@@ -1,0 +1,375 @@
+body{
+
+    background: grey url('../img/ui/bg/bg.jpeg');
+    text-align: center;
+    font-family: sans-serif;
+}
+
+
+a{
+
+    color: #17337e;
+    text-decoration: none;
+}
+
+
+table, img{
+
+    max-width: 500px;
+}
+
+
+input[type="button"], button {
+  background-color: rgba(255, 255, 255, .4);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  box-shadow: rgba(255, 255, 255, .4) 0 1px 0 0 inset;
+  box-sizing: border-box;
+  color: #000;
+  cursor: pointer;
+  display: inline-block;
+  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.15385;
+  margin: 0;
+  outline: none;
+  padding: 8px .8em;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+input[type="button"]:hover, button:hover,
+input[type="button"]:focus, button:focus {
+  background-color: #e6e6e6;
+}
+
+input[type="button"]:focus, button:focus {
+  box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
+}
+
+input[type="button"]:active, button:active {
+  background-color: #d9d9d9;
+  box-shadow: none;
+}
+
+input[type="button"]:disabled, button:disabled {
+  color: grey;
+  box-shadow: none;
+}
+
+
+/*
+ * tools
+ */
+
+.box-shadow{box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);}
+
+.desaturate{
+  filter: grayscale(1);
+}
+
+.blink {
+    animation: blinker 1.5s linear infinite;
+}
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+
+.popup, #ui-card, #ui-item-list, #ui-dialog{
+
+    position: absolute;
+    top: 182px;
+    z-index: 100;
+    width: 99%;
+    margin: 0 auto;
+}
+
+.marbre{
+
+    background: url('../img/ui/bg/marbre.jpeg');
+}
+
+
+/*
+ * view
+ */
+
+#svg-view{
+
+    cursor: pointer;
+}
+
+.avatar-shadow{
+    filter: contrast(0%) brightness(50%);
+
+    width: 35px;
+    margin-top: 14px;
+    margin-left: -5px;
+    z-index: 1;
+    opacity: 0.5;
+}
+
+.transparent-gradient{
+
+    -webkit-mask-image:-webkit-gradient(linear, top, bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+
+
+/*
+ * MAP
+ */
+
+
+#ui-map{
+
+
+}
+
+
+/*
+ * case infos
+ */
+
+.case-infos{
+
+    width: 300px;
+    margin: 0 auto;
+    font-size: 88%;
+    margin-bottom: 25px;
+}
+
+    .case-infos img{
+
+        float: left;
+        margin: 7px;
+    }
+
+    .case-infos .text{
+
+        text-align: left;
+    }
+
+#case-coords{
+
+    font-size: 88%;
+    opacity: 0.5;
+}
+
+
+/*
+* card ui
+*/
+
+#ui-card, #ui-item-list, #ui-dialog, #ui-map{
+
+    color: white;
+}
+
+#ui-card .card-template, #ui-item-list .item-preview, #ui-item-invent, #ui-dialog .dialog-template {
+
+    width: 275px;
+    height: 450px;
+    margin: 0 auto;
+    background: black;
+    border: 15px solid black;
+    border-radius: 15px;
+}
+
+    #ui-card .card-template-name, #ui-item-list .preview-name, #ui-dialog .dialog-template-name{
+
+        width: auto;
+        padding: 15px;
+        text-align: left;
+        background: rgba(0,0,0,0.8);
+    }
+
+    #ui-card .card-template-img{
+
+        width: 275px;
+        height: 250px;
+        text-align: right;
+    }
+
+    #ui-card .card-template-type{
+
+        width: 250px;
+        text-align: left;
+        opacity: 0.5;
+    }
+
+    #ui-card .card-template-text{
+
+        width: auto;
+        margin: 0 auto;
+        height: 115px;;
+        text-align: left;
+        background: rgba(0,0,0,0.8);
+        padding-top: 10px;
+        padding-left: 15px;
+        padding-right: 15px;
+        overflow: scroll;
+    }
+
+    #ui-card .card-template-name, #ui-card .card-template-type{
+
+        padding-left: 10px;
+    }
+
+        #ui-card .card-template-name .close-card{
+
+            float: right;
+        }
+
+    #ui-card .action{
+
+/*         font-size: 120%; */
+        color: black;
+    }
+
+        #ui-card .action .action-name{
+
+            display: none;
+        }
+
+
+    /*
+    * item list special ui
+    */
+
+    #ui-item-list .preview-infos {
+
+        float: right;
+    }
+
+    #ui-item-list .item-preview{
+
+        width: 500px;
+        height: 300px;
+        background: url('../img/ui/inventory/leather.jpeg') no-repeat center;
+        background-size: auto 500px;
+    }
+
+    #ui-item-list .preview-text{
+
+
+        color: black;
+    }
+
+    #ui-item-list .preview-wrapper{
+
+        text-align: left;
+        height: 195px;
+        overflow: scroll;
+        margin: 15px;
+        padding-bottom: 30px;
+    }
+
+    #ui-item-list .preview-action{
+
+        margin-top: -55px;
+    }
+
+        #ui-item-list .preview-action .btn-wrapper{
+
+            width: 100px;
+            display: inline-block;
+
+        }
+
+        #ui-item-list .preview-action .action-warning .btn-wrapper{
+
+            --bg-color-hovered: red;
+        }
+
+    #ui-item-list .preview-n{
+
+        margin-left: 15px;
+        font-size: 0.8em;
+    }
+
+    #ui-item-list .preview-img{
+
+        max-width: 150px;
+        max-height: 150px;
+        float: left;
+        margin-right: 15px;
+        margin-bottom: 15px;
+    }
+
+        #ui-item-list .preview-img img{
+
+            max-width: 150px;
+            max-height: 150px;
+        }
+
+    #ui-item-invent{
+
+        width: 500px;
+        background: black url(../img/ui/inventory/leather_case.jpeg);
+        min-height: 50px;
+        max-height: 150px;
+        overflow: scroll;
+        margin: 0 auto;
+        margin-top: -25px;
+        text-align: left;
+    }
+
+        #ui-item-invent .item-case{
+
+            width: 50px;
+            height: 50px;
+            position: relative;
+            display: inline;
+            cursor: pointer;
+            opacity: 0.9;
+        }
+
+            #ui-item-invent .item-case:hover{
+
+                opacity: 1;
+            }
+
+            #ui-item-invent img{
+
+                width: 50px;
+                height: 50px;
+            }
+
+
+            #ui-item-invent .item-case-n{
+
+                position: absolute;
+                bottom: 0px;
+                right: 0px;
+                font-size: 0.8em;
+            }
+
+
+/*
+ * RA COLORS
+ */
+
+.ra-horn-call{ color: red; } /* adrenaline */
+
+.ra-small-fire{ color: gold; } /* feu */
+.ra-water-drop{ color: #33ccff; } /* eau */
+.ra-vine-whip{ color: green; } /* ronce */
+.ra-sapphire{ color: #ffccff; } /* diamant */
+.ra-shoe-prints{ color: brown; } /* boue */
+
+.ra-gloop{ color: #990000; } /* sang */
+
+.ra-health-increase{ color: #66d9ff; } /* heal */
+
+.ra-bone-bite{ color: #66ff66; } /* poison */
