@@ -1,9 +1,6 @@
 <?php
 
-
-$plan = $player->coords->plan;
-
-$planJson = json()->decode('plans', $plan);
+echo '<div><a href="index.php"><button>Retour</button></a><a href="map.php"><button>Monde</button></a></div>';
 
 
 echo '
@@ -36,7 +33,7 @@ echo '
 
         $db = new Db();
 
-        $res = $db->exe($sql, $plan);
+        $res = $db->exe($sql, $player->coords->plan);
 
         while($row = $res->fetch_object()){
 

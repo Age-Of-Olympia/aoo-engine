@@ -8,8 +8,17 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_coords();
 
+$planJson = json()->decode('plans', $player->coords->plan);
+
+
+if(isset($_GET['local'])){
+
+    include('scripts/map/local.php');
+    exit();
+}
+
 ?>
-<div><a href="index.php"><button>Retour</button></a></div>
+<div><a href="index.php"><button>Retour</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
 
 
 <div id="ui-map">
@@ -61,16 +70,6 @@ $player->get_coords();
     ?>
 </svg>
 </div>
-
-
-<?php
-
-
-include('scripts/map/territoire.php');
-
-
-?>
-
 
 <script>
 $(document).ready(function(){

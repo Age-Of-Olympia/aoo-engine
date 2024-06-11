@@ -426,6 +426,25 @@ class Player{
 
             @unlink('datas/private/players/'. $row->id .'.svg');
         }
+
+        $sql = '
+        DELETE FROM
+        coords
+        WHERE
+        id NOT IN (
+            SELECT coords_id FROM players
+            UNION
+            SELECT coords_id FROM map_elements
+            UNION
+            SELECT coords_id FROM map_tiles
+            UNION
+            SELECT coords_id FROM map_triggers
+            UNION
+            SELECT coords_id FROM map_walls
+            )
+        ';
+
+        $db->exe($sql);
     }
 
 
@@ -503,7 +522,8 @@ class Player{
             'name'=>$name,
             'race'=>$race,
             'avatar'=>'img/avatars/'. $race .'/1.png',
-            'portrait'=>'img/portraits/'. $race .'/1.jpeg'
+            'portrait'=>'img/portraits/'. $race .'/1.jpeg',
+            'coords_id'=>1
         );
 
         $db->insert('players', $values);

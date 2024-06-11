@@ -346,6 +346,9 @@ if(!empty($card)){
 
         $('.action').click(function(e){
 
+            $('.action').prop('disabled', true);
+            $('#action-data').hide().html();
+
             let url = 'action.php';
 
             if($(this).data('url')){
@@ -369,7 +372,9 @@ if(!empty($card)){
                 data: {'action':action, 'targetId':targetId}, // serializes the form's elements.
                 success: function(data)
                 {
-                    alert(data);
+                    // alert(data);
+                    $('#action-data').html(data).fadeIn();
+                    $('.action').prop('disabled', false);
                     // document.location.reload();
                 }
             });

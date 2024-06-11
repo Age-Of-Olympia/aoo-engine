@@ -201,6 +201,19 @@ input[type="button"]:disabled, button:disabled {
         text-align: right;
     }
 
+        #action-data{
+
+            position: absolute;
+            font-size: 88%;
+            text-align: left;
+            width: 220px;
+            margin: 5px;
+            padding: 3px;
+            background: rgba(0,0,0,0.8);
+            display: none;
+        }
+
+
     #ui-card .card-template-type{
 
         width: 250px;

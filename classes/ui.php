@@ -90,6 +90,8 @@ class ui{
                 <div class="card-template-img">
                     ';
 
+                    echo '<div id="action-data"></div>';
+
                     echo '<button
                         class="action close-card"
                         data-action="close-card"
