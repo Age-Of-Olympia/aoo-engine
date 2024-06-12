@@ -9,7 +9,7 @@ $player = new Player($_SESSION['playerId']);
 $player->get_coords();
 
 
-echo '<div><a href="index.php"><button>Retour</button></a><button>Du lieu</button><button>Du personnage</button></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><button>Du lieu</button><button>Du personnage</button></div>';
 
 echo '
 <table class="box-shadow marbre" border="1" align="center">';

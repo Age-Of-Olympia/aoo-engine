@@ -38,7 +38,7 @@ if(!empty($actionJson->distanceMin)){
 
     if($distance < $actionJson->distanceMin){
 
-        exit('error distance min');
+        exit('Vous n\'êtes pas à bonne distance.');
     }
 }
 
@@ -47,7 +47,7 @@ if(!empty($actionJson->distanceMax)){
 
     if($distance > $actionJson->distanceMax){
 
-        exit('error distance max');
+        exit('Vous n\'êtes pas à bonne distance.');
     }
 }
 
@@ -71,19 +71,14 @@ if($actionJson->targetType != 'self'){
     $targetJet = (is_numeric($actionJson->targetJet)) ? $dice->roll($actionJson->targetJet) : $dice->roll($target->caracs->{$actionJson->targetJet});
 
 
-    echo '<div>Jet '. $player->row->name .': '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) .'</div>';
-    echo '<div>Jet '. $target->row->name .': '. implode(' + ', $targetJet) .' = '. array_sum($targetJet) .'</div>';
-
-
-
     // success
-    if($playerJet >= $targetJet){
+    if($actionJson->targetJet == 0 || array_sum($playerJet) >= array_sum($targetJet)){
 
         $success = true;
     }
     else{
 
-        echo 'Raté!';
+        echo '<div style="color: red;">Échec.</div>';
     }
 }
 elseif($actionJson->targetType == 'self'){
@@ -99,6 +94,9 @@ elseif($actionJson->targetType == 'self'){
 
 
 if(!empty($success) && $success == true){
+
+
+    echo '<div style="color: #66ccff;">Réussite!</div>';
 
 
     if(!empty($actionJson->playerDamages)){
@@ -120,19 +118,30 @@ if(!empty($success) && $success == true){
             $totalDamages = 1;
         }
 
-        echo '<div>Dégats: '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .'</div>';
+        echo '
+        Vous infligez '. $totalDamages .' à '. $target->row->name .'.
+
+        <div>'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .'</div>';
     }
 
     elseif(!empty($actionJson->playerHeal)){
 
-        $playerHeal = (is_numeric($actionJson->playerHeal)) ? $actionJson->playerHeal : $player->caracs->{$actionJson->playerHeal};
+        $baseHeal = (is_numeric($actionJson->playerHeal)) ? $actionJson->playerHeal : $player->caracs->{$actionJson->playerHeal};
+
+        $bonusHeal = 0;
 
         if(!empty($actionJson->bonusHeal)){
 
-            $playerHeal += $actionJson->bonusHeal;
+            $bonusHeal = $actionJson->bonusHeal;
         }
 
-        echo '<div>Soins: '. $playerHeal .'</div>';
+
+        $playerHeal = $baseHeal + $bonusHeal;
+
+        echo '
+        <div>Vous soignez '. $target->row->name .' de '. $playerHeal .'PV.</div>
+        <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'</div>
+        ';
     }
 }
 
@@ -174,8 +183,26 @@ if(!empty($actionJson->addEffects)){
 
                 $target->add_effect($e->name, $duration);
             }
+
+
+
+            if(!empty($e->text)){
+
+                echo '<div>'. $e->text .'</div>';
+            }
         }
     }
+}
+
+
+if(
+    (!empty($actionJson->targetJet) && $actionJson->targetJet != 0)
+    &&
+    $actionJson->targetType != 'self'
+){
+
+    echo '<div class="action-details">Jet '. $player->row->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) .'</div>';
+    echo '<div class="action-details">Jet '. $target->row->name .' = '. array_sum($targetJet) .'</div>';
 }
 
 

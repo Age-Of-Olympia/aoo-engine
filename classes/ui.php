@@ -129,118 +129,121 @@ class ui{
     }
 
 
-    public static function get_inventory($player) : string {
+    public static function print_inventory($itemList){
 
-        // tampon start
+
         ob_start();
 
+        echo '
+        <table border="1" align="center" class="marbre">
+        <tr>
+        <td>
+        ';
 
         echo '
-        <div id="ui-item-list">
+        <div style="margin: 0 auto; width: 500px; position: relative;">
             ';
 
-            // or
-            $defaultItem = new Item(1);
 
-            $defaultItem->get_data();
-
-
-            // item list
-            $itemList = Item::get_item_list($player->id);
-
-            $defaultN = (!empty($itemList[$defaultItem->row->name])) ? $itemList[$defaultItem->row->name] : 0;
-
-
-            // item preview
             echo '
-            <div class="item-preview">
+            <div style="max-height: 308px; max-width: 200px; overflow: scroll; float: left;">
+                <table border="1">
+                    ';
 
-                <div class="preview-name">
-                    '. ucfirst($defaultItem->data->name) .'
+                    $defaultItem = new Item(1);
+                    $defaultItem->get_data();
 
-                    <span class="preview-n">x'. $defaultN .'</span>
-
-                    <span class="preview-infos">
+                    foreach($itemList as $k=>$e){
 
 
-                        Prix: '. $defaultItem->data->price .'po
-                    </span>
+                        $itemJson = json()->decode('items', $k);
+
+                        echo '
+                        <tr>
+                        ';
+
+                            echo '
+                            <td>
+                                <div
+                                    class="item-case"
+
+                                    data-name="'. ucfirst($itemJson->name) .'"
+                                    data-n="'. $e .'"
+                                    data-text="'. $itemJson->text .'"
+                                    data-price="'. $itemJson->price .'"
+                                    data-img="img/items/'. $itemJson->name .'.png"
+                                    >
+                                        <img src="img/items/'. $itemJson->name .'_mini.png" />
+                                    </div>
+                            </td>
+                            ';
+
+                            echo '
+                            <td align="left">
+                                '. ucfirst($itemJson->name) .'
+                            </td>
+                            ';
+
+                            echo '
+                            <td>
+                                x'. $e .'
+                            </td>
+                            ';
+
+                            echo '
+                        </tr>
+                        ';
+                    }
+
+                    echo '
+                </table>
+            </div>
+            ';
+
+
+            echo '
+            <div style="width: 300px; position: absolute; left: 200px;">
+
+                <div class="preview-img">
+                    <img
+                        src="img/ui/fillers/150.png"
+                        data-src="img/items/'. $defaultItem->row->name .'.png"
+                        data-filler="img/ui/fillers/150.png"
+                        width="150"
+                        />
                 </div>
 
+                <div class="preview-text">
 
-                <div class="preview-wrapper">
-
-                    <div class="preview-img">
-                        <img src="img/ui/fillers/150.png"
-                            data-src="img/items/'. $defaultItem->row->name .'.png"
-                            data-filler="img/ui/fillers/150.png"
-                            />
-                    </div>
-
-                    <div class="preview-text">
-
-                        '. $defaultItem->data->text .'
-                    </div>
-
+                    '. $defaultItem->data->text .'
                 </div>
 
                 <div class="preview-action">
 
-                    <input type="button" value="Utiliser" /><input type="button" value="Déposer" /><input type="button" class="alert" id="action-close" value="Fermer" />
+                    <input type="button" value="Utiliser" /><input type="button" value="Déposer" />
                 </div>
-
             </div>
             ';
-
-
-            // item list
-            echo '
-            <div id="ui-item-invent">
-                ';
-
-                foreach($itemList as $k=>$e){
-
-
-                    $itemJson = json()->decode('items', $k);
-
-                    // $n = Str::get_k($e);
-
-
-                    echo '<div
-                            class="item-case"
-
-                            data-name="'. ucfirst($itemJson->name) .'"
-                            data-n="'. $e .'"
-                            data-text="'. $itemJson->text .'"
-                            data-price="'. $itemJson->price .'"
-                            data-img="img/items/'. $itemJson->name .'.png"
-                            >';
-                        echo '<img src="img/items/'. $itemJson->name .'_mini.png" />';
-                        echo '<div class="item-case-n">x'. $e .'</div>';
-                    echo '</div>';
-                }
-
-                echo '
-            </div>
-            ';
-
 
             echo '
         </div>
         ';
 
+        echo '
+        </td>
+        </tr>
+        </table>
+        ';
 
-        // js
+
         ?>
         <script>
         $(document).ready(function(){
-
 
             var $previewImg = $(".preview-img img");
 
             // first img preload
             preload($previewImg.data("src"), $previewImg);
-
 
             $(".item-case").click(function(e){
 
@@ -254,29 +257,18 @@ class ui{
                 let infos = $item.data("infos");
                 let img =   $item.data("img");
 
-                $(".preview-name").html(name +" <span class='preview-n'>x"+ n +"</span><span class='preview-infos'>"+ infos +" Prix: "+ price +"<span class='creds'>po</span></span>");
                 $(".preview-text").text(text);
 
                 preload(img, $previewImg);
-            });
-
-
-            $("#action-close").click(function(e){
-
-
-                e.preventDefault();
-
-                $("#ui-item-list").hide();
             });
         });
         </script>
         <?php
 
 
-        // get tampon & clean
-        $return = ob_get_contents();
-        ob_end_clean();
 
+        $return = ob_get_contents();
+        ob_clean();
 
         return $return;
     }

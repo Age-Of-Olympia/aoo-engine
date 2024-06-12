@@ -18,7 +18,7 @@ if(isset($_GET['local'])){
 }
 
 ?>
-<div><a href="index.php"><button>Retour</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
+<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
 
 
 <div id="ui-map">

@@ -323,7 +323,7 @@ class Player{
 
                 $this->end_effect(ELE_CONTROLS[$name]);
 
-                echo $name .' controle '. ELE_CONTROLS[$name] .' (terminated)';
+                echo ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'.';
             }
 
             if(!empty(ELE_IS_CONTROLED[$name])){
@@ -334,7 +334,7 @@ class Player{
                     $this->end_effect(ELE_IS_CONTROLED[$name]);
                     $this->end_effect($name);
 
-                    echo ELE_IS_CONTROLED[$name] .' annule '. $name .'';
+                    echo ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent.';
                 }
             }
         }

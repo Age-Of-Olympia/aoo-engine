@@ -13,7 +13,7 @@ if(!empty($_POST['text'])){
     exit();
 }
 
-echo '<div><a href="account.php"><button>Retour</button></a></div>';
+echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 echo '<textarea style="height: 150px; width: 500px;">'. $player->data->text .'</textarea>';
 

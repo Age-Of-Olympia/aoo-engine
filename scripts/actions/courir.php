@@ -5,6 +5,8 @@ $rand = rand(1,3);
 $mvt = $rand;
 
 // pouvoir divin
+$pouvoir = '';
+
 if($player->row->godId == '4'){
 
     if($player->row->pf > 0){
@@ -12,10 +14,14 @@ if($player->row->godId == '4'){
         $mvt += 1;
 
         $player->put_pf(-1);
+
+        $pouvoir = '+1 (pouvoir d\'Hermès)';
     }
 }
 
 
-echo "Vous courrez et gagnez $mvt Mouvements.";
+echo '
+Vous courrez et gagnez '. $mvt .' Mouvements.
 
-echo '<div class="details">1d3 = '. $rand .' + 1 (pouvoir d\'Hermès)</div>';
+<div class="action-details">1d3 = '. $rand .' '. $pouvoir .'</div>
+';

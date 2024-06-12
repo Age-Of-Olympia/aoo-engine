@@ -63,7 +63,7 @@ $ui = new Ui('Améliorations');
 
 
 echo '
-<div><a href="index.php"><button>Retour</button></a><a href="upgrades.php"><button>Caractéristiques</button></a><a href="upgrades.php?spells"><button>Sorts</button></a></div>
+<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="upgrades.php"><button>Caractéristiques</button></a><a href="upgrades.php?spells"><button>Sorts</button></a></div>
 ';
 
 

@@ -45,7 +45,7 @@ define('OPTIONS', array(
 ));
 
 
-echo '<a href="index.php"><button>Retour</button></a>';
+echo '<a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>';
 echo '<a href="index.php"><button>Changer Nom</button></a>';
 echo '<a href="index.php"><button>Changer Mot de Passe</button></a>';
 echo '<a href="index.php"><button>Changer Mail</button></a>';

@@ -85,7 +85,7 @@ input[type="button"]:disabled, button:disabled {
 }
 
 
-.popup, #ui-card, #ui-item-list, #ui-dialog{
+.popup, #ui-card, #ui-dialog{
 
     position: absolute;
     top: 182px;
@@ -176,7 +176,7 @@ input[type="button"]:disabled, button:disabled {
     color: white;
 }
 
-#ui-card .card-template, #ui-item-list .item-preview, #ui-item-invent, #ui-dialog .dialog-template {
+#ui-card .card-template, #ui-item-list .item-preview, #ui-dialog .dialog-template {
 
     width: 275px;
     height: 450px;
@@ -186,7 +186,7 @@ input[type="button"]:disabled, button:disabled {
     border-radius: 15px;
 }
 
-    #ui-card .card-template-name, #ui-item-list .preview-name, #ui-dialog .dialog-template-name{
+    #ui-card .card-template-name, #ui-dialog .dialog-template-name{
 
         width: auto;
         padding: 15px;
@@ -208,9 +208,15 @@ input[type="button"]:disabled, button:disabled {
             text-align: left;
             width: 220px;
             margin: 5px;
-            padding: 3px;
+            padding: 5px;
             background: rgba(0,0,0,0.8);
             display: none;
+        }
+
+        #action-data .action-details{
+
+            font-size: 88%;
+            color: grey;
         }
 
 
@@ -260,7 +266,7 @@ input[type="button"]:disabled, button:disabled {
     * item list special ui
     */
 
-    #ui-item-list .preview-infos {
+/*    #ui-item-list .preview-infos {
 
         float: right;
     }
@@ -366,7 +372,7 @@ input[type="button"]:disabled, button:disabled {
                 bottom: 0px;
                 right: 0px;
                 font-size: 0.8em;
-            }
+            }*/
 
 
 /*
