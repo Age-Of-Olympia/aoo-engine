@@ -30,7 +30,7 @@ AND
 pi >= ?
 ';
 
-$db->exe($sql, array(&$cost, &$player->id, &$cost));
+$db->exe($sql, array($cost, $player->id, $cost));
 
 
 $values = array(

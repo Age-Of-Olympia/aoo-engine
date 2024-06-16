@@ -66,6 +66,17 @@ input[type="button"]:disabled, button:disabled {
 
 
 /*
+ * fonts
+ */
+
+
+@font-face {
+  font-family: goudy;
+  src: url('fonts/goudy.ttf');
+}
+
+
+/*
  * tools
  */
 
@@ -131,9 +142,35 @@ input[type="button"]:disabled, button:disabled {
  */
 
 
-#ui-map{
+#ui-map {
 
+    background: url(../img/ui/map/parchemin.gif);
+    width: 800px;
+    margin: 0 auto;
+}
 
+#svg-map {
+
+    background: url(../img/ui/map/parchemin.png);
+}
+
+.map.location {
+
+    cursor: pointer;
+}
+
+#svg-map .text {
+
+    font-family: goudy;
+    font-size: 180%;
+    display: none;
+    pointer-events: none;
+    fill: black;
+    paint-order: stroke;
+    stroke: #eac198;
+    stroke-width: 5px;
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
 }
 
 
@@ -252,7 +289,6 @@ input[type="button"]:disabled, button:disabled {
 
     #ui-card .action{
 
-/*         font-size: 120%; */
         color: black;
     }
 
@@ -262,117 +298,6 @@ input[type="button"]:disabled, button:disabled {
         }
 
 
-    /*
-    * item list special ui
-    */
-
-/*    #ui-item-list .preview-infos {
-
-        float: right;
-    }
-
-    #ui-item-list .item-preview{
-
-        width: 500px;
-        height: 300px;
-        background: url('../img/ui/inventory/leather.jpeg') no-repeat center;
-        background-size: auto 500px;
-    }
-
-    #ui-item-list .preview-text{
-
-
-        color: black;
-    }
-
-    #ui-item-list .preview-wrapper{
-
-        text-align: left;
-        height: 195px;
-        overflow: scroll;
-        margin: 15px;
-        padding-bottom: 30px;
-    }
-
-    #ui-item-list .preview-action{
-
-        margin-top: -55px;
-    }
-
-        #ui-item-list .preview-action .btn-wrapper{
-
-            width: 100px;
-            display: inline-block;
-
-        }
-
-        #ui-item-list .preview-action .action-warning .btn-wrapper{
-
-            --bg-color-hovered: red;
-        }
-
-    #ui-item-list .preview-n{
-
-        margin-left: 15px;
-        font-size: 0.8em;
-    }
-
-    #ui-item-list .preview-img{
-
-        max-width: 150px;
-        max-height: 150px;
-        float: left;
-        margin-right: 15px;
-        margin-bottom: 15px;
-    }
-
-        #ui-item-list .preview-img img{
-
-            max-width: 150px;
-            max-height: 150px;
-        }
-
-    #ui-item-invent{
-
-        width: 500px;
-        background: black url(../img/ui/inventory/leather_case.jpeg);
-        min-height: 50px;
-        max-height: 150px;
-        overflow: scroll;
-        margin: 0 auto;
-        margin-top: -25px;
-        text-align: left;
-    }
-
-        #ui-item-invent .item-case{
-
-            width: 50px;
-            height: 50px;
-            position: relative;
-            display: inline;
-            cursor: pointer;
-            opacity: 0.9;
-        }
-
-            #ui-item-invent .item-case:hover{
-
-                opacity: 1;
-            }
-
-            #ui-item-invent img{
-
-                width: 50px;
-                height: 50px;
-            }
-
-
-            #ui-item-invent .item-case-n{
-
-                position: absolute;
-                bottom: 0px;
-                right: 0px;
-                font-size: 0.8em;
-            }*/
 
 
 /*

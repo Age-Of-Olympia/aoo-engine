@@ -65,5 +65,19 @@ class Str{
 
         return $rank;
     }
+
+
+    public static function get_from_dir($dir){
+
+
+        if($dir == 'e') return 'w';
+        elseif($dir == 'w') return 'e';
+        elseif($dir == 's') return 'n';
+        elseif($dir == 'n') return 's';
+        elseif($dir == 'nw') return 'se';
+        elseif($dir == 'ne') return 'sw';
+        elseif($dir == 'sw') return 'ne';
+        elseif($dir == 'se') return 'nw';
+    }
 }
 

@@ -50,3 +50,19 @@ function printr($text){
     echo '</pre>';
 }
 
+// sqln
+function sqln(){
+
+    global $n;
+
+    if(!isset($n)){
+
+        $n = 1;
+    }
+    else{
+
+        $n++;
+    }
+
+    return $n;
+}

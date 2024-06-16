@@ -35,7 +35,7 @@ define('OPTIONS', array(
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
     'changeAvatar'=>"Changer d'Avatar<br /><sup>Vous pouvez faire une demande d'Avatar sur le forum</sup>",
     'changeMdj'=>$player->data->text,
-    'raceHint'=>"Indice de Race<br /><sup>Affiche une bordure e couleur autour du personnage</sup>",
+    'raceHint'=>"Indice de Race<br /><sup>Affiche une bordure de couleur autour du personnage</sup>",
     'raceHintMax'=>"Indice de Race maximale<br /><sup>Colore également l'arrière plan du personnage</sup>",
     'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
     'hideGrid'=>"Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",

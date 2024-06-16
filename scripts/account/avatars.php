@@ -21,7 +21,7 @@ if(!empty($_POST['img'])){
 
     $db = new Db();
 
-    $db->exe($sql, array(&$url, &$player->id));
+    $db->exe($sql, array($url, $player->id));
 
 
     @unlink('datas/private/players/'. $player->id .'.json');

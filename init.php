@@ -9,6 +9,9 @@ ini_set('display_startup_errors', TRUE);
 require_once('config.php');
 
 
+$ui = new Ui('Init');
+
+
 function rrmdir($dir) {
     if (is_dir($dir)) {
     $objects = scandir($dir);
@@ -25,26 +28,35 @@ function rrmdir($dir) {
 }
 
 
-echo 'deleting data : player<br />';
+echo 'delete datas dir : players<br />';
 
-$path = 'datas/private/player/';
+$path = 'datas/private/players/';
 
 $realpath = realpath($path);
 
 rrmdir($realpath);
 
 
-echo 'create new data : player<br />';
+echo 'create new datas dir : players<br />';
 
 mkdir($path, 0755, true);
 
 
-echo 'running db/init.sql<br />';
+echo 'run db/init.sql<br />';
 
 $sql = file_get_contents('db/init.sql');
 
 db()->multi_query($sql);
 
 
-echo 'done!';
+echo 'done!<br />';
 
+
+echo '
+<br />
+press ² to show prompt cmd<br />
+create player [character name] [character race]<br />
+tp [character name or id] 0,0,0,[plan]<br />
+session open [character name or id]<br />
+<a href="index.php"><button>Then press this button</button></a>
+';

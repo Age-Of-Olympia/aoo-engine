@@ -27,36 +27,7 @@ $row = $res->fetch_object();
 $god = new Player($row->player_id);
 
 
-$sql = '
-SELECT
-x,y,z,plan
-FROM
-coords AS c
-INNER JOIN
-map_walls AS w
-ON
-w.coords_id = c.id
-WHERE
-w.id = ?
-';
-
-$res = $db->exe($sql, $row->wall_id);
-
-if(!$res->num_rows){
-
-    exit('error coords');
-}
-
-
-$row = $res->fetch_object();
-
-
-$coords = (object) array(
-    'x'=>$row->x,
-    'y'=>$row->y,
-    'z'=>$row->z,
-    'plan'=>$row->plan
-);
+$coords = View::get_coords('walls', $row->id);
 
 
 $player = new Player($_SESSION['playerId']);

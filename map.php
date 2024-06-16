@@ -21,69 +21,63 @@ if(isset($_GET['local'])){
 <div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
 
 
-<div id="ui-map">
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-    xmlns="http://www.w3.org/2000/svg"
-    xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
-    baseProfile="full"
+<?php echo Ui::print_map($player, $planJson) ?>
 
-    id="svg-map"
-
-    width="532"
-    height="800"
-
-    style="background: url(img/ui/map/parchemin.png);"
-    >
-
-    <?php
-
-    foreach(File::scan_dir('img/ui/map/', $without=".png") as $e){
-
-        if($e == 'parchemin'){
-
-            continue;
-        }
-
-        $mapJson = json()->decode('plans', $e);
-
-
-        $opacity = 0.3;
-
-        if($player->coords->plan == $e){
-
-            $opacity = 1;
-        }
-
-
-        echo '
-        <image
-            x="'. $mapJson->x .'"
-            y="'. $mapJson->y .'"
-            class="map location"
-            href="img/ui/map/'. $e .'.png"
-            style="opacity: '. $opacity .'; cursor: pointer;"
-            />
-        ';
-    }
-
-    ?>
-</svg>
-</div>
 
 <script>
 $(document).ready(function(){
 
+
+    $('.map[data-plan="<?php echo $player->coords->plan ?>"]').css('opacity', 1).data('opacity', 1);
+    $('.text[data-plan="<?php echo $player->coords->plan ?>"]').show();
+
+
+    <?php include('scripts/map/travel.php') ?>
+
+
     $('.map')
+    <?php
+
+    if(!empty($triggerId)){
+
+        ?>
+        .on('click', function(e){
+
+            if($(this).hasClass('blink')){
+
+                if(confirm('Voyager jusqu\'à '+ $(this).data('name') +'?')){
+
+                    $.ajax({
+                        type: "POST",
+                        url: 'map.php?triggerId=<?php echo $triggerId ?>',
+                        data: {'goPlan':$(this).data('plan')}, // serializes the form's elements.
+                        success: function(data)
+                        {
+                            // alert(data);
+                            document.location = "index.php";
+                        }
+                    });
+                }
+            }
+        })
+        <?php
+    }
+    ?>
     .on('mouseover', function(e){
 
-        window.old_opacity = $(this).css('opacity');
+        window.old_opacity = $(this).data('opacity');
 
         $(this).css('opacity','1');
+        $('.text[data-plan="'+ $(this).data('plan') +'"]').show();
     })
     .on('mouseout', function(e){
 
         $(this).css('opacity',window.old_opacity);
+
+        if(window.old_opacity != 1){
+
+            $('.text[data-plan="'+ $(this).data('plan') +'"]').hide();
+        }
     });
 });
 </script>

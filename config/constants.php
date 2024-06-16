@@ -109,3 +109,10 @@ define('WALLS_PV', array(
     'mur_pierre'=>100,
     'altar'=>100
 ));
+
+
+/*
+ * errors
+ */
+
+define('ERROR_DISTANCE', "Vous n'êtes pas à bonne distance.");

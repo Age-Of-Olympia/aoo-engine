@@ -6,7 +6,7 @@ if(!empty($_POST['text'])){
 
     $db = new Db();
 
-    $db->exe($sql, array(&$_POST['text'], &$player->id));
+    $db->exe($sql, array($_POST['text'], $player->id));
 
     $player->refresh_data();
 

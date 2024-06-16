@@ -30,7 +30,7 @@ $target->get_caracs();
 
 
 // distance
-$distance = Player::get_distance($player->get_coords(), $target->get_coords());
+$distance = View::get_distance($player->get_coords(), $target->get_coords());
 
 
 if(!empty($actionJson->distanceMin)){

@@ -52,6 +52,7 @@ class ui{
          */
 
         return '
+                <sup style="position: absolute; bottom: 0px; right: 0px;">'. sqln()-1 .' req</sup>
             </body>
         </html>
         ';
@@ -132,6 +133,10 @@ class ui{
     public static function print_inventory($itemList){
 
 
+        $defaultItem = new Item(1);
+        $defaultItem->get_data();
+
+
         ob_start();
 
         echo '
@@ -141,68 +146,12 @@ class ui{
         ';
 
         echo '
-        <div style="margin: 0 auto; width: 500px; position: relative;">
+        <div style="margin: 0 auto; width: 350px; height: 250px; position: relative;">
             ';
 
 
             echo '
-            <div style="max-height: 308px; max-width: 200px; overflow: scroll; float: left;">
-                <table border="1">
-                    ';
-
-                    $defaultItem = new Item(1);
-                    $defaultItem->get_data();
-
-                    foreach($itemList as $k=>$e){
-
-
-                        $itemJson = json()->decode('items', $k);
-
-                        echo '
-                        <tr>
-                        ';
-
-                            echo '
-                            <td>
-                                <div
-                                    class="item-case"
-
-                                    data-name="'. ucfirst($itemJson->name) .'"
-                                    data-n="'. $e .'"
-                                    data-text="'. $itemJson->text .'"
-                                    data-price="'. $itemJson->price .'"
-                                    data-img="img/items/'. $itemJson->name .'.png"
-                                    >
-                                        <img src="img/items/'. $itemJson->name .'_mini.png" />
-                                    </div>
-                            </td>
-                            ';
-
-                            echo '
-                            <td align="left">
-                                '. ucfirst($itemJson->name) .'
-                            </td>
-                            ';
-
-                            echo '
-                            <td>
-                                x'. $e .'
-                            </td>
-                            ';
-
-                            echo '
-                        </tr>
-                        ';
-                    }
-
-                    echo '
-                </table>
-            </div>
-            ';
-
-
-            echo '
-            <div style="width: 300px; position: absolute; left: 200px;">
+            <div style="">
 
                 <div class="preview-img">
                     <img
@@ -224,6 +173,68 @@ class ui{
                 </div>
             </div>
             ';
+
+            echo '
+        </td>
+        </tr>
+        <tr>
+        <td/>
+            ';
+
+
+            echo '
+            <div style="max-height: 500px; overflow: scroll; float: left;">
+                <table border="1" style="width: 350px;">
+                    ';
+
+                    foreach($itemList as $k=>$e){
+
+
+                        $itemJson = json()->decode('items', $k);
+
+                        echo '
+                        <tr
+                            class="item-case"
+
+                            data-name="'. ucfirst($itemJson->name) .'"
+                            data-n="'. $e .'"
+                            data-text="'. $itemJson->text .'"
+                            data-price="'. $itemJson->price .'"
+                            data-img="img/items/'. $itemJson->name .'.png"
+                            >
+                            ';
+
+                            echo '
+                            <td width="50">
+                                <div
+                                    >
+                                        <img src="img/items/'. $itemJson->name .'_mini.png" />
+                                    </div>
+                            </td>
+                            ';
+
+                            echo '
+                            <td align="left">
+                                '. ucfirst($itemJson->name) .'
+                            </td>
+                            ';
+
+                            echo '
+                            <td width="50">
+                                x'. $e .'
+                            </td>
+                            ';
+
+                            echo '
+                        </tr>
+                        ';
+                    }
+
+                    echo '
+                </table>
+            </div>
+            ';
+
 
             echo '
         </div>
@@ -266,6 +277,97 @@ class ui{
         <?php
 
 
+
+        $return = ob_get_contents();
+        ob_clean();
+
+        return $return;
+    }
+
+
+    public static function print_map() {
+
+        ob_start();
+
+        echo '
+        <div id="ui-map">
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+            baseProfile="full"
+            id="svg-map"
+            width="800"
+            height="532"
+            >
+        ';
+
+        $text = array();
+
+        foreach (File::scan_dir('img/ui/map/', $without=".png") as $e) {
+
+            if ($e == 'parchemin') {
+                continue;
+            }
+
+            $mapJson = json()->decode('plans', $e);
+            $opacity = 0.4;
+
+            echo '
+            <image
+                x="'. $mapJson->x .'"
+                y="'. $mapJson->y .'"
+                class="map location"
+                data-plan="'. $e .'"
+                data-name="'. $mapJson->name .'"
+                data-opacity="'. $opacity .'"
+                href="img/ui/map/'. $e .'.png"
+                style="opacity: '. $opacity .';"
+            />
+            ';
+
+            $text[] = '
+            <text
+                class="text"
+                data-plan="'. $e .'"
+                x="'. ($mapJson->x + 50) .'"
+                y="'. ($mapJson->y + 50) .'"
+            >
+                '. $mapJson->name .'
+            </text>
+            ';
+        }
+
+        echo implode('', $text);
+
+        echo '
+        </svg>
+        </div>
+        ';
+
+        $return = ob_get_contents();
+        ob_clean();
+
+        return $return;
+    }
+
+
+
+    public static function print_dialog($dialog){
+
+
+        $dlgJson = json()->decode('dialogs', $dialog);
+
+        if(!$dlgJson){
+
+
+            return '<table border="1" align="center" class="marbre"><tr><td><i>'. $dialog .'</i></td></tr></table>';
+        }
+
+
+        ob_start();
+
+        printr($dlgJson);
 
         $return = ob_get_contents();
         ob_clean();

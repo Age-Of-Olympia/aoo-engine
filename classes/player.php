@@ -156,7 +156,7 @@ class Player{
         id = ?
         ';
 
-        $db->exe($sql, array(&$coordsId, &$this->id));
+        $db->exe($sql, array($coordsId, $this->id));
     }
 
 
@@ -313,7 +313,7 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, array(&$this->id, &$name, &$endTime));
+        $db->exe($sql, array($this->id, $name, $endTime));
 
 
         // element control
@@ -390,7 +390,7 @@ class Player{
 
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
 
-        $db->exe($sql, array(&$coordsId, &$this->id));
+        $db->exe($sql, array($coordsId, $this->id));
 
 
         // add elements
@@ -419,7 +419,7 @@ class Player{
         c.plan = ?
         ';
 
-        $res = $db->exe($sql, array(&$goCoords->z, &$goCoords->plan));
+        $res = $db->exe($sql, array($goCoords->z, $goCoords->plan));
 
         while($row = $res->fetch_object()){
 
@@ -427,6 +427,8 @@ class Player{
             @unlink('datas/private/players/'. $row->id .'.svg');
         }
 
+
+        // delete empty coords (except #1)
         $sql = '
         DELETE FROM
         coords
@@ -441,7 +443,13 @@ class Player{
             SELECT coords_id FROM map_triggers
             UNION
             SELECT coords_id FROM map_walls
+            UNION
+            SELECT coords_id FROM map_dialogs
+            UNION
+            SELECT coords_id FROM map_plants
             )
+        AND
+        id != 1
         ';
 
         $db->exe($sql);
@@ -462,7 +470,7 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, array(&$xp, &$xp, &$rank, &$this->id));
+        $db->exe($sql, array($xp, $xp, $rank, $this->id));
 
 
         if($this->row->rank != $rank){
@@ -493,7 +501,7 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, array(&$pf, &$this->id));
+        $db->exe($sql, array($pf, $this->id));
     }
 
 
@@ -504,7 +512,16 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, array(&$god->id, &$this->id));
+        $db->exe($sql, array($god->id, $this->id));
+    }
+
+
+    public function get_gold(){
+
+
+        $item = Item::get_item_by_name('or');
+
+        return $item->get_n($this);
     }
 
 
@@ -598,29 +615,5 @@ class Player{
         $this->data = $playerJson;
 
         return $playerJson;
-    }
-
-
-    public static function get_distance($coords1, $coords2){
-
-        $coords1 = (array) $coords1;
-
-        $coords2 = (array) $coords2;
-
-
-        // not same z error
-        if($coords1['z'] != $coords2['z'])
-            exit('error not same z');
-
-        // not same plan error
-        if($coords1['plan'] != $coords2['plan'])
-            exit('error not same plan');
-
-
-        $difX = abs($coords1['x'] - $coords2['x']) ;
-        $difY = abs($coords1['y'] - $coords2['y']) ;
-
-        if( $difX > $difY ) return $difX ;
-        else return $difY ;
     }
 }

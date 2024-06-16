@@ -49,7 +49,7 @@ AND
 c.plan = ?
 ';
 
-$res = $db->exe($sql, array(&$x, &$y, &$coords->z, &$coords->plan));
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 
 
 if($res->num_rows){
@@ -114,7 +114,7 @@ AND
 c.plan = ?
 ';
 
-$res = $db->exe($sql, array(&$x, &$y, &$coords->z, &$coords->plan));
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 
 
 if($res->num_rows){
@@ -169,6 +169,12 @@ if($res->num_rows){
         }
 
 
+        if($target->have_option('isMerchant')){
+
+            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> Marchander</button></a>';
+        }
+
+
         $raceJson = json()->decode('races', $target->row->race);
 
         $dataType = 'Personnage - <i>'. $raceJson->name .'</i>';
@@ -212,7 +218,7 @@ else{
     c.plan = ?
     ';
 
-    $res = $db->exe($sql, array(&$x, &$y, &$coords->z, &$coords->plan));
+    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 
 
     if($res->num_rows){
@@ -325,6 +331,38 @@ else{
             </script>
             <?php
         }
+    }
+
+
+    // dialogs
+    $sql = '
+    SELECT
+    params
+    FROM
+    map_dialogs AS p
+    INNER JOIN
+    coords AS c
+    ON
+    p.coords_id = c.id
+    WHERE
+    c.x = ?
+    AND
+    c.y = ?
+    AND
+    c.z = ?
+    AND
+    c.plan = ?
+    ';
+
+    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+
+    if($res->num_rows){
+
+
+        $row = $res->fetch_object();
+
+
+        echo Ui::print_dialog($row->params);
     }
 }
 

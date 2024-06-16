@@ -134,5 +134,3 @@ function preload(img, element){
             }
     );
 }
-
-

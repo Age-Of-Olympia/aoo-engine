@@ -15,43 +15,38 @@ class Db{
     }
 
 
-    public function exe($sql, $array=array()){
+    public function exe($sql, $array=array()) {
+
+        sqln();
 
         $params = '';
 
         $stmt = $this->db->prepare($sql);
 
-        if(!$stmt){
-
+        if(!$stmt) {
             echo $sql;
             exit('error stmt: check $sql');
         }
 
-
         // str to array
-        if(!is_array($array)){
-
+        if(!is_array($array)) {
             $values = array(&$array);
-        }
-        else{
-
+        } else {
             $values = $array;
         }
 
         // if values
-        if(count($values)){
-
+        if(count($values)) {
             // params type
-            foreach($values as $e){
-
-                if(is_numeric($e)){
+            foreach($values as $key => $value) {
+                if(is_numeric($value)) {
                     $params .= 'i';
-                }
-                else{
+                } else {
                     $params .= 's';
                 }
+                // Make sure each element is passed by reference
+                $values[$key] = &$values[$key];
             }
-
 
             // add params BEFORE $values
             array_unshift($values, $params);
@@ -64,13 +59,13 @@ class Db{
 
         $res = $stmt->get_result();
 
-        if($res){
-
+        if($res) {
             return $res;
         }
 
         return true;
     }
+
 
 
     public function get_single($table, $id, $fields=array()) : mysqli_result{
@@ -244,4 +239,22 @@ class Db{
         return $this->get_last_id($table);
     }
 
+
+    public static function print_in($values){
+
+        return implode(',', array_fill(0, count($values), '?'));
+    }
+
+
+    public static function get_ref($array){
+
+        $return = array();
+
+        foreach($array as &$e){
+
+            $return[] = &$e;
+        }
+
+        return $return;
+    }
 }

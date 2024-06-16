@@ -310,6 +310,42 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // MARKET
+    if($cmdTbl[0] == 'market'){
+
+
+        if(is_numeric($cmdTbl[1])){
+
+            $player = new Player($cmdTbl[1]);
+        }
+        else{
+
+            $player = Player::get_player_by_name($cmdTbl[1]);
+        }
+
+
+        $table = $cmdTbl[2];
+
+        $item = Item::get_item_by_name($cmdTbl[3]);
+
+        $price = $cmdTbl[4];
+
+        $n = $cmdTbl[5];
+
+        $values = array(
+            'item_id'=>$item->id,
+            'player_id'=>$player->id,
+            'price'=>$price,
+            'n'=>$n
+        );
+
+        $db = new Db();
+
+        $db->insert('items_'. $table, $values);
+
+        exit($player->row->name .' '. $table .' '. $cmdTbl[3] .' pour '. $price .' x'. $n);
+    }
+
     // TP
     if($cmdTbl[0] == 'tp'){
 
@@ -385,6 +421,68 @@ if(!empty($_POST['cmd'])){
 
     // MAP
     if($cmdTbl[0] == 'tiled'){
+
+
+        if(!empty($cmdTbl[1])){
+
+
+            list($width, $height, $type, $attr) = getimagesize('img/'. $cmdTbl[1] .'/'. $cmdTbl[2] .'/'. $cmdTbl[2] .'.png');
+
+
+            $x = $width / 50;
+            $y = $height / 50;
+
+
+            $imgN = 0;
+
+            $db = new Db();
+
+
+            $player = new Player($_SESSION['playerId']);
+            $player->get_coords();
+
+            $imgX = $player->coords->x;
+            $imgY = $player->coords->y;
+
+
+            for($j=0; $j<$y; $j++){
+
+                $imgX = $player->coords->x;
+
+                for($i=0; $i<$x; $i++){
+
+
+                    $imgX += 1;
+
+
+                    $coords = (object) array(
+                        'x'=>$imgX-1,
+                        'y'=>$imgY,
+                        'z'=>$player->coords->z,
+                        'plan'=>$player->coords->plan
+                    );
+
+
+                    $coordsId = View::get_coords_id($coords);
+
+
+                    $values = array(
+                        'name'=>$cmdTbl[2] .'/'. $cmdTbl[2] .'-0'. $imgN .'',
+                        'coords_id'=>$coordsId
+                    );
+
+                    $db->insert('map_'. $cmdTbl[1], $values);
+
+                    $imgN++;
+                }
+
+                $imgY -= 1;
+            }
+
+            exit('add '. $cmdTbl[1] .'/'. $cmdTbl[2] .' '. $x .'x'. $y);
+
+
+        }
 
 
         exit('tiled');

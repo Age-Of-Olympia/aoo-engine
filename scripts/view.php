@@ -73,7 +73,13 @@ if(!empty($_SESSION['playerId'])){
                 data: {'coords':coords}, // serializes the form's elements.
                 success: function(data)
                 {
-                    // alert(data);
+                    if(data.trim() != ''){
+
+                        $('#ajax-data').html(data);
+
+                        return false;
+                    }
+
                     document.location.reload();
                 }
             });
