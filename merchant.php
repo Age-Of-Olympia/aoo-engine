@@ -55,6 +55,22 @@ elseif(isset($_GET['bank'])){
 
 
     echo $market->print_bank($player);
+
+
+    ?>
+    <script>
+    $(document).ready(function(){
+
+        var $actions = $('.preview-action');
+
+        $actions
+        .append('<button class="action" data-action="withdraw">Retirer</button><br />')
+        .append('<button class="action" data-action="store">Déposer</button><br />');
+
+
+    });
+    </script>
+    <?php
 }
 
 

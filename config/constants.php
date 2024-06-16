@@ -107,7 +107,11 @@ define('INACTIVE_TIME', ONE_WEEK);
 // PV: if not defined, undestructible
 define('WALLS_PV', array(
     'mur_pierre'=>100,
-    'altar'=>100
+    'altar'=>100,
+
+    'cocotier1'=>10,
+    'cocotier2'=>10,
+    'cocotier3'=>10
 ));
 
 
@@ -116,3 +120,10 @@ define('WALLS_PV', array(
  */
 
 define('ERROR_DISTANCE', "Vous n'êtes pas à bonne distance.");
+
+
+/*
+ * debug & test
+ */
+
+define('AUTO_GROW', true); // si true, les plantes poussent dès qu'on les met en terre

@@ -368,7 +368,7 @@ else{
 
 
 // coords
-echo '<div id="case-coords"><button>x'. $x .',y'. $y .'</button></div>';
+echo '<div id="case-coords"><button>x'. $x .',y'. $y .',z'. $coords->z .'</button></div>';
 
 
 if(!empty($card)){

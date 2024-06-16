@@ -11,7 +11,6 @@ if(!isset($_POST['coords'])){
 
 $coords = explode(',', $_POST['coords']);
 
-
 $player = new Player($_SESSION['playerId']);
 
 $player->get_coords();
@@ -69,8 +68,6 @@ $sql = '
 SELECT * FROM map_plants WHERE coords_id = ?
 ';
 
-$db = new Db();
-
 $res = $db->exe($sql, $coordsId);
 
 if($res->num_rows){
@@ -95,8 +92,6 @@ if($res->num_rows){
 
 
 // followers
-$db = new Db();
-
 $res = $db->get_single_player_id('players_followers', $player->id);
 
 if($res->num_rows){
@@ -114,6 +109,49 @@ if($res->num_rows){
         include($path);
     }
 
+}
+
+
+// underground
+if($goCoords->z < 0){
+
+
+    $values = array(
+        'name'=>'caverne',
+        'coords_id'=>$coordsId
+    );
+
+    $db->delete('map_tiles', $values);
+
+    $db->insert('map_tiles', $values);
+}
+
+
+
+// loots
+$sql = '
+SELECT * FROM map_items WHERE coords_id = ?
+';
+
+$res = $db->exe($sql, $coordsId);
+
+if($res->num_rows){
+
+
+    while($row = $res->fetch_object()){
+
+
+        $item = new Item($row->item_id);
+
+        $item->add_item($player, $row->n);
+    }
+
+
+    $values = array(
+        'coords_id'=>$coordsId
+    );
+
+    $db->delete('map_items', $values);
 }
 
 

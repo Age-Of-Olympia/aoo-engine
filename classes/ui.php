@@ -136,8 +136,8 @@ class ui{
         $defaultItem = new Item(1);
         $defaultItem->get_data();
 
-
         ob_start();
+
 
         echo '
         <table border="1" align="center" class="marbre">
@@ -146,97 +146,72 @@ class ui{
         ';
 
         echo '
-        <div style="margin: 0 auto; width: 350px; height: 250px; position: relative;">
+        <div class="inventory-container">
             ';
 
-
-            echo '
-            <div style="">
-
+        echo '
+            <div class="">
                 <div class="preview-img">
                     <img
                         src="img/ui/fillers/150.png"
                         data-src="img/items/'. $defaultItem->row->name .'.png"
                         data-filler="img/ui/fillers/150.png"
                         width="150"
-                        />
+                    />
                 </div>
-
                 <div class="preview-text">
-
                     '. $defaultItem->data->text .'
                 </div>
-
                 <div class="preview-action">
-
-                    <input type="button" value="Utiliser" /><input type="button" value="Déposer" />
                 </div>
             </div>
             ';
 
-            echo '
+        echo '
         </td>
         </tr>
         <tr>
         <td/>
             ';
 
-
-            echo '
-            <div style="max-height: 500px; overflow: scroll; float: left;">
-                <table border="1" style="width: 350px;">
+        echo '
+            <div class="item-list">
+                <table border="1">
                     ';
 
-                    foreach($itemList as $k=>$e){
+        foreach($itemList as $k => $e){
+            $itemJson = json()->decode('items', $k);
 
+            echo '
+            <tr
+                class="item-case"
+                data-name="'. ucfirst($itemJson->name) .'"
+                data-n="'. $e .'"
+                data-text="'. $itemJson->text .'"
+                data-price="'. $itemJson->price .'"
+                data-img="img/items/'. $itemJson->name .'.png"
+            >
+                <td width="50">
+                    <div>
+                        <img src="img/items/'. $itemJson->name .'_mini.png" />
+                    </div>
+                </td>
+                <td align="left">
+                    '. ucfirst($itemJson->name) .'
+                </td>
+                <td width="50">
+                    x'. $e .'
+                </td>
+            </tr>
+            ';
+        }
 
-                        $itemJson = json()->decode('items', $k);
-
-                        echo '
-                        <tr
-                            class="item-case"
-
-                            data-name="'. ucfirst($itemJson->name) .'"
-                            data-n="'. $e .'"
-                            data-text="'. $itemJson->text .'"
-                            data-price="'. $itemJson->price .'"
-                            data-img="img/items/'. $itemJson->name .'.png"
-                            >
-                            ';
-
-                            echo '
-                            <td width="50">
-                                <div
-                                    >
-                                        <img src="img/items/'. $itemJson->name .'_mini.png" />
-                                    </div>
-                            </td>
-                            ';
-
-                            echo '
-                            <td align="left">
-                                '. ucfirst($itemJson->name) .'
-                            </td>
-                            ';
-
-                            echo '
-                            <td width="50">
-                                x'. $e .'
-                            </td>
-                            ';
-
-                            echo '
-                        </tr>
-                        ';
-                    }
-
-                    echo '
+        echo '
                 </table>
             </div>
             ';
 
-
-            echo '
+        echo '
         </div>
         ';
 
@@ -251,6 +226,10 @@ class ui{
         <script>
         $(document).ready(function(){
 
+
+            window.name = "<?php echo $defaultItem->row->name ?>";
+            window.n =    <?php echo $itemList[$defaultItem->row->name] ?>;
+
             var $previewImg = $(".preview-img img");
 
             // first img preload
@@ -261,8 +240,8 @@ class ui{
 
                 var $item = $(this);
 
-                let name =  $item.data("name");
-                let n =     $item.data("n");
+                window.name =  $item.data("name");
+                window.n =     $item.data("n");
                 let text =  $item.data("text");
                 let price = $item.data("price");
                 let infos = $item.data("infos");
@@ -276,12 +255,7 @@ class ui{
         </script>
         <?php
 
-
-
-        $return = ob_get_contents();
-        ob_clean();
-
-        return $return;
+        return ob_get_clean();
     }
 
 

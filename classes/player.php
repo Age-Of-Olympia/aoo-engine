@@ -525,6 +525,30 @@ class Player{
     }
 
 
+    public function drop($item, $n){
+
+
+        if($n > $item->get_n($this)){
+
+            exit('error n');
+        }
+
+
+        $values = array(
+            'item_id'=>$item->id,
+            'coords_id'=>$this->row->coords_id,
+            'n'=>$n
+        );
+
+        $db = new Db();
+
+        $db->insert('map_items', $values);
+
+
+        $item->add_item($this, -$n);
+    }
+
+
     /*
      * STATIC FUNCTIONS
      */

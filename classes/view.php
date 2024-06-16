@@ -115,6 +115,11 @@ class View{
 
         $tile = (!empty($planJson->bg)) ? $planJson->bg : 'img/tiles/'. $this->coords->plan .'.png';
 
+        if($this->coords->z < 0){
+
+            $tile = 'img/tiles/underground.png';
+        }
+
 
         echo '
         <div id="view">
@@ -139,6 +144,8 @@ class View{
             echo $this->print_table('tiles');
 
             echo $this->print_table('plants');
+
+            echo $this->print_table('items');
 
 
             $eleTbl = $this->get_map('map_elements');
@@ -356,8 +363,30 @@ class View{
 
             if(!empty($row->foreground) && $row->foreground == 1){
 
-                echo 'lol'.$id;
                 $this->useTbl[] = $id;
+            }
+
+
+            // items
+            if($table == 'items'){
+
+
+                echo '
+                <image
+
+                    id="'. $id .'"
+
+                    width="50"
+                    height="50"
+
+                    x="'. floor($x) .'"
+                    y="'. floor($y) .'"
+
+                    href="img/tiles/loot.png"
+                    />
+                ';
+
+                break;
             }
 
 

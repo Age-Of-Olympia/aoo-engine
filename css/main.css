@@ -297,7 +297,63 @@ input[type="button"]:disabled, button:disabled {
             display: none;
         }
 
+/*
+ * INVENTORY
+ */
 
+
+.inventory-container {
+
+    margin: 0 auto;
+    width: 350px;
+    height: 250px;
+    position: relative;
+}
+
+.preview-img img {
+
+    width: 150px;
+}
+
+.preview-text {
+
+    margin-top: 10px;
+}
+
+.preview-action {
+
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+    .preview-action button{
+
+        float: right;
+        width: 80px;
+    }
+
+.item-list {
+
+    max-height: 500px;
+    overflow: scroll;
+    float: left;
+}
+
+.item-list table {
+
+    width: 350px;
+    border-collapse: collapse;
+}
+
+.item-case {
+
+    cursor: pointer;
+}
+
+.item-case img {
+
+    width: 50px;
+}
 
 
 /*
