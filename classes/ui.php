@@ -229,6 +229,7 @@ class ui{
 
             window.name = "<?php echo $defaultItem->row->name ?>";
             window.n =    <?php echo $itemList[$defaultItem->row->name] ?>;
+            window.price =    1;
 
             var $previewImg = $(".preview-img img");
 
@@ -243,7 +244,7 @@ class ui{
                 window.name =  $item.data("name");
                 window.n =     $item.data("n");
                 let text =  $item.data("text");
-                let price = $item.data("price");
+                window.price = $item.data("price");
                 let infos = $item.data("infos");
                 let img =   $item.data("img");
 
@@ -327,25 +328,102 @@ class ui{
 
 
 
-    public static function print_dialog($dialog){
+   #
+    # dialog ui
+    #
+
+    public static function get_dialog($player, $options, $landingData='#ui-data') : string {
 
 
-        $dlgJson = json()->decode('dialogs', $dialog);
-
-        if(!$dlgJson){
-
-
-            return '<table border="1" align="center" class="marbre"><tr><td><i>'. $dialog .'</i></td></tr></table>';
-        }
+        /*
+         * show a floating dialog pannel with options
+         */
 
 
+        // tampon start
         ob_start();
 
-        printr($dlgJson);
 
-        $return = ob_get_contents();
-        ob_clean();
+        echo '
+        <div id="ui-dialog">
+            ';
 
-        return $return;
+            if(!empty($options['json'])){
+
+                $options = (array) $options['json'];
+            }
+
+
+            echo '
+            <div
+                class="dialog-template">
+                ';
+
+
+                // player avatar
+                echo '
+                <div class="dialog-template-img">
+
+                    <img src="img/ui/fillers/1.png" data-src="'. $options['avatar'] .'" />
+                </div>
+                ';
+
+                echo '
+                <div class="dialog-template-name">'. $options['name'] .'</div>
+                ';
+
+
+                // dialog
+                if(!empty($options['dialog'])){
+
+
+                    $dialog = new Dialog($options['dialog']);
+
+
+                    // get dialog data
+                    echo '
+                    <div class="dialog-template-box">
+                        ';
+
+
+                        echo $dialog->get_data();
+
+
+                        echo '
+                    </div>
+                    ';
+                }
+
+
+                // repace text
+                $text = $options['text'];
+
+
+                // replace str
+                // $text = Str::replace_str($player, $text);
+
+
+                echo '
+                <div class="dialog-template-text">'. $text .'</div>
+                ';
+
+                echo '
+            </div>';
+
+            echo '
+        </div>';
+
+
+        // js & css
+        $dialogVersion = filemtime('js/dialog.js');
+        $dialogCssVersion = filemtime('css/dialog.css');
+
+        echo '
+        <script src="js/dialog.js?v='. $dialogVersion .'"></script>
+        <link rel="stylesheet" href="css/dialog.css?v='. $dialogVersion .'">
+        ';
+
+
+        return ob_get_clean();
     }
 }

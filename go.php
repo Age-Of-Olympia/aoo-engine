@@ -32,15 +32,15 @@ if(!is_numeric($goCoords->x) || !is_numeric($goCoords->y)){
 
 $coordsId = View::get_coords_id($goCoords);
 
-
-// trigger
 $sql = '
-SELECT * FROM map_triggers WHERE coords_id = ?
+SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ?
+UNION
+SELECT *, "plants" AS whichTable FROM map_plants WHERE coords_id = ?
 ';
 
 $db = new Db();
 
-$res = $db->exe($sql, $coordsId);
+$res = $db->exe($sql, array($coordsId, $coordsId));
 
 if($res->num_rows){
 
@@ -48,43 +48,34 @@ if($res->num_rows){
     while($row = $res->fetch_object()){
 
 
-        $path = 'scripts/map/triggers/'. $row->name .'.php';
+        if($row->whichTable == 'triggers'){
 
-        if(!file_exists($path)){
 
-            exit('error trigger path');
+            $path = 'scripts/map/triggers/'. $row->name .'.php';
+
+            if(!file_exists($path)){
+
+                exit('error trigger path');
+            }
+
+            $triggerId = $row->id;
+            $params = $row->params;
         }
 
-        $triggerId = $row->id;
-        $params = $row->params;
-
-        include($path);
-    }
-}
+        elseif($row->whichTable == 'plants'){
 
 
-// plants
-$sql = '
-SELECT * FROM map_plants WHERE coords_id = ?
-';
+            $path = 'scripts/map/plants.php';
 
-$res = $db->exe($sql, $coordsId);
+            if(!file_exists($path)){
 
-if($res->num_rows){
+                exit('error plant path');
+            }
 
-
-    while($row = $res->fetch_object()){
-
-
-        $path = 'scripts/map/plants.php';
-
-        if(!file_exists($path)){
-
-            exit('error plant path');
+            $plantId = $row->id;
+            $name = $row->name;
         }
 
-        $plantId = $row->id;
-        $name = $row->name;
 
         include($path);
     }

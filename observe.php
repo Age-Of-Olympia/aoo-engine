@@ -229,7 +229,7 @@ else{
 
             echo '
             <div class="case-infos">
-                <img src="img/walls/'. $row->name .'.png" title="'. $row->id .'"/>
+                <img src="img/walls/'. $row->name .'.png" title="#'. $row->id .'"/>
 
                 <div class="text">
                     Structure non-passable.<br />

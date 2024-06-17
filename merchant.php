@@ -28,7 +28,10 @@ if($distance > 1){
 
 
 // menu
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button><span class="ra ra-gavel"></span> Offres</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button><span class="ra ra-scroll-unfurled"></span> Demandes</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a></div>';
+if(!isset($_GET['hideMenu'])){
+
+    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button><span class="ra ra-gavel"></span> Offres</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button><span class="ra ra-scroll-unfurled"></span> Demandes</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a><a href="merchant.php?targetId='. $target->id .'&inventory"><button><span class="ra ra-key"></span> Inventaire</button></a></div>';
+}
 
 
 // market
@@ -51,26 +54,45 @@ elseif(isset($_GET['asks'])){
 elseif(isset($_GET['bank'])){
 
 
-    echo '<h1>Banque</h1>';
+    include('scripts/merchant/bank.php');
+}
 
-
-    echo $market->print_bank($player);
+elseif(isset($_GET['inventory'])){
 
 
     ?>
     <script>
-    $(document).ready(function(){
+    $(document).ready(function(e){
 
         var $actions = $('.preview-action');
 
         $actions
-        .append('<button class="action" data-action="withdraw">Retirer</button><br />')
-        .append('<button class="action" data-action="store">Déposer</button><br />');
-
-
+        .append('<button class="action" data-action="store">→Banque</button><br />');
     });
     </script>
     <?php
+
+
+    include('scripts/inventory.php');
+}
+else{
+
+
+    echo '<h1>Saruta & Frères</h1>
+    Marchands d\'Olympia
+    ';
+
+    $player->get_data();
+
+
+    $options = array(
+        'name'=>$player->row->name,
+        'avatar'=>'img/dialogs/bg/'. $target->id .'.png',
+        'dialog'=>'marchand',
+        'text'=>''
+    );
+
+    echo Ui::get_dialog($player, $options);
 }
 
 

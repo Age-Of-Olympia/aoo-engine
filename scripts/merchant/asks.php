@@ -46,9 +46,18 @@ if(!empty($_GET['item'])){
 }
 
 
-echo '<h1>Demandes</h1>';
+echo '<h1>Demandes (Vendre)</h1>';
 
-echo '<div>Vous pouvez <b>vendre</b> ces objets sur le Marché.<br />
-Cliquez sur l\'un d\'eux pour voir le détail de la demande.</div>';
+
+if(isset($_GET['newContract'])){
+
+
+    include('scripts/merchant/new_contract.php');
+
+    exit();
+}
+
+
+echo '<div><a href="merchant.php?targetId='. $target->id .'&asks&newContract"><button>Nouveau Contrat</button></a></div>';
 
 echo $market->print_market('asks');

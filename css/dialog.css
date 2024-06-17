@@ -1,0 +1,85 @@
+/*
+* dialog special ui
+*/
+
+#ui-dialog .dialog-template{
+
+    width: 500px;
+    overflow: hidden;
+    position: relative;
+    background: black;
+}
+
+#ui-dialog .dialog-template-type{
+
+    display: none;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+}
+
+#ui-dialog .dialog-template-box, #ui-dialog .dialog-large{
+
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 460px;
+    height: 100;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    text-align: left;
+    overflow: scroll;
+    padding: 10px;
+    }
+
+    #ui-dialog .dialog-node{
+
+        display: none;
+    }
+
+        #ui-dialog .dialog-large{
+
+            top: 55px;
+            left: 5px;
+            width: 470px;
+            height: 370px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+
+
+    #ui-dialog .dialog-node-options{
+
+        margin: 10px;
+    }
+
+    #ui-dialog .dialog-node-options .node-option{
+
+        cursor: pointer;
+    }
+
+    #ui-dialog .dialog-node-options .node-option:hover{
+
+        background: rgba(255, 255, 240, 0.5);
+        color: black;
+    }
+
+    .dialog-template-img, .dialog-template-img img{
+
+        height: 500px;
+        position: absolute;
+        left: 0px;
+        bottom: 0px;
+    }
+
+    .dialog-template-name{
+
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 500px;
+        font-size: 120%;
+        padding: 5px;
+        background: rgba(0,0,0,0.5);
+        text-align: left;
+    }

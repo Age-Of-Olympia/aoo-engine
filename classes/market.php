@@ -128,6 +128,12 @@ class Market{
         $action = ($table == 'bids') ? 'Acheter' : 'Vendre';
 
 
+        if(!isset($this->$table[$item->id])){
+
+            exit('<div>'. $action .' cet objet: aucun contrat trouvé.</div>');
+        }
+
+
         echo '
         <table border="1" align="center" class="marbre">
         <tr>
@@ -356,5 +362,15 @@ class Market{
 
             $item->add_item($player, $n, $bank=true);
         }
+
+
+        $sql = 'UPDATE items_'. $table .' SET stock = stock - ? WHERE ?';
+
+        $db->exe($sql, array($n, $row->id));
+
+
+        $values = array('stock'=>0);
+
+        $db->delete('items_'. $table, $values);
     }
 }

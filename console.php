@@ -310,6 +310,84 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // PLAYER
+    if($cmdTbl[0] == 'player'){
+
+
+        if(is_numeric($cmdTbl[1])){
+
+            $player = new Player($cmdTbl[1]);
+        }
+        else{
+
+            $player = Player::get_player_by_name($cmdTbl[1]);
+        }
+
+
+        if(!isset($cmdTbl[2])){
+
+
+            exit('id: '. $player->id .'
+            name: '. $player->row->name .'
+            race: '. $player->row->race .'
+            xp: '. $player->row->xp .'
+            pi: '. $player->row->pi .'
+            pf: '. $player->row->pf .'
+            rank: '. $player->row->rank);
+        }
+
+
+        if($cmdTbl[2] == 'respec'){
+
+
+            $values = array(
+                'player_id'=>$player->id
+            );
+
+            $db = new Db();
+
+            $db->delete('players_upgrades', $values);
+
+
+            $sql = 'UPDATE players SET pi = xp WHERE id = ?';
+
+            $db->exe($sql, $player->id);
+
+
+            exit($player->row->name .' have respec');
+        }
+
+
+        if($cmdTbl[2] == 'cancel'){
+
+
+            $sql = 'SELECT * FROM players_upgrades WHERE player_id = ? ORDER BY id DESC LIMIT 1';
+
+            $db = new Db();
+
+            $res = $db->exe($sql, $player->id);
+
+            while($row = $res->fetch_object()){
+
+
+                $sql = 'DELETE FROM players_upgrades WHERE id = ?';
+
+                $db->exe($sql, $row->id);
+
+
+                $sql = 'UPDATE players SET pi = pi + ? WHERE id = ?';
+
+                $db->exe($sql, array($row->cost, $player->id));
+
+
+                exit($player->row->name .' last upgrade canceled ('. $row->name .' for '. $row->cost .'Pi)');
+            }
+
+            exit($player->row->name .' has no upgrades');
+        }
+    }
+
+
     // MARKET
     if($cmdTbl[0] == 'market'){
 
