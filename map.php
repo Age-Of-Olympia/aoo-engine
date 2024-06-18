@@ -21,7 +21,7 @@ if(!$planJson){
 
     if(!file_exists($url)){
 
-        $url = 'img/ui/map/parchemin.png';
+        $url = 'img/ui/illustrations/gaia.png';
     }
 
 

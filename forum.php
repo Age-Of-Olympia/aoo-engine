@@ -3,7 +3,7 @@
 require_once('config.php');
 
 
-echo '<h1 id="title">Aoo4</h1>';
+echo '<h1 id="title"><a href="index.php">Aoo4</a></h1>';
 
 
 include('scripts/infos.php');
@@ -70,7 +70,7 @@ echo '<h1>Forums</h1>';
 
 
 echo '
-<table border="0" align="center" class="marbre" width="500">
+<table border="0" align="center" width="500">
     ';
 
 

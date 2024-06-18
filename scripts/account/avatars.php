@@ -7,7 +7,7 @@ $dir = 'img/avatars/'. $player->data->race .'/';
 if(!empty($_POST['img'])){
 
 
-    $player->change_avatar($url);
+    $player->change_avatar($_POST['img']);
 
     exit();
 }

@@ -7,7 +7,7 @@ $ui = new Ui($title="Index");
 
 
 ?>
-<h1 id="title">Aoo4</h1>
+<h1 id="title"><a href="index.php">Aoo4</a></h1>
 
 <div id="infos"><?php include('scripts/infos.php') ?></div>
 
