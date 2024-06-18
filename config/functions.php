@@ -66,3 +66,11 @@ function sqln(){
 
     return $n;
 }
+
+function removeComments($jsonString) {
+    // Supprime les commentaires de type //
+    $jsonString = preg_replace('/\/\/[^\n]*\n/', '', $jsonString);
+    // Supprime les commentaires de type /* */
+    $jsonString = preg_replace('/\/\*.*?\*\//s', '', $jsonString);
+    return $jsonString;
+}

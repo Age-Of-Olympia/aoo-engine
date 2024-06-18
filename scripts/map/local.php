@@ -1,6 +1,20 @@
 <?php
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button>'. $planJson->name .'</button></a></div>';
+
+
+// plan at war
+$colored = '';
+
+if(!empty($planJson->war)){
+
+    $colored = 'colored-red';
+
+    echo '<font color="red">Ce territoire est en guerre!</font>';
+}
+
+
+echo '<div class="map-local"><img src="img/ui/map/'. $player->coords->plan .'.png" /></div>';
 
 
 echo '

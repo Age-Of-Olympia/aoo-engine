@@ -15,6 +15,8 @@ $actionJson = json()->decode('actions', $_POST['action']);
 // player
 $player = new Player($_SESSION['playerId']);
 
+$player->get_data();
+
 $player->get_caracs();
 
 
@@ -25,6 +27,8 @@ if(!isset($_POST['targetId'])){
 }
 
 $target = new Player($_POST['targetId']);
+
+$target->get_data();
 
 $target->get_caracs();
 
@@ -55,8 +59,8 @@ if(!empty($actionJson->distanceMax)){
 // log
 $log = $actionJson->log;
 
-$log = str_replace('PLAYER', $player->row->name, $log);
-$log = str_replace('TARGET', $target->row->name, $log);
+$log = str_replace('PLAYER', $player->data->name, $log);
+$log = str_replace('TARGET', $target->data->name, $log);
 $log = str_replace('NAME', $actionJson->name, $log);
 
 
@@ -119,7 +123,7 @@ if(!empty($success) && $success == true){
         }
 
         echo '
-        Vous infligez '. $totalDamages .' à '. $target->row->name .'.
+        Vous infligez '. $totalDamages .' à '. $target->data->name .'.
 
         <div>'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .'</div>';
     }
@@ -139,7 +143,7 @@ if(!empty($success) && $success == true){
         $playerHeal = $baseHeal + $bonusHeal;
 
         echo '
-        <div>Vous soignez '. $target->row->name .' de '. $playerHeal .'PV.</div>
+        <div>Vous soignez '. $target->data->name .' de '. $playerHeal .'PV.</div>
         <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'</div>
         ';
     }
@@ -201,8 +205,8 @@ if(
     $actionJson->targetType != 'self'
 ){
 
-    echo '<div class="action-details">Jet '. $player->row->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) .'</div>';
-    echo '<div class="action-details">Jet '. $target->row->name .' = '. array_sum($targetJet) .'</div>';
+    echo '<div class="action-details">Jet '. $player->data->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) .'</div>';
+    echo '<div class="action-details">Jet '. $target->data->name .' = '. array_sum($targetJet) .'</div>';
 }
 
 

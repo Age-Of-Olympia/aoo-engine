@@ -193,7 +193,24 @@ class View{
             }
 
 
-            $playersTbl = $this->get_map('players');
+            // plan exceptions
+            if($planJson){
+
+
+                $playersTbl = $this->get_map('players');
+            }
+            else{
+
+
+                // solo
+                $playersTbl = array(
+                    'row'=>(object) array(
+                        'id'=>$_SESSION['playerId'],
+                        'x'=>$this->coords->x,
+                        'y'=>$this->coords->y
+                    )
+                );
+            }
 
             foreach($playersTbl as $row){
 

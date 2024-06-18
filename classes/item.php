@@ -232,6 +232,10 @@ class Item{
         $return = array();
 
 
+        // always define or
+        $return['or'] = 0;
+
+
         $sql = '
         SELECT
         name,

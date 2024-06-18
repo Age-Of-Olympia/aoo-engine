@@ -33,6 +33,8 @@ class json{
         // open
         $str = file_get_contents($path);
 
+        $str = removeComments($str);
+
         // error not json
         if(!$this->isJson($str)){
 

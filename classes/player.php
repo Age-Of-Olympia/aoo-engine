@@ -9,6 +9,10 @@ class Player{
 
         $this->caracs = (object) array();
         $this->upgrades = (object) array();
+    }
+
+
+    public function get_row(){
 
 
         $db = new Db();
@@ -35,7 +39,13 @@ class Player{
     public function get_caracs(){
 
 
-        $raceJson = json()->decode('races', $this->row->race);
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
+        $raceJson = json()->decode('races', $this->data->race);
 
         $this->raceData = $raceJson;
 
@@ -71,8 +81,14 @@ class Player{
         $db = new Db();
 
 
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
         // first coords
-        if($this->row->coords_id == NULL){
+        if($this->data->coords_id == NULL){
 
 
             $coords = (object) array(
@@ -120,43 +136,47 @@ class Player{
     public function move_player($coords){
 
 
-        $db = new Db();
+        $this->go($coords);
 
-        $sql = '
-        SELECT
-        COUNT(*) AS n
-        FROM coords WHERE
-        x = '. $coords->x .'
-        AND
-        y = '. $coords->y .'
-        AND
-        z = '. $coords->z .'
-        AND
-        plan = "'. $coords->plan .'"
-        ';
-
-        $count = $db->get_count($sql);
-
-        if(!$count){
-
-            // create coord
-            $db->insert('coords', (array) $coords);
-
-            $coordsId = $db->get_last_id('coords');
-        }
-
-
-        // update player
-        $sql = '
-        UPDATE
-        players
-        SET
-        coords_id = ?
-        WHERE
-        id = ?
-        ';
-
-        $db->exe($sql, array($coordsId, $this->id));
+        // $db = new Db();
+        //
+        // $sql = '
+        // SELECT
+        // COUNT(*) AS n
+        // FROM coords WHERE
+        // x = '. $coords->x .'
+        // AND
+        // y = '. $coords->y .'
+        // AND
+        // z = '. $coords->z .'
+        // AND
+        // plan = "'. $coords->plan .'"
+        // ';
+        //
+        // $count = $db->get_count($sql);
+        //
+        // if(!$count){
+        //
+        //     // create coord
+        //     $db->insert('coords', (array) $coords);
+        //
+        //     $coordsId = $db->get_last_id('coords');
+        // }
+        //
+        //
+        // // update player
+        // $sql = '
+        // UPDATE
+        // players
+        // SET
+        // coords_id = ?
+        // WHERE
+        // id = ?
+        // ';
+        //
+        // $db->exe($sql, array($coordsId, $this->id));
+        //
+        // $this->refresh_data();
     }
 
 
@@ -392,6 +412,8 @@ class Player{
 
         $db->exe($sql, array($coordsId, $this->id));
 
+        $this->refresh_data();
+
 
         // add elements
         $sql = 'SELECT name FROM map_elements WHERE coords_id = ?';
@@ -459,12 +481,18 @@ class Player{
     public function put_xp($xp){
 
 
-        $this->row->xp += $xp;
-        $this->row->pi += $xp;
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
+        $this->data->xp += $xp;
+        $this->data->pi += $xp;
 
 
         // update rank
-        $rank = Str::get_rank($this->row->xp);
+        $rank = Str::get_rank($this->data->xp);
 
         $sql = 'UPDATE players SET xp = xp + ?, pi = pi + ?, rank = ? WHERE id = ?';
 
@@ -473,11 +501,7 @@ class Player{
         $db->exe($sql, array($xp, $xp, $rank, $this->id));
 
 
-        if($this->row->rank != $rank){
-
-            // refresh player data with new rank
-            @unlink('datas/private/players/'. $this->id .'.json');
-        }
+        $this->refresh_data();
     }
 
 
@@ -502,6 +526,8 @@ class Player{
         $db = new Db();
 
         $db->exe($sql, array($pf, $this->id));
+
+        $this->refresh_data();
     }
 
 
@@ -513,6 +539,8 @@ class Player{
         $db = new Db();
 
         $db->exe($sql, array($god->id, $this->id));
+
+        $this->refresh_data();
     }
 
 
@@ -528,6 +556,12 @@ class Player{
     public function drop($item, $n){
 
 
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
         if($n > $item->get_n($this)){
 
             exit('error n');
@@ -536,7 +570,7 @@ class Player{
 
         $values = array(
             'item_id'=>$item->id,
-            'coords_id'=>$this->row->coords_id,
+            'coords_id'=>$this->data->coords_id,
             'n'=>$n
         );
 
@@ -546,6 +580,32 @@ class Player{
 
 
         $item->add_item($this, -$n);
+    }
+
+
+    public function change_avatar($file){
+
+        $dir = 'img/avatars/'. $this->data->race .'/';
+
+        $url = str_replace('/', '', $file);
+        $url = str_replace('..', '', $url);
+        $url = $dir . $url;
+
+        if(!file_exists($url)){
+
+            exit('error url');
+        }
+
+
+        $sql = 'UPDATE players SET avatar = ? WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($url, $this->id));
+
+
+        $this->refresh_data();
+        $this->refresh_view();
     }
 
 
@@ -559,12 +619,23 @@ class Player{
 
         $db = new Db();
 
+
+        $goCoords = (object) array(
+            'x'=>0,
+            'y'=>0,
+            'z'=>0,
+            'plan'=>'gaia'
+        );
+
+        $coordsId = View::get_coords_id($goCoords);
+
+
         $values = array(
             'name'=>$name,
             'race'=>$race,
-            'avatar'=>'img/avatars/'. $race .'/1.png',
+            'avatar'=>'img/avatars/ame/'. $race .'.png',
             'portrait'=>'img/portraits/'. $race .'/1.jpeg',
-            'coords_id'=>1
+            'coords_id'=>$coordsId
         );
 
         $db->insert('players', $values);
@@ -618,15 +689,12 @@ class Player{
 
             $player = new Player( $this->id);
 
+            $player->get_row();
+
 
             // unset some unwanted var
             unset($player->row->psw);
             unset($player->row->mail);
-            unset($player->row->coords_id);
-            unset($player->row->xp);
-            unset($player->row->pi);
-            unset($player->row->godId);
-            unset($player->row->pf);
 
             $path = 'datas/private/players/'. $player->id .'.json';
             $data = Json::encode($player->row);

@@ -7,13 +7,13 @@ if(!empty($_POST['action']) && !empty($_POST['item']) && !empty($_POST['n'])){
     $item = Item::get_item_by_name($_POST['item']);
 
 
-    if(!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player, $bank=true)){
-
-        exit('error n');
-    }
-
-
     if($_POST['action'] == 'withdraw'){
+
+
+        if(!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player, $bank=true)){
+
+            exit('error n');
+        }
 
 
         if(!$item->add_item($player, -$_POST['n'], $bank=true)){
@@ -28,6 +28,12 @@ if(!empty($_POST['action']) && !empty($_POST['item']) && !empty($_POST['n'])){
 
 
         // script called from inventory.php
+
+
+        if(!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player)){
+
+            exit('error n');
+        }
 
 
         if(!$item->add_item($player, -$_POST['n'])){
@@ -81,7 +87,7 @@ $(document).ready(function(){
             data: {'action': action,'item': window.name,'n': n}, // serializes the form's elements.
             success: function(data)
             {
-                alert(data);
+                // alert(data);
                 document.location.reload();
             }
         });

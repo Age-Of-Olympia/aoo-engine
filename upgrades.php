@@ -48,6 +48,8 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 
+$player->get_row();
+
 $player->get_caracs();
 
 
@@ -79,7 +81,7 @@ echo '
 <table class="box-shadow marbre" border="1" align="center">';
 
 
-echo '<tr><th>Améliorations</th><th>Valeur</th><th>Coût</th><th>+1</th></tr>';
+echo '<tr><th>Améliorations</th><th>Valeur</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
 
 
 foreach(CARACS as $k=>$e){
@@ -96,6 +98,7 @@ foreach(CARACS as $k=>$e){
 
     $color = 'green';
     $disabled = '';
+
 
     if($cost > $player->row->pi){
 
@@ -123,7 +126,7 @@ foreach(CARACS as $k=>$e){
                 '. $disabled .'
                 class="upgrade"
                 >
-                <span class="ra ra-archery-target"></span>
+                +1
             </button>
             ';
 

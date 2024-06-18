@@ -20,7 +20,7 @@ if(!empty($_SESSION['playerId'])){
     <table border="0" align="center">
         <tr>
             <td>
-                <img src="'. $playerJson->avatar .'" />
+                <a href="pnjs.php"><img src="'. $playerJson->avatar .'" /></a>
             </td>
             <td align="left">
                 '. $playerJson->name .' (mat.'. $playerJson->id .')<br />

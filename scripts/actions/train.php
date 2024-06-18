@@ -1,7 +1,7 @@
 <?php
 
-$playerRank = $player->row->rank;
-$targetRank = $target->row->rank;
+$playerRank = $player->data->rank;
+$targetRank = $target->data->rank;
 
 
 if($playerRank == $targetRank){
@@ -21,10 +21,10 @@ elseif($playerRank < $targetRank){
 }
 
 echo '
-Vous vous entraînez avec '. $target->row->name .'.
+Vous vous entraînez avec '. $target->data->name .'.
 
 <div class="action-details">
-    '. $player->row->name .' (rang '. $playerRank .') +'. $playerXp .'Xp<br />
-    '. $target->row->name .' (rang '. $targetRank .') +'. $targetXp .'Xp
+    '. $player->data->name .' (rang '. $playerRank .') +'. $playerXp .'Xp<br />
+    '. $target->data->name .' (rang '. $targetRank .') +'. $targetXp .'Xp
 </div>
 ';

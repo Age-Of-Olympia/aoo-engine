@@ -8,6 +8,8 @@ $ui = new Ui('Marchander');
 
 $player = new Player($_SESSION['playerId']);
 
+$player->get_data();
+
 
 // target = merchant
 if(!isset($_GET['targetId'])){
@@ -16,6 +18,8 @@ if(!isset($_GET['targetId'])){
 }
 
 $target = new Player($_GET['targetId']);
+
+// $target->get_data();
 
 
 // distance
@@ -86,8 +90,8 @@ else{
 
 
     $options = array(
-        'name'=>$player->row->name,
-        'avatar'=>'img/dialogs/bg/'. $target->id .'.png',
+        'name'=>$player->data->name,
+        'avatar'=>'img/dialogs/bg/'. $target->id .'.jpeg',
         'dialog'=>'marchand',
         'text'=>''
     );

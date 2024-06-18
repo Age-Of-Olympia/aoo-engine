@@ -94,30 +94,46 @@ if($res->num_rows){
 
 }
 
-$sql = '
-SELECT
-p.id AS id,
-name
-FROM
-players AS p
-INNER JOIN
-coords AS c
-ON
-p.coords_id = c.id
-WHERE
-c.x = ?
-AND
-c.y = ?
-AND
-c.z = ?
-AND
-c.plan = ?
-';
 
-$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+// plan exceptions
+$planJson = json()->decode('plans', $player->coords->plan);
+
+if($planJson){
 
 
-if($res->num_rows){
+    $sql = '
+    SELECT
+    p.id AS id,
+    name
+    FROM
+    players AS p
+    INNER JOIN
+    coords AS c
+    ON
+    p.coords_id = c.id
+    WHERE
+    c.x = ?
+    AND
+    c.y = ?
+    AND
+    c.z = ?
+    AND
+    c.plan = ?
+    ';
+
+    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+
+    $solo = false;
+}
+else{
+
+
+    // solo
+    $solo = true;
+}
+
+
+if(!$solo && $res->num_rows){
 
 
     while($row = $res->fetch_object()){
@@ -125,10 +141,12 @@ if($res->num_rows){
 
         $target = new Player($row->id);
 
+        $target->get_data();
+
         $targetJson = json()->decode('players', $target->id);
 
 
-        $dataName = $target->row->name;
+        $dataName = $target->data->name;
 
         foreach($target->get_effects() as $e){
 
@@ -175,7 +193,7 @@ if($res->num_rows){
         }
 
 
-        $raceJson = json()->decode('races', $target->row->race);
+        $raceJson = json()->decode('races', $target->data->race);
 
         $dataType = 'Personnage - <i>'. $raceJson->name .'</i>';
 
@@ -263,7 +281,7 @@ else{
 
                         $actions = '';
 
-                        if($god->id != $player->row->godId){
+                        if($god->id != $player->data->godId){
 
                             $actions = '
                             <button
@@ -362,7 +380,24 @@ else{
         $row = $res->fetch_object();
 
 
-        echo Ui::print_dialog($row->params);
+        $paramsTbl = explode(',', $row->params);
+
+
+        if(count($paramsTbl) == 1){
+
+            $paramsTbl[] = $paramsTbl[0];
+            $paramsTbl[] = $paramsTbl[0];
+        }
+
+
+        $options = array(
+        'name'=>$paramsTbl[0],
+        'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.jpeg',
+        'dialog'=>$paramsTbl[2],
+        'text'=>''
+        );
+
+        echo Ui::get_dialog($player, $options);
     }
 }
 

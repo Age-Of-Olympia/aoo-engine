@@ -11,6 +11,26 @@ $player->get_coords();
 $planJson = json()->decode('plans', $player->coords->plan);
 
 
+// hors map
+if(!$planJson){
+
+    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div><br />';
+
+
+    $url = 'img/ui/illustrations/'. $player->coords->plan .'.png';
+
+    if(!file_exists($url)){
+
+        $url = 'img/ui/map/parchemin.png';
+    }
+
+
+    echo '<img class="box-shadow" src="'. $url .'" />';
+
+    exit();
+}
+
+
 if(isset($_GET['local'])){
 
     include('scripts/map/local.php');
@@ -18,7 +38,7 @@ if(isset($_GET['local'])){
 }
 
 ?>
-<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
+<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
 
 
 <?php echo Ui::print_map($player, $planJson) ?>

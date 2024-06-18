@@ -1,31 +1,13 @@
 <?php
 
 
-$dir = 'img/avatars/'. $player->row->race .'/';
+$dir = 'img/avatars/'. $player->data->race .'/';
 
 
 if(!empty($_POST['img'])){
 
 
-    $url = str_replace('/', '', $_POST['img']);
-    $url = str_replace('..', '', $url);
-    $url = $dir . $url;
-
-    if(!file_exists($url)){
-
-        exit('error url');
-    }
-
-
-    $sql = 'UPDATE players SET avatar = ? WHERE id = ?';
-
-    $db = new Db();
-
-    $db->exe($sql, array($url, $player->id));
-
-
-    @unlink('datas/private/players/'. $player->id .'.json');
-    @unlink('datas/private/players/'. $player->id .'.svg');
+    $player->change_avatar($url);
 
     exit();
 }

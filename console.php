@@ -47,6 +47,9 @@ if(!empty($_POST['cmd'])){
                 $player = Player::get_player_by_name($cmdTbl[2]);
             }
 
+            $player->get_data();
+
+
             $values = array(
                 'player_id'=>$player->id,
                 'wall_id'=>$cmdTbl[3]
@@ -56,7 +59,7 @@ if(!empty($_POST['cmd'])){
 
             $db->insert('altars', $values);
 
-            exit('Altar du dieu '. $player->row->name .' ajouté à wall #'. $cmdTbl[3] .'');
+            exit('Altar du dieu '. $player->data->name .' ajouté à wall #'. $cmdTbl[3] .'');
         }
 
         // ITEM
@@ -133,7 +136,9 @@ if(!empty($_POST['cmd'])){
 
         $player->put_xp($cmdTbl[2]);
 
-        exit($cmdTbl[2] .'Xp et Pi ajoutés à '. $player->row->name);
+        $player->get_data();
+
+        exit($cmdTbl[2] .'Xp et Pi ajoutés à '. $player->data->name);
     }
 
 
@@ -189,13 +194,15 @@ if(!empty($_POST['cmd'])){
             $player = Player::get_player_by_name($cmdTbl[1]);
         }
 
+        $player->get_data();
+
 
         if($player->have('effects', $cmdTbl[2])){
 
 
             $player->end_effect($cmdTbl[2]);
 
-            exit('Effet '. $cmdTbl[2] .' enlevé à '. $player->row->name .'');
+            exit('Effet '. $cmdTbl[2] .' enlevé à '. $player->data->name .'');
         }
 
         else{
@@ -205,7 +212,7 @@ if(!empty($_POST['cmd'])){
 
             $player->add_effect($cmdTbl[2], $duration);
 
-            exit('Effet '. $cmdTbl[2] .' ajouté à '. $player->row->name .'');
+            exit('Effet '. $cmdTbl[2] .' ajouté à '. $player->data->name .'');
         }
 
     }
@@ -223,13 +230,15 @@ if(!empty($_POST['cmd'])){
             $player = Player::get_player_by_name($cmdTbl[1]);
         }
 
+        $player->get_data();
+
 
         if($player->have('actions', $cmdTbl[2])){
 
 
             $player->end_action($cmdTbl[2]);
 
-            exit('Action '. $cmdTbl[2] .' enlevé à '. $player->row->name .'');
+            exit('Action '. $cmdTbl[2] .' enlevé à '. $player->data->name .'');
         }
 
         else{
@@ -239,7 +248,7 @@ if(!empty($_POST['cmd'])){
 
             $player->add_action($cmdTbl[2]);
 
-            exit('Action '. $cmdTbl[2] .' ajouté à '. $player->row->name .'');
+            exit('Action '. $cmdTbl[2] .' ajouté à '. $player->data->name .'');
         }
 
     }
@@ -257,13 +266,15 @@ if(!empty($_POST['cmd'])){
             $player = Player::get_player_by_name($cmdTbl[1]);
         }
 
+        $player->get_data();
+
 
         if($player->have('options', $cmdTbl[2])){
 
 
             $player->end_option($cmdTbl[2]);
 
-            exit('Option '. $cmdTbl[2] .' enlevé à '. $player->row->name .'');
+            exit('Option '. $cmdTbl[2] .' enlevé à '. $player->data->name .'');
         }
 
         else{
@@ -273,7 +284,7 @@ if(!empty($_POST['cmd'])){
 
             $player->add_option($cmdTbl[2]);
 
-            exit('Option '. $cmdTbl[2] .' ajouté à '. $player->row->name .'');
+            exit('Option '. $cmdTbl[2] .' ajouté à '. $player->data->name .'');
         }
 
     }
@@ -292,6 +303,8 @@ if(!empty($_POST['cmd'])){
             $player = Player::get_player_by_name($cmdTbl[1]);
         }
 
+        $player->get_data();
+
 
         if(is_numeric($cmdTbl[2])){
 
@@ -306,7 +319,7 @@ if(!empty($_POST['cmd'])){
         $item->add_item($player, $cmdTbl[3]);
 
 
-        exit('Item '. $item->row->name .' x'. $cmdTbl[3] .' ajouté à '. $player->row->name .'');
+        exit('Item '. $item->row->name .' x'. $cmdTbl[3] .' ajouté à '. $player->data->name .'');
     }
 
 
@@ -324,7 +337,13 @@ if(!empty($_POST['cmd'])){
         }
 
 
+        $player->get_data();
+
+
         if(!isset($cmdTbl[2])){
+
+
+            $player->get_row();
 
 
             exit('id: '. $player->id .'
@@ -354,7 +373,40 @@ if(!empty($_POST['cmd'])){
             $db->exe($sql, $player->id);
 
 
-            exit($player->row->name .' have respec');
+            exit($player->data->name .' have respec');
+        }
+
+
+        if($cmdTbl[2] == 'addPnj'){
+
+
+            if(is_numeric($cmdTbl[3])){
+
+                $target = new Player($cmdTbl[3]);
+            }
+            else{
+
+                $target = Player::get_player_by_name($cmdTbl[3]);
+            }
+
+            $target->get_data();
+
+
+            $values = array(
+                'pnj_id'=>$target->id
+            );
+
+            $db = new Db();
+
+            $db->delete('players_pnjs', $values);
+
+
+            $values['player_id'] = $player->id;
+
+            $db->insert('players_pnjs', $values);
+
+
+            exit($player->data->name .' pnj ajouté: '. $target->data->name .'');
         }
 
 
@@ -380,10 +432,10 @@ if(!empty($_POST['cmd'])){
                 $db->exe($sql, array($row->cost, $player->id));
 
 
-                exit($player->row->name .' last upgrade canceled ('. $row->name .' for '. $row->cost .'Pi)');
+                exit($player->data->name .' last upgrade canceled ('. $row->name .' for '. $row->cost .'Pi)');
             }
 
-            exit($player->row->name .' has no upgrades');
+            exit($player->data->name .' has no upgrades');
         }
     }
 
@@ -400,6 +452,8 @@ if(!empty($_POST['cmd'])){
 
             $player = Player::get_player_by_name($cmdTbl[1]);
         }
+
+        $player->get_data();
 
 
         $table = $cmdTbl[2];
@@ -421,7 +475,7 @@ if(!empty($_POST['cmd'])){
 
         $db->insert('items_'. $table, $values);
 
-        exit($player->row->name .' '. $table .' '. $cmdTbl[3] .' pour '. $price .' x'. $n);
+        exit($player->data->name .' '. $table .' '. $cmdTbl[3] .' pour '. $price .' x'. $n);
     }
 
     // TP
@@ -454,8 +508,10 @@ if(!empty($_POST['cmd'])){
 
         $player->go($coords);
 
+        $player->get_data();
 
-        exit($player->row->name .' téléporté en '. implode(',', (array) $coords) .'');
+
+        exit($player->data->name .' téléporté en '. implode(',', (array) $coords) .'');
     }
 
 
@@ -480,11 +536,13 @@ if(!empty($_POST['cmd'])){
                 $player = new Player($login);
             }
 
+            $player->get_data();
 
-            $_SESSION['playerId'] = $player->id;
+
+            $_SESSION['playerId'] = $_SESSION['mainPlayerId'] = $player->id;
 
 
-            exit('Session ouverte pour joueur '. $player->row->name .'.');
+            exit('Session ouverte pour joueur '. $player->data->name .'.');
         }
     }
 

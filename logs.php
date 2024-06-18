@@ -9,7 +9,8 @@ $player = new Player($_SESSION['playerId']);
 $player->get_coords();
 
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><button>Du lieu</button><button>Du personnage</button></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a></div>';
+
 
 echo '
 <table class="box-shadow marbre" border="1" align="center">';
@@ -17,12 +18,24 @@ echo '
     foreach(Log::get($player->coords->plan) as $e){
 
 
-        $playerJson = json()->decode('players', $e->player_id);
+        if(!isset($_GET['self']) && $e->player_id == $_SESSION['playerId']){
+
+
+            continue;
+        }
+
+
+        $player = new Player($e->player_id);
+        $player->get_data();
+
 
         if($e->player_id != $e->target_id){
 
-            $targetJson = json()->decode('players', $e->target_id);
+
+            $target = new Player($e->target_id);
+            $target->get_data();
         }
+
 
         echo '
         <tr>
@@ -33,17 +46,17 @@ echo '
                     '. $e->text .'
                 </td>
             <td>
-                '. $playerJson->name .'<br />
-                (mat.'. $e->player_id .')
+                '. $player->data->name .'<br />
+                (mat.'. $player->id .')
             </td>
             ';
 
-            if(!empty($targetJson)){
+            if(!empty($target)){
 
                 echo '
                 <td>
-                    '. $targetJson->name .'<br />
-                    (mat.'. $e->target_id .')
+                    '. $target->data->name .'<br />
+                    (mat.'. $target->id .')
                 </td>
                 ';
             }

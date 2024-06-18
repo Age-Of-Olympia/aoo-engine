@@ -94,6 +94,7 @@ foreach(File::scan_dir('img/tiles/', $without=".png") as $e){
         data-type="tiles"
         data-name="'. $e .'"
         src="img/tiles/'. $e .'.png"
+        width="50"
     />';
 }
 

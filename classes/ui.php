@@ -154,7 +154,7 @@ class ui{
                 <div class="preview-img">
                     <img
                         src="img/ui/fillers/150.png"
-                        data-src="img/items/'. $defaultItem->row->name .'.png"
+                        data-src="img/items/'. $defaultItem->data->name .'.png"
                         data-filler="img/ui/fillers/150.png"
                         width="150"
                     />
@@ -288,11 +288,18 @@ class ui{
             $mapJson = json()->decode('plans', $e);
             $opacity = 0.4;
 
+
+            // plan at war
+            $fill = (!empty($mapJson->war)) ? 'style="fill: red;"' : '';
+            $colored = (!empty($mapJson->war)) ? 'colored-red' : '';
+
+
+
             echo '
             <image
                 x="'. $mapJson->x .'"
                 y="'. $mapJson->y .'"
-                class="map location"
+                class="map location '. $colored .'"
                 data-plan="'. $e .'"
                 data-name="'. $mapJson->name .'"
                 data-opacity="'. $opacity .'"
@@ -301,12 +308,14 @@ class ui{
             />
             ';
 
+
             $text[] = '
             <text
                 class="text"
                 data-plan="'. $e .'"
                 x="'. ($mapJson->x + 50) .'"
                 y="'. ($mapJson->y + 50) .'"
+                '. $fill .'
             >
                 '. $mapJson->name .'
             </text>

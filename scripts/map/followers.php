@@ -11,7 +11,7 @@ if($position == 'last'){
     id = ?
     ';
 
-    $db->exe($sql, array($player->row->coords_id, $tile_id));
+    $db->exe($sql, array($player->data->coords_id, $tile_id));
 }
 
 elseif($position == 'on'){

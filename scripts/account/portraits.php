@@ -1,7 +1,7 @@
 <?php
 
 
-$dir = 'img/portraits/'. $player->row->race .'/';
+$dir = 'img/portraits/'. $player->data->race .'/';
 
 
 if(!empty($_POST['img'])){
