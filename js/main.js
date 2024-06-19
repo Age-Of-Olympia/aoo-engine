@@ -12,14 +12,21 @@ $(document).ready(function(){
         }
     });
 
+
+    function close_all(){
+
+        $('#ui-card').hide();
+        $('#ui-item-list').hide();
+        $('#ui-dialog').hide();
+        $('#ui-map').hide();
+        $('#ui-profil').hide();
+    }
+
+
     // special listener for escape key
     document.body.addEventListener('keydown', function(e) {
         if (e.key == "Escape") {
-            $('#ui-card').hide();
-            $('#ui-item-list').hide();
-            $('#ui-dialog').hide();
-            $('#ui-map').hide();
-            $('#ui-profil').hide();
+            close_all();
         }
         else if (e.keyCode == 176) {
 

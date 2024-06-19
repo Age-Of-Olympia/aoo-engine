@@ -6,10 +6,21 @@ $ui = new Ui('Évènements');
 
 $player = new Player($_SESSION['playerId']);
 
+$player->get_data();
+
 $player->get_coords();
 
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a><a href="logs.php?quests"><button>Quêtes</button></a></div>';
+
+
+if(isset($_GET['quests'])){
+
+
+    include('scripts/logs/quests.php');
+
+    exit();
+}
 
 
 echo '

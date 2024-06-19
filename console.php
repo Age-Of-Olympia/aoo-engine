@@ -323,6 +323,43 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // QUEST
+    if($cmdTbl[0] == 'quest'){
+
+
+        if(is_numeric($cmdTbl[1])){
+
+            $player = new Player($cmdTbl[1]);
+        }
+        else{
+
+            $player = Player::get_player_by_name($cmdTbl[1]);
+        }
+
+
+        $player->get_data();
+
+
+        if(!isset($cmdTbl[2])){
+
+
+            $questJson = json()->decode('quests', $player->data->quest);
+
+            if(!$questJson){
+
+                exit($player->data->name .': aucune quête en cours');
+            }
+
+            exit($player->data->name .': quête: '. $player->data->quest);
+        }
+
+
+        $player->add_quest($cmdTbl[2]);
+
+        exit($player->data->name .': nouvelle quête: '. $cmdTbl[2]);
+    }
+
+
     // PLAYER
     if($cmdTbl[0] == 'player'){
 

@@ -13,9 +13,9 @@ if(!empty($_SESSION['playerId'])){
     $lastPostJson = json()->decode('forum', 'lastPosts');
 
 
-    if(!empty($lastPostJson->{$player->data->race})){
+    if(!empty($lastPostJson->{$player->data->faction})){
 
-        $lastPost = ($lastPostJson->general->time > $lastPostJson->{$player->data->race}->time) ? $lastPostJson->general->text : $lastPostJson->{$player->data->race}->text;
+        $lastPost = ($lastPostJson->general->time > $lastPostJson->{$player->data->faction}->time) ? $lastPostJson->general->text : $lastPostJson->{$player->data->faction}->text;
     }
 
     else{

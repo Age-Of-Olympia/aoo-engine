@@ -40,6 +40,14 @@ if(!empty($_GET['triggerId'])){
                     $goPlanJson = json()->decode('plans', $e->plan);
 
 
+                    // war
+                    if(!empty($goPlanJson->war)){
+
+
+                        exit('error war');
+                    }
+
+
                     if(!empty($goPlanJson->enters->$fromDir)){
 
 

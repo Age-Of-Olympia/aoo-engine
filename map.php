@@ -65,6 +65,17 @@ $(document).ready(function(){
 
             if($(this).hasClass('blink')){
 
+
+                // war
+                if($(this).hasClass('colored-red')){
+
+
+                    alert('Ce territoire est en guerre: impossible de s\'y rendre.');
+
+                    return false;
+                }
+
+
                 if(confirm('Voyager jusqu\'à '+ $(this).data('name') +'?')){
 
                     $.ajax({

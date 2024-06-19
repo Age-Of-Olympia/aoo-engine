@@ -16,7 +16,14 @@ class Dialog{
 
         if(!$this->dialogJson){
 
-            exit('error dialog json');
+            echo '
+            <br />
+            <button OnClick="$(\'#ui-dialog\').hide()">
+                Fermer
+            </button>
+            ';
+
+            exit();
         }
     }
 

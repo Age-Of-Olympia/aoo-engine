@@ -59,7 +59,27 @@ function refresh_last_posts(){
 
     $lastPosts = json()->decode('forum', 'lastPosts');
 
-    $lastPosts->general->text = $topName;
+
+    $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
+
+
+    if(!empty($forumJson->factions)){
+
+
+        foreach($forumJson->factions as $faction){
+
+
+            $lastPosts->$faction->text = $topName;
+            $lastPosts->$faction->time = time();
+        }
+    }
+
+    else{
+
+
+        $lastPosts->general->text = $topName;
+        $lastPosts->general->time = time();
+    }
 
     $data = Json::encode($lastPosts);
 

@@ -609,6 +609,66 @@ class Player{
     }
 
 
+    public function add_quest($quest){
+
+
+        $questJson = json()->decode('quests', $quest);
+
+
+        if(!$questJson){
+
+            exit('error quest');
+        }
+
+
+        $sql = 'UPDATE players SET quest = ? WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($quest, $this->id));
+
+
+        $values = array(
+            'player_id'=>$this->id,
+            'quest'=>$quest
+        );
+
+        $db->insert('players_quests', $values);
+
+
+        $this->refresh_data();
+    }
+
+
+    public function get_quest($quest){
+
+
+        $questJson = json()->decode('quests', $quest);
+
+
+        if(!$questJson){
+
+            exit('error quest');
+        }
+
+
+        $db = new Db();
+
+        $sql = 'SELECT * FROM players_quests WHERE player_id = ? AND quest = ?';
+
+        $res = $db->exe($sql, array($this->id, $quest));
+
+        if(!$res->num_rows){
+
+            exit('error player quest');
+        }
+
+        $row = $res->fetch_object();
+
+        return $row;
+    }
+
+
     /*
      * STATIC FUNCTIONS
      */

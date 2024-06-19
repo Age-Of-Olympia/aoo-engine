@@ -215,7 +215,9 @@ class View{
             foreach($playersTbl as $row){
 
 
-                $playerJson = json()->decode('players', $row->id);
+                $player = new Player($row->id);
+                $player->get_data();
+
 
                 $x = ($row->x - $this->coords->x + $this->p) * 50;
                 $y = (-$row->y + $this->coords->y + $this->p) * 50;
@@ -229,7 +231,7 @@ class View{
                     x="'. floor($x) .'"
                     y="'. floor($y) .'"
 
-                    href="'. $playerJson->avatar .'"
+                    href="'. $player->data->avatar .'"
 
                     class="avatar-shadow"
                     />
@@ -252,7 +254,7 @@ class View{
                     x="'. floor($x) .'"
                     y="'. floor($y) .'"
 
-                    href="'. $playerJson->avatar .'"
+                    href="'. $player->data->avatar .'"
 
                     class="'. implode(' ', $playerClasses) .'"
                     />

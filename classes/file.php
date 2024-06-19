@@ -101,10 +101,4 @@ class File{
             }
         }
     }
-
-    // Répertoire de départ (remplacez par le répertoire souhaité)
-    $directory = __DIR__ . '/path/to/directory';
-
-    // Supprime tous les fichiers .json dans le répertoire spécifié
-    deleteJsonFiles($directory);
 }
