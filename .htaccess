@@ -1,0 +1,1 @@
+php_value session.save_path "/home/leo/Documents/Prog/www/aoo4/sessions"

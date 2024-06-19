@@ -3,9 +3,6 @@
 require_once('config.php');
 
 
-echo '<h1 id="title"><a href="index.php">Aoo4</a></h1>';
-
-
 include('scripts/infos.php');
 include('scripts/menu.php');
 
@@ -21,6 +18,76 @@ function get_pages($postTotal){
     }
 
     return $pagesN;
+}
+
+
+function refresh_last_posts(){
+
+    // Répertoire de départ
+    $directory = 'datas/private/forum/topics/'; // Remplacez par le répertoire souhaité
+
+    // Récupère le fichier le plus récemment modifié
+    $mostRecentFile = get_most_recent($directory);
+
+    $topName = 'Aucun';
+
+    if ($mostRecentFile !== null) {
+
+        $topJson = json()->decode('forum', 'topics/'. $mostRecentFile);
+
+        if(strlen($topJson->name) > 10){
+
+            $topName = htmlentities(substr($topJson->name, 0, 10)) .'...';
+        }
+
+        else{
+
+            $topName = htmlentities($topJson->name) .'';
+        }
+
+
+        $postJson = json()->decode('forum', 'posts/'. end($topJson->posts)->name);
+
+        $author = new Player($postJson->author);
+        $author->get_data();
+
+        $pageN = get_pages($postTotal=count($topJson->posts));
+
+        $topName = 'Dans <a href="forum.php?topic='. htmlentities($topJson->name) .'&page='. $pageN .'#'. $postJson->name .'">'. $topName .'</a> par '. $author->data->name;
+    }
+
+
+    $lastPosts = json()->decode('forum', 'lastPosts');
+
+    $lastPosts->general->text = $topName;
+
+    $data = Json::encode($lastPosts);
+
+    Json::write_json('datas/private/forum/lastPosts.json', $data);
+}
+
+
+function get_most_recent($dir) {
+
+    $latestFile = null;
+    $latestTime = 0;
+
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
+    foreach ($iterator as $file) {
+        if ($file->isFile()) {
+            $fileTime = $file->getMTime();
+            if ($fileTime > $latestTime) {
+                $latestTime = $fileTime;
+                $latestFile = $file->getFilename();
+            }
+        }
+    }
+
+    if ($latestFile !== null) {
+        return pathinfo($latestFile, PATHINFO_FILENAME); // Retourne le nom sans l'extension
+    }
+
+    return null;
 }
 
 
@@ -74,7 +141,7 @@ echo '
     ';
 
 
-    foreach(array('RP','HRP') as $cat){
+    foreach(array('RP','Privés','HRP') as $cat){
 
 
         $catJson = json()->decode('forum', 'categories/'. $cat);
@@ -95,12 +162,31 @@ echo '
             $forJson = json()->decode('forum', 'forums/'. $forum->name);
 
 
+            $img = $forJson->name;
+
+            if($catJson->name == 'Privés'){
+
+
+                if(!empty($forJson->factions)){
+
+
+                    if(!in_array($player->data->faction, $forJson->factions)){
+
+                        continue;
+                    }
+                }
+
+
+                $img = 'Privés';
+            }
+
+
             echo '
             <tr>
                 ';
 
                 echo '
-                <td><img src="img/ui/forum/'. $forJson->name .'.png" width="50" /></td>
+                <td><img src="img/ui/forum/'. $img .'.png" width="50" /></td>
                 ';
 
                 echo '

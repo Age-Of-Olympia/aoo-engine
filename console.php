@@ -555,6 +555,16 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // PURGE
+    if($cmdTbl[0] == 'purge'){
+
+
+        File::refresh_player_cache($cmdTbl[1]);
+
+        exit();
+    }
+
+
     // MAP
     if($cmdTbl[0] == 'tiled'){
 

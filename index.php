@@ -7,7 +7,7 @@ $ui = new Ui($title="Index");
 
 
 ?>
-<h1 id="title"><a href="index.php">Aoo4</a></h1>
+<!-- <a href="index.php"><img src="img/ui/bg/banner.png" height="100" /></a> -->
 
 <div id="infos"><?php include('scripts/infos.php') ?></div>
 

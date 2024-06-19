@@ -75,4 +75,36 @@ class File{
 
         return $return;
     }
+
+
+    public static function refresh_player_cache($ext) {
+
+
+        $dir = __DIR__ .'/../datas/private/players';
+
+        if(!file_exists($dir)){
+
+            exit('error dir');
+        }
+
+        // Utilise DirectoryIterator pour itérer à travers les fichiers du répertoire
+        $iterator = new DirectoryIterator($dir);
+        foreach ($iterator as $fileinfo) {
+            if ($fileinfo->isFile() && $fileinfo->getExtension() === $ext) {
+                $filePath = $fileinfo->getPathname();
+                // Supprime le fichier
+                if (unlink($filePath)) {
+                    echo "Fichier supprimé : $filePath\n";
+                } else {
+                    echo "Erreur lors de la suppression du fichier : $filePath\n";
+                }
+            }
+        }
+    }
+
+    // Répertoire de départ (remplacez par le répertoire souhaité)
+    $directory = __DIR__ . '/path/to/directory';
+
+    // Supprime tous les fichiers .json dans le répertoire spécifié
+    deleteJsonFiles($directory);
 }

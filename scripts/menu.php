@@ -3,7 +3,7 @@
 if(!empty($_SESSION['playerId'])){
 
 
-    echo '<a href="upgrades.php"><button><span class="ra ra-podium"></span> Améliorations</button></a><a href="logs.php"><button><span class="ra ra-book"></span> Evènements</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a><a href="map.php"><button><span class="ra ra-scroll-unfurled"></span> Carte</button></a><a href="account.php"><button><span class="ra ra-wrench"></span> Profil</button></a>';
+    echo '<a href="index.php"><button>&nbsp;<span class="ra ra-chessboard"></span>&nbsp;</button></a><a href="upgrades.php"><button><span class="ra ra-podium"></span> Améliorations</button></a><a href="logs.php"><button><span class="ra ra-book"></span> Evènements</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a><a href="map.php"><button><span class="ra ra-scroll-unfurled"></span> Carte</button></a><a href="account.php"><button>&nbsp;<span class="ra ra-wrench"></span>&nbsp;</button></a>';
 
     ?>
     <script>

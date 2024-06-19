@@ -14,7 +14,7 @@ $res = $db->get_single_player_id('players_pnjs', $_SESSION['mainPlayerId']);
 
 if(!$res->num_rows){
 
-    exit('Vous n\'avez pas de personnage secondaire.<br />Vous pouvez en faire la demande auprès d\'un Animateur.');
+    // exit('Vous n\'avez pas de personnage secondaire.<br />Vous pouvez en faire la demande auprès d\'un Animateur.');
 }
 
 
