@@ -167,6 +167,7 @@ class Db{
         return $this->exe($sql, $valuesRef);
     }
 
+
     // last id
     public function get_last_id($table, $order = 0){
 
@@ -188,6 +189,12 @@ class Db{
         $row = $result->fetch_assoc();
 
         return $row['id'];
+    }
+
+
+    public function get_first_id($table){
+
+        return $this->get_last_id($table, $order=true);
     }
 
 

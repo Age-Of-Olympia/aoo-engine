@@ -669,12 +669,27 @@ class Player{
     }
 
 
+    public function get_new_mails(){
+
+
+        $db = new Db();
+
+        $sql = 'SELECT COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0';
+
+        $res = $db->exe($sql, $this->id);
+
+        $row = $res->fetch_object();
+
+        return $row->n;
+    }
+
+
     /*
      * STATIC FUNCTIONS
      */
 
 
-    public static function put_player($name, $race) : int{
+    public static function put_player($name, $race, $pnj=false) : int{
 
 
         $db = new Db();
@@ -690,10 +705,25 @@ class Player{
         $coordsId = View::get_coords_id($goCoords);
 
 
+        $id = null;
+
+        if($pnj){
+
+
+            $id = $db->get_first_id('players') - 1;
+
+            if(!$id){
+
+                $id = -1;
+            }
+        }
+
+
         $values = array(
+            'id'=>$id,
             'name'=>$name,
             'race'=>$race,
-            'avatar'=>'img/avatars/ame/'. $race .'.png',
+            'avatar'=>'img/avatars/ame/'. $race .'.webp',
             'portrait'=>'img/portraits/'. $race .'/1.jpeg',
             'coords_id'=>$coordsId
         );
@@ -706,6 +736,12 @@ class Player{
 
         // first init data
         $player->get_data();
+
+
+        if($pnj){
+
+            return $id;
+        }
 
         return $lastId;
     }
@@ -767,5 +803,27 @@ class Player{
         $this->data = $playerJson;
 
         return $playerJson;
+    }
+
+
+    public static function refresh_list(){
+
+
+        $sql = 'SELECT id,name,race FROM players ORDER BY name';
+
+        $db = new Db();
+
+        $res = $db->exe($sql);
+
+        $data = array();
+
+        while($row = $res->fetch_object()){
+
+            $data[] = $row;
+        }
+
+        $data = Json::encode($data);
+
+        Json::write_json('datas/private/players/list.json', $data);
     }
 }

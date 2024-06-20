@@ -45,7 +45,7 @@ if(!empty($_GET['url'])){
         exit($_GET['url'] .' not found');
     }
 
-    $dir = (!empty($dataJson->private) || explode(',', $_GET['url'])[0] == 'players') ? 'private' : 'public';
+    $dir = (!file_exists('public/'. explode(',', $_GET['url'])[0] .'/'. explode(',', $_GET['url'])[1] .'.json')) ? 'private' : 'public';
 
     $url = ''. $dir .'/'. explode(',', $_GET['url'])[0] .'/'. explode(',', $_GET['url'])[1] .'.json';
 }
@@ -62,6 +62,14 @@ echo '
 <div>
     <textarea id="data" style="width: 500px; height: 500px;"></textarea><br />
     <input type="button" value="save" />
+</div>
+';
+
+
+echo '
+<br />
+<div>
+    <a href="editor.php?url='. explode(',', $_GET['url'])[0] .',exemple,json"><button>exemple</button></a>
 </div>
 ';
 

@@ -6,7 +6,6 @@ class View{
     private $p; // Portée de la vue
     private $tiled; // Indique si la vue est dans l'éditeur de map
     private $inSight; // Coordonnées des objets dans le champ de vision
-    private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
 
 
@@ -17,24 +16,7 @@ class View{
         $this->p = $p;
         $this->tiled = $tiled;
         $this->inSight = $this->get_inSight();
-        $this->inSightId = $this->get_inSightId();
         $this->useTbl = array();
-    }
-
-
-    public function get_inSightId(){
-
-
-        $return = array();
-
-        foreach($this->inSight as $row){
-
-
-            $return[] = $row->id;
-        }
-
-
-        return $return;
     }
 
 
@@ -47,7 +29,7 @@ class View{
         $maxY = $this->coords->y + $this->p;
 
         $sql = '
-        SELECT id, x, y FROM coords
+        SELECT id FROM coords
         WHERE x BETWEEN ? AND ?
         AND y BETWEEN ? AND ?
         AND z = ?
@@ -70,7 +52,47 @@ class View{
 
         while($row = $res->fetch_object()){
 
-            $return[$row->id] = $row;
+            $return[] = $row->id;
+        }
+
+        return $return;
+    }
+
+    public function get_map($table){
+
+
+        $return = array();
+
+        $sql = '
+        SELECT
+        p.*,
+        c.id AS coordsId,
+        x, y, z, plan
+        FROM
+        '. $table .' AS p
+        INNER JOIN
+        coords AS c
+        ON
+        p.coords_id = c.id
+        WHERE
+        p.coords_id IN ('. Db::print_in($this->inSight) .')
+        ';
+
+        $db = new Db();
+
+        $params = array();
+
+        foreach($this->inSight as $e){
+
+            $params[] = $e;
+        }
+
+        $res = $db->exe($sql, $params);
+
+        while($row = $res->fetch_object()){
+
+
+            $return[] = $row;
         }
 
         return $return;
@@ -119,235 +141,38 @@ class View{
             ';
 
 
-            $tiledSql = '';
+            echo $this->print_table('tiles');
 
-            if($this->tiled){
+            echo $this->print_table('plants');
 
-                // only for tiled
+            echo $this->print_table('items');
 
-                $tiledSql = '
-                UNION
 
-                SELECT
-                id, name, coords_id,
-                "triggers" AS whichTable,
-                200 AS tableOrder
-                FROM
-                map_triggers
-                WHERE
-                coords_id IN ('. implode(',', $this->inSightId) .')
+            $eleTbl = $this->get_map('map_elements');
 
-                UNION
+            foreach($eleTbl as $row){
 
-                SELECT
-                id, name, coords_id,
-                "dialogs" AS whichTable,
-                300 AS tableOrder
-                FROM
-                map_dialogs
-                WHERE
-                coords_id IN ('. implode(',', $this->inSightId) .')
-                ';
-            }
 
+                $x = ($row->x - $this->coords->x + $this->p) * 50;
+                $y = (-$row->y + $this->coords->y + $this->p) * 50;
 
-            $sql = '
-            SELECT
-            id, name, coords_id,
-            "tiles" AS whichTable,
-            93 AS tableOrder
-            FROM
-            map_tiles
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
 
-            UNION
+                $typesTbl = array(
+                    'gif'=>'0.3',
+                    'webp'=>'0.5',
+                    'png'=>'1'
+                );
 
-            SELECT
-            id, name, coords_id,
-            "plants" AS whichTable,
-            95 AS tableOrder
-            FROM
-            map_plants
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
 
-            UNION
+                foreach($typesTbl as $k=>$e){
 
-            SELECT
-            id, name, coords_id,
-            "items" AS whichTable,
-            96 AS tableOrder
-            FROM
-            map_items
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
 
-            UNION
+                    $url = 'img/elements/'. $row->name .'.'. $k;
 
-            SELECT
-            id, name, coords_id,
-            "elements" AS whichTable,
-            97 AS tableOrder
-            FROM
-            map_elements
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
-
-            UNION
-
-            SELECT
-            id, name, coords_id,
-            "players" AS whichTable,
-            98 AS tableOrder
-            FROM
-            players
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
-
-            UNION
-
-            SELECT
-            id, name, coords_id,
-            "walls" AS whichTable,
-            99 AS tableOrder
-            FROM
-            map_walls
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
-
-            UNION
-
-            SELECT
-            id, name, coords_id,
-            "foregrounds" AS whichTable,
-            100 AS tableOrder
-            FROM
-            map_foregrounds
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
-
-            '. $tiledSql .'
-
-            ORDER BY
-            tableOrder
-            ';
-
-
-            $db = new Db();
-
-            $res = $db->exe($sql);
-
-
-            while($row = $res->fetch_object()){
-
-
-                $id = $row->whichTable . $row->id;
-
-
-                $coords = $this->inSight[$row->coords_id];
-
-
-                $x = $coords->x;
-                $y = $coords->y;
-
-
-                $x = ($x - $this->coords->x + $this->p) * 50;
-                $y = (-$y + $this->coords->y + $this->p) * 50;
-
-
-                $img = 'img/'. $row->whichTable .'/'. $row->name .'.png';
-
-
-                if($row->whichTable == 'items'){
-
-
-                    $img = 'img/tiles/loot.png';
-                }
-
-                elseif($row->whichTable == 'players'){
-
-
-                    // plan do not exists: solo mod
-                    if(!$planJson && $row->id > 0 && $row->id != $_SESSION['playerId']){
-
-                        continue;
-                    }
-
-
-                    $player = new Player($row->id);
-                    $player->get_data();
-
-
-                    $img = $player->data->avatar;
-                }
-
-                elseif($row->whichTable == 'foregrounds'){
-
-
-                    $this->useTbl[] = $id;
-                }
-
-
-                // transparent gradient
-                if(!empty($classTransparent[$x .','. $y]) && $row->whichTable != 'tiles'){
-
-                    $img .= '" class="transparent-gradient';
-                }
-
-
-                if($row->whichTable == 'elements'){
-
-
-                    // elements
-
-
-                    $typesTbl = array(
-                        'gif'=>'0.3',
-                        'webp'=>'0.5',
-                        'png'=>'1'
-                    );
-
-
-                    foreach($typesTbl as $k=>$e){
-
-
-                        $img = 'img/elements/'. $row->name .'.'. $k;
-
-                        if(file_exists($img)){
-
-                            echo '
-                            <image
-
-                                width="50"
-                                height="50"
-
-                                x="'. floor($x) .'"
-                                y="'. floor($y) .'"
-
-                                style="opacity: '. $e .';"
-
-                                href="'. $img .'"
-                                />
-                            ';
-                        }
-                    }
-
-                    $classTransparent[$x .','. $y] = 'transparent-gradient';
-                }
-
-                else{
-
-                    // default
-
-
-                    if($row->whichTable == 'players'){
-
+                    if(file_exists($url)){
 
                         echo '
                         <image
-
-                            id="'. $id .'"
 
                             width="50"
                             height="50"
@@ -355,30 +180,85 @@ class View{
                             x="'. floor($x) .'"
                             y="'. floor($y) .'"
 
-                            href="'. $img .'"
+                            style="opacity: '. $e .';"
 
-                            class="avatar-shadow"
+                            href="'. $url .'"
                             />
                         ';
                     }
-
-
-                    echo '
-                    <image
-
-                        id="'. $id .'"
-
-                        width="50"
-                        height="50"
-
-                        x="'. floor($x) .'"
-                        y="'. floor($y) .'"
-
-                        href="'. $img .'"
-                        />
-                    ';
                 }
 
+
+                $classTransparent[$x .','. $y] = 'transparent-gradient';
+            }
+
+
+            // plan exceptions
+            if($planJson){
+
+
+                $playersTbl = $this->get_map('players');
+            }
+            else{
+
+
+                // solo
+                $playersTbl = array(
+                    'row'=>(object) array(
+                        'id'=>$_SESSION['playerId'],
+                        'x'=>$this->coords->x,
+                        'y'=>$this->coords->y
+                    )
+                );
+            }
+
+            foreach($playersTbl as $row){
+
+
+                $player = new Player($row->id);
+                $player->get_data();
+
+
+                $x = ($row->x - $this->coords->x + $this->p) * 50;
+                $y = (-$row->y + $this->coords->y + $this->p) * 50;
+
+                echo '
+                <image
+
+                    width="50"
+                    height="50"
+
+                    x="'. floor($x) .'"
+                    y="'. floor($y) .'"
+
+                    href="'. $player->data->avatar .'"
+
+                    class="avatar-shadow"
+                    />
+                ';
+
+
+                $playerClasses = array();
+
+                if(!empty($classTransparent[$x .','. $y])){
+
+                    $playerClasses[] = 'transparent-gradient';
+                }
+
+                echo '
+                <image
+
+                    width="50"
+                    height="50"
+
+                    x="'. floor($x) .'"
+                    y="'. floor($y) .'"
+
+                    href="'. $player->data->avatar .'"
+
+                    class="'. implode(' ', $playerClasses) .'"
+                    />
+                ';
             }
 
 
@@ -389,7 +269,20 @@ class View{
             }
 
 
-            // // grid
+            // walls
+            echo $this->print_table('walls');
+
+
+            if($this->tiled){
+
+                // only for tiled
+
+                echo $this->print_table('triggers');
+                echo $this->print_table('dialogs');
+            }
+
+
+            // grid
             for ($i = 0; $i < $this->p*2+1; $i++) {
 
                 for ($j = 0; $j < $this->p*2+1; $j++) {
@@ -460,10 +353,77 @@ class View{
                 />
             ';
 
+
             echo '
         </svg>
         </div>
         ';
+
+
+        return ob_get_clean();
+    }
+
+
+    public function print_table($table){
+
+        ob_start();
+
+        $tbl = $this->get_map('map_'. $table);
+
+        foreach($tbl as $row){
+
+
+            $id = $table . $row->id;
+
+
+            $x = ($row->x - $this->coords->x + $this->p) * 50;
+            $y = (-$row->y + $this->coords->y + $this->p) * 50;
+
+
+            if(!empty($row->foreground) && $row->foreground == 1){
+
+                $this->useTbl[] = $id;
+            }
+
+
+            // items
+            if($table == 'items'){
+
+
+                echo '
+                <image
+
+                    id="'. $id .'"
+
+                    width="50"
+                    height="50"
+
+                    x="'. floor($x) .'"
+                    y="'. floor($y) .'"
+
+                    href="img/tiles/loot.png"
+                    />
+                ';
+
+                break;
+            }
+
+
+            echo '
+            <image
+
+                id="'. $id .'"
+
+                width="50"
+                height="50"
+
+                x="'. floor($x) .'"
+                y="'. floor($y) .'"
+
+                href="img/'. $table .'/'. $row->name .'.png"
+                />
+            ';
+        }
 
 
         return ob_get_clean();

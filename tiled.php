@@ -89,11 +89,20 @@ echo '
 
 foreach(File::scan_dir('img/tiles/', $without=".png") as $e){
 
+
+    $url = 'img/tiles/'. $e .'.png';
+
+    if(!file_exists($url)){
+
+        continue;
+    }
+
+
     echo '<img
         class="map tile select-name"
         data-type="tiles"
         data-name="'. $e .'"
-        src="img/tiles/'. $e .'.png"
+        src="'. $url .'"
         width="50"
     />';
 }
@@ -194,6 +203,18 @@ foreach(File::scan_dir('img/triggers/', $without=".png") as $e){
 
         $params = 'direction:';
     }
+    elseif($e == 'tp'){
+
+        $params = 'x,y,z,plan';
+    }
+    elseif($e == 'need'){
+
+        $params = 'item:name:n,spell:spell_name';
+    }
+    elseif($e == 'enter'){
+
+        $params = 'direction:';
+    }
 
 
     echo '<img
@@ -284,10 +305,11 @@ $(document).ready(function(){
             src = $selected.data('name');
         }
 
-        if($selected.data('params')){
+        if($selected.data('params') != null){
 
             params = $('#'+ $selected.data('type') +'-params').val();
         }
+
 
         $.ajax({
             type: "POST",

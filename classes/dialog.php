@@ -23,6 +23,15 @@ class Dialog{
             </button>
             ';
 
+            ?>
+            <script>
+            $(document).ready(function(){
+
+                $('#ui-dialog, .dialog-template').css('height', '150px');
+            });
+            </script>
+            <?php
+
             exit();
         }
     }

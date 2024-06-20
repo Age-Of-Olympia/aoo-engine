@@ -43,6 +43,13 @@ $(document).ready(function(){
 
                     lastCmd = data.trim();
 
+
+                    if($('.reply')[0] != null){
+
+                        lastCmd = 'topic '+ $('.reply').data('topic');
+                    }
+
+
                     var cmd = prompt('', lastCmd);
 
                     if(cmd != null && cmd != ''){
@@ -88,7 +95,7 @@ function copyToClipboard(element) {
     $temp.val($(element).text()).select();
     document.execCommand("copy");
     $temp.remove();
-    $(element).text('Copié dans le presse-papier!');
+    $(element).text('Copié!');
 }
 
 
@@ -141,3 +148,42 @@ function preload(img, element){
             }
     );
 }
+
+$(document).ready(function(){
+
+    const baseTitle = $(document).prop('title');
+
+    var checkMailFunction = function () {
+
+        $.ajax({
+            type: "GET",
+            url: 'check_mail.php',
+            data: {}, // serializes the form's elements.
+            success: function(data)
+            {
+                if(data.trim() != '0'){
+
+                    var $avatar = $('#player-avatar');
+
+                    var $popup = $('<div class="cartouche bulle blink" style="pointer-events: none;">'+ data.trim() +'</div>');
+
+                    $avatar.append($popup);
+
+                    // change favicon
+                    $("link[rel*='icon']").attr("href", "img/ui/favicons/favicon_alert.png");
+
+                    // change title
+                    var newTitle = '('+ data.trim() +') '+ baseTitle;
+
+                    $(document).prop('title', newTitle);
+                }
+            }
+        });
+
+        setTimeout(checkMailFunction, 60000);
+
+    }
+
+    setTimeout(checkMailFunction, 1);
+});
+

@@ -29,6 +29,12 @@ if(isset($_GET['mdj'])){
     exit();
 }
 
+if(isset($_POST['changeName'])){
+
+    include('scripts/account/change_name.php');
+    exit();
+}
+
 
 define('OPTIONS', array(
 
@@ -46,7 +52,7 @@ define('OPTIONS', array(
 
 
 echo '<a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>';
-echo '<a href="index.php"><button>Changer Nom</button></a>';
+echo '<button data-change="name">Changer Nom</button>';
 echo '<a href="index.php"><button>Changer Mot de Passe</button></a>';
 echo '<a href="index.php"><button>Changer Mail</button></a>';
 
@@ -119,6 +125,37 @@ echo '
 ?>
 <script>
 $(document).ready(function(){
+
+    $('button[data-change="name"]').click(function(e){
+
+        if(<?php if($player->have_option('alreayChanged')) echo 1; else echo 0; ?>){
+
+            alert('Vous avez déjà changé de nom une fois.\nDemandez à un Admin si vous souhaitez le modifier une fois de plus.');
+
+            return false;
+        }
+
+        var name = prompt('Nouveau nom:');
+
+        var oldName = "<?php echo $player->data->name ?>";
+
+        if(name == oldName){
+
+            alert('Le nouveau nom est identique à l\'ancien nom.');
+
+            return false;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: 'account.php',
+            data: {'changeName': name}, // serializes the form's elements.
+            success: function(data)
+            {
+                alert(data);
+            }
+        });
+    });
 
     $('.option').click(function(e){
 

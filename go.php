@@ -36,6 +36,8 @@ $sql = '
 SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ?
 UNION
 SELECT *, "plants" AS whichTable FROM map_plants WHERE coords_id = ?
+
+ORDER BY id DESC
 ';
 
 $db = new Db();
@@ -93,9 +95,9 @@ if($res->num_rows){
 
         $path = 'scripts/map/followers.php';
 
-        $tile_id = $row->tile_id;
+        $foreground_id = $row->foreground_id;
 
-        $position = $row->position;
+        $position = $row->params;
 
         include($path);
     }

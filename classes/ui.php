@@ -26,6 +26,7 @@ class ui{
             <head>
                 <meta charset="UTF-8">
                 <title>Age of Olympia - '. $title .'</title>
+                <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v='. $jsVersion .'"></script>
                 <link href="css/main.css?v='. $cssVersion .'" rel="stylesheet" />
@@ -384,6 +385,21 @@ class ui{
 
                 // dialog
                 if(!empty($options['dialog'])){
+
+
+                    $dialogJson = json()->decode('dialogs', $options['dialog']);
+
+                    if(!$dialogJson){
+
+
+                        ob_clean();
+
+                        ob_start();
+
+                        echo '<script>alert("'. $options['dialog'] .'");</script>';
+
+                        return ob_get_clean();
+                    }
 
 
                     $dialog = new Dialog($options['dialog']);

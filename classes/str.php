@@ -79,5 +79,23 @@ class Str{
         elseif($dir == 'sw') return 'ne';
         elseif($dir == 'se') return 'nw';
     }
+
+
+    public static function check_name( $str ){
+
+        if( strlen( $str ) > 30 ) return false;
+
+        return preg_match( "/^[a-z'àâçéèêëîïôûùü -]*$/i", $str );
+    }
+
+
+    public static function check_mail( $str ){
+
+        if (!filter_var($str, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        return true;
+    }
 }
 

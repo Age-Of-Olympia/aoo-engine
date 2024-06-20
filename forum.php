@@ -7,6 +7,56 @@ include('scripts/infos.php');
 include('scripts/menu.php');
 
 
+function get_views($topJson){
+
+
+    if(!isset($topJson->views)){
+
+        return array();
+    }
+
+    return $topJson->views;
+}
+
+
+function put_view($topJson){
+
+
+    if(!isset($topJson->views)){
+
+        $topJson->views = array();
+    }
+
+    if(in_array($_SESSION['playerId'], $topJson->views)){
+
+
+        return false;
+    }
+
+
+    $topJson->views[] = $_SESSION['playerId'];
+
+
+    $data = Json::encode($topJson);
+
+    Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
+
+
+    return true;
+}
+
+
+function delete_views($topJson){
+
+
+    $topJson->views = array();
+
+    $data = Json::encode($topJson);
+
+    Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
+}
+
+
 function get_pages($postTotal){
 
 
@@ -35,14 +85,14 @@ function refresh_last_posts(){
 
         $topJson = json()->decode('forum', 'topics/'. $mostRecentFile);
 
-        if(strlen($topJson->name) > 10){
+        if(strlen($topJson->title) > 10){
 
-            $topName = htmlentities(substr($topJson->name, 0, 10)) .'...';
+            $topName = htmlentities(substr($topJson->title, 0, 10)) .'...';
         }
 
         else{
 
-            $topName = htmlentities($topJson->name) .'';
+            $topName = htmlentities($topJson->title) .'';
         }
 
 

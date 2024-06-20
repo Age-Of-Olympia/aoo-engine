@@ -20,6 +20,43 @@ if(!empty($_POST['cmd'])){
     $cmdTbl = explode(' ', $cmd);
 
 
+    // FORUM
+    if($cmdTbl[0] == 'topic'){
+
+
+        $topJson = json()->decode('forum', 'topics/'. $cmdTbl[1]);
+
+
+        if($cmdTbl[2] == 'close'){
+
+
+            $topJson->closed = 1;
+
+
+            $data = Json::encode($topJson);
+
+            Json::write_json('datas/private/forum/topics/'. $cmdTbl[1] .'.json', $data);
+
+            exit('topic '. $topJson->title .' closed');
+        }
+
+        if($cmdTbl[2] == 'open'){
+
+
+            $topJson->closed = 0;
+
+            unset($topJson->closed);
+
+
+            $data = Json::encode($topJson);
+
+            Json::write_json('datas/private/forum/topics/'. $cmdTbl[1] .'.json', $data);
+
+            exit('topic '. $topJson->title .' opened');
+        }
+    }
+
+
     // CREATE
     if($cmdTbl[0] == 'create'){
 
@@ -32,6 +69,16 @@ if(!empty($_POST['cmd'])){
 
 
             exit('Player '. $cmdTbl[2] .' créé ('. $cmdTbl[3] .', mat.'. $lastId .')');
+        }
+
+        // PNJ
+        if($cmdTbl[1] == 'pnj'){
+
+
+            $lastId = Player::put_player($cmdTbl[2], $cmdTbl[3], $pnj=true);
+
+
+            exit('PNJ '. $cmdTbl[2] .' créé ('. $cmdTbl[3] .', mat.'. $lastId .')');
         }
 
         // ALTAR
@@ -539,7 +586,7 @@ if(!empty($_POST['cmd'])){
         $coords->x = $coordsTbl[0];
         $coords->y = $coordsTbl[1];
 
-        $coords->z = (!empty($coordsTbl[2])) ? $coordsTbl[2] : $player->coords->z;
+        $coords->z = (isset($coordsTbl[2])) ? $coordsTbl[2] : $player->coords->z;
         $coords->plan = (!empty($coordsTbl[3])) ? $coordsTbl[3] : $player->coords->plan;
 
 
@@ -607,6 +654,34 @@ if(!empty($_POST['cmd'])){
 
 
         if(!empty($cmdTbl[1])){
+
+
+            if($cmdTbl[1] == 'delete'){
+
+
+                if(!empty($cmdTbl[2])){
+
+                    $sql = '
+                    DELETE FROM
+                    map_'. $cmdTbl[2] .'
+                    WHERE
+                    coords_id IN(
+                        SELECT id FROM coords WHERE plan = ? AND z = ?
+                        )
+                    ';
+
+                    $db = new Db();
+
+                    $player = new Player($_SESSION['playerId']);
+
+                    $player->get_coords();
+
+                    $db->exe($sql, array($player->coords->plan, $player->coords->z));
+
+                    exit($cmdTbl[2] .' deleted in '. $player->coords->plan .' (z'. $player->coords->z .')');
+                }
+
+            }
 
 
             list($width, $height, $type, $attr) = getimagesize('img/'. $cmdTbl[1] .'/'. $cmdTbl[2] .'/'. $cmdTbl[2] .'.png');

@@ -2,7 +2,7 @@
 
 echo '
 <script>
-alert("Quelque chose vous empêche de passer.");
+alert("Impossible de se rendre à cet endroit.");
 </script>
 ';
 

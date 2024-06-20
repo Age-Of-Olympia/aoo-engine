@@ -60,7 +60,7 @@ input[type="button"]:active, button:active, select:active {
   box-shadow: none;
 }
 
-input[type="button"]:disabled, button:disabled, select:disabled {
+input[type="button"]:disabled, button:disabled, select:disabled{
   color: grey;
   box-shadow: none;
 }
@@ -100,7 +100,7 @@ input[type="button"]:disabled, button:disabled, select:disabled {
 .popup, #ui-card, #ui-dialog{
 
     position: absolute;
-    top: 182px;
+    top: 110px;
     z-index: 100;
     width: 99%;
     margin: 0 auto;
@@ -365,6 +365,40 @@ input[type="button"]:disabled, button:disabled, select:disabled {
 .item-case img {
 
     width: 50px;
+}
+
+
+/*
+ * FORUM
+ */
+
+
+.cartouche{
+
+    border: 0px solid #333;
+    border-radius: 5px;
+    padding-left: 2px;
+    padding-right: 2px;
+    cursor: pointer;
+}
+
+#player-avatar{
+
+    position: relative;
+}
+
+.bulle{
+
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    border-radius: 15px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: white;
+    font-size: 88%;
+    font-weight: bold;
 }
 
 

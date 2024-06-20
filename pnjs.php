@@ -48,7 +48,7 @@ if(!empty($_POST['switch'])){
 
 
 echo '
-<table border="1" align="center" class="marbre">
+<table border="1" align="center" class="marbre" cellspacing="0">
 <tr>
 ';
 
@@ -69,8 +69,22 @@ foreach($playersTbl as $pnj){
     $raceJson = json()->decode('races', $pnj->data->race);
 
 
+    $mails = $pnj->get_new_mails();
+
+    if($mails){
+
+
+        $mails = '<div class="cartouche bulle blink" data-id="'. $pnj->id .'">'. $mails .'</div>';
+    }
+    else{
+
+
+        $mails = '';
+    }
+
+
     echo '
-    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;"><div style="position: absolute; top: 0; right: 0;">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" width="150" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .' Rang '. $pnj->data->rank .'</span></div></td>
+    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;">'. $mails .'<div style="position: absolute; top: 0; right: 0;">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" width="150" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .' Rang '. $pnj->data->rank .'</span></div></td>
     ';
 }
 
@@ -95,6 +109,20 @@ $(document).ready(function(){
             success: function(data)
             {
                 document.location = 'index.php';
+            }
+        });
+    });
+
+    $('.bulle').click(function(e){
+
+
+        $.ajax({
+            type: "POST",
+            url: 'pnjs.php',
+            data: {'switch':$(this).data('id')}, // serializes the form's elements.
+            success: function(data)
+            {
+                document.location = 'forum.php?forum=Missives';
             }
         });
     });

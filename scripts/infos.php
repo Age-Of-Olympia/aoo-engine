@@ -28,19 +28,19 @@ if(!empty($_SESSION['playerId'])){
     <table border="0" align="center">
         <tr>
             <td>
-                <a href="pnjs.php"><img src="'. $player->data->avatar .'" /></a>
+                <div id="player-avatar">
+                    <a href="pnjs.php"><img src="'. $player->data->avatar .'" /></a>
+                </div>
             </td>
             <td align="left">
                 '. $player->data->name .' (mat.'. $player->id .')<br />
                 <sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup>
             </td>
 
-            <td width="100" align="right">
-                <a href="forum.php"><button style="width: 45px; height: 45px; font-size: 120%;"><span class="ra ra-quill-ink"></span></button></a>
-            </td>
+            <td width="50"></td>
 
             <td align="left" style="font-size: 88%;">
-                Dernier message du Forum<br />
+                Dernier message du <a href="forum.php">Forum</a><br />
                 <i>'. $lastPost .'</i>
             </td>
         </tr>
