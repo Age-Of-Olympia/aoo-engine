@@ -44,7 +44,7 @@ $db->insert('players_upgrades', $values);
 
 if($k == 'p'){
 
-    $player->reload_view();
+    $player->refresh_view();
 }
 
 

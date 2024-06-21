@@ -14,6 +14,9 @@ if(!empty($planJson->war)){
 }
 
 
+echo '<h1><font style="font-family: goudy">'. $planJson->name .'</font></h1>';
+
+
 echo '<div class="map-local"><img src="img/ui/map/'. $player->coords->plan .'.png" /></div>';
 
 

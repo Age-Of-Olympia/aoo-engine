@@ -135,48 +135,7 @@ class Player{
 
     public function move_player($coords){
 
-
         $this->go($coords);
-
-        // $db = new Db();
-        //
-        // $sql = '
-        // SELECT
-        // COUNT(*) AS n
-        // FROM coords WHERE
-        // x = '. $coords->x .'
-        // AND
-        // y = '. $coords->y .'
-        // AND
-        // z = '. $coords->z .'
-        // AND
-        // plan = "'. $coords->plan .'"
-        // ';
-        //
-        // $count = $db->get_count($sql);
-        //
-        // if(!$count){
-        //
-        //     // create coord
-        //     $db->insert('coords', (array) $coords);
-        //
-        //     $coordsId = $db->get_last_id('coords');
-        // }
-        //
-        //
-        // // update player
-        // $sql = '
-        // UPDATE
-        // players
-        // SET
-        // coords_id = ?
-        // WHERE
-        // id = ?
-        // ';
-        //
-        // $db->exe($sql, array($coordsId, $this->id));
-        //
-        // $this->refresh_data();
     }
 
 
@@ -421,6 +380,18 @@ class Player{
         $res = $db->exe($sql, $coordsId);
 
         while($row = $res->fetch_object()){
+
+
+            if(FISHING || $this->have_item('canne_a_peche')){
+
+
+                echo '
+                <script>
+                    alert("Ça mord!");
+                    document.location = "fish.php";
+                </script>
+                ';
+            }
 
 
             $this->add_effect($row->name, ONE_DAY);
@@ -669,18 +640,44 @@ class Player{
     }
 
 
-    public function get_new_mails(){
+    public function get_new_mails($all=false){
 
 
         $db = new Db();
 
-        $sql = 'SELECT COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0';
+        if($all){
 
-        $res = $db->exe($sql, $this->id);
+            $sql = '
+            SELECT COUNT(*) AS n
+            FROM
+            players_forum_missives
+            WHERE
+            (
+                player_id IN(
+                    SELECT pnj_id FROM players_pnjs WHERE player_id = ?
+                )
+                OR
+                player_id = ?
+            )
+            AND
+            viewed = 0
+            ';
+
+            $res = $db->exe($sql, array($_SESSION['mainPlayerId'], $_SESSION['mainPlayerId']));
+        }
+        else{
+
+
+            $sql = 'SELECT COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0';
+
+            $res = $db->exe($sql, $this->id);
+        }
 
         $row = $res->fetch_object();
 
-        return $row->n;
+        $n = $row->n;
+
+        return $n;
     }
 
 

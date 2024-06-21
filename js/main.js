@@ -16,10 +16,7 @@ $(document).ready(function(){
     function close_all(){
 
         $('#ui-card').hide();
-        $('#ui-item-list').hide();
         $('#ui-dialog').hide();
-        $('#ui-map').hide();
-        $('#ui-profil').hide();
     }
 
 
@@ -65,15 +62,24 @@ $(document).ready(function(){
                                 if(data.trim() == 'editor'){
 
                                     document.location = 'editor.php';
+
+                                    return false;
                                 }
                                 else if(data.trim() == 'tiled'){
 
                                     document.location = 'tiled.php';
+
+                                    return false;
                                 }
                                 else if(data.slice(-5) == ',json'){
 
                                     document.location = 'editor.php?url='+ data.trim();
+
+                                    return false;
                                 }
+
+
+                                document.location.reload();
                             }
                         });
                     }

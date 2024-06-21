@@ -19,7 +19,7 @@ $values = array(
 $db->delete('map_plants', $values);
 
 
-$text = $player->row->name .' a récolté '. ucfirst($item->data->name) .' x'. $rand .'.
+$text = $player->data->name .' a récolté '. ucfirst($item->data->name) .' x'. $rand .'.
 <div class="action-details">1d3 = '. $rand .'</div>';
 
 Log::put($player, $player, $text, "harvest");

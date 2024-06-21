@@ -97,6 +97,25 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 }
 
 
+.glow{
+  animation-name: glowing;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+
+@keyframes glowing {
+    0%   {
+        filter: brightness(1 );
+    }
+    50%  {
+        filter: brightness(2);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}
+
+
 .popup, #ui-card, #ui-dialog{
 
     position: absolute;
@@ -391,7 +410,7 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 
     position: absolute;
     top: 0;
-    right: 0;
+    left: 0;
     background: red;
     border-radius: 15px;
     padding-left: 6px;
@@ -399,6 +418,22 @@ input[type="button"]:disabled, button:disabled, select:disabled{
     color: white;
     font-size: 88%;
     font-weight: bold;
+}
+
+
+.dest-container {
+
+    width: 500px;
+    margin: 0 auto;
+    text-align: left;
+    padding: 10px;
+    font-size: 88%;
+}
+
+
+#dest-list {
+
+    display: none;
 }
 
 
