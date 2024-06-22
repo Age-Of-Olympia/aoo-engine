@@ -127,4 +127,4 @@ define('ERROR_DISTANCE', "Vous n'êtes pas à bonne distance.");
  */
 
 define('AUTO_GROW', true); // si true, les plantes poussent dès qu'on les met en terre
-define('FISHING', true); // si true, les players pêchent constemment
+define('FISHING', false); // si true, les players pêchent constemment

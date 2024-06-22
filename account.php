@@ -137,6 +137,13 @@ $(document).ready(function(){
 
         var name = prompt('Nouveau nom:');
 
+
+        if(name == null || name.trim() == ''){
+
+            return false;
+        }
+
+
         var oldName = "<?php echo $player->data->name ?>";
 
         if(name == oldName){

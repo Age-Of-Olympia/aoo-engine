@@ -382,15 +382,25 @@ class Player{
         while($row = $res->fetch_object()){
 
 
-            if(FISHING || $this->have_item('canne_a_peche')){
+            // fishing
+            if($row->name == 'eau'){
 
 
-                echo '
-                <script>
-                    alert("Ça mord!");
-                    document.location = "fish.php";
-                </script>
-                ';
+                $item = Item::get_item_by_name('canne_a_peche');
+
+
+                if(FISHING || ($item && $item->get_item_n($this))){
+
+
+                    $this->end_option('alreadyFished');
+
+                    echo '
+                    <script>
+                        alert("Ça mord!");
+                        document.location = "fish.php";
+                    </script>
+                    ';
+                }
             }
 
 

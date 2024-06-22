@@ -7,7 +7,19 @@ require_once('config.php');
 $ui = new Ui('Ça mord!');
 
 
-echo '<div style="background: url(img/ui/bg/eau.png); width: 100%; height: 100%; position: absolute; top: 0px; left: 0px;">';
+$player = new Player($_SESSION['playerId']);
+
+
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
+
+
+if($player->have_option('alreadyFished')){
+
+    exit('Déplacez-vous pour pêcher à nouveau.');
+}
+
+
+$player->add_option('alreadyFished');
 
 
 echo '<h1>Ça mord!</h1>';
@@ -18,14 +30,18 @@ $fishesTbl = array('noires/1.png','noires/2.png','rouges/1.png');
 
 $stopTbl = [rand(0,2), rand(0,2), rand(0,2)];
 
+$win = 0;
+
 if($stopTbl[0] == $stopTbl[1] && $stopTbl[1] == $stopTbl[2]){
 
-    echo 'win';
+    $win = 1;
+
+    $player->get_data();
+
+    $text = $player->data->name .' a pêché un poisson!';
+
+    Log::put($player, $player, $text, $type="fishing");
 }
-
-printr($stopTbl);
-
-
 
 echo '
 <table align="center">
@@ -148,14 +164,12 @@ echo '
 ';
 
 
-echo '<input type="number" value="0" />';
-
-
-echo '</div>';
-
 ?>
 <script>
 $(document).ready(function(){
+
+
+    $('body').css('background','url(img/ui/bg/eau.png)');
 
 
     const winner = [<?php echo implode(',', $stopTbl) ?>];
@@ -287,13 +301,14 @@ $(document).ready(function(){
 
         time ++;
 
-        $('input[type="number"]').val(time);
-
 
         if(time == 10){
 
 
-            $('*[data-fish="2"]').addClass('glow');
+            if(<?php echo $win ?>){
+
+                $('*[data-fish="2"]').addClass('glow');
+            }
 
             clearInterval(chrono);
 

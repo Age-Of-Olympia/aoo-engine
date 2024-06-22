@@ -83,9 +83,11 @@ class Str{
 
     public static function check_name( $str ){
 
-        if( strlen( $str ) > 30 ) return false;
+        if(trim($str) == '') return false;
 
-        return preg_match( "/^[a-z'àâçéèêëîïôûùü -]*$/i", $str );
+        if(strlen( $str ) > 30) return false;
+
+        return preg_match("/^[a-z'àâçéèêëîïôûùü -]*$/i", $str);
     }
 
 
