@@ -155,7 +155,7 @@ class ui{
                 <div class="preview-img">
                     <img
                         src="img/ui/fillers/150.png"
-                        data-src="img/items/'. $defaultItem->data->name .'.png"
+                        data-src="img/items/'. $defaultItem->row->name .'.png"
                         data-filler="img/ui/fillers/150.png"
                         width="150"
                     />
@@ -181,27 +181,42 @@ class ui{
                     ';
 
         foreach($itemList as $k => $e){
+
+
+            $k = Item::get_unformatted_name($k);
+
+
             $itemJson = json()->decode('items', $k);
+
+            $caracs = Item::get_item_carac($itemJson);
+
+
+            $itemName = Item::get_formatted_name(ucfirst($itemJson->name), $e);
+
+            $itemName = str_replace('&#42;', '*', $itemName); // so the players cannot search for cursed items easily in source code
+
 
             echo '
             <tr
                 class="item-case"
-                data-name="'. ucfirst($itemJson->name) .'"
-                data-n="'. $e .'"
+                data-id="'. $e->id .'"
+                data-name="'. $itemName .'"
+                data-n="'. $e->n .'"
                 data-text="'. $itemJson->text .'"
                 data-price="'. $itemJson->price .'"
-                data-img="img/items/'. $itemJson->name .'.png"
+                data-img="img/items/'. $k .'.png"
             >
                 <td width="50">
                     <div>
-                        <img src="img/items/'. $itemJson->name .'_mini.png" />
+                        <img src="img/items/'. $e->name .'_mini.png" />
                     </div>
                 </td>
                 <td align="left">
-                    '. ucfirst($itemJson->name) .'
+                    '. $itemName .'<br />
+                    '. implode(', ', $caracs) .'
                 </td>
                 <td width="50">
-                    x'. $e .'
+                    x'. $e->n .'
                 </td>
             </tr>
             ';
@@ -228,8 +243,9 @@ class ui{
         $(document).ready(function(){
 
 
+            window.id = "<?php echo $defaultItem->row->id ?>";
             window.name = "<?php echo $defaultItem->row->name ?>";
-            window.n =    <?php echo $itemList[$defaultItem->row->name] ?>;
+            window.n =    <?php echo $itemList[$defaultItem->row->name]->n ?>;
             window.price =    1;
 
             var $previewImg = $(".preview-img img");
@@ -242,6 +258,7 @@ class ui{
 
                 var $item = $(this);
 
+                window.id =  $item.data("id");
                 window.name =  $item.data("name");
                 window.n =     $item.data("n");
                 let text =  $item.data("text");

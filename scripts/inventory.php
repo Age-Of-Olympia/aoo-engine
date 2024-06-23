@@ -84,7 +84,7 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: 'inventory.php',
-            data: {'action': action,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
+            data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
             success: function(data)
             {
                 // alert(data);

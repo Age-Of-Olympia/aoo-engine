@@ -5,6 +5,7 @@ class Item{
 
     function __construct($itemId){
 
+
         $this->id = $itemId;
 
         $db = new Db();
@@ -59,6 +60,7 @@ class Item{
 
 
         $bank = ($bank) ? '_bank' : '';
+
 
         // format player
         if(is_numeric($player)){
@@ -175,7 +177,7 @@ class Item{
 
 
     // STATIC
-    public static function put_item($name, $private=0) : int{
+    public static function put_item($name, $private=0, $options=false) : int{
 
 
         $db = new Db();
@@ -184,6 +186,14 @@ class Item{
             'name'=>$name,
             'private'=>$private
         );
+
+
+        if($options && is_array($options)){
+
+
+            $values = array_merge($values, $options);
+        }
+
 
         $db->insert('items', $values);
 
@@ -238,8 +248,7 @@ class Item{
 
         $sql = '
         SELECT
-        name,
-        n
+        *
         FROM
         players_items'. $bank .'
         INNER JOIN
@@ -248,6 +257,8 @@ class Item{
         item_id = items.id
         WHERE
         player_id = ?
+        ORDER BY
+        items.name
         ';
 
         $db = new Db();
@@ -256,9 +267,114 @@ class Item{
 
         while($row = $res->fetch_object()){
 
-            $return[$row->name] = $row->n;
+
+            $k = $row->name;
+
+
+            $k = self::get_formatted_name($k, $row);
+
+
+
+            $return[$k] = $row;
         }
 
+
+        return $return;
+    }
+
+
+    public static function get_formatted_name($name, $row){
+
+
+        foreach(ITEMS_OPT as $k=>$e){
+
+
+            if($row->$k){ $name = $e . $name . $e; }
+        }
+
+        return $name;
+    }
+
+
+    public static function get_unformatted_name($name){
+
+
+        foreach(ITEMS_OPT as $e){
+
+            $name = str_replace($e, '', $name);
+        }
+
+        return $name;
+    }
+
+
+    // print item carac
+    public static function get_item_carac($itemJson){
+
+
+        $return = array();
+
+
+        // spellMalus
+        if(!empty($itemJson->spellMalus))
+            $return[] = '<font color="red"><del>M</del></font>';
+
+
+        // parchemin sort
+        elseif(!empty($itemJson->spell)){
+
+
+            // json
+            $json = new Json();
+
+            // spell Json
+            $spellJson = $json->decode('spell', $itemJson->spell);
+
+            // return spell name
+            $return[] = '<font color="blue">'. $spellJson->name .'</font>';
+        }
+
+
+        // search for item bonus carac
+        foreach(CARACS as $k=>$e){
+
+
+            // special fF
+            if($k == 'f' && !empty($itemJson->fixedF)){
+
+                $return[] = '<font color="blue">'. $e .'='. $itemJson->fixedF .'</font>';
+                continue;
+            }
+
+            // special mDamage
+            if($k == 'f' && !empty($itemJson->mDamage)){
+
+                $return[] = '<font color="blue">'. $e .'=M</font>';
+                continue;
+            }
+
+
+            // item have not this bonus
+            if(!isset($itemJson->$k))
+                continue;
+
+
+            // item have this bonus
+            $carac = $itemJson->$k;
+
+
+            // bonus blue or malus red
+            if( $carac > 0 )
+                $return[] = '<font color="blue">'. $e .'+'. $carac .'</font>';
+            if( $carac < 0 )
+                $return[] = '<font color="red">'. $e .''. $carac .'</font>';
+        }
+
+
+        // pr
+        if(!empty($itemJson->pr)){
+            $return[] = '<font color="blue">Pr+'. $itemJson->pr .'</font>';
+        }
 
         return $return;
     }

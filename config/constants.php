@@ -116,6 +116,18 @@ define('WALLS_PV', array(
 
 
 /*
+ * items options
+ */
+
+
+define('ITEMS_OPT', array(
+    'enchanted'=>'*',
+    'vorpal'=>'~',
+    'cursed'=>'&#42;'
+));
+
+
+/*
  * errors
  */
 

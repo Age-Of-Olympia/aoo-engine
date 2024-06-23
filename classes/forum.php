@@ -42,6 +42,27 @@ class Forum{
     }
 
 
+    public static function put_reward($postJson, $reward){
+
+
+        if(!isset($postJson->rewards)){
+
+            $postJson->rewards = array();
+        }
+
+
+        $postJson->rewards[] = (object) $reward;
+
+
+        $data = Json::encode($postJson);
+
+        Json::write_json('datas/private/forum/posts/'. $postJson->name .'.json', $data);
+
+
+        return true;
+    }
+
+
     public static function delete_views($topJson){
 
 

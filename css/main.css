@@ -19,6 +19,13 @@ table, img{
 }
 
 
+h1, h2{
+
+
+    font-family: goudy;
+}
+
+
 input[type="button"], button, select {
   background-color: rgba(255, 255, 255, .4);
   border: 1px solid transparent;
@@ -262,6 +269,13 @@ input[type="button"]:disabled, button:disabled, select:disabled{
         background: rgba(0,0,0,0.8);
     }
 
+        #ui-card .card-template-name a{
+
+            color: white;
+            font-family: goudy;
+            font-size: 120%;
+        }
+
     #ui-card .card-template-img{
 
         width: 275px;
@@ -391,6 +405,53 @@ input[type="button"]:disabled, button:disabled, select:disabled{
  * FORUM
  */
 
+.tr-cat, .tr-forum, .post-rewards{
+
+    cursor: pointer;
+}
+
+.tr-cat{
+
+    background: url('../img/ui/bg/marbre.jpeg');
+}
+
+.tr-topic1{
+
+    background: url('../img/ui/bg/bg_white1.jpeg');
+}
+
+.tr-topic2{
+
+    background: url('../img/ui/bg/bg_white2.jpeg');
+}
+
+.post-rewards{
+
+    margin-top: 20px;
+    text-align: right;
+}
+
+    .post-rewards img{
+
+        width: 50px;
+        height: 50px;
+    }
+
+    .post-rewards span{
+
+        font-size: 88%;
+    }
+
+
+.give-reward{
+
+    opacity: 0.5;
+}
+
+    .give-reward:hover{
+
+        opacity: 1;
+    }
 
 .cartouche{
 

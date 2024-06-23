@@ -33,7 +33,7 @@ if(!empty($_SESSION['playerId'])){
                 </div>
             </td>
             <td align="left">
-                '. $player->data->name .' (mat.'. $player->id .')<br />
+                <a href="infos.php?targetId='. $player->id .'">'. $player->data->name .'</a> (mat.'. $player->id .')<br />
                 <sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup>
             </td>
 

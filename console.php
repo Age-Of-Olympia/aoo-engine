@@ -137,6 +137,28 @@ if(!empty($_POST['cmd'])){
             exit('Item '. $cmdTbl[2] .' créé (id.'. $lastId .')');
         }
 
+
+        // ENCHANTED ITEM
+        if(in_array($cmdTbl[1], array('enchanted','vorpal','cursed'))){
+
+
+            if(!json()->decode('items', $cmdTbl[2])){
+
+                exit('error item '. $cmdTbl[2] .' does not exist');
+            }
+
+
+            $private = (!empty($cmdTbl[3])) ? 1 : 0;
+
+            $options = array($cmdTbl[1]=>1);
+
+            $lastId = Item::put_item($cmdTbl[2], $private, $options);
+
+
+            exit('Item '. $cmdTbl[2] .' ('. $cmdTbl[1] .') créé (id.'. $lastId .')');
+        }
+
+
         // JSON
         if($cmdTbl[1] == 'json'){
 

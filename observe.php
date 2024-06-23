@@ -146,7 +146,7 @@ if(!$solo && $res->num_rows){
         $targetJson = json()->decode('players', $target->id);
 
 
-        $dataName = $target->data->name;
+        $dataName = '<a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a>';
 
         foreach($target->get_effects() as $e){
 

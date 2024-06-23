@@ -39,6 +39,14 @@ elseif(!empty($_GET['newTopic'])){
     exit();
 }
 
+elseif(isset($_GET['rewards'])){
+
+
+    include('scripts/forum/rewards.php');
+
+    exit();
+}
+
 
 $ui = new Ui('Forum');
 
@@ -92,7 +100,7 @@ echo '
 
 
             echo '
-            <tr>
+            <tr class="tr-cat">
                 ';
 
                 echo '

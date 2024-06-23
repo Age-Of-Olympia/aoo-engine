@@ -1,7 +1,7 @@
 <?php
 
 
-$item = Item::get_item_by_name($_POST['item']);
+$item = new Item($_POST['itemId']);
 $item->get_data();
 
 $player->drop($item, $_POST['n']);
