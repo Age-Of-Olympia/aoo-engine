@@ -124,10 +124,12 @@ class Item{
     }
 
 
-    public function get_n($player, $bank=false){
+    public function get_n($player, $bank=false, $equiped=false){
 
 
         $bank = ($bank) ? '_bank' : '';
+
+        $equiped = ($equiped) ? 'AND equiped != ""' : '';
 
         $playerId = (is_numeric($player)) ? $player : $player->id;
 
@@ -144,6 +146,7 @@ class Item{
         player_id = ?
         AND
         name = ?
+        '. $equiped .'
         ';
 
         $db = new Db();

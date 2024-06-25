@@ -62,10 +62,27 @@ if(!empty($actionJson->distanceMax)){
 }
 
 
+if($player->main1->data->subtype == 'melee' && $distance > 1){
+
+    exit('Vous n\'êtes pas à bonne distance (arme de mêlée).');
+}
+elseif($player->main1->data->subtype == 'jet' && $distance < 2){
+
+    exit('Vous n\'êtes pas à bonne distance (arme de jet).');
+}
+elseif($player->main1->data->subtype == 'tir' && $distance < 2){
+
+        exit('Vous n\'êtes pas à bonne distance (arme de tir).');
+}
+
+
+if(!$munition = $player->get_munition($player->main1, $equiped=true)){
+
+    exit('Vous devez équiper une munition.');
+}
+
+
 View::get_walls_between($player->coords, $target->coords);
-
-
-$playerMain1 = new Item(Item::get_emplacement($player, 'main1'));
 
 
 // log
@@ -208,6 +225,17 @@ if(!empty($actionJson->addEffects)){
             }
         }
     }
+}
+
+
+if(!empty($munition) && $munition){
+
+
+    $munition->get_data();
+
+    $munition->add_item($player, -1);
+
+    echo 'Perdu: '. $munition->data->name .'';
 }
 
 

@@ -107,7 +107,7 @@ echo '
 
                 $author->get_data();
 
-                echo '<img src="'. $author->data->portrait .'" width="50" />';
+                echo '<img src="'. $author->data->mini .'" width="50" />';
 
 
                 echo '

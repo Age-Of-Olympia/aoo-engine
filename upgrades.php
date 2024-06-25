@@ -81,7 +81,7 @@ echo '
 <table class="box-shadow marbre" border="1" align="center">';
 
 
-echo '<tr><th>Améliorations</th><th>Valeur</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
+echo '<tr><th>Améliorations</th><th>Valeur</th><th>Équipé<th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
 
 
 foreach(CARACS as $k=>$e){
@@ -106,13 +106,31 @@ foreach(CARACS as $k=>$e){
         $disabled = 'disabled';
     }
 
+
+    $carac = '';
+
+    if($player->caracs->$k > $player->nude->$k){
+
+
+        $carac = '<font color="blue">'. $player->caracs->$k .'</font>';
+    }
+    elseif($player->caracs->$k < $player->nude->$k){
+
+
+        $carac = '<font color="red">'. $player->caracs->$k .'</font>';
+    }
+
+
     echo '
     <tr>
         <td>
             '. $e .'
         </td>
         <td>
-            '. $player->caracs->$k .'
+            '. $player->nude->$k .'
+        </td>
+        <td>
+            '. $carac .'
         </td>
         <td>
             <font color="'. $color .'">'. $cost .'Pi</font>

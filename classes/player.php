@@ -36,7 +36,7 @@ class Player{
     }
 
 
-    public function get_caracs(){
+    public function get_caracs($nude=false){
 
 
         if(!isset($this->data)){
@@ -54,6 +54,61 @@ class Player{
         foreach(CARACS as $k=>$e){
 
             $this->caracs->$k = $this->raceData->$k + $this->upgrades->$k;
+        }
+
+
+        if($nude){
+
+            return false;
+        }
+
+
+        $this->nude = clone $this->caracs;
+
+
+        $itemList = Item::get_equiped_list($this);
+
+        foreach($itemList as $row){
+
+
+            $item = new Item($row->id, $row);
+
+            $item->get_data();
+
+
+            $this->{$row->equiped} = $item;
+
+
+            foreach(CARACS as $k=>$e){
+
+
+                if(!empty($item->data->$k)){
+
+
+                    $this->caracs->$k += $item->data->$k;
+                }
+            }
+
+
+            // fixed caracs
+            if(!empty($item->data->fixedF)){
+
+
+                $this->caracs->f = $item->data->fixedF;
+            }
+        }
+
+
+        // fist
+        if(!isset($this->main1)){
+
+
+            $item = Item::get_item_by_name('poing');
+
+            $item->get_data();
+
+            $this->main1 = (object) array();
+            $this->main1 = $item;
         }
     }
 
@@ -755,6 +810,12 @@ class Player{
     public function equip($item){
 
 
+        if(!isset($item->data)){
+
+            $item->get_data();
+        }
+
+
         $db = new Db();
 
 
@@ -792,6 +853,39 @@ class Player{
             $this->id,
             $item->id
         ));
+
+
+        // equip munitions
+        if($munition = $this->get_munition($item)){
+
+
+            $this->equip($munition);
+        }
+    }
+
+
+    public function get_munition($item, $equiped=false){
+
+
+        if(!isset($item->data->munitions)){
+
+            return false;
+
+        }
+
+        foreach($item->data->munitions as $e){
+
+
+            $munition = Item::get_item_by_name($e);
+
+            if($munition->get_n($this, $bank=false, $equiped) > 0){
+
+
+                return $munition;
+            }
+        }
+
+        return false;
     }
 
 
@@ -912,6 +1006,12 @@ class Player{
         }
 
         $this->data = $playerJson;
+
+
+        $pathInfo = pathinfo($this->data->portrait);
+
+        $this->data->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+
 
         return $playerJson;
     }
