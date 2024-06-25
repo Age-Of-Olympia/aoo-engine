@@ -12,6 +12,15 @@ require_once('config.php');
 $ui = new Ui('Init');
 
 
+if(!isset($_GET['perform'])){
+
+
+    echo '<a href="ini.php?perform"><button>(re)init</button></a>';
+
+    exit();
+}
+
+
 function rrmdir($dir) {
     if (is_dir($dir)) {
     $objects = scandir($dir);
@@ -40,6 +49,13 @@ rrmdir($realpath);
 echo 'create new datas dir : players<br />';
 
 mkdir($path, 0755, true);
+
+
+if(!file_exists('config/db_constants.php')){
+
+
+    exit('<font color="red">Renommez config/db_constants.php.exemple en config/db_constants.php, puis éditez le!');
+}
 
 
 echo 'run db/init.sql<br />';

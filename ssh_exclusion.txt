@@ -1,0 +1,6 @@
+.git/
+wiki/
+data/private/players/
+data/private/forum/
+config/db_constants.php
+sessions/

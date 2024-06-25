@@ -1,2 +1,3 @@
-sessions/*
-forum/
+sessions/
+datas/private/
+config/db_constants.php

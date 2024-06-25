@@ -158,6 +158,7 @@ class ui{
                         data-src="img/items/'. $defaultItem->row->name .'.png"
                         data-filler="img/ui/fillers/150.png"
                         width="150"
+                        height="150"
                     />
                 </div>
                 <div class="preview-text">
@@ -180,43 +181,50 @@ class ui{
                 <table border="1">
                     ';
 
-        foreach($itemList as $k => $e){
+        foreach($itemList as $row){
 
 
-            $k = Item::get_unformatted_name($k);
+            $item = new Item($row->id, $row);
+
+            $item->get_data();
+
+            $caracs = Item::get_item_carac($item->data);
 
 
-            $itemJson = json()->decode('items', $k);
-
-            $caracs = Item::get_item_carac($itemJson);
+            $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
 
 
-            $itemName = Item::get_formatted_name(ucfirst($itemJson->name), $e);
+            $emplacement = '';
 
-            $itemName = str_replace('&#42;', '*', $itemName); // so the players cannot search for cursed items easily in source code
+            if($row->equiped != ''){
+
+                $emplacement = '<div class="emplacement"><img src="img/ui/inventory/'. $row->equiped .'.jpeg" /></div>';
+            }
 
 
             echo '
             <tr
                 class="item-case"
-                data-id="'. $e->id .'"
+                data-id="'. $row->id .'"
                 data-name="'. $itemName .'"
-                data-n="'. $e->n .'"
-                data-text="'. $itemJson->text .'"
-                data-price="'. $itemJson->price .'"
-                data-img="img/items/'. $k .'.png"
+                data-n="'. $row->n .'"
+                data-text="'. $item->data->text .'"
+                data-price="'. $item->data->price .'"
+                data-img="img/items/'. $item->row->name .'.png"
             >
                 <td width="50">
                     <div>
-                        <img src="img/items/'. $e->name .'_mini.png" />
+                        <img src="img/items/'. $row->name .'_mini.png" height="50" />
                     </div>
                 </td>
-                <td align="left">
+                <td align="left" class="item-name">
                     '. $itemName .'<br />
                     '. implode(', ', $caracs) .'
+
+                    '. $emplacement .'
                 </td>
                 <td width="50">
-                    x'. $e->n .'
+                    x'. $row->n .'
                 </td>
             </tr>
             ';
@@ -245,7 +253,7 @@ class ui{
 
             window.id = "<?php echo $defaultItem->row->id ?>";
             window.name = "<?php echo $defaultItem->row->name ?>";
-            window.n =    <?php echo $itemList[$defaultItem->row->name]->n ?>;
+            window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
             window.price =    1;
 
             var $previewImg = $(".preview-img img");

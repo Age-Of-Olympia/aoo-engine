@@ -9,10 +9,10 @@ if(!empty($_POST['id']) && !empty($_POST['n'])){
 }
 
 
-if(!empty($_GET['item'])){
+if(!empty($_GET['itemId'])){
 
 
-    $item = Item::get_item_by_name($_GET['item']);
+    $item = new Item($_GET['itemId']);
     $item->get_data();
 
 

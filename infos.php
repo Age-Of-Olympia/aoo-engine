@@ -41,12 +41,48 @@ echo '
 
         echo '<img src="'. $target->data->avatar .'" />';
 
+
+        echo '<div class="infos-text">'. nl2br($target->data->text) .'</div>';
+
+
+        echo '
+    </td>
+</tr>
+<tr>
+    <td colspan="2">
+        ';
+
+        echo '
+        <table align="center" border="1" class="marbre" cellspacing="0">
+            <tr>
+                ';
+
+                $itemList = Item::get_equiped_list($target);
+
+                foreach($itemList as $row){
+
+
+                    $item = new Item($row->id, $row);
+                    $item->get_data();
+
+                        echo '<td><img src="'. $item->data->mini .'" /></td>';
+                }
+
+                echo '
+            </tr>
+        </table>
+        ';
+
         echo '
     </td>
 </tr>
 <tr>
     <td colspan="2" align="left">
-        '. nl2br($target->data->text) .'
+
+        <h2>Histoire:</h2>
+
+        '. nl2br($target->data->story) .'
     </td>
+</tr>
 </table>
 ';

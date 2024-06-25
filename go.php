@@ -30,7 +30,18 @@ if(!is_numeric($goCoords->x) || !is_numeric($goCoords->y)){
 }
 
 
+// distance
+if(View::get_distance($player->coords, $goCoords) > 1){
+
+    exit('error distance');
+}
+
+
 $coordsId = View::get_coords_id($goCoords);
+
+
+$db = new Db();
+
 
 $sql = '
 SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ?
@@ -39,8 +50,6 @@ SELECT *, "plants" AS whichTable FROM map_plants WHERE coords_id = ?
 
 ORDER BY id DESC
 ';
-
-$db = new Db();
 
 $res = $db->exe($sql, array($coordsId, $coordsId));
 
@@ -81,27 +90,6 @@ if($res->num_rows){
 
         include($path);
     }
-}
-
-
-// followers
-$res = $db->get_single_player_id('players_followers', $player->id);
-
-if($res->num_rows){
-
-
-    while($row = $res->fetch_object()){
-
-
-        $path = 'scripts/map/followers.php';
-
-        $foreground_id = $row->foreground_id;
-
-        $position = $row->params;
-
-        include($path);
-    }
-
 }
 
 

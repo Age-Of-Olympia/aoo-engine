@@ -54,7 +54,9 @@ define('EFFECTS_RA_FONT', array(
     'sang'=>'ra-gloop',
 
     'regeneration'=>'ra-health-increase',
-    'poison_magique'=>'ra-bone-bite'
+    'poison_magique'=>'ra-bone-bite',
+
+    'fatigue'=>'ra-player-pain'
 ));
 
 define('ELE_CONTROLS', array(
@@ -116,15 +118,41 @@ define('WALLS_PV', array(
 
 
 /*
- * items options
+ * items options & emplacements
  */
 
 
 define('ITEMS_OPT', array(
     'enchanted'=>'*',
     'vorpal'=>'~',
-    'cursed'=>'&#42;'
+    'cursed'=>'',
+    'element'=>'',
+    'blessed_by_id'=>'+'
+
 ));
+
+
+define('ITEM_EMPLACEMENT_FORMAT', array(
+    'main1',
+    'main2',
+    'doigt',
+    'tete',
+    'bouche',
+    'cou',
+    'epaule',
+    'tronc',
+    'taille',
+    'pieds',
+    'munition',
+    'trophee'
+));
+
+
+/*
+ * costs
+ */
+
+define('TRAVEL_COST', 15);
 
 
 /*

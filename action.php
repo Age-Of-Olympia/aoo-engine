@@ -37,6 +37,12 @@ $target->get_caracs();
 $distance = View::get_distance($player->get_coords(), $target->get_coords());
 
 
+if($distance > $player->caracs->p){
+
+    exit('La cible est hors de votre Perception.');
+}
+
+
 if(!empty($actionJson->distanceMin)){
 
 
@@ -54,6 +60,12 @@ if(!empty($actionJson->distanceMax)){
         exit('Vous n\'êtes pas à bonne distance.');
     }
 }
+
+
+View::get_walls_between($player->coords, $target->coords);
+
+
+$playerMain1 = new Item(Item::get_emplacement($player, 'main1'));
 
 
 // log

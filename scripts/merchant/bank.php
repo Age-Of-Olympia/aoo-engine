@@ -1,10 +1,10 @@
 <?php
 
 
-if(!empty($_POST['action']) && !empty($_POST['item']) && !empty($_POST['n'])){
+if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])){
 
 
-    $item = Item::get_item_by_name($_POST['item']);
+    $item = new Item($_POST['itemId']);
 
 
     if($_POST['action'] == 'withdraw'){
@@ -84,7 +84,7 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: 'merchant.php?targetId=<?php echo $target->id ?>&bank',
-            data: {'action': action,'item': window.name,'n': n}, // serializes the form's elements.
+            data: {'action': action,'itemId': window.id,'n': n}, // serializes the form's elements.
             success: function(data)
             {
                 // alert(data);

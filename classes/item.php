@@ -3,16 +3,21 @@
 class Item{
 
 
-    function __construct($itemId){
+    function __construct($itemId, $row=false){
 
 
         $this->id = $itemId;
 
-        $db = new Db();
 
-        $res = $db->get_single('items', $this->id);
+        if(!$row){
 
-        $row = $res->fetch_object();
+            $db = new Db();
+
+            $res = $db->get_single('items', $this->id);
+
+            $row = $res->fetch_object();
+        }
+
 
         $this->row = $row;
     }
@@ -45,9 +50,9 @@ class Item{
         }
 
 
-        $itemJson->img = (!empty($itemJson->img)) ? $itemJson->img : 'img/items/'. $itemJson->name .'.png';
+        $itemJson->img = (!empty($itemJson->img)) ? $itemJson->img : 'img/items/'. $this->row->name .'.png';
 
-        $itemJson->mini = (!empty($itemJson->mini)) ? $itemJson->mini : 'img/items/'. $itemJson->name .'_mini.png';
+        $itemJson->mini = (!empty($itemJson->mini)) ? $itemJson->mini : 'img/items/'. $this->row->name .'_mini.png';
 
 
         $this->data = $itemJson;
@@ -225,10 +230,20 @@ class Item{
     }
 
 
-    public static function get_item_list($player, $bank=false) : array {
+    public static function get_equiped_list($player) : array {
+
+
+        return self::get_item_list($player, $bank=false, $equiped=true);
+    }
+
+
+    public static function get_item_list($player, $bank=false, $equiped=false) : array {
 
 
         $bank = ($bank) ? '_bank' : '';
+
+        $equiped = ($equiped) ? 'AND equiped != ""' : '';
+
 
         if(!is_numeric($player)){
 
@@ -242,10 +257,6 @@ class Item{
         $return = array();
 
 
-        // always define or
-        $return['or'] = 0;
-
-
         $sql = '
         SELECT
         *
@@ -257,8 +268,9 @@ class Item{
         item_id = items.id
         WHERE
         player_id = ?
+        '. $equiped .'
         ORDER BY
-        items.name
+        players_items.equiped DESC, items.name
         ';
 
         $db = new Db();
@@ -268,14 +280,19 @@ class Item{
         while($row = $res->fetch_object()){
 
 
-            $k = $row->name;
+            $return[$row->id] = $row;
+        }
 
 
-            $k = self::get_formatted_name($k, $row);
+        // or
+        if(!isset($return[1]) && !$equiped){
 
+            $return[1] = (object) array('id'=>1,'name'=>'or','price'=>1,'n'=>0, 'equiped'=>'');
 
+            foreach(ITEMS_OPT as $k=>$e){
 
-            $return[$k] = $row;
+                $return[1]->$k = 0;
+            }
         }
 
 

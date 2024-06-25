@@ -211,7 +211,6 @@ input[type="button"]:disabled, button:disabled, select:disabled{
     margin: 10px;
 }
 
-
 /*
  * case infos
  */
@@ -345,6 +344,19 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 /*
  * INVENTORY
  */
+
+.item-name{
+
+    position: relative;
+}
+
+.item-name .emplacement{
+
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    opacity: 0.7;
+}
 
 
 .inventory-container {
@@ -499,6 +511,19 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 
 
 /*
+ * infos target
+ */
+
+
+.infos-text{
+
+    max-height: 150px;
+    overflow: scroll;
+    text-align: left;
+}
+
+
+/*
  * RA COLORS
  */
 
@@ -515,3 +540,5 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 .ra-health-increase{ color: #66d9ff; } /* heal */
 
 .ra-bone-bite{ color: #66ff66; } /* poison */
+
+.ra-player-pain{ color: #eee; } /* fatigue */

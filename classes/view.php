@@ -618,4 +618,147 @@ class View{
         if( $difX > $difY ) return $difX ;
         else return $difY ;
     }
+
+
+    public static function get_walls_between($coords1, $coords2){
+
+
+        $playerA = (array) $coords1;
+        $playerB = (array) $coords2;
+
+        if (!$playerA || !$playerB) {
+            die('Erreur: Impossible de récupérer les coordonnées des joueurs.');
+        }
+
+        $xA = $playerA['x'];
+        $yA = $playerA['y'];
+        $xB = $playerB['x'];
+        $yB = $playerB['y'];
+
+
+        // walls
+        $db = new Db();
+
+        $sql = '
+        SELECT
+        map_walls.id AS id,
+        x,y
+        FROM
+        coords
+        INNER JOIN
+        map_walls
+        ON
+        coords.id = coords_id
+        WHERE
+        z = ?
+        AND
+        plan = ?
+        AND
+        x BETWEEN ? AND ?
+        AND
+        y BETWEEN ? AND ?
+        ';
+
+        $xMin = min($xA, $xB);
+        $xMax = max($xA, $xB);
+        $yMin = min($yA, $yB);
+        $yMax = max($yA, $yB);
+
+
+        $res = $db->exe($sql, array(
+            $coords1->z,
+            $coords1->plan,
+            $xMin,
+            $xMax,
+            $yMin,
+            $yMax
+        ));
+
+        if(!$res->num_rows){
+
+            return false;
+        }
+
+        $wallsTbl = array();
+
+        while($row = $res->fetch_object()){
+
+            $wallsTbl[$row->x .','. $row->y] = $row->id;
+        }
+
+
+        // Fonction pour utiliser l'algorithme de Bresenham pour tracer une ligne
+        function bresenham($x1, $y1, $x2, $y2) {
+            $points = [];
+            $dx = abs($x2 - $x1);
+            $dy = abs($y2 - $y1);
+            $sx = ($x1 < $x2) ? 1 : -1;
+            $sy = ($y1 < $y2) ? 1 : -1;
+            $err = $dx - $dy;
+
+            while (true) {
+                $points[] = [$x1, $y1];
+                if ($x1 == $x2 && $y1 == $y2) break;
+                $e2 = 2 * $err;
+                if ($e2 > -$dy) {
+                    $err -= $dy;
+                    $x1 += $sx;
+                }
+                if ($e2 < $dx) {
+                    $err += $dx;
+                    $y1 += $sy;
+                }
+            }
+            return $points;
+        }
+
+
+        // Tracer la ligne entre les deux joueurs
+        $line_points = bresenham($xA, $yA, $xB, $yB);
+
+
+        ob_start();
+
+
+        ?>
+        <script>
+
+        alert("Un ou plusieurs obstacles gênent votre action.");
+        $("#ui-card").hide();
+
+        <?php
+
+        // echo '';
+
+        $obstacle = false;
+
+        // Vérifier chaque point pour des obstacles
+        foreach ($line_points as $point) {
+            list($x, $y) = $point;
+
+            if(!empty($wallsTbl[$x .','. $y])){
+
+
+                $obstacle = true;
+
+                ?>
+                $('#walls'+ <?php echo $wallsTbl[$x .','. $y] ?>).addClass('blink');
+                <?php
+            }
+        }
+
+        ?>
+        </script>
+        <?php
+
+        $js = ob_get_clean();
+
+
+        if($obstacle){
+
+
+            echo $js;
+            exit();
+        }
+    }
 }

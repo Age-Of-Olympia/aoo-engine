@@ -269,6 +269,13 @@ class Player{
     public function add_effect($name, $duration=0){
 
 
+        // effect exists
+        if(!isset(EFFECTS_RA_FONT[$name])){
+
+            exit('error effect name');
+        }
+
+
         // duration (0 is unlimited)
         if($duration == 0){
 
@@ -365,6 +372,9 @@ class Player{
 
 
         $coordsId = View::get_coords_id($goCoords);
+
+
+        $this->move_followers($coordsId);
 
 
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
@@ -688,6 +698,100 @@ class Player{
         $n = $row->n;
 
         return $n;
+    }
+
+
+    public function move_followers($coordsId){
+
+
+        $db = new Db();
+
+        $res = $db->get_single_player_id('players_followers', $this->id);
+
+        if($res->num_rows){
+
+
+            while($row = $res->fetch_object()){
+
+
+                $foreground_id = $row->foreground_id;
+
+                $position = $row->params;
+
+                if($position == 'last'){
+
+
+                    $sql = '
+                    UPDATE
+                    map_foregrounds
+                    SET
+                    coords_id = ?
+                    WHERE
+                    id = ?
+                    ';
+
+                    $db->exe($sql, array($this->data->coords_id, $foreground_id));
+                }
+
+                elseif($position == 'on'){
+
+
+                    $sql = '
+                    UPDATE
+                    map_foregrounds
+                    SET
+                    coords_id = ?
+                    WHERE
+                    id = ?
+                    ';
+
+                    $db->exe($sql, array($coordsId, $foreground_id));
+                }
+            }
+        }
+    }
+
+
+    public function equip($item){
+
+
+        $db = new Db();
+
+
+        // unequip emplacement
+        $sql = '
+        UPDATE
+        players_items
+        SET
+        equiped = ""
+        WHERE
+        player_id = ?
+        AND
+        equiped = ?
+        ';
+
+        $db->exe($sql, array(
+            $this->id,
+            $item->data->emplacement,
+        ));
+
+
+        $sql = '
+        UPDATE
+        players_items
+        SET
+        equiped = ?
+        WHERE
+        player_id = ?
+        AND
+        item_id = ?
+        ';
+
+        $db->exe($sql, array(
+            $item->data->emplacement,
+            $this->id,
+            $item->id
+        ));
     }
 
 

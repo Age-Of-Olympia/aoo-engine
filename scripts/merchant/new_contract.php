@@ -87,7 +87,7 @@ elseif(isset($_GET['bids'])){
     <select id="item">
         ';
 
-        $sql = 'SELECT * FROM items';
+        $sql = 'SELECT * FROM items ORDER by name';
 
         $db = new Db();
 
@@ -98,14 +98,15 @@ elseif(isset($_GET['bids'])){
         while($row = $res->fetch_object()){
 
 
-            $itemJson = json()->decode('items', $row->name);
+            $item = new Item($row->id, $row);
+            $item->get_data();
 
-            if(!empty($itemJson->forbid->market)){
+            if(!empty($item->data->forbid->market)){
 
                 continue;
             }
 
-            $itemList[$row->name] = $itemJson->name;
+            $itemList[] = $item;
 
         }
 
@@ -113,11 +114,11 @@ elseif(isset($_GET['bids'])){
         ksort($itemList);
 
 
-        foreach($itemList as $k=>$e){
+        foreach($itemList as $item){
 
 
             echo '
-            <option value="'. $k .'">'. ucfirst($e) .'</option>
+            <option value="'. $item->id .'">'. ucfirst($item->data->name) .'</option>
             ';
         }
 
@@ -138,12 +139,12 @@ elseif(isset($_GET['bids'])){
 
         $('#item').change(function(e){
 
-            var item = $(this).val();
+            var itemId = $(this).val();
 
 
             $.ajax({
                 type: "POST",
-                url: 'merchant.php?targetId=<?php echo $target->id ?>&bids&hideMenu&item='+ item,
+                url: 'merchant.php?targetId=<?php echo $target->id ?>&bids&hideMenu&itemId='+ itemId,
                 data: {}, // serializes the form's elements.
                 success: function(data)
                 {
