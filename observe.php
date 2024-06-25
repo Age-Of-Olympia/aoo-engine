@@ -143,15 +143,17 @@ if(!$solo && $res->num_rows){
 
         $target->get_data();
 
-        $targetJson = json()->decode('players', $target->id);
-
 
         $dataName = '<a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a>';
+
+        $dataName .= '<div class="effects">';
 
         foreach($target->get_effects() as $e){
 
             $dataName .= ' <span class="ra '. EFFECTS_RA_FONT[$e] .'"></span>';
         }
+
+        $dataName .= '</div>';
 
 
         $dataImg = '';
@@ -189,21 +191,22 @@ if(!$solo && $res->num_rows){
 
         if($target->have_option('isMerchant')){
 
-            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> Marchander</button></a>';
+            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
         }
 
 
         $raceJson = json()->decode('races', $target->data->race);
 
-        $dataType = 'Personnage - <i>'. $raceJson->name .'</i>';
+        $dataType = $raceJson->name;
 
 
         $data = (object) array(
-            'bg'=>$targetJson->portrait,
+            'bg'=>$target->data->portrait,
             'name'=>$dataName,
             'img'=>$dataImg,
             'type'=>$dataType,
-            'text'=>$targetJson->text
+            'text'=>$target->data->text,
+            'race'=>$target->data->race
         );
 
         $card = Ui::get_card($data);

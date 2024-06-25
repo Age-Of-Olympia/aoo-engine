@@ -650,6 +650,16 @@ if(!empty($_POST['cmd'])){
 
             exit('Session ouverte pour joueur '. $player->data->name .'.');
         }
+
+        // DESTROY
+        if($cmdTbl[1] == 'destroy'){
+
+            unset($_SESSION['mainPlayerId']);
+            unset($_SESSION['playerId']);
+            session_destroy();
+
+            exit('session destroyed');
+        }
     }
 
 

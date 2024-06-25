@@ -6,7 +6,6 @@ $forumJson = json()->decode('forum', 'forums/'. $_GET['forum']);
 
 if(!$forumJson){
 
-    ob_clean();
     exit('error forum');
 }
 

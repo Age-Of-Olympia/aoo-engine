@@ -245,101 +245,158 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 * card ui
 */
 
-#ui-card, #ui-item-list, #ui-dialog, #ui-map{
+#ui-card,  #ui-dialog{
 
     color: white;
+
 }
 
-#ui-card .card-template, #ui-item-list .item-preview, #ui-dialog .dialog-template {
+    #ui-card .card-wrapper{
+
+        width: 230px;
+        margin: 0 auto;
+        padding: 17px;
+        padding-top: 10px;
+        padding-bottom: 5px;
+        border: 17px solid black;
+        border-radius: 15px;
+        position: relative;
+    }
+
+    #ui-card .geant{
+
+        background: url('../img/ui/cards/brown.jpeg');
+    }
+
+    #ui-card .nain{
+
+        background: url('../img/ui/cards/red.jpeg');
+    }
+
+    #ui-card .elfe{
+
+        background: url('../img/ui/cards/light_green.jpeg');
+    }
+
+    #ui-card .hs{
+
+        background: url('../img/ui/cards/dark_green.jpeg');
+    }
+
+    #ui-card .olympien{
+
+        background: url('../img/ui/cards/white_marble.jpeg');
+    }
+
+
+    #ui-card .card-name{
+
+        text-align: left;
+        margin-top: -10px;
+        margin-left: -10px;
+        position: relative;
+    }
+
+        #ui-card .card-name a{
+
+            font-family: goudy;
+            font-size: 1.3em;
+            color: white;
+            text-shadow: 1px 1px #0a0a0a;
+            letter-spacing: 1px;
+        }
+
+        #ui-card .card-name .effects{
+
+            position: absolute;
+            top: 3px;
+            right: -10px;
+        }
+
+            #ui-card .card-name .effects span{
+
+                background: black;
+                font-size: 1.3em;
+                padding: 2px;
+                border-radius: 15px;
+                margin: -2px;
+                z-index: 1;
+                display: inline-flex;
+            }
+
+    #ui-card .card-image{
+
+        overflow: hidden;
+        width: 220px;
+        height: 230px;
+        margin-left: 5px;
+        position: relative;
+        border-bottom: 5px solid rgba(255,255,255,0.1);
+    }
+
+        #ui-card .card-image .card-portrait{
+
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 5px solid rgba(0,0,0,0.5);
+            border-left: 5px solid rgba(255,255,255,0.1);
+        }
+
+    #ui-card .card-actions{
+
+        position: absolute;
+        top: 30px;
+        right: -5px;
+        text-align: right;
+    }
+
+    #ui-card .card-actions .action-name{
+
+        display: none;
+    }
+
+    #ui-card .card-type{
+
+        text-align: left;
+        color: #eee;
+        font-size: 88%;
+        margin-left: -10px;
+    }
+
+    #ui-card .card-text{
+
+        color: grey;
+        padding: 5px;
+        margin-left: -8px;
+        width: 225px;
+        height: 125px;
+        overflow: scroll;
+        text-align: left;
+        background: rgba(0,0,0,0.8);
+        border: 5px solid rgba(0,0,0,0.5);
+        border-left: 5px solid rgba(255,255,255,0.1);
+        border-bottom: 5px solid rgba(255,255,255,0.1);
+        font-size: 88%;
+    }
+
+
+/*
+* dialog
+*/
+
+#ui-dialog .dialog-template {
 
     width: 275px;
     height: 450px;
     margin: 0 auto;
-    background: black;
+    background: black url('../img/ui/cards/red.jpeg');
     border: 15px solid black;
     border-radius: 15px;
+    padding: 17px;
+    padding-top: 23px;
 }
 
-    #ui-card .card-template-name{
-
-        width: auto;
-        padding: 15px;
-        text-align: left;
-        background: rgba(0,0,0,0.8);
-    }
-
-        #ui-card .card-template-name a{
-
-            color: white;
-            font-family: goudy;
-            font-size: 120%;
-        }
-
-    #ui-card .card-template-img{
-
-        width: 275px;
-        height: 250px;
-        text-align: right;
-    }
-
-        #action-data{
-
-            position: absolute;
-            font-size: 88%;
-            text-align: left;
-            width: 220px;
-            margin: 5px;
-            padding: 5px;
-            background: rgba(0,0,0,0.8);
-            display: none;
-        }
-
-        #action-data .action-details{
-
-            font-size: 88%;
-            color: grey;
-        }
-
-
-    #ui-card .card-template-type{
-
-        width: 250px;
-        text-align: left;
-        opacity: 0.5;
-    }
-
-    #ui-card .card-template-text{
-
-        width: auto;
-        margin: 0 auto;
-        height: 115px;;
-        text-align: left;
-        background: rgba(0,0,0,0.8);
-        padding-top: 10px;
-        padding-left: 15px;
-        padding-right: 15px;
-        overflow: scroll;
-    }
-
-    #ui-card .card-template-name, #ui-card .card-template-type{
-
-        padding-left: 10px;
-    }
-
-        #ui-card .card-template-name .close-card{
-
-            float: right;
-        }
-
-    #ui-card .action{
-
-        color: black;
-    }
-
-        #ui-card .action .action-name{
-
-            display: none;
-        }
 
 /*
  * INVENTORY
@@ -522,6 +579,19 @@ input[type="button"]:disabled, button:disabled, select:disabled{
     text-align: left;
 }
 
+.infos-portrait{
+
+    position: relative;
+}
+
+    .infos-portrait .infos-effects{
+
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        text-align: left;
+        background: rgba(255,255,255,0.5);
+    }
 
 /*
  * RA COLORS

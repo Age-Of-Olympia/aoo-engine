@@ -34,10 +34,23 @@ if(!empty($_POST['img'])){
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
+echo '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 210px));">';
+
+
 foreach(File::scan_dir($dir) as $e){
 
-    echo '<img style="cursor: pointer" src="'. $dir . $e .'" data-img="'. $e .'" height="330" />';
+
+    if(str_contains($e, '_mini')){
+
+        continue;
+    }
+
+    echo '<img style="cursor: pointer;" src="'. $dir . $e .'" data-img="'. $e .'" height="330" />';
 }
+
+
+echo '</div>';
+
 
 ?>
 <script>

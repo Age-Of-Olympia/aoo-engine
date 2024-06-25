@@ -23,8 +23,43 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 echo '
 <table border="1" align="center" cellspacing="0" class="marbre">
 <tr>
-    <td width="210">
-        <img src="'. $target->data->portrait .'" height="330" />
+    <td width="210" class="infos-portrait">
+        ';
+
+
+        if($target->id == $_SESSION['playerId']){
+
+
+            $sql = 'SELECT name, endTime FROM players_effects WHERE player_id = ?';
+
+            $db = new Db();
+
+            $res = $db->exe($sql, $target->id);
+
+            echo '<div class="infos-effects">';
+
+                while($row = $res->fetch_object()){
+
+
+                    $endTime = '(reposez-vous)';
+
+                    if(time() < $row->endTime){
+
+                        $endTime = Str::convert_time($row->endTime - time());
+                    }
+
+
+                    echo '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span> <sup>'. $endTime .'</sup><br />';
+                }
+
+            echo '</div>';
+        }
+
+
+        echo '<img src="'. $target->data->portrait .'" height="330" />';
+
+
+        echo '
     </td>
     <td valign="top">
         ';

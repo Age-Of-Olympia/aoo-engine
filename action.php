@@ -62,23 +62,34 @@ if(!empty($actionJson->distanceMax)){
 }
 
 
-if($player->main1->data->subtype == 'melee' && $distance > 1){
-
-    exit('Vous n\'êtes pas à bonne distance (arme de mêlée).');
-}
-elseif($player->main1->data->subtype == 'jet' && $distance < 2){
-
-    exit('Vous n\'êtes pas à bonne distance (arme de jet).');
-}
-elseif($player->main1->data->subtype == 'tir' && $distance < 2){
-
-        exit('Vous n\'êtes pas à bonne distance (arme de tir).');
-}
+if(!empty($actionJson->useEmplacement)){
 
 
-if(!$munition = $player->get_munition($player->main1, $equiped=true)){
+    $emplacement = $actionJson->useEmplacement;
 
-    exit('Vous devez équiper une munition.');
+
+    if($player->$emplacement->data->subtype == 'melee' && $distance > 1){
+
+        exit('Vous n\'êtes pas à bonne distance (arme de mêlée).');
+    }
+    elseif($player->$emplacement->data->subtype == 'jet' && $distance < 2){
+
+        exit('Vous n\'êtes pas à bonne distance (arme de jet).');
+    }
+    elseif($player->$emplacement->data->subtype == 'tir' ){
+
+
+        if($distance < 2){
+
+            exit('Vous n\'êtes pas à bonne distance (arme de tir).');
+        }
+
+
+        if(!$munition = $player->get_munition($player->$emplacement, $equiped=true)){
+
+            exit('Vous devez équiper une munition.');
+        }
+    }
 }
 
 
@@ -152,7 +163,7 @@ if(!empty($success) && $success == true){
         }
 
         echo '
-        Vous infligez '. $totalDamages .' à '. $target->data->name .'.
+        Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
         <div>'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .'</div>';
     }
@@ -228,16 +239,48 @@ if(!empty($actionJson->addEffects)){
 }
 
 
-if(!empty($munition) && $munition){
+if(!empty($actionJson->useEmplacement)){
 
 
-    $munition->get_data();
+    if(!empty($munition) && $munition){
 
-    $munition->add_item($player, -1);
 
-    echo 'Perdu: '. $munition->data->name .'';
+        $munition->get_data();
+
+        $munition->add_item($player, -1);
+
+        echo 'Perdu: '. $munition->data->name .'';
+    }
+
+
+    if($player->$emplacement->data->subtype == 'jet'){
+
+
+        if($distance > 2){
+
+
+            $dropCoords = clone $target->coords;
+
+            $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
+
+            $values = array(
+            'item_id'=>$player->$emplacement->id,
+            'coords_id'=>$coordsId,
+            'n'=>1
+            );
+
+            $db = new Db();
+
+            $db->insert('map_items', $values);
+
+
+            $player->$emplacement->add_item($player, -1);
+
+
+            Player::refresh_views_at_z($dropCoords->z);
+        }
+    }
 }
-
 
 if(
     (!empty($actionJson->targetJet) && $actionJson->targetJet != 0)

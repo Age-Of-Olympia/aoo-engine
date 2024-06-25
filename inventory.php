@@ -3,8 +3,6 @@
 require_once('config.php');
 
 
-$player = new Player($_SESSION['playerId']);
-
 
 if(!empty($_POST['action']) && $_POST['action'] == 'store'){
 

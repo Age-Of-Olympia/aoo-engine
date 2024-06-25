@@ -1,8 +1,5 @@
 <?php
 
-ob_clean();
-
-
 if(!empty($_POST['post'])){
 
 

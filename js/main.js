@@ -27,71 +27,80 @@ $(document).ready(function(){
         }
         else if (e.keyCode == 176) {
 
-            e.preventDefault();
-
-            var lastCmd = '';
-
-            $.ajax({
-                type: "POST",
-                url: 'console.php',
-                data: {'getLastCmd':1}, // serializes the form's elements.
-                success: function(data)
-                {
-
-                    lastCmd = data.trim();
-
-
-                    if($('.reply')[0] != null){
-
-                        lastCmd = 'topic '+ $('.reply').data('topic');
-                    }
-
-
-                    var cmd = prompt('', lastCmd);
-
-                    if(cmd != null && cmd != ''){
-
-                        $.ajax({
-                            type: "POST",
-                            url: 'console.php',
-                            data: {'cmd':cmd}, // serializes the form's elements.
-                            success: function(data)
-                            {
-                                alert(data);
-
-                                if(data.trim() == 'editor'){
-
-                                    document.location = 'editor.php';
-
-                                    return false;
-                                }
-                                else if(data.trim() == 'tiled'){
-
-                                    document.location = 'tiled.php';
-
-                                    return false;
-                                }
-                                else if(data.slice(-5) == ',json'){
-
-                                    document.location = 'editor.php?url='+ data.trim();
-
-                                    return false;
-                                }
-
-
-                                document.location.reload();
-                            }
-                        });
-                    }
-                }
-            });
-
-
-
-            return false;
+            open_console(false);
         }
     });
 });
+
+
+function open_console(defaultCmd){
+
+
+    var lastCmd = '';
+
+    $.ajax({
+        type: "POST",
+        url: 'console.php',
+        data: {'getLastCmd':1}, // serializes the form's elements.
+        success: function(data)
+        {
+
+            lastCmd = data.trim();
+
+
+            if($('.reply')[0] != null){
+
+                lastCmd = 'topic '+ $('.reply').data('topic');
+            }
+
+            if(defaultCmd){
+
+                lastCmd = defaultCmd;
+            }
+
+            var cmd = prompt('', lastCmd);
+
+            if(cmd != null && cmd != ''){
+
+                $.ajax({
+                    type: "POST",
+                    url: 'console.php',
+                    data: {'cmd':cmd}, // serializes the form's elements.
+                    success: function(data)
+                    {
+                        alert(data);
+
+                        if(data.trim() == 'editor'){
+
+                            document.location = 'editor.php';
+
+                            return false;
+                        }
+                        else if(data.trim() == 'tiled'){
+
+                            document.location = 'tiled.php';
+
+                            return false;
+                        }
+                        else if(data.slice(-5) == ',json'){
+
+                            document.location = 'editor.php?url='+ data.trim();
+
+                            return false;
+                        }
+
+
+                        document.location.reload();
+                    }
+                });
+            }
+        }
+    });
+
+
+
+    return false;
+}
 
 
 // copy to clipboard

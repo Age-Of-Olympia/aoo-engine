@@ -561,6 +561,11 @@ class Player{
         @unlink('datas/private/players/'. $this->id .'.json');
     }
 
+    public function refresh_invent(){
+
+        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.invent');
+    }
+
 
     public function put_pf($pf){
 
@@ -861,6 +866,9 @@ class Player{
 
             $this->equip($munition);
         }
+
+
+        $this->refresh_invent();
     }
 
 
@@ -1036,5 +1044,22 @@ class Player{
         $data = Json::encode($data);
 
         Json::write_json('datas/private/players/list.json', $data);
+    }
+
+
+    public static function refresh_views_at_z($z){
+
+
+        $sql = 'SELECT players.id FROM players INNER JOIN coords ON coords.id = coords_id WHERE z = ?';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $z);
+
+        while($row = $res->fetch_object()){
+
+
+            @unlink('datas/private/players/'. $row->id .'.svg');
+        }
     }
 }

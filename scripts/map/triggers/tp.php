@@ -18,62 +18,7 @@ $p = 1;
 $coordsArround = View::get_coords_arround($coords, $p);
 
 
-$sql = '
-SELECT
-x, y
-FROM
-coords AS c
-INNER JOIN
-players AS p
-ON
-p.coords_id = c.id
-WHERE
-z = ?
-AND
-plan = ?
-
-UNION
-
-SELECT
-x, y
-FROM
-coords AS c
-INNER JOIN
-map_walls AS p
-ON
-p.coords_id = c.id
-WHERE
-z = ?
-AND
-plan = ?
-
-UNION
-
-SELECT
-x, y
-FROM
-coords AS c
-INNER JOIN
-map_triggers AS p
-ON
-p.coords_id = c.id
-WHERE
-name = "forbidden"
-AND
-z = ?
-AND
-plan = ?
-';
-
-$res = $db->exe($sql, array($coords->z, $coords->plan, $coords->z, $coords->plan, $coords->z, $coords->plan));
-
-$coordsTaken = array($coords->x .','. $coords->y);
-
-while($row = $res->fetch_object()){
-
-
-    $coordsTaken[] = $row->x .','. $row->y;
-}
+$coordsTaken = View::get_coords_taken($coords);
 
 
 $coordsArround = array_diff($coordsArround, $coordsTaken);

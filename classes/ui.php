@@ -71,54 +71,40 @@ class ui{
             ';
 
 
-            echo '
-            <div
-                class="card-template"
-                style="background: url(\''. $data->bg .'\') no-repeat center; background-size: auto 450px;"
-                >
-                ';
+            echo '<div class="card-wrapper '. $data->race .'">';
+
+
+                echo '<div class="card-name">'. $data->name .'</div>';
+
+
+                echo '<div class="card-image"><img src="'. $data->bg .'" class="card-portrait" /></div>';
+
+
+                echo '<div class="card-actions">';
 
                 echo '
-                <div class="card-template-name">
+                <button
+                    class="action close-card"
+                    data-action="close-card"
+                    >
+                    <span class="ra ra-x-mark"></span>
+                    <span class="action-name">Fermer</span>
+                    </button>
+                    <br />
                     ';
 
-                    echo $data->name;
+                echo $data->img;
 
-                    echo '
-                </div>
-                ';
-
-                echo '
-                <div class="card-template-img">
-                    ';
-
-                    echo '<div id="action-data"></div>';
-
-                    echo '<button
-                        class="action close-card"
-                        data-action="close-card"
-                        >
-                        <span class="ra ra-x-mark"></span>
-                        <span class="action-name">Fermer</span>
-                        </button><br />';
-
-                    echo $data->img;
-
-                    echo '
-                </div>
-                ';
-
-                echo '
-                <div class="card-template-type">'. $data->type .'</div>
-                ';
+                echo '</div>';
 
 
-                echo '
-                <div class="card-template-text">'. $data->text .'</div>
-                ';
+                echo '<div class="card-type">'. $data->type .'</div>';
 
-                echo '
-            </div>';
+
+                echo '<div class="card-text">'. $data->text .'</div>';
+
+
+            echo '</div>';
 
             echo '
         </div>
@@ -196,7 +182,7 @@ class ui{
 
             $emplacement = '';
 
-            if($row->equiped != ''){
+            if(!empty($row->equiped) && $row->equiped != ''){
 
                 $emplacement = '<div class="emplacement"><img src="img/ui/inventory/'. $row->equiped .'.jpeg" /></div>';
             }

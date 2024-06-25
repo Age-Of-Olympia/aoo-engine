@@ -84,7 +84,7 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 (37,	'anneau_horizon',	0,	0,	0,	0,	'',	NULL),
 (38,	'anneau_caprice',	0,	0,	0,	0,	'',	NULL),
 (39,	'anneau_puissance',	0,	0,	0,	0,	'',	NULL),
-(40,	'armure_boue',	0,	0,	0,	0,	'',	NULL),
+(40,	'armure_boue',	0,	0,	0,	1,	'',	NULL),
 (41,	'bottes_sept_lieux',	0,	0,	0,	0,	'',	NULL),
 (42,	'obole_sacree',	0,	0,	0,	0,	'',	NULL),
 (43,	'armure_ecailles',	0,	0,	0,	0,	'',	NULL),
@@ -151,7 +151,8 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 (104,	'baton_marche',	0,	1,	0,	0,	'',	NULL),
 (105,	'armure_boue',	0,	1,	0,	0,	'',	NULL),
 (106,	'baton_marche',	0,	0,	1,	0,	'',	NULL),
-(107,	'baton_marche',	0,	0,	0,	1,	'',	NULL);
+(107,	'baton_marche',	0,	0,	0,	1,	'',	NULL),
+(109,	'poing',	0,	0,	0,	0,	'',	NULL);
 
 DROP TABLE IF EXISTS `items_asks`;
 CREATE TABLE `items_asks` (
@@ -452,5 +453,5 @@ CREATE TABLE `players_upgrades` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- 2024-06-25 07:31:24
+-- 2024-06-25 13:20:42
 

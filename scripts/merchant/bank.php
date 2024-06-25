@@ -1,5 +1,7 @@
 <?php
 
+$player = new Player($_SESSION['playerId']);
+
 
 if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])){
 

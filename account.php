@@ -88,7 +88,7 @@ foreach(OPTIONS as $k=>$e){
             if($k == 'changePortrait'){
 
                 echo '
-                <a href="account.php?portraits"><img src="'. $player->data->portrait .'" width="75" /></a>
+                <a href="account.php?portraits"><img src="'. $player->data->mini .'" /></a>
                 ';
             }
             elseif($k == 'changeAvatar'){

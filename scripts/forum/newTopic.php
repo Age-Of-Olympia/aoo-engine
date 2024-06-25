@@ -6,7 +6,6 @@ $forumJson = json()->decode('forum', 'forums/'. $_GET['newTopic']);
 
 if(!$forumJson){
 
-    ob_clean();
     exit('error forum');
 }
 
@@ -42,9 +41,6 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
 
         Forum::refresh_last_posts();
     }
-
-    ob_clean();
-
 
     echo time();
 

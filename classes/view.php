@@ -493,6 +493,69 @@ class View{
     }
 
 
+    public static function get_coords_taken($coords){
+
+        $sql = '
+        SELECT
+        x, y
+        FROM
+        coords AS c
+        INNER JOIN
+        players AS p
+        ON
+        p.coords_id = c.id
+        WHERE
+        z = ?
+        AND
+        plan = ?
+
+        UNION
+
+        SELECT
+        x, y
+        FROM
+        coords AS c
+        INNER JOIN
+        map_walls AS p
+        ON
+        p.coords_id = c.id
+        WHERE
+        z = ?
+        AND
+        plan = ?
+
+        UNION
+
+        SELECT
+        x, y
+        FROM
+        coords AS c
+        INNER JOIN
+        map_triggers AS p
+        ON
+        p.coords_id = c.id
+        WHERE
+        z = ?
+        AND
+        plan = ?
+        ';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, array($coords->z, $coords->plan, $coords->z, $coords->plan, $coords->z, $coords->plan));
+
+        $coordsTaken = array($coords->x .','. $coords->y);
+
+        while($row = $res->fetch_object()){
+
+
+            $coordsTaken[] = $row->x .','. $row->y;
+        }
+
+        return $coordsTaken;
+    }
+
+
     public static function get_coords_id_arround($coords, $p){
 
 
@@ -554,6 +617,29 @@ class View{
         }
 
         return $coordsId;
+    }
+
+
+    public static function get_free_coords_id_arround($coords, $p){
+
+
+            $coordsArround = View::get_coords_arround($coords, $p=1);
+
+            $coordsTaken = View::get_coords_taken($coords);
+
+            $coordsArround = array_diff($coordsArround, $coordsTaken);
+
+
+            shuffle($coordsArround);
+
+            $randCoords = array_pop($coordsArround);
+
+            $coords->x = explode(',', $randCoords)[0];
+            $coords->y = explode(',', $randCoords)[1];
+
+            $coordsId = View::get_coords_id($coords);
+
+            return $coordsId;
     }
 
 

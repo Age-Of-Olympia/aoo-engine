@@ -120,6 +120,9 @@ class Item{
             $db->exe($sql, $player->id);
         }
 
+
+        $player->refresh_invent();
+
         return true;
     }
 
@@ -243,9 +246,27 @@ class Item{
     public static function get_item_list($player, $bank=false, $equiped=false) : array {
 
 
-        $bank = ($bank) ? '_bank' : '';
+        $equipedOrder = 'equiped DESC,';
 
-        $equiped = ($equiped) ? 'AND equiped != ""' : '';
+        if($bank){
+
+            $bank = '_bank';
+            $equipedOrder = '';
+        }
+        else{
+
+            $bank = '';
+        }
+
+
+        if($equiped){
+
+            $equiped = 'AND equiped != ""';
+        }
+        else{
+
+            $equiped = '';
+        }
 
 
         if(!is_numeric($player)){
@@ -273,7 +294,7 @@ class Item{
         player_id = ?
         '. $equiped .'
         ORDER BY
-        players_items.equiped DESC, items.name
+        '. $equipedOrder .' items.name
         ';
 
         $db = new Db();

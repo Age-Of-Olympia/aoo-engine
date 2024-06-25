@@ -6,7 +6,6 @@ $topJson = json()->decode('forum', 'topics/'. $_GET['reply']);
 
 if(!$topJson){
 
-    ob_clean();
     exit('error top');
 }
 

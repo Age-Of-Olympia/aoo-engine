@@ -1,9 +1,12 @@
 <?php
 
-$itemList = Item::get_item_list($player->id);
-
 
 if(!empty($_POST['action'])){
+
+
+    $player = new Player($_SESSION['playerId']);
+
+    $itemList = Item::get_item_list($player->id);
 
 
     if(in_array($_POST['action'], array('drop','use'))){
@@ -22,7 +25,27 @@ if(!empty($_POST['action'])){
 }
 
 
-echo Ui::print_inventory($itemList);
+$path = 'datas/private/players/'. $_SESSION['playerId'] .'.invent';
+
+if(!file_exists($path)){
+
+
+    $player = new Player($_SESSION['playerId']);
+
+    $itemList = Item::get_item_list($player->id);
+
+    $data = Ui::print_inventory($itemList);
+
+    $myfile = fopen($path, "w") or die("Unable to open file!");
+    fwrite($myfile, $data);
+    fclose($myfile);
+}
+else{
+
+    $data = file_get_contents($path);
+}
+
+echo $data;
 
 
 ?>
