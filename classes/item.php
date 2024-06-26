@@ -54,6 +54,8 @@ class Item{
 
         $itemJson->mini = (!empty($itemJson->mini)) ? $itemJson->mini : 'img/items/'. $this->row->name .'_mini.png';
 
+        $itemJson->name = ucfirst($itemJson->name);
+
 
         $this->data = $itemJson;
 
@@ -411,6 +413,12 @@ class Item{
                 $return[] = '<font color="red">'. $e .''. $carac .'</font>';
         }
 
+
+        // special demolition
+        if(!empty($itemJson->demolition)){
+
+            $return[] = '<font color="blue">démolition+'. $itemJson->demolition .'</font>';
+        }
 
         // pr
         if(!empty($itemJson->pr)){

@@ -102,6 +102,7 @@ $log = $actionJson->log;
 $log = str_replace('PLAYER', $player->data->name, $log);
 $log = str_replace('TARGET', $target->data->name, $log);
 $log = str_replace('NAME', $actionJson->name, $log);
+$log = str_replace('WEAPON', $player->$emplacement->data->name, $log);
 
 
 if($actionJson->targetType != 'self'){
@@ -165,7 +166,7 @@ if(!empty($success) && $success == true){
         echo '
         Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
-        <div>'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .'</div>';
+        <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .' dégâts</div>';
     }
 
     elseif(!empty($actionJson->playerHeal)){
@@ -184,7 +185,7 @@ if(!empty($success) && $success == true){
 
         echo '
         <div>Vous soignez '. $target->data->name .' de '. $playerHeal .'PV.</div>
-        <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'</div>
+        <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'PV</div>
         ';
     }
 }

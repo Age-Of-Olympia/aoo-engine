@@ -77,7 +77,7 @@ class ui{
                 echo '<div class="card-name">'. $data->name .'</div>';
 
 
-                echo '<div class="card-image"><img src="'. $data->bg .'" class="card-portrait" /></div>';
+                echo '<div class="card-image"><img src="'. $data->bg .'" class="card-portrait" /><div id="action-data"></div></div>';
 
 
                 echo '<div class="card-actions">';

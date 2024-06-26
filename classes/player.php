@@ -461,8 +461,14 @@ class Player{
 
                     echo '
                     <script>
-                        alert("Ça mord!");
-                        document.location = "fish.php";
+                        $(document).ready(function(){
+                            if(!confirm("Ça mord!\nPêcher?")){
+
+                                document.location.reload();
+                                return false;
+                            };
+                            document.location = "fish.php";
+                        });
                     </script>
                     ';
                 }

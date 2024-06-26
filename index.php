@@ -16,3 +16,12 @@ $ui = new Ui($title="Index");
 <div id="view"><?php include('scripts/view.php') ?></div>
 
 
+<?php
+
+echo '<div style="color: red;">';
+
+if(!CACHED_INVENT) echo 'CACHED_INVENT = false<br />';
+if(AUTO_GROW) echo 'AUTO_GROW = true<br />';
+if(FISHING) echo 'AUTO_GROW = true<br />';
+
+echo '</div>';

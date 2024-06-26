@@ -27,7 +27,7 @@ if(!empty($_POST['action'])){
 
 $path = 'datas/private/players/'. $_SESSION['playerId'] .'.invent';
 
-if(!file_exists($path)){
+if(!file_exists($path) || !CACHED_INVENT){
 
 
     $player = new Player($_SESSION['playerId']);
