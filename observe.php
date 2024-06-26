@@ -200,12 +200,20 @@ if(!$solo && $res->num_rows){
         $dataType = $raceJson->name;
 
 
+        $text = $target->data->text;
+
+        if($target->data->race != $player->data->race){
+
+            $text = '<i>Parle dans une langue qui vous est inconnue.</i>';
+        }
+
+
         $data = (object) array(
             'bg'=>$target->data->portrait,
             'name'=>$dataName,
             'img'=>$dataImg,
             'type'=>$dataType,
-            'text'=>$target->data->text,
+            'text'=>$text,
             'race'=>$target->data->race
         );
 

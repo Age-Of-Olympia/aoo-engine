@@ -10,6 +10,10 @@ if(!isset($_GET['targetId']) || !is_numeric($_GET['targetId'])){
 }
 
 
+$player = new Player($_SESSION['playerId']);
+$player->get_data();
+
+
 $target = new Player($_GET['targetId']);
 $target->get_data();
 
@@ -77,7 +81,16 @@ echo '
         echo '<img src="'. $target->data->avatar .'" />';
 
 
-        echo '<div class="infos-text">'. nl2br($target->data->text) .'</div>';
+        $text = nl2br($target->data->text);
+
+        if($target->data->race != $player->data->race){
+
+
+            $text = '<i>Parle dans une langue qui vous est inconnue.</i>';
+        }
+
+
+        echo '<div class="infos-text">'. $text .'</div>';
 
 
         echo '

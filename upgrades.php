@@ -141,6 +141,7 @@ foreach(CARACS as $k=>$e){
             echo '
             <button
                 data-carac="'. $k .'"
+                data-carac-name="'. CARACS[$k] .'"
                 '. $disabled .'
                 class="upgrade"
                 >
@@ -172,13 +173,21 @@ $(document).ready(function(){
 
         let carac = $(this).data('carac');
 
+
+        if(!confirm('Augmenter '+ $(this).data('carac-name') +'?')){
+
+
+            $('.upgrade').prop('disabled', false);
+            return false;
+        }
+
         $.ajax({
             type: "POST",
             url: 'upgrades.php',
             data: {'carac':carac}, // serializes the form's elements.
             success: function(data)
             {
-                alert(data);
+                // alert(data);
 
                 document.location.reload();
             }

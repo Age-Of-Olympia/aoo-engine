@@ -69,6 +69,12 @@ echo '
     foreach ($playersJson as $e) {
 
 
+        if($e->race != $player->data->race){
+
+            continue;
+        }
+
+
         echo '<option value="' . $e->id . '">' . $e->name . ' (mat.' . $e->id . ')</option>';
     }
 

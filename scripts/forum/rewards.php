@@ -10,7 +10,9 @@ if(!empty($_POST['post'])){
 
 
         ?>
+        <div id="data">
         <script>alert('Vous ne pouvez pas récompenser un de vos post.');</script>
+        </div>
         <?php
 
         exit();
@@ -122,7 +124,9 @@ if(!empty($_POST['post'])){
     if(!$res->num_rows){
 
         ?>
+        <div id="data">
         <script>alert('Vous ne possédez aucune récompense à donner.');</script>
+        </div>
         <?php
 
         exit();

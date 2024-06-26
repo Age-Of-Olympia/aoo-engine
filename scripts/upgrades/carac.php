@@ -48,4 +48,7 @@ if($k == 'p'){
 }
 
 
+$player->refresh_caracs();
+
+
 exit('Vous avez augmenté '. CARACS[$k] .' pour '. $cost .'Pi.');

@@ -110,6 +110,11 @@ class Player{
             $this->main1 = (object) array();
             $this->main1 = $item;
         }
+
+
+        // save .caracs
+        $data = Json::encode($this->caracs);
+        Json::write_json('datas/private/players/'. $this->id .'.caracs.json', $data);
     }
 
 
@@ -572,6 +577,11 @@ class Player{
         @unlink('datas/private/players/'. $_SESSION['playerId'] .'.invent');
     }
 
+    public function refresh_caracs(){
+
+        $this->get_caracs();
+    }
+
 
     public function put_pf($pf){
 
@@ -875,6 +885,8 @@ class Player{
 
 
         $this->refresh_invent();
+        $this->refresh_caracs();
+        $this->refresh_view();
     }
 
 

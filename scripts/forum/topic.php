@@ -9,7 +9,7 @@ if(!$topJson){
 }
 
 
-$ui = new Ui(htmlentities($topJson->name));
+$ui = new Ui(htmlentities($topJson->title));
 
 
 $postMin = 0;
@@ -298,8 +298,9 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
-                $this.next('span').html(data);
+                htmlContent = $('<div>').html(data).find('#data').html();
+                // alert(htmlContent);
+                $this.next('span').html(htmlContent);
             }
         });
     });

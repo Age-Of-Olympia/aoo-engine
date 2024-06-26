@@ -102,7 +102,12 @@ $log = $actionJson->log;
 $log = str_replace('PLAYER', $player->data->name, $log);
 $log = str_replace('TARGET', $target->data->name, $log);
 $log = str_replace('NAME', $actionJson->name, $log);
-$log = str_replace('WEAPON', $player->$emplacement->data->name, $log);
+
+
+if(!empty($emplacement)){
+
+    $log = str_replace('WEAPON', $player->$emplacement->data->name, $log);
+}
 
 
 if($actionJson->targetType != 'self'){

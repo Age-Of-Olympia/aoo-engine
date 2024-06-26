@@ -15,10 +15,20 @@ if(!empty($_SESSION['playerId'])){
 
         $coords = $player->get_coords();
 
-        $player->get_caracs();
 
+        $caracsJson = json()->decode('players', $player->id .'.caracs');
 
-        $p = $player->caracs->p;
+        if(!$caracsJson){
+
+            $player->get_caracs();
+
+            $p = $player->caracs->p;
+        }
+        else{
+
+            $p = $caracsJson->p;
+        }
+
 
         $view = new View($coords, $p);
 

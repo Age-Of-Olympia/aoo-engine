@@ -63,6 +63,27 @@ class Forum{
     }
 
 
+    public static function approve($topJson){
+
+
+        if(!empty($topJson->approved)){
+
+            return false;
+        }
+
+
+        $topJson->approved = 1;
+
+
+        $data = Json::encode($topJson);
+
+        Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
+
+
+        return true;
+    }
+
+
     public static function delete_views($topJson){
 
 
@@ -337,6 +358,16 @@ class Forum{
         }
 
         $dest = new Player($dest);
+        $dest->get_data();
+
+        $player = new Player($_SESSION['playerId']);
+        $player->get_data();
+
+        if($dest->data->race != $player->data->race){
+
+            exit('error dest forbidden');
+        }
+
 
         $db = new Db();
 

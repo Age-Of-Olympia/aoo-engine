@@ -148,8 +148,8 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 }
 
 .avatar-shadow{
-    filter: contrast(0%) brightness(50%);
 
+    filter: contrast(0%) brightness(50%);
     width: 35px;
     margin-top: 14px;
     margin-left: -5px;
@@ -245,7 +245,7 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 * card ui
 */
 
-#ui-card,  #ui-dialog{
+#ui-card{
 
     color: white;
 
@@ -407,14 +407,10 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 
 #ui-dialog .dialog-template {
 
-    width: 275px;
+    width: 500px;
     height: 450px;
     margin: 0 auto;
-    background: black url('../img/ui/cards/red.jpeg');
-    border: 15px solid black;
-    border-radius: 15px;
-    padding: 17px;
-    padding-top: 23px;
+    border-radius: 10px;
 }
 
 

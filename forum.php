@@ -47,6 +47,14 @@ elseif(isset($_GET['rewards'])){
     exit();
 }
 
+elseif(isset($_GET['approve'])){
+
+
+    include('scripts/forum/approve.php');
+
+    exit();
+}
+
 
 $ui = new Ui('Forum');
 

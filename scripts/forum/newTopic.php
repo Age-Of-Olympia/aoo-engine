@@ -42,6 +42,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
         Forum::refresh_last_posts();
     }
 
+
     echo time();
 
 
@@ -149,8 +150,8 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
-                alert(data);
-                document.location = 'forum.php?topic='+ data.trim();
+                // alert(data);
+                document.location = 'forum.php?topic='+ data.trim().slice(-10);
             }
         });
     });

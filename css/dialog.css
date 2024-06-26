@@ -2,6 +2,11 @@
 * dialog special ui
 */
 
+#ui-dialog{
+
+    color: white;
+}
+
 #ui-dialog .dialog-template{
 
     width: 500px;
