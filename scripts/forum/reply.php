@@ -83,10 +83,18 @@ $(document).ready(function(e){
 
     $('.submit').click(function(e){
 
+        var text = $('textarea').val();
+
+
+        if(text.trim() == ''){
+
+            alert('Le message ne doit pas être vide.');
+            return false;
+        }
+
 
         $(this).prop('disabled', true);
 
-        var text = $('textarea').val();
 
         var topic = $(this).data('topic');
 

@@ -586,7 +586,7 @@ class Player{
     public function put_pf($pf){
 
 
-        $this->row->pf += $pf;
+        $this->data->pf += $pf;
 
         $sql = 'UPDATE players SET pf = pf + ? WHERE id = ?';
 
@@ -967,6 +967,14 @@ class Player{
 
         // first init data
         $player->get_data();
+
+
+        $raceJson = json()->decode('races', $player->data->race);
+
+        foreach($raceJson->actions as $e){
+
+            $player->add_action($e);
+        }
 
 
         if($pnj){

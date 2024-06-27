@@ -166,12 +166,12 @@ if(!$solo && $res->num_rows){
 
             if($player->id == $target->id){
 
-                if($actionJson->targetType != 'self'){
+                if(!isset($actionJson->targetType) || $actionJson->targetType != 'self'){
 
                     continue;
                 }
             }
-            elseif($actionJson->targetType == 'self'){
+            elseif(!isset($actionJson->targetType) || $actionJson->targetType == 'self'){
 
                 continue;
             }
@@ -450,6 +450,9 @@ if(!empty($card)){
             }
 
 
+            $('.card-text').html('<div class="action-details"><i><span class="ra ra-perspective-dice-random"></span> Lancé de dés...</i></div>');
+
+
             $.ajax({
                 type: "POST",
                 url: url,
@@ -457,9 +460,9 @@ if(!empty($card)){
                 success: function(data)
                 {
                     // alert(data);
-                    $('#action-data').html(data).fadeIn();
+                    let $action = $('<div>'+ data +'</div>').hide();
+                    $('.card-text').html('').addClass('action-text').append($action.fadeIn());
                     $('.action').prop('disabled', false);
-                    // document.location.reload();
                 }
             });
         })

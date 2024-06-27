@@ -190,7 +190,7 @@ if(!empty($success) && $success == true){
 
         echo '
         <div>Vous soignez '. $target->data->name .' de '. $playerHeal .'PV.</div>
-        <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'PV</div>
+        <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'</div>
         ';
     }
 }

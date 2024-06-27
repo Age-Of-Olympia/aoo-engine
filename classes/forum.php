@@ -341,31 +341,40 @@ class Forum{
     public static function add_dest($dest, $topJson, $destTbl=false){
 
 
+        if(is_numeric($dest)){
+
+
+            $dest = new Player($dest);
+
+            $dest->get_data();
+        }
+
         if(!$destTbl){
 
-            $destTbl = self::get_top_dest($topjson);
+            $destTbl = self::get_top_dest($topJson);
         }
 
 
-        if(in_array($dest, $destTbl)){
+        if(in_array($dest->id, $destTbl)){
 
             exit('error already in dest');
         }
 
-        if(!is_numeric($dest)){
-
-            exit('error dest');
-        }
-
-        $dest = new Player($dest);
-        $dest->get_data();
 
         $player = new Player($_SESSION['playerId']);
+
         $player->get_data();
+
 
         if($dest->data->race != $player->data->race){
 
-            exit('error dest forbidden');
+
+            $raceJson = json()->decode('races', $dest->data->race);
+
+            if(!$player->have_option('isAdmin')){
+
+                exit('error dest forbidden');
+            }
         }
 
 

@@ -159,7 +159,8 @@ $(document).ready(function(){
             data: {'changeName': name}, // serializes the form's elements.
             success: function(data)
             {
-                alert(data);
+                htmlContent = $('<div>').html(data).find('#data').html();
+                alert(htmlContent);
             }
         });
     });

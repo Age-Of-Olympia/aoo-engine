@@ -6,9 +6,7 @@ $(document).ready(function(){
 
             $('form').submit();
 
-            // alert();
-
-            auto_save(true);
+            $('.submit').click();
         }
     });
 

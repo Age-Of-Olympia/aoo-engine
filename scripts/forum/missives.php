@@ -64,7 +64,7 @@ echo '
     }
 
     echo '<select id="dest-list">
-        <option disabled selected>Sélectionnez un personnage</option>';
+        <option disabled selected>Sélectionnez un personnage:</option>';
 
     foreach ($playersJson as $e) {
 
@@ -75,12 +75,34 @@ echo '
         }
 
 
-        echo '<option value="' . $e->id . '">' . $e->name . ' (mat.' . $e->id . ')</option>';
+        echo '<option value="' . $e->id . '">- ' . $e->name . ' (mat.' . $e->id . ')</option>';
     }
+
+
+    echo '<option disabled>Animateurs:</option>';
+
+
+    foreach(RACES_EXT as $e){
+
+
+        $raceJson = json()->decode('races', $e);
+
+        echo '<option value="'. $raceJson->animateur .'">- Animateur: '. $raceJson->name .'</option>';
+    }
+
 
     echo '</select>';
 
 echo '</div>';
+
+
+if(count($destTbl) == 1){
+
+
+    echo '<div style="margin: 15px; color: blue;">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple,<br />sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.</div>';
+}
+
+
 ?>
 
 <script>

@@ -139,6 +139,23 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 
 
 /*
+ * menu
+ */
+
+
+#caracs-menu{
+
+    display: none;
+    font-size: 88%;
+}
+
+#caracs-menu-landing{
+
+/*     font-size: 88%; */
+}
+
+
+/*
  * view
  */
 
@@ -288,6 +305,16 @@ input[type="button"]:disabled, button:disabled, select:disabled{
         background: url('../img/ui/cards/white_marble.jpeg');
     }
 
+    #ui-card .redoraan{
+
+        background: url('../img/ui/cards/white_fur.jpeg');
+    }
+
+    #ui-card .lutin{
+
+        background: url('../img/ui/cards/white_clouds.jpeg');
+    }
+
 
     #ui-card .card-name{
 
@@ -315,13 +342,16 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 
             #ui-card .card-name .effects span{
 
-                background: black;
-                font-size: 1.3em;
-                padding: 2px;
-                border-radius: 15px;
-                margin: -2px;
-                z-index: 1;
                 display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                width: 32px; /* Change the width and height as needed */
+                height: 32px;
+                background-color: black; /* Change the background color as needed */
+                font-size: 1.3em; /* Adjust the font size as needed */
+                border-radius: 50%; /* This makes the div a circle */
+                text-align: center;
+                margin: -5px;
             }
 
     #ui-card .card-image{
@@ -343,7 +373,7 @@ input[type="button"]:disabled, button:disabled, select:disabled{
             border-left: 5px solid rgba(255,255,255,0.1);
         }
 
-    #ui-card #action-data{
+    /*#ui-card #action-data{
 
         position: absolute;
         top: -1px;
@@ -355,13 +385,7 @@ input[type="button"]:disabled, button:disabled, select:disabled{
         margin: 5px;
         width: 200px;
         display: none;
-    }
-
-        #ui-card #action-data .action-details{
-
-            color: grey;
-            font-size: 88%;
-        }
+    }*/
 
     #ui-card .card-actions{
 
@@ -397,6 +421,17 @@ input[type="button"]:disabled, button:disabled, select:disabled{
         border: 5px solid rgba(0,0,0,0.5);
         border-left: 5px solid rgba(255,255,255,0.1);
         border-bottom: 5px solid rgba(255,255,255,0.1);
+        font-size: 88%;
+    }
+
+    #ui-card .action-text{
+
+        color: white;
+    }
+
+    #ui-card .card-text .action-details{
+
+        color: grey;
         font-size: 88%;
     }
 

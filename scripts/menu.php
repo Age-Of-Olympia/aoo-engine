@@ -3,11 +3,57 @@
 if(!empty($_SESSION['playerId'])){
 
 
-    echo '<a href="index.php" title="Vue"><button>&nbsp;<span class="ra ra-chessboard"></span>&nbsp;</button></a><a href="upgrades.php"><button><span class="ra ra-podium"></span> Améliorations</button></a><a href="logs.php"><button><span class="ra ra-book"></span> Evènements</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a><a href="map.php" title="Carte"><button>&nbsp;<span class="ra ra-scroll-unfurled"></span>&nbsp;</button></a><a href="forum.php?forum=Missives" title="Missives"><button>&nbsp;<span class="ra ra-quill-ink"></span>&nbsp;</button></a><a href="account.php" title="Profil"><button>&nbsp;<span class="ra ra-wrench"></span>&nbsp;</button></a>';
+    echo '<a href="index.php" title="Vue"><button><span class="ra ra-chessboard"></span></button></a><a href="upgrades.php"><button><span class="ra ra-podium"></span> Améliorations</button></a><a href="logs.php"><button><span class="ra ra-book"></span> Evènements</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a><a href="map.php" title="Carte"><button><span class="ra ra-scroll-unfurled"></span></button></a><a href="forum.php?forum=Missives" title="Missives"><button><span class="ra ra-quill-ink"></span></button></a><a href="#" id="show-caracs" title="Caractéristiques"><button><span class="ra ra-muscle-up"></span></button></a><a href="account.php" title="Profil"><button><span class="ra ra-wrench"></span></button></a>';
+
+
+    if(!$caracsJson = json()->decode('players', $_SESSION['playerId'] .'.caracs')){
+
+
+        $player = new Player($_SESSION['playerId']);
+
+        $player->get_caracs();
+
+        $caracsJson = json()->decode('players', $_SESSION['playerId'] .'.caracs');
+    }
+
+    echo '<table border="1" align="center" class="marbre" id="caracs-menu">';
+
+    echo '<tr>';
+
+    foreach(CARACS as $k=>$e){
+
+
+        echo '<th width="30">'. $e .'</th>';
+    }
+
+    echo '</tr>';
+
+    echo '<tr>';
+
+    foreach(CARACS as $k=>$e){
+
+
+        echo '<td>'. $caracsJson->$k .'</td>';
+    }
+
+    echo '</tr>';
+
+    echo '</table>';
+
 
     ?>
     <script>
     $(document).ready(function(){
+
+
+        $('#show-caracs').click(function(e){
+
+            e.preventDefault();
+
+            $('#caracs-menu-landing').hide();
+
+            $('#caracs-menu').fadeIn();
+        });
 
         $('.menu-link').click(function(e){
 

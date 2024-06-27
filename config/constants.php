@@ -11,6 +11,8 @@ define('VERSION_CSS_MAIN', filemtime('css/main.css'));
 
 define('RACES', array('nain','geant','olympien','hs','elfe'));
 
+define('RACES_EXT', array('nain','geant','olympien','hs','elfe','lutin','humain','dieu'));
+
 
 /*
  * caracs

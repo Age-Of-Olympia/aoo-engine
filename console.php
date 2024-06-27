@@ -43,8 +43,6 @@ if(!empty($_POST['cmd'])){
         if($cmdTbl[2] == 'open'){
 
 
-            $topJson->closed = 0;
-
             unset($topJson->closed);
 
 
@@ -53,6 +51,45 @@ if(!empty($_POST['cmd'])){
             Json::write_json('datas/private/forum/topics/'. $cmdTbl[1] .'.json', $data);
 
             exit('topic '. $topJson->title .' opened');
+        }
+
+        if($cmdTbl[2] == 'approve'){
+
+
+            if(!empty($topJson->approved)){
+
+                unset($topJson->approved);
+            }
+            else{
+
+                $topJson->approved = 1;
+            }
+
+
+            $data = Json::encode($topJson);
+
+            Json::write_json('datas/private/forum/topics/'. $cmdTbl[1] .'.json', $data);
+
+            exit('topic '. $topJson->title .' approved');
+        }
+
+        if($cmdTbl[2] == 'add'){
+
+
+            if(is_numeric($cmdTbl[3])){
+
+                $player = new Player($cmdTbl[3]);
+            }
+            else{
+
+                $player = Player::get_player_by_name($cmdTbl[3]);
+            }
+
+            $player->get_data();
+
+            Forum::add_dest($player, $topJson);
+
+            exit('topic '. $player->data->name .' ajouté à '. $topJson->title);
         }
     }
 

@@ -168,9 +168,27 @@ echo '
                 >
                 ';
 
+
+                $text = $postJson->text;
+
+                if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
+
+
+                    $player = new Player($_SESSION['playerId']);
+
+                    if(!$player->have_option('isAdmin')){
+
+
+                        $text = '[i]Texte dans une langue qui vous est inconnue.[/i]
+
+                        hrp: ce texte est en attente de l\'approbation d\'un modérateur.';
+                    }
+                }
+
+
                 $bbcode = new bbcode();
 
-                echo '<div style="padding: 10px;">'. $bbcode->render(htmlentities($postJson->text)) .'</div>';
+                echo '<div style="padding: 10px;">'. $bbcode->render(htmlentities($text)) .'</div>';
 
                 echo '
                 <div class="post-rewards">

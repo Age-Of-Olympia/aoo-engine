@@ -7,9 +7,9 @@ $mvt = $rand;
 // pouvoir divin
 $pouvoir = '';
 
-if($player->row->godId == '4'){
+if($player->data->godId == '4'){
 
-    if($player->row->pf > 0){
+    if($player->data->pf > 0){
 
         $mvt += 1;
 
@@ -21,7 +21,7 @@ if($player->row->godId == '4'){
 
 
 echo '
-Vous courrez et gagnez '. $mvt .' Mouvements.
+Vous courez et gagnez '. $mvt .' Mouvements.
 
 <div class="action-details">1d3 = '. $rand .' '. $pouvoir .'</div>
 ';

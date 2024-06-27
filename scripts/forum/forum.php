@@ -109,6 +109,13 @@ echo '
                 $topName = htmlentities($topJson->title);
 
 
+                if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
+
+
+                    $topName .= ' <i><font color="red">(en attente de traduction)</font></i>';
+                }
+
+
                 if(!in_array($player->id, $views)){
 
                     $symbolsTbl[] = '<span class="ra ra-quill-ink"></span>';

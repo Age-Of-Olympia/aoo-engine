@@ -3,13 +3,13 @@
 
 if(!Str::check_name($_POST['changeName'])){
 
-    exit('Nom invalide');
+    exit('<div id="data">Nom invalide</div>');
 }
 
 
 if($player->have_option('alreadyChanged')){
 
-    exit('Already changed');
+    exit('<div id="data">Already changed</div>');
 }
 
 
@@ -25,4 +25,4 @@ $player->refresh_data();
 $player->add_option('alreadyChanged');
 
 
-exit('Nom changé avec succès!');
+exit('<div id="data">Nom changé avec succès!</div>');
