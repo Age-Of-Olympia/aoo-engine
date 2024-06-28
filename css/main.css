@@ -73,6 +73,12 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 }
 
 
+input[type="text"], input[type="password"], input[type="number"]{
+
+    background: url('../img/ui/bg/bg_white2.jpeg');
+}
+
+
 /*
  * fonts
  */
@@ -154,6 +160,65 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 /*     font-size: 88%; */
 }
 
+
+/*
+ * index
+ */
+
+
+#index-menu{
+
+    width: 200px;
+    margin: 0 auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+
+.index-button{
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('../img/ui/bg/button1.png');
+    width: 200px;
+    height: 58px;
+    color: white;
+    font-family: goudy;
+    font-size: 1.5em;
+}
+
+    .index-button:hover{
+
+        background: url('../img/ui/bg/button2.png');
+    }
+
+    .index-button:active{
+
+        background: url('../img/ui/bg/button3.png');
+    }
+
+.preload{
+
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+
+#index-banner{
+
+    margin-left: 10px;
+    margin-right: 10px;
+    filter: grayscale(1);
+    opacity: 0.7;
+}
+
+    #index-banner:hover{
+
+        filter: grayscale(0);
+        opacity: 1;
+    }
 
 /*
  * view

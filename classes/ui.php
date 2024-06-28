@@ -24,7 +24,14 @@ class ui{
         <!DOCTYPE html>
         <html lang="fr">
             <head>
-                <meta charset="UTF-8">
+                <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <meta name="title" content="Age Of Olympia">
+                <meta name="description" content="Jeu de rôle par navigateur au tour par tour, rétro-clone de Legends Of Olympia.">
+                <meta name="keywords" content="JDR,jeu en ligne,JDR en ligne,jeu de rôle,jeu de role,en ligne,Legends of Olympia,Age of Olympia,LoO,AoO">
+                <meta name="robots" content="index, follow">
+                <meta name="language" content="French">
+
                 <title>Age of Olympia - '. $title .'</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>

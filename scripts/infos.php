@@ -37,7 +37,7 @@ if(!empty($_SESSION['playerId'])){
                 <sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup>
             </td>
 
-            <td width="50"></td>
+            <td><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/banner.png" height="45" /></a></td>
 
             <td align="left" style="font-size: 88%;">
                 Dernier message du <a href="forum.php">Forum</a><br />
@@ -46,10 +46,4 @@ if(!empty($_SESSION['playerId'])){
         </tr>
     </table>
     ';
-}
-
-else{
-
-
-    echo "Vous n'êtes pas connecté.";
 }

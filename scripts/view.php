@@ -101,8 +101,3 @@ if(!empty($_SESSION['playerId'])){
     </script>
     <?php
 }
-else{
-
-
-    echo "Aoo, JDR gratuit au tour-par-tour.";
-}

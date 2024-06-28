@@ -197,6 +197,9 @@ $(document).ready(function(){
 
     }
 
-    setTimeout(checkMailFunction, 1);
+    if($('#player-avatar')[0] != null){
+
+        setTimeout(checkMailFunction, 1);
+    }
 });
 

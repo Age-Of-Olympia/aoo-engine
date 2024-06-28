@@ -74,28 +74,3 @@ if(!empty($_SESSION['playerId'])){
     </script>
     <?php
 }
-else{
-
-
-    echo '
-    <input type="text" />
-    <input type="password" />
-    <input type="submit" value="Connexion" />
-    ';
-
-    ?>
-    <script>
-    $(document).ready(function(){
-
-        $('input[type="submit"]').click(function(e){
-
-            let player = $('input[type="text"]').val();
-
-            open_console('session open '+ player);
-        });
-    });
-    </script>
-    <?php
-
-    exit();
-}

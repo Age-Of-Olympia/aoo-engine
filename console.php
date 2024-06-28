@@ -1,5 +1,7 @@
 <?php
 
+define('NO_LOGIN', true);
+
 require_once('config.php');
 
 
