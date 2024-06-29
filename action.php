@@ -66,6 +66,11 @@ if(!empty($actionJson->distanceMax)){
     }
 }
 
+if($player->coords->z < 0 && $distance > 2){
+
+    exit('Dans les souterrains, la portée maximum est de 2 cases.');
+}
+
 
 if(!empty($actionJson->useEmplacement)){
 
