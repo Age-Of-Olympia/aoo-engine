@@ -48,13 +48,13 @@
 }
 
 .dialog-node-options {
-    margin-top: 10px;
+/*     margin-top: 10px; */
 }
 
 .node-option {
     cursor: pointer;
     padding: 5px;
-    margin-top: 5px;
+    margin-top: 1px;
     background-color: rgba(255, 255, 255, 0.1);
 /*     border-radius: 5px; */
 }
