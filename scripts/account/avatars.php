@@ -18,10 +18,11 @@ echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> R
 
 foreach(File::scan_dir($dir) as $e){
 
-    echo '<img style="cursor: pointer" src="'. $dir . $e .'" data-img="'. $e .'" width="50" />';
+    echo '<img style="cursor: pointer" src="img/ui/fillers/50.png" data-src="'. $dir . $e .'" data-img="'. $e .'" width="50" />';
 }
 
 ?>
+<script src="js/progressive_loader.js"></script>
 <script>
 $(document).ready(function(){
 

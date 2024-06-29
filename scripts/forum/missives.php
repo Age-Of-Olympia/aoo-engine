@@ -99,7 +99,7 @@ echo '</div>';
 if(count($destTbl) == 1){
 
 
-    echo '<div style="margin: 15px; color: blue;">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple,<br />sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.</div>';
+    echo '<div style="color: blue; text-align: left; font-size: 88%; margin: 10px;">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple, sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.</div>';
 }
 
 

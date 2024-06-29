@@ -455,7 +455,7 @@ input[type="text"], input[type="password"], input[type="number"]{
         overflow: hidden;
         width: 220px;
         height: 230px;
-        margin-left: 5px;
+        margin-left: 7px;
         position: relative;
         border-bottom: 5px solid rgba(255,255,255,0.1);
     }
@@ -504,11 +504,19 @@ input[type="text"], input[type="password"], input[type="number"]{
         margin-left: -10px;
     }
 
+    #ui-card .card-faction{
+
+        position: absolute;
+        right: 3px;
+        top: 255px;
+    }
+
     #ui-card .card-text{
 
         color: grey;
         padding: 5px;
-        margin-left: -8px;
+        margin-left: -5px;
+        margin-right: -5px;
         width: 225px;
         height: 125px;
         overflow: scroll;
@@ -519,6 +527,19 @@ input[type="text"], input[type="password"], input[type="number"]{
         border-bottom: 5px solid rgba(255,255,255,0.1);
         font-size: 88%;
     }
+
+        #ui-card .card-text textarea{
+
+            width: 100%;
+            height: 100%;
+            background: none;
+            border: 0px;
+            color: white;
+            font-family: sans-serif;
+            font-size: 88%;
+            padding: 0;
+            margin: 0;
+        }
 
     #ui-card .action-text{
 
@@ -577,12 +598,12 @@ input[type="text"], input[type="password"], input[type="number"]{
     .preview-action button{
 
         float: right;
-        width: 80px;
+        width: 100px;
     }
 
 .item-list {
 
-    max-height: 500px;
+    max-height: 375px;
     overflow: scroll;
     float: left;
 }
@@ -687,7 +708,6 @@ input[type="text"], input[type="password"], input[type="number"]{
 
 .dest-container {
 
-    width: 500px;
     margin: 0 auto;
     text-align: left;
     padding: 10px;

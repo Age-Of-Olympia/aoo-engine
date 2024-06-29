@@ -427,4 +427,47 @@ class Item{
 
         return $return;
     }
+
+
+    public static function get_free_emplacement($player) : int{
+
+
+        $values = ITEM_EMPLACEMENT_FORMAT;
+
+
+        foreach($values as $k=>$e){
+
+            if(in_array($e, array('trophee','munition'))){
+
+                unset($values[$k]);
+            }
+        }
+
+
+        // count emplacements
+        $sql = '
+        SELECT COUNT(*) AS n
+        FROM
+        players_items
+        WHERE
+        player_id = ?
+        AND
+        equiped IN('. Db::print_in($values) .')
+        ';
+
+        $values = array_merge(array($player->id), $values);
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $values);
+
+        $row = $res->fetch_object();
+
+        if($row->n >= ITEM_LIMIT){
+
+            return 0;
+        }
+
+        return $row->n;
+    }
 }

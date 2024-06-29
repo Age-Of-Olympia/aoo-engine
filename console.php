@@ -22,6 +22,23 @@ if(!empty($_POST['cmd'])){
     $cmdTbl = explode(' ', $cmd);
 
 
+    // POST
+    if($cmdTbl[0] == 'post'){
+
+
+        $postJson = json()->decode('forum', 'posts/'. $cmdTbl[1]);
+
+        if(!$postJson){
+
+            exit('error post');
+        }
+
+
+        exit($postJson->name .',post');
+
+    }
+
+
     // FORUM
     if($cmdTbl[0] == 'topic'){
 
@@ -508,6 +525,16 @@ if(!empty($_POST['cmd'])){
         }
 
 
+        if($cmdTbl[2] == 'purge'){
+
+
+            File::refresh_player_cache($player->id);
+
+
+            exit('cache purged for '. $player->data->name .'');
+        }
+
+
         if($cmdTbl[2] == 'respec'){
 
 
@@ -714,16 +741,6 @@ if(!empty($_POST['cmd'])){
 
 
         exit('editor');
-    }
-
-
-    // PURGE
-    if($cmdTbl[0] == 'purge'){
-
-
-        File::refresh_player_cache($cmdTbl[1]);
-
-        exit();
     }
 
 

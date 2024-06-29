@@ -30,6 +30,7 @@ class Player{
 
 
         $row->text = htmlentities($row->text);
+        $row->story = htmlentities($row->story);
 
 
         $this->row = $row;
@@ -96,6 +97,27 @@ class Player{
 
                 $this->caracs->f = $item->data->fixedF;
             }
+        }
+
+
+        // turn caracs with bonus / malus
+        $sql = '
+        SELECT name, n FROM
+        players_bonus
+        WHERE
+        player_id = ?
+        ';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $this->id);
+
+        $this->turn = (object) array();
+
+        while($row = $res->fetch_object()){
+
+
+            $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
         }
 
 
@@ -598,6 +620,51 @@ class Player{
     }
 
 
+    public function put_bonus($bonus){
+
+
+        $values = array();
+
+        foreach($bonus as $carac=>$val){
+
+
+            $values[] = '('. $this->id .', "'. $carac .'", '. $val .')';
+
+            if($carac == 'a'){
+
+
+                $this->put_fat(1);
+            }
+        }
+
+        $sql = '
+        INSERT INTO
+        players_bonus
+        (`player_id`,`name`,`n`)
+        VALUE'. implode(',', $values) .'
+        ON DUPLICATE KEY UPDATE
+        n = n + VALUES(n);
+        ';
+
+        $db = new Db();
+
+        $db->exe($sql);
+    }
+
+
+    public function put_fat($fat){
+
+
+        $sql = 'UPDATE players SET fatigue = fatigue + 1 WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, $this->id);
+
+        $this->refresh_data();
+    }
+
+
     public function change_god($god){
 
 
@@ -831,59 +898,106 @@ class Player{
     public function equip($item){
 
 
+        $db = new Db();
+
+
         if(!isset($item->data)){
 
             $item->get_data();
         }
 
 
-        $db = new Db();
+        $itemList = Item::get_equiped_list($this);
 
 
-        // unequip emplacement
-        $sql = '
-        UPDATE
-        players_items
-        SET
-        equiped = ""
-        WHERE
-        player_id = ?
-        AND
-        equiped = ?
-        ';
-
-        $db->exe($sql, array(
-            $this->id,
-            $item->data->emplacement,
-        ));
+        if(!empty($itemList[$item->id])){
 
 
-        $sql = '
-        UPDATE
-        players_items
-        SET
-        equiped = ?
-        WHERE
-        player_id = ?
-        AND
-        item_id = ?
-        ';
+            // item is equiped : UNEQUIP
 
-        $db->exe($sql, array(
-            $item->data->emplacement,
-            $this->id,
-            $item->id
-        ));
+            $sql = '
+            UPDATE
+            players_items
+            SET
+            equiped = ""
+            WHERE
+            player_id = ?
+            AND
+            item_id = ?
+            ';
 
-
-        // equip munitions
-        if($munition = $this->get_munition($item)){
-
-
-            $this->equip($munition);
+            $db->exe($sql, array(
+                $this->id,
+                $item->id
+            ));
         }
 
 
+        else{
+
+
+            // item is NOT equiped : EQUIP
+
+            if(!empty($this->{$item->data->emplacement}) && $this->{$item->data->emplacement} == $item->id){
+
+                exit('unequip');
+            }
+
+
+            if(!Item::get_free_emplacement($this)){
+
+                exit('error item limit');
+            }
+
+
+            // unequip emplacement
+            $sql = '
+            UPDATE
+            players_items
+            SET
+            equiped = ""
+            WHERE
+            player_id = ?
+            AND
+            equiped = ?
+            ';
+
+            $db->exe($sql, array(
+                $this->id,
+                $item->data->emplacement,
+            ));
+
+
+            $sql = '
+            UPDATE
+            players_items
+            SET
+            equiped = ?
+            WHERE
+            player_id = ?
+            AND
+            item_id = ?
+            ';
+
+            $db->exe($sql, array(
+                $item->data->emplacement,
+                $this->id,
+                $item->id
+            ));
+
+
+            // equip munitions
+            if($munition = $this->get_munition($item)){
+
+                if(!isset($itemList[$munition->id])){
+
+                    $this->equip($munition);
+                }
+            }
+        }
+
+
+        // in both case, refresh
         $this->refresh_invent();
         $this->refresh_caracs();
         $this->refresh_view();
@@ -1045,6 +1159,9 @@ class Player{
         $pathInfo = pathinfo($this->data->portrait);
 
         $this->data->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+
+        $this->data->faction_img = 'img/factions/'. $this->data->faction .'.png';
+        $this->data->faction_mini = 'img/factions/'. $this->data->faction .'_mini.png';
 
 
         return $playerJson;

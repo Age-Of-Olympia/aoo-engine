@@ -113,6 +113,9 @@ class ui{
                 echo '<div class="card-type">'. $data->type .'</div>';
 
 
+                echo '<div class="card-faction">'. $data->faction .'</div>';
+
+
                 echo '<div class="card-text">'. $data->text .'</div>';
 
 
@@ -196,7 +199,7 @@ class ui{
 
             if(!empty($row->equiped) && $row->equiped != ''){
 
-                $emplacement = '<div class="emplacement"><img src="img/ui/inventory/'. $row->equiped .'.jpeg" /></div>';
+                $emplacement = '<div class="emplacement" data-id="'. $row->id .'"><img src="img/ui/inventory/'. $row->equiped .'.jpeg" /></div>';
             }
 
 
@@ -271,6 +274,28 @@ class ui{
                 window.price = $item.data("price");
                 let infos = $item.data("infos");
                 let img =   $item.data("img");
+
+
+                if($('.emplacement[data-id="'+ window.id +'"]')[0] != null){
+
+                    $('.action[data-action="use"]')
+                    .html('Déséquiper')
+                    .prop('disabled', false);
+                }
+                else{
+
+                    if(window.freeEmp){
+
+
+                    }
+                    else{
+
+                        $('.action[data-action="use"]')
+                        .html('<font color="red">Max <?php echo ITEM_LIMIT ?></font>')
+                        .prop('disabled', true);
+                    }
+                }
+
 
                 $(".preview-text").text(text);
 

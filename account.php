@@ -29,6 +29,12 @@ if(isset($_GET['mdj'])){
     exit();
 }
 
+if(isset($_GET['story'])){
+
+    include('scripts/account/story.php');
+    exit();
+}
+
 if(isset($_POST['changeName'])){
 
     include('scripts/account/change_name.php');
@@ -41,6 +47,7 @@ define('OPTIONS', array(
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
     'changeAvatar'=>"Changer d'Avatar<br /><sup>Vous pouvez faire une demande d'Avatar sur le forum</sup>",
     'changeMdj'=>$player->data->text,
+    'changeStory'=>$player->data->story,
     'raceHint'=>"Indice de Race<br /><sup>Affiche une bordure de couleur autour du personnage</sup>",
     'raceHintMax'=>"Indice de Race maximale<br /><sup>Colore également l'arrière plan du personnage</sup>",
     'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
@@ -75,6 +82,10 @@ foreach(OPTIONS as $k=>$e){
 
                 echo explode("\n", $player->data->text)[0] .' [...]';
             }
+            elseif($k == 'changeStory'){
+
+                echo explode("\n", $player->data->story)[0] .' [...]';
+            }
             else{
 
                 echo $e;
@@ -101,6 +112,12 @@ foreach(OPTIONS as $k=>$e){
 
                 echo '
                 <a href="account.php?mdj"><button>Changer</button></a>
+                ';
+            }
+            elseif($k == 'changeStory'){
+
+                echo '
+                <a href="account.php?story"><button>Changer</button></a>
                 ';
             }
             else{

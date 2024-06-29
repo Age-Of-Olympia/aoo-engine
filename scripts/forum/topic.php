@@ -96,7 +96,7 @@ echo '
 
 
         echo '
-        <tr class="tr-topic2">
+        <tr class="tr-topic2 box-shadow">
             ';
 
             echo '
@@ -110,7 +110,7 @@ echo '
 
                 $author->get_data();
 
-                echo '<img src="'. $author->data->mini .'" width="50" />';
+                echo '<a href="infos.php?targetId='. $author->id .'"><img class="box-shadow" src="'. $author->data->mini .'" width="50" /></a>';
 
 
                 echo '
@@ -127,15 +127,17 @@ echo '
                 >
                 ';
 
-                echo '<div>'. $author->data->name .'</div>';
+                echo '<div><a href="infos.php?targetId='. $author->id .'">'. $author->data->name .'</a>, mat.'. $author->id .'</div>';
 
 
                 $raceJson = json()->decode('races', $author->data->race);
 
-                echo '<div style="font-size: 88%;">'. $raceJson->name .' Rang '. $author->data->rank .'</div>';
+                echo '<div style="font-size: 88%;"><i>'. $raceJson->name .' Rang '. $author->data->rank .'</i></div>';
 
 
-                echo '<div style="font-size: 88%;">mat.'. $author->id .'</div>';
+                $factionJson = json()->decode('factions', $author->data->faction);
+
+                echo '<div style="font-size: 88%;">'. $factionJson->name .' <img style="display: inline-block; width: 1.5em; vertical-align: middle;" src="'. $author->data->faction_mini .'" width="25" /> (<i>Citoyen</i>) </div>';
 
 
                 echo '
@@ -227,6 +229,16 @@ echo '
                         <span
                             class="give-reward-span"
                         ></span>';
+                }
+
+                elseif($postJson->author == $_SESSION['playerId']){
+
+
+                    echo '
+                    <span class="give-reward-span">
+
+                        <a href="forum.php?edit='. $post->name .'">Edit</a>
+                    </span>';
                 }
 
                     echo '

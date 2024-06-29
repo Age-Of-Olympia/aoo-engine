@@ -3,6 +3,11 @@
 require_once('config.php');
 
 
+/*
+ * ACTION CHECK
+ */
+
+
 // action
 if(!isset($_POST['action'])){
 
@@ -96,6 +101,11 @@ if(!empty($actionJson->useEmplacement)){
 View::get_walls_between($player->coords, $target->coords);
 
 
+/*
+ * PERFORM ACTION
+ */
+
+
 // log
 $log = $actionJson->log;
 
@@ -121,8 +131,16 @@ if($actionJson->targetType != 'self'){
     $targetJet = (is_numeric($actionJson->targetJet)) ? $dice->roll($actionJson->targetJet) : $dice->roll($target->caracs->{$actionJson->targetJet});
 
 
+    $playerFat = floor($player->data->fatigue / FAT_EVERY);
+    $targetFat = floor($target->data->fatigue / FAT_EVERY);
+
+
+    $playerTotal = array_sum($playerJet) - $playerFat;
+    $targetTotal = array_sum($targetJet) - $targetFat - $target->data->malus;
+
+
     // success
-    if($actionJson->targetJet == 0 || array_sum($playerJet) >= array_sum($targetJet)){
+    if($actionJson->targetJet == 0 || $playerTotal >= $targetTotal){
 
         $success = true;
     }
@@ -196,12 +214,24 @@ if(!empty($success) && $success == true){
 }
 
 
+/*
+ * RESOLVE ACTION
+ */
+
+
+// default cost
+$bonus = array('a'=>-1);
+
+
 // scripts
 if(!empty($actionJson->script)){
 
 
     include($actionJson->script);
 }
+
+
+$player->put_bonus($bonus);
 
 
 // add effects
@@ -288,14 +318,27 @@ if(!empty($actionJson->useEmplacement)){
     }
 }
 
+
+/*
+ * PRINT AND REQ RESULTS
+ */
+
+
 if(
     (!empty($actionJson->targetJet) && $actionJson->targetJet != 0)
     &&
     $actionJson->targetType != 'self'
 ){
 
-    echo '<div class="action-details">Jet '. $player->data->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) .'</div>';
-    echo '<div class="action-details">Jet '. $target->data->name .' = '. array_sum($targetJet) .'</div>';
+
+    $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus) = '. $targetTotal : '';
+
+    $playerFatTxt = ($playerFat != 0) ? ' - '. $playerFat .' (Fatigue) = '. $playerTotal : '';
+    $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue) = '. $targetTotal : '';
+
+
+    echo '<div class="action-details">Jet '. $player->data->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) . $playerFatTxt .'</div>';
+    echo '<div class="action-details">Jet '. $target->data->name .' = '. array_sum($targetJet) . $malusTxt . $targetFatTxt .'</div>';
 }
 
 

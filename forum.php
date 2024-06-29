@@ -27,6 +27,14 @@ elseif(!empty($_GET['reply'])){
     exit();
 }
 
+elseif(!empty($_GET['edit'])){
+
+
+    include('scripts/forum/edit.php');
+
+    exit();
+}
+
 elseif(!empty($_GET['newTopic'])){
 
 

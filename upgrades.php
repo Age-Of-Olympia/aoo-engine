@@ -81,7 +81,7 @@ echo '
 <table class="box-shadow marbre" border="1" align="center">';
 
 
-echo '<tr><th>Améliorations</th><th>Valeur</th><th>Équipé<th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
+echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th>Reste</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
 
 
 foreach(CARACS as $k=>$e){
@@ -121,16 +121,36 @@ foreach(CARACS as $k=>$e){
     }
 
 
+    $turn = '';
+
+    if(isset($player->turn->$k)){
+
+        $turn =  $player->turn->$k;
+    }
+
+    if(is_numeric($turn) && $turn < 1){
+
+        $turn = '<font color="red">'. $turn .'</font>';
+    }
+    elseif(is_numeric($turn) && $turn == $carac){
+
+        $turn = '<font color="blue">'. $turn .'</font>';
+    }
+
+
     echo '
     <tr>
-        <td>
+        <th>
             '. $e .'
-        </td>
+        </th>
         <td>
             '. $player->nude->$k .'
         </td>
         <td>
             '. $carac .'
+        </td>
+        <td>
+            '. $turn .'
         </td>
         <td>
             <font color="'. $color .'">'. $cost .'Pi</font>

@@ -124,6 +124,9 @@ define('WALLS_PV', array(
  */
 
 
+define('ITEM_LIMIT', 3);
+
+
 define('ITEMS_OPT', array(
     'enchanted'=>'*',
     'vorpal'=>'~',
@@ -155,6 +158,8 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
  */
 
 define('TRAVEL_COST', 15);
+
+define('FAT_EVERY', 6);
 
 
 /*

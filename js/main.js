@@ -33,7 +33,6 @@ $(document).ready(function(){
 
 function open_console(defaultCmd){
 
-
     var lastCmd = '';
 
     $.ajax({
@@ -49,6 +48,16 @@ function open_console(defaultCmd){
             if($('.reply')[0] != null){
 
                 lastCmd = 'topic '+ $('.reply').data('topic');
+
+
+                var hash = window.location.hash;
+
+                // Si vous souhaitez retirer le caractère # du fragment
+                if (hash) {
+                    hash = hash.substring(1);
+
+                    lastCmd = 'post '+ hash;
+                }
             }
 
             if(defaultCmd){
@@ -89,6 +98,18 @@ function open_console(defaultCmd){
                         else if(data.slice(-5) == ',card'){
 
                             document.location = 'print_card.php?playerId='+ data.trim();
+
+                            return false;
+                        }
+                        else if(data.slice(-5) == ',view'){
+
+                            document.location = 'print_view.php?playerId='+ data.trim();
+
+                            return false;
+                        }
+                        else if(data.slice(-5) == ',post'){
+
+                            document.location = 'forum.php?edit='+ data.slice(0, -5).trim();
 
                             return false;
                         }

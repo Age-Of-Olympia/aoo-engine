@@ -52,6 +52,10 @@ echo $data;
 <script>
 $(document).ready(function(){
 
+
+    window.freeEmp = <?php echo Item::get_free_emplacement($player) ?>;
+
+
     var $actions = $('.preview-action');
 
     $actions

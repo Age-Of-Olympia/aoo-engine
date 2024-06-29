@@ -136,4 +136,10 @@ if($res->num_rows){
 }
 
 
+// cost (neg bonus)
+$bonus = array('mvt'=>-1);
+
+$player->put_bonus($bonus);
+
+
 $player->go($goCoords);

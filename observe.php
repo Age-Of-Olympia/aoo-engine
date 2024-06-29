@@ -214,7 +214,8 @@ if(!$solo && $res->num_rows){
             'img'=>$dataImg,
             'type'=>$dataType,
             'text'=>$text,
-            'race'=>$target->data->race
+            'race'=>$target->data->race,
+            'faction'=>'<img src="'. $target->data->faction_mini .'" />'
         );
 
         $card = Ui::get_card($data);

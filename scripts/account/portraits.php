@@ -45,7 +45,7 @@ foreach(File::scan_dir($dir) as $e){
         continue;
     }
 
-    echo '<img style="cursor: pointer;" src="'. $dir . $e .'" data-img="'. $e .'" height="330" />';
+    echo '<img style="cursor: pointer;" src="img/portraits/placeholder.png" data-src="'. $dir . $e .'" data-img="'. $e .'" height="330" />';
 }
 
 
@@ -53,6 +53,7 @@ echo '</div>';
 
 
 ?>
+<script src="js/progressive_loader.js"></script>
 <script>
 $(document).ready(function(){
 
