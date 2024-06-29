@@ -296,6 +296,8 @@ CREATE TABLE `players` (
   `race` varchar(255) NOT NULL DEFAULT '',
   `xp` int(11) NOT NULL DEFAULT 0,
   `pi` int(11) NOT NULL DEFAULT 0,
+  `malus` int(11) NOT NULL DEFAULT 0,
+  `fatigue` int(11) NOT NULL DEFAULT 0,
   `godId` int(11) NOT NULL DEFAULT 0,
   `pf` int(11) NOT NULL DEFAULT 0,
   `rank` int(11) NOT NULL DEFAULT 0,
@@ -318,6 +320,16 @@ CREATE TABLE `players_actions` (
   `type` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`player_id`,`name`),
   CONSTRAINT `players_actions_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+DROP TABLE IF EXISTS `players_bonus`;
+CREATE TABLE `players_bonus` (
+  `player_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `n` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`player_id`,`name`),
+  CONSTRAINT `players_bonus_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
@@ -453,5 +465,5 @@ CREATE TABLE `players_upgrades` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- 2024-06-25 13:20:42
+-- 2024-06-29 19:56:07
 
