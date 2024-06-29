@@ -501,6 +501,13 @@ if(!empty($_POST['cmd'])){
         }
 
 
+        if($cmdTbl[2] == 'card'){
+
+
+            exit($player->id .',card');
+        }
+
+
         if($cmdTbl[2] == 'respec'){
 
 

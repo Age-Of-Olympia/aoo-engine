@@ -3,10 +3,6 @@
 require_once('config.php');
 
 
-include('scripts/infos.php');
-include('scripts/menu.php');
-
-
 if(!empty($_GET['forum'])){
 
 
@@ -59,6 +55,10 @@ elseif(isset($_GET['approve'])){
 $ui = new Ui('Forum');
 
 
+include('scripts/infos.php');
+include('scripts/menu.php');
+
+
 echo '<h1>Forums</h1>';
 
 
@@ -75,7 +75,7 @@ echo '
 
         echo '
         <tr>
-            <th width="1%"></th>
+            <th width="50"></th>
             <th>'. $catJson->name .'</th>
             <th width="1%">Sujets</th>
         </tr>

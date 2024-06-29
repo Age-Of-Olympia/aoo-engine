@@ -15,7 +15,7 @@ if(!empty($_POST['text'])){
 
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
-echo '<textarea style="height: 150px; width: 500px;">'. $player->data->text .'</textarea>';
+echo '<textarea rows="20" class="tr-topic1" style="width: 100%;">'. $player->data->text .'</textarea>';
 
 echo '<div><button>Valider</button></div>';
 

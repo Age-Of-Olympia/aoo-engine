@@ -408,7 +408,7 @@ else{
         'text'=>''
         );
 
-        echo Ui::get_dialog($player, $options);
+        echo '<div class="view-dialog">'. Ui::get_dialog($player, $options) .'</div>';
     }
 }
 

@@ -86,6 +86,12 @@ function open_console(defaultCmd){
 
                             return false;
                         }
+                        else if(data.slice(-5) == ',card'){
+
+                            document.location = 'print_card.php?playerId='+ data.trim();
+
+                            return false;
+                        }
 
 
                         document.location.reload();

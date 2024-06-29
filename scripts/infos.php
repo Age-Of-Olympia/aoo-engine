@@ -32,14 +32,14 @@ if(!empty($_SESSION['playerId'])){
                     <a href="pnjs.php"><img src="'. $player->data->avatar .'" /></a>
                 </div>
             </td>
-            <td align="left">
+            <td align="left" style="white-space: nowrap;">
                 <a href="infos.php?targetId='. $player->id .'">'. $player->data->name .'</a> (mat.'. $player->id .')<br />
                 <sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup>
             </td>
 
-            <td><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/banner.png" height="45" /></a></td>
+            <td height="45"><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/banner.png" width="50" /></a></td>
 
-            <td align="left" style="font-size: 88%;">
+            <td align="left" style="font-size: 88%; white-space: nowrap;">
                 Dernier message du <a href="forum.php">Forum</a><br />
                 <i>'. $lastPost .'</i>
             </td>

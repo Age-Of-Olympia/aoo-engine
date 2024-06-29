@@ -13,6 +13,9 @@ if(!$forumJson){
 if(!empty($_POST['text']) && !empty($_POST['name'])){
 
 
+    $player = new Player($_SESSION['playerId']);
+
+
     Forum::check_access($player, $forumJson);
 
 
@@ -53,6 +56,10 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
 $ui = new Ui('Nouveau sujet');
 
 
+include('scripts/infos.php');
+include('scripts/menu.php');
+
+
 echo '<h1>'. $forumJson->name .'</h1>';
 
 
@@ -74,14 +81,13 @@ echo '
 <input
     type="text"
     class="name tr-topic2"
-    style="width: 500px;"
+    style="width: 100%"
     value="Titre du sujet"
     />
 <br />
 <textarea
     class="box-shadow tr-topic1"
-    style="width: 500px;"
-
+     style="width: 100%"
     rows="20"
     >Message</textarea>
 </div>

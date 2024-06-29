@@ -12,6 +12,10 @@ if(!$topJson){
 $ui = new Ui(htmlentities($topJson->title));
 
 
+include('scripts/infos.php');
+include('scripts/menu.php');
+
+
 $postMin = 0;
 $postMax = 4;
 $page = 1;
@@ -75,7 +79,7 @@ echo '
 
 
 echo '
-<table border="1" align="center" class="marbre" width="500" cellspacing="0">
+<table border="0" align="center" class="marbre box-shadow" cellspacing="0" style="width: 100%">
     ';
 
 

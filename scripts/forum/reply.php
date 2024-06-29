@@ -16,6 +16,9 @@ $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
 if(!empty($_POST['text'])){
 
 
+    $player = new Player($_SESSION['playerId']);
+
+
     Forum::check_access($player, $forumJson);
 
 
@@ -48,6 +51,10 @@ if(!empty($_POST['text'])){
 $ui = new Ui('Répondre');
 
 
+include('scripts/infos.php');
+include('scripts/menu.php');
+
+
 echo '<h1>'. $topJson->title .'</h1>';
 
 
@@ -61,7 +68,7 @@ echo '
 <div>
 <textarea
     class="box-shadow tr-topic1"
-    style="width: 500px;"
+    style="width: 100%;"
 
     rows="20"
     ></textarea>

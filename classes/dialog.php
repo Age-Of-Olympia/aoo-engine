@@ -45,6 +45,14 @@ class Dialog{
         $type = (!empty($node->type)) ? $node->type : '';
 
 
+        $notHidden = '';
+
+        if($node->id == 'bonjour'){
+
+            $notHidden = 'style="display: block;"';
+        }
+
+
         echo '
         <div
             id="node'. $node->id .'"
@@ -53,9 +61,12 @@ class Dialog{
             data-node="'. $node->id .'"
             data-avatar="'. $avatar .'"
             data-type="'. $type .'"
+
+            '. $notHidden .'
             >
 
             '. $node->text .'
+
 
             <div class="dialog-node-options">
 

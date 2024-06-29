@@ -89,16 +89,21 @@ class ui{
 
                 echo '<div class="card-actions">';
 
-                echo '
-                <button
-                    class="action close-card"
-                    data-action="close-card"
-                    >
-                    <span class="ra ra-x-mark"></span>
-                    <span class="action-name">Fermer</span>
-                    </button>
-                    <br />
-                    ';
+
+                if(!isset($data->noClose)){
+
+                    echo '
+                    <button
+                        class="action close-card"
+                        data-action="close-card"
+                        >
+                        <span class="ra ra-x-mark"></span>
+                        <span class="action-name">Fermer</span>
+                        </button>
+                        <br />
+                        ';
+                }
+
 
                 echo $data->img;
 

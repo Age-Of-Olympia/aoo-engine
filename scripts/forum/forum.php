@@ -13,6 +13,10 @@ if(!$forumJson){
 $ui = new Ui($forumJson->name);
 
 
+include('scripts/infos.php');
+include('scripts/menu.php');
+
+
 echo '<h1>'. $forumJson->name .'</h1>';
 
 
@@ -20,16 +24,17 @@ Forum::check_access($player, $forumJson->name);
 
 
 echo '
-<div style="position: relative; width: 500px; margin: 0 auto; text-align: left;">
+<div style="position: relative; text-align: left;">
+
     <a href="forum.php">Forum ('. $forumJson->category_id .')</a> >
     <a href="forum.php?forum='. $forumJson->name .'">'. $forumJson->name .'</a>
 
-    <div style="position: absolute; right: 0; top: -10;"><button class="newTopic" data-forum="'. $_GET['forum'] .'"><span class="ra ra-quill-ink"></span> Nouveau sujet</button></div>
+    <button class="newTopic" style="position: absolute; right: 0px; top: -10px;" data-forum="'. $_GET['forum'] .'"><span class="ra ra-quill-ink"></span> Nouveau sujet</button>
 </div>';
 
 
 echo '
-<table border="1" align="center" class="marbre" width="500">
+<table border="1" align="center" class="marbre">
     ';
 
     echo '
