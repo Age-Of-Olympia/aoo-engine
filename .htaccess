@@ -1,7 +1,14 @@
-php_value session.save_path "/home/leo/Documents/Prog/www/aoo4/sessions"
-
+# Activer le moteur de réécriture d'URL
 RewriteEngine On
+
+# Bloquer l'accès à tous les fichiers dans le dossier /sessions
+RewriteRule ^sessions/ - [F,L]
+
+# Redirection HTTP vers HTTPS sauf pour les requêtes locales
 RewriteCond %{HTTP_HOST} !^localhost [NC]
-RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1$
+RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1$ [NC]
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Configurer le chemin de sauvegarde des sessions PHP
+# php_value session.save_path "/home/leo/Documents/Prog/www/aoo4/sessions"
