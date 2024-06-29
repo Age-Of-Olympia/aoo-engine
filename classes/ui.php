@@ -378,7 +378,7 @@ class ui{
 
 
         echo '
-        <div id="ui-dialog">
+        <div id="ui-dialog" style="display: none;">
             ';
 
             if(!empty($options['json'])){
@@ -470,6 +470,15 @@ class ui{
         <script src="js/dialog.js?v='. $dialogVersion .'"></script>
         <link rel="stylesheet" href="css/dialog.css?v='. $dialogVersion .'">
         ';
+
+        ?>
+        <script>
+        $(document).ready(function(){
+
+            $('#ui-dialog').delay('fast').fadeIn();
+        });
+        </script>
+        <?php
 
 
         return ob_get_clean();
