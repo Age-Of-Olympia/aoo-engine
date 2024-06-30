@@ -189,6 +189,26 @@ input[type="text"], input[type="password"], input[type="number"]{
  */
 
 
+#top-menu-button{
+
+    margin-top: -7px;
+    margin-bottom: -10px;
+    height: 43px;
+}
+
+    #top-menu-button img{
+
+        filter: grayscale(1);
+        opacity: 0.5;
+    }
+
+    #top-menu-button img:hover{
+
+        filter: grayscale(0);
+        opacity: 1;
+    }
+
+
 #index-menu{
 
     width: 200px;
@@ -230,20 +250,22 @@ input[type="text"], input[type="password"], input[type="number"]{
     pointer-events: none;
 }
 
+.player-info{
 
-#index-banner{
-
-    margin-left: 10px;
-    margin-right: 10px;
-/*     filter: grayscale(1); */
-/*     opacity: 0.7; */
+    font-size: 88%;
+    white-space: nowrap;
 }
 
-    #index-banner:hover{
+#index-partenaires{
 
-        filter: grayscale(0);
-        opacity: 1;
+    margin: 50px;
+}
+
+    #index-partenaires img{
+
+        max-width: 100px;
     }
+
 
 /*
  * view
@@ -469,20 +491,6 @@ input[type="text"], input[type="password"], input[type="number"]{
             border-left: 5px solid rgba(255,255,255,0.1);
         }
 
-    /*#ui-card #action-data{
-
-        position: absolute;
-        top: -1px;
-        left: 0px;
-        background: rgba(0,0,0,0.7);
-        text-align: left;
-        font-size: 88%;
-        padding: 5px;
-        margin: 5px;
-        width: 200px;
-        display: none;
-    }*/
-
     #ui-card .card-actions{
 
         position: absolute;
@@ -502,14 +510,20 @@ input[type="text"], input[type="password"], input[type="number"]{
         color: #eee;
         font-size: 88%;
         margin-left: -10px;
+        text-shadow: 1px 1px #0a0a0a;
     }
 
     #ui-card .card-faction{
 
         position: absolute;
         right: 3px;
-        top: 255px;
+        top: 257px;
     }
+
+        #ui-card .card-faction img{
+
+            height: 25px;
+        }
 
     #ui-card .card-text{
 
@@ -721,6 +735,24 @@ input[type="text"], input[type="password"], input[type="number"]{
 }
 
 
+#elebata{
+
+    position: fixed;
+    bottom: 5px;
+    right: 5px;
+}
+
+    #elebata img{
+
+        opacity: 0.3;
+    }
+
+    #elebata img:hover{
+
+        opacity: 1;
+    }
+
+
 /*
  * infos target
  */
@@ -766,3 +798,7 @@ input[type="text"], input[type="password"], input[type="number"]{
 .ra-bone-bite{ color: #66ff66; } /* poison */
 
 .ra-player-pain{ color: #eee; } /* fatigue */
+
+.ra-hand-emblem{ color: cyan; } /* sorts de soins */
+
+.ra-barbed-arrow{ color: red; } /* sorts de dmg1 */

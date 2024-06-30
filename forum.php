@@ -120,11 +120,11 @@ echo '
                 ';
 
                 echo '
-                <td><img src="img/ui/forum/'. $img .'.png" width="50" /></td>
+                <td class="forum" data-forum="'. $forJson->name .'"²><img src="img/ui/forum/'. $img .'.png" width="50" /></td>
                 ';
 
                 echo '
-                <td data-forum="'. $forJson->name .'">
+                <td class="forum" data-forum="'. $forJson->name .'">
                     ';
 
 
@@ -136,7 +136,7 @@ echo '
                 ';
 
                 echo '
-                <td align="center">
+                <td class="forum" data-forum="'. $forJson->name .'" align="center">
                     ';
 
 
@@ -163,7 +163,7 @@ echo '
 <script>
 $(document).ready(function(e){
 
-    $('td').click(function(e){
+    $('.forum').click(function(e){
 
         document.location = 'forum.php?forum='+ $(this).data('forum');
     });

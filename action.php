@@ -131,6 +131,65 @@ if($actionJson->targetType != 'self'){
     // action
     $dice = new Dice(3);
 
+
+    $checkAboveDistance = true;
+    $distanceMalus = 0;
+
+
+    // special attack cc/ct
+    if($actionJson->playerJet == 'cc/ct'){
+
+        if($distance == 1){
+
+
+            // melee
+
+            $actionJson->playerJet = 'cc';
+        }
+
+        elseif($distance > 1){
+
+
+            // tir / jet
+
+            $actionJson->playerJet = 'ct';
+        }
+    }
+
+    // special defense cc/agi
+    if($actionJson->targetJet == 'cc/agi'){
+
+
+        if($distance == 1){
+
+
+            // melee
+
+            $actionJson->targetJet = max($target->caracs->cc, $target->caracs->agi);
+        }
+
+        elseif($distance > 1){
+
+
+            // tir
+
+
+            // distanceMalus
+            if($distance > 2){
+
+                $distanceMalus = ($distance - 2) * 3;
+            }
+
+
+            $option1 = floor( (3/4*$target->caracs->cc) + (1/4*$target->caracs->agi) );
+            $option2 = floor( (1/4*$target->caracs->cc) + (3/4*$target->caracs->agi) );
+
+
+            $actionJson->targetJet = max($option1, $option2);
+        }
+    }
+
+
     $playerJet = (is_numeric($actionJson->playerJet)) ? $dice->roll($actionJson->playerJet) : $dice->roll($player->caracs->{$actionJson->playerJet});
 
     $targetJet = (is_numeric($actionJson->targetJet)) ? $dice->roll($actionJson->targetJet) : $dice->roll($target->caracs->{$actionJson->targetJet});
@@ -140,18 +199,57 @@ if($actionJson->targetType != 'self'){
     $targetFat = floor($target->data->fatigue / FAT_EVERY);
 
 
-    $playerTotal = array_sum($playerJet) - $playerFat;
+    $playerTotal = array_sum($playerJet) - $playerFat - $distanceMalus;
     $targetTotal = array_sum($targetJet) - $targetFat - $target->data->malus;
 
 
+    // tir & too far
+    if($distanceMalus){
+
+
+        $distanceTreshold = floor(($distance) * 2.5);
+        $checkAboveDistance = $playerTotal >= $distanceTreshold;
+    }
+
+
+    // spell & too far
+    if($actionJson->playerJet == 'fm'){
+
+
+        $distanceTreshold = 4 * ($distance - 1);
+        $checkAboveDistance = $playerTotal >= $distanceTreshold;
+    }
+
+
     // success
-    if($actionJson->targetJet == 0 || $playerTotal >= $targetTotal){
+    if(
+        $checkAboveDistance
+        &&
+        (
+            $actionJson->targetJet == 0
+            ||
+            $playerTotal >= $targetTotal
+        )
+        ){
 
         $success = true;
     }
     else{
 
-        echo '<div style="color: red;">Échec.</div>';
+
+        if(!$checkAboveDistance){
+
+
+            echo '<div style="color: red;">Votre action ne porte pas aussi loin.</div>';
+        }
+        else{
+
+
+            echo '<div style="color: red;">Échec.</div>';
+
+            // target malus
+            $target->put_malus(1);
+        }
     }
 }
 elseif($actionJson->targetType == 'self'){
@@ -169,14 +267,20 @@ elseif($actionJson->targetType == 'self'){
 if(!empty($success) && $success == true){
 
 
+    $distanceDmgReduce = 0;
+
+
     echo '<div style="color: #66ccff;">Réussite!</div>';
 
 
     if(!empty($actionJson->playerDamages)){
 
+
         $playerDamages = (is_numeric($actionJson->playerDamages)) ? $actionJson->playerDamages : $player->caracs->{$actionJson->playerDamages};
 
+
         if(!empty($actionJson->bonusDamages)){
+
 
             $playerDamages += $actionJson->bonusDamages;
         }
@@ -186,24 +290,48 @@ if(!empty($success) && $success == true){
 
         $totalDamages = $playerDamages - $targetDamages;
 
+
+        // tir damages reduce
+        if($distance > 2){
+
+
+            $distanceDmgReduce = $distance - 2;
+
+            $totalDamages -= $distanceDmgReduce;
+        }
+
+
         if($totalDamages < 1){
+
 
             $totalDamages = 1;
         }
 
+
+        $distanceDmgReduceTxt = ($distanceDmgReduce) ? ' - '. $distanceDmgReduce .' (Distance)' : '';
+
+
         echo '
         Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
-        <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages .' = '. $totalDamages .' dégâts</div>';
+        <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt .' = '. $totalDamages .' dégâts</div>';
+
+
+        // put negative bonus (damages)
+        $target->put_bonus(array('pv'=>-$totalDamages));
     }
 
+
     elseif(!empty($actionJson->playerHeal)){
+
 
         $baseHeal = (is_numeric($actionJson->playerHeal)) ? $actionJson->playerHeal : $player->caracs->{$actionJson->playerHeal};
 
         $bonusHeal = 0;
 
+
         if(!empty($actionJson->bonusHeal)){
+
 
             $bonusHeal = $actionJson->bonusHeal;
         }
@@ -211,10 +339,14 @@ if(!empty($success) && $success == true){
 
         $playerHeal = $baseHeal + $bonusHeal;
 
+
         echo '
         <div>Vous soignez '. $target->data->name .' de '. $playerHeal .'PV.</div>
         <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'</div>
         ';
+
+
+        $target->put_bonus(array('pv'=>$playerHeal));
     }
 }
 
@@ -226,6 +358,16 @@ if(!empty($success) && $success == true){
 
 // default cost
 $bonus = array('a'=>-1);
+
+
+// add other costs (ie. PM cost for spells)
+if(!empty($actionJson->costs)){
+
+    foreach($actionJson->costs as $k=>$e){
+
+        $bonus[$k] = -$e;
+    }
+}
 
 
 // scripts
@@ -335,15 +477,29 @@ if(
     $actionJson->targetType != 'self'
 ){
 
+    $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
 
-    $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus) = '. $targetTotal : '';
+    $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
 
-    $playerFatTxt = ($playerFat != 0) ? ' - '. $playerFat .' (Fatigue) = '. $playerTotal : '';
-    $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue) = '. $targetTotal : '';
+    $playerFatTxt = ($playerFat != 0) ? ' - '. $playerFat .' (Fatigue)' : '';
+    $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
+
+    $playerTotalTxt = ($playerFat || $distanceMalus) ? ' = '. $playerTotal : '';
+    $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
 
 
-    echo '<div class="action-details">Jet '. $player->data->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) . $playerFatTxt .'</div>';
-    echo '<div class="action-details">Jet '. $target->data->name .' = '. array_sum($targetJet) . $malusTxt . $targetFatTxt .'</div>';
+    echo '<div class="action-details">Jet '. $player->data->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) . $distanceMalusTxt . $playerFatTxt . $playerTotalTxt .'</div>';
+
+
+    if($checkAboveDistance){
+
+
+        echo '<div class="action-details">Jet '. $target->data->name .' = '. array_sum($targetJet) . $malusTxt . $targetFatTxt . $targetTotalTxt .'</div>';
+    }
+    else{
+
+        echo '<div class="action-details">Le jet devait être >= à '. $distanceTreshold .'.</div>';
+    }
 }
 
 

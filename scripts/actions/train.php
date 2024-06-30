@@ -20,6 +20,11 @@ elseif($playerRank < $targetRank){
     $targetXp = 1;
 }
 
+
+$player->put_xp($playerXp);
+$target->put_xp($targetXp);
+
+
 echo '
 Vous vous entraînez avec '. $target->data->name .'.
 

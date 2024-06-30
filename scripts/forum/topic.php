@@ -12,6 +12,9 @@ if(!$topJson){
 $ui = new Ui(htmlentities($topJson->title));
 
 
+echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.png" /></a><br /><a href="#last"><img src="img/ui/forum/down.png" /></a></div>';
+
+
 include('scripts/infos.php');
 include('scripts/menu.php');
 

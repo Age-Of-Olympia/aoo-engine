@@ -620,7 +620,13 @@ class Player{
     }
 
 
-    public function put_bonus($bonus){
+    public function put_bonus($bonus) : bool{
+
+
+        if(!count($bonus)){
+
+            return false;
+        }
 
 
         $values = array();
@@ -630,10 +636,42 @@ class Player{
 
             $values[] = '('. $this->id .', "'. $carac .'", '. $val .')';
 
+
             if($carac == 'a'){
 
 
-                $this->put_fat(1);
+                $this->put_fat(FAT_PER_ACTION);
+            }
+
+            elseif($carac == 'pv'){
+
+
+                if($val < 0){
+
+                    $this->put_malus(MALUS_PER_DAMAGES);
+                }
+
+                elseif($val > 0){
+
+
+                    $pvLeft = $this->get_left('pv');
+
+                    if($pvLeft + $val > $this->caracs->pv){
+
+                        $val = $pvLeft;
+                    }
+                }
+            }
+
+            elseif($carac == 'pm' && $val > 0){
+
+
+                $pmLeft = $this->get_left('pm');
+
+                if($pmLeft + $val > $this->caracs->pm){
+
+                    $val = $pmLeft;
+                }
             }
         }
 
@@ -649,17 +687,46 @@ class Player{
         $db = new Db();
 
         $db->exe($sql);
+
+
+        return true;
+    }
+
+
+    public function get_left($carac){
+
+
+        if(!isset($this->caracs)){
+
+
+            $this->get_caracs();
+        }
+
+        return $this->caracs->$carac - $this->turn->$carac;
+    }
+
+
+    public function put_malus($malus){
+
+
+        $sql = 'UPDATE players SET malus = GREATEST(malus + ?, 0) WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($malus, $this->id));
+
+        $this->refresh_data();
     }
 
 
     public function put_fat($fat){
 
 
-        $sql = 'UPDATE players SET fatigue = fatigue + 1 WHERE id = ?';
+        $sql = 'UPDATE players SET fatigue = GREATEST(fatigue + ?, 0) WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, $this->id);
+        $db->exe($sql, array($fat, $this->id));
 
         $this->refresh_data();
     }
@@ -1064,13 +1131,17 @@ class Player{
         }
 
 
+        $raceJson = json()->decode('races', $player->data->race);
+
+
         $values = array(
             'id'=>$id,
             'name'=>$name,
             'race'=>$race,
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
             'portrait'=>'img/portraits/'. $race .'/1.jpeg',
-            'coords_id'=>$coordsId
+            'coords_id'=>$coordsId,
+            'faction'=>$raceJson->faction
         );
 
         $db->insert('players', $values);
@@ -1082,8 +1153,6 @@ class Player{
         // first init data
         $player->get_data();
 
-
-        $raceJson = json()->decode('races', $player->data->race);
 
         foreach($raceJson->actions as $e){
 

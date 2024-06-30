@@ -60,7 +60,7 @@ class ui{
          */
 
         return '
-                <sup style="position: absolute; bottom: 0px; right: 0px;">'. sqln()-1 .' req</sup>
+                <sup style="position: absolute; top: 0px; right: 0px; opacity: 0.5;">'. sqln()-1 .' req</sup>
             </body>
         </html>
         ';

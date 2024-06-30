@@ -15,6 +15,15 @@ if(!isset($_SESSION['playerId']) || isset($_GET['menu'])){
     include('scripts/index.php');
 }
 
+elseif(isset($_GET['logout'])){
+
+    unset($_SESSION['mainPlayerId']);
+    unset($_SESSION['playerId']);
+    session_destroy();
+
+    header('location:index.php');
+}
+
 
 ?>
 

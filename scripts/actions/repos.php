@@ -1,6 +1,35 @@
 <?php
 
 
+echo '
+Vous vous reposez.
+';
+
+
+// // malus
+// if($player->data->malus){
+//
+//
+//     $player->put_malus(-9);
+//
+//     $malus = ($player->data->malus > 9) ? 9 : $player->data->malus;
+//
+//     echo '<div class="action-details">'. $malus .' Malus enlevés.</div>';
+// }
+
+
+// fatigue
+if($player->data->fatigue){
+
+
+    $player->put_fat(-FAT_PER_REST); // this action add 1 one fat
+
+    $fat = ($player->data->fatigue > FAT_PER_REST) ? FAT_PER_REST : $player->data->fatigue;
+
+    echo '<div class="action-details">'. $fat .' Fatigues enlevées.</div>';
+}
+
+
 $sql = '
 SELECT COUNT(*) AS n
 FROM players_effects
@@ -17,10 +46,23 @@ $db = new Db();
 $count = $db->get_count($sql);
 
 
-$player->purge_effects();
+if($count){
 
-echo '
-Vous vous reposez.
+    $player->purge_effects();
 
-<div class="action-details">'. $count .' effets terminés.</div>
-';
+    echo '<div class="action-details">'. $count .' effets terminés.</div>';
+}
+
+
+
+// special : dot not add -1 A with $payer->put_bonus() cause it add 1 Fat
+
+$bonus = array();
+
+$values = array(
+    'player_id'=>$player->id,
+    'name'=>'a',
+    'n'=>-1
+);
+
+$db->insert('players_bonus', $values);

@@ -157,9 +157,15 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
  * costs
  */
 
-define('TRAVEL_COST', 15);
+define('TRAVEL_COST', 15); // travelling cost 15Po
 
-define('FAT_EVERY', 6);
+define('FAT_EVERY', 6); // every 6 fat, -1 for all rolls
+
+define('FAT_PER_ACTION', 1); // each Action add 1 fat
+
+define('FAT_PER_REST', 6); // resting delete 6 fat
+
+define('MALUS_PER_DAMAGES', 2); // when damages are done, add 2 malus
 
 
 /*
