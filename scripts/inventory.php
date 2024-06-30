@@ -49,6 +49,7 @@ echo $data;
 
 
 ?>
+<script src="js/progressive_loader.js"></script>
 <script>
 $(document).ready(function(){
 

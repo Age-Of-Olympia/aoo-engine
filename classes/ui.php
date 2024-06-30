@@ -155,8 +155,7 @@ class ui{
             <div class="">
                 <div class="preview-img">
                     <img
-                        src="img/ui/fillers/150.png"
-                        data-src="img/items/'. $defaultItem->row->name .'.png"
+                        src="img/items/'. $defaultItem->row->name .'.png"
                         data-filler="img/ui/fillers/150.png"
                         width="150"
                         height="150"
@@ -215,7 +214,11 @@ class ui{
             >
                 <td width="50">
                     <div>
-                        <img src="img/items/'. $row->name .'_mini.png" height="50" />
+                        <img
+                            src="img/ui/fillers/50.png"
+                            height="50"
+                            data-src="img/items/'. $row->name .'_mini.png"
+                        />
                     </div>
                 </td>
                 <td align="left" class="item-name">
@@ -260,7 +263,7 @@ class ui{
             var $previewImg = $(".preview-img img");
 
             // first img preload
-            preload($previewImg.data("src"), $previewImg);
+            // preload($previewImg.data("src"), $previewImg);
 
             $(".item-case").click(function(e){
 
