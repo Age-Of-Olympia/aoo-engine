@@ -1,6 +1,12 @@
 <?php
 
 
+if(isset($_GET['logout'])){
+
+    ob_start();
+}
+
+
 define('NO_LOGIN', true);
 
 
@@ -20,6 +26,8 @@ elseif(isset($_GET['logout'])){
     unset($_SESSION['mainPlayerId']);
     unset($_SESSION['playerId']);
     session_destroy();
+
+    ob_clean();
 
     header('location:index.php');
 }

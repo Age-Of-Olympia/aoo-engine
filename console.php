@@ -744,6 +744,26 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // ANNONCE
+    if($cmdTbl[0] == 'annonce'){
+
+        unset($cmdTbl[0]);
+
+        $text = implode(' ', $cmdTbl);
+
+        $data = (object) array(
+            'text'=>$text,
+            'time'=>time()
+        );
+
+        $data = Json::encode($data);
+
+        Json::write_json('datas/public/annonce.json', $data);
+
+        exit('annonce: '. $text .'');
+    }
+
+
     // MAP
     if($cmdTbl[0] == 'tiled'){
 

@@ -91,7 +91,7 @@ echo '
     }
 
     echo '<a href="forum.php" class="index-button">Forum</a>';
-    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4" class="index-button">Wiki v4</a>';
+    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4" class="index-button">Aide Wiki</a>';
 
     echo '
 </div>
@@ -106,7 +106,7 @@ echo '
     <br />
     ';
 
-    echo '<a href="http://aufonddutrou.fr/"><img src="img/ui/partenaires/afdt.gif" /></a>';
+    echo '<a href="https://aufonddutrou.fr/"><img src="img/ui/partenaires/afdt.gif" /></a>';
     echo '<a href="https://www.jdr.alandara.net/"><img src="img/ui/partenaires/alandara.gif" /></a>';
     echo '<a href="https://ideo-lejeu.com/"><img src="img/ui/partenaires/ideo.gif" /></a>';
     echo '<a href="https://www.mountyhall.com/"><img src="img/ui/partenaires/mountyhall.png" /></a>';
@@ -117,6 +117,16 @@ echo '
     echo '
 </div>
 ';
+
+
+$annonceJson = json()->decode('', 'annonce');
+
+if($annonceJson){
+
+    echo '<div id="index-changelog"><a class="install-app" style="background: black; color: white;" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. date('d/m/Y', $annonceJson->time) .')</a></div>';
+}
+
+echo '<div id="index-discord"><a class="install-app" style="background: #5865f2; color: white;" href="https://discord.gg/peYNvzhDag"><img src="img/ui/partenaires/discord.png" /> Discord </a></div>';
 
 
 echo '<div class="preload"><img src="img/ui/bg/button2.png" /></div>';
