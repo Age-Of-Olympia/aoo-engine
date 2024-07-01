@@ -6,9 +6,16 @@ class Dialog{
 
     private $dialog; // dialog id/name
     private $dialogJson; // dialog json file (in datas/private/dialogs/ or datas/public/dialogs/)
+    private $player; // to customize dialog text
 
 
-    function __construct($dialog){
+    function __construct($dialog, $player=false){
+
+
+        if($player){
+
+            $this->player = $player;
+        }
 
 
         $this->dialogJson = json()->decode('dialogs', $dialog);
@@ -74,17 +81,55 @@ class Dialog{
 
                 $n = 1;
 
+
+                if(!empty($node->shuffle)){
+
+                    shuffle($node->options);
+                }
+
+
                 foreach($node->options as $option){
 
 
                     echo '
                     <div
-                        data-go="'. $option->go .'" class="node-option">
+                        ';
 
-                        '. $n .'.
+                        if(!empty($option->go)){
 
-                        '. $option->text .'
+                            echo 'data-go="'. $option->go .'"
+                            ';
+                        }
+                        elseif(!empty($option->url)){
 
+                            echo 'data-url="'. $option->url .'"
+                            ';
+                        }
+
+                        if(!empty($option->set)){
+
+
+                            foreach($option->set as $k=>$e){
+
+
+                                echo 'data-set-name="'. $k .'"
+                                ';
+
+                                echo 'data-set-val="'. $e .'"
+                                ';
+                            }
+                        }
+
+
+                        echo '
+                        class="node-option"
+                        >';
+
+                        echo $n .'. ';
+
+                        echo $this->customize($option->text);
+
+                        echo '
                     </div>
                     ';
 
@@ -130,5 +175,106 @@ class Dialog{
 
 
         return ob_get_clean();
+    }
+
+
+    public function customize($text){
+
+
+        return $text;
+    }
+
+
+    public static function get_race_n(){
+
+        $db = new Db();
+
+        // time limit
+        $limit = time() - INACTIVE_TIME;
+
+        // AND
+        // nextTurnTime > ?
+
+        $sql = '
+        SELECT COUNT(*) AS n, race
+        FROM
+        players
+        WHERE
+        id > 0
+
+        GROUP BY
+        race
+        ';
+
+        $result = $db->exe($sql);
+
+        // races n
+        $raceNTbl = array();
+
+
+        // default
+        foreach(RACES as $e)
+            $raceNTbl[$e] = 0;
+
+
+        $raceBonusTbl = array();
+
+        while($row = $result->fetch_assoc()){
+
+
+            if(!in_array($row['race'], RACES)){
+
+                continue;
+            }
+
+
+            $raceNTbl[$row['race']] = $row['n'];
+        }
+
+        // print_r($raceNTbl);
+
+        $raceNTblFormat= [];
+        foreach($raceNTbl as $k=>$e){
+            $raceNTblFormat[$k] = '('. $e .' âmes)';
+        }
+
+        $raceNTblCopy = $raceNTbl;
+
+        sort($raceNTbl);
+
+        $raceTbl = array();
+        foreach($raceNTblCopy as $k=>$e){
+            if($e == $raceNTbl[0]){
+                $raceTbl[] = $k;
+                $raceNTblFormat[$k] .= " <font color='gold'>+20Po en bonus!</font>";
+            }
+        }
+
+        return $raceNTblFormat;
+    }
+
+
+    public static function refresh_register_dialog(){
+
+
+        $options = array();
+
+
+        foreach(self::get_race_n() as $k=>$e){
+
+
+            $raceJson = json()->decode('races', $k);
+
+            $options[] = (object) array('go'=>$k, 'text'=>$raceJson->name .' '. $e);
+        }
+
+
+        $regJson = json()->decode('dialogs', 'register');
+
+        $regJson->dialog[0]->options = $options;
+
+        $data = Json::encode($regJson);
+
+        Json::write_json('datas/public/dialogs/register.json', $data);
     }
 }

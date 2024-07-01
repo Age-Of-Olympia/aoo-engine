@@ -9,10 +9,10 @@ if(!empty($_POST['id']) && !empty($_POST['n'])){
 }
 
 
-if(!empty($_GET['item'])){
+if(!empty($_GET['itemId'])){
 
 
-    $item = Item::get_item_by_name($_GET['item']);
+    $item = new Item($_GET['itemId']);
     $item->get_data();
 
 
@@ -46,7 +46,7 @@ if(!empty($_GET['item'])){
 }
 
 
-echo '<h1>Demandes (Vendre)</h1>';
+echo '<h1>Demandes d\'Achat</h1>';
 
 
 if(isset($_GET['newContract'])){
@@ -58,6 +58,8 @@ if(isset($_GET['newContract'])){
 }
 
 
-echo '<div><a href="merchant.php?targetId='. $target->id .'&asks&newContract"><button>Nouveau Contrat</button></a></div>';
+echo '<div>Voici les objets que les autres personnages veulent acheter.<br /><font color="gold">Vendez vos objets ici.</font></div>';
 
 echo $market->print_market('asks');
+
+echo '<div><a href="merchant.php?targetId='. $target->id .'&asks&newContract"><button>Nouvelle demande d\'Achat</button></a></div>';

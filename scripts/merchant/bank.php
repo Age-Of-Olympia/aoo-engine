@@ -57,6 +57,7 @@ echo $market->print_bank($player);
 
 
 ?>
+<script src="js/progressive_loader.js"></script>
 <script>
 $(document).ready(function(){
 

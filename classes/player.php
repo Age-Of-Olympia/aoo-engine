@@ -1131,7 +1131,7 @@ class Player{
         }
 
 
-        $raceJson = json()->decode('races', $player->data->race);
+        $raceJson = json()->decode('races', $race);
 
 
         $values = array(
@@ -1164,6 +1164,10 @@ class Player{
 
             return $id;
         }
+
+
+        Dialog::refresh_register_dialog();
+
 
         return $lastId;
     }

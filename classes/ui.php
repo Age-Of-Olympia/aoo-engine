@@ -425,7 +425,7 @@ class ui{
                 echo '
                 <div class="dialog-template-img">
 
-                    <img src="img/ui/fillers/1.png" data-src="'. $options['avatar'] .'" />
+                    <img src="img/ui/fillers/1.png" data-img="'. $options['avatar'] .'" />
                 </div>
                 ';
 

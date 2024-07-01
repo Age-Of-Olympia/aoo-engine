@@ -34,7 +34,7 @@ if($distance > 1){
 // menu
 if(!isset($_GET['hideMenu'])){
 
-    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button><span class="ra ra-gavel"></span> Offres</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button><span class="ra ra-scroll-unfurled"></span> Demandes</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a><a href="merchant.php?targetId='. $target->id .'&inventory"><button><span class="ra ra-key"></span> Inventaire</button></a></div>';
+    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button><span class="ra ra-gavel"></span> Offres de Vente</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button><span class="ra ra-scroll-unfurled"></span> Demandes d\'Achat</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a><a href="merchant.php?targetId='. $target->id .'&inventory"><button><span class="ra ra-key"></span> Inventaire</button></a></div>';
 }
 
 
@@ -106,7 +106,7 @@ $(document).ready(function(){
 
     $('.item').click(function(e){
 
-        document.location = 'merchant.php?'+ $(this).data('market') +'&targetId=<?php echo $target->id ?>&item='+ $(this).data('name');
+        document.location = 'merchant.php?'+ $(this).data('market') +'&targetId=<?php echo $target->id ?>&itemId='+ $(this).data('id');
     });
 });
 </script>

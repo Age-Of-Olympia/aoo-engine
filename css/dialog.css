@@ -1,4 +1,5 @@
 #ui-dialog {
+
     display: flex;
     justify-content: center;
     align-items: flex-end;
@@ -6,6 +7,7 @@
 }
 
 .dialog-template {
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -15,16 +17,19 @@
 }
 
 .dialog-template-img {
+
     max-width: 100%;
     position: relative;
 }
 
 .dialog-template-img img {
+
     max-width: 100%;
     display: block;
 }
 
 .dialog-template-name {
+
     position: absolute;
     top: 10px;
     left: 10px;
@@ -35,6 +40,7 @@
 }
 
 .dialog-template-box {
+
     text-align: left;
     z-index: 100;
     width: 95%;
@@ -47,19 +53,29 @@
     box-sizing: border-box;
 }
 
+    .dialog-template-box a{
+
+        color: skyblue;
+    }
+
 .dialog-node-options {
+
 /*     margin-top: 10px; */
+    margin-top: 10px;
 }
 
 .node-option {
+
     cursor: pointer;
     padding: 5px;
     margin-top: 1px;
     background-color: rgba(255, 255, 255, 0.1);
 /*     border-radius: 5px; */
+/*     font-size: 88%; */
 }
 
 .node-option:hover {
+
     background-color: rgba(255, 255, 255, 0.2);
 }
 

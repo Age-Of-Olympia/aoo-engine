@@ -21,7 +21,7 @@
 // </video>
 // ';
 
-echo '<a href="index.php"><img src="img/ui/bg/banner.png" /></a>';
+echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.png" /></a>';
 echo "<div>Aoo, JDR gratuit au tour-par-tour.</div>";
 echo '
 <div id="index-menu">
@@ -83,7 +83,7 @@ echo '
 
     if(!isset($_SESSION['playerId'])){
 
-        echo '<a href="#" action="register" class="index-button">Inscription</a>';
+        echo '<a href="register.php" class="index-button">Inscription</a>';
     }
     else{
 
@@ -133,7 +133,21 @@ echo '<div class="preload"><img src="img/ui/bg/button2.png" /></div>';
 echo '<div class="preload"><img src="img/ui/bg/button3.png" /></div>';
 
 ?>
+<script src="js/progressive_loader.js"></script>
 <script>
+
+    <?php
+    if(!empty($_GET['login']) && is_numeric($_GET['login'])):
+    ?>
+
+    $('#index-login').fadeIn();
+    $('[type="text"]').val(<?php echo $_GET['login'] ?>);
+    $('[type="password"]').focus();
+
+    <?php
+    endif
+    ?>
+
 $('a[action="login"]').click(function(e){
 
 

@@ -85,6 +85,7 @@ class Market{
 
                 data-market="'. $table .'"
                 data-name="'. $item->row->name .'"
+                data-id="'. $item->id .'"
                 >
                 ';
 

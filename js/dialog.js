@@ -4,7 +4,7 @@ $(document).ready(function(){
     // preload avatar
     var $avatarImg = $(".dialog-template-img img");
 
-    preload($avatarImg.data("src"), $avatarImg);
+    preload($avatarImg.data("img"), $avatarImg);
 
 
     // show first node
@@ -13,6 +13,20 @@ $(document).ready(function(){
 
     // option click
     $(".node-option").click(function(e){
+
+
+        if($(this).data('url')){
+
+            document.location = $(this).data('url');
+
+            return false;
+        }
+
+
+        if($(this).data('set-name')){
+
+            window[$(this).data('set-name')] = $(this).data('set-val');
+        }
 
 
         var go = $(this).data("go");

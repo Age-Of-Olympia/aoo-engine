@@ -1,9 +1,9 @@
 <?php
 
 
-if(!empty($_POST['action']) && !empty($_POST['item']) &&  !empty($_POST['n']) && !empty($_POST['price'])){
+if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) && !empty($_POST['price'])){
 
-    $item = Item::get_item_by_name($_POST['item']);
+    $item = new Item($_POST['itemId']);
     $item->get_data();
 
 
@@ -30,48 +30,51 @@ if(!empty($_POST['action']) && !empty($_POST['item']) &&  !empty($_POST['n']) &&
     }
 
 
-    if($_POST['action'] == 'newAsk'){
+    if($_POST['action'] == 'newBid'){
 
 
-        if($_POST['n'] > $itemList[$item->row->name]){
+        $nMax = $item->get_n($player);
 
-            exit('Max. '. $itemList[$item->row->name] .'!');
+
+        if($_POST['n'] > $nMax){
+
+            exit('Max. '. $nMax .'!');
         }
 
-        $db->insert('items_asks', $values);
+        $db->insert('items_bids', $values);
 
 
         $item->add_item($player, -$_POST['n']);
 
     }
-    elseif($_POST['action'] == 'newBid'){
+    elseif($_POST['action'] == 'newAsk'){
 
 
         $total = $_POST['n'] * $_POST['price'];
 
 
-        if($total > $itemList['or']){
+        if($total > $player->get_gold()){
 
 
             exit('Vous ne possédez pas assez d\'Or pour prétendre acheter '. $_POST['n'] .' '. $item->row->name .'.');
         }
 
 
-        $db->insert('items_bids', $values);
+        $db->insert('items_asks', $values);
     }
 
-    exit();
+    exit('new offer done');
 }
 
 
-if(isset($_GET['asks'])){
+if(isset($_GET['bids'])){
 
     ?>
     <script>
     $(document).ready(function(e){
 
         $('.preview-action')
-        .append('<button class="action" data-action="newAsk">Vendre</button><br />');
+        .append('<button class="action" data-action="newBid">Vendre</button><br />');
     });
     </script>
     <?php
@@ -80,12 +83,14 @@ if(isset($_GET['asks'])){
     include('scripts/inventory.php');
 }
 
-elseif(isset($_GET['bids'])){
+elseif(isset($_GET['asks'])){
 
 
     echo '
     <select id="item">
         ';
+
+        echo '<option selected disabled>Choisissez un objet</option>';
 
         $sql = 'SELECT * FROM items ORDER by name';
 
@@ -127,7 +132,7 @@ elseif(isset($_GET['bids'])){
     ';
 
 
-    echo '<button id="submit">Créer une Offre d\'achat</button>';
+    echo '<button id="submit">Créer une Demande d\'Achat</button>';
 
 
     echo '<div id="ajax-data"></div>';
@@ -140,6 +145,9 @@ elseif(isset($_GET['bids'])){
         $('#item').change(function(e){
 
             var itemId = $(this).val();
+
+            window.itemId = itemId;
+            window.action = 'newAsk';
 
 
             $.ajax({
@@ -157,7 +165,10 @@ elseif(isset($_GET['bids'])){
 
         $('#submit').click(function(e){
 
-            var n = prompt('Combien?', 1);
+
+            var itemId = window.itemId;
+
+            var n = prompt('Quantité?', 1);
 
             if(n == null){
 
@@ -169,6 +180,39 @@ elseif(isset($_GET['bids'])){
                 alert('Nombre invalide!');
                 return false;
             }
+
+
+            let basePrice = window.basePrice || 0;
+
+
+            var price = prompt('Prix à l\'unité?', basePrice);
+
+            if(price == null){
+
+                return false;
+            }
+
+            if(price == '' || price < 1){
+
+                alert('Nombre invalide!');
+                return false;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: 'merchant.php?targetId=<?php echo $target->id ?>&bids&hideMenu&newContract',
+                data: {
+                    'action': window.action,
+                    'itemId': itemId,
+                    'n': n,
+                    'price': price
+                }, // serializes the form's elements.
+                success: function(data)
+                {
+                    // alert(data);
+                    alert(data);
+                }
+            });
         });
 
 

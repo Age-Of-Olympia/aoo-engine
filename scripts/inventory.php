@@ -61,7 +61,7 @@ $(document).ready(function(){
 
     $actions
     .append('<button class="action" data-action="use">Utiliser</button><br />')
-    .append('<button class="action" data-action="drop">Déposer</button><br />');
+    .append('<button class="action" data-action="drop">Jeter</button><br />');
 
 
     $('.action').click(function(e){
