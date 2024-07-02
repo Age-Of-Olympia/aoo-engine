@@ -546,7 +546,9 @@ img {
         position: absolute;
         top: 30px;
         right: -5px;
+        max-height: 100px;
         text-align: right;
+        z-index: 1;
     }
 
     #ui-card .card-actions .action-name{
@@ -565,15 +567,27 @@ img {
 
     #ui-card .card-faction{
 
+        color: #0a0a0a;
         position: absolute;
-        right: 3px;
-        top: 257px;
+        right: 13px;
+        top: 254px;
+        font-size: 1.5em;
+        z-index: 0;
+        text-shadow: 1px 1px white;
+        opacity: 0.9;
     }
+
+        #ui-card .card-faction a{
+
+            color: #0a0a0a;
+        }
 
         #ui-card .card-faction img{
 
             height: 25px;
         }
+
+
 
     #ui-card .card-text{
 
@@ -884,6 +898,10 @@ img {
 
 .ra-player-pain{ color: #eee; } /* fatigue */
 
-.ra-hand-emblem{ color: cyan; } /* sorts de soins */
+.ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{ color: #0a0a0a; text-shadow: 1px 1px #efd477; } /* sorts de soins */
 
-.ra-barbed-arrow{ color: red; } /* sorts de dmg1 */
+.ra-barbed-arrow, .ra-burning-eye, .ra-kunai, .ra-thorn-arrow, .ra-spinning-sword, .ra-drill{ color: #ff00eb; text-shadow: 1px 1px #0a0a0a; } /* sorts de dmg1 */
+
+.ra-cracked-helm, .ra-hand, .ra-diving-dagger, .ra-bird-claw, .ra-tooth{ color: #efd477; text-shadow: 1px 1px #0a0a0a; }/* sorts de dmg2 */
+
+.ra-forging{ color: white; text-shadow: 1px 1px #0a0a0a; } /* forge sacrée */

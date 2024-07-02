@@ -208,6 +208,9 @@ if(!$solo && $res->num_rows){
         }
 
 
+        $factionJson = json()->decode('factions', $target->data->faction);
+
+
         $data = (object) array(
             'bg'=>$target->data->portrait,
             'name'=>$dataName,
@@ -215,7 +218,7 @@ if(!$solo && $res->num_rows){
             'type'=>$dataType,
             'text'=>$text,
             'race'=>$target->data->race,
-            'faction'=>'<img src="'. $target->data->faction_mini .'" />'
+            'faction'=>'<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>'
         );
 
         $card = Ui::get_card($data);

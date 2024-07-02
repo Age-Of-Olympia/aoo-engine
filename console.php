@@ -588,6 +588,28 @@ if(!empty($_POST['cmd'])){
             exit($player->data->name .' pnj ajouté: '. $target->data->name .'');
         }
 
+        if($cmdTbl[2] == 'data'){
+
+
+            $player->get_data();
+
+            if(empty($player->data->{$cmdTbl[3]})){
+
+                exit('wrong data');
+            }
+
+
+            $sql = 'UPDATE players SET '. $cmdTbl[3] .' = ? WHERE id = ?';
+
+            $db = new Db();
+
+            $db->exe($sql, array($cmdTbl[4], $player->id));
+
+            $player->refresh_data();
+
+            exit($player->data->name .': '. $cmdTbl[3] .' = '. $cmdTbl[4]);
+        }
+
 
         if($cmdTbl[2] == 'cancel'){
 
