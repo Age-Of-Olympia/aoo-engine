@@ -108,6 +108,31 @@ if($goCoords->z < 0){
 }
 
 
+// sky
+elseif($goCoords->z > 0){
+
+
+    $sql = 'SELECT COUNT(*) AS n FROM map_tiles WHERE coords_id = ?';
+
+    $res = $db->exe($sql, $coordsId);
+
+    $row = $res->fetch_object();
+
+    if(!$row->n && !$player->have_effect('vol')){
+
+        echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu.");</script>';
+
+        exit();
+    }
+
+    elseif(!$row->n && $player->have_effect('vol')){
+
+        // vol
+        include('scripts/map/vol.php');
+    }
+}
+
+
 
 // loots
 $sql = '

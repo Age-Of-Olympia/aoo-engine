@@ -65,6 +65,7 @@ class Market{
             <th></th>
             <th>Objet</th>
             <th>Meilleur prix</th>
+            <th></th>
         </tr>
         ';
 
@@ -104,6 +105,14 @@ class Market{
                 echo '
                 <td>
                     '. $row->price .'Po
+                </td>
+                ';
+
+                echo '
+                <td>
+                    <a href="merchant.php?'. $table .'&targetId='. $this->target->id .'&itemId='. $item->id .'">
+                        Négocier
+                    </a>
                 </td>
                 ';
 

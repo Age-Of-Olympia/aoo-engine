@@ -35,7 +35,7 @@ foreach($player->get_spells() as $e){
             <span class="ra '. $spellJson->raFont .'"></span>
         </td>
         <td>
-            '. $spellJson->cost .'PM
+            '. implode(', ', Item::get_cost($spellJson->costs)) .'
         </td>
         <td align="left">
             '. $spellJson->text .'

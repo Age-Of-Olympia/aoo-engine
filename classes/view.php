@@ -97,6 +97,10 @@ class View{
 
             $tile = 'img/tiles/underground.png';
         }
+        elseif($this->coords->z > 0){
+
+            $tile = 'img/tiles/sky.png';
+        }
 
 
         echo '
@@ -463,6 +467,17 @@ class View{
             echo '
         </svg>
         </div>
+        ';
+
+
+        // scroll middle of view overflow
+        echo '
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var scrollableDiv = document.getElementById("view");
+            scrollableDiv.scrollLeft = (scrollableDiv.scrollWidth - scrollableDiv.clientWidth) / 2;
+        });
+        </script>
         ';
 
 

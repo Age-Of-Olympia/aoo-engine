@@ -38,69 +38,26 @@ $target->get_data();
 $target->get_caracs();
 
 
+// player : ignore equipement
+if(!empty($actionJson->playerIgnore)){
+
+
+    include('scripts/actions/playerIgnore.php');
+}
+
+// target : ignore equipement
+if(!empty($actionJson->targetIgnore)){
+
+
+    include('scripts/actions/targetIgnore.php');
+}
+
+
 // distance
 $distance = View::get_distance($player->get_coords(), $target->get_coords());
 
 
-if($distance > $player->caracs->p){
-
-    exit('La cible est hors de votre Perception.');
-}
-
-
-if(!empty($actionJson->distanceMin)){
-
-
-    if($distance < $actionJson->distanceMin){
-
-        exit('Vous n\'êtes pas à bonne distance.');
-    }
-}
-
-if(!empty($actionJson->distanceMax)){
-
-
-    if($distance > $actionJson->distanceMax){
-
-        exit('Vous n\'êtes pas à bonne distance.');
-    }
-}
-
-if($player->coords->z < 0 && $distance > 2){
-
-    exit('Dans les souterrains, la portée maximum est de 2 cases.');
-}
-
-
-if(!empty($actionJson->useEmplacement)){
-
-
-    $emplacement = $actionJson->useEmplacement;
-
-
-    if($player->$emplacement->data->subtype == 'melee' && $distance > 1){
-
-        exit('Vous n\'êtes pas à bonne distance (arme de mêlée).');
-    }
-    elseif($player->$emplacement->data->subtype == 'jet' && $distance < 2){
-
-        exit('Vous n\'êtes pas à bonne distance (arme de jet).');
-    }
-    elseif($player->$emplacement->data->subtype == 'tir' ){
-
-
-        if($distance < 2){
-
-            exit('Vous n\'êtes pas à bonne distance (arme de tir).');
-        }
-
-
-        if(!$munition = $player->get_munition($player->$emplacement, $equiped=true)){
-
-            exit('Vous devez équiper une munition.');
-        }
-    }
-}
+include('scripts/actions/check_distance.php');
 
 
 View::get_walls_between($player->coords, $target->coords);
@@ -126,6 +83,12 @@ if(!empty($emplacement)){
 
 
 if($actionJson->targetType != 'self'){
+
+
+    if($target->id == $player->id){
+
+        exit('error not self');
+    }
 
 
     // action
@@ -286,7 +249,7 @@ if(!empty($success) && $success == true){
         }
 
 
-        $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $player->caracs->{$actionJson->targetDamages};
+        $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $target->caracs->{$actionJson->targetDamages};
 
         $totalDamages = $playerDamages - $targetDamages;
 
@@ -308,13 +271,31 @@ if(!empty($success) && $success == true){
         }
 
 
+        // crit
+        if(!isset($target->tete) || !empty($actionJson->autoCrit)){
+
+
+            if(rand(1,100) <= DMG_CRIT || !empty($actionJson->autoCrit)){
+
+
+                $critMultiplier = 2;
+
+                $totalDamages *= $critMultiplier;
+
+                echo '<div><font color="red">Critique! Dégâts doublés!</font></div>';
+            }
+        }
+
+
         $distanceDmgReduceTxt = ($distanceDmgReduce) ? ' - '. $distanceDmgReduce .' (Distance)' : '';
+
+        $critTxt = (!empty($critMultiplier)) ? ' (x '. $critMultiplier .')' : '';
 
 
         echo '
         Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
-        <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt .' = '. $totalDamages .' dégâts</div>';
+        <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>';
 
 
         // put negative bonus (damages)

@@ -643,6 +643,14 @@ img {
     position: relative;
 }
 
+.preview-n{
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 5px;
+}
+
 .preview-img img {
 
     width: 150px;
@@ -662,7 +670,7 @@ img {
     .preview-action button{
 
         float: right;
-        width: 100px;
+        width: 105px;
     }
 
 .item-list {
@@ -686,6 +694,33 @@ img {
 .item-case img {
 
     width: 50px;
+}
+
+
+/*
+ * Market
+ */
+
+.section {
+    margin: 20px;
+    background: rgba(255,255,255, 0.2);
+    padding: 15px;
+    font-size: 88%;
+}
+.button-container {
+    margin-top: 10px;
+}
+.sell-button {
+    background-color: #f39c12;
+    color: white;
+}
+.buy-button {
+    background-color: #3498db;
+    color: white;
+}
+.section-title {
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
 

@@ -468,6 +468,20 @@ class Item{
             return 0;
         }
 
-        return $row->n;
+        return ITEM_LIMIT - $row->n;
+    }
+
+
+    public static function get_cost($costs){
+
+
+        $return = array();
+
+        foreach($costs as $k=>$e){
+
+            $return[] = $e . CARACS[$k];
+        }
+
+        return $return;
     }
 }

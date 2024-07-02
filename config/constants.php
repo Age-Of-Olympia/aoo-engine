@@ -58,6 +58,8 @@ define('EFFECTS_RA_FONT', array(
     'regeneration'=>'ra-health-increase',
     'poison_magique'=>'ra-bone-bite',
 
+    'vol'=>'ra-feather-wing',
+
     'fatigue'=>'ra-player-pain'
 ));
 
@@ -124,6 +126,12 @@ define('WALLS_PV', array(
  */
 
 
+define('DMG_CRIT', 10); // 10% de critique (x2 dégâts) sur un ennemi sans casque
+
+
+define('ITEM_DROP', 10); // 10% de drop sur les désarmements et loots
+
+
 define('ITEM_LIMIT', 3);
 
 
@@ -163,7 +171,7 @@ define('FAT_EVERY', 6); // every 6 fat, -1 for all rolls
 
 define('FAT_PER_ACTION', 1); // each Action add 1 fat
 
-define('FAT_PER_REST', 6); // resting delete 6 fat
+define('FAT_PER_REST', 4); // resting delete 4 fat
 
 define('MALUS_PER_DAMAGES', 2); // when damages are done, add 2 malus
 

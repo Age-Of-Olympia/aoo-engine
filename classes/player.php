@@ -140,6 +140,20 @@ class Player{
     }
 
 
+    public function get_caracsJson(){
+
+
+        if(!$caracsJson = json()->decode('players', $this->id .'.caracs')){
+
+            $player->get_caracs();
+
+            $caracsJson = json()->decode('players', $this->id .'.caracs');
+        }
+
+        return $caracsJson;
+    }
+
+
     public function get_upgrades(){
 
 
@@ -974,7 +988,13 @@ class Player{
         }
 
 
-        $itemList = Item::get_equiped_list($this);
+        if($item->row->name == 'poing'){
+
+            return false;
+        }
+
+
+        $itemList = Item::get_equiped_list($this, $doNotRefresh=false);
 
 
         if(!empty($itemList[$item->id])){
@@ -1005,7 +1025,7 @@ class Player{
 
             // item is NOT equiped : EQUIP
 
-            if(!empty($this->{$item->data->emplacement}) && $this->{$item->data->emplacement} == $item->id){
+            if(!empty($this->{$item->data->emplacement}) && $this->{$item->data->emplacement}->id == $item->id){
 
                 exit('unequip');
             }
@@ -1064,10 +1084,15 @@ class Player{
         }
 
 
-        // in both case, refresh
-        $this->refresh_invent();
-        $this->refresh_caracs();
-        $this->refresh_view();
+        // in actions.php, refreshing will interact with "ignore equipement" script
+        if(!$doNotRefresh){
+
+
+            // in both case, refresh
+            $this->refresh_invent();
+            $this->refresh_caracs();
+            $this->refresh_view();
+        }
     }
 
 

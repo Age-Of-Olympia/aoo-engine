@@ -153,6 +153,9 @@ class ui{
 
         echo '
             <div class="">
+
+                <div class="preview-n">x'. $itemList[$defaultItem->id]->n .'</div>
+
                 <div class="preview-img">
                     <img
                         src="img/items/'. $defaultItem->row->name .'.png"
@@ -202,6 +205,8 @@ class ui{
             }
 
 
+            $type = (!empty($item->data->type)) ? $item->data->type : '';
+
             echo '
             <tr
                 class="item-case"
@@ -210,6 +215,7 @@ class ui{
                 data-n="'. $row->n .'"
                 data-text="'. $item->data->text .'"
                 data-price="'. $item->data->price .'"
+                data-type="'. $type .'"
                 data-img="img/items/'. $item->row->name .'.png"
             >
                 <td width="50">
@@ -257,6 +263,7 @@ class ui{
 
             window.id = "<?php echo $defaultItem->row->id ?>";
             window.name = "<?php echo $defaultItem->row->name ?>";
+            window.type = "<?php echo $type ?>";
             window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
             window.price =    1;
 
@@ -272,6 +279,7 @@ class ui{
 
                 window.id =  $item.data("id");
                 window.name =  $item.data("name");
+                window.type =  $item.data("type");
                 window.n =     $item.data("n");
                 let text =  $item.data("text");
                 window.price = $item.data("price");
@@ -287,19 +295,28 @@ class ui{
                 }
                 else{
 
-                    if(window.freeEmp){
+                    if(window.freeEmp && window.type == 'equipement'){
 
+                        $('.action[data-action="use"]')
+                        .html('Équiper')
+                        .prop('disabled', false);
+                    }
+                    else if(!window.freeEmp && window.type == 'equipement'){
 
+                        $('.action[data-action="use"]')
+                        .html('<font color="red">Équiper (Max.)</font>')
+                        .prop('disabled', true);
                     }
                     else{
 
                         $('.action[data-action="use"]')
-                        .html('<font color="red">Max <?php echo ITEM_LIMIT ?></font>')
-                        .prop('disabled', true);
+                        .html('Utiliser')
+                        .prop('disabled', false);
                     }
                 }
 
 
+                $(".preview-n").text('x'+ n);
                 $(".preview-text").text(text);
 
                 preload(img, $previewImg);

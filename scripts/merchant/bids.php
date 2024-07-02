@@ -49,10 +49,26 @@ if(isset($_GET['newContract'])){
 }
 
 
-echo '<div>Voici les objets que les autres personnages veulent vendre.<br /><font color="cyan">Achetez des objets ici.</font></div>';
+echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Achetez des objets ici.</b></p></div>';
 
 
 echo $market->print_market('bids');
 
+?>
+<div class="button-container">
+        <a href="merchant.php?targetId=<?php echo $target->id ?>&bids&newContract">
+            <button class="sell-button"><span class="ra ra-gavel"></span> Nouvelle offre de Vente</button>
+        </a>
+    </div>
+</div>
 
-echo '<div><a href="merchant.php?targetId='. $target->id .'&bids&newContract"><button>Nouvelle offre de Vente</button></a></div>';
+<div class="section">
+    <div class="section-title">Demande d'Achat</div>
+    <div>Si l'objet que vous souhaitez <b>acheter</b> n'apparaît pas dans la liste, vous pouvez créer une nouvelle demande d'achat:</div>
+
+    <div class="button-container">
+        <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newRequest">
+            <button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Nouvelle demande d'Achat</button>
+        </a>
+    </div>
+</div>
