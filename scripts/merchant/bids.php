@@ -67,7 +67,7 @@ echo $market->print_market('bids');
     <div>Si l'objet que vous souhaitez <b>acheter</b> n'apparaît pas dans la liste, vous pouvez créer une nouvelle demande d'achat:</div>
 
     <div class="button-container">
-        <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newRequest">
+        <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newContract">
             <button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Nouvelle demande d'Achat</button>
         </a>
     </div>

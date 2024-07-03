@@ -8,7 +8,7 @@ if(isset($_GET['forget']) && !empty($_POST['spell'])){
 
 
 echo '
-<table class="box-shadow marbre" border="1" align="center">';
+<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
 
 
 echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th colspan="2">Effet</th></tr>';
@@ -25,7 +25,7 @@ foreach($player->get_spells() as $e){
 
     echo '
     <tr>
-        <td valign="top">
+        <td valign="top" width="50">
             <img src="'. $img .'" width="50" />
         </td>
         <td align="left">

@@ -422,7 +422,7 @@ else{
 
 
 // coords
-echo '<div id="case-coords"><button OnClick="copyToClipboard(this);">x'. $x .',y'. $y .',z'. $coords->z .'</button></div>';
+echo '<div id="case-coords"><button OnClick="copyToClipboard(this);">x'. $x .',y'. $y .'</button></div>';
 
 
 if(!empty($card)){

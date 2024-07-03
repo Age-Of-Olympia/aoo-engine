@@ -1,34 +1,3 @@
-// ctrl enter to submit textarea
-$(document).ready(function(){
-
-    $('textarea').keydown( function(e) {
-        if ((e.ctrlKey || e.metaKey) && (e.keyCode == 13 || e.keyCode == 10)) {
-
-            $('form').submit();
-
-            $('.submit').click();
-        }
-    });
-
-
-    function close_all(){
-
-        $('#ui-card').hide();
-        $('#ui-dialog').hide();
-    }
-
-
-    // special listener for escape key
-    document.body.addEventListener('keydown', function(e) {
-        if (e.key == "Escape") {
-            close_all();
-        }
-        else if (e.keyCode == 176) {
-
-            open_console(false);
-        }
-    });
-});
 
 
 function open_console(defaultCmd){
@@ -191,6 +160,39 @@ function preload(img, element){
 
 $(document).ready(function(){
 
+
+    // ctrl enter to submit
+    $('textarea').keydown( function(e) {
+        if ((e.ctrlKey || e.metaKey) && (e.keyCode == 13 || e.keyCode == 10)) {
+
+            $('form').submit();
+
+            $('.submit').click();
+        }
+    });
+
+
+    // close card & dialog
+    function close_all(){
+
+        $('#ui-card').hide();
+        $('#ui-dialog').hide();
+    }
+
+
+    // special listener for escape key
+    document.body.addEventListener('keydown', function(e) {
+        if (e.key == "Escape") {
+            close_all();
+        }
+        else if (e.keyCode == 176) {
+
+            open_console(false);
+        }
+    });
+
+
+    // check mail
     const baseTitle = $(document).prop('title');
 
     var checkMailFunction = function () {
@@ -228,5 +230,14 @@ $(document).ready(function(){
 
         setTimeout(checkMailFunction, 1);
     }
+
+
+    window.addEventListener('wheel', function(event) {
+        if (document.body.scrollHeight <= window.innerHeight && event.deltaY !== 0) {
+            // Si le contenu du corps ne déborde pas verticalement
+            event.preventDefault();
+            window.scrollBy(event.deltaY, 0);
+        }
+    });
 });
 

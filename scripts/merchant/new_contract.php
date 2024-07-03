@@ -86,6 +86,9 @@ if(isset($_GET['bids'])){
 elseif(isset($_GET['asks'])){
 
 
+    echo '<div><p>Choisissez un objet que vous souhaitez Acheter.<br />Vous pourrez ensuite choisir le nombre d\'objet à acheter et fixer un prix.</p></div>';
+
+
     echo '
     <select id="item">
         ';

@@ -145,7 +145,7 @@ class Player{
 
         if(!$caracsJson = json()->decode('players', $this->id .'.caracs')){
 
-            $player->get_caracs();
+            $this->get_caracs();
 
             $caracsJson = json()->decode('players', $this->id .'.caracs');
         }
@@ -714,6 +714,14 @@ class Player{
 
 
             $this->get_caracs();
+        }
+
+
+
+        if(!isset($this->turn->$carac)){
+
+
+            return $this->caracs->$carac;
         }
 
         return $this->caracs->$carac - $this->turn->$carac;

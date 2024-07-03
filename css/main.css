@@ -6,6 +6,32 @@ body{
     max-width: 100%;
     box-sizing: border-box;
     margin: 0 auto;
+    line-height: 1.5;
+    font-size: 16px;
+}
+
+
+/* Style pour la barre de défilement globale */
+::-webkit-scrollbar {
+    width: 3px;  /* Largeur de la barre de défilement verticale */
+    height: 3px; /* Hauteur de la barre de défilement horizontale */
+}
+
+/* Style pour la piste de la barre de défilement */
+::-webkit-scrollbar-track {
+    background: transparent; /* Couleur de fond de la piste */
+    border-radius: 10px;  /* Arrondir les coins */
+}
+
+/* Style pour le pouce de la barre de défilement (la partie qui se déplace) */
+::-webkit-scrollbar-thumb {
+    background: #888;      /* Couleur du pouce */
+    border-radius: 10px;   /* Arrondir les coins */
+}
+
+/* Style pour le pouce de la barre de défilement au survol */
+::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Couleur du pouce au survol */
 }
 
 
@@ -15,11 +41,43 @@ a{
     text-decoration: none;
 }
 
+p {
+
+    margin: 0 0 1em;
+}
+
 
 table, img, div, textarea{
 
     max-width: 100%;
 }
+
+td img {
+
+    margin: 0;
+    padding: 0;
+    vertical-align: top;
+}
+
+
+.marbre table{
+
+    border: 1px solid #b2b2b2;
+}
+
+.marbre td, .marbre th{
+
+    border-right: 1px solid #b2b2b2;
+    border-bottom: 1px solid #b2b2b2;
+    border-top: 1px solid #565656;
+    border-left: 1px solid #565656;
+}
+
+/* Lignes de table */
+tr:nth-child(even) {
+    background-color: rgba(255,255,255,0.1); /* Couleur de fond pour les lignes paires */
+}
+
 
 @media (min-width: 600px) {
 
@@ -32,11 +90,12 @@ table, img, div, textarea{
 }
 
 
-h1, h2{
 
+h1, h2, h3, h4, h5, h6 {
+
+    line-height: 1.2;
     font-family: goudy;
 }
-
 
 input[type="button"], button, select {
 
@@ -105,6 +164,7 @@ input[type="text"], input[type="password"], input[type="number"]{
 
   font-family: goudy;
   src: url('fonts/goudy.ttf');
+  font-weight: 700;
 }
 
 
@@ -325,7 +385,7 @@ img {
 
     width: 100%;
     box-sizing: border-box;
-    overflow: scroll;
+    overflow-x: scroll;
     padding-bottom: 20px;
 }
 
@@ -597,7 +657,7 @@ img {
         margin-right: -5px;
         width: 225px;
         height: 125px;
-        overflow: scroll;
+        overflow-y: scroll;
         text-align: left;
         background: rgba(0,0,0,0.8);
         border: 5px solid rgba(0,0,0,0.5);
@@ -690,7 +750,7 @@ img {
 .item-list {
 
     max-height: 375px;
-    overflow: scroll;
+    overflow-y: scroll;
     float: left;
 }
 
@@ -860,7 +920,7 @@ img {
 .infos-text{
 
     max-height: 150px;
-    overflow: scroll;
+    overflow-y: scroll;
     text-align: left;
 }
 
@@ -876,6 +936,7 @@ img {
         right: 0px;
         text-align: left;
         background: rgba(255,255,255,0.5);
+        z-index: 1;
     }
 
 /*
@@ -904,4 +965,4 @@ img {
 
 .ra-cracked-helm, .ra-hand, .ra-diving-dagger, .ra-bird-claw, .ra-tooth{ color: #efd477; text-shadow: 1px 1px #0a0a0a; }/* sorts de dmg2 */
 
-.ra-forging{ color: white; text-shadow: 1px 1px #0a0a0a; } /* forge sacrée */
+#ui-card .card-faction a .ra-forging{ color: white; text-shadow: 1px 1px #0a0a0a; } /* forge sacrée */

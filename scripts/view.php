@@ -104,10 +104,14 @@ if(!empty($_SESSION['playerId'])){
             }
 
 
+            let [x, y] = coords.split(',');
+
+
+            // show coords button
+            $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button></div>');
+
+
             if($case.hasClass('go')){
-
-
-                let [x, y] = coords.split(',');
 
 
                 $('#go-rect')

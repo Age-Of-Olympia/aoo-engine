@@ -23,7 +23,6 @@ $ui = new Ui($target->data->name);
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
-
 echo '
 <table border="1" align="center" cellspacing="0" class="marbre">
 <tr>
