@@ -192,7 +192,7 @@ $(document).ready(function(){
 
             $.ajax({
                 type: "POST",
-                url: 'scripts/account/refresh_view.php',
+                url: 'refresh_view.php',
                 data: {}, // serializes the form's elements.
                 success: function(data)
                 {

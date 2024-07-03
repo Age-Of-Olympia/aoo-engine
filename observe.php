@@ -333,9 +333,13 @@ else{
     else{
 
 
+        /*
+         * go button is now printed in js in scripts/view.php
+         */
+
         // no wall
 
-        $coordsArround = View::get_coords_arround($player->coords, $p=1);
+        /*$coordsArround = View::get_coords_arround($player->coords, $p=1);
 
         if(in_array($x .','. $y, $coordsArround)){
 
@@ -363,7 +367,7 @@ else{
             $('#go-img').hide();
             </script>
             <?php
-        }
+        }*/
     }
 
 

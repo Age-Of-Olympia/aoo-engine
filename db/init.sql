@@ -306,7 +306,8 @@ CREATE TABLE `players` (
   `text` text NOT NULL DEFAULT 'Je suis nouveau, frappez-moi!',
   `story` text NOT NULL DEFAULT 'Je préfère garder cela pour moi.',
   `quest` varchar(255) DEFAULT 'gaia',
-  `faction` varchar(255) DEFAULT NULL,
+  `faction` varchar(255) NOT NULL DEFAULT '',
+  `nextTurnTime` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `coords_id` (`coords_id`),
   CONSTRAINT `players_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`)
@@ -465,5 +466,5 @@ CREATE TABLE `players_upgrades` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- 2024-06-29 19:56:07
+-- 2024-07-03 03:49:13
 

@@ -8,9 +8,10 @@ class View{
     private $inSight; // Coordonnées des objets dans le champ de vision
     private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
+    private $noGrid; // no grid if set to true
 
 
-    function __construct($coords, $p, $tiled=false){
+    function __construct($coords, $p, $tiled=false, $noGrid=false){
 
 
         $this->coords = $coords;
@@ -19,6 +20,7 @@ class View{
         $this->inSight = $this->get_inSight();
         $this->inSightId = $this->get_inSightId();
         $this->useTbl = array();
+        $this->noGrid = $noGrid;
     }
 
 
@@ -375,6 +377,8 @@ class View{
                         width="50"
                         height="50"
 
+                        data-table="'. $row->whichTable .'"
+
                         x="'. floor($x) .'"
                         y="'. floor($y) .'"
 
@@ -393,7 +397,11 @@ class View{
             }
 
 
-            // // grid
+            // go cases
+            $coordsArround = View::get_coords_arround($this->coords, $p=1);
+
+
+            // grid or empty clickable cases
             for ($i = 0; $i < $this->p*2+1; $i++) {
 
                 for ($j = 0; $j < $this->p*2+1; $j++) {
@@ -405,31 +413,47 @@ class View{
                     $x = $i * 50;
                     $y = $j * 50;
 
-                    echo '
-                    <image
-                        data-coords="'. $coordX .','. $coordY .'"
 
-                        x="' . $x . '"
-                        y="' . $y . '"
+                    $goCase = '';
 
-                        href="img/ui/view/grid.png"
-                        />
-                    ';
+                    if(in_array($coordX .','. $coordY, $coordsArround)){
 
-                    echo '
-                    <rect
-                        class="case"
-                        data-coords="'. $coordX .','. $coordY .'"
 
-                        x="' . $x . '"
-                        y="' . $y . '"
+                        $goCase = 'go';
+                    }
 
-                        width="50"
-                        height="50"
+                    if(!$this->noGrid){
 
-                        fill="transparent"
-                        />
-                    ';
+                        echo '
+                        <image
+                            class="case '. $goCase .'"
+                            data-coords="'. $coordX .','. $coordY .'"
+
+                            x="' . $x . '"
+                            y="' . $y . '"
+
+                            href="img/ui/view/grid.png"
+                            />
+                        ';
+                    }
+
+                    else {
+
+                        echo '
+                        <rect
+                            class="case"
+                            data-coords="'. $coordX .','. $coordY .'"
+
+                            x="' . $x . '"
+                            y="' . $y . '"
+
+                            width="50"
+                            height="50"
+
+                            fill="transparent"
+                            />
+                        ';
+                    }
                 }
             }
 

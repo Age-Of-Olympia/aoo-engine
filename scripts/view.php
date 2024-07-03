@@ -57,19 +57,50 @@ if(!empty($_SESSION['playerId'])){
 
         $('.case').click(function(e){
 
+
             var coords = $(this).data('coords');
 
-            $.ajax({
-                type: "POST",
-                url: 'observe.php',
-                data: {'coords':coords}, // serializes the form's elements.
-                success: function(data)
-                {
-                    // alert(data);
+            var i = $(this).attr('x');
+            var j = $(this).attr('y');
 
-                    $('#ajax-data').html(data);
-                }
-            });
+
+            var $case = $('[x="'+ i +'"][y="'+ j +'"]');
+
+            if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"]')[0]){
+
+                console.log('db query');
+
+                $.ajax({
+                    type: "POST",
+                    url: 'observe.php',
+                    data: {'coords':coords}, // serializes the form's elements.
+                    success: function(data)
+                    {
+                        // alert(data);
+
+                        $('#ajax-data').html(data);
+                    }
+                });
+
+                return false;
+            }
+
+
+            if($case.hasClass('go')){
+
+
+                let [x, y] = coords.split(',');
+
+
+                $('#go-rect')
+                    .show()
+                    .attr({'x': i, 'y': j})
+                    .data('coords', x +','+ y);
+
+                var imgY = j - 20 ;
+
+                $('#go-img').show().attr({'x': i, 'y': imgY});
+            }
         });
 
 
