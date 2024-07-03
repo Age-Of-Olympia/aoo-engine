@@ -55,6 +55,10 @@ if(!empty($_SESSION['playerId'])){
     <script>
     $(document).ready(function(){
 
+
+        window.clickedCases = [];
+
+
         $('.case').click(function(e){
 
 
@@ -68,7 +72,17 @@ if(!empty($_SESSION['playerId'])){
 
             if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"]')[0]){
 
-                console.log('db query');
+
+                if(window.clickedCases[coords]){
+
+
+                    let data = window.clickedCases[coords];
+
+                    $('#ajax-data').html(data);
+
+                    return false;
+                }
+
 
                 $.ajax({
                     type: "POST",
@@ -78,7 +92,11 @@ if(!empty($_SESSION['playerId'])){
                     {
                         // alert(data);
 
+                        console.log('db query');
+
                         $('#ajax-data').html(data);
+
+                        window.clickedCases[coords] = data;
                     }
                 });
 
@@ -107,6 +125,9 @@ if(!empty($_SESSION['playerId'])){
         $('#go-rect').click(function(e){
 
             var coords = $(this).data('coords');
+
+            $('#go-rect').off('click');
+            $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});
 
             $.ajax({
                 type: "POST",
