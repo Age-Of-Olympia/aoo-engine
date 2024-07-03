@@ -659,26 +659,47 @@ class View{
     }
 
 
-    public static function get_free_coords_id_arround($coords, $p){
+    public static function get_free_coords_id_arround(&$goCoords, $p=1){
 
 
-            $coordsArround = View::get_coords_arround($coords, $p=1);
 
-            $coordsTaken = View::get_coords_taken($coords);
+        $coordsArround = View::get_coords_arround($goCoords, $p);
 
-            $coordsArround = array_diff($coordsArround, $coordsTaken);
+        $coordsTaken = View::get_coords_taken($goCoords);
+
+        $coordsArround = array_diff($coordsArround, $coordsTaken);
+
+
+        while(true){
+
+
+            if(!count($coordsArround)){
+
+                $p++;
+
+                $coordsArround = View::get_coords_arround($goCoords, $p);
+
+                $coordsArround = array_diff($coordsArround, $coordsTaken);
+            }
 
 
             shuffle($coordsArround);
 
+
             $randCoords = array_pop($coordsArround);
 
-            $coords->x = explode(',', $randCoords)[0];
-            $coords->y = explode(',', $randCoords)[1];
+            $goCoords->x = explode(',', $randCoords)[0];
+            $goCoords->y = explode(',', $randCoords)[1];
 
-            $coordsId = View::get_coords_id($coords);
 
-            return $coordsId;
+            break;
+        }
+
+
+        $coordsId = View::get_coords_id($goCoords);
+
+
+        return $coordsId;
     }
 
 

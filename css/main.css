@@ -630,7 +630,7 @@ img {
         color: #0a0a0a;
         position: absolute;
         right: 13px;
-        top: 254px;
+        top: 258px;
         font-size: 1.5em;
         z-index: 0;
         text-shadow: 1px 1px white;
@@ -876,6 +876,7 @@ img {
     color: white;
     font-size: 88%;
     font-weight: bold;
+    z-index: 1;
 }
 
 
@@ -965,4 +966,11 @@ img {
 
 .ra-cracked-helm, .ra-hand, .ra-diving-dagger, .ra-bird-claw, .ra-tooth{ color: #efd477; text-shadow: 1px 1px #0a0a0a; }/* sorts de dmg2 */
 
+.ra-spiked-tentacle, .ra-axe-swing, .ra-lightning-sword, .ra-burning-meteor, .ra-supersonic-arrow{ color: red; text-shadow: 1px 1px yellow; }/* sorts speciaux */
+
 #ui-card .card-faction a .ra-forging{ color: white; text-shadow: 1px 1px #0a0a0a; } /* forge sacrée */
+
+#ui-card .card-faction a .ra-triforce{ color: white; text-shadow: 1px 1px #0a0a0a; } /* royaume des cimes */
+
+#ui-card .card-faction a .ra-maggot{ color: white; text-shadow: 1px 1px #0a0a0a; } /* royaume des cimes */
+

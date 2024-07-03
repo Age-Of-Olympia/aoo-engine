@@ -60,6 +60,9 @@ $distance = View::get_distance($player->get_coords(), $target->get_coords());
 include('scripts/actions/check_distance.php');
 
 
+include('scripts/actions/check_equipement.php');
+
+
 View::get_walls_between($player->coords, $target->coords);
 
 
@@ -243,6 +246,13 @@ if(!empty($success) && $success == true){
 
 
         if(!empty($actionJson->bonusDamages)){
+
+
+            if(!is_numeric($actionJson->bonusDamages)){
+
+
+                $actionJson->bonusDamages = $player->caracs->{$actionJson->bonusDamages};
+            }
 
 
             $playerDamages += $actionJson->bonusDamages;
@@ -442,6 +452,9 @@ if(!empty($actionJson->useEmplacement)){
 
 
             Player::refresh_views_at_z($dropCoords->z);
+
+
+            include('scripts/actions/on_hide_reload_view.php');
         }
     }
 }

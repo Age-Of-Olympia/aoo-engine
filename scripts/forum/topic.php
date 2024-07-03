@@ -140,7 +140,7 @@ echo '
 
                 $factionJson = json()->decode('factions', $author->data->faction);
 
-                echo '<div style="font-size: 88%;">'. $factionJson->name .' <img style="display: inline-block; width: 1.5em; vertical-align: middle;" src="'. $author->data->faction_mini .'" width="25" /> (<i>Citoyen</i>) </div>';
+                echo '<div style="font-size: 88%;">'. $factionJson->name .' <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>) </div>';
 
 
                 echo '
