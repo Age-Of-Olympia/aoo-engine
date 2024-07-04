@@ -178,7 +178,7 @@ if(!empty($_SESSION['playerId'])){
                 name IN("ae","a","mvt")
                 ';
 
-                $db->exe($sql);
+                $db->exe($sql, $player->id);
 
                 // Restore fractional mouv
                 if ($mvtToKeep > 0){
