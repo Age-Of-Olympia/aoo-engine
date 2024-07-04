@@ -410,6 +410,41 @@ img {
     mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0));
 }
 
+
+/*
+ * logs
+ */
+
+
+.log-td{
+
+    font-size: 88%;
+    color: #333;
+}
+
+.log-rez{
+
+    color: black;
+    font-family: goudy;
+    font-size: 1.5em;
+}
+
+.log-fishing{
+
+    color: blue;
+}
+
+.log-harvest{
+
+    color: green;
+}
+
+.log-travel{
+
+    color: orange;
+}
+
+
 /*
  * MAP
  */

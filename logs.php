@@ -22,9 +22,19 @@ if(isset($_GET['quests'])){
     exit();
 }
 
+echo '<p>Voici les évènements qui se sont déroulés<br />sur ce Territoire ces 24 dernières heures.</p>';
 
 echo '
 <table class="box-shadow marbre" border="1" align="center">';
+
+    echo '
+    <tr>
+        <th>Évènements</th>
+        <th>De</th>
+        <th>Avec</th>
+        <th>Date</th>
+    </tr>
+    ';
 
     foreach(Log::get($player->coords->plan) as $e){
 
@@ -38,6 +48,7 @@ echo '
 
         $player = new Player($e->player_id);
         $player->get_data();
+        $playerRaceJson = json()->decode('races', $player->data->race);
 
 
         if($e->player_id != $e->target_id){
@@ -45,6 +56,7 @@ echo '
 
             $target = new Player($e->target_id);
             $target->get_data();
+            $targetRaceJson = json()->decode('races', $target->data->race);
         }
 
 
@@ -54,33 +66,45 @@ echo '
                 align="left"
                 valign="top"
                 >
-                    '. $e->text .'
+                    <span class="log-'. $e->type .'">'. $e->text .'</span>
                 </td>
-            <td>
+            <td class="log-td" style="background-color: '. $playerRaceJson->bgColor .'; color: '. $playerRaceJson->color .';">
                 '. $player->data->name .'<br />
-                (mat.'. $player->id .')
+                (<a style="color: '. $playerRaceJson->color .';" href="infos.php?targetId='. $player->id .'">mat.'. $player->id .'</a>)
             </td>
             ';
 
             if(!empty($target)){
 
                 echo '
-                <td>
+                <td  class="log-td" style="background-color: '. $targetRaceJson->bgColor .'; color: '. $targetRaceJson->color .';">
                     '. $target->data->name .'<br />
-                    (mat.'. $target->id .')
+                    (<a style="color: '. $targetRaceJson->color .';" href="infos.php?targetId='. $player->id .'">mat.'. $target->id .'</a>)
                 </td>
                 ';
             }
             else{
 
                 echo '
-                <td></td>
+                <td class="log-td"></td>
                 ';
             }
 
+
+            $date = date('d/m/Y', $e->time);
+
+            if($date == date('d/m/Y', time())){
+
+                $date = 'Aujourd\'hui';
+            }
+            elseif($date == date('d/m/Y', time()-86400)){
+
+                $date = 'Hier';
+            }
+
             echo '
-            <td>
-                '. date('d/m/Y', $e->time) .'<br />
+            <td class="log-td">
+                '. $date .'<br />
                 à '. date('H:i', $e->time) .'
             </td>
         </tr>

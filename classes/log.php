@@ -12,9 +12,11 @@ class Log{
 
         $db = new Db();
 
-        $sql = 'SELECT * FROM players_logs WHERE plan = ? ORDER BY time DESC';
+        $timeLimit = time()-ONE_DAY;
 
-        $res = $db->exe($sql, $plan);
+        $sql = 'SELECT * FROM players_logs WHERE plan = ? AND time > ? ORDER BY time DESC';
+
+        $res = $db->exe($sql, array($plan, $timeLimit));
 
         while($row = $res->fetch_object()){
 

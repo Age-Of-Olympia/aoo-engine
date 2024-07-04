@@ -7,3 +7,4 @@ datas/private/topics/*.json
 config/db_constants.php
 /data/
 /.idea/
+*.kate-swp
