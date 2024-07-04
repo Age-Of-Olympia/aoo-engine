@@ -1,5 +1,5 @@
 sessions/
-datas/private/*.json
+datas/private/forum/*.json
 datas/private/categories/*.json
 datas/private/forums/*.json
 datas/private/topics/*.json
