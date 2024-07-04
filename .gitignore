@@ -1,3 +1,5 @@
 sessions/
 datas/private/
 config/db_constants.php
+/data/
+/.idea/
