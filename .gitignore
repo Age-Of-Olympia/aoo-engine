@@ -6,3 +6,5 @@ datas/private/topics/*.json
 datas/private/posts/*.json
 datas/private/topics/*.json
 config/db_constants.php
+/data/
+/.idea/
