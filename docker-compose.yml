@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  webserver:
+    container_name: PHP-AOO4-Local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+      - ./config/php.ini-development:/usr/local/etc/php/php.ini
+    ports:
+      - 8000:80
+    depends_on:
+      - mariadb-aoo4
+  mariadb-aoo4:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: passwordRoot
+      MYSQL_DATABASE: aoo4
+      MYSQL_USER: run
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes: 
+      - ./data/db:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/1-init-data.sql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mariadb-aoo4
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mariadb-aoo4
+      MYSQL_ROOT_PASSWORD: passwordRoot
