@@ -39,6 +39,14 @@ define('CARACS', array(
 ));
 
 
+define('CARACS_RECOVER', array(
+    'pv'=>'r',
+    'pm'=>'rm',
+    'a'=>'a',
+    'mvt'=>'mvt'
+));
+
+
 /*
  * effects, elements
  */
@@ -47,13 +55,13 @@ define('EFFECTS_RA_FONT', array(
 
     'adrenaline'=>'ra-horn-call',
 
-    'feu'=>'ra-small-fire',
-    'eau'=>'ra-water-drop',
-    'ronce'=>'ra-vine-whip',
-    'boue'=>'ra-shoe-prints',
-    'diamant'=>'ra-sapphire',
+    'feu'=>'ra-small-fire',     // e - 1
+    'eau'=>'ra-water-drop',     // mvt -1
+    'ronce'=>'ra-vine-whip',    // agi -1
+    'boue'=>'ra-shoe-prints',   // f -1
+    'diamant'=>'ra-sapphire',   // m -1
 
-    'sang'=>'ra-gloop',
+    'sang'=>'ra-gloop',         // fm -1
 
     'regeneration'=>'ra-health-increase',
     'poison_magique'=>'ra-bone-bite',
@@ -61,6 +69,15 @@ define('EFFECTS_RA_FONT', array(
     'vol'=>'ra-feather-wing',
 
     'fatigue'=>'ra-player-pain'
+));
+
+define('ELE_DEBUFFS', array(
+    'feu'=>'e',
+    'eau'=>'mvt',
+    'ronce'=>'agi',
+    'boue'=>'f',
+    'diamant'=>'fm',
+    'sang'=>'fm'
 ));
 
 define('ELE_CONTROLS', array(
@@ -162,7 +179,7 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
 
 
 /*
- * costs
+ * costs & recups
  */
 
 define('TRAVEL_COST', 15); // travelling cost 15Po
@@ -173,7 +190,13 @@ define('FAT_PER_ACTION', 1); // each Action add 1 fat
 
 define('FAT_PER_REST', 4); // resting delete 4 fat
 
+define('FAT_PER_TURNS', 2); // new turn delete 2 fat
+
 define('MALUS_PER_DAMAGES', 2); // when damages are done, add 2 malus
+
+define('MALUS_PER_TURNS', 9); // recup 9 malus / turns
+
+define('XP_PER_TURNS', 6); // base 6 xp - rank / turns
 
 
 /*

@@ -121,6 +121,25 @@ class Player{
         }
 
 
+        // elements de debuffs
+        $effectsList = $this->get_effects();
+
+        $this->debuffs = (object) array();
+
+
+        foreach($effectsList as $e){
+
+
+            if(!empty(ELE_DEBUFFS[$e])){
+
+
+                $this->caracs->{ELE_DEBUFFS[$e]} -= 1;
+
+                $this->debuffs->{ELE_DEBUFFS[$e]} = $e;
+            }
+        }
+
+
         // fist
         if(!isset($this->main1)){
 
@@ -643,6 +662,12 @@ class Player{
         }
 
 
+        if(!isset($this->caracs)){
+
+            $this->get_caracs();
+        }
+
+
         $values = array();
 
         foreach($bonus as $carac=>$val){
@@ -651,7 +676,7 @@ class Player{
             $values[] = '('. $this->id .', "'. $carac .'", '. $val .')';
 
 
-            if($carac == 'a'){
+            if($carac == 'a' && $val < 0){
 
 
                 $this->put_fat(FAT_PER_ACTION);
@@ -703,6 +728,19 @@ class Player{
         $db->exe($sql);
 
 
+        if(!isset($this->turn)){
+
+            $this->turn = (object) array();
+        }
+
+        if(!isset($this->turn->$carac)){
+
+            $this->turn->$carac = 0;
+        }
+
+        $this->turn->$carac += $val;
+
+
         return true;
     }
 
@@ -724,7 +762,7 @@ class Player{
             return $this->caracs->$carac;
         }
 
-        return $this->caracs->$carac - $this->turn->$carac;
+        return $this->turn->$carac;
     }
 
 

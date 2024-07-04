@@ -138,6 +138,14 @@ foreach(CARACS as $k=>$e){
     }
 
 
+    $debuff = '';
+
+    if(!empty($player->debuffs->$k)){
+
+        $debuff = '<span class="ra '. EFFECTS_RA_FONT[$player->debuffs->$k] .'"></span>';
+    }
+
+
     echo '
     <tr>
         <th>
@@ -147,7 +155,7 @@ foreach(CARACS as $k=>$e){
             '. $player->nude->$k .'
         </td>
         <td>
-            '. $carac .'
+            '. $carac . $debuff .'
         </td>
         <td>
             '. $turn .'

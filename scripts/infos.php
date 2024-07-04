@@ -3,8 +3,12 @@
 if(!empty($_SESSION['playerId'])){
 
 
-    $player = new Player($_SESSION['playerId']);
-    $player->get_data();
+    if(!isset($player)){
+
+
+        $player = new Player($_SESSION['playerId']);
+        $player->get_data();
+    }
 
 
     $raceJson = json()->decode('races', $player->data->race);

@@ -282,7 +282,7 @@ img {
     color: black;
     text-decoration: none;
     padding: 4px;
-    font-size: 88%;
+    font-size: 70%;
     opacity: 0.7;
     font-family: monospace;
 }
@@ -944,33 +944,112 @@ img {
  * RA COLORS
  */
 
-.ra-horn-call{ color: red; } /* adrenaline */
+/* adrenaline */
+.ra-horn-call{
 
-.ra-small-fire{ color: gold; } /* feu */
-.ra-water-drop{ color: #33ccff; } /* eau */
-.ra-vine-whip{ color: green; } /* ronce */
-.ra-sapphire{ color: #ffccff; } /* diamant */
-.ra-shoe-prints{ color: brown; } /* boue */
+    color: red;
+}
 
-.ra-gloop{ color: #990000; } /* sang */
+ /* feu */
+.ra-small-fire{
 
-.ra-health-increase{ color: #66d9ff; } /* heal */
+    color: gold;
+}
 
-.ra-bone-bite{ color: #66ff66; } /* poison */
+/* eau */
+.ra-water-drop{
 
-.ra-player-pain{ color: #eee; } /* fatigue */
+    color: #33ccff;
+}
 
-.ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{ color: #0a0a0a; text-shadow: 1px 1px #efd477; } /* sorts de soins */
+/* ronce */
+.ra-vine-whip{
 
-.ra-barbed-arrow, .ra-burning-eye, .ra-kunai, .ra-thorn-arrow, .ra-spinning-sword, .ra-drill{ color: #ff00eb; text-shadow: 1px 1px #0a0a0a; } /* sorts de dmg1 */
+    color: green;
+}
 
-.ra-cracked-helm, .ra-hand, .ra-diving-dagger, .ra-bird-claw, .ra-tooth{ color: #efd477; text-shadow: 1px 1px #0a0a0a; }/* sorts de dmg2 */
+/* diamant */
+.ra-sapphire{
 
-.ra-spiked-tentacle, .ra-axe-swing, .ra-lightning-sword, .ra-burning-meteor, .ra-supersonic-arrow{ color: red; text-shadow: 1px 1px yellow; }/* sorts speciaux */
+    color: #ffccff;
+}
 
-#ui-card .card-faction a .ra-forging{ color: white; text-shadow: 1px 1px #0a0a0a; } /* forge sacrée */
+/* boue */
+.ra-shoe-prints{
 
-#ui-card .card-faction a .ra-triforce{ color: white; text-shadow: 1px 1px #0a0a0a; } /* royaume des cimes */
+    color: brown;
+}
 
-#ui-card .card-faction a .ra-maggot{ color: white; text-shadow: 1px 1px #0a0a0a; } /* royaume des cimes */
+/* sang */
+.ra-gloop{
+
+    color: #990000;
+}
+
+/* heal */
+.ra-health-increase{
+
+    color: #66d9ff;
+}
+
+/* poison */
+.ra-bone-bite{
+
+    color: #66ff66;
+}
+
+/* fatigue */
+.ra-player-pain{
+
+    color: #eee;
+}
+
+/* sorts de soins */
+.ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{
+
+    color: #0a0a0a;
+    text-shadow: 1px 1px #efd477;
+}
+
+/* sorts de dmg1 */
+.ra-barbed-arrow, .ra-burning-eye, .ra-kunai, .ra-thorn-arrow, .ra-spinning-sword, .ra-drill{
+
+    color: #ff00eb;
+    text-shadow: 1px 1px #0a0a0a;
+}
+
+/* sorts de dmg2 */
+.ra-cracked-helm, .ra-hand, .ra-diving-dagger, .ra-bird-claw, .ra-tooth{
+
+    color: #efd477;
+    text-shadow: 1px 1px #0a0a0a;
+}
+
+/* sorts speciaux */
+.ra-spiked-tentacle, .ra-axe-swing, .ra-lightning-sword, .ra-burning-meteor, .ra-supersonic-arrow{
+
+    color: red;
+    text-shadow: 1px 1px yellow;
+}
+
+/* forge sacrée */
+#ui-card .card-faction a .ra-forging{
+
+    color: white;
+    text-shadow: 1px 1px #0a0a0a;
+}
+
+/* royaume des cimes */
+#ui-card .card-faction a .ra-triforce{
+
+    color: white;
+    text-shadow: 1px 1px #0a0a0a;
+}
+
+/* royaume des cimes */
+#ui-card .card-faction a .ra-maggot{
+
+    color: white;
+    text-shadow: 1px 1px #0a0a0a;
+}
 

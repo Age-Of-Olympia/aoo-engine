@@ -1,26 +1,6 @@
 <?php
 
 
-// echo '
-// <style>
-// #background-video {
-//   height: 100%;
-//   width: 100%;
-//   object-fit: cover;
-//   position: fixed;
-//   left: 0;
-//   right: 0;
-//   top: 0;
-//   bottom: 0;
-//   z-index: -1;
-//   opacity: 0.1;
-// }
-// </style>
-// <video id="background-video" autoplay muted loop>
-//   <source src="img/ui/bg/vid.mp4" type="video/mp4">
-// </video>
-// ';
-
 echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.png" /></a>';
 echo "<div>Aoo, JDR gratuit au tour-par-tour.</div>";
 echo '

@@ -34,7 +34,7 @@ elseif(isset($_GET['logout'])){
 
 
 ?>
-
+<div id="new-turn"><?php include('scripts/new_turn.php') ?></div>
 
 <div id="infos"><?php include('scripts/infos.php') ?></div>
 

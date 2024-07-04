@@ -39,6 +39,24 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // NEW TURN
+    if($cmdTbl[0] == 'nt'){
+
+
+        $player = new Player($_SESSION['playerId']);
+
+        $sql = 'UPDATE players SET nextTurnTime = ? WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array(time(), $player->id));
+
+        $player->refresh_data();
+
+        exit('new turn');
+    }
+
+
     // FORUM
     if($cmdTbl[0] == 'topic'){
 

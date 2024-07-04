@@ -66,6 +66,23 @@ include('scripts/actions/check_equipement.php');
 View::get_walls_between($player->coords, $target->coords);
 
 
+// forbid if
+if(!empty($actionJson->forbidIf)){
+
+
+    foreach($actionJson->forbidIf as $e){
+
+
+        $who = ($e->who == 'player') ? $player : $target;
+
+        if($e->have == 'effect' && $who->have_effect($e->name)){
+
+            exit('Un effet empêche cette action <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span>');
+        }
+    }
+}
+
+
 /*
  * PERFORM ACTION
  */
@@ -330,6 +347,8 @@ if(!empty($success) && $success == true){
 
         $playerHeal = $baseHeal + $bonusHeal;
 
+        $playerHeal = min($playerHeal, $target->caracs->pv - $target->get_left('pv'));
+
 
         echo '
         <div>Vous soignez '. $target->data->name .' de '. $playerHeal .'PV.</div>
@@ -501,3 +520,19 @@ if(!empty($log)){
 
     Log::put($player, $target, $log, $type="action");
 }
+
+
+// update pv red filter
+$pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
+$height = floor((100 - $pvPct) * 225 / 100);
+$height = min($height, 225);
+
+?>
+<script>
+$(document).ready(function(){
+
+    var height = <?php echo $height ?>;
+
+    $('#red-filter').css({'height':height +'px'});
+});
+</script>

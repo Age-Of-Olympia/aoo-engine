@@ -143,6 +143,8 @@ if(!$solo && $res->num_rows){
 
         $target->get_data();
 
+        $target->get_caracs();
+
 
         $dataName = '<a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a>';
 
@@ -157,6 +159,7 @@ if(!$solo && $res->num_rows){
 
 
         $dataImg = '';
+
 
         foreach($player->get_actions() as $e){
 
@@ -210,11 +213,13 @@ if(!$solo && $res->num_rows){
 
         $factionJson = json()->decode('factions', $target->data->faction);
 
+        $pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
 
         $data = (object) array(
             'bg'=>$target->data->portrait,
             'name'=>$dataName,
             'img'=>$dataImg,
+            'pvPct'=>$pvPct,
             'type'=>$dataType,
             'text'=>$text,
             'race'=>$target->data->race,
@@ -336,38 +341,6 @@ else{
         /*
          * go button is now printed in js in scripts/view.php
          */
-
-        // no wall
-
-        /*$coordsArround = View::get_coords_arround($player->coords, $p=1);
-
-        if(in_array($x .','. $y, $coordsArround)){
-
-            $player->get_caracs();
-
-            $i = ($x - $player->coords->x + $player->caracs->p) * 50;
-            $j = (-$y + $player->coords->y + $player->caracs->p) * 50;
-
-            ?>
-            <script>
-            $('#go-rect')
-                .show()
-                .attr({'x':<?php echo $i ?>, 'y':<?php echo $j ?>})
-                .data('coords', '<?php echo $x .','. $y ?>');
-
-            $('#go-img').show().attr({'x':<?php echo $i ?>, 'y':<?php echo $j -20 ?>});
-            </script>
-            <?php
-        }
-        else{
-
-            ?>
-            <script>
-            $('#go-rect').hide();
-            $('#go-img').hide();
-            </script>
-            <?php
-        }*/
     }
 
 

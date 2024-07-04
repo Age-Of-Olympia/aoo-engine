@@ -17,6 +17,10 @@ $player->get_data();
 $target = new Player($_GET['targetId']);
 $target->get_data();
 
+
+$distance = View::get_distance($player->get_coords(), $target->get_coords());
+
+
 $ui = new Ui($target->data->name);
 
 
@@ -30,7 +34,9 @@ echo '
         ';
 
 
-        if($target->id == $_SESSION['playerId']){
+        $caracsJson = $player->get_caracsJson();
+
+        if($distance <= $caracsJson->p){
 
 
             $sql = 'SELECT name, endTime FROM players_effects WHERE player_id = ?';
@@ -44,13 +50,25 @@ echo '
                 while($row = $res->fetch_object()){
 
 
-                    $endTime = '(reposez-vous)';
+                    if($target->id == $player->id){
 
-                    if(time() < $row->endTime){
+                        $endTime = '(reposez-vous)';
 
-                        $endTime = Str::convert_time($row->endTime - time());
+                        if(time() < $row->endTime){
+
+                            $endTime = Str::convert_time($row->endTime - time());
+                        }
+
+
+                        if(!$row->endTime){
+
+                            $endTime = '∞';
+                        }
                     }
+                    else{
 
+                        $endTime = '';
+                    }
 
                     echo '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span> <sup>'. $endTime .'</sup><br />';
                 }

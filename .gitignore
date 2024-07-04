@@ -1,3 +1,3 @@
 sessions/
-datas/private/
+datas/private/*.json
 config/db_constants.php

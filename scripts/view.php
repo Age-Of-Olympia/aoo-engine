@@ -70,7 +70,7 @@ if(!empty($_SESSION['playerId'])){
 
             var $case = $('[x="'+ i +'"][y="'+ j +'"]');
 
-            if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="items"]')[0]){
+            if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="items"], [data-table="elements"]')[0]){
 
 
                 if(window.clickedCases[coords]){

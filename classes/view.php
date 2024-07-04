@@ -328,6 +328,8 @@ class View{
                                 width="50"
                                 height="50"
 
+                                data-table="'. $row->whichTable .'"
+
                                 x="'. floor($x) .'"
                                 y="'. floor($y) .'"
 

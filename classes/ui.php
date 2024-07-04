@@ -87,6 +87,23 @@ class ui{
                 echo '<div class="card-image"><img src="'. $data->bg .'" class="card-portrait" /><div id="action-data"></div></div>';
 
 
+                if(!empty($data->pvPct)){
+
+
+                    $height = floor((100 - $data->pvPct) * 225 / 100);
+                    $height = min($height, 225);
+
+                    // life red filter
+                    echo '
+                    <div
+                        id="red-filter"
+                        style="background: #770001; width: 210px; height: '. $height .'px; position: absolute; bottom: 176px; left: 29px; opacity: 0.5; transition: height 0.2s linear;"
+                    >
+                    </div>
+                    ';
+                }
+
+
                 echo '<div class="card-actions">';
 
 
