@@ -75,7 +75,7 @@ echo $market->print_market('asks');
     <div>Si l'objet que vous souhaitez <b>vendre</b> n'apparaît pas dans la liste, vous pouvez créer une nouvelle offre de vente:</div>
 
     <div class="button-container">
-        <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newContract">
+        <a href="merchant.php?targetId=<?php echo $target->id ?>&bids&newContract">
             <button class="sell-button"><span class="ra ra-gavel"></span> Nouvelle offre de Vente</button>
         </a>
     </div>
