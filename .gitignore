@@ -1,7 +1,9 @@
-sessions/
+wiki/
+datas/private/players/
 datas/private/forum/
-db/updates_done/
 config/db_constants.php
+sessions/
+db/updates_done/
 /data/
 /.idea/
 *.kate-swp
