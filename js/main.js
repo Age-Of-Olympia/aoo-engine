@@ -182,10 +182,12 @@ $(document).ready(function(){
 
     // special listener for escape key
     document.body.addEventListener('keydown', function(e) {
+
+
         if (e.key == "Escape") {
             close_all();
         }
-        else if (e.keyCode == 176) {
+        else if (e.code == 'Backquote') {
 
             open_console(false);
         }

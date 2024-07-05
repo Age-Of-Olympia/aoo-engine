@@ -163,7 +163,7 @@ input[type="text"], input[type="password"], input[type="number"]{
 @font-face {
 
   font-family: goudy;
-  src: url('fonts/goudy.ttf');
+  src: url('fonts/planewalker.otf');
   font-weight: 700;
 }
 
