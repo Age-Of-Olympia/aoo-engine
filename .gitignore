@@ -1,6 +1,6 @@
 sessions/
 datas/private/forum/
-db/updates_done/*
+db/updates_done/
 config/db_constants.php
 /data/
 /.idea/
