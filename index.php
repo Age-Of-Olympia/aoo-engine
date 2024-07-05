@@ -33,12 +33,6 @@ elseif(isset($_GET['logout'])){
 }
 
 
-
-$player = new Player(1);
-
-Forum::put_reward($player);
-
-
 ?>
 <div id="new-turn"><?php include('scripts/new_turn.php') ?></div>
 

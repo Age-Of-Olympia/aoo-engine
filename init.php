@@ -21,29 +21,13 @@ if(!isset($_GET['perform'])){
 }
 
 
-function rrmdir($dir) {
-    if (is_dir($dir)) {
-    $objects = scandir($dir);
-    foreach ($objects as $object) {
-        if ($object != "." && $object != "..") {
-        if (filetype($dir."/".$object) == "dir")
-            rrmdir($dir."/".$object);
-        else unlink   ($dir."/".$object);
-        }
-    }
-    reset($objects);
-    rmdir($dir);
-    }
-}
-
-
 echo 'delete datas dir : players<br />';
 
 $path = 'datas/private/players/';
 
 $realpath = realpath($path);
 
-rrmdir($realpath);
+File::rrmdir($realpath);
 
 
 echo 'create new datas dir : players<br />';

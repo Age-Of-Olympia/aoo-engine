@@ -296,6 +296,7 @@ CREATE TABLE `players` (
   `race` varchar(255) NOT NULL DEFAULT '',
   `xp` int(11) NOT NULL DEFAULT 0,
   `pi` int(11) NOT NULL DEFAULT 0,
+  `pr` int(11) NOT NULL DEFAULT 0,
   `malus` int(11) NOT NULL DEFAULT 0,
   `fatigue` int(11) NOT NULL DEFAULT 0,
   `godId` int(11) NOT NULL DEFAULT 0,
@@ -308,6 +309,8 @@ CREATE TABLE `players` (
   `quest` varchar(255) DEFAULT 'gaia',
   `faction` varchar(255) NOT NULL DEFAULT '',
   `nextTurnTime` int(11) NOT NULL DEFAULT 0,
+  `lastActionTime` int(11) NOT NULL DEFAULT 0,
+  `antiBerserkTime` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `coords_id` (`coords_id`),
   CONSTRAINT `players_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`)
@@ -466,5 +469,5 @@ CREATE TABLE `players_upgrades` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- 2024-07-03 03:49:13
+-- 2024-07-05 18:30:33
 

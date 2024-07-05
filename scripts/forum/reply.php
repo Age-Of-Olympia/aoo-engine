@@ -114,7 +114,7 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
+                alert(data);
                 document.location = 'forum.php?topic='+ topic +'&page=<?php echo $pagesN ?>#'+ data.trim();
             }
         });
