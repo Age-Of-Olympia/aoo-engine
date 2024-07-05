@@ -42,13 +42,18 @@ class Forum{
     }
 
 
-    public static function put_reward($postJson, $reward){
+    public static function give_reward($postJson, $reward){
 
 
         if(!isset($postJson->rewards)){
 
             $postJson->rewards = array();
         }
+
+
+        $target = new Player($postJson->author);
+
+        $target->put_pr($reward->pr);
 
 
         $postJson->rewards[] = (object) $reward;
@@ -270,7 +275,71 @@ class Forum{
         Json::write_json($path, $data);
 
 
+        $player->put_pr(1);
+
+
         self::add_post_in_topic($name=time(), $topJson);
+    }
+
+
+    public static function put_reward($player){
+
+
+        function draw_random_reward() {
+
+
+            // Define the rewards and their weights
+            $rewards = [1, 2, 3, 4];
+            $weights = [4, 2, 1.33, 1];
+
+            // Normalize the weights
+            $total_weight = array_sum($weights);
+            $normalized_weights = array_map(function($weight) use ($total_weight) {
+                return $weight / $total_weight;
+            }, $weights);
+
+            // Create cumulative weights
+            $cumulative_weights = [];
+            $cumulative_sum = 0;
+            foreach ($normalized_weights as $weight) {
+                $cumulative_sum += $weight;
+                $cumulative_weights[] = $cumulative_sum;
+            }
+
+            // Generate a random number between 0 and 1
+            $rand = mt_rand() / mt_getrandmax();
+
+            // Find the reward corresponding to the random number
+            foreach ($cumulative_weights as $index => $cumulative_weight) {
+                if ($rand < $cumulative_weight) {
+                    return $rewards[$index];
+                }
+            }
+
+            // Fallback return (should not be reached)
+            return end($rewards);
+        }
+
+
+        $reward = draw_random_reward();
+
+        $path = 'img/ui/forum/rewards/';
+
+        $directory = File::get_random_directory($path);
+
+        $url = $path .'/'. $directory .'/'. $reward .'.png';
+
+
+        $values = array(
+            'from_player_id'=>$player->id,
+            'to_player_id'=>$player->id,
+            'img'=>$url,
+            'pr'=>$reward
+        );
+
+        $db = new Db();
+
+        $db->insert('players_forum_rewards', $values);
     }
 
 

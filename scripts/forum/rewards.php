@@ -69,7 +69,7 @@ if(!empty($_POST['post'])){
         );
 
 
-        Forum::put_reward($postJson, $reward);
+        Forum::give_reward($postJson, $reward);
 
 
         $sql = '
@@ -133,6 +133,11 @@ if(!empty($_POST['post'])){
     }
 
 
+    echo '
+    <div id="data">
+    ';
+
+
     while($row = $res->fetch_object()){
 
 
@@ -184,5 +189,10 @@ if(!empty($_POST['post'])){
         });
     </script>
 <?php
+
+
+    echo '
+    </div>
+    ';
 
 }

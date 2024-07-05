@@ -101,4 +101,35 @@ class File{
             }
         }
     }
+
+
+    public static function get_random_directory($path) {
+
+
+        // Check if the path is a valid directory
+        if (!is_dir($path)) {
+            exit("The specified path is not a valid directory.");
+        }
+
+        // Open the directory
+        $directories = [];
+        if ($handle = opendir($path)) {
+            // Read the directory entries
+            while (false !== ($entry = readdir($handle))) {
+                if ($entry != "." && $entry != ".." && is_dir($path . DIRECTORY_SEPARATOR . $entry)) {
+                    $directories[] = $entry;
+                }
+            }
+            closedir($handle);
+        }
+
+        // Check if any directories were found
+        if (empty($directories)) {
+            exit("No directories found in the specified path.");
+        }
+
+        // Select a random directory
+        $random_directory = $directories[array_rand($directories)];
+        return $random_directory;
+    }
 }

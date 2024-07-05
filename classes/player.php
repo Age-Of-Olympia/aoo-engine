@@ -617,6 +617,35 @@ class Player{
     }
 
 
+    public function put_pr($pr){
+
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
+        for($n=$this->data->pr; $n<=$this->data->pr+$pr; $n++){
+
+            if($n %5 == 0){
+
+                Forum::put_reward($this);
+            }
+        }
+
+
+        $sql = 'UPDATE players SET pr = pr + ? WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($pr, $this->id));
+
+
+        $this->refresh_data();
+    }
+
+
     public function refresh_view(){
 
         @unlink('datas/private/players/'. $_SESSION['playerId'] .'.svg');
