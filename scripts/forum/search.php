@@ -38,7 +38,7 @@ echo '
 if(!empty($_POST['keywords'])){
 
 
-    echo '<p>'. count($search) .' résultats.</p>';
+    echo '<p>Résultats:</p>';
 
 
     echo '

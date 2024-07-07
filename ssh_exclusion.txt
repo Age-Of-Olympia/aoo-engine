@@ -3,4 +3,5 @@ wiki/
 datas/private/players/
 datas/private/forum/
 config/db_constants.php
+db/updates_done/
 sessions/
