@@ -8,10 +8,10 @@ class View{
     private $inSight; // Coordonnées des objets dans le champ de vision
     private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
-    private $noGrid; // no grid if set to true
+    private $options; // player->get_options()
 
 
-    function __construct($coords, $p, $tiled=false, $noGrid=false){
+    function __construct($coords, $p, $tiled=false, $options=array()){
 
 
         $this->coords = $coords;
@@ -20,7 +20,7 @@ class View{
         $this->inSight = $this->get_inSight();
         $this->inSightId = $this->get_inSightId();
         $this->useTbl = array();
-        $this->noGrid = $noGrid;
+        $this->options = $options;
     }
 
 
@@ -286,6 +286,39 @@ class View{
 
 
                     $img = $player->data->avatar;
+
+
+                    if(in_array('raceHint', $this->options)){
+
+
+                        $raceJson = json()->decode('races', $player->data->race);
+
+
+                        if(in_array('raceHintMax', $this->options)){
+
+                            $style = 'fill: '. $raceJson->bgColor;
+                        }
+
+                        else{
+
+                            $style = 'fill: transparent; stroke-width: 1; stroke: '. $raceJson->bgColor;
+                        }
+
+
+                        echo '
+                        <rect
+                            class="case"
+
+                            x="' . $x . '"
+                            y="' . $y . '"
+
+                            width="50"
+                            height="50"
+
+                            style="'. $style .'"
+                            />
+                        ';
+                    }
                 }
 
                 elseif($row->whichTable == 'foregrounds'){
@@ -424,7 +457,7 @@ class View{
                         $goCase = 'go';
                     }
 
-                    if(!$this->noGrid){
+                    if(!in_array('hideGrid', $this->options)){
 
                         echo '
                         <image
@@ -443,6 +476,7 @@ class View{
 
                         echo '
                         <rect
+                            class="case '. $goCase .'"
                             class="case"
                             data-coords="'. $coordX .','. $coordY .'"
 

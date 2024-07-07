@@ -275,8 +275,7 @@ if(!isset($topJson->closed)){
 
 
     echo '<div>
-    <button class="reply" data-topic="'. htmlentities($_GET['topic']) .'">
-    <span class="ra ra-cycle"></span> Répondre
+    <button class="reply" data-topic="'. htmlentities($_GET['topic']) .'">Répondre
     </button>
     </div>';
 }

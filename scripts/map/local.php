@@ -80,3 +80,34 @@ echo '
     </tr>
 </table>
 ';
+
+
+if(!empty($planJson->pnj)){
+
+
+    $pnj = new Player($planJson->pnj);
+
+    $pnj->get_data();
+
+    $raceJson = json()->decode('races', $pnj->data->race);
+
+    echo '
+    <h2>PNJ</h2>
+    <table border="1" align="center" class="marbre">
+        <tr>
+            ';
+
+            echo '<td><img src="'. $pnj->data->avatar .'" /></td>';
+
+            echo '<td align="left"><a href="infos.php?targetId='. $pnj->id .'">'. $pnj->data->name .'</a><br /><font style="font-size: 88%;">'. $raceJson->name .', rang '. $pnj->data->rank .'</font></td>';
+
+            echo '
+        </tr>
+    </table>
+    ';
+}
+
+else{
+
+    echo '<p><font color="red">Il n\'y a pas de PNJ assigné à ce Territoire.</font></p>';
+}

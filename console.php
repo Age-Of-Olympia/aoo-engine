@@ -582,6 +582,26 @@ if(!empty($_POST['cmd'])){
         }
 
 
+        if($cmdTbl[2] == 'assign'){
+
+
+            $planJson = json()->decode('plans', $cmdTbl[3]);
+
+            if(!$planJson){
+
+                exit('error plan');
+            }
+
+            $planJson->pnj = $player->id;
+
+            $data = Json::encode($planJson);
+
+            Json::write_json('datas/private/plans/'. $cmdTbl[3] .'.json', $data);
+
+            exit($player->data->name .' assigné à '. $planJson->name .'.');
+        }
+
+
         if($cmdTbl[2] == 'respec'){
 
 

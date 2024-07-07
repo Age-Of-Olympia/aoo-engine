@@ -30,7 +30,9 @@ if(!empty($_SESSION['playerId'])){
         }
 
 
-        $view = new View($coords, $p);
+        $playerOptions = $player->get_options();
+
+        $view = new View($coords, $p, $tiled=false, $playerOptions);
 
         $data = $view->get_view();
 

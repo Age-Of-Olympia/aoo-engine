@@ -387,6 +387,7 @@ img {
     box-sizing: border-box;
     overflow-x: scroll;
     padding-bottom: 20px;
+    user-select: none;
 }
 
 #svg-view{
@@ -455,6 +456,7 @@ img {
     background: url(../img/ui/map/parchemin.gif);
     width: 800px;
     margin: 0 auto;
+    user-select: none;
 }
 
 #svg-map {
@@ -611,7 +613,7 @@ img {
                 width: 32px; /* Change the width and height as needed */
                 height: 32px;
                 background-color: black; /* Change the background color as needed */
-                font-size: 1.3em; /* Adjust the font size as needed */
+                font-size: 1em; /* Adjust the font size as needed */
                 border-radius: 50%; /* This makes the div a circle */
                 text-align: center;
                 margin: -5px;
@@ -1030,7 +1032,7 @@ img {
 /* poison */
 .ra-bone-bite{
 
-    color: #66ff66;
+    color: cyan;
 }
 
 /* fatigue */

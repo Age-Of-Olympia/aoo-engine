@@ -41,7 +41,6 @@ if(isset($_POST['changeName'])){
     exit();
 }
 
-
 define('OPTIONS', array(
 
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
@@ -58,6 +57,33 @@ define('OPTIONS', array(
 ));
 
 
+
+if(!empty($_POST['option'])){
+
+
+    if(!isset(OPTIONS[$_POST['option']])){
+
+        exit('error option');
+    }
+
+
+    $player->refresh_view();
+
+
+    if($player->have_option($_POST['option'])){
+
+
+        $player->end_option($_POST['option']);
+
+        exit();
+    }
+
+    $player->add_option($_POST['option']);
+
+    exit();
+}
+
+
 echo '<a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>';
 echo '<button data-change="name">Changer Nom</button>';
 echo '<a href="index.php"><button>Changer Mot de Passe</button></a>';
@@ -69,6 +95,23 @@ echo '
 
 
 echo '<tr><th>Options du Profil</th><th></th></tr>';
+
+
+$checked = array();
+
+
+foreach(OPTIONS as $k=>$e){
+
+
+    $checked[$k] = '';
+}
+
+foreach($player->get_options() as $e){
+
+
+    $checked[$e] = 'checked';
+}
+
 
 foreach(OPTIONS as $k=>$e){
 
@@ -123,7 +166,7 @@ foreach(OPTIONS as $k=>$e){
             else{
 
                 echo '
-                <input type="checkbox" class="option" data-option="'. $k .'" />
+                <input type="checkbox" class="option" data-option="'. $k .'" '. $checked[$k] .' />
                 ';
             }
 
@@ -201,7 +244,26 @@ $(document).ready(function(){
                     $box.prop('checked', true);
                 }
             });
+
+            return false;
         }
+
+
+        $.ajax({
+            type: "POST",
+            url: 'account.php',
+            data: {
+                'option': $box.data('option')
+            }, // serializes the form's elements.
+            success: function(data)
+            {
+
+                // alert(data);
+                alert('Changement effectué.');
+
+                $box.prop('checked', !$box.prop('checked'));
+            }
+        });
     });
 });
 </script>

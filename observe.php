@@ -152,7 +152,7 @@ if(!$solo && $res->num_rows){
 
         foreach($target->get_effects() as $e){
 
-            $dataName .= ' <span class="ra '. EFFECTS_RA_FONT[$e] .'"></span>';
+            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$e] .'"></span></a>';
         }
 
         $dataName .= '</div>';
