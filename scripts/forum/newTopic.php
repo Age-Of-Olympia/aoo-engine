@@ -76,6 +76,17 @@ if(!empty($forumJson->factions)){
 echo '<h2>Nouveau sujet</h2>';
 
 
+$autosave = Forum::get_autosave($player);
+
+
+$msg = 'Message';
+
+if($autosave != ''){
+
+    $msg = $autosave;
+}
+
+
 echo '
 <div>
 <input
@@ -89,7 +100,7 @@ echo '
     class="box-shadow tr-topic1"
      style="width: 100%"
     rows="20"
-    >Message</textarea>
+    >'. $msg .'</textarea>
 </div>
 ';
 
@@ -98,6 +109,7 @@ echo '<div><button class="submit" data-forum="'. $forumJson->name .'">Envoyer</b
 
 
 ?>
+<script src="js/autosave.js"></script>
 <script>
 $(document).ready(function(e){
 

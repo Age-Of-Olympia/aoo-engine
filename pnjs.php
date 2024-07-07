@@ -60,9 +60,27 @@ foreach($playersTbl as $pnj){
 
     $effectsTbl = array();
 
-    foreach($pnj->get_effects() as $e){
+    $sql = 'SELECT name, endTime FROM players_effects WHERE player_id = ?';
 
-        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$e] .'"></span>';
+    $res = $db->exe($sql, $pnj->id);
+
+    while($row = $res->fetch_object()){
+
+
+        $endTime = '(reposez-vous)';
+
+        if(time() < $row->endTime){
+
+            $endTime = Str::convert_time($row->endTime - time());
+        }
+
+
+        if(!$row->endTime){
+
+            $endTime = '∞';
+        }
+
+        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span> <sup>'. $endTime .'</sup>';
     }
 
 
@@ -84,7 +102,7 @@ foreach($playersTbl as $pnj){
 
 
     echo '
-    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;">'. $mails .'<div style="position: absolute; top: 0; right: 0;">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" width="150" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></td>
+    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;">'. $mails .'<div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" width="150" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></td>
     ';
 }
 

@@ -59,6 +59,26 @@ elseif(isset($_GET['approve'])){
     exit();
 }
 
+elseif(isset($_GET['search'])){
+
+
+    include('scripts/forum/search.php');
+
+    exit();
+}
+
+elseif(isset($_GET['autosave']) && !empty($_POST['text'])){
+
+
+    if(trim($_POST['text']) != ''){
+
+
+        Forum::put_autosave($_SESSION['playerId'], $_POST['text']);
+    }
+
+    exit();
+}
+
 
 $ui = new Ui('Forum');
 
@@ -157,6 +177,9 @@ echo '
     echo '
 </table>
 ';
+
+
+echo '<div><a href="forum.php?search"><button>Recherche</button></a></div>';
 
 
 ?>

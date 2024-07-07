@@ -47,6 +47,17 @@ if(!empty($_POST['cmd'])){
         }
 
 
+        $db = new Db();
+
+        $sql = 'TRUNCATE TABLE `players_forum_missives`;';
+        $db->exe($sql);
+
+        $sql = 'TRUNCATE TABLE `players_forum_rewards`;';
+        $db->exe($sql);
+
+        $sql = 'TRUNCATE TABLE `forums_keywords`;';
+        $db->exe($sql);
+
         exit();
     }
 

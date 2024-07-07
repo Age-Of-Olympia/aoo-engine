@@ -967,7 +967,7 @@ img {
     position: relative;
 }
 
-    .infos-portrait .infos-effects{
+    .infos-effects{
 
         position: absolute;
         top: 0px;
@@ -976,6 +976,11 @@ img {
         background: rgba(255,255,255,0.5);
         z-index: 1;
     }
+
+.infos-item{
+
+    cursor: pointer;
+}
 
 /*
  * RA COLORS

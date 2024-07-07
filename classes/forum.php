@@ -275,7 +275,13 @@ class Forum{
         Json::write_json($path, $data);
 
 
-        $player->put_pr(1);
+        if($topJson->forum_id != 'Missives'){
+
+
+            $player->put_pr(1);
+
+            Forum::put_keywords(time(), $text);
+        }
 
 
         self::add_post_in_topic($name=time(), $topJson);
@@ -475,5 +481,155 @@ class Forum{
 
             $db->delete('players_forum_missives', $values);
         }
+    }
+
+
+    public static function put_autosave($playerId, $text){
+
+
+        if(!is_numeric($playerId)){
+
+            $playerId = $playerId->id;
+        }
+
+        $myfile = fopen('datas/private/players/'. $playerId .'.save', "w") or die("Unable to open file!");
+        fwrite($myfile, htmlentities($text));
+        fclose($myfile);
+    }
+
+
+    public static function get_autosave($playerId) : string{
+
+
+        if(!is_numeric($playerId)){
+
+            $playerId = $playerId->id;
+        }
+
+
+        $file = 'datas/private/players/'. $playerId .'.save';
+
+        if(file_exists($file)){
+
+            return file_get_contents($file);
+        }
+
+        else{
+
+            return '';
+        }
+    }
+
+
+    public static function extract_keywords($content) {
+
+
+        // Convertir en minuscule et retirer la ponctuation
+        $content = strtolower($content);
+        $content = preg_replace('/[^\p{L}\p{N}\s]/u', '', $content);
+        $content = preg_replace('/[\r\n]+/', ' ', $content); // Remplacer les sauts de ligne par des espaces
+
+
+        // Séparer les mots et retirer les doublons
+        $words = array_unique(explode(' ', $content));
+
+        // Liste de mots vides (stop words) exhaustive
+        $stopWords = [
+            'au', 'aux', 'avec', 'ce', 'ces', 'dans', 'de', 'des', 'du', 'elle', 'en', 'et', 'eux', 'il', 'je', 'la', 'le',
+            'leur', 'lui', 'ma', 'mais', 'me', 'même', 'mes', 'moi', 'mon', 'ne', 'nos', 'notre', 'nous', 'on', 'ou', 'par',
+            'pas', 'pour', 'qu', 'que', 'qui', 'sa', 'se', 'ses', 'son', 'sur', 'ta', 'te', 'tes', 'toi', 'ton', 'tu', 'un',
+            'une', 'vos', 'votre', 'vous', 'c\'', 'd\'', 'j\'', 'l\'', 'à', 'm\'', 'n\'', 's\'', 't\'', 'y', 'été', 'étée',
+            'étées', 'étés', 'étant', 'suis', 'es', 'est', 'sommes', 'êtes', 'sont', 'serai', 'seras', 'sera', 'serons', 'serez',
+            'seront', 'serais', 'serait', 'serions', 'seriez', 'seraient', 'étais', 'était', 'étions', 'étiez', 'étaient', 'fus',
+            'fut', 'fûmes', 'fûtes', 'furent', 'sois', 'soit', 'soyons', 'soyez', 'soient', 'fusse', 'fusses', 'fût', 'fussions',
+            'fussiez', 'fussent', 'ayant', 'eu', 'eue', 'eues', 'eus', 'ai', 'as', 'avons', 'avez', 'ont', 'aurai', 'auras',
+            'aura', 'aurons', 'aurez', 'auront', 'aurais', 'aurait', 'aurions', 'auriez', 'auraient', 'avais', 'avait', 'avions',
+            'aviez', 'avaient', 'eut', 'eûmes', 'eûtes', 'eurent', 'aie', 'aies', 'ait', 'ayons', 'ayez', 'aient', 'eusse',
+            'eusses', 'eût', 'eussions', 'eussiez', 'eussent', 'ceci', 'cela', 'celà', 'cet', 'cette', 'ici', 'ils', 'les',
+            'leurs', 'quel', 'quels', 'quelle', 'quelles', 'sans', 'soi'
+        ];
+
+
+        // Retirer les mots vides (stop words) et les mots ne contenant qu'une lettre ou un chiffre
+        $keywords = array_filter($words, function($word) use ($stopWords) {
+            return !in_array($word, $stopWords) && mb_strlen($word) > 1;
+        });
+
+        return $keywords;
+    }
+
+
+    public static function put_keywords($postName, $text, $deleteBefore=false){
+
+
+        $db = new Db();
+
+
+        if($deleteBefore){
+
+
+            // edit : delte before
+            $values = array('postName'=>$postName);
+
+            $db->delete('forums_keywords', $values);
+        }
+
+
+        // Extraire les mots-clés du message
+        $keywords = self::extract_keywords($text);
+
+
+        foreach ($keywords as $e) {
+
+
+            $values = array(
+                'name'=>$e,
+                'postName'=>$postName
+            );
+
+            $db->insert('forums_keywords', $values);
+        }
+    }
+
+
+    public static function search($keywords) : array {
+
+
+        $return = array();
+
+        $values = explode(' ', $keywords);
+
+
+        foreach($values as $e){
+
+            if(strlen($e) < 2){
+
+                exit('Vos mot-clés doivent être formés d\'au moins 2 charactères.');
+            }
+        }
+
+        $db = new Db();
+
+        $sql = '
+        SELECT
+        postName
+        FROM
+        forums_keywords
+        WHERE
+        name IN('. Db::print_in($values) .')
+        GROUP BY
+        postName
+        LIMIT 10
+        ';
+
+        $res = $db->exe($sql, $values);
+
+        while($row = $res->fetch_object()){
+
+
+            $return[] = $row->postName;
+        }
+
+        return $return;
     }
 }

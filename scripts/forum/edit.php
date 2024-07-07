@@ -33,6 +33,13 @@ if(!empty($_POST['text'])){
     $postJson->text = $_POST['text'];
 
 
+    if($topJson->forum_id != 'Missives'){
+
+
+        Forum::put_keywords($postJson->name, $_POST['text'], $deleteBefore=true);
+    }
+
+
     $data = Json::encode($postJson);
 
     Json::write_json('datas/private/forum/posts/'. $postJson->name .'.json', $data);

@@ -21,6 +21,15 @@ $target->get_data();
 $distance = View::get_distance($player->get_coords(), $target->get_coords());
 
 
+if(isset($_GET['reputation'])){
+
+
+    include('scripts/infos/reputation.php');
+
+    exit();
+}
+
+
 $ui = new Ui($target->data->name);
 
 
@@ -86,28 +95,53 @@ echo '
         ';
 
 
-        echo '<h1>'. $target->data->name .'</h1>';
+        echo '
+        <div id="infos-player">
+            ';
 
 
-        $raceJson = json()->decode('races', $target->data->race);
+            echo '<h1>'. $target->data->name .'</h1>';
 
 
-        echo '<div>'. $raceJson->name .' Rang '. $target->data->rank .'</div>';
+            $raceJson = json()->decode('races', $target->data->race);
 
 
-        echo '<img src="'. $target->data->avatar .'" />';
+            echo '<div>'. $raceJson->name .' <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput($target->data->pr) .'</a> Rang '. $target->data->rank .'</div>';
 
 
-        $text = nl2br($target->data->text);
+            $factionJson = json()->decode('factions', $target->data->faction);
 
-        if($target->data->race != $player->data->race){
-
-
-            $text = '<i>Parle dans une langue qui vous est inconnue.</i>';
-        }
+            echo '<div>'. $factionJson->name .' <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>) </div>';
 
 
-        echo '<div class="infos-text">'. $text .'</div>';
+            echo '<img src="'. $target->data->avatar .'" />';
+
+
+            $text = nl2br($target->data->text);
+
+            if($target->data->race != $player->data->race){
+
+
+                $text = '<i>Parle dans une langue qui vous est inconnue.</i>';
+            }
+
+
+            echo '<div class="infos-text">'. $text .'</div>';
+
+            echo '
+        </div>
+        ';
+
+
+        echo '
+        <div id="preview-item" style="display: none;">
+            <h1></h1>
+            <div class="preview-img">
+                <img src="img/ui/fillers/150.png" />
+            </div>
+            <p class="preview-text"></p>
+        </div>
+        ';
 
 
         echo '
@@ -130,7 +164,22 @@ echo '
                     $item = new Item($row->id, $row);
                     $item->get_data();
 
-                        echo '<td><img src="'. $item->data->mini .'" /></td>';
+
+                    $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
+
+                    $type = (!empty($item->data->type)) ? $item->data->type : '';
+
+
+                        echo '<td><img
+                            class="infos-item"
+                            data-id="'. $row->id .'"
+                            data-name="'. $itemName .'"
+                            data-n="'. $row->n .'"
+                            data-text="'. $item->data->text .'"
+                            data-price="'. $item->data->price .'"
+                            data-type="'. $type .'"
+                            data-img="img/items/'. $item->row->name .'.png"
+                            src="'. $item->data->mini .'" /></td>';
                 }
 
                 echo '
@@ -151,3 +200,32 @@ echo '
 </tr>
 </table>
 ';
+
+?>
+<script>
+$(document).ready(function(){
+
+    var $previewImg = $(".preview-img img");
+
+    $('.infos-item').click(function(e){
+
+
+        $('#infos-player').hide();
+        $('#preview-item').hide().fadeIn();
+
+
+        $('#preview-item').find('h1').html($(this).data('name'));
+        $('#preview-item .preview-text').html($(this).data('text'));
+
+        preload($(this).data('img'), $previewImg);
+    });
+
+
+    $('.infos-portrait').click(function(e){
+
+
+        $('#preview-item').hide();
+        $('#infos-player').fadeIn();
+    });
+});
+</script>

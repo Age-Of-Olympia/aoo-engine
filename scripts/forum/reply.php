@@ -37,8 +37,15 @@ if(!empty($_POST['text'])){
     }
     else{
 
+
+        Forum::put_keywords(time(), $_POST['text']);
+
         Forum::refresh_last_posts();
     }
+
+
+    // delete autosave
+    @unlink('datas/private/players/'. $player->id .'.save');
 
 
     echo time();
@@ -64,6 +71,9 @@ Forum::check_access($player, $topJson);
 echo '<h2>Répondre</h2>';
 
 
+$autoSave = Forum::get_autosave($player);
+
+
 echo '
 <div>
 <textarea
@@ -71,7 +81,7 @@ echo '
     style="width: 100%;"
 
     rows="20"
-    ></textarea>
+    >'. $autoSave .'</textarea>
 </div>
 ';
 
@@ -85,6 +95,7 @@ $pagesN = Forum::get_pages($postTotal);
 
 
 ?>
+<script src="js/autosave.js"></script>
 <script>
 $(document).ready(function(e){
 
@@ -114,7 +125,7 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
-                alert(data);
+                // alert(data);
                 document.location = 'forum.php?topic='+ topic +'&page=<?php echo $pagesN ?>#'+ data.trim();
             }
         });
