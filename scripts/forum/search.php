@@ -55,6 +55,12 @@ if(!empty($_POST['keywords'])){
             $forumJson = json()->decode('forum/forums', $topJson->forum_id);
 
 
+            if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
+
+                continue;
+            }
+
+
             if(!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions)){
 
                 continue;
