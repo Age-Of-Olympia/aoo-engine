@@ -150,4 +150,45 @@ class File{
         rmdir($dir);
         }
     }
+
+
+    public static function get_uploaded($player){
+
+
+        $path='img/ui/forum/uploads/'. $player->id;
+
+        if(!file_exists($path)){
+
+            mkdir($path, 0777);
+        }
+
+        $uploaded = self::scan_dir($path);
+
+        return $uploaded;
+    }
+
+
+    public static function get_uploaded_max($player){
+
+
+        if(!isset($player->data)){
+
+            $player->get_data();
+        }
+
+
+        $max = $player->data->pr;
+
+        if($player->have_option('isAdmin')){
+
+            $max *= 100;
+        }
+
+        elseif($player->have_option('doubleUpload')){
+
+            $max *= 2;
+        }
+
+        return $max;
+    }
 }

@@ -43,4 +43,42 @@ $(document).ready(function(){
 
 
     setTimeout(autosave, 1);
+
+
+    $('#delete').click(function(e){
+
+        if(confirm('Êtes-vous certain de vouloir effacer le texte?')){
+
+            $('textarea').val('').focus();
+        }
+    });
+
+    $('#add-rows').click(function(e){
+
+        $('textarea').css('height','+=200px');
+
+    });
+
+    $('#upload').click( function(e) {
+        $('#drop_file_zone').show();
+    });
+
+
 });
+
+
+
+
+function insert_img(url){
+
+    // will give the current position of the cursor
+    var curPos = $('textarea').selectionStart;
+
+    // will get the value of the text area
+    let x= $('textarea').val();
+
+    var text = '[img]'+url+'[/img]';
+
+    // setting the updated value in the text area
+    $('textarea').val(x.slice(0,curPos)+text+x.slice(curPos));
+}

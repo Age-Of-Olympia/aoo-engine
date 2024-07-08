@@ -950,6 +950,13 @@ img {
     }
 
 
+.forum-bottom-textarea{
+
+    text-align: right;
+    word-spacing: 10px;
+}
+
+
 /*
  * infos target
  */
