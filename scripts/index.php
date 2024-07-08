@@ -1,6 +1,14 @@
 <?php
 
 
+if(isset($_GET['resetPsw'])){
+
+    include('scripts/reset_psw.php');
+
+    exit();
+}
+
+
 echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.png" /></a>';
 echo "<div>Aoo, JDR gratuit au tour-par-tour.</div>";
 echo '
@@ -15,12 +23,11 @@ echo '
         id="index-login"
         style="display: none;" border="0"
         align="center"
-        class="marbre box-shadow"
         cellspacing="0"
     >
     <tr>
     <td>
-    Matricule ou pseudo
+    Matricule ou pseudo:
     </td>
     </tr>
     <tr>
@@ -30,7 +37,7 @@ echo '
     </tr>
     <tr>
     <td>
-    Mot de Passe
+    Mot de Passe:
     </td>
     </tr>
     <tr>
@@ -40,7 +47,8 @@ echo '
     </tr>
     <tr>
     <td>
-    <input type="submit" value="Connexion" />
+    <font style="font-size: 70%"><a href="index.php?resetPsw">Mot de passe perdu?</a></font><br />
+    <button class="submit">Connexion</button>
     </td>
     </tr>
     </table>

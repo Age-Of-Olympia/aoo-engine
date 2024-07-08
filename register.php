@@ -36,10 +36,26 @@ if(!empty($_POST['race'])){
             exit('error name');
         }
 
-
         if(!Str::check_mail($_POST['mail'])){
 
             exit('error mail');
+        }
+
+
+        $_POST['name'] = trim($_POST['name']);
+
+
+        $sql = 'SELECT COUNT(*) AS n FROM players WHERE name = ?';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $_POST['name']);
+
+        $row = $res->fetch_object();
+
+        if($row->n){
+
+            exit('Ce nom de personnage est déjà pris.');
         }
 
 
@@ -48,6 +64,25 @@ if(!empty($_POST['race'])){
         $player = new Player($playerId);
 
         $player->get_data();
+
+
+        // hash
+        $hashedPsw = password_hash($_POST['psw1'], PASSWORD_DEFAULT);
+        $hashedMail = password_hash($_POST['mail'], PASSWORD_DEFAULT);
+
+
+        $sql = '
+        UPDATE
+        players
+        SET
+        psw = ?,
+        mail = ?
+        WHERE
+        id = ?
+        ';
+
+        $db->exe($sql, array($hashedPsw, $hashedMail, $player->id));
+
 
         echo 'Personnage '. $player->data->name .' (matricule '. $player->id .') créé avec succès!<br />';
 
@@ -61,12 +96,12 @@ if(!empty($_POST['race'])){
 
 
     echo '<table border="0" align="center">';
-    echo '<tr><td>Nom</td><td><input type="text" name="name" value="'. $name .'" /></td></tr>';
+    echo '<tr><td>Nom</td><td><input class="field" type="text" name="name" id="name" value="'. $name .'" /></td></tr>';
 
     echo '<tr>';
     echo '<td>Race</td>';
 
-    echo '<td><select name="race">';
+    echo '<td><select name="race" class="field">';
 
     foreach(RACES as $e){
 
@@ -81,9 +116,10 @@ if(!empty($_POST['race'])){
     echo '</td>';
     echo '</tr>';
 
-    echo '<tr><td>Mot de passe</td><td><input type="password" name="psw1" value="" /></td></tr>';
-    echo '<tr><td>Confirmez</td><td><input type="password" name="psw2" value="" /></td></tr>';
-    echo '<tr><td>Mail</td><td><input type="text" name="mail" value="" /></td></tr>';
+    echo '<tr><td>Mot de passe</td><td><input class="field" type="password" name="psw1" value="" /></td></tr>';
+    echo '<tr><td>Confirmez</td><td><input class="field" type="password" name="psw2" value="" /></td></tr>';
+    echo '<tr><td>Mail</td><td><input class="field" type="text" name="mail" value="" /></td></tr>';
+    echo '<tr><td colspan="2"><label>J\'ai lu et j\'accepte <a href="https://age-of-olympia.net/wiki/doku.php?id=about:cgu">les CGU</a> <input type="checkbox" id="cgu" /></label></td></tr>';
 
     echo '<tr><td colspan="2"><button id="submit">Valider</button></td></tr>';
 
@@ -97,11 +133,73 @@ if(!empty($_POST['race'])){
         $('#submit').click(function(e){
 
 
-            var name = $('[name="name"]').val();
+            var name = $('#name').val();
             var race = $('[name="race"]').val();
             var psw1 = $('[name="psw1"]').val();
             var psw2 = $('[name="psw2"]').val();
             var mail = $('[name="mail"]').val();
+
+
+            function isEmail(email) {
+                var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+                return regex.test(email);
+            }
+
+            function isValidName(name) {
+                var regex = /^[a-z'àâçéèêëîïôûùü -]*$/i;
+                return regex.test(name);
+            }
+
+
+            var checkFields = true;
+
+            $('.field').each(function(){
+
+                if($(this).val() == ''){
+                    alert('Merci de remplir tous les champs.');
+                    checkFields = false;
+                    return false;
+                }
+
+            });
+
+
+            if(!checkFields)
+                return false;
+
+
+            if($('#cgu').prop('checked') == false){
+                alert('Merci de cocher la case des CGU.');
+                return false;
+            }
+
+
+            if(psw1 != psw2){
+                alert('Les mots de passe ne correspondent pas.');
+                return false;
+            }
+
+
+            if(!isValidName(name)){
+                alert('Le nom de votre personnage ne doit contenir ni chiffre ni caractère spécial.');
+                return false;
+            }
+
+
+            if(name.length > 30){
+                alert('Le nom de votre personnage doit faire moins de 30 charactères.');
+                return false;
+            }
+
+
+            if(!isEmail(mail)){
+                alert('Indiquez un mail valide.');
+                return false;
+            }
+
+
+            $('#noderegister').html('Veuillez patienter...');
+
 
             $.ajax({
             type: "POST",
@@ -129,6 +227,9 @@ if(!empty($_POST['race'])){
 
 
 $ui = new Ui('Inscription');
+
+
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
 if(!empty($_SESSION['playerId'])){

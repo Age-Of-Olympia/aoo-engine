@@ -1260,6 +1260,9 @@ class Player{
         }
 
 
+        Player::refresh_list();
+
+
         if($pnj){
 
             return $id;
