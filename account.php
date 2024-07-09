@@ -41,6 +41,12 @@ if(isset($_POST['changeName'])){
     exit();
 }
 
+if(isset($_GET['uploads'])){
+
+    include('scripts/account/uploads.php');
+    exit();
+}
+
 define('OPTIONS', array(
 
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
@@ -53,7 +59,8 @@ define('OPTIONS', array(
     'hideGrid'=>"Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
-    'hideTuto'=>"Cacher le Tutoriel<br /><sup>Décochez si vous souhaitez le relire</sup>"
+    'hideTuto'=>"Cacher le Tutoriel<br /><sup>Décochez si vous souhaitez le relire</sup>",
+    'manageUploads'=>"Gérer vos images téléversées"
 ));
 
 
@@ -129,6 +136,16 @@ foreach(OPTIONS as $k=>$e){
 
                 echo explode("\n", $player->data->story)[0] .' [...]';
             }
+            elseif($k == 'manageUploads'){
+
+                echo $e .'<br />';
+
+                // drag and drop for upload img
+                $uploadedN = count(File::get_uploaded($player));
+                $uploadMax = File::get_uploaded_max($player);
+
+                echo '<sup>Vous avez uploadé '. $uploadedN .'/'. $uploadMax .' images</sup>';
+            }
             else{
 
                 echo $e;
@@ -161,6 +178,12 @@ foreach(OPTIONS as $k=>$e){
 
                 echo '
                 <a href="account.php?story"><button>Changer</button></a>
+                ';
+            }
+            elseif($k == 'manageUploads'){
+
+                echo '
+                <a href="account.php?uploads"><button style="width: 100%; height: 4em;">Gérer</button></a>
                 ';
             }
             else{
