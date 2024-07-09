@@ -45,6 +45,17 @@ if(!empty($_POST['race'])){
         $_POST['name'] = trim($_POST['name']);
 
 
+        if(strlen($_POST['name']) < 3){
+
+            exit('error 3 char min');
+        }
+
+        if(strlen($_POST['name']) > 30){
+
+            exit('error 30 char max');
+        }
+
+
         $nameTbl = explode(' ', $_POST['name']);
 
         foreach($nameTbl as $k=>$e){
@@ -199,6 +210,12 @@ if(!empty($_POST['race'])){
 
             if(name.length > 30){
                 alert('Le nom de votre personnage doit faire moins de 30 charactères.');
+                return false;
+            }
+
+
+            if(name.length < 3){
+                alert('Le nom de votre personnage doit faire au moins 3 charactères.');
                 return false;
             }
 

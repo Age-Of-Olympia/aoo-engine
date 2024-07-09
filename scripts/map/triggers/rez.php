@@ -9,10 +9,14 @@ if($player->coords->plan == 'gaia'){
     $item->add_item($player, 20);
 
 
-    if($player->data->xp == 0){
+    $item = Item::get_item_by_name('baton_marche');
+    $item->add_item($player, 1);
 
-        $player->put_xp('500');
-    }
+
+    // if($player->data->xp == 0){
+    //
+    //     $player->put_xp('500');
+    // }
 
 
     $player->change_avatar('1.png');
