@@ -25,6 +25,9 @@ if(!empty($_POST['cmd'])){
     // FORUM RESET
     if($cmdTbl[0] == 'forum_reset'){
 
+
+        File::rrmdir(realpath('img/ui/forum/uploads/'));
+
         File::rrmdir(realpath('datas/private/forum/'));
 
         // assuming file.zip is in the same directory as the executing script.
