@@ -1,100 +1,5 @@
 
 
-function open_console(defaultCmd){
-
-    var lastCmd = '';
-
-    $.ajax({
-        type: "POST",
-        url: 'console.php',
-        data: {'getLastCmd':1}, // serializes the form's elements.
-        success: function(data)
-        {
-
-            lastCmd = data.trim();
-
-
-            if($('.reply')[0] != null){
-
-                lastCmd = 'topic '+ $('.reply').data('topic');
-
-
-                var hash = window.location.hash;
-
-                // Si vous souhaitez retirer le caractère # du fragment
-                if (hash) {
-                    hash = hash.substring(1);
-
-                    lastCmd = 'post '+ hash;
-                }
-            }
-
-            if(defaultCmd){
-
-                lastCmd = defaultCmd;
-            }
-
-            var cmd = prompt('', lastCmd);
-
-            if(cmd != null && cmd != ''){
-
-                $.ajax({
-                    type: "POST",
-                    url: 'console.php',
-                    data: {'cmd':cmd}, // serializes the form's elements.
-                    success: function(data)
-                    {
-                        alert(data);
-
-                        if(data.trim() == 'editor'){
-
-                            document.location = 'editor.php';
-
-                            return false;
-                        }
-                        else if(data.trim() == 'tiled'){
-
-                            document.location = 'tiled.php';
-
-                            return false;
-                        }
-                        else if(data.slice(-5) == ',json'){
-
-                            document.location = 'editor.php?url='+ data.trim();
-
-                            return false;
-                        }
-                        else if(data.slice(-5) == ',card'){
-
-                            document.location = 'print_card.php?playerId='+ data.trim();
-
-                            return false;
-                        }
-                        else if(data.slice(-5) == ',view'){
-
-                            document.location = 'print_view.php?playerId='+ data.trim();
-
-                            return false;
-                        }
-                        else if(data.slice(-5) == ',post'){
-
-                            document.location = 'forum.php?edit='+ data.slice(0, -5).trim();
-
-                            return false;
-                        }
-
-
-                        document.location.reload();
-                    }
-                });
-            }
-        }
-    });
-
-
-
-    return false;
-}
 
 
 // copy to clipboard
@@ -177,6 +82,8 @@ $(document).ready(function(){
 
         $('#ui-card').hide();
         $('#ui-dialog').hide();
+        $('#console-wrapper').hide();
+        $('#input-line').val('');
     }
 
 
@@ -187,12 +94,11 @@ $(document).ready(function(){
         if (e.key == "Escape") {
             close_all();
         }
-        else if (e.code == 'Backquote') {
 
-            open_console(false);
-        }
     });
 
+    //bind console keys
+    bind_console_keys(document.body);
 
     // check mail
     const baseTitle = $(document).prop('title');

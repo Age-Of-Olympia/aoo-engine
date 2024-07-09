@@ -1111,3 +1111,56 @@ img {
     text-shadow: 1px 1px #0a0a0a;
 }
 
+
+#console-wrapper {
+    width: 100%;
+    height: 300px;
+    background-color: black;
+    color: green;
+    border: none;
+    resize: none;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+#console {
+    height: 265px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    overflow: hidden;
+}
+
+#console-wrapper  input {
+    width: 100%;
+    border: none;
+    background:none;
+    color: #00ff00;
+    outline: none;
+    font-family: monospace;
+    font-size: 1em;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: green;
+}
+::-webkit-scrollbar-track {
+    background: black;
+}
+
+#console .request {
+    color: #40c140;
+}
+#console .response-error {
+    color: #b55300;
+}
+#console .error {
+    color: #810303;
+}

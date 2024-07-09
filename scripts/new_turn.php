@@ -31,9 +31,6 @@ if(!empty($_SESSION['playerId'])){
                 $playerTurn = 86400 - (($player->caracs->spd-10)*3600);
 
 
-                // anti berserk
-                $antiBerserkTime = $player->data->lastActionTime + (0.25 * $playerTurn);
-
 
                 // NO dlag
                 if( !$player->have_option('dlag') ){
@@ -62,21 +59,16 @@ if(!empty($_SESSION['playerId'])){
                 UPDATE
                 players
                 SET
-                nextTurnTime = ?,
-                lastActionTime = 0,
-                antiBerserkTime = ?
+                nextTurnTime = ?
                 WHERE
                 id = ?
                 ';
 
                 $db = new Db();
 
-                $db->exe($sql, array($nextTurnTime, $antiBerserkTime, $player->id));
+                $db->exe($sql, array($nextTurnTime, $player->id));
 
                 echo '<tr><td>Prochain Tour</td><td>le '. date('d/m/Y à h:i', $nextTurnTime) .'</td></tr>';
-
-                echo '<tr><td>Prochaine Action possible</td><td>le '. date('d/m/Y à h:i', $antiBerserkTime) .'</td></tr>';
-
 
                 // gain xp
                 $gain = max(1, XP_PER_TURNS - $player->data->rank);
