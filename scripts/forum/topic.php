@@ -15,8 +15,15 @@ $ui = new Ui(htmlentities($topJson->title));
 echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.png" /></a><br /><a href="#last"><img src="img/ui/forum/down.png" /></a></div>';
 
 
-include('scripts/infos.php');
-include('scripts/menu.php');
+if(!isset($_GET['hideMenu'])){
+
+    include('scripts/infos.php');
+    include('scripts/menu.php');
+}
+else{
+
+    $player = new Player($_SESSION['playerId']);
+}
 
 
 $postMin = 0;
@@ -44,7 +51,10 @@ if(!empty($_GET['page'])){
 }
 
 
-echo '<h1>'. htmlentities($topJson->title) .'</h1>';
+if(!isset($_GET['hideMenu'])){
+
+    echo '<h1>'. htmlentities($topJson->title) .'</h1>';
+}
 
 
 $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
@@ -73,12 +83,15 @@ if(Forum::put_view($topJson) && $topJson->forum_id == 'Missives'){
 }
 
 
-echo '
-<div>
-    <a href="forum.php">Forum ('. $forumJson->category_id .')</a> >
-    <a href="forum.php?forum='. $topJson->forum_id .'">'. $topJson->forum_id .'</a> >
-    <a href="forum.php?topic='. htmlentities($topJson->name) .'">'. htmlentities($topJson->title) .'</a>
-</div>';
+if(!isset($_GET['hideMenu'])){
+
+    echo '
+    <div>
+        <a href="forum.php">Forum ('. $forumJson->category_id .')</a> >
+        <a href="forum.php?forum='. $topJson->forum_id .'">'. $topJson->forum_id .'</a> >
+        <a href="forum.php?topic='. htmlentities($topJson->name) .'">'. htmlentities($topJson->title) .'</a>
+    </div>';
+}
 
 
 echo '
@@ -234,7 +247,7 @@ echo '
                         ></span>';
                 }
 
-                elseif($postJson->author == $_SESSION['playerId']){
+                elseif($postJson->author == $_SESSION['playerId'] && !isset($_GET['hideMenu'])){
 
 
                     echo '
@@ -274,10 +287,14 @@ echo '<div id="last"></div>';
 if(!isset($topJson->closed)){
 
 
-    echo '<div>
-    <button class="reply" data-topic="'. htmlentities($_GET['topic']) .'">Répondre
-    </button>
-    </div>';
+    if(!isset($_GET['hideMenu'])){
+
+
+        echo '<div>
+        <button class="reply" data-topic="'. htmlentities($_GET['topic']) .'">Répondre
+        </button>
+        </div>';
+    }
 }
 else{
 
@@ -286,13 +303,16 @@ else{
 }
 
 
-echo $postTotal .' posts: <a href="forum.php?topic='. htmlentities($_GET['topic']) .'&page='. $pagesN .'#last">dernier</a><br />';
+$hideMenu = (!isset($_GET['hideMenu'])) ? '' : '&hideMenu=1';
+
+
+echo $postTotal .' posts: <a href="forum.php?topic='. htmlentities($_GET['topic']) . $hideMenu .'&page='. $pagesN .'#last">dernier</a><br />';
 
 
 for($i=1; $i<=$pagesN; $i++){
 
 
-    echo '<a href="forum.php?topic='. htmlentities($_GET['topic']) .'&page='. $i .'">page '. $i .'</a> ';
+    echo '<a href="forum.php?topic='. htmlentities($_GET['topic']) . $hideMenu .'&page='. $i .'">page '. $i .'</a> ';
 }
 
 

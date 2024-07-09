@@ -119,6 +119,14 @@ $postTotal -= $postN;
 $pagesN = Forum::get_pages($postTotal);
 
 
+echo '
+<iframe
+    id="older-iframe"
+    src="forum.php?topic='. $topJson->name .'&page='. $pagesN .'&hideMenu=1#end"
+></iframe>
+';
+
+
 ?>
 <script src="js/autosave.js"></script>
 <script>
