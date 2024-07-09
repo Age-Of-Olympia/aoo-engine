@@ -16,4 +16,4 @@ $row_ip = $result->fetch_assoc();
 
 $haveFailed = ( is_array($row_ip) ) ? $row_ip['failed'] : 0 ;
 
-if( $haveFailed >= 3 ) exit('Trop de tentatives!<br />Attendez 5 minutes avant de réessayer.');
+if( $haveFailed >= 3 ) exit('Trop de tentatives!\nAttendez 5 minutes avant de réessayer.');

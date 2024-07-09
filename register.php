@@ -106,6 +106,9 @@ if(!empty($_POST['race'])){
         $db->exe($sql, array($hashedPsw, $hashedMail, $player->id));
 
 
+        Player::refresh_list();
+
+
         echo 'Personnage '. $player->data->name .' (matricule '. $player->id .') créé avec succès!<br />';
 
         echo 'Vous pouvez désormais <a href="index.php?login='. $player->id .'">vous connecter</a> en utilisant son nom ou son matricule.';

@@ -559,6 +559,16 @@ if(!empty($_POST['cmd'])){
     }
 
 
+    // CRON
+    if($cmdTbl[0] == 'cron'){
+
+
+        include('scripts/crons/'. $cmdTbl[1] .'.php');
+
+        exit('cron '. $cmdTbl[1] .'.php executed');
+    }
+
+
     // PLAYER
     if($cmdTbl[0] == 'player'){
 

@@ -1,6 +1,6 @@
 <?php
 
-@unlink('datas/publlic/classements/general.html');
-@unlink('datas/publlic/classements/bourrins.html');
-@unlink('datas/publlic/classements/reputation.html');
-@unlink('datas/publlic/classements/fortunes.html');
+@unlink('datas/public/classements/general.html');
+@unlink('datas/public/classements/bourrins.html');
+@unlink('datas/public/classements/reputation.html');
+@unlink('datas/public/classements/fortunes.html');
