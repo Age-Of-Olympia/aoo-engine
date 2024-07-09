@@ -45,6 +45,17 @@ if(!empty($_POST['race'])){
         $_POST['name'] = trim($_POST['name']);
 
 
+        $nameTbl = explode(' ', $_POST['name']);
+
+        foreach($nameTbl as $k=>$e){
+
+
+            $nameTbl[$k] = ucfirst($e);
+        }
+
+        $_POST['name'] = implode(' ', $nameTbl);
+
+
         $sql = 'SELECT COUNT(*) AS n FROM players WHERE name = ?';
 
         $db = new Db();
@@ -119,7 +130,7 @@ if(!empty($_POST['race'])){
     echo '<tr><td>Mot de passe</td><td><input class="field" type="password" name="psw1" value="" /></td></tr>';
     echo '<tr><td>Confirmez</td><td><input class="field" type="password" name="psw2" value="" /></td></tr>';
     echo '<tr><td>Mail</td><td><input class="field" type="text" name="mail" value="" /></td></tr>';
-    echo '<tr><td colspan="2"><label>J\'ai lu et j\'accepte <a href="https://age-of-olympia.net/wiki/doku.php?id=about:cgu">les CGU</a> <input type="checkbox" id="cgu" /></label></td></tr>';
+    echo '<tr><td colspan="2"><label>J\'ai lu et j\'accepte <a href="https://age-of-olympia.net/wiki/doku.php?id=about:cgu" target="_new">les CGU</a> <input type="checkbox" id="cgu" /></label></td></tr>';
 
     echo '<tr><td colspan="2"><button id="submit">Valider</button></td></tr>';
 

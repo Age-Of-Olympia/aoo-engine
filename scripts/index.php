@@ -19,6 +19,7 @@ echo '
 
 
     echo '
+    <form id="login" method="post" action="login.php">
     <table
         id="index-login"
         style="display: none;" border="0"
@@ -32,7 +33,7 @@ echo '
     </tr>
     <tr>
     <td>
-    <input type="text" style="text-align: center;" />
+    <input name="name" type="text" style="text-align: center;" />
     </td>
     </tr>
     <tr>
@@ -42,7 +43,7 @@ echo '
     </tr>
     <tr>
     <td>
-    <input type="password" style="text-align: center;" />
+    <input name="psw" type="password" style="text-align: center;" />
     </td>
     </tr>
     <tr>
@@ -52,17 +53,39 @@ echo '
     </td>
     </tr>
     </table>
+    </form>
     ';
 
     ?>
     <script>
     $(document).ready(function(){
 
-        $('input[type="submit"]').click(function(e){
 
-            let player = $('input[type="text"]').val();
+        $("#login").submit(function(e) {
 
-            open_console('session open '+ player);
+            e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            var $form = $(this);
+            var actionUrl = $form.attr('action');
+
+            $.ajax({
+                type: "POST",
+                url: actionUrl,
+                data: $form.serialize(), // serializes the form's elements.
+                success: function(data)
+                {
+
+                    if(data.trim() == ''){
+
+                        document.location.reload();
+
+                        return false;
+                    }
+
+                    alert(data); // show response from the php script.
+                }
+            });
+
         });
     });
     </script>

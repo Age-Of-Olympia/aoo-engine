@@ -1320,6 +1320,7 @@ class Player{
             // unset some unwanted var
             unset($player->row->psw);
             unset($player->row->mail);
+            unset($player->row->ip);
 
             $path = 'datas/private/players/'. $player->id .'.json';
             $data = Json::encode($player->row);
