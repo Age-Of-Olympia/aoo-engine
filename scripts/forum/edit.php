@@ -80,15 +80,47 @@ echo '
 ';
 
 
+echo '
+<div class="forum-bottom-textarea">
+    <a href="#bottom" id="upload">Image</a>
+    <a href="#" id="delete">Effacer</a>
+    <a href="#bottom" id="add-rows">Agrandir</a>
+</div>
+';
+
+
 echo '<div><button class="submit" data-post="'. $postJson->name .'">Envoyer</button></div>';
 
 
+include('scripts/forum/upload_module.php');
+
+
+// search post position
+$postN = 0;
+
+foreach($topJson->posts as $e){
+
+    if($e->name != $postJson->name){
+
+        $postN ++;
+
+        continue;
+    }
+
+    break;
+}
+
+
+
 $postTotal = count($topJson->posts)+1;
+
+$postTotal -= $postN;
 
 $pagesN = Forum::get_pages($postTotal);
 
 
 ?>
+<script src="js/autosave.js"></script>
 <script>
 $(document).ready(function(e){
 

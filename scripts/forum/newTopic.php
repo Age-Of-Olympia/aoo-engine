@@ -105,7 +105,19 @@ echo '
 ';
 
 
+echo '
+<div class="forum-bottom-textarea">
+    <a href="#bottom" id="upload">Image</a>
+    <a href="#" id="delete">Effacer</a>
+    <a href="#bottom" id="add-rows">Agrandir</a>
+</div>
+';
+
+
 echo '<div><button class="submit" data-forum="'. $forumJson->name .'">Envoyer</button></div>';
+
+
+include('scripts/forum/upload_module.php');
 
 
 ?>

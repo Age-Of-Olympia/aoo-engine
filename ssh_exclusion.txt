@@ -1,5 +1,6 @@
 .git/
 wiki/
+img/ui/forums/uploads/*
 datas/private/players/
 datas/private/forum/
 config/db_constants.php

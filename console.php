@@ -74,6 +74,19 @@ if(!empty($_POST['cmd'])){
         }
 
 
+        if(!empty($cmdTbl[2]) && $cmdTbl[2] == 'delete'){
+
+
+            $postJson->text = '(message supprimé)';
+
+            $data = Json::encode($postJson);
+
+            Json::write_json('datas/private/forum/posts/'. $cmdTbl[1] .'.json', $data);
+
+            exit($postJson->name .' supprimé');
+        }
+
+
         exit($postJson->name .',post');
 
     }
