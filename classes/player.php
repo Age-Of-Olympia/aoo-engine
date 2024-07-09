@@ -538,27 +538,40 @@ class Player{
             $this->add_effect($row->name, ONE_DAY);
         }
 
-        // delete svg cache
-        $sql = '
-        SELECT p.id AS id
-        FROM
-        players AS p
-        INNER JOIN
-        coords AS c
-        ON
-        p.coords_id = c.id
-        WHERE
-        c.z = ?
-        AND
-        c.plan = ?
-        ';
 
-        $res = $db->exe($sql, array($goCoords->z, $goCoords->plan));
+        // void plan
+        $planJson = json()->decode('plans', $this->coords->plan);
 
-        while($row = $res->fetch_object()){
+        if(!$planJson){
 
 
-            @unlink('datas/private/players/'. $row->id .'.svg');
+            $this->refresh_view();
+        }
+        else{
+
+
+            // delete svg cache
+            $sql = '
+            SELECT p.id AS id
+            FROM
+            players AS p
+            INNER JOIN
+            coords AS c
+            ON
+            p.coords_id = c.id
+            WHERE
+            c.z = ?
+            AND
+            c.plan = ?
+            ';
+
+            $res = $db->exe($sql, array($goCoords->z, $goCoords->plan));
+
+            while($row = $res->fetch_object()){
+
+
+                @unlink('datas/private/players/'. $row->id .'.svg');
+            }
         }
 
 
@@ -1241,7 +1254,8 @@ class Player{
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
             'portrait'=>'img/portraits/'. $race .'/1.jpeg',
             'coords_id'=>$coordsId,
-            'faction'=>$raceJson->faction
+            'faction'=>$raceJson->faction,
+            'nextTurnTime'=>time()
         );
 
         $db->insert('players', $values);
@@ -1348,7 +1362,7 @@ class Player{
     public static function refresh_list(){
 
 
-        $sql = 'SELECT id,name,race FROM players ORDER BY name';
+        $sql = 'SELECT id,name,race,xp,rank,pr FROM players ORDER BY name';
 
         $db = new Db();
 

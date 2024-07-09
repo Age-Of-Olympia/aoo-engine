@@ -110,6 +110,13 @@ echo '
 
 
 echo '
+<div style="font-size: 88%;">
+   '. file_get_contents('datas/public/classements/stats.html') .'
+</div>
+';
+
+
+echo '
 <div id="index-partenaires">
 
     <a href="https://ame-jdr.net"><img src="img/ui/partenaires/ame-jdr.net.png" /></a><br />

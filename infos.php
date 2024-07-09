@@ -18,9 +18,6 @@ $target = new Player($_GET['targetId']);
 $target->get_data();
 
 
-$distance = View::get_distance($player->get_coords(), $target->get_coords());
-
-
 if(isset($_GET['reputation'])){
 
 
@@ -45,7 +42,11 @@ echo '
 
         $caracsJson = $player->get_caracsJson();
 
-        if($distance <= $caracsJson->p){
+        if(
+            $distance = View::get_distance($player->get_coords(), $target->get_coords())
+            &&
+            $distance <= $caracsJson->p
+        ){
 
 
             $sql = 'SELECT name, endTime FROM players_effects WHERE player_id = ?';

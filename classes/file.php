@@ -154,6 +154,12 @@ class File{
 
     public static function get_uploaded($player){
 
+        $path='img/ui/forum/uploads/';
+
+        if(!file_exists($path)){
+
+            mkdir($path, 0777);
+        }
 
         $path='img/ui/forum/uploads/'. $player->id;
 

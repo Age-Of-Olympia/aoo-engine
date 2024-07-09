@@ -77,6 +77,7 @@ if(!empty($_POST['post'])){
         players_forum_rewards
         SET
         postName = ?,
+        topName = ?,
         to_player_id = ?
         WHERE
         postName = ""
@@ -92,6 +93,7 @@ if(!empty($_POST['post'])){
 
         $res = $db->exe($sql, array(
             $postJson->name,
+            $postJson->top_id,
             $postJson->author,
             $_SESSION['playerId'],
             $_POST['img']

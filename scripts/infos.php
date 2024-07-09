@@ -32,13 +32,17 @@ if(!empty($_SESSION['playerId'])){
     <div id="top-menu-button"><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/index.png" /></a></div>';
 
 
+    $timeToNextTurn = Str::convert_time($player->data->nextTurnTime - time());
+
+
     echo '
     <table border="0" align="center">
         <tr>
 
             <td align="left" class="player-info">
                 <a href="infos.php?targetId='. $player->id .'">'. $player->data->name .'</a> (mat.'. $player->id .')<br />
-                <sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup>
+                <!--sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup-->
+                <sup>Prochain tour à <a href="#" title="dans '. $timeToNextTurn .'">'. date('H:i', $player->data->nextTurnTime) .'</a></sup>
             </td>
             <td>
                 <div id="player-avatar">

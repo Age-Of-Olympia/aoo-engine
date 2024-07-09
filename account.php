@@ -41,12 +41,6 @@ if(isset($_POST['changeName'])){
     exit();
 }
 
-if(isset($_GET['uploads'])){
-
-    include('scripts/account/uploads.php');
-    exit();
-}
-
 define('OPTIONS', array(
 
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
@@ -55,12 +49,12 @@ define('OPTIONS', array(
     'changeStory'=>$player->data->story,
     'raceHint'=>"Indice de Race<br /><sup>Affiche une bordure de couleur autour du personnage</sup>",
     'raceHintMax'=>"Indice de Race maximale<br /><sup>Colore également l'arrière plan du personnage</sup>",
-    'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
+    // 'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
     'hideGrid'=>"Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",
+    'dlag'=>"DLA glissante<br /><sup>Décale l'heure du prochain tour</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'hideTuto'=>"Cacher le Tutoriel<br /><sup>Décochez si vous souhaitez le relire</sup>",
-    'manageUploads'=>"Gérer vos images téléversées"
 ));
 
 

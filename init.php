@@ -15,7 +15,7 @@ $ui = new Ui('Init');
 if(!isset($_GET['perform'])){
 
 
-    echo '<a href="ini.php?perform"><button>(re)init</button></a>';
+    echo '<a href="init.php?perform"><button>(re)init</button></a>';
 
     exit();
 }
@@ -54,9 +54,7 @@ echo 'done!<br />';
 
 echo '
 <br />
-press ² to show prompt cmd<br />
-create player [character name] [character race]<br />
-tp [character name or id] 0,0,0,[plan]<br />
-session open [character name or id]<br />
-<a href="index.php"><button>Then press this button</button></a>
+The first character to register will be granted as Admin<br />
+Login to this character then press ² to open the console<br />
+<a href="index.php"><button>Press this button</button></a>
 ';

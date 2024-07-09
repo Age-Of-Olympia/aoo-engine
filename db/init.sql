@@ -29,6 +29,15 @@ CREATE TABLE `coords` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
+DROP TABLE IF EXISTS `forums_keywords`;
+CREATE TABLE `forums_keywords` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL DEFAULT '',
+  `postName` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 DROP TABLE IF EXISTS `items`;
 CREATE TABLE `items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -292,6 +301,7 @@ CREATE TABLE `players` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `psw` varchar(255) NOT NULL DEFAULT '',
   `mail` varchar(255) NOT NULL DEFAULT '',
+  `ip` varchar(255) NOT NULL DEFAULT '',
   `coords_id` int(11) NOT NULL DEFAULT 0,
   `race` varchar(255) NOT NULL DEFAULT '',
   `xp` int(11) NOT NULL DEFAULT 0,
@@ -310,6 +320,7 @@ CREATE TABLE `players` (
   `faction` varchar(255) NOT NULL DEFAULT '',
   `nextTurnTime` int(11) NOT NULL DEFAULT 0,
   `lastActionTime` int(11) NOT NULL DEFAULT 0,
+  `lastLoginTime` int(11) NOT NULL DEFAULT 0,
   `antiBerserkTime` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `coords_id` (`coords_id`),
@@ -387,6 +398,16 @@ CREATE TABLE `players_forum_rewards` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
+DROP TABLE IF EXISTS `players_ips`;
+CREATE TABLE `players_ips` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ip` varchar(255) NOT NULL DEFAULT '',
+  `expTime` int(11) NOT NULL DEFAULT 0,
+  `failed` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 DROP TABLE IF EXISTS `players_items`;
 CREATE TABLE `players_items` (
   `player_id` int(11) NOT NULL,
@@ -435,6 +456,8 @@ CREATE TABLE `players_options` (
   CONSTRAINT `players_options_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO `players_options` (`player_id`, `name`) VALUES
+(1,	'isAdmin');
 
 DROP TABLE IF EXISTS `players_pnjs`;
 CREATE TABLE `players_pnjs` (
@@ -445,6 +468,16 @@ CREATE TABLE `players_pnjs` (
   CONSTRAINT `players_pnjs_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `players_pnjs_ibfk_2` FOREIGN KEY (`pnj_id`) REFERENCES `players` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+DROP TABLE IF EXISTS `players_psw`;
+CREATE TABLE `players_psw` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `player_id` int(11) NOT NULL DEFAULT 0,
+  `uniqid` varchar(255) NOT NULL DEFAULT '',
+  `sentTime` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 
 DROP TABLE IF EXISTS `players_quests`;
@@ -469,5 +502,5 @@ CREATE TABLE `players_upgrades` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- 2024-07-05 18:30:33
+-- 2024-07-09 11:50:21
 
