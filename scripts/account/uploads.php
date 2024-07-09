@@ -11,7 +11,7 @@ $uploadMax = File::get_uploaded_max($player);
 
 echo '
 Images uploadées: '. $uploadedN .'/'. $uploadMax .'.<br />
-<sup>Seules les images non-utilisées peuvent être supprimées.<br />
+<sup>Les images qui ne sont pas utilisées seront automatiquement supprimées.<br />
 Vous pouvez uploader autant d\'images que vous avez de Points de réputation (Pr).
 </sup>
 ';
