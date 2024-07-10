@@ -41,6 +41,19 @@ if(isset($_POST['changeName'])){
     exit();
 }
 
+if(isset($_GET['changePsw'])){
+
+    include('scripts/account/change_psw.php');
+    exit();
+}
+
+if(isset($_POST['changeMail'])){
+
+    include('scripts/account/change_mail.php');
+    exit();
+}
+
+
 define('OPTIONS', array(
 
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
@@ -87,8 +100,8 @@ if(!empty($_POST['option'])){
 
 echo '<a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>';
 echo '<button data-change="name">Changer Nom</button>';
-echo '<a href="index.php"><button>Changer Mot de Passe</button></a>';
-echo '<a href="index.php"><button>Changer Mail</button></a>';
+echo '<a href="account.php?changePsw"><button>Changer Mot de Passe</button></a>';
+echo '<a href="#" class="change-mail"><button>Changer Mail</button></a>';
 
 
 echo '
@@ -282,5 +295,44 @@ $(document).ready(function(){
             }
         });
     });
+
+    $('.change-mail').click(function(e){
+
+
+        e.preventDefault();
+
+        var mail = prompt('Entrez une adresse mail valide:');
+
+        if(!mail || mail == ''){
+
+            return false;
+        }
+
+        if(!isEmail(mail)){
+
+            alert('Cette adresse mail n\'est pas valide.');
+
+            return false;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: 'account.php',
+            data: {
+                'changeMail': mail
+            }, // serializes the form's elements.
+            success: function(data)
+            {
+
+                // alert(data);
+                alert('Changement effectué.');
+            }
+        });
+    });
 });
+
+function isEmail(email) {
+    var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    return regex.test(email);
+}
 </script>
