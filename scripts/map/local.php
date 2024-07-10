@@ -65,6 +65,8 @@ echo '
         $x = ($row->x + 10) * 5;
         $y = (-$row->y + 10) * 5;
 
+        $color = ($row->id == $player->id) ? 'magenta' : $raceJson->bgColor;
+
         echo '
         <rect
             x="' . $x . '"
@@ -73,7 +75,7 @@ echo '
             width="5"
             height="5"
 
-            fill="'. $raceJson->bgColor .'"
+            fill="'. $color .'"
             />
         ';
     }

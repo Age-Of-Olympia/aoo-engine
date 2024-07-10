@@ -51,6 +51,11 @@ $(document).ready(function(){
     $('.map[data-plan="<?php echo $player->coords->plan ?>"]').css('opacity', 1).data('opacity', 1);
     $('.text[data-plan="<?php echo $player->coords->plan ?>"]').show();
 
+    $('[data-plan="<?php echo $player->coords->plan ?>"]').click(function(e){
+
+        document.location = 'map.php?local';
+    });
+
 
     <?php include('scripts/map/travel.php') ?>
 
