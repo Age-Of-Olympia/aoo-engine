@@ -99,7 +99,7 @@ echo '
 
         $sql = '
         SELECT
-        race,
+        faction,
         SUM(xp) AS xp
         FROM
         players AS p
@@ -109,24 +109,22 @@ echo '
         c.id = p.coords_id
         WHERE
         c.plan = ?
-        AND
-        race IN("'. implode('","', RACES) .'")
-        GROUP BY race
+        GROUP BY faction
         ';
 
         $res = $db->exe($sql, $player->coords->plan);
 
         while($row = $res->fetch_object()){
 
-            $data[$row->race] = $row->xp;
+            $data[$row->faction] = $row->xp;
         }
 
         foreach($data as $k=>$e){
 
-            $raceJson = json()->decode('races', $k);
+            $factionJson = json()->decode('factions', $k);
 
             echo '
-            <td>'. $raceJson->name .'s</td>
+            <td>'. $factionJson->name .'</td>
             ';
         }
 
