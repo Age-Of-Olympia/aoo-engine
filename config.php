@@ -11,10 +11,22 @@ ini_set('display_startup_errors', TRUE);
 
 // classes autoloader
 spl_autoload_register(function ($class_name) {
+    $base_dir = __DIR__ . '/classes/';
 
-    require_once(dirname(__FILE__) .'/classes/'. strtolower($class_name) . '.php');
+    $file_name = strtolower($class_name) . '.php';
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($base_dir),
+        RecursiveIteratorIterator::LEAVES_ONLY
+    );
+
+    foreach ($iterator as $file) {
+        if ($file->isFile() && strtolower($file->getFilename()) === $file_name) {
+            require_once $file->getPathname();
+            return;
+        }
+    }
 });
-
 
 require_once('config/constants.php');
 require_once('config/db_constants.php');

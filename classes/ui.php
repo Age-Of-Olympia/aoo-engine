@@ -36,6 +36,7 @@ class ui{
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v='. $jsVersion .'"></script>
+                <script src="js/console.js?v='. $jsVersion .'"></script>
                 <link href="css/main.css?v='. $cssVersion .'" rel="stylesheet" />
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">
             </head>
