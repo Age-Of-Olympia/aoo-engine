@@ -17,7 +17,71 @@ if(!empty($planJson->war)){
 echo '<h1><font style="font-family: goudy">'. $planJson->name .'</font></h1>';
 
 
-echo '<div class="map-local"><img src="img/ui/map/'. $player->coords->plan .'.png" /></div>';
+// echo '<div class="map-local"><img src="img/ui/map/'. $player->coords->plan .'.png" /></div>';
+
+// mini map
+$sql = '
+SELECT
+p.id,
+name,
+race,
+x,
+y
+FROM
+players AS p
+INNER JOIN
+coords AS c
+ON
+p.coords_id = c.id
+WHERE
+z = ?
+AND
+plan = ?
+';
+
+$db = new Db();
+
+$res = $db->exe($sql, array($player->coords->z, $player->coords->plan));
+
+echo '
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+    baseProfile="full"
+
+    width="100"
+    height="100"
+
+    style="background: url(img/ui/map/'. $player->coords->plan .'.png) center center no-repeat;"
+    >
+    ';
+
+    while($row = $res->fetch_object()){
+
+
+        $raceJson = json()->decode('races', $row->race);
+
+
+        $x = ($row->x + 10) * 5;
+        $y = (-$row->y + 10) * 5;
+
+        echo '
+        <rect
+            x="' . $x . '"
+            y="' . $y . '"
+
+            width="5"
+            height="5"
+
+            fill="'. $raceJson->bgColor .'"
+            />
+        ';
+    }
+
+
+    echo '
+</svg>
+';
 
 
 echo '
@@ -47,8 +111,6 @@ echo '
         race IN("'. implode('","', RACES) .'")
         GROUP BY race
         ';
-
-        $db = new Db();
 
         $res = $db->exe($sql, $player->coords->plan);
 
@@ -111,3 +173,6 @@ else{
 
     echo '<p><font color="red">Il n\'y a pas de PNJ assigné à ce Territoire.</font></p>';
 }
+
+
+
