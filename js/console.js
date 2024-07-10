@@ -88,7 +88,7 @@ function completion(cmdLine){
         success: function(response) {
             let responseObj = JSON.parse(response);
             if(responseObj.suggestions.length===1){
-                cmdLine.val(responseObj.suggestions[0]);
+                cmdLine.val(responseObj.suggestions[0] +' ');
             }else if (responseObj.suggestions.length>1){
                 let $console = $('#console');
                 $console.append('<span class="response-completion">');
