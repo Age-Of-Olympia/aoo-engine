@@ -370,6 +370,13 @@ class Forum{
 
         $topJson->posts[] = (object) array('name'=>$name);
 
+
+        $postJson = json()->decode('forum/posts', $name);
+
+
+        $topJson->last = (object) array("author"=>$postJson->author, "time"=>$name);
+
+
         $data = Json::encode($topJson);
 
         Json::write_json($path, $data);

@@ -155,8 +155,17 @@ echo '
             ';
 
 
+            $postTotal = count($topJson->posts);
+
+            $pagesN = Forum::get_pages($postTotal);
+
+
             echo '
-            <td align="right" style="font-size: 88%;">
+            <td
+                align="right"
+                style="font-size: 88%;"
+                data-topic="'. htmlentities($top->name) .'&page='. $pagesN .'#'. $topJson->last->time .'"
+                >
                 ';
 
 
