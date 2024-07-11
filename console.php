@@ -23,7 +23,7 @@ if (isset($_POST['cmdLine']) && isset($_POST['completion'])){
     }
 }
 
-
+//execution
 if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     $inputString = $_POST['cmdLine'];
 
