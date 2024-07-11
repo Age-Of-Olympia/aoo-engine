@@ -6,8 +6,20 @@ require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
+$player->get_coords();
+
+$player->get_caracs();
+
+$aLeft = $player->get_left('a');
+
 
 if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
+
+
+    if(!$aLeft){
+
+        exit('error a');
+    }
 
 
     $coordsTbl = explode(',', $_POST['coords']);
@@ -48,6 +60,13 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
     View::put('walls', $item->row->name, $coords);
 
+
+    $item->add_item($player, -1);
+
+
+    $player->put_bonus(['a'=>-1]);
+
+
     exit();
 }
 
@@ -61,13 +80,6 @@ if(!isset($_GET['itemId'])){
 $item = new Item($_GET['itemId']);
 
 
-
-if(!$item->get_n($player)){
-
-    exit('error item n');
-}
-
-
 $item->get_data();
 
 
@@ -77,23 +89,42 @@ $ui = new Ui('Construire '. $item->data->name);
 echo '<div><a href="inventory.php#'. $item->id .'"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
-$view = new View($player->get_coords(), $p=1);
+$view = new View($player->coords, $p=1);
 
 
-echo '<h1>Construire '. $item->data->name .'</h1>';
+echo '<h1>Construire</h1>';
 
 
-echo '<img src="'. $item->data->mini .'" />';
+$itemN = $item->get_n($player);
+
+$nText = (!$itemN) ? '<font color="red">x'. $itemN .'</font>' : 'x'. $itemN ;
 
 
-echo '<p>Construire une structure coûte 1 Action.</p>';
+echo '
+<table border="1" class="marbre" align="center">
+<tr>
+    <th colspan="2">'. $item->data->name .'</th>
+</tr>
+<tr>
+    <td><img src="'. $item->data->mini .'" /></td>
+    <td align="left">'. $nText .'<br />Actions: '. $aLeft .'</td>
+</tr>
+</table>
+<br />
+';
 
 echo $view->get_view();
+
+
+echo '<sup>Construire une structure coûte 1 Action.</sup>';
 
 
 ?>
 <script>
 $(document).ready(function(){
+
+
+    window.aLeft = <?php echo $aLeft ?>;
 
 
     window.itemId = <?php echo $item->id ?>;
@@ -115,6 +146,14 @@ $(document).ready(function(){
 
 
             document.location = 'index.php';
+
+            return false;
+        }
+
+
+        if(!window.aLeft){
+
+            alert('Vous n\'avez plus d\'Actions disponibles ce tour-ci.');
 
             return false;
         }
