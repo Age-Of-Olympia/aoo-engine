@@ -6,6 +6,18 @@ require_once('config.php');
 require_once('config/config-console.php');
 
 
+// get cmd history
+if(!empty($_POST['cmdHistory'])){
+
+    if(!empty($_SESSION['cmdHistory'])){
+
+        echo implode("|", $_SESSION['cmdHistory']);
+    }
+
+    exit();
+}
+
+
 //auto-complete
 if (isset($_POST['cmdLine']) && isset($_POST['completion'])){
     $inputString = $_POST['cmdLine'];
@@ -47,5 +59,10 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     }
 
     //Todo trace command
+    if(!isset($_SESSION['cmdHistory'])){
 
+        $_SESSION['cmdHistory'] = array();
+    }
+
+    $_SESSION['cmdHistory'][] = $_POST['cmdLine'];
 }

@@ -45,10 +45,54 @@ function bind_console_keys(body){
                  break;
              case 'ArrowUp':
                  if(consoleTextArea.is(':visible')) {
-                   $('#input-line').val($('#console .request').last().text()).focus();
-                   e.preventDefault();
+
+                    if(window.cmdHistory == null){
+
+                        $.ajax({
+                            type: "POST",
+                            url: 'console.php',
+                            data: {'cmdHistory': 1},
+                            success: function(data)
+                            {
+                                // alert(data);
+                                window.cmdHistory = data.split('|');
+
+                                window.historyCursor = window.cmdHistory.length-1;
+
+                                $('#input-line').val(window.cmdHistory[window.historyCursor]);
+                            }
+                        });
+                    }
+                    else{
+
+                        if(window.historyCursor == 0){
+                            return false;
+                        }
+
+                        window.historyCursor--;
+
+                        $('#input-line')
+                        .val(window.cmdHistory[window.historyCursor])
+                        .focus();
+                    }
+                    e.preventDefault();
                  }
                  break;
+             case 'ArrowDown':
+                if(window.cmdHistory == null){
+                    return false;
+                }
+                if(window.cmdHistory.length == window.historyCursor+1){
+                    return false;
+                }
+
+                window.historyCursor++;
+
+                $('#input-line')
+                .val(window.cmdHistory[window.historyCursor])
+                .focus();
+
+                break;
              default:
                  break;
          }
