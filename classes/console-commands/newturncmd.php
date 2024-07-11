@@ -1,5 +1,7 @@
 <?php
 
+/* déclenche un nouveau tour pour la session en cours */
+
 class NewTurnCmd extends Command
 {
     public function __construct() {

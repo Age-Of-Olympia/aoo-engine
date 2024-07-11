@@ -45,7 +45,7 @@ function bind_console_keys(body){
                  break;
              case 'ArrowUp':
                  if(consoleTextArea.is(':visible')) {
-                   $('#input-line').val($('#console .request').last().text());
+                   $('#input-line').val($('#console .request').last().text()).focus();
                    e.preventDefault();
                  }
                  break;

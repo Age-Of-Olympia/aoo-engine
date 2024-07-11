@@ -1,4 +1,7 @@
 <?php
+/* téléporte le joueur [mat] aux coordonnées [coords] (x,y,z,plan).
+ * Exemple:
+ * > tp Orcrist 50,125,-5,eryn_dolen */
 
 class TpCmd extends Command
 {

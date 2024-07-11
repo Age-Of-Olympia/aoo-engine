@@ -1,5 +1,9 @@
 <?php
 
+/* Affiche les commandes possibles et leurs arguments
+ * Exemple:
+ * > help tp */
+
 class HelpCmd extends Command
 {
     public function __construct() {

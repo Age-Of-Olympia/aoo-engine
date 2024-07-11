@@ -1,5 +1,11 @@
 <?php
 
+/* open: permet de se connecter au compte d'un personnage (sans login)
+ * destroy: ferme la session (logout)
+ * Exemple:
+ * > session open Orcrist
+ * > session destroy */
+
 class SessionCmd extends Command
 {
     public function __construct() {
