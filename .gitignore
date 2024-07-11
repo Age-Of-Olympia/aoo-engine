@@ -2,6 +2,7 @@ wiki/
 img/ui/forum/uploads/*
 datas/public/classements/*
 datas/private/players/
+datas/private/console/
 datas/private/forum/
 config/db_constants.php
 sessions/
