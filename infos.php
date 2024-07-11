@@ -42,8 +42,13 @@ echo '
 
         $caracsJson = $player->get_caracsJson();
 
+        $player->get_coords();
+        $target->get_coords();
+
+        $distance = View::get_distance($player->coords, $target->coords);
+
         if(
-            $distance = View::get_distance($player->get_coords(), $target->get_coords())
+            ($player->id == $target->id || $distance)
             &&
             $distance <= $caracsJson->p
         ){
@@ -80,7 +85,7 @@ echo '
                         $endTime = '';
                     }
 
-                    echo '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span> <sup>'. $endTime .'</sup><br />';
+                    echo '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span><span style="font-size: 88%;">'. $endTime .'</span><br />';
                 }
 
             echo '</div>';
