@@ -1,14 +1,24 @@
 <?php
 
-define('NO_LOGIN', true);
-
-
-require_once('config.php');
-
-
 if(!isset($_GET['playerId'])){
 
-    exit('error playerId');
+
+    $ui = new Ui('Carte');
+
+
+    ?>
+    <input type="number" id="mat" value="<?php echo $_SESSION['playerId'] ?>" />
+    <button class="submit">Ok</button>
+    <script>
+        $(document).ready(function() {
+            $('.submit').click(function() {
+                window.location = 'tools.php?print_card&playerId=' + $('#mat').val();
+            });
+        });
+    </script>
+    <?php
+
+    exit();
 }
 
 
@@ -25,6 +35,8 @@ $dataName = '<a href="infos.php?targetId='. $player->id .'">'. $player->data->na
 
 $raceJson = json()->decode('races', $player->data->race);
 
+$factionJson = json()->decode('factions', $player->data->faction);
+
 
 $data = (object) array(
     'bg'=>$player->data->portrait,
@@ -33,9 +45,10 @@ $data = (object) array(
     'type'=>$raceJson->name,
     'text'=>'<textarea spellcheck="false"></textarea>',
     'race'=>$player->data->race,
-    'faction'=>'<img src="'. $player->data->faction_mini .'" />',
+    'faction'=>'<a href="faction.php?faction='. $player->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>',
     'noClose'=>1
 );
+
 
 $card = Ui::get_card($data);
 

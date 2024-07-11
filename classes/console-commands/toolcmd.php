@@ -3,11 +3,27 @@
 class ToolCmd extends Command
 {
     public function __construct() {
-        parent::__construct("tool",[new Argument('path',false)]);
+        parent::__construct("tool",[new Argument('path',true)]);
     }
 
     public function execute(  array $argumentValues ) : string
     {
+
+        if(!isset($argumentValues[0]) || $argumentValues[0] == ''){
+
+
+            $path = 'scripts/tools/';
+
+            $filesTbl = File::scan_dir($path, $without='.php');
+
+            foreach($filesTbl as $k=>$e){
+
+
+                $filesTbl[$k] = '<a href="tools.php?'. $e .'">'. $e .'</a>';
+            }
+
+            return implode(', ', $filesTbl);
+        }
 
         // clean function outputs
         ob_start();

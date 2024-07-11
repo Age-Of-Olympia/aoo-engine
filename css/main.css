@@ -1142,6 +1142,11 @@ img {
     overflow: hidden;
 }
 
+    #console a{
+
+        color: cyan;
+    }
+
 #console-wrapper  input {
     width: 100%;
     border: none;

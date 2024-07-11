@@ -69,7 +69,7 @@ function submit_command(cmdLine){
             if(responseObj.error){
                 $('#console').append('<span class="response-error">'+responseObj.error+ '</span>');
             }else{
-                $('#console').append('<span class="response">'+responseObj.message+ ' '+ responseObj.result+'</span>');
+                $('#console').append('<span class="response">'+responseObj.message+ '<br />'+ responseObj.result+'</span>');
                 $('#input-line').val('');
             }
         },

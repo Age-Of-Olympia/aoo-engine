@@ -1,7 +1,5 @@
 <?php
 
-require_once('config.php');
-
 
 $player = new Player($_SESSION['playerId']);
 
@@ -275,7 +273,7 @@ $(document).ready(function(){
 
             $.ajax({
                 type: "POST",
-                url: 'tiled.php',
+                url: 'tools.php?tiled',
                 data: {
                     'coords':$(this).data('coords'),
                     'type':'tp',
@@ -313,7 +311,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: 'tiled.php',
+            url: 'tools.php?tiled',
             data: {
                 'coords':$(this).data('coords'),
                 'type':$selected.data('type'),
