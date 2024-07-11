@@ -1231,7 +1231,7 @@ class Player{
             'name'=>$name,
             'race'=>$race,
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
-            'portrait'=>'img/portraits/'. $race .'/1.jpeg',
+            'portrait'=>'img/portraits/ame/1.jpeg',
             'coords_id'=>$coordsId,
             'faction'=>$raceJson->faction,
             'nextTurnTime'=>time()
@@ -1247,10 +1247,8 @@ class Player{
         $player->get_data();
 
 
-        foreach($raceJson->actions as $e){
-
-            $player->add_action($e);
-        }
+        // add tuto action
+        $player->add_action('tuto/attaquer');
 
 
         Player::refresh_list();

@@ -98,8 +98,8 @@ if($res->num_rows){
 // plan exceptions
 $planJson = json()->decode('plans', $player->coords->plan);
 
-if($planJson){
 
+if($planJson){
 
     $sql = '
     SELECT
@@ -122,18 +122,41 @@ if($planJson){
     ';
 
     $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
-
-    $solo = false;
-}
-else{
-
-
-    // solo
-    $solo = true;
 }
 
+elseif(!$planJson){
 
-if(!$solo && $res->num_rows){
+    $sql = '
+    SELECT
+    p.id AS id,
+    name
+    FROM
+    players AS p
+    INNER JOIN
+    coords AS c
+    ON
+    p.coords_id = c.id
+    WHERE
+    c.x = ?
+    AND
+    c.y = ?
+    AND
+    c.z = ?
+    AND
+    c.plan = ?
+    AND
+    (
+        p.id = ?
+        OR
+        p.id < 0
+    )
+    ';
+
+    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
+}
+
+
+if($res->num_rows){
 
 
     while($row = $res->fetch_object()){
@@ -165,6 +188,12 @@ if(!$solo && $res->num_rows){
 
 
             $actionJson = json()->decode('actions', $e);
+
+
+            if(!empty($actionJson->targetType) && $actionJson->targetType == 'none'){
+
+                continue;
+            }
 
 
             if($player->id == $target->id){

@@ -17,6 +17,13 @@ if(!isset($_POST['action'])){
 $actionJson = json()->decode('actions', $_POST['action']);
 
 
+// special no target
+if($actionJson->targetType == 'none'){
+
+    exit('Ce sort ne peut être lancé.');
+}
+
+
 // player
 $player = new Player($_SESSION['playerId']);
 
