@@ -1131,21 +1131,30 @@ img {
     position: fixed;
     top: 0;
     left: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 #console {
     height: 165px;
+    overflow-y: auto;
+}
+
+#console-content {
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
     justify-content: flex-end;
-    overflow: hidden;
+    min-height: 100%;
+}
+#console span{
+    display: block;
 }
 
-    #console a{
-
-        color: cyan;
-    }
+#console a{
+    color: cyan;
+}
 
 #console-wrapper  input {
     width: 100%;

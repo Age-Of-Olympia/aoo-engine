@@ -15,6 +15,7 @@ function initCommmandFactory() : CommandFactory
             $reflectionClass = new ReflectionClass($className);
             if ($reflectionClass->isInstantiable()) {
                 $commandInstance = $reflectionClass->newInstance();
+                $commandInstance->setFactory($factory);
                 $factory->register($commandInstance);
             }
         }

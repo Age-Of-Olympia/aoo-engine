@@ -26,6 +26,9 @@ class CommandFactory
 
         return $matchingCommands;
     }
+    public function getCommands() : array{
+        return $this->commands;
+    }
 }
 
 

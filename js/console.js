@@ -3,7 +3,7 @@ function open_console(){
     let consoleTextArea = $('#console-wrapper');
     if(consoleTextArea.length === 0){
         document.body.innerHTML += '<div id="console-wrapper">'
-        + '<div id="console"></div>'
+        + '<div id="console"><div id="console-content"></div></div>'
         + '<input type="text" id="input-line" />'
         + '</div>'
     }else{
@@ -37,11 +37,8 @@ function bind_console_keys(body){
                  if(consoleTextArea.is(':visible')) {
                      let line = $('#input-line').val();
                      if(line.length>0){
-                         $('#console').append('<span class="request">' + line + '</span>');
-
-
+                         $('#console-content').append('<span class="request">' + line + '</span>');
                          submit_command(line);
-
                      }
                      e.preventDefault();
                  }
@@ -67,14 +64,18 @@ function submit_command(cmdLine){
         success: function(response) {
             let responseObj = JSON.parse(response);
             if(responseObj.error){
-                $('#console').append('<span class="response-error">'+responseObj.error+ '</span>');
+                $('#console-content').append('<span class="response-error">'+responseObj.error+ '</span>');
             }else{
-                $('#console').append('<span class="response">'+responseObj.message+ '<br />'+ responseObj.result+'</span>');
+                $('#console-content').append('<span class="response">'+responseObj.message+ '<br />'+ responseObj.result+'</span>');
                 $('#input-line').val('');
             }
+            $('#console').scrollTop($('#console')[0].scrollHeight);
+
         },
         error: function(xhr, status, error) {
-            $('#console').append('<span class="response-error">Error : '+error+ '</span>');
+            $('#console-content').append('<span class="response-error">Error : '+error+ '</span>');
+            $('#console').scrollTop($('#console')[0].scrollHeight);
+
         }
     });
 }
@@ -90,7 +91,7 @@ function completion(cmdLine){
             if(responseObj.suggestions.length===1){
                 cmdLine.val(responseObj.suggestions[0] +' ');
             }else if (responseObj.suggestions.length>1){
-                let $console = $('#console');
+                let $console = $('#console-content');
                 $console.append('<span class="response-completion">');
                 responseObj.suggestions.forEach(function(item) {
                     $console.append(item + ' ');
