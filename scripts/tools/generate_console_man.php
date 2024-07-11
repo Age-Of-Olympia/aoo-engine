@@ -69,7 +69,8 @@ if (is_dir($dir)) {
 
                 // Retirer les * en début de ligne et les espaces en trop
                 $cleaned_match = preg_replace('/^\s*\*\s?/m', '', $match);
-                $data = "\n===== $file $cmds =====\n";
+                $data = "\n===== $file =====\n";
+                $data .= "''$file $cmds''\n\n";
                 $data .= trim($cleaned_match) . "\n";
 
                 $result[$file] = $data;
