@@ -943,4 +943,68 @@ class View{
             exit();
         }
     }
+
+
+    public static function put($table, $name, $coords){
+
+
+        $db = new Db();
+
+        $values = array(
+            'name'=>$name,
+            'coords_id'=>View::get_coords_id($coords),
+            'player_id'=>$_SESSION['playerId']
+        );
+
+        $db->insert('map_'. $table, $values);
+
+
+        self::refresh_players_svg($coords);
+    }
+
+
+    public static function refresh_players_svg($coords=false){
+
+
+        $db = new Db();
+
+        if($coords){
+
+
+            // delete svg cache
+            $sql = '
+            SELECT p.id AS id
+            FROM
+            players AS p
+            INNER JOIN
+            coords AS c
+            ON
+            p.coords_id = c.id
+            WHERE
+            c.z = ?
+            AND
+            c.plan = ?
+            ';
+
+            $res = $db->exe($sql, array($coords->z, $coords->plan));
+
+
+            while($row = $res->fetch_object()){
+
+
+                @unlink('datas/private/players/'. $row->id .'.svg');
+            }
+
+            return true;
+        }
+
+
+        $files = glob('datas/private/players/*.svg'); // Get all .svg files in the directory
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file); // Delete the file
+            }
+        }
+    }
 }

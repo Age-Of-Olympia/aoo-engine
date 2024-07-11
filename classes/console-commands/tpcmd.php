@@ -15,9 +15,9 @@ class TpCmd extends Command
 
         $coordsTbl = explode(',', $argumentValues[1]);
 
-        if(count($coordsTbl) < 4){
+        if(count($coordsTbl) != 4){
 
-            return 'invalid coords (must be x,y,z,plan)';
+            return '<font color="red">invalid coords (must be x,y,z,plan)</font>';
         }
 
         list($x, $y, $z, $plan) = $coordsTbl;

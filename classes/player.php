@@ -550,28 +550,7 @@ class Player{
         else{
 
 
-            // delete svg cache
-            $sql = '
-            SELECT p.id AS id
-            FROM
-            players AS p
-            INNER JOIN
-            coords AS c
-            ON
-            p.coords_id = c.id
-            WHERE
-            c.z = ?
-            AND
-            c.plan = ?
-            ';
-
-            $res = $db->exe($sql, array($goCoords->z, $goCoords->plan));
-
-            while($row = $res->fetch_object()){
-
-
-                @unlink('datas/private/players/'. $row->id .'.svg');
-            }
+            View::refresh_players_svg($this->coords);
         }
 
 

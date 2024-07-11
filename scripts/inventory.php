@@ -109,6 +109,18 @@ $(document).ready(function(){
             }
         }
 
+
+        if(action == 'use'){
+
+            if(window.type == 'structure'){
+
+                document.location = 'build.php?itemId='+ window.id;
+
+                return false;
+            }
+        }
+
+
         $.ajax({
             type: "POST",
             url: 'inventory.php',

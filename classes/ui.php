@@ -194,7 +194,16 @@ class ui{
         </td>
         </tr>
         <tr>
-        <td/>
+        <td align="right">
+            ';
+
+            echo '<input type="text" value="chercher" id="item-search" style="opacity: 0.5;" class="desaturate" />';
+
+         echo '
+        </td>
+        </tr>
+        <tr>
+        <td>
             ';
 
         echo '
@@ -228,6 +237,7 @@ class ui{
             echo '
             <tr
                 class="item-case"
+                id="'. $row->id .'"
                 data-id="'. $row->id .'"
                 data-name="'. $itemName .'"
                 data-n="'. $row->n .'"
@@ -338,6 +348,51 @@ class ui{
                 $(".preview-text").text(text);
 
                 preload(img, $previewImg);
+            });
+
+
+            $('#item-search').click(function(){
+
+
+                $(this).css({'opacity':'1'}).removeClass('desaturate')
+
+
+                if($(this).val() == 'chercher'){
+
+                    $(this).val('');
+                }
+            })
+            .on('blur', function(){
+
+                $(this).addClass('desaturate').css({'opacity':'0.5'});
+            })
+            .on('keyup', function(){
+
+
+                // Récupère la valeur de l'input et la convertit en minuscules
+                var name = $(this).val().toLowerCase();
+
+                var $search = null;
+
+                // Parcourt tous les éléments avec l'attribut data-name
+                $('[data-name]').each(function() {
+                    var dataName = $(this).data('name').toLowerCase();
+
+                    // Vérifie si data-name contient la valeur de name
+                    if (dataName.includes(name)) {
+                        $search = $(this);
+                        return false; // Sortir de la boucle each() si un élément est trouvé
+                    }
+                });
+
+                // Si aucun élément n'est trouvé, sortir de la fonction
+                if (!$search) {
+                    return false;
+                }
+
+                document.location = '#'+ $search.attr('id');
+
+                $(this).focus();
             });
         });
         </script>
