@@ -39,6 +39,8 @@ function bind_console_keys(body){
                      if(line.length>0){
                          $('#console-content').append('<span class="request">' + line + '</span>');
                          submit_command(line);
+                         window.cmdHistory.push(line); // j'adore cette pushline
+                         window.historyCursor = window.cmdHistory.length-1;
                      }
                      e.preventDefault();
                  }
@@ -82,7 +84,10 @@ function bind_console_keys(body){
                 if(window.cmdHistory == null){
                     return false;
                 }
-                if(window.cmdHistory.length == window.historyCursor+1){
+                if(window.cmdHistory.length <= window.historyCursor+1){
+                    $('#input-line').val('');
+
+                    window.historyCursor = window.cmdHistory.length;
                     return false;
                 }
 

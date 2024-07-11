@@ -40,6 +40,10 @@ class PlayerCmd extends Command
 
                 list($race, $pnj) = $optList;
             }
+            else{
+
+                return 'invalid option ('. $argumentValues[2] .'). Must be: "race" or "race,pnj", ie. "elfe" or "lutin,pnj"';
+            }
 
 
             if(!$raceJson = json()->decode('races', $race)){
