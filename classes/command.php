@@ -46,7 +46,7 @@ abstract class Command
         }
         foreach ($this->arguments as $arg) {
             $optional = $arg->isOptional() ? ' (optional)' : ' (required)';
-            $argumentsStr.= " -" . $arg->getName(). $optional ;
+            $argumentsStr.= " - " . $arg->getName(). $optional ;
         }
         return $argumentsStr;
     }

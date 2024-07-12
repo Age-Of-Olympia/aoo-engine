@@ -54,7 +54,6 @@ if (isset($_POST['cmdLine']) && isset($_POST['completion'])){
 
         echo json_encode(['suggestions' => $factory->getCommandsStartingWith($inputString) ]);
 
-
     }else{
         echo json_encode(['suggestions' => '']);
     }
@@ -71,14 +70,22 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     $command = $factory->getCommand($commandLineSplit[0]);
     array_shift($commandLineSplit); //remove first line
     if($command){
-        if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
-            $result = $command->execute($commandLineSplit);
-            echo json_encode(['message' => 'command found '. $command->getName().'. Executing.',
+
+        if(isset($commandLineSplit[0]) &&($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')){
+            $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=dev:console#'. $command->getName(). '">'. $command->getName(). '</a> ' .$command->printArguments();
+            echo json_encode(['message' => 'Help for command ' . $command->getName() . ': ',
                 'result' => $result]);
-        }else{
-            $result = 'missing mandatory arguments '.$command->printArguments();
-            $error = $result;
-            echo json_encode(['error' => $result]);
+        }
+        else {
+            if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
+                $result = $command->execute($commandLineSplit);
+                echo json_encode(['message' => 'command found ' . $command->getName() . '. Executing.',
+                    'result' => $result]);
+            } else {
+                $result = 'missing mandatory arguments ' . $command->printArguments();
+                $error = $result;
+                echo json_encode(['error' => $result]);
+            }
         }
 
 
