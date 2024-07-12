@@ -26,25 +26,7 @@ if(!empty($_POST['cmd'])){
     if($cmdTbl[0] == 'create'){
 
 
-        // PLAYER
-        if($cmdTbl[1] == 'player'){
 
-
-            $lastId = Player::put_player($cmdTbl[2], $cmdTbl[3]);
-
-
-            exit('Player '. $cmdTbl[2] .' créé ('. $cmdTbl[3] .', mat.'. $lastId .')');
-        }
-
-        // PNJ
-        if($cmdTbl[1] == 'pnj'){
-
-
-            $lastId = Player::put_player($cmdTbl[2], $cmdTbl[3], $pnj=true);
-
-
-            exit('PNJ '. $cmdTbl[2] .' créé ('. $cmdTbl[3] .', mat.'. $lastId .')');
-        }
 
         // ALTAR
         if($cmdTbl[1] == 'altar'){
@@ -73,56 +55,6 @@ if(!empty($_POST['cmd'])){
 
             exit('Altar du dieu '. $player->data->name .' ajouté à wall #'. $cmdTbl[3] .'');
         }
-
-        // ITEM
-        if($cmdTbl[1] == 'item'){
-
-
-            $private = (!empty($cmdTbl[3])) ? 1 : 0;
-
-
-            $lastId = Item::put_item($cmdTbl[2], $private);
-
-
-            $dir = ($private) ? 'private' : 'public';
-
-
-            $data = (object) array(
-                'id'=>$lastId,
-                'name'=>$cmdTbl[2],
-                "private"=>$private,
-                'price'=>1,
-                'text'=>"Description de l'objet."
-            );
-
-
-            Json::write_json('datas/'. $dir .'/items/'. $cmdTbl[2] . '.json', Json::encode($data));
-
-
-            exit('Item '. $cmdTbl[2] .' créé (id.'. $lastId .')');
-        }
-
-
-        // ENCHANTED ITEM
-        if(in_array($cmdTbl[1], array('enchanted','vorpal','cursed'))){
-
-
-            if(!json()->decode('items', $cmdTbl[2])){
-
-                exit('error item '. $cmdTbl[2] .' does not exist');
-            }
-
-
-            $private = (!empty($cmdTbl[3])) ? 1 : 0;
-
-            $options = array($cmdTbl[1]=>1);
-
-            $lastId = Item::put_item($cmdTbl[2], $private, $options);
-
-
-            exit('Item '. $cmdTbl[2] .' ('. $cmdTbl[1] .') créé (id.'. $lastId .')');
-        }
-
 
         // JSON
         if($cmdTbl[1] == 'json'){
@@ -285,39 +217,6 @@ if(!empty($_POST['cmd'])){
             exit('Option '. $cmdTbl[2] .' ajouté à '. $player->data->name .'');
         }
 
-    }
-
-
-    // ADD
-    if($cmdTbl[0] == 'add'){
-
-
-        if(is_numeric($cmdTbl[1])){
-
-            $player = new Player($cmdTbl[1]);
-        }
-        else{
-
-            $player = Player::get_player_by_name($cmdTbl[1]);
-        }
-
-        $player->get_data();
-
-
-        if(is_numeric($cmdTbl[2])){
-
-            $item = new Item($cmdTbl[2]);
-        }
-        else{
-
-            $item = Item::get_item_by_name($cmdTbl[2]);
-        }
-
-
-        $item->add_item($player, $cmdTbl[3]);
-
-
-        exit('Item '. $item->row->name .' x'. $cmdTbl[3] .' ajouté à '. $player->data->name .'');
     }
 
 

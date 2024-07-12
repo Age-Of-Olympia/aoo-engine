@@ -118,13 +118,12 @@ function submit_command(cmdLine){
                 $('#console-content').append('<span class="response">'+responseObj.message+ '<br />'+ responseObj.result+'</span>');
                 $('#input-line').val('');
             }
-            $('#console').scrollTop($('#console')[0].scrollHeight);
+            scrollDown();
 
         },
         error: function(xhr, status, error) {
             $('#console-content').append('<span class="response-error">Error : '+error+ '</span>');
-            $('#console').scrollTop($('#console')[0].scrollHeight);
-
+            scrollDown();
         }
     });
 }
@@ -146,8 +145,13 @@ function completion(cmdLine){
                     $console.append(item + ' ');
                 });
                 $console.append('</span>');
+                scrollDown();
             }
         }
 
     });
+}
+
+function scrollDown(){
+    $('#console').scrollTop($('#console')[0].scrollHeight);
 }
