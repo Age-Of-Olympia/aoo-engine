@@ -1260,6 +1260,13 @@ class Player{
         }
 
 
+        // first id
+        if($lastId == 1){
+
+            $player->add_option('isAdmin');
+        }
+
+
         Dialog::refresh_register_dialog();
 
 
