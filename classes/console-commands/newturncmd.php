@@ -1,11 +1,12 @@
 <?php
 
-/* déclenche un nouveau tour pour la session en cours */
-
 class NewTurnCmd extends Command
 {
     public function __construct() {
         parent::__construct("new_turn",[]);
+        parent::setDescription(<<<EOT
+déclenche un nouveau tour pour la session en cours 
+EOT);
     }
 
     public function execute(  array $argumentValues ) : string

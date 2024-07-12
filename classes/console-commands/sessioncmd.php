@@ -1,15 +1,16 @@
 <?php
 
-/* open: permet de se connecter au compte d'un personnage (sans login)
- * destroy: ferme la session (logout)
- * Exemple:
- * > session open Orcrist
- * > session destroy */
-
 class SessionCmd extends Command
 {
     public function __construct() {
         parent::__construct("session",[new Argument('action',false), new Argument('mat',true)]);
+        parent::setDescription(<<<EOT
+open: permet de se connecter au compte d'un personnage (sans login)
+destroy: ferme la session (logout)
+Exemple:
+> session open Orcrist
+> session destroy 
+EOT);
     }
 
     public function execute(  array $argumentValues ) : string

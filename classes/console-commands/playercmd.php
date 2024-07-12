@@ -1,17 +1,17 @@
 <?php
 
-/* manipule la table "players".
- * Exemple:
- * > player create Orcrist olympien
- * > player create Ocyrhoée elfe,pnj
- * > player edit Finn race,lutin
- * > player edit 1 name,Léo
-*/
-
 class PlayerCmd extends Command
 {
     public function __construct() {
         parent::__construct("player",[new Argument('action',false), new Argument('mat',false), new Argument('options',true)]);
+        parent::setDescription(<<<EOT
+Manipule la table "players".
+Exemple:
+> player create Orcrist olympien
+> player create Ocyrhoée elfe,pnj
+> player edit Finn race,lutin
+> player edit 1 name,Léo
+EOT);
     }
 
     public function execute(  array $argumentValues ) : string

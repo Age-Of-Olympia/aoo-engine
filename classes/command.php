@@ -2,6 +2,7 @@
 abstract class Command
 {
     private string $name;
+    private string $description;
     private array $arguments;
     private CommandFactory $factory;
 
@@ -9,6 +10,7 @@ abstract class Command
     {
         $this->name = $name;
         $this->arguments = $arguments;
+        $this->description = "";
     }
 
     public function getName(): string
@@ -19,6 +21,14 @@ abstract class Command
     public function getArguments(): array
     {
         return $this->arguments;
+    }
+
+    public function setDescription(string $description){
+        $this->description = $description;
+    }
+
+    public function getDescription(): string{
+        return $this->description ;
     }
 
     public function setFactory($factory){

@@ -1,14 +1,15 @@
 <?php
 
-/* permet d'afficher les outils comme l'éditeur de carte
- * Exemple:
- * > tool (affiche la liste des outils disponibles)
- * > tool add_100_item (lance directement le script add_100_items) */
-
 class ToolCmd extends Command
 {
     public function __construct() {
         parent::__construct("tool",[new Argument('path',true)]);
+        parent::setDescription(<<<EOT
+permet d'afficher les outils comme l'éditeur de carte
+Exemple:
+> tool (affiche la liste des outils disponibles)
+> tool add_100_item (lance directement le script add_100_items)
+EOT);
     }
 
     public function execute(  array $argumentValues ) : string

@@ -1,11 +1,17 @@
 <?php
 
-/** Création d'un objet en donnant son nom, sera public si pas d'argument private. Création d'objet enchanté ou maudités create-enchanted create-cursed ...*/
+
 class ItemCmd extends Command
 {
     public function __construct() {
         parent::__construct("item", [new Argument('action',false),
             new Argument('item_name',false),new Argument('private',true)]);
+        parent::setDescription(<<<EOT
+Création d'un objet en donnant son nom, sera public si pas d'argument private. Création d'objet enchanté ou maudites
+ create-enchanted create-cursed create-vorpal
+ Ex:    item create nouvel_item 1
+        item create-vorpal existing_item_name 
+EOT);
     }
 
     public function execute(  array $argumentValues ) : string

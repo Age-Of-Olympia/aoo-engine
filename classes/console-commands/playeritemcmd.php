@@ -1,13 +1,14 @@
 <?php
 
-/** Gestion objets d'un joueur, ajouter :
- * add [matricule ou nom] [id objet ou nom objet] [nombre d'objet, par défaut 1]
- */
 class PlayerItemCmd extends Command
 {
     public function __construct() {
         parent::__construct("player_item", [new Argument('action',false),new Argument('mat',false),
             new Argument('item_name',false),  new Argument('n',true)]);
+        parent::setDescription(<<<EOT
+Gestion objets d'un joueur, ajouter :
+> add [matricule ou nom] [id objet ou nom objet] [nombre d'objet, par défaut 1]
+EOT);
     }
 
     public function execute(  array $argumentValues ) : string

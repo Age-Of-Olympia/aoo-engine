@@ -72,7 +72,8 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     if($command){
 
         if(isset($commandLineSplit[0]) &&($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')){
-            $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=dev:console#'. $command->getName(). '">'. $command->getName(). '</a> ' .$command->printArguments();
+            $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=dev:console#'. $command->getName(). '">'. $command->getName(). '</a> ' .$command->printArguments()."<br/>"
+            .$command->getDescription();
             echo json_encode(['message' => 'Help for command ' . $command->getName() . ': ',
                 'result' => $result]);
         }

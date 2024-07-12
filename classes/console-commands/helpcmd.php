@@ -1,13 +1,16 @@
 <?php
 
-/* Affiche les commandes possibles et leurs arguments
- * Exemple:
- * > help tp */
 
 class HelpCmd extends Command
 {
     public function __construct() {
         parent::__construct("help",[new Argument('command',true)]);
+        parent::setDescription(<<<EOT
+Affiche les commandes possibles et leurs arguments
+Exemple:
+> help tp
+EOT
+        );
     }
 
     public function execute(  array $argumentValues ) : string
