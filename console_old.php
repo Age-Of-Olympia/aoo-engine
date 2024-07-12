@@ -86,67 +86,6 @@ if(!empty($_POST['cmd'])){
         exit($cmdTbl[1] .','. $cmdTbl[2] .',json');
     }
 
-
-    // XP
-    if($cmdTbl[0] == 'xp'){
-
-
-        if(is_numeric($cmdTbl[1])){
-
-            $player = new Player($cmdTbl[1]);
-        }
-        else{
-
-            $player = Player::get_player_by_name($cmdTbl[1]);
-        }
-
-        $player->put_xp($cmdTbl[2]);
-
-        $player->get_data();
-
-        exit($cmdTbl[2] .'Xp et Pi ajoutés à '. $player->data->name);
-    }
-
-
-    // LOGS
-    if($cmdTbl[0] == 'log'){
-
-
-        if(is_numeric($cmdTbl[1])){
-
-            $player = new Player($cmdTbl[1]);
-        }
-        else{
-
-            $player = Player::get_player_by_name($cmdTbl[1]);
-        }
-
-        if(is_numeric($cmdTbl[2])){
-
-            if($cmdTbl[2] == 0){
-
-                $target = 0;
-            }
-
-            $target = new Player($cmdTbl[2]);
-        }
-        else{
-
-            $target = Player::get_player_by_name($cmdTbl[2]);
-        }
-
-        unset($cmdTbl[0]);
-        unset($cmdTbl[1]);
-        unset($cmdTbl[2]);
-
-        $text = implode(' ', $cmdTbl);
-
-        Log::put($player, $target, $text);
-
-        exit($text);
-    }
-
-
     // ACTION
     if($cmdTbl[0] == 'action'){
 
@@ -182,43 +121,6 @@ if(!empty($_POST['cmd'])){
         }
 
     }
-
-    // OPTION
-    if($cmdTbl[0] == 'option'){
-
-
-        if(is_numeric($cmdTbl[1])){
-
-            $player = new Player($cmdTbl[1]);
-        }
-        else{
-
-            $player = Player::get_player_by_name($cmdTbl[1]);
-        }
-
-        $player->get_data();
-
-
-        if($player->have('options', $cmdTbl[2])){
-
-
-            $player->end_option($cmdTbl[2]);
-
-            exit('Option '. $cmdTbl[2] .' enlevé à '. $player->data->name .'');
-        }
-
-        else{
-
-            // duration
-            $duration = (!empty($cmdTbl[3])) ? $cmdTbl[3] : 0;
-
-            $player->add_option($cmdTbl[2]);
-
-            exit('Option '. $cmdTbl[2] .' ajouté à '. $player->data->name .'');
-        }
-
-    }
-
 
     // QUEST
     if($cmdTbl[0] == 'quest'){

@@ -9,8 +9,8 @@ class PlayerItemCmd extends Command
 Gestion objets d'un joueur.
 add: ajouter un objet à un joueur
 Exemple:
-> add [matricule ou nom] [id objet ou nom objet] [nombre d'objet, par défaut 1]
-> add 1 pierre 10
+> player-item add [matricule ou nom] [id objet ou nom objet] [nombre d'objet, par défaut 1]
+> player-item add 1 pierre 10
 EOT);
     }
 
