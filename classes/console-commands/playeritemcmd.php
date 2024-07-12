@@ -6,8 +6,11 @@ class PlayerItemCmd extends Command
         parent::__construct("player_item", [new Argument('action',false),new Argument('mat',false),
             new Argument('item_name',false),  new Argument('n',true)]);
         parent::setDescription(<<<EOT
-Gestion objets d'un joueur, ajouter :
+Gestion objets d'un joueur.
+add: ajouter un objet à un joueur
+Exemple:
 > add [matricule ou nom] [id objet ou nom objet] [nombre d'objet, par défaut 1]
+> add 1 pierre 10
 EOT);
     }
 
