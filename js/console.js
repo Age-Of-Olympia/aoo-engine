@@ -40,7 +40,7 @@ function bind_console_keys(body){
                          $('#console-content').append('<span class="request">' + line + '</span>');
                          submit_command(line);
                          window.cmdHistory.push(line); // j'adore cette pushline
-                         window.historyCursor = window.cmdHistory.length-1;
+                         window.historyCursor = window.cmdHistory.length;
                      }
                      e.preventDefault();
                  }

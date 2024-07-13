@@ -71,5 +71,19 @@ abstract class Command
         return $player;
     }
 
+    public static function getCommandLineSplit($inputString){
+
+        preg_match_all('/"(?:\\\\.|[^\\\\"])*"|\S+/', $inputString, $matches);
+
+        $commandLineSplit = $matches[0];
+
+        // Nettoyer les guillemets des arguments entourés de guillemets
+        $commandLineSplit = array_map(function($arg) {
+            return trim($arg, '"');
+        }, $commandLineSplit);
+
+        return $commandLineSplit;
+    }
+
     abstract public function execute(  array $argumentValues ): string;
 }

@@ -53,18 +53,18 @@ function printr($text){
 // sqln
 function sqln(){
 
-    global $n;
+    global $sqln;
 
-    if(!isset($n)){
+    if(!isset($sqln)){
 
-        $n = 1;
+        $sqln = 1;
     }
     else{
 
-        $n++;
+        $sqln++;
     }
 
-    return $n;
+    return $sqln;
 }
 
 function removeComments($jsonString) {

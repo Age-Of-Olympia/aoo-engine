@@ -8,10 +8,8 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 
-$player->get_coords();
 
-
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a><!--a href="logs.php?quests"><button>Quêtes</button></a--></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a><a href="logs.php?quests"><button>Quêtes</button></a></div>';
 
 
 if(isset($_GET['quests'])){
@@ -21,6 +19,10 @@ if(isset($_GET['quests'])){
 
     exit();
 }
+
+
+$player->get_coords();
+
 
 echo '<p>Voici les évènements qui se sont déroulés<br />sur ce Territoire ces 24 dernières heures.</p>';
 

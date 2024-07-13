@@ -65,8 +65,8 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
 
     $factory = initCommmandFactory();
 
+    $commandLineSplit = Command::getCommandLineSplit($inputString);
 
-    $commandLineSplit = explode(' ', $inputString);
     $command = $factory->getCommand($commandLineSplit[0]);
     array_shift($commandLineSplit); //remove first line
     if($command){
