@@ -1,11 +1,27 @@
 
+function create_console(){
+
+    document.body.innerHTML += '<div id="console-wrapper">'
+        + '<div id="console"><div id="console-content"></div></div>'
+        + '<input type="text" id="input-line" />'
+        + '</div>';
+}
+
+function submit_cmd(){
+
+    let line = $('#input-line').val();
+    if(line.length>0){
+        $('#console-content').append('<span class="request">' + line + '</span>');
+        submit_command(line);
+        window.cmdHistory.push(line); // j'adore cette pushline
+        window.historyCursor = window.cmdHistory.length;
+    }
+}
+
 function open_console(){
     let consoleTextArea = $('#console-wrapper');
     if(consoleTextArea.length === 0){
-        document.body.innerHTML += '<div id="console-wrapper">'
-        + '<div id="console"><div id="console-content"></div></div>'
-        + '<input type="text" id="input-line" />'
-        + '</div>'
+        create_console();
     }else{
         consoleTextArea.show();
     }
@@ -35,14 +51,8 @@ function bind_console_keys(body){
              case 'NumpadEnter':
              case 'Enter':
                  if(consoleTextArea.is(':visible')) {
-                     let line = $('#input-line').val();
-                     if(line.length>0){
-                         $('#console-content').append('<span class="request">' + line + '</span>');
-                         submit_command(line);
-                         window.cmdHistory.push(line); // j'adore cette pushline
-                         window.historyCursor = window.cmdHistory.length;
-                     }
-                     e.preventDefault();
+                     submit_cmd();
+                    e.preventDefault();
                  }
                  break;
              case 'ArrowUp':

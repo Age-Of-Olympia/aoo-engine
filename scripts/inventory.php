@@ -25,7 +25,7 @@ if(!empty($_POST['action'])){
 }
 
 
-$path = 'datas/private/players/'. $_SESSION['playerId'] .'.invent';
+$path = 'datas/private/players/'. $_SESSION['playerId'] .'.invent.html';
 
 if(!file_exists($path) || !CACHED_INVENT){
 

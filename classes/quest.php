@@ -43,7 +43,6 @@ class Quest{
     }
 
 
-
     public function get_player_quests(){
 
 
@@ -465,6 +464,8 @@ class Quest{
         while($row = $res->fetch_object()){
 
 
+            $row->img = self::get_img($row->name);
+
             $return[$row->name] = $row;
         }
 
@@ -527,5 +528,13 @@ class Quest{
         $db->exe($sql, array($value, $quest->id));
 
         return true;
+    }
+
+    public static function get_img($name){
+
+
+        $path = 'img/quests/'. $name .'.png';
+
+        return (file_exists($path)) ? $path : 'img/quests/default.png';
     }
 }

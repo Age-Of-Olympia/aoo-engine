@@ -24,6 +24,8 @@ EOT);
     public function execute(  array $argumentValues ) : string
     {
 
+        ob_start();
+
         $action = $argumentValues[0];
 
 

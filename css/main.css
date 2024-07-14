@@ -1206,6 +1206,7 @@ img {
     background: url('../img/ui/bg/journal.png');
     padding: 50px;
     padding-top: 45px;
+    padding-bottom: 25px;
 }
 
     .journal td{
@@ -1219,9 +1220,21 @@ img {
         display: block;
         text-align: left;
         width: 247px;
+        height: 355px;
         padding-left: 20px;
         padding-right: 20px;
         font-family: "Reenie Beanie";
         font-size: 170%;
         line-height: 1.1em;
+        position: relative;
+    }
+
+    .journal .footer{
+
+        font-family: "Reenie Beanie";
+        line-height: 1em;
+        position: absolute;
+        bottom: 0;
+        font-size: 70%;
+        left: 135px;
     }

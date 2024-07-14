@@ -48,6 +48,12 @@ if(isset($_GET['local'])){
 $(document).ready(function(){
 
 
+    if(<?php echo (isset($_GET['allMap'])) ? 'true' : 'false' ?>){
+
+        $('.map').css('opacity', 1).data('opacity', 1).show().off('mouseover');
+        $('.text').delete();
+    }
+
     $('.map[data-plan="<?php echo $player->coords->plan ?>"]').css('opacity', 1).data('opacity', 1);
     $('.text[data-plan="<?php echo $player->coords->plan ?>"]').show();
 
