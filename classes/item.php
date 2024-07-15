@@ -16,6 +16,7 @@ class Item{
             $res = $db->get_single('items', $this->id);
 
             $row = $res->fetch_object();
+
         }
 
 
@@ -329,13 +330,11 @@ class Item{
 
 
         foreach(ITEMS_OPT as $k=>$e){
-
-
-            if($row->$k){ $name = $e . $name . $e; }
+            if(!empty($row->$k)){ $name = $e . $name . $e; }
         }
 
 
-        if($row->spell){
+        if(!empty($row->spell)){
 
             $spellJson = json()->decode('actions', $row->spell);
 
