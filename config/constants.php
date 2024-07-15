@@ -160,8 +160,8 @@ define('ITEMS_OPT', array(
     'vorpal'=>'~',
     'cursed'=>'',
     'element'=>'',
-    'blessed_by_id'=>'+'
-
+    'blessed_by_id'=>'+',
+    'spell'=>'§'
 ));
 
 

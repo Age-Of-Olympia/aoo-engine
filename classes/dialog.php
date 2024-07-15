@@ -4,17 +4,23 @@
 class Dialog{
 
 
-    private $dialog; // dialog id/name
-    private $dialogJson; // dialog json file (in datas/private/dialogs/ or datas/public/dialogs/)
-    private $player; // to customize dialog text
+    private $dialog;        // dialog id/name
+    private $dialogJson;    // dialog json file (in datas/private/dialogs/ or datas/public/dialogs/)
+    private $player;        // to customize dialog text
+    private $target;        // to customize dialog text
 
 
-    function __construct($dialog, $player=false){
+    function __construct($dialog, $player=false, $target=false){
 
 
         if($player){
 
             $this->player = $player;
+        }
+
+        if($target){
+
+            $this->target = $target;
         }
 
 
@@ -72,7 +78,7 @@ class Dialog{
             '. $notHidden .'
             >
 
-            '. $node->text .'
+            '. $this->customize($node->text) .'
 
 
             <div class="dialog-node-options">
@@ -102,7 +108,7 @@ class Dialog{
                         }
                         elseif(!empty($option->url)){
 
-                            echo 'data-url="'. $option->url .'"
+                            echo 'data-url="'. $this->customize($option->url) .'"
                             ';
                         }
 
@@ -179,6 +185,18 @@ class Dialog{
 
 
     public function customize($text){
+
+
+        if(!empty($this->player)){
+
+            $text = str_replace('PLAYER_ID', $this->player->id, $text);
+            $text = str_replace('PLAYER_NAME', $this->player->data->name, $text);
+        }
+
+        if(!empty($this->target)){
+
+            $text = str_replace('TARGET_ID', $this->target->id, $text);
+        }
 
 
         return $text;

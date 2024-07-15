@@ -61,6 +61,12 @@ elseif(isset($_GET['bank'])){
     include('scripts/merchant/bank.php');
 }
 
+elseif(isset($_GET['spells'])){
+
+
+    include('scripts/merchant/spells.php');
+}
+
 elseif(isset($_GET['inventory'])){
 
 
@@ -93,7 +99,9 @@ else{
         'name'=>$player->data->name,
         'avatar'=>'img/dialogs/bg/'. $target->id .'.jpeg',
         'dialog'=>'marchand',
-        'text'=>''
+        'text'=>'',
+        'player'=>$player,
+        'target'=>$target
     );
 
     echo Ui::get_dialog($player, $options);

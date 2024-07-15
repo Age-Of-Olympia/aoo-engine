@@ -543,7 +543,12 @@ class ui{
                     }
 
 
-                    $dialog = new Dialog($options['dialog']);
+                    $player = (!empty($options['player'])) ? $options['player'] : false;
+
+                    $target = (!empty($options['target'])) ? $options['target'] : false;
+
+
+                    $dialog = new Dialog($options['dialog'], $player, $target);
 
 
                     // get dialog data

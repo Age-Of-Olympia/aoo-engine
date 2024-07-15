@@ -77,10 +77,9 @@ class Item{
 
 
         // enougth?
-        if($n < 0 && $this->get_n($player) < $n){
+        if($n < 0 && $this->get_n($player) + $n < 0){
 
             // not enougth
-
             return false;
         }
 
@@ -333,6 +332,14 @@ class Item{
 
 
             if($row->$k){ $name = $e . $name . $e; }
+        }
+
+
+        if($row->spell){
+
+            $spellJson = json()->decode('actions', $row->spell);
+
+            $name .= '<br /><sup>'. $spellJson->name .'</sup>';
         }
 
         return $name;
