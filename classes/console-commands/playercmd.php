@@ -11,6 +11,9 @@ Exemple:
 > player create Ocyrhoée elfe,pnj
 > player edit Finn race,lutin
 > player edit 1 name,Léo
+> player additem Orcrist or 100
+> player additem 1 1 -100
+> player addbank Orcrist pierre 100
 EOT);
     }
 
@@ -154,6 +157,101 @@ EOT);
 
                 return 'player '. $player->data->name .': '. $argumentValues[2] .' cache purged '. $return;
             }
+
+
+            if($action == 'additem' || $action == 'addbank'){
+
+
+                if(!isset($argumentValues[2])){
+
+                    return '<font color="red">error missing option1 [item id or name]. usage: player additem [mat] [existing item id or name] [number]</font>';
+                }
+
+                if(!isset($argumentValues[3])){
+
+                    return '<font color="red">error missing option2 [number]. usage: player additem [mat] [existing item id or name] [number]</font>';
+                }
+
+                ob_start();
+
+                if(is_numeric($argumentValues[2])){
+
+                    $item = new Item($argumentValues[2]);
+                }
+                else{
+
+                    $item = Item::get_item_by_name($argumentValues[2]);
+                }
+
+                $item->get_data();
+
+                $bank = ($action == 'addbank') ? true : false;
+
+                $place = ($action == 'addbank') ? 'bank' : 'inventory';
+
+                $item->add_item($player, $argumentValues[3], $bank);
+
+                $return = ob_get_clean();
+
+                return 'player '. $player->data->name .': '. $item->data->name .' x'. $argumentValues[3] .' added to '. $place;
+            }
+        }
+
+        if($action == 'addxp'){
+
+
+            if(!isset($argumentValues[2])){
+
+                return '<font color="red">error missing option1 [xp]. usage: player addxp [mat] [xp]</font>';
+            }
+
+            $player->put_xp($argumentValues[2]);
+
+            return $argumentValues[2] .'Xp et Pi ajoutés à '. $player->data->name;
+
+        }
+
+
+        if($action == 'addlog'){
+
+
+            if(!isset($argumentValues[2])){
+
+                return '<font color="red">error missing option1 [target id or name]. usage: player addlog [mat]  [target id or name] [text]</font>';
+            }
+
+            if(!isset($argumentValues[3])){
+
+                return '<font color="red">error missing option2 [text]. usage: player addlog [mat]  [target id or name] [text]</font>';
+            }
+
+            if(is_numeric($argumentValues[2])){
+
+                $target = new Player($argumentValues[2]);
+            }
+            else{
+
+                $target = Player::get_player_by_name($argumentValues[2]);
+            }
+
+
+            $target->get_data();
+
+            Log::put($player, $target, $argumentValues[3], $type="console");
+
+            return $player->data->name .' to '. $target->data->name .' log added: "'. $argumentValues[3] .'"';
+        }
+
+        if($action == 'deletelastlog'){
+
+
+            $sql = 'DELETE FROM players_logs WHERE player_id = ? ORDER BY time DESC LIMIT 1';
+
+            $db = new Db();
+
+            $db->exe($sql, $player->id);
+
+            return $player->data->name .' last log deleted';
         }
 
         return '<font color="orange">no changes detected</font>';

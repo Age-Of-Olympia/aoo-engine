@@ -1,9 +1,9 @@
 <?php
 
-class PlayerOptionCmd extends Command
+class OptionCmd extends Command
 {
     public function __construct() {
-        parent::__construct("player_option", [new Argument('mat',false),new Argument('option',false)]);
+        parent::__construct("option", [new Argument('mat',false),new Argument('option',false)]);
         parent::setDescription(<<<EOT
 Ajout ou suppression d'une option à un joueur (si il a l'option, ça lui enlève s'il ne l'a pas ça a ajoute).
 Exemple:
