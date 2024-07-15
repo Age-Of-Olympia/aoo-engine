@@ -762,6 +762,18 @@ class Player{
         $this->turn->$carac += $val;
 
 
+        $sql = '
+        DELETE FROM
+        players_bonus
+        WHERE
+        name IN ("pm", "pv")
+        AND
+        n >= 0
+        ';
+
+        $db->exe($sql);
+
+
         return true;
     }
 
@@ -1346,7 +1358,7 @@ class Player{
     public static function refresh_list(){
 
 
-        $sql = 'SELECT id,name,race,xp,rank,pr FROM players ORDER BY name';
+        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction FROM players ORDER BY name';
 
         $db = new Db();
 

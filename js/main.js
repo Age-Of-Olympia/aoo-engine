@@ -80,6 +80,12 @@ $(document).ready(function(){
     // close card & dialog
     function close_all(){
 
+        if($('#console-wrapper').is(':visible')){
+            $('#console-wrapper').hide();
+            document.location.reload();
+            return false;
+        }
+
         $('#ui-card').hide();
         $('#ui-dialog').hide();
         $('#console-wrapper').hide();

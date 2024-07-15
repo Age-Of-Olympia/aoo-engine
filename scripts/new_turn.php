@@ -16,6 +16,9 @@ if(!empty($_SESSION['playerId'])){
         if($player->coords->plan != 'limbes'){
 
 
+            $db = new Db();
+
+
             echo '<h1><font color="red">Nouveau Tour</font></h1>';
 
 
@@ -53,53 +56,27 @@ if(!empty($_SESSION['playerId'])){
                     $nextTurnTime += 86400 - (($player->caracs->spd-10)*3600);
                 }
 
-
-                // update next turn time
-                $sql = '
-                UPDATE
-                players
-                SET
-                nextTurnTime = ?
-                WHERE
-                id = ?
-                ';
-
-                $db = new Db();
-
-                $db->exe($sql, array($nextTurnTime, $player->id));
-
                 echo '<tr><td>Prochain Tour</td><td>le '. date('d/m/Y à h:i', $nextTurnTime) .'</td></tr>';
 
+
                 // gain xp
-                $gain = max(1, XP_PER_TURNS - $player->data->rank);
+                $gainXp = max(1, XP_PER_TURNS - $player->data->rank);
 
-                $player->put_xp($gain);
+                echo '<tr><td>Xp</td><td>+ '. $gainXp .'</td></tr>';
 
-                echo '<tr><td>Xp</td><td>+ '. $gain .'</td></tr>';
+                echo '<tr><td>Pi</td><td>+ '. $gainXp .'</td></tr>';
 
-                echo '<tr><td>Pi</td><td>+ '. $gain .'</td></tr>';
-
-
-                // refresh data
-                $player->refresh_data();
-
-
-                // malus base
-                $malus = MALUS_PER_TURNS;
 
                 // update malus
-                $player->put_malus(-$malus);
+                $recovMalus = min($player->data->malus, MALUS_PER_TURNS);
 
-                echo '<tr><td>Malus</td><td>- '. $malus .'</td></tr>';
+                echo '<tr><td>Malus</td><td>- '. $recovMalus .'</td></tr>';
 
-
-                // fat base
-                $fat = FAT_PER_TURNS;
 
                 // update fat
-                $player->put_fat(-$fat);
+                $recovFat = min($player->data->fatigue, FAT_PER_TURNS);
 
-                echo '<tr><td>Fatigue</td><td>- '. $fat .'</td></tr>';
+                echo '<tr><td>Fatigue</td><td>- '. $recovFat .'</td></tr>';
 
 
                 // recover carac
@@ -184,6 +161,35 @@ if(!empty($_SESSION['playerId'])){
             ';
 
             echo '<a href="index.php"><button>Jouer</button></a>';
+
+
+            // update
+            $sql = '
+            UPDATE
+            players
+            SET
+            nextTurnTime = ?,
+            xp = xp + ?,
+            pi = pi + ?,
+            malus = malus - ?,
+            fatigue = fatigue - ?
+            WHERE
+            id = ?
+            ';
+
+            $values = array(
+                $nextTurnTime,
+                $gainXp,
+                $gainXp,
+                $recovMalus,
+                $recovFat,
+                $player->id
+            );
+
+            $db->exe($sql, $values);
+
+            $player->refresh_data();
+
 
             exit();
         }

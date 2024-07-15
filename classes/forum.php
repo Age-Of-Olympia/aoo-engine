@@ -448,7 +448,11 @@ class Forum{
         $player->get_data();
 
 
-        if($dest->data->race != $player->data->race){
+        if(
+            $dest->data->race != $player->data->race
+            &&
+            $dest->data->secretFaction != $player->data->secretFaction
+        ){
 
 
             $raceJson = json()->decode('races', $dest->data->race);

@@ -41,8 +41,7 @@ echo '
     foreach(Log::get($player->coords->plan) as $e){
 
 
-        if(!isset($_GET['self']) && $e->player_id == $_SESSION['playerId']){
-
+        if(isset($_GET['self']) && $e->player_id != $_SESSION['playerId']){
 
             continue;
         }
@@ -81,7 +80,7 @@ echo '
                 echo '
                 <td  class="log-td" style="background-color: '. $targetRaceJson->bgColor .'; color: '. $targetRaceJson->color .';">
                     '. $target->data->name .'<br />
-                    (<a style="color: '. $targetRaceJson->color .';" href="infos.php?targetId='. $player->id .'">mat.'. $target->id .'</a>)
+                    (<a style="color: '. $targetRaceJson->color .';" href="infos.php?targetId='. $target->id .'">mat.'. $target->id .'</a>)
                 </td>
                 ';
             }

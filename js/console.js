@@ -37,6 +37,7 @@ function bind_console_keys(body){
              case 'Backquote':
                  if($('#console-wrapper').is(':visible')){
                     $('#console-wrapper').hide();
+                    document.location.reload();
                     return false;
                  }
                  open_console();

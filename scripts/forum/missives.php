@@ -66,10 +66,20 @@ echo '
     echo '<select id="dest-list">
         <option disabled selected>Sélectionnez un personnage:</option>';
 
+
+    $secretFaction = array();
+
+
     foreach ($playersJson as $e) {
 
 
-        if($e->race != $player->data->race){
+        if($e->faction != $player->data->faction){
+
+
+            if($e->secretFaction == $player->data->secretFaction){
+
+                $secretFaction[] = $e;
+            }
 
             continue;
         }
@@ -79,8 +89,20 @@ echo '
     }
 
 
-    echo '<option disabled>Animateurs:</option>';
+    $secretJson = json()->decode('factions', $player->data->secretFaction);
 
+    echo '<option disabled>'. $secretJson->name .':</option>';
+
+    foreach($secretFaction as $e){
+
+
+        $raceJson = json()->decode('races', $e->race);
+
+        echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
+    }
+
+
+    echo '<option disabled>Animateurs:</option>';
 
     foreach(RACES_EXT as $e){
 
@@ -99,7 +121,7 @@ echo '</div>';
 if(count($destTbl) == 1){
 
 
-    echo '<div style="color: blue; text-align: left; font-size: 88%; margin: 10px;">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple, sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.<br />
+    echo '<div style="color: blue; text-align: left; font-size: 88%; margin: 10px;">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre faction/peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple, sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.<br />
     <font color="red">Les Missives sans destinataires sont automatiquement supprimées.</font></div>';
 }
 

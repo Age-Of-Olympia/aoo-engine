@@ -3,7 +3,7 @@
 class PlayerCmd extends Command
 {
     public function __construct() {
-        parent::__construct("player",[new Argument('action',false), new Argument('mat',false), new Argument('options',true)]);
+        parent::__construct("player",[new Argument('action',false), new Argument('mat',false), new Argument('option1',true), new Argument('option2',true)]);
         parent::setDescription(<<<EOT
 Manipule la table "players".
 Exemple:
@@ -69,20 +69,25 @@ EOT);
             $player->get_data();
 
 
-            $optList = explode(',', $argumentValues[2]);
-
-
             if($action == 'edit'){
 
 
-                if(count($optList) != 2){
+                if(!isset($argumentValues[2])){
 
-                    return '<font color="red">invalid options ('. $argumentValues[2] .').<br />
-                    Must be: "field,value" ie. "race,lutin"</font>';
+                    return '<font color="red">invalid argument option1 ('. $argumentValues[2] .').<br />
+                    Usage: player edit [mat] [field] [value] ie player edit Orcrist name "Orcrist le Vénérable"</font>';
+                }
+
+                if(!isset($argumentValues[3])){
+
+                    return '<font color="red">invalid argument option2 ('. $argumentValues[3] .').<br />
+                    Usage: player edit [mat] [field] [value] ie player edit Orcrist name "Orcrist le Vénérable"</font>';
                 }
 
 
-                list($field, $value) = $optList;
+                $field = $argumentValues[2];
+
+                $value = $argumentValues[3];
 
 
                 if(in_array($field, array('id','coords_id','mail','psw','ip'))){
@@ -119,6 +124,35 @@ EOT);
 
 
                 return 'player '. $player->data->name .': field "'. $field .'" changed to value "'. $value .'"';
+            }
+
+            if($action == 'purge'){
+
+
+                if($argumentValues[2] == 'view'){
+
+                    $files = glob('datas/private/players/'. $player->id .'.svg');
+                }
+                elseif($argumentValues[2] == 'all'){
+
+                    $files = glob('datas/private/players/'. $player->id .'*');
+                }
+                elseif($argumentValues[2] == 'allplayers'){
+
+                    $files = glob('datas/private/players/*');
+                }
+
+                ob_start();
+
+                foreach($files as $file){
+
+                    @unlink($file);
+                    echo $file;
+                }
+
+                $return = ob_get_clean();
+
+                return 'player '. $player->data->name .': '. $argumentValues[2] .' cache purged '. $return;
             }
         }
 

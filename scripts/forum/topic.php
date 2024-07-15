@@ -153,7 +153,7 @@ echo '
 
                 $factionJson = json()->decode('factions', $author->data->faction);
 
-                echo '<div style="font-size: 88%;">'. $factionJson->name .' <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>) </div>';
+                echo '<div style="font-size: 88%;"><a href="faction.php?faction='. $author->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>)</div>';
 
 
                 echo '

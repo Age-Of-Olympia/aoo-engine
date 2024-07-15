@@ -240,9 +240,23 @@ if($res->num_rows){
         }
 
 
+        $pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
+
+
         $factionJson = json()->decode('factions', $target->data->faction);
 
-        $pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
+        $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
+
+        if(
+            $target->data->secretFaction != ''
+            &&
+            $target->data->secretFaction == $player->data->secretFaction
+        ){
+
+            $secretJson = json()->decode('factions', $target->data->secretFaction);
+
+            $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';
+        }
 
         $data = (object) array(
             'bg'=>$target->data->portrait,
@@ -252,7 +266,7 @@ if($res->num_rows){
             'type'=>$dataType,
             'text'=>$text,
             'race'=>$target->data->race,
-            'faction'=>'<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>'
+            'faction'=>$faction
         );
 
         $card = Ui::get_card($data);
