@@ -11,7 +11,7 @@ class Craft{
         $this->json = new Json();
 
         // recette json
-        $this->recetteJson = $this->json->decode('artisanat', 'recette');
+        $this->recetteJson = $this->json->decode('', 'crafts');
 
         // item json
         $this->itemJson = $this->json->decode('items', $item);

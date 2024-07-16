@@ -1,6 +1,80 @@
 <?php
 
-require_once('config.php');
+
+// player
+$player = new Player($_SESSION['playerId']);
+$player->get_data();
+
+
+// recette json
+$json = new Json();
+$recipesJson = $json->decode('', 'crafts');
+
+// common recipes
+$recipeList = $recipesJson->common;
+
+// add race recipes
+$playerRace = $player->data->race;
+
+// merge with racial recipes
+if(!empty($recipesJson->$playerRace)){
+
+    $recipeList = array_merge($recipeList, $recipesJson->$playerRace);
+}
+
+
+$ingredientList = array();
+
+foreach($recipeList as $e){
+
+    foreach($e->recette as $i){
+
+        $ingredientList[$i->id] = true;
+    }
+}
+
+
+if(!isset($_GET['itemId'])){
+
+
+    echo '<h1>Artisanat</h1>';
+
+
+    echo '<p>Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat:</p>';
+
+    $itemList = Item::get_item_list($player->id);
+
+
+    foreach($itemList as $k=>$item){
+
+
+        if(!empty($ingredientList[$item->id])){
+
+            continue;
+        }
+
+
+        unset($itemList[$k]);
+    }
+
+
+    $data = Ui::print_inventory($itemList);
+
+
+    echo $data;
+
+    ?>
+    <script src="js/progressive_loader.js"></script>
+    <script>
+    $('.item-case').click(function(e){
+
+        document.location = 'inventory.php?craft&itemId='+ $(this).data('id');
+    });
+    </script>
+    <?php
+
+    exit();
+}
 
 
 function get_json_item($item){
@@ -13,20 +87,12 @@ function get_json_item($item){
 }
 
 
-// player
-$player = new Player($_SESSION['playerId']);
-$player->get_data();
-
-$item = new Item($_GET['item'], false);
+$item = new Item($_GET['itemId'], false);
 
 $item->get_data();
 
-$ui = new Ui('Artisanat: '.$item->data->name.'');
-
 echo '
 <div id="craft-wrapper">
-
-<div><a href="inventory.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>
 
 <h1>Artisanat: '.$item->data->name.'</h1>
 <br/>
@@ -83,14 +149,6 @@ echo '
 ';
 
 
-// race craft forbidden
-if(!empty($raceJson->forbidCraft)){
-    echo ERROR_RACE_FORBIDDEN;
-
-    exit();
-}
-
-
 // list all item in Inventory and number
 
 $itemList = Item::get_item_list($player->id);
@@ -104,11 +162,6 @@ foreach($itemList as $playerItem){
 $craftList = array();
 
 
-
-// recette json
-$json = new Json();
-$recipesJson = $json->decode('artisanat', 'recette');
-
 echo '
 <table border="1" class="marbre">
     <tr>
@@ -118,18 +171,6 @@ echo '
         <th></th>
     </tr>
     ';
-
-// common recipes
-$recipeList = $recipesJson->common;
-
-// add race recipes
-$playerRace = $player->data->race;
-
-// merge with racial recipes
-if(!empty($recipesJson->$playerRace)){
-
-    $recipeList = array_merge($recipeList, $recipesJson->$playerRace);
-}
 
 
 // at least one art
@@ -316,7 +357,7 @@ foreach($recipeList as $recipe){
 
 // no recipies
 if(!$atLeastOne){
-    echo '<tr><td colspan="3" align="center">Vous ne connaissez aucun artisanat en lien avec cet objet.</td></tr>';
+    echo '<tr><td colspan="4" align="center">Vous ne connaissez aucun artisanat en lien avec cet objet.</td></tr>';
 }
 
 
@@ -327,29 +368,30 @@ echo '
 
 
 ?>
-  <script>
+<script src="js/progressive_loader.js"></script>
+<script>
     $('input[type="button"]').click(function(e){
 
-      var artName = $(this).attr('item');
+    var artName = $(this).attr('item');
 
-      var option = $('select[item="'+artName+'"]').val();
+    var option = $('select[item="'+artName+'"]').val();
 
-      $(this).attr('disabled', true);
+    $(this).attr('disabled', true);
 
-      $.ajax({
+    $.ajax({
         type: "POST",
         url: 'craft.php?item=<?php echo $_GET['item'] ?>',
         data: {'create':artName, 'option':option},
         success: function(data)
         {
 
-          alert('Artisanat effectué.');
-          alert(data);
-          location.reload();
+        alert('Artisanat effectué.');
+        alert(data);
+        location.reload();
         }
-      });
     });
-  </script>
+    });
+</script>
 <?php
 
 exit();

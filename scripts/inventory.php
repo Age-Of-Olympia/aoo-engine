@@ -61,7 +61,8 @@ $(document).ready(function(){
 
     $actions
     .append('<button class="action" data-action="use">Utiliser</button><br />')
-    .append('<button class="action" data-action="drop">Jeter</button><br />');
+    .append('<button class="action" data-action="drop">Jeter</button><br />')
+    .append('<button class="action" data-action="craft">Artisanat</button><br />');
 
 
     $('.action').click(function(e){
@@ -69,6 +70,13 @@ $(document).ready(function(){
 
         var action = $(this).data('action');
         var n = 0;
+
+
+        if(action == 'craft'){
+
+            document.location = 'inventory.php?craft&itemId='+ window.id;
+            return false;
+        }
 
         if(action == 'drop' || action == "store" || action == "newAsk" || action == "newBid"){
 
