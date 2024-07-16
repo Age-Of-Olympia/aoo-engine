@@ -762,7 +762,7 @@ class Player{
 
         if(!isset($this->turn->$carac)){
 
-            $this->turn->$carac = 0;
+            $this->turn->$carac = $this->caracs->$carac;
         }
 
         $this->turn->$carac += $val;

@@ -75,7 +75,14 @@ if(!empty($_SESSION['playerId'])){
             if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="items"], [data-table="elements"]')[0]){
 
 
-                if(window.clickedCases[coords]){
+                if($('.clicked-cases-reseter[data-coords="'+ coords +'"]')[0] != null){
+
+                    $('.clicked-cases-reseter[data-coords="'+ coords +'"]').remove();
+                    var remove = true;
+                }
+
+
+                if(window.clickedCases[coords] && !remove){
 
 
                     let data = window.clickedCases[coords];

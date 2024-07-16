@@ -45,6 +45,23 @@ $target->get_data();
 $target->get_caracs();
 
 
+// healing a full life target
+if(!empty($actionJson->playerHeal)){
+
+
+    if($target->get_left('pv') == $target->caracs->pv){
+
+        exit('Ce personnage n\'a pas besoin de soins.');
+    }
+}
+
+// action on a dead target
+if($target->get_left('pv') < 1){
+
+    exit('Ce personnage est mort.');
+}
+
+
 // player : ignore equipement
 if(!empty($actionJson->playerIgnore)){
 
@@ -541,5 +558,7 @@ $(document).ready(function(){
     var height = <?php echo $height ?>;
 
     $('#red-filter').css({'height':height +'px'});
+
+    $('body').append('<div class="clicked-cases-reseter" data-coords="<?php echo $target->coords->x .','. $target->coords->y ?>"></div>');
 });
 </script>

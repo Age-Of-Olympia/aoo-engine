@@ -7,8 +7,8 @@ class OptionCmd extends Command
         parent::setDescription(<<<EOT
 Ajout ou suppression d'une option à un joueur (si il a l'option, ça lui enlève s'il ne l'a pas ça a ajoute).
 Exemple:
-> player_option [matricule ou nom] [nom option]
-> player_option 1 isMerchant
+> option [matricule ou nom] [nom option]
+> option 1 isMerchant
 EOT);
     }
 
