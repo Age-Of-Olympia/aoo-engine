@@ -3,6 +3,16 @@
 require_once('config.php');
 
 
+function get_json_item($item){
+
+    $return = (object) array('data');
+    $return->data = json()->decode('items', $item->name);
+    $return->data->mini = 'img/items/'. $item->name .'_mini.png';
+
+    return $return;
+}
+
+
 // player
 $player = new Player($_SESSION['playerId']);
 $player->get_data();
@@ -11,14 +21,14 @@ $item = new Item($_GET['item'], false);
 
 $item->get_data();
 
-$ui = new Ui('Artisanat');
+$ui = new Ui('Artisanat: '.$item->data->name.'');
 
 echo '
 <div id="craft-wrapper">
 
 <div><a href="inventory.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>
 
-<h2>Artisanat - '.$item->data->name.'</h2>
+<h1>Artisanat: '.$item->data->name.'</h1>
 <br/>
 
  <a href="item.php?item='.$item->data->id.'" class="source-link">
@@ -42,9 +52,11 @@ if(!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->da
 
         foreach($craft->itemRecipe as $ingredientItem=>$n){
 
-            $ingredient = new Item($craft-> $ingredientItem->id);
+            // $ingredient = new Item($craft-> $ingredientItem->id);
+            //
+            // $ingredient->get_data();
 
-            $ingredient->get_data();
+            $ingredient = get_json_item($craft->$ingredientItem->name);
 
             echo '
                 <img src="'. $ingredient->data->mini .'" /> x'. $n .'
@@ -66,9 +78,8 @@ if(!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->da
 }
 
 
-echo '<br/>
-<h2>Recettes</h2>
-<sup>Créer un objet</sup><br />
+echo '
+<p>Voici la liste des objets que vous pouvez créer avec cet objet.</p>
 ';
 
 
@@ -99,7 +110,7 @@ $json = new Json();
 $recipesJson = $json->decode('artisanat', 'recette');
 
 echo '
-<table border="1" class="dialog-table">
+<table border="1" class="marbre">
     <tr>
         <th></th>
         <th>Objet</th>
@@ -152,8 +163,9 @@ foreach($recipeList as $recipe){
         continue;
     }
 
-    $artItem = new Item($recipe->id);
-    $artItem->get_data();
+    $artItem = get_json_item($recipe);
+
+    $artName = $recipe->name;
 
     // print
     echo '
@@ -170,16 +182,14 @@ foreach($recipeList as $recipe){
 
     echo '
             </td>
-            <td>
+            <td align="left">
                 ';
 
     // recipe
     foreach($recipeIngredients as $ingredient){
 
 
-        $ingredientItem = new Item($ingredient->id);
-        $ingredientItem->get_data();
-
+        $ingredientItem = get_json_item($ingredient);
 
 
         // color
@@ -196,8 +206,8 @@ foreach($recipeList as $recipe){
         }
 
         echo '
-                    <a href="item.php?item='. $ingredient->name .'"><img width="25" src="'. $ingredientItem->data->mini .'" /></a>
-                    <sup><font color="'. $color .'">x'. $ingredient->n .'</font></sup>
+                    <a href="item.php?item='. $ingredient->name .'"><img src="'. $ingredientItem->data->mini .'" /></a>
+                    <font color="'. $color .'">x'. $ingredient->n .'</font>
                     ';
 
         // crafting
@@ -240,35 +250,34 @@ foreach($recipeList as $recipe){
 
                             foreach($neededJson->whenCrafted as $eee){
 
-                                Inventory::add_item($player, $eee->name, $eee->n);
+                                // Inventory::add_item($player, $eee->name, $eee->n);
+
+                                $whenCraftItem = Item::get_item_by_name($eee->name);
+                                $whenCraftItem->add_item($player, $eee->n);
                             }
                         }
 
 
                         // remove item recipe
-                        Inventory::add_item($player, $ee->name, -$ee->n);
+                        // Inventory::add_item($player, $ee->name, -$ee->n);
+
+                        $itemRecipe = new Item($ee->id);
+                        $itemRecipe->add_item($player, -$ee->n);
 
                     }
 
                     // add craft item
-                    Inventory::add_item($player, $artName, $craftedByN);
+                    // Inventory::add_item($player, $artName, $craftedByN);
+
+                    $itemCrafted = Item::get_item_by_name($artName);
+                    $itemCrafted->add_item($player, $craftedByN);
 
 
-                    // put mvt
-                    $player->put_used_carac('mvt', ITEM_CRAFT_COST);
-
-                    // reload menu
-                    $player->delete_cache('main');
+                    // CRAFT COST (A)
 
 
                     // log
-                    Log::put(array(
-                        'player'=>$player,
-                        'text'=>$player->name .' a créé un objet.',
-                        'targetId'=>0,
-                        'type'=>'craft',
-                        'details'=>$artJson->name .' x'. $craftedByN
-                    ));
+
 
                     exit();
                 }
@@ -288,7 +297,7 @@ foreach($recipeList as $recipe){
 
         echo '
                 <td valign="top">
-                    <input type="button" value="Créer" item="'. $artItem->data->name .'" />
+                    <input type="button" value="Créer" item="'. $artItem->data->name .'" style="width: 100%; height: 50px;" />
                 </td>
                 ';
     }
@@ -335,7 +344,7 @@ echo '
         {
 
           alert('Artisanat effectué.');
-          // alert(data);
+          alert(data);
           location.reload();
         }
       });
