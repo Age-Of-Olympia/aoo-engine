@@ -170,7 +170,7 @@ class ui{
             ';
 
         echo '
-            <div class="">
+            <div class="inventory-preview">
 
                 <div class="preview-n">x'. $itemList[$defaultItem->id]->n .'</div>
 

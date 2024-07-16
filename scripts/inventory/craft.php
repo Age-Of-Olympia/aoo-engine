@@ -39,9 +39,6 @@ if(!isset($_GET['itemId'])){
 
     echo '<h1>Artisanat</h1>';
 
-
-    echo '<p>Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat:</p>';
-
     $itemList = Item::get_item_list($player->id);
 
 
@@ -64,11 +61,20 @@ if(!isset($_GET['itemId'])){
     echo $data;
 
     ?>
+    <style>.inventory-preview{display: none; text-align: left;}</style>
     <script src="js/progressive_loader.js"></script>
     <script>
-    $('.item-case').click(function(e){
+    $(document).ready(function(){
 
-        document.location = 'inventory.php?craft&itemId='+ $(this).data('id');
+
+        $('.inventory-preview').html('Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.').fadeIn();
+
+        $('.item-case').click(function(e){
+
+            e.preventDefault();
+
+            document.location = 'inventory.php?craft&itemId='+ $(this).data('id');
+        });
     });
     </script>
     <?php
