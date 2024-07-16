@@ -14,7 +14,28 @@ echo '
 echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th colspan="2">Effet</th></tr>';
 
 
-foreach($player->get_spells() as $e){
+$spellList = $player->get_spells();
+
+$spellsN = count($spellList);
+
+$trStyle = '';
+
+$buttonStyle = '';
+
+$maxSpells = $player->get_max_spells(count($spellList));
+
+if($maxSpells < 0){
+
+    $max = $maxSpells + $spellsN;
+
+    echo '<tr><th colspan="6"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $max .')</font></th>';
+
+    $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
+
+    $buttonStyle = 'class="blink" style="color: red;"';
+}
+
+foreach($spellList as $e){
 
 
     $spellJson = json()->decode('actions', $e);
@@ -24,7 +45,7 @@ foreach($player->get_spells() as $e){
 
 
     echo '
-    <tr>
+    <tr '. $trStyle .'>
         <td valign="top" width="50">
             <img src="'. $img .'" width="50" />
         </td>
@@ -53,6 +74,7 @@ foreach($player->get_spells() as $e){
                     data-spell="'. $e .'"
                     data-name="'. $spellJson->name .'"
                     value="Oublier"
+                    style="height: 50px;"
                     />
             </td>
             ';
@@ -70,7 +92,7 @@ if(!isset($_GET['forget'])){
     <tr>
         <td colspan="5" align="right">
 
-            <a href="upgrades.php?spells&forget"><button>Oublier un sort</button></a>
+            <a href="upgrades.php?spells&forget"><button '. $buttonStyle .'>Oublier un sort</button></a>
         </td>
     </tr>
     ';

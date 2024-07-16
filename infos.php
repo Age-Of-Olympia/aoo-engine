@@ -65,7 +65,13 @@ echo '
                 while($row = $res->fetch_object()){
 
 
-                    if($target->id == $player->id){
+                    if(
+                        $target->id == $player->id
+                        ||
+                        $target->data->faction == $player->data->faction
+                        ||
+                        $target->data->secretFaction == $player->data->secretFaction
+                    ){
 
                         $endTime = '(reposez-vous)';
 
@@ -117,7 +123,7 @@ echo '
 
             $factionJson = json()->decode('factions', $target->data->faction);
 
-            echo '<div>'. $factionJson->name .' <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>) </div>';
+            echo '<div><a href="faction.php?faction='. $target->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>) </div>';
 
 
             echo '<img src="'. $target->data->avatar .'" />';
@@ -125,7 +131,11 @@ echo '
 
             $text = nl2br($target->data->text);
 
-            if($target->data->race != $player->data->race){
+            if(
+                $target->data->race != $player->data->race
+                &&
+                $target->data->secretFaction != $player->data->secretFaction
+            ){
 
 
                 $text = '<i>Parle dans une langue qui vous est inconnue.</i>';

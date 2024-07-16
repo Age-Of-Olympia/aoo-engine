@@ -282,13 +282,19 @@ class Player{
     }
 
 
-    public function add($table, $name){
+    public function add($table, $name, $charges=false){
 
 
         $values = array(
             'player_id'=>$this->id,
             'name'=>$name
         );
+
+
+        if(!empty($charges)){
+
+            $values['charges'] = $charges;
+        }
 
 
         if($table == 'actions'){
@@ -346,7 +352,7 @@ class Player{
     public function get_options(){ return $this->get('options'); }
 
     // actions shortcuts
-    public function add_action($name){ $this->add('actions', $name); }
+    public function add_action($name, $charges=false){ $this->add('actions', $name, $charges); }
     public function have_action($name){ return $this->have('actions', $name); }
     public function end_action($name){ $this->end('actions', $name); }
     public function get_actions(){ return $this->get('actions'); }
@@ -1172,6 +1178,20 @@ class Player{
             $this->refresh_caracs();
             $this->refresh_view();
         }
+    }
+
+
+    public function get_max_spells($spellsN){
+
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+        $maxSpells = $this->data->rank + 1;
+
+        return $maxSpells - $spellsN;
     }
 
 

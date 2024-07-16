@@ -43,7 +43,7 @@ if($player->data->race == $target->data->race){
 }
 
 
-$raceJson = json()->decode('races', $player->data->race);
+$raceJson = json()->decode('races', $target->data->race);
 
 
 echo '<h2>Sorts proposés</h2>';
