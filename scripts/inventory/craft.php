@@ -37,8 +37,6 @@ foreach($recipeList as $e){
 if(!isset($_GET['itemId'])){
 
 
-    echo '<h1>Artisanat</h1>';
-
     $itemList = Item::get_item_list($player->id);
 
 
@@ -61,13 +59,13 @@ if(!isset($_GET['itemId'])){
     echo $data;
 
     ?>
-    <style>.inventory-preview{display: none; text-align: left;}</style>
+    <style>.inventory-preview{display: none;}</style>
     <script src="js/progressive_loader.js"></script>
     <script>
     $(document).ready(function(){
 
 
-        $('.inventory-preview').html('Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.').fadeIn();
+        $('.inventory-preview').html('<h1>Artisanat</h1> Voici les objets dans votre inventaire susceptibles d\'être utilisés dans l\'Artisanat.<br />Cliquez sur l\'un d\'eux pour voir les recettes associées.').fadeIn();
 
         $('.item-case').click(function(e){
 
