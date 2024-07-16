@@ -346,6 +346,7 @@ class ui{
 
                 $(".preview-n").text('x'+ n);
                 $(".preview-text").text(text);
+                $("#craft-link").attr('href', 'craft.php?item='+$item.data("id"));
 
                 preload(img, $previewImg);
             });
