@@ -45,18 +45,21 @@ $target->get_data();
 $target->get_caracs();
 
 
+// store target health
+$targetPvBefore = $target->get_left('pv');
+
 // healing a full life target
 if(!empty($actionJson->playerHeal)){
 
 
-    if($target->get_left('pv') == $target->caracs->pv){
+    if($targetPvBefore == $target->caracs->pv){
 
         exit('Ce personnage n\'a pas besoin de soins.');
     }
 }
 
 // action on a dead target
-if($target->get_left('pv') < 1){
+if($targetPvBefore < 1){
 
     exit('Ce personnage est mort.');
 }
@@ -371,7 +374,7 @@ if(!empty($success) && $success == true){
 
         $playerHeal = $baseHeal + $bonusHeal;
 
-        $playerHeal = min($playerHeal, $target->caracs->pv - $target->get_left('pv'));
+        $playerHeal = min($playerHeal, $target->caracs->pv - $targetPvBefore);
 
 
         echo '
@@ -546,19 +549,25 @@ if(!empty($log)){
 }
 
 
-// update pv red filter
-$pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
-$height = floor((100 - $pvPct) * 225 / 100);
-$height = min($height, 225);
+$targetPvAfter = $target->get_left('pv');
 
-?>
-<script>
-$(document).ready(function(){
+if($targetPvBefore != $targetPvAfter){
 
-    var height = <?php echo $height ?>;
+    // update pv red filter
+    $pvPct = floor($targetPvAfter / $target->caracs->pv * 100);
+    $height = floor((100 - $pvPct) * 225 / 100);
+    $height = min($height, 225);
 
-    $('#red-filter').css({'height':height +'px'});
+    ?>
+    <script>
+    $(document).ready(function(){
 
-    $('body').append('<div class="clicked-cases-reseter" data-coords="<?php echo $target->coords->x .','. $target->coords->y ?>"></div>');
-});
-</script>
+        var height = <?php echo $height ?>;
+
+        $('#red-filter').css({'height':height +'px'});
+
+        $('body').append('<div class="clicked-cases-reseter" data-coords="<?php echo $target->coords->x .','. $target->coords->y ?>"></div>');
+    });
+    </script>
+    <?php
+}
