@@ -84,7 +84,11 @@ if(!isset($_GET['itemId'])){
 function get_json_item($item){
 
     $return = (object) array('data');
-    $return->data = json()->decode('items', $item->name);
+    if(!$return->data = json()->decode('items', $item->name)){
+
+        echo 'error '. $item->name;
+    }
+
     $return->data->mini = 'img/items/'. $item->name .'_mini.png';
 
     return $return;
