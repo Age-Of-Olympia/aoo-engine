@@ -1209,6 +1209,9 @@ img {
     width:600px;
 }
 
+.secret-faction{opacity: 0.5;}
+.secret-faction:hover{opacity: 1;}
+
 
 .journal{
 
