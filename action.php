@@ -111,6 +111,19 @@ if(!empty($actionJson->forbidIf)){
 
 
 /*
+ * action details
+ */
+
+
+echo '<style>.action-details{display: none;}</style>';
+
+if($player->have_option('showActionDetails')){
+
+    echo '<style>.action-details{display: inline;}</style>';
+}
+
+
+/*
  * PERFORM ACTION
  */
 
