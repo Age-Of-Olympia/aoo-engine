@@ -26,7 +26,9 @@ if($player->data->fatigue){
 
     $fat = ($player->data->fatigue > FAT_PER_REST) ? FAT_PER_REST : $player->data->fatigue;
 
-    echo '<div class="action-details">'. $fat .' Fatigues enlevées.</div>';
+    // echo '<div class="action-details">'. $fat .' Fatigues enlevées.</div>';
+
+    echo $fat .' Fatigues enlevées.';
 }
 
 
@@ -50,7 +52,9 @@ if($count){
 
     $player->purge_effects();
 
-    echo '<div class="action-details">'. $count .' effets terminés.</div>';
+    // echo '<div class="action-details">'. $count .' effets terminés.</div>';
+
+    echo $count .' effets terminés.';
 }
 
 

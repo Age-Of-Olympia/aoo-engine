@@ -268,6 +268,28 @@ img {
 /*     font-size: 88%; */
 }
 
+.progress-bar {
+    position: relative;
+    height: 1.5em; /* adjust as needed */
+}
+
+.progress-bar .text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.progress-bar .bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%; /* ensure the bar covers the full height of progress-bar */
+    background: linear-gradient(to right, #00c6ff, #0072ff);
+    z-index: 1;
+}
+
 
 /*
  * index

@@ -67,6 +67,70 @@ class Str{
     }
 
 
+    public static function get_previous_xp($rank) {
+
+        switch($rank) {
+            case 1:
+                return 0;
+            case 2:
+                return 500;
+            case 3:
+                return 1500;
+            case 4:
+                return 3000;
+            case 5:
+                return 5000;
+            case 6:
+                return 7500;
+            default:
+                return null;
+        }
+    }
+
+
+    public static function get_next_xp($rank){
+
+        switch($rank) {
+            case 1:
+                $next_xp = 500;
+                break;
+            case 2:
+                $next_xp = 1500;
+                break;
+            case 3:
+                $next_xp = 3000;
+                break;
+            case 4:
+                $next_xp = 5000;
+                break;
+            case 5:
+                $next_xp = 7500;
+                break;
+            default:
+                // For rank 6 and above, we can assume there is no next rank, so no next XP.
+                $next_xp = null;
+                break;
+        }
+
+        return $next_xp;
+    }
+
+
+    public static function calculate_xp_percentage($xp, $rank) {
+
+        $previous_xp = self::get_previous_xp($rank);
+        $next_xp = self::get_next_xp($rank);
+
+        if ($previous_xp === null || $next_xp === null) {
+            return null; // Invalid rank
+        }
+
+        $percentage = (($xp - $previous_xp) / ($next_xp - $previous_xp)) * 100;
+
+        return round($percentage);
+    }
+
+
     public static function get_reput($pr){
 
         if( $pr == 0 )

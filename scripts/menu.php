@@ -42,6 +42,19 @@ if(!empty($_SESSION['playerId'])){
         ';
 
 
+        $pct = Str::calculate_xp_percentage($player->data->xp, $player->data->rank);
+
+
+        echo '<tr>';
+
+            echo '<td colspan="'. count(CARACS) .'">
+            <div class="progress-bar">
+                <div class="bar" style="width: '. $pct .'%;">&nbsp;</div>
+                <div class="text">Xp: '. $player->data->xp .'/'. Str::get_next_xp($player->data->rank) .'</div>
+            </div>
+            </td>';
+
+        echo '</tr>';
 
         echo '<tr>';
 
@@ -51,6 +64,7 @@ if(!empty($_SESSION['playerId'])){
             }
 
         echo '</tr>';
+
         echo '<tr>';
 
             if($player->data->fatigue >= FAT_EVERY){
