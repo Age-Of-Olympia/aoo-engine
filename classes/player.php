@@ -689,11 +689,10 @@ class Player{
         }
 
 
-        if(!isset($this->caracs)){
+        if(!isset($this->caracs) || !count((array) $this->caracs)){
 
             $this->get_caracs();
         }
-
 
         $values = array();
 
@@ -860,13 +859,6 @@ class Player{
 
             $this->get_data();
         }
-
-
-        if($n > $item->get_n($this)){
-
-            exit('error n');
-        }
-
 
         $values = array(
             'item_id'=>$item->id,
@@ -1217,6 +1209,96 @@ class Player{
         }
 
         return false;
+    }
+
+
+    public function death(){
+
+
+        // drop loot
+        $sql = '
+        SELECT
+        item_id, n, equiped,
+        i.name
+        FROM
+        players_items AS pi
+        INNER JOIN
+        items AS i
+        ON
+        pi.item_id = i.id
+        WHERE
+        player_id = ?
+        ';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $this->id);
+
+        // loot list
+        $lootList = array();
+
+
+        while($row = $res->fetch_object()){
+
+            $loot = new Item($row->item_id, $row);
+
+            $loot->get_data();
+
+
+            // loot chance default
+            $lootChance = LOOT_CHANCE_DEFAULT;
+
+            // type loot chance
+            if(!empty(LOOT_CHANCE[$row->name])){
+
+                $lootChance = LOOT_CHANCE[$row->name];
+            }
+
+            // custom loot chance
+            if(!empty($loot->data->lootChance)){
+
+                $lootChance = $loot->data->lootChance;
+            }
+
+            // equiped loot chance : half chance
+            if($row->equiped){
+
+                $lootChance = floor($lootChance / 2);
+            }
+
+            // pnj loot chance
+            if($this->id < 0){
+
+                $lootChance = 100;
+            }
+
+
+            // perform loot
+            if(rand(1,100) <= $lootChance){
+
+
+                // rand loot n
+                $lootN = floor($row->n * $lootChance / 100);
+
+                if($lootN < 0) $lootN = 1;
+
+                if($lootN > $row->n) $lootN = $row->n;
+
+                // drop
+                $this->drop($loot, $lootN);
+
+                // populate lootList
+                $lootList[] = $loot->data->name .' x'. $lootN;
+            }
+        }
+
+        if(count($lootList)){
+
+
+            $text = $this->data->name .' a perdu des objets: '. implode(', ', $lootList) .'.';
+
+            Log::put($this, $this, $text, $type="loot");
+        }
     }
 
 

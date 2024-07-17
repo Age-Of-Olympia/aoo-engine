@@ -190,6 +190,11 @@ input[type="text"], input[type="password"], input[type="number"]{
   filter: grayscale(1);
 }
 
+.dead{
+
+    filter: grayscale(1) contrast(1.5);
+}
+
 .blink {
 
     animation: blinker 1.5s linear infinite;
@@ -431,11 +436,16 @@ img {
     color: #333;
 }
 
-.log-rez{
+.log-rez, .log-kill{
 
     color: black;
     font-family: goudy;
     font-size: 1.5em;
+}
+
+.log-kill{
+
+    color: red;
 }
 
 .log-fishing{

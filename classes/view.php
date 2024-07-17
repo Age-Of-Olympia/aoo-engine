@@ -188,6 +188,7 @@ class View{
             map_items
             WHERE
             coords_id IN ('. implode(',', $this->inSightId) .')
+            GROUP BY coords_id
 
             UNION
 

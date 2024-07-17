@@ -103,7 +103,7 @@ echo '
 
         echo '
         <tr>
-            <th width="50"></th>
+            <th width="50" height="50"></th>
             <th>'. $catJson->name .'</th>
             <th width="1%">Sujets</th>
         </tr>

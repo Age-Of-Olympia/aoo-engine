@@ -61,7 +61,7 @@ if(!empty($actionJson->playerHeal)){
 // action on a dead target
 if($targetPvBefore < 1){
 
-    exit('Ce personnage est mort.');
+    // exit('Ce personnage est mort.');
 }
 
 
@@ -553,6 +553,13 @@ $targetPvAfter = $target->get_left('pv');
 
 if($targetPvBefore != $targetPvAfter){
 
+
+    if($targetPvAfter < 1){
+
+        include('scripts/death.php');
+    }
+
+
     // update pv red filter
     $pvPct = floor($targetPvAfter / $target->caracs->pv * 100);
     $height = floor((100 - $pvPct) * 225 / 100);
@@ -564,7 +571,16 @@ if($targetPvBefore != $targetPvAfter){
 
         var height = <?php echo $height ?>;
 
-        $('#red-filter').css({'height':height +'px'});
+        if(height >= 225){
+
+            $('.card-portrait').addClass('dead');
+            $('#red-filter').hide();
+        }
+
+        else{
+
+            $('#red-filter').css({'height':height +'px'});
+        }
 
         $('body').append('<div class="clicked-cases-reseter" data-coords="<?php echo $target->coords->x .','. $target->coords->y ?>"></div>');
     });

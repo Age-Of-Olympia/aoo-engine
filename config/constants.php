@@ -181,6 +181,13 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
 ));
 
 
+define('LOOT_CHANCE_DEFAULT', 20);
+
+
+define('LOOT_CHANCE', array(
+));
+
+
 /*
  * costs & recups
  */

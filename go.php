@@ -144,12 +144,18 @@ $res = $db->exe($sql, $coordsId);
 if($res->num_rows){
 
 
+    $lootList = array();
+
     while($row = $res->fetch_object()){
 
 
         $item = new Item($row->item_id);
 
+        $item->get_data();
+
         $item->add_item($player, $row->n);
+
+        $lootList[] = $item->data->name .' x'. $row->n;
     }
 
 
@@ -158,6 +164,11 @@ if($res->num_rows){
     );
 
     $db->delete('map_items', $values);
+
+
+    $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
+
+    Log::put($player, $player, $text, $type="loot");
 }
 
 

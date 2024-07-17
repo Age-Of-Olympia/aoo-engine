@@ -135,7 +135,7 @@ $(document).ready(function(){
             data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
             success: function(data)
             {
-                alert(data);
+                // alert(data);
                 document.location.reload();
             }
         });

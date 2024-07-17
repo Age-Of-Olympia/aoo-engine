@@ -14,7 +14,7 @@ class Log{
 
         $timeLimit = time()-ONE_DAY;
 
-        $sql = 'SELECT * FROM players_logs WHERE plan = ? AND time > ? ORDER BY time DESC';
+        $sql = 'SELECT * FROM players_logs WHERE plan = ? AND time > ? ORDER BY time DESC, id DESC';
 
         $res = $db->exe($sql, array($plan, $timeLimit));
 
