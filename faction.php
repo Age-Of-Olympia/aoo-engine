@@ -17,7 +17,6 @@ if(!empty($_GET['faction'])){
 
     $ui = new Ui('Faction: '. $facJson->name);
 
-
     echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"> Retour</button></a></div>';
 
 
@@ -25,59 +24,37 @@ if(!empty($_GET['faction'])){
 
     echo '<div style="font-size: 5em;"><span class="ra '. $facJson->raFont .'"></span></div>';
 
+    if(isset($facJson->secret)){
+        $player = new Player($_SESSION['playerId']);
+        $player->get_data();
+        if($player->data->secretFaction == $_GET['faction'] || $player->have_option('isAdmin')){
+            $sql = 'SELECT id,avatar,name,race,xp,secretFactionRole as factionRole FROM players WHERE nextTurnTime > ? AND secretFaction = ? ORDER BY name';
 
-    $sql = 'SELECT id,avatar,name,race,xp,rank FROM players WHERE nextTurnTime > ? AND faction = ? ORDER BY name';
+            $db = new Db();
 
-    $db = new Db();
+            $timeLimit =time() - INACTIVE_TIME;
 
-    $timeLimit =time() - INACTIVE_TIME;
+            $res = $db->exe($sql, array($timeLimit, $_GET['faction']));
 
-    $res = $db->exe($sql, array($timeLimit, $_GET['faction']));
+            include('scripts/faction_list.php');
 
+        }else{
+            echo "<p>Cette faction est entourée d'un grand mystère, nul ne connait vraiment ses membres.</p>";
+        }
 
-    echo '
-    <table border="1" cellspacing="0" class="marbre" align="center">
-    ';
+    }else{
 
-    echo '
-    <tr>
-        <th></th>
-        <th>Nom</th>
-        <th>Peuple</th>
-        <th>Xp</th>
-        <th>Rang</th>
-    </tr>
-    ';
+        $sql = 'SELECT id,avatar,name,race,xp,factionRole FROM players WHERE nextTurnTime > ? AND faction = ? ORDER BY name';
 
-    while($row = $res->fetch_object()){
+        $db = new Db();
 
+        $timeLimit =time() - INACTIVE_TIME;
 
-        $raceJson = json()->decode('races', $row->race);
+        $res = $db->exe($sql, array($timeLimit, $_GET['faction']));
 
-        echo '
-        <tr>
-            <td>
-                <img src="'. $row->avatar .'" />
-            </td>
-            <td>
-                '. $row->name .'
-            </td>
-            <td>
-                '. $raceJson->name .'
-            </td>
-            <td>
-                '. $row->xp .'
-            </td>
-            <td>
-                '. $row->rank .'
-            </td>
-        </tr>
-        ';
+        include('scripts/faction_list.php');
     }
 
-    echo '
-    </table>
-    ';
 
 }
 else{

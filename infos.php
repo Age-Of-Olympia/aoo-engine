@@ -123,9 +123,14 @@ echo '
 
             $factionJson = json()->decode('factions', $target->data->faction);
 
-            echo '<div><a href="faction.php?faction='. $target->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>) </div>';
+            echo '<div><a href="faction.php?faction='. $target->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$target->data->factionRole]->name.'</i>) </div>';
 
+            if (isset($target->data->secretFaction) && !empty($target->data->secretFaction) && ($player->data->secretFaction == $target->data->secretFaction || $player->have_option('isAdmin'))) {
+                $secretFactionJson = json()->decode('factions', $target->data->secretFaction);
 
+                echo '<div class="secret-faction"><a href="faction.php?faction='. $target->data->secretFaction .'">'. $secretFactionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $secretFactionJson->raFont .'"></span> (<i>'.$secretFactionJson->role[$target->data->secretFactionRole]->name.'</i>) </div>';
+            }
+            
             echo '<img src="'. $target->data->avatar .'" />';
 
 
