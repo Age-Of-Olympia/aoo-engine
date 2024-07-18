@@ -402,17 +402,29 @@ else{
         var i = $wall.attr('x');
         var j = $wall.attr('y');
 
-        var x = <?php echo $x ?>;
-        var y = <?php echo $y ?>;
 
-        $('#destroy-rect')
-            .show()
-            .attr({'x': i, 'y': j})
-            .data('coords', x +','+ y);
+        // only on go cases (at distance 1)
+        if($('.go[x="'+ i +'"][y="'+ j +'"]')[0] != null){
 
-        var imgY = j - 20 ;
 
-        $('#destroy-img').show().attr({'x': i, 'y': imgY});
+            var x = <?php echo $x ?>;
+            var y = <?php echo $y ?>;
+
+            $('#destroy-rect')
+                .show()
+                .attr({'x': i, 'y': j})
+                .data('coords', x +','+ y);
+
+            var imgY = j - 20 ;
+
+            $('#destroy-img').show().attr({'x': i, 'y': imgY});
+
+
+            $('#destroy-rect').click(function(e){
+
+                alert($wall.attr('id'));
+            });
+        }
         </script>
         <?php
 

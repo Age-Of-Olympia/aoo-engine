@@ -42,7 +42,7 @@ if(!empty($_SESSION['playerId'])){
 
         echo $data;
 
-        echo '<sup>La vue a été rafraîchie!</sup>';
+        echo '<!--sup>La vue a été rafraîchie!</sup-->';
     }
 
     else{
