@@ -683,6 +683,12 @@ class Player{
     public function put_bonus($bonus) : bool{
 
 
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
         if(!count($bonus)){
 
             return false;
@@ -695,6 +701,10 @@ class Player{
         }
 
         $values = array();
+
+
+        $db = new Db();
+
 
         foreach($bonus as $carac=>$val){
 
@@ -713,7 +723,11 @@ class Player{
 
                 if($val < 0){
 
+
                     $this->put_malus(MALUS_PER_DAMAGES);
+
+                    // add blood on floor
+                    Element::put('sang', $this->data->coords_id);
                 }
 
                 elseif($val > 0){
@@ -748,8 +762,6 @@ class Player{
         ON DUPLICATE KEY UPDATE
         n = n + VALUES(n);
         ';
-
-        $db = new Db();
 
         $db->exe($sql);
 

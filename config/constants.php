@@ -51,6 +51,24 @@ define('CARACS_RECOVER', array(
 
 
 /*
+ * time
+ */
+
+// ONE YEAR
+define('ONE_YEAR', 31536000);
+// ONE WEEK
+define('ONE_WEEK', 604800);
+// THREE DAYS
+define('THREE_DAYS', 259200);
+// ONE DAY
+define('ONE_DAY', 86400);
+// ONE HOUR
+define('ONE_HOUR', 3600);
+// INACTIVE TIME
+define('INACTIVE_TIME', ONE_WEEK);
+
+
+/*
  * effects, elements
  */
 
@@ -106,22 +124,6 @@ define('ELE_PROD', array(
     'ronce'=>'feu',
     'boue'=>'diamant'
 ));
-
-
-/*
- * time
- */
-
-// ONE YEAR
-define('ONE_YEAR', 31536000);
-// ONE WEEK
-define('ONE_WEEK', 604800);
-// ONE DAY
-define('ONE_DAY', 86400);
-// ONE HOUR
-define('ONE_HOUR', 3600);
-// INACTIVE TIME
-define('INACTIVE_TIME', ONE_WEEK);
 
 
 /*
