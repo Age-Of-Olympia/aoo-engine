@@ -760,6 +760,11 @@ img {
             margin: 0;
         }
 
+        #ui-card .card-text a{
+
+            color: cyan;
+        }
+
     #ui-card .action-text{
 
         color: white;

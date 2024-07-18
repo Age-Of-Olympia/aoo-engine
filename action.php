@@ -110,6 +110,9 @@ if(!empty($actionJson->forbidIf)){
 }
 
 
+include('scripts/actions/check_max_spells.php');
+
+
 /*
  * action details
  */
