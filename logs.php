@@ -27,7 +27,7 @@ $player->get_coords();
 echo '<p>Voici les évènements qui se sont déroulés<br />sur ce Territoire ces 24 dernières heures.</p>';
 
 echo '
-<table class="box-shadow marbre" border="1" align="center">';
+<table class="box-shadow marbre" border="1" align="center" style="width: 100%;">';
 
     echo '
     <tr>

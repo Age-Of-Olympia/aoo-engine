@@ -162,6 +162,12 @@ class Forum{
             foreach($forumJson->factions as $faction){
 
 
+                if(!isset($lastPosts->$faction)){
+
+                    $lastPosts->$faction = (object) array();
+                }
+
+
                 $lastPosts->$faction->text = $topName;
                 $lastPosts->$faction->time = time();
             }
@@ -205,6 +211,12 @@ class Forum{
 
 
     public static function check_access($player, $forumJson){
+
+
+        if(!isset($player->data)){
+
+            $player->get_data();
+        }
 
 
         if(!empty($forumJson->factions)){
