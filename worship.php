@@ -12,11 +12,11 @@ if(!isset($_POST['targetId']) || !is_numeric($_POST['targetId'])){
 $db = new Db();
 
 
-$sql = 'SELECT * FROM altars WHERE wall_id = ?';
+$sql = 'SELECT * FROM map_triggers WHERE id = ?';
 
 $res = $db->exe($sql, $_POST['targetId']);
 
-if(!$res->num_rows){
+if(!$res->num_rows){echo $_POST['targetId'];
 
     exit('error wall');
 }
@@ -24,12 +24,12 @@ if(!$res->num_rows){
 
 $row = $res->fetch_object();
 
-$god = new Player($row->player_id);
+$god = new Player($row->params);
 
 $god->get_data();
 
 
-$coords = View::get_coords('walls', $row->wall_id);
+$coords = View::get_coords('triggers', $row->id);
 
 
 $player = new Player($_SESSION['playerId']);

@@ -525,6 +525,36 @@ class View{
                 />
             ';
 
+            // destroy button
+            echo '
+            <rect
+                data-coords=""
+                id="destroy-rect"
+
+                x="50"
+                y="50"
+
+                width="50"
+                height="50"
+
+                fill="red"
+                style="opacity: 0.3; display: none;"
+                />
+            ';
+
+            echo '
+            <image
+                id="destroy-img"
+
+                x="50"
+                y="30"
+
+                style="opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg);"
+                class="blink"
+                href="img/ui/view/arrow.png"
+                />
+            ';
+
             echo '
         </svg>
         </div>

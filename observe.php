@@ -310,7 +310,12 @@ else{
     if($res->num_rows){
 
 
+        // structures
+
         while($row = $res->fetch_object()){
+
+
+            $wallId = $row->id;
 
 
             echo '
@@ -331,6 +336,9 @@ else{
                     }
 
                     echo '<br />';
+
+
+                    // altar
 
                     $sql = 'SELECT * FROM map_triggers WHERE name = "altar" AND coords_id= ?';
 
@@ -357,7 +365,7 @@ else{
                                 class="action"
                                 data-url="worship.php"
                                 data-action="worship"
-                                data-target-id="'. $row->wall_id .'"
+                                data-target-id="'. $row->id .'"
                             ><span class="ra ra-candle"></span> Vénérer
                             </button>';
 
@@ -376,7 +384,6 @@ else{
                         );
 
                         $card = Ui::get_card($data);
-
                     }
 
                     echo '
@@ -384,6 +391,30 @@ else{
             </div>
             ';
         }
+
+
+        // show destroy button
+        ?>
+        <script>
+
+        var $wall = $('#walls<?php echo $wallId ?>');
+
+        var i = $wall.attr('x');
+        var j = $wall.attr('y');
+
+        var x = <?php echo $x ?>;
+        var y = <?php echo $y ?>;
+
+        $('#destroy-rect')
+            .show()
+            .attr({'x': i, 'y': j})
+            .data('coords', x +','+ y);
+
+        var imgY = j - 20 ;
+
+        $('#destroy-img').show().attr({'x': i, 'y': imgY});
+        </script>
+        <?php
 
     }
     else{

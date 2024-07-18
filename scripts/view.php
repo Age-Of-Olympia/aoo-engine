@@ -64,6 +64,13 @@ if(!empty($_SESSION['playerId'])){
         $('.case').click(function(e){
 
 
+            $('#destroy-rect').hide();
+            $('#destroy-img').hide();
+
+            $('#go-rect').hide();
+            $('#go-img').hide();
+
+
             var coords = $(this).data('coords');
 
             var i = $(this).attr('x');
@@ -72,7 +79,7 @@ if(!empty($_SESSION['playerId'])){
 
             var $case = $('[x="'+ i +'"][y="'+ j +'"]');
 
-            if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="items"], [data-table="elements"]')[0]){
+            if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="items"], [data-table="elements"], #go-img, #go-rect, #destroy-img, #destroy-rec')[0]){
 
 
                 if($('.clicked-cases-reseter[data-coords="'+ coords +'"]')[0] != null){
