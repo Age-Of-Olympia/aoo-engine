@@ -285,6 +285,7 @@ else{
     $sql = '
     SELECT
     p.id AS id,
+    coords_id,
     name,
     damages
     FROM
@@ -331,43 +332,46 @@ else{
 
                     echo '<br />';
 
-                    $sql = 'SELECT * FROM altars WHERE wall_id = ?';
+                    $sql = 'SELECT * FROM map_triggers WHERE name = "altar" AND coords_id= ?';
 
-                    $res = $db->exe($sql, $row->id);
+                    $res = $db->exe($sql, $row->coords_id);
 
                     if($res->num_rows){
 
                         $row = $res->fetch_object();
 
-                        $god = new Player($row->player_id);
+                        $god = new Player($row->params);
 
-                        echo 'Altar du Dieu '. $god->row->name .'.';
-
-                        // card
                         $god->get_data();
 
+                        echo 'Altar du Dieu '. $god->data->name .'.';
+
                         $actions = '';
+
+                        $dataText = "Vous vénérez déjà ce Dieu.";
 
                         if($god->id != $player->data->godId){
 
                             $actions = '
                             <button
                                 class="action"
-                                data-url="venerate.php"
-                                data-action="venerate"
+                                data-url="worship.php"
+                                data-action="worship"
                                 data-target-id="'. $row->wall_id .'"
                             ><span class="ra ra-candle"></span> Vénérer
                             </button>';
+
+                            $dataText = "Vénérez ce Dieu pour pouvoir lui adresser vos prières.";
                         }
 
-
-                        $dataText = "Description de l'Altar.";
+                        $dataName = '<a href="infos.php?targetId='. $god->id .'">Altar du Dieu '. $god->data->name .'</a>';
 
                         $data = (object) array(
                             'bg'=>$god->data->portrait,
-                            'name'=>'Altar du Dieu '. $god->row->name,
+                            'name'=>$dataName,
                             'img'=>$actions,
                             'type'=>'Altar',
+                            'race'=>'dieu',
                             'text'=>$dataText
                         );
 

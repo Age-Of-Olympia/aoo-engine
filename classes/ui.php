@@ -131,7 +131,10 @@ class ui{
                 echo '<div class="card-type">'. $data->type .'</div>';
 
 
-                echo '<div class="card-faction">'. $data->faction .'</div>';
+                if(!empty($data->faction)){
+
+                    echo '<div class="card-faction">'. $data->faction .'</div>';
+                }
 
 
                 echo '<div class="card-text">'. $data->text .'</div>';
