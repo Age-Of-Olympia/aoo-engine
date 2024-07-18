@@ -9,12 +9,12 @@ if(!$forumJson){
     exit('error forum');
 }
 
-
 if(!empty($_POST['text']) && !empty($_POST['name'])){
 
 
     $player = new Player($_SESSION['playerId']);
 
+    $player->get_data();
 
     Forum::check_access($player, $forumJson);
 
@@ -66,7 +66,7 @@ echo '<h1>'. $forumJson->name .'</h1>';
 if(!empty($forumJson->factions)){
 
 
-    if(!in_array($player->data->faction, $forumJson->factions)){
+    if(!in_array($player->data->faction, $forumJson->factions) && !in_array($player->data->secretFaction, $forumJson->factions)){
 
         exit('Accès refusé');
     }

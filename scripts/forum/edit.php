@@ -20,6 +20,7 @@ if(!empty($_POST['text'])){
 
     $player = new Player($_SESSION['playerId']);
 
+    $player->get_data();
 
     Forum::check_access($player, $forumJson);
 

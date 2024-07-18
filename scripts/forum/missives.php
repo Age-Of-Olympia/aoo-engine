@@ -7,7 +7,25 @@ if (!in_array($player->id, $destTbl)) {
 }
 
 if (!empty($_POST['addDest'])) {
-    Forum::add_dest($_POST['addDest'], $topJson, $destTbl);
+    if (strpos($_POST['addDest'], 'all_faction_') === 0) {
+        $faction = substr($_POST['addDest'], strlen('all_faction_'));
+        if ($player->data->faction == $faction || $player->data->secretFaction == $faction){
+            $sql = 'SELECT id FROM players where ( faction = ? or secretFaction = ?) ORDER BY name';
+
+            $db = new Db();
+
+            $timeLimit =time() - INACTIVE_TIME;
+
+            $res = $db->exe($sql, array($faction, $faction));
+
+            while($row = $res->fetch_object()){
+                Forum::add_dest($row->id,  $topJson, $destTbl)  ;
+            }
+        }
+    }else{
+      Forum::add_dest($_POST['addDest'], $topJson, $destTbl)  ;
+    }
+
     exit();
 }
 
@@ -68,30 +86,42 @@ echo '
 
 
     $secretFaction = array();
+    $faction = array();
 
 
     foreach ($playersJson as $e) {
 
+        if($e->secretFaction == $player->data->secretFaction){
 
-        if($e->faction != $player->data->faction){
+            $secretFaction[] = $e;
 
+        }elseif($e->faction == $player->data->faction){
 
-            if($e->secretFaction == $player->data->secretFaction){
+            $faction[] = $e;
 
-                $secretFaction[] = $e;
-            }
+        }else{
+            $raceJson = json()->decode('races', $e->race);
 
-            continue;
+            echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
         }
+    }
+
+    $factionJson = json()->decode('factions', $player->data->faction);
+
+    echo '<option value="all_faction_'.$player->data->faction.'">'. $factionJson->name .' (tous les membres)</option>';
+
+    foreach($faction as $e){
 
 
-        echo '<option value="' . $e->id . '">- ' . $e->name . ' (mat.' . $e->id . ')</option>';
+        $raceJson = json()->decode('races', $e->race);
+
+        echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
     }
 
 
     $secretJson = json()->decode('factions', $player->data->secretFaction);
 
-    echo '<option disabled>'. $secretJson->name .':</option>';
+    echo '<option value="all_faction_'.$player->data->secretFaction.'">'. $secretJson->name .' (tous les membres)</option>';
 
     foreach($secretFaction as $e){
 
@@ -150,7 +180,8 @@ $(document).ready(function() {
             url: 'forum.php?topic=<?php echo $topJson->name ?>',
             data: {'addDest': dest},
             success: function(data) {
-                document.location.reload();
+              //debugger;
+              document.location.reload();
             }
         });
     });

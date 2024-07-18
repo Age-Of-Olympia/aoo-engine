@@ -18,6 +18,7 @@ if(!empty($_POST['text'])){
 
     $player = new Player($_SESSION['playerId']);
 
+    $player->get_data();
 
     Forum::check_access($player, $forumJson);
 
@@ -64,6 +65,7 @@ include('scripts/menu.php');
 
 echo '<h1>'. $topJson->title .'</h1>';
 
+$player->get_data();
 
 Forum::check_access($player, $topJson);
 

@@ -218,11 +218,9 @@ class Forum{
             $player->get_data();
         }
 
-
         if(!empty($forumJson->factions)){
 
-
-            if(!in_array($player->data->faction, $forumJson->factions)){
+            if(!in_array($player->data->faction, $forumJson->factions) && !in_array($player->data->secretFaction, $forumJson->factions)){
 
                 exit('Accès refusé');
             }
@@ -451,7 +449,7 @@ class Forum{
 
         if(in_array($dest->id, $destTbl)){
 
-            exit('error already in dest');
+            return 'error already in dest';
         }
 
 
@@ -471,7 +469,7 @@ class Forum{
 
             if(!$player->have_option('isAdmin')){
 
-                exit('error dest forbidden');
+                return 'error dest forbidden';
             }
         }
 
