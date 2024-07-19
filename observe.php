@@ -422,7 +422,18 @@ else{
 
             $('#destroy-rect').click(function(e){
 
-                alert($wall.attr('id'));
+                var wallId = $wall.attr('id');
+
+                $.ajax({
+                    type: "POST",
+                    url: 'destroy.php',
+                    data: {'wallId':wallId}, // serializes the form's elements.
+                    success: function(data)
+                    {
+                        alert(data);
+                        document.location.reload();
+                    }
+                });
             });
         }
         </script>

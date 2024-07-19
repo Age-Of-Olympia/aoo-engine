@@ -135,11 +135,14 @@ define('ELE_PROD', array(
 // PV: if not defined, undestructible
 define('WALLS_PV', array(
     'mur_pierre'=>100,
-    'altar'=>100,
+    'mur_pierre_broken'=>100,
 
-    'cocotier1'=>10,
-    'cocotier2'=>10,
-    'cocotier3'=>10
+    'altar'=>50,
+    'altar_broken'=>50,
+
+    'cocotier1'=>1,
+    'cocotier2'=>1,
+    'cocotier3'=>1
 ));
 
 

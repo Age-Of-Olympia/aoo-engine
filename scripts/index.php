@@ -19,41 +19,44 @@ echo '
 
 
     echo '
-    <form id="login" method="post" action="login.php">
-    <table
-        id="index-login"
-        style="display: none;" border="0"
-        align="center"
-        cellspacing="0"
-    >
-    <tr>
-    <td>
-    Matricule ou pseudo:
-    </td>
-    </tr>
-    <tr>
-    <td>
-    <input name="name" type="text" style="text-align: center;" />
-    </td>
-    </tr>
-    <tr>
-    <td>
-    Mot de Passe:
-    </td>
-    </tr>
-    <tr>
-    <td>
-    <input name="psw" type="password" style="text-align: center;" />
-    </td>
-    </tr>
-    <tr>
-    <td>
-    <font style="font-size: 70%"><a href="index.php?resetPsw">Mot de passe perdu?</a></font><br />
-    <button class="submit">Connexion</button>
-    </td>
-    </tr>
-    </table>
-    </form>
+    <div id="index-login">
+        <a href="index.php" action="retour" class="index-button">Retour</a>
+        <form id="login" method="post" action="login.php">
+            <table
+                border="0"
+                align="center"
+                cellspacing="0"
+            >
+            <tr>
+            <td>
+            Matricule ou pseudo:
+            </td>
+            </tr>
+            <tr>
+            <td>
+            <input name="name" type="text" style="text-align: center;" />
+            </td>
+            </tr>
+            <tr>
+            <td>
+            Mot de Passe:
+            </td>
+            </tr>
+            <tr>
+            <td>
+            <input name="psw" type="password" style="text-align: center;" />
+            </td>
+            </tr>
+            <tr>
+            <td>
+            <font style="font-size: 70%"><a href="index.php?resetPsw">Mot de passe perdu?</a></font><br />
+            </td>
+            </tr>
+            </table>
+
+            <a href="index.php" action="submit" class="index-button">Login</a>
+        </form>
+    </div>
     ';
 
     ?>
@@ -61,11 +64,11 @@ echo '
     $(document).ready(function(){
 
 
-        $("#login").submit(function(e) {
+        $('[action="submit"]').click(function(e) {
 
             e.preventDefault(); // avoid to execute the actual submit of the form.
 
-            var $form = $(this);
+            var $form = $('#login');
             var actionUrl = $form.attr('action');
 
             $.ajax({
@@ -171,6 +174,8 @@ $('a[action="login"]').click(function(e){
 
     <?php if(!isset($_SESSION['playerId'])): ?>
     e.preventDefault();
+
+    $('.index-button').not('[action="retour"], [action="submit"]').hide();
 
     $('#index-login').fadeIn();
     <?php endif ?>
