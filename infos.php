@@ -36,7 +36,7 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 echo '
 <table border="1" align="center" cellspacing="0" class="marbre" style="width: 100%;">
 <tr>
-    <td width="210" class="infos-portrait">
+    <td width="210" class="infos-portrait" valign="top">
         ';
 
 

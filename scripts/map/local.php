@@ -49,8 +49,8 @@ echo '
     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
     baseProfile="full"
 
-    width="100"
-    height="100"
+    width="110"
+    height="110"
 
     style="background: url(img/ui/map/'. $player->coords->plan .'.png) center center no-repeat;"
     >
@@ -62,8 +62,8 @@ echo '
         $raceJson = json()->decode('races', $row->race);
 
 
-        $x = ($row->x + 10) * 5;
-        $y = (-$row->y + 10) * 5;
+        $x = ($row->x + 11) * 5;
+        $y = (-$row->y + 11) * 5;
 
         $color = ($row->id == $player->id) ? 'magenta' : $raceJson->bgColor;
 
@@ -86,62 +86,87 @@ echo '
 ';
 
 
+$sql = '
+SELECT
+    faction,
+    SUM(xp) AS xp
+FROM
+    players AS p
+INNER JOIN
+    coords AS c
+ON
+    c.id = p.coords_id
+WHERE
+    c.plan = ?
+GROUP BY faction
+';
+
+$res = $db->exe($sql, $player->coords->plan);
+
+$data = [];
+while ($row = $res->fetch_object()) {
+    $data[$row->faction] = $row->xp;
+}
+
+
 echo '
 <table border="1" class="marbre" align="center">
-
     <tr>
-        <th colspan="'. count(RACES) .'">
+        <th colspan="'. count($data) .'">
             Forces en présence
         </th>
     </tr>
     <tr>
-        ';
+';
 
-        $sql = '
-        SELECT
-        faction,
-        SUM(xp) AS xp
-        FROM
-        players AS p
-        INNER JOIN
-        coords AS c
-        ON
-        c.id = p.coords_id
-        WHERE
-        c.plan = ?
-        GROUP BY faction
-        ';
 
-        $res = $db->exe($sql, $player->coords->plan);
 
-        while($row = $res->fetch_object()){
+foreach ($data as $k => $e) {
+    $factionJson = json()->decode('factions', $k);
+    echo '<td>' . $factionJson->name . '</td>';
+}
 
-            $data[$row->faction] = $row->xp;
-        }
-
-        foreach($data as $k=>$e){
-
-            $factionJson = json()->decode('factions', $k);
-
-            echo '
-            <td>'. $factionJson->name .'</td>
-            ';
-        }
-
-        echo '
+echo '
     </tr>
     <tr>
-        ';
+';
 
-        foreach($data as $e){
+$xpTotal = array_sum($data);
 
-            echo '<td>'. $e .'Xp</td>';
-        }
+$pcts = [];
+$sumPct = 0;
+$index = 0;
+$lastIndex = count($data) - 1;
 
-        echo '
+foreach ($data as $e) {
+    if ($index == $lastIndex) {
+        // Pour la dernière faction, calculer le pourcentage restant pour que la somme soit 100%
+        $pct = 100 - $sumPct;
+    } else {
+        $pct = ($e / $xpTotal) * 100;
+        $pct = floor($pct); // Utiliser floor pour éviter les erreurs d'arrondi
+        $sumPct += $pct; // Ajouter au total des pourcentages
+    }
+    $pcts[] = $pct;
+    $index++;
+}
+
+$index = 0;
+foreach ($data as $e) {
+    echo '<td>' . $e . 'Xp <sup>' . $pcts[$index] . '%</sup></td>';
+    $index++;
+}
+
+echo '
+    </tr>
+    <tr>
+        <td colspan="'. count($data) .'">
+            Total: '. $xpTotal .'Xp <sup>100%</sup>
+        </td>
     </tr>
 </table>
 ';
+
 
 
 if(!empty($planJson->pnj)){
