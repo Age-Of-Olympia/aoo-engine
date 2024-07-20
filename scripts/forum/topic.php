@@ -59,6 +59,7 @@ if(!isset($_GET['hideMenu'])){
 
 $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
 
+$player->get_data();
 
 Forum::check_access($player, $forumJson);
 
@@ -151,10 +152,17 @@ echo '
                 echo '<div style="font-size: 88%;"><i>'. $raceJson->name .' <a href="infos.php?targetId='. $author->id .'&reputation">'. Str::get_reput($author->data->pr) .'</a> Rang '. $author->data->rank .'</i></div>';
 
 
-                $factionJson = json()->decode('factions', $author->data->faction);
 
-                echo '<div style="font-size: 88%;"><a href="faction.php?faction='. $author->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>Citoyen</i>)</div>';
+                if (isset($forumJson->factions) && in_array($author->data->secretFaction, $forumJson->factions)){
+                  $factionJson = json()->decode('factions', $author->data->secretFaction);
+                  echo '<div style="font-size: 88%;"><a href="faction.php?faction='. $author->data->secretFaction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$author->data->secretFactionRole]->name.'</i>)</div>';
 
+                }else{
+
+                  $factionJson = json()->decode('factions', $author->data->faction);
+                  echo '<div style="font-size: 88%;"><a href="faction.php?faction='. $author->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$author->data->factionRole]->name.'</i>)</div>';
+
+                }
 
                 echo '
                 <div

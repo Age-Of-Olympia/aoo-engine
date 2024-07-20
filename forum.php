@@ -124,7 +124,7 @@ echo '
                 if(!empty($forJson->factions)){
 
 
-                    if(!in_array($player->data->faction, $forJson->factions)){
+                    if(!in_array($player->data->faction, $forJson->factions) && !in_array($player->data->secretFaction, $forJson->factions)){
 
                         continue;
                     }

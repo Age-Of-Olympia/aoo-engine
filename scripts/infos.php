@@ -17,15 +17,25 @@ if(!empty($_SESSION['playerId'])){
     $lastPostJson = json()->decode('forum', 'lastPosts');
 
 
+
+    $lastPostTime = $lastPostJson->general->time;
+    $lastPost = $lastPostJson->general->text;
+
     if(!empty($lastPostJson->{$player->data->faction})){
 
-        $lastPost = ($lastPostJson->general->time > $lastPostJson->{$player->data->faction}->time) ? $lastPostJson->general->text : $lastPostJson->{$player->data->faction}->text;
+        if ($lastPostJson->{$player->data->faction}->time > $lastPostTime) {
+            $lastPostTime = $lastPostJson->{$player->data->faction}->time;
+            $lastPost = $lastPostJson->{$player->data->faction}->text;
+        }
     }
 
-    else{
-
-        $lastPost = $lastPostJson->general->text;
+    if (!empty($player->data->secretFaction) && !empty($lastPostJson->{$player->data->secretFaction})) {
+        if ($lastPostJson->{$player->data->secretFaction}->time > $lastPostTime) {
+            $lastPostTime = $lastPostJson->{$player->data->secretFaction}->time;
+            $lastPost = $lastPostJson->{$player->data->secretFaction}->text;
+        }
     }
+
 
 
     echo '
