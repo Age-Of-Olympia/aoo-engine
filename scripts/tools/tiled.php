@@ -23,6 +23,11 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         exit('tp');
     }
 
+    if($_POST['type'] == 'eraser'){
+        include 'tiled_tool/erase_map.php';
+        exit('erase');
+    }
+
 
     if(!in_array($_POST['type'], array('tiles','walls','triggers','elements','dialogs','plants'))){
 
@@ -79,186 +84,24 @@ echo '
 </div>
 ';
 
-echo '<h3>Tiles (indestructibles, passables)</h3>';
+include 'tiled_tool/display_indestructibles.php';
 
-echo '
-<div>
-';
+include 'tiled_tool/display_plants.php';
 
-foreach(File::scan_dir('img/tiles/', $without=".png") as $e){
+include 'tiled_tool/display_walls.php';
 
+include 'tiled_tool/display_elements.php';
 
-    $url = 'img/tiles/'. $e .'.png';
+include 'tiled_tool/display_triggers.php';
 
-    if(!file_exists($url)){
-
-        continue;
-    }
-
-
-    echo '<img
-        class="map tile select-name"
-        data-type="tiles"
-        data-name="'. $e .'"
-        src="'. $url .'"
-        width="50"
-    />';
-}
-
-echo '
-</div>
-';
-
-
-echo '<h3>Plantes (recoltables, passables)</h3>';
-
-echo '
-<div>
-';
-
-foreach(File::scan_dir('img/plants/', $without=".png") as $e){
-
-    echo '<img
-        class="map plants select-name"
-        data-type="plants"
-        data-name="'. $e .'"
-        src="img/plants/'. $e .'.png"
-    />';
-}
-
-echo '
-</div>
-';
-
-
-echo '<h3>Walls (destructibles, non passables)</h3>';
-
-echo '
-<div>
-';
-
-foreach(File::scan_dir('img/walls/', $without=".png") as $e){
-
-
-    $url = 'img/walls/'. $e .'.png';
-
-    if(!file_exists($url)){
-
-        continue;
-    }
-
-    echo '<img
-        class="map wall select-name"
-        data-type="walls"
-        data-name="'. $e .'"
-        src="'. $url .'"
-    />';
-}
-
-echo '
-</div>
-';
-
-
-echo '<h3>Elements (ajoute un effet, passables)</h3>';
-
-echo '
-<div>
-';
-
-foreach(File::scan_dir('img/elements/') as $e){
-
-    if(explode('.', $e)[1] == 'gif'){
-
-        continue;
-    }
-
-    echo '<img
-        class="map ele"
-        data-type="elements"
-        data-element="'. explode('.', $e)[0] .'"
-        src="img/elements/'. $e .'"
-    />';
-}
-
-echo '
-</div>
-';
-
-
-echo '<h3>Déclencheurs (invisibles)</h3>';
-
-echo '
-<div>
-';
-
-foreach(File::scan_dir('img/triggers/', $without=".png") as $e){
-
-
-    $params = '';
-
-    if($e == 'exit'){
-
-        $params = 'direction:';
-    }
-    elseif($e == 'tp'){
-
-        $params = 'x,y,z,plan';
-    }
-    elseif($e == 'need'){
-
-        $params = 'item:name:n,spell:spell_name';
-    }
-    elseif($e == 'enter'){
-
-        $params = 'direction:';
-    }
-
-
-    echo '<img
-        class="map trigger select-name"
-        data-type="triggers"
-        data-params="'. $params .'"
-        data-name="'. $e .'"
-        src="img/triggers/'. $e .'.png"
-    />';
-}
-
-
-echo '<div>Params: <input type="text" id="triggers-params" /></div>';
-
-
-echo '
-</div>
-';
-
-
-echo '<h3>Outils</h3>';
-
-echo '
-<div>
-';
-
-echo '
-<img
-    class="map dialog select-name"
-    data-type="dialogs"
-    data-params="dialog"
-    data-name="question"
-    src="img/dialogs/question.png"
-    />
-';
-
-echo '<div>Params: <input type="text" id="dialogs-params" /></div>';
-
-echo '
-</div>
-';
+include 'tiled_tool/display_tools.php';
 
 
 ?>
 <script>
 $(document).ready(function(){
+
+    selectPreviousTool();
 
     $('.case').click(function(e){
 
@@ -282,7 +125,7 @@ $(document).ready(function(){
                 success: function(data)
                 {
                     // alert(data);
-                    document.location.reload();
+                  document.location='tools.php?tiled';
                 }
             });
 
@@ -321,23 +164,49 @@ $(document).ready(function(){
             success: function(data)
             {
                 // alert(data);
-                document.location.reload();
+                document.location='tools.php?tiled&selectedTool='+$selected.data('name');
             }
         });
     });
 
     $('.map').click(function(e){
-
-        if($(this).data('params')){
+        if (!$(this).hasClass('selected')) {
+          if ($(this).data('params')) {
 
             let params = $(this).data('params');
 
-            $('#'+ $(this).data('type') +'-params').val(params);
-        }
+            $('#' + $(this).data('type') + '-params').val(params);
+          }
 
-        $('.map').removeClass('selected').css('border', '0px');
-        $(this).addClass('selected').css('border', '1px solid red');
+          $('.map').removeClass('selected').css('border', '0px');
+          $(this).addClass('selected').css('border', '1px solid red');
+        } else{
+          $(this).removeClass('selected').css('border', '0px');
+        }
     });
+
+
+  function selectPreviousTool(){
+    let selectedTool = getParameterByName('selectedTool');
+
+    if (selectedTool) {
+      $('.map').filter(function() {
+
+        return $(this).data('name') === selectedTool;
+      }).each(function() {
+        $(this).addClass('selected').css('border', '1px solid red');
+      });
+    }
+
+  }
+  function getParameterByName(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+  }
 
 });
 </script>
