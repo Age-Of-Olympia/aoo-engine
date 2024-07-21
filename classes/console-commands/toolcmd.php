@@ -25,6 +25,13 @@ EOT);
             foreach($filesTbl as $k=>$e){
 
 
+                if($e == 'tiled_'){
+
+                    unset($filesTbl[$k]);
+                    continue;
+                }
+
+
                 $filesTbl[$k] = '<a href="tools.php?'. $e .'">'. $e .'</a>';
             }
 

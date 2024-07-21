@@ -70,7 +70,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 $ui = new Ui($title="Tiled");
 
 
-$view = new View($player->coords, $p=8, $tiled=true);
+$view = new View($player->coords, $p=10, $tiled=true);
 
 $data = $view->get_view();
 

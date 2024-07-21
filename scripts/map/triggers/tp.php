@@ -15,3 +15,4 @@ $goCoords = $coords;
 $coordsId = View::get_free_coords_id_arround($goCoords);
 
 
+View::refresh_players_svg($player->coords);
