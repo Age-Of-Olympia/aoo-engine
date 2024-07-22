@@ -70,6 +70,19 @@ echo '
 
             var $form = $('#login');
             var actionUrl = $form.attr('action');
+            var footprint = {
+              screenResolution: screen.width + 'x' + screen.height,
+              userAgent: navigator.userAgent,
+              platform: navigator.platform,
+              cookiesEnabled: navigator.cookieEnabled,
+              language: navigator.language,
+              javaEnabled: navigator.javaEnabled()
+            };
+            $('<input>').attr({
+              type: 'hidden',
+              name: 'footprint',
+              value:  JSON.stringify(footprint)
+            }).appendTo($form);
 
             $.ajax({
                 type: "POST",

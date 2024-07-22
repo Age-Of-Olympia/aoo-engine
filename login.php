@@ -94,17 +94,14 @@ $_SESSION['mainPlayerId'] = $row['id'];
 
 $_SESSION['playerId'] = $row['id'];
 
-$_SESSION['ip'] = $ip;
+$values = array(
+    'player_id'=> $row['id'],
+    'ip'=>md5($ip),
+    'footprint'=>md5( $_POST['footprint']),
+    'time'=>time()
+);
 
+$db = new Db();
 
-$sql = '
-UPDATE
-players
-SET ip = ?
-WHERE
-id = ?
-';
+$db->insert('players_connections', $values);
 
-$md5 = md5($_SESSION['ip']);
-
-$db->exe($sql, $values=array($md5, $row['id']));
