@@ -68,7 +68,7 @@ define('OPTIONS', array(
     'dlag'=>"DLA glissante<br /><sup>Décale l'heure du prochain tour</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
-    'hideTuto'=>"Cacher le Tutoriel<br /><sup>Décochez si vous souhaitez le relire</sup>",
+    'showTuto'=>"Rejouer le tutoriel",
 ));
 
 
@@ -188,10 +188,10 @@ foreach(OPTIONS as $k=>$e){
                 <a href="account.php?story"><button>Changer</button></a>
                 ';
             }
-            elseif($k == 'manageUploads'){
+            elseif($k == 'showTuto'){
 
                 echo '
-                <a href="account.php?uploads"><button style="width: 100%; height: 4em;">Gérer</button></a>
+                <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
                 ';
             }
             else{

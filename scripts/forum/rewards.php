@@ -5,13 +5,27 @@ if(!empty($_POST['post'])){
 
     $postJson = json()->decode('forum', 'posts/'. $_POST['post']);
 
+    $topJson = json()->decode('forum', 'topics/'. $postJson->top_id);
+
+    if($topJson->forum_id == 'Missives'){
+
+
+        ?>
+        <div id="data">
+        <script>alert('Vous ne pouvez pas récompenser une Missive.');</script>
+        </div>
+        <?php
+
+        exit();
+    }
+
 
     if($postJson->author == $_SESSION['playerId']){
 
 
         ?>
         <div id="data">
-        <script>alert('Vous ne pouvez pas récompenser un de vos post.');</script>
+        <script>alert('Vous ne pouvez pas récompenser vos propres posts.');</script>
         </div>
         <?php
 

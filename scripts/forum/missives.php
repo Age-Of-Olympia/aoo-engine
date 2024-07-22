@@ -162,6 +162,9 @@ if(count($destTbl) == 1){
 $(document).ready(function() {
 
 
+    $('.post-rewards').addClass('desaturate');
+
+
     $('#add-dest').click(function(e) {
 
 

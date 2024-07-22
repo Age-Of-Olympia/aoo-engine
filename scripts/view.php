@@ -3,6 +3,24 @@
 if(!empty($_SESSION['playerId'])){
 
 
+    if(isset($_GET['tutorial'])){
+
+
+        include('scripts/tutorial.php');
+    }
+
+
+    $msgUrl = 'datas/private/players/'. $_SESSION['playerId'] .'.msg.html';
+
+
+    if(file_exists($msgUrl)){
+
+        $data = file_get_contents($msgUrl);
+
+        echo '<div id="view-landing-wrapper"><div id="view-landing-msg">'. $data .'<div id="seal"></div></div></div>';
+    }
+
+
     $svgUrl = 'datas/private/players/'. $_SESSION['playerId'] .'.svg';
 
 

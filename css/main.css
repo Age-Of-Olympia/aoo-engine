@@ -414,6 +414,40 @@ img {
  * view
  */
 
+#view-landing-wrapper{
+
+    position: absolute;
+    top: 100px;
+    width: 500px;
+}
+
+#view-landing-msg{
+
+    font-family: goudy;
+    font-size: 130%;
+    margin-top: 25px;
+    padding-top: 100px;
+    padding-left: 100px;
+    padding-right: 100px;
+    width: 300px;
+    height: 541px;
+    text-align: left;
+    background: url('../img/ui/bg/perchment.gif');
+}
+    #view-landing-msg h1{
+
+        margin: 0px;
+    }
+
+    #view-landing-msg #seal{
+
+        float: right;
+        width: 100px;
+        height: 100px;
+        margin-top: 25px;
+        background: url('../img/ui/bg/admins.png');
+    }
+
 #view{
 
     width: 100%;

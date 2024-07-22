@@ -140,7 +140,7 @@ echo '
                 ';
 
                 echo '
-                <td class="forum" data-forum="'. $forJson->name .'"²><img src="img/ui/forum/'. $img .'.png" width="50" /></td>
+                <td class="forum" data-forum="'. $forJson->name .'"²><img src="img/ui/forum/'. $img .'.png" width="50" height="50" /></td>
                 ';
 
                 echo '

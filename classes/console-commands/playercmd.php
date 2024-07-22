@@ -33,8 +33,12 @@ EOT);
 
         $player->get_data();
 
-        if($action == 'edit'){
-            return edit_player($argumentValues, $player);
+        if($action == 'create'){
+            return create_player($argumentValues);
+        }
+
+        if($action == 'msg'){
+            return msg_player($argumentValues, $player);
         }
 
         if($action == 'purge'){
@@ -158,6 +162,18 @@ function edit_player($argumentValues, $player){
 
 
     return 'player '. $player->data->name .': field "'. $field .'" changed to value "'. $value .'"';
+}
+
+function msg_player($argumentValues, $player){
+
+
+    $data = $argumentValues[2];
+
+    $path = 'datas/private/players/'. $player->id .'.msg.html';
+
+    File::write($path, $data);
+
+    return $player->data->name .' new landing msg:<br />'. htmlentities($data);
 }
 
 function purge_player($argumentValues, $player){
