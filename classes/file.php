@@ -197,4 +197,48 @@ class File{
 
         return $max;
     }
+
+
+    public static function changeOpacityAndShift($path, $opacity, $shiftX) {
+
+        // Charger l'image
+        $img = imagecreatefrompng($path);
+        if (!$img) {
+            die("Impossible de charger l'image : $path");
+        }
+
+        // Créer une image temporaire avec la même taille
+        $width = imagesx($img);
+        $height = imagesy($img);
+        $tmpImg = imagecreatetruecolor($width, $height);
+
+        // Activer la transparence alphabétique
+        imagealphablending($tmpImg, false);
+        imagesavealpha($tmpImg, true);
+
+        // Remplir l'image temporaire avec un fond transparent
+        $transparent = imagecolorallocatealpha($tmpImg, 0, 0, 0, 127);
+        imagefill($tmpImg, 0, 0, $transparent);
+
+        // Appliquer l'opacité et le décalage
+        for ($x = 0; $x < $width; $x++) {
+            for ($y = 0; $y < $height; $y++) {
+                $newX = $x - $shiftX; // Calculer la nouvelle position x avec décalage
+                if ($newX >= 0 && $newX < $width) {
+                    $color = imagecolorat($img, $newX, $y);
+                    $alpha = ($color >> 24) & 0x7F; // Extraire le canal alpha (transparence)
+                    $alpha = 127 - ((127 - $alpha) * $opacity); // Appliquer l'opacité
+                    $color = ($color & 0xFFFFFF) | ($alpha << 24); // Recomposer la couleur avec le nouveau canal alpha
+                    imagesetpixel($tmpImg, $x, $y, $color);
+                }
+            }
+        }
+
+        // Enregistrer l'image résultante
+        imagepng($tmpImg, $path);
+
+        // Libérer la mémoire
+        imagedestroy($img);
+        imagedestroy($tmpImg);
+    }
 }

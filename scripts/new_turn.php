@@ -22,6 +22,21 @@ if(!empty($_SESSION['playerId'])){
             echo '<h1><font color="red">Nouveau Tour</font></h1>';
 
 
+            // end effects
+            foreach(EFFECTS_HIDDEN as $e){
+
+                $player->end_effect($e);
+            }
+
+
+            // special doubles
+            $url = 'img/foregrounds/doubles/'. $player->id .'.png';
+            if(file_exists($url)){
+
+                View::delete_double($player);
+            }
+
+
             echo '
             <table border="1" align="center" class="marbre">
                 ';

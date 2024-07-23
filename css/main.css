@@ -1172,7 +1172,7 @@ img {
 }
 
 /* sorts d'esquive */
-.ra-sword{
+.ra-sword, .ra-player-dodge, .ra-bear-trap, .ra-double-team, .ra-lava{
 
     color: silver;
     text-shadow: 1px 1px black;

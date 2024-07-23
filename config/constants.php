@@ -88,6 +88,10 @@ define('EFFECTS_RA_FONT', array(
     'poison_magique'=>'ra-bone-bite',
 
     'parade'=>'ra-sword',
+    'pas_de_cote'=>'ra-player-dodge',
+    'cle_de_bras'=>'ra-bear-trap',
+    'leurre'=>'ra-lava',
+    'dedoublement'=>'ra-double-team',
 
     'vol'=>'ra-feather-wing',
 
@@ -95,8 +99,12 @@ define('EFFECTS_RA_FONT', array(
 ));
 
 
-define('EFFECTS_HIDDEN', array(
-    'parade'
+define('EFFECTS_HIDDEN', array( // these effects will be ended at a new turn or when used
+    'parade',
+    'leurre',
+    'dedoublement',
+    'cle_de_bras',
+    'pas_de_cote'
 ));
 
 

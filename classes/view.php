@@ -375,7 +375,11 @@ class View{
                         }
                     }
 
-                    $classTransparent[$x .','. $y] = 'transparent-gradient';
+
+                    if($row->name != 'sang'){
+
+                        $classTransparent[$x .','. $y] = 'transparent-gradient';
+                    }
                 }
 
                 else{
@@ -1037,5 +1041,47 @@ class View{
                 unlink($file); // Delete the file
             }
         }
+    }
+
+
+    public static function delete_double($player){
+
+
+        $url = 'img/foregrounds/doubles/'. $player->id .'.png';
+
+        $sql = '
+        DELETE p
+        FROM
+        map_foregrounds AS m
+        INNER JOIN
+        players_followers AS p
+        ON
+        m.id = p.foreground_id
+        WHERE
+        p.player_id = ?
+        AND
+        m.name = ?
+        ';
+
+        $name = $name='doubles/'. $player->id;
+
+        $db = new Db();
+
+        $db->exe($sql, array($player->id, $name));
+
+        $values = array(
+            'name'=>'doubles/'. $player->id
+        );
+
+        $db->delete('map_foregrounds', $values);
+
+        @unlink($url);
+
+        if(!isset($player->coords)){
+
+            $player->get_coords();
+        }
+
+        self::refresh_players_svg($player->coords);
     }
 }

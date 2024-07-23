@@ -362,14 +362,22 @@ if(!empty($success) && $success == true){
         $critTxt = (!empty($critMultiplier)) ? ' (x '. $critMultiplier .')' : '';
 
 
-        echo '
-        Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
-
-        <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>';
+        include('scripts/actions/esquive.php');
 
 
-        // put negative bonus (damages)
-        $target->put_bonus(array('pv'=>-$totalDamages));
+        if($totalDamages){
+
+
+            echo '
+            Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
+
+            <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>
+            ';
+
+
+            // put negative bonus (damages)
+            $target->put_bonus(array('pv'=>-$totalDamages));
+        }
     }
 
 
