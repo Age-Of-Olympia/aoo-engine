@@ -24,7 +24,7 @@ if(!empty($_GET['triggerId'])){
     if($distance <= 1){
 
 
-        $dir = explode(':', $row->params)[1];
+        $dir = $row->params;
 
         foreach($planJson->exits->$dir as $e){
 
@@ -50,6 +50,10 @@ if(!empty($_GET['triggerId'])){
                         exit('error war');
                     }
 
+
+                    View::refresh_players_svg($player->coords);
+
+
                     // enter coords
                     $sql = '
                     SELECT
@@ -74,7 +78,7 @@ if(!empty($_GET['triggerId'])){
                     $res = $db->exe($sql, array(
                         $e,
                         $player->coords->z,
-                        $params="direction:$fromDir"
+                        $params=$fromDir
                     ));
 
 
@@ -101,6 +105,9 @@ if(!empty($_GET['triggerId'])){
                             'plan'=>$e
                         );
                     }
+
+
+                    View::refresh_players_svg($coords);
 
 
                     // travel price

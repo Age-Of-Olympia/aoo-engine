@@ -109,6 +109,12 @@ if(!empty($_POST['race'])){
         Player::refresh_list();
 
 
+        // landing welcome msg
+        $data = file_get_contents('datas/private/players/welcome.msg.html');
+
+        File::write('datas/private/players/'. $player->id .'.msg.html', $data);
+
+
         echo 'Personnage '. $player->data->name .' (matricule '. $player->id .') créé avec succès!<br />';
 
         echo 'Vous pouvez désormais <a href="index.php?login='. $player->id .'">vous connecter</a> en utilisant son nom ou son matricule.';

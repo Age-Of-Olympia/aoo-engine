@@ -18,8 +18,10 @@ echo '
     echo '<a href="index.php" action="login" class="index-button">Jouer</a>';
 
 
+    $raceBg = RACES[0];
+
     echo '
-    <div id="index-login">
+    <div id="index-login" class="box-shadow">
         <a href="index.php" action="retour" class="index-button">Retour</a>
         <form id="login" method="post" action="login.php">
             <table
@@ -161,6 +163,7 @@ echo '<div class="preload"><img src="img/ui/bg/button3.png" /></div>';
     if(!empty($_GET['login']) && is_numeric($_GET['login'])):
     ?>
 
+    $('.index-button').not('[action="retour"], [action="submit"]').hide();
     $('#index-login').fadeIn();
     $('[type="text"]').val(<?php echo $_GET['login'] ?>);
     $('[type="password"]').focus();
