@@ -120,7 +120,7 @@ elseif($goCoords->z > 0){
 
     if(!$row->n && !$player->have_effect('vol')){
 
-        echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu.");</script>';
+        echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu."); document.location.reload();</script>';
 
         exit();
     }
