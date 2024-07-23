@@ -189,6 +189,49 @@ class Item{
     }
 
 
+    public function is_crafted_with($ingredients){
+
+
+        if(!is_array($ingredients)){
+
+
+            $ingredients = array($ingredients);
+        }
+
+        $craftJson = json()->decode('', 'crafts');
+
+        foreach($craftJson as $occurrence){
+
+
+            foreach($occurrence as $recipe){
+
+
+                if($recipe->name != $this->row->name){
+
+                    continue;
+                }
+
+
+                foreach($recipe->recette as $items){
+
+
+                    if(in_array($items->name, $ingredients)){
+
+                        return true;
+                    }
+
+                    return false;
+                }
+
+
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+
     // STATIC
     public static function put_item($name, $private=0, $options=false) : int{
 

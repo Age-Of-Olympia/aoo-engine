@@ -52,6 +52,10 @@ if(!empty($actionJson->itemConditions)){
 
 
             // search if $item is crafted with $e->value
+            if(!$item->is_crafted_with($e->value)){
+
+                exit('Cette action nécessite un équipement particulier.');
+            }
         }
 
         elseif(!empty($item->data->{$e->condition})){
