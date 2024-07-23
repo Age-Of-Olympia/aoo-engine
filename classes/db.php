@@ -24,7 +24,7 @@ class Db{
         $stmt = $this->db->prepare($sql);
 
         if(!$stmt) {
-            echo $sql;
+            echo $sql . ' - ' . $this->db->error;
             exit('error stmt: check $sql');
         }
 
