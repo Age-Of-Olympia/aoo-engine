@@ -54,7 +54,14 @@ echo '
         ){
 
 
-            $sql = 'SELECT name, endTime FROM players_effects WHERE player_id = ?';
+            $sql = '
+            SELECT
+            name, endTime
+            FROM
+            players_effects
+            WHERE
+            player_id = ?
+            ';
 
             $db = new Db();
 
@@ -63,6 +70,12 @@ echo '
             echo '<div class="infos-effects">';
 
                 while($row = $res->fetch_object()){
+
+
+                    if(in_array($row->name, EFFECTS_HIDDEN)){
+
+                        continue;
+                    }
 
 
                     if(

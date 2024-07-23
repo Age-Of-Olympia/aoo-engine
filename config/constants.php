@@ -87,10 +87,18 @@ define('EFFECTS_RA_FONT', array(
     'regeneration'=>'ra-health-increase',
     'poison_magique'=>'ra-bone-bite',
 
+    'parade'=>'ra-sword',
+
     'vol'=>'ra-feather-wing',
 
     'fatigue'=>'ra-player-pain'
 ));
+
+
+define('EFFECTS_HIDDEN', array(
+    'parade'
+));
+
 
 define('ELE_DEBUFFS', array(
     'feu'=>'e',

@@ -1171,6 +1171,13 @@ img {
     text-shadow: 1px 1px #0a0a0a;
 }
 
+/* sorts d'esquive */
+.ra-sword{
+
+    color: silver;
+    text-shadow: 1px 1px black;
+}
+
 /* sorts speciaux */
 .ra-spiked-tentacle, .ra-axe-swing, .ra-lightning-sword, .ra-burning-meteor, .ra-supersonic-arrow{
 

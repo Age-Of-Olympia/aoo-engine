@@ -175,6 +175,12 @@ if($res->num_rows){
 
         foreach($target->get_effects() as $e){
 
+
+            if(in_array($e, EFFECTS_HIDDEN)){
+
+                continue;
+            }
+
             $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$e] .'"></span></a>';
         }
 

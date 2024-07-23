@@ -440,6 +440,7 @@ if(!empty($actionJson->addEffects)){
     foreach($actionJson->addEffects as $e){
 
         $duration = 0;
+        $hidden = 0;
 
         if(
             $e->when == 'always'
@@ -454,14 +455,26 @@ if(!empty($actionJson->addEffects)){
                 $duration = ONE_DAY * 2;
             }
 
+            elseif(!empty($e->duration)){
+
+                $duration = $e->duration;
+            }
+
+
+            if(!empty($e->hidden)){
+
+                $hidden = 1;
+            }
+
+
             if($e->on == 'player'){
 
-                $player->add_effect($e->name, $duration);
+                $player->add_effect($e->name, $duration, $hidden);
             }
 
             elseif($e->on == 'target'){
 
-                $target->add_effect($e->name, $duration);
+                $target->add_effect($e->name, $duration, $hidden);
             }
 
 
