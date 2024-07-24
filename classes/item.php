@@ -232,6 +232,71 @@ class Item{
     }
 
 
+    public function get_version($options){
+
+
+        $options = array_merge((array) $this->row, $options);
+
+
+        $conditions = array(
+            'name = "'. $this->row->name .'"',
+            'private = '. $this->row->private
+        );
+
+        $newOptions = array(
+            'name'=>$this->row->name,
+            'private'=>$this->row->private
+        );
+
+        foreach(ITEMS_OPT as $k=>$e){
+
+
+            $newOptions[$k] = $options[$k];
+            $conditions[$k] = $k .' = "'. $options[$k] .'"';
+
+            if(in_array($k, array('spell','blessed_by_id'))){
+
+
+                if(empty($options[$k])){
+
+                    unset($newOptions[$k]);
+                    unset($conditions[$k]);
+                }
+            }
+        }
+
+        $db = new Db();
+
+        $sql = '
+        SELECT
+        id
+        FROM
+        items
+        WHERE
+        '. implode(' AND ', $conditions) .'
+        ';
+
+        $res = $db->exe($sql);
+
+        if($res->num_rows){
+
+
+            $row = $res->fetch_object();
+
+            $newId = $row->id;
+        }
+        else{
+
+
+            $db->insert('items', $newOptions);
+
+            $newId = $db->get_last_id('items');
+        }
+
+        return $newId;
+    }
+
+
     // STATIC
     public static function put_item($name, $private=0, $options=false) : int{
 
