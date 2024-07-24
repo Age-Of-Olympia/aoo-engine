@@ -52,5 +52,6 @@ if(AUTO_GROW) echo 'AUTO_GROW = true<br />';
 if(FISHING) echo 'AUTO_GROW = true<br />';
 if(ITEM_DROP > 10) echo 'ITEM_DROP = '. ITEM_DROP .'<br />';
 if(DMG_CRIT > 10) echo 'DMG_CRIT = '. DMG_CRIT .'<br />';
+if(AUTO_BREAK) echo 'AUTO_BREAK = true<br />';
 
 echo '</div>';

@@ -497,7 +497,7 @@ img {
     font-size: 1.5em;
 }
 
-.log-kill{
+.log-kill, .log-break{
 
     color: red;
 }
@@ -858,6 +858,8 @@ img {
 .preview-text {
 
     margin-top: 10px;
+    max-height: 90px;
+    overflow-y: scroll;
 }
 
 .preview-action {
@@ -1183,6 +1185,13 @@ img {
 
     color: red;
     text-shadow: 1px 1px yellow;
+}
+
+/* sorts d'enchantement */
+.ra-heavy-shield, .ra-vest, .ra-helmet, .ra-spear-head, .ra-croc-sword, .ra-supersonic-arrow, .ra-pine-tree{
+
+    color: gold;
+    text-shadow: 1px 1px black;
 }
 
 /* forge sacrée */

@@ -167,11 +167,11 @@ define('WALLS_PV', array(
  */
 
 
-define('DMG_CRIT', 10); // 10% de critique (x2 dégâts) sur un ennemi sans casque
-
+define('DMG_CRIT', 5); // 5% de critique (x2 dégâts) sur un ennemi sans casque
 
 define('ITEM_DROP', 10); // 10% de drop sur les désarmements et loots
 
+define('ITEM_BREAK', 1); // 1% de break sur une attaque ou une défense
 
 define('ITEM_LIMIT', 3);
 
@@ -244,3 +244,4 @@ define('ERROR_DISTANCE', "Vous n'êtes pas à bonne distance.");
 define('AUTO_GROW', true); // si true, les plantes poussent dès qu'on les met en terre
 define('FISHING', false); // si true, les players pêchent constemment
 define('CACHED_INVENT', false);
+define('AUTO_BREAK', true); // si true, l'équipement casse (100% de chance)

@@ -377,6 +377,10 @@ if(!empty($success) && $success == true){
 
             // put negative bonus (damages)
             $target->put_bonus(array('pv'=>-$totalDamages));
+
+
+            // weapon break
+            include('scripts/actions/weapon_break.php');
         }
     }
 
@@ -443,104 +447,11 @@ $player->put_bonus($bonus);
 
 
 // add effects
-if(!empty($actionJson->addEffects)){
-
-    foreach($actionJson->addEffects as $e){
-
-        $duration = 0;
-        $hidden = 0;
-
-        if(
-            $e->when == 'always'
-            ||
-            ($e->when == 'win' && (!empty($success) && $success == true))
-            ||
-            ($e->when == 'fail' && (!isset($success) || $success == false))
-        ){
-
-            if($e->name == 'adrenaline' || !empty(ELE_CONTROLS[$e->name])){
-
-                $duration = ONE_DAY * 2;
-            }
-
-            elseif(!empty($e->duration)){
-
-                $duration = $e->duration;
-            }
+include('scripts/actions/add_effects.php');
 
 
-            if(!empty($e->hidden)){
-
-                $hidden = 1;
-            }
-
-
-            if($e->on == 'player'){
-
-                $player->add_effect($e->name, $duration, $hidden);
-            }
-
-            elseif($e->on == 'target'){
-
-                $target->add_effect($e->name, $duration, $hidden);
-            }
-
-
-
-            if(!empty($e->text)){
-
-                echo '<div>'. $e->text .'</div>';
-            }
-        }
-    }
-}
-
-
-if(!empty($actionJson->useEmplacement)){
-
-
-    if(!empty($munition) && $munition){
-
-
-        $munition->get_data();
-
-        $munition->add_item($player, -1);
-
-        echo 'Perdu: '. $munition->data->name .'';
-    }
-
-
-    if($player->$emplacement->data->subtype == 'jet'){
-
-
-        if($distance > 2){
-
-
-            $dropCoords = clone $target->coords;
-
-            $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
-
-            $values = array(
-            'item_id'=>$player->$emplacement->id,
-            'coords_id'=>$coordsId,
-            'n'=>1
-            );
-
-            $db = new Db();
-
-            $db->insert('map_items', $values);
-
-
-            $player->$emplacement->add_item($player, -1);
-
-
-            Player::refresh_views_at_z($dropCoords->z);
-
-
-            include('scripts/actions/on_hide_reload_view.php');
-        }
-    }
-}
+// drop munition or jet
+include('scripts/actions/drop_ammo.php');
 
 
 /*

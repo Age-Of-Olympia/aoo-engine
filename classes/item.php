@@ -198,7 +198,26 @@ class Item{
             $ingredients = array($ingredients);
         }
 
+        $recipe = $this->get_recipe();
+
+        foreach($ingredients as $e){
+
+
+            if(!isset($recipe[$e])){
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function get_recipe() : array{
+
+
         $craftJson = json()->decode('', 'crafts');
+
+        $return = array();
 
         foreach($craftJson as $occurrence){
 
@@ -214,21 +233,14 @@ class Item{
 
                 foreach($recipe->recette as $items){
 
-
-                    if(in_array($items->name, $ingredients)){
-
-                        return true;
-                    }
-
-                    return false;
+                    $return[$items->name] = $items->n;
                 }
 
-
-                return false;
+                break;
             }
         }
 
-        return false;
+        return $return;
     }
 
 
