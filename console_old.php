@@ -249,39 +249,6 @@ if(!empty($_POST['cmd'])){
             exit($player->data->name .' have respec');
         }
 
-
-        if($cmdTbl[2] == 'addPnj'){
-
-
-            if(is_numeric($cmdTbl[3])){
-
-                $target = new Player($cmdTbl[3]);
-            }
-            else{
-
-                $target = Player::get_player_by_name($cmdTbl[3]);
-            }
-
-            $target->get_data();
-
-
-            $values = array(
-                'pnj_id'=>$target->id
-            );
-
-            $db = new Db();
-
-            $db->delete('players_pnjs', $values);
-
-
-            $values['player_id'] = $player->id;
-
-            $db->insert('players_pnjs', $values);
-
-
-            exit($player->data->name .' pnj ajouté: '. $target->data->name .'');
-        }
-
         if($cmdTbl[2] == 'data'){
 
 
