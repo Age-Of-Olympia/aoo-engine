@@ -174,6 +174,21 @@ input[type="text"], input[type="password"], input[type="number"]{
  * tools
  */
 
+.scrolling-bg {
+
+    animation: scrollBackground 60s linear infinite;
+}
+
+@keyframes scrollBackground {
+
+    0% {
+    background-position: 0 0;
+    }
+    100% {
+    background-position: -1024px 0; /* Ajustez cette valeur selon la largeur de votre image */
+    }
+}
+
 .box-shadow{
 
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -359,6 +374,13 @@ img {
     margin-top: 20px;
     margin-bottom: 20px;
 }
+
+    #index-menu .text{
+
+        font-size: 75%;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
 
 
 .index-button{
@@ -606,7 +628,7 @@ img {
     color: white;
 }
 
-#ui-card .card-wrapper, #index-login {
+#ui-card .card-wrapper, #index-menu {
 
     pointer-events: auto;
     padding: 17px;
@@ -617,11 +639,10 @@ img {
     position: relative;
 }
 
-    #index-login{
+    #index-menu{
 
-        margin-left: -17px;
-        width: 250px;
         border: 0px;
+        background: url('../img/ui/bg/white_clouds.jpeg');
     }
 
     #ui-card .geant{
@@ -654,7 +675,7 @@ img {
         background: url('../img/ui/cards/white_fur.jpeg');
     }
 
-    #ui-card .lutin, #index-login{
+    #ui-card .lutin{
 
         background: url('../img/ui/cards/white_clouds.jpeg');
     }
@@ -1099,7 +1120,7 @@ img {
 }
 
  /* feu */
-.ra-small-fire{
+.ra-small-fire, .ra-fire-bomb{
 
     color: gold;
 }

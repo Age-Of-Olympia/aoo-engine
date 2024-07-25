@@ -83,6 +83,7 @@ define('EFFECTS_RA_FONT', array(
     'diamant'=>'ra-sapphire',   // m -1
 
     'sang'=>'ra-gloop',         // fm -1
+    'lave'=>'ra-fire-bomb',         // a -1
 
     'regeneration'=>'ra-health-increase',
     'poison_magique'=>'ra-bone-bite',
@@ -114,7 +115,9 @@ define('ELE_DEBUFFS', array(
     'ronce'=>'agi',
     'boue'=>'f',
     'diamant'=>'fm',
-    'sang'=>'fm'
+
+    'sang'=>'fm',
+    'lave'=>'a',
 ));
 
 define('ELE_CONTROLS', array(

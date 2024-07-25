@@ -10,10 +10,12 @@ if(isset($_GET['resetPsw'])){
 
 
 echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.png" /></a>';
-echo "<div>Aoo, JDR gratuit au tour-par-tour.</div>";
+
 echo '
-<div id="index-menu">
+<div id="index-menu" class="box-shadow scrolling-bg">
     ';
+
+    echo '<div class="text"><b>Aoo,<br />JDR gratuit au tour-par-tour.</b></div>';
 
     echo '<a href="index.php" action="login" class="index-button">Jouer</a>';
 
@@ -21,7 +23,7 @@ echo '
     $raceBg = RACES[0];
 
     echo '
-    <div id="index-login" class="box-shadow">
+    <div id="index-login">
         <a href="index.php" action="retour" class="index-button">Retour</a>
         <form id="login" method="post" action="login.php">
             <table
@@ -123,15 +125,17 @@ echo '
     echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4" class="index-button">Aide Wiki</a>';
 
     echo '
+    <div class="text">
+    '. file_get_contents('datas/public/classements/stats.html') .'
+    </div>
+    ';
+
+    echo '
 </div>
 ';
 
 
-echo '
-<div style="font-size: 88%;">
-   '. file_get_contents('datas/public/classements/stats.html') .'
-</div>
-';
+
 
 
 echo '

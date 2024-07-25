@@ -316,7 +316,7 @@ class Item{
         $db = new Db();
 
         $values = array(
-            'name'=>$name,
+            'name'=>strtolower($name),
             'private'=>$private
         );
 

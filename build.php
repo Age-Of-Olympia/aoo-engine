@@ -52,13 +52,24 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
     $item = new Item($_POST['itemId']);
 
+    $item->get_data();
+
+
     if(!$item->get_n($player)){
 
         exit('error item n');
     }
 
 
-    View::put('walls', $item->row->name, $coords);
+    $table = 'walls';
+
+    if(!empty($item->data->subtype)){
+
+
+        $table = $item->data->subtype;
+    }
+
+    View::put($table, $item->row->name, $coords);
 
 
     $item->add_item($player, -1);
@@ -186,7 +197,7 @@ $(document).ready(function(){
             success: function(data)
             {
 
-                // alert(data);
+                alert(data);
                 document.location.reload();
             }
         });

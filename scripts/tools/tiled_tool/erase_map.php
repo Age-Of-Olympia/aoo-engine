@@ -1,6 +1,6 @@
 <?php
 //delete anything at coords given.
-$mapTypes = array('tiles','walls','triggers','elements','dialogs','plants');
+$mapTypes = array('tiles','walls','triggers','elements','dialogs','plants','foregrounds');
 
 $db = new Db();
 

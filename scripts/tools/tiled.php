@@ -29,7 +29,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
     }
 
 
-    if(!in_array($_POST['type'], array('tiles','walls','triggers','elements','dialogs','plants'))){
+    if(!in_array($_POST['type'], array('tiles','foregrounds','walls','triggers','elements','dialogs','plants'))){
 
         exit('error type');
     }
@@ -74,6 +74,8 @@ $view = new View($player->coords, $p=10, $tiled=true);
 
 $data = $view->get_view();
 
+
+
 echo '
 <div style="float: left;">
 ';
@@ -84,7 +86,11 @@ echo '
 </div>
 ';
 
+echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><button>Retour</button></a></div>';
+
 include 'tiled_tool/display_indestructibles.php';
+
+include 'tiled_tool/display_foregrounds.php';
 
 include 'tiled_tool/display_plants.php';
 
@@ -98,8 +104,25 @@ include 'tiled_tool/display_tools.php';
 
 
 ?>
+<style>
+.custom-cursor {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    pointer-events: none;
+    z-index: 1000;
+}
+</style>
+
 <script>
 $(document).ready(function(){
+
+
+    var $customCursor = $('<img>', {
+        class: 'custom-cursor',
+        src: $('.map').attr('src')
+    }).appendTo('body').hide();
+
 
     selectPreviousTool();
 
@@ -180,8 +203,35 @@ $(document).ready(function(){
 
           $('.map').removeClass('selected').css('border', '0px');
           $(this).addClass('selected').css('border', '1px solid red');
+
+
+          // Position de l'image sur la page
+          var offsetX = e.offsetX - 25; // 25 pour centrer l'image (50/2)
+          var offsetY = e.offsetY - 25; // 25 pour centrer l'image (50/2)
+
+          $customCursor.css({
+              left: e.pageX + offsetX + 'px',
+              top: e.pageY + offsetY + 'px'
+          }).attr('src', $(this).attr('src')).show();
+
+            $('body').on('mousemove', function(e) {
+                $customCursor.css({
+                    left: e.pageX - 25 +'px',
+                    top: e.pageY - 25+'px'
+                });
+            });
+
         } else{
           $(this).removeClass('selected').css('border', '0px');
+        }
+    });
+
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).hasClass('map')) {
+            $customCursor.hide();
+            $('body').off('mousemove');
+            $('.map').removeClass('selected').css('border', '0px');
         }
     });
 
@@ -195,6 +245,8 @@ $(document).ready(function(){
         return $(this).data('name') === selectedTool;
       }).each(function() {
         $(this).addClass('selected').css('border', '1px solid red');
+
+        $customCursor.attr('src', $(this).attr('src'));
       });
     }
 
@@ -210,3 +262,6 @@ $(document).ready(function(){
 
 });
 </script>
+
+
+

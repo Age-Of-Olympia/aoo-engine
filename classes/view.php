@@ -172,7 +172,7 @@ class View{
             SELECT
             id, name, coords_id,
             "plants" AS whichTable,
-            95 AS tableOrder
+            97.5 AS tableOrder
             FROM
             map_plants
             WHERE
