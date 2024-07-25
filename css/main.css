@@ -917,6 +917,10 @@ img {
     background-color: #3498db;
     color: white;
 }
+.exchange-button {
+    background-color: #1ba377;
+    color: white;
+}
 .section-title {
     font-weight: bold;
     margin-bottom: 10px;
