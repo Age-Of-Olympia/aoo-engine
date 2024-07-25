@@ -246,7 +246,14 @@ $(document).ready(function(){
       }).each(function() {
         $(this).addClass('selected').css('border', '1px solid red');
 
-        $customCursor.attr('src', $(this).attr('src'));
+          $customCursor.attr('src', $(this).attr('src')).show();
+
+            $('body').on('mousemove', function(e) {
+                $customCursor.css({
+                    left: e.pageX - 25 +'px',
+                    top: e.pageY - 25+'px'
+                });
+            });
       });
     }
 
