@@ -16,6 +16,7 @@ Exemple:
 > player addbank Orcrist pierre 100
 > player addlog Orcrist "this is a log to be added"
 > player deletelastlog Orcrist
+> player addPnj Orcrist Ocyrhoée
 EOT);
     }
 
@@ -62,6 +63,10 @@ EOT);
 
         if($action == 'deletelastlog'){
             return delete_last_log($player);
+        }
+
+        if($action == 'addPnj'){
+            return add_pnj($player, parent::getPlayer($argumentValues[2]));
         }
 
         return '<font color="orange">Action : '.$action.' unknown</font>';
@@ -253,6 +258,28 @@ function add_xp($argumentValues, $player)
     $player->put_xp($argumentValues[2]);
 
     return $argumentValues[2] .'Xp et Pi ajoutés à '. $player->data->name;
+}
+
+function add_pnj($player, $target)
+{
+
+    $target->get_data();
+
+
+    $values = array(
+        'pnj_id'=>$target->id
+    );
+
+    $db = new Db();
+
+    $db->delete('players_pnjs', $values);
+
+    $values['player_id'] = $player->id;
+
+    $db->insert('players_pnjs', $values);
+
+
+    return 'PNJ '. $target->data->name .' ajouté au joueur '.$player->data->name ;
 }
 
 function add_log($argumentValues, $player){
