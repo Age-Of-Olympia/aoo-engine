@@ -2,16 +2,16 @@
 
 class ui{
 
-    public function __construct($title=''){
+    public function __construct($title='', $loadJQueryUi=false){
 
         /*
          * construct html page with a title
          */
-
-        echo $this->get_header($title);
+        echo $this->get_header($title, $loadJQueryUi);
     }
 
-    public function get_header($title){
+
+    public function get_header($title, $loadJQueryUi){
 
         /*
          * return header and extra files timestamped
@@ -20,7 +20,7 @@ class ui{
         $jsVersion = filemtime('js/main.js');
         $cssVersion = filemtime('css/main.css');
 
-        return '
+        $header = '
         <!DOCTYPE html>
         <html lang="fr">
             <head>
@@ -32,16 +32,24 @@ class ui{
                 <meta name="robots" content="index, follow">
                 <meta name="language" content="French">
 
-                <title>Age of Olympia - '. $title .'</title>
+                <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
-                <script src="js/main.js?v='. $jsVersion .'"></script>
-                <script src="js/console.js?v='. $jsVersion .'"></script>
-                <link href="css/main.css?v='. $cssVersion .'" rel="stylesheet" />
-                <link rel="stylesheet" href="css/rpg-awesome.min.css">
-            </head>
+                <script src="js/main.js?v=' . $jsVersion . '"></script>
+                <script src="js/console.js?v=' . $jsVersion . '"></script>
+                <link href="css/main.css?v=' . $cssVersion . '" rel="stylesheet" />
+                <link rel="stylesheet" href="css/rpg-awesome.min.css">';
+
+        if($loadJQueryUi){
+            $header.=' <script src="js/jquery-ui.min.js"></script>
+                <link rel="stylesheet" href="css/jquery-ui.min.css" />
+                ';
+        }
+
+        $header.='    </head>
             <body>
                 ';
+        return $header;
     }
 
     public function __destruct(){
@@ -609,4 +617,5 @@ class ui{
 
         return ob_get_clean();
     }
+
 }

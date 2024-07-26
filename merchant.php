@@ -3,7 +3,7 @@
 require_once('config.php');
 
 
-$ui = new Ui('Marchander');
+$ui = new Ui('Marchander', true);
 
 
 $player = new Player($_SESSION['playerId']);
@@ -34,7 +34,7 @@ if($distance > 1){
 // menu
 if(!isset($_GET['hideMenu'])){
 
-    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-speech-bubbles"></span> </button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button class="sell-button"><span class="ra ra-gavel"></span> Offres de Vente</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Demandes d\'Achat</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a><a href="merchant.php?targetId='. $target->id .'&inventory"><button><span class="ra ra-key"></span> Inventaire</button></a></div>';
+    echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-speech-bubbles"></span> </button></a><a href="merchant.php?targetId='. $target->id .'&bids"><button class="sell-button"><span class="ra ra-gavel"></span> Offres de Vente</button></a><a href="merchant.php?targetId='. $target->id .'&asks"><button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Demandes d\'Achat</button></a><a href="merchant.php?targetId='. $target->id .'&exchanges"><button class="exchange-button"><span class="ra ra-x-mark"></span> Echanges</button></a><a href="merchant.php?targetId='. $target->id .'&bank"><button><span class="ra ra-gold-bar"></span> Banque</button></a><a href="merchant.php?targetId='. $target->id .'&inventory"><button><span class="ra ra-key"></span> Inventaire</button></a></div>';
 }
 
 
@@ -53,6 +53,12 @@ elseif(isset($_GET['asks'])){
 
 
     include('scripts/merchant/asks.php');
+}
+
+elseif(isset($_GET['exchanges'])){
+
+
+    include('scripts/merchant/exchanges.php');
 }
 
 elseif(isset($_GET['bank'])){
