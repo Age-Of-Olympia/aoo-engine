@@ -644,6 +644,26 @@ class Player{
     }
 
 
+    public function put_kill($target, $xp, $assist=0){
+
+
+        $db = new Db();
+
+        $values = array(
+            'player_id'=>$this->id,
+            'target_id'=>$target->id,
+            'player_rank'=>$this->data->rank,
+            'target_rank'=>$target->data->rank,
+            'xp'=>$xp,
+            'assist'=>$assist,
+            'time'=>time(),
+            'plan'=>$target->coords->plan
+        );
+
+        $db->insert('players_kills', $values);
+    }
+
+
     public function refresh_view(){
 
         @unlink('datas/private/players/'. $_SESSION['playerId'] .'.svg');
@@ -1311,6 +1331,97 @@ class Player{
 
             Log::put($this, $this, $text, $type="loot");
         }
+    }
+
+
+    public function distribute_xp() {
+
+
+        $return = array();
+
+        $target_id = $this->id;
+
+        $timeLimit = time() - ONE_DAY;
+
+        // Récupérer les détails de la cible
+        $target_rank = $this->data->rank;
+        $xp_to_distribute = $target_rank * 10;
+
+        $return['xp_to_distribute'] = $xp_to_distribute;
+
+
+        // Optionnel: supprimer les assists après distribution si nécessaire
+        $stmt = db()->prepare("DELETE FROM players_assists WHERE time < ?");
+        $stmt->bind_param('i', $timeLimit);
+        $stmt->execute();
+
+
+        // Récupérer les assists des dernières 24 heures pour cette cible
+        $stmt = db()->prepare("
+            SELECT player_id, player_rank, damages, time
+            FROM players_assists
+            WHERE target_id = ? AND time > ?
+            ORDER BY time DESC
+        ");
+        $stmt->bind_param('ii', $target_id, $timeLimit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $assists = $result->fetch_all(MYSQLI_ASSOC);
+
+        $total_weight = 0;
+        $weights = [];
+        $xp_distribution = [];
+
+        // Calculer les poids basés sur la différence de rang et les dommages
+        foreach ($assists as $assist) {
+            $weight = ($target_rank / max(1, $assist['player_rank'])) * $assist['damages'];
+            $weights[$assist['player_id']] = $weight;
+            $total_weight += $weight;
+        }
+
+        // Vérifier que le total des poids n'est pas zéro pour éviter la division par zéro
+        if ($total_weight > 0) {
+            // Répartir l'XP selon les poids calculés
+            $total_distributed_xp = 0;
+            foreach ($weights as $player_id => $weight) {
+                $xp_share = floor(($weight / $total_weight) * $xp_to_distribute);
+                $xp_distribution[$player_id] = $xp_share;
+                $total_distributed_xp += $xp_share;
+            }
+
+            // Calculer l'XP restante
+            $remaining_xp = $xp_to_distribute - $total_distributed_xp;
+
+            // Ajouter l'XP restante au dernier joueur qui a infligé des dégâts
+            if (!empty($assists)) {
+                $last_assist_player_id = $assists[0]['player_id'];
+                $xp_distribution[$last_assist_player_id] += $remaining_xp;
+            }
+
+            // Mettre à jour l'XP des joueurs
+            foreach ($xp_distribution as $player_id => $xp_share) {
+
+                $return[$player_id] = $xp_share;
+            }
+        } else {
+            // Si total_weight est zéro, distribuer l'XP de manière égale à tous les participants
+            if (!empty($assists)) {
+                $equal_xp_share = floor($xp_to_distribute / count($assists));
+                foreach ($assists as $assist) {
+
+                    $return[$player_id] = $xp_to_distribute;
+                }
+
+                // Ajouter l'XP restante (due à l'arrondi) au dernier joueur qui a infligé des dégâts
+                $remaining_xp = $xp_to_distribute - ($equal_xp_share * count($assists));
+
+                $return['remaining_xp'] = $remaining_xp;
+
+            }
+        }
+
+        return $return;
     }
 
 

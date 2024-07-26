@@ -830,12 +830,12 @@ img {
         color: white;
     }
 
-    #ui-card .card-text .action-details{
+        #ui-card .card-text .action-details{
 
-        color: grey;
-        font-size: 88%;
-    }
-
+            color: grey;
+            font-size: 88%;
+            display: block;
+        }
 
 /*
  * INVENTORY
