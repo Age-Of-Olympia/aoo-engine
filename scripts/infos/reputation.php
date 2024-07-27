@@ -86,73 +86,81 @@ $db = new Db();
 
 $result = $db->exe($sql);
 
-if( !$result->num_rows ) exit('Aucune récompense.');
+if(!$result->num_rows){
 
-$imgList = array();
-
-
-echo '
-<table border="1" align="center" class="marbre">
-<tr>
-    <th>Sujet</th>
-    <td>Récompenses</td>
-    <td>Pr
-    ';
+    echo 'Aucune récompense.';
+}
+else{
 
 
-while( $row = $result->fetch_assoc() ){
+    $imgList = array();
 
-    $img = '
-        <a href="forum.php?topic='. $row['topName'] .'#'. $row['postName'] .'"><img src="'. $row['img'] .'" class="img-reward" /></a>
+
+    echo '
+    <table border="1" align="center" class="marbre">
+    <tr>
+        <th>Sujet</th>
+        <td>Récompenses</td>
+        <td>Pr
         ';
 
-    if( !isset($imgList[ $row['topName'] ]) ){
+
+    while( $row = $result->fetch_assoc() ){
+
+        $img = '
+            <a href="forum.php?topic='. $row['topName'] .'#'. $row['postName'] .'"><img src="'. $row['img'] .'" class="img-reward" /></a>
+            ';
+
+        if( !isset($imgList[ $row['topName'] ]) ){
 
 
-        if(!empty($pr)){
+            if(!empty($pr)){
 
-            echo '</td><td>'. $pr;
+                echo '</td><td>'. $pr;
+            }
+
+
+            echo '</td></tr><tr>';
+
+
+            $topJson = json()->decode('forum/topics', $row['topName']);
+
+            $forumJson = json()->decode('forum/forums', $topJson->forum_id);
+
+
+            if(!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions)){
+
+
+                echo '<th>?</th>
+                <td>';
+            }
+            else{
+
+
+                echo '<th><a href="forum.php?topic='. $topJson->name .'">'. $topJson->title .'</a></th>
+                <td>';
+            }
+
+
+            $imgList[ $row['topName'] ] = 1;
+
+            $pr = 0;
         }
 
 
-        echo '</td></tr><tr>';
+        $postJson = json()->decode('forum/posts', $row['postName']);
+
+        echo $img;
 
 
-        $topJson = json()->decode('forum/topics', $row['topName']);
-
-        $forumJson = json()->decode('forum/forums', $topJson->forum_id);
-
-
-        if(!empty($forumJson->factions) && !in_array($player->data->faction, $forumJson->factions)){
-
-
-            echo '<th>?</th>
-            <td>';
-        }
-        else{
-
-
-            echo '<th><a href="forum.php?topic='. $topJson->name .'">'. $topJson->title .'</a></th>
-            <td>';
-        }
-
-
-        $imgList[ $row['topName'] ] = 1;
-
-        $pr = 0;
+        $pr += $row['pr'];
     }
 
-
-    $postJson = json()->decode('forum/posts', $row['postName']);
-
-    echo $img;
-
-
-    $pr += $row['pr'];
+    echo '
+    </td><td>'. $pr .'</td>
+    </tr>
+    </table>
+    ';
 }
 
-echo '
-</td><td>'. $pr .'</td>
-</tr>
-</table>
-';
+include('scripts/infos/kills.php');

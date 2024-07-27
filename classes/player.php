@@ -661,6 +661,8 @@ class Player{
         );
 
         $db->insert('players_kills', $values);
+
+        $this->refresh_kills();
     }
 
 
@@ -676,7 +678,12 @@ class Player{
 
     public function refresh_invent(){
 
-        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.invent');
+        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.invent.html');
+    }
+
+    public function refresh_kills(){
+
+        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.kills.html');
     }
 
     public function refresh_caracs(){
