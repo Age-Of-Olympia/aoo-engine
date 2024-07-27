@@ -107,6 +107,7 @@ class View{
 
         echo '
         <div id="view">
+        <div id="svg-container">
         <?xml version="1.0" encoding="UTF-8" standalone="no"?>
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -561,6 +562,47 @@ class View{
 
             echo '
         </svg>
+        ';
+
+        if(!empty($planJson->mask)){
+
+
+            if(!empty($planJson->scrollingMask)){
+
+
+                list($maskW, $maskH) = getimagesize($planJson->mask);
+
+                echo '
+                <style>
+                .scrolling-mask {
+
+                    animation: scrollMask 60s linear infinite;
+                }
+
+                @keyframes scrollMask {
+
+                    0% {
+                    background-position: 0 0;
+                    }
+                    100% {
+                    background-position: -'. $maskW .'px 0; /* Ajustez cette valeur selon la largeur de votre image */
+                    }
+                }
+                </style>
+                ';
+            }
+
+            echo '
+            <div
+                class="view-mask scrolling-mask"
+                style="background: url(\''. $planJson->mask .'\');"
+                >
+            </div>
+            ';
+        }
+
+        echo '
+        </div>
         </div>
         ';
 
