@@ -94,6 +94,12 @@ define('EFFECTS_RA_FONT', array(
     'leurre'=>'ra-lava',
     'dedoublement'=>'ra-double-team',
 
+    'corruption_du_metal'=>'ra-biohazard',
+    'corruption_du_bronze'=>'ra-biohazard',
+    'corruption_du_bois'=>'ra-biohazard',
+    'corruption_du_plantes'=>'ra-biohazard',
+    'corruption_du_cuir'=>'ra-biohazard',
+
     'vol'=>'ra-feather-wing',
 
     'fatigue'=>'ra-player-pain'

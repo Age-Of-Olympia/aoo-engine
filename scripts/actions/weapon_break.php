@@ -1,16 +1,62 @@
 <?php
 
 
-if(rand(1,100) <= ITEM_BREAK || AUTO_BREAK){
+if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
 
 
-    if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
+    $breakChance = ITEM_BREAK;
+
+    $corrupted = array();
+
+    $corruptions = array(
+        'corruption_du_metal'=>array('bronze','nickel'),
+        'corruption_du_bronze'=>array('bronze'),
+        'corruption_du_bois'=>array('bois','bois_petrifie'),
+        'corruption_des_plantes'=>array('adonis','cafe','astral','houblon','lichen_sacre','lotus_noir','menthe','pavot'),
+        'corruption_du_cuir'=>array('cuir')
+    );
+
+    $corruptBreackChance = array(
+        'corruption_du_metal'=>15,
+        'corruption_du_bronze'=>10,
+        'corruption_du_bois'=>20,
+        'corruption_des_plantes'=>15,
+        'corruption_du_cuir'=>5
+    );
+
+
+    foreach($corruptions as $k=>$e){
+
+
+        if($player->have_effect($k)){
+
+
+            if($player->main1->is_crafted_with($e)){
+
+
+                $breakChance = $corruptBreackChance[$k];
+
+                $corrupted = $e;
+
+                break;
+            }
+        }
+    }
+
+
+    if(rand(1,100) <= $breakChance || AUTO_BREAK){
+
+
+        $recup = array();
 
 
         $recipe = $player->main1->get_recipe();
 
+        foreach($corrupted as $e){
 
-        $recup = array();
+            unset($recipe[$e]);
+        }
+
 
         foreach($recipe as $k=>$e){
 
@@ -21,11 +67,12 @@ if(rand(1,100) <= ITEM_BREAK || AUTO_BREAK){
 
             if($rand){
 
+
                 $craftedWithItem->add_item($player, -$rand);
 
                 $craftedWithItem->get_data();
 
-                $recup[] = $craftedWithItem->data->name .'x'. $rand;
+                $recup[] = $craftedWithItem->data->name .' x'. $rand;
             }
         }
 
@@ -40,7 +87,5 @@ if(rand(1,100) <= ITEM_BREAK || AUTO_BREAK){
         Log::put($player, $player, $text, $type="break");
 
         echo '<div><font color="red">Votre arme se casse.</font></div>';
-
-        exit();
     }
 }

@@ -1219,6 +1219,13 @@ img {
     text-shadow: 1px 1px black;
 }
 
+/* sorts de corruption */
+.ra-biohazard{
+
+    color: lime;
+    text-shadow: 1px 1px pink;
+}
+
 /* forge sacrée */
 #ui-card .card-faction a .ra-forging{
 
