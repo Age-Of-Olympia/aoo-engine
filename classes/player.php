@@ -666,6 +666,35 @@ class Player{
     }
 
 
+    public function put_assist($target, $damages){
+
+
+        self::clean_players_assists();
+
+
+        $db = new Db();
+
+        $values = array(
+            'player_id'=>$this->id,
+            'target_id'=>$target->id,
+            'player_rank'=>$this->data->rank,
+            'damages'=>$damages,
+            'time'=>time()
+        );
+
+        $sql = '
+        INSERT INTO
+        players_assists
+        (`player_id`,`target_id`,`player_rank`,`damages`,`time`)
+        VALUE('. implode(',', $values) .')
+        ON DUPLICATE KEY UPDATE
+        damages = damages + VALUES(damages);
+        ';
+
+        $db->exe($sql);
+    }
+
+
     public function refresh_view(){
 
         @unlink('datas/private/players/'. $_SESSION['playerId'] .'.svg');
@@ -1323,11 +1352,15 @@ class Player{
 
                 if($lootN > $row->n) $lootN = $row->n;
 
-                // drop
-                $this->drop($loot, $lootN);
+                if($lootN > 0){
 
-                // populate lootList
-                $lootList[] = $loot->data->name .' x'. $lootN;
+
+                    // drop
+                    $this->drop($loot, $lootN);
+
+                    // populate lootList
+                    $lootList[] = $loot->data->name .' x'. $lootN;
+                }
             }
         }
 
@@ -1338,6 +1371,11 @@ class Player{
 
             Log::put($this, $this, $text, $type="loot");
         }
+
+
+        // purge assists
+        $values = array('target_id'=>$this->id);
+        $db->delete('players_assists', $values);
     }
 
 
@@ -1357,10 +1395,7 @@ class Player{
         $return['xp_to_distribute'] = $xp_to_distribute;
 
 
-        // Optionnel: supprimer les assists après distribution si nécessaire
-        $stmt = db()->prepare("DELETE FROM players_assists WHERE time < ?");
-        $stmt->bind_param('i', $timeLimit);
-        $stmt->execute();
+        self::clean_players_assists();
 
 
         // Récupérer les assists des dernières 24 heures pour cette cible
@@ -1623,5 +1658,17 @@ class Player{
 
             @unlink('datas/private/players/'. $row->id .'.svg');
         }
+    }
+
+
+    public static function clean_players_assists(){
+
+
+        $timeLimit = time() - ONE_DAY;
+
+        // Optionnel: supprimer les assists
+        $stmt = db()->prepare("DELETE FROM players_assists WHERE time < ?");
+        $stmt->bind_param('i', $timeLimit);
+        $stmt->execute();
     }
 }

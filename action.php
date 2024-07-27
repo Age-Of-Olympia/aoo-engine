@@ -122,7 +122,7 @@ echo '<style>.action-details{display: none;}</style>';
 
 if($player->have_option('showActionDetails')){
 
-    echo '<style>.action-details{display: inline;}</style>';
+    echo '<style>.action-details{display: block;}</style>';
 }
 
 
@@ -377,6 +377,10 @@ if(!empty($success) && $success == true){
 
             // put negative bonus (damages)
             $target->put_bonus(array('pv'=>-$totalDamages));
+
+
+            // put assist
+            $player->put_assist($target, $totalDamages);
 
 
             // weapon break

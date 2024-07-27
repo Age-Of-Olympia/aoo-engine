@@ -88,7 +88,7 @@ class Item{
         // error n
         if(!is_numeric($n) || $n == 0){
 
-            exit('error n');
+            exit('error n '. $n);
         }
 
         // insert or update
