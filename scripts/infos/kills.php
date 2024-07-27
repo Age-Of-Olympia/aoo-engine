@@ -16,9 +16,9 @@ if(!file_exists($path) || !CACHED_KILLS){
 
     echo '<h1>Exploits Guerriers</h1>';
 
-    echo '<h2>Importateur de viandes pour les Limbes</h2>';
+    $killsTxt = '<h2>Importateur de viandes pour les Limbes</h2>';
 
-    echo '
+    $killsTxt .= '
     <table border="1" align="center" class="marbre" width="100%">
     <tr>
     ';
@@ -54,6 +54,9 @@ if(!file_exists($path) || !CACHED_KILLS){
         }
 
 
+        $showKills = true;
+
+
         $assistant = $target;
 
         $killed = new Player($row->target_id);
@@ -62,34 +65,40 @@ if(!file_exists($path) || !CACHED_KILLS){
 
         $planJson = json()->decode('plans', $row->plan);
 
-        echo '
+        $killsTxt .= '
         <tr>
             ';
 
-            echo '<td width="50"><img src="'. $killed->data->avatar .'" /></td>';
+            $killsTxt .= '<td width="50"><img src="'. $killed->data->avatar .'" /></td>';
 
-            echo '<td width="1%">'. date('d/m/Y', $row->time) .'</td>';
+            $killsTxt .= '<td width="1%">'. date('d/m/Y', $row->time) .'</td>';
 
-            echo '<td><a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a> (rang '. $row->player_rank .') a tué <a href="infos.php?targetId='. $killed->id .'">'. $killed->data->name .'</a> (rang '. $row->target_rank .')</td>';
+            $killsTxt .= '<td><a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a> (rang '. $row->player_rank .') a tué <a href="infos.php?targetId='. $killed->id .'">'. $killed->data->name .'</a> (rang '. $row->target_rank .')</td>';
 
-            echo '<td width="1%">'. $planJson->name .'</td>';
+            $killsTxt .= '<td width="1%">'. $planJson->name .'</td>';
 
-            echo '<td width="1%">'. $row->xp .'Xp</td>';
+            $killsTxt .= '<td width="1%">'. $row->xp .'Xp</td>';
 
-            echo '
+            $killsTxt .= '
         </tr>
         ';
     }
 
-    echo '
+    $killsTxt .= '
     </tr>
     </table>
     ';
 
 
+    if(!empty($showKills)){
+
+        echo $killsTxt;
+    }
+
+
     if(!count($assists)){
 
-        echo '<h2>'. $target->data->name .' n\'a jamais filé un seul coup de main.</h2>';
+        // echo '<h2>'. $target->data->name .' n\'a jamais filé un seul coup de main.</h2>';
     }
 
     else{
@@ -140,7 +149,7 @@ if(!file_exists($path) || !CACHED_KILLS){
 
     if(!count($deaths)){
 
-        echo '<h2>'. $target->data->name .' ne connaît pas la défaite.</h2>';
+        // echo '<h2>'. $target->data->name .' ne connaît pas la défaite.</h2>';
     }
 
     else{

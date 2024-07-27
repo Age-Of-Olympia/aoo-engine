@@ -70,7 +70,7 @@ echo '
 
 
 
-echo '<h2>Récompenses</h2>';
+echo '<h1>Récompenses</h1>';
 
 $sql = '
 SELECT postName, topName, img, pr FROM
@@ -88,7 +88,7 @@ $result = $db->exe($sql);
 
 if(!$result->num_rows){
 
-    echo 'Aucune récompense.';
+    // echo 'Aucune récompense.';
 }
 else{
 

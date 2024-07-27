@@ -8,14 +8,12 @@ class TpCmd extends Command
 téléporte le joueur [mat] aux coordonnées [coords] (x,y,z,plan).
 Exemple:
 > tp Orcrist 50,125,-5,eryn_dolen 
+> tp everyone x,y,z,eryn_dolen (change tous le monde de plan sans changer x,y,z)
 EOT);
     }
 
     public function execute(  array $argumentValues ) : string
     {
-        $player=parent::getPlayer($argumentValues[0]);
-
-        $player->get_data();
 
 
         $coordsTbl = explode(',', $argumentValues[1]);
@@ -27,22 +25,71 @@ EOT);
 
         list($x, $y, $z, $plan) = $coordsTbl;
 
-        $coords = (object) array(
-            'x'=>$x,
-            'y'=>$y,
-            'z'=>$z,
-            'plan'=>$plan
-        );
+
+        $playersTbl = array();
+
+
+        if($argumentValues[0] == 'everyone'){
+
+
+            $admin = new Player($_SESSION['playerId']);
+            $admin->get_coords();
+
+            $db = new Db();
+
+            $sql = '
+            SELECT p.id
+            FROM players AS p
+            INNER JOIN coords AS c
+            ON p.coords_id = c.id
+            WHERE c.plan = ?
+            ';
+
+            $res = $db->exe($sql, $admin->coords->plan);
+
+            while($row = $res->fetch_object()){
+
+
+                $playersTbl[] = new Player($row->id);
+            }
+        }
+        else{
+
+            $playersTbl = array($player=parent::getPlayer($argumentValues[0]));
+        }
 
 
         // clean function outputs
         ob_start();
 
-        $player->go($coords);
 
-        ob_clean();
+        foreach($playersTbl as $player){
 
 
-        return 'tp '. $player->data->name .' to '. $x .','. $y .','. $z .','. $plan;
+            $player->get_data();
+
+            $player->get_coords();
+
+
+            $goX = (!is_numeric($x)) ? $player->coords->x : $x;
+            $goY = (!is_numeric($z)) ? $player->coords->y : $y;
+            $goZ = (!is_numeric($z)) ? $player->coords->z : $z;
+
+
+            $coords = (object) array(
+                'x'=>$goX,
+                'y'=>$goY,
+                'z'=>$goZ,
+                'plan'=>$plan
+            );
+
+
+            $player->go($coords);
+
+            echo 'tp '. $player->data->name .' to '. $goX .','. $goY .','. $goZ .','. $plan .'<br />';
+        }
+
+
+        return ob_get_clean();
     }
 }
