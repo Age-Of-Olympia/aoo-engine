@@ -190,7 +190,32 @@ if($res->num_rows){
         $dataImg = '';
 
 
-        foreach($player->get_actions() as $e){
+        $actions = $player->get_actions();
+
+        $basics = array(
+            "attaquer",
+            "courir",
+            "entrainement",
+            "fouiller",
+            "prier",
+            "repos"
+        );
+
+        function custom_compare($a, $b) {
+
+            global $basics;
+
+            if (in_array($a, $basics)) {
+                return -1;
+            }
+
+            return 1; // Si l'élément $b n'est pas dans l'ordre, il est considéré plus petit
+        }
+
+        // Trier le tableau en utilisant la fonction de comparaison personnalisée
+        usort($actions, 'custom_compare');
+
+        foreach($actions as $e){
 
 
             $actionJson = json()->decode('actions', $e);

@@ -1241,6 +1241,13 @@ img {
     text-shadow: 1px 1px pink;
 }
 
+/* sorts de tank */
+.ra-sunbeams, .ra-monster-skull, .ra-diamond, .ra-aware, .ra-player-shot{
+
+    color: red;
+    text-shadow: 1px 1px white;
+}
+
 /* forge sacrée */
 #ui-card .card-faction a .ra-forging{
 

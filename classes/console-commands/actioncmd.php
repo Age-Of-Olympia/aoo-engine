@@ -15,6 +15,40 @@ EOT);
     public function execute(  array $argumentValues ) : string
     {
 
+        if($argumentValues[0] == 'pack'){
+
+
+            ob_start();
+
+            $admin = new Player($_SESSION['playerId']);
+            $admin->get_data();
+            $raceJson = json()->decode('races', $argumentValues[1]);
+
+            echo 'delete all actions for '. $admin->data->name .'...<br />';
+
+            $db = new Db();
+            $values = array('player_id'=>$admin->id);
+            $db->delete('players_actions', $values);
+
+            echo 'done!';
+
+            echo 'ajout du pack de sort '. $raceJson->name .'...<br />';
+
+            foreach($raceJson->actionsPack as $e){
+
+
+                echo $e .': ';
+
+                $admin->add_action($e);
+
+                echo 'done!<br />';
+            }
+
+            echo '<font color="lime">pack successfully updated!</font>';
+
+            return ob_get_clean();
+        }
+
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
 

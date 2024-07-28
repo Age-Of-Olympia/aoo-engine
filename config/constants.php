@@ -94,6 +94,12 @@ define('EFFECTS_RA_FONT', array(
     'leurre'=>'ra-lava',
     'dedoublement'=>'ra-double-team',
 
+    'armure_rayonnante'=>'ra-sunbeams',
+    'berserker'=>'ra-monster-skull',
+    'endiamente'=>'ra-diamond',
+    'golconda'=>'ra-aware',
+    'martyr'=>'ra-player-shot',
+
     'corruption_du_metal'=>'ra-biohazard',
     'corruption_du_bronze'=>'ra-biohazard',
     'corruption_du_bois'=>'ra-biohazard',
