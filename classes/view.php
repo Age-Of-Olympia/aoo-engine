@@ -576,7 +576,7 @@ class View{
                 <style>
                 .scrolling-mask {
 
-                    animation: scrollMask 60s linear infinite;
+                    animation: scrollMask '. $planJson->scrollingMask .'s linear infinite;
                 }
 
                 @keyframes scrollMask {
