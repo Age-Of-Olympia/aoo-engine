@@ -585,9 +585,19 @@ class View{
                     background-position: 0 0;
                     }
                     100% {
-                    background-position: -'. $maskW .'px 0; /* Ajustez cette valeur selon la largeur de votre image */
+                    ';
+
+                    if(!isset($planJson->verticalScrolling)){
+
+                        echo 'background-position: -'. $maskW .'px 0;';
                     }
-                }
+
+                    else{
+
+                        echo 'background-position: 0 '. $maskW .'px;';
+                    }
+
+                echo '
                 </style>
                 ';
             }
