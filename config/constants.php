@@ -184,6 +184,32 @@ define('ITEM_BREAK', 1); // 1% de break sur une attaque ou une défense
 
 define('ITEM_LIMIT', 3);
 
+define('ITEM_PLANTS', array(
+    'adonis',
+    'cafe',
+    'astral',
+    'houblon',
+    'lichen_sacre',
+    'lotus_noir',
+    'menthe',
+    'pavot'
+));
+
+define('ITEM_CORRUPTIONS', array(
+    'corruption_du_metal'=>array('bronze','nickel'),
+    'corruption_du_bronze'=>array('bronze'),
+    'corruption_du_bois'=>array('bois','bois_petrifie'),
+    'corruption_des_plantes'=>ITEM_PLANTS,
+    'corruption_du_cuir'=>array('cuir')
+));
+
+define('ITEM_CORRUPT_BREAKCHANCES', array(
+    'corruption_du_metal'=>15,
+    'corruption_du_bronze'=>10,
+    'corruption_du_bois'=>20,
+    'corruption_des_plantes'=>15,
+    'corruption_du_cuir'=>5
+));
 
 define('ITEMS_OPT', array(
     'enchanted'=>'*',
@@ -255,3 +281,4 @@ define('FISHING', false); // si true, les players pêchent constemment
 define('CACHED_INVENT', false); // si false, l'inventaire n'est pas cached
 define('CACHED_KILLS', false); // si false, infos>kills n'est pas cached
 define('AUTO_BREAK', true); // si true, l'équipement casse (100% de chance)
+define('AUTO_FAIL', false); // si true, les attaques ratent forcément

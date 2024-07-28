@@ -249,14 +249,18 @@ if($actionJson->targetType != 'self'){
 
     // success
     if(
-        $checkAboveDistance
+        !AUTO_FAIL
         &&
         (
-            $actionJson->targetJet == 0
-            ||
-            $playerTotal >= $targetTotal
+            $checkAboveDistance
+            &&
+            (
+                $actionJson->targetJet == 0
+                ||
+                $playerTotal >= $targetTotal
+            )
         )
-        ){
+    ){
 
         $success = true;
     }
@@ -269,6 +273,10 @@ if($actionJson->targetType != 'self'){
             echo '<div style="color: red;">Votre action ne porte pas aussi loin.</div>';
         }
         else{
+
+
+            // break defenses
+            include('scripts/actions/break_defenses.php');
 
 
             echo '<div style="color: red;">Échec.</div>';
@@ -384,7 +392,7 @@ if(!empty($success) && $success == true){
 
 
             // weapon break
-            include('scripts/actions/weapon_break.php');
+            include('scripts/actions/break_weapon.php');
         }
     }
 

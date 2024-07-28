@@ -697,7 +697,7 @@ class Player{
 
     public function refresh_view(){
 
-        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.svg');
+        @unlink('datas/private/players/'. $this->id .'.svg');
     }
 
     public function refresh_data(){
@@ -707,12 +707,12 @@ class Player{
 
     public function refresh_invent(){
 
-        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.invent.html');
+        @unlink('datas/private/players/'. $this->id .'.invent.html');
     }
 
     public function refresh_kills(){
 
-        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.kills.html');
+        @unlink('datas/private/players/'. $this->id .'.kills.html');
     }
 
     public function refresh_caracs(){
@@ -1162,6 +1162,13 @@ class Player{
                 $this->id,
                 $item->id
             ));
+
+
+            // refresh view when P change
+            if(isset($item->data->p)){
+
+                $this->refresh_view();
+            }
         }
 
 

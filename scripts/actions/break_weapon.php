@@ -8,21 +8,9 @@ if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
 
     $corrupted = array();
 
-    $corruptions = array(
-        'corruption_du_metal'=>array('bronze','nickel'),
-        'corruption_du_bronze'=>array('bronze'),
-        'corruption_du_bois'=>array('bois','bois_petrifie'),
-        'corruption_des_plantes'=>array('adonis','cafe','astral','houblon','lichen_sacre','lotus_noir','menthe','pavot'),
-        'corruption_du_cuir'=>array('cuir')
-    );
+    $corruptions = ITEMS_CORRUPTIONS;
 
-    $corruptBreackChance = array(
-        'corruption_du_metal'=>15,
-        'corruption_du_bronze'=>10,
-        'corruption_du_bois'=>20,
-        'corruption_des_plantes'=>15,
-        'corruption_du_cuir'=>5
-    );
+    $corruptBreackChance = ITEM_CORRUPT_BREAKCHANCES;
 
 
     foreach($corruptions as $k=>$e){
@@ -68,7 +56,7 @@ if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
             if($rand){
 
 
-                $craftedWithItem->add_item($player, -$rand);
+                $craftedWithItem->add_item($player, $rand);
 
                 $craftedWithItem->get_data();
 
