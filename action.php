@@ -376,6 +376,9 @@ if(!empty($success) && $success == true){
         if($totalDamages){
 
 
+            include('scripts/actions/tank.php');
+
+
             echo '
             Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
