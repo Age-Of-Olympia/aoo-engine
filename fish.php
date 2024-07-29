@@ -169,7 +169,7 @@ echo '
 $(document).ready(function(){
 
 
-    $('body').css('background','url(img/ui/bg/eau.png)');
+    $('body').css('background','url(img/ui/bg/eau.webp)');
 
 
     const winner = [<?php echo implode(',', $stopTbl) ?>];

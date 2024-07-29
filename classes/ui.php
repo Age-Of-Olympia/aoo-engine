@@ -434,7 +434,7 @@ class ui{
 
         foreach (File::scan_dir('img/ui/map/', $without=".png") as $e) {
 
-            if ($e == 'parchemin') {
+            if ($e == 'parchemin.' || $e == 'parchemin') {
                 continue;
             }
 

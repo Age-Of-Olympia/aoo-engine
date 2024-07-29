@@ -473,7 +473,7 @@ class View{
                             x="' . $x . '"
                             y="' . $y . '"
 
-                            href="img/ui/view/grid.png"
+                            href="img/ui/view/grid.webp"
                             />
                         ';
                     }
@@ -526,7 +526,7 @@ class View{
 
                 style="opacity: 0.8; display: none; pointer-events: none;"
                 class="blink"
-                href="img/ui/view/arrow.png"
+                href="img/ui/view/arrow.webp"
                 />
             ';
 
@@ -556,7 +556,7 @@ class View{
 
                 style="opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg);"
                 class="blink"
-                href="img/ui/view/arrow.png"
+                href="img/ui/view/arrow.webp"
                 />
             ';
 

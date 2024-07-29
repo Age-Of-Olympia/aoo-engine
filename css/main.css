@@ -467,7 +467,7 @@ img {
         width: 100px;
         height: 100px;
         margin-top: 25px;
-        background: url('../img/ui/bg/admins.png');
+        background: url('../img/ui/bg/admins.webp');
     }
 
 #view{
@@ -563,7 +563,7 @@ img {
 
 #ui-map {
 
-    background: url(../img/ui/map/parchemin.gif);
+/*     background: url(../img/ui/map/parchemin.webp); */
     width: 800px;
     margin: 0 auto;
     user-select: none;
@@ -571,7 +571,7 @@ img {
 
 #svg-map {
 
-    background: url(../img/ui/map/parchemin.png);
+    background: url(../img/ui/map/parchemin.webp);
 }
 
 .map.location {
@@ -658,47 +658,47 @@ img {
     #index-menu{
 
         border: 0px;
-        background: url('../img/ui/bg/white_clouds.jpeg');
+        background: url('../img/ui/bg/white_clouds.webp');
     }
 
     #ui-card .geant{
 
-        background: url('../img/ui/cards/brown.jpeg');
+        background: url('../img/ui/cards/brown.webp');
     }
 
     #ui-card .nain{
 
-        background: url('../img/ui/cards/red.jpeg');
+        background: url('../img/ui/cards/red.webp');
     }
 
     #ui-card .elfe{
 
-        background: url('../img/ui/cards/light_green.jpeg');
+        background: url('../img/ui/cards/light_green.webp');
     }
 
     #ui-card .hs{
 
-        background: url('../img/ui/cards/dark_green.jpeg');
+        background: url('../img/ui/cards/dark_green.webp');
     }
 
     #ui-card .olympien{
 
-        background: url('../img/ui/cards/white_marble.jpeg');
+        background: url('../img/ui/cards/white_marble.webp');
     }
 
     #ui-card .redoraan{
 
-        background: url('../img/ui/cards/white_fur.jpeg');
+        background: url('../img/ui/cards/white_fur.webp');
     }
 
     #ui-card .lutin{
 
-        background: url('../img/ui/cards/white_clouds.jpeg');
+        background: url('../img/ui/cards/white_clouds.webp');
     }
 
     #ui-card .dieu{
 
-        background: url('../img/ui/cards/gasoline.jpeg');
+        background: url('../img/ui/cards/gasoline.webp');
     }
 
     #ui-card .card-name{
@@ -1363,7 +1363,7 @@ img {
 
     width: 684px;
     height: 440px;
-    background: url('../img/ui/bg/journal.png');
+    background: url('../img/ui/bg/journal.webp');
     padding: 50px;
     padding-top: 45px;
     padding-bottom: 25px;

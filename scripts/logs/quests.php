@@ -19,7 +19,7 @@ if(!file_exists($path)){
 
     if(!count($playerQuests)){
 
-        echo '<a href="javascript: alert(\'Aucune quête en cours.\');"><img src="img/ui/bg/journal_closed.png" /></a>';
+        echo '<a href="javascript: alert(\'Aucune quête en cours.\');"><img src="img/ui/bg/journal_closed.webp" /></a>';
 
         exit();
     }

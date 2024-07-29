@@ -39,7 +39,7 @@ if(!empty($_SESSION['playerId'])){
 
 
     echo '
-    <div id="top-menu-button"><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/index.png" /></a></div>';
+    <div id="top-menu-button"><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/index.webp" /></a></div>';
 
 
     $timeToNextTurn = Str::convert_time($player->data->nextTurnTime - time());

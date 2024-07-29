@@ -15,7 +15,7 @@ echo '
 <div id="index-menu" class="box-shadow scrolling-bg">
     ';
 
-    echo '<div class="text"><b>Aoo,<br />JDR gratuit au tour-par-tour.</b></div>';
+    echo '<div class="text"><b>Age of Olympia,<br />JDR gratuit au tour-par-tour.</b></div>';
 
     echo '<a href="index.php" action="login" class="index-button">Jouer</a>';
 
