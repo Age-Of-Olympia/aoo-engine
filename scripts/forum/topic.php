@@ -12,7 +12,10 @@ if(!$topJson){
 $ui = new Ui(htmlentities($topJson->title));
 
 
-echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.png" /></a><br /><a href="#last"><img src="img/ui/forum/down.png" /></a></div>';
+ob_start();
+
+
+echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.webp" /></a><br /><a href="#last"><img src="img/ui/forum/down.webp" /></a></div>';
 
 
 if(!isset($_GET['hideMenu'])){
@@ -248,7 +251,7 @@ echo '
                         <img
                             data-post="'. $post->name .'"
                             class="give-reward"
-                            src="img/ui/forum/gift.png"
+                            src="img/ui/forum/gift.webp"
                         />
                         <span
                             class="give-reward-span"
@@ -324,49 +327,11 @@ for($i=1; $i<=$pagesN; $i++){
 }
 
 
+echo Str::minify(ob_get_clean());
+
 ?>
 <script>
-$(document).ready(function(e){
-
-
-    window.topicName = <?php echo $topJson->name ?>;
-    window.pageN = <?php echo $page ?>;
-
-
-    $('.reply').click(function(e){
-
-
-        document.location = 'forum.php?reply='+ $(this).data('topic');
-    });
-
-
-    $('.post-rewards img:not(.give-reward)').click(function(e){
-
-
-        $('.post-rewards span:not(.give-reward-span)').html('');
-
-        $(this).next('span').html($(this).attr('title'));
-    });
-
-    $('.give-reward').click(function(e){
-
-
-        var $this = $(this);
-
-
-        $.ajax({
-            type: "POST",
-            url: 'forum.php?rewards',
-            data: {
-                'post': $this.data('post')
-            }, // serializes the form's elements.
-            success: function(data)
-            {
-                htmlContent = $('<div>').html(data).find('#data').html();
-                // alert(htmlContent);
-                $this.next('span').html(htmlContent);
-            }
-        });
-    });
-});
+window.topicName = <?php echo $topJson->name ?>;
+window.pageN = <?php echo $page ?>;
 </script>
+<script src="js/forum_topic.js"></script>

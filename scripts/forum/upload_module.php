@@ -25,7 +25,7 @@ else{
             <input type="button" value="Selectionner Fichier" onclick="file_explorer();" />
             <input type="file" id="selectfile" />
         </div>
-        <font size="2">Vous avez uploadé <?php echo $uploadedN ?>/<?php echo $uploadMax ?> images<br />Formats: .jpeg .jpg .gif .png .webp<br />
+        <font size="2">Vous avez uploadé <?php echo $uploadedN ?>/<?php echo $uploadMax ?> images<br />Formats: .jpeg .jpg .gif .png <a href="https://minipic.app/" target="_new" title="Compressez vos images avant upload!">.webp</a><br />
         Les images non utilisées seront automatiquement supprimées.</font>
     </div>
     <div class="img-content"></div>

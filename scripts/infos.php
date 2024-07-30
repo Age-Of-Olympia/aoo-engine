@@ -37,6 +37,8 @@ if(!empty($_SESSION['playerId'])){
     }
 
 
+    ob_start();
+
 
     echo '
     <div id="top-menu-button"><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/index.webp" /></a></div>';
@@ -67,4 +69,8 @@ if(!empty($_SESSION['playerId'])){
         </tr>
     </table>
     ';
+
+
+    echo Str::minify(ob_get_clean());
 }
+

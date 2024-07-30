@@ -87,6 +87,9 @@ include('scripts/infos.php');
 include('scripts/menu.php');
 
 
+ob_start();
+
+
 echo '<h1>Forums</h1>';
 
 
@@ -140,7 +143,7 @@ echo '
                 ';
 
                 echo '
-                <td class="forum" data-forum="'. $forJson->name .'"²><img src="img/ui/forum/'. $img .'.png" width="50" height="50" /></td>
+                <td class="forum" data-forum="'. $forJson->name .'"><img src="img/ui/forum/'. $img .'.webp" width="50" height="50" /></td>
                 ';
 
                 echo '
@@ -192,3 +195,6 @@ $(document).ready(function(e){
     });
 });
 </script>
+<?php
+
+echo Str::minify(ob_get_clean());

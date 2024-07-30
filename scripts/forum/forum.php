@@ -13,6 +13,9 @@ if(!$forumJson){
 $ui = new Ui($forumJson->name);
 
 
+ob_start();
+
+
 include('scripts/infos.php');
 include('scripts/menu.php');
 
@@ -228,3 +231,6 @@ $(document).ready(function(e){
     });
 });
 </script>
+<?php
+
+echo Str::minify(ob_get_clean());

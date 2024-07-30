@@ -56,6 +56,9 @@ if(!empty($_POST['text'])){
 $ui = new Ui('Éditer un message');
 
 
+ob_start();
+
+
 include('scripts/infos.php');
 include('scripts/menu.php');
 
@@ -127,42 +130,12 @@ echo '
 ></iframe>
 ';
 
+echo Str::minify(ob_get_clean());
 
 ?>
 <script src="js/autosave.js"></script>
 <script>
-$(document).ready(function(e){
-
-    $('.submit').click(function(e){
-
-        var text = $('textarea').val();
-
-
-        if(text.trim() == ''){
-
-            alert('Le message ne doit pas être vide.');
-            return false;
-        }
-
-
-        $(this).prop('disabled', true);
-
-
-        var post = $(this).data('post');
-
-
-        $.ajax({
-            type: "POST",
-            url: 'forum.php?edit='+ post,
-            data: {
-                'text': text
-            }, // serializes the form's elements.
-            success: function(data)
-            {
-                // alert(data);
-                document.location = 'forum.php?topic=<?php echo $postJson->top_id ?>&page=<?php echo $pagesN ?>#'+ data.trim();
-            }
-        });
-    });
-});
+window.topId = <?php echo $postJson->top_id ?>;
+window.pagesN = <?php echo $pagesN ?>;
 </script>
+<script src="js/forum_edit.js"></script>

@@ -93,7 +93,12 @@ class View{
 
         $planJson = json()->decode('plans', $this->coords->plan);
 
-        $tile = (!empty($planJson->bg)) ? $planJson->bg : 'img/tiles/'. $this->coords->plan .'.png';
+        $tile = (!empty($planJson->bg)) ? $planJson->bg : 'img/tiles/'. $this->coords->plan .'.webp';
+
+        if(!file_exists($tile)){
+
+            $tile = 'img/tiles/'. $this->coords->plan .'.png';
+        }
 
         if($this->coords->z < 0){
 

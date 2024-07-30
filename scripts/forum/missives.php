@@ -157,56 +157,7 @@ if(count($destTbl) == 1){
 
 
 ?>
-
 <script>
-$(document).ready(function() {
-
-
-    $('.post-rewards').addClass('desaturate');
-
-
-    $('#add-dest').click(function(e) {
-
-
-        $('#dest').hide();
-        $('#dest-list').show();
-    });
-
-
-    $('#dest-list').on('change', function(e) {
-
-
-        var dest = $(this).val();
-
-        $.ajax({
-            type: "POST",
-            url: 'forum.php?topic=<?php echo $topJson->name ?>',
-            data: {'addDest': dest},
-            success: function(data) {
-              //debugger;
-              document.location.reload();
-            }
-        });
-    });
-
-
-    $('.dest').click(function(e) {
-
-
-        var dest = $(this).data('id');
-
-        if (!confirm('Supprimer ce personnage de la conversation?')) {
-            return false;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: 'forum.php?topic=<?php echo $topJson->name ?>',
-            data: {'removeDest': dest},
-            success: function(data) {
-                document.location.reload();
-            }
-        });
-    });
-});
+window.topName = "<?php echo $topJson->name ?>";
 </script>
+<script src="js/forum_missives.js"></script>

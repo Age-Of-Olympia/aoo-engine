@@ -140,7 +140,7 @@ echo '
 echo '
 <div id="index-partenaires">
 
-    <a href="https://ame-jdr.net"><img src="img/ui/partenaires/ame-jdr.net.png" /></a><br />
+    <a href="https://ame-jdr.net"><img src="img/ui/partenaires/ame-jdr.net.webp" /></a><br />
     <br />
     <br />
     ';
@@ -165,7 +165,7 @@ if($annonceJson){
     echo '<div id="index-changelog"><a class="install-app" style="background: black; color: white;" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. date('d/m/Y', $annonceJson->time) .')</a></div>';
 }
 
-echo '<div id="index-discord"><a class="install-app" style="background: #5865f2; color: white;" href="https://discord.gg/peYNvzhDag"><img src="img/ui/partenaires/discord.png" /> Discord </a></div>';
+echo '<div id="index-discord"><a class="install-app" style="background: #5865f2; color: white;" href="https://discord.gg/peYNvzhDag"><img src="img/ui/partenaires/discord.webp" /> Discord </a></div>';
 
 
 echo '<div class="preload"><img src="img/ui/bg/button2.png" /></div>';
