@@ -8,6 +8,8 @@ if(!empty($_POST['id']) && !empty($_POST['n'])){
     exit();
 }
 
+ob_start();
+
 
 if(!empty($_GET['itemId'])){
 
@@ -72,3 +74,6 @@ echo $market->print_market('bids');
         </a>
     </div>
 </div>
+<?php
+
+echo Str::minify(ob_get_clean());

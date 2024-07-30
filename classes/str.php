@@ -214,5 +214,9 @@ class Str{
         return $result;
     }
 
+    public static function minify($b){
+
+        return preg_replace(['/\>[^\S ]+/s','/[^\S ]+\</s','/(\s)+/s'],['>','<','\\1'],$b);
+    }
 }
 

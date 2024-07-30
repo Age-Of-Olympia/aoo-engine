@@ -33,6 +33,8 @@ elseif(isset($_GET['logout'])){
 }
 
 
+ob_start();
+
 ?>
 <div id="new-turn"><?php include('scripts/new_turn.php') ?></div>
 
@@ -49,6 +51,7 @@ echo '<div style="color: red;">';
 
 if(!CACHED_INVENT) echo 'CACHED_INVENT = false<br />';
 if(!CACHED_KILLS) echo 'CACHED_KILLS = false<br />';
+if(!CACHED_CLASSEMENTS) echo 'CACHED_CLASSEMENTS = false<br />';
 if(AUTO_GROW) echo 'AUTO_GROW = true<br />';
 if(FISHING) echo 'AUTO_GROW = true<br />';
 if(ITEM_DROP > 10) echo 'ITEM_DROP = '. ITEM_DROP .'<br />';
@@ -57,3 +60,5 @@ if(AUTO_BREAK) echo 'AUTO_BREAK = true<br />';
 if(AUTO_FAIL) echo 'AUTO_FAIL = true<br />';
 
 echo '</div>';
+
+echo Str::minify(ob_get_clean());

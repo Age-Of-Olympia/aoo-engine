@@ -69,16 +69,30 @@ $(document).ready(function(){
 
 
 
-function insert_img(url){
+function insert_img(url) {
+    // Sélectionner l'élément textarea
+    var $textarea = $('textarea');
 
-    // will give the current position of the cursor
-    var curPos = $('textarea').selectionStart;
+    // Obtenir la position actuelle du curseur
+    var curPos = $textarea.prop('selectionStart');
 
-    // will get the value of the text area
-    let x= $('textarea').val();
+    // Obtenir la valeur actuelle de la zone de texte
+    var text = $textarea.val();
 
-    var text = '[img]'+url+'[/img]';
+    // Préparer le texte à insérer
+    var imgText = '[img]' + url + '[/img]';
 
-    // setting the updated value in the text area
-    $('textarea').val(x.slice(0,curPos)+text+x.slice(curPos));
+    // Insérer le texte à la position du curseur
+    var newText = text.slice(0, curPos) + imgText + text.slice(curPos);
+
+    // Mettre à jour la valeur de la zone de texte
+    $textarea.val(newText);
+
+    // Ajuster la position du curseur après l'insertion du texte
+    $textarea.prop('selectionStart', curPos + imgText.length);
+    $textarea.prop('selectionEnd', curPos + imgText.length);
+
+    // Mettre le focus sur la zone de texte
+    $textarea.focus();
 }
+

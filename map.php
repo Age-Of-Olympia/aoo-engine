@@ -11,6 +11,9 @@ $player->get_coords();
 $planJson = json()->decode('plans', $player->coords->plan);
 
 
+ob_start();
+
+
 // hors map
 if(!$planJson){
 
@@ -34,6 +37,9 @@ if(!$planJson){
 if(isset($_GET['local'])){
 
     include('scripts/map/local.php');
+
+    echo Str::minify(ob_get_clean());
+
     exit();
 }
 
@@ -45,81 +51,12 @@ if(isset($_GET['local'])){
 
 
 <script>
-$(document).ready(function(){
-
-
-    if(<?php echo (isset($_GET['allMap'])) ? 'true' : 'false' ?>){
-
-        $('.map').css('opacity', 1).data('opacity', 1).show().off('mouseover');
-        $('.text').delete();
-    }
-
-    $('.map[data-plan="<?php echo $player->coords->plan ?>"]').css('opacity', 1).data('opacity', 1);
-    $('.text[data-plan="<?php echo $player->coords->plan ?>"]').show();
-
-    $('[data-plan="<?php echo $player->coords->plan ?>"]').click(function(e){
-
-        document.location = 'map.php?local';
-    });
-
-
-    <?php include('scripts/map/travel.php') ?>
-
-
-    $('.map')
-    <?php
-
-    if(!empty($triggerId)){
-
-        ?>
-        .on('click', function(e){
-
-            if($(this).hasClass('blink')){
-
-
-                // war
-                if($(this).hasClass('colored-red')){
-
-
-                    alert('Ce territoire est en guerre: impossible de s\'y rendre.');
-
-                    return false;
-                }
-
-
-                if(confirm('Voyager jusqu\'à '+ $(this).data('name') +'?')){
-
-                    $.ajax({
-                        type: "POST",
-                        url: 'map.php?triggerId=<?php echo $triggerId ?>',
-                        data: {'goPlan':$(this).data('plan')}, // serializes the form's elements.
-                        success: function(data)
-                        {
-                            // alert(data);
-                            document.location = "index.php";
-                        }
-                    });
-                }
-            }
-        })
-        <?php
-    }
-    ?>
-    .on('mouseover', function(e){
-
-        window.old_opacity = $(this).data('opacity');
-
-        $(this).css('opacity','1');
-        $('.text[data-plan="'+ $(this).data('plan') +'"]').show();
-    })
-    .on('mouseout', function(e){
-
-        $(this).css('opacity',window.old_opacity);
-
-        if(window.old_opacity != 1){
-
-            $('.text[data-plan="'+ $(this).data('plan') +'"]').hide();
-        }
-    });
-});
+window.coordsPlan = "<?php echo $player->coords->plan ?>";
+window.allMap = <?php echo (isset($_GET['allMap'])) ? 'true' : 'false' ?>;
+window.triggerId = <?php echo (!empty($_GET['triggerId']) && is_numeric($_GET['triggerId'])) ? $_GET['triggerId'] : 'false' ?>;
+<?php include('scripts/map/travel.php') ?>
 </script>
+<script src="js/map.js"></script>
+<?php
+
+echo Str::minify(ob_get_clean());

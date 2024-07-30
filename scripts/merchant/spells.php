@@ -1,5 +1,6 @@
 <?php
 
+ob_start();
 
 $spellPrices = array(
     'dmg1'=>100,
@@ -154,6 +155,8 @@ foreach($raceJson->spells as $e){
 }
 
 echo '</table>';
+
+echo Str::minify(ob_get_clean());
 
 ?>
 <script>

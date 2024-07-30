@@ -2,6 +2,7 @@
 
 require_once('config.php');
 
+ob_start();
 
 // caracs trio
 $trio['pv'] = array(4,2,1);
@@ -192,35 +193,8 @@ echo $player->row->pi .' Points d\'investissement (Pi)';
 
 
 ?>
-<script>
-$(document).ready(function(){
-
-    $('.upgrade').click(function(e){
-
-        $('.upgrade').prop('disabled', true);
-
-        let carac = $(this).data('carac');
+<script src="js/upgrades.js"></script>
+<?php
 
 
-        if(!confirm('Augmenter '+ $(this).data('carac-name') +'?')){
-
-
-            $('.upgrade').prop('disabled', false);
-            return false;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: 'upgrades.php',
-            data: {'carac':carac}, // serializes the form's elements.
-            success: function(data)
-            {
-                // alert(data);
-
-                document.location.reload();
-            }
-        });
-    });
-});
-</script>
-
+echo Str::minify(ob_get_clean());

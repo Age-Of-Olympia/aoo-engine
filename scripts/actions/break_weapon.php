@@ -8,7 +8,7 @@ if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
 
     $corrupted = array();
 
-    $corruptions = ITEMS_CORRUPTIONS;
+    $corruptions = ITEM_CORRUPTIONS;
 
     $corruptBreackChance = ITEM_CORRUPT_BREAKCHANCES;
 

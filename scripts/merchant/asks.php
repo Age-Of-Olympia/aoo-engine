@@ -9,6 +9,9 @@ if(!empty($_POST['id']) && !empty($_POST['n'])){
 }
 
 
+ob_start();
+
+
 if(!empty($_GET['itemId'])){
 
 
@@ -64,7 +67,7 @@ echo $market->print_market('asks');
 
 ?>
 <div class="button-container">
-        <a href="merchant.php?targetId=<?php echo $target->id ?>&bids&newContract">
+        <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newContract">
             <button class="buy-button"><span class="ra ra-scroll-unfurled"></span> Nouvelle demande d'Achat</button>
         </a>
     </div>
@@ -80,4 +83,6 @@ echo $market->print_market('asks');
         </a>
     </div>
 </div>
+<?php
 
+echo Str::minify(ob_get_clean());

@@ -8,7 +8,6 @@ if(isset($_GET['resetPsw'])){
     exit();
 }
 
-
 echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.png" /></a>';
 
 echo '

@@ -25,7 +25,8 @@ else{
             <input type="button" value="Selectionner Fichier" onclick="file_explorer();" />
             <input type="file" id="selectfile" />
         </div>
-        <sup>Vous avez uploadé <?php echo $uploadedN ?>/<?php echo $uploadMax ?> images</sup>
+        <font size="2">Vous avez uploadé <?php echo $uploadedN ?>/<?php echo $uploadMax ?> images<br />Formats: .jpeg .jpg .gif .png .webp<br />
+        Les images non utilisées seront automatiquement supprimées.</font>
     </div>
     <div class="img-content"></div>
     <script src="js/upload_img.js"></script>

@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-$arr_file_types = ['image/png', 'image/gif', 'image/jpg', 'image/jpeg'];
+$arr_file_types = ['image/png', 'image/gif', 'image/jpg', 'image/jpeg', 'image/webp'];
 
 if (!(in_array($_FILES['file']['type'], $arr_file_types))) {
     echo "error: invalid file type";
@@ -26,10 +26,15 @@ if (!file_exists('img/ui/forum/uploads/' . $_SESSION['playerId'])) {
 $file_name = $_FILES['file']['name'];
 $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
 
-$filename = time();
+$filename = md5_file($_FILES['file']['tmp_name']);
 
-if (move_uploaded_file($_FILES['file']['tmp_name'], 'img/ui/forum/uploads/' . $_SESSION['playerId'] . '/' . $filename . '.' . $file_extension)) {
-    echo 'img/ui/forum/uploads/' . $_SESSION['playerId'] . '/' . $filename . '.' . $file_extension;
+$finalPath = 'img/ui/forum/uploads/' . $_SESSION['playerId'] . '/' . $filename . '.' . $file_extension;
+
+if(file_exists($finalPath)){
+    echo $finalPath;
+}
+elseif (move_uploaded_file($_FILES['file']['tmp_name'], $finalPath)) {
+    echo $finalPath;
 } else {
     echo "error: file upload failed";
 }

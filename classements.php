@@ -134,7 +134,7 @@ usort($list, 'compareByXp');
 
 $path = 'datas/public/classements/general.html';
 
-if(file_exists($path)){
+if(file_exists($path) && CACHED_CLASSEMENTS){
 
 
     echo file_get_contents($path);

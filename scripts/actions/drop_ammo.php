@@ -10,7 +10,7 @@ if(!empty($actionJson->useEmplacement)){
 
         $munition->add_item($player, -1);
 
-        echo 'Perdu: '. $munition->data->name .'';
+        echo '<div>Perdu: '. $munition->data->name .'.</div>';
     }
 
 

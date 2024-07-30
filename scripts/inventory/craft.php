@@ -5,6 +5,7 @@
 $player = new Player($_SESSION['playerId']);
 $player->get_data();
 
+ob_start();
 
 // recette json
 $json = new Json();
@@ -374,6 +375,7 @@ echo '
 </div>
 ';
 
+echo Str::minify(ob_get_clean());
 
 ?>
 <script src="js/progressive_loader.js"></script>
@@ -388,13 +390,13 @@ echo '
 
     $.ajax({
         type: "POST",
-        url: 'craft.php?item=<?php echo $_GET['item'] ?>',
+        url: 'inventory.php?craft&itemId=<?php echo $_GET['itemId'] ?>',
         data: {'create':artName, 'option':option},
         success: function(data)
         {
 
         alert('Artisanat effectué.');
-        alert(data);
+        // alert(data);
         location.reload();
         }
     });

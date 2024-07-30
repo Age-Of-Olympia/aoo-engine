@@ -103,7 +103,7 @@ else{
 
     $options = array(
         'name'=>$player->data->name,
-        'avatar'=>'img/dialogs/bg/'. $target->id .'.jpeg',
+        'avatar'=>'img/dialogs/bg/'. $target->id .'.webp',
         'dialog'=>'marchand',
         'text'=>'',
         'player'=>$player,

@@ -78,7 +78,7 @@ class Item{
 
 
         // enougth?
-        if($n < 0 && $this->get_n($player) + $n < 0){
+        if($n < 0 && $this->get_n($player, $bank) + $n < 0){
 
             // not enougth
             return false;

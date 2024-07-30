@@ -628,7 +628,7 @@ class View{
         ';
 
 
-        return ob_get_clean();
+        return Str::minify(ob_get_clean());
     }
 
 

@@ -180,7 +180,7 @@ class Dialog{
         echo $this->get_node($node);
 
 
-        return ob_get_clean();
+        return Str::minify(ob_get_clean());
     }
 
 

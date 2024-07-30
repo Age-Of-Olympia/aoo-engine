@@ -28,7 +28,7 @@ if($player->data->fatigue){
 
     // echo '<div class="action-details">'. $fat .' Fatigues enlevées.</div>';
 
-    echo $fat .' Fatigues enlevées.';
+    echo $fat .' Fatigues enlevées. ';
 }
 
 
