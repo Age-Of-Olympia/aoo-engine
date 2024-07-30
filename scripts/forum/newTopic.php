@@ -103,7 +103,15 @@ echo '
     class="box-shadow tr-topic1"
      style="width: 100%"
     rows="20"
-    >'. $msg .'</textarea>
+    ';
+
+    echo Str::minify(ob_get_clean());
+
+    echo '>'. $msg .'</textarea>';
+
+    ob_start();
+
+    echo '
 </div>
 ';
 

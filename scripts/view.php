@@ -12,7 +12,6 @@ if(!empty($_SESSION['playerId'])){
 
     $msgUrl = 'datas/private/players/'. $_SESSION['playerId'] .'.msg.html';
 
-
     if(file_exists($msgUrl)){
 
         $data = file_get_contents($msgUrl);
@@ -22,7 +21,6 @@ if(!empty($_SESSION['playerId'])){
 
 
     $svgUrl = 'datas/private/players/'. $_SESSION['playerId'] .'.svg';
-
 
     if(!file_exists($svgUrl)){
 
@@ -59,8 +57,6 @@ if(!empty($_SESSION['playerId'])){
         fclose($myfile);
 
         echo $data;
-
-        echo '<!--sup>La vue a été rafraîchie!</sup-->';
     }
 
     else{

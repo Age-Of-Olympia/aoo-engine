@@ -79,7 +79,15 @@ echo '
     style="width: 100%;"
 
     rows="20"
-    >'. $postJson->text .'</textarea>
+    ';
+
+    echo Str::minify(ob_get_clean());
+
+    echo '>'. $postJson->text .'</textarea>';
+
+    ob_start();
+
+    echo '
 </div>
 ';
 

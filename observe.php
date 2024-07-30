@@ -518,12 +518,13 @@ else{
 
             $paramsTbl[] = $paramsTbl[0];
             $paramsTbl[] = $paramsTbl[0];
+            $paramsTbl[] = $paramsTbl[0];
         }
 
 
         $options = array(
         'name'=>$paramsTbl[0],
-        'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.jpeg',
+        'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.webp',
         'dialog'=>$paramsTbl[2],
         'text'=>''
         );

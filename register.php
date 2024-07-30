@@ -109,6 +109,14 @@ if(!empty($_POST['race'])){
         Player::refresh_list();
 
 
+        // welcome missive
+        $sql = 'SELECT name FROM players_forum_missives WHERE player_id = 1 ORDER BY name LIMIT 1';
+        $res = $db->exe($sql);
+        $row = $res->fetch_object();
+        $values = array('player_id'=>$player->id, 'name'=>$row->name);
+        $db->insert('players_forum_missives', $values);
+
+
         // landing welcome msg
         $data = file_get_contents('datas/private/players/welcome.msg.html');
 
@@ -286,7 +294,7 @@ $player = new Player(1);
 
 $options = array(
     'name'=>'Gaïa',
-    'avatar'=>'img/dialogs/bg/gaia.jpeg',
+    'avatar'=>'img/dialogs/bg/gaia.webp',
     'dialog'=>'register',
     'text'=>''
 );

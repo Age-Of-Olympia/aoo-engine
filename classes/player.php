@@ -572,6 +572,8 @@ class Player{
             UNION
             SELECT coords_id FROM map_tiles
             UNION
+            SELECT coords_id FROM map_foregrounds
+            UNION
             SELECT coords_id FROM map_triggers
             UNION
             SELECT coords_id FROM map_walls

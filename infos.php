@@ -29,6 +29,7 @@ if(isset($_GET['reputation'])){
 
 $ui = new Ui($target->data->name);
 
+ob_start();
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
@@ -235,31 +236,7 @@ echo '
 </table>
 ';
 
+echo Str::minify(ob_get_clean());
+
 ?>
-<script>
-$(document).ready(function(){
-
-    var $previewImg = $(".preview-img img");
-
-    $('.infos-item').click(function(e){
-
-
-        $('#infos-player').hide();
-        $('#preview-item').hide().fadeIn();
-
-
-        $('#preview-item').find('h1').html($(this).data('name'));
-        $('#preview-item .preview-text').html($(this).data('text'));
-
-        preload($(this).data('img'), $previewImg);
-    });
-
-
-    $('.infos-portrait').click(function(e){
-
-
-        $('#preview-item').hide();
-        $('#infos-player').fadeIn();
-    });
-});
-</script>
+<script src="js/infos.js"></script>

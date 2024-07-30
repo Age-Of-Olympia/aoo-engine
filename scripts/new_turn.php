@@ -22,6 +22,40 @@ if(!empty($_SESSION['playerId'])){
             echo '<h1><font color="red">Nouveau Tour</font></h1>';
 
 
+            echo '<a href="index.php"><img class="box-shadow" src="img/ui/illustrations/sunset.webp" /></a>';
+
+            $player->get_caracs();
+
+
+            // player turn
+            $playerTurn = 86400 - (($player->caracs->spd-10)*3600);
+
+
+
+            // NO dlag
+            if( !$player->have_option('dlag') ){
+
+
+                $nextTurnTime = $player->data->nextTurnTime + $playerTurn;
+            }
+
+            // DLAG
+            else{
+
+
+                $nextTurnTime = time() + $playerTurn;
+            }
+
+
+            // adjust time
+            while( $nextTurnTime <= time() ){
+
+                $nextTurnTime += 86400 - (($player->caracs->spd-10)*3600);
+            }
+
+            echo '<br />Prochain Tour</td><td>le '. date('d/m/Y à h:i', $nextTurnTime) .'.';
+
+
             // end effects
             foreach(EFFECTS_HIDDEN as $e){
 
@@ -38,40 +72,9 @@ if(!empty($_SESSION['playerId'])){
 
 
             echo '
-            <table border="1" align="center" class="marbre">
-                ';
+            <table border="1" align="center" class="marbre">';
 
-
-                $player->get_caracs();
-
-
-                // player turn
-                $playerTurn = 86400 - (($player->caracs->spd-10)*3600);
-
-
-
-                // NO dlag
-                if( !$player->have_option('dlag') ){
-
-
-                    $nextTurnTime = $player->data->nextTurnTime + $playerTurn;
-                }
-
-                // DLAG
-                else{
-
-
-                    $nextTurnTime = time() + $playerTurn;
-                }
-
-
-                // adjust time
-                while( $nextTurnTime <= time() ){
-
-                    $nextTurnTime += 86400 - (($player->caracs->spd-10)*3600);
-                }
-
-                echo '<tr><td>Prochain Tour</td><td>le '. date('d/m/Y à h:i', $nextTurnTime) .'</td></tr>';
+                // echo '<tr><td></td></tr>';
 
 
                 // gain xp
@@ -149,7 +152,7 @@ if(!empty($_SESSION['playerId'])){
                 // Kepp fractional mouv for next turn
                 $mvtToKeep = ($mvtLeft == 0.5) ? 0.5 : 0;
 
-                echo '<tr><td>Mouvements conservés</td><td>+ '. $mvtToKeep .'</td></tr>';
+                echo '<tr><td>Bonus Mvt</td><td>+ '. $mvtToKeep .'</td></tr>';
 
 
                 // recover Ae, A, Mvt
@@ -171,11 +174,9 @@ if(!empty($_SESSION['playerId'])){
                 }
 
 
-                echo '
-            </table>
-            ';
+                echo '</table>';
 
-            echo '<a href="index.php"><button>Jouer</button></a>';
+            echo '<br /><a href="index.php"><button>Jouer</button></a>';
 
 
             // update

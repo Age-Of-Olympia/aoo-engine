@@ -286,6 +286,7 @@ define('AUTO_GROW', true); // si true, les plantes poussent dès qu'on les met e
 define('FISHING', false); // si true, les players pêchent constemment
 define('CACHED_INVENT', false); // si false, l'inventaire n'est pas cached
 define('CACHED_KILLS', false); // si false, infos>kills n'est pas cached
+define('CACHED_QUESTS', false); // si false, logs>quests n'est pas cached
 define('CACHED_CLASSEMENTS', false); // si false, classemens.php n'est pas cached
 define('AUTO_BREAK', true); // si true, l'équipement casse (100% de chance)
 define('AUTO_FAIL', false); // si true, les attaques ratent forcément

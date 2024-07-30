@@ -84,7 +84,15 @@ echo '
     style="width: 100%;"
 
     rows="20"
-    >'. $autoSave .'</textarea>
+    ';
+
+    echo Str::minify(ob_get_clean());
+
+    echo '>'. $autosave .'</textarea>';
+
+    ob_start();
+
+    echo '
 </div>
 ';
 

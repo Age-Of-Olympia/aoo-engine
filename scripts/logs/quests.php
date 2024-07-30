@@ -6,7 +6,7 @@ echo '<h1>Quêtes</h1>';
 $path = 'datas/private/players/'. $_SESSION['playerId'] .'.quests.html';
 
 
-if(!file_exists($path)){
+if(!file_exists($path) || !CACHED_QUESTS){
 
     ob_start();
 
@@ -36,9 +36,9 @@ if(!file_exists($path)){
 
         $style = ($pageN == 1) ? '' : 'style="display: none"';
 
-        $imgPath = 'img/quests/'. $row->name .'.png';
+        $imgPath = 'img/quests/'. $row->name .'.webp';
 
-        $img = (file_exists($imgPath)) ? $imgPath : 'img/quests/default.png';
+        $img = (file_exists($imgPath)) ? $imgPath : 'img/quests/default.webp';
 
         $status = ($row->status == 'pending') ? 'En cours' : 'Terminée';
 

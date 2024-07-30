@@ -15,7 +15,7 @@ $ui = new Ui('Init');
 if(!isset($_GET['perform'])){
 
 
-    echo '<a href="init.php?perform"><button>(re)init</button></a>';
+    echo '<a href="tools.php?init&perform"><button>(re)init</button></a>';
 
     exit();
 }

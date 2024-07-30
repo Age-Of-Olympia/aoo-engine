@@ -52,6 +52,7 @@ echo '<div style="color: red;">';
 if(!CACHED_INVENT) echo 'CACHED_INVENT = false<br />';
 if(!CACHED_KILLS) echo 'CACHED_KILLS = false<br />';
 if(!CACHED_CLASSEMENTS) echo 'CACHED_CLASSEMENTS = false<br />';
+if(!CACHED_QUESTS) echo 'CACHED_QUESTS = false<br />';
 if(AUTO_GROW) echo 'AUTO_GROW = true<br />';
 if(FISHING) echo 'AUTO_GROW = true<br />';
 if(ITEM_DROP > 10) echo 'ITEM_DROP = '. ITEM_DROP .'<br />';

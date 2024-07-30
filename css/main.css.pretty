@@ -441,6 +441,7 @@ img {
     position: absolute;
     top: 100px;
     width: 500px;
+    z-index: 100;
 }
 
 #view-landing-msg{
@@ -465,7 +466,7 @@ img {
 
         float: right;
         width: 100px;
-        height: 100px;
+        height: 127px;
         margin-top: 25px;
         background: url('../img/ui/bg/admins.webp');
     }
