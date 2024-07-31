@@ -2,7 +2,7 @@
 
 
 // first spawn : change avatar
-if($player->coords->plan == 'gaia'){
+if($player->coords->plan == 'gaia2'){
 
 
     $item = Item::get_item_by_name('or');

@@ -313,7 +313,7 @@ CREATE TABLE `players` (
   `fatigue` int(11) NOT NULL DEFAULT 0,
   `godId` int(11) NOT NULL DEFAULT 0,
   `pf` int(11) NOT NULL DEFAULT 0,
-  `rank` int(11) NOT NULL DEFAULT 0,
+  `rank` int(11) NOT NULL DEFAULT 1,
   `avatar` varchar(255) NOT NULL DEFAULT '',
   `portrait` varchar(255) NOT NULL DEFAULT '',
   `text` text NOT NULL DEFAULT 'Je suis nouveau, frappez-moi!',

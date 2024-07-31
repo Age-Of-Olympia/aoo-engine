@@ -6,7 +6,7 @@ $ui = new Ui('json edit tool');
 
 if(!isset($_GET['dir']) || !isset($_GET['subDir']) || !isset($_GET['finalDir'])){
 
-    exit('error missing dirs or private');
+    exit('use cmd: "edit [file] [private]"<br />ie: "edit items/adonis"<br />or: "edit plans/faille_naine private"');
 }
 
 

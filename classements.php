@@ -132,6 +132,13 @@ function compareByXp($a, $b) {
 usort($list, 'compareByXp');
 
 
+// enlever les pnj
+foreach($list as $k=>$e){
+    if($e->id < 0)
+        unset($list[$k]);
+}
+
+
 $path = 'datas/public/classements/general.html';
 
 if(file_exists($path) && CACHED_CLASSEMENTS){
@@ -156,9 +163,16 @@ else{
     echo $data;
 
 
+    foreach($list as $e){
+
+        $first = $e;
+        break;
+    }
+
+
     $data = '
     ~'. count($list) .' joueurs actifs<br />
-    <a href="infos.php?targetId='. $list[0]->id .'">'. $list[0]->name .'</a> domine le <a href="classements.php">classement</a>!
+    <a href="infos.php?targetId='. $first->id .'">'. $first->name .'</a> domine le <a href="classements.php">classement</a>!
     ';
 
     $path = 'datas/public/classements/stats.html';

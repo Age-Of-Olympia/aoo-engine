@@ -36,6 +36,12 @@ if(!file_exists($path) || !CACHED_INVENT){
 
     $data = Ui::print_inventory($itemList);
 
+    $data .= '
+    <script>
+    window.freeEmp = '. Item::get_free_emplacement($player) .';
+    </script>
+    ';
+
     $myfile = fopen($path, "w") or die("Unable to open file!");
     fwrite($myfile, $data);
     fclose($myfile);
@@ -50,7 +56,4 @@ echo $data;
 
 ?>
 <script src="js/progressive_loader.js"></script>
-<script>
-window.freeEmp = <?php echo Item::get_free_emplacement($player) ?>;
-</script>
 <script src="js/inventory.js"></script>

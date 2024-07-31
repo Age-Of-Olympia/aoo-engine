@@ -57,12 +57,22 @@ function array_keys_recursive($array) {
 echo '<textarea style="width: 100%; height: 100%">';
 
 
-foreach(array('plans','players') as $e){
+foreach(array('plans','players','dialogs','races') as $e){
 
 
 
     // Appel de la fonction avec le répertoire courant
     getAllJsonKeys('./datas/private/'. $e .'/');
+
+    echo "\n";
+}
+
+foreach(array('items','actions','factions',) as $e){
+
+
+
+    // Appel de la fonction avec le répertoire courant
+    getAllJsonKeys('./datas/public/'. $e .'/');
 
     echo "\n";
 }
