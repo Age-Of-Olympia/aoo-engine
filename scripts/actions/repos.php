@@ -69,4 +69,15 @@ $values = array(
     'n'=>-1
 );
 
-$db->insert('players_bonus', $values);
+// $db->insert('players_bonus', $values);
+
+$sql = '
+INSERT INTO
+players_bonus
+(`player_id`,`name`,`n`)
+VALUES(?,?,?)
+ON DUPLICATE KEY UPDATE
+n = n + VALUES(n);
+';
+
+$db->exe($sql, array($player->id, 'a', -1));
