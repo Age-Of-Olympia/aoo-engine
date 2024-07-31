@@ -27,8 +27,12 @@ FROM
 items
 ';
 
+// echo $sql;
 
 $db->exe($sql, $player->id);
+
+
+$player->refresh_invent();
 
 
 echo 'done!';
