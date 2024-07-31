@@ -4,7 +4,7 @@
 $raceJson = json()->decode('races', $player->data->race);
 
 
-$player->end_action('attaquer_tuto');
+$player->end_action('tuto/attaquer');
 
 
 foreach($raceJson->actions as $e){
