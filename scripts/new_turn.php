@@ -53,7 +53,7 @@ if(!empty($_SESSION['playerId'])){
                 $nextTurnTime += 86400 - (($player->caracs->spd-10)*3600);
             }
 
-            echo '<br />Prochain Tour</td><td> le '. date('d/m/Y à h:i', $nextTurnTime) .'.';
+            echo '<br />Prochain Tour le '. date('d/m/Y à h:i', $nextTurnTime) .'.';
 
 
             // end effects

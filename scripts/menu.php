@@ -98,7 +98,12 @@ if(!empty($_SESSION['playerId'])){
 
             $('#caracs-menu-landing').hide();
 
-            $('#caracs-menu').fadeIn();
+            if($('#caracs-menu').is(':hidden')){
+                $('#caracs-menu').fadeIn();
+            }
+            else{
+                $('#caracs-menu').hide();
+            }
         });
 
 
