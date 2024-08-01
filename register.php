@@ -26,6 +26,10 @@ if(!empty($_POST['race'])){
             exit('error race');
         }
 
+
+        $raceNTblFormat = Dialog::get_race_n();
+
+
         if($_POST['psw1'] != $_POST['psw2']){
 
             exit('error psw');
@@ -104,6 +108,14 @@ if(!empty($_POST['race'])){
         ';
 
         $db->exe($sql, array($hashedPsw, $hashedMail, $player->id));
+
+
+        // add bonus gold
+        if( strpos( $raceNTblFormat[$player->data->race], '+20Po' ) !== false) {
+
+            $gold = new Item(1);
+            $gold->add_item($player, 20);
+        }
 
 
         Player::refresh_list();
