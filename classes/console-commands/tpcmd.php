@@ -86,6 +86,8 @@ EOT);
 
             $player->go($coords);
 
+            $player->refresh_view();
+
             echo 'tp '. $player->data->name .' to '. $goX .','. $goY .','. $goZ .','. $plan .'<br />';
         }
 
