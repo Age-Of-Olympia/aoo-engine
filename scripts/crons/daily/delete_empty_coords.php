@@ -1,0 +1,29 @@
+<?php
+
+// delete empty coords (except #1)
+$sql = '
+DELETE FROM
+coords
+WHERE
+id NOT IN (
+SELECT coords_id FROM players
+UNION
+SELECT coords_id FROM map_elements
+UNION
+SELECT coords_id FROM map_tiles
+UNION
+SELECT coords_id FROM map_foregrounds
+UNION
+SELECT coords_id FROM map_triggers
+UNION
+SELECT coords_id FROM map_walls
+UNION
+SELECT coords_id FROM map_dialogs
+UNION
+SELECT coords_id FROM map_plants
+)
+AND
+id != 1
+';
+
+$db->exe($sql);
