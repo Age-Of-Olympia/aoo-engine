@@ -90,7 +90,8 @@ $(document).ready(function(){
         var coords = $(this).data('coords');
 
         $('#go-rect').off('click');
-        $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});
+        $('#go-img').attr('href', 'img/ui/view/gear.webp');
+        // $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});
 
         $.ajax({
             type: "POST",
