@@ -12,7 +12,7 @@ function compareByPr($a, $b) {
 
 $path = 'datas/public/classements/reputation.html';
 
-if(file_exists($path)){
+if(file_exists($path) && CACHED_CLASSEMENTS){
 
 
     echo file_get_contents($path);

@@ -6,7 +6,7 @@ echo '<h1>Classement des Fortunes</h1>';
 
 $path = 'datas/public/classements/fortunes.html';
 
-if(file_exists($path)){
+if(file_exists($path) && CACHED_CLASSEMENTS){
 
 
     echo file_get_contents($path);
