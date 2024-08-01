@@ -57,6 +57,8 @@ echo '
             </tr>
             </table>
 
+            <button style="display: none" class="submit"></button>
+
             <a href="index.php" action="submit" class="index-button">Login</a>
         </form>
     </div>
@@ -66,6 +68,13 @@ echo '
     <script>
     $(document).ready(function(){
 
+
+        $('#login').submit(function(e){
+
+            e.preventDefault();
+
+            $('[action="submit"]').click();
+        });
 
         $('[action="submit"]').click(function(e) {
 
