@@ -102,11 +102,11 @@ class View{
 
         if($this->coords->z < 0){
 
-            $tile = 'img/tiles/underground.png';
+            $tile = 'img/tiles/underground.webp';
         }
         elseif($this->coords->z > 0){
 
-            $tile = 'img/tiles/sky.png';
+            $tile = 'img/tiles/sky.webp';
         }
 
 
@@ -559,7 +559,7 @@ class View{
                 x="50"
                 y="30"
 
-                style="opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg);"
+                style="opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg); z-index: 100;"
                 class="blink"
                 href="img/ui/view/arrow.webp"
                 />
@@ -569,7 +569,7 @@ class View{
         </svg>
         ';
 
-        if(!empty($planJson->mask)){
+        if(!empty($planJson->mask) && $this->coords->z >= 0){
 
 
             if(!empty($planJson->scrollingMask)){
