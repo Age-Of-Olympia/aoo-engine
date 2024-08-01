@@ -88,7 +88,7 @@ echo '
 
     echo Str::minify(ob_get_clean());
 
-    echo '>'. $autosave .'</textarea>';
+    echo '>'. $autoSave .'</textarea>';
 
     ob_start();
 
