@@ -35,6 +35,8 @@ else{
     players_items_bank
     WHERE
     item_id = 1
+    AND
+    player_id > 0
     ';
 
     $res = $db->exe($sql);

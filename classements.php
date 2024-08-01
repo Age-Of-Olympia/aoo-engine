@@ -91,6 +91,11 @@ if(!$list){
     @unlink('datas/public/classements/fortunes.html');
 }
 
+// enlever les pnj
+foreach($list as $k=>$e){
+    if($e->id < 0)
+        unset($list[$k]);
+}
 
 $ui = new Ui('Classements des joueurs');
 
@@ -130,13 +135,6 @@ function compareByXp($a, $b) {
 
 // Trier le tableau en utilisant la fonction de comparaison
 usort($list, 'compareByXp');
-
-
-// enlever les pnj
-foreach($list as $k=>$e){
-    if($e->id < 0)
-        unset($list[$k]);
-}
 
 
 $path = 'datas/public/classements/general.html';
