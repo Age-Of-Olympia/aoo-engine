@@ -217,6 +217,8 @@ foreach($recipeList as $recipe){
 
     $artName = $recipe->name;
 
+    $artId = $recipe->id;
+
     // print
     echo '
         <tr>
@@ -263,8 +265,11 @@ foreach($recipeList as $recipe){
         // crafting
         if(!empty($_POST['create'])){
 
+
+            ob_start();
+
             // this item
-            if($_POST['create'] == $artName){
+            if($_POST['create'] == $artId){
 
                 // create art if complete
                 if($artComplete){
@@ -328,6 +333,7 @@ foreach($recipeList as $recipe){
 
                     // log
 
+                    echo ob_get_clean();
 
                     exit();
                 }
@@ -335,7 +341,11 @@ foreach($recipeList as $recipe){
                 break;
             }
 
+
+            echo ob_get_clean();
+
             continue;
+
         }
     }
 
@@ -347,7 +357,7 @@ foreach($recipeList as $recipe){
 
         echo '
                 <td valign="top">
-                    <input type="button" value="Créer" item="'. $artItem->data->name .'" style="width: 100%; height: 50px;" />
+                    <input type="button" value="Créer" itemId="'. $artId .'" style="width: 100%; height: 50px;" />
                 </td>
                 ';
     }
@@ -382,16 +392,14 @@ echo Str::minify(ob_get_clean());
 <script>
     $('input[type="button"]').click(function(e){
 
-    var artName = $(this).attr('item');
-
-    var option = $('select[item="'+artName+'"]').val();
+    var artId = $(this).attr('itemId');
 
     $(this).attr('disabled', true);
 
     $.ajax({
         type: "POST",
         url: 'inventory.php?craft&itemId=<?php echo $_GET['itemId'] ?>',
-        data: {'create':artName, 'option':option},
+        data: {'create':artId},
         success: function(data)
         {
 
