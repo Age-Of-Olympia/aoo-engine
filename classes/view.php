@@ -308,7 +308,7 @@ class View{
 
                         else{
 
-                            $style = 'fill: transparent; stroke-width: 1; stroke: '. $raceJson->bgColor;
+                            $style = 'fill: transparent; stroke-width: 5; stroke: '. $raceJson->bgColor;
                         }
 
 
