@@ -8,10 +8,23 @@ $item = new Item($_POST['itemId']);
 $item->get_data();
 
 
+$text = $player->data->name .' a utilisé '. $item->data->name .'.';
+
+
 if(!empty($item->data->emplacement)){
 
 
-    $player->equip($item);
+    $return = $player->equip($item);
+
+    if($return == 'equip'){
+
+        $text = $player->data->name .' a équipé '. $item->data->name .'.';
+    }
+
+    elseif($return == 'unequip'){
+
+        $text = $player->data->name .' a déséquipé '. $item->data->name .'.';
+    }
 }
 
 elseif($item->row->spell != ''){
@@ -33,9 +46,10 @@ elseif($item->row->spell != ''){
     }
 
     $player->add_action($item->row->spell, $charges);
+
+
+    $text = $player->data->name .' a lu '. $item->data->name .'.';
 }
 
-
-$text = $player->data->name .' a utilisé '. $item->data->name .'.';
 
 Log::put($player, $player, $text, $type='use');

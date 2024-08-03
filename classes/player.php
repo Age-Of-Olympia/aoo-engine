@@ -1145,6 +1145,8 @@ class Player{
 
                 $this->refresh_view();
             }
+
+            $return = 'unequip';
         }
 
 
@@ -1209,6 +1211,8 @@ class Player{
                     $this->equip($munition);
                 }
             }
+
+            $return = 'equip';
         }
 
 
@@ -1221,6 +1225,8 @@ class Player{
             $this->refresh_caracs();
             $this->refresh_view();
         }
+
+        return $return;
     }
 
 
