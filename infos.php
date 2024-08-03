@@ -182,49 +182,60 @@ echo '
         echo '
     </td>
 </tr>
-<tr>
-    <td colspan="2">
-        ';
-
-        echo '
-        <table align="center" border="1" class="marbre" cellspacing="0">
-            <tr>
-                ';
-
-                $itemList = Item::get_equiped_list($target);
-
-                foreach($itemList as $row){
+';
 
 
-                    $item = new Item($row->id, $row);
-                    $item->get_data();
+if($player->coords->plan == $target->coords->plan){
 
 
-                    $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
+    echo '
+    <tr>
+        <td colspan="2">
+            ';
 
-                    $type = (!empty($item->data->type)) ? $item->data->type : '';
+            echo '
+            <table align="center" border="1" class="marbre" cellspacing="0">
+                <tr>
+                    ';
+
+                    $itemList = Item::get_equiped_list($target);
+
+                    foreach($itemList as $row){
 
 
-                        echo '<td><img
-                            class="infos-item"
-                            data-id="'. $row->id .'"
-                            data-name="'. $itemName .'"
-                            data-n="'. $row->n .'"
-                            data-text="'. $item->data->text .'"
-                            data-price="'. $item->data->price .'"
-                            data-type="'. $type .'"
-                            data-img="img/items/'. $item->row->name .'.png"
-                            src="'. $item->data->mini .'" /></td>';
-                }
+                        $item = new Item($row->id, $row);
+                        $item->get_data();
 
-                echo '
-            </tr>
-        </table>
-        ';
 
-        echo '
-    </td>
-</tr>
+                        $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
+
+                        $type = (!empty($item->data->type)) ? $item->data->type : '';
+
+
+                            echo '<td><img
+                                class="infos-item"
+                                data-id="'. $row->id .'"
+                                data-name="'. $itemName .'"
+                                data-n="'. $row->n .'"
+                                data-text="'. $item->data->text .'"
+                                data-price="'. $item->data->price .'"
+                                data-type="'. $type .'"
+                                data-img="img/items/'. $item->row->name .'.png"
+                                src="'. $item->data->mini .'" /></td>';
+                    }
+
+                    echo '
+                </tr>
+            </table>
+            ';
+
+            echo '
+        </td>
+    </tr>
+    ';
+}
+
+echo '
 <tr>
     <td colspan="2" align="left">
 
