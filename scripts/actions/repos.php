@@ -54,6 +54,22 @@ if($count){
 
     // echo '<div class="action-details">'. $count .' effets terminés.</div>';
 
+    $effects = '';
+
+    foreach($player->get_effects() as $e){
+
+
+        if(in_array($e, EFFECTS_HIDDEN)){
+
+            continue;
+        }
+
+        $effects .= ' <a href="infos.php?targetId='. $player->id .'"><span class="ra '. EFFECTS_RA_FONT[$e] .'"></span></a>';
+    }
+
+    echo '<script>$(".effects").html("'. $effects .'");</script>';
+
+
     echo $count .' effets terminés.';
 }
 
