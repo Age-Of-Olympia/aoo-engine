@@ -51,9 +51,9 @@ class Item{
         }
 
 
-        $itemJson->img = (!empty($itemJson->img)) ? $itemJson->img : 'img/items/'. $this->row->name .'.png';
+        $itemJson->img = (!empty($itemJson->img)) ? $itemJson->img : 'img/items/'. $this->row->name .'.webp';
 
-        $itemJson->mini = (!empty($itemJson->mini)) ? $itemJson->mini : 'img/items/'. $this->row->name .'_mini.png';
+        $itemJson->mini = (!empty($itemJson->mini)) ? $itemJson->mini : 'img/items/'. $this->row->name .'_mini.webp';
 
         $itemJson->name = ucfirst($itemJson->name);
 

@@ -183,6 +183,7 @@ class ui{
         <div class="inventory-container">
             ';
 
+
         echo '
             <div class="inventory-preview">
 
@@ -190,7 +191,7 @@ class ui{
 
                 <div class="preview-img">
                     <img
-                        src="img/items/'. $defaultItem->row->name .'.png"
+                        src="img/items/'. $defaultItem->row->name .'.webp"
                         data-filler="img/ui/fillers/150.png"
                         width="150"
                         height="150"
@@ -258,14 +259,14 @@ class ui{
                 data-text="'. $item->data->text .'"
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
-                data-img="img/items/'. $item->row->name .'.png"
+                data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
                     <div>
                         <img
                             src="img/ui/fillers/50.png"
                             height="50"
-                            data-src="img/items/'. $row->name .'_mini.png"
+                            data-src="img/items/'. $row->name .'_mini.webp"
                         />
                     </div>
                 </td>
