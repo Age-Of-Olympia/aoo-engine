@@ -187,7 +187,7 @@ $(document).ready(function(){
             success: function(data)
             {
                 // alert(data);
-                document.location='tools.php?tiled&selectedTool='+$selected.data('name');
+                document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
             }
         });
     });
@@ -265,6 +265,16 @@ $(document).ready(function(){
                     top: e.pageY - 25+'px'
                 });
             });
+
+
+            var $paramsField = $('#' + $(this).data('type') + '-params');
+
+            if($paramsField != null){
+
+                let selectedParams = getParameterByName('selectedParams');
+
+                $paramsField.val(selectedParams);
+            }
       });
     }
 
