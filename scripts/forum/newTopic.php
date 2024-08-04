@@ -34,6 +34,24 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
         $values = array('player_id'=>$player->id, 'name'=>time());
 
         $db->insert('players_forum_missives', $values);
+
+
+        if(!empty($_POST['destId'])){
+
+
+            $target = new Player($_POST['destId']);
+
+            if($player->check_missive_permission($target)){
+
+
+                $values = array(
+                    'player_id'=>$target->id,
+                    'name'=>$topJson->name
+                );
+
+                $db->insert('players_forum_missives', $values);
+            }
+        }
     }
 
     else{
@@ -76,7 +94,32 @@ if(!empty($forumJson->factions)){
 }
 
 
-echo '<h2>Nouveau sujet</h2>';
+if($forumJson->name == 'Missives'){
+
+
+    $title = '<h2>Nouvelle Missive</h2>';
+
+    if(!empty($_GET['targetId'])){
+
+
+        $target = new Player($_GET['targetId']);
+
+        if($player->check_missive_permission($target)){
+
+
+            $title = '<h2>Nouvelle Missive à '. $target->data->name .'</h2>';
+
+            echo '<input type="hidden" id="dest" value="'. $target->id .'" />';
+        }
+    }
+
+    echo $title;
+}
+
+else{
+
+    echo '<h2>Nouveau Sujet</h2>';
+}
 
 
 $autosave = Forum::get_autosave($player);

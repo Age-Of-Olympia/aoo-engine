@@ -1456,6 +1456,44 @@ class Player{
     }
 
 
+    public function check_missive_permission($target){
+
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+        if(!isset($target->data)){
+
+            $target->get_data();
+        }
+
+
+        if(
+            $this->id != $target->id
+            &&
+            (
+                (
+                    $target->data->faction == $this->data->faction
+                    ||
+                    $target->data->secretFaction == $this->data->secretFaction
+                )
+                ||
+                $this->have_option('isAdmin')
+                ||
+                $target->have_option('isAdmin')
+            )
+        ){
+
+            return true;
+        }
+
+
+        return false;
+    }
+
+
     /*
      * STATIC FUNCTIONS
      */

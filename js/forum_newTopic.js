@@ -46,12 +46,23 @@ $(document).ready(function(e){
         var forum = $(this).data('forum');
 
 
+        var destId = 0;
+
+        var $destField = $('#dest');
+
+        if($destField != null){
+
+            destId = $destField.val();
+        }
+
+
         $.ajax({
             type: "POST",
             url: 'forum.php?newTopic='+ forum,
             data: {
                 'text': text,
-                'name': name
+                'name': name,
+                'destId': destId
             }, // serializes the form's elements.
             success: function(data)
             {
