@@ -34,8 +34,8 @@ EOT);
 
         $player->get_data();
 
-        if($action == 'create'){
-            return create_player($argumentValues);
+        if($action == 'unequip'){
+            return unequip_player($argumentValues, $player);
         }
 
         if($action == 'msg'){
@@ -179,6 +179,41 @@ function msg_player($argumentValues, $player){
     File::write($path, $data);
 
     return $player->data->name .' new landing msg:<br />'. htmlentities($data);
+}
+
+function unequip_player($argumentValues, $player){
+
+
+    if(!isset($argumentValues[2])){
+
+        return '<font color="red">error: missing arg2 "emplacement", ie. "player unequip Orcrist main1"';
+    }
+
+    ob_start();
+
+    $data = $argumentValues[2];
+
+    if(!in_array($data, ITEM_EMPLACEMENT_FORMAT)){
+
+        echo '<font color="orange">unvalid emplacement</font>';
+    }
+
+    else{
+
+        $sql = 'UPDATE players_items SET equiped = "" WHERE player_id = ? AND equiped = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($player->id, $data));
+
+        $player->refresh_invent();
+        $player->refresh_caracs();
+        $player->refresh_view();
+
+        echo $player->data->name .' unequiped '. $data;
+    }
+
+    return ob_get_clean();
 }
 
 function purge_player($argumentValues, $player){
