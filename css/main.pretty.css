@@ -1330,7 +1330,7 @@ img {
     width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-    background: green;
+    background: gray;
 }
 ::-webkit-scrollbar-track {
     background: black;
