@@ -69,6 +69,10 @@ EOT);
             return add_pnj($player, parent::getPlayer($argumentValues[2]));
         }
 
+        if($action == 'edit'){
+            return edit_player($argumentValues,$player);
+        }
+
         return '<font color="orange">Action : '.$action.' unknown</font>';
     }
 }
@@ -164,6 +168,8 @@ function edit_player($argumentValues, $player){
 
 
     $player->refresh_data();
+    $player->refresh_caracs();
+    $player->refresh_view();
 
 
     return 'player '. $player->data->name .': field "'. $field .'" changed to value "'. $value .'"';
