@@ -80,6 +80,10 @@ $(document).ready(function(){
             success: function(data)
             {
                 // alert(data);
+                var contentData = $('<div></div>').html(data).find('#data');
+                if(contentData.html()){
+                    alert(contentData.html())
+                }
                 document.location.reload();
             }
         });

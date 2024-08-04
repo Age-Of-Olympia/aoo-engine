@@ -1121,6 +1121,14 @@ class Player{
         if(!empty($itemList[$item->id])){
 
 
+            // item is cursed
+            if($item->row->cursed){
+
+                echo '<div id="data">Objet Maudit!</div>';
+                return false;
+            }
+
+
             // item is equiped : UNEQUIP
 
             $sql = '
@@ -1164,6 +1172,28 @@ class Player{
             if(!Item::get_free_emplacement($this)){
 
                 exit('error item limit');
+            }
+
+
+            // cursed emp
+            $sql = '
+            SELECT COUNT(*) AS n
+            FROM items AS i
+            INNER JOIN players_items AS p
+            ON i.id = p.item_id
+            WHERE p.player_id = ?
+            AND p.equiped = ?
+            AND i.cursed = 1
+            ';
+
+            $res = $db->exe($sql, array($this->id, $item->data->emplacement));
+
+            $row = $res->fetch_object();
+
+            if($row->n){
+
+                echo '<div id="data">Objet Maudit!</div>';
+                exit('cursed');
             }
 
 
