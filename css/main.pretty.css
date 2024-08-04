@@ -687,14 +687,34 @@ img {
         background: url('../img/ui/cards/white_marble.webp');
     }
 
-    #ui-card .redoraan{
+    #ui-card .trotile{
 
         background: url('../img/ui/cards/white_fur.webp');
+    }
+
+    #ui-card .redoraan{
+
+        background: url('../img/ui/cards/night_sky.webp');
+    }
+
+    #ui-card .humain{
+
+        background: url('../img/ui/cards/plastic_blue.webp');
+    }
+
+    #ui-card .protocole{
+
+        background: url('../img/ui/cards/black_circuit.webp');
     }
 
     #ui-card .lutin{
 
         background: url('../img/ui/cards/white_clouds.webp');
+    }
+
+    #ui-card .triton{
+
+        background: url('../img/ui/cards/blue_scales.webp');
     }
 
     #ui-card .dieu{
