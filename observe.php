@@ -196,7 +196,7 @@ if($res->num_rows){
         if($player->check_missive_permission($target)){
 
             $dataImg .= '<a href="forum.php?newTopic=Missives&targetId='. $target->id .'"><button
-                    >
+                    class="action">
                     <span class="ra ra-quill-ink"></span>
                     <span class="action-name">Missive</span>
                     </button></a><br/>';
