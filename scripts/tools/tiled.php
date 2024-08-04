@@ -194,11 +194,22 @@ $(document).ready(function(){
 
     $('.map').click(function(e){
         if (!$(this).hasClass('selected')) {
+
+          var $paramsField = $('#' + $(this).data('type') + '-params');
+
           if ($(this).data('params')) {
 
             let params = $(this).data('params');
 
-            $('#' + $(this).data('type') + '-params').val(params);
+            // if($paramsField.val() == ''){
+
+                $paramsField.val(params);
+            // }
+
+            $paramsField.focus().select();
+          }
+          else{
+            $paramsField.val('');
           }
 
           $('.map').removeClass('selected').css('border', '0px');
@@ -228,7 +239,7 @@ $(document).ready(function(){
 
 
     $(document).on('click', function(e) {
-        if (!$(e.target).hasClass('map')) {
+        if (!$(e.target).hasClass('map') && $(e.target).attr('type') != 'text') {
             $customCursor.hide();
             $('body').off('mousemove');
             $('.map').removeClass('selected').css('border', '0px');

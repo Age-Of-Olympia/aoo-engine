@@ -14,7 +14,7 @@ foreach(File::scan_dir('img/triggers/', $without=".png") as $e){
 
     if($e == 'exit'){
 
-        $params = 'direction:';
+        $params = 'sw';
     }
     elseif($e == 'tp'){
 
@@ -26,7 +26,7 @@ foreach(File::scan_dir('img/triggers/', $without=".png") as $e){
     }
     elseif($e == 'enter'){
 
-        $params = 'direction:';
+        $params = 'ne';
     }
 
 
