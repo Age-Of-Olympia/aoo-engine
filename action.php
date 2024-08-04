@@ -3,6 +3,9 @@
 require_once('config.php');
 
 
+ob_start();
+
+
 /*
  * ACTION CHECK
  */
@@ -510,6 +513,15 @@ if(!empty($log)){
 
     Log::put($player, $target, $log, $type="action");
 }
+
+
+$data = ob_get_clean();
+
+$sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = "action" ORDER BY time DESC LIMIT 1';
+$db = new Db();
+$db->exe($sql, $data);
+
+echo $data;
 
 
 $targetPvAfter = $target->get_left('pv');

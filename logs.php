@@ -57,6 +57,14 @@ echo '
         $playerRaceJson = json()->decode('races', $player->data->race);
 
 
+        $hiddenText = '';
+
+        if($e->player_id == $player->id && $e->hiddenText != ''){
+
+            $hiddenText = '<div class="logs-hidden" style="background: black; color: gray; padding: 5px; font-size: 88%;">'. str_replace('<style>.action-details{display: none;}</style>', '', $e->hiddenText) .'</div>';
+        }
+
+
         if($e->player_id != $e->target_id){
 
 
@@ -72,7 +80,8 @@ echo '
                 align="left"
                 valign="top"
                 >
-                    <span class="log-'. $e->type .'">'. $e->text .'</span>
+                    <span class="log-'. $e->type .'">'. $e->text .'</span><br />
+                    '. $hiddenText .'
                 </td>
             <td class="log-td" style="background-color: '. $playerRaceJson->bgColor .'; color: '. $playerRaceJson->color .';">
                 '. $player->data->name .'<br />
