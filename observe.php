@@ -485,25 +485,37 @@ else{
         $row = $res->fetch_object();
 
 
-        $paramsTbl = explode(',', $row->params);
+        if($row->params[0] == '"'){
 
 
-        if(count($paramsTbl) == 1){
+            $alert = str_replace('"', '', $row->params);
 
-            $paramsTbl[] = $paramsTbl[0];
-            $paramsTbl[] = $paramsTbl[0];
-            $paramsTbl[] = $paramsTbl[0];
+            echo '<script>alert("'. $alert .'");</script>';
         }
 
+        else{
 
-        $options = array(
-        'name'=>$paramsTbl[0],
-        'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.webp',
-        'dialog'=>$paramsTbl[2],
-        'text'=>''
-        );
 
-        echo '<div class="view-dialog">'. Ui::get_dialog($player, $options) .'</div>';
+            $paramsTbl = explode(',', $row->params);
+
+
+            if(count($paramsTbl) == 1){
+
+                $paramsTbl[] = $paramsTbl[0];
+                $paramsTbl[] = $paramsTbl[0];
+                $paramsTbl[] = $paramsTbl[0];
+            }
+
+
+            $options = array(
+            'name'=>$paramsTbl[0],
+            'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.webp',
+            'dialog'=>$paramsTbl[2],
+            'text'=>''
+            );
+
+            echo '<div class="view-dialog">'. Ui::get_dialog($player, $options) .'</div>';
+        }
     }
 }
 
