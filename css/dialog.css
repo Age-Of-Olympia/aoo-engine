@@ -1,1 +1,97 @@
-#ui-dialog{display:flex;justify-content:center;align-items:flex-end;box-sizing:border-box}.dialog-template{width:500px;height:500px;display:flex;flex-direction:column;align-items:center;position:relative;max-width:100%;box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)}.dialog-template-img{max-width:100%;position:relative}.dialog-template-img img{max-width:100%;display:block}.dialog-template-name{position:absolute;top:10px;left:10px;background-color:rgba(0, 0, 0, 0.5);color:white;padding:5px 10px;border-radius:5px}.dialog-template-box{text-align:left;z-index:100;width:95%;background-color:rgba(0, 0, 0, 0.7);color:white;padding:10px;border-radius:10px;position:absolute;bottom:10px;box-sizing:border-box}.dialog-template-box a{color:skyblue}.dialog-node-options{margin-top:10px}.node-option{cursor:pointer;padding:5px;margin-top:1px;background-color:rgba(255, 255, 255, 0.1)}.node-option:hover{background-color:rgba(255, 255, 255, 0.2)}#ui-dialog .dialog-node{display:none}.view-dialog{width:100%;position:absolute;top:90px;left:0;z-index:100}
+#ui-dialog {
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    box-sizing: border-box;
+}
+
+.dialog-template {
+
+    width: 500px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    max-width: 100%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.dialog-template-img {
+
+    max-width: 100%;
+    position: relative;
+}
+
+.dialog-template-img img {
+
+    max-width: 100%;
+    display: block;
+}
+
+.dialog-template-name {
+
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.5); /* Optionnel : pour mieux voir le texte */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.dialog-template-box {
+
+    text-align: left;
+    z-index: 100;
+    width: 95%;
+    background-color: rgba(0, 0, 0, 0.7); /* Optionnel : pour mieux voir le texte */
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    position: absolute;
+    bottom: 10px;
+    box-sizing: border-box;
+}
+
+    .dialog-template-box a{
+
+        color: skyblue;
+    }
+
+.dialog-node-options {
+
+/*     margin-top: 10px; */
+    margin-top: 10px;
+}
+
+.node-option {
+
+    cursor: pointer;
+    padding: 5px;
+    margin-top: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+/*     border-radius: 5px; */
+/*     font-size: 88%; */
+}
+
+.node-option:hover {
+
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+
+#ui-dialog .dialog-node{
+
+    display: none;
+}
+
+.view-dialog{
+
+    width: 100%;
+    position: absolute;
+    top: 90px;
+    left: 0;
+    z-index: 100;
+}

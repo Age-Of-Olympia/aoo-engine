@@ -39,7 +39,7 @@ class ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=' . $jsVersion . '"></script>
                 <script src="js/console.js?v=' . $jsVersion . '"></script>
-                <link href="css/main.css?v=' . $cssVersion . '" rel="stylesheet" />
+                <link href="css/main.min.css?v=' . $cssVersion . '" rel="stylesheet" />
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){
@@ -501,12 +501,12 @@ class ui{
 
 
         // js & css
-        $dialogVersion = filemtime('js/dialog.js');
-        $dialogCssVersion = filemtime('css/dialog.css');
+        // $dialogVersion = filemtime('js/dialog.js');
+        // $dialogCssVersion = filemtime('css/dialog.min.css');
 
         echo '
-        <script src="js/dialog.js?v='. $dialogVersion .'"></script>
-        <link rel="stylesheet" href="css/dialog.css?v='. $dialogVersion .'">
+        <script src="js/dialog.js"></script>
+        <link rel="stylesheet" href="css/dialog.min.css">
         ';
 
         return Str::minify(ob_get_clean());
