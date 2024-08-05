@@ -9,25 +9,64 @@ Ajout ou suppression d'une action à un joueur (si il a l'action, ça lui enlèv
 Exemple:
 > action [matricule ou nom] [nom option]
 > action 1 soins/imposition_des_mains
+> action 1 pack [+/-race]
+> action 1 startpack [+/-race]
 EOT);
     }
 
     public function execute(  array $argumentValues ) : string
     {
 
-        if($argumentValues[0] == 'pack'){
+        if($argumentValues[1] == 'startpack'){
 
 
             ob_start();
 
-            $admin = new Player($_SESSION['playerId']);
-            $admin->get_data();
-            $raceJson = json()->decode('races', $argumentValues[1]);
+            $player=parent::getPlayer($argumentValues[0]);
+            $player->get_data();
+            $raceJson = json()->decode('races', $player->data->race);
 
-            echo 'delete all actions for '. $admin->data->name .'...<br />';
+            echo 'delete all actions for '. $player->data->name .'...<br />';
 
             $db = new Db();
-            $values = array('player_id'=>$admin->id);
+            $values = array('player_id'=>$player->id);
+            $db->delete('players_actions', $values);
+
+            echo 'done!';
+
+            echo 'ajout du pack de base de '. $raceJson->name .'...<br />';
+
+            foreach($raceJson->actions as $e){
+
+
+                echo $e .': ';
+
+                $player->add_action($e);
+
+                echo 'done!<br />';
+            }
+
+            echo '<font color="lime">startpack successfully updated!</font>';
+
+            return ob_get_clean();
+        }
+
+        if($argumentValues[1] == 'pack'){
+
+
+            ob_start();
+
+            $player=parent::getPlayer($argumentValues[0]);
+            $player->get_data();
+
+            $race = (!empty($argumentValues[2])) ? $argumentValues[2] : $player->data->race;
+
+            $raceJson = json()->decode('races', $race);
+
+            echo 'delete all actions for '. $player->data->name .'...<br />';
+
+            $db = new Db();
+            $values = array('player_id'=>$player->id);
             $db->delete('players_actions', $values);
 
             echo 'done!';
@@ -39,7 +78,7 @@ EOT);
 
                 echo $e .': ';
 
-                $admin->add_action($e);
+                $player->add_action($e);
 
                 echo 'done!<br />';
             }

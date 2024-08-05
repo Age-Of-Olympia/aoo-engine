@@ -65,6 +65,8 @@ echo '
         }
 
 
+        $target = false;
+
         if($e->player_id != $e->target_id){
 
 
