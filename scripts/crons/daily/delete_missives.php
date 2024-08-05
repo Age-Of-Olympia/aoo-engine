@@ -5,9 +5,6 @@
  */
 
 
-
-
-
 $sql = '
 SELECT name
 FROM players_forum_missives
@@ -56,3 +53,5 @@ if(count($deleteTbl)){
     $db->exe($sql, $deleteTbl);
 }
 
+
+echo 'done';

@@ -28,7 +28,7 @@ while($row = $res->fetch_object()){
     $item->get_data();
 
 
-    if($item->data->growZMin > $row->z){
+    if(!empty($item->data->growZMin) && $item->data->growZMin > $row->z){
 
         continue;
     }
@@ -60,3 +60,6 @@ while($row = $res->fetch_object()){
         }
     }
 }
+
+
+echo 'done';

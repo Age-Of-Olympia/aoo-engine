@@ -27,3 +27,6 @@ id != 1
 ';
 
 $db->exe($sql);
+
+
+echo 'done';

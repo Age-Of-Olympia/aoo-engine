@@ -13,4 +13,4 @@ $db = new Db();
 $db->exe($sql);
 
 
-
+echo 'done';

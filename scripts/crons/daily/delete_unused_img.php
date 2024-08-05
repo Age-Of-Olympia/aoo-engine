@@ -40,7 +40,7 @@ foreach(File::scan_dir('datas/private/forum/posts/', $without='.json') as $e){
 }
 
 
-printr($result);
+// printr($result);
 
 
 $dir = 'img/ui/forum/uploads/';

@@ -27,3 +27,6 @@ time < ?
 ';
 
 $db->exe($sql, $timeLimit);
+
+
+echo 'done';
