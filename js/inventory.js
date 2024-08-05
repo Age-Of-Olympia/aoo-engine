@@ -4,7 +4,7 @@ $(document).ready(function(){
     var $actions = $('.preview-action');
 
     $actions
-    .append('<button class="action" data-action="use">Utiliser</button><br />')
+    .append('<button class="action" data-action="use" disabled="true">Utiliser</button><br />')
     .append('<button class="action" data-action="drop">Jeter</button><br />')
     .append('<button class="action" data-action="craft">Artisanat</button><br />');
 

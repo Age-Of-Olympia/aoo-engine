@@ -249,6 +249,8 @@ class ui{
 
             $type = (!empty($item->data->type)) ? $item->data->type : '';
 
+            $emp = (!empty($item->data->emplacement)) ? $item->data->emplacement : '';
+
             echo '
             <tr
                 class="item-case"
@@ -257,6 +259,7 @@ class ui{
                 data-name="'. $itemName .'"
                 data-n="'. $row->n .'"
                 data-text="'. $item->data->text .'"
+                data-emplacement="'. $emp .'"
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
                 data-img="img/items/'. $item->row->name .'.webp"

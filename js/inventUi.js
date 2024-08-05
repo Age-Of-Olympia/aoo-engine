@@ -14,6 +14,7 @@ $(document).ready(function(){
         window.id =  $item.data("id");
         window.name =  $item.data("name");
         window.type =  $item.data("type");
+        window.emplacement =  $item.data("emplacement");
         window.n =     $item.data("n");
         let text =  $item.data("text");
         window.price = $item.data("price");
@@ -41,11 +42,17 @@ $(document).ready(function(){
                 .html('<font color="red">Équiper (Max.)</font>')
                 .prop('disabled', true);
             }
-            else{
+            else if(window.type == 'parchemin' || window.type == 'structure' || window.type == 'consommable' || window.emplacement != ''){
 
                 $('.action[data-action="use"]')
                 .html('Utiliser')
                 .prop('disabled', false);
+            }
+            else{
+
+                $('.action[data-action="use"]')
+                .html('Utiliser')
+                .prop('disabled', true);
             }
         }
 
