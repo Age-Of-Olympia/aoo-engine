@@ -539,7 +539,7 @@ class Player{
                 $item = Item::get_item_by_name('canne_a_peche');
 
 
-                if(FISHING || ($item && $item->get_n($this))){
+                if(FISHING || ($item && $item->get_n($this, $bank=false, $equiped=true))){
 
 
                     $this->end_option('alreadyFished');

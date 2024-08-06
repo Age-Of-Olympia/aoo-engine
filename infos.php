@@ -220,7 +220,7 @@ if($player->coords->plan == $target->coords->plan){
                                 data-text="'. $item->data->text .'"
                                 data-price="'. $item->data->price .'"
                                 data-type="'. $type .'"
-                                data-img="img/items/'. $item->row->name .'.png"
+                                data-img="img/items/'. $item->row->name .'.webp"
                                 src="'. $item->data->mini .'" /></td>';
                     }
 
