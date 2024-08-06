@@ -1,9 +1,5 @@
 <?php
 
-define('VERSION_JS_MAIN', filemtime('js/main.js'));
-define('VERSION_CSS_MAIN', filemtime('css/main.css'));
-
-
 define('DOMAIN', 'http://localhost/www/aoo4/');
 
 
