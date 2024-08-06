@@ -43,6 +43,33 @@ $coordsId = View::get_coords_id($goCoords);
 $db = new Db();
 
 
+// check invalid location
+$sql = '
+SELECT COUNT(*) AS n
+FROM coords
+WHERE
+id IN(
+    SELECT coords_id FROM map_walls WHERE coords_id = ?
+    )
+OR
+id IN(
+    SELECT coords_id FROM players WHERE coords_id = ?
+    )
+';
+
+$res = $db->exe($sql, array($coordsId, $coordsId));
+
+$row = $res->fetch_object();
+
+if($row->n){
+
+
+    echo '<script>alert("Coordonnées invalides");document.location.reload();</script>';
+
+    exit();
+}
+
+
 $sql = '
 SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ?
 UNION
