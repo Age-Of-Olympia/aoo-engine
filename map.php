@@ -20,11 +20,11 @@ if(!$planJson){
     echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div><br />';
 
 
-    $url = 'img/ui/illustrations/'. $player->coords->plan .'.png';
+    $url = 'img/ui/illustrations/'. $player->coords->plan .'.webp';
 
     if(!file_exists($url)){
 
-        $url = 'img/ui/illustrations/gaia.jpeg';
+        $url = 'img/ui/illustrations/gaia.webp';
     }
 
 

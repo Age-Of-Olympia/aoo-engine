@@ -1413,9 +1413,50 @@ class Player{
         }
 
 
+        // spawn to hell
+        $coords = (object) array('x'=>0,'y'=>0,'z'=>0,'plan'=>'enfers');
+
+        $oneDayOfWalk = $this->caracs->mvt;
+        $distance = $oneDayOfWalk * $this->data->rank;
+
+        $possibleCoords = [
+            ['x' => -1, 'y' => 0],
+            ['x' => 1, 'y' => 0],
+            ['x' => 0, 'y' => -1],
+            ['x' => -1, 'y' => -1],
+        ];
+
+        $randomIndex = array_rand($possibleCoords);
+        $randomCoords = $possibleCoords[$randomIndex];
+
+        $coords->x = $randomCoords['x'] * $distance;
+        $coords->y = $randomCoords['y'] * $distance;
+
+        $this->go($coords);
+
+
+        // purge fat & malus
+        $sql = 'UPDATE players SET fatigue = 0, malus = 0 WHERE id = ?';
+        $db->exe($sql, $this->id);
+
+        // purge effects & bonus
+        $sql = '
+        DELETE players_effects, players_bonus
+        FROM players_effects
+        JOIN players_bonus ON players_effects.player_id = players_bonus.player_id
+        WHERE players_effects.player_id = ?
+        ';
+        $db->exe($sql, $this->id);
+
         // purge assists
         $values = array('target_id'=>$this->id);
         $db->delete('players_assists', $values);
+
+
+        // refresh
+        $this->refresh_view();
+        $this->refresh_caracs();
+        $this->refresh_data();
     }
 
 

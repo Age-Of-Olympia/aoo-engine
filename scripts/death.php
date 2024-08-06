@@ -66,3 +66,6 @@ echo '
 
 
 $target->death();
+
+
+include('scripts/actions/on_hide_reload_view.php');
