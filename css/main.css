@@ -279,7 +279,7 @@ img {
 
 .progress-bar {
     position: relative;
-    height: 1.5em; /* adjust as needed */
+    height: 2.5em; /* adjust as needed */
 }
 
 .progress-bar .text {
