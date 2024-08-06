@@ -6,10 +6,11 @@ if(!empty($_SESSION['playerId'])){
     ob_start();
 
 
-    echo '<a href="index.php" title="Vue"><button>&nbsp;<span class="ra ra-chessboard"></span>&nbsp;</button></a><a href="upgrades.php"><button><span class="ra ra-podium"></span> Améliorations</button></a><a href="logs.php"><button><span class="ra ra-book"></span> Evènements</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a><a href="map.php" title="Carte"><button>&nbsp;<span class="ra ra-scroll-unfurled"></span>&nbsp;</button></a><a href="forum.php?forum=Missives" title="Missives"><button>&nbsp;<span class="ra ra-quill-ink"></span>&nbsp;</button></a><a href="#" id="show-caracs" title="Caractéristiques"><button>&nbsp;<span class="ra ra-muscle-up"></span>&nbsp;</button></a><a href="account.php" title="Profil"><button>&nbsp;<span class="ra ra-wrench"></span>&nbsp;</button></a>';
+    echo '<a href="index.php" title="Vue"><button>&nbsp;<span class="ra ra-chessboard"></span>&nbsp;</button></a><a href="#" id="show-caracs" title="Caractéristiques"><button><span class="ra ra-muscle-up"></span>&nbsp;Caractéristiques</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a><!--a href="upgrades.php"><button><span class="ra ra-podium"></span> Améliorations</button></a--><a href="logs.php"><button><span class="ra ra-book"></span> Evènements</button></a><a href="map.php" title="Carte"><button>&nbsp;<span class="ra ra-scroll-unfurled"></span>&nbsp;</button></a><a href="forum.php?forum=Missives" title="Missives"><button>&nbsp;<span class="ra ra-quill-ink"></span>&nbsp;</button></a><a href="account.php" title="Profil"><button>&nbsp;<span class="ra ra-wrench"></span>&nbsp;</button></a>';
 
 
     $caracsJson = $player->get_caracsJson();
+    $turnJson = $player->get_turnJson();
 
 
     echo '
@@ -37,7 +38,13 @@ if(!empty($_SESSION['playerId'])){
             foreach(CARACS as $k=>$e){
 
 
-                echo '<td>'. $caracsJson->$k .'</td>';
+                $left = '';
+                if(isset($turnJson->$k)){
+
+                    $left = $turnJson->$k .'/';
+                }
+
+                echo '<td>'. $left . $caracsJson->$k .'</td>';
             }
 
             echo '
@@ -50,12 +57,17 @@ if(!empty($_SESSION['playerId'])){
 
         echo '<tr>';
 
-            echo '<td colspan="'. count(CARACS) .'">
+            echo '<td colspan="'. count(CARACS) - 8 .'">
             <div class="progress-bar">
                 <div class="bar" style="width: '. $pct .'%;">&nbsp;</div>
                 <div class="text">Xp: '. $player->data->xp .'/'. Str::get_next_xp($player->data->rank) .'</div>
             </div>
             </td>';
+
+
+            echo '<td colspan="2"><div style="white-space: nowrap;">Pi: '. $player->data->pi .'</div></td>';
+            echo '<td colspan="6"><div style="white-space: nowrap;"><a href="upgrades.php"><button>Améliorer mes caractéristiques</button></a></div></td>';
+
 
         echo '</tr>';
 

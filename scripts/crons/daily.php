@@ -1,6 +1,11 @@
+#!/usr/bin/env php
 <?php
 
 $path = __DIR__ .'/daily/';
+
+define('NO_LOGIN', true);
+
+require_once($path .'../../../config.php');
 
 foreach(File::scan_dir($path) as $file){
 

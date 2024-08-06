@@ -121,6 +121,11 @@ class Player{
         }
 
 
+        // save .turn
+        $data = Json::encode($this->turn);
+        Json::write_json('datas/private/players/'. $this->id .'.turn.json', $data);
+
+
         // elements de debuffs
         $effectsList = $this->get_effects();
 
@@ -170,6 +175,20 @@ class Player{
         }
 
         return $caracsJson;
+    }
+
+
+    public function get_turnJson(){
+
+
+        if(!$turnJson = json()->decode('players', $this->id .'.turn')){
+
+            $this->get_caracs();
+
+            $turnJson = json()->decode('players', $this->id .'.turn');
+        }
+
+        return $turnJson;
     }
 
 
@@ -559,6 +578,8 @@ class Player{
             View::refresh_players_svg($this->coords);
         }
 
+
+        $this->refresh_caracs();
 
        // delete empty coords will be cron managed for easier debugging
     }
