@@ -118,6 +118,12 @@ include 'tiled_tool/display_tools.php';
 $(document).ready(function(){
 
 
+    $('img').each(function(e){
+
+        $(this).attr('title', $(this).data('name'));
+    });
+
+
     var $customCursor = $('<img>', {
         class: 'custom-cursor',
         src: $('.map').attr('src')
