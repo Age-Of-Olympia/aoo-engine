@@ -34,12 +34,12 @@ while($row = $res->fetch_object()){
 
         echo 'post '. $e->name .' deleted<br />';
 
-        @unlink('datas/private/forum/posts/'. $e->name .'.json');
+        @unlink(__DIR__ .'/../../../datas/private/forum/posts/'. $e->name .'.json');
     }
 
     echo 'topic '. $row->name .' deleted<br />';
 
-    @unlink('datas/private/forum/topics/'. $row->name .'.json');
+    @unlink(__DIR__ .'/../../../datas/private/forum/topics/'. $row->name .'.json');
 }
 
 

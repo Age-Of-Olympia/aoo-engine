@@ -6,9 +6,6 @@
  */
 
 
-require_once('config.php');
-
-
 function search_img($text, &$result){
 
 
@@ -32,7 +29,7 @@ function search_img($text, &$result){
 $result = array();
 
 
-foreach(File::scan_dir('datas/private/forum/posts/', $without='.json') as $e){
+foreach(File::scan_dir(__DIR__ .'/../../../datas/private/forum/posts/', $without='.json') as $e){
 
     $postJson = json()->decode('forum/posts', $e);
 
@@ -43,7 +40,7 @@ foreach(File::scan_dir('datas/private/forum/posts/', $without='.json') as $e){
 // printr($result);
 
 
-$dir = 'img/ui/forum/uploads/';
+$dir = __DIR__ .'/../../../img/ui/forum/uploads/';
 
 
 // Fonction pour parcourir récursivement un dossier et retourner les chemins des images trouvées

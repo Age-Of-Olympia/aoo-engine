@@ -2,10 +2,10 @@
 
 Player::refresh_list();
 
-@unlink('datas/public/classements/general.html');
-@unlink('datas/public/classements/bourrins.html');
-@unlink('datas/public/classements/reputation.html');
-@unlink('datas/public/classements/fortunes.html');
+@unlink(__DIR__ .'/../../../datas/public/classements/general.html');
+@unlink(__DIR__ .'/../../../datas/public/classements/bourrins.html');
+@unlink(__DIR__ .'/../../../datas/public/classements/reputation.html');
+@unlink(__DIR__ .'/../../../datas/public/classements/fortunes.html');
 
 
 echo 'done';

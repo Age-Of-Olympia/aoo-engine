@@ -3,7 +3,12 @@
 
 $path = __DIR__ .'/daily/';
 
-define('NO_LOGIN', true);
+
+if(!defined('NO_LOGIN')){
+
+    define('NO_LOGIN', true);
+}
+
 
 require_once($path .'../../../config.php');
 
