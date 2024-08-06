@@ -165,11 +165,13 @@ echo '
 
 
 ?>
+<style>
+body{
+    background: url(img/ui/bg/eau.webp);
+}
+</style>
 <script>
 $(document).ready(function(){
-
-
-    $('body').css('background','url(img/ui/bg/eau.webp)');
 
 
     const winner = [<?php echo implode(',', $stopTbl) ?>];

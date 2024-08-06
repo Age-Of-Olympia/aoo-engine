@@ -42,6 +42,10 @@ if(!empty($actionJson->useEmplacement)){
 
 
             include('scripts/actions/on_hide_reload_view.php');
+
+            echo '<div>Vous perdez '. $player->$emplacement->data->name .'.</div>';
         }
+
+        echo '<div>Vous gardez '. $player->$emplacement->data->name .'.</div>';
     }
 }

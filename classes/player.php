@@ -525,7 +525,7 @@ class Player{
 
 
         // add elements
-        $sql = 'SELECT name FROM map_elements WHERE coords_id = ?';
+        $sql = 'SELECT name, endTime FROM map_elements WHERE coords_id = ?';
 
         $res = $db->exe($sql, $coordsId);
 
@@ -533,7 +533,7 @@ class Player{
 
 
             // fishing
-            if($row->name == 'eau'){
+            if($row->name == 'eau' && $row->endTime == 0){
 
 
                 $item = Item::get_item_by_name('canne_a_peche');
