@@ -8,3 +8,4 @@ datas/private/console/
 config/db_constants.php
 db/updates_done/
 sessions/
+*.log
