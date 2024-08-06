@@ -90,7 +90,7 @@ function get_json_item($item){
         echo 'error '. $item->name;
     }
 
-    $return->data->mini = 'img/items/'. $item->name .'_mini.png';
+    $return->data->mini = 'img/items/'. $item->name .'_mini.webp';
 
     return $return;
 }
@@ -131,7 +131,7 @@ if(!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->da
             //
             // $ingredient->get_data();
 
-            $ingredient = get_json_item($craft->$ingredientItem->name);
+            $ingredient = get_json_item((object) array('name'=>$ingredientItem));
 
             echo '
                 <img src="'. $ingredient->data->mini .'" /> x'. $n .'

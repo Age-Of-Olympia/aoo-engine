@@ -23,4 +23,4 @@ foreach(File::scan_dir($path) as $file){
     echo ' <br />';
 }
 
-echo 'cron daily done';
+echo 'cron daily done '. date('d/m/Y H:i:s');

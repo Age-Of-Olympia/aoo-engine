@@ -23,6 +23,24 @@ if(!empty($_POST['text'])){
     Forum::check_access($player, $forumJson);
 
 
+
+    if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
+
+
+        if(!$player->have_option('isAdmin')){
+
+            exit('error topic must be approved by admin');
+        }
+
+
+        // approve this topic
+        $topJson->approved = 1;
+
+        $topData = Json::encode($topJson);
+        Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $topData);
+    }
+
+
     // create post
     Forum::put_post($player, $topJson, $_POST['text']);
 
