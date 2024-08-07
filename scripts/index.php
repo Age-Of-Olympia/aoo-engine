@@ -130,7 +130,7 @@ echo '
     }
 
     echo '<a href="forum.php" class="index-button">Forum</a>';
-    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4" class="index-button">Aide Wiki</a>';
+    echo '<a href="https://age-of-olympia.net/wiki/" class="index-button">Aide Wiki</a>';
 
     echo '
     <div class="text">
