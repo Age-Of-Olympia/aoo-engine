@@ -44,6 +44,22 @@ $db = new Db();
 
 
 // check invalid location
+$inPlayerSql = '';
+$values = $coordsId;
+
+if($planJson = json()->decode('plans', $player->coords->plan)){
+
+    $inPlayerSql = '
+    OR
+    id IN(
+        SELECT coords_id FROM players WHERE coords_id = ?
+        )
+    ';
+
+    $values = array($coordsId, $coordsId);
+}
+
+
 $sql = '
 SELECT COUNT(*) AS n
 FROM coords
@@ -51,13 +67,10 @@ WHERE
 id IN(
     SELECT coords_id FROM map_walls WHERE coords_id = ?
     )
-OR
-id IN(
-    SELECT coords_id FROM players WHERE coords_id = ?
-    )
+'. $inPlayerSql .'
 ';
 
-$res = $db->exe($sql, array($coordsId, $coordsId));
+$res = $db->exe($sql, $values);
 
 $row = $res->fetch_object();
 
