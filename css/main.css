@@ -145,7 +145,7 @@ input[type="button"]:disabled, button:disabled, select:disabled{
 
 input[type="text"], input[type="password"], input[type="number"]{
 
-    background: url('../img/ui/bg/bg_white2.jpeg');
+    background: white url('../img/ui/bg/bg_white2.jpeg');
 }
 
 

@@ -30,6 +30,14 @@ if(!empty($_POST['action'])){
             <?php
         break;
 
+        case 'addPlayer':
+            ?>
+            <script>
+
+            </script>
+            <?php
+        break;
+
         default:
 
             echo 'error action';
@@ -227,6 +235,24 @@ $(document).ready(function(){
             let cmd = 'quest create';
 
             return force_cmd(text, cmd);
+        }
+
+        if(action == 'addPlayer'){
+
+
+            let text = 'Id ou Nom du Player';
+            var value = prompt(text);
+            if(!value) return false;
+
+            let cmd = 'quest player "'+ value +'" start '+ questId;
+
+            create_console();
+
+            $('#input-line').val(cmd).focus();
+
+            submit_cmd();
+
+            return false;
         }
 
         if(action == 'editName'){

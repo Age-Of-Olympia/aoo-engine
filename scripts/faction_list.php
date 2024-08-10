@@ -2,7 +2,7 @@
 
 
 echo '
-    <table border="1" cellspacing="0" class="marbre" align="center">
+    <table border="1" class="marbre" align="center">
     ';
 
 echo '

@@ -133,7 +133,6 @@ $(document).ready(function(){
 
     $('.bulle').click(function(e){
 
-
         $.ajax({
             type: "POST",
             url: 'pnjs.php',
