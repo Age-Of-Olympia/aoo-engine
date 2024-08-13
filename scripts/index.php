@@ -8,7 +8,7 @@ if(isset($_GET['resetPsw'])){
     exit();
 }
 
-echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.png" /></a>';
+echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.webp" /></a>';
 
 echo '
 <div id="index-menu" class="box-shadow scrolling-bg">
@@ -154,11 +154,12 @@ echo '
     <br />
     ';
 
-    echo '<a href="https://aufonddutrou.fr/"><img src="img/ui/partenaires/afdt.gif" /></a>';
-    echo '<a href="https://www.jdr.alandara.net/"><img src="img/ui/partenaires/alandara.gif" /></a>';
-    echo '<a href="https://ideo-lejeu.com/"><img src="img/ui/partenaires/ideo.gif" /></a>';
-    echo '<a href="https://www.mountyhall.com/"><img src="img/ui/partenaires/mountyhall.png" /></a>';
-    echo '<a href="https://www.tourdejeu.net/annu/fichejeu.php?id=14616"><img src="img/ui/partenaires/tdj.gif" /></a>';
+    echo '<a href="https://aufonddutrou.fr/" title="Au fond du trou"><img src="img/ui/partenaires/afdt.gif" /></a>';
+    echo '<a href="https://www.jdr.alandara.net/" title="Alandara"><img src="img/ui/partenaires/alandara.gif" /></a>';
+    echo '<a href="https://ideo-lejeu.com/" title="IDEO"><img src="img/ui/partenaires/ideo.gif" /></a>';
+    echo '<a href="https://www.mountyhall.com/" title="Mounty Hall"><img src="img/ui/partenaires/mountyhall.png" /></a>';
+    echo '<a href="https://www.tourdejeu.net/annu/fichejeu.php?id=14616" title="Tour de jeu"><img src="img/ui/partenaires/tdj.gif" /></a>';
+    echo '<a href="https://www.qtg.fr/" title="Qu\'est-ce que tu Geeks?"><img src="img/ui/partenaires/qtg.gif" /></a>';
 
     echo '<div style="font-size: 75%; color: #333;"><a href="https://votezpourmoi.com/">Votez Pour Moi</a>, Jeu de simulation de campagne électorale! (<a href="https://votezpourmoi.com/jeu-politique/but-jeu.php">en savoir plus</a>)</div>';
 

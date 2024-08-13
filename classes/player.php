@@ -100,6 +100,25 @@ class Player{
         }
 
 
+        // elements de debuffs
+        $effectsList = $this->get_effects();
+
+        $this->debuffs = (object) array();
+
+
+        foreach($effectsList as $e){
+
+
+            if(!empty(ELE_DEBUFFS[$e])){
+
+
+                $this->caracs->{ELE_DEBUFFS[$e]} -= 1;
+
+                $this->debuffs->{ELE_DEBUFFS[$e]} = $e;
+            }
+        }
+
+
         // turn caracs with bonus / malus
         $sql = '
         SELECT name, n FROM
@@ -124,25 +143,6 @@ class Player{
         // save .turn
         $data = Json::encode($this->turn);
         Json::write_json('datas/private/players/'. $this->id .'.turn.json', $data);
-
-
-        // elements de debuffs
-        $effectsList = $this->get_effects();
-
-        $this->debuffs = (object) array();
-
-
-        foreach($effectsList as $e){
-
-
-            if(!empty(ELE_DEBUFFS[$e])){
-
-
-                $this->caracs->{ELE_DEBUFFS[$e]} -= 1;
-
-                $this->debuffs->{ELE_DEBUFFS[$e]} = $e;
-            }
-        }
 
 
         // fist
@@ -175,6 +175,19 @@ class Player{
         }
 
         return $caracsJson;
+    }
+
+    public function get_turnTurnJson(){
+
+
+        if(!$turnJson = json()->decode('players', $this->id .'.turn')){
+
+            $this->get_caracs();
+
+            $turnJson = json()->decode('players', $this->id .'.turn');
+        }
+
+        return $turnJson;
     }
 
 
@@ -811,7 +824,7 @@ class Player{
         INSERT INTO
         players_bonus
         (`player_id`,`name`,`n`)
-        VALUE'. implode(',', $values) .'
+        VALUE '. implode(',', $values) .'
         ON DUPLICATE KEY UPDATE
         n = n + VALUES(n);
         ';
@@ -844,6 +857,9 @@ class Player{
         $db->exe($sql);
 
 
+        $this->refresh_caracs();
+
+
         return true;
     }
 
@@ -851,7 +867,7 @@ class Player{
     public function get_left($carac){
 
 
-        if(!isset($this->caracs)){
+        if(!isset($this->caracs) || !get_object_vars($this->caracs)){
 
 
             $this->get_caracs();

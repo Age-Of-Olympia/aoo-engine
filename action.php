@@ -30,6 +30,13 @@ if($actionJson->targetType == 'none'){
 // player
 $player = new Player($_SESSION['playerId']);
 
+
+if($player->get_left('a') < 1){
+
+    exit('<font color="red">Pas assez d\'Actions.</font>');
+}
+
+
 $player->get_data();
 
 $player->get_caracs();

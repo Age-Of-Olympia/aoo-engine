@@ -85,8 +85,6 @@ $values = array(
     'n'=>-1
 );
 
-// $db->insert('players_bonus', $values);
-
 $sql = '
 INSERT INTO
 players_bonus

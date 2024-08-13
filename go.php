@@ -13,6 +13,13 @@ $coords = explode(',', $_POST['coords']);
 
 $player = new Player($_SESSION['playerId']);
 
+if($player->get_left('mvt') < 1){
+
+
+    echo '<script>alert("Pas assez de Mouvements.");document.location.reload();</script>';
+    exit();
+}
+
 $player->get_coords();
 
 
@@ -212,10 +219,14 @@ if($res->num_rows){
 }
 
 
-// cost (neg bonus)
-$bonus = array('mvt'=>-1);
 
-$player->put_bonus($bonus);
+if($planJson){
+
+
+    // cost (neg bonus)
+    $bonus = array('mvt'=>-1);
+    $player->put_bonus($bonus);
+}
 
 
 $player->go($goCoords);

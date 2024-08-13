@@ -80,21 +80,21 @@ if(!empty($_SESSION['playerId'])){
                 // gain xp
                 $gainXp = max(1, XP_PER_TURNS - $player->data->rank);
 
-                echo '<tr><td>Xp</td><td>+ '. $gainXp .'</td></tr>';
+                echo '<tr><td>Xp</td><td>+'. $gainXp .'</td></tr>';
 
-                echo '<tr><td>Pi</td><td>+ '. $gainXp .'</td></tr>';
+                echo '<tr><td>Pi</td><td>+'. $gainXp .'</td></tr>';
 
 
                 // update malus
                 $recovMalus = min($player->data->malus, MALUS_PER_TURNS);
 
-                echo '<tr><td>Malus</td><td>- '. $recovMalus .'</td></tr>';
+                echo '<tr><td>Malus</td><td>-'. $recovMalus .'</td></tr>';
 
 
                 // update fat
                 $recovFat = min($player->data->fatigue, FAT_PER_TURNS);
 
-                echo '<tr><td>Fatigue</td><td>- '. $recovFat .'</td></tr>';
+                echo '<tr><td>Fatigue</td><td>-'. $recovFat .'</td></tr>';
 
 
                 // recover carac
@@ -110,7 +110,7 @@ if(!empty($_SESSION['playerId'])){
                         $player->end_effect('poison_magique');
 
 
-                        echo '<tr><td>'. CARACS[$k] .'</td><td>+ 0 (<span class="ra '. EFFECTS_RA_FONT['poison_magique'] .'"></span> Poison Magique)</td></tr>';
+                        echo '<tr><td>'. CARACS[$k] .'</td><td>+0 (<span class="ra '. EFFECTS_RA_FONT['poison_magique'] .'"></span> Poison Magique)</td></tr>';
 
                         continue;
                     }
@@ -134,7 +134,7 @@ if(!empty($_SESSION['playerId'])){
 
                         $val += $player->caracs->rm;
 
-                        echo '<tr><td>'. CARACS[$k] .'</td><td>+ '. $val .' (<span class="ra '. EFFECTS_RA_FONT['regeneration'] .'"></span> Régénération)</td></tr>';
+                        echo '<tr><td>'. CARACS[$k] .'</td><td>+'. $val .' (<span class="ra '. EFFECTS_RA_FONT['regeneration'] .'"></span> Régénération)</td></tr>';
 
                         continue;
                     }
@@ -142,7 +142,7 @@ if(!empty($_SESSION['playerId'])){
 
                     $player->put_bonus(array($k=>$val));
 
-                    echo '<tr><td>'. CARACS[$k] .'</td><td>+ '. $val .'</td></tr>';
+                    echo '<tr><td>'. CARACS[$k] .'</td><td>+'. $val .'</td></tr>';
                 }
 
 
@@ -152,7 +152,7 @@ if(!empty($_SESSION['playerId'])){
                 // Kepp fractional mouv for next turn
                 $mvtToKeep = ($mvtLeft == 0.5) ? 0.5 : 0;
 
-                echo '<tr><td>Bonus Mvt</td><td>+ '. $mvtToKeep .'</td></tr>';
+                echo '<tr><td>Bonus Mvt</td><td>+'. $mvtToKeep .'</td></tr>';
 
 
                 // recover Ae, A, Mvt
