@@ -1,5 +1,9 @@
 # Age of Olympia v4
 
+Dans cette première page se trouve la documentation pour lancer le projet.
+Pour l'architecture du code, il faut suivre ce lien :
+[Architecture du code](docs/architecture.md)
+
 ## Démarrage de l'environnement de développement
 
 L'environnement de développement est un devcontainer. Le devcontainer est une fonctionnalité proposée par vscode, il est donc recommandé d'utiliser vscode pour travailler sur ce projet.
