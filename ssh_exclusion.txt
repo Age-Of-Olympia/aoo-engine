@@ -1,4 +1,7 @@
 .git/
+.devcontainer/
+.vscode/
+docs/
 wiki/
 img/ui/forum/uploads/
 datas/public/classements/

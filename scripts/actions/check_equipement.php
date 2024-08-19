@@ -68,3 +68,22 @@ if(!empty($actionJson->itemConditions)){
         }
     }
 }
+
+
+if(!empty($actionJson->spellMalus)){
+
+
+    foreach(ITEM_EMPLACEMENT_FORMAT as $emp){
+
+
+        if(!empty($player->$emp)){
+
+
+            if(!empty($player->$emp->data->spellMalus)){
+
+
+                echo '<font color="red">'. $player->$emp->data->name .' empêche la magie.</font> ';
+            }
+        }
+    }
+}
