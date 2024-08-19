@@ -9,7 +9,9 @@ if (!in_array($player->id, $destTbl)) {
 if (!empty($_POST['addDest'])) {
     if (strpos($_POST['addDest'], 'all_faction_') === 0) {
         $faction = substr($_POST['addDest'], strlen('all_faction_'));
-        if ($player->data->faction == $faction || $player->data->secretFaction == $faction){
+        if ($player->data->faction == $faction ||
+                ($player->data->secretFaction != '' && $player->data->secretFaction == $faction)
+            ){
             $sql = 'SELECT id FROM players where ( faction = ? or secretFaction = ?) ORDER BY name';
 
             $db = new Db();
@@ -91,7 +93,7 @@ echo '
 
     foreach ($playersJson as $e) {
 
-        if($e->secretFaction == $player->data->secretFaction){
+        if($e->secretFaction != '' && $e->secretFaction == $player->data->secretFaction){
 
             $secretFaction[] = $e;
 
@@ -100,9 +102,10 @@ echo '
             $faction[] = $e;
 
         }else{
-            $raceJson = json()->decode('races', $e->race);
-
-            echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
+            // $raceJson = json()->decode('races', $e->race);
+            //
+            // echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
+            continue;
         }
     }
 
@@ -115,20 +118,24 @@ echo '
 
         $raceJson = json()->decode('races', $e->race);
 
-        echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
+        echo '<option value="'. $e->id .'">- '. $e->name .' ('. $raceJson->name .')</option>';
     }
 
 
-    $secretJson = json()->decode('factions', $player->data->secretFaction);
-
-    echo '<option value="all_faction_'.$player->data->secretFaction.'">'. $secretJson->name .' (tous les membres)</option>';
-
-    foreach($secretFaction as $e){
+    if($player->data->secretFaction != ''){
 
 
-        $raceJson = json()->decode('races', $e->race);
+        $secretJson = json()->decode('factions', $player->data->secretFaction);
 
-        echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
+        echo '<option value="all_faction_'.$player->data->secretFaction.'">'. $secretJson->name .' (tous les membres)</option>';
+
+        foreach($secretFaction as $e){
+
+
+            $raceJson = json()->decode('races', $e->race);
+
+            echo '<option value="'. $e->id .'">- '. $e->name .' ('. $raceJson->name .')</option>';
+        }
     }
 
 
