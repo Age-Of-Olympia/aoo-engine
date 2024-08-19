@@ -92,7 +92,7 @@ define('EFFECTS_RA_FONT', array(
 
     'armure_rayonnante'=>'ra-sunbeams',
     'berserker'=>'ra-monster-skull',
-    'endiamente'=>'ra-diamond',
+    'endiamante'=>'ra-diamond',
     'golconda'=>'ra-aware',
     'martyr'=>'ra-player-shot',
 

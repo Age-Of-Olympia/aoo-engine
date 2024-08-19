@@ -140,19 +140,13 @@ if(!empty($_SESSION['playerId'])){
                     }
 
 
-                    $player->put_bonus(array($k=>$val));
+                    if(!in_array($k, array('ae','a','mvt'))){
+
+                        $player->put_bonus(array($k=>$val));
+                    }
 
                     echo '<tr><td>'. CARACS[$k] .'</td><td>+'. $val .'</td></tr>';
                 }
-
-
-                // mvt left
-                $mvtLeft = $player->get_left('mvt');
-
-                // Kepp fractional mouv for next turn
-                $mvtToKeep = ($mvtLeft == 0.5) ? 0.5 : 0;
-
-                echo '<tr><td>Bonus Mvt</td><td>+'. $mvtToKeep .'</td></tr>';
 
 
                 // recover Ae, A, Mvt
@@ -166,12 +160,6 @@ if(!empty($_SESSION['playerId'])){
                 ';
 
                 $db->exe($sql, $player->id);
-
-                // Restore fractional mouv
-                if ($mvtToKeep > 0){
-
-                    $player->put_bonus('mvt', -$mvtToKeep);
-                }
 
 
                 echo '</table>';

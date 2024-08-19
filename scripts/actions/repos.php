@@ -6,23 +6,11 @@ Vous vous reposez.
 ';
 
 
-// // malus
-// if($player->data->malus){
-//
-//
-//     $player->put_malus(-9);
-//
-//     $malus = ($player->data->malus > 9) ? 9 : $player->data->malus;
-//
-//     echo '<div class="action-details">'. $malus .' Malus enlevés.</div>';
-// }
-
-
 // fatigue
 if($player->data->fatigue){
 
 
-    $player->put_fat(-FAT_PER_REST); // this action add 1 one fat
+    $player->put_fat(-FAT_PER_REST);
 
     $fat = ($player->data->fatigue > FAT_PER_REST) ? FAT_PER_REST : $player->data->fatigue;
 
