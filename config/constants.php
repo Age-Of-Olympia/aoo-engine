@@ -250,21 +250,16 @@ define('LOOT_CHANCE', array(
  * costs & recups
  */
 
-define('TRAVEL_COST', 15); // travelling cost 15Po
-
-define('FAT_EVERY', 6); // every 6 fat, -1 for all rolls
-
-define('FAT_PER_ACTION', 1); // each Action add 1 fat
-
-define('FAT_PER_REST', 4); // resting delete 4 fat
-
-define('FAT_PER_TURNS', 2); // new turn delete 2 fat
-
+define('TRAVEL_COST', 15);      // travelling cost 15Po
+define('FAT_EVERY', 6);         // every 6 fat, -1 for all rolls
+define('FAT_PER_ACTION', 1);    // each Action add 1 fat
+define('FAT_PER_REST', 4);      // resting delete 4 fat
+define('FAT_PER_TURNS', 2);     // new turn delete 2 fat
+define('FAT_PER_MINE', 3);      // fat when mining without pioche
 define('MALUS_PER_DAMAGES', 2); // when damages are done, add 2 malus
-
-define('MALUS_PER_TURNS', 9); // recup 9 malus / turns
-
-define('XP_PER_TURNS', 6); // base 6 xp - rank / turns
+define('MALUS_PER_TURNS', 9);   // recup 9 malus / turns
+define('XP_PER_TURNS', 6);      // base 6 xp - rank / turns
+define('XP_PER_MINE', 1);       // chaque case creusé rapporte 1xp
 
 
 /*

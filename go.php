@@ -144,14 +144,63 @@ if($res->num_rows){
 if($goCoords->z < 0){
 
 
-    $values = array(
-        'name'=>'caverne',
-        'coords_id'=>$coordsId
-    );
+    $sql = '
+    SELECT COUNT(*) AS n
+    FROM map_tiles
+    WHERE
+    coords_id = ?
+    AND
+    name = "caverne"
+    ';
 
-    $db->delete('map_tiles', $values);
+    $res = $db->exe($sql, $coordsId);
 
-    $db->insert('map_tiles', $values);
+    $row = $res->fetch_object();
+
+    if(!$row->n){
+
+
+        if(!isset($player->caracs)){
+
+
+            $player->get_caracs();
+        }
+
+
+        if($player->get_left('a') < 1){
+
+
+            echo '<script>alert("Pas assez d\'Actions.");document.location.reload();</script>';
+            exit();
+        }
+
+
+        $bonus = array('a'=>-1);
+        $player->put_bonus($bonus);
+
+        $player->put_xp(XP_PER_MINE);
+
+
+        if($player->main1->data->name != 'Pioche'){
+
+
+            $player->put_fat(FAT_PER_MINE);
+
+            echo '<script>alert("Creuser sans Pioche, qu\'est-ce que ça fatigue!");document.location.reload();</script>';
+        }
+
+
+        $pierre = Item::get_item_by_name('pierre');
+        $pierre->add_item($player, 1);
+
+
+        $values = array(
+            'name'=>'caverne',
+            'coords_id'=>$coordsId
+        );
+
+        $db->insert('map_tiles', $values);
+    }
 }
 
 

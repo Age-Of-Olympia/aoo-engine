@@ -42,6 +42,10 @@ $player->get_data();
 $player->get_caracs();
 
 
+// anti berserk
+include('scripts/actions/check_berserk.php');
+
+
 // target
 if(!isset($_POST['targetId'])){
 
@@ -446,6 +450,9 @@ if(!empty($success) && $success == true){
  */
 
 
+$db = new Db();
+
+
 // default cost
 $bonus = array('a'=>-1);
 
@@ -458,6 +465,19 @@ if(!empty($actionJson->costs)){
         $bonus[$k] = -$e;
     }
 }
+
+
+// last action
+$sql = '
+UPDATE
+players
+SET
+lastActionTime = '. time() .'
+WHERE
+id = ?
+';
+
+$db->exe($sql, $player->id);
 
 
 // scripts
@@ -525,7 +545,7 @@ if(!empty($log)){
 $data = ob_get_clean();
 
 $sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = "action" ORDER BY time DESC LIMIT 1';
-$db = new Db();
+
 $db->exe($sql, $data);
 
 echo $data;

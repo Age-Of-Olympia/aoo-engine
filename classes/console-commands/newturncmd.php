@@ -13,7 +13,7 @@ EOT);
     {
         $player = new Player($_SESSION['playerId']);
 
-        $sql = 'UPDATE players SET nextTurnTime = ? WHERE id = ?';
+        $sql = 'UPDATE players SET nextTurnTime = ?, lastActionTime = 0, antiBerserkTime = 0 WHERE id = ?';
 
         $db = new Db();
 
