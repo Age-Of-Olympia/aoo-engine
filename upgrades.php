@@ -15,7 +15,7 @@ $trio['fm'] = array(100,50,30);
 $trio['m'] = array(110,55,35);
 $trio['a'] = array(800,200,100);
 $trio['mvt'] = array(100,50,30);
-$trio['r'] = array(70,55,30);
+$trio['r'] = array(40,30,15);
 $trio['rm'] = array(50,40,20);
 $trio['cc'] = array(100,50,30);
 $trio['p'] = array(110,85,78);
@@ -57,6 +57,58 @@ $player->get_caracs();
 if(!empty($_POST['carac'])){
 
     include('scripts/upgrades/carac.php');
+    exit();
+}
+
+
+if( !empty($_GET['caracTables']) ){
+
+
+    foreach( CARACS as $e=>$k ){
+
+
+        if(!isset($trio[$e])){
+
+            continue;
+        }
+
+
+        echo '
+        ==== '. $k .' ====
+        <br />
+        ';
+
+
+        echo '
+        ^    ^ '. implode('/', $trio[ $e ]) .' ^^<br />
+        ^ Augm. ^ Coût ^ Coût total ^<br />
+        ';
+
+
+        $total = 0;
+
+
+        for( $i=1; $i<=12; $i++ ){
+
+            $n = $i - 1;
+
+            $cost = return_cost( $trio[ $e ], $n );
+            $total += $cost;
+
+            echo '
+            | +'. $i .' | '. $cost .' | '. $total .' |<br />
+            ';
+        }
+
+
+        echo '
+        <br />
+        <br />
+        ';
+    }
+
+
+
     exit();
 }
 

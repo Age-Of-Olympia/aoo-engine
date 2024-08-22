@@ -108,6 +108,28 @@ define('EFFECTS_RA_FONT', array(
 ));
 
 
+define('EFFECTS_TXT', array(
+    'adrenaline'=>"Adrénaline<br />Empêche d'intéragir avec un Marchand.",
+    'eau'=>"Eau<br />Diminue les Mouvements de 1.",
+    'ronce'=>"Ronce<br />Diminue l'Agilité de 1.",
+    'boue'=>"Boue<br />Diminue la Force de 1.",
+    'diamant'=>"Diamant<br />Diminue la Magie de 1.",
+    'sang'=>"Sang<br />Diminue Force Mentale de 1.",
+    'lave'=>"Lave<br />Diminue les Actions de 1.",
+
+    'regeneration'=>"Regénération<br />Effet du sort Regénération.",
+    'poison_magique'=>"Poison Magique<br />Empêche la récupération magique au prochain tour.",
+
+    'corruption_du_metal'=>'Corruption du métal<br />Augmente le risque que le matériel contenant du métal (Bronze, Nickel) se casse.',
+    'corruption_du_bronze'=>'Corruption du Bronze<br />Augmente le risque que le matériel contenant du Bronze se casse.',
+    'corruption_du_bois'=>'Corruption du Bois<br />Augmente le risque que le matériel contenant du Bois (ou du Bois Pétrifié) se casse.',
+    'corruption_du_plantes'=>'Corruption des plantes<br />Augmente le risque que le matériel contenant des plantes (Adonis) se casse.',
+    'corruption_du_cuir'=>'Corruption du Cuir<br />Augmente le risque que le matériel contenant du Cuir se casse.',
+
+    'vol'=>"Vol<br />Permet de se déplacer dans les airs."
+));
+
+
 define('EFFECTS_HIDDEN', array( // these effects will be ended at a new turn or when used
     'parade',
     'leurre',
@@ -122,7 +144,7 @@ define('ELE_DEBUFFS', array(
     'eau'=>'mvt',
     'ronce'=>'agi',
     'boue'=>'f',
-    'diamant'=>'fm',
+    'diamant'=>'m',
 
     'sang'=>'fm',
     'lave'=>'a',
