@@ -130,7 +130,7 @@ if(!empty($_POST['race'])){
 
 
         // landing welcome msg
-        $data = file_get_contents('datas/private/players/welcome.msg.html');
+        $data = file_get_contents('datas/private/welcome.msg.html');
 
         File::write('datas/private/players/'. $player->id .'.msg.html', $data);
 
