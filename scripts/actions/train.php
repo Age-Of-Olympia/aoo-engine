@@ -1,5 +1,15 @@
 <?php
 
+
+// training limitation
+if($target->data->fatigue >= FAT_EVERY){
+
+    exit('<font color="red">Ce personnage est trop fatigué pour s\'entraîner.</font>');
+}
+
+$target->put_fat(1);
+
+
 $playerRank = $player->data->rank;
 $targetRank = $target->data->rank;
 
@@ -24,9 +34,10 @@ elseif($playerRank < $targetRank){
 $player->put_xp($playerXp);
 $target->put_xp($targetXp);
 
+// Vous vous entraînez avec '. $target->data->name .' (+'. $playerXp .'Xp).
 
 echo '
-Vous vous entraînez avec '. $target->data->name .' (+'. $playerXp .'Xp).
+
 
 <div class="action-details">
     '. $player->data->name .' (rang '. $playerRank .') +'. $playerXp .'Xp<br />

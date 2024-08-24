@@ -1602,6 +1602,57 @@ class Player{
     }
 
 
+    public function get_action_xp($target){
+
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+        if(!isset($target->data)){
+
+            $target->get_data();
+        }
+
+
+        $playerRank = $this->data->rank;
+        $targetRank = $target->data->rank;
+
+
+        $dif = $playerRank - $targetRank;
+
+
+        $playerXp = ACTION_XP - $dif;
+
+
+        if($playerXp < 1){
+
+            $playerXp = 1;
+        }
+
+
+        if($this->id == $target->id){
+
+            $playerXp = 1;
+        }
+
+
+        if($this->data->faction != '' && $this->data->faction == $target->data->faction){
+
+            $playerXp = 1;
+        }
+
+        if($this->data->secretFaction != '' && $this->data->secretFaction == $target->data->secretFaction){
+
+            $playerXp = 1;
+        }
+
+
+        return $playerXp;
+    }
+
+
     /*
      * STATIC FUNCTIONS
      */

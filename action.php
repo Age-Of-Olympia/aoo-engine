@@ -500,6 +500,40 @@ include('scripts/actions/drop_ammo.php');
 
 
 /*
+ * XP
+ */
+
+
+if(!isset($playerXp)){
+
+
+    // playerXp is not defined by the train.php script
+
+    $playerXp = 1;
+    $targetXp = 0;
+
+    if(
+        (!empty($success) && $success)
+        &&
+        ($actionJson->targetType != 'self' || (!empty($actionJson->targetJet) && $actionJson->targetJet == 0))
+    ){
+
+        $playerXp = $player->get_action_xp($target);
+    }
+
+    if(
+        (!isset($success) || $success == false)
+        &&
+        $player->id != $target->id
+    ){
+
+        $playerXp = 0;
+        $targetXp = 2;
+    }
+}
+
+
+/*
  * PRINT AND REQ RESULTS
  */
 
@@ -588,4 +622,16 @@ if($targetPvBefore != $targetPvAfter){
     });
     </script>
     <?php
+}
+
+
+// display xp
+if($playerXp){
+
+    echo '<div>Vous gagnez '. $playerXp .'Xp.</div>';
+}
+
+if($targetXp){
+
+    echo '<div>'. $target->data->name .' gagne '. $targetXp .'Xp.</div>';
 }
