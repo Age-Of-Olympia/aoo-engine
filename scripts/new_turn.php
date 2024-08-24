@@ -201,6 +201,7 @@ if(!empty($_SESSION['playerId'])){
 
             $player->refresh_data();
             $player->refresh_caracs();
+            $player->refresh_invent(); // for Ae
 
 
             exit();

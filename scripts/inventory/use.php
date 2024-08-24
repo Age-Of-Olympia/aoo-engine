@@ -18,7 +18,18 @@ if(!empty($item->data->emplacement)){
 
     if($return == 'equip'){
 
+        if($player->get_left('ae') < 1){
+
+
+            // undo equip
+            $player->equip($item);
+
+            exit('error ae');
+        }
+
         $text = $player->data->name .' a équipé '. $item->data->name .'.';
+
+        $ae = 1;
     }
 
     elseif($return == 'unequip'){
@@ -29,6 +40,11 @@ if(!empty($item->data->emplacement)){
 
 elseif($item->row->spell != ''){
 
+
+    if($player->get_left('ae') < 1){
+
+        exit('error ae');
+    }
 
     $raceJson = json()->decode('races', $player->data->race);
 
@@ -49,6 +65,15 @@ elseif($item->row->spell != ''){
 
 
     $text = $player->data->name .' a lu '. $item->data->name .'.';
+
+    $ae = 1;
+}
+
+
+// use ae
+if(!empty($ae)){
+
+    $player->put_bonus(array('ae'=>-$ae));
 }
 
 
