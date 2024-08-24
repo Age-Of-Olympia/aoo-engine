@@ -12,6 +12,7 @@ echo '
         <th>Peuple</th>
         <th>Xp</th>
         <th>Rang</th>
+        <th>Territoire</th>
     </tr>
     ';
 
@@ -19,6 +20,18 @@ while($row = $res->fetch_object()){
 
 
     $raceJson = json()->decode('races', $row->race);
+
+    $planJson = json()->decode('plans', $row->plan);
+
+    if(!$planJson){
+
+        $planName = '?';
+    }
+    else{
+
+        $planName = $planJson->name;
+    }
+
 
     echo '
         <tr>
@@ -36,6 +49,9 @@ while($row = $res->fetch_object()){
             </td>
             <td>
                 '. $facJson->role[$row->factionRole]->name .'
+            </td>
+            <td>
+                '. $planName .'
             </td>
         </tr>
         ';
