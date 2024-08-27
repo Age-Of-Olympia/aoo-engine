@@ -133,17 +133,17 @@ class Str{
 
     public static function get_reput($pr){
 
-        if( $pr == 0 )
+        if( $pr < 25 )
             $rank = "Inconnu";
-        if( $pr < 500 )
+        if( $pr < 100 )
             $rank = "Connu";
-        elseif( $pr < 1500 )
+        elseif( $pr < 250 )
             $rank = "Populaire";
-        elseif( $pr < 3000 )
+        elseif( $pr < 500 )
             $rank = "Héroïque";
-        elseif( $pr < 5000 )
+        elseif( $pr < 1250 )
             $rank = "Légendaire";
-        elseif( $pr < 7500 )
+        elseif( $pr < 2500 )
             $rank = "Mythologique";
         else
             $rank = "Divin";
