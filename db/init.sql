@@ -160,7 +160,8 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 (121,	'pavot',	0,	0,	0,	0,	'',	NULL,	NULL),
 (123,	'echelle',	0,	0,	0,	0,	'',	NULL,	NULL),
 (124,	'menthe',	0,	0,	0,	0,	'',	NULL,	NULL),
-(125,	'armet_incruste',	0,	1,	0,	0,	'',	NULL,	NULL);
+(125,	'armet_incruste',	0,	1,	0,	0,	'',	NULL,	NULL),
+(126,	'cafe',	0,	0,	0,	0,	'',	NULL,	NULL);
 
 DROP TABLE IF EXISTS `items_asks`;
 CREATE TABLE `items_asks` (
@@ -320,9 +321,9 @@ CREATE TABLE `players` (
   `story` text NOT NULL DEFAULT 'Je préfère garder cela pour moi.',
   `quest` varchar(255) DEFAULT 'gaia',
   `faction` varchar(255) NOT NULL DEFAULT '',
-  `factionRole` varchar(255) NOT NULL DEFAULT '',
+  `factionRole` int(11) NOT NULL DEFAULT 0,
   `secretFaction` varchar(255) NOT NULL DEFAULT '',
-  `secretFactionRole` varchar(255) NOT NULL DEFAULT '',
+  `secretFactionRole` int(11) NOT NULL DEFAULT 0,
   `nextTurnTime` int(11) NOT NULL DEFAULT 0,
   `lastActionTime` int(11) NOT NULL DEFAULT 0,
   `lastLoginTime` int(11) NOT NULL DEFAULT 0,
@@ -490,6 +491,7 @@ CREATE TABLE `players_logs` (
   `player_id` int(11) NOT NULL,
   `target_id` int(11) NOT NULL,
   `text` varchar(255) NOT NULL DEFAULT '',
+  `hiddenText` text NOT NULL DEFAULT '',
   `type` varchar(255) NOT NULL DEFAULT '',
   `plan` varchar(255) NOT NULL DEFAULT '',
   `time` int(11) NOT NULL DEFAULT 0,
@@ -498,6 +500,22 @@ CREATE TABLE `players_logs` (
   KEY `target_id` (`target_id`),
   CONSTRAINT `players_logs_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   CONSTRAINT `players_logs_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+DROP TABLE IF EXISTS `players_logs_archives`;
+CREATE TABLE `players_logs_archives` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `player_id` int(11) NOT NULL,
+  `target_id` int(11) NOT NULL,
+  `text` varchar(255) NOT NULL DEFAULT '',
+  `hiddenText` text NOT NULL DEFAULT '',
+  `type` varchar(255) NOT NULL DEFAULT '',
+  `plan` varchar(255) NOT NULL DEFAULT '',
+  `time` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `player_id` (`player_id`),
+  KEY `target_id` (`target_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
@@ -580,5 +598,5 @@ CREATE TABLE `quests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- 2024-07-30 15:45:58
+-- 2024-08-29 05:03:19
 

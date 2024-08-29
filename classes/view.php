@@ -569,7 +569,7 @@ class View{
         </svg>
         ';
 
-        if(!empty($planJson->mask) && $this->coords->z >= 0){
+        if(!empty($planJson->mask) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
 
 
             if(!empty($planJson->scrollingMask)){
