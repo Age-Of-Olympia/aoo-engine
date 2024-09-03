@@ -169,7 +169,7 @@ foreach(OPTIONS as $k=>$e){
             else if($k=='incognitoMode')
             {
                 if($player->have_option('isAdmin'))
-                echo $e;
+                    echo $e;
             }
             else{
 
