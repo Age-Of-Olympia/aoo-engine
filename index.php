@@ -1,14 +1,5 @@
 <?php
 
-
-// if(!in_array($_SERVER['REMOTE_ADDR'], array("92.130.13.184","176.144.114.243"))){
-//
-//
-//     echo file_get_contents('index.html');
-//     exit();
-// }
-
-
 if(isset($_GET['logout'])){
 
     ob_start();

@@ -78,8 +78,9 @@ define('EFFECTS_RA_FONT', array(
     'boue'=>'ra-shoe-prints',   // f -1
     'diamant'=>'ra-sapphire',   // m -1
 
+    'styx'=>'ra-water-drop',     // mvt -1
     'sang'=>'ra-gloop',         // fm -1
-    'lave'=>'ra-fire-bomb',         // a -1
+    'lave'=>'ra-fire-bomb',     // a -1
 
     'regeneration'=>'ra-health-increase',
     'poison_magique'=>'ra-bone-bite',
@@ -146,6 +147,7 @@ define('ELE_DEBUFFS', array(
     'boue'=>'f',
     'diamant'=>'m',
 
+    'styx'=>'mvt',
     'sang'=>'fm',
     'lave'=>'a',
 ));

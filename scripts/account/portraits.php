@@ -45,6 +45,11 @@ foreach(File::scan_dir($dir) as $e){
         continue;
     }
 
+    if(str_contains($e, '.sh')){
+
+        continue;
+    }
+
     echo '<img style="cursor: pointer;" src="img/portraits/placeholder.png" data-src="'. $dir . $e .'" data-img="'. $e .'" height="330" />';
 }
 

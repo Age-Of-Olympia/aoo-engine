@@ -95,6 +95,8 @@ if(!$list){
 foreach($list as $k=>$e){
     if($e->id < 0)
         unset($list[$k]);
+    if($e->race == 'dieu')
+        unset($list[$k]);
 }
 
 $ui = new Ui('Classements des joueurs');

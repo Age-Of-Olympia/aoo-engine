@@ -8,6 +8,13 @@ if(!isset(CARACS[$_POST['carac']])){
 
 $k = $_POST['carac'];
 
+
+if($k == 'spd'){
+
+    exit('error carac: spd');
+}
+
+
 $cost = return_cost($trio[$k], $player->upgrades->$k);
 
 

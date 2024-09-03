@@ -29,6 +29,8 @@ if(!empty($_GET['triggerId'])){
         foreach($planJson->exits->$dir as $e){
 
 
+            $e = $e->plan;
+
             if(!empty($_POST['goPlan'])){
 
 
@@ -111,17 +113,17 @@ if(!empty($_GET['triggerId'])){
 
 
                     // travel price
-                    $item = new Item(1); // or
-                    if($item->get_n($player) >= TRAVEL_COST){
-
-
-                        $item->add_item($player, -TRAVEL_COST);
-                    }
-                    else{
+                    // $item = new Item(1); // or
+                    // if($item->get_n($player) >= TRAVEL_COST){
+                    //
+                    //
+                    //     $item->add_item($player, -TRAVEL_COST);
+                    // }
+                    // else{
 
 
                         $player->add_effect('fatigue', $duration=ONE_DAY);
-                    }
+                    // }
 
 
                     $player->go($coords);

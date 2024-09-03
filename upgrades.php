@@ -140,7 +140,7 @@ echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th>Reste</th><th>Coût
 foreach(CARACS as $k=>$e){
 
 
-    if($k == 'ae'){
+    if($k == 'ae' || $k == 'spd'){
 
         continue;
     }

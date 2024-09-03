@@ -14,7 +14,7 @@ echo '
 <table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
 
 
-echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th colspan="2">Effet</th></tr>';
+echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Dégâts</th><th colspan="2">Effet</th></tr>';
 
 
 $spellList = $player->get_spells();
@@ -61,6 +61,18 @@ foreach($spellList as $e){
         <td>
             '. implode(', ', Item::get_cost($spellJson->costs)) .'
         </td>
+        ';
+
+        if(!empty($spellJson->bonusDamages)){
+
+            echo '<td>+'. $spellJson->bonusDamages .'</td>';
+        }
+        else{
+
+            echo '<td></td>';
+        }
+
+        echo '
         <td align="left">
             '. $spellJson->text .'
         </td>
@@ -93,7 +105,7 @@ if(!isset($_GET['forget'])){
 
     echo '
     <tr>
-        <td colspan="5" align="right">
+        <td colspan="6" align="right">
 
             <a href="upgrades.php?spells&forget"><button '. $buttonStyle .'>Oublier un sort</button></a>
         </td>

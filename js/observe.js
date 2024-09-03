@@ -3,7 +3,33 @@ $(document).ready(function(){
     $('#go-rect').hide();
     $('#go-img').hide();
 
+
+    window.visible = false;
+
+
     $('.action').click(function(e){
+
+
+        if($(this).find('.action-name').html() != 'Fermer'){
+
+
+            if(!window.visible){
+
+
+                $('.action').find('.action-name').show();
+
+                window.visible = true;
+
+                return false;
+            }
+
+
+            if(!confirm($(this).find('.action-name').html() +'?')){
+
+                return false;
+            }
+        }
+
 
         $('.action').prop('disabled', true);
         $('#action-data').hide().html();
@@ -43,10 +69,10 @@ $(document).ready(function(){
     })
     .on('mouseover', function(e){
 
-        $(this).find('.action-name').show();
+        // $(this).find('.action-name').show();
     })
     .on('mouseout', function(e){
 
-        $(this).find('.action-name').hide();
+        // $(this).find('.action-name').hide();
     });
 });

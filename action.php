@@ -43,7 +43,10 @@ $player->get_caracs();
 
 
 // anti berserk
-include('scripts/actions/check_berserk.php');
+if(!isset($actionJson->noBerserkCheck)){
+
+    include('scripts/actions/check_berserk.php');
+}
 
 
 // target
@@ -578,9 +581,9 @@ if(!empty($log)){
 
 $data = ob_get_clean();
 
-$sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = "action" ORDER BY time DESC LIMIT 1';
+$sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = "action" AND player_id = ? ORDER BY time DESC LIMIT 1';
 
-$db->exe($sql, $data);
+$db->exe($sql, array($data, $player->id));
 
 echo $data;
 

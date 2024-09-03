@@ -529,7 +529,7 @@ if(!empty($card)){
     echo $card;
 
     ?>
-    <script src="js/observe.js"></script>
+    <script src="js/observe.js?12"></script>
     <?php
 }
 

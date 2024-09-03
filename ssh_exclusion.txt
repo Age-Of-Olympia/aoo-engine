@@ -4,6 +4,7 @@
 docs/
 wiki/
 img/ui/forum/uploads/
+datas/
 datas/public/classements/
 datas/private/players/
 datas/private/forum/

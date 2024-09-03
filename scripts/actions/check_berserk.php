@@ -1,21 +1,17 @@
 <?php
 
-if($player->data->antiBerserkTime > time()){
-
+if($player->data->antiBerserkTime > time()) {
 
     function convertToHoursMins($time, $format = '%02d:%02d') {
-    if ($time < 1) {
-        return;
+        if ($time < 1) {
+            return;
+        }
+        $hours = floor($time / 60);
+        $minutes = floor($time % 60);
+        return sprintf($format, $hours, $minutes);
     }
-    $hours = floor($time / 60);
-    $minutes = ($time % 60);
-    return sprintf($format, $hours, $minutes);
-    }
 
-
-    $timeLeft = $player->data->antiBerserkTime - time();
-    $timeLeft /= 60;
-
+    $timeLeft = intval(($player->data->antiBerserkTime - time()) / 60);
 
     echo '
     <font color="red">Mesure anti-Berserk!</font><br />

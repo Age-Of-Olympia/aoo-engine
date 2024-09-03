@@ -71,7 +71,7 @@ function verifyImages($dir, $result) {
         if (!in_array($image, $result)) {
             echo "L'image $image n'est pas dans la liste et a été supprimée.<br />";
 
-            unlink($image);
+            // unlink($image);
 
             $allImagesExist = false;
         }

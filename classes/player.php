@@ -1307,6 +1307,11 @@ class Player{
 
         $maxSpells = $this->data->rank + 1;
 
+        if($this->data->race == 'hs'){
+
+            $maxSpells += 1;
+        }
+
         return $maxSpells - $spellsN;
     }
 

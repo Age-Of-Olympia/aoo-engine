@@ -1,10 +1,22 @@
 <?php
 
 
+// forbidden training
+if($target->have_option('noTrain')){
+
+    exit('<font color="red">Ce personnage n\'autorise pas les entraînements.</font>');
+}
+
+
 // training limitation
 if($target->data->fatigue >= FAT_EVERY){
 
     exit('<font color="red">Ce personnage est trop fatigué pour s\'entraîner.</font>');
+}
+
+if($player->data->fatigue >= FAT_EVERY){
+
+    exit('<font color="red">Vous êtes trop fatigué pour vous entraîner.</font>');
 }
 
 $target->put_fat(1);

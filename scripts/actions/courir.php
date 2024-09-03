@@ -44,3 +44,7 @@ Vous courez et gagnez '. $mvt .' Mouvements.
 
 <div class="action-details">1d3 = '. $rand .' '. $route .' '. $pouvoir .'</div>
 ';
+
+
+// gain xp
+$player->put_xp(1);

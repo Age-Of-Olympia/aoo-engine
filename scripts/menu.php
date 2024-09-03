@@ -24,8 +24,16 @@ if(!empty($_SESSION['playerId'])){
             foreach(CARACS as $k=>$e){
 
 
+                if($k == 'spd'){
+
+                    continue;
+                }
+
+
                 echo '<th width="30">'. $e .'</th>';
             }
+
+            echo '<th>Foi</th>';
 
             echo '
         </tr>
@@ -38,6 +46,12 @@ if(!empty($_SESSION['playerId'])){
             foreach(CARACS as $k=>$e){
 
 
+                if($k == 'spd'){
+
+                    continue;
+                }
+
+
                 $left = '';
                 if(isset($turnJson->$k)){
 
@@ -46,6 +60,8 @@ if(!empty($_SESSION['playerId'])){
 
                 echo '<td>'. $left . $caracsJson->$k .'</td>';
             }
+
+            echo '<td>'. $player->data->pf .'</td>';
 
             echo '
         </tr>
@@ -73,22 +89,22 @@ if(!empty($_SESSION['playerId'])){
 
         echo '<tr>';
 
-            if($player->data->malus){
+            // if($player->data->malus){
 
-                echo '<td colspan="'. count(CARACS) .'">Malus: -'. $player->data->malus .' aux jets de défense.</td>';
-            }
+                echo '<td colspan="'. count(CARACS) .'">Malus ('. $player->data->malus .'): -'. $player->data->malus .' aux jets de défense.</td>';
+            // }
 
         echo '</tr>';
 
         echo '<tr>';
 
-            if($player->data->fatigue >= FAT_EVERY){
+            // if($player->data->fatigue >= FAT_EVERY){
 
 
                 $fatMalus = floor($player->data->fatigue / FAT_EVERY);
 
                 echo '<td colspan="'. count(CARACS) .'">Fatigue ('. $player->data->fatigue .'): -'. $fatMalus .' à tous les jets.</td>';
-            }
+            // }
 
         echo '</tr>';
 
