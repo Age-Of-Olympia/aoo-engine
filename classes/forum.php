@@ -129,13 +129,13 @@ class Forum{
             $topJson = json()->decode('forum', 'topics/'. $mostRecentFile);
 
             if(strlen($topJson->title) > 10){
-
-                $topName = htmlentities(substr($topJson->title, 0, 10)) .'...';
+                $topName = mb_substr($topJson->title, 0, 10);
+                $topName = htmlentities($topName,ENT_HTML5, "UTF-8") .'...';
             }
 
             else{
 
-                $topName = htmlentities($topJson->title) .'';
+                $topName = htmlentities($topJson->title,ENT_HTML5, "UTF-8") .'';
             }
 
 
