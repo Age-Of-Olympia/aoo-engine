@@ -45,12 +45,20 @@ if(!$res->num_rows){
     exit("Il n'y a rien par ici.");
 }
 
+$ressources = array();
 while($row = $res->fetch_object()){
 
+    if(array_key_exists($biomes[$row->name], $ressources))
+        $ressources[$biomes[$row->name]] += $row->max;
+    else
+        $ressources[$biomes[$row->name]] = $row->max;
 
-    $max = $row->max;
+}
 
-    $item = Item::get_item_by_name($biomes[$row->name]);
+foreach($ressources as $k=>$v){
+    $max = $v;
+
+    $item = Item::get_item_by_name($k);
 
     $item->get_data();
 
