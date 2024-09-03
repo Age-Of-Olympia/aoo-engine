@@ -132,17 +132,18 @@ if(!empty($_GET['triggerId'])){
 
                     View::refresh_players_svg($coords);
 
+                    if(!$player->get_option('incognitoMode'))
+                    {
+                        $player->get_data();
 
-                    $player->get_data();
 
+                        $text = $player->data->name .' a voyagé de '. $planJson->name .' à '. $goPlanJson->name .'.';
+                        Log::put($player, $player, $text, $type="travel");
 
-                    $text = $player->data->name .' a voyagé de '. $planJson->name .' à '. $goPlanJson->name .'.';
-                    Log::put($player, $player, $text, $type="travel");
+                        $player->coords->plan = $e;
 
-                    $player->coords->plan = $e;
-
-                    Log::put($player, $player, $text, $type="travel");
-
+                        Log::put($player, $player, $text, $type="travel");
+                    }
 
                     exit();
                 }

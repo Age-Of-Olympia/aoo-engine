@@ -43,27 +43,39 @@ $db = new Db();
 
 $res = $db->exe($sql, array($player->coords->z, $player->coords->plan));
 
+//this way allow single sql querry, the count of incognito should be small enough to not be a problem
+$incognitos = array();
+$incognitosSQL="SELECT player_id FROM `players_options` WHERE name='incognitoMode'";
+$resIncognito = $db->exe($incognitosSQL);
+while($row = $resIncognito->fetch_object()){
+    $incognitos[$row->player_id] = true ;
+}
+$width=11;
+if($player->coords->plan=="praetorium") //TODO add $planJson->size variable
+    $width=15;
+    
 echo '
 <svg
     xmlns="http://www.w3.org/2000/svg"
     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
     baseProfile="full"
 
-    width="110"
-    height="110"
+    width="'. $width * 10 .'"
+    height="'. $width * 10 .'"
 
     style="background: url(img/ui/map/'. $player->coords->plan .'.png) center center no-repeat;"
     >
     ';
 
     while($row = $res->fetch_object()){
-
-
+        if($row->id != $player->id && isset($incognitos[$row->id])){
+            continue;
+        }
         $raceJson = json()->decode('races', $row->race);
 
 
-        $x = ($row->x + 11) * 5;
-        $y = (-$row->y + 11) * 5;
+        $x = ($row->x + $width) * 5;
+        $y = (-$row->y + $width) * 5;
 
         $color = ($row->id == $player->id) ? 'magenta' : $raceJson->bgColor;
 
@@ -98,6 +110,14 @@ ON
     c.id = p.coords_id
 WHERE
     c.plan = ?
+AND p.id NOT IN (
+SELECT 
+`players_options`.`player_id` 
+FROM `players_options` 
+INNER JOIN players_options as po 
+ON po.player_id = p.id 
+WHERE `players_options`.`name`="incognitoMode" 
+)
 GROUP BY faction
 ';
 
