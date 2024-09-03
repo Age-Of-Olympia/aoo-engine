@@ -109,9 +109,6 @@ if(!empty($_GET['triggerId'])){
                     }
 
 
-                    View::refresh_players_svg($coords);
-
-
                     // travel price
                     // $item = new Item(1); // or
                     // if($item->get_n($player) >= TRAVEL_COST){
@@ -128,8 +125,13 @@ if(!empty($_GET['triggerId'])){
                     // }
 
 
-                    // $player->go($coords);
-                    $coordsId = View::get_free_coords_id_arround($goCoords);
+
+                    $coordsId = View::get_free_coords_id_arround($coords);
+
+                    $player->go($coords);
+
+                    View::refresh_players_svg($coords);
+
 
                     $player->get_data();
 
