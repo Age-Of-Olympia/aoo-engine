@@ -64,7 +64,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
     }
 
 
-    echo time();
+    echo $topJson->name;
 
 
     exit();
