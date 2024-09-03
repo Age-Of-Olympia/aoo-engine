@@ -46,7 +46,7 @@ echo '
     foreach(Log::get($player->coords->plan) as $e){
 
 
-        if(isset($_GET['self']) && $e->player_id != $_SESSION['playerId']){
+        if(isset($_GET['self']) && $e->player_id != $_SESSION['playerId'] && $e->target_id != $_SESSION['playerId']){
 
             continue;
         }
