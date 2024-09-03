@@ -20,7 +20,8 @@ function search_img($text, &$result){
         // Les correspondances sont dans $matches[1]
         foreach ($matches[1] as $match) {
 
-            $result[] = $match;
+            if(str_starts_with($match,"img/ui/forum/uploads/")) // keep only file name and use dict for faster check
+                $result[str_replace("img/ui/forum/uploads/","",$match)]=true;
         }
     }
 }
@@ -53,7 +54,8 @@ function getImagesFromDir($dir) {
             $filePath = $file->getPathname();
             // Vérifier si le fichier est une image en fonction de son extension
             if (preg_match('/\.(jpg|jpeg|png|gif)$/i', $filePath)) {
-                $images[] = $filePath;
+                $fileName= str_replace($dir, '', $filePath);
+                $images[] = $fileName;
             }
         }
     }
@@ -62,16 +64,16 @@ function getImagesFromDir($dir) {
 }
 
 
-function verifyImages($dir, $result) {
-    $images = getImagesFromDir($dir);
+function verifyImages($dir, $ImagesUsed) {
+    $imagesOnDisk = getImagesFromDir($dir);
     $allImagesExist = true;
 
-    foreach ($images as $image) {
+    foreach ($imagesOnDisk as $image) {
         // On considère que $result contient les chemins complets ou les URLs des images
-        if (!in_array($image, $result)) {
+        if (!array_key_exists($image, $ImagesUsed)) {
             echo "L'image $image n'est pas dans la liste et a été supprimée.<br />";
 
-            // unlink($image);
+            unlink($dir.$image);
 
             $allImagesExist = false;
         }
