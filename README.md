@@ -33,7 +33,21 @@ Vous pouvez alors vérifier que trois conteneurs sont démarrés, par exemple ic
 
 ![docker desktop dans lequel on voit trois conteneurs ouverts, celui de dev, la bdd, phpmyadmin](./docs/images/docker.png)
 
-C'est prêt !
+C'est presque prêt !
+
+dupliquez le fichier "config/db_constants.php.exemple" vers "config/db_constants.php"
+
+et mettez le contenu suivant : 
+
+```code
+define('DB_CONSTANTS', array(
+    'host'=>"mariadb-aoo4:3306",
+    'user'=>"root",
+    'psw'=>"passwordRoot",
+    'db'=>"aoo4"
+));
+```
+sauvgardez et vous être prêt ! 
 
 ### Lancement du serveur
 
