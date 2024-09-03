@@ -214,6 +214,19 @@ foreach(OPTIONS as $k=>$e){
 }
 
 
+
+if($player->have_option('isAdmin')){
+
+
+    echo '
+    <tr>
+        <td>Ouvrir la console</td>
+        <td><input type="button" OnClick="create_console(); document.getElementById(\'input-line\').focus()" value="Ouvrir" style="width: 100%;" /></td>
+    </tr>
+    ';
+}
+
+
 echo '
 </table>
 ';

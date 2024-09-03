@@ -722,6 +722,11 @@ img {
         background: url('../img/ui/cards/gasoline.webp');
     }
 
+    #ui-card .animal{
+
+        background: url('../img/ui/cards/black_fur.webp');
+    }
+
     #ui-card .card-name{
 
         text-align: left;

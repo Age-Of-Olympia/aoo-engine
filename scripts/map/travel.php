@@ -122,11 +122,14 @@ if(!empty($_GET['triggerId'])){
                     // else{
 
 
-                        $player->add_effect('fatigue', $duration=ONE_DAY);
+                        // $player->add_effect('fatigue', $duration=ONE_DAY);
+
+                        $player->put_fat(FAT_EVERY);
                     // }
 
 
-                    $player->go($coords);
+                    // $player->go($coords);
+                    $coordsId = View::get_free_coords_id_arround($goCoords);
 
                     $player->get_data();
 

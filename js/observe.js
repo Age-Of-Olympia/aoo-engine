@@ -16,7 +16,7 @@ $(document).ready(function(){
             if(!window.visible){
 
 
-                $('.action').find('.action-name').show();
+                $('.action').css('width', '110px').find('.action-name').show();
 
                 window.visible = true;
 
@@ -24,10 +24,10 @@ $(document).ready(function(){
             }
 
 
-            if(!confirm($(this).find('.action-name').html() +'?')){
-
-                return false;
-            }
+            // if(!confirm($(this).find('.action-name').html() +'?')){
+            //
+            //     return false;
+            // }
         }
 
 
