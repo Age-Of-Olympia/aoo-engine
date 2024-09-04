@@ -84,12 +84,14 @@ echo '
     }
 
 $topicsHtml=array();
+$pinnedTopicsHtml=array();
     foreach($topicsTbl as $top){
 
 
         $topJson = json()->decode('forum', 'topics/'. $top->name);
 
         $views = (count($topicsViewsTbl)) ? $topicsViewsTbl[$top->name] : Forum::get_views($topJson);
+
 
 
         $author = new Player($topJson->author);
@@ -129,6 +131,10 @@ $topicsHtml=array();
                     $topName = '<b>'. htmlentities($topJson->title) .'</b>';
                 }
 
+                if(isset($topJson->pined) && $topJson->pined){
+
+                   $topName= '<i class="ra ra-gavel"></i>'.$topName;
+                }
 
                 $currentTopicHtml.= implode(' ', $symbolsTbl) . $topName;
 
@@ -203,9 +209,20 @@ $topicsHtml=array();
             $currentTopicHtml.= '
         </tr>
         ';
-        $topicsHtml[$topJson->last->time]=  $currentTopicHtml;
+        if(isset($topJson->pined) && $topJson->pined)
+        {
+            $pinnedTopicsHtml[$topJson->last->time]=  $currentTopicHtml;
+        }
+        else
+        {
+            $topicsHtml[$topJson->last->time]=  $currentTopicHtml;
+        }
     }
 
+    krsort($pinnedTopicsHtml);
+    foreach($pinnedTopicsHtml as $currentTopicHtml){
+        echo $currentTopicHtml;
+    }
     //sort by last post time
     krsort($topicsHtml);
     foreach($topicsHtml as $currentTopicHtml){
