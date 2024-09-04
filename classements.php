@@ -95,7 +95,8 @@ if(!$list){
 foreach($list as $k=>$e){
     if($e->id < 0)
         unset($list[$k]);
-    if($e->race == 'dieu')
+    //Enlever les races "privées" dieux, animaux, protocols... au cas où ce ne soit pas un pnj
+    if(file_exists('datas/private/races/' . $e->race . '.json'))
         unset($list[$k]);
 }
 
