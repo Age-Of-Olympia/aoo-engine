@@ -294,15 +294,18 @@ echo '
 
 echo '<div id="last"></div>';
 
-
-if(!isset($topJson->closed)){
+$topicClosed = isset($topJson->closed) && $topJson->closed;
+if(!$topicClosed || $player->have_option('isAdmin')){
 
 
     if(!isset($_GET['hideMenu'])){
 
-
+        $replyTitle = 'Répondre';
+        if($topicClosed){
+            $replyTitle .= ' (admin only)';
+        }
         echo '<div>
-        <button class="reply" data-topic="'. htmlentities($_GET['topic']) .'">Répondre
+        <button class="reply" data-topic="'. htmlentities($_GET['topic']) .'">'.$replyTitle.'
         </button>
         </div>';
     }
@@ -310,6 +313,10 @@ if(!isset($topJson->closed)){
 else{
 
     echo '<input type="hidden" class="reply" data-topic="'. htmlentities($_GET['topic']) .'" />';
+}
+
+if($topicClosed)
+{
     echo '<div>Sujet fermé.</div>';
 }
 
