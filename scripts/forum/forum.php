@@ -48,8 +48,6 @@ echo '
     </tr>
     ';
 
-    krsort($forumJson->topics);
-
     $topicsTbl = $forumJson->topics;
 
 
@@ -85,7 +83,7 @@ echo '
         }
     }
 
-
+$topicsHtml=array();
     foreach($topicsTbl as $top){
 
 
@@ -98,12 +96,12 @@ echo '
 
         $author->get_data();
 
-
-        echo '
+        
+        $currentTopicHtml= '
         <tr class="tr-forum">
             ';
 
-            echo '
+        $currentTopicHtml.= '
             <td
                 data-topic="'. htmlentities($top->name) .'"
 
@@ -132,28 +130,28 @@ echo '
                 }
 
 
-                echo implode(' ', $symbolsTbl) . $topName;
+                $currentTopicHtml.= implode(' ', $symbolsTbl) . $topName;
 
 
-                echo '
+                $currentTopicHtml.= '
                 <div><i>Par '. $author->data->name .'</i></div>
                 ';
 
 
-                echo '
+                $currentTopicHtml.= '
             </td>
             ';
 
 
-            echo '
+            $currentTopicHtml.= '
             <td align="center">
                 ';
 
 
-                echo count($topJson->posts);
+                $currentTopicHtml.= count($topJson->posts);
 
 
-                echo '
+                $currentTopicHtml.= '
             </td>
             ';
 
@@ -163,7 +161,7 @@ echo '
             $pagesN = Forum::get_pages($postTotal);
 
 
-            echo '
+            $currentTopicHtml.= '
             <td
                 align="right"
                 style="font-size: 88%;"
@@ -187,7 +185,7 @@ echo '
                     $date = 'Hier';
                 }
 
-                echo '
+                $currentTopicHtml.= '
                 <div>
                     Par '. $lastAuthor->data->name .'
                     <div>
@@ -197,16 +195,22 @@ echo '
                 ';
 
 
-                echo '
+                $currentTopicHtml.= '
             </td>
             ';
 
 
-            echo '
+            $currentTopicHtml.= '
         </tr>
         ';
+        $topicsHtml[$topJson->last->time]=  $currentTopicHtml;
     }
 
+    //sort by last post time
+    krsort($topicsHtml);
+    foreach($topicsHtml as $currentTopicHtml){
+        echo $currentTopicHtml;
+    }
 
     echo '
 </table>
