@@ -1,5 +1,18 @@
 <?php
 
+function SearchInPosts($posts, $search)
+{
+    $search = strtolower($search);
+    foreach($posts as $post)
+    {
+        $postJson = json()->decode('forum', 'posts/'. $post->name);
+        if(strpos(strtolower($postJson->text),$search ) !== false)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 $forumJson = json()->decode('forum', 'forums/'. $_GET['forum']);
 
@@ -48,8 +61,6 @@ echo '
     </tr>
     ';
 
-    krsort($forumJson->topics);
-
     $topicsTbl = $forumJson->topics;
 
 
@@ -85,25 +96,41 @@ echo '
         }
     }
 
-
+$topicsHtml=array();
+$pinnedTopicsHtml=array();
     foreach($topicsTbl as $top){
-
+        $shoulBeDisplayed = true;
 
         $topJson = json()->decode('forum', 'topics/'. $top->name);
+        if(isset($_GET['search']))
+        {
+            $shoulBeDisplayed = false;
+            if(strpos(strtolower($topJson->title), strtolower($_GET['search'])) !== false)
+            {
+                $shoulBeDisplayed = true;
+            }
+            else
+            {
+                $shoulBeDisplayed=SearchInPosts($topJson->posts, $_GET['search']);
+            }
+        }
+
+        if(!$shoulBeDisplayed)continue;
 
         $views = (count($topicsViewsTbl)) ? $topicsViewsTbl[$top->name] : Forum::get_views($topJson);
+
 
 
         $author = new Player($topJson->author);
 
         $author->get_data();
 
-
-        echo '
+        
+        $currentTopicHtml= '
         <tr class="tr-forum">
             ';
 
-            echo '
+        $currentTopicHtml.= '
             <td
                 data-topic="'. htmlentities($top->name) .'"
 
@@ -131,29 +158,33 @@ echo '
                     $topName = '<b>'. htmlentities($topJson->title) .'</b>';
                 }
 
+                if(isset($topJson->pined) && $topJson->pined){
 
-                echo implode(' ', $symbolsTbl) . $topName;
+                   $topName= '<i class="ra ra-gavel"></i>'.$topName;
+                }
+
+                $currentTopicHtml.= implode(' ', $symbolsTbl) . $topName;
 
 
-                echo '
+                $currentTopicHtml.= '
                 <div><i>Par '. $author->data->name .'</i></div>
                 ';
 
 
-                echo '
+                $currentTopicHtml.= '
             </td>
             ';
 
 
-            echo '
+            $currentTopicHtml.= '
             <td align="center">
                 ';
 
 
-                echo count($topJson->posts);
+                $currentTopicHtml.= count($topJson->posts);
 
 
-                echo '
+                $currentTopicHtml.= '
             </td>
             ';
 
@@ -163,7 +194,7 @@ echo '
             $pagesN = Forum::get_pages($postTotal);
 
 
-            echo '
+            $currentTopicHtml.= '
             <td
                 align="right"
                 style="font-size: 88%;"
@@ -187,7 +218,7 @@ echo '
                     $date = 'Hier';
                 }
 
-                echo '
+                $currentTopicHtml.= '
                 <div>
                     Par '. $lastAuthor->data->name .'
                     <div>
@@ -197,16 +228,33 @@ echo '
                 ';
 
 
-                echo '
+                $currentTopicHtml.= '
             </td>
             ';
 
 
-            echo '
+            $currentTopicHtml.= '
         </tr>
         ';
+        if(isset($topJson->pined) && $topJson->pined)
+        {
+            $pinnedTopicsHtml[$topJson->last->time]=  $currentTopicHtml;
+        }
+        else
+        {
+            $topicsHtml[$topJson->last->time]=  $currentTopicHtml;
+        }
     }
 
+    krsort($pinnedTopicsHtml);
+    foreach($pinnedTopicsHtml as $currentTopicHtml){
+        echo $currentTopicHtml;
+    }
+    //sort by last post time
+    krsort($topicsHtml);
+    foreach($topicsHtml as $currentTopicHtml){
+        echo $currentTopicHtml;
+    }
 
     echo '
 </table>

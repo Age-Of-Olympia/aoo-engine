@@ -31,7 +31,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
 
         $db = new Db();
 
-        $values = array('player_id'=>$player->id, 'name'=>time());
+        $values = array('player_id'=>$player->id, 'name'=>$topJson->name);
 
         $db->insert('players_forum_missives', $values);
 

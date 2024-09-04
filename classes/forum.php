@@ -229,12 +229,13 @@ class Forum{
 
     public static function put_topic($player, $forumJson, $title, $text){
 
+        $topicId = time();
 
-        $path = 'datas/private/forum/topics/'. time() .'.json';
+        $path = 'datas/private/forum/topics/'. $topicId .'.json';
 
         $data = (object) array(
 
-            "name"=>time(),
+            "name"=>$topicId,
 
             "title"=>$title,
 
@@ -252,7 +253,7 @@ class Forum{
         Json::write_json($path, $data);
 
 
-        $topJson = json()->decode('forum', 'topics/'. time());
+        $topJson = json()->decode('forum', 'topics/'. $topicId);
 
 
         // create post
@@ -266,12 +267,12 @@ class Forum{
 
     public static function put_post($player, $topJson, $text){
 
-
-        $path = 'datas/private/forum/posts/'. time() .'.json';
+        $postId = time();
+        $path = 'datas/private/forum/posts/'. $postId .'.json';
 
         $data = (object) array(
 
-            "name"=>time(),
+            "name"=>$postId,
 
             "author"=>$player->id,
 
@@ -290,11 +291,11 @@ class Forum{
 
             $player->put_pr(1);
 
-            Forum::put_keywords(time(), $text);
+            Forum::put_keywords($postId, $text);
         }
 
 
-        self::add_post_in_topic($name=time(), $topJson);
+        self::add_post_in_topic($postId, $topJson);
     }
 
 

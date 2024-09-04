@@ -22,7 +22,10 @@ if(!empty($_POST['text'])){
 
     Forum::check_access($player, $forumJson);
 
+    if(isset($topJson->closed) && $topJson->closed && !$player->have_option('isAdmin')){
 
+        exit('error topic is closed only admin can post');
+    }
 
     if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
 
