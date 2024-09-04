@@ -1,5 +1,18 @@
 <?php
 
+function SearchInPosts($posts, $search)
+{
+    $search = strtolower($search);
+    foreach($posts as $post)
+    {
+        $postJson = json()->decode('forum', 'posts/'. $post->name);
+        if(strpos(strtolower($postJson->text),$search ) !== false)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 $forumJson = json()->decode('forum', 'forums/'. $_GET['forum']);
 
@@ -86,9 +99,23 @@ echo '
 $topicsHtml=array();
 $pinnedTopicsHtml=array();
     foreach($topicsTbl as $top){
-
+        $shoulBeDisplayed = true;
 
         $topJson = json()->decode('forum', 'topics/'. $top->name);
+        if(isset($_GET['search']))
+        {
+            $shoulBeDisplayed = false;
+            if(strpos(strtolower($topJson->title), strtolower($_GET['search'])) !== false)
+            {
+                $shoulBeDisplayed = true;
+            }
+            else
+            {
+                $shoulBeDisplayed=SearchInPosts($topJson->posts, $_GET['search']);
+            }
+        }
+
+        if(!$shoulBeDisplayed)continue;
 
         $views = (count($topicsViewsTbl)) ? $topicsViewsTbl[$top->name] : Forum::get_views($topJson);
 
