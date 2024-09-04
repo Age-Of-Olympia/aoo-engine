@@ -73,7 +73,7 @@ function verifyImages($dir, $ImagesUsed) {
         if (!array_key_exists($image, $ImagesUsed)) {
             echo "L'image $image n'est pas dans la liste et a été supprimée.<br />";
 
-            unlink($dir.$image);
+            // unlink($dir.$image);
 
             $allImagesExist = false;
         }

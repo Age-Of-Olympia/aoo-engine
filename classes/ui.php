@@ -17,9 +17,6 @@ class ui{
          * return header and extra files timestamped
          */
 
-        $jsVersion = filemtime('js/main.js');
-        $cssVersion = filemtime('css/main.css');
-
         ob_start();
 
         echo '
@@ -37,9 +34,9 @@ class ui{
                 <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
-                <script src="js/main.js?v=' . $jsVersion . '"></script>
-                <script src="js/console.js?v=' . $jsVersion . '"></script>
-                <link href="css/main.min.css?v=' . $cssVersion . '" rel="stylesheet" />
+                <script src="js/main.js?v=20240904"></script>
+                <script src="js/console.js?v=20240904"></script>
+                <link href="css/main.min.css?v=20240904" rel="stylesheet" />
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){

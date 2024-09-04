@@ -105,7 +105,7 @@ echo '
                         $endTime = '';
                     }
 
-                    echo '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span><span style="font-size: 88%;">'. $endTime .'</span><br />';
+                    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#'. $row->name .'"><span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span><span style="font-size: 88%;">'. $endTime .'</span></a><br />';
                 }
 
             echo '</div>';

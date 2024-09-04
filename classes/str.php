@@ -172,7 +172,7 @@ class Str{
 
         if(strlen( $str ) > 30) return false;
 
-        return preg_match("/^[a-z'àâçéèêëîïôûùü -]*$/i", $str);
+        return preg_match("/^[a-z'àâçéèêëîïôöûùü -]*$/i", $str);
     }
 
 
