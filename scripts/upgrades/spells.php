@@ -14,7 +14,7 @@ echo '
 <table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
 
 
-echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Dégâts</th><th colspan="2">Effet</th></tr>';
+echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th colspan="2">Effet</th></tr>';
 
 
 $spellList = $player->get_spells();
@@ -63,14 +63,20 @@ foreach($spellList as $e){
         </td>
         ';
 
+        $bonus = '';
+
         if(!empty($spellJson->bonusDamages)){
 
-            echo '<td>+'. $spellJson->bonusDamages .'</td>';
+            $bonus = '+'. $spellJson->bonusDamages;
         }
-        else{
+        elseif(!empty($spellJson->bonusHeal)){
 
-            echo '<td></td>';
+            $bonus = '+'. $spellJson->bonusHeal;
         }
+
+
+        echo '<td>'. $bonus .'</td>';
+
 
         echo '
         <td align="left">

@@ -101,9 +101,17 @@ else{
     $player->get_data();
 
 
+    $bg = 'img/dialogs/bg/'. $target->id .'.webp';
+
+    if(!file_exists($bg)){
+
+        $bg = 'img/dialogs/bg/marchand.webp';
+    }
+
+
     $options = array(
         'name'=>$player->data->name,
-        'avatar'=>'img/dialogs/bg/'. $target->id .'.webp',
+        'avatar'=>$bg,
         'dialog'=>'marchand',
         'text'=>'',
         'player'=>$player,

@@ -102,7 +102,7 @@ foreach($playersTbl as $pnj){
 
 
     echo '
-    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;">'. $mails .'<div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" width="150" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></td>
+    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;">'. $mails .'<div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></td>
     ';
 }
 

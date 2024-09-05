@@ -7,6 +7,10 @@ $spellPrices = array(
     'dmg2'=>200,
     'rp'=>50,
     'soins'=>100,
+	'esquive'=>200,
+	'enchant'=>100,
+	'corrupt'=>100,
+	'dps'=>300,
     'special'=>300
 );
 
@@ -19,7 +23,7 @@ echo '<h1>Parchemins de sorts</h1>';
 
 echo '<table border="1" align="center" class="marbre">';
 
-echo '<tr><td><img src="img/items/parchemin_sort_mini.png" /></td><td align="left">';
+echo '<tr><td><img src="img/items/parchemin_sort_mini.webp" /></td><td align="left">';
 
 echo $playerGold .'Po<br />';
 
