@@ -74,7 +74,7 @@ define('OPTIONS', array(
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'showTuto'=>"Rejouer le tutoriel",
-    'incognitoMode'=>"Mode Incognito<br /><sup>Vous ne serez plus visible sur la carte ni dans les evenements</sup>",
+    'incognitoMode'=>"Mode Incognito (admin)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
 ));
 
 
@@ -241,7 +241,7 @@ if($player->have_option('isAdmin')){
 
     echo '
     <tr>
-        <td>Ouvrir la console</td>
+        <td>Ouvrir la console (admin)</td>
         <td><input type="button" OnClick="create_console(); document.getElementById(\'input-line\').focus()" value="Ouvrir" style="width: 100%;" /></td>
     </tr>
     ';

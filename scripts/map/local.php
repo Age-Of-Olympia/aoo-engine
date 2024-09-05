@@ -51,8 +51,10 @@ while($row = $resIncognito->fetch_object()){
     $incognitos[$row->player_id] = true ;
 }
 $width=11;
-if($player->coords->plan=="praetorium") //TODO add $planJson->size variable
-    $width=15;
+if(!empty($planJson->size)){
+
+    $width=$planJson->size;
+}
     
 echo '
 <svg
