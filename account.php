@@ -74,6 +74,7 @@ define('OPTIONS', array(
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'showTuto'=>"Rejouer le tutoriel",
+    'incognitoMode'=>"Mode Incognito<br /><sup>Vous ne serez plus visible sur la carte ni dans les evenements</sup>",
 ));
 
 
@@ -84,6 +85,12 @@ if(!empty($_POST['option'])){
     if(!isset(OPTIONS[$_POST['option']])){
 
         exit('error option');
+    }
+
+    if($_POST['option']=='incognitoMode')
+    {
+       if(!$player->have_option('isAdmin'))
+           exit('error option');
     }
 
 
@@ -159,6 +166,11 @@ foreach(OPTIONS as $k=>$e){
 
                 echo '<sup>Vous avez uploadé '. $uploadedN .'/'. $uploadMax .' images</sup>';
             }
+            else if($k=='incognitoMode')
+            {
+                if($player->have_option('isAdmin'))
+                    echo $e;
+            }
             else{
 
                 echo $e;
@@ -198,6 +210,15 @@ foreach(OPTIONS as $k=>$e){
                 echo '
                 <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
                 ';
+            }
+            else if($k =='incognitoMode')
+            {
+                if($player->have_option('isAdmin'))
+                {
+                    echo '
+                    <input type="checkbox" class="option" data-option="'. $k .'" '. $checked[$k] .' />
+                    ';
+                }
             }
             else{
 
