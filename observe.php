@@ -279,9 +279,15 @@ if($res->num_rows){
         $text = $target->data->text;
 
         if(
+            $target->id > 0
+            &&
             $target->data->race != $player->data->race
             &&
-            $target->data->secretFaction != $player->data->secretFaction
+            (
+                $target->data->secretFaction != $player->data->secretFaction
+                ||
+                $player->data->secretFaction == ''
+            )
         ){
 
             $text = '<i>Parle dans une langue qui vous est inconnue.</i>';

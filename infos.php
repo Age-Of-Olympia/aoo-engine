@@ -151,9 +151,15 @@ echo '
             $text = nl2br($target->data->text);
 
             if(
+                $target->id > 0
+                &&
                 $target->data->race != $player->data->race
                 &&
-                $target->data->secretFaction != $player->data->secretFaction
+                (
+                    $target->data->secretFaction != $player->data->secretFaction
+                    ||
+                    $player->data->secretFaction == ''
+                )
             ){
 
 
