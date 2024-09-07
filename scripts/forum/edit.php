@@ -108,33 +108,26 @@ include('scripts/forum/upload_module.php');
 
 
 // search post position
-$postN = 0;
+$postN = count($topJson->posts);
 
 foreach($topJson->posts as $e){
 
     if($e->name != $postJson->name){
 
-        $postN ++;
-
         continue;
     }
 
-    break;
+    $postN --;
 }
 
 
-
-$postTotal = count($topJson->posts)+1;
-
-$postTotal -= $postN;
-
-$pagesN = Forum::get_pages($postTotal);
+$pagesN = Forum::get_pages($postN);
 
 
 echo '
 <iframe
     id="older-iframe"
-    src="forum.php?topic='. $topJson->name .'&page='. $pagesN .'&hideMenu=1#end"
+    src="forum.php?topic='. $topJson->name .'&page='. $pagesN .'&hideMenu=1#'. $postJson->name .'"
 ></iframe>
 ';
 
