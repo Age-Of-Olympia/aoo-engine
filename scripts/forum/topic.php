@@ -167,13 +167,28 @@ echo '
                     echo '<div style="font-size: 88%;"><a href="faction.php?faction='. $author->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$author->data->factionRole]->name.'</i>)</div>';
                 }
 
+
+                $date = date('d/m/Y', $postJson->name);
+
+                if($date == date('d/m/Y', time())){
+
+                    $date = 'Aujourd\'hui';
+                }
+                elseif($date == date('d/m/Y', time()-86400)){
+
+                    $date = 'Hier';
+                }
+
+
                 echo '
                 <div
                     id="'. $postJson->name .'"
 
-                    style="position: absolute; right: 0; top: 0;"
+                    style="position: absolute; right: 0; top: 0; text-align: right"
                     >
                         <a href="forum.php?topic='. htmlentities($_GET['topic']) .'&page='. $page .'#'. $postJson->name .'">#'. $postN+1 .'</a>
+                        <br />
+                        <span style="color: grey; font-size: 75%;">'. $date .'<br />'. date('à H:i') .'</span>
                     </div>';
 
 
