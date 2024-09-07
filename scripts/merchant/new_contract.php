@@ -97,7 +97,7 @@ elseif(isset($_GET['asks'])){
 
         echo '<option selected disabled>Choisissez un objet</option>';
 
-        $sql = 'SELECT * FROM items ORDER by name';
+        $sql = 'SELECT * FROM items GROUP BY name ORDER by name';
 
         $db = new Db();
 
