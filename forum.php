@@ -67,6 +67,14 @@ elseif(isset($_GET['search'])){
     exit();
 }
 
+elseif(isset($_GET['lastPosts'])){
+
+
+    include('scripts/forum/last_posts.php');
+
+    exit();
+}
+
 elseif(isset($_GET['autosave']) && !empty($_POST['text'])){
 
 

@@ -63,7 +63,7 @@ if(!empty($_SESSION['playerId'])){
             </td>
 
             <td align="left" class="player-info">
-                Dernier message du <a href="forum.php">Forum</a><br />
+                <a href="forum.php?lastPosts">Derniers messages</a> du <a href="forum.php">Forum</a><br />
                 <sup><i>'. $lastPost .'</i></sup>
             </td>
         </tr>

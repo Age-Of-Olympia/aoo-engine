@@ -1,6 +1,8 @@
 <?php
 
 
+exit('Pour le moment, les échanges ne sont pas possibles.<br />Revenez plus tard!');
+
 
 if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])) {
 

@@ -1739,6 +1739,9 @@ class Player{
         $raceJson = json()->decode('races', $race);
 
 
+        $time = time();
+
+
         $values = array(
             'id'=>$id,
             'name'=>$name,
@@ -1747,7 +1750,8 @@ class Player{
             'portrait'=>'img/portraits/ame/1.jpeg',
             'coords_id'=>$coordsId,
             'faction'=>$raceJson->faction,
-            'nextTurnTime'=>time()
+            'nextTurnTime'=>$time,
+            'registerTime'=>$time
         );
 
         $db->insert('players', $values);
