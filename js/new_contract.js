@@ -68,7 +68,7 @@ $(document).ready(function(){
             success: function(data)
             {
                 // alert(data);
-                alert(data);
+                document.location = 'merchant.php?targetId='+ window.targetId +'&asks';
             }
         });
     });
