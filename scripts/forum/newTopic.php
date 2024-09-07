@@ -111,6 +111,12 @@ if($forumJson->name == 'Missives'){
 
             echo '<input type="hidden" id="dest" value="'. $target->id .'" />';
         }
+        else{
+
+            echo '<font color="red">Vous ne pouvez pas envoyer directement de message au personnage '. $target->data->name .', car celui-ci ne fait pas parti de votre Faction.</font>';
+            echo '<br />';
+            echo '<span style="font-size: 88%;">Demandez à l\'Animateur de sa Faction de superviser votre échange.</span>';
+        }
     }
 
     echo $title;

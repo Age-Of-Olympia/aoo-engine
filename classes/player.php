@@ -1613,7 +1613,8 @@ class Player{
                 (
                     $target->data->faction == $this->data->faction
                     ||
-                    $target->data->secretFaction == $this->data->secretFaction
+                    ($target->data->secretFaction == $this->data->secretFaction
+                    && $target->data->secretFaction != '')
                 )
                 ||
                 $this->have_option('isAdmin')
