@@ -52,6 +52,7 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])){
 
 echo '<h1>Banque</h1>';
 
+echo '<sup>Votre Or en Banque augmente de '. BANK_PCT .'% chaque jour passé sans combattre.</sup>';
 
 echo $market->print_bank($player);
 

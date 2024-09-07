@@ -285,6 +285,7 @@ define('MALUS_PER_TURNS', 9);   // recup 9 malus / turns
 define('XP_PER_TURNS', 6);      // base 6 xp - rank / turns
 define('XP_PER_MINE', 1);       // chaque case creusé rapporte 1xp
 define('ACTION_XP', 5);         // base action Xp
+define('BANK_PCT', 1);          // % gain par jour en banque sans adré
 
 /*
  * errors
