@@ -26,6 +26,8 @@ if(!is_numeric($x) || !is_numeric($y)){
 
 $player = new Player($_SESSION['playerId']);
 
+$player->get_data();
+
 $coords = $player->get_coords();
 
 
@@ -282,6 +284,10 @@ if($res->num_rows){
             $target->id > 0
             &&
             $target->data->race != $player->data->race
+            &&
+            !file_exists('datas/private/races/'. $target->data->race .'.json')
+            &&
+            !file_exists('datas/private/races/'. $player->data->race .'.json')
             &&
             (
                 $target->data->secretFaction != $player->data->secretFaction

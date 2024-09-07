@@ -31,6 +31,18 @@ if($distance > 1){
 }
 
 
+// adré
+if($player->have_effect('adrenaline')){
+
+    exit('Vous ne pouvez pas marchander en ayant l\'Adrénaline du combat.');
+}
+
+if($target->have_effect('adrenaline')){
+
+    exit('Vous ne pouvez pas marchander avec un Marchand ayant l\'Adrénaline du combat.');
+}
+
+
 // menu
 if(!isset($_GET['hideMenu'])){
 
@@ -110,7 +122,7 @@ else{
 
 
     $options = array(
-        'name'=>$player->data->name,
+        'name'=>$target->data->name,
         'avatar'=>$bg,
         'dialog'=>'marchand',
         'text'=>'',

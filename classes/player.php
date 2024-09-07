@@ -1623,6 +1623,25 @@ class Player{
             )
         ){
 
+            if(
+                $target->id > 0
+                &&
+                $target->data->race != $this->data->race
+                &&
+                !file_exists('datas/private/races/'. $target->data->race .'.json')
+                &&
+                !file_exists('datas/private/races/'. $this->data->race .'.json')
+                &&
+                (
+                    $target->data->secretFaction != $this->data->secretFaction
+                    ||
+                    $this->data->secretFaction == ''
+                )
+            ){
+
+                return false;
+            }
+
             return true;
         }
 

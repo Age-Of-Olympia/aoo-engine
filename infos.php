@@ -155,6 +155,10 @@ echo '
                 &&
                 $target->data->race != $player->data->race
                 &&
+                !file_exists('datas/private/races/'. $target->data->race .'.json')
+                &&
+                !file_exists('datas/private/races/'. $player->data->race .'.json')
+                &&
                 (
                     $target->data->secretFaction != $player->data->secretFaction
                     ||
