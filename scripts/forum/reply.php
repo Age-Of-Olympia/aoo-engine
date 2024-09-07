@@ -133,7 +133,7 @@ echo '<div><button class="submit" data-topic="'. $topJson->name .'">Envoyer</but
 include('scripts/forum/upload_module.php');
 
 
-$postTotal = count($topJson->posts)+1;
+$postTotal = count($topJson->posts);
 
 $pagesN = Forum::get_pages($postTotal);
 
@@ -141,15 +141,19 @@ $pagesN = Forum::get_pages($postTotal);
 echo '
 <iframe
     id="older-iframe"
-    src="forum.php?topic='. $topJson->name .'&page='. $pagesN .'&hideMenu=1#end"
+    src="forum.php?topic='. $topJson->name .'&page='. $pagesN .'&hideMenu=1#last"
 ></iframe>
 ';
+
+
+$nextPagesN = Forum::get_pages($postTotal+1);
+
 
 echo Str::minify(ob_get_clean());
 
 ?>
 <script src="js/autosave.js"></script>
 <script>
-window.pagesN = <?php echo $pagesN ?>;
+window.pagesN = <?php echo $nextPagesN ?>;
 </script>
 <script src="js/forum_reply.js"></script>
