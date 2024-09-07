@@ -268,7 +268,7 @@ echo '<div><button class="newTopic" data-forum="'. $_GET['forum'] .'"><span clas
 <script>
 $(document).ready(function(e){
 
-    $('td').click(function(e){
+    $('.marbre td').click(function(e){
 
         document.location = 'forum.php?topic='+ $(this).data('topic');
     });
