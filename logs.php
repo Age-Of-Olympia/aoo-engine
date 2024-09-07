@@ -9,6 +9,15 @@ $player = new Player($_SESSION['playerId']);
 $player->get_data();
 
 
+// last travel time
+$lastTravelTime = 0;
+
+if(!empty($player->data->lastTravelTime)){
+
+    $lastTravelTime = $player->data->lastTravelTime;
+}
+
+
 ob_start();
 
 
@@ -29,7 +38,7 @@ if(isset($_GET['quests'])){
 $player->get_coords();
 
 
-echo '<p>Voici les évènements qui se sont déroulés<br />sur ce Territoire ces 24 dernières heures.</p>';
+echo '<p>Voici les évènements qui se sont déroulés<br />sur ce Territoire depuis votre arrivée (max. 24h)</p>';
 
 echo '
 <table class="box-shadow marbre" border="1" align="center" style="width: 100%;">';
@@ -46,8 +55,17 @@ echo '
     foreach(Log::get($player->coords->plan) as $e){
 
 
-        if(isset($_GET['self']) && $e->player_id != $_SESSION['playerId'] && $e->target_id != $_SESSION['playerId']){
-
+        if(
+            (
+                isset($_GET['self'])
+                &&
+                $e->player_id != $_SESSION['playerId']
+                &&
+                $e->target_id != $_SESSION['playerId']
+            )
+            ||
+            $e->time < $lastTravelTime
+        ){
             continue;
         }
 
@@ -118,6 +136,7 @@ echo '
 
                 $date = 'Hier';
             }
+
 
             echo '
             <td class="log-td">

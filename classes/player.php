@@ -521,6 +521,15 @@ class Player{
     public function go($goCoords){
 
 
+        // store older coords
+        if(!isset($this->coords)){
+
+            $this->get_coords();
+        }
+
+        $oldCoords = $this->coords;
+
+
         $db = new Db();
 
 
@@ -533,6 +542,20 @@ class Player{
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
 
         $db->exe($sql, array($coordsId, $this->id));
+
+
+        // territory change
+        if($goCoords->plan != $oldCoords->plan){
+
+
+            // update last travel time
+            $sql = 'UPDATE players SET lastTravelTime = ? WHERE id = ?';
+
+            $time = time();
+
+            $db->exe($sql, array($time, $this->id));
+        }
+
 
         $this->refresh_data();
 
