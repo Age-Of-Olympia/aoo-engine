@@ -70,6 +70,16 @@ $(document).ready(function(){
 
 
 function insert_img(url) {
+
+
+    // Préparer le texte à insérer
+    var imgText = '[img]' + url + '[/img]';
+
+    insert_textarea(imgText);
+}
+
+function insert_textarea(addText){
+
     // Sélectionner l'élément textarea
     var $textarea = $('textarea');
 
@@ -79,20 +89,16 @@ function insert_img(url) {
     // Obtenir la valeur actuelle de la zone de texte
     var text = $textarea.val();
 
-    // Préparer le texte à insérer
-    var imgText = '[img]' + url + '[/img]';
-
     // Insérer le texte à la position du curseur
-    var newText = text.slice(0, curPos) + imgText + text.slice(curPos);
+    var newText = text.slice(0, curPos) + addText + text.slice(curPos);
 
     // Mettre à jour la valeur de la zone de texte
     $textarea.val(newText);
 
     // Ajuster la position du curseur après l'insertion du texte
-    $textarea.prop('selectionStart', curPos + imgText.length);
-    $textarea.prop('selectionEnd', curPos + imgText.length);
+    $textarea.prop('selectionStart', curPos + addText.length);
+    $textarea.prop('selectionEnd', curPos + addText.length);
 
     // Mettre le focus sur la zone de texte
     $textarea.focus();
 }
-

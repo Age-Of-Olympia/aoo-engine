@@ -140,7 +140,12 @@ if($autosave != ''){
 
 
 echo '
-<div>
+<div id="forum-textarea">
+';
+
+include('scripts/forum/tools.php');
+
+echo '
 <input
     type="text"
     class="name tr-topic2"
@@ -184,5 +189,5 @@ echo Str::minify(ob_get_clean());
 
 
 ?>
-<script src="js/autosave.js"></script>
+<script src="js/autosave.js?20240907"></script>
 <script src="js/forum_newTopic.js"></script>

@@ -73,7 +73,12 @@ echo '<h2>Éditer</h2>';
 
 
 echo '
-<div>
+<div id="forum-textarea">
+';
+
+include('scripts/forum/tools.php');
+
+echo '
 <textarea
     class="box-shadow tr-topic1"
     style="width: 100%;"
@@ -134,7 +139,7 @@ echo '
 echo Str::minify(ob_get_clean());
 
 ?>
-<script src="js/autosave.js"></script>
+<script src="js/autosave.js?20240907"></script>
 <script>
 window.topId = <?php echo $postJson->top_id ?>;
 window.pagesN = <?php echo $pagesN ?>;

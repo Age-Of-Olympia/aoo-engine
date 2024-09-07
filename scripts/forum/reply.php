@@ -99,7 +99,12 @@ $autoSave = Forum::get_autosave($player);
 
 
 echo '
-<div>
+<div id="forum-textarea">
+';
+
+include('scripts/forum/tools.php');
+
+echo '
 <textarea
     class="box-shadow tr-topic1"
     style="width: 100%;"
@@ -152,7 +157,7 @@ $nextPagesN = Forum::get_pages($postTotal+1);
 echo Str::minify(ob_get_clean());
 
 ?>
-<script src="js/autosave.js"></script>
+<script src="js/autosave.js?20240907"></script>
 <script>
 window.pagesN = <?php echo $nextPagesN ?>;
 </script>

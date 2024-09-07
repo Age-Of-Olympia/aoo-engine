@@ -1130,6 +1130,27 @@ img {
     border: 0px;
 }
 
+#forum-textarea{ position: relative; }
+
+#tools{
+
+    /*position: absolute;
+    top: 0;
+    right: 0;*/
+    text-align: right;
+}
+    #tools .tool-button{
+
+        width: 35px;
+        height: 35px;
+        display: inline-block;
+    }
+        #tools .tool-button button{
+
+            width: 35px;
+            height: 35px;
+        }
+
 /*
  * infos target
  */
