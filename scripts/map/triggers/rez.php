@@ -37,7 +37,7 @@ $goCoords = (object) array(
 );
 
 
-$coordsId = View::get_coords_id($goCoords);
+$coordsId = View::get_free_coords_id_arround($goCoords);
 
 
 $text = $player->data->name .' est arrivé sur Olympia.';
