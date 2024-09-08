@@ -21,6 +21,8 @@ UNION
 SELECT coords_id FROM map_dialogs
 UNION
 SELECT coords_id FROM map_plants
+UNION
+SELECT coords_id FROM map_items
 )
 AND
 id != 1

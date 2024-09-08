@@ -533,8 +533,8 @@ class Quest{
     public static function get_img($name){
 
 
-        $path = 'img/quests/'. $name .'.png';
+        $path = 'img/quests/'. $name .'.webp';
 
-        return (file_exists($path)) ? $path : 'img/quests/default.png';
+        return (file_exists($path)) ? $path : 'img/quests/default.webp';
     }
 }
