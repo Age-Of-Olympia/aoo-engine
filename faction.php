@@ -24,6 +24,13 @@ if(!empty($_GET['faction'])){
 
     echo '<div style="font-size: 5em;"><span class="ra '. $facJson->raFont .'"></span></div>';
 
+
+    if(!empty($facJson->hidden)){
+
+        exit();
+    }
+
+
     if(isset($facJson->secret)){
         $player = new Player($_SESSION['playerId']);
         $player->get_data();
