@@ -7,6 +7,18 @@ $(document).ready(function() {
         e.preventDefault();
 
         let tag = $(this).data('tag');
+
+        if(tag == null){
+
+            if(!confirm('Quitter cette page pour consulter le Wiki?')){
+
+                return false;
+            }
+
+            document.location = $(this).parent('a').attr('href');
+            return false;
+        }
+
         let openTag = tag;
         let closeTag = tag;
 
@@ -14,7 +26,8 @@ $(document).ready(function() {
             openTag = tag + '=';  // Ajouter le signe égal uniquement à la balise d'ouverture
         }
 
-        if (window.tagsTbl[tag] == null) {
+        // if (window.tagsTbl[tag] == null) {
+        if(true){
             window.tagsTbl[tag] = true;
             let addText = '[' + openTag + ']';
             wrapSelectedText(addText, '[/' + closeTag + ']');
