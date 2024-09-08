@@ -151,23 +151,12 @@ echo '
             $text = nl2br($target->data->text);
 
             if(
-                $target->id > 0
-                &&
-                $target->data->race != $player->data->race
-                &&
-                !file_exists('datas/private/races/'. $target->data->race .'.json')
-                &&
-                !file_exists('datas/private/races/'. $player->data->race .'.json')
-                &&
-                (
-                    $target->data->secretFaction != $player->data->secretFaction
-                    ||
-                    $player->data->secretFaction == ''
-                )
+                !$distance
+                ||
+                $distance > $caracsJson->p
             ){
 
-
-                $text = '<i>Parle dans une langue qui vous est inconnue.</i>';
+                $text = '<i>Ce personnage est trop éloigné.</i>';
             }
 
 

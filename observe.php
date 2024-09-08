@@ -280,25 +280,6 @@ if($res->num_rows){
 
         $text = $target->data->text;
 
-        if(
-            $target->id > 0
-            &&
-            $target->data->race != $player->data->race
-            &&
-            !file_exists('datas/private/races/'. $target->data->race .'.json')
-            &&
-            !file_exists('datas/private/races/'. $player->data->race .'.json')
-            &&
-            (
-                $target->data->secretFaction != $player->data->secretFaction
-                ||
-                $player->data->secretFaction == ''
-            )
-        ){
-
-            $text = '<i>Parle dans une langue qui vous est inconnue.</i>';
-        }
-
 
         $pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
 
