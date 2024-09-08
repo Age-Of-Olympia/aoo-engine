@@ -266,15 +266,10 @@ img {
  */
 
 
-#caracs-menu{
+#load-caracs{
 
     display: none;
     font-size: 88%;
-}
-
-#caracs-menu-landing{
-
-/*     font-size: 88%; */
 }
 
 .progress-bar {
