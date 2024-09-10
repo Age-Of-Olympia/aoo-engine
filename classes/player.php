@@ -462,7 +462,7 @@ class Player{
 
                 $this->end_effect(ELE_CONTROLS[$name]);
 
-                echo '<script>alert("'. ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'");document.location.reload();</script>';
+                // echo '<script>alert("'. ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'");document.location.reload();</script>';
             }
 
             if(!empty(ELE_IS_CONTROLED[$name])){
@@ -473,7 +473,7 @@ class Player{
                     $this->end_effect(ELE_IS_CONTROLED[$name]);
                     $this->end_effect($name);
 
-                    echo '<script>alert("'. ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent!");document.location.reload();</script>';
+                    // echo '<script>alert("'. ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent!");document.location.reload();</script>';
                 }
             }
         }
