@@ -317,6 +317,8 @@ class Player{
     public function add($table, $name, $charges=false){
 
 
+        $db = new Db();
+
         $values = array(
             'player_id'=>$this->id,
             'name'=>$name
@@ -340,7 +342,16 @@ class Player{
         }
 
 
-        $db = new Db();
+        if($table == 'options'){
+
+
+            if($name == 'isMerchant'){
+
+
+                $this->add_follower('marchand', $params='on');
+            }
+        }
+
 
         $db->insert('players_'. $table, $values);
     }
@@ -355,6 +366,12 @@ class Player{
         $db = new Db();
 
         $db->delete('players_'. $table, $values);
+
+
+        if($name == 'isMerchant'){
+
+            $this->delete_follower('marchand');
+        }
     }
 
     public function get($table){
@@ -1103,6 +1120,75 @@ class Player{
         $n = $row->n;
 
         return $n;
+    }
+
+
+    public function add_follower($name, $params){
+
+
+        $db = new Db();
+
+        $values = array(
+            'coords_id'=>$this->data->coords_id,
+            'name'=>'marchand'
+                    );
+
+        $db->insert('map_foregrounds', $values);
+
+        $sql = 'SELECT id FROM map_foregrounds WHERE name = ? AND coords_id = ?';
+
+        $res = $db->exe($sql, array($name, $this->data->coords_id));
+
+        $row = $res->fetch_object();
+
+        $values = array(
+            'player_id'=>$this->id,
+            'foreground_id'=>$row->id,
+            'params'=>$params
+                    );
+
+        $db->insert('players_followers', $values);
+    }
+
+    public function delete_follower($name){
+
+
+        $db = new Db();
+
+        $sql = '
+        SELECT
+        f.id AS followerId,
+        foreground_id
+        FROM
+        players_followers AS f
+        INNER JOIN
+        map_foregrounds AS m
+        ON
+        f.foreground_id = m.id
+        WHERE
+        m.name = ?
+        AND
+        f.player_id = ?';
+
+        $res = $db->exe($sql, array($name, $this->id));
+
+        if($res->num_rows){
+
+
+            $row = $res->fetch_object();
+
+
+            $values = array('player_id'=>$this->id, 'foreground_id'=>$row->foreground_id);
+
+            $db->delete('players_followers', $values);
+
+
+            $values = array(
+                'id'=>$row->foreground_id
+                      );
+
+            $db->delete('map_foregrounds', $values);
+        }
     }
 
 
