@@ -546,6 +546,15 @@ class Item{
             $return[] = '<font color="blue">démolition+'. $itemJson->demolition .'</font>';
         }
 
+        // special effects
+        if(!empty($itemJson->addEffects)){
+
+            foreach($itemJson->addEffects as $e){
+
+                $return[] = '<font color="blue">+'. $e->name .'</font>';
+            }
+        }
+
         // pr
         if(!empty($itemJson->pr)){
             $return[] = '<font color="blue">Pr+'. $itemJson->pr .'</font>';

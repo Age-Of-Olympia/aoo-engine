@@ -79,7 +79,7 @@ foreach($artJson as $occ=>$e){
         $formattedInfos = str_replace('</font>', '', $formattedInfos);
 
 
-        echo '| '. $n .' | {{https://aootest.net/img/items/'. $item->row->name .'_mini.webp}} '. $item->data->name .' | '. $formattedInfos .' |
+        echo '| '. $n .' | {{https://aootest.net/img/items/'. $item->row->name .'_mini.webp}} [[https://age-of-olympia.net/item.php?itemId='. $item->id .'|'. $item->data->name .']] | '. $formattedInfos .' |
 ';
 
 

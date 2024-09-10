@@ -106,7 +106,7 @@ echo '
 <h1>Artisanat: '.$item->data->name.'</h1>
 <br/>
 
- <a href="item.php?item='.$item->data->id.'" class="source-link">
+ <a href="item.php?itemId='.$item->id.'" class="source-link">
         <img src="'. $item->data->img .'" />
     </a>
    ';
@@ -223,7 +223,7 @@ foreach($recipeList as $recipe){
     echo '
         <tr>
             <td width="50">
-                <a href="item.php?item='. $recipe->name .'"><img src="'. $artItem->data->mini .'" /></a>
+                <a href="item.php?itemId='. $artId .'"><img src="'. $artItem->data->mini .'" /></a>
             </td>
             <td>
                 '. $artItem->data->name .'<br />
@@ -258,7 +258,7 @@ foreach($recipeList as $recipe){
         }
 
         echo '
-                    <a href="item.php?item='. $ingredient->name .'"><img src="'. $ingredientItem->data->mini .'" /></a>
+                    <a href="item.php?itemId='. $ingredient->id .'"><img src="'. $ingredientItem->data->mini .'" /></a>
                     <font color="'. $color .'">x'. $ingredient->n .'</font>
                     ';
 
