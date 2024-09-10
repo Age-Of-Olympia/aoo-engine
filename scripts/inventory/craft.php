@@ -199,7 +199,7 @@ foreach($recipeList as $recipe){
 
     // search for item in recipe
     foreach($recipeIngredients as $ee){
-        if($ee->name != strtolower($item->data->name)){
+        if($ee->id != strtolower($item->data->id)){
             continue;
         }
 
