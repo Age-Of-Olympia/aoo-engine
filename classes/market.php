@@ -255,7 +255,14 @@ class Market{
                         success: function(data)
                         {
                             // alert(data);
-                            alert('Transaction réussie!\nLes objets ou l\'or ont été déposés sur votre compte en banque.');
+                            $dataHtml = $('<div>');
+                            $dataHtml.html(data);
+                            if($dataHtml.find('#error')[0] != null){
+                                alert($dataHtml.find('#error').text());
+                            }
+                            else{
+                                alert('Transaction réussie!\nLes objets ou l\'or ont été déposés sur votre compte en banque.');
+                            }
                             document.location.reload();
                         }
                     });
@@ -316,7 +323,7 @@ class Market{
         if($n > $row->stock){
 
 
-            exit('error stock');
+            exit('<div id="error">Erreur de stock.</div>');
         }
 
 
@@ -338,7 +345,7 @@ class Market{
             if(!$item->give_item($player, $target, $n, $bank=true)){
 
 
-                exit('error n');
+                exit('<div id="error">Pas assez de cet objet.</div>');
             }
 
 
@@ -362,7 +369,7 @@ class Market{
             if(!$gold->give_item($player, $target, $total)){
 
 
-                exit('error n');
+                exit('<div id="error">Pas assez d\'Or.</div>');
             }
 
 
