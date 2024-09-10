@@ -460,18 +460,11 @@ class Forum{
 
 
         if(
-            $dest->data->race != $player->data->race
-            &&
-            $dest->data->secretFaction != $player->data->secretFaction
+            !$player->check_missive_permission($dest)
         ){
 
+            return 'error dest forbidden';
 
-            $raceJson = json()->decode('races', $dest->data->race);
-
-            if(!$player->have_option('isAdmin')){
-
-                return 'error dest forbidden';
-            }
         }
 
 
