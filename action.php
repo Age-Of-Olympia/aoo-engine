@@ -519,6 +519,8 @@ if(!isset($playerXp)){
         (!empty($success) && $success)
         &&
         ($actionJson->targetType != 'self' || (!empty($actionJson->targetJet) && $actionJson->targetJet == 0))
+        &&
+        !isset($actionJson->playerHeal)
     ){
 
         $playerXp = $player->get_action_xp($target);

@@ -83,6 +83,7 @@ define('EFFECTS_RA_FONT', array(
     'lave'=>'ra-fire-bomb',     // a -1
 
     'regeneration'=>'ra-health-increase',
+    'poison'=>'ra-bone-bite',
     'poison_magique'=>'ra-bone-bite',
 
     'parade'=>'ra-sword',
