@@ -1592,6 +1592,41 @@ class Player{
     }
 
 
+    public function check_share_factions($target){
+
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+        if(!isset($target->data)){
+
+            $target->get_data();
+        }
+
+
+        if($this->data->faction == $target->data->faction){
+
+            return true;
+        }
+
+
+        if($this->data->secretFaction != "" && $target->data->secretFaction != ""){
+
+
+            if($this->data->secretFaction == $target->data->secretFaction){
+
+
+                return true;
+            }
+        }
+
+
+        return false;
+    }
+
+
     public function check_missive_permission($target){
 
 
@@ -1606,47 +1641,39 @@ class Player{
         }
 
 
+        // same id not allowed
+        if($this->id == $target->id){
+
+            return false;
+        }
+
+
+        // allow admin and same faction
         if(
-            $this->id != $target->id
-            &&
-            (
-                (
-                    $target->data->faction == $this->data->faction
-                    ||
-                    ($target->data->secretFaction == $this->data->secretFaction
-                    && $target->data->secretFaction != '')
-                )
-                ||
-                $this->have_option('isAdmin')
-                ||
-                $target->have_option('isAdmin')
-            )
+            $this->have_option('isAdmin')
+            ||
+            $target->have_option('isAdmin')
+            ||
+            $this->check_share_factions($target)
         ){
-
-            if(
-                $target->id > 0
-                &&
-                $target->data->race != $this->data->race
-                &&
-                !file_exists('datas/private/races/'. $target->data->race .'.json')
-                &&
-                !file_exists('datas/private/races/'. $this->data->race .'.json')
-                &&
-                (
-                    $target->data->secretFaction != $this->data->secretFaction
-                    ||
-                    $this->data->secretFaction == ''
-                )
-            ){
-
-                return false;
-            }
 
             return true;
         }
 
 
-        return false;
+        // allow exotic races or pnj
+        if(
+            $this->id < 0
+            ||
+            $target->id < 0
+            ||
+            file_exists('datas/private/races/'. $target->data->race .'.json')
+            ||
+            file_exists('datas/private/races/'. $this->data->race .'.json')
+        ){
+
+            return true;
+        }
     }
 
 
