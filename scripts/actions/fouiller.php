@@ -70,7 +70,7 @@ foreach($ressources as $k=>$v){
     <div class="action-details">1d'. $max .' = '. $rand .'</div>
     ';
 
-    $item->add_item($player, $max);
+    $item->add_item($player, $rand);
 }
 
 
