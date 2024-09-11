@@ -635,12 +635,16 @@ if($targetPvBefore != $targetPvAfter){
 
 
 // display xp
-if($playerXp){
+if(!empty($playerXp)){
 
     echo '<div>Vous gagnez '. $playerXp .'Xp.</div>';
+
+    $player->put_xp($playerXp);
 }
 
-if($targetXp){
+if(!empty($targetXp)){
 
     echo '<div>'. $target->data->name .' gagne '. $targetXp .'Xp.</div>';
+
+    $target->put_xp($targetXp);
 }

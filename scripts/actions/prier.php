@@ -19,3 +19,6 @@ Vous priez '. $god->data->name .' et gagnez '. $pf .' Points de Foi (total '. $p
 
 <div class="action-details">1d3 = '. $pf .'</div>
 ';
+
+
+$playerXp = 1;

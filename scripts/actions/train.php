@@ -43,11 +43,6 @@ elseif($playerRank < $targetRank){
 }
 
 
-$player->put_xp($playerXp);
-$target->put_xp($targetXp);
-
-// Vous vous entraînez avec '. $target->data->name .' (+'. $playerXp .'Xp).
-
 echo '
 
 

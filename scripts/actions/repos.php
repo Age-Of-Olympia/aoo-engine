@@ -83,3 +83,6 @@ n = n + VALUES(n);
 ';
 
 $db->exe($sql, array($player->id, 'a', -1));
+
+
+$playerXp = 1;

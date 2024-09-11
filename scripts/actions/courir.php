@@ -46,5 +46,4 @@ Vous courez et gagnez '. $mvt .' Mouvements.
 ';
 
 
-// gain xp
-$player->put_xp(1);
+$playerXp = 1;
