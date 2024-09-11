@@ -118,6 +118,12 @@ if($forumJson->name == 'Missives'){
             echo '<span style="font-size: 88%;">Demandez à l\'Animateur de sa Faction de superviser votre échange.</span>';
         }
     }
+    else{
+
+
+
+        echo '<font color="blue">Rédigez, puis envoyez votre Missive.<br /> Après cela, vous pourrez ajouter des destinataires.</font>';
+    }
 
     echo $title;
 }
