@@ -4,6 +4,7 @@ function create_console(){
     document.body.innerHTML += '<div id="console-wrapper">'
         + '<div id="console"><div id="console-content"></div></div>'
         + '<input type="text" id="input-line" />'
+        + '<button class="console-button" OnClick="submit_cmd()">ok</button>'
         + '</div>';
 }
 

@@ -1417,9 +1417,29 @@ blockquote{
     width:600px;
 }
 
+.console-button{
+
+    width: 40px;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    color: black;
+    background: lime;
+    border: green;
+}
+
+
+/*
+ * factions
+ */
+
 .secret-faction{opacity: 0.5;}
 .secret-faction:hover{opacity: 1;}
 
+
+/*
+ * journal
+ */
 
 .journal{
 
