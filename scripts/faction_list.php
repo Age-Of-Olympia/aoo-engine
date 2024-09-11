@@ -51,7 +51,27 @@ while($row = $res->fetch_object()){
                 '. $facJson->role[$row->factionRole]->name .'
             </td>
             <td>
-                '. $planName .'
+                ';
+
+
+                // simulate target as a Player()
+                $target = (object) array(
+                    'data'=>(object) array(
+                        'faction'=>$_GET['faction'],
+                        'secretFaction'=>""
+                                     )
+                                   );
+
+                if($player->check_share_factions($target)){
+
+                    echo $planName;
+                }
+                else{
+
+                    echo '?';
+                }
+
+                echo '
             </td>
         </tr>
         ';

@@ -25,15 +25,18 @@ if(!empty($_GET['faction'])){
     echo '<div style="font-size: 5em;"><span class="ra '. $facJson->raFont .'"></span></div>';
 
 
-    if(!empty($facJson->hidden)){
+    $player = new Player($_SESSION['playerId']);
+    $player->get_data();
+
+
+    if(!empty($facJson->hidden) && !$player->have_option('isAdmin')){
 
         exit();
     }
 
 
     if(isset($facJson->secret)){
-        $player = new Player($_SESSION['playerId']);
-        $player->get_data();
+
         if($player->data->secretFaction == $_GET['faction'] || $player->have_option('isAdmin')){
             $sql = 'SELECT players.id AS id,avatar,name,race,xp,secretFactionRole as factionRole,plan FROM players INNER JOIN coords ON coords_id = coords.id WHERE nextTurnTime > ? AND secretFaction = ? ORDER BY name';
 
