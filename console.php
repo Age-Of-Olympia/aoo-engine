@@ -68,7 +68,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     $commandLineSplit = Command::getCommandLineSplit($inputString);
 
     $command = $factory->getCommand($commandLineSplit[0]);
-    array_shift($commandLineSplit); //remove first line
+    array_shift($commandLineSplit); //remove first part
     if($command){
 
         if(isset($commandLineSplit[0]) &&($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')){
@@ -79,9 +79,16 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         }
         else {
             if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
-                $result = $command->execute($commandLineSplit);
-                echo json_encode(['message' => 'command found ' . $command->getName() . '. Executing.',
+                try{
+                    $result = $command->execute($commandLineSplit);
+                    echo json_encode(['message' => 'command found ' . $command->getName() . '. Executing.',
                     'result' => $result]);
+                }catch(Throwable $e){
+                    $result = "Unexpected technical error, check command syntax : ".$command->getName()." ".$command->printArguments() 
+                    . "  - Error details : ". $e->getMessage();
+                    $error = $result;
+                    echo json_encode(['error' => $result]);
+                }
             } else {
                 $result = 'missing mandatory arguments ' . $command->printArguments();
                 $error = $result;
