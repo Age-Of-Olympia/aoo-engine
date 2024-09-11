@@ -1976,7 +1976,7 @@ class Player{
     public static function refresh_list(){
 
 
-        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction FROM players ORDER BY name';
+        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players ORDER BY name';
 
         $db = new Db();
 
