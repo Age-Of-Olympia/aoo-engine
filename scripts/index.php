@@ -172,7 +172,13 @@ $annonceJson = json()->decode('', 'annonce');
 
 if($annonceJson){
 
-    echo '<div id="index-changelog"><a class="install-app" style="background: black; color: white;" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. date('d/m/Y', $annonceJson->time) .')</a></div>';
+    // Définir la locale en français
+    setlocale(LC_TIME, 'fr_FR.UTF-8');
+
+    // Obtenir et afficher le nom du jour en français
+    $jour = strftime("%a"); // Affiche le nom complet du jour en français
+
+    echo '<div id="index-changelog"><a class="install-app" style="background: black; color: white;" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
 }
 
 echo '<div id="index-discord"><a class="install-app" style="background: #5865f2; color: white;" href="https://discord.gg/djPRYwEt8E"><img src="img/ui/partenaires/discord.webp" /> Discord </a></div>';
