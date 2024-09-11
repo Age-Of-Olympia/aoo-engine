@@ -30,6 +30,15 @@ class Log{
     public static function put($player, $target, $text, $type=''){
 
 
+        $plan = $player->coords->plan;
+
+        // hide log in incognitoMode
+        if($player->have_option('incognitoMode')){
+
+            $plan = "birdland"; // show logs in birdlands for posterity
+        }
+
+
         if(!isset($player->coords)){
 
             $player->get_coords();
@@ -42,7 +51,7 @@ class Log{
             'player_id'=>$player->id,
             'target_id'=>$targetId,
             'text'=>$text,
-            'plan'=>$player->coords->plan,
+            'plan'=>$plan,
             'time'=>time(),
             'type'=>$type
         );
