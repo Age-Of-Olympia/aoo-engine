@@ -8,6 +8,7 @@ class TpCmd extends Command
 téléporte le joueur [mat] aux coordonnées [coords] (x,y,z,plan).
 Exemple:
 > tp Orcrist 50,125,-5,eryn_dolen 
+> tp Orcrist Sharon (tp Orcrist à côté de Sharon)
 > tp everyone x,y,z,eryn_dolen (change tous le monde de plan sans changer x,y,z)
 EOT);
     }
@@ -17,6 +18,23 @@ EOT);
 
 
         $coordsTbl = explode(',', $argumentValues[1]);
+
+        if(is_numeric($argumentValues[1]) || count($coordsTbl) == 1){
+
+            $player=parent::getPlayer($argumentValues[0]);
+            $player->get_data();
+
+            $target = parent::getPlayer($argumentValues[1]);
+            $target->get_data();
+
+            $goCoords = $target->get_coords();
+
+            $coordsId = View::get_free_coords_id_arround($goCoords);
+
+            $player->go($goCoords);
+
+            return 'tp '. $player->data->name .' near '. $target->data->name .'';
+        }
 
         if(count($coordsTbl) != 4){
 
