@@ -74,3 +74,5 @@ foreach($ressources as $k=>$v){
 }
 
 
+// gain xp
+$player->put_xp(1);
