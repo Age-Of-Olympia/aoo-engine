@@ -470,17 +470,21 @@ if(!empty($actionJson->costs)){
 }
 
 
-// last action
-$sql = '
-UPDATE
-players
-SET
-lastActionTime = '. time() .'
-WHERE
-id = ?
-';
 
-$db->exe($sql, $player->id);
+// last action
+if(!isset($actionJson->noBerserkCheck)){
+
+    $sql = '
+    UPDATE
+    players
+    SET
+    lastActionTime = '. time() .'
+    WHERE
+    id = ?
+    ';
+
+    $db->exe($sql, $player->id);
+}
 
 
 // scripts

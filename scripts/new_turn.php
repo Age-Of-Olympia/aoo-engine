@@ -168,7 +168,7 @@ if(!empty($_SESSION['playerId'])){
 
 
             // anti berserk
-            $antiBerserkTime = $player->data->lastActionTime + (0.25 * $playerTurn);
+            $antiBerserkTime = time() + $player->data->lastActionTime + (0.25 * $playerTurn);
 
 
             // update
