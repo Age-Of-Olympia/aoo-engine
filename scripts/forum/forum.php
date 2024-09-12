@@ -36,7 +36,7 @@ include('scripts/menu.php');
 echo '<h1>'. $forumJson->name .'</h1>';
 
 
-Forum::check_access($player, $forumJson->name);
+Forum::check_access($player, $forumJson);
 
 
 echo '
