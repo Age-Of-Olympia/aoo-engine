@@ -381,7 +381,7 @@ class Market{
         }
 
 
-        $sql = 'UPDATE items_'. $table .' SET stock = stock - ? WHERE ?';
+        $sql = 'UPDATE items_'. $table .' SET stock = stock - ? WHERE id=?';
 
         $db->exe($sql, array($n, $row->id));
 
