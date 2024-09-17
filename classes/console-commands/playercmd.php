@@ -17,13 +17,14 @@ Exemple:
 > player addlog Orcrist "this is a log to be added"
 > player deletelastlog Orcrist
 > player addPnj Orcrist Ocyrhoée
+> player addUpgrade Orcrist Mvt
 EOT);
     }
 
     public function execute(  array $argumentValues ) : string
     {
 
-        $action = $argumentValues[0];
+        $action = strtolower($argumentValues[0]);
 
 
         if($action == 'create'){
@@ -56,6 +57,9 @@ EOT);
             return add_xp($argumentValues, $player);
         }
 
+        if($action == 'addupgrade'){
+            return add_upgrade($argumentValues,$player);
+        }
 
         if($action == 'addlog'){
             return add_log($argumentValues,$player);
@@ -299,6 +303,27 @@ function add_xp($argumentValues, $player)
     $player->put_xp($argumentValues[2]);
 
     return $argumentValues[2] .'Xp et Pi ajoutés à '. $player->data->name;
+}
+
+function add_upgrade($argumentValues, $player)
+{
+
+    if(!isset($argumentValues[2])){
+        return '<font color="red">error missing option1. usage: player addupgrade [mat or name] [carac]</font>';
+    }
+
+    if($player->id >0){
+        return '<font color="red">Do not use this command for PJ this is only to upgrade PNJs</font>';
+    }
+
+    $upgradeName = strtolower($argumentValues[2]);
+    if(!array_key_exists($upgradeName, CARACS)){
+        return '<font color="red">error unknown upgrade</font>';
+    }
+
+    $player->put_upgrade($upgradeName, 0);
+
+    return $argumentValues[2] .' ajouté à '. $player->data->name;
 }
 
 function add_pnj($player, $target)

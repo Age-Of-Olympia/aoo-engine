@@ -786,6 +786,28 @@ class Player{
     }
 
 
+    public function put_upgrade($upgradeName, $cost){
+
+        $values = array(
+            'player_id'=>$this->id,
+            'name'=>$upgradeName,
+            'cost'=>$cost
+        );
+        
+        $db = new Db();
+        
+        $db->insert('players_upgrades', $values);
+        
+        
+        if($upgradeName == 'p'){
+        
+            $this->refresh_view();
+        }
+        
+        
+        $this->refresh_caracs();
+    }
+
     public function put_bonus($bonus) : bool{
 
 
