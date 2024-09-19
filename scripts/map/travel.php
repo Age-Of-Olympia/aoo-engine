@@ -132,7 +132,7 @@ if(!empty($_GET['triggerId'])){
 
                     View::refresh_players_svg($coords);
 
-                    if(!$player->get_option('incognitoMode'))
+                    if(!$player->have_option('incognitoMode'))
                     {
                         $player->get_data();
 
