@@ -5,14 +5,14 @@ class Log{
 
     // STATIC
 
-    public static function get($plan){
+    public static function get($plan,$maxLogAge=ONE_DAY){
 
 
         $return = array();
 
         $db = new Db();
 
-        $timeLimit = time()-ONE_DAY;
+        $timeLimit = time()-$maxLogAge;
 
         $sql = 'SELECT * FROM players_logs WHERE plan = ? AND time > ? ORDER BY time DESC, id DESC';
 

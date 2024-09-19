@@ -1,5 +1,5 @@
 <?php
-
+$time_start = microtime(true); 
 require_once('config.php');
 
 $ui = new Ui('Évènements');
@@ -11,12 +11,16 @@ $player->get_data();
 
 // last travel time
 $lastTravelTime = 0;
-
+$logAge=ONE_DAY;
 if(!empty($player->data->lastTravelTime)){
 
     $lastTravelTime = $player->data->lastTravelTime;
 }
-
+if($player->have_option('isAdmin'))
+{
+    $logAge = THREE_DAYS;
+    $lastTravelTime = 0;
+}
 
 ob_start();
 
@@ -52,9 +56,7 @@ echo '
     </tr>
     ';
 
-    foreach(Log::get($player->coords->plan) as $e){
-
-
+    foreach(Log::get($player->coords->plan,$logAge) as $e){
         if(
             (
                 isset($_GET['self'])
@@ -150,5 +152,7 @@ echo '
 echo '
 </table>
 ';
-
+$time_end = microtime(true);
+$execution_time = ($time_end - $time_start);
+echo '<b>Total Execution Time:</b> '.$execution_time.' Mins';
 echo Str::minify(ob_get_clean());
