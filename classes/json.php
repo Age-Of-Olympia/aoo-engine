@@ -1,7 +1,8 @@
 <?php
 
 class json{
-
+    public ?string $id = null;
+    private $paths;
     public function decode($type, $name){
 
 

@@ -1,10 +1,10 @@
 <?php
 
 class Db{
-
+    private $db;
     public function __construct(){
-
-        $this->link = $this->db = db();
+        mysqli_report(MYSQLI_REPORT_ERROR);
+        $this->db = db();
     }
 
     public function __destruct(){
