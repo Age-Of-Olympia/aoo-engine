@@ -13,15 +13,15 @@ if(!empty($_POST['text'])){
     exit();
 }
 
-echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
+echo '<div><a href="account.php"><button id="cancel"><span class="ra ra-sideswipe"></span>Retour</button></a></div>';
 
 echo '<textarea rows="20" class="tr-topic1" style="width: 100%;">'. $player->data->text .'</textarea>';
 
-echo '<div><button>Valider</button></div>';
+echo '<div><button id="validate">Valider</button></div>';
 
 ?>
 <script>
-$('button').click(function(e){
+$('#validate').click(function(e){
 
     let text = $('textarea').val();
 
@@ -36,5 +36,9 @@ $('button').click(function(e){
             document.location = 'account.php';
         }
     });
+});
+
+$('#cancel').click(function(e){
+      document.location = 'account.php';
 });
 </script>
