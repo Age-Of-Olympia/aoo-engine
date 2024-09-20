@@ -40,22 +40,7 @@ pi >= ?
 $db->exe($sql, array($cost, $player->id, $cost));
 
 
-$values = array(
-    'player_id'=>$player->id,
-    'name'=>$k,
-    'cost'=>$cost
-);
-
-$db->insert('players_upgrades', $values);
-
-
-if($k == 'p'){
-
-    $player->refresh_view();
-}
-
-
-$player->refresh_caracs();
+$player->put_upgrade($k,$cost);
 
 
 exit('Vous avez augmenté '. CARACS[$k] .' pour '. $cost .'Pi.');
