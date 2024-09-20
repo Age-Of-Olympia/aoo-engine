@@ -53,7 +53,7 @@ class Market{
     }
 
 
-    public function print_market($table){
+    public function print_market($table, $player_id){
 
 
         ob_start();
@@ -112,10 +112,21 @@ class Market{
                 <td>
                     <a href="merchant.php?'. $table .'&targetId='. $this->target->id .'&itemId='. $item->id .'">
                         Négocier
-                    </a>
+                    </a>';
+                    if($this->$table[$k][0]->player_id==$player_id){
+                        echo '
+                        <br/>
+                        <a href="merchant.php?'. $table .'&cancel&targetId='. $this->target->id .'&id='. $this->$table[$k][0]->id .'">
+                            Annuler
+                        </a>
+                    
+                    ';}
+                
+                echo '
                 </td>
                 ';
 
+                
             echo '
             </tr>
             ';
@@ -389,5 +400,40 @@ class Market{
         $values = array('stock'=>0);
 
         $db->delete('items_'. $table, $values);
+    }
+
+    public function cancel($table, $id, $player){
+       
+        $db = new Db();
+
+        
+        if($table == 'bids'){
+
+            $sql = '
+                SELECT
+                *
+                FROM
+                items_bids
+                where id = ?
+                ';
+
+
+                $res = $db->exe($sql, $id);
+
+                while($row = $res->fetch_object()){
+
+                    //give back items
+                    $item = new Item($row->item_id);
+        
+                    $item->add_item($player, $row->n, $bank=false);
+                    
+                }
+        }
+
+        $values = array('id'=>$id, 'player_id'=> $player->id);
+
+        $db->delete('items_'. $table, $values);
+
+
     }
 }
