@@ -73,14 +73,15 @@ echo '
 echo '<h1>Récompenses</h1>';
 
 $sql = '
-SELECT postName, topName, img, pr FROM
-players_forum_rewards AS a
+SELECT postName, a.topName, img, pr FROM
+    players_forum_rewards AS a
+join (select topName, sum(pr) as total_pr from players_forum_rewards group by topName)
+    topic_total_pr on a.topName = topic_total_pr.topName
 WHERE
-a.to_player_id = '. $target->id .'
-AND
-a.from_player_id != a.to_player_id
-ORDER BY a.pr,a.img
-';
+    a.to_player_id = '. $target->id .'
+  AND
+    a.from_player_id != a.to_player_id
+ORDER BY topic_total_pr.total_pr desc, topName,a.img';
 
 $db = new Db();
 
