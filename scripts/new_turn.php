@@ -1,6 +1,10 @@
 <?php
 
-if(!empty($_SESSION['playerId'])){
+if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
+
+    echo '<h1><font color="red">Nouveau Tour Désactivé (Admin)</font></h1>';
+}
+else if(!empty($_SESSION['playerId'])){
 
 
     $player = new Player($_SESSION['playerId']);
