@@ -2,12 +2,15 @@
 
 class Item{
 
+    public $id;
+    public $row;
+    public $data;
 
     function __construct($itemId, $row=false){
 
 
         $this->id = $itemId;
-
+        $this->data=null;
 
         if(!$row){
 

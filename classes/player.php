@@ -2,13 +2,31 @@
 
 class Player{
 
-
+    public $id;
+    public $data;
+    public $caracs;
+    public $upgrades;
+    public $coords;
+    public $nude;
+    public $raceData;
+    public $debuffs;
+    public $turn;
+    public $main1;
+    public $row;
     function __construct($playerId){
 
         $this->id = $playerId;
 
         $this->caracs = (object) array();
         $this->upgrades = (object) array();
+        $this->data =null;
+        $this->coords = null;
+        $this->nude = null;
+        $this->raceData = null;
+        $this->debuffs = null;
+        $this->turn = null;
+        $this->main1 = null;
+        $this->row = null;
     }
 
 
