@@ -2,7 +2,7 @@
 
 if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
 
-    echo '<h1><font color="red">Nouveau Tour Désactivé (Admin)</font></h1>';
+   //do nothing, admin info is displayed in infos.php
 }
 else if(!empty($_SESSION['playerId'])){
 

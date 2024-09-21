@@ -45,7 +45,10 @@ if(!empty($_SESSION['playerId'])){
 
 
     $timeToNextTurn = Str::convert_time($player->data->nextTurnTime - time());
-
+    $adminInfos = '';
+    if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
+        $adminInfos = ' Nouveau Tour Désactivé (use -reactive to enable it on session open : ex "session open Orcrist -reactive" )';
+    }
 
     echo '
     <table border="0" align="center">
@@ -54,7 +57,7 @@ if(!empty($_SESSION['playerId'])){
             <td align="left" class="player-info">
                 <a href="infos.php?targetId='. $player->id .'">'. $player->data->name .'</a> (mat.'. $player->id .')<br />
                 <!--sup>'. $raceJson->name .' Rang '. $player->data->rank .'</sup-->
-                <sup>Prochain tour à <a href="#" title="dans '. $timeToNextTurn .'">'. date('H:i', $player->data->nextTurnTime) .'</a></sup>
+                <sup>Prochain tour à <a href="#" title="dans '. $timeToNextTurn .'">'. date('H:i', $player->data->nextTurnTime). $adminInfos .'</a></sup>
             </td>
             <td>
                 <div id="player-avatar">

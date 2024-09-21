@@ -93,6 +93,7 @@ $db->exe($sql, $row['id']);
 $_SESSION['mainPlayerId'] = $row['id'];
 
 $_SESSION['playerId'] = $row['id'];
+unset($_SESSION['nonewturn']);
 
 $values = array(
     'player_id'=> $row['id'],
