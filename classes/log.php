@@ -30,6 +30,11 @@ class Log{
     public static function put($player, $target, $text, $type=''){
 
 
+        if(!isset($player->coords)){
+
+            $player->get_coords();
+        }
+
         $plan = $player->coords->plan;
 
         // hide log in incognitoMode

@@ -1,5 +1,5 @@
 <?php
-$time_start = microtime(true); 
+// $time_start = microtime(true);
 require_once('config.php');
 
 $ui = new Ui('Évènements');
@@ -152,7 +152,7 @@ echo '
 echo '
 </table>
 ';
-$time_end = microtime(true);
-$execution_time = ($time_end - $time_start);
-echo '<b>Total Execution Time:</b> '.$execution_time.' Mins';
+// $time_end = microtime(true);
+// $execution_time = ($time_end - $time_start);
+// echo '<b>Total Execution Time:</b> '.$execution_time.' Mins';
 echo Str::minify(ob_get_clean());
