@@ -55,6 +55,13 @@ echo '<h2>Sorts proposés</h2>';
 
 echo '<table border="1" align="center" class="marbre">';
 
+
+if(!isset($raceJson->spells)){
+
+    exit('<p>Ce personnage ne vend pas de sorts.</p>');
+}
+
+
 foreach($raceJson->spells as $e){
 
 

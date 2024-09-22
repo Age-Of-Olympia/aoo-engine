@@ -14,6 +14,12 @@ if(!isset($_POST['wallId'])){
 $wallId = preg_replace('/[^0-9]/', '', $_POST['wallId']);
 
 
+if($player->get_left('a') < 1){
+
+    exit('Pas assez d\'Actions.');
+}
+
+
 $sql = '
 SELECT
 *,
