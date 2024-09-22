@@ -36,7 +36,12 @@ EOT);
 
 
             $_SESSION['playerId'] = $_SESSION['mainPlayerId'] = $player->id;
-
+            if(isset($argumentValues[2]) && $argumentValues[2] == '-reactive'){
+               unset($_SESSION['nonewturn']);
+            }
+            else{
+                $_SESSION['nonewturn'] = true;
+            }
 
             return 'Session ouverte pour joueur '. $player->data->name .'.';
         }
@@ -46,6 +51,7 @@ EOT);
 
             unset($_SESSION['mainPlayerId']);
             unset($_SESSION['playerId']);
+            unset($_SESSION['nonewturn']);
             session_destroy();
 
             return 'session destroyed';

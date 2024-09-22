@@ -1,6 +1,10 @@
 <?php
 
-if(!empty($_SESSION['playerId'])){
+if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
+
+   //do nothing, admin info is displayed in infos.php
+}
+else if(!empty($_SESSION['playerId'])){
 
 
     $player = new Player($_SESSION['playerId']);
