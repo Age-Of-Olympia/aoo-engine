@@ -117,11 +117,12 @@ $(document).ready(function(){
             data: {}, // serializes the form's elements.
             success: function(data)
             {
-                if(data.trim() != '0'){
+                let trimedData = data.trim();
+                if(trimedData != '0'){
 
                     var $avatar = $('#player-avatar');
 
-                    var $popup = $('<div class="cartouche bulle blink" style="pointer-events: none;">'+ data.trim() +'</div>');
+                    var $popup = $('<div class="cartouche bulle blink" style="pointer-events: none;">'+ trimedData +'</div>');
 
                     $avatar.append($popup);
 
@@ -129,9 +130,13 @@ $(document).ready(function(){
                     $("link[rel*='icon']").attr("href", "img/ui/favicons/favicon_alert.png");
 
                     // change title
-                    var newTitle = '('+ data.trim() +') '+ baseTitle;
+                    if(trimedData.length > 0 && trimedData.length < 10){
 
-                    $(document).prop('title', newTitle);
+                        var newTitle = '('+ trimedData +') '+ baseTitle;
+
+                        $(document).prop('title', newTitle);
+                    }
+
                 }
             }
         });
