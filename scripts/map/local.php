@@ -236,6 +236,7 @@ WHERE
 m1.name = "flag_red"
 AND
 plan = ?
+GROUP BY m2.params
 ';
 
 $res = $db->exe($sql, $player->coords->plan);

@@ -43,6 +43,15 @@ if(!empty($_POST['switch'])){
 
 
     $_SESSION['playerId'] = $_POST['switch'];
+
+    // update lastLoginTime
+
+    $sql = 'UPDATE players SET lastLoginTime = ? WHERE id = ?';
+
+    $time = time();
+
+    $db->exe($sql, array($time, $_SESSION['playerId']));
+
     exit();
 }
 
