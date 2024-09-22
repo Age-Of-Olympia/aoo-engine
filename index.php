@@ -24,6 +24,7 @@ elseif(isset($_GET['logout'])){
 
     unset($_SESSION['mainPlayerId']);
     unset($_SESSION['playerId']);
+    unset($_SESSION['nonewturn']);
     session_destroy();
 
     ob_clean();
