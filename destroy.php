@@ -128,6 +128,11 @@ if(!empty($refresh) && $refresh){
 }
 
 
+$player->put_bonus($bonus=array('a'=>-1));
+
+$player->put_xp(1);
+
+
 Log::put($player, $player, $text, $type="destroy");
 
 
