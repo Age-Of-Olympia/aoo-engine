@@ -174,7 +174,6 @@ if($annonceJson){
 
     // Définir la locale en français
     $jour= DAYS_OF_WEEK[getdate($annonceJson->time)["wday"]];
-    echo getdate($annonceJson->time)["wday"];
     echo '<div id="index-changelog"><a class="install-app" style="background: black; color: white;" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
 }
 
