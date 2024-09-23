@@ -60,10 +60,17 @@ if(isset($_GET['newContract'])){
     exit();
 }
 
+if(isset($_GET['cancel'])){
+
+    include('scripts/merchant/cancel_contract.php');
+    
+    exit();
+}
+
 
 echo '<div>Voici les objets que les autres personnages veulent acheter.<br /><font><b>Vendez vos objets ici.</b></font></div>';
 
-echo $market->print_market('asks');
+echo $market->print_market('asks', $player->id);
 
 ?>
 <div class="button-container">

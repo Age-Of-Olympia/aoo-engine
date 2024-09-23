@@ -61,6 +61,8 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) 
 
 
         $db->insert('items_asks', $values);
+
+        //todo remove money
     }
 
     exit('new offer done');

@@ -8,6 +8,16 @@ if(!empty($_POST['id']) && !empty($_POST['n'])){
     exit();
 }
 
+
+if(isset($_GET['cancel'])){
+
+    include('scripts/merchant/cancel_contract.php');
+
+    exit();
+}
+
+
+
 ob_start();
 
 
@@ -54,7 +64,7 @@ if(isset($_GET['newContract'])){
 echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Achetez des objets ici.</b></p></div>';
 
 
-echo $market->print_market('bids');
+echo $market->print_market('bids',$player->id);
 
 ?>
 <div class="button-container">
