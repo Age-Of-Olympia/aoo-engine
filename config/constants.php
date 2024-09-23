@@ -63,7 +63,15 @@ define('ONE_HOUR', 3600);
 // INACTIVE TIME
 define('INACTIVE_TIME', ONE_WEEK);
 
-
+define('DAYS_OF_WEEK', array(
+    'Dimanche',
+    'Lundi',
+    'Mardi',
+    'Mercredi',
+    'Jeudi',
+    'Vendredi',
+    'Samedi'
+));
 /*
  * effects, elements
  */

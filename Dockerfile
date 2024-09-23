@@ -1,4 +1,5 @@
-FROM php:8.0.28-apache
+FROM php:8.3-apache
+
 
 ARG UID=1000
 ARG GID=1000
