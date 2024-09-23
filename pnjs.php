@@ -61,6 +61,8 @@ echo '
 <tr>
 ';
 
+$n = 1;
+
 foreach($playersTbl as $pnj){
 
 
@@ -111,8 +113,16 @@ foreach($playersTbl as $pnj){
 
 
     echo '
-    <td align="center" class="pnj" data-id="'. $pnj->id .'"><div style="position: relative; cursor: pointer;">'. $mails .'<div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></td>
+    <td align="center" valign="top" class="pnj" data-id="'. $pnj->id .'" style="width: 100px; overflow: scroll;"><div style="position: relative; cursor: pointer;">'. $mails .'<div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></td>
     ';
+
+
+    if($n % 3 == 0){
+
+        echo '</tr><tr>';
+    }
+
+    $n++;
 }
 
 
