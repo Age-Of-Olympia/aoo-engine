@@ -181,7 +181,7 @@ if($goCoords->z < 0){
         $player->put_xp(XP_PER_MINE);
 
 
-        if($player->main1->data->name != 'Pioche'){
+        if($player->emplacements->main1->data->name != 'Pioche'){
 
 
             $player->put_fat(FAT_PER_MINE);

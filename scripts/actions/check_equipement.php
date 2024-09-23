@@ -6,15 +6,15 @@ if(!empty($actionJson->useEmplacement)){
     $emplacement = $actionJson->useEmplacement;
 
 
-    if($player->$emplacement->data->subtype == 'melee' && $distance > 1){
+    if($player->emplacements->{$emplacement}->data->subtype == 'melee' && $distance > 1){
 
         exit('Vous n\'êtes pas à bonne distance (arme de mêlée).');
     }
-    elseif($player->$emplacement->data->subtype == 'jet' && $distance < 2){
+    elseif($player->emplacements->{$emplacement}->data->subtype == 'jet' && $distance < 2){
 
         exit('Vous n\'êtes pas à bonne distance (arme de jet).');
     }
-    elseif($player->$emplacement->data->subtype == 'tir' ){
+    elseif($player->emplacements->{$emplacement}->data->subtype == 'tir' ){
 
 
         if($distance < 2){
@@ -23,7 +23,7 @@ if(!empty($actionJson->useEmplacement)){
         }
 
 
-        if(!$munition = $player->get_munition($player->$emplacement, $equiped=true)){
+        if(!$munition = $player->get_munition($player->emplacements->{$emplacement}, $equiped=true)){
 
             exit('Vous devez équiper une munition.');
         }
@@ -37,13 +37,13 @@ if(!empty($actionJson->itemConditions)){
     foreach($actionJson->itemConditions as $e){
 
 
-        if(!isset($player->{$e->emplacement})){
+        if(!isset($player->emplacements->{$e->emplacement})){
 
             exit('Cette action nécessite un équipement particulier.');
         }
 
 
-        $item = $player->{$e->emplacement};
+        $item = $player->emplacements->{$e->emplacement};
 
         $item->get_data();
 
@@ -76,13 +76,13 @@ if(!empty($actionJson->spellMalus)){
     foreach(ITEM_EMPLACEMENT_FORMAT as $emp){
 
 
-        if(!empty($player->$emp)){
+        if(!empty($player->emplacements->{$emp})){
 
 
-            if(!empty($player->$emp->data->spellMalus)){
+            if(!empty($player->emplacements->{$emp}->data->spellMalus)){
 
 
-                echo '<font color="red">'. $player->$emp->data->name .' empêche la magie.</font> ';
+                echo '<font color="red">'. $player->emplacements->{$emp}->data->name .' empêche la magie.</font> ';
             }
         }
     }

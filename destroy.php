@@ -74,7 +74,7 @@ $pvMax = WALLS_PV[$row->name];
 
 $player->get_caracs();
 
-$main1 = $player->main1;
+$main1 = $player->emplacements->main1;
 
 
 if($main1->data->name == 'poings'){

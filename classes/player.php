@@ -11,7 +11,7 @@ class Player{
     public $raceData;
     public $debuffs;
     public $turn;
-    public $main1;
+    public $emplacements;
     public $row;
     function __construct($playerId){
 
@@ -19,13 +19,13 @@ class Player{
 
         $this->caracs = (object) array();
         $this->upgrades = (object) array();
+        $this->emplacements = (object) array();
         $this->data =null;
         $this->coords = null;
         $this->nude = null;
         $this->raceData = null;
         $this->debuffs = null;
         $this->turn = null;
-        $this->main1 = null;
         $this->row = null;
     }
 
@@ -95,7 +95,7 @@ class Player{
             $item->get_data();
 
 
-            $this->{$row->equiped} = $item;
+            $this->emplacement->{$row->equiped} = $item;
 
 
             foreach(CARACS as $k=>$e){
@@ -164,15 +164,15 @@ class Player{
 
 
         // fist
-        if(!isset($this->main1)){
+        if(!isset($this->emplacements->main1)){
 
 
             $item = Item::get_item_by_name('poing');
 
             $item->get_data();
 
-            $this->main1 = (object) array();
-            $this->main1 = $item;
+            
+            $this->emplacements->main1 = $item;
         }
 
 
@@ -1349,7 +1349,7 @@ class Player{
 
             // item is NOT equiped : EQUIP
 
-            if(!empty($this->{$item->data->emplacement}) && $this->{$item->data->emplacement}->id == $item->id){
+            if(!empty($this->emplacements->{$item->data->emplacement}) && $this->emplacements->{$item->data->emplacement}->id == $item->id){
 
                 exit('unequip');
             }

@@ -11,7 +11,7 @@ $emplacements = array(
 foreach($emplacements as $k=>$e){
 
 
-    if(!empty($target->$k) && !$target->$k->row->enchanted){
+    if(!empty($target->emplacements->{$k}) && !$target->emplacements->{$k}->row->enchanted){
 
 
         continue;
@@ -45,7 +45,7 @@ if(count($emplacements)){
         if($target->have_effect($k)){
 
 
-            if($target->$emp->is_crafted_with($e)){
+            if($target->emplacements->{$emp}->is_crafted_with($e)){
 
 
                 $breakChance = $corruptBreackChance[$k];
@@ -64,7 +64,7 @@ if(count($emplacements)){
         $recup = array();
 
 
-        $recipe = $target->$emp->get_recipe();
+        $recipe = $target->emplacements->{$emp}->get_recipe();
 
         foreach($corrupted as $e){
 
@@ -90,9 +90,9 @@ if(count($emplacements)){
             }
         }
 
-        $target->equip($target->$emp);
+        $target->equip($target->emplacements->{$emp});
 
-        $target->$emp->add_item($target, -1);
+        $target->emplacements->{$emp}->add_item($target, -1);
 
         $recupTxt = (count($recup)) ? implode(', ', $recup) : 'rien';
 

@@ -158,7 +158,7 @@ $log = str_replace('NAME', $actionJson->name, $log);
 
 if(!empty($emplacement)){
 
-    $log = str_replace('WEAPON', $player->$emplacement->data->name, $log);
+    $log = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $log);
 }
 
 
