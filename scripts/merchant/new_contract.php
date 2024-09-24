@@ -62,7 +62,9 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) 
 
         $db->insert('items_asks', $values);
 
-        //todo remove money
+        //remove money to "block" it
+        $gold = Item::get_item_by_name('or');
+        $gold->add_item($player, -$total);
     }
 
     exit('new offer done');
