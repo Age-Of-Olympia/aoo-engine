@@ -112,8 +112,13 @@ if(!empty($_POST['name']) && !empty($_POST['mail'])){
 
 
     // error mail
-    if(!password_verify($_POST['mail'], $player->row->mail)){
-        exit('Erreur: l\'adresse mail n\'est pas la bonne.');
+    if(!password_verify(strtolower($_POST['mail']), $player->row->mail)){
+
+        // on vérifie si l'user n'avait pas mis une maj à la première lettre de son mail avant le patch
+        if(!password_verify(ucfirst(strtolower($_POST['mail'])), $player->row->mail)){
+
+            exit('Erreur: l\'adresse mail n\'est pas la bonne.');
+        }
     }
 
 
@@ -128,7 +133,7 @@ if(!empty($_POST['name']) && !empty($_POST['mail'])){
 
          // (5min)
         if($row['sentTime'] > time() - 300){
-            exit('Veuillez attendre 5 minutes entre les demandes.');
+            exit('Veuillez attendre 5 minutes avant de réessayer.');
         }
 
         // > 5min

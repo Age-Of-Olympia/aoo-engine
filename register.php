@@ -94,7 +94,7 @@ if(!empty($_POST['race'])){
 
         // hash
         $hashedPsw = password_hash($_POST['psw1'], PASSWORD_DEFAULT);
-        $hashedMail = password_hash($_POST['mail'], PASSWORD_DEFAULT);
+        $hashedMail = password_hash(strtolower($_POST['mail']), PASSWORD_DEFAULT);
 
 
         $sql = '

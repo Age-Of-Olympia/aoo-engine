@@ -16,8 +16,8 @@ Exemple:
 > player addbank Orcrist pierre 100
 > player addlog Orcrist "this is a log to be added"
 > player deletelastlog Orcrist
-> player addPnj Orcrist Ocyrhoée
-> player addUpgrade Orcrist Mvt
+> player addpnj Orcrist Ocyrhoée
+> player addupgrade Orcrist Mvt
 EOT);
     }
 
@@ -69,7 +69,7 @@ EOT);
             return delete_last_log($player);
         }
 
-        if($action == 'addPnj'){
+        if($action == 'addpnj'){
             return add_pnj($player, parent::getPlayer($argumentValues[2]));
         }
 
