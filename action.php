@@ -367,7 +367,7 @@ if(!empty($success) && $success == true){
 
 
         // crit
-        if(!isset($target->tete) || !empty($actionJson->autoCrit)){
+        if(!isset($target->emplacements->tete) || !empty($actionJson->autoCrit)){
 
 
             if(rand(1,100) <= DMG_CRIT || !empty($actionJson->autoCrit)){
