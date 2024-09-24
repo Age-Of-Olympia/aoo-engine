@@ -22,6 +22,11 @@ EOT);
 
         $topJson = json()->decode('forum/topics', $argumentValues[1]);
 
+        //Check missive exists and decoded
+        if(!$topJson){
+            return '<font color="red">Unknown missive</font>';
+        }
+
         $db = new Db();
 
         $sql = 'SELECT COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND name = ?';
