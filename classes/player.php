@@ -95,7 +95,7 @@ class Player{
             $item->get_data();
 
 
-            $this->emplacement->{$row->equiped} = $item;
+            $this->emplacements->{$row->equiped} = $item;
 
 
             foreach(CARACS as $k=>$e){
