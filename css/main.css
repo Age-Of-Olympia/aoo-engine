@@ -730,6 +730,11 @@ img {
         background: url('../img/ui/cards/black_fur.webp');
     }
 
+    #ui-card .troglodyte{
+
+        background: url('../img/ui/cards/wet_stone.webp');
+    }
+
     #ui-card .card-name{
 
         text-align: left;
