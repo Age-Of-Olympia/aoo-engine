@@ -7,11 +7,13 @@ if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
 else if(!empty($_SESSION['playerId'])){
 
 
+    $time = time();
+
     $player = new Player($_SESSION['playerId']);
     $player->get_data();
 
 
-    if($player->data->nextTurnTime <= time()){
+    if($player->data->nextTurnTime <= $time){
 
 
         $player->get_coords();
@@ -47,12 +49,12 @@ else if(!empty($_SESSION['playerId'])){
             else{
 
 
-                $nextTurnTime = time() + $playerTurn;
+                $nextTurnTime = $time + $playerTurn;
             }
 
 
             // adjust time
-            while( $nextTurnTime <= time() ){
+            while( $nextTurnTime <= $time ){
 
                 $nextTurnTime += 86400 - (($player->caracs->spd-10)*3600);
             }
@@ -166,13 +168,38 @@ else if(!empty($_SESSION['playerId'])){
                 $db->exe($sql, $player->id);
 
 
+                // end effects
+                $sql = '
+                SELECT COUNT(*) AS n
+                FROM players_effects
+                WHERE
+                endTime <= ?
+                AND
+                endTime != 0
+                AND
+                player_id = ?
+                ';
+
+
+                $res = $db->exe($sql, array($time, $player->id));
+
+                $row = $res->fetch_object();
+
+                if($row->n){
+
+                    $player->purge_effects();
+
+                    echo '<tr><td>Effets terminés</td><td align="right">'. $row->n .'</td></tr>';
+                }
+
+
                 echo '</table>';
 
             echo '<br /><a href="index.php"><button>Jouer</button></a>';
 
 
             // anti berserk
-            $antiBerserkTime = time() + $player->data->lastActionTime + (0.25 * $playerTurn);
+            $antiBerserkTime = $time + $player->data->lastActionTime + (0.25 * $playerTurn);
 
 
             // update
