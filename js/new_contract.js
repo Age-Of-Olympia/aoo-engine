@@ -67,7 +67,14 @@ $(document).ready(function(){
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
+                $dataHtml = $('<div>');
+                $dataHtml.html(data);
+                if($dataHtml.find('#error')[0] != null){
+                    alert($dataHtml.find('#error').text());
+                }
+                else{
+                    alert('Nouvelle transaction créée.');
+                }
                 document.location = 'merchant.php?targetId='+ window.targetId +'&asks';
             }
         });
