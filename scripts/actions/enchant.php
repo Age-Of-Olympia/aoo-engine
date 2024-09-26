@@ -2,7 +2,7 @@
 
 $enchantCond = $actionJson->itemConditions[0];
 
-$itemToEnchant = $player->{$enchantCond->emplacement};
+$itemToEnchant = $player->emplacements->{$enchantCond->emplacement};
 
 if(
     $itemToEnchant->data->{$enchantCond->condition} != $enchantCond->value

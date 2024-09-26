@@ -2,6 +2,8 @@
 
 class Dice{
 
+    public int $n;
+
     function __construct($n){
 
 

@@ -4,9 +4,9 @@ if($target->have_effect('parade')){
 
 
     if(
-        $target->main1->data->subtype == 'melee'
+        $target->emplacements->main1->data->subtype == 'melee'
         &&
-        $player->main1->data->subtype == 'melee'
+        $player->emplacements->main1->data->subtype == 'melee'
     ){
 
 
@@ -57,9 +57,9 @@ if($target->have_effect('cle_de_bras')){
 
 
     if(
-        $player->main1->data->subtype == 'melee'
+        $player->emplacements->main1->data->subtype == 'melee'
         &&
-        $target->main1->data->name == 'Poing'
+        $target->emplacements->main1->data->name == 'Poing'
     ){
 
 

@@ -3,18 +3,18 @@
 $itemToEquip = array();
 
 
-foreach($actionJson->playerIgnore as $e){
+foreach($actionJson->playerIgnore as $emp){
 
 
-    if(!empty($player->$e)){
+    if(!empty($player->emplacements->{$emp})){
 
 
         // unequip
-        $player->equip($player->$e, $doNotRefresh=true);
+        $player->equip($player->emplacements->{$emp}, $doNotRefresh=true);
 
-        $itemToEquip[$e] = $player->$e;
+        $itemToEquip[$emp] = $player->emplacements->{$emp};
 
-        unset($player->$e);
+        unset($player->emplacements->{$emp});
     }
 }
 
@@ -27,14 +27,14 @@ $caracsCp = clone $player->caracs;
 
 
 // re equip
-foreach($itemToEquip as $k=>$e){
+foreach($itemToEquip as $emp=>$item){
 
 
-    $player->equip($e, $doNotRefresh=true);
+    $player->equip($item, $doNotRefresh=true);
 
 
     // unset again
-    unset($player->$k);
+    unset($player->emplacements->{$emp});
 }
 
 

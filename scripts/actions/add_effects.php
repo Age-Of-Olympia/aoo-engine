@@ -69,10 +69,10 @@ if(!empty($actionJson->useEmplacement)){
     $emplacement = $actionJson->useEmplacement;
 
 
-    if(!empty($player->$emplacement->data->addEffects)){
+    if(!empty($player->emplacements->{$emplacement}->data->addEffects)){
 
 
-        foreach($player->$emplacement->data->addEffects as $e){
+        foreach($player->emplacements->{$emplacement}->data->addEffects as $e){
 
 
             if(

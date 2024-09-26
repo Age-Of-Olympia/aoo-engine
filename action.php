@@ -158,7 +158,7 @@ $log = str_replace('NAME', $actionJson->name, $log);
 
 if(!empty($emplacement)){
 
-    $log = str_replace('WEAPON', $player->$emplacement->data->name, $log);
+    $log = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $log);
 }
 
 
@@ -367,7 +367,7 @@ if(!empty($success) && $success == true){
 
 
         // crit
-        if(!isset($target->tete) || !empty($actionJson->autoCrit)){
+        if(!isset($target->emplacements->tete) || !empty($actionJson->autoCrit)){
 
 
             if(rand(1,100) <= DMG_CRIT || !empty($actionJson->autoCrit)){

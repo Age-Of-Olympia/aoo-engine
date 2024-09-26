@@ -4,10 +4,10 @@
 if(!empty($success) && $success == true){
 
 
-    if($target->main1->row->name != 'poing'){
+    if($target->emplacements->main1->row->name != 'poing'){
 
 
-        $target->equip($target->main1);
+        $target->equip($target->emplacements->main1);
 
 
         echo '<div><font color="#66ccff">Vous désarmez '. $target->data->name .'!</font></div>';
@@ -16,7 +16,7 @@ if(!empty($success) && $success == true){
         if(rand(1,100) <= ITEM_DROP){
 
 
-            $target->drop($target->main1, 1);
+            $target->drop($target->emplacements->main1, 1);
 
             echo '<div><font color="#66ccff">Son arme tombe sur le sol!</font></div>';
         }

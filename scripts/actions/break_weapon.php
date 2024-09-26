@@ -1,7 +1,7 @@
 <?php
 
 
-if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
+if($player->emplacements->main1->data->name != 'Poing' && !$player->emplacements->main1->row->enchanted){
 
 
     $breakChance = ITEM_BREAK;
@@ -19,7 +19,7 @@ if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
         if($player->have_effect($k)){
 
 
-            if($player->main1->is_crafted_with($e)){
+            if($player->emplacements->main1->is_crafted_with($e)){
 
 
                 $breakChance = $corruptBreackChance[$k];
@@ -38,7 +38,7 @@ if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
         $recup = array();
 
 
-        $recipe = $player->main1->get_recipe();
+        $recipe = $player->emplacements->main1->get_recipe();
 
         foreach($corrupted as $e){
 
@@ -64,9 +64,9 @@ if($player->main1->data->name != 'Poing' && !$player->main1->row->enchanted){
             }
         }
 
-        $player->equip($player->main1);
+        $player->equip($player->emplacements->main1);
 
-        $player->main1->add_item($player, -1);
+        $player->emplacements->main1->add_item($player, -1);
 
         $recupTxt = (count($recup)) ? implode(', ', $recup) : 'rien';
 

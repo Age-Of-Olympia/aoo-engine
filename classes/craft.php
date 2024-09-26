@@ -2,6 +2,12 @@
 
 class Craft{
 
+    public $item;
+    public $json;
+    public $recetteJson;
+    public $itemJson;
+    public $itemRecipe;
+    public $cost;
     function __construct($itemParam){
         // item
         $item = strtolower($itemParam);
