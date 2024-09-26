@@ -229,9 +229,13 @@ class Forum{
 
     public static function put_topic($player, $forumJson, $title, $text){
 
-        $topicId = time();
+        $topicId = round(microtime(true) * 1000);
 
         $path = 'datas/private/forum/topics/'. $topicId .'.json';
+
+        if(file_exists($path)){
+            exit('topic file already exists, please retry');
+        }
 
         $data = (object) array(
 
@@ -267,8 +271,13 @@ class Forum{
 
     public static function put_post($player, $topJson, $text){
 
-        $postId = time();
+        $postId = round(microtime(true) * 1000);
+
         $path = 'datas/private/forum/posts/'. $postId .'.json';
+
+        if(file_exists($path)){
+            exit('post file already exists, please retry');
+        }
 
         $data = (object) array(
 
