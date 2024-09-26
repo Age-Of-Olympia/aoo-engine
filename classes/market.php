@@ -430,6 +430,27 @@ class Market{
                 }
         }
 
+        if($table == 'asks'){
+            $sql = '
+                SELECT
+                *
+                FROM
+                items_asks
+                where id = ?
+                ';
+
+
+            $res = $db->exe($sql, $id);
+
+            while($row = $res->fetch_object()){
+
+                //give back gold
+                $gold = Item::get_item_by_name('or');
+                $gold->add_item($player, $row->n*$row->price);
+            }
+
+        }
+
         $values = array('id'=>$id, 'player_id'=> $player->id);
 
         $db->delete('items_'. $table, $values);

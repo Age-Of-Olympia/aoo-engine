@@ -8,8 +8,7 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) 
 
 
     if(!empty($item->data->forbid->market)){
-
-        exit('Impossible de créer un contrat sur cet objet.');
+        exit('<div id="error">Impossible de créer un contrat sur cet objet.</div>');
     }
 
 
@@ -25,8 +24,7 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) 
 
 
     if(!is_numeric($_POST['price']) || $_POST['price'] < 1){
-
-        exit('error price');
+        exit('<div id="error">Erreur, prix invalide</div>');
     }
 
 
@@ -54,15 +52,15 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) 
 
 
         if($total > $player->get_gold()){
-
-
-            exit('Vous ne possédez pas assez d\'Or pour prétendre acheter '. $_POST['n'] .' '. $item->row->name .'.');
+            exit('<div id="error">'.'Vous ne possédez pas assez d\'Or pour prétendre acheter '. $_POST['n'] .' '. $item->row->name .'.'.'</div>');
         }
 
 
         $db->insert('items_asks', $values);
 
-        //todo remove money
+        //remove money to "block" it
+        $gold = Item::get_item_by_name('or');
+        $gold->add_item($player, -$total);
     }
 
     exit('new offer done');
