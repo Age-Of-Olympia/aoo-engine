@@ -66,8 +66,8 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
-                document.location = 'forum.php?topic='+ data.trim().slice(-10);
+                //alert(data);
+                document.location = 'forum.php?topic='+ data.match(/\d+$/)[0];
             }
         });
     });
