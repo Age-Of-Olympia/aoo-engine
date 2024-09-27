@@ -196,6 +196,12 @@ if($actionJson->targetType != 'self'){
             // tir / jet
 
             $actionJson->playerJet = 'ct';
+
+            if($distance > 2){
+
+                $distanceMalus = ($distance - 2) * 3;
+            }
+
         }
     }
 
@@ -349,8 +355,8 @@ if(!empty($success) && $success == true){
         $totalDamages = $playerDamages - $targetDamages;
 
 
-        // tir damages reduce
-        if($distance > 2){
+        // tir damages reduce and distance malus has same rules to be applied ( tir + distance > 2 )
+        if($distanceMalus){
 
 
             $distanceDmgReduce = $distance - 2;
