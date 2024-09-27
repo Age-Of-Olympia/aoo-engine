@@ -103,7 +103,7 @@ foreach(array('RP','Privés','HRP') as $cat){
                     $author->get_data();
 
 
-                    $date = date('d/m/Y', $topJson->last->time);
+                    $date = date('d/m/Y', timestampNormalization($topJson->last->time));
 
                     if($date == date('d/m/Y', time())){
 

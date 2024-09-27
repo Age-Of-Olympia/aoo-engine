@@ -74,3 +74,11 @@ function removeComments($jsonString) {
     $jsonString = preg_replace('/\/\*.*?\*\//s', '', $jsonString);
     return $jsonString;
 }
+
+function timestampNormalization($timestamp){
+    if ($timestamp > 32503680000) {
+        return (int) ($timestamp / 1000); // Conversion de millisecondes en secondes
+    } else {
+        return (int) $timestamp; // Le timestamp est déjà en secondes
+    }
+}
