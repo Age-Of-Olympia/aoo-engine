@@ -18,8 +18,7 @@ define('CARACS_BOURRINS', array(
     'm'=>"Les plus puissants magiciens!",
 
     'r'=>"Les plus résistants!",
-    'rm'=>"Des mineurs de mana",
-    'spd'=>"Les meilleurs marathoniens."
+    'rm'=>"Des mineurs de mana"
 ));
 
 
