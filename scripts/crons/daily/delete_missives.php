@@ -8,38 +8,48 @@
 $sql = '
 SELECT name
 FROM players_forum_missives
-WHERE
-name < ?
 GROUP BY name
 HAVING COUNT(*) = 1
 ';
 
 $db = new Db();
 
-$timeLimit = time() - ONE_DAY;
-
-$res = $db->exe($sql, $timeLimit);
+$res = $db->exe($sql);
 
 $deleteTbl = array();
 
-while($row = $res->fetch_object()){
+$sevenDaysAgo = time() - (7 * 24 * 60 * 60);
 
+while($row = $res->fetch_object()){
 
     $deleteTbl[] = $row->name;
 
     $topJson = json()->decode('forum/topics', $row->name);
 
-    foreach($topJson->posts as $e){
+    $latestPostUpdate = 0;
 
-
-        echo 'post '. $e->name .' deleted<br />';
-
-        @unlink(__DIR__ .'/../../../datas/private/forum/posts/'. $e->name .'.json');
+    // Find latest post updated among all posts of topic.
+    foreach ($topJson->posts as $e) {
+        if (isset($e->last_update_date) && $e->last_update_date > $latestPostUpdate) {
+            $latestPostUpdate = $e->last_update_date;
+        }
     }
 
-    echo 'topic '. $row->name .' deleted<br />';
+    if ($latestPostUpdate < $sevenDaysAgo) {
+        //if latest post older than 7 days, delete topic and posts of missive.
 
-    @unlink(__DIR__ .'/../../../datas/private/forum/topics/'. $row->name .'.json');
+        foreach ($topJson->posts as $e) {
+            echo 'post '. $e->name .' deleted<br />';
+            @unlink(__DIR__ .'/../../../datas/private/forum/posts/'. $e->name .'.json');
+        }
+
+        echo 'topic '. $row->name .' deleted<br />';
+        @unlink(__DIR__ .'/../../../datas/private/forum/topics/'. $row->name .'.json');
+    } else {
+        // Sinon, on ne fait rien
+        echo 'No deletion, last post is less than 7 days old<br />';
+    }
+
 }
 
 

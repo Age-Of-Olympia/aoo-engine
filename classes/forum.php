@@ -287,6 +287,8 @@ class Forum{
 
             "top_id"=>$topJson->name,
 
+            "last_update_date"=>time(),
+
             "text"=>$text
         );
 
