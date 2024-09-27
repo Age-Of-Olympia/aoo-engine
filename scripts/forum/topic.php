@@ -168,7 +168,7 @@ echo '
                 }
 
 
-                $date = date('d/m/Y', $postJson->name);
+                $date = date('d/m/Y', timestampNormalization($postJson->name));
 
                 if($date == date('d/m/Y', time())){
 
