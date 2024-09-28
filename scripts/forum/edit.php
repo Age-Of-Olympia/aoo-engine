@@ -14,30 +14,24 @@ $topJson = json()->decode('forum', 'topics/'. $postJson->top_id);
 
 $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
 
+$player = new Player($_SESSION['playerId']);
+
+$player->get_data();
+
+Forum::check_access($player, $forumJson);
+
+if(!$player->have_option('isAdmin') && ($postJson->author != $player->id || !empty($topJson->closed))){
+
+    exit('cannot edit this post');
+}
 
 if(!empty($_POST['text'])){
-
-
-    $player = new Player($_SESSION['playerId']);
-
-    $player->get_data();
-
-    Forum::check_access($player, $forumJson);
-
-
-    if(!$player->have_option('isAdmin') && ($postJson->author != $player->id || !empty($topJson->closed))){
-
-        exit('cannot edit this post');
-    }
-
 
     $postJson->text = $_POST['text'];
 
     $postJson->last_update_date = time();
 
     if($topJson->forum_id != 'Missives'){
-
-
         Forum::put_keywords($postJson->name, $_POST['text'], $deleteBefore=true);
     }
 
@@ -63,11 +57,10 @@ ob_start();
 include('scripts/infos.php');
 include('scripts/menu.php');
 
-
 echo '<h1>'. $topJson->title .'</h1>';
 
 
-Forum::check_access($player, $topJson);
+
 
 
 echo '<h2>Éditer</h2>';
