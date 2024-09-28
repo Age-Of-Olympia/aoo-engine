@@ -53,19 +53,16 @@ if(!empty($_GET['page'])){
     $postMax += ($_GET['page']-1)*5;
 }
 
-
-if(!isset($_GET['hideMenu'])){
-
-    echo '<h1>'. htmlentities($topJson->title) .'</h1>';
-}
-
-
 $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
 
 $player->get_data();
 
 Forum::check_access($player, $forumJson);
 
+if(!isset($_GET['hideMenu'])){
+
+    echo '<h1>'. htmlentities($topJson->title) .'</h1>';
+}
 
 if($topJson->forum_id == 'Missives'){
 
