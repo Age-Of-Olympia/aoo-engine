@@ -12,15 +12,13 @@ if(!$topJson){
 
 $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
 
+$player = new Player($_SESSION['playerId']);
+
+$player->get_data();
+
+Forum::check_access($player, $forumJson);
 
 if(!empty($_POST['text'])){
-
-
-    $player = new Player($_SESSION['playerId']);
-
-    $player->get_data();
-
-    Forum::check_access($player, $forumJson);
 
     if(isset($topJson->closed) && $topJson->closed && !$player->have_option('isAdmin')){
 
@@ -86,10 +84,6 @@ include('scripts/menu.php');
 
 
 echo '<h1>'. $topJson->title .'</h1>';
-
-$player->get_data();
-
-Forum::check_access($player, $topJson);
 
 
 echo '<h2>Répondre</h2>';
