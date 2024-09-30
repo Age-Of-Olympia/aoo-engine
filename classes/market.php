@@ -97,8 +97,14 @@ class Market{
                 ';
 
                 echo '
-                <td>
-                    '. ucfirst($item->data->name) .'
+                <td>';
+                    //Is player having at least 1 offer?
+                    if (array_filter($this->$table[$k], fn($row) => $row->player_id == $player_id)) {
+                        echo '<b>'.ucfirst($item->data->name).'</b>';
+                    } else {
+                        echo ucfirst($item->data->name);
+                    }
+                echo '
                 </td>
                 ';
 
@@ -112,17 +118,7 @@ class Market{
                 <td>
                     <a href="merchant.php?'. $table .'&targetId='. $this->target->id .'&itemId='. $item->id .'">
                         Négocier
-                    </a>';
-                    if($this->$table[$k][0]->player_id==$player_id){
-                        echo '
-                        <br/>
-                        <a href="merchant.php?'. $table .'&cancel&targetId='. $this->target->id .'&id='. $this->$table[$k][0]->id .'">
-                            Annuler
-                        </a>
-                    
-                    ';}
-                
-                echo '
+                    </a>
                 </td>
                 ';
 
@@ -140,13 +136,11 @@ class Market{
     }
 
 
-    public function print_detail($item, $table){
+    public function print_detail($item, $table, $player_id){
 
 
         ob_start();
 
-
-        $action = ($table == 'bids') ? 'Acheter' : 'Vendre';
 
 
         if(!isset($this->$table[$item->id])){
@@ -180,6 +174,11 @@ class Market{
 
             $playerJson = json()->decode('players', $row->player_id);
 
+            $action = ($table == 'bids') ? 'Acheter' : 'Vendre';
+
+            if($playerJson->id==$player_id){
+                $action = 'Annuler';
+            }
 
             echo '
             <tr>
@@ -222,7 +221,11 @@ class Market{
                         data-price="'. $row->price .'"
                         data-id="'. $row->id .'"
 
-                        >'. $action .'</button>
+                        >'. $action .'</button>';
+
+
+
+                echo '
                 </td>
                 ';
 
@@ -248,14 +251,19 @@ class Market{
                 var price = $(this).data('price');
                 var id = $(this).data('id');
 
+                if(action === 'Annuler'){
+                  window.location.href= 'merchant.php?<?php echo $table ?>&cancel&targetId=<?php echo $this->target->id ?>&id='+id;
+                  return; 
+                }
+
                 var n = prompt('Combien?', stock);
 
                 if(n == null || n == '' || n < 1 || n > stock){
 
                     return false;
                 }
-
                 total = n * price;
+
 
                 if(confirm(action +' '+ item +' x'+ n +'\nà '+ price +'Po/unité\npour un total de '+ total +'Po?')){
 
