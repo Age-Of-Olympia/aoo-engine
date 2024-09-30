@@ -99,10 +99,9 @@ class Market{
                 echo '
                 <td>';
                     //Is player having at least 1 offer?
+                    echo ucfirst($item->data->name);
                     if (array_filter($this->$table[$k], fn($row) => $row->player_id == $player_id)) {
-                        echo '<b>'.ucfirst($item->data->name).'</b>';
-                    } else {
-                        echo ucfirst($item->data->name);
+                        echo '<b>*</b>';
                     }
                 echo '
                 </td>
@@ -145,7 +144,7 @@ class Market{
 
         if(!isset($this->$table[$item->id])){
 
-            exit('<div>'. $action .' cet objet: aucun contrat trouvé.</div>');
+            exit('<div>'. ($table == 'bids') ? 'Acheter' : 'Vendre' .' cet objet: aucun contrat trouvé.</div>');
         }
 
 
@@ -177,7 +176,7 @@ class Market{
             $action = ($table == 'bids') ? 'Acheter' : 'Vendre';
 
             if($playerJson->id==$player_id){
-                $action = 'Annuler';
+                $action = ($table == 'bids') ? 'Annuler l\'offre' : 'Annuler la demande';
             }
 
             echo '
@@ -251,7 +250,7 @@ class Market{
                 var price = $(this).data('price');
                 var id = $(this).data('id');
 
-                if(action === 'Annuler'){
+                if(action.startsWith('Annuler'){
                   window.location.href= 'merchant.php?<?php echo $table ?>&cancel&targetId=<?php echo $this->target->id ?>&id='+id;
                   return; 
                 }

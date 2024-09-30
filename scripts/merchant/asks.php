@@ -70,8 +70,9 @@ if(isset($_GET['cancel'])){
 
 echo '<div>Voici les objets que les autres personnages veulent acheter.<br /><font><b>Vendez vos objets ici.</b></font></div>';
 
-echo $market->print_market('asks', $player->id);
+echo $market->print_market('asks', $player->id) ;
 
+echo '<br/><b>*</b> Certaines des propositions d\'achat sont les vôtres'
 ?>
 <div class="button-container">
         <a href="merchant.php?targetId=<?php echo $target->id ?>&asks&newContract">

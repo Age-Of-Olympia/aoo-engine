@@ -66,6 +66,7 @@ echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><
 
 echo $market->print_market('bids',$player->id);
 
+echo '<br/><b>*</b> Certains des objets en vente sont les vôtres';
 ?>
 <div class="button-container">
         <a href="merchant.php?targetId=<?php echo $target->id ?>&bids&newContract">
