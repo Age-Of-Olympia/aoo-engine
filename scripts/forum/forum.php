@@ -223,7 +223,7 @@ $pinnedTopicsHtml=array();
                     Par '. $lastAuthor->data->name .'
                     <div>
                         '. $date .'<br />
-                        à '. date('H:i', $topJson->last->time) .'
+                        à '. date('H:i', timestampNormalization($topJson->last->time)) .'
                 </div>
                 ';
 

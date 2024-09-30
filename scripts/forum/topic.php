@@ -185,7 +185,7 @@ echo '
                     >
                         <a href="forum.php?topic='. htmlentities($_GET['topic']) .'&page='. $page .'#'. $postJson->name .'">#'. $postN+1 .'</a>
                         <br />
-                        <span style="color: grey; font-size: 75%;">'. $date .'<br />'. date('H:i', $postJson->name) .'</span>
+                        <span style="color: grey; font-size: 75%;">'. $date .'<br />'. date('H:i', timestampNormalization($postJson->name)) .'</span>
                     </div>';
 
 
