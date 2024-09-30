@@ -79,9 +79,14 @@ elseif(isset($_GET['autosave']) && !empty($_POST['text'])){
 
 
     if(trim($_POST['text']) != ''){
-
-
-        Forum::put_autosave($_SESSION['playerId'], $_POST['text']);
+        if($_POST['currentSessionId'] == $_SESSION['playerId'])
+        {
+            Forum::put_autosave($_SESSION['playerId'], $_POST['text']);
+        }
+        else
+        {
+            exit('error session swich');
+        }
     }
 
     exit();

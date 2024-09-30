@@ -15,7 +15,7 @@ $(document).ready(function(){
 
 
         var actualText = $('textarea').val();
-
+        var currentSessionId = $('#currentSessionId').text();
         if(actualText != text){
 
 
@@ -25,10 +25,14 @@ $(document).ready(function(){
                 type: "POST",
                 url: 'forum.php?autosave',
                 data: {
-                    'text': actualText
+                    'text': actualText,
+                    'currentSessionId': currentSessionId
                 }, // serializes the form's elements.
                 success: function(data)
                 {
+                    if(data.trim() != ''){
+                        alert(data);
+                    }
                     // alert(data);
                     $('.submit').html('Envoyer');
 
