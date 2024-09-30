@@ -123,7 +123,12 @@ function submit_command(cmdLine){
         type: 'POST',
         data: { cmdLine: cmdLine },
         success: function(response) {
-            let responseObj = JSON.parse(response);
+            let responseObj;
+            try{
+                responseObj=JSON.parse(response);
+            }catch(e){
+                responseObj={error:'Error: '+response};
+            }
             if(responseObj.error){
                 $('#console-content').append('<span class="response-error">'+responseObj.error+ '</span>');
             }else{
