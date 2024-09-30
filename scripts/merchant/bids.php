@@ -42,7 +42,7 @@ if(!empty($_GET['itemId'])){
     echo '<script>window.basePrice = '. $item->data->price .';</script>';
 
 
-    echo $market->print_detail($item, 'bids');
+    echo $market->print_detail($item, 'bids',$player->id);
 
 
     exit();
