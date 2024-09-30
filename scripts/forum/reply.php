@@ -20,6 +20,10 @@ Forum::check_access($player, $forumJson);
 
 if(!empty($_POST['text'])){
 
+    if($_POST['currentSessionId'] != $_SESSION['playerId']){
+
+        exit('error session swich');
+    }
     if(isset($topJson->closed) && $topJson->closed && !$player->have_option('isAdmin')){
 
         exit('error topic is closed only admin can post');
@@ -97,7 +101,7 @@ echo '
 ';
 
 include('scripts/forum/tools.php');
-
+echo '<div id="currentSessionId" style="display:none;">'.$_SESSION['playerId'].'</div>';
 echo '
 <textarea
     class="box-shadow tr-topic1"

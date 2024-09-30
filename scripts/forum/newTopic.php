@@ -11,6 +11,10 @@ if(!$forumJson){
 
 if(!empty($_POST['text']) && !empty($_POST['name'])){
 
+    if($_POST['currentSessionId'] != $_SESSION['playerId']){
+
+        exit('error session swich');
+    }
 
     $player = new Player($_SESSION['playerId']);
 
@@ -144,7 +148,7 @@ if($autosave != ''){
     $msg = $autosave;
 }
 
-
+echo '<div id="currentSessionId" style="display:none;">'.$_SESSION['playerId'].'</div>';
 echo '
 <div id="forum-textarea">
 ';

@@ -55,6 +55,7 @@ $(document).ready(function(e){
             destId = $destField.val();
         }
 
+        var currentSessionId = $('#currentSessionId').text();
 
         $.ajax({
             type: "POST",
@@ -62,7 +63,8 @@ $(document).ready(function(e){
             data: {
                 'text': text,
                 'name': name,
-                'destId': destId
+                'destId': destId,
+                'currentSessionId': currentSessionId
             }, // serializes the form's elements.
             success: function(data)
             {

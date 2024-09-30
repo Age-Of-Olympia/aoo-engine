@@ -16,13 +16,14 @@ $(document).ready(function(e){
 
 
         var topic = $(this).data('topic');
-
+        var currentSessionId = $('#currentSessionId').text();
 
         $.ajax({
             type: "POST",
             url: 'forum.php?reply='+ topic,
             data: {
-                'text': text
+                'text': text,
+                'currentSessionId': currentSessionId
             }, // serializes the form's elements.
             success: function(data)
             {
