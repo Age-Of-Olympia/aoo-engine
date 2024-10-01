@@ -85,10 +85,10 @@ function timestampNormalization($timestamp){
 
 //Helper For Json Reply
 function ExitError($error){
-    exit('{error:"'.$error.'"}');
+    exit('{"error":"'.$error.'"}');
 }
 
 function ExitSuccess($success){
-    exit('{result:"'.$success.'"}');
+    exit('{"result":"'.$success.'"}');
 }
 
