@@ -27,8 +27,19 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
+                try {
+                    let response = JSON.parse(data);
+                    if(response.error){
+                        alert(response.error);
+                    }
+                    else{
+                        document.location = 'forum.php?topic='+ topic +'&page='+ window.pagesN +'#'+ response.result;
+                    }
+                } catch (error) {
+                    alert(data);
+                }
                 // alert(data);
-                document.location = 'forum.php?topic='+ topic +'&page='+ window.pagesN +'#'+ data.trim();
+                
             }
         });
     });

@@ -69,7 +69,19 @@ $(document).ready(function(e){
             success: function(data)
             {
                 //alert(data);
-                document.location = 'forum.php?topic='+ data.match(/\d+$/)[0];
+               // document.location = 'forum.php?topic='+ data.match(/\d+$/)[0];
+
+                try {
+                    let response = JSON.parse(data);
+                    if(response.error){
+                        alert(response.error);
+                    }
+                    else{
+                        document.location = 'forum.php?topic='+ response.result;
+                    }
+                } catch (error) {
+                    alert(data);
+                }
             }
         });
     });

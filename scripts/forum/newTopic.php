@@ -6,14 +6,14 @@ $forumJson = json()->decode('forum', 'forums/'. $_GET['newTopic']);
 
 if(!$forumJson){
 
-    exit('error forum');
+    ExitError('error forum');
 }
 
 if(!empty($_POST['text']) && !empty($_POST['name'])){
 
     if($_POST['currentSessionId'] != $_SESSION['playerId']){
 
-        exit('error session swich');
+        ExitError('error session swich');
     }
 
     $player = new Player($_SESSION['playerId']);
@@ -68,10 +68,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
     }
 
 
-    echo $topJson->name;
-
-
-    exit();
+    ExitSuccess($topJson->name);
 }
 
 

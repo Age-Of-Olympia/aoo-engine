@@ -82,3 +82,13 @@ function timestampNormalization($timestamp){
         return (int) $timestamp; // Le timestamp est déjà en secondes
     }
 }
+
+//Helper For Json Reply
+function ExitError($error){
+    exit('{error:"'.$error.'"}');
+}
+
+function ExitSuccess($success){
+    exit('{result:"'.$success.'"}');
+}
+
