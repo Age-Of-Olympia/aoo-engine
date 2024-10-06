@@ -1524,3 +1524,16 @@ blockquote{
 
         text-align: right;
     }
+
+    ul.compact-list {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    ul.compact-list li {
+        padding: 5px 0;
+        margin: 0;
+        font-size: 14px;
+    }
+        
