@@ -52,13 +52,13 @@ if(!empty($_GET['itemId'])){
 echo '<h1>Offres de Vente</h1>';
 
 
-if(isset($_GET['newContract'])){
+  if(isset($_GET['newContract'])){
 
 
-    include('scripts/merchant/new_contract.php');
+      include('scripts/merchant/new_contract.php');
 
-    exit();
-}
+      exit();
+  }
 
 
 echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Achetez des objets ici.</b></p></div>';

@@ -14,11 +14,14 @@ class Exchange{
     public $items = [];
 
 
-    function __construct(){
+    public function __construct($id = null) {
         $this->db = new Db();
+        if ($id !== null) {
+            $this->id = $id;
+        }
     }
 
-        public function get_base_data(){
+    public function get_base_data(){
         if (!isset($this->id) || $this->id == null)
             exit('get data impossible, relies on id');
 
@@ -57,67 +60,91 @@ class Exchange{
         }
     }
 
-    public function get_last_data(){
-        $sql = '
-        SELECT items_exchanges.id, items_exchanges.player_ok, items_exchanges.target_ok, items_exchanges.update_time
-        FROM items_exchanges
-        where items_exchanges.player_id = ?
-        and items_exchanges.target_id = ?
-        and not (target_ok and player_ok)
-        order by update_time desc
-        limit 1
-        ';
-
-
-
-        $res = $this->db->exe($sql, array($this->playerId, $this->targetId));
-
-        while($row = $res->fetch_object()){
-            $this->id= $row->id;
-            $this->playerOK = $row->player_ok;
-            $this->targetOk = $row->target_ok;
-            $this->updateTime = $row->update_time;
-        }
-
-    }
-    public function create_and_get($playerId,$targetId){
+    public function create($playerId,$targetId){
 
         $this->playerId = $playerId;
         $this->targetId = $targetId;
-        $this->get_last_data();
-        if (!isset($this->id)){
 
-            $values = array(
-                'player_id'=>$playerId,
-                'target_id'=>$targetId,
-                'update_time'=>time()
-            );
-            $this->db->insert('items_exchanges', $values);
+        $values = array(
+            'player_id'=>$playerId,
+            'target_id'=>$targetId,
+            'update_time'=>time()
+        );
+        $this->db->insert('items_exchanges', $values);
+        $this->id = $this->db->get_last_id('items_exchanges');
 
-            $this->get_base_data();
-        }
     }
 
-    public function add_players_items_exchange($itemId, $n,$playerId,$targetId){
+    public function add_item_to_exchange($itemId, $n){
         $values = array(
             'exchange_id'=>$this->id,
             'item_id'=>$itemId,
             'n'=>$n,
-            'player_id'=>$playerId,
-            'target_id'=>$targetId
+            'player_id'=>$this->playerId,
+            'target_id'=>$this->targetId
         );
         $this->db->insert('players_items_exchanges', $values);
 
     }
 
+    public function accept_exchange(){
+        $sql = '
+        UPDATE
+        items_exchanges
+        SET
+        target_ok = 1,
+        player_ok = 1,
+        update_time = ?
+        WHERE
+        id = ?
+        ';
+    
+        $this->db->exe($sql, array(time(),$this->id));
+    }
+
+    public function refuse_exchange(){
+        $sql = '
+        UPDATE
+        items_exchanges
+        SET
+        target_ok = -1,
+        update_time = ?
+        WHERE
+        id = ?
+        ';
+    
+        $this->db->exe($sql, array(time(),$this->id));
+    }
+
+    public function cancel_exchange(){
+        $sql = '
+        UPDATE
+        items_exchanges
+        SET
+        player_ok = -1,
+        update_time = ?
+        WHERE
+        id = ?
+        ';
+    
+        $this->db->exe($sql, array(time(),$this->id));
+    }
+
+    public function give_items( $player ){
+        foreach($this->items as $exchange_item){
+            $item = new Item($exchange_item->item_id);
+            $item->add_item($player, $exchange_item->n, true);
+        }
+    }
 
     public static function get_open_exchanges($playerId){
 
         $return = array();
 
         $sql = 'SELECT * FROM items_exchanges
-         WHERE player_id = ? or target_id = ?
-         AND not (player_ok and target_ok) 
+         WHERE (player_id = ? or target_id = ?)
+         AND  target_ok= 0 
+         AND player_ok >=0
          order by update_time desc';
 
 
