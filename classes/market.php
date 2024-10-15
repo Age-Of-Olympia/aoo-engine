@@ -250,7 +250,7 @@ class Market{
                 var price = $(this).data('price');
                 var id = $(this).data('id');
 
-                if(action.startsWith('Annuler'){
+                if(action.startsWith('Annuler')){
                   window.location.href= 'merchant.php?<?php echo $table ?>&cancel&targetId=<?php echo $this->target->id ?>&id='+id;
                   return; 
                 }
@@ -422,17 +422,18 @@ class Market{
                 FROM
                 items_bids
                 where id = ?
+                and player_id = ?
                 ';
 
 
-                $res = $db->exe($sql, $id);
+                $res = $db->exe($sql,  array($id, $player->id));
 
                 while($row = $res->fetch_object()){
 
                     //give back items
                     $item = new Item($row->item_id);
         
-                    $item->add_item($player, $row->n, $bank=false);
+                    $item->add_item($player, $row->stock, $bank=false);
                     
                 }
         }
@@ -444,16 +445,17 @@ class Market{
                 FROM
                 items_asks
                 where id = ?
+                and player_id = ?
                 ';
 
 
-            $res = $db->exe($sql, $id);
+            $res = $db->exe($sql,  array($id, $player->id));
 
             while($row = $res->fetch_object()){
 
                 //give back gold
                 $gold = Item::get_item_by_name('or');
-                $gold->add_item($player, $row->n*$row->price);
+                $gold->add_item($player, $row->stock*$row->price);
             }
 
         }
