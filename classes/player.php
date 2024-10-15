@@ -1909,7 +1909,8 @@ class Player{
 
         $db->insert('players', $values);
 
-        $lastId = $db->get_last_id('players');
+        //we allready have the id for pnj and it's negatif 
+        $lastId = is_null($id) ? $db->get_last_id('players') : $id;
 
         $player = new Player($lastId);
 
