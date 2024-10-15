@@ -20,9 +20,13 @@ Forum::check_access($player, $forumJson);
 
 if(!empty($_POST['text'])){
 
+    if($_POST['currentSessionId'] != $_SESSION['playerId']){
+
+        ExitError('error session swich');
+    }
     if(isset($topJson->closed) && $topJson->closed && !$player->have_option('isAdmin')){
 
-        exit('error topic is closed only admin can post');
+        ExitError('error topic is closed only admin can post');
     }
 
     if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
@@ -30,7 +34,7 @@ if(!empty($_POST['text'])){
 
         if(!$player->have_option('isAdmin')){
 
-            exit('error topic must be approved by admin');
+            ExitError('error topic must be approved by admin');
         }
 
 
@@ -43,7 +47,7 @@ if(!empty($_POST['text'])){
 
 
     // create post
-    Forum::put_post($player, $topJson, $_POST['text']);
+    $replyId = Forum::put_post($player, $topJson, $_POST['text']);
 
 
     // delete missives views
@@ -68,10 +72,7 @@ if(!empty($_POST['text'])){
     @unlink('datas/private/players/'. $player->id .'.save');
 
 
-    echo time();
-
-
-    exit();
+    ExitSuccess($replyId);
 }
 
 
@@ -97,7 +98,7 @@ echo '
 ';
 
 include('scripts/forum/tools.php');
-
+echo '<div id="currentSessionId" style="display:none;">'.$_SESSION['playerId'].'</div>';
 echo '
 <textarea
     class="box-shadow tr-topic1"

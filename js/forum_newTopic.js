@@ -55,6 +55,7 @@ $(document).ready(function(e){
             destId = $destField.val();
         }
 
+        var currentSessionId = $('#currentSessionId').text();
 
         $.ajax({
             type: "POST",
@@ -62,12 +63,25 @@ $(document).ready(function(e){
             data: {
                 'text': text,
                 'name': name,
-                'destId': destId
+                'destId': destId,
+                'currentSessionId': currentSessionId
             }, // serializes the form's elements.
             success: function(data)
             {
                 //alert(data);
-                document.location = 'forum.php?topic='+ data.match(/\d+$/)[0];
+               // document.location = 'forum.php?topic='+ data.match(/\d+$/)[0];
+
+                try {
+                    let response = JSON.parse(data);
+                    if(response.error){
+                        alert(response.error);
+                    }
+                    else{
+                        document.location = 'forum.php?topic='+ response.result;
+                    }
+                } catch (error) {
+                    alert(data);
+                }
             }
         });
     });

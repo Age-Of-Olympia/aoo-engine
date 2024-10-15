@@ -307,6 +307,7 @@ class Forum{
 
 
         self::add_post_in_topic($postId, $topJson);
+        return $postId;
     }
 
 

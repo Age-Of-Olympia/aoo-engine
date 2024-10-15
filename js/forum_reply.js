@@ -16,18 +16,30 @@ $(document).ready(function(e){
 
 
         var topic = $(this).data('topic');
-
+        var currentSessionId = $('#currentSessionId').text();
 
         $.ajax({
             type: "POST",
             url: 'forum.php?reply='+ topic,
             data: {
-                'text': text
+                'text': text,
+                'currentSessionId': currentSessionId
             }, // serializes the form's elements.
             success: function(data)
             {
+                try {
+                    let response = JSON.parse(data);
+                    if(response.error){
+                        alert(response.error);
+                    }
+                    else{
+                        document.location = 'forum.php?topic='+ topic +'&page='+ window.pagesN +'#'+ response.result;
+                    }
+                } catch (error) {
+                    alert(data);
+                }
                 // alert(data);
-                document.location = 'forum.php?topic='+ topic +'&page='+ window.pagesN +'#'+ data.trim();
+                
             }
         });
     });
