@@ -340,9 +340,14 @@ echo $postTotal .' posts: <a href="forum.php?topic='. htmlentities($_GET['topic'
 
 
 for($i=1; $i<=$pagesN; $i++){
+    $preText="";
+    $postText="";
+    if($i == $page){
+        $preText = '<u><b>';
+        $postText = '</b></u>';
+    }
 
-
-    echo '<a href="forum.php?topic='. htmlentities($_GET['topic']) . $hideMenu .'&page='. $i .'">page '. $i .'</a> ';
+    echo '<a href="forum.php?topic='. htmlentities($_GET['topic']) . $hideMenu .'&page='. $i .'">'. $preText .'page '. $i . $postText .'</a> ';
 }
 
 
