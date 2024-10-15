@@ -238,11 +238,11 @@ $pinnedTopicsHtml=array();
         ';
         if(isset($topJson->pined) && $topJson->pined)
         {
-            $pinnedTopicsHtml[$topJson->last->time]=  $currentTopicHtml;
+            $pinnedTopicsHtml[timestampNormalization($topJson->last->time)]=  $currentTopicHtml;
         }
         else
         {
-            $topicsHtml[$topJson->last->time]=  $currentTopicHtml;
+            $topicsHtml[timestampNormalization($topJson->last->time)]=  $currentTopicHtml;
         }
     }
 
