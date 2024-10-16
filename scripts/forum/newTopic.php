@@ -196,5 +196,5 @@ echo Str::minify(ob_get_clean());
 
 
 ?>
-<script src="js/autosave.js?20240907"></script>
-<script src="js/forum_newTopic.js"></script>
+<script src="js/autosave.js?20241016"></script>
+<script src="js/forum_newTopic.js?20241016"></script>
