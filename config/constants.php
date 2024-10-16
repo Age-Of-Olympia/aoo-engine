@@ -197,6 +197,14 @@ define('WALLS_PV', array(
     'mur_pierre'=>100,
     'mur_pierre_broken'=>100,
 
+    'coffre_pierre'=>50,
+    'coffre_bois'=>75,
+    'coffre_bois_petrifie'=>100,
+
+    'coffre_pierre_broken'=>50,
+    'coffre_bois_broken'=>75,
+    'coffre_bois_petrifie_broken'=>100,
+
     'altar'=>50,
     'altar_broken'=>50,
 
