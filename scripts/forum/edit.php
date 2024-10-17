@@ -71,7 +71,7 @@ echo '
 ';
 
 include('scripts/forum/tools.php');
-
+echo '<div id="currentSessionId" style="display:none;">'.$_SESSION['playerId'].'</div>';
 echo '
 <textarea
     class="box-shadow tr-topic1"
@@ -133,7 +133,7 @@ echo '
 echo Str::minify(ob_get_clean());
 
 ?>
-<script src="js/autosave.js?20240907"></script>
+<script src="js/autosave.js?20241016"></script>
 <script>
 window.topId = <?php echo $postJson->top_id ?>;
 window.pagesN = <?php echo $pagesN ?>;
