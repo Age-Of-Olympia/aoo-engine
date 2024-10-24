@@ -39,7 +39,7 @@ class Log{
 
         // hide log in incognitoMode
         if($player->have_option('incognitoMode')){
-
+            $text = "Plan d'origine : ".$plan." - ".$text;
             $plan = "birdland"; // show logs in birdlands for posterity
         }
 

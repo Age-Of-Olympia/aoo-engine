@@ -1,7 +1,6 @@
 <?php
 
-if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
-
+if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] && $_SESSION['playerId'] != $_SESSION['originalPlayerId']){
    //do nothing, admin info is displayed in infos.php
 }
 else if(!empty($_SESSION['playerId'])){

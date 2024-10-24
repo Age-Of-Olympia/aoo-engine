@@ -69,6 +69,10 @@ echo '
 
     if($forumJson->name == 'Missives'){
 
+        if ($player->id >0 && ($player->id != $_SESSION['originalPlayerId'])) {
+            exit('Accès refusé');
+        }
+
         $topicsTbl = array();
 
 
