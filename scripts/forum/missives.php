@@ -32,7 +32,13 @@ if (!empty($_POST['addDest'])) {
 }
 
 if (!empty($_POST['removeDest'])) {
-    Forum::remove_dest($_POST['removeDest'], $topJson, $destTbl);
+    //player can only remove self, admin car remove anyone
+    if(($_POST['removeDest'] == $player->id) || $player->have_option('isAdmin')){
+        Forum::remove_dest($_POST['removeDest'], $topJson, $destTbl);
+    }
+    else{
+        exit('<div id="error">Impossible de supprimer ce destinataire. Vous pouvez uniquement supprimer votre propre personnage des destinataires de la missive.</div>');
+    }
     exit();
 }
 

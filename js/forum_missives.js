@@ -42,7 +42,14 @@ $(document).ready(function() {
             url: 'forum.php?topic='+ window.topName,
             data: {'removeDest': dest},
             success: function(data) {
-                document.location.reload();
+                $dataHtml = $('<div>');
+                $dataHtml.html(data);
+                if($dataHtml.find('#error')[0] != null){
+                    alert($dataHtml.find('#error').text());
+                }
+                else{
+                    document.location.reload();
+                }
             }
         });
     });
