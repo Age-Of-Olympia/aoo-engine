@@ -559,7 +559,22 @@ img {
 
 .portrait{ width: 100px; }
 
+#pnj-container
+{
+    margin: auto;
+    display: flex;
+    width: 90%;
+    justify-content: center;
+    flex-wrap:wrap;
+}
 
+article.pnj {
+    width:100px;
+    padding: 5px 10px;
+    border: solid black 1px;
+    border-radius: 5px;
+    margin: 5px 10px;
+}
 /*
  * MAP
  */
