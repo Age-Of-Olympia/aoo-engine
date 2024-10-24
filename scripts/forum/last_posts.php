@@ -120,7 +120,7 @@ foreach(array('RP','Privés','HRP') as $cat){
                     echo '<br />';
                     echo $date;
                     echo '<br />';
-                    echo 'à '. date('H:i', $topJson->last->time);
+                    echo 'à '. date('H:i', timestampNormalization($topJson->last->time));
 
                     echo '</a>';
 
