@@ -20,8 +20,13 @@ $target->get_data();
 
 if(isset($_GET['reputation'])){
 
-
     include('scripts/infos/reputation.php');
+
+    exit();
+}
+if(isset($_GET['rewards'])){
+
+    include('scripts/infos/rewards.php');
 
     exit();
 }

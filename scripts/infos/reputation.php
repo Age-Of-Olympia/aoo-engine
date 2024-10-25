@@ -70,7 +70,8 @@ echo '
 
 
 
-echo '<h1>Récompenses</h1>';
+echo '<h1>Récompenses</h1>
+<a href="infos.php?targetId='. $target->id .'&rewards">Voir sa collection de récompenses</a><br/><br/>';
 
 $sql = '
 SELECT postName, a.topName, img, pr FROM
