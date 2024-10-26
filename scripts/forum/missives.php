@@ -2,7 +2,7 @@
 
 $destTbl = Forum::get_top_dest($topJson);
 
-if (!in_array($player->id, $destTbl)) {
+if (!in_array($player->id, $destTbl) || (($player->id >0) && ($player->id != $_SESSION['originalPlayerId']))) {
     exit('Accès refusé');
 }
 

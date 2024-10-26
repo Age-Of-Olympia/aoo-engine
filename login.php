@@ -93,6 +93,7 @@ $db->exe($sql, $row['id']);
 $_SESSION['mainPlayerId'] = $row['id'];
 
 $_SESSION['playerId'] = $row['id'];
+$_SESSION['originalPlayerId'] = $row['id'];
 unset($_SESSION['nonewturn']);
 
 $values = array(

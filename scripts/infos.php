@@ -46,7 +46,7 @@ if(!empty($_SESSION['playerId'])){
 
     $timeToNextTurn = Str::convert_time($player->data->nextTurnTime - time());
     $adminInfos = '';
-    if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] == true){
+    if(isset($_SESSION['nonewturn']) && $_SESSION['nonewturn'] && $player->id != $_SESSION['originalPlayerId']){
         $adminInfos = ' Nouveau Tour Désactivé (use -reactive to enable it on session open : ex "session open Orcrist -reactive" )';
     }
 
