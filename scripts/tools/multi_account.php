@@ -2,37 +2,37 @@
 
 $db = new Db();
 
-$sql = 'SELECT group_concat(players_connections.player_id) as mats, group_concat(players.name) as names
-    FROM (select player_id, ip, footprint
-          from players_connections
-          group by ip, footprint, player_id) as players_connections
-inner join players on players_connections.player_id = players.id
-group by ip
-having count(player_id)>1;
-';
+$sql = "SELECT group_concat(players_connections.player_id) as mats, group_concat(players.name) as names, connection_date
+FROM (select player_id, ip, FROM_UNIXTIME(time, '%d/%m/%Y') as connection_date
+      from players_connections
+      group by ip, player_id, FROM_UNIXTIME(time, '%d/%m/%Y')) as players_connections
+         inner join players on players_connections.player_id = players.id
+group by ip, connection_date
+having count(player_id)>1
+order by connection_date desc";
 
 $res = $db->exe($sql);
 
 echo '<h2>Players sharing same IP</h2>';
 while($row = $res->fetch_object()){
-    echo 'Matricules '.$row->mats. ' noms : '.$row->names. ' <br/>';
+    echo 'Matricules '.$row->mats. ' noms : '.$row->names. ' le '.$row->connection_date.' <br/>';
 }
 
 
-$sql = 'SELECT group_concat(players_connections.player_id) as mats, group_concat(players.name) as names
-    FROM (select player_id, ip, footprint
-          from players_connections
-          group by ip, footprint, player_id) as players_connections
-inner join players on players_connections.player_id = players.id
-group by footprint
-having count(player_id)>1;
-';
+$sql = "SELECT group_concat(players_connections.player_id) as mats, group_concat(players.name) as names, connection_date
+FROM (select player_id, footprint, FROM_UNIXTIME(time, '%d/%m/%Y') as connection_date
+      from players_connections
+      group by footprint, player_id, FROM_UNIXTIME(time, '%d/%m/%Y')) as players_connections
+         inner join players on players_connections.player_id = players.id
+group by footprint, connection_date
+having count(player_id)>1
+order by connection_date desc";
 
 $res = $db->exe($sql);
 
 echo '<h2>Players sharing same FootPrint </h2>';
 while($row = $res->fetch_object()){
-    echo 'Matricules '.$row->mats. ' noms : '.$row->names. ' <br/>';
+    echo 'Matricules '.$row->mats. ' noms : '.$row->names. ' le '.$row->connection_date.' <br/>';
 }
 
 
