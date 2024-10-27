@@ -27,20 +27,20 @@ if(isset($_GET['accept']) || isset($_GET['refuse'])) {
   $exchangeId= !empty($_GET['accept']) ? $_GET['accept'] : $_GET['refuse'];
   $exchange = new Exchange($exchangeId);
   $exchange->get_base_data();
-  if ($player->id !== $exchange->targetId ){
+  if ($player->id != $exchange->targetId ){
     exit('Current player is not the target of the exchange');
   }
   $offeringPlayer = new Player($exchange->playerId);
   $offeringPlayer->get_data();
   if(isset($_GET['accept'])){
     $exchange->get_items_data();
-    $echange->give_items($player);
+    $exchange->give_items($player);
     $exchange->accept_exchange();
     echo "<b>Vous avez accepté l'échange proposé par ".$offeringPlayer->data->name." </b>";
   }
   if(isset($_GET['refuse'])){
     $exchange->get_items_data();
-    $echange->give_items($offeringPlayer);
+    $exchange->give_items($offeringPlayer);
     $exchange->refuse_exchange();
     echo "<b>Vous avez refusé l'échange proposé par ".$offeringPlayer->data->name." </b>";
   }
