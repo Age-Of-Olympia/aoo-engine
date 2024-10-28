@@ -87,7 +87,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: 'merchant.php?targetId=<?php echo $target->id ?>&bank',
+            url: 'merchant.php?targetId=<?php echo isset($target)?$target->id :"0" ?>&bank', // 0 allow valid link even if code should not be used in that case 
             data: {'action': action,'itemId': window.id,'n': n}, // serializes the form's elements.
             success: function(data)
             {

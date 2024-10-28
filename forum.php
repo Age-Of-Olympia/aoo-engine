@@ -75,8 +75,7 @@ elseif(isset($_GET['lastPosts'])){
     exit();
 }
 
-elseif(isset($_GET['autosave']) && !empty($_POST['text'])){
-
+elseif(isset($_GET['autosave']) && isset($_POST['text'])){
 
     if(trim($_POST['text']) != ''){
         if($_POST['currentSessionId'] == $_SESSION['playerId'])
