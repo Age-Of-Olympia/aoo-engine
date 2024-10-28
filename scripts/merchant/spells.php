@@ -40,7 +40,7 @@ echo '</td></tr></table>';
 echo '<p>Faites inscrire un sort sur un Parchemin.</p>';
 
 
-if($player->data->race == $target->data->race){
+if($player->data->race != $target->data->race){
 
     echo '<font color="red">Attention! Ce personnage n\'est pas de votre peuple.<br />
     Vous ne pourrez lancer les Sorts inscrits sur ses Parchemins qu\'une seule fois.</font>
@@ -95,6 +95,7 @@ foreach($raceJson->spells as $e){
                 );
 
                 $parcheminSort = Item::put_item('parchemin_sort', $private=0, $options);
+                $parcheminSort = new Item($parcheminSort);
             }
 
             $gold = new Item(1);
