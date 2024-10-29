@@ -148,8 +148,9 @@ echo '
 
 
                 $raceJson = json()->decode('races', $author->data->race);
+                $pnjText = $author->id<0 ? ' - PNJ' : '';
 
-                echo '<div style="font-size: 88%;"><i>'. $raceJson->name .' <a href="infos.php?targetId='. $author->id .'&reputation">'. Str::get_reput($author->data->pr) .'</a> Rang '. $author->data->rank .'</i></div>';
+                echo '<div style="font-size: 88%;"><i>'. $raceJson->name . $pnjText .' - <a href="infos.php?targetId='. $author->id .'&reputation">'. Str::get_reput($author->data->pr) .'</a> Rang '. $author->data->rank .'</i></div>';
 
 
 
