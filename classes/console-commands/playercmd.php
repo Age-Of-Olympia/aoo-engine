@@ -17,7 +17,8 @@ Exemple:
 > player addlog Orcrist "this is a log to be added"
 > player deletelastlog Orcrist
 > player addpnj Orcrist Ocyrhoée
-> player addupgrade Orcrist Mvt
+> player addupgrade Ocyrhoée Mvt
+> player addupgrade Shaolan A 12
 EOT);
     }
 
@@ -309,7 +310,7 @@ function add_upgrade($argumentValues, $player)
 {
 
     if(!isset($argumentValues[2])){
-        return '<font color="red">error missing option1. usage: player addupgrade [mat or name] [carac]</font>';
+        return '<font color="red">error missing option1. usage: player addupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';
     }
 
     if($player->id >0){
@@ -320,8 +321,24 @@ function add_upgrade($argumentValues, $player)
     if(!array_key_exists($upgradeName, CARACS)){
         return '<font color="red">error unknown upgrade</font>';
     }
+    if (isset($argumentValues[3])){
+        $n = $argumentValues[3];
+        if( filter_var($n, FILTER_VALIDATE_INT) !== false && $n != 0) {
+            if($n >0){
+                for ($i = 0; $i < abs($n); $i++) {
+                    $player->put_upgrade($upgradeName, 0);
+                }
+            }else{
+                $player->remove_upgrade($upgradeName, $n*-1);
+                return $argumentValues[2] .' retiré à '. $player->data->name;
 
-    $player->put_upgrade($upgradeName, 0);
+            }
+        }else{
+            return '<font color="red">Invalid number of ugrade to add</font>';
+        }
+    } else {
+        $player->put_upgrade($upgradeName, 0);
+    }
 
     return $argumentValues[2] .' ajouté à '. $player->data->name;
 }

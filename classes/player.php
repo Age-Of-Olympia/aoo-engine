@@ -826,6 +826,24 @@ class Player{
         $this->refresh_caracs();
     }
 
+    public function remove_upgrade($upgradeName, $n){
+
+        $sql = 'delete from players_upgrades where player_id = ? and name = ? limit ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($this->id, $upgradeName,$n));
+
+
+        if($upgradeName == 'p'){
+
+            $this->refresh_view();
+        }
+
+
+        $this->refresh_caracs();
+    }
+
     public function put_bonus($bonus) : bool{
 
 
