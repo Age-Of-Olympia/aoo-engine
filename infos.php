@@ -136,8 +136,9 @@ echo '
 
             $raceJson = json()->decode('races', $target->data->race);
 
+            $pnjText = $target->id<0 ? ' - PNJ' : '';
 
-            echo '<div>'. $raceJson->name .' <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput($target->data->pr) .'</a> Rang '. $target->data->rank .'</div>';
+            echo '<div>'. $raceJson->name . $pnjText .' - <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput($target->data->pr) .'</a> Rang '. $target->data->rank .'</div>';
 
 
             $factionJson = json()->decode('factions', $target->data->faction);

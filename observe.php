@@ -275,8 +275,9 @@ if($res->num_rows){
 
         $raceJson = json()->decode('races', $target->data->race);
 
-        $dataType = $raceJson->name;
+        $pnjText = $target->id<0 ? ' - PNJ' : '';
 
+        $dataType = $raceJson->name . $pnjText;
 
         $text = $target->data->text;
 
