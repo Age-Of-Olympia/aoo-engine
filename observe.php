@@ -438,7 +438,7 @@ else{
         var x = <?php echo $x ?>;
         var y = <?php echo $y ?>;
         </script>
-        <script src="js/observe_destroy.js"></script>
+        <script src="js/observe_destroy.js?v=31102024"></script>
         <?php
 
     }
@@ -515,7 +515,7 @@ else{
 
 
 // coords
-echo '<div id="case-coords"><button OnClick="copyToClipboard(this);">x'. $x .',y'. $y .'</button></div>';
+echo '<div id="case-coords"><button OnClick="copyToClipboard(this);">x'. $x .',y'. $y .',z'. $coords->z .'</button></div>';
 
 
 if(!empty($card)){

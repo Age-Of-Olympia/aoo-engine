@@ -18,6 +18,10 @@ if($('.go[x="'+ i +'"][y="'+ j +'"]')[0] != null){
 
     $('#destroy-rect').click(function(e){
 
+        if(!confirm("Détruire ce mur? (1A)")){
+            return false;
+        }
+
         var wallId = $wall.attr('id');
 
         $.ajax({
