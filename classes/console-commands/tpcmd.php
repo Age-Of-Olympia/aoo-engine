@@ -33,6 +33,8 @@ EOT);
 
             $player->go($goCoords);
 
+            $player->refresh_view();
+
             return 'tp '. $player->data->name .' near '. $target->data->name .'';
         }
 
