@@ -26,7 +26,6 @@ if($actionJson->targetType == 'none'){
     exit('Ce sort ne peut être lancé.');
 }
 
-
 // player
 $player = new Player($_SESSION['playerId']);
 
@@ -36,6 +35,10 @@ if($player->get_left('a') < 1){
     exit('<font color="red">Pas assez d\'Actions.</font>');
 }
 
+if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->get_left('pm')){
+
+    exit('<font color="red">Pas assez de PM.</font>');
+}
 
 $player->get_data();
 
