@@ -194,25 +194,37 @@ define('ELE_PROD', array(
 
 // PV: if not defined, undestructible
 define('WALLS_PV', array(
-    'mur_pierre'=>100,
-    'mur_pierre_broken'=>100,
+    'mur_pierre'=>150,
+    'mur_pierre_broken'=>150,
+    
+    'mur_bois'=>100,
+    'mur_bois_petrifie'=>125,
 
-    'coffre_pierre'=>50,
-    'coffre_bois'=>75,
-    'coffre_bois_petrifie'=>100,
+    'coffre_metal'=>100,
+    'coffre_bois'=>30,
+    'coffre_bois_petrifie'=>40,
 
-    'coffre_pierre_broken'=>50,
-    'coffre_bois_broken'=>75,
-    'coffre_bois_petrifie_broken'=>100,
+    'coffre_metal_broken'=>100,
+    'coffre_bois_broken'=>30,
+    'coffre_bois_petrifie_broken'=>40,
 
     'altar'=>50,
     'altar_broken'=>50,
-
+    
+    'piedestal'=>50,
+    'piedestal_pierre'=>25,
+    
+    'table_bois'=>50,	
+    
+    'statue_ailee'=>30,
+    'statue_gisant'=>30,
+    'statue_heroique'=>30,
+    'statue_monstrueuse'=>30,
+    
     'cocotier1'=>1,
     'cocotier2'=>1,
     'cocotier3'=>1
 ));
-
 
 /*
  * items options & emplacements
