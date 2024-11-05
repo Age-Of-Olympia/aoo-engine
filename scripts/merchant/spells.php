@@ -98,10 +98,9 @@ foreach($raceJson->spells as $e){
                 $parcheminSort = new Item($parcheminSort);
             }
 
-            $gold = new Item(1);
 
 
-            if($playerGold + $price < 0){
+            if($playerGold < $price){
 
                 exit('<div id="data">Pas assez d\'Or.</div>');
             }
@@ -111,6 +110,8 @@ foreach($raceJson->spells as $e){
                 exit('<div id="data">Cela nécessite 1 Parchemin vierge.</div>');
             }
 
+            $gold = new Item(1);
+            $gold -> add_item($player, -$price);
             $parcheminSort->add_item($player, 1);
 
             exit('<div id="data">Parchemin inscrit avec succès et placé dans votre inventaire.</div>');
