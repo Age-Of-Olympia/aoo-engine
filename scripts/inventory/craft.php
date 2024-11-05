@@ -279,7 +279,7 @@ foreach($recipeList as $recipe){
 
 
                     // artJson
-                    $artJson = $json->decode('item', $artName);
+                    $artJson = $json->decode('items', $artName);
 
 
                     // crafted by n
@@ -297,7 +297,7 @@ foreach($recipeList as $recipe){
 
 
                         // needed item
-                        $neededJson = $json->decode('item', $ee->name);
+                        $neededJson = $json->decode('items', $ee->name);
 
 
                         // add when crafted item
