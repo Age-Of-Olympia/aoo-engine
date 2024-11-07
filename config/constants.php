@@ -216,10 +216,12 @@ define('WALLS_PV', array(
     
     'table_bois'=>50,	
     
-    'statue_ailee'=>30,
-    'statue_gisant'=>30,
+    'statues1'=>30,
+    'statues2'=>30,
     'statue_heroique'=>30,
-    'statue_monstrueuse'=>30,
+    'statues6'=>30,
+    'statues4'=>30,
+    'statues5'=>30,
     
     'cocotier1'=>1,
     'cocotier2'=>1,

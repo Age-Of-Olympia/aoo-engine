@@ -96,12 +96,9 @@ if(!empty($main1->data->demolition)){
 }
 
 
-if(strpos($row->name, '_broken') !== false){
+$name = $row->name;
 
-    // alreafy broken
-    $name = $row->name;
-}
-else{
+if(strpos($row->name, '_broken') !== false && file_exists('img/walls/'. $row->name .'_broken.png')){
 
     $name = $row->name .'_broken';
 
