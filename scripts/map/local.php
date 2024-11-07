@@ -55,6 +55,14 @@ if(!empty($planJson->size)){
 
     $width=$planJson->size;
 }
+
+
+$planImg = 'img/ui/map/'. $player->coords->plan .'.png';
+
+if(!file_exists($planImg)){
+
+    $planImg = 'img/ui/fillers/150.png';
+}
     
 echo '
 <svg
@@ -65,7 +73,7 @@ echo '
     width="'. $width * 10 .'"
     height="'. $width * 10 .'"
 
-    style="background: url(img/ui/map/'. $player->coords->plan .'.png) center center no-repeat;"
+    style="background: url('. $planImg .') center center no-repeat;"
     >
     ';
 

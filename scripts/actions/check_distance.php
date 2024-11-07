@@ -28,3 +28,10 @@ if($player->coords->z < 0 && $distance > 2){
 
     exit('Dans les souterrains, la portée maximum est de 2 cases.');
 }
+
+
+// enfers
+if($player->coords->plan == 'enfers'){
+
+    exit('Impossible d\'attaquer aux Enfers.');
+}
