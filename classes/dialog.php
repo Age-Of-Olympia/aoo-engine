@@ -219,12 +219,13 @@ class Dialog{
         players
         WHERE
         id > 0
-
+        AND
+        lastLoginTime > ?
         GROUP BY
         race
         ';
 
-        $result = $db->exe($sql);
+        $result = $db->exe($sql, $limit);
 
         // races n
         $raceNTbl = array();
