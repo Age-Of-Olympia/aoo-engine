@@ -745,6 +745,11 @@ article.pnj {
         background: url('../img/ui/cards/black_fur.webp');
     }
 
+    #ui-card .saurien{
+
+        background: url('../img/ui/cards/croco.webp');
+    }
+
     #ui-card .troglodyte{
 
         background: url('../img/ui/cards/wet_stone.webp');
