@@ -15,6 +15,14 @@ require_once('config.php');
 $ui = new Ui($title="Index");
 
 
+if(!empty($_SESSION['banned'])){
+
+    echo '<h1>Vous avez été banni.</h1>';
+
+    exit($_SESSION['banned']);
+}
+
+
 if(!isset($_SESSION['playerId']) || isset($_GET['menu'])){
 
     include('scripts/index.php');

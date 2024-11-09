@@ -107,3 +107,33 @@ $db = new Db();
 
 $db->insert('players_connections', $values);
 
+
+$sql = '
+SELECT * FROM players_banned
+WHERE player_id = ?
+';
+
+$res = $db->exe($sql, $_SESSION['playerId']);
+
+if($res->num_rows){
+
+    $row = $res->fetch_object();
+
+    $_SESSION['banned'] = $row->text;
+
+    $bannedIps = explode(',', $row->ips);
+
+    if(!in_array($ip, $bannedIps)){
+
+
+        array_push($bannedIps, $ip);
+
+        $bannedIps = array_filter($bannedIps, function($value) {
+            return $value !== ""; // Filtre les valeurs qui ne sont pas des chaînes vides
+        });
+
+        $sql = 'UPDATE players_banned SET ips = ? WHERE player_id = ?';
+
+        $db->exe($sql, array(implode(',', $bannedIps), $_SESSION['playerId']));
+    }
+}
