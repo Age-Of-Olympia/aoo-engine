@@ -109,8 +109,16 @@ $sql = 'UPDATE map_walls SET name = ?, damages = damages + ? WHERE id = ?';
 
 $db->exe($sql, array($name, $damages, $row->id));
 
+$itemJson = json()->decode('items', $row->name);
+if($itemJson)
+{
+    $text = $player->data->name .' a attaqué '.$itemJson->name;
+}
+else
+{
+    $text = $player->data->name .' a attaqué une structure';
+}
 
-$text = $player->data->name .' a attaqué une structure.';
 
 if($row->damages + $damages >= $pvMax){
 
@@ -119,8 +127,11 @@ if($row->damages + $damages >= $pvMax){
 
     $refresh = true;
 
-    $text = $player->data->name .' a attaqué une structure et l\'a détruite.';
+    $text .= ' et l\'a détruite';
 }
+
+$text .='.'; 
+
 
 
 if(!empty($refresh) && $refresh){
