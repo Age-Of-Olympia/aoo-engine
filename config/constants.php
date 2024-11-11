@@ -114,7 +114,18 @@ define('EFFECTS_RA_FONT', array(
 
     'vol'=>'ra-feather-wing',
 
-    'fatigue'=>'ra-player-pain'
+    'fatigue'=>'ra-player-pain',
+
+    //non utilisé mais necceesaire
+    'trace_pas'=> 'ra-footprint',
+    'trace_pas_ne'=> 'ra-footprint',
+    'trace_pas_n'=> 'ra-footprint',
+    'trace_pas_no'=> 'ra-footprint',
+    'trace_pas_e'=> 'ra-footprint',
+    'trace_pas_o'=> 'ra-footprint',
+    'trace_pas_se'=> 'ra-footprint',
+    'trace_pas_s'=> 'ra-footprint',
+    'trace_pas_so'=> 'ra-footprint'
 ));
 
 

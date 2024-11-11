@@ -278,4 +278,20 @@ if($planJson){
 }
 
 
+$footstep='trace_pas_';
+if($goCoords->y>$player->coords->y){
+    $footstep.='n';
+}
+elseif($goCoords->y<$player->coords->y){
+    $footstep.='s';
+}
+if($goCoords->x>$player->coords->x){
+    $footstep.='e';
+}
+elseif($goCoords->x<$player->coords->x){
+    $footstep.='o';
+}
+
+Element::put($footstep, $player->data->coords_id,ONE_DAY);
+
 $player->go($goCoords);

@@ -601,7 +601,10 @@ class Player{
         $res = $db->exe($sql, $coordsId);
 
         while($row = $res->fetch_object()){
+            if(str_starts_with($row->name, 'trace_pas')){
 
+              continue;
+            }
 
             // fishing
             if($row->name == 'eau' && $row->endTime == 0){
