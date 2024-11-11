@@ -756,7 +756,7 @@ class Player{
         (`player_id`,`target_id`,`player_rank`,`damages`,`time`)
         VALUE('. implode(',', $values) .')
         ON DUPLICATE KEY UPDATE
-        damages = damages + VALUES(damages);
+        damages = damages + VALUES(damages), time = VALUES(time);
         ';
 
         $db->exe($sql);
