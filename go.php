@@ -193,6 +193,8 @@ if($goCoords->z < 0){
         $pierre = Item::get_item_by_name('pierre');
         $pierre->add_item($player, 1);
 
+        $text = $player->data->name .' a creusé et as trouvé 1 pierre.';
+        Log::put($player, $player, $text, $type="loot");
 
         $values = array(
             'name'=>'caverne',
