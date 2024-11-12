@@ -280,21 +280,23 @@ if($planJson){
     $player->put_bonus($bonus);
 }
 
+if(!$player->have_option('incognitoMode'))
+{
+    $footstep='trace_pas_';
+    if($originalGooCoords->y>$player->coords->y){
+        $footstep.='n';
+    }
+    elseif($originalGooCoords->y<$player->coords->y){
+        $footstep.='s';
+    }
+    if($originalGooCoords->x>$player->coords->x){
+        $footstep.='e';
+    }
+    elseif($originalGooCoords->x<$player->coords->x){
+        $footstep.='o';
+    }
 
-$footstep='trace_pas_';
-if($originalGooCoords->y>$player->coords->y){
-    $footstep.='n';
+    Element::put($footstep, $player->data->coords_id,ONE_DAY);
 }
-elseif($originalGooCoords->y<$player->coords->y){
-    $footstep.='s';
-}
-if($originalGooCoords->x>$player->coords->x){
-    $footstep.='e';
-}
-elseif($originalGooCoords->x<$player->coords->x){
-    $footstep.='o';
-}
-
-Element::put($footstep, $player->data->coords_id,ONE_DAY);
 
 $player->go($goCoords);
