@@ -382,8 +382,7 @@ class View{
                     }
 
 
-                    if($row->name != 'sang'){
-
+                    if($row->name != 'sang' && !str_starts_with($row->name, 'trace_pas')){
                         $classTransparent[$x .','. $y] = 'transparent-gradient';
                     }
                 }
