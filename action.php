@@ -162,6 +162,12 @@ $log = str_replace('NAME', $actionJson->name, $log);
 if(!empty($emplacement)){
 
     $log = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $log);
+    
+    if($player->data->race=='animal')
+    {
+        $log = str_replace('avec WEAPON', '', $log);
+        $log = str_replace('WEAPON', '', $log);
+    }
 }
 
 
