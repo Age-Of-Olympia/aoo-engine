@@ -1,0 +1,3 @@
+- name: Tester la connexion SSH
+  run: |
+    ssh -vvv ripo8171@aootest.net exit
