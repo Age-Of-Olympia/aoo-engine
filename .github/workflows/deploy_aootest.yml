@@ -1,0 +1,16 @@
+name: Déploiement manuel vers O2Switch (aootest)
+
+on:
+  workflow_dispatch:  # Déclencheur manuel
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cloner le dépôt
+      uses: actions/checkout@v2
+
+    - name: Déployer sur le serveur O2Switch
+      run: |
+        rsync -artvu --delete-during --exclude-from "ssh_exclusion.txt" ./ ripo8171@aootest.net:www/
