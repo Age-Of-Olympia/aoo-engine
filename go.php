@@ -30,6 +30,7 @@ $goCoords = (object) array(
     'plan'=>$player->coords->plan
 );
 
+$originalGooCoords=$goCoords;
 
 if(!is_numeric($goCoords->x) || !is_numeric($goCoords->y)){
 
@@ -281,16 +282,16 @@ if($planJson){
 
 
 $footstep='trace_pas_';
-if($goCoords->y>$player->coords->y){
+if($originalGooCoords->y>$player->coords->y){
     $footstep.='n';
 }
-elseif($goCoords->y<$player->coords->y){
+elseif($originalGooCoords->y<$player->coords->y){
     $footstep.='s';
 }
-if($goCoords->x>$player->coords->x){
+if($originalGooCoords->x>$player->coords->x){
     $footstep.='e';
 }
-elseif($goCoords->x<$player->coords->x){
+elseif($originalGooCoords->x<$player->coords->x){
     $footstep.='o';
 }
 
