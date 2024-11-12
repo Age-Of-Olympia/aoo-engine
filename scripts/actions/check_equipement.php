@@ -72,7 +72,7 @@ if(!empty($actionJson->itemConditions)){
 
 if(!empty($actionJson->spellMalus)){
 
-
+    $blocked = false;
     foreach(ITEM_EMPLACEMENT_FORMAT as $emp){
 
 
@@ -81,9 +81,12 @@ if(!empty($actionJson->spellMalus)){
 
             if(!empty($player->emplacements->{$emp}->data->spellMalus)){
 
-
+                $blocked = true;
                 echo '<font color="red">'. $player->emplacements->{$emp}->data->name .' empêche la magie.</font> ';
             }
         }
+    }
+    if($blocked){
+        exit();
     }
 }
