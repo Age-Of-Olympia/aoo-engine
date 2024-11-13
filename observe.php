@@ -62,6 +62,9 @@ if($res->num_rows){
 
     while($row = $res->fetch_object()){
 
+        if(str_starts_with($row->name, 'trace_pas')){
+            continue;
+        }
 
         echo '
         <div class="case-infos">
