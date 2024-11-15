@@ -612,7 +612,7 @@ if(!empty($log)){
 }
 
 if(!empty($targetLog)){
-    Log::put($target, $player, $targetLog, $type="action");
+    Log::put($target, $player, $targetLog, $type="action_other_player");
 }
 
 
