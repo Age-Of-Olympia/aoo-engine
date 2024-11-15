@@ -5,7 +5,9 @@ class Log{
 
     // STATIC
 
-    public static function get($plan,$maxLogAge=ONE_DAY){
+    public static function get(Player $player,$maxLogAge=ONE_DAY){
+        
+        
 
 
         $return = array();
@@ -14,20 +16,92 @@ class Log{
 
         $timeLimit = time()-$maxLogAge;
 
-        $sql = 'SELECT * FROM players_logs WHERE plan = ? AND time > ? ORDER BY time DESC, id DESC';
+        $sql = 'SELECT 
+            final_logs.id,
+            final_logs.player_id,
+            final_logs.target_id,
+            final_logs.text,
+            final_logs.hiddenText,
+            final_logs.type,
+            final_logs.plan,
+            final_logs.time,
+            final_logs.coords_id,
+            final_logs.last_player_movement_coords_id AS last_player_coords_id,
+            c.plan AS movement_plan,
+            c.x AS movement_x,
+            c.y AS movement_y,
+            c.z AS movement_z
+        FROM (
+            SELECT 
+                logs.*,
+                logs_player.coords_id AS last_player_movement_coords_id
+            FROM (
+                SELECT
+                    pl.*,
+                    MAX(CASE WHEN pl.player_id = ? AND pl.type = \'move\' THEN id END) OVER (
+                        ORDER BY pl.time 
+                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                    ) AS last_player_move_id
+                FROM players_logs pl
+                WHERE time > ?
+            ) logs
+            LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
+        ) AS final_logs
+        LEFT JOIN coords c ON final_logs.last_player_movement_coords_id = c.id
+        ORDER BY final_logs.time DESC';
 
-        $res = $db->exe($sql, array($plan, $timeLimit));
+        $res = $db->exe($sql, array($player->id, $timeLimit));
 
         while($row = $res->fetch_object()){
 
-            $return[] = $row;
+            // Temporary hide moves && other player action
+            if ($row->type == "move" || $row->type == "action_other_player") {
+                continue;
+            }
+
+            // If the event is about player, either as doer or as target, event is displayed
+            if ($row->player_id == $player->id) {
+                $return[] = $row;
+                continue;
+            }
+
+            if ($row->target_id == $player->id) {
+                $return[] = $row;
+                continue;
+            }  
+
+            // Get Percetion
+            $caracsJson = json()->decode('players', $player->id .'.caracs');
+            if(!$caracsJson){
+                $player->get_caracs();
+                $p = $player->caracs->p;
+            }
+            else{
+                $p = $caracsJson->p;
+            }
+
+            // Create coord object to call get_coords_id_arround
+            $last_player_coords = (object) array(
+                'x'=>$row->movement_x,
+                'y'=>$row->movement_y,
+                'z'=>$row->movement_z,
+                'plan'=>$row->movement_plan
+            );
+
+            $arrayCoords = View::get_coords_id_arround($last_player_coords, $p);
+
+            if (in_array($row->coords_id, $arrayCoords)) {
+                $return[] = $row;
+            }
+            
+           
         }
 
         return $return;
     }
 
 
-    public static function put($player, $target, $text, $type=''){
+    public static function put(Player $player, $target, $text, $type=''){
 
 
         if(!isset($player->coords)){
