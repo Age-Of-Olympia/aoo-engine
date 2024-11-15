@@ -564,11 +564,9 @@ class Player{
 
         $oldCoords = $this->coords;
 
-
-        $db = new Db();
-
-
         $coordsId = View::get_coords_id($goCoords);
+
+        $zChange = ($oldCoords->z != $goCoords->z);
 
 
         $this->move_followers($coordsId);
@@ -576,6 +574,7 @@ class Player{
 
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
 
+        $db = new Db();
         $db->exe($sql, array($coordsId, $this->id));
 
 
@@ -654,6 +653,14 @@ class Player{
 
 
         $this->refresh_caracs();
+        
+        if (!$zChange) {
+            $text = $this->data->name .' s\'est déplacé en '.$goCoords->x.','.$goCoords->y.','.$goCoords->z;
+        } else {
+            $text = $this->data->name .' a emprunté des escaliers.';
+        }
+        
+        Log::put($this, $this, $text, $type="move");
 
        // delete empty coords will be cron managed for easier debugging
     }
