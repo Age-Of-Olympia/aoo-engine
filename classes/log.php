@@ -58,7 +58,8 @@ class Log{
             'text'=>$text,
             'plan'=>$plan,
             'time'=>time(),
-            'type'=>$type
+            'type'=>$type,
+            'coords_id'=>View::get_coords_id($player->coords)
         );
 
         $db = new Db();
