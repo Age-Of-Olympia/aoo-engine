@@ -729,13 +729,15 @@ class View{
 
         $coordsArround = self::get_coords_arround($coords, $p);
 
+        $inClause = implode('","', $coordsArround);
+
         $sql = '
         SELECT
         id
         FROM
         coords
         WHERE
-        CONCAT(x, ",", y) IN("'. implode('","', $coordsArround) .'")
+        CONCAT(x, ",", y) IN("'. $inClause .'")
         AND
         z = ?
         AND
