@@ -15,7 +15,7 @@ echo '
     justify-content: center;
 }
 </style>
-<div><a href="infos.php?targetId='. $target->id .' &reputation"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
+<div><a href="infos.php?targetId='. $target->id .'&reputation"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 echo '
 <h1>
    Collection de '.$target->data->name.'
