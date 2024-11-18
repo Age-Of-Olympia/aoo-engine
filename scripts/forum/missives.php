@@ -80,14 +80,7 @@ echo '
     </div>';
 
 
-    $playersJson = json()->decode('players', 'list');
-
-
-    if (!$playersJson) {
-
-        Player::refresh_list();
-        $playersJson = json()->decode('players', 'list');
-    }
+    $playersJson = Player::get_player_list()->list;
 
     echo '<select id="dest-list">
         <option disabled selected>Sélectionnez un personnage:</option>';

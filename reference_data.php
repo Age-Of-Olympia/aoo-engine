@@ -8,15 +8,7 @@ if($data_type =='player_name'){
 
     $term = isset($_GET['term']) ? $_GET['term'] : '';
 
-    $playersJson = json()->decode('players', 'list');
-
-
-    if (!$playersJson) {
-
-        Player::refresh_list();
-        $playersJson = json()->decode('players', 'list');
-    }
-
+    $playersJson = Player::get_player_list()->list;
 
     $suggestions = array();
 

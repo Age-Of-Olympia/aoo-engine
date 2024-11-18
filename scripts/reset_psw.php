@@ -90,8 +90,8 @@ if(!empty($_POST['name']) && !empty($_POST['mail'])){
     // name
     else{
 
-        $json = new Json();
-        $listPlayerJson = $json->decode('players', 'list');
+       
+        $listPlayerJson = Player::get_player_list()->list;
 
         foreach($listPlayerJson as $e){
 
