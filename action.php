@@ -604,26 +604,20 @@ if(
 
         echo '<div class="action-details">Le jet devait être >= à '. $distanceTreshold .'.</div>';
     }
+
 }
-
-
-if(!empty($log)){
-    Log::put($player, $target, $log, $type="action");
-}
-
-if(!empty($targetLog)){
-    Log::put($target, $player, $targetLog, $type="action_other_player");
-}
-
 
 $data = ob_get_clean();
 
-$sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = "action" AND player_id = ? ORDER BY time DESC LIMIT 1';
+if(!empty($log)){
+    Log::put($player, $target, $log, $type="action", $data);
+}
 
-$db->exe($sql, array($data, $player->id));
+if(!empty($targetLog)){
+    Log::put($target, $player, $targetLog, $type="action_other_player", $data);
+}
 
 echo $data;
-
 
 $targetPvAfter = $target->get_left('pv');
 

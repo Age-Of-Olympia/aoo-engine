@@ -10,6 +10,12 @@ if(!empty($_POST['text'])){
 
     $player->refresh_data();
 
+    $log = 'Changement de message du jour.';
+
+    $details = '<div class="action-details">'.$_POST['text'].'</div>';
+
+    Log::put($player, $player, $log, $type="mdj", $details);
+
     exit();
 }
 

@@ -5,16 +5,21 @@ class Log{
 
     // STATIC
 
-    public static function get(Player $player,$maxLogAge=ONE_DAY){
+    public static function get(Player $player,$maxLogAge=ONE_DAY,$type=''){
         
-        
-
-
         $return = array();
-
         $db = new Db();
-
         $timeLimit = time()-$maxLogAge;
+        $typeCondition = '';
+
+        switch ($type) {
+            case 'mdj':
+                $typeCondition = ' WHERE type = \'mdj\'';
+                break;
+            default:
+                $typeCondition = ' WHERE type != \'mdj\'';
+                break;
+        }
 
         $sql = 'SELECT 
             final_logs.id,
@@ -42,12 +47,12 @@ class Log{
                         ORDER BY pl.time 
                         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
                     ) AS last_player_move_id
-                FROM players_logs pl
-                WHERE time > ?
-            ) logs
+                FROM players_logs pl) logs
             LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
+            WHERE logs.time > ?
         ) AS final_logs
         LEFT JOIN coords c ON final_logs.last_player_movement_coords_id = c.id
+        '.$typeCondition.'
         ORDER BY final_logs.time DESC';
 
         $res = $db->exe($sql, array($player->id, $timeLimit));
@@ -55,7 +60,11 @@ class Log{
         while($row = $res->fetch_object()){
 
             // Temporary hide moves && other player action
-            if ($row->type == "move" || $row->type == "action_other_player") {
+            // if ($row->type == "move" || $row->type == "action_other_player") {
+            //     continue;
+            // }
+
+            if ($row->type == "move" && $type == "light") {
                 continue;
             }
 
@@ -101,7 +110,7 @@ class Log{
     }
 
 
-    public static function put(Player $player, $target, $text, $type=''){
+    public static function put(Player $player, $target, $text, $type='', $hiddenText=''){
 
 
         if(!isset($player->coords)){
@@ -138,6 +147,12 @@ class Log{
 
         $db = new Db();
 
-        $db->insert('players_logs', $values);
+        $res = $db->insert('players_logs', $values);
+
+        if ($hiddenText != '') {
+            $sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = ? AND player_id = ? ORDER BY time DESC LIMIT 1';
+            $db->exe($sql, array($hiddenText, $type, $player->id));
+        }
+        
     }
 }

@@ -20,7 +20,12 @@ if($player->have_option('isAdmin')) {
 ob_start();
 
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a><a href="logs.php?quests"><button>Quêtes</button></a></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
+<a href="logs.php?light"><button>Perception</button></a>
+<a href="logs.php"><button>Perception complète</button></a>
+<a href="logs.php?self&light"><button>Du personnage</button></a>
+<a href="logs.php?mdj"><button>Messages du jour</button></a>
+<a href="logs.php?quests"><button>Quêtes</button></a></div>';
 
 
 if(isset($_GET['quests'])){
@@ -32,6 +37,15 @@ if(isset($_GET['quests'])){
 
     exit();
 }
+
+if(isset($_GET['mdj'])){
+    $logsToDisplay = Log::get($player,$logAge, 'mdj');
+} else if (isset($_GET['light'])) {
+    $logsToDisplay = Log::get($player,$logAge, 'light');
+} else {
+    $logsToDisplay = Log::get($player,$logAge);
+}
+
 
 
 $player->get_coords();
@@ -52,7 +66,7 @@ echo '
     </tr>
     ';
 
-    foreach(Log::get($player,$logAge) as $e){
+    foreach($logsToDisplay as $e){
         if(
             isset($_GET['self'])
             &&
