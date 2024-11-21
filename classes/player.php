@@ -659,8 +659,10 @@ class Player{
         } else {
             $text = $this->data->name .' a emprunté des escaliers.';
         }
+
+        $this->coords = $goCoords;
         
-        Log::put($this, $this, $text, $type="move");
+        Log::put($this, $this, $text, "move");
 
        // delete empty coords will be cron managed for easier debugging
     }
