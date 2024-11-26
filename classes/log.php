@@ -110,6 +110,39 @@ class Log{
         return $return;
     }
 
+    public static function getAdmin($plan, $maxLogAge=THREE_DAYS){
+
+        $return = array();
+        $player = new Player($_SESSION['playerId']);
+        if($player->have_option('isAdmin')) {
+            $db = new Db();
+            $timeLimit = time()-$maxLogAge;
+
+            $sql = 'SELECT 
+                players_logs.id,
+                players_logs.player_id,
+                players_logs.target_id,
+                players_logs.text,
+                players_logs.hiddenText,
+                players_logs.type,
+                players_logs.plan,
+                players_logs.time,
+                players_logs.coords_id
+            FROM players_logs
+            WHERE players_logs.time > ? AND plan = ?   
+            ORDER BY players_logs.time DESC';
+
+            $res = $db->exe($sql, array($timeLimit, $plan));
+
+            while($row = $res->fetch_object()){
+                $return[] = $row;
+                continue;
+            }
+        }
+
+        return $return;
+    }
+
 
     public static function put(Player $player, $target, $text, $type='', $hiddenText=''){
 

@@ -26,6 +26,9 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 <a href="logs.php?self&light"><button>Du personnage</button></a>
 <a href="logs.php?mdj"><button>Messages du jour</button></a>
 <a href="logs.php?quests"><button>Quêtes</button></a></div>';
+if($player->have_option('isAdmin')) {
+    echo '<a href="logs.php?admin"><button>Admin</button></a></div>';
+}
 
 
 if(isset($_GET['quests'])){
@@ -38,17 +41,21 @@ if(isset($_GET['quests'])){
     exit();
 }
 
+$player->get_coords();
+
 if(isset($_GET['mdj'])){
     $logsToDisplay = Log::get($player,$logAge, 'mdj');
 } else if (isset($_GET['light'])) {
     $logsToDisplay = Log::get($player,$logAge, 'light');
+} else if (isset($_GET['admin'])) {
+    $logsToDisplay = Log::getAdmin($player->coords->plan,$logAge);
 } else {
     $logsToDisplay = Log::get($player,$logAge);
 }
 
 
 
-$player->get_coords();
+
 
 
 echo '<p>Voici les évènements qui se sont déroulés récemment<br /> du point de vue de votre personnage (max. 24h)</p>';
