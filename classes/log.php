@@ -69,7 +69,8 @@ class Log{
             }
 
             // If the event is about player, either as doer or as target, event is displayed
-            if ($row->player_id == $player->id) {
+
+            if ($row->player_id == $player->id && $row->type != "travel") {
                 $return[] = $row;
                 continue;
             }
@@ -125,13 +126,6 @@ class Log{
             $text = "Plan d'origine : ".$plan." - ".$text;
             $plan = "birdland"; // show logs in birdlands for posterity
         }
-
-
-        if(!isset($player->coords)){
-
-            $player->get_coords();
-        }
-
 
         $targetId = (is_numeric($target)) ? $target : $target->id;
 

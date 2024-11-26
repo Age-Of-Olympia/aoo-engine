@@ -9,6 +9,8 @@ $player = new Player($_SESSION['playerId']);
 $player->get_coords();
 
 $planJson = json()->decode('plans', $player->coords->plan);
+$planJson->id = $player->coords->plan;
+$planJson->fromCoords = $player->coords;
 
 
 ob_start();
