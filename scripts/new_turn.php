@@ -88,16 +88,16 @@ else if(!empty($_SESSION['playerId'])){
             echo '
             <table border="1" align="center" class="marbre">';
 
-                // echo '<tr><td></td></tr>';
-
 
                 // gain xp
                 $gainXp = 5;
 
                 if($player->data->xp + 250 <= $firstPlayerXP){
 
-                    $diff= $firstPlayerXP - $player->data->xp;
+                    $diff= $firstPlayerXP - ($player->data->xp + 250);
                     $gainXp += 1 + floor($diff/50);
+                    if($player->id<0 && $gainXp>10)
+                        $gainXp = 10;
                 }
 
                 echo '<tr><td>Xp</td><td align="right">+'. $gainXp .'</td></tr>';
