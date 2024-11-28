@@ -58,7 +58,7 @@ $wallCoords = (object) array(
 $distance = View::get_distance($player->get_coords(), $wallCoords);
 
 
-if(!$distance || $distance > 1){
+if($distance > 1){
 
     exit('error distance');
 }
