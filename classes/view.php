@@ -878,11 +878,11 @@ class View{
 
         // not same z error
         if($coords1['z'] != $coords2['z'])
-            return false;
+            return 100000000;
 
         // not same plan error
         if($coords1['plan'] != $coords2['plan'])
-            return false;
+            return 100000000;
 
 
         $difX = abs($coords1['x'] - $coords2['x']) ;

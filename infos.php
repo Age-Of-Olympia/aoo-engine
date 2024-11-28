@@ -54,8 +54,8 @@ echo '
         $distance = View::get_distance($player->coords, $target->coords);
 
         if(
-            ($player->id == $target->id || $distance)
-            &&
+            $player->id == $target->id
+            ||
             $distance <= $caracsJson->p
         ){
 
@@ -157,9 +157,7 @@ echo '
             $text = nl2br($target->data->text);
 
             if(
-                ($player->id != $target->id && !$distance)
-                ||
-                $distance > $caracsJson->p
+                $player->id != $target->id || $distance > $caracsJson->p
             ){
 
                 $text = '<i>Ce personnage est trop éloigné pour l\'entendre parler.</i>';
