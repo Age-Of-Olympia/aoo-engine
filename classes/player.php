@@ -2047,13 +2047,23 @@ class Player{
         $data = array();
 
         $list= array();
-
+        $privateRaces = array();
         $firstData = null;
         while($row = $res->fetch_object()){
 
             $list[] = $row;
-            if(!$firstData || $row->xp > $firstData->xp){
-                $firstData = $row;
+            if($row->id > 0 )
+            {
+                if(!isset($privateRaces[$row->race]))
+                {
+                    $privateRaces[$row->race]=file_exists('datas/private/races/' . $row->race . '.json');
+                }
+
+                if($privateRaces[$row->race])continue;
+
+                if(!$firstData || $row->xp > $firstData->xp){
+                    $firstData = $row;
+                }
             }
         }
         $data['list']=$list;
