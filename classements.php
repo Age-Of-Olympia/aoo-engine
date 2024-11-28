@@ -72,24 +72,8 @@ function print_players($list){
     ';
 }
 
+$list =Player::get_player_list()->list;
 
-$list = json()->decode('players', 'list');
-
-if(!$list){
-
-
-    // refresh all classements (once per day, done with cron)
-
-    Player::refresh_list();
-
-    $list = json()->decode('players', 'list');
-
-
-    @unlink('datas/public/classements/general.html');
-    @unlink('datas/public/classements/bourrins.html');
-    @unlink('datas/public/classements/reputation.html');
-    @unlink('datas/public/classements/fortunes.html');
-}
 
 // enlever les pnj
 foreach($list as $k=>$e){

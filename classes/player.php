@@ -2046,16 +2046,43 @@ class Player{
 
         $data = array();
 
+        $list= array();
+
+        $firstData = null;
         while($row = $res->fetch_object()){
 
-            $data[] = $row;
+            $list[] = $row;
+            if(!$firstData || $row->xp > $firstData->xp){
+                $firstData = $row;
+            }
         }
-
+        $data['list']=$list;
+        $data['first']=$firstData;
         $data = Json::encode($data);
 
         Json::write_json('datas/private/players/list.json', $data);
     }
+    
+    public static function get_player_list(){
+        
+        $list = json()->decode('players', 'list');
 
+        if(!$list){
+            // refresh all classements (once per day, done with cron)
+
+            Player::refresh_list();
+
+            $list = json()->decode('players', 'list');
+
+            $test =__DIR__;
+            
+            @unlink('datas/public/classements/general.html');
+            @unlink('datas/public/classements/bourrins.html');
+            @unlink('datas/public/classements/reputation.html');
+            @unlink('datas/public/classements/fortunes.html');
+        }
+        return $list;
+    }
 
     public static function refresh_views_at_z($z){
 

@@ -79,15 +79,26 @@ else if(!empty($_SESSION['playerId'])){
                 View::delete_double($player);
             }
 
+            $firstPlayerXP = 0;
+            $firstPlayerData = Player::get_player_list();
+            if(isset($firstPlayerData->first)){
+                $firstPlayerXP = $firstPlayerData->first->xp;
+            }
 
             echo '
             <table border="1" align="center" class="marbre">';
 
-                // echo '<tr><td></td></tr>';
-
 
                 // gain xp
-                $gainXp = max(1, XP_PER_TURNS - $player->data->rank);
+                $gainXp = 5;
+
+                if($player->data->xp + 250 <= $firstPlayerXP){
+
+                    $diff= $firstPlayerXP - ($player->data->xp + 250);
+                    $gainXp += 1 + floor($diff/50);
+                    if($player->id<0 && $gainXp>10)
+                        $gainXp = 10;
+                }
 
                 echo '<tr><td>Xp</td><td align="right">+'. $gainXp .'</td></tr>';
 
