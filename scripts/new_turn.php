@@ -100,7 +100,14 @@ else if(!empty($_SESSION['playerId'])){
                         $gainXp = 10;
                 }
 
-                echo '<tr><td>Xp</td><td align="right">+'. $gainXp .'</td></tr>';
+                $gainXpTxt="";
+
+                //temporaire
+                $gainXpTxt=" ( calculé:". $gainXp ."xp)";
+                if($gainXp>10)
+                    $gainXp =10; 
+
+                echo '<tr><td>Xp</td><td align="right">+'. $gainXp . $gainXpTxt . '</td></tr>';
 
                 echo '<tr><td>Pi</td><td align="right">+'. $gainXp .'</td></tr>';
 
