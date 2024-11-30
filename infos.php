@@ -156,9 +156,7 @@ echo '
 
             $text = nl2br($target->data->text);
 
-            if(
-                $player->id != $target->id || $distance > $caracsJson->p
-            ){
+            if($player->id != $target->id && $distance > $caracsJson->p){
 
                 $text = '<i>Ce personnage est trop éloigné pour l\'entendre parler.</i>';
             }
