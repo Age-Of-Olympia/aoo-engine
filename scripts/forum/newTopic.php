@@ -64,7 +64,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
         // edit forum
         Forum::add_topic_in_forum($topJson->name, $forumJson);
 
-        Forum::refresh_last_posts();
+        Forum::refresh_last_posts($topJson->name);
     }
 
 
