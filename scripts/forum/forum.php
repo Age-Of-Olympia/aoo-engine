@@ -181,7 +181,8 @@ $pinnedTopicsHtml=array();
 
 
             $currentTopicHtml.= '
-            <td align="center">
+            <td align="center"
+            data-topic="'. htmlentities($top->name) .'">
                 ';
 
 
