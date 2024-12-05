@@ -64,7 +64,7 @@ if(!empty($_POST['text'])){
 
         Forum::put_keywords(time(), $_POST['text']);
 
-        Forum::refresh_last_posts();
+        Forum::refresh_last_posts($topJson->name);
     }
 
 

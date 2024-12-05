@@ -114,40 +114,31 @@ class Forum{
     }
 
 
-    public static function refresh_last_posts(){
-
-        // Répertoire de départ
-        $directory = 'datas/private/forum/topics/'; // Remplacez par le répertoire souhaité
-
-        // Récupère le fichier le plus récemment modifié
-        $mostRecentFile = self::get_most_recent($directory);
-
-        $topName = 'Aucun';
-
-        if ($mostRecentFile !== null) {
-
-            $topJson = json()->decode('forum', 'topics/'. $mostRecentFile);
-
-            if(strlen($topJson->title) > 10){
-                $topName = mb_substr($topJson->title, 0, 10);
-                $topName = htmlentities($topName,ENT_HTML5, "UTF-8") .'...';
-            }
-
-            else{
-
-                $topName = htmlentities($topJson->title,ENT_HTML5, "UTF-8") .'';
-            }
+    public static function refresh_last_posts($topicName){
 
 
-            $postJson = json()->decode('forum', 'posts/'. end($topJson->posts)->name);
 
-            $author = new Player($postJson->author);
-            $author->get_data();
+        $topJson = json()->decode('forum', 'topics/'. $topicName);
 
-            $pageN = self::get_pages($postTotal=count($topJson->posts));
-
-            $topName = 'Dans <a href="forum.php?topic='. htmlentities($topJson->name) .'&page='. $pageN .'#'. $postJson->name .'">'. $topName .'</a> par '. $author->data->name;
+        if(strlen($topJson->title) > 10){
+            $topName = mb_substr($topJson->title, 0, 10);
+            $topName = htmlentities($topName,ENT_HTML5, "UTF-8") .'...';
         }
+
+        else{
+
+            $topName = htmlentities($topJson->title,ENT_HTML5, "UTF-8") .'';
+        }
+
+
+        $postJson = json()->decode('forum', 'posts/'. end($topJson->posts)->name);
+
+        $author = new Player($postJson->author);
+        $author->get_data();
+
+        $pageN = self::get_pages(count($topJson->posts));
+
+        $topName = 'Dans <a href="forum.php?topic='. htmlentities($topJson->name) .'&page='. $pageN .'#'. $postJson->name .'">'. $topName .'</a> par '. $author->data->name;
 
 
         $lastPosts = json()->decode('forum', 'lastPosts');
