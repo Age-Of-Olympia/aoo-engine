@@ -5,15 +5,18 @@ if ($debug) {
 }
 require_once('config.php');
 
+
+
 $ui = new Ui('Évènements');
 
 $player = new Player($_SESSION['playerId']);
+$displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
 
 $player->get_data();
 
 $logAge=ONE_DAY;
 
-if($player->have_option('isAdmin')) {
+if($displayAllCondition) {
     $logAge = THREE_DAYS;
 }
 
@@ -26,8 +29,8 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 <a href="logs.php?self&light"><button>Du personnage</button></a>
 <a href="logs.php?mdj"><button>Messages du jour</button></a>
 <a href="logs.php?quests"><button>Quêtes</button></a></div>';
-if($player->have_option('isAdmin')) {
-    echo '<a href="logs.php?admin"><button>Admin</button></a></div>';
+if($displayAllCondition) {
+    echo '<br /><a href="logs.php?admin"><button>Vue complète</button></a></div>';
 }
 
 
