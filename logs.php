@@ -25,7 +25,7 @@ ob_start();
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
 <a href="logs.php?light"><button>Perception</button></a>
-<a href="logs.php"><button>Perception complète</button></a>
+<!--<a href="logs.php"><button>Perception complète</button></a>-->
 <a href="logs.php?self&light"><button>Du personnage</button></a>
 <a href="logs.php?mdj"><button>Messages du jour</button></a>
 <a href="logs.php?quests"><button>Quêtes</button></a></div>';

@@ -59,10 +59,15 @@ class Log{
 
         while($row = $res->fetch_object()){
 
-            // Temporary hide moves && other player action
-            // if ($row->type == "move" || $row->type == "action_other_player") {
-            //     continue;
-            // }
+            // BEGIN OF TEMPORARY FILTER Temporary hide moves && other player action and show all plan events
+            if ($row->plan != $player->coords->plan || $row->type == "move" || $row->type == "action_other_player") {
+                continue;
+            }
+            if ($row->plan == $player->coords->plan) {
+                $return[] = $row;
+                continue;
+            }
+            // END OF TEMPORARY FILTER
 
             if ($row->type == "move" && $type == "light") {
                 continue;
