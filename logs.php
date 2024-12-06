@@ -1,31 +1,37 @@
 <?php
-// $time_start = microtime(true);
+$debug=false;
+if ($debug) {
+    $time_start = microtime(true);
+}
 require_once('config.php');
+
+
 
 $ui = new Ui('Évènements');
 
 $player = new Player($_SESSION['playerId']);
+$displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
 
 $player->get_data();
 
-
-// last travel time
-$lastTravelTime = 0;
 $logAge=ONE_DAY;
-if(!empty($player->data->lastTravelTime)){
 
-    $lastTravelTime = $player->data->lastTravelTime;
-}
-if($player->have_option('isAdmin'))
-{
+if($displayAllCondition) {
     $logAge = THREE_DAYS;
-    $lastTravelTime = 0;
 }
 
 ob_start();
 
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="logs.php"><button>Du lieu</button></a><a href="logs.php?self"><button>Du personnage</button></a><a href="logs.php?quests"><button>Quêtes</button></a></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
+<a href="logs.php?light"><button>Perception</button></a>
+<!--<a href="logs.php"><button>Perception complète</button></a>-->
+<a href="logs.php?self&light"><button>Du personnage</button></a>
+<a href="logs.php?mdj"><button>Messages du jour</button></a>
+<a href="logs.php?quests"><button>Quêtes</button></a></div>';
+if($displayAllCondition) {
+    echo '<br /><a href="logs.php?admin"><button>Vue complète</button></a></div>';
+}
 
 
 if(isset($_GET['quests'])){
@@ -38,11 +44,24 @@ if(isset($_GET['quests'])){
     exit();
 }
 
-
 $player->get_coords();
 
+if(isset($_GET['mdj'])){
+    $logsToDisplay = Log::get($player,$logAge, 'mdj');
+} else if (isset($_GET['light'])) {
+    $logsToDisplay = Log::get($player,$logAge, 'light');
+} else if (isset($_GET['admin'])) {
+    $logsToDisplay = Log::getAdmin($player->coords->plan,$logAge);
+} else {
+    $logsToDisplay = Log::get($player,$logAge);
+}
 
-echo '<p>Voici les évènements qui se sont déroulés<br />sur ce Territoire depuis votre arrivée (max. 24h)</p>';
+
+
+
+
+
+echo '<p>Voici les évènements qui se sont déroulés récemment<br /> du point de vue de votre personnage (max. 24h)</p>';
 
 echo '
 <table class="box-shadow marbre" border="1" align="center" style="width: 100%;">';
@@ -53,20 +72,17 @@ echo '
         <th>De</th>
         <th>Avec</th>
         <th>Date</th>
+        <th>Plan</th>
     </tr>
     ';
 
-    foreach(Log::get($player->coords->plan,$logAge) as $e){
+    foreach($logsToDisplay as $e){
         if(
-            (
-                isset($_GET['self'])
-                &&
-                $e->player_id != $_SESSION['playerId']
-                &&
-                $e->target_id != $_SESSION['playerId']
-            )
-            ||
-            $e->time < $lastTravelTime
+            isset($_GET['self'])
+            &&
+            $e->player_id != $_SESSION['playerId']
+            &&
+            $e->target_id != $_SESSION['playerId']
         ){
             continue;
         }
@@ -145,6 +161,21 @@ echo '
                 '. $date .'<br />
                 à '. date('H:i', $e->time) .'
             </td>
+        ';
+
+        $planJson = json()->decode('plans', $e->plan);
+
+        
+        if (is_bool($planJson)) {
+            $plan = '?';
+        } else {
+            $plan = $planJson->name;
+        }
+
+        echo '
+            <td class="log-td">
+                '. $plan .'
+            </td>
         </tr>
         ';
     }
@@ -152,7 +183,11 @@ echo '
 echo '
 </table>
 ';
-// $time_end = microtime(true);
-// $execution_time = ($time_end - $time_start);
-// echo '<b>Total Execution Time:</b> '.$execution_time.' Mins';
+
+if ($debug) {
+    $time_end = microtime(true);
+    $execution_time = ($time_end - $time_start);
+    echo '<b>Total Execution Time:</b> '.$execution_time.' Mins';
+}
+
 echo Str::minify(ob_get_clean());

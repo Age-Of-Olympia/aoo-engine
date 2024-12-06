@@ -153,6 +153,12 @@ if($player->have_option('showActionDetails')){
 
 // log
 $log = $actionJson->log;
+if (isset($actionJson->targetLog)) {
+    $targetLog = $actionJson->targetLog;
+    $targetLog = str_replace('PLAYER', $player->data->name, $targetLog);
+    $targetLog = str_replace('TARGET', $target->data->name, $targetLog);
+    $targetLog = str_replace('NAME', $actionJson->name, $targetLog);
+}
 
 $log = str_replace('PLAYER', $player->data->name, $log);
 $log = str_replace('TARGET', $target->data->name, $log);
@@ -162,11 +168,18 @@ $log = str_replace('NAME', $actionJson->name, $log);
 if(!empty($emplacement)){
 
     $log = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $log);
+    if (isset($targetLog)) {
+        $targetLog = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $targetLog);
+    }
     
     if($player->data->race=='animal')
     {
         $log = str_replace('avec WEAPON', '', $log);
         $log = str_replace('WEAPON', '', $log);
+        if (isset($targetLog)) {
+            $targetLog = str_replace('avec WEAPON', '', $targetLog);
+            $targetLog = str_replace('WEAPON', '', $targetLog);
+        }
     }
 }
 
@@ -591,23 +604,20 @@ if(
 
         echo '<div class="action-details">Le jet devait être >= à '. $distanceTreshold .'.</div>';
     }
+
 }
-
-
-if(!empty($log)){
-
-    Log::put($player, $target, $log, $type="action");
-}
-
 
 $data = ob_get_clean();
 
-$sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = "action" AND player_id = ? ORDER BY time DESC LIMIT 1';
+if(!empty($log)){
+    Log::put($player, $target, $log, $type="action", $data);
+}
 
-$db->exe($sql, array($data, $player->id));
+if(!empty($targetLog)){
+    Log::put($target, $player, $targetLog, $type="action_other_player", $data);
+}
 
 echo $data;
-
 
 $targetPvAfter = $target->get_left('pv');
 

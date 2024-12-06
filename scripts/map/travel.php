@@ -136,13 +136,14 @@ if(!empty($_GET['triggerId'])){
                     {
                         $player->get_data();
 
-
+                        // clone to pass the "from" travel plan
+                        $playerClone = new Player($player->id);
+                        $playerClone->coords = $planJson->fromCoords;
                         $text = $player->data->name .' a voyagé de '. $planJson->name .' à '. $goPlanJson->name .'.';
+
+                        Log::put($playerClone, $playerClone, $text, $type="travel");
                         Log::put($player, $player, $text, $type="travel");
 
-                        $player->coords->plan = $e;
-
-                        Log::put($player, $player, $text, $type="travel");
                     }
 
                     exit();
