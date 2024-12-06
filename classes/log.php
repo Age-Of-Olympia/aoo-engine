@@ -63,7 +63,7 @@ class Log{
             if ($row->plan != $player->coords->plan || $row->type == "move" || $row->type == "action_other_player") {
                 continue;
             }
-            if ($row->plan == $player->coords->plan) {
+            if ($row->plan == $player->coords->plan && $row->type != "mdj") {
                 $return[] = $row;
                 continue;
             }
