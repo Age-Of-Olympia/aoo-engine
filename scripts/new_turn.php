@@ -102,10 +102,13 @@ else if(!empty($_SESSION['playerId'])){
 
                 $gainXpTxt="";
 
-                //temporaire
-                $gainXpTxt=" ( calculé:". $gainXp ."xp)";
-                if($gainXp>10)
-                    $gainXp =10; 
+                
+                
+                if($gainXp>25)
+                {
+                    $gainXpTxt=" ( calculé:". $gainXp ."xp)";
+                    $gainXp =25; 
+                }
 
                 echo '<tr><td>Xp</td><td align="right">+'. $gainXp . $gainXpTxt . '</td></tr>';
 

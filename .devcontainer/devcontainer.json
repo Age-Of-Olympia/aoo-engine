@@ -26,16 +26,19 @@
 		"vscode": {
 			"extensions": [
 				"xdebug.php-debug",
-				"ms-azuretools.vscode-docker"
+				"ms-azuretools.vscode-docker",
+				"bmewburn.vscode-intelephense-client"
 			],
 			"settings": {
        			"remote.autoForwardPorts": false
       		}
 		}
-	}
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// Done in docker compose !!
@@ -48,7 +51,7 @@
 	// "shutdownAction": "none",
 
 	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
+	"postCreateCommand": "echo \"\nsource /usr/share/bash-completion/completions/git\" >> ~/.bashrc"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
