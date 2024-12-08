@@ -1,7 +1,7 @@
 <?php
 
 
-$timeLimit = time() - ONE_DAY;
+$timeLimit = time() - THREE_DAYS;
 
 // copy
 $sql = '
