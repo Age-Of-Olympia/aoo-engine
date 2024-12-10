@@ -13,7 +13,7 @@ class Log{
 
         switch ($type) {
             case 'mdj':
-                $typeCondition = ' WHERE final_logs.time > ? AND 0 < ? AND final_logs.type = \'mdj\'';
+                $typeCondition = ' WHERE final_logs.time > ? AND 0 < LENGTH(?) AND final_logs.type = \'mdj\'';
                 $maxLogAge = THREE_DAYS;
                 break;
             default:
