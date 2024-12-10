@@ -15,6 +15,7 @@ class Log{
         switch ($type) {
             case 'mdj':
                 $typeCondition = ' WHERE type = \'mdj\'';
+                $maxLogAge = THREE_DAYS;
                 break;
             default:
                 $typeCondition = ' WHERE type != \'mdj\'';
@@ -59,22 +60,13 @@ class Log{
 
         while($row = $res->fetch_object()){
 
-            // BEGIN OF TEMPORARY FILTER Temporary hide moves && other player action and show all plan events
-            if ($row->plan != $player->coords->plan || $row->type == "move" || $row->type == "action_other_player") {
-                continue;
-            }
-            if ($row->plan == $player->coords->plan && $row->type != "mdj") {
-                $return[] = $row;
-                continue;
-            }
-            // END OF TEMPORARY FILTER
-
             if ($row->type == "move" && $type == "light") {
                 continue;
             }
 
             // If the event is about player, either as doer or as target, event is displayed
-
+            // Two lines of travel are stored, one in the departure plan and ont in the arrival plan,
+            // We hide one of the two !
             if ($row->player_id == $player->id && $row->type != "travel") {
                 $return[] = $row;
                 continue;
@@ -85,7 +77,7 @@ class Log{
                 continue;
             }  
 
-            // Get Percetion
+            // Get Perception
             $caracsJson = json()->decode('players', $player->id .'.caracs');
             if(!$caracsJson){
                 $player->get_caracs();
@@ -115,34 +107,33 @@ class Log{
         return $return;
     }
 
-    public static function getAdmin($plan, $maxLogAge=THREE_DAYS){
+    public static function getAllPlanEvents($plan, $maxLogAge=THREE_DAYS){
 
         $return = array();
         $player = new Player($_SESSION['playerId']);
-        if($player->have_option('isAdmin')) {
-            $db = new Db();
-            $timeLimit = time()-$maxLogAge;
 
-            $sql = 'SELECT 
-                players_logs.id,
-                players_logs.player_id,
-                players_logs.target_id,
-                players_logs.text,
-                players_logs.hiddenText,
-                players_logs.type,
-                players_logs.plan,
-                players_logs.time,
-                players_logs.coords_id
-            FROM players_logs
-            WHERE players_logs.time > ? AND plan = ?   
-            ORDER BY players_logs.time DESC';
+        $db = new Db();
+        $timeLimit = time()-$maxLogAge;
 
-            $res = $db->exe($sql, array($timeLimit, $plan));
+        $sql = 'SELECT
+            players_logs.id,
+            players_logs.player_id,
+            players_logs.target_id,
+            players_logs.text,
+            players_logs.hiddenText,
+            players_logs.type,
+            players_logs.plan,
+            players_logs.time,
+            players_logs.coords_id
+        FROM players_logs
+        WHERE players_logs.time > ? AND plan = ?
+        ORDER BY players_logs.time DESC';
 
-            while($row = $res->fetch_object()){
-                $return[] = $row;
-                continue;
-            }
+        $res = $db->exe($sql, array($timeLimit, $plan));
+
+        while($row = $res->fetch_object()){
+            $return[] = $row;
+            continue;
         }
 
         return $return;
