@@ -9,18 +9,19 @@ class Log{
         
         $return = array();
         $db = new Db();
-        $timeLimit = time()-$maxLogAge;
         $typeCondition = '';
 
         switch ($type) {
             case 'mdj':
-                $typeCondition = ' WHERE type = \'mdj\'';
+                $typeCondition = ' WHERE final_logs.time > ? AND 0 < ? AND final_logs.type = \'mdj\'';
                 $maxLogAge = THREE_DAYS;
                 break;
             default:
-                $typeCondition = ' WHERE type != \'mdj\'';
+                $typeCondition = ' WHERE final_logs.time > ? AND final_logs.plan = ? AND final_logs.type != \'mdj\'';
                 break;
         }
+
+        $timeLimit = time()-$maxLogAge;
 
         $sql = 'SELECT 
             final_logs.id,
@@ -56,7 +57,7 @@ class Log{
         '.$typeCondition.'
         ORDER BY final_logs.time DESC';
 
-        $res = $db->exe($sql, array($player->id, $timeLimit));
+        $res = $db->exe($sql, array($player->id, $timeLimit, $timeLimit, $player->coords->plan));
 
         while($row = $res->fetch_object()){
 
