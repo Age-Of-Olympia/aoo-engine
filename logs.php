@@ -50,7 +50,7 @@ if(isset($_GET['mdj'])){
     $logsToDisplay = Log::get($player,$logAge, 'mdj');
 } else if (isset($_GET['light'])) {
     $logsToDisplay = Log::get($player,$logAge, 'light');
-} else if ($displayAllCondition) {
+} else if ($displayAllCondition && isset($_GET['admin'])) {
     $logsToDisplay = Log::getAllPlanEvents($player->coords->plan,$logAge);
 } else {
     $logsToDisplay = Log::get($player,$logAge);
