@@ -5,6 +5,12 @@ class Log{
 
     // STATIC
 
+    // Should be mouved in view class (in Log now to have only one file to update to fix)
+    public static function compute_unique_coord(&$inputCoord, $key, array $coordCompletion)
+    {
+        $inputCoord = str_replace(",","_",$inputCoord)."_".$coordCompletion[0]."_".$coordCompletion[1];
+    }
+
     public static function get(Player $player,$maxLogAge=ONE_DAY,$type=''){
         
         $return = array();
@@ -13,11 +19,11 @@ class Log{
 
         switch ($type) {
             case 'mdj':
-                $typeCondition = ' WHERE final_logs.time > ? AND 0 < LENGTH(?) AND final_logs.type = \'mdj\'';
+                $typeCondition = ' WHERE final_logs.type = \'mdj\'';
                 $maxLogAge = THREE_DAYS;
                 break;
             default:
-                $typeCondition = ' WHERE final_logs.time > ? AND final_logs.plan = ? AND final_logs.type != \'mdj\'';
+                $typeCondition = ' WHERE final_logs.type != \'mdj\'';
                 break;
         }
 
@@ -33,6 +39,7 @@ class Log{
             final_logs.plan,
             final_logs.time,
             final_logs.coords_id,
+            final_logs.coords_computed,
             final_logs.last_player_movement_coords_id AS last_player_coords_id,
             c.plan AS movement_plan,
             c.x AS movement_x,
@@ -57,11 +64,15 @@ class Log{
         '.$typeCondition.'
         ORDER BY final_logs.time DESC';
 
-        $res = $db->exe($sql, array($player->id, $timeLimit, $timeLimit, $player->coords->plan));
+        $res = $db->exe($sql, array($player->id, $timeLimit));
 
         while($row = $res->fetch_object()){
 
             if ($row->type == "move" && $type == "light") {
+                continue;
+            }
+
+            if ($row->plan == "birdland") {
                 continue;
             }
 
@@ -95,13 +106,14 @@ class Log{
                 'z'=>$row->movement_z,
                 'plan'=>$row->movement_plan
             );
-
-            $arrayCoords = View::get_coords_id_arround($last_player_coords, $p);
-
-            if (in_array($row->coords_id, $arrayCoords)) {
-                $return[] = $row;
-            }
             
+            // Computing coords
+            $arrayCoordsId = View::get_coords_arround($last_player_coords, $p);
+            array_walk($arrayCoordsId, array(Log::class, 'compute_unique_coord'), [$last_player_coords->z, $last_player_coords->plan]);
+
+            if (in_array($row->coords_computed, $arrayCoordsId)) {
+                $return[] = $row;
+            }            
            
         }
 
@@ -159,6 +171,8 @@ class Log{
 
         $targetId = (is_numeric($target)) ? $target : $target->id;
 
+        $coordToLog = $player->coords->x."_".$player->coords->y."_".$player->coords->z."_".$player->coords->plan;
+
         $values = array(
             'player_id'=>$player->id,
             'target_id'=>$targetId,
@@ -166,7 +180,8 @@ class Log{
             'plan'=>$plan,
             'time'=>time(),
             'type'=>$type,
-            'coords_id'=>View::get_coords_id($player->coords)
+            'coords_id'=>View::get_coords_id($player->coords),
+            'coords_computed'=>$coordToLog
         );
 
         $db = new Db();
