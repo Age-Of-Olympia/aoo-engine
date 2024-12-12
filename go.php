@@ -145,13 +145,20 @@ if($res->num_rows){
 if($goCoords->z < 0){
 
 
-    $sql = '
+    /*$sql = '
     SELECT COUNT(*) AS n
     FROM map_tiles
     WHERE
     coords_id = ?
     AND
     name = "caverne"
+    ';*/
+
+    $sql = '
+    SELECT COUNT(*) AS n
+    FROM map_tiles
+    WHERE
+    coords_id = ?
     ';
 
     $res = $db->exe($sql, $coordsId);
