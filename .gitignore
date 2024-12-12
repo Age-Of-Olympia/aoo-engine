@@ -1,6 +1,7 @@
 wiki/
 img/ui/forum/uploads/*
 datas/
+img/
 config/db_constants.php
 sessions/
 db/updates_done/
