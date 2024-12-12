@@ -1,9 +1,6 @@
 wiki/
 img/ui/forum/uploads/*
-datas/public/classements/*
-datas/private/players/
-datas/private/console/
-datas/private/forum/
+datas/
 config/db_constants.php
 sessions/
 db/updates_done/
