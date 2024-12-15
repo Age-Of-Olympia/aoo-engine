@@ -50,18 +50,22 @@ class Log{
                 logs.*,
                 logs_player.coords_id AS last_player_movement_coords_id
             FROM (
-                SELECT
-                    pl.*,
-                    MAX(CASE WHEN pl.player_id = ? AND pl.type = \'move\' THEN id END) OVER (
-                        ORDER BY pl.time 
-                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                SELECT pl.*,
+                    (
+                        SELECT MAX(pl2.id)
+                        FROM players_logs pl2
+                        WHERE pl2.player_id = ?
+                        AND pl2.time <= pl.time
+                        ORDER BY pl2.time DESC
+                        LIMIT 1
                     ) AS last_player_move_id
                 FROM players_logs pl) logs
             LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
-            WHERE logs.time > ?
+            
         ) AS final_logs
         LEFT JOIN coords c ON final_logs.last_player_movement_coords_id = c.id
         '.$typeCondition.'
+        AND final_logs.time > ?
         ORDER BY final_logs.time DESC';
 
         $res = $db->exe($sql, array($player->id, $timeLimit));
