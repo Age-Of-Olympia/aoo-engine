@@ -3,12 +3,8 @@
 .vscode/
 docs/
 wiki/
-img/ui/forum/uploads/
+img/
 datas/
-datas/public/classements/
-datas/private/players/
-datas/private/forum/
-datas/private/console/
 config/db_constants.php
 db/updates_done/
 sessions/
