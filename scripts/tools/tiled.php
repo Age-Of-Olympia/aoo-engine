@@ -5,6 +5,43 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_coords();
 
+if(!empty($_POST['zone']) && !empty($_POST['type']) && !empty($_POST['src'])){
+
+    $zoneData = [
+        'beginX' => intval($_POST['zone']['beginX']),
+        'beginY' => intval($_POST['zone']['beginY']),
+        'endX' => intval($_POST['zone']['endX']),
+        'endY' => intval($_POST['zone']['endY'])
+    ];
+    
+    $allCoords = [];
+    
+    for ($x = min($zoneData['beginX'], $zoneData['endX']); $x <= max($zoneData['beginX'], $zoneData['endX']); $x++) {
+        for ($y = min($zoneData['beginY'], $zoneData['endY']); $y <= max($zoneData['beginY'], $zoneData['endY']); $y++) {
+
+            $coords = $player->coords;
+
+            $coords->x = $x;
+            $coords->y = $y;
+    
+            $coordsId = View::get_coords_id($coords);
+    
+            // keep all coords ids
+            $allCoords[] =  $coordsId;
+        }
+    }
+    
+    
+    // Create or erase tile for each in the coords zone
+    foreach ($allCoords as $coordsId) {
+       include 'tiled_tool/erase_or_create_tile.php';
+    }
+
+
+
+
+  exit();
+}
 
 if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 
@@ -23,45 +60,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         exit('tp');
     }
 
-    if($_POST['type'] == 'eraser'){
-        include 'tiled_tool/erase_map.php';
-        exit('erase');
-    }
-
-
-    if(!in_array($_POST['type'], array('tiles','foregrounds','walls','triggers','elements','dialogs','plants'))){
-
-        exit('error type');
-    }
-
-
-    $values = array(
-        'name'=>$_POST['src'],
-        'coords_id'=>$coordsId
-    );
-
-    $db = new Db();
-
-    echo $_POST['type'];
-
-    $db->insert('map_'. $_POST['type'], $values);
-
-
-    echo '
-    '. $_POST['src'] .' in '. $_POST['coords'];
-
-
-    if(!empty($_POST['params'])){
-
-        $lastId = $db->get_last_id('map_'. $_POST['type']);
-
-        $sql = 'UPDATE map_'. $_POST['type'] .' SET params = ? WHERE id = ?';
-
-        $db->exe($sql, array($_POST['params'], $lastId));
-
-        echo '
-        params: '. $_POST['params'];
-    }
+    include 'tiled_tool/erase_or_create_tile.php';
 
     exit();
 }
@@ -102,6 +101,7 @@ include 'tiled_tool/display_triggers.php';
 
 include 'tiled_tool/display_tools.php';
 
+include 'tiled_tool/display_mass_tools.php';
 
 ?>
 <style>
@@ -185,15 +185,15 @@ $(document).ready(function(){
             type: "POST",
             url: 'tools.php?tiled',
             data: {
-                'coords':$(this).data('coords'),
-                'type':$selected.data('type'),
-                'src':src,
-                'params':params
+              'coords':$(this).data('coords'),
+              'type':$selected.data('type'),
+              'src':src,
+              'params':params
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
-                document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
+              // alert(data);
+              document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
             }
         });
     });
