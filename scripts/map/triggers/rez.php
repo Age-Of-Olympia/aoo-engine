@@ -39,6 +39,7 @@ $goCoords = (object) array(
 
 $coordsId = View::get_free_coords_id_arround($goCoords);
 
+$player->coords->plan = $spawnPlan;
 
 $text = $player->data->name .' est arrivé sur Olympia.';
 

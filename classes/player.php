@@ -657,7 +657,7 @@ class Player{
         if (!$zChange) {
             $text = $this->data->name .' s\'est déplacé en '.$goCoords->x.','.$goCoords->y.','.$goCoords->z;
         } else {
-            $text = $this->data->name .' a emprunté des escaliers.';
+            $text = $this->data->name .' a emprunté des escaliers. (Il est arrivé en '.$goCoords->x.','.$goCoords->y.','.$goCoords->z.')';
         }
 
         $this->coords = $goCoords;

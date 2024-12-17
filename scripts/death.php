@@ -7,10 +7,14 @@ if($target->get_left('pv') > 0){
 }
 
 
+$timestamp = time();
 $text = $player->data->name .' a tué '. $target->data->name .'.';
 
+Log::put($player, $target, $text, $type="kill",'',$timestamp);
 
-Log::put($player, $target, $text, $type="kill");
+$text = $target->data->name .' a été tué par '. $player->data->name .'.';
+
+Log::put($target, $player, $text, $type="kill",'',$timestamp);
 
 
 echo '<b><font color="red">Vous tuez votre adversaire.</font></b>';
