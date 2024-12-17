@@ -77,6 +77,7 @@ $data = $view->get_view();
 
 echo '
 <div style="float: left;">
+<script src="js/tiled.js"></script>
 ';
 
 echo $data;
@@ -85,7 +86,9 @@ echo '
 </div>
 ';
 
-echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><button>Retour</button></a></div>';
+echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><button>Retour</button></a></div>
+<br/>
+<div id="ajax-data"></div>';
 
 include 'tiled_tool/display_indestructibles.php';
 
@@ -130,7 +133,24 @@ $(document).ready(function(){
     }).appendTo('body').hide();
 
 
-    selectPreviousTool();
+    selectPreviousTool($customCursor);
+
+
+  $('.case').on('contextmenu', function(e) {
+      e.preventDefault();
+
+      var coords = $(this).data('coords');
+
+      let [x, y] = coords.split(',');
+
+
+      // show coords button
+      $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
+          '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
+          '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
+
+
+    });
 
     $('.case').click(function(e){
 
@@ -251,48 +271,6 @@ $(document).ready(function(){
             $('.map').removeClass('selected').css('border', '0px');
         }
     });
-
-
-  function selectPreviousTool(){
-    let selectedTool = getParameterByName('selectedTool');
-
-    if (selectedTool) {
-      $('.map').filter(function() {
-
-        return $(this).data('name') === selectedTool;
-      }).each(function() {
-        $(this).addClass('selected').css('border', '1px solid red');
-
-          $customCursor.attr('src', $(this).attr('src')).show();
-
-            $('body').on('mousemove', function(e) {
-                $customCursor.css({
-                    left: e.pageX - 25 +'px',
-                    top: e.pageY - 25+'px'
-                });
-            });
-
-
-            var $paramsField = $('#' + $(this).data('type') + '-params');
-
-            if($paramsField != null){
-
-                let selectedParams = getParameterByName('selectedParams');
-
-                $paramsField.val(selectedParams);
-            }
-      });
-    }
-
-  }
-  function getParameterByName(name, url = window.location.href) {
-    name = name.replace(/[\[\]]/g, '\\$&');
-    let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, ' '));
-  }
 
 });
 </script>

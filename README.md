@@ -47,7 +47,7 @@ define('DB_CONSTANTS', array(
     'db'=>"aoo4"
 ));
 ```
-sauvgardez et vous être prêt ! 
+sauvegardez et vous être prêt ! 
 
 ### Lancement du serveur
 
@@ -77,3 +77,11 @@ Il est évidemment possible de modifier l'environnement de travail en modifiant 
 
 Une fois que c'est fait, il faut alors reconstruire le devcontainer : il faut appuyer sur F1 puis taper "Dev Container" dans le moteur de recherche, les différentes commandes, dont celles de reconstruction, apparaîtront.
 
+### Premiers pas sur le jeu 
+
+Pour pouvoir faire tourner le jeu localement, il faudra inscrire un premier personnage via l'inscription normale. Puis ouvrir la console avec ² une fois connecté et saisir les commandes suivantes.
+
+```
+map load praetorium
+tp 1 0,0,0,praetorium
+```

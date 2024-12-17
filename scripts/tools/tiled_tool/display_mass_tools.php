@@ -25,18 +25,6 @@
 
 <script>
 $(document).ready(function(){
-  function validateZoneData(zoneData) {
-    var integerRegex = /^-?\d+$/;
-
-    for (var key in zoneData) {
-      var value = zoneData[key];
-      if (value === '' || !integerRegex.test(value)) {
-        return false; 
-      }
-    }
-    return true;
-  }
-
 
 
    $("#zone-apply").click(function(e){
