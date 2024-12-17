@@ -5,6 +5,43 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_coords();
 
+if(!empty($_POST['zone']) && !empty($_POST['type']) && !empty($_POST['src'])){
+
+    $zoneData = [
+        'beginX' => intval($_POST['zone']['beginX']),
+        'beginY' => intval($_POST['zone']['beginY']),
+        'endX' => intval($_POST['zone']['endX']),
+        'endY' => intval($_POST['zone']['endY'])
+    ];
+    
+    $allCoords = [];
+    
+    for ($x = min($zoneData['beginX'], $zoneData['endX']); $x <= max($zoneData['beginX'], $zoneData['endX']); $x++) {
+        for ($y = min($zoneData['beginY'], $zoneData['endY']); $y <= max($zoneData['beginY'], $zoneData['endY']); $y++) {
+
+            $coords = $player->coords;
+
+            $coords->x = $x;
+            $coords->y = $y;
+    
+            $coordsId = View::get_coords_id($coords);
+    
+            // keep all coords ids
+            $allCoords[] =  $coordsId;
+        }
+    }
+    
+    
+    // Create or erase tile for each in the coords zone
+    foreach ($allCoords as $coordsId) {
+       include 'tiled_tool/erase_or_create_tile.php';
+    }
+
+
+
+
+  exit();
+}
 
 if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 
@@ -23,45 +60,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         exit('tp');
     }
 
-    if($_POST['type'] == 'eraser'){
-        include 'tiled_tool/erase_map.php';
-        exit('erase');
-    }
-
-
-    if(!in_array($_POST['type'], array('tiles','foregrounds','walls','triggers','elements','dialogs','plants'))){
-
-        exit('error type');
-    }
-
-
-    $values = array(
-        'name'=>$_POST['src'],
-        'coords_id'=>$coordsId
-    );
-
-    $db = new Db();
-
-    echo $_POST['type'];
-
-    $db->insert('map_'. $_POST['type'], $values);
-
-
-    echo '
-    '. $_POST['src'] .' in '. $_POST['coords'];
-
-
-    if(!empty($_POST['params'])){
-
-        $lastId = $db->get_last_id('map_'. $_POST['type']);
-
-        $sql = 'UPDATE map_'. $_POST['type'] .' SET params = ? WHERE id = ?';
-
-        $db->exe($sql, array($_POST['params'], $lastId));
-
-        echo '
-        params: '. $_POST['params'];
-    }
+    include 'tiled_tool/erase_or_create_tile.php';
 
     exit();
 }
@@ -78,6 +77,7 @@ $data = $view->get_view();
 
 echo '
 <div style="float: left;">
+<script src="js/tiled.js"></script>
 ';
 
 echo $data;
@@ -86,7 +86,9 @@ echo '
 </div>
 ';
 
-echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><button>Retour</button></a></div>';
+echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><button>Retour</button></a></div>
+<br/>
+<div id="ajax-data"></div>';
 
 include 'tiled_tool/display_indestructibles.php';
 
@@ -102,6 +104,7 @@ include 'tiled_tool/display_triggers.php';
 
 include 'tiled_tool/display_tools.php';
 
+include 'tiled_tool/display_mass_tools.php';
 
 ?>
 <style>
@@ -130,7 +133,24 @@ $(document).ready(function(){
     }).appendTo('body').hide();
 
 
-    selectPreviousTool();
+    selectPreviousTool($customCursor);
+
+
+  $('.case').on('contextmenu', function(e) {
+      e.preventDefault();
+
+      var coords = $(this).data('coords');
+
+      let [x, y] = coords.split(',');
+
+
+      // show coords button
+      $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
+          '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
+          '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
+
+
+    });
 
     $('.case').click(function(e){
 
@@ -185,15 +205,15 @@ $(document).ready(function(){
             type: "POST",
             url: 'tools.php?tiled',
             data: {
-                'coords':$(this).data('coords'),
-                'type':$selected.data('type'),
-                'src':src,
-                'params':params
+              'coords':$(this).data('coords'),
+              'type':$selected.data('type'),
+              'src':src,
+              'params':params
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
-                document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
+              // alert(data);
+              document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
             }
         });
     });
@@ -251,48 +271,6 @@ $(document).ready(function(){
             $('.map').removeClass('selected').css('border', '0px');
         }
     });
-
-
-  function selectPreviousTool(){
-    let selectedTool = getParameterByName('selectedTool');
-
-    if (selectedTool) {
-      $('.map').filter(function() {
-
-        return $(this).data('name') === selectedTool;
-      }).each(function() {
-        $(this).addClass('selected').css('border', '1px solid red');
-
-          $customCursor.attr('src', $(this).attr('src')).show();
-
-            $('body').on('mousemove', function(e) {
-                $customCursor.css({
-                    left: e.pageX - 25 +'px',
-                    top: e.pageY - 25+'px'
-                });
-            });
-
-
-            var $paramsField = $('#' + $(this).data('type') + '-params');
-
-            if($paramsField != null){
-
-                let selectedParams = getParameterByName('selectedParams');
-
-                $paramsField.val(selectedParams);
-            }
-      });
-    }
-
-  }
-  function getParameterByName(name, url = window.location.href) {
-    name = name.replace(/[\[\]]/g, '\\$&');
-    let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, ' '));
-  }
 
 });
 </script>
