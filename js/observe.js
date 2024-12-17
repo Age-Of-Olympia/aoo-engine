@@ -60,7 +60,6 @@ $(document).ready(function(){
             data: {'action':action, 'targetId':targetId}, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
                 let $action = $('<div>'+ data +'</div>').hide();
                 $('.card-text').html('').addClass('action-text').append($action.fadeIn());
                 $('.action').prop('disabled', false);

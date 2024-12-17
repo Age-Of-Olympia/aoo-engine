@@ -443,7 +443,7 @@ class View{
 
 
             // go cases
-            $coordsArround = View::get_coords_arround($this->coords, $p=1);
+            $coordsArround = View::get_coords_arround($this->coords, 1);
 
 
             // grid or empty clickable cases

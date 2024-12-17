@@ -216,7 +216,8 @@ if($res->num_rows){
             "entrainement",
             "fouiller",
             "prier",
-            "repos"
+            "repos",
+            "vol_a_la_tire"
         );
 
         function custom_compare($a, $b) {

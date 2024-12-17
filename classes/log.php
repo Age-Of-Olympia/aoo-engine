@@ -84,12 +84,18 @@ class Log{
             // Two lines of travel are stored, one in the departure plan and ont in the arrival plan,
             // We hide one of the two !
             if ($row->player_id == $player->id && $row->type != "travel") {
-                $return[] = $row;
+                if ($row->type != "hidden_action_other_player")
+                {
+                    $return[] = $row;
+                }
                 continue;
             }
 
             if ($row->target_id == $player->id) {
-                $return[] = $row;
+                if ($row->type != "hidden_action")
+                {
+                    $return[] = $row;
+                }
                 continue;
             }  
 
@@ -175,7 +181,15 @@ class Log{
 
         $targetId = (is_numeric($target)) ? $target : $target->id;
 
-        $coordToLog = $player->coords->x."_".$player->coords->y."_".$player->coords->z."_".$player->coords->plan;
+        if (str_starts_with($type, "hidden_")) {
+            $coordsId = NULL;
+            $coordToLog = NULL;
+        } else {
+            $coordsId = View::get_coords_id($player->coords);
+            $coordToLog = $player->coords->x."_".$player->coords->y."_".$player->coords->z."_".$player->coords->plan;
+        }
+
+        
 
         $values = array(
             'player_id'=>$player->id,
@@ -184,7 +198,7 @@ class Log{
             'plan'=>$plan,
             'time'=>time(),
             'type'=>$type,
-            'coords_id'=>View::get_coords_id($player->coords),
+            'coords_id'=>$coordsId,
             'coords_computed'=>$coordToLog
         );
 
