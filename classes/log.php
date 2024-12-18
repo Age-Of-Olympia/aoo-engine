@@ -56,6 +56,7 @@ class Log{
                         FROM players_logs pl2
                         WHERE pl2.player_id = ?
                         AND pl2.time <= pl.time
+                        AND pl2.type = \'move\'
                         ORDER BY pl2.time DESC
                         LIMIT 1
                     ) AS last_player_move_id
