@@ -66,7 +66,7 @@ class Log{
         LEFT JOIN coords c ON final_logs.last_player_movement_coords_id = c.id
         '.$typeCondition.'
         AND final_logs.time > ?
-        ORDER BY final_logs.time DESC';
+        ORDER BY final_logs.id DESC';
 
         $res = $db->exe($sql, array($player->id, $timeLimit));
 
@@ -84,12 +84,18 @@ class Log{
             // Two lines of travel are stored, one in the departure plan and ont in the arrival plan,
             // We hide one of the two !
             if ($row->player_id == $player->id && $row->type != "travel") {
-                $return[] = $row;
+                if ($row->type != "hidden_action_other_player")
+                {
+                    $return[] = $row;
+                }
                 continue;
             }
 
             if ($row->target_id == $player->id) {
-                $return[] = $row;
+                if ($row->type != "hidden_action")
+                {
+                    $return[] = $row;
+                }
                 continue;
             }  
 
@@ -117,12 +123,82 @@ class Log{
 
             if (in_array($row->coords_computed, $arrayCoordsId)) {
                 $return[] = $row;
-            }            
-           
+            }
         }
 
+        $return = Log::filterRows($return, $player->id);
         return $return;
     }
+
+/**
+ * Filters an array of row objects by identifying pairs of rows that meet the specified conditions.
+ * 
+ * Conditions for identifying a pair:
+ * - Two consecutive rows have the same timestamp.
+ * - They have the same action type.
+ * - The player of the first row is the target of the second row OR the target of the first row is the player of the second row.
+ * 
+ * For pairs that match these conditions: keep only one row amongst the two.
+ * 
+ * If a pair is not matched or identified, the row is kept as is.
+ * 
+ * @param array $rows An array of objects. Each object is expected to have 'time', 'player', 'target', and 'type' properties.
+ * @param int $playerId The identifier of the player to prioritize in pairs.
+ * @return array The filtered array of rows.
+ */
+private static function filterRows(array $rows, int $playerId): array {
+    $filtered = [];
+
+    $count = count($rows);
+    for ($i = 0; $i < $count; $i++) {
+        // Check if we can form a pair with the next row
+        if ($i < $count - 1) {
+            $current = $rows[$i];
+            $next = $rows[$i + 1];
+
+            $isPair = (
+                ($current->time === $next->time)
+                &&
+                ((($current->type === "action" && $next->type === "action_other_player") ||
+                ($current->type === "action_other_player" && $next->type === "action")) 
+                ||
+                (($current->type === "hidden_action" && $next->type === "hidden_action_other_player") ||
+                ($current->type === "hidden_action_other_player" && $next->type === "hidden_action")) 
+                ||
+                ($current->type === "travel" && $next->type === "travel")
+                ||
+                ($current->type === "kill" && $next->type === "kill"))
+                &&
+                (
+                    $current->player_id === $next->target_id ||
+                    $current->target_id === $next->player_id
+                )
+            );
+
+            if ($isPair) {
+                if ($current->player_id === $playerId) {
+                    if ($current->type != "travel") {
+                        $filtered[] = $current;
+                    }
+                }
+                if ($next->player_id === $playerId) {
+                    $filtered[] = $next;
+                }
+                if (($current->player_id != $playerId) && ($next->player_id != $playerId)) {
+                    $filtered[] = $next;
+                }
+
+                $i++; // Move past the pair
+                continue;
+            }
+        }
+
+        // If not part of a filtered pair, just keep the row
+        $filtered[] = $rows[$i];
+    }
+
+    return $filtered;
+}
 
     public static function getAllPlanEvents($plan, $maxLogAge=THREE_DAYS){
 
@@ -157,7 +233,7 @@ class Log{
     }
 
 
-    public static function put(Player $player, $target, $text, $type='', $hiddenText=''){
+    public static function put(Player $player, $target, $text, $type='', $hiddenText='', $logTime=''){
 
 
         if(!isset($player->coords)){
@@ -175,16 +251,28 @@ class Log{
 
         $targetId = (is_numeric($target)) ? $target : $target->id;
 
-        $coordToLog = $player->coords->x."_".$player->coords->y."_".$player->coords->z."_".$player->coords->plan;
+        if (str_starts_with($type, "hidden_")) {
+            $coordsId = NULL;
+            $coordToLog = NULL;
+        } else {
+            $coordsId = View::get_coords_id($player->coords);
+            $coordToLog = $player->coords->x."_".$player->coords->y."_".$player->coords->z."_".$player->coords->plan;
+        }
+
+        if ($logTime != '') {
+            $time = $logTime;
+        } else {
+            $time = time();
+        }
 
         $values = array(
             'player_id'=>$player->id,
             'target_id'=>$targetId,
             'text'=>$text,
             'plan'=>$plan,
-            'time'=>time(),
+            'time'=>$time,
             'type'=>$type,
-            'coords_id'=>View::get_coords_id($player->coords),
+            'coords_id'=>$coordsId,
             'coords_computed'=>$coordToLog
         );
 

@@ -609,12 +609,23 @@ if(
 
 $data = ob_get_clean();
 
+$logTime = time();
 if(!empty($log)){
-    Log::put($player, $target, $log, $type="action", $data);
+    if (isset($actionJson->hideWhenSuccess) && isset($success) && $success && $actionJson->hideWhenSuccess) {
+        $type = "hidden_action";
+    } else {
+        $type = "action";
+    }
+    Log::put($player, $target, $log, $type, $data, $logTime);
 }
 
 if(!empty($targetLog)){
-    Log::put($target, $player, $targetLog, $type="action_other_player", $data);
+    if (isset($actionJson->hideWhenSuccess) && isset($success) && $success && $actionJson->hideWhenSuccess) {
+        $type = "hidden_action_other_player";
+    } else {
+        $type = "action_other_player";
+    }
+    Log::put($target, $player, $targetLog, $type, $data, $logTime);
 }
 
 echo $data;

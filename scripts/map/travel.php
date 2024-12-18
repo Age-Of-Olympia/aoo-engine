@@ -141,8 +141,9 @@ if(!empty($_GET['triggerId'])){
                         $playerClone->coords = $planJson->fromCoords;
                         $text = $player->data->name .' a voyagé de '. $planJson->name .' à '. $goPlanJson->name .'.';
 
-                        Log::put($playerClone, $playerClone, $text, $type="travel");
-                        Log::put($player, $player, $text, $type="travel");
+                        $logtime = time();
+                        Log::put($playerClone, $playerClone, $text, $type="travel", '', $logtime);
+                        Log::put($player, $player, $text, $type="travel", '', $logtime);
 
                     }
 
