@@ -1,1 +1,2 @@
-cp -r ~/aoo-engine/{*.php,config,classes,css,js,scripts} ~/public_html/
+cd ~/aoo-engine
+git pull && cp -r /{*.php,config,classes,css,js,scripts} ~/public_html/
