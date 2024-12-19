@@ -31,6 +31,10 @@ if(!isset($_SESSION['isAdmin'])){
 }
 
 if (isset($_GET["type"])) {
-    shell_exec("deploy_".$_GET["type"]."sh");
+    echo "Deploying ".$_GET["type"];
+    $output = shell_exec("scripts/deploy_".$_GET["type"]."sh");
+    echo $output;
+    echo "<br />Done.";
 }
+?>
 
