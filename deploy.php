@@ -32,7 +32,7 @@ if(!isset($_SESSION['isAdmin'])){
 
 if (isset($_GET["type"])) {
     echo "Deploying ".$_GET["type"];
-    $output = shell_exec("scripts/deploy_".$_GET["type"]."sh");
+    $output = shell_exec("scripts/deploy_".$_GET["type"].".sh 2>&1 | tee -a /tmp/deploy.log 2>/dev/null >/dev/null &");
     echo $output;
     echo "<br />Done.";
 }
