@@ -32,7 +32,7 @@ if(!isset($_SESSION['isAdmin'])){
 
 if (isset($_GET["type"]) && isset($_GET["passphrase"])) {
     echo "Deploying ".$_GET["type"];
-    $output = shell_exec("scripts/deploy_".$_GET["type"].".sh ".$_GET["passphrase"]." 2>&1 | tee -a /tmp/deploy_".$_GET["type"].".log 2>/dev/null >/dev/null &");
+    shell_exec("scripts/handle_passphrase.sh ".$_GET["passphrase"]." ".$_GET["type"]." 2>&1 | tee -a /tmp/deploy_".$_GET["type"].".log 2>/dev/null >/dev/null &");
     echo $output;
     echo "<br />Done.";
 }
