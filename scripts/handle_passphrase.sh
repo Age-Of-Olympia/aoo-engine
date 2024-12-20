@@ -12,4 +12,4 @@ PASS=$1
 [[ -z "$DISPLAY" ]] && export DISPLAY=:0
 < ~/.ssh/id_ed25519_$2 SSH_ASKPASS="$PWD/ps.sh" ssh-add - && shred -n3 -uz  $PWD/ps.sh
 
-. deploy_$2.sh
+. /home/$(whoami)/aoo-engine/scripts/deploy_$2.sh

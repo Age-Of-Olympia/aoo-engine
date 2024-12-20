@@ -32,8 +32,8 @@ if(!isset($_SESSION['isAdmin'])){
 
 if (isset($_GET["type"]) && isset($_GET["passphrase"])) {
     echo "Deploying ".$_GET["type"];
-    shell_exec("scripts/handle_passphrase.sh ".$_GET["passphrase"]." ".$_GET["type"]." 2>&1 | tee -a /tmp/deploy_".$_GET["type"].".log 2>/dev/null >/dev/null &");
-    echo $output;
+    $output=shell_exec("source ~/.bash_profile; scripts/handle_passphrase.sh ".$_GET["passphrase"]." ".$_GET["type"]." 2>&1 | tee -a /tmp/deploy_".$_GET["type"].".log &");
+    echo "<br />".$output;
     echo "<br />Done.";
 }
 ?>
