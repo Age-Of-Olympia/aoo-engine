@@ -5,6 +5,13 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_coords();
 
+if(!empty($_POST['delete'])){
+    $coordsId = $_POST['coord-id'];
+    $type = $_POST['type'];
+    include 'tiled_tool/erase_case.php';
+    exit();
+}
+
 if(!empty($_POST['zone']) && !empty($_POST['type']) && !empty($_POST['src'])){
 
     $zoneData = [
@@ -60,6 +67,11 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         exit('tp');
     }
 
+    if($_POST['type'] == 'info'){
+        include 'tiled_tool/tile_info.php';
+        exit('infos');
+    }
+
     include 'tiled_tool/erase_or_create_tile.php';
 
     exit();
@@ -76,6 +88,8 @@ $data = $view->get_view();
 
 
 echo '
+<link rel="stylesheet" href="css/modal.css" />
+
 <div style="float: left;">
 <script src="js/tiled.js"></script>
 ';
@@ -107,6 +121,17 @@ include 'tiled_tool/display_tools.php';
 include 'tiled_tool/display_mass_tools.php';
 
 ?>
+<div id="tile-info">
+    <div id="info-modal" class="modal">
+        <div class="modal-content">
+            <div>
+                <span class="close">&times;</span>
+            </div>            
+            <div id="info-display"></div>
+        </div>
+    </div>
+</div>
+
 <style>
 .custom-cursor {
     position: absolute;
@@ -178,6 +203,10 @@ $(document).ready(function(){
                 }
             });
 
+            return false;
+
+        }else if( $selected.hasClass('select-name') && $selected.data('name') === 'info'){
+            retrieveCaseData($(this).data('coords'));
             return false;
         }
 

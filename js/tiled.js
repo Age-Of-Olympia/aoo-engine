@@ -62,3 +62,75 @@ function validateZoneData(zoneData) {
   return true;
 }
 
+
+function retrieveCaseData(coords){
+  $.ajax({
+    type: "POST",
+    url: 'tools.php?tiled',
+    data: {
+      'coords':coords,
+      'type':'info',
+      'src':1
+    }, // serializes the form's elements.
+    success: function(response)
+    {
+      displayInfo($('<div>').html(response).find('#tile-info').html());
+    }
+  });
+}
+
+$(document).ready(function(){
+
+  $('.close').click(function () {
+    $('#info-modal').fadeOut();
+  });
+
+  $(window).click(function (e) {
+    if ($(e.target).is('#info-modal')) {
+      $('#info-modal').fadeOut();
+    }
+  });
+
+});
+
+//Display information with magnifying glass icon
+function displayInfo(infosJson){
+  
+  let displayDiv = $("#info-display");
+
+  let data = JSON.parse(infosJson);
+
+  displayDiv.empty();
+
+  
+  data.forEach((item, index) => {
+      let params = item.params ? item.params : "N/A"; 
+      let line = `
+          <div class="info-row" data-index="${index}">
+              <span>Type: ${item.type}, Name: ${item.name}, Params: ${params}</span>
+              <button class="delete-btn" data-coord-id="${item.coords_id}"  data-type="${item.type}">Supprimer</button>
+          </div>
+      `;
+      displayDiv.append(line); 
+  });
+  
+  $('#info-modal').fadeIn();
+}
+
+
+//Delete button on "info" modal
+$(document).on("click", ".delete-btn", function () {
+  $.ajax({
+    type: "POST",
+    url: 'tools.php?tiled',
+    data: {
+      'delete':1,
+      'coord-id':$(this).data("coord-id"),
+      'type': $(this).data("type")
+    }, 
+    success: function()
+    {
+      document.location='tools.php?tiled';
+    }
+  });
+});
