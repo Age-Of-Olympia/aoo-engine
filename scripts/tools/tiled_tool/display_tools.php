@@ -24,6 +24,14 @@ echo '
     src="img/tools/eraser.png"
     />
     
+<img
+    class="map info select-name"
+    data-type="infos"
+    data-params="info"
+    data-name="info"
+    src="img/tools/glass.png"
+    />
+    
     
 ';
 
