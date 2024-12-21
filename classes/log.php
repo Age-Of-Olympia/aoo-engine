@@ -124,6 +124,23 @@ class Log{
 
             if (in_array($row->coords_computed, $arrayCoordsId)) {
                 $return[] = $row;
+                continue;
+            }
+
+            $raceJson = json()->decode('races', $player->data->race);
+            // if the player is in his home plan at the moment of the event + it is a travel
+            if ($raceJson->plan == $row->plan && $row->movement_plan == $row->plan && $row->type == "travel") {
+                // we get the plan pnj
+                $planJson = json()->decode('plans', $row->plan);
+                if (isset($planJson->pnj)) {
+                    $pnj = new Player($planJson->pnj);
+                    $pnj->get_coords();
+                    // if the pnj is in the plan at the moment (should be at the time of event but it would be one more sql request)
+                    if (isset($pnj->coords->plan) && ($pnj->coords->plan == $row->plan)) {
+                        $return[] = $row;
+                        continue;
+                    }
+                }
             }
         }
 
