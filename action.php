@@ -376,21 +376,6 @@ if(!empty($success) && $success == true){
 
         $totalDamages = $playerDamages - $targetDamages;
 
-        // crit
-        if(!isset($target->emplacements->tete) || !empty($actionJson->autoCrit)){
-
-
-            if(rand(1,100) <= DMG_CRIT || !empty($actionJson->autoCrit)){
-
-
-                $critAdd = 3;
-
-                $totalDamages += $critAdd;
-
-                echo '<div><font color="red">Critique! Dégâts augmentés!</font></div>';
-            }
-        }
-
         // tir damages reduce and distance malus has same rules to be applied ( tir + distance > 2 )
         if($distanceMalus){
 
@@ -405,6 +390,21 @@ if(!empty($success) && $success == true){
 
 
             $totalDamages = 1;
+        }
+
+        // crit
+        if(!isset($target->emplacements->tete) || !empty($actionJson->autoCrit)){
+
+
+            if(rand(1,100) <= DMG_CRIT || !empty($actionJson->autoCrit)){
+
+
+                $critAdd = 3;
+
+                $totalDamages += $critAdd;
+
+                echo '<div><font color="red">Critique! Dégâts augmentés!</font></div>';
+            }
         }
 
         $distanceDmgReduceTxt = ($distanceDmgReduce) ? ' - '. $distanceDmgReduce .' (Distance)' : '';
@@ -424,7 +424,7 @@ if(!empty($success) && $success == true){
             echo '
             Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
-            <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages . $critTxt .' - '. $targetDamages . $distanceDmgReduceTxt .' = '. $totalDamages .' dégâts</div>
+            <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>
             ';
 
 
