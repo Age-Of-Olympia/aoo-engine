@@ -78,6 +78,10 @@ EOT);
             return edit_player($argumentValues,$player);
         }
 
+        if($action == 'setfatigue'){
+            return set_fatigue($argumentValues,$player);
+        }
+
         return '<font color="orange">Action : '.$action.' unknown</font>';
     }
 }
@@ -405,3 +409,15 @@ function delete_last_log($player){
     return $player->data->name .' last log deleted';
 }
 
+function set_fatigue($argumentValues, $player)
+{
+
+    if(!isset($argumentValues[2])){
+
+        return '<font color="red">error missing option1 [fatigue]. usage: player setfatigue [mat] [fatigue]</font>';
+    }
+
+    $player->set_fat($argumentValues[2]);
+
+    return 'Fatigue mise à '. max($argumentValues[2],0) .' pour le personnage '. $player->data->name;
+}
