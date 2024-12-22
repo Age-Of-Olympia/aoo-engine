@@ -1007,6 +1007,17 @@ class Player{
         $this->refresh_data();
     }
 
+    public function set_fat($fat){
+
+
+        $sql = 'UPDATE players SET fatigue = GREATEST(?, 0) WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($fat, $this->id));
+
+        $this->refresh_data();
+    }
 
     public function put_fat($fat){
 
