@@ -246,6 +246,22 @@ class Db{
         return $this->get_last_id($table);
     }
 
+    public function start_transaction(?string $name){
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+        $this->db->begin_transaction(0,$name);
+    }
+
+    public function commit_transaction(?string $name){
+        
+        $this->db->commit(0,$name);
+    }
+
+    public function rollback_transaction(?string $name){
+        
+        $this->db->rollback(0,$name);
+
+    }
 
     public static function print_in($values){
 
@@ -264,4 +280,5 @@ class Db{
 
         return $return;
     }
+
 }
