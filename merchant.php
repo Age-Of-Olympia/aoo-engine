@@ -17,8 +17,12 @@ if(!isset($_GET['targetId'])){
     exit('error merchant');
 }
 
-$target = new Player($_GET['targetId']);
 
+$target = new Player($_GET['targetId']);
+if(!$target->have_option('isMerchant'))
+{
+    exit('error merchant');
+}
 // $target->get_data();
 
 
