@@ -2,13 +2,13 @@
 
 class Exchange{
 
-    private $db;
+    public $db;
 
     public int $id;
     public int $playerId;
     public int $targetId;
-    public bool $targetOk;
-    public bool $playerOK;
+    public int $targetOk=0;
+    public int $playerOk=0;
     public $updateTime;
 
     public $items = [];
@@ -38,7 +38,7 @@ class Exchange{
         while($row = $res->fetch_object()){
             $this->playerId = $row->player_id;
             $this->targetId = $row->target_id;
-            $this->playerOK = $row->player_ok;
+            $this->playerOk = $row->player_ok;
             $this->targetOk = $row->target_ok;
             $this->updateTime = $row->update_time;
         }
@@ -75,40 +75,78 @@ class Exchange{
 
     }
 
-    public function add_item_to_exchange($itemId, $n){
+    public function add_item_to_exchange($itemId, $n, $itemOwnerId){
+        $this->refuse_exchange(true,true);
+
         $values = array(
             'exchange_id'=>$this->id,
             'item_id'=>$itemId,
             'n'=>$n,
-            'player_id'=>$this->playerId,
-            'target_id'=>$this->targetId
+            'player_id'=>$itemOwnerId == $this->playerId ? $this->playerId : $this->targetId,
+            'target_id'=>$itemOwnerId == $this->playerId ? $this->targetId : $this->playerId
         );
         $this->db->insert('players_items_exchanges', $values);
-
     }
 
-    public function accept_exchange(){
+    public function remove_item_from_exchange($item_exchange_id,$itemId,$itemN, $itemOwnerId){
+        $this->refuse_exchange(true,true);
+        $sql = '
+        DELETE FROM
+        players_items_exchanges
+        WHERE
+        exchange_id = ?
+        AND
+        item_id = ?
+        AND
+        n = ?
+        AND
+        player_id = ?
+        ';
+    
+        $this->db->exe($sql, array($this->id,$itemId,$itemN,$itemOwnerId));
+    }
+
+    public function is_in_progress()
+    {
+        return $this->playerOk==0 || $this->targetOk==0;
+    }
+    
+    public function accept_exchange($Istarget){
         $sql = '
         UPDATE
         items_exchanges
-        SET
-        target_ok = 1,
-        player_ok = 1,
-        update_time = ?
+        SET ';
+        $sql.=$Istarget ?'target_ok = 1, ' :'player_ok = 1, ';
+        $sql.='update_time = ?
         WHERE
         id = ?
         ';
-    
+        if($Istarget)
+        {
+            $this->targetOk=1;
+        } 
+        else
+        {
+            $this->playerOk=1;
+        }
         $this->db->exe($sql, array(time(),$this->id));
     }
 
-    public function refuse_exchange(){
+    public function refuse_exchange($Istarget,$IsPlayer){
+        $editNeeded = $Istarget && $this->targetOk==1;
+        $editNeeded = $editNeeded || ($IsPlayer && $this->playerOk==1);
+        if(!$editNeeded){
+            return;
+        }
         $sql = '
         UPDATE
         items_exchanges
-        SET
-        target_ok = -1,
-        update_time = ?
+        SET ';
+        if($Istarget)
+            $sql.='target_ok = 0, ';
+        if($IsPlayer)
+            $sql.='player_ok = 0, ';
+        $sql.='update_time = ?
         WHERE
         id = ?
         ';
@@ -122,6 +160,7 @@ class Exchange{
         items_exchanges
         SET
         player_ok = -1,
+        target_ok = -1,
         update_time = ?
         WHERE
         id = ?
@@ -130,11 +169,39 @@ class Exchange{
         $this->db->exe($sql, array(time(),$this->id));
     }
 
-    public function give_items( $player ){
+    public function give_items( $from_player, $to_player ){
         foreach($this->items as $exchange_item){
+           if($exchange_item->player_id != $from_player->id)continue;
+            if($exchange_item->target_id != $to_player->id && $exchange_item->player_id != $to_player->id){
+                throw new Exception('Player is not the target of the exchange');
+                continue;
+            }
+            if($exchange_item->n < 0){
+                throw new Exception('Negative item count');
+                continue;
+            }
             $item = new Item($exchange_item->item_id);
-            $item->add_item($player, $exchange_item->n, true);
+            $item->add_item($to_player, $exchange_item->n, true);
         }
+    }
+
+    public function render_items_for_player($playerId){
+        $return = '';
+        $noItem= true;
+        foreach($this->items as $exchange_item){
+            if($exchange_item->player_id != $playerId){
+                continue;
+            }
+            $item = new Item($exchange_item->item_id);
+            $item->get_data();
+            $return .= '<li>'. $exchange_item->n . ' ' . $item->data->name. '</li>';;
+            $noItem = false;
+        }
+
+        if($noItem){
+            $return = '<li>Aucun objet</li>';
+        }
+        return $return;
     }
 
     public static function get_open_exchanges($playerId){
@@ -143,8 +210,7 @@ class Exchange{
 
         $sql = 'SELECT * FROM items_exchanges
          WHERE (player_id = ? or target_id = ?)
-         AND  target_ok= 0 
-         AND player_ok >=0
+         AND (target_ok = 0 or player_ok = 0)
          order by update_time desc';
 
 
