@@ -7,3 +7,5 @@ db/updates_done/
 /data/
 /.idea/
 *.kate-swp
+vendor/
+.bash_history
