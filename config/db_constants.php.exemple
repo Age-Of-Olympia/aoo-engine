@@ -1,12 +1,15 @@
 <?php
 
 // DB CONSTANT
-
+// We have redundant data because we are switching to Doctrine
 define('DB_CONSTANTS', array(
     'host'=>"localhost",
     'user'=>"root",
     'psw'=>"",
-    'db'=>""
+    'db'=>"",
+    'password'=>"",
+    'dbname'=>"",
+    'driver' => 'pdo_mysql',
 ));
 
 

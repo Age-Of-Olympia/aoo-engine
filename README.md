@@ -25,6 +25,8 @@ En cliquant sur ce bouton, VsCode va redémarrer et builder l'image Docker qui c
 
 Cette image peut-être un peu longue à construire la première fois, n'hésitez pas à afficher les logs, ça occupe !
 
+A la fin de la construction, le devcontainer va lancer les commandes de base pour télécharger les ressources néssaires, en particulier `composer install`.
+
 Une fois que c'est fait, on se retrouve dans la fenêtre suivante :
 
 ![vscode réouvert dans un container](./docs/images/vscode_inside_devcontainer.png)
@@ -41,10 +43,13 @@ et mettez le contenu suivant :
 
 ```code
 define('DB_CONSTANTS', array(
-    'host'=>"mariadb-aoo4:3306",
+    'host'=>"localhost",
     'user'=>"root",
-    'psw'=>"passwordRoot",
-    'db'=>"aoo4"
+    'psw'=>"",
+    'db'=>"",
+    'password'=>"",
+    'dbname'=>"",
+    'driver' => 'pdo_mysql',
 ));
 ```
 sauvegardez et vous être prêt ! 
@@ -60,6 +65,8 @@ apache2-foreground
 Voici le résultat attendu : 
 
 ![gif qui montre le lancement de la commande et l'affichage du jeu par la suite](./docs/gifs/lancement_serveur.gif)
+
+Attention, il exite un bug dans apache qui fait que le serveur d'arrête avec le signal SIGWINCH lorsque l'on redimensionne la fenêtre du terminal. Il suffit alors de le relancer.
 
 ### Debug
 
