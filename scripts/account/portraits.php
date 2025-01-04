@@ -87,7 +87,7 @@ $(document).ready(function(){
 include("checks/admin-check.php");
 
 echo '<hr>';
-echo '<div>Panneau d\'administration pour ajouter un portrait Nain</div>';
+echo '<div>Panneau d\'administration pour ajouter un portrait '.$player->data->race.'</div>';
 
 $raceService = new RaceService();
 

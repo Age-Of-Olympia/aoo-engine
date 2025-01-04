@@ -51,7 +51,7 @@ $(document).ready(function(){
 include("checks/admin-check.php");
 
 echo '<hr>';
-echo '<div>Panneau d\'administration pour ajouter un avatar Nain</div>';
+echo '<div>Panneau d\'administration pour ajouter un avatar '.$player->data->race.'</div>';
 
 
 $raceService = new RaceService();
