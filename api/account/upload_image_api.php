@@ -141,12 +141,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $entityManager->persist($race);
         $entityManager->flush();
 
-        echo "Image uploaded successfully!<br>";
-        echo "Main file path: " . htmlspecialchars($destinationPath) . "<br>";
+        header('Content-Type: application/json');
+
+        $resMessage = "Envoi réussi !<br>";
+        $resMessage .= "Chemin du fichier principal : " . htmlspecialchars($destinationPath) . "<br>";
         if (isset($miniPath)) {
-            echo "Mini file path: " . htmlspecialchars($miniPath) . "<br>";
+            $resMessage .= "Chemin du fichier mini : " . htmlspecialchars($miniPath) . "<br>";
         }
+
+        echo json_encode([
+            'success' => true,
+            'message' => $resMessage,
+        ]);
+
     } catch (Exception $e) {
-        echo "Error processing image: " . $e->getMessage();
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage() 
+        ]);
+
     }
 }

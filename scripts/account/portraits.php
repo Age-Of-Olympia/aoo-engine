@@ -1,5 +1,8 @@
 <?php
 
+use App\Entity\EntityManagerFactory;
+use App\Entity\Race;
+use App\Service\RaceService;
 
 $dir = 'img/portraits/'. $player->data->race .'/';
 
@@ -79,3 +82,19 @@ $(document).ready(function(){
     });
 });
 </script>
+
+<?php
+include("checks/admin-check.php");
+
+echo '<hr>';
+echo '<div>Panneau d\'administration pour ajouter un portrait Nain</div>';
+
+$raceService = new RaceService();
+
+// Fetch Race by name
+$race = $raceService->getRaceByName($player->data->race);
+
+$selectedRaceId = $race->getId();
+$selectedType   = 'portrait';
+
+include ($_SERVER['DOCUMENT_ROOT'].'/src/Form/upload_image_form.php');

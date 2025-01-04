@@ -1,5 +1,8 @@
 <?php
 
+use App\Entity\EntityManagerFactory;
+use App\Entity\Race;
+use App\Service\RaceService;
 
 $dir = 'img/avatars/'. $player->data->race .'/';
 
@@ -14,7 +17,6 @@ if(!empty($_POST['img'])){
 
 
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
-
 
 foreach(File::scan_dir($dir) as $e){
 
@@ -44,3 +46,20 @@ $(document).ready(function(){
 });
 </script>
 
+<?php
+
+include("checks/admin-check.php");
+
+echo '<hr>';
+echo '<div>Panneau d\'administration pour ajouter un avatar Nain</div>';
+
+
+$raceService = new RaceService();
+
+// Fetch Race by name
+$race = $raceService->getRaceByName($player->data->race);
+
+$selectedRaceId = $race->getId();
+$selectedType   = 'avatar';
+
+include ($_SERVER['DOCUMENT_ROOT'].'/src/Form/upload_image_form.php');
