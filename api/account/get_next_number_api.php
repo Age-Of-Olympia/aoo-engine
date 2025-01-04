@@ -10,7 +10,7 @@ $entityManager = EntityManagerFactory::getEntityManager();
 
 header('Content-Type: application/json');
 
-// 1) Read query params (e.g., /get_next_number.php?type=portrait&raceId=2)
+// 1) Read query params (e.g., /get_next_number_api.php?type=portrait&raceId=2)
 $type   = $_GET['type']   ?? '';
 $raceId = $_GET['raceId'] ?? '';
 
