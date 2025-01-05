@@ -1,0 +1,24 @@
+{
+
+    "name": "Bonjour, petite Âme",
+
+    "steps":[
+
+        {
+            "name": "Tutoriel",
+            "text": "Parlez à Gaïa pour apprendre à vous déplacer puis attaquez-la.",
+            "gains":[
+
+            ]
+        },
+        {
+            "name": "Quitter Gaïa",
+            "text": "Déplacez-vous jusqu'à la planète Olympia puis cliquez-dessus.",
+            "gains":[
+
+                {"item": "or", "n": 20}
+
+            ]
+        }
+    ]
+}

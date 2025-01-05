@@ -1,0 +1,13 @@
+{
+    "name": "Privés",
+
+    "forums":[
+
+        {
+            "name": "La Caverne Bruyante"
+        },
+        {
+            "name": "L'Arbre des Murmures"
+        }
+    ]
+}

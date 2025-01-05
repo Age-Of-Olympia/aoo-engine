@@ -1,0 +1,10 @@
+{
+    "id": 32,
+    "name": "Route",
+    "private": 0,
+    "price": 10,
+    "race": "common",
+    "type": "structure",
+    "subtype": "tiles",
+    "text": "Une surface de pierre qui facilite les déplacements."
+}

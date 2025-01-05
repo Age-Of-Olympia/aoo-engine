@@ -1,0 +1,32 @@
+{
+    "name": "Assomoir",
+    "raFont": "ra-cracked-helm",
+    "type": "sort",
+    "subtype": "technique",
+
+    "costs": {"pm": 7},
+
+    "text": "Ignore le casque (chance de critique).",
+
+    "targetType": "other",
+
+    "distanceMax": 1,
+
+    "playerJet": "cc/ct",
+    "targetJet": "cc/agi",
+
+    "playerDamages": "f",
+    "targetDamages": "e",
+
+    "bonusDamages": 4,
+
+    "targetIgnore":["tete"],
+
+    "log": "PLAYER a lancé NAME sur TARGET.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"}
+    ]
+}

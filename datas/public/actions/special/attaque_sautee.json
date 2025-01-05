@@ -1,0 +1,38 @@
+{
+    "name": "Attaque Sautée",
+    "raFont": "ra-axe-swing",
+    "type": "sort",
+    "subtype": "technique",
+
+    "costs": {"pm": 12},
+
+    "text": "Avec une arme de mêlée, déplace immédiatement le personnage au contact de la cible et lui inflige des dégâts magiques.",
+
+    "targetType": "other",
+
+    "distanceMin": 2,
+
+    "playerJet": "cc/ct",
+    "targetJet": "cc/agi",
+
+    "playerDamages": "f",
+    "targetDamages": "e",
+
+    "bonusDamages": "m",
+
+    "itemConditions":[
+
+        {"emplacement": "main1", "condition": "subtype", "value": "melee"}
+    ],
+
+    "script": "scripts/actions/attaque_sautee.php",
+
+    "log": "PLAYER a lancé NAME sur TARGET.",
+    "targetLog": "TARGET a subi NAME de PLAYER.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"}
+    ]
+}

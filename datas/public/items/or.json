@@ -1,0 +1,11 @@
+{
+    "id": 1,
+    "name": "Or",
+    "type": "monnaie",
+    "private": 0,
+    "price": 1,
+    "text": "La monnaie d'échange ayant cours sur Olympia.",
+    "forbid": {
+        "market": 1
+    }
+}

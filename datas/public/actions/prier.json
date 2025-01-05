@@ -1,0 +1,8 @@
+{
+    "name": "Prier",
+    "raFont": "ra-crowned-heart",
+    "targetType": "self",
+    "log": "PLAYER a prié les Dieux.",
+    "script": "scripts\/actions\/prier.php",
+    "noBerserkCheck": 1
+}

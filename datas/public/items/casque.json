@@ -1,0 +1,14 @@
+{
+    "id": 75,
+    "name": "Casque Phrygien",
+    "private": 0,
+    "price": 250,
+    "race": "nain",
+    "type": "equipement",
+    "text": "Il est de forme conique avec une extrémité qui s'arrondit vers l'avant, à la manière d'un bonnet phrygien ; les protections de joues pouvant être articulées grâce à des charnières.",
+    "subtype": "casque",
+    "emplacement": "tete",
+    "e": 2,
+    "p": -1,
+    "spellMalus": 1
+}

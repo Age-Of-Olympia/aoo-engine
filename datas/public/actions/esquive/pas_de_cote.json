@@ -1,0 +1,24 @@
+{
+    "name": "Pas de Côté",
+    "raFont": "ra-player-dodge",
+    "type": "sort",
+    "subtype": "technique",
+
+    "costs": {"pm": 7},
+
+    "text": "Esquive la prochaine attaque physique en se déplaçant aléatoirement d'une case (nécessite 1Mvt).",
+
+    "targetType": "self",
+
+    "forbidIf":[
+
+        {"who": "player", "have": "effect", "name": "pas_de_cote"}
+    ],
+
+    "addEffects": [
+
+        {"name": "pas_de_cote", "on": "player", "when": "always", "text": "La prochaine attaque physique que vous subirez sera esquivée en vous déplaçant aléatoirement d'une case, s'il vous reste un Mvt (persiste jusqu'à votre prochain tour)."}
+    ],
+
+    "log": "PLAYER a lancé NAME sur lui-même."
+}

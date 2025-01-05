@@ -1,0 +1,31 @@
+{
+    "name": " Poings de Pierre",
+    "raFont": "ra-barbed-arrow",
+    "type": "sort",
+
+    "costs": {"pm": 8},
+
+    "text": "Vos poings deviennent durs comme de la roche millénaire, que vous abattez sur vos ennemis",
+
+    "targetType": "other",
+
+	"distanceMax": 1,
+
+    "playerJet": "fm",
+    "targetJet": "fm",
+
+    "playerDamages": "m",
+    "targetDamages": "m",
+
+    "bonusDamages": 8,
+
+    "spellMalus": 1,
+
+    "log": "PLAYER a lancé NAME sur TARGET.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"}
+    ]
+}

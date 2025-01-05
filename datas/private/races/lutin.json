@@ -1,0 +1,33 @@
+{
+    "name": "Lutin",
+    "text": "",
+    "pv": 45,
+    "cc": 8,
+    "ct": 8,
+    "f": 7,
+    "e": 3,
+    "agi": 6,
+    "a": 2,
+    "mvt": 4,
+    "p": 4,
+    "pm": 15,
+    "fm": 6,
+    "m": 3,
+    "r": 3,
+    "rm": 4,
+    "spd": 16,
+    "ae": 1,
+    "bgColor": "white",
+    "color": "black",
+    "plan": "antre_les_confins",
+    "faction": "saruta_et_freres",
+    "actions": [
+        "attaquer",
+        "courir",
+        "entrainement",
+        "fouiller",
+        "prier",
+        "repos"
+    ],
+    "animateur": -28
+}

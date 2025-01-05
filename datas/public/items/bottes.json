@@ -1,0 +1,12 @@
+{
+    "id": 50,
+    "name": "Bottes Tâlroval",
+    "private": 0,
+    "price": 250,
+    "race": "elfe",
+    "type": "equipement",
+    "subtype": "bottes",
+    "emplacement": "pieds",
+    "text": "Ces bottes sont appelées «Pieds-ailés» par les Elfes.",
+    "mvt": 2
+}

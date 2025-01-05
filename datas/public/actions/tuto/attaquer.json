@@ -1,0 +1,21 @@
+{
+    "name": "Attaquer",
+    "raFont": "ra-crossed-swords",
+
+    "targetType": "other",
+
+    "distanceMax": 1,
+
+    "playerJet": "cc/ct",
+    "targetJet": "0",
+
+    "playerDamages": "0",
+    "targetDamages": "e",
+
+    "useEmplacement": "main1",
+
+    "log": "PLAYER a attaqué TARGET avec WEAPON.",
+    "logTarget": "TARGET a été attaqué par PLAYER avec WEAPON.",
+
+    "script": "scripts/actions/attaquer_tuto.php"
+}

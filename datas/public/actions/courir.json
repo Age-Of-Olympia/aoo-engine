@@ -1,0 +1,8 @@
+{
+    "name": "Courir",
+    "raFont": "ra-boot-stomp",
+    "targetType": "self",
+    "log": "PLAYER s'est mis à courir.",
+    "script": "scripts\/actions\/courir.php",
+    "noBerserkCheck": 1
+}

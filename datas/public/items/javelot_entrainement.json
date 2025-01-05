@@ -1,0 +1,13 @@
+{
+    "id": 29,
+    "name": "Javelot d'Entraînement",
+    "private": 0,
+    "price": 50,
+    "race": "common",
+    "type": "equipement",
+    "emplacement": "main1",
+    "text": "Cette arme en bois et en pierre permet de s'entraîner à coups réels sans se faire (trop) mal.",
+    "subtype": "melee",
+    "ct": 1,
+    "f": -3
+}

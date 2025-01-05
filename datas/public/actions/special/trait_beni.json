@@ -1,0 +1,35 @@
+{
+    "name": "Trait Béni",
+    "raFont": "ra-supersonic-arrow",
+    "type": "sort",
+
+    "costs": {"pm": 12},
+
+    "text": "Ajoute des dégâts magiques lors d'une attaque au tir.",
+
+    "targetType": "other",
+
+    "distanceMin": 2,
+
+    "playerJet": "cc/ct",
+    "targetJet": "cc/agi",
+
+    "playerDamages": "f",
+    "targetDamages": "e",
+
+    "bonusDamages": "m",
+
+    "itemConditions":[
+
+        {"emplacement": "main1", "condition": "subtype", "value": "tir"}
+    ],
+
+    "log": "PLAYER a lancé NAME sur TARGET.",
+    "logTarget": "TARGET a subi NAME de PLAYER.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"}
+    ]
+}

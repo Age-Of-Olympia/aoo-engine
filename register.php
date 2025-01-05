@@ -161,7 +161,9 @@ if(!empty($_POST['race'])){
 
         $selected = ($e == $_POST['race']) ? 'selected' : '';
 
-        echo '<option value="'. $e .'" '. $selected .'>'. $raceJson->name .'</option>';
+        if ($raceJson) {
+            echo '<option value="'. $e .'" '. $selected .'>'. $raceJson->name .'</option>';
+        }
     }
 
     echo '</td>';

@@ -1,0 +1,11 @@
+{
+    "name": "Sceau Elfique",
+    "raFont": "ra-circle-of-circles",
+    "type": "sort",
+
+    "costs": {"pm": 0},
+
+    "text": "Le Sceau magique permettant l'accès à Eryn Dolen, la Forêt Secrète des Elfes.",
+
+    "targetType": "none"
+}

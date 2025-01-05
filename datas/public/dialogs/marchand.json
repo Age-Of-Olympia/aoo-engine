@@ -1,0 +1,69 @@
+{
+
+    "id": "marchand",
+
+    "name": "TARGET_NAME",
+
+    "type": "pnj",
+
+    "custom": "",
+
+    "dialog":
+    [
+
+        {
+            "id": "bonjour",
+            "text": "Bienvenue sur le marché itinérant de Saruta & Frères, PLAYER_NAME!",
+            "options":
+            [
+                {"go": "acheter",  "text": "Je souhaite <font color='#f39c12'>acheter</font> un objet."},
+                {"go": "vendre",  "text": "Je souhaite <font color='#3498db'>vendre</font> un objet."},
+                {"go": "echange",  "text": "Je souhaite <font color='##1ba377'>envoyer ou recevoir</font> un objet."},
+                {"url": "merchant.php?targetId=TARGET_ID&spells",  "text": "Je souhaite acheter un Parchemin de sort."},
+                {"go": "banque",  "text": "Je veux accéder à la Banque."}
+            ]
+        },
+
+        {
+            "id": "banque",
+            "text": "Que souhaitez-vous faire à la Banque?",
+            "options":
+            [
+                {"url": "merchant.php?targetId=TARGET_ID&bank",  "text": "Retirer un objet"},
+                {"url": "merchant.php?targetId=TARGET_ID&inventory",  "text": "Déposer un objet."},
+                {"go": "bonjour",  "text": "[Retour]"}
+            ]
+        },
+
+        {
+            "id": "acheter",
+            "text": "Pour <font color='#f39c12'>acheter</font> un objet, regardez les offres de Vente.",
+            "options":
+            [
+                {"url": "merchant.php?targetId=TARGET_ID&bids",  "text": "[voir les offres de Vente]"},
+                {"go": "bonjour",  "text": "[Retour]"}
+            ]
+        },
+
+        {
+            "id": "vendre",
+            "text": "Pour <font color='#3498db'>vendre</font> un objet, jetez un oeil aux demandes d'Achat.",
+            "options":
+            [
+                {"url": "merchant.php?targetId=TARGET_ID&asks",  "text": "[voir les demandes d'Achat]"},
+                {"go": "bonjour",  "text": "[Retour]"}
+            ]
+        },
+
+        {
+            "id": "echange",
+            "text": "Pour <font color='#1ba377'>envoyer ou recevoir</font> un objet, jetez un oeil aux échanges.",
+            "options":
+            [
+                {"url": "merchant.php?targetId=TARGET_ID&exchanges",  "text": "[voir les échanges]"},
+                {"go": "bonjour",  "text": "[Retour]"}
+            ]
+        }
+    ]
+}
+

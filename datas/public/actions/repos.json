@@ -1,0 +1,8 @@
+{
+    "name": "Repos",
+    "raFont": "ra-campfire",
+    "targetType": "self",
+    "log": "PLAYER s'est reposé.",
+    "script": "scripts\/actions\/repos.php",
+    "noBerserkCheck": 1
+}

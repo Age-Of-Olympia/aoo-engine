@@ -1,0 +1,25 @@
+ {
+
+    "name":"Eryn Dolen",
+
+    "text":"La Forêt Secrète des Elfes d'Olympia.",
+
+    "raFont": "ra-moon-sun",
+
+    "role":[
+
+        {"name":"Guerrier","showPosition":1,"showForum":1,"defaultRole":1},
+
+        {"name":"Grand Argentier","addMember":1,"showPosition":1,"showForum":1},
+        {"name":"Chancelier","addMember":1,"showPosition":1,"showForum":1},
+        {"name":"Gardienne d'Eryn Dolen","addMember":1,"showPosition":1,"showForum":1},
+        {"name":"Gardien des Abysses","addMember":1,"showPosition":1,"showForum":1},
+
+        {"name":"Sage","addMember":1,"showPosition":1,"showForum":1,"editRole":1},
+
+        {"name":"Grand Maître du Conseil","showPosition":1,"editRole":1,"kickMember":1,"addMember":1,"showForum":1}
+
+    ]
+
+
+ }

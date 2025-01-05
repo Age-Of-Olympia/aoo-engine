@@ -1,0 +1,189 @@
+{
+    "common": [
+        {
+            "name": "gladius_entrainement",
+            "recette": [
+                {
+                    "name": "bois",
+                    "n": 2,
+                    "id": 89
+                }
+            ],
+            "id": 18
+        },
+        {
+            "name": "gladius",
+            "recette": [
+                {
+                    "name": "pierre",
+                    "n": 2,
+                    "id": 86
+                },
+                {
+                    "name": "or",
+                    "n": 30,
+                    "id": 1
+                }
+            ],
+            "id": 19
+        },
+        {
+            "name": "mur_pierre",
+            "recette": [
+                {
+                    "name": "pierre",
+                    "n": 10,
+                    "id": 86
+                }
+            ],
+            "id": 25
+        },
+        {
+            "name": "javelot_entrainement",
+            "recette": [
+                {
+                    "name": "bois",
+                    "n": 1,
+                    "id": 89
+                },
+                {
+                    "name": "pierre",
+                    "n": 1,
+                    "id": 86
+                }
+            ],
+            "id": 29
+        },
+        {
+            "name": "arc",
+            "recette": [
+                {
+                    "name": "bois",
+                    "n": 1,
+                    "id": 89
+                }
+            ],
+            "id": 5
+        },
+        {
+            "name": "baton_marche",
+            "recette": [
+                {
+                    "name": "bois",
+                    "n": 1,
+                    "id": 89
+                }
+            ],
+            "id": 8
+        },
+        {
+            "name": "pioche",
+            "recette": [
+                {
+                    "name": "bois",
+                    "n": 1,
+                    "id": 89
+                },
+                {
+                    "name": "pierre",
+                    "n": 2,
+                    "id": 86
+                }
+            ],
+            "id": 30
+        },
+        {
+            "name": "route",
+            "recette": [
+                {
+                    "name": "pierre",
+                    "n": 2,
+                    "id": 86
+                }
+            ],
+            "id": 32
+        },
+        {
+            "name": "table_bois",
+            "recette": [
+                {
+                    "name": "bois",
+                    "n": 5,
+                    "id": 89
+                }
+            ],
+            "id": 35
+        }
+    ],
+    "lutin": [
+        {
+            "name": "anneau",
+            "recette": [
+                {
+                    "name": "or",
+                    "n": 100,
+                    "id": 1
+                },
+                {
+                    "name": "bois",
+                    "n": 1,
+                    "id": 89
+                }
+            ],
+            "id": 37
+        }
+    ],
+    "elfe": [
+        {
+            "name": "bottes",
+            "recette": [
+                {
+                    "name": "cuir",
+                    "n": 3,
+                    "id": 93
+                },
+                {
+                    "name": "or",
+                    "n": 20,
+                    "id": 1
+                }
+            ],
+            "id": 50
+        }
+    ],
+    "nain": [
+        {
+            "name": "casque",
+            "recette": [
+                {
+                    "name": "cuir",
+                    "n": 2,
+                    "id": 93
+                },
+                {
+                    "name": "or",
+                    "n": 50,
+                    "id": 1
+                }
+            ],
+            "id": 75
+        }
+    ],
+    "ressource": [
+        {
+            "name": "pierre",
+            "recette": [],
+            "id": 86
+        },
+        {
+            "name": "bois",
+            "recette": [],
+            "id": 89
+        },
+        {
+            "name": "cuir",
+            "recette": [],
+            "id": 93
+        }
+    ]
+}

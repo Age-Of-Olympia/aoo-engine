@@ -1,0 +1,34 @@
+{
+    "name": "Lien de Vie",
+    "raFont": "ra-level-two-advanced",
+    "type": "sort",
+    "costs": {
+        "pm": 8
+    },
+    "text": "Puise dans la régénération magique pour soigner un blessé.",
+    "targetType": "other",
+    "distanceMax": 1,
+    "playerJet": "fm",
+    "targetJet": 0,
+    "playerHeal": "rm",
+    "forbidIf": [
+        {
+            "who": "player",
+            "have": "effect",
+            "name": "poison_magique"
+        }
+    ],
+    "addEffects": [
+        {
+            "name": "poison_magique",
+            "on": "player",
+            "when": "always",
+            "text": "À votre prochain tour, vous ne récupérerez pas de Points de Magie."
+        }
+    ],
+    "spellMalus": 1,
+    "log": "PLAYER a lancé NAME sur TARGET.",
+    "targetLog": "TARGET a reçu NAME de PLAYER.",
+    "noBerserkCheck": 1
+}
+

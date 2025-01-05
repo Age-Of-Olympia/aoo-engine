@@ -1,0 +1,8 @@
+{
+    "name": "Fouiller",
+    "raFont": "ra-clover",
+    "targetType": "self",
+    "log": "PLAYER a fouillé les alentours.",
+    "script": "scripts\/actions\/fouiller.php",
+    "noBerserkCheck": 1
+}

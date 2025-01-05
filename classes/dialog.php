@@ -283,8 +283,9 @@ class Dialog{
 
 
             $raceJson = json()->decode('races', $k);
-
-            $options[] = (object) array('go'=>$k, 'text'=>$raceJson->name .' '. $e);
+            if ($raceJson) {
+                $options[] = (object) array('go'=>$k, 'text'=>$raceJson->name .' '. $e);
+            }
         }
 
 

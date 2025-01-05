@@ -1,0 +1,12 @@
+{
+    "id": 30,
+    "name": "Pioche",
+    "private": 0,
+    "price": 50,
+    "race": "common",
+    "type": "equipement",
+    "text": "La pioche est un outil composé de deux pièces : une pièce de travail en acier fixée par l'intermédiaire d'un œil à un manche en bois dur. La pièce de métal forme un angle d'environ 90° avec le manche. C'est probablement l'un des plus vieux outils manufacturés du monde, aussi vieux que la connaissance du travail du fer. Cet outil est destiné principalement aux travaux agricoles, de terrassement ou encore d'extraction dans les mines.",
+    "subtype": "melee",
+    "emplacement": "main1",
+    "demolition": 5
+}

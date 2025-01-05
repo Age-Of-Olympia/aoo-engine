@@ -1,0 +1,34 @@
+{
+
+    "id": "olympia",
+
+    "name": "TARGET_NAME",
+
+    "type": "pnj",
+
+    "custom": "",
+
+    "dialog":
+    [
+
+        {
+            "id": "bonjour",
+            "text": "Olympia flotte devant toi. Tu te sens irrépréssiblement attiré vers elle.",
+            "options":
+            [
+                {"go": "continuer",  "text": "[continuer]"}
+            ]
+        },
+
+        {
+            "id": "continuer",
+            "text": "[Vous vous apprêtez à rejoindre Olympia. Vous y serez accueillis par les représentants de votre peuple. N'hésitez-pas à leur poser des questions et à leur demander de l'aide et du matériel! Avancez sur la case de la planète pour basculer vers elle. Bon jeu!]",
+            "options":
+            [
+                {"go": "EXIT",  "text": "[partir]"}
+            ]
+        }
+    ]
+}
+
+

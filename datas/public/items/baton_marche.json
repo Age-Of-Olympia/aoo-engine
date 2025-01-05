@@ -1,0 +1,12 @@
+{
+    "id": 8,
+    "name": "Bâton de marche",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "equipement",
+    "subtype": "melee",
+    "emplacement": "main1",
+    "text": "Ce baton des plus simple permet au voyageur fatigué par la route de poursuivre son chemin quelques lieues de plus avant de devoir s'arrêter. ",
+    "mvt": 1
+}

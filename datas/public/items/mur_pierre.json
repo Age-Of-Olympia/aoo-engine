@@ -1,0 +1,10 @@
+{
+    "id": 25,
+    "name": "Mur de pierre",
+    "type": "structure",
+    "subtype": "walls",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "text": "Un solide mur de pierre."
+}

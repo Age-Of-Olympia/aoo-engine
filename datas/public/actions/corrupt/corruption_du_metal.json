@@ -1,0 +1,31 @@
+{
+    "name": "Corruption du Métal",
+    "raFont": "ra-biohazard",
+    "type": "sort",
+
+    "costs": {"pm": 8},
+
+    "text": "Augmente la chance que l'équipement en métal de l'adversaire se casse.",
+
+    "targetType": "other",
+
+    "playerJet": "fm",
+    "targetJet": "fm",
+
+    "spellMalus": 1,
+
+    "forbidIf":[
+
+        {"who": "target", "have": "effect", "name": "corruption_du_bronze"},
+        {"who": "target", "have": "effect", "name": "corruption_du_cuir"},
+        {"who": "target", "have": "effect", "name": "corruption_des_plantes"},
+        {"who": "target", "have": "effect", "name": "corruption_du_bois"}
+    ],
+
+    "addEffects": [
+
+        {"name": "corruption_du_metal", "on": "target", "when": "win", "duration": 259200, "text": "L'équipement métallique de l'adversaire est corrompu."}
+    ],
+
+    "log": "PLAYER a lancé NAME sur TARGET."
+}

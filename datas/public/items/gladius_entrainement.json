@@ -1,0 +1,13 @@
+{
+    "id": 18,
+    "name": "Gladius d'Entraînement",
+    "private": 0,
+    "price": 50,
+    "race": "common",
+    "type": "equipement",
+    "text": "Cette arme en bois permet de s'entraîner à coups réels sans se faire (trop) mal.",
+    "subtype": "melee",
+    "emplacement": "main1",
+    "cc": 1,
+    "f": -3
+}

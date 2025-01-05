@@ -1,0 +1,43 @@
+{
+
+    "id": "gaia",
+
+    "name": "TARGET_NAME",
+
+    "type": "pnj",
+
+    "custom": "",
+
+    "dialog":
+    [
+
+        {
+            "id": "bonjour",
+            "text": "Il est temps de nous quitter, petite âme. Nous nous sommes assez amusées.",
+            "options":
+            [
+                {"go": "ou",  "text": "Où dois-je aller?"}
+            ]
+        },
+
+        {
+            "id": "ou",
+            "text": "Sur Olympia, bien sûr. Là où ton destin t'attends.",
+            "options":
+            [
+                {"go": "comment",  "text": "Comment y aller?"}
+            ]
+        },
+
+        {
+            "id": "comment",
+            "text": "Déplace-toi par la volonté de ton esprit, tu trouveras ton Monde derrière ces cristaux.<br />Dissipe l'Âme qui bloque le passage, et va!<br />Adieu!<br /><font color='grey'>[Déplacez-vous jusqu'à l'Âme en bas à droite puis cliquez sur elle pour l'attaquer <span class='ra ra-crossed-swords'></span>]</font>",
+            "options":
+            [
+                {"go": "EXIT", "text": "[partir]"}
+            ]
+        }
+    ]
+}
+
+

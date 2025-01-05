@@ -1,0 +1,21 @@
+{
+    "name": "Enchantement d'Armes de Tir",
+    "raFont": "ra-supersonic-arrow",
+
+    "targetType": "self",
+
+    "type": "sort",
+
+    "costs": {"pm": 10},
+
+    "text": "Enchante l'arme de tir équipée (elle devient alors incassable).",
+
+    "log": "PLAYER a enchanté un objet.",
+
+    "itemConditions":[
+
+        {"emplacement": "main1", "condition": "subtype", "value": "tir"}
+    ],
+
+    "script": "scripts/actions/enchant.php"
+}

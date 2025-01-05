@@ -1,0 +1,43 @@
+{
+
+    "id": "gaia2",
+
+    "name": "TARGET_NAME",
+
+    "type": "pnj",
+
+    "custom": "",
+
+    "dialog":
+    [
+
+        {
+            "id": "bonjour",
+            "text": "Ouste! Va-t'en!",
+            "options":
+            [
+                {"go": "ou",  "text": "Où dois-je aller?"}
+            ]
+        },
+
+        {
+            "id": "ou",
+            "text": "La grosse planète orange, là, derrière.",
+            "options":
+            [
+                {"go": "comment",  "text": "Comment y aller?"}
+            ]
+        },
+
+        {
+            "id": "comment",
+            "text": "Saute dans le vide et vole jusqu'à elle.<br /><font color='grey'>[Déplacez-vous jusqu'à la planète orange, en bas à droite. Marcher dessus vous téléportera sur Olympia.]</font>",
+            "options":
+            [
+                {"go": "EXIT", "text": "[partir]"}
+            ]
+        }
+    ]
+}
+
+

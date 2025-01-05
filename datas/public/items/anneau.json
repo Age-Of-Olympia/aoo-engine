@@ -1,0 +1,12 @@
+{
+    "id": 37,
+    "name": "Anneau",
+    "private": 0,
+    "price": 200,
+    "race": "lutin",
+    "type": "equipement",
+    "subtype": "anneau",
+    "emplacement": "doigt",
+    "text": "Un Anneau de Pouvoir prisé des Magiciens.",
+    "p": 1
+}

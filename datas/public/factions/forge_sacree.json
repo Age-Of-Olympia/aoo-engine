@@ -1,0 +1,18 @@
+ {
+
+    "name":"La Forge Sacrée",
+
+    "text":"Faille Naine.",
+
+    "raFont": "ra-forging",
+
+    "role":[
+
+        {"name":"Forgeron","showPosition":1,"showForum":1,"defaultRole":1},
+
+        {"name":"Intendant","showPosition":1,"showForum":1,"addMember":1},
+        {"name":"Roi","showPosition":1,"editRole":1,"kickMember":1,"addMember":1,"showForum":1}
+
+    ]
+
+ }

@@ -1,0 +1,16 @@
+{
+    "id": 5,
+    "name": "Arc",
+    "private": 0,
+    "price": 150,
+    "race": "common",
+    "type": "equipement",
+    "subtype": "tir",
+    "emplacement": "main1",
+    "text": "L'arc est une arme de trait destinée à lancer des flèches.",
+    "cc": -2,
+    "f": 1,
+    "munitions": [
+        "fleche"
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "id": 19,
+    "name": "Gladius",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "equipement",
+    "text": "Épée courte, d'approximativement 60cm à 90cm de longueur totale, de 4cm à 7cm de large et d'environ 0,6kg à 1,5kg, conçue pour délivrer principalement de puissantes frappes d'estoc. Le glaive était large pour que les blessures infligées soient les plus larges possibles, ce qui procurait un impact psychologique supplémentaire sur l'adversaire. ",
+    "subtype": "melee",
+    "emplacement": "main1",
+    "cc": 1,
+    "spellMalus": 1
+}

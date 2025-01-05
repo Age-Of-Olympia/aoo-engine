@@ -1,0 +1,933 @@
+{
+    "tiles": [
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -11,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -11,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "falaise",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -1,
+            "z": 0
+        }
+    ],
+    "walls": [
+        {
+            "name": "gaia",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": -1,
+            "z": 0
+        }
+    ],
+    "triggers": [
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": -1,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 0,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": -1,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": -1,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": -1,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": -1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 0,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 1,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 1,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 1,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 2,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 3,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 4,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 4,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 4,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 4,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 5,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 5,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 6,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 1,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 2,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 3,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 3,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 3,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 4,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 5,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 6,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 6,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 6,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 6,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 7,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 8,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 9,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 9,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 10,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 10,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 6,
+            "y": -11,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 7,
+            "y": -11,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 8,
+            "y": -11,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 9,
+            "y": -11,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 9,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 10,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 10,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 11,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 11,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 11,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "forbidden",
+            "params": "",
+            "x": 11,
+            "y": -9,
+            "z": 0
+        }
+    ],
+    "foregrounds": [
+        {
+            "name": "olympia-00",
+            "x": 7,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "olympia-01",
+            "x": 8,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "olympia-02",
+            "x": 7,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "olympia-03",
+            "x": 8,
+            "y": -8,
+            "z": 0
+        }
+    ],
+    "items": [],
+    "dialogs": [
+        {
+            "name": "question",
+            "params": "Gaïa,gaia,gaia",
+            "x": 2,
+            "y": -1,
+            "z": 0
+        }
+    ],
+    "plants": [],
+    "elements": [
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 4,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 2,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 2,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 3,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 4,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 5,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 5,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 5,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": 0,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -4,
+            "y": 1,
+            "z": 0
+        }
+    ]
+}

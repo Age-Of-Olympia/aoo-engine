@@ -1,0 +1,6752 @@
+{
+    "tiles": [
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -10,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 10,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 8,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 9,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -10,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -10,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -10,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -9,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -8,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "carreaux",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "rune1",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -7,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 7,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "fefnir",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "fefnir",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "rune10",
+            "foreground": 0,
+            "player_id": null,
+            "x": 0,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "caverne",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "rune15",
+            "foreground": 0,
+            "player_id": null,
+            "x": -1,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "rune9",
+            "foreground": 0,
+            "player_id": null,
+            "x": 1,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 6,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 3,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 2,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -2,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -3,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -4,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -5,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "lac_thetis",
+            "foreground": 0,
+            "player_id": null,
+            "x": -6,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 4,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "desert_de_l_egeon",
+            "foreground": 0,
+            "player_id": null,
+            "x": 5,
+            "y": 4,
+            "z": -1
+        }
+    ],
+    "walls": [
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": 5,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -6,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -8,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "cocotier2",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": -8,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": -2,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 8,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 4,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "cocotier1",
+            "player_id": null,
+            "damages": 0,
+            "x": 5,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 0,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "pierre2",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": -9,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": -9,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 8,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": -2,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": 5,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": 4,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "cocotier3",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": 0,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -2,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -5,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -6,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -7,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -6,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -5,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre_bleue",
+            "player_id": null,
+            "damages": 0,
+            "x": -2,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "statues6",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "statue_heroique",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "statue_heroique",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": 0,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "pierre_noire2",
+            "player_id": null,
+            "damages": 0,
+            "x": -2,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": 4,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "pierre2",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "pierre2",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "pierre2",
+            "player_id": null,
+            "damages": 0,
+            "x": -2,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "pierre2",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 4,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 5,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 7,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 5,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 4,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 2,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": 0,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "mur_pierre",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "statues6",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": 6,
+            "z": -1
+        },
+        {
+            "name": "pierre1",
+            "player_id": null,
+            "damages": 0,
+            "x": -1,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "pierre3",
+            "player_id": null,
+            "damages": 0,
+            "x": 1,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "pierre3",
+            "player_id": null,
+            "damages": 0,
+            "x": 5,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "statues5",
+            "player_id": null,
+            "damages": 0,
+            "x": 3,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "statues5",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 4,
+            "y": 7,
+            "z": -1
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": 6,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -6,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -6,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "pilier",
+            "player_id": null,
+            "damages": 0,
+            "x": -4,
+            "y": -7,
+            "z": -1
+        },
+        {
+            "name": "statue_heroique",
+            "player_id": null,
+            "damages": 0,
+            "x": -6,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "statue_heroique",
+            "player_id": null,
+            "damages": 0,
+            "x": -3,
+            "y": -7,
+            "z": -1
+        }
+    ],
+    "triggers": [],
+    "foregrounds": [],
+    "items": [],
+    "dialogs": [],
+    "plants": [],
+    "elements": [
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -4,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": 5,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -3,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -4,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -2,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": 4,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": 5,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -3,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -4,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -5,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -3,
+            "y": -4,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -2,
+            "y": -5,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": 4,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": 6,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": 5,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "boue",
+            "endTime": 0,
+            "x": -1,
+            "y": -6,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -1,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -2,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -5,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -2,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -3,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -4,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -6,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "diamant",
+            "endTime": 0,
+            "x": -6,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 4,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 1,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -6,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -2,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 6,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 2,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 1,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 1,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 1,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 1,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 2,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 3,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 5,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 6,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 4,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 6,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 5,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 4,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 2,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 3,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 2,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 0,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -4,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -5,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 0,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -3,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -4,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -5,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -3,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -2,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -1,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -1,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 0,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 0,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 3,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -3,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 1,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 2,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 4,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 0,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -4,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -3,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -6,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 5,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -1,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -10,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -6,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": -10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 5,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 6,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 10,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 9,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 8,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 7,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 6,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 5,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 4,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 3,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 2,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 1,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": 0,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -1,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -2,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -3,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -4,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -5,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -6,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 6,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": 7,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": 8,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -9,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -8,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -7,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -6,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -6,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -5,
+            "y": 9,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -5,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -4,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "eau",
+            "endTime": 0,
+            "x": -3,
+            "y": 10,
+            "z": 0
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 3,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 2,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 4,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 4,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 5,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 5,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 6,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 3,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "feu",
+            "endTime": 0,
+            "x": 4,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 2,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 4,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 3,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 5,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 4,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 3,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 6,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 2,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 4,
+            "y": 3,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 5,
+            "y": 2,
+            "z": -1
+        },
+        {
+            "name": "lave",
+            "endTime": 0,
+            "x": 6,
+            "y": 1,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -2,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -3,
+            "y": 0,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -3,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -4,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -1,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -2,
+            "y": 4,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -5,
+            "y": -1,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -4,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -5,
+            "y": -2,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -4,
+            "y": -3,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -2,
+            "y": 5,
+            "z": -1
+        },
+        {
+            "name": "styx",
+            "endTime": 0,
+            "x": -6,
+            "y": -1,
+            "z": -1
+        }
+    ]
+}

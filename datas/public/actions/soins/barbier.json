@@ -1,0 +1,23 @@
+{
+    "name": "Barbier",
+    "raFont": "ra-cut-palm",
+    "type": "sort",
+    "subtype": "technique",
+    "costs": {
+        "pm": 8
+    },
+    "text": "Petites et grandes chirurgies des blessés.",
+    "targetType": "other",
+    "distanceMax": 1,
+    "playerJet": "fm",
+    "targetJet": 0,
+    "playerHeal": "agi",
+    "bonusHeal": 0,
+    "spellMalus": 1,
+    "log": "PLAYER a lancé NAME sur TARGET.",
+    "targetLog": "TARGET a reçu NAME de PLAYER.",
+    "noBerserkCheck": 1
+}
+
+    
+

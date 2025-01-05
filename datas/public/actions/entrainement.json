@@ -1,0 +1,12 @@
+{
+    "name": "Entrainement",
+    "raFont": "ra-archery-target",
+    "targetType": "other",
+    "distanceMax": 1,
+    "playerJet": 1,
+    "targetJet": 0,
+    "script": "scripts\/actions\/train.php",
+    "log": "PLAYER s'est entrainé avec TARGET.",
+    "targetLog": "TARGET a été entrainé par PLAYER.",
+    "noBerserkCheck": 1
+}

@@ -1,0 +1,11 @@
+{
+    "id": 86,
+    "name": "Pierre",
+    "type": "equipement",
+    "subtype": "jet",
+    "emplacement": "main1",
+    "private": 0,
+    "price": 15,
+    "race": "common",
+    "text": "Une pierre ou roche (du latin vulgaire rocca) est un matériau naturel presque toujours solide et constitué, essentiellement ou en totalité, d'un assemblage de minéraux."
+}

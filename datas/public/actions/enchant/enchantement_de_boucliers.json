@@ -1,0 +1,21 @@
+{
+    "name": "Enchantement de Boucliers",
+    "raFont": "ra-heavy-shield",
+
+    "targetType": "self",
+
+    "type": "sort",
+
+    "costs": {"pm": 10},
+
+    "text": "Enchante le bouclier équipé (il devient alors incassable).",
+
+    "log": "PLAYER a enchanté un objet.",
+
+    "itemConditions":[
+
+        {"emplacement": "main2", "condition": "subtype", "value": "bouclier"}
+    ],
+
+    "script": "scripts/actions/enchant.php"
+}

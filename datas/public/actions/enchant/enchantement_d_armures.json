@@ -1,0 +1,21 @@
+{
+    "name": "Enchantement d'Armures",
+    "raFont": "ra-vest",
+
+    "targetType": "self",
+
+    "type": "sort",
+
+    "costs": {"pm": 10},
+
+    "text": "Enchante l'armure équipée (elle devient alors incassable).",
+
+    "log": "PLAYER a enchanté un objet.",
+
+    "itemConditions":[
+
+        {"emplacement": "tronc", "condition": "subtype", "value": "armure"}
+    ],
+
+    "script": "scripts/actions/enchant.php"
+}

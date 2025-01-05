@@ -1,0 +1,23 @@
+{
+    "name": "Attaquer",
+    "raFont": "ra-crossed-swords",
+
+    "targetType": "other",
+
+    "playerJet": "cc/ct",
+    "targetJet": "cc/agi",
+
+    "playerDamages": "f",
+    "targetDamages": "e",
+
+    "useEmplacement": "main1",
+
+    "log": "PLAYER a attaqué TARGET avec WEAPON.",
+    "targetLog": "TARGET a été attaqué par PLAYER avec WEAPON.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"}
+    ]
+}

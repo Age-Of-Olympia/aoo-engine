@@ -1,0 +1,32 @@
+{
+    "name": "Flèche Aquatique",
+    "raFont": "ra-thorn-arrow",
+    "type": "sort",
+
+    "costs": {"pm": 5},
+
+    "text": "Projette une flèche composée d'eau sur l'adversaire.",
+
+    "targetType": "other",
+
+    "distanceMin": 2,
+
+    "playerJet": "fm",
+    "targetJet": "fm",
+
+    "playerDamages": "m",
+    "targetDamages": "m",
+
+    "bonusDamages": 3,
+
+    "spellMalus": 1,
+
+    "log": "PLAYER a lancé NAME sur TARGET.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"},
+        {"name": "eau", "on": "target", "when": "win", "text": "L'adversaire est trempé!"}
+    ]
+}

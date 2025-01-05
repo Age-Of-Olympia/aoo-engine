@@ -1,0 +1,28 @@
+{
+    "name": "Voler",
+    "raFont": "ra-nuclear",
+
+    "targetType": "other",
+
+    "playerJet": "agi",
+    "targetJet": "agi",
+
+    "spellMalus": 1,
+
+    "forbidIf":[
+
+        {"who": "player", "have": "effect", "name": "adrenaline"},
+        {"who": "target", "have": "effect", "name": "adrenaline"}
+    ],
+
+    "script": "scripts/actions/vol_a_la_tire.php",
+
+    "log": "PLAYER a volé TARGET.",
+    "targetLog": "TARGET a été volé par PLAYER.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "fail"},
+        {"name": "adrenaline", "on": "target", "when": "fail"}
+    ]
+}

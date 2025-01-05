@@ -1,0 +1,10 @@
+{
+    "id": 109,
+    "name": "Poing",
+    "private": 0,
+    "price": 0,
+    "emplacement": "main1",
+    "type": "equipement",
+    "subtype": "melee",
+    "text": "Description de l'objet."
+}

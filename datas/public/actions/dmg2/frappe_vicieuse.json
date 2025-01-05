@@ -1,0 +1,32 @@
+{
+    "name": "Frappe Vicieuse",
+    "raFont": "ra-diving-dagger",
+    "type": "sort",
+    "subtype": "technique",
+
+    "costs": {"pm": 7},
+
+    "text": "Ignore l'armure de l'adversaire.",
+
+    "targetType": "other",
+
+    "distanceMax": 1,
+
+    "playerJet": "cc/ct",
+    "targetJet": "cc/agi",
+
+    "playerDamages": "f",
+    "targetDamages": "e",
+
+    "bonusDamages": 2,
+
+    "targetIgnore": ["tronc"],
+
+    "log": "PLAYER a lancé NAME sur TARGET.",
+
+    "addEffects": [
+
+        {"name": "adrenaline", "on": "player", "when": "always"},
+        {"name": "adrenaline", "on": "target", "when": "always"}
+    ]
+}

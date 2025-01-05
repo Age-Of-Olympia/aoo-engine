@@ -1,0 +1,4 @@
+mainPlayerId,playerId,time,Y/m/d,H:i:s,cmdLine,result
+1,1,1736117842,2025/01/05,22:57:22,"tp 1 0,0,0,banque_des_lutins","tp Cradek to 0,0,0,banque_des_lutins<br />"
+1,1,1736118462,2025/01/05,23:07:42,"tp 2 -4,2,0,banque_des_lutins","tp Dorna to -4,2,0,banque_des_lutins<br />"
+1,1,1736118541,2025/01/05,23:09:01,"tp 2 1,1,0,banque_des_lutins","tp Dorna to 1,1,0,banque_des_lutins<br />"

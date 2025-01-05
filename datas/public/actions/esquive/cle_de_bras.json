@@ -1,0 +1,24 @@
+{
+    "name": "Clé de bras",
+    "raFont": "ra-bear-trap",
+    "type": "sort",
+    "subtype": "technique",
+
+    "costs": {"pm": 7},
+
+    "text": "Pare la prochaine attaque de mếlée et immobilise l'adversaire (uniquement à Mains nues).",
+
+    "targetType": "self",
+
+    "forbidIf":[
+
+        {"who": "player", "have": "effect", "name": "cle_de_bras"}
+    ],
+
+    "addEffects": [
+
+        {"name": "cle_de_bras", "on": "player", "when": "always", "text": "La prochaine attaque de mêlée que vous subirez sera parée et l'adversaire immobilisé, si vous combattez à mains nues (persiste jusqu'à votre prochain tour)."}
+    ],
+
+    "log": "PLAYER a lancé NAME sur lui-même."
+}

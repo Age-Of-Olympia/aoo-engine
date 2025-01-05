@@ -1,0 +1,13 @@
+{
+    "name": "RP",
+
+    "forums":[
+
+        {
+            "name": "La Grande Assemblée"
+        },
+        {
+            "name": "Le Chant des Souvenirs"
+        }
+    ]
+}

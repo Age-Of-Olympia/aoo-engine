@@ -1,0 +1,15 @@
+ {
+
+    "name":"Saruta & Frères",
+
+    "text":"Caravanes itinérantes sur tout Olympia.",
+
+    "raFont": "ra-gold-bar",
+
+    "role":[
+
+        {"name":"Gestionnaire","showPosition":1,"editRole":1,"kickMember":1,"addMember":1,"showForum":1,"initRole":1},
+        {"name":"Marchand","showPosition":1,"showForum":1},
+        {"name":"Coursier","defaultRole":1}
+    ]
+ }
