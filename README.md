@@ -43,12 +43,12 @@ et mettez le contenu suivant :
 
 ```code
 define('DB_CONSTANTS', array(
-    'host'=>"localhost",
+    'host'=>"mariadb-aoo4:3306",
     'user'=>"root",
-    'psw'=>"",
-    'db'=>"",
-    'password'=>"",
-    'dbname'=>"",
+    'psw'=>"passwordRoot",
+    'db'=>"aoo4",
+    'password'=>"passwordRoot",
+    'dbname'=>"aoo4",
     'driver' => 'pdo_mysql',
 ));
 ```
