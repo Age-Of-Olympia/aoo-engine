@@ -14,11 +14,7 @@ $displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
 
 $player->get_data();
 
-$logAge=ONE_DAY;
-
-if($displayAllCondition) {
-    $logAge = THREE_DAYS;
-}
+$logAge=THREE_DAYS;
 
 ob_start();
 

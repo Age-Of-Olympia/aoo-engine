@@ -11,7 +11,7 @@ class Log{
         $inputCoord = str_replace(",","_",$inputCoord)."_".$coordCompletion[0]."_".$coordCompletion[1];
     }
 
-    public static function get(Player $player,$maxLogAge=ONE_DAY,$type=''){
+    public static function get(Player $player,$maxLogAge=THREE_DAYS,$type=''){
         
         $return = array();
         $db = new Db();
@@ -20,7 +20,6 @@ class Log{
         switch ($type) {
             case 'mdj':
                 $typeCondition = ' WHERE final_logs.type = \'mdj\'';
-                $maxLogAge = THREE_DAYS;
                 break;
             default:
                 $typeCondition = ' WHERE final_logs.type != \'mdj\'';
