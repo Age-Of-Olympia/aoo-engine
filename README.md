@@ -88,7 +88,9 @@ Une fois que c'est fait, il faut alors reconstruire le devcontainer : il faut ap
 
 Pour pouvoir lancer le jeu, il faut utiliser le fichier sql `db/init_noupdates.sql` pour peupler la base.
 
-Cela va créer trois personnages : 
+Ensuite il faut dézipper le fichier `datas/private/players.zip` là où il se trouve, cala va créer un certain nombre de fichiers dans le dossier `players`.
+
+Ces deux actions vont entre autre créer trois personnages : 
 
 - Cradek, matricule 1, Nain, administrateur
 - Dorna, matricule 2, Nain, joueur
