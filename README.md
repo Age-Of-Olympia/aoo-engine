@@ -84,11 +84,16 @@ Il est évidemment possible de modifier l'environnement de travail en modifiant 
 
 Une fois que c'est fait, il faut alors reconstruire le devcontainer : il faut appuyer sur F1 puis taper "Dev Container" dans le moteur de recherche, les différentes commandes, dont celles de reconstruction, apparaîtront.
 
-### Premiers pas sur le jeu 
+### Premiers pas sur le jeu
 
-Pour pouvoir faire tourner le jeu localement, il faudra inscrire un premier personnage via l'inscription normale. Puis ouvrir la console avec ² une fois connecté et saisir les commandes suivantes.
+Pour pouvoir lancer le jeu, il faut utiliser le fichier sql `db/init_noupdates.sql` pour peupler la base.
 
-```
-map load praetorium
-tp 1 0,0,0,praetorium
-```
+Cela va créer trois personnages : 
+
+- Cradek, matricule 1, Nain, administrateur
+- Dorna, matricule 2, Nain, joueur
+- Thyrias, matricule 3, Elfe, joueur
+
+Pour s'y connecter, le mot de passe est `test`.
+
+Pour ouvrir la console d'administration il faut utiliser ² une fois connecté.
