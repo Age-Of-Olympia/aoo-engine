@@ -9,8 +9,8 @@ if(!isset($_SESSION['playerId'])){
 // check admin (only once per session)
 if(!isset($_SESSION['isAdmin'])){
   // check admin
-  $player = new Player($_SESSION['playerId']);
-  if(!$player->have_option('isAdmin')){
+  $playerToCheck = new Player($_SESSION['playerId']);
+  if(!$playerToCheck->have_option('isAdmin')){
       exit();
   }
   else{
