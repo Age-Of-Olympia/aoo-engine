@@ -1,6 +1,7 @@
 <?php
 
 const MIN_GOLD_STOLEN = 5;
+const MAX_XP = 3;
 
 if(!empty($success) && $success == true){
 
@@ -32,10 +33,24 @@ if(!empty($success) && $success == true){
     }
 
     echo '<div>Vous obtenez '. $gain .'Po grâce à votre larcin sur '. $target->data->name .'</div>';
+
+    $playerXp = $player->get_action_xp($target);
+
+    if ($playerXp > MAX_XP) {
+        $playerXp = MAX_XP;
+    }
+
+    echo '
+        <div class="action-details">
+            '. $player->data->name .' (rang '. $playerRank .') +'. $playerXp .'Xp
+        </div>
+    ';
 }
 
 else{
 
+    $playerXp = 0;
+    $targetXp = 2;
 
     echo '<div>Vous êtes pris la main dans le sac!</div>';
 }
