@@ -1,8 +1,5 @@
 <?php
 
-const MIN_GOLD_STOLEN = 5;
-const MAX_XP = 3;
-
 if(!empty($success) && $success == true){
 
     $gold = new Item(1);
@@ -36,8 +33,8 @@ if(!empty($success) && $success == true){
 
     $playerXp = $player->get_action_xp($target);
 
-    if ($playerXp > MAX_XP) {
-        $playerXp = MAX_XP;
+    if ($playerXp > MAX_XP_FOR_STEALING) {
+        $playerXp = MAX_XP_FOR_STEALING;
     }
 
     echo '
