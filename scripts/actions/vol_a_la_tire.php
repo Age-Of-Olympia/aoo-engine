@@ -26,7 +26,7 @@ if(!empty($success) && $success == true){
             $gain += $goldAddedToComplete; 
         }
         // Pockets were empty or the gold could not be given
-        else if ($goldInTargetInventory == 0 || !$res) {
+        else {
             $gold->add_item($player, MIN_GOLD_STOLEN);
             $gain = MIN_GOLD_STOLEN;
         } 
