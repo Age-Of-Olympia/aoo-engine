@@ -37,6 +37,7 @@ if(!empty($success) && $success == true){
         $playerXp = MAX_XP_FOR_STEALING;
     }
 
+    $playerRank = $player->data->rank;
     echo '
         <div class="action-details">
             '. $player->data->name .' (rang '. $playerRank .') +'. $playerXp .'Xp
