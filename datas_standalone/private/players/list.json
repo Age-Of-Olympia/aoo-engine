@@ -1,0 +1,59 @@
+{
+    "list": [
+        {
+            "id": 1,
+            "name": "Cradek",
+            "race": "nain",
+            "xp": 6,
+            "rank": 1,
+            "pr": 0,
+            "faction": "forge_sacree",
+            "secretFaction": "",
+            "lastLoginTime": 1736120123
+        },
+        {
+            "id": 2,
+            "name": "Dorna",
+            "race": "nain",
+            "xp": 6,
+            "rank": 1,
+            "pr": 0,
+            "faction": "forge_sacree",
+            "secretFaction": "",
+            "lastLoginTime": 1736118569
+        },
+        {
+            "id": -1,
+            "name": "Gaïa",
+            "race": "lutin",
+            "xp": 0,
+            "rank": 1,
+            "pr": 0,
+            "faction": "",
+            "secretFaction": "",
+            "lastLoginTime": 0
+        },
+        {
+            "id": 3,
+            "name": "Thyrias",
+            "race": "elfe",
+            "xp": 0,
+            "rank": 1,
+            "pr": 0,
+            "faction": "eryn_dolen",
+            "secretFaction": "",
+            "lastLoginTime": 0
+        }
+    ],
+    "first": {
+        "id": 1,
+        "name": "Cradek",
+        "race": "nain",
+        "xp": 6,
+        "rank": 1,
+        "pr": 0,
+        "faction": "forge_sacree",
+        "secretFaction": "",
+        "lastLoginTime": 1736120123
+    }
+}
