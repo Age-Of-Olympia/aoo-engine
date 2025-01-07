@@ -86,11 +86,11 @@ Une fois que c'est fait, il faut alors reconstruire le devcontainer : il faut ap
 
 ### Premiers pas sur le jeu
 
-Pour pouvoir lancer le jeu, il faut utiliser le fichier sql `db/init_noupdates.sql` pour peupler la base.
+Pour pouvoir lancer le jeu, il faut copier les repertoires `datas_standalone` et `img_standalone` respectivement vers les dossiers `datas` et `img`.
 
-Ensuite il faut dézipper le fichier `datas/private/players.zip` là où il se trouve, cala va créer un certain nombre de fichiers dans le dossier `players`.
+Le fichier `db/init_noupdates.sql` est lancé par le `docker-compose.yml` automatiquement pour peupler la base.
 
-Ces deux actions vont entre autre créer trois personnages : 
+Ces actions vont entre autre créer trois personnages : 
 
 - Cradek, matricule 1, Nain, administrateur
 - Dorna, matricule 2, Nain, joueur
