@@ -329,6 +329,9 @@ define('XP_PER_MINE', 1);       // chaque case creusé rapporte 1xp
 define('ACTION_XP', 5);         // base action Xp
 define('BANK_PCT', 1);          // % gain par jour en banque sans adré
 
+define('MIN_GOLD_STOLEN', 5);
+define('MAX_XP_FOR_STEALING', 3);
+
 /*
  * errors
  */
