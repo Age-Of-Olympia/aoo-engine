@@ -4,104 +4,104 @@
 echo '<h1>Echanges</h1>';
 
 
-if(isset($_GET['create'])) {
+// if(isset($_GET['create'])) {
 
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+//   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    $objects = $_POST['objects'] ?? [];
-    $recipient = Player::get_player_by_name($_POST['recipient']);
+//     $objects = $_POST['objects'] ?? [];
+//     $recipient = Player::get_player_by_name($_POST['recipient']);
 
-    $exchange = new Exchange();
-    $exchange->db->start_transaction('create_exchange');
-    try {
-      $exchange->create($player->id,$recipient->id);
+//     $exchange = new Exchange();
+//     $exchange->db->start_transaction('create_exchange');
+//     try {
+//       $exchange->create($player->id,$recipient->id);
 
-      foreach ($objects as $object) {
-          $decodedObject = json_decode($object, true);
-          $item = new Item($decodedObject['id']);
-          $count = abs($decodedObject['n']);
-          if(!$item->add_item($player, -$count, true))
-          {
-            throw new Exception('Erreur lors de l\'ajout de l\'objet à l\'échange');
-          }
-          $exchange->add_item_to_exchange($item->id, $count,$player->id);
-      }
-    } catch (Throwable $th) {
-      $exchange->db->rollback_transaction('create_exchange');
-      ExitError('Erreur lors de la création de l\'échange');
-    }
-    $exchange->db->commit_transaction('create_exchange');
-    ExitSuccess($exchange->db->get_last_id("items_exchanges"));
-  }
-  exit();
-}
+//       foreach ($objects as $object) {
+//           $decodedObject = json_decode($object, true);
+//           $item = new Item($decodedObject['id']);
+//           $count = abs($decodedObject['n']);
+//           if(!$item->add_item($player, -$count, true))
+//           {
+//             throw new Exception('Erreur lors de l\'ajout de l\'objet à l\'échange');
+//           }
+//           $exchange->add_item_to_exchange($item->id, $count,$player->id);
+//       }
+//     } catch (Throwable $th) {
+//       $exchange->db->rollback_transaction('create_exchange');
+//       ExitError('Erreur lors de la création de l\'échange');
+//     }
+//     $exchange->db->commit_transaction('create_exchange');
+//     ExitSuccess($exchange->db->get_last_id("items_exchanges"));
+//   }
+//   exit();
+// }
 
-if(isset($_GET['accept']) || isset($_GET['refuse'])) {
-  $exchangeId= !empty($_GET['accept']) ? $_GET['accept'] : $_GET['refuse'];
-  $exchange = new Exchange($exchangeId);
-  if(!$exchange->is_in_progress()){
-    exit('Echange déjà cloturé');
-  }
-  $exchange->db->start_transaction('accept_or_reffuse_exchange');
-  try {
-    $exchange->get_base_data();
-    if ($player->id != $exchange->targetId && $player->id != $exchange->playerId){
-      exit('Current player is not part of the exchange');
-    }
-    $isTarget = $player->id == $exchange->targetId;
+// if(isset($_GET['accept']) || isset($_GET['refuse'])) {
+//   $exchangeId= !empty($_GET['accept']) ? $_GET['accept'] : $_GET['refuse'];
+//   $exchange = new Exchange($exchangeId);
+//   if(!$exchange->is_in_progress()){
+//     exit('Echange déjà cloturé');
+//   }
+//   $exchange->db->start_transaction('accept_or_reffuse_exchange');
+//   try {
+//     $exchange->get_base_data();
+//     if ($player->id != $exchange->targetId && $player->id != $exchange->playerId){
+//       exit('Current player is not part of the exchange');
+//     }
+//     $isTarget = $player->id == $exchange->targetId;
 
-    $offeringPlayer = new Player(  $isTarget ? $exchange->playerId : $exchange->targetId);
-    $targetPlayer = new Player( $isTarget ? $exchange->targetId:$exchange->playerId );
-    $offeringPlayer->get_data();
-    if(isset($_GET['accept'])){
-      if(!$exchange->is_in_progress())exit('echange n\'est plus de l\'actualité');
-      $exchange->accept_exchange($isTarget);
-      echo "<b>Vous avez accepté l'échange proposé par ".$offeringPlayer->data->name." </b>";
-      if($exchange->playerOk == 1 && $exchange->targetOk == 1){
-        echo "<b>Vous avez validé l'échange proposé par ".$offeringPlayer->data->name." </b>";
+//     $offeringPlayer = new Player(  $isTarget ? $exchange->playerId : $exchange->targetId);
+//     $targetPlayer = new Player( $isTarget ? $exchange->targetId:$exchange->playerId );
+//     $offeringPlayer->get_data();
+//     if(isset($_GET['accept'])){
+//       if(!$exchange->is_in_progress())exit('echange n\'est plus de l\'actualité');
+//       $exchange->accept_exchange($isTarget);
+//       echo "<b>Vous avez accepté l'échange proposé par ".$offeringPlayer->data->name." </b>";
+//       if($exchange->playerOk == 1 && $exchange->targetOk == 1){
+//         echo "<b>Vous avez validé l'échange proposé par ".$offeringPlayer->data->name." </b>";
 
-        $exchange->give_items(from_player:$offeringPlayer , to_player:$targetPlayer);
-        $exchange->give_items(from_player:$targetPlayer , to_player:$offeringPlayer);
+//         $exchange->give_items(from_player:$offeringPlayer , to_player:$targetPlayer);
+//         $exchange->give_items(from_player:$targetPlayer , to_player:$offeringPlayer);
     
-      }
-    }
-    else if(isset($_GET['refuse'])){
-      $exchange->refuse_exchange(Istarget:$isTarget,IsPlayer:!$isTarget);
-      echo "<b>Vous avez refusé l'échange proposé par ".$offeringPlayer->data->name." </b>";
-    }
-  } catch (Throwable $th) {
-    $exchange->db->rollback_transaction('create_exchange');
-    exit('Erreur lors de l\'acceptation/refus de l\'échange');
-  }
-  $exchange->db->commit_transaction('accept_or_reffuse_exchange');
-}
+//       }
+//     }
+//     else if(isset($_GET['refuse'])){
+//       $exchange->refuse_exchange(Istarget:$isTarget,IsPlayer:!$isTarget);
+//       echo "<b>Vous avez refusé l'échange proposé par ".$offeringPlayer->data->name." </b>";
+//     }
+//   } catch (Throwable $th) {
+//     $exchange->db->rollback_transaction('create_exchange');
+//     exit('Erreur lors de l\'acceptation/refus de l\'échange');
+//   }
+//   $exchange->db->commit_transaction('accept_or_reffuse_exchange');
+// }
 
 
-if(isset($_GET['cancel']) ) {
-  $exchange = new Exchange($_GET['cancel']);
-  $exchange->get_base_data();
-  if(!$exchange->is_in_progress()){
-    exit('Echange déjà cloturé');
-  }
-  $exchange->db->start_transaction('cancel_exchange');
-  try {
-    if ($player->id !== $exchange->playerId && $player->id !== $exchange->targetId){
-      exit('Current player is not the part of the exchange');
-    }
-    $exchange->get_items_data();
-    $offeringPlayer = new Player($exchange->playerId);
-    $targetPlayer = new Player($exchange->targetId);
-    //refund items
-    $exchange->give_items(from_player:$offeringPlayer , to_player:$offeringPlayer);
-    $exchange->give_items(from_player:$targetPlayer , to_player:$targetPlayer);
+// if(isset($_GET['cancel']) ) {
+//   $exchange = new Exchange($_GET['cancel']);
+//   $exchange->get_base_data();
+//   if(!$exchange->is_in_progress()){
+//     exit('Echange déjà cloturé');
+//   }
+//   $exchange->db->start_transaction('cancel_exchange');
+//   try {
+//     if ($player->id !== $exchange->playerId && $player->id !== $exchange->targetId){
+//       exit('Current player is not the part of the exchange');
+//     }
+//     $exchange->get_items_data();
+//     $offeringPlayer = new Player($exchange->playerId);
+//     $targetPlayer = new Player($exchange->targetId);
+//     //refund items
+//     $exchange->give_items(from_player:$offeringPlayer , to_player:$offeringPlayer);
+//     $exchange->give_items(from_player:$targetPlayer , to_player:$targetPlayer);
 
-    $exchange->cancel_exchange();
-  } catch (Throwable $th) {
-    $exchange->db->rollback_transaction('cancel_exchange');
-    exit('Erreur lors de l\'annulation de l\'échange');
-  }
-  $exchange->db->commit_transaction('cancel_exchange');
-}
+//     $exchange->cancel_exchange();
+//   } catch (Throwable $th) {
+//     $exchange->db->rollback_transaction('cancel_exchange');
+//     exit('Erreur lors de l\'annulation de l\'échange');
+//   }
+//   $exchange->db->commit_transaction('cancel_exchange');
+// }
 
 if(isset($_GET['newExchange'])){
 
@@ -193,3 +193,6 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
   </div>
 
 </div>
+<script>
+  
+</script>
