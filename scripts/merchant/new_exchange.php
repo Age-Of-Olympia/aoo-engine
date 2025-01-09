@@ -16,6 +16,7 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
   <div class="button-container">
     <div>
       <input id="autocomplete" type="text" placeholder="Rechercher">
+      <span id="exchange-recipient"></span>
     </div>
   </div>
 
@@ -64,9 +65,8 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
       minLength: 2,
       select: function(event, ui) {
         $('#exchange-recipient').text(ui.item.label);
-        if(objects.length > 0 ){
-          $('#validate-button').prop('disabled', false);
-        }
+        $('#validate-button').prop('disabled', false);
+        $('#autocomplete').hide();
       }
     }).data("ui-autocomplete")._renderItem = function(ul, item) {
       return $("<li>")
@@ -75,9 +75,11 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
     };
 
     $('#cancel-button').click(function(e) {
-        objects = [];
-        updateObjectList();
+       // objects = [];
+       // updateObjectList();
+        $('#validate-button').prop('disabled', true);
         $('#exchange-recipient').text('');
+        $('#autocomplete').show();
         e.preventDefault();
     });
 
@@ -92,7 +94,7 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
         }
         e.preventDefault(); 
         $.ajax({
-              url: 'merchant.php?targetId=<?php echo $target->id ?>&exchanges&create',  
+              url: 'api/exchanges/exchanges-create.php?targetId=<?php echo $target->id ?>',  
               method: 'POST',
               data: $('#object-list-form').serialize(), // Serialize form data
               success: function(response) {
