@@ -14,14 +14,14 @@ $player->get_data();
 // target = merchant
 if(!isset($_GET['targetId'])){
 
-    exit('error merchant');
+    exit('error no merchant');
 }
 
 
 $target = new Player($_GET['targetId']);
 if(!$target->have_option('isMerchant'))
 {
-    exit('error merchant');
+    exit('error not merchant');
 }
 // $target->get_data();
 
