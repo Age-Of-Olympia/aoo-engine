@@ -1,2 +1,6 @@
+echo "===== Deploy ====="
+echo $(date)
 cd ~/aoo-engine
-git pull && cp -ra ~/aoo-engine/{*.php,config,classes,css,js,scripts} ~/public_html/
+git pull \
+&& git log --oneline -1 \
+&& cp -ra ~/aoo-engine/{*.php,admin,api,config,classes,css,js,scripts,src} ~/public_html/
