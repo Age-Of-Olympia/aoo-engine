@@ -1,5 +1,4 @@
-echo "===== Deploy ====="
-echo $(date)
+echo "$(date)<br>"
 cd ~/aoo-engine
 git pull \
 && git log --oneline -1 \
