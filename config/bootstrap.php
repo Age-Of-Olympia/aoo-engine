@@ -3,7 +3,7 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 
-require_once $_SERVER['DOCUMENT_ROOT']."/vendor/autoload.php";
+require_once dirname(__FILE__)."/../vendor/autoload.php";
 
 // Create a simple "default" Doctrine ORM configuration for Attributes
 $orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
