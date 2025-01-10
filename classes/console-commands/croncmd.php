@@ -14,7 +14,11 @@ EOT);
 
     public function execute(  array $argumentValues ) : string
     {
-        $path = "scripts/crons/$argumentValues[0]/$argumentValues[1].php";
+        $path = "scripts/crons/$argumentValues[0].php";
+        
+        if(isset($argumentValues[1])) {
+            $path = "scripts/crons/$argumentValues[0]/$argumentValues[1].php";
+        }
 
         if (file_exists($path)) {
 
