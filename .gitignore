@@ -12,3 +12,4 @@ vendor/
 .bash_history
 .env
 bin/composer
+
