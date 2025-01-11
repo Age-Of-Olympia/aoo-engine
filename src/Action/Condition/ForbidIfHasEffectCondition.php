@@ -16,7 +16,7 @@ class ForbidIfHasEffectCondition implements ConditionInterface
         $params = $condition->getParameters(); // e.g. { "effectName": "stunned" }
         $effectName = $params['effectName'] ?? '';
 
-        if ($target && $target->hasEffect($effectName)) {
+        if ($target && $target->have_effect($effectName)) {
             $this->errorMessage = "Target has forbidden effect: $effectName";
             return false;
         }

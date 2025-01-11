@@ -1,5 +1,7 @@
 <?php
 
+require_once("config/functions.php");
+
 class Db{
     private $db;
     public function __construct(){

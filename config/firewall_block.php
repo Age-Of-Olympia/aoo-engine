@@ -3,24 +3,26 @@
 
 $db = new Db();
 
-$ip = $_SERVER['REMOTE_ADDR'];
+if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
+    $ip = $_SERVER['REMOTE_ADDR'];
 
-$expTime = time() + 300;
+    $expTime = time() + 300;
 
-// reccord the fail for firewall
-if( $haveFailed ){
+    // reccord the fail for firewall
+    if( $haveFailed ){
 
-    $sql = 'UPDATE players_ips SET failed = failed + 1, expTime = '. $expTime .' WHERE ip = "'. $ip .'" ';
-    $db->exe($sql);
-}
-else{
+        $sql = 'UPDATE players_ips SET failed = failed + 1, expTime = '. $expTime .' WHERE ip = "'. $ip .'" ';
+        $db->exe($sql);
+    }
+    else{
 
-    $sql = '
-    INSERT INTO players_ips
-    (`ip`,`expTime`,`failed`)
-    VALUES("'. $ip .'",'. $expTime .',1);
-    ';
-    $db->exe($sql);
+        $sql = '
+        INSERT INTO players_ips
+        (`ip`,`expTime`,`failed`)
+        VALUES("'. $ip .'",'. $expTime .',1);
+        ';
+        $db->exe($sql);
+    }
 }
 
 

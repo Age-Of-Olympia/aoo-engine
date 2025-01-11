@@ -4,6 +4,7 @@ namespace App\Condition;
 use App\Action\Condition\ConditionInterface;
 use Player;
 use App\Entity\ActionCondition;
+use View;
 
 class MinimumDistanceCondition implements ConditionInterface
 {
