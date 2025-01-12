@@ -10,3 +10,5 @@ db/updates_done/
 *.kate-swp
 vendor/
 .bash_history
+.env
+bin/composer

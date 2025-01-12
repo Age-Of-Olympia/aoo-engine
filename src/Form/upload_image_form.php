@@ -42,24 +42,9 @@ if ($selectedRaceId) {
 <html>
 <head>
     <title>Upload Portrait or Avatar</title>
-    <style>
-        /* Very basic styling */
-        .modal-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.5);
-            display: none; /* Hidden by default */
-            align-items: center; 
-            justify-content: center;
-        }
-        .modal {
-            background: #fff;
-            padding: 20px;
-            border-radius: 6px;
-        }
-        .modal h3 { margin-top: 0; }
-        .modal button { margin-top: 10px; }
-    </style>
+    <link rel="stylesheet" href="css/modal.css" />
+    <script src="js/modal.js"></script>
+
 </head>
 <script>
     // A small helper to fetch the next number:
@@ -108,22 +93,17 @@ if ($selectedRaceId) {
 </script>
 
 <body>
-    <!-- =========== The Waiting Modal =========== -->
-    <div id="waitingModal" class="modal-bg">
-    <div class="modal">
-        <h3>Patience...</h3>
-        <p>Fichier en cours d'envoi.</p>
-    </div>
-    </div>
-
-    <!-- =========== The Result Modal =========== -->
-    <div id="resultModal" class="modal-bg">
-    <div class="modal">
-        <h3>Envoi !</h3>
-        <div id="resultContent">...</div>
-        <button id="closeResultButton">Fermer</button>
-    </div>
-    </div>
+    <?php
+        use App\View\ModalView;
+        
+        // The Waiting Modal     
+        $modalView = new ModalView();
+        $modalView->displayModal('waitingModal','waitingMessage', 'Patience...', 'Image en cours d\'upload');
+        
+        // The result modal
+        $modalView = new ModalView();
+        $modalView->displayModal('resultModal','resultContent', 'Envoi !');
+    ?>
 
 
     <form  id="uploadForm" enctype="multipart/form-data">
@@ -174,23 +154,8 @@ if ($selectedRaceId) {
   const waitingModal = document.getElementById('waitingModal');
   const resultModal  = document.getElementById('resultModal');
   const resultContent= document.getElementById('resultContent');
-  const closeResultBtn = document.getElementById('closeResultButton');
 
-  // Show a modal (making its .modal-bg visible)
-  function showModal(modalElement) {
-    modalElement.style.display = 'flex';
-  }
 
-  // Hide a modal
-  function hideModal(modalElement) {
-    modalElement.style.display = 'none';
-  }
-
-  // Hide result modal on "Close"
-  closeResultBtn.addEventListener('click', () => {
-    hideModal(resultModal);
-    window.location.reload(true);
-  });
 
   // Intercept the form submit
   document.getElementById('uploadForm').addEventListener('submit', async function(e) {
@@ -233,6 +198,8 @@ if ($selectedRaceId) {
       showModal(resultModal);
     }
   });
+
+  bindModalButton(resultModal,true);
 </script>
 </body>
 </html>

@@ -92,6 +92,8 @@ echo '
 
 <div style="float: left;">
 <script src="js/tiled.js"></script>
+<script src="js/modal.js"></script>
+
 ';
 
 echo $data;
@@ -120,17 +122,12 @@ include 'tiled_tool/display_tools.php';
 
 include 'tiled_tool/display_mass_tools.php';
 
+use App\View\ModalView;
+$modalView = new ModalView();
+$modalView->displayModal('tile-info','info-display');
+
 ?>
-<div id="tile-info">
-    <div id="info-modal" class="modal">
-        <div class="modal-content">
-            <div>
-                <span class="close">&times;</span>
-            </div>            
-            <div id="info-display"></div>
-        </div>
-    </div>
-</div>
+
 
 <style>
 .custom-cursor {
