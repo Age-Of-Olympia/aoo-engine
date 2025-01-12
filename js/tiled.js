@@ -80,16 +80,8 @@ function retrieveCaseData(coords){
 }
 
 $(document).ready(function(){
-
-  $('.close').click(function () {
-    $('#info-modal').fadeOut();
-  });
-
-  $(window).click(function (e) {
-    if ($(e.target).is('#info-modal')) {
-      $('#info-modal').fadeOut();
-    }
-  });
+  const infoModal = document.getElementById('tile-info');
+  bindModalButton(infoModal);
 
 });
 
@@ -114,7 +106,10 @@ function displayInfo(infosJson){
       displayDiv.append(line); 
   });
   
-  $('#info-modal').fadeIn();
+  
+  const infoModal = document.getElementById('tile-info');
+  //$('#info-modal').fadeIn();
+  showModal(infoModal);
 }
 
 
