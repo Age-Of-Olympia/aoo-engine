@@ -2054,7 +2054,7 @@ class Player{
         return $playerJson;
     }
 
-
+    //called by cron & register
     public static function refresh_list(){
 
 
@@ -2077,7 +2077,7 @@ class Player{
                 if(!isset($privateRaces[$row->race]))
                 {
                     $privateRaces[$row->race]=file_exists(dirname(__FILE__) .'/../'.'datas/private/races/' . $row->race . '.json');
-                    echo $row->race . ":" . (($privateRaces[$row->race]) ? "private" :"public") . '<br>';
+                    //echo $row->race . ":" . (($privateRaces[$row->race]) ? "private" :"public") . '<br>';
                 }
 
                 if($privateRaces[$row->race])continue;
