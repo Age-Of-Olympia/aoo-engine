@@ -139,11 +139,11 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                 echo $targetPlayer->data->name. 'a accepté';
               }
               if($exchange->targetOk == 1){
-               echo 'Vous avez accepté. => <a href="merchant.php?targetId='.$target->id.'&exchanges&refuse='.$exchange->id.'">Refuser</a> ( n\'annule pas l\'échange)<br>';
+               echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'">Refuser</a> ( n\'annule pas l\'échange)<br>';
               }
               else
-                echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&accept='.$exchange->id.'">Accepter l\'échange</a><br>';
-              echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&cancel='.$exchange->id.'">Annuler ( suprimer )</a><br>';
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'">Accepter l\'échange</a><br>';
+              echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( suprimer )</a><br>';
               echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a> <br>';
               echo '<ul class="compact-list">
               <li style="font-weight: bold;">Vous recevez : </li>';
@@ -167,12 +167,12 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                     echo $targetPlayer->data->name. 'a accepté';
                 }
                 if($exchange->playerOk == 1){
-                 echo 'Vous avez accepté. => <a href="merchant.php?targetId='.$target->id.'&exchanges&refuse='.$exchange->id.'">Refuser</a> ( n\'annule pas l\'échange) <br>';
+                 echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'">Refuser</a> ( n\'annule pas l\'échange) <br>';
                 }
                 else 
-                  echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&accept='.$exchange->id.'">Accepter l\'échange</a> <br>';
+                  echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'">Accepter l\'échange</a> <br>';
                
-                echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&cancel='.$exchange->id.'">Annuler ( suprimer )</a><br>'; 
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( suprimer )</a><br>'; 
                 echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a>  <br>';
                 echo '<br><ul class="compact-list">
                 <li style="font-weight: bold;">Vous recevez : </li>';
@@ -194,5 +194,28 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
 
 </div>
 <script>
-  
+   $('.action').click(function(e){
+    e.preventDefault();
+    let elem = e.currentTarget;
+    let url = elem.dataset.url;
+    const dataset = element.dataset;
+    const payload = { ...dataset };
+    delete payload.url;
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Success:', data);
+      
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+   });
 </script>
