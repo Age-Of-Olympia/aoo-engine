@@ -469,6 +469,9 @@ if(!empty($success) && $success == true){
 
 
         $target->put_bonus(array('pv'=>$playerHeal));
+
+        $playerXp = 3;
+        $targetXp = 0;
     }
 }
 
