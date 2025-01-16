@@ -20,13 +20,6 @@ class Player{
         $this->caracs = (object) array();
         $this->upgrades = (object) array();
         $this->emplacements = (object) array();
-        $this->data =null;
-        $this->coords = null;
-        $this->nude = null;
-        $this->raceData = null;
-        $this->debuffs = null;
-        $this->turn = null;
-        $this->row = null;
     }
 
 

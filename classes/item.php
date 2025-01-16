@@ -10,7 +10,6 @@ class Item{
 
 
         $this->id = $itemId;
-        $this->data=null;
 
         if(!$row){
 
