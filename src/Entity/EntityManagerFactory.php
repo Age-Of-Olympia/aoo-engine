@@ -14,7 +14,7 @@ final class EntityManagerFactory
     {
         if (self::$em === null) {
             $orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
-                paths: [dirname(__FILE__) . '/../../config'],
+                paths: [dirname(__FILE__)],
                 isDevMode: false
             );
             $connection = DriverManager::getConnection(DB_CONSTANTS, $orm_db_config);
