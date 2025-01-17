@@ -13,6 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit('error not merchant');
   }
 
+  $player = new Player($_SESSION['playerId']);
+  $player->get_data();
+  
   $objects = $_POST['objects'] ?? [];
   $recipient = Player::get_player_by_name($_POST['recipient']);
 

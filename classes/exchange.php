@@ -2,7 +2,7 @@
 
 class Exchange{
 
-    public $db;
+    public Db $db;
 
     public int $id;
     public int $playerId;
