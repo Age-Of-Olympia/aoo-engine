@@ -166,7 +166,18 @@ elseif(!$planJson){
 
 if($res->num_rows){
 
+    function custom_compare($a, $b) {
 
+        global $basics;
+
+        if (in_array($a, $basics)) {
+            return -1;
+        }
+
+        return 1; // Si l'élément $b n'est pas dans l'ordre, il est considéré plus petit
+    }
+
+    $card="";
     while($row = $res->fetch_object()){
 
 
@@ -175,7 +186,10 @@ if($res->num_rows){
         $target->get_data();
 
         $target->get_caracs();
-
+        if(!empty($card)){
+            echo ' <div class="case-infos">  <div class="text"> autre joueur:  <a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a> ['.$target->id.']</div> </div>';
+           continue;
+        }
 
         $dataName = '<a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a>';
 
@@ -219,17 +233,6 @@ if($res->num_rows){
             "repos",
             "vol_a_la_tire"
         );
-
-        function custom_compare($a, $b) {
-
-            global $basics;
-
-            if (in_array($a, $basics)) {
-                return -1;
-            }
-
-            return 1; // Si l'élément $b n'est pas dans l'ordre, il est considéré plus petit
-        }
 
         // Trier le tableau en utilisant la fonction de comparaison personnalisée
         usort($actions, 'custom_compare');
@@ -315,7 +318,7 @@ if($res->num_rows){
             'faction'=>$faction
         );
 
-        $card = Ui::get_card($data);
+        $card .= Ui::get_card($data);
     }
 }
 
