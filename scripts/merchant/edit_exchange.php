@@ -1,22 +1,41 @@
 <?php
-echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des marchands, c\'est ici. <br/>
-Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </div>';
+if(!isset($_GET['editExchange'])){
+  exit('exchange not set');
+}
+    $exchange = new Exchange($_GET['editExchange']);
+    $exchange->get_base_data();
+    if (!$exchange->is_in_progress()) {
+      exit('cet echange n\'est plus de l\'actualité');
+    }
+    $exchange->get_items_data();
+    $objects = [];
+
+    $player = new Player($_SESSION['playerId']);
+    $player->get_data();
+  
+    if ($player->id != $exchange->targetId && $player->id != $exchange->playerId) {
+      ExitError('Current player is not part of the exchange');
+    }
+    $otherPlayer = new Player( $player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId);
+    $otherPlayer->get_data();
 ?>
 <div class="section">
   <div class="section-title">Nouvel échange</div>
-  <div>Si vous souhaitez proposer un échange à un autre personnage, sélectionnez le dans la liste<br/>
-  (Pour envoyer un objet il doit être en banque)</div>
-  <div class="button-container">
-    <div>
-      <input id="autocomplete" type="text" placeholder="Rechercher">
-    </div>
-  </div>
+  <div> Pour envoyer un objet il doit être en banque</div>
+  
   <form id="object-list-form">
       <div class="new-exchange-container hidden">
         <div>
-            <h3>Objets à envoyer à <span id="exchange-recipient"> </span></h3> 
+            <h3>Objets à envoyer à <span id="exchange-recipient"> <?php echo $otherPlayer->data->name ?> </span></h3> 
             <div id="object-list">
-              <!-- Objects to be exchanged -->
+            <?php 
+            foreach ($exchange->items as $exchange_item) {
+              $item = new Item($exchange_item->item_id);
+              $item->get_data();
+              echo '<div>Objet : ' . $item->data->name . ' - Quantité: ' . $exchange_item->n . '</div>';
+              $objects[] = ['id' => $exchange_item->item_id, 'name' => $item->data->name, 'n' => $exchange_item->n];
+            }
+            ?>
             </div>
             <?php
             $player = new Player($_SESSION['playerId']);
@@ -25,7 +44,7 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
             ?>
         </div>
         <button id="cancel-button" >Annuler</button>
-        <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Creer l'échange</button>
+        <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Modifier l'échange</button>
       </div>
   </form>
   <div class="button-container">
@@ -37,41 +56,15 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
 <script src="js/progressive_loader.js"></script>
 <script>
   $(function() {
-    var objects = [];
+    var objects = <?php echo json_encode($objects); ?>;
     var $actions = $('.preview-action');
     $actions
     .append('<button class="action" data-action="add-to-exchange">+ Ajouter</button><br />');
-    $("#autocomplete").autocomplete({
-      source: function(request, response) {
-        $.ajax({
-          url: "reference_data.php",
-          type: "GET",
-          dataType: "json",
-          data: {
-            data_type:"player_name",
-            term: request.term
-          },
-          success: function(data) {
-            response(data);
-          }
-        });
-      },
-      minLength: 2,
-      select: function(event, ui) {
-        $('#exchange-recipient').text(ui.item.label);
-        if(objects.length > 0 ){
-          $('#validate-button').prop('disabled', false);
-        }
-      }
-    }).data("ui-autocomplete")._renderItem = function(ul, item) {
-      return $("<li>")
-      .append("<div>" + item.label + "</div>")
-      .appendTo(ul);
-    };
+  
     $('#cancel-button').click(function(e) {
-        objects = [];
+        objects = <?php echo json_encode($objects); ?>;
         updateObjectList();
-        $('#exchange-recipient').text('');
+     
         e.preventDefault();
     });
     $('#validate-button').click(function(e) {
@@ -92,16 +85,22 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
                   value: JSON.stringify(object)  
               }).appendTo('#object-list-form');
           });
-        $.ajax({
-              url: 'merchant.php?targetId=<?php echo $target->id ?>&exchanges&create',  
+          $.ajax({
+              url: 'api/exchanges/exchanges-edit.php?targetId=<?php echo $target->id ?>',  
               method: 'POST',
-              data: $('#object-list-form').serialize(), // Serialize form data
+              dataType: 'json',
+              data: {
+                  action: 'objects',
+                  id: <?php echo $exchange->id ?>,
+                  objects: objects
+              },  
               success: function(response) {
                 if(response.error){
                   alert(response.error);
                   return;
                 }
-                window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&exchanges&edit='+response.data;
+                alert('Echange modifié');
+                window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&exchange';
               },
               error: function(xhr, status, error) {
                 alert('Erreur technique.')
