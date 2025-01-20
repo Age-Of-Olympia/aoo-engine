@@ -96,6 +96,7 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
         $.ajax({
               url: 'api/exchanges/exchanges-create.php?targetId=<?php echo $target->id ?>',  
               method: 'POST',
+              dataType: 'json',
               data: $('#object-list-form').serialize(), // Serialize form data
               success: function(response) {
                 if(response.error){

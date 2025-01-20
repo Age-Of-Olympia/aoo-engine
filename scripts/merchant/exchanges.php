@@ -111,7 +111,7 @@ if(isset($_GET['newExchange'])){
 }
 if(isset($_GET['editExchange'])){
 
-    //include('scripts/merchant/exchanges.php');
+    include('scripts/merchant/edit_exchange.php');
 
     exit();
 }
@@ -198,7 +198,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
     e.preventDefault();
     let elem = e.currentTarget;
     let url = elem.dataset.url;
-    const dataset = element.dataset;
+    const dataset = elem.dataset;
     const payload = { ...dataset };
     delete payload.url;
 
@@ -211,11 +211,18 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
     })
     .then(response => response.json())
     .then(data => {
-      console.log('Success:', data);
-      
+      if(data.error) {
+        alert(data.error);
+      }
+      else if(data.message) {
+        alert(data.message);
+      }
+      //console.log('Success:', data);
+      location.reload();
     })
     .catch((error) => {
       console.error('Error:', error);
+      location.reload();
     });
    });
 </script>

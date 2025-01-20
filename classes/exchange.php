@@ -17,7 +17,10 @@ class Exchange{
     public function __construct($id = null) {
         $this->db = new Db();
         if ($id !== null) {
-            $this->id = $id;
+            if(is_numeric($id))
+                $this->id = $id;
+            else
+                $this->id = -1;
         }
     }
 
@@ -108,7 +111,7 @@ class Exchange{
 
     public function is_in_progress()
     {
-        return $this->playerOk==0 || $this->targetOk==0;
+        return $this->id>0 && ($this->playerOk==0 || $this->targetOk==0);
     }
     
     public function accept_exchange($Istarget){
