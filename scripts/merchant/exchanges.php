@@ -202,14 +202,8 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
     const payload = { ...dataset };
     delete payload.url;
 
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
+
+    aooFetch(url,payload,null)
     .then(data => {
       if(data.error) {
         alert(data.error);
