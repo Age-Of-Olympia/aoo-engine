@@ -2034,9 +2034,9 @@ class Player{
 
 
         // first create dir
-        if(!file_exists('datas/private/players/')){
+        if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/')){
 
-            mkdir('datas/private/players/');
+            mkdir($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/');
         }
 
         $playerJson = json()->decode('players', $this->id);
