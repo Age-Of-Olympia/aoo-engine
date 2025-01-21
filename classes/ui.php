@@ -301,7 +301,7 @@ class ui{
 
         ?>
         <script>
-        window.id = "<?php echo $defaultItem->row->id ?>";
+        window.id = <?php echo $defaultItem->row->id ?>;
         window.name = "<?php echo $defaultItem->row->name ?>";
         window.type = "<?php echo $type ?>";
         window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
