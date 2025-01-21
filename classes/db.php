@@ -15,7 +15,7 @@ class Db{
     }
 
 
-    public function exe($sql, $array=array()) {
+    public function exe($sql, $array=array(), $returnFalseIfNoAffectedRows = false){
 
         sqln();
 
@@ -62,7 +62,9 @@ class Db{
         if($res) {
             return $res;
         }
-
+        if($returnFalseIfNoAffectedRows && $stmt->affected_rows == 0) {
+            return false;
+        }
         return true;
     }
 

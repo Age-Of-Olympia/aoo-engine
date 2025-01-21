@@ -91,7 +91,7 @@ class Exchange{
         $this->db->insert('players_items_exchanges', $values);
     }
 
-    public function remove_item_from_exchange($item_exchange_id,$itemId,$itemN, $itemOwnerId){
+    public function remove_item_from_exchange($itemId,$itemN, $itemOwnerId){
         $this->refuse_exchange(true,true);
         $sql = '
         DELETE FROM
@@ -106,7 +106,9 @@ class Exchange{
         player_id = ?
         ';
     
-        $this->db->exe($sql, array($this->id,$itemId,$itemN,$itemOwnerId));
+        if($this->db->exe($sql, array($this->id,$itemId,$itemN,$itemOwnerId),true)==false){
+            throw new Exception('Erreur lors de la suppression de l\'objet de l\'échange');
+        }
     }
 
     public function is_in_progress()
