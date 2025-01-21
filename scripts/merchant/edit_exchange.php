@@ -32,7 +32,7 @@ if(!isset($_GET['editExchange'])){
             foreach ($exchange->items as $exchange_item) {
               $item = new Item($exchange_item->item_id);
               $item->get_data();
-              echo '<div>Objet : ' . $item->data->name . ' - Quantité: ' . $exchange_item->n . '</div>';
+              echo '<div>Objet : ' . $item->data->name . ' - Quantité: ' . $exchange_item->n . '<button class="delete" data-id="'.$exchange_item->item_id.'">X</button></div>';
               $objects[] = ['id' => $exchange_item->item_id, 'name' => $item->data->name, 'n' => $exchange_item->n];
             }
             ?>
@@ -57,6 +57,7 @@ if(!isset($_GET['editExchange'])){
 <script>
   $(function() {
     var objects = <?php echo json_encode($objects); ?>;
+    var defaultobjects=<?php echo json_encode($objects); ?>;
     var $actions = $('.preview-action');
     $actions
     .append('<button class="action" data-action="add-to-exchange">+ Ajouter</button><br />');
@@ -64,61 +65,61 @@ if(!isset($_GET['editExchange'])){
     $('#cancel-button').click(function(e) {
         objects = <?php echo json_encode($objects); ?>;
         updateObjectList();
-     
+        $('#validate-button').prop('disabled', true);
         e.preventDefault();
     });
     $('#validate-button').click(function(e) {
-        var recipient = $('#exchange-recipient').text().trim();
-        if (recipient) {
-            $('<input>').attr({
-                type: 'hidden',
-                name: 'recipient',
-                value: recipient
-            }).appendTo('#object-list-form');
-        }
         e.preventDefault(); 
-        $('#object-list-form input[name="objects[]"]').remove();
-        objects.forEach(function(object, index) {
-              $('<input>').attr({
-                  type: 'hidden',
-                  name: 'objects[]',
-                  value: JSON.stringify(object)  
-              }).appendTo('#object-list-form');
-          });
-          $.ajax({
-              url: 'api/exchanges/exchanges-edit.php?targetId=<?php echo $target->id ?>',  
-              method: 'POST',
-              dataType: 'json',
-              data: {
+        $('#validate-button').prop('disabled', true);
+        let payload = {
                   action: 'objects',
                   id: <?php echo $exchange->id ?>,
                   objects: objects
-              },  
-              success: function(response) {
-                if(response.error){
-                  alert(response.error);
-                  return;
-                }
-                alert('Echange modifié');
-                window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&exchange';
-              },
-              error: function(xhr, status, error) {
-                alert('Erreur technique.')
-              }
-          });
+              };
+          let url= 'api/exchanges/exchanges-edit.php?targetId=<?php echo $target->id ?>';
+          aooFetch(url,payload,null)
+          .then(data => {
+          if(data.error) {
+            alert(data.error);
+            $('#validate-button').prop('disabled', false);
+          }
+          else if(data.result) {
+            alert(data.result);
+            window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&exchange';
+          }
+        
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+          location.reload();
+        });
       });
+      
+      function deleteObject(e){
+        e.preventDefault();
+        objects=objects.filter(obj => obj.id !== $(e.target).data("id"));
+        updateObjectList();
+      }
+      $('.delete').click(deleteObject);
       $('.action').click(function(e){
+        e.preventDefault();
           var n = 0;
           n = prompt('Combien?', window.n);
           if(n == null){
             return false;
           }
-          if(n == '' || n < 1 || n > window.n){
+          var objectId= window.id;
+          let allreadyInTrade =0;
+          var existingObjectIndefaults = defaultobjects.find(obj => obj.id === objectId);
+          if (existingObjectIndefaults) 
+              allreadyInTrade = existingObjectIndefaults.n;
+
+          if(n == '' || n < 1 || n > (window.n+allreadyInTrade)){
             alert('Nombre invalide!');
             return false;
           }
           var objectName = window.name;
-          var objectId= window.id;
+          
           var objectCount  = n;
           var existingObject = objects.find(obj => obj.id === objectId);
           if (existingObject) {
@@ -127,15 +128,14 @@ if(!isset($_GET['editExchange'])){
             objects.push({ id: objectId, name:objectName ,n: objectCount });
           }
           updateObjectList();
-          if($('#exchange-recipient').text().trim() !== ""){
+
             $('#validate-button').prop('disabled', false);
-          }
-          e.preventDefault();
+
       })
     function updateObjectList() {
         $('#object-list').empty(); 
         objects.forEach(function(obj) {
-          $('#object-list').append('<div>Objet : ' + obj.name + ' - Quantité: ' + obj.n + '</div>');
+          $('#object-list').append('<div>Objet : ' + obj.name + ' - Quantité: ' + obj.n + '<button class="delete" data-id="'+obj.id+'">X</button></div>').on( "click", "button",deleteObject);
         });
     }
   });

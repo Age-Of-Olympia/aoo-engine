@@ -70,8 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     exit(json_encode($result));
   }
-
-  if ($POST_DATA['action'] =='cancel') {
+  else if ($POST_DATA['action'] =='cancel') {
    
     $exchange->db->start_transaction('cancel_exchange');
     try {
@@ -89,6 +88,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $exchange->db->commit_transaction('cancel_exchange');
     exit();
+  }
+  else if ($POST_DATA['action'] =='objects') {
+    $objects = $POST_DATA['objects'] ?? [];
+    $exchange->db->start_transaction('edit_objects_exchange');
+    $exchange->get_items_data();
+    try {
+    //refund all items 
+    foreach ($exchange->items as $exchange_item) {
+     if($exchange_item->player_id != $player->id)continue;
+     $exchange->remove_item_from_exchange($exchange_item->item_id, $exchange_item->n, $player->id);
+     $item = new Item($exchange_item->item_id);
+     $item->add_item($player, $exchange_item->n, true);
+    }
+
+      // add new items
+      foreach ($objects as $decodedObject) {
+        $item = new Item($decodedObject['id']);
+        $count = abs($decodedObject['n']);
+        if (!$item->add_item($player, -$count, true)) {
+          throw new Exception('Erreur lors de l\'ajout de l\'objet à l\'échange');
+        }
+        $exchange->add_item_to_exchange($item->id, $count, $player->id);
+      }
+    } catch (Throwable $th) {
+      $exchange->db->rollback_transaction('edit_objects_exchange');
+      ExitError('Erreur lors de l\'edition de l\'échange');
+    }
+    $exchange->db->commit_transaction('edit_objects_exchange');
+    ExitSuccess('echange modifié');
   }
 
   ExitError('Invalid request');

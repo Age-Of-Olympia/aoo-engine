@@ -27,32 +27,32 @@ function load_data(data, element){
 }
 
 function aooFetch(url,  payload = null, method = null,autoProcess = true) {
-	const headers = { 'Content-Type': 'application/json' }
-	const config = {
-		method: method?method:payload ? 'POST' : 'GET',
-		headers: {
-			...headers,
+    const headers = { 'Content-Type': 'application/json' }
+    const config = {
+        method: method?method:payload ? 'POST' : 'GET',
+        headers: {
+            ...headers,
             //todo: add token
-		},
-	}
-	if (payload) {
-		config.body = JSON.stringify(payload)
-	}
+        },
+    }
+    if (payload) {
+        config.body = JSON.stringify(payload)
+    }
 
-	return window
-		.fetch(url, config)
-		.then((response) => {
-			if (response.ok) {
+    return window
+        .fetch(url, config)
+        .then((response) => {
+            if (response.ok) {
                 if (autoProcess) {
                     return response.json()
                 } else {
                     return Promise.resolve(response);
                 }
-			} else {
-				const errorMessage = response.text()
-				return Promise.reject(new Error(errorMessage))
-			}
-		})
+            } else {
+                const errorMessage = response.text()
+                return Promise.reject(new Error(errorMessage))
+            }
+        })
 }
 
 // preload img
