@@ -611,14 +611,11 @@ class View{
                     100% {
                     ';
 
-                    if(!isset($verticalScrolling) && $verticalScrolling != 0){
-
-                        echo 'background-position: -'. $maskW .'px 0;';
+                    if($verticalScrolling != 0){
+                         echo 'background-position: 0 '. $maskW .'px;';
                     }
-
                     else{
-
-                        echo 'background-position: 0 '. $maskW .'px;';
+                        echo 'background-position: -'. $maskW .'px 0;';
                     }
 
                 echo '
