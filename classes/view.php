@@ -577,19 +577,30 @@ class View{
         </svg>
         ';
 
-        if(!empty($planJson->mask) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+        if((!empty($planJson->mask) || $this->coords->mask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
 
 
-            if(!empty($planJson->scrollingMask)){
+            if(!empty($planJson->scrollingMask) || $this->coords->sm != NULL){
 
-
-                list($maskW, $maskH) = getimagesize($planJson->mask);
-
+                if(!empty($planJson->scrollingMask)){
+                    list($maskW, $maskH) = getimagesize($planJson->mask);
+                    $scrollingMask = $planJson->scrollingMask;
+                    $verticalScrolling = $planJson->verticalScrolling;
+                    $mask = $planJson->mask;
+                }
+                else{
+                    list($maskW, $maskH) = getimagesize('img/tiles/' . $this->coords->mask . '.webp');
+                    $scrollingMask = $this->coords->sm;
+                    $verticalScrolling = $this->coords->vs;
+                    $mask = 'img\/tiles\/' . $this->coords->mask . '.webp';
+                }
+                
+                
                 echo '
                 <style>
                 .scrolling-mask {
 
-                    animation: scrollMask '. $planJson->scrollingMask .'s linear infinite;
+                    animation: scrollMask '. $scrollingMask .'s linear infinite;
                 }
 
                 @keyframes scrollMask {
@@ -600,7 +611,7 @@ class View{
                     100% {
                     ';
 
-                    if(!isset($planJson->verticalScrolling)){
+                    if(!isset($verticalScrolling) && $verticalScrolling != 0){
 
                         echo 'background-position: -'. $maskW .'px 0;';
                     }
@@ -618,7 +629,7 @@ class View{
             echo '
             <div
                 class="view-mask scrolling-mask"
-                style="background: url(\''. $planJson->mask .'\'); width:'. $size .'px; max-width:'. $size .'px; height:'. $size .'px; "
+                style="background: url(\''. $mask .'\'); width:'. $size .'px; max-width:'. $size .'px; height:'. $size .'px; "
                 >
             </div>
             ';
