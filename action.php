@@ -373,8 +373,9 @@ if(!empty($success) && $success == true){
 
 
         $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $target->caracs->{$actionJson->targetDamages};
+        $targetDamagesBonus = (is_numeric($actionJson->targetDamagesBonus)) ? $actionJson->targetDamagesBonus : $target->caracs->{$actionJson->targetDamagesBonus};
 
-        $totalDamages = $playerDamages - $targetDamages;
+        $totalDamages = $playerDamages - ($targetDamages + $targetDamagesBonus);
 
         // tir damages reduce and distance malus has same rules to be applied ( tir + distance > 2 )
         if($distanceMalus){
