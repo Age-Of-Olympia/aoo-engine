@@ -13,23 +13,7 @@ if(!isset($_SESSION['playerId'])){
     exit();
 }
 
-
-// check admin (only once per session)
-if(!isset($_SESSION['isAdmin'])){
-
-    // check admin
-    $player = new Player($_SESSION['playerId']);
-    if(!$player->have_option('isAdmin')){
-
-        echo 'admin account required';
-        exit();
-    }
-    else{
-
-        $_SESSION['isAdmin'] = true;
-    }
-}
-
+include $_SERVER['DOCUMENT_ROOT'].'/checks/admin-check.php';
 
 // get cmd history
 if(!empty($_POST['cmdHistory'])){
@@ -80,7 +64,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         else {
             if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
                 try{
-                    $result = $command->execute($commandLineSplit);
+                    $result = $command->executeIfAuthorized($commandLineSplit);
                     echo json_encode(['message' => 'command found ' . $command->getName() . '. Executing.',
                     'result' => $result]);
                 }catch(Throwable $e){

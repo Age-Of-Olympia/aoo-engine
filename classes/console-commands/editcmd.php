@@ -1,6 +1,6 @@
 <?php
 
-class EditCmd extends Command
+class EditCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("edit",[new Argument('json',false), new Argument('private',true)]);

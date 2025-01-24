@@ -1,6 +1,6 @@
 <?php
 
-class AnnonceCmd extends Command
+class AnnonceCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("annonce",[new Argument('text',false)]);

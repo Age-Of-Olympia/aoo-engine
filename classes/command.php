@@ -86,4 +86,8 @@ abstract class Command
     }
 
     abstract public function execute(  array $argumentValues ): string;
+
+    public function executeIfAuthorized( array $argumentValues ): string {
+        return $this->execute($argumentValues);
+    }
 }

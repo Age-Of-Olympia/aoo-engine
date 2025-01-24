@@ -18,6 +18,10 @@ EOT);
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
 
+        if ( $argumentValues[1] == 'isSuperAdmin'){
+            include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+        }
+
         if($player->have('options', $argumentValues[1])){
 
 

@@ -4,10 +4,7 @@ require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
-if(!$player->have_option('isAdmin')){
-
-    exit('error isAdmin');
-}
+include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
 
 $filesTbl = File::scan_dir('scripts/tools/', $without='.php');
 

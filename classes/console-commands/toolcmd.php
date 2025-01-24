@@ -1,11 +1,11 @@
 <?php
 
-class ToolCmd extends Command
+class ToolCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("tool",[new Argument('path',true)]);
         parent::setDescription(<<<EOT
-permet d'afficher les outils comme l'éditeur de carte
+permet d'afficher les outils
 Exemple:
 > tool (affiche la liste des outils disponibles)
 > tool add_100_item (lance directement le script add_100_items)

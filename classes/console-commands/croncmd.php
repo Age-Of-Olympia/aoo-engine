@@ -1,6 +1,6 @@
 <?php
 
-class CronCmd extends Command
+class CronCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("cron",[new Argument('path',false)]);
