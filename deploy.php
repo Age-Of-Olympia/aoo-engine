@@ -7,7 +7,7 @@ require_once('config/config-console.php');
 
 
 // check session
-include ('checks/admin-check.php');
+include ('checks/super-admin-check.php');
 
 if (isset($_GET["type"]) && isset($_GET["passphrase"])) {
     echo "Deploying ".$_GET["type"];

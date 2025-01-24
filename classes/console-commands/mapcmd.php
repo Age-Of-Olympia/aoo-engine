@@ -1,6 +1,6 @@
 <?php
 
-class MapCmd extends Command
+class MapCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("map",[new Argument('action',true), new Argument('name',true)]);

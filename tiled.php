@@ -1,5 +1,6 @@
 <?php
 
+require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
@@ -8,7 +9,7 @@ $player->get_coords();
 if(!empty($_POST['delete'])){
     $coordsId = $_POST['coord-id'];
     $type = $_POST['type'];
-    include 'tiled_tool/erase_case.php';
+    include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/erase_case.php';
     exit();
 }
 
@@ -41,7 +42,7 @@ if(!empty($_POST['zone']) && !empty($_POST['type']) && !empty($_POST['src'])){
     
     // Create or erase tile for each in the coords zone
     foreach ($allCoords as $coordsId) {
-       include 'tiled_tool/erase_or_create_tile.php';
+       include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/erase_or_create_tile.php';
     }
 
 
@@ -68,11 +69,11 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
     }
 
     if($_POST['type'] == 'info'){
-        include 'tiled_tool/tile_info.php';
+        include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/tile_info.php';
         exit('infos');
     }
 
-    include 'tiled_tool/erase_or_create_tile.php';
+    include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/erase_or_create_tile.php';
 
     exit();
 }
@@ -106,21 +107,21 @@ echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><but
 <br/>
 <div id="ajax-data"></div>';
 
-include 'tiled_tool/display_indestructibles.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_indestructibles.php';
 
-include 'tiled_tool/display_foregrounds.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_foregrounds.php';
 
-include 'tiled_tool/display_plants.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_plants.php';
 
-include 'tiled_tool/display_walls.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_walls.php';
 
-include 'tiled_tool/display_elements.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_elements.php';
 
-include 'tiled_tool/display_triggers.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_triggers.php';
 
-include 'tiled_tool/display_tools.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_tools.php';
 
-include 'tiled_tool/display_mass_tools.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_mass_tools.php';
 
 use App\View\ModalView;
 $modalView = new ModalView();
