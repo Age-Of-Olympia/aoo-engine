@@ -1440,8 +1440,39 @@ class Player{
                 $this->id,
                 $item->data->emplacement,
             ));
+            
+            // unequip main1 and main2 if item is 2mains
+            if($item->data->emplacement == "deuxmains"){
+                $sql = '
+                UPDATE
+                players_items
+                SET
+                equiped = ""
+                WHERE
+                player_id = ?
+                AND
+                (equiped = "main1" OR equiped="main2")
+                ';
 
+                $db->exe($sql, array($this->id));
+                }
+            
+            // unequip 2mains if item is main1 or main2
+            elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
+                $sql = '
+                UPDATE
+                players_items
+                SET
+                equiped = ""
+                WHERE
+                player_id = ?
+                AND
+                equiped = "deuxmains"
+                ';
 
+                $db->exe($sql, array($this->id));
+                }
+            
             $sql = '
             UPDATE
             players_items
@@ -1458,7 +1489,7 @@ class Player{
                 $this->id,
                 $item->id
             ));
-
+            
 
             // equip munitions
             if($munition = $this->get_munition($item)){
