@@ -292,6 +292,7 @@ define('ITEMS_OPT', array(
 define('ITEM_EMPLACEMENT_FORMAT', array(
     'main1',
     'main2',
+    'deuxmains',
     'doigt',
     'tete',
     'bouche',
