@@ -207,6 +207,9 @@ define('ELE_PROD', array(
 define('WALLS_PV', array(
     'mur_pierre'=>150,
     'mur_pierre_broken'=>150,
+
+    'mur_noir'=>120
+    'mur_noir_broken'=>120,
     
     'mur_bois'=>100,
     'mur_bois_petrifie'=>125,
