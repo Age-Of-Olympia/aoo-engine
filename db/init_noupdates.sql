@@ -1773,7 +1773,8 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 (123, 'echelle', 0, 0, 0, 0, '', NULL, NULL),
 (124, 'menthe', 0, 0, 0, 0, '', NULL, NULL),
 (125, 'armet_incruste', 0, 1, 0, 0, '', NULL, NULL),
-(126, 'cafe', 0, 0, 0, 0, '', NULL, NULL);
+(126, 'cafe', 0, 0, 0, 0, '', NULL, NULL),
+(127, 'mur_noir', 0, 0, 0, 0, '', NULL, NULL);
 
 -- --------------------------------------------------------
 
