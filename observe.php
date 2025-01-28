@@ -276,7 +276,7 @@ if($res->num_rows){
 
         if($target->have_option('isMerchant')){
 
-            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
+            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
         }
 
 
