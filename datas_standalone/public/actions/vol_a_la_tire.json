@@ -7,8 +7,6 @@
     "playerJet": "agi",
     "targetJet": "agi",
 
-    "spellMalus": 1,
-
     "forbidIf":[
 
         {"who": "player", "have": "effect", "name": "adrenaline"},
