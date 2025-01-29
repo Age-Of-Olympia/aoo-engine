@@ -373,7 +373,7 @@ if(!empty($success) && $success == true){
 
 
         $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $target->caracs->{$actionJson->targetDamages};
-        $targetDamagesBonus = (is_numeric($actionJson->targetDamagesBonus)) ? $actionJson->targetDamagesBonus : $target->caracs->{$actionJson->targetDamagesBonus};
+        $targetDamagesBonus = empty($actionJson->targetDamagesBonus)? 0 :((is_numeric($actionJson->targetDamagesBonus)) ? $actionJson->targetDamagesBonus : $target->caracs->{$actionJson->targetDamagesBonus});
 
         $totalDamages = $playerDamages - ($targetDamages + $targetDamagesBonus);
 
