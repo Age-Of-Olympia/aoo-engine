@@ -34,6 +34,9 @@ EOT);
 
             $player->get_data();
 
+            if($player->have('options','isSuperAdmin') && $player->id != $_SESSION['originalPlayerId'] ){
+                include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+            }
 
             $_SESSION['playerId'] = $_SESSION['mainPlayerId'] = $player->id;
             if(isset($argumentValues[2]) && $argumentValues[2] == '-reactive'){
