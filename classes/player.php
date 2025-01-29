@@ -274,7 +274,7 @@ class Player{
 
         $sql = '
         SELECT
-        x, y, z, plan, mask, scrollingMask, verticalScrolling
+        x, y, z, plan
         FROM
         coords AS c
         INNER JOIN
@@ -293,10 +293,7 @@ class Player{
             'x'=>$row->x,
             'y'=>$row->y,
             'z'=>$row->z,
-            'plan'=>$row->plan,
-            'mask'=>$row->mask,
-            'sm' => $row->scrollingMask,
-            'vs' => $row->verticalScrolling
+            'plan'=>$row->plan
         );
 
         $this->coords = $coords;
