@@ -597,60 +597,57 @@ class View{
         $res = $db->exe($sql, $this->coord_computed);
 
         $row = $res->fetch_object();
+        $isMask = false;
 
-        if((!empty($planJson->mask) || $row->mask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+        if(($row->mask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+            list($maskW, $maskH) = getimagesize('img/tiles/' . $row->mask . '.webp');
+            $scrollingMask = $row->sm;
+            $verticalScrolling = $row->vs;
+            $mask = 'img\/tiles\/' . $row->mask . '.webp';
+            $isMask = true;
+        }
+        elseif((!empty($planJson->mask)) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+            if(!empty($planJson->scrollingMask)){
+                list($maskW, $maskH) = getimagesize($planJson->mask);
+                $scrollingMask = $planJson->scrollingMask;
+                $verticalScrolling = $planJson->verticalScrolling;
+                $mask = $planJson->mask;
+                $isMask = true;
+            }
+        }
 
+        if($isMask){
+            echo '
+            <style>
+            .scrolling-mask {
 
-            if(!empty($planJson->scrollingMask) || $row->sm != NULL){
+                animation: scrollMask '. $scrollingMask .'s linear infinite;
+            }
 
-                if(!empty($planJson->scrollingMask)){
-                    list($maskW, $maskH) = getimagesize($planJson->mask);
-                    $scrollingMask = $planJson->scrollingMask;
-                    $verticalScrolling = $planJson->verticalScrolling;
-                    $mask = $planJson->mask;
+            @keyframes scrollMask {
+
+                0% {
+                background-position: 0 0;
+                }
+                100% {
+                ';
+
+                if($verticalScrolling != 0){
+                    echo 'background-position: 0 '. $maskW .'px;';
                 }
                 else{
-                    list($maskW, $maskH) = getimagesize('img/tiles/' . $row->mask . '.webp');
-                    $scrollingMask = $row->sm;
-                    $verticalScrolling = $row->vs;
-                    $mask = 'img\/tiles\/' . $row->mask . '.webp';
-                }
-                
-                
-                echo '
-                <style>
-                .scrolling-mask {
-
-                    animation: scrollMask '. $scrollingMask .'s linear infinite;
-                }
-
-                @keyframes scrollMask {
-
-                    0% {
-                    background-position: 0 0;
-                    }
-                    100% {
-                    ';
-
-                    if($verticalScrolling != 0){
-                         echo 'background-position: 0 '. $maskW .'px;';
-                    }
-                    else{
                         echo 'background-position: -'. $maskW .'px 0;';
-                    }
+                }
 
-                echo '
-                </style>
-                ';
-            }
-            
             echo '
+            </style>
             <div
                 class="view-mask scrolling-mask"
                 style="background: url(\''. $mask .'\'); width:'. $size .'px; max-width:'. $size .'px; height:'. $size .'px; "
                 >
             </div>
             ';
+
         }
 
         echo '
