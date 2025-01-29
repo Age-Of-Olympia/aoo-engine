@@ -352,6 +352,11 @@ function add_pnj($player, $target)
 
     $target->get_data();
 
+    //Si le pnj ajouté a l'option isSuperAdmin, seul un superAdmin lui même peut l'ajouter a un player
+    if($target->have('options','isSuperAdmin') ){ 
+        include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+    }
+
 
     $values = array(
         'pnj_id'=>$target->id
