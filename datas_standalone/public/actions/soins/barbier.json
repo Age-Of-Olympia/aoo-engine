@@ -13,7 +13,6 @@
     "targetJet": 0,
     "playerHeal": "agi",
     "bonusHeal": 0,
-    "spellMalus": 1,
     "log": "PLAYER a lancé NAME sur TARGET.",
     "targetLog": "TARGET a reçu NAME de PLAYER.",
     "noBerserkCheck": 1
