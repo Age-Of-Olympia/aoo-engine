@@ -65,7 +65,7 @@ $(document).ready(function(){
 
          $.ajax({
            type: "POST",
-           url: 'tools.php?tiled',
+           url: 'tiled.php',
            data: {
              'zone': zoneData,
              'type':$selected.data('type'),
@@ -74,7 +74,7 @@ $(document).ready(function(){
            }, // serializes the form's elements.
            success: function(data)
            {
-              document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
+              document.location='tiled.php?selectedTool='+$selected.data('name')+'&selectedParams='+params;
            }
          });
 
