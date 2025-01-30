@@ -66,7 +66,7 @@ function validateZoneData(zoneData) {
 function retrieveCaseData(coords){
   $.ajax({
     type: "POST",
-    url: 'tools.php?tiled',
+    url: 'tiled.php',
     data: {
       'coords':coords,
       'type':'info',
@@ -117,7 +117,7 @@ function displayInfo(infosJson){
 $(document).on("click", ".delete-btn", function () {
   $.ajax({
     type: "POST",
-    url: 'tools.php?tiled',
+    url: 'tiled.php',
     data: {
       'delete':1,
       'coord-id':$(this).data("coord-id"),
@@ -125,7 +125,7 @@ $(document).on("click", ".delete-btn", function () {
     }, 
     success: function()
     {
-      document.location='tools.php?tiled';
+      document.location='tiled.php';
     }
   });
 });
