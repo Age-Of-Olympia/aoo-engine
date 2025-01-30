@@ -188,7 +188,7 @@ $(document).ready(function(){
 
             $.ajax({
                 type: "POST",
-                url: 'tools.php?tiled',
+                url: 'tiled.php',
                 data: {
                     'coords':$(this).data('coords'),
                     'type':'tp',
@@ -197,7 +197,7 @@ $(document).ready(function(){
                 success: function(data)
                 {
                     // alert(data);
-                  document.location='tools.php?tiled';
+                  document.location='tiled.php';
                 }
             });
 
@@ -230,7 +230,7 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: 'tools.php?tiled',
+            url: 'tiled.php',
             data: {
               'coords':$(this).data('coords'),
               'type':$selected.data('type'),
@@ -240,7 +240,7 @@ $(document).ready(function(){
             success: function(data)
             {
               // alert(data);
-              document.location='tools.php?tiled&selectedTool='+$selected.data('name')+'&selectedParams='+params;
+              document.location='tiled.php?selectedTool='+$selected.data('name')+'&selectedParams='+params;
             }
         });
     });
