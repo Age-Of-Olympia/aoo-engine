@@ -1605,15 +1605,18 @@ class Player{
 
             // equiped loot chance : half chance
             if($row->equiped){
-
-                $lootChance = floor($lootChance / 2);
-            }
-
-            // pnj loot chance
-            if($this->id < 0){
-
-                $lootChance = 100;
-            }
+                 // pnj will not drop equiped item
+                if($this->id < 0){
+                    $lootChance = 0;
+                }else{
+                    $lootChance = floor($lootChance / 2);
+                }
+            }else{
+                // if pnj and not equiped, will drop everytime
+                if($this->id < 0){
+                    $lootChance = 100;
+                }
+            }        
 
 
             // perform loot
