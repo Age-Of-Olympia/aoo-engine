@@ -301,6 +301,7 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
     'bouche',
     'cou',
     'epaule',
+    'cape',
     'tronc',
     'taille',
     'pieds',
