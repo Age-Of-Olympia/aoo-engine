@@ -59,6 +59,10 @@ class Db{
 
         $stmt->execute();
 
+        if ($stmt->errno > 0) {
+            exit('error stmt: '.$stmt->error);
+        }
+
         $res = $stmt->get_result();
 
         if($res) {
@@ -121,7 +125,7 @@ class Db{
         return $row['n'];
     }
 
-    public function insert($table, $values){
+    public function insert($table, $values) : bool{
 
         $fields = $args = array();
 
