@@ -1982,7 +1982,11 @@ class Player{
             'registerTime'=>$time
         );
 
-        $db->insert('players', $values);
+        $res = $db->insert('players', $values);
+
+        if (!$res) {
+            exit('error inserting player');
+        }
 
         //we allready have the id for pnj and it's negatif 
         $lastId = is_null($id) ? $db->get_last_id('players') : $id;
