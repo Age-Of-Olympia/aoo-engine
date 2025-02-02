@@ -16,10 +16,10 @@ class Meteo
     private string $mask;
 
     #[ORM\Column(type: "float")]
-    private int $scrollingMask;
+    private float $scrollingMask;
 
-    #[ORM\Column(type: "integer", options: array("default"=>null))]
-    private ?int $verticalScrolling = null;
+    #[ORM\Column(type: "integer", options: array("default"=>0))]
+    private int $verticalScrolling = 0;
 
     public function getCoord_computed(): string
     {
@@ -31,12 +31,12 @@ class Meteo
         return $this->mask;
     }
 
-    public function getScrollingMask(): string
+    public function getScrollingMask(): float
     {
         return $this->scrollingMask;
     }
 
-    public function getVerticalScrolling(): string
+    public function getVerticalScrolling(): int
     {
         return $this->verticalScrolling;
     }

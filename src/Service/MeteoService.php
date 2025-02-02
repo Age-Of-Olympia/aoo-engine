@@ -18,10 +18,10 @@ class MeteoService
     /**
      * Returns the Meteo that matches the given coord, or null if not found.
      */
-    public function getMeteoByCoord_id(string $coord): ?string
+    public function getMeteoByCoord_id(string $coord): ?Meteo
     {
         $repo = $this->entityManager->getRepository(Meteo::class);
-        return $repo->findOneBy(['coords_computed' => $coord]);
+        return $repo->findOneBy(['coord_computed' => $coord]);
 
     }
 }

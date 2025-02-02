@@ -1,5 +1,10 @@
 <?php
 
+use App\Entity\Meteo;
+use App\Service\MeteoService;
+
+require_once "config/bootstrap.php";
+
 class View{
 
     private $coords; // Coordonnées de la vue
@@ -10,6 +15,7 @@ class View{
     private $useTbl; // array qui permettra d'augmenter le z-level des images
     private $options; // player->get_options()
     private $coord_computed; // Coordonnées passées au format string 'X_Y_Z_plan'
+    private $meteoService; // Service en relation avec la météo
 
 
     function __construct($coords, $p, $tiled=false, $options=array()){
@@ -22,6 +28,7 @@ class View{
         $this->useTbl = array();
         $this->options = $options;
         $this->coord_computed = $this->compute_unique_coord($coords);
+        $this->meteoService = new MeteoService();
     }
 
     public static function compute_unique_coord($coords){
@@ -581,30 +588,16 @@ class View{
         ';
         
         // Récupération de la météo
-        $sql = '
-        SELECT
-        mask,
-        scrollingMask AS sm,
-        verticalScrolling AS vs
-        FROM
-        meteos
-        WHERE
-        coord_computed = ?
-        ';
-
-        $db = new Db();
-
-        $res = $db->exe($sql, $this->coord_computed);
-
-        $row = $res->fetch_object();
+        $meteo = $this->meteoService->getMeteoByCoord_id($this->coord_computed);
         $isMask = false;
             
-        if(($row != NULL)){
-            if(($row->mask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
-                list($maskW, $maskH) = getimagesize('img/weather/' . $row->mask . '.webp');
-                $scrollingMask = $row->sm;
-                $verticalScrolling = $row->vs;
-                $mask = 'img\/weather\/' . $row->mask . '.webp';
+        if(($meteo != NULL)){
+            $meteoMask = $meteo->getMask();
+            if(($meteoMask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+                list($maskW, $maskH) = getimagesize('img/weather/' . $meteoMask . '.webp');
+                $scrollingMask = $meteo->getScrollingMask();
+                $verticalScrolling = $meteo->getVerticalScrolling();
+                $mask = 'img\/weather\/' . $meteoMask . '.webp';
                 $isMask = true;
             }
         }
