@@ -290,17 +290,12 @@ private static function filterRows(array $rows, int $playerId): array {
             'time'=>$time,
             'type'=>$type,
             'coords_id'=>$coordsId,
-            'coords_computed'=>$coordToLog
+            'coords_computed'=>$coordToLog,
+            'hiddenText'=>$hiddenText
         );
 
         $db = new Db();
 
         $res = $db->insert('players_logs', $values);
-
-        if ($hiddenText != '') {
-            $sql = 'UPDATE players_logs SET hiddenText = ? WHERE type = ? AND player_id = ? ORDER BY time DESC LIMIT 1';
-            $db->exe($sql, array($hiddenText, $type, $player->id));
-        }
-        
     }
 }

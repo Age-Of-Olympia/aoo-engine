@@ -45,22 +45,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $offeringPlayer = new Player($isTarget ? $exchange->playerId : $exchange->targetId);
       $targetPlayer = new Player($isTarget ? $exchange->targetId : $exchange->playerId);
       $offeringPlayer->get_data();
+      $targetPlayer->get_data();
       if ($POST_DATA['action'] == 'accept') {
   
         if (!isset($POST_DATA['lastmodification']) || $exchange->updateTime != $POST_DATA['lastmodification']) {
           ExitError('l\'échange à été modifié entre l\'affichage et l\'acceptation, revérifiez les objets');
         }
         $exchange->accept_exchange($isTarget);
-        $result["message"] .= "Vous avez accepté l'échange proposé par " . $offeringPlayer->data->name;
+        $result["message"] .= "Vous avez accepté l'échange avec " . $offeringPlayer->data->name;
         if ($exchange->playerOk == 1 && $exchange->targetOk == 1) {
-          $result["message"] .= "cela à validé l'échange proposé par " . $offeringPlayer->data->name;
+          $result["message"] .= ". Cela à validé l'échange";
+          $exchange->get_items_data();
+          $fromOfferingToTarget = $exchange->give_items(from_player: $offeringPlayer, to_player: $targetPlayer);
+          $fromTargetToOffering = $exchange->give_items(from_player: $targetPlayer, to_player: $offeringPlayer);
 
-          $exchange->give_items(from_player: $offeringPlayer, to_player: $targetPlayer);
-          $exchange->give_items(from_player: $targetPlayer, to_player: $offeringPlayer);
+          $logTime = time();
+          $targetLog = "Vous avez échangé avec " . $targetPlayer->data->name;
+          $objects = "vous avez donné : " . $fromOfferingToTarget . " et vous avez reçu : " . $fromTargetToOffering;
+          Log::put($offeringPlayer, $targetPlayer, $targetLog, "hidden_action", $objects, $logTime);
+
+          $targetLog = "Vous avez échangé avec " . $offeringPlayer->data->name;
+          $objects = "vous avez donné : " . $fromTargetToOffering . " et vous avez reçu : " . $fromOfferingToTarget;
+          Log::put($targetPlayer, $offeringPlayer, $targetLog, "hidden_action", $objects, $logTime);
         }
       } else if ($POST_DATA['action'] =='refuse') {
         $exchange->refuse_exchange(Istarget: $isTarget, IsPlayer: !$isTarget);
-        $result["message"] .= "Vous avez refusé l'échange proposé par " . $offeringPlayer->data->name;
+        $result["message"] .= "Vous avez refusé l'échange avec " . $offeringPlayer->data->name;
       }
     } catch (Throwable $th) {
       $exchange->db->rollback_transaction('create_exchange');

@@ -175,6 +175,7 @@ class Exchange{
     }
 
     public function give_items( $from_player, $to_player ){
+        $result ="";
         foreach($this->items as $exchange_item){
            if($exchange_item->player_id != $from_player->id)continue;
             if($exchange_item->target_id != $to_player->id && $exchange_item->player_id != $to_player->id){
@@ -186,8 +187,17 @@ class Exchange{
                 continue;
             }
             $item = new Item($exchange_item->item_id);
+            $item->get_data();
             $item->add_item($to_player, $exchange_item->n, true);
+            if(!empty($result))
+                $result.=", ";
+            $result.=$exchange_item->n." ".$item->data->name;
         }
+
+        if(empty($result)){
+            $result = 'Rien';
+        }
+        return $result;
     }
 
     public function render_items_for_player($playerId){
