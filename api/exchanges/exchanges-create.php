@@ -17,7 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $player->get_data();
   
   $recipient = Player::get_player_by_name($_POST['recipient']);
-
+  if($player->id == $recipient->id){
+    ExitError('Vous ne pouvez pas vous échanger des objets à vous même');
+  }
   $exchange = new Exchange();
   $exchange->db->start_transaction('create_exchange');
   try {
