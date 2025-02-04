@@ -81,38 +81,45 @@ $(document).ready(function(){
     });
 
     $('.change-mail').click(function(e){
-
-
         e.preventDefault();
 
-        var mail = prompt('Entrez une adresse mail valide:');
+        $("#email-dialog").dialog({
+            modal: true,
+            width: 400,
+            buttons: {
+                "Enregistrer": function() {
+                    var mail = $("#new-email").val();
+                    
+                    if(!mail || mail == ''){
+                        return false;
+                    }
 
-        if(!mail || mail == ''){
+                    if(!isEmail(mail)){
+                        alert('Cette adresse mail n\'est pas valide.');
+                        return false;
+                    }
 
-            return false;
-        }
-
-        if(!isEmail(mail)){
-
-            alert('Cette adresse mail n\'est pas valide.');
-
-            return false;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: 'account.php',
-            data: {
-                'changeMail': mail
-            }, // serializes the form's elements.
-            success: function(data)
-            {
-
-                // alert(data);
-                alert('Changement effectué.');
+                    $.ajax({
+                        type: "POST",
+                        url: 'scripts/account/change_mail.php',
+                        data: {'changeMail': mail},
+                        success: function(data) {
+                            var htmlContent = $(data).filter('#data').html();
+                            alert(htmlContent);
+                            if(htmlContent.includes('succès')) {
+                                $("#current-email").text(mail);
+                                $("#email-dialog").dialog("close");
+                            }
+                        }
+                    });
+                },
+                "Annuler": function() {
+                    $(this).dialog("close");
+                }
             }
         });
     });
+
 });
 
 function isEmail(email) {

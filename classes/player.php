@@ -2080,6 +2080,14 @@ class Player{
 
         $this->data = $playerJson;
 
+        // Get plain_mail from database
+        $db = new Db();
+        $sql = 'SELECT plain_mail FROM players WHERE id = ?';
+        $res = $db->exe($sql, array($this->id));
+        if($res && $res->num_rows > 0) {
+            $row = $res->fetch_object();
+            $this->data->plain_mail = $row->plain_mail;
+        }
 
         $pathInfo = pathinfo($this->data->portrait);
 
