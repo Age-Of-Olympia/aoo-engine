@@ -2,8 +2,6 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
-use App\Entity\Race;
 use Db;
 
 class PlayerService
