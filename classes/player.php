@@ -1,5 +1,7 @@
 <?php
 
+use App\Service\PlayerService;
+
 class Player{
 
     public $id;
@@ -13,6 +15,7 @@ class Player{
     public $turn;
     public $emplacements;
     public $row;
+    public $playerService;
     function __construct($playerId){
 
         $this->id = $playerId;
@@ -27,6 +30,7 @@ class Player{
         $this->debuffs = null;
         $this->turn = null;
         $this->row = null;
+        $this->playerService = new PlayerService();
     }
 
 
@@ -2081,13 +2085,7 @@ class Player{
         $this->data = $playerJson;
 
         // Get plain_mail from database
-        $db = new Db();
-        $sql = 'SELECT plain_mail FROM players WHERE id = ?';
-        $res = $db->exe($sql, array($this->id));
-        if($res && $res->num_rows > 0) {
-            $row = $res->fetch_object();
-            $this->data->plain_mail = $row->plain_mail;
-        }
+        $this->data->plain_mail = $this->playerService->getPlainEmail($this->id);
 
         $pathInfo = pathinfo($this->data->portrait);
 
