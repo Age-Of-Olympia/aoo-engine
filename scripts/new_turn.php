@@ -221,6 +221,7 @@ else if(!empty($_SESSION['playerId'])){
                 echo '</table>';
 
             echo '<br /><a href="index.php"><button>Jouer</button></a>';
+
             // Only show email prompt for real players (positive IDs)
             if($player->id > 0 && empty($player->data->plain_mail) && !$player->data->email_bonus) {
                 echo ' <a href="account.php?changeMail"><button>Renseigner mon mail (+20 XP)</button></a>';
