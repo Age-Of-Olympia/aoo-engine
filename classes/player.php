@@ -2084,8 +2084,10 @@ class Player{
 
         $this->data = $playerJson;
 
-        // Get plain_mail from database
-        $this->data->plain_mail = $this->playerService->getPlainEmail($this->id);
+        // Get plain_mail & email_bonus from PlayerService
+        $fields = $this->playerService->getPlayerFields($this->id, ['plain_mail', 'email_bonus']);
+        $this->data->plain_mail = $fields['plain_mail'];
+        $this->data->email_bonus = $fields['email_bonus'] ?? false;
 
         $pathInfo = pathinfo($this->data->portrait);
 
