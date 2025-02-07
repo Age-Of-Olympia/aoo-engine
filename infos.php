@@ -33,6 +33,8 @@ if(isset($_GET['rewards'])){
 
 
 $ui = new Ui($target->data->name);
+Use App\Service\PlayerEffectService;
+$playerEffectService = new PlayerEffectService();
 
 ob_start();
 
@@ -59,30 +61,16 @@ echo '
             $distance <= $caracsJson->p
         ){
 
-
-            $sql = '
-            SELECT
-            name, endTime
-            FROM
-            players_effects
-            WHERE
-            player_id = ?
-            ';
-
-            $db = new Db();
-
-            $res = $db->exe($sql, $target->id);
-
             echo '<div class="infos-effects">';
 
-                while($row = $res->fetch_object()){
+                $playerEffects = $playerEffectService->getEffectsByPlayerId($target->id);
 
+                foreach ($playerEffects as $effect){
 
-                    if(in_array($row->name, EFFECTS_HIDDEN)){
+                    if(in_array($effect->getName(), EFFECTS_HIDDEN)){
 
                         continue;
                     }
-
 
                     if(
                         $target->id == $player->id
@@ -94,13 +82,13 @@ echo '
 
                         $endTime = '(reposez-vous)';
 
-                        if(time() < $row->endTime){
+                        if(time() < $effect->getEndTime()){
 
-                            $endTime = Str::convert_time($row->endTime - time());
+                            $endTime = Str::convert_time($effect->getEndTime() - time());
                         }
 
 
-                        if(!$row->endTime){
+                        if(!$effect->getEndTime()){
 
                             $endTime = '∞';
                         }
@@ -110,7 +98,7 @@ echo '
                         $endTime = '';
                     }
 
-                    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#'. $row->name .'"><span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span><span style="font-size: 88%;">'. $endTime .'</span></a><br />';
+                    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#'. $effect->getName() .'"><span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span><span style="font-size: 88%;">'. $endTime .'</span></a><br />';
                 }
 
             echo '</div>';

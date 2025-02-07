@@ -11,7 +11,7 @@ if(!isset($_SESSION['isAdmin'])){
   // check admin
   $playerToCheck = new Player($_SESSION['playerId']);
   if(!$playerToCheck->have_option('isAdmin')){
-      exit();
+      exit('Action réservée aux admin');
   }
   else{
       $_SESSION['isAdmin'] = true;

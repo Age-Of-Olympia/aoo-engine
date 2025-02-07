@@ -8,14 +8,8 @@ $ui = new Ui('Personnages secondaires');
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
-$db = new Db();
-
-$res = $db->get_single_player_id('players_pnjs', $_SESSION['mainPlayerId']);
-
-if(!$res->num_rows){
-
-    // exit('Vous n\'avez pas de personnage secondaire.<br />Vous pouvez en faire la demande auprès d\'un Animateur.');
-}
+Use App\Service\PlayerPnjService;
+$playerPnjService = new PlayerPnjService();
 
 
 $main = new Player($_SESSION['mainPlayerId']);
@@ -25,22 +19,25 @@ $playersTbl = array(
     $main->id=>$main
 );
 
+$hiddenPnjs = array();
 
-while($row = $res->fetch_object()){
-
-
-    $playersTbl[$row->pnj_id] = new Player($row->pnj_id);
+$playerPnjs = $playerPnjService->getByPlayerId($main->id);
+foreach($playerPnjs as $playerPnj ){
+    if($playerPnj->isDisplayed()){
+        $playersTbl[$playerPnj->getPnjId()] = new Player($playerPnj->getPnjId());
+    }else{
+        $hiddenPnjs[$playerPnj->getPnjId()] = new Player($playerPnj->getPnjId());
+    }
 }
 
 
 if(!empty($_POST['switch'])){
 
 
-    if(!isset($playersTbl[$_POST['switch']])){
+    if(!isset($playersTbl[$_POST['switch']]) && !isset($hiddenPnjs[$_POST['switch']])){
 
         exit('error pnj');
     }
-
 
     $_SESSION['playerId'] = $_POST['switch'];
 
@@ -56,41 +53,38 @@ if(!empty($_POST['switch'])){
 }
 
 
-echo '<section id="pnj-container" class="marbre">';
+echo '<section class="marbre pnj-container">';
 
+Use App\Service\PlayerEffectService;
+$playerEffectService = new PlayerEffectService();
 
 foreach($playersTbl as $pnj){
 
 
     $pnj->get_data();
 
-
     $effectsTbl = array();
 
-    $sql = 'SELECT name, endTime FROM players_effects WHERE player_id = ?';
-
-    $res = $db->exe($sql, $pnj->id);
-
-    while($row = $res->fetch_object()){
-
-
+    $playerEffects = $playerEffectService->getEffectsByPlayerId($pnj->id);
+    
+    foreach ($playerEffects as $effect){
+        
         $endTime = '(reposez-vous)';
 
-        if(time() < $row->endTime){
+        if(time() < $effect->getEndTime()){
 
-            $endTime = Str::convert_time($row->endTime - time());
+            $endTime = Str::convert_time($effect->getEndTime()- time());
         }
 
 
-        if(!$row->endTime){
+        if(!$effect->getEndTime()){
 
             $endTime = '∞';
         }
 
-        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span> <sup>'. $endTime .'</sup>';
+        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span> <sup>'. $endTime .'</sup>';
     }
-
-
+    
     $raceJson = json()->decode('races', $pnj->data->race);
 
 
@@ -109,45 +103,46 @@ foreach($playersTbl as $pnj){
 
 
     echo '
-    <article class="pnj" style="cursor: pointer;" data-id="'. $pnj->id .'"><div style="position: relative;">'. $mails .'<div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div><img class="portrait" src="'. $pnj->data->portrait .'" /><br />'. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />'. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span></div></article>
+    <article class="pnj" style="cursor: pointer; position:relative;" data-id="'. $pnj->id .'">
+        <div style="position: relative;">'. $mails .'
+            <div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div>
+            <img class="portrait" src="'. $pnj->data->portrait .'" /><br />
+            '. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />
+            '. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span>
+        </div>';
+    if($pnj->id!=$_SESSION['originalPlayerId']){  
+        echo '<div class="masquer-pnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $pnj->id .'" ><span class="ra ra-fall-down "/> masquer</div>';
+    }
+    echo '
+    </article>
     ';
 }
 
 
 echo '
 </section>
-';
 
+<section class="marbre pnj-container hidden-pnjs"><div id="display-hidden-pnjs" style="cursor:pointer"> + Afficher la liste des PNJs Masqués.</div>
+<div id="hidden-pnjs-list">
+';
+foreach($hiddenPnjs as $hiddenPnj){
+    $hiddenPnj->get_data();
+    $raceJson = json()->decode('races', $hiddenPnj->data->race);  
+    $mails = $hiddenPnj->get_new_mails();
+    if($mails){
+        $mails = '<span class="cartouche bulle-mini blink" data-id="'. $hiddenPnj->id .'">'. $mails .'</span>';
+    }else{
+        $mails = '';
+    }
+    echo '<div data-player-id="'. $_SESSION['playerId'] .'" data-id="'. $hiddenPnj->id .'" >'. $hiddenPnj->data->name .' - <span style="font-size: 88%;">mat.'. $hiddenPnj->id .' - 
+            '. $raceJson->name .' - Rang '. $hiddenPnj->data->rank .' '.$mails.'
+            <button class="showPnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $hiddenPnj->id .'">Afficher</button>
+            <button class="impersonate" data-id="'. $hiddenPnj->id .'">Jouer</button>
+            </div>';
+
+}
+echo '
+</div></section>'
 
 ?>
-<script>
-$(document).ready(function(){
-
-    $('.pnj').click(function(e){
-
-
-        $.ajax({
-            type: "POST",
-            url: 'pnjs.php',
-            data: {'switch':$(this).data('id')}, // serializes the form's elements.
-            success: function(data)
-            {
-                document.location = 'index.php';
-            }
-        });
-    });
-
-    $('.bulle').click(function(e){
-
-        $.ajax({
-            type: "POST",
-            url: 'pnjs.php',
-            data: {'switch':$(this).data('id')}, // serializes the form's elements.
-            success: function(data)
-            {
-                document.location = 'forum.php?forum=Missives';
-            }
-        });
-    });
-});
-</script>
+<script src="js/pnjs.js"></script>

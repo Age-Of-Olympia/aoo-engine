@@ -559,13 +559,20 @@ img {
 
 .portrait{ width: 100px; }
 
-#pnj-container
+.pnj-container
 {
     margin: auto;
     display: flex;
     width: 90%;
     justify-content: center;
     flex-wrap:wrap;
+}
+
+.hidden-pnjs{
+    flex-direction: column;
+}
+#hidden-pnjs-list {
+    display: none;
 }
 
 article.pnj {
@@ -1100,6 +1107,17 @@ article.pnj {
     z-index: 1;
 }
 
+.bulle-mini{
+    background: red;
+    border-radius: 15px;
+    padding-left: 6px;
+    padding-right: 6px;
+    color: white;
+    font-size: 88%;
+    font-weight: bold;
+    z-index: 1;
+}
+
 
 .dest-container {
 
@@ -1200,15 +1218,26 @@ blockquote{
     position: relative;
 }
 
-    .infos-effects{
+.infos-effects{
 
-        position: absolute;
-        top: 0px;
-        right: 0px;
-        text-align: left;
-        background: rgba(255,255,255,0.5);
-        z-index: 10;
-    }
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    text-align: left;
+    background: rgba(255,255,255,0.5);
+    z-index: 10;
+}
+
+.masquer-pnj {
+    display: none;
+    position: absolute;  
+    background-color: rgba(0, 0, 0, 0.5);
+    bottom: 0;
+    left: 0;
+    width: 100%; 
+    color: white;
+    text-align: center;
+}
 
 .infos-item{
 
