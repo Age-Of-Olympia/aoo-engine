@@ -4520,7 +4520,8 @@ INSERT INTO `players_options` (`player_id`, `name`) VALUES
 
 CREATE TABLE `players_pnjs` (
   `player_id` int(11) NOT NULL,
-  `pnj_id` int(11) NOT NULL
+  `pnj_id` int(11) NOT NULL,
+  `displayed` boolean not null default true
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

@@ -14,7 +14,10 @@ function submit_cmd(){
     if(line.length>0){
         $('#console-content').append('<span class="request">' + line + '</span>');
         submit_command(line);
-        window.cmdHistory.push(line); // j'adore cette pushline
+        if(!window.cmdHistory){
+            window.cmdHistory=array();
+        }
+        window.cmdHistory.push(line);   
         window.historyCursor = window.cmdHistory.length;
     }
 }
