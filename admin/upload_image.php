@@ -1,6 +1,18 @@
 <?php
-include ($_SERVER['DOCUMENT_ROOT'].'/checks/admin-check.php');
+include ($_SERVER['DOCUMENT_ROOT'].'/admin/includes/header.php');
+?>
 
-require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
+<h1>Upload Images</h1>
+<div class="upload-form">
+    <form method="post" action="process_upload.php" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Select Image:</label>
+            <input type="file" name="image" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn">Upload Image</button>
+    </form>
+</div>
 
-include ($_SERVER['DOCUMENT_ROOT'].'/src/Form/upload_image_form.php');
+<?php
+include ($_SERVER['DOCUMENT_ROOT'].'/admin/includes/footer.php');
+?>
