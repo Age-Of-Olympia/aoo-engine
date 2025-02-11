@@ -46,7 +46,7 @@ if(View::get_distance($player->coords, $goCoords) > 1){
 
 
 $coordsId = View::get_coords_id($goCoords);
-
+$goCoords->coordsId=$coordsId;
 
 $db = new Db();
 
@@ -273,8 +273,10 @@ if($res->num_rows){
 
 
     $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
-
+    $coordBackup = $player->coord;
+    $player->coords = $goCoords;
     Log::put($player, $player, $text, $type="loot");
+    $player->coords = $coordBackup;
 }
 
 
