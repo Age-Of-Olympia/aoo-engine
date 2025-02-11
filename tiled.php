@@ -63,7 +63,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 
 
     if($_POST['type'] == 'tp'){
-
+        $coords->coordsId = $coordsId;
         $player->go($coords);
         exit('tp');
     }

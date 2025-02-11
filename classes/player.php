@@ -561,7 +561,7 @@ class Player{
 
         $oldCoords = $this->coords;
 
-        $coordsId = View::get_coords_id($goCoords);
+        $coordsId = isset($goCoords->coordsId) ? $goCoords->coordsId : View::get_coords_id($goCoords);
 
         $zChange = ($oldCoords->z != $goCoords->z);
 

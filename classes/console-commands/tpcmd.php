@@ -30,7 +30,7 @@ EOT);
             $goCoords = $target->get_coords();
 
             $coordsId = View::get_free_coords_id_arround($goCoords);
-
+            $goCoords->coordsId = $coordsId;
             $player->go($goCoords);
 
             $player->refresh_view();
