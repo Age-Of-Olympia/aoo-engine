@@ -1,0 +1,243 @@
+.account-nav {
+    margin-bottom: 2rem;
+}
+
+.account-container {
+    display: flex;
+    gap: 2rem;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.account-column {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    border-radius: 4px;
+}
+
+.settings-section {
+    margin-bottom: 2rem;
+}
+
+.settings-section h3 {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: #000;
+}
+
+.settings-content {
+    padding-left: 1rem;
+}
+
+.settings-help {
+    color: #000;
+    font-size: 0.9em;
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.settings-option {
+    margin-bottom: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+    color: #000;
+    position: relative;
+    cursor: pointer;
+}
+
+.tooltip-trigger {
+    cursor: help;
+}
+
+.tooltip {
+    visibility: hidden;
+    position: absolute;
+    left: calc(100% + 10px);
+    top: -2px;
+    transform: none;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tooltip::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 8px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
+}
+
+.tooltip-trigger:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+input[type="button"], button, select {
+    background-color: rgba(255, 255, 255, .4);
+    border: 1px solid transparent;
+    border-radius: 3px;
+    box-shadow: rgba(255, 255, 255, .4) 0 1px 0 0 inset;
+    box-sizing: border-box;
+    color: #000;
+    cursor: pointer;
+    display: inline-block;
+    font-family: -apple-system, system-ui, "Segoe UI", "Liberation Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.15385;
+    margin: 0;
+    outline: 0;
+    padding: 8px .8em;
+    position: relative;
+    text-align: center;
+    text-decoration: none;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+input[type="button"]:hover, button:hover,
+input[type="button"]:focus, button:focus,
+select:hover, select:focus {
+    background-color: #e6e6e6;
+}
+
+input[type="button"]:focus, button:focus, select:focus {
+    box-shadow: 0 0 0 4px rgba(0, 149, 255, .15);
+}
+
+input[type="button"]:active, button:active, select:active {
+    background-color: #d9d9d9;
+    box-shadow: none;
+}
+
+input[type="button"]:disabled, button:disabled, select:disabled {
+    color: grey;
+    box-shadow: none;
+}
+
+.danger-button {
+    background-color: rgba(187, 32, 32, 0.3);
+    border-color: rgba(187, 32, 32, 0.4);
+}
+
+.danger-button:hover {
+    background-color: rgba(187, 32, 32, 0.4);
+}
+
+.notification-options {
+    margin-left: 2rem;
+    display: none;
+}
+
+.notification-options.active {
+    display: block;
+}
+
+.notification-group {
+    margin-bottom: 0.5rem;
+}
+
+.save-button {
+    margin-top: 1rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    max-width: 400px;
+}
+
+.settings-cell {
+    flex: none;
+    color: #000;
+}
+
+.settings-cell:first-child {
+    flex: 1;
+    min-width: 0;
+    padding-right: 1rem;
+}
+
+.settings-cell:last-child {
+    text-align: right;
+}
+
+.game-preferences {
+    margin-bottom: 2rem;
+}
+
+.game-preferences h3 {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: #000;
+}
+
+.game-preferences-content {
+    padding-left: 1rem;
+}
+
+.game-preferences-option {
+    margin-bottom: 1rem;
+}
+
+.game-preferences-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+    color: #000;
+}
+
+@media (max-width: 768px) {
+    .account-container {
+        flex-direction: column;
+    }
+    
+    .account-column {
+        width: 100%;
+    }
+    
+    .tooltip {
+        left: auto;
+        right: 0;
+        top: 100%;
+        transform: none;
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+    
+    .tooltip::before {
+        left: 10px;
+        top: -6px;
+        border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+    }
+}

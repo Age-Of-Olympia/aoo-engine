@@ -49,7 +49,7 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
         </button>
         <!-- Left Menu -->
         <div class="admin-menu">
-            <h2>Admin Menu</h2>
+            <h2>Admin Of Olympia</h2>
             <ul>
                 <li class="menu-item">
                     <a href="/admin/index.php" <?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'class="active"' : ''; ?>>Dashboard</a>
