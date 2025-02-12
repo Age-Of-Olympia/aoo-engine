@@ -93,6 +93,9 @@ function preload(img, element){
 
 $(document).ready(function(){
 
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./js/worker-cache.js");
+      }
 
     // ctrl enter to submit
     $('textarea').keydown( function(e) {
@@ -153,9 +156,13 @@ $(document).ready(function(){
                     var $popup = $('<div class="cartouche bulle blink" style="pointer-events: none;">'+ trimedData +'</div>');
 
                     $avatar.append($popup);
-
-                    // change favicon
-                    $("link[rel*='icon']").attr("href", "img/ui/favicons/favicon_alert.png");
+                    if (navigator.setAppBadge) {
+                        navigator.setAppBadge(trimedData);
+                      } else {
+                          // change favicon
+                        $("link[rel*='icon']").attr("href", "img/ui/favicons/favicon_alert.png");
+                      }
+                 
 
                     // change title
                     if(trimedData.length > 0 && trimedData.length < 10){
@@ -165,6 +172,17 @@ $(document).ready(function(){
                         $(document).prop('title', newTitle);
                     }
 
+                }
+                else{
+
+                   
+                    $(document).prop('title', baseTitle);
+
+                    if (navigator.clearAppBadge) {
+                        navigator.clearAppBadge()
+                      } else {
+                        $("link[rel*='icon']").attr("href", "img/ui/favicons/favicon.png");
+                      }
                 }
             }
         });

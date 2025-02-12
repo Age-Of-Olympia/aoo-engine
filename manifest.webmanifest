@@ -1,0 +1,33 @@
+{
+    "short_name": "AoO",
+    "name": "Age of Olympia",
+    "icons": [
+      {
+        "src": "/img/ui/favicons/banner-600.webp",
+        "sizes": "600x600",
+        "type": "image/webp"
+      },
+      {
+        "src": "/img/ui/favicons/favicon-1024.png",
+        "sizes": "1024x1024",
+        "type": "image/png"
+      },
+      {
+        "src": "/img/ui/favicons/favicon-512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      },
+      {
+        "src": "/img/ui/favicons/favicon-256.png",
+        "sizes": "256x256",
+        "type": "image/png"
+      }
+
+    ],
+    "id": "com.ageofolympia",
+    "start_url": "/",
+    "display_override": ["window-controls-overlay"],
+    "display": "standalone",
+    "theme_color": "#555",
+    "background_color": "grey"
+  }

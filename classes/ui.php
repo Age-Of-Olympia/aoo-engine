@@ -30,6 +30,7 @@ class ui{
                 <meta name="keywords" content="JDR,jeu en ligne,JDR en ligne,jeu de rôle,jeu de role,en ligne,Legends of Olympia,Age of Olympia,LoO,AoO">
                 <meta name="robots" content="index, follow">
                 <meta name="language" content="French">
+                <link rel="manifest" href="manifest.webmanifest" />
 
                 <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
