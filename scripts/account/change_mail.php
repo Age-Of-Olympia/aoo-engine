@@ -6,6 +6,11 @@ echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> R
 $player = new Player($_SESSION['playerId']);
 $player->get_data();
 
+// Prevent PNJs from getting emails
+if($player->id <= 0) {
+    exit('Cette fonctionnalité n\'est pas disponible pour les PNJs.');
+}
+
 // save new email
 if(!empty($_POST['confirmChange'])){
     if(empty($_POST['new'])) exit('Entrez le nouvel email.');
