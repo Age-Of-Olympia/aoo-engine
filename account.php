@@ -212,7 +212,12 @@ foreach(OPTIONS as $k=>$e){
                 ';
             }
             elseif($k == 'changeMail'){
-                echo '<a href="account.php?changeMail"><button style="width: 100%;">Changer</button></a>';
+                // Disable email change for PNJs
+                if($player->id > 0) {
+                    echo '<a href="account.php?changeMail"><button style="width: 100%;">Changer</button></a>';
+                } else {
+                    echo '<button style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>PNJ - Non disponible</button>';
+                }
             }
             else if($k =='incognitoMode')
             {
