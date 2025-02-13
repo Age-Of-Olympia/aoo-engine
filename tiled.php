@@ -91,8 +91,23 @@ $data = $view->get_view();
 echo '
 <link rel="stylesheet" href="css/modal.css" />
 
+<style>
+
+    #tool-div {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    @media (max-width: 1200px) { 
+            #tool-div {
+                 flex-direction: row;
+            }
+    }
+
+</style>
+
 <div style="float: left;">
-<script src="js/tiled.js"></script>
 <script src="js/modal.js"></script>
 
 ';
@@ -105,11 +120,20 @@ echo '
 
 echo '<div stlye="position: absolute; top: 0; left: 0;"><a href="index.php"><button>Retour</button></a></div>
 <br/>
-<div id="ajax-data"></div>';
+<div id="ajax-data"></div>
+<div id="tool-div" style="display:flex;justify-content: center;">
+    <div>';
+
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_tools.php';
+
+echo '</div><div>';
+
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_mass_tools.php';
+
+echo '</div>
+</div>';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_indestructibles.php';
-
-include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_foregrounds.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_plants.php';
 
@@ -119,9 +143,7 @@ include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_elements.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_triggers.php';
 
-include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_tools.php';
-
-include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_mass_tools.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_foregrounds.php';
 
 use App\View\ModalView;
 $modalView = new ModalView();
@@ -140,167 +162,8 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script>
-$(document).ready(function(){
+<script src="js/tiled.js"></script>
 
-
-    $('img').each(function(e){
-
-        $(this).attr('title', $(this).data('name'));
-    });
-
-
-    var $customCursor = $('<img>', {
-        class: 'custom-cursor',
-        src: $('.map').attr('src')
-    }).appendTo('body').hide();
-
-
-    selectPreviousTool($customCursor);
-
-
-  $('.case').on('contextmenu', function(e) {
-      e.preventDefault();
-
-      var coords = $(this).data('coords');
-
-      let [x, y] = coords.split(',');
-
-
-      // show coords button
-      $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
-          '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
-          '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
-
-
-    });
-
-    $('.case').click(function(e){
-
-        var $selected = $('.selected');
-
-        if(!$selected[0]){
-
-            if(!confirm('TP?')){
-
-                return false;
-            }
-
-            $.ajax({
-                type: "POST",
-                url: 'tiled.php',
-                data: {
-                    'coords':$(this).data('coords'),
-                    'type':'tp',
-                    'src':1
-                }, // serializes the form's elements.
-                success: function(data)
-                {
-                    // alert(data);
-                  document.location='tiled.php';
-                }
-            });
-
-            return false;
-
-        }else if( $selected.hasClass('select-name') && $selected.data('name') === 'info'){
-            retrieveCaseData($(this).data('coords'));
-            return false;
-        }
-
-        var src = $selected.attr('src');
-
-        var params = '';
-
-        if($selected.hasClass('ele')){
-
-            src = $selected.data('element');
-        }
-
-        if($selected.hasClass('select-name')){
-
-            src = $selected.data('name');
-        }
-
-        if($selected.data('params') != null){
-
-            params = $('#'+ $selected.data('type') +'-params').val();
-        }
-
-
-        $.ajax({
-            type: "POST",
-            url: 'tiled.php',
-            data: {
-              'coords':$(this).data('coords'),
-              'type':$selected.data('type'),
-              'src':src,
-              'params':params
-            }, // serializes the form's elements.
-            success: function(data)
-            {
-              // alert(data);
-              document.location='tiled.php?selectedTool='+$selected.data('name')+'&selectedParams='+params;
-            }
-        });
-    });
-
-    $('.map').click(function(e){
-        if (!$(this).hasClass('selected')) {
-
-          var $paramsField = $('#' + $(this).data('type') + '-params');
-
-          if ($(this).data('params')) {
-
-            let params = $(this).data('params');
-
-            // if($paramsField.val() == ''){
-
-                $paramsField.val(params);
-            // }
-
-            $paramsField.focus().select();
-          }
-          else{
-            $paramsField.val('');
-          }
-
-          $('.map').removeClass('selected').css('border', '0px');
-          $(this).addClass('selected').css('border', '1px solid red');
-
-
-          // Position de l'image sur la page
-          var offsetX = e.offsetX - 25; // 25 pour centrer l'image (50/2)
-          var offsetY = e.offsetY - 25; // 25 pour centrer l'image (50/2)
-
-          $customCursor.css({
-              left: e.pageX + offsetX + 'px',
-              top: e.pageY + offsetY + 'px'
-          }).attr('src', $(this).attr('src')).show();
-
-            $('body').on('mousemove', function(e) {
-                $customCursor.css({
-                    left: e.pageX - 25 +'px',
-                    top: e.pageY - 25+'px'
-                });
-            });
-
-        } else{
-          $(this).removeClass('selected').css('border', '0px');
-        }
-    });
-
-
-    $(document).on('click', function(e) {
-        if (!$(e.target).hasClass('map') && $(e.target).attr('type') != 'text') {
-            $customCursor.hide();
-            $('body').off('mousemove');
-            $('.map').removeClass('selected').css('border', '0px');
-        }
-    });
-
-});
-</script>
 
 
 
