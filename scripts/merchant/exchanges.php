@@ -43,7 +43,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
               }
               else
                 echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-lastModification="'.$exchange->updateTime.'">Accepter l\'échange</a><br>';
-              echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( suprimer )</a><br>';
+              echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( supprimer )</a><br>';
               echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a> <br>';
               echo '<ul class="compact-list">
               <li style="font-weight: bold;">Vous recevez : </li>';
@@ -72,7 +72,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                 else 
                   echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-lastModification="'.$exchange->updateTime.'" >Accepter l\'échange</a> <br>';
                
-                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( suprimer )</a><br>'; 
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( supprimer )</a><br>'; 
                 echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a>  <br>';
                 echo '<br><ul class="compact-list">
                 <li style="font-weight: bold;">Vous recevez : </li>';
