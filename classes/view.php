@@ -472,8 +472,13 @@ class View{
                         echo '
                         <image
                             class="case '. $goCase .'"
-                            data-coords="'. $coordX .','. $coordY .'"
+                            data-coords="'. $coordX .','. $coordY .'"';
 
+                            if($this->tiled){
+                                echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
+                            }
+
+                           echo ' 
                             x="' . $x . '"
                             y="' . $y . '"
 
@@ -488,9 +493,13 @@ class View{
                         <rect
                             class="case '. $goCase .'"
                             class="case"
-                            data-coords="'. $coordX .','. $coordY .'"
+                            data-coords="'. $coordX .','. $coordY .'"';
 
-                            x="' . $x . '"
+                            if($this->tiled){
+                                echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
+                            }
+
+                            echo 'x="' . $x . '"
                             y="' . $y . '"
 
                             width="50"
