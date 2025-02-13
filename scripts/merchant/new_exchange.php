@@ -2,8 +2,7 @@
 
 
 
-echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des marchands, c\'est ici. <br/>
-Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </div>';
+echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des marchands, c\'est ici. </div>';
 
 
 ?>

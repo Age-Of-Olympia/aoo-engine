@@ -20,7 +20,7 @@ if(!isset($_GET['editExchange'])){
     $otherPlayer->get_data();
 ?>
 <div class="section">
-  <div class="section-title">Nouvel échange</div>
+  <div class="section-title">Modification de l'échange</div>
   <div> Pour envoyer un objet il doit être en banque</div>
   
   <form id="object-list-form">
@@ -37,6 +37,8 @@ if(!isset($_GET['editExchange'])){
             }
             ?>
             </div>
+            <hr>
+            <h3>Votre Inventaire :</h3>
             <?php
             $player = new Player($_SESSION['playerId']);
             $itemList = Item::get_item_list($player, $bank=true);
@@ -60,7 +62,7 @@ if(!isset($_GET['editExchange'])){
     var defaultobjects=<?php echo json_encode($objects); ?>;
     var $actions = $('.preview-action');
     $actions
-    .append('<button class="action" data-action="add-to-exchange">+ Ajouter</button><br />');
+    .append('<button class="action" data-action="add-to-exchange">+-Modifier </button><br />');
   
     $('#cancel-button').click(function(e) {
         objects = <?php echo json_encode($objects); ?>;
