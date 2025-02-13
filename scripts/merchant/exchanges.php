@@ -39,11 +39,11 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                 echo $fromPlayer->data->name. ' a accepté<br>';
               }
               if($exchange->targetOk == 1){
-               echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'">Refuser</a> ( n\'annule pas l\'échange)<br>';
+               echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'">Refuser</a> ( n\'annule pas l\'échange)<br>';
               }
               else
-                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-lastModification="'.$exchange->updateTime.'">Accepter l\'échange</a><br>';
-              echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( supprimer )</a><br>';
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-lastModification="'.$exchange->updateTime.'" data-playerid="'.$player->id.'">Accepter l\'échange</a><br>';
+              echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'" >Annuler ( supprimer )</a><br>';
               echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a> <br>';
               echo '<ul class="compact-list">
               <li style="font-weight: bold;">Vous recevez : </li>';
@@ -67,12 +67,12 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                     echo $targetPlayer->data->name. ' a accepté<br>';
                 }
                 if($exchange->playerOk == 1){
-                 echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'">Refuser</a> ( n\'annule pas l\'échange) <br>';
+                 echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'">Refuser</a> ( n\'annule pas l\'échange) <br>';
                 }
                 else 
-                  echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-lastModification="'.$exchange->updateTime.'" >Accepter l\'échange</a> <br>';
+                  echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'" data-lastModification="'.$exchange->updateTime.'" >Accepter l\'échange</a> <br>';
                
-                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'">Annuler ( supprimer )</a><br>'; 
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'">Annuler ( supprimer )</a><br>'; 
                 echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a>  <br>';
                 echo '<br><ul class="compact-list">
                 <li style="font-weight: bold;">Vous recevez : </li>';

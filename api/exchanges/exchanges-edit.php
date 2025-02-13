@@ -19,6 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ExitError('Invalid request');
   }
 
+  if(isset($POST_DATA['playerid']))
+  {
+    if($_SESSION['playerId'] != $POST_DATA['playerid'])
+    {
+      ExitError('account changed');
+    }
+  }
   $exchange = new Exchange($POST_DATA['id']);
   $exchange->get_base_data();
   
