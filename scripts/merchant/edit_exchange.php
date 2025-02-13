@@ -30,6 +30,7 @@ if(!isset($_GET['editExchange'])){
             <div id="object-list">
             <?php 
             foreach ($exchange->items as $exchange_item) {
+              if($exchange_item->player_id != $player->id)continue;
               $item = new Item($exchange_item->item_id);
               $item->get_data();
               echo '<div>Objet : ' . $item->data->name . ' - Quantité: ' . $exchange_item->n . '<button class="delete" data-id="'.$exchange_item->item_id.'">X</button></div>';
