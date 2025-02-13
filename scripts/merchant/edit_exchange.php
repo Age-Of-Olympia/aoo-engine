@@ -74,6 +74,7 @@ if(!isset($_GET['editExchange'])){
         let payload = {
                   action: 'objects',
                   id: <?php echo $exchange->id ?>,
+                  playerid: <?php echo $player->id ?>,
                   objects: objects
               };
           let url= 'api/exchanges/exchanges-edit.php?targetId=<?php echo $target->id ?>';
