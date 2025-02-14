@@ -229,7 +229,6 @@ else if(!empty($_SESSION['playerId'])){
             // anti berserk
             $antiBerserkTime = $player->data->lastActionTime + (0.25 * $playerTurn);
 
-
             // update
             $sql = '
             UPDATE
@@ -238,8 +237,6 @@ else if(!empty($_SESSION['playerId'])){
             nextTurnTime = ?,
             lastActionTime = 0,
             antiBerserkTime = ?,
-            xp = xp + ?,
-            pi = pi + ?,
             malus = malus - ?,
             fatigue = fatigue - ?
             WHERE
@@ -249,14 +246,15 @@ else if(!empty($_SESSION['playerId'])){
             $values = array(
                 $nextTurnTime,
                 $antiBerserkTime,
-                $gainXp,
-                $gainXp,
                 $recovMalus,
                 $recovFat,
                 $player->id
             );
 
             $db->exe($sql, $values);
+            
+            // Ajout de l'xp de début de tour
+            $player->put_xp($gainXp);
 
             $player->refresh_data();
             $player->refresh_caracs();

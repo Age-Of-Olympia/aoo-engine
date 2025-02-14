@@ -673,10 +673,11 @@ class Player{
             $this->get_data();
         }
 
-
+        // Ajout d'un cap temporaire des PIs pour la fin de la saison 1
+        $xpCap = 3500;
+        $pi = min(max(0,($xpCap - $this->data->xp)),$xp);
         $this->data->xp += $xp;
-        $this->data->pi += $xp;
-
+        $this->data->pi += $pi;
 
         // update rank
         $rank = Str::get_rank($this->data->xp);
@@ -685,7 +686,7 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, array($xp, $xp, $rank, $this->id));
+        $db->exe($sql, array($xp, $pi, $rank, $this->id));
 
 
         $this->refresh_data();
