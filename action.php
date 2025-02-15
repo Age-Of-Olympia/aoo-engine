@@ -205,8 +205,6 @@ if($actionJson->targetType != 'self'){
     if($actionJson->playerJet == 'cc/ct'){
 
         if($distance == 1){
-
-
             // melee
 
             $actionJson->playerJet = 'cc';
@@ -363,13 +361,14 @@ if(!empty($success) && $success == true){
         $targetDamagesBonus = empty($actionJson->targetDamagesBonus)? 0 :((is_numeric($actionJson->targetDamagesBonus)) ? $actionJson->targetDamagesBonus : $target->caracs->{$actionJson->targetDamagesBonus});
 
         $baseDamages = $playerDamages - $targetDamages;
-        $baseDamages = max($baseDamages, 1);
+        
         
         $bonusDamages = $playerDamagesBonus - $targetDamagesBonus;
 
-        //minimum bonus damages seulement si le bonus est positif ( certains sorts ont des bonus négatifs )
-        if($playerDamagesBonus > 0){
-            $bonusDamages = max($bonusDamages, 1);
+        //minimum damages seulement si l'adversaire à une defense bonus
+        if($targetDamagesBonus > 0){
+            $bonusDamages = max($bonusDamages, 0);
+            $baseDamages = max($baseDamages, 0);
         }
 
         $totalDamages = $baseDamages + $bonusDamages;
@@ -410,11 +409,11 @@ if(!empty($success) && $success == true){
         $critTxt = (!empty($critAdd)) ? ' (+ '. $critAdd .')' : '';
         $bonusDamageTxt="";
         if($playerDamagesBonus>0){
-            $bonusDamageTxt="(min 1) + (".$bonusDamages;
-            if($playerDamagesBonus>0){
+            $bonusDamageTxt=" + (".$playerDamagesBonus;
+            if($targetDamagesBonus>0){
                 $bonusDamageTxt.=" - ".$targetDamagesBonus;
             }
-            $bonusDamageTxt.=")(min 1)";
+            $bonusDamageTxt.=")";
         }
 
         $bonusCaracTxt="";
