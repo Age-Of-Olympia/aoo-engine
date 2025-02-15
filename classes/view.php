@@ -228,6 +228,19 @@ class View{
             map_walls
             WHERE
             coords_id IN ('. implode(',', $this->inSightId) .')
+            
+            UNION
+
+            SELECT
+            id, 
+            "carreaux" AS name,
+            coords_id,
+            "routes" AS whichTable,
+            99.5 AS tableOrder
+            FROM
+            map_routes
+            WHERE
+            coords_id IN ('. implode(',', $this->inSightId) .')
 
             UNION
 
@@ -457,7 +470,6 @@ class View{
 
                     $x = $i * 50;
                     $y = $j * 50;
-
 
                     $goCase = '';
 

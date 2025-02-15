@@ -22,7 +22,7 @@ $(document).ready(function(){
 
         var $case = $('[x="'+ i +'"][y="'+ j +'"]');
 
-        if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="plants"], [data-table="items"], [data-table="elements"], #go-img, #go-rect, #destroy-img, #destroy-rec')[0]){
+        if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="plants"], [data-table="items"], [data-table="elements"], [data-table="routes"], #go-img, #go-rect, #destroy-img, #destroy-rec')[0]){
 
 
             if($('.clicked-cases-reseter[data-coords="'+ coords +'"]')[0] != null){

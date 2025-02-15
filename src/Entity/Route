@@ -1,0 +1,32 @@
+<?php
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+#[ORM\Table(name: "routes")]
+class Route
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: "integer")]
+    private ?int $id = null;
+
+    #[ORM\Column(type: "integer")]
+    private string $coord_id;
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getCoord_computed(): int
+    {
+        return $this->coord_id;
+    }
+
+    public function setCoord_computed(int $coord_id): void
+    {
+        $this->coord_id = $coord_id;
+    }
+}
