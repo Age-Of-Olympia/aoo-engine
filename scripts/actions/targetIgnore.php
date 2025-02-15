@@ -10,7 +10,7 @@ foreach($actionJson->targetIgnore as $emp){
 
 
         // unequip
-        $target->equip($target->emplacements->{$emp}, $doNotRefresh=true);
+        $target->equip($target->emplacements->{$emp}, doNotRefresh:true);
 
         $itemToEquip[$emp] = $target->emplacements->{$emp};
 
@@ -30,11 +30,8 @@ $caracsCp = clone $target->caracs;
 foreach($itemToEquip as $emp=>$item){
 
 
-    $target->equip($item, $doNotRefresh=true);
+    $target->equip($item, doNotRefresh:true);
 
-
-    // unset again
-    unset($target->emplacements->{$emp});
 }
 
 

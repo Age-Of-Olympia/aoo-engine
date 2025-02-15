@@ -1362,7 +1362,7 @@ class Player{
     }
 
 
-    public function equip($item){
+    public function equip($item,$doNotRefresh=false){
 
 
         $db = new Db();
@@ -1380,7 +1380,7 @@ class Player{
         }
 
 
-        $itemList = Item::get_equiped_list($this, $doNotRefresh=false);
+        $itemList = Item::get_equiped_list($this);
 
 
         if(!empty($itemList[$item->id])){
