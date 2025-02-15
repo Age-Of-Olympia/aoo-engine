@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Hôte : mariadb-aoo4
--- Généré le : lun. 06 jan. 2025 à 00:01
--- Version du serveur : 11.5.2-MariaDB-ubu2404
--- Version de PHP : 8.2.8
+-- Host: mariadb-aoo4
+-- Generation Time: Feb 15, 2025 at 10:12 PM
+-- Server version: 11.6.2-MariaDB-ubu2404
+-- PHP Version: 8.2.8
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de données : `aoo4-fromscratch`
+-- Database: `aoo4`
 --
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `coords`
+-- Table structure for table `coords`
 --
 
 CREATE TABLE `coords` (
@@ -36,7 +36,7 @@ CREATE TABLE `coords` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `coords`
+-- Dumping data for table `coords`
 --
 
 INSERT INTO `coords` (`id`, `x`, `y`, `z`, `plan`) VALUES
@@ -1624,7 +1624,7 @@ INSERT INTO `coords` (`id`, `x`, `y`, `z`, `plan`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `forums_keywords`
+-- Table structure for table `forums_keywords`
 --
 
 CREATE TABLE `forums_keywords` (
@@ -1636,7 +1636,7 @@ CREATE TABLE `forums_keywords` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `items`
+-- Table structure for table `items`
 --
 
 CREATE TABLE `items` (
@@ -1652,7 +1652,7 @@ CREATE TABLE `items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `items`
+-- Dumping data for table `items`
 --
 
 INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `element`, `blessed_by_id`, `spell`) VALUES
@@ -1779,7 +1779,7 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 -- --------------------------------------------------------
 
 --
--- Structure de la table `items_asks`
+-- Table structure for table `items_asks`
 --
 
 CREATE TABLE `items_asks` (
@@ -1794,7 +1794,7 @@ CREATE TABLE `items_asks` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `items_bids`
+-- Table structure for table `items_bids`
 --
 
 CREATE TABLE `items_bids` (
@@ -1809,7 +1809,7 @@ CREATE TABLE `items_bids` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `items_exchanges`
+-- Table structure for table `items_exchanges`
 --
 
 CREATE TABLE `items_exchanges` (
@@ -1824,7 +1824,7 @@ CREATE TABLE `items_exchanges` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_dialogs`
+-- Table structure for table `map_dialogs`
 --
 
 CREATE TABLE `map_dialogs` (
@@ -1837,7 +1837,7 @@ CREATE TABLE `map_dialogs` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_elements`
+-- Table structure for table `map_elements`
 --
 
 CREATE TABLE `map_elements` (
@@ -1848,7 +1848,7 @@ CREATE TABLE `map_elements` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `map_elements`
+-- Dumping data for table `map_elements`
 --
 
 INSERT INTO `map_elements` (`id`, `name`, `coords_id`, `endTime`) VALUES
@@ -2351,7 +2351,7 @@ INSERT INTO `map_elements` (`id`, `name`, `coords_id`, `endTime`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_foregrounds`
+-- Table structure for table `map_foregrounds`
 --
 
 CREATE TABLE `map_foregrounds` (
@@ -2361,7 +2361,7 @@ CREATE TABLE `map_foregrounds` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `map_foregrounds`
+-- Dumping data for table `map_foregrounds`
 --
 
 INSERT INTO `map_foregrounds` (`id`, `coords_id`, `name`) VALUES
@@ -2406,7 +2406,7 @@ INSERT INTO `map_foregrounds` (`id`, `coords_id`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_items`
+-- Table structure for table `map_items`
 --
 
 CREATE TABLE `map_items` (
@@ -2420,7 +2420,7 @@ CREATE TABLE `map_items` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_plants`
+-- Table structure for table `map_plants`
 --
 
 CREATE TABLE `map_plants` (
@@ -2431,7 +2431,7 @@ CREATE TABLE `map_plants` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `map_plants`
+-- Dumping data for table `map_plants`
 --
 
 INSERT INTO `map_plants` (`id`, `name`, `coords_id`, `params`) VALUES
@@ -2498,7 +2498,7 @@ INSERT INTO `map_plants` (`id`, `name`, `coords_id`, `params`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_tiles`
+-- Table structure for table `map_tiles`
 --
 
 CREATE TABLE `map_tiles` (
@@ -2510,7 +2510,7 @@ CREATE TABLE `map_tiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `map_tiles`
+-- Dumping data for table `map_tiles`
 --
 
 INSERT INTO `map_tiles` (`id`, `name`, `coords_id`, `foreground`, `player_id`) VALUES
@@ -3558,7 +3558,7 @@ INSERT INTO `map_tiles` (`id`, `name`, `coords_id`, `foreground`, `player_id`) V
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_triggers`
+-- Table structure for table `map_triggers`
 --
 
 CREATE TABLE `map_triggers` (
@@ -3569,7 +3569,7 @@ CREATE TABLE `map_triggers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `map_triggers`
+-- Dumping data for table `map_triggers`
 --
 
 INSERT INTO `map_triggers` (`id`, `name`, `coords_id`, `params`) VALUES
@@ -3756,7 +3756,7 @@ INSERT INTO `map_triggers` (`id`, `name`, `coords_id`, `params`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `map_walls`
+-- Table structure for table `map_walls`
 --
 
 CREATE TABLE `map_walls` (
@@ -3768,7 +3768,7 @@ CREATE TABLE `map_walls` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `map_walls`
+-- Dumping data for table `map_walls`
 --
 
 INSERT INTO `map_walls` (`id`, `name`, `player_id`, `coords_id`, `damages`) VALUES
@@ -4015,7 +4015,7 @@ INSERT INTO `map_walls` (`id`, `name`, `player_id`, `coords_id`, `damages`) VALU
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players`
+-- Table structure for table `players`
 --
 
 CREATE TABLE `players` (
@@ -4023,6 +4023,7 @@ CREATE TABLE `players` (
   `name` varchar(255) NOT NULL DEFAULT '',
   `psw` varchar(255) NOT NULL DEFAULT '',
   `mail` varchar(255) NOT NULL DEFAULT '',
+  `plain_mail` varchar(255) NOT NULL DEFAULT '',
   `coords_id` int(11) NOT NULL DEFAULT 0,
   `race` varchar(255) NOT NULL DEFAULT '',
   `xp` int(11) NOT NULL DEFAULT 0,
@@ -4047,23 +4048,24 @@ CREATE TABLE `players` (
   `lastActionTime` int(11) NOT NULL DEFAULT 0,
   `lastLoginTime` int(11) NOT NULL DEFAULT 0,
   `antiBerserkTime` int(11) NOT NULL DEFAULT 0,
-  `lastTravelTime` int(11) NOT NULL DEFAULT 0
+  `lastTravelTime` int(11) NOT NULL DEFAULT 0,
+  `email_bonus` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players`
+-- Dumping data for table `players`
 --
 
-INSERT INTO `players` (`id`, `name`, `psw`, `mail`, `coords_id`, `race`, `xp`, `pi`, `pr`, `malus`, `fatigue`, `godId`, `pf`, `rank`, `avatar`, `portrait`, `text`, `story`, `quest`, `faction`, `factionRole`, `secretFaction`, `secretFactionRole`, `nextTurnTime`, `registerTime`, `lastActionTime`, `lastLoginTime`, `antiBerserkTime`, `lastTravelTime`) VALUES
-(-1, 'Gaïa', '', '', 15, 'lutin', 0, 0, 0, 0, 0, 0, 0, 1, 'img/avatars/ame/lutin.webp', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'saruta_et_freres', 0, '', 0, 0, 0, 0, 0, 0, 0),
-(1, 'Cradek', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '$2y$10$hkduB0wnA8nfn2C.ck6UA.b6jr56K9WeBDel33IokN/rtogNXQ8C2', 15318, 'nain', 6, 6, 0, 0, 1, 0, 0, 1, 'img/avatars/nain/5.png', 'img/portraits/nain/45.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1736181320, 1736117307, 1736120127, 1736121625, 16200, 1736117842),
-(2, 'Dorna', '$2y$10$XJm1A0RZWGRbhvDlUyOP8e/O0hhDLLUwU.VJM00GbmWjydKqeoczy', '$2y$10$pVJivan0Lhqg.x0OSWQzaulIWVr.BPJ.c3Q992jtWsy61FXH84wNS', 17004, 'nain', 6, 6, 0, 0, 1, 0, 0, 1, 'img/avatars/nain/73.png', 'img/portraits/nain/44.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1736181749, 1736118099, 1736120060, 1736121647, 16200, 1736118462),
-(3, 'Thyrias', '$2y$10$SzsgPLFIpn11Rg/TDubHj.fvFLGZdgY.Vwx9VD9GlYYhPu5MR3SeG', '$2y$10$1iltdhoPMNdCc9hBNMbdkuVpkb5/Qf7s2CIM0.KgIFwkQmVKXj7p6', 15472, 'elfe', 10, 10, 0, 0, 1, 0, 0, 1, 'img/avatars/elfe/70.png', 'img/portraits/elfe/33.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'eryn_dolen', 0, '', 0, 1736184980, 1736120180, 1736120472, 1736120194, 16200, 0);
+INSERT INTO `players` (`id`, `name`, `psw`, `mail`, `plain_mail`, `coords_id`, `race`, `xp`, `pi`, `pr`, `malus`, `fatigue`, `godId`, `pf`, `rank`, `avatar`, `portrait`, `text`, `story`, `quest`, `faction`, `factionRole`, `secretFaction`, `secretFactionRole`, `nextTurnTime`, `registerTime`, `lastActionTime`, `lastLoginTime`, `antiBerserkTime`, `lastTravelTime`, `email_bonus`) VALUES
+(-1, 'Gaïa', '', '', '', 15, 'lutin', 0, 0, 0, 0, 0, 0, 0, 1, 'img/avatars/ame/lutin.webp', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'saruta_et_freres', 0, '', 0, 0, 0, 0, 0, 0, 0, 0),
+(1, 'Cradek', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '$2y$10$hkduB0wnA8nfn2C.ck6UA.b6jr56K9WeBDel33IokN/rtogNXQ8C2', '', 15318, 'nain', 6, 6, 0, 0, 1, 0, 0, 1, 'img/avatars/nain/5.png', 'img/portraits/nain/45.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1736181320, 1736117307, 1736120127, 1736121625, 16200, 1736117842, 0),
+(2, 'Dorna', '$2y$10$XJm1A0RZWGRbhvDlUyOP8e/O0hhDLLUwU.VJM00GbmWjydKqeoczy', '$2y$10$pVJivan0Lhqg.x0OSWQzaulIWVr.BPJ.c3Q992jtWsy61FXH84wNS', '', 17004, 'nain', 6, 6, 0, 0, 1, 0, 0, 1, 'img/avatars/nain/73.png', 'img/portraits/nain/44.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1736181749, 1736118099, 1736120060, 1736121647, 16200, 1736118462, 0),
+(3, 'Thyrias', '$2y$10$SzsgPLFIpn11Rg/TDubHj.fvFLGZdgY.Vwx9VD9GlYYhPu5MR3SeG', '$2y$10$1iltdhoPMNdCc9hBNMbdkuVpkb5/Qf7s2CIM0.KgIFwkQmVKXj7p6', '', 15472, 'elfe', 10, 10, 0, 0, 1, 0, 0, 1, 'img/avatars/elfe/70.png', 'img/portraits/elfe/33.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'eryn_dolen', 0, '', 0, 1736184980, 1736120180, 1736120472, 1736120194, 16200, 0, 0);
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_actions`
+-- Table structure for table `players_actions`
 --
 
 CREATE TABLE `players_actions` (
@@ -4074,7 +4076,7 @@ CREATE TABLE `players_actions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_actions`
+-- Dumping data for table `players_actions`
 --
 
 INSERT INTO `players_actions` (`player_id`, `name`, `type`, `charges`) VALUES
@@ -4106,7 +4108,7 @@ INSERT INTO `players_actions` (`player_id`, `name`, `type`, `charges`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_assists`
+-- Table structure for table `players_assists`
 --
 
 CREATE TABLE `players_assists` (
@@ -4120,7 +4122,7 @@ CREATE TABLE `players_assists` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_banned`
+-- Table structure for table `players_banned`
 --
 
 CREATE TABLE `players_banned` (
@@ -4132,7 +4134,7 @@ CREATE TABLE `players_banned` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_bonus`
+-- Table structure for table `players_bonus`
 --
 
 CREATE TABLE `players_bonus` (
@@ -4142,7 +4144,7 @@ CREATE TABLE `players_bonus` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_bonus`
+-- Dumping data for table `players_bonus`
 --
 
 INSERT INTO `players_bonus` (`player_id`, `name`, `n`) VALUES
@@ -4156,7 +4158,7 @@ INSERT INTO `players_bonus` (`player_id`, `name`, `n`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_connections`
+-- Table structure for table `players_connections`
 --
 
 CREATE TABLE `players_connections` (
@@ -4168,7 +4170,7 @@ CREATE TABLE `players_connections` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_connections`
+-- Dumping data for table `players_connections`
 --
 
 INSERT INTO `players_connections` (`id`, `player_id`, `ip`, `time`, `footprint`) VALUES
@@ -4186,7 +4188,7 @@ INSERT INTO `players_connections` (`id`, `player_id`, `ip`, `time`, `footprint`)
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_effects`
+-- Table structure for table `players_effects`
 --
 
 CREATE TABLE `players_effects` (
@@ -4198,7 +4200,7 @@ CREATE TABLE `players_effects` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_followers`
+-- Table structure for table `players_followers`
 --
 
 CREATE TABLE `players_followers` (
@@ -4211,7 +4213,7 @@ CREATE TABLE `players_followers` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_forum_missives`
+-- Table structure for table `players_forum_missives`
 --
 
 CREATE TABLE `players_forum_missives` (
@@ -4221,7 +4223,7 @@ CREATE TABLE `players_forum_missives` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_forum_missives`
+-- Dumping data for table `players_forum_missives`
 --
 
 INSERT INTO `players_forum_missives` (`player_id`, `name`, `viewed`) VALUES
@@ -4232,7 +4234,7 @@ INSERT INTO `players_forum_missives` (`player_id`, `name`, `viewed`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_forum_rewards`
+-- Table structure for table `players_forum_rewards`
 --
 
 CREATE TABLE `players_forum_rewards` (
@@ -4248,7 +4250,7 @@ CREATE TABLE `players_forum_rewards` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_ips`
+-- Table structure for table `players_ips`
 --
 
 CREATE TABLE `players_ips` (
@@ -4259,7 +4261,7 @@ CREATE TABLE `players_ips` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_ips`
+-- Dumping data for table `players_ips`
 --
 
 INSERT INTO `players_ips` (`id`, `ip`, `expTime`, `failed`) VALUES
@@ -4268,7 +4270,7 @@ INSERT INTO `players_ips` (`id`, `ip`, `expTime`, `failed`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_items`
+-- Table structure for table `players_items`
 --
 
 CREATE TABLE `players_items` (
@@ -4279,7 +4281,7 @@ CREATE TABLE `players_items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_items`
+-- Dumping data for table `players_items`
 --
 
 INSERT INTO `players_items` (`player_id`, `item_id`, `n`, `equiped`) VALUES
@@ -4293,7 +4295,7 @@ INSERT INTO `players_items` (`player_id`, `item_id`, `n`, `equiped`) VALUES
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_items_bank`
+-- Table structure for table `players_items_bank`
 --
 
 CREATE TABLE `players_items_bank` (
@@ -4305,7 +4307,7 @@ CREATE TABLE `players_items_bank` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_items_exchanges`
+-- Table structure for table `players_items_exchanges`
 --
 
 CREATE TABLE `players_items_exchanges` (
@@ -4319,7 +4321,7 @@ CREATE TABLE `players_items_exchanges` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_kills`
+-- Table structure for table `players_kills`
 --
 
 CREATE TABLE `players_kills` (
@@ -4337,7 +4339,7 @@ CREATE TABLE `players_kills` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_logs`
+-- Table structure for table `players_logs`
 --
 
 CREATE TABLE `players_logs` (
@@ -4354,7 +4356,7 @@ CREATE TABLE `players_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_logs`
+-- Dumping data for table `players_logs`
 --
 
 INSERT INTO `players_logs` (`id`, `player_id`, `target_id`, `text`, `hiddenText`, `type`, `plan`, `time`, `coords_id`, `coords_computed`) VALUES
@@ -4475,7 +4477,7 @@ INSERT INTO `players_logs` (`id`, `player_id`, `target_id`, `text`, `hiddenText`
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_logs_archives`
+-- Table structure for table `players_logs_archives`
 --
 
 CREATE TABLE `players_logs_archives` (
@@ -4494,7 +4496,7 @@ CREATE TABLE `players_logs_archives` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_options`
+-- Table structure for table `players_options`
 --
 
 CREATE TABLE `players_options` (
@@ -4503,16 +4505,17 @@ CREATE TABLE `players_options` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Déchargement des données de la table `players_options`
+-- Dumping data for table `players_options`
 --
 
 INSERT INTO `players_options` (`player_id`, `name`) VALUES
-(1, 'isAdmin');
+(1, 'isAdmin'),
+(1, 'isSuperAdmin');
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_pnjs`
+-- Table structure for table `players_pnjs`
 --
 
 CREATE TABLE `players_pnjs` (
@@ -4523,7 +4526,7 @@ CREATE TABLE `players_pnjs` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_psw`
+-- Table structure for table `players_psw`
 --
 
 CREATE TABLE `players_psw` (
@@ -4536,7 +4539,7 @@ CREATE TABLE `players_psw` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_quests`
+-- Table structure for table `players_quests`
 --
 
 CREATE TABLE `players_quests` (
@@ -4550,7 +4553,7 @@ CREATE TABLE `players_quests` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_quests_steps`
+-- Table structure for table `players_quests_steps`
 --
 
 CREATE TABLE `players_quests_steps` (
@@ -4564,7 +4567,7 @@ CREATE TABLE `players_quests_steps` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `players_upgrades`
+-- Table structure for table `players_upgrades`
 --
 
 CREATE TABLE `players_upgrades` (
@@ -4577,7 +4580,7 @@ CREATE TABLE `players_upgrades` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `quests`
+-- Table structure for table `quests`
 --
 
 CREATE TABLE `quests` (
@@ -4589,7 +4592,7 @@ CREATE TABLE `quests` (
 -- --------------------------------------------------------
 
 --
--- Structure de la table `races`
+-- Table structure for table `races`
 --
 
 CREATE TABLE `races` (
@@ -4604,30 +4607,30 @@ CREATE TABLE `races` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
--- Index pour les tables déchargées
+-- Indexes for dumped tables
 --
 
 --
--- Index pour la table `coords`
+-- Indexes for table `coords`
 --
 ALTER TABLE `coords`
   ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `forums_keywords`
+-- Indexes for table `forums_keywords`
 --
 ALTER TABLE `forums_keywords`
   ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `items`
+-- Indexes for table `items`
 --
 ALTER TABLE `items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `blessed_by_id` (`blessed_by_id`);
 
 --
--- Index pour la table `items_asks`
+-- Indexes for table `items_asks`
 --
 ALTER TABLE `items_asks`
   ADD PRIMARY KEY (`id`),
@@ -4635,7 +4638,7 @@ ALTER TABLE `items_asks`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `items_bids`
+-- Indexes for table `items_bids`
 --
 ALTER TABLE `items_bids`
   ADD PRIMARY KEY (`id`),
@@ -4643,7 +4646,7 @@ ALTER TABLE `items_bids`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `items_exchanges`
+-- Indexes for table `items_exchanges`
 --
 ALTER TABLE `items_exchanges`
   ADD PRIMARY KEY (`id`),
@@ -4651,14 +4654,14 @@ ALTER TABLE `items_exchanges`
   ADD KEY `items_exchanges_fk_2` (`target_id`);
 
 --
--- Index pour la table `map_dialogs`
+-- Indexes for table `map_dialogs`
 --
 ALTER TABLE `map_dialogs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `map_elements`
+-- Indexes for table `map_elements`
 --
 ALTER TABLE `map_elements`
   ADD PRIMARY KEY (`name`,`coords_id`),
@@ -4666,14 +4669,14 @@ ALTER TABLE `map_elements`
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `map_foregrounds`
+-- Indexes for table `map_foregrounds`
 --
 ALTER TABLE `map_foregrounds`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `map_items`
+-- Indexes for table `map_items`
 --
 ALTER TABLE `map_items`
   ADD PRIMARY KEY (`id`),
@@ -4681,14 +4684,14 @@ ALTER TABLE `map_items`
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `map_plants`
+-- Indexes for table `map_plants`
 --
 ALTER TABLE `map_plants`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `map_tiles`
+-- Indexes for table `map_tiles`
 --
 ALTER TABLE `map_tiles`
   ADD PRIMARY KEY (`id`),
@@ -4696,14 +4699,14 @@ ALTER TABLE `map_tiles`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `map_triggers`
+-- Indexes for table `map_triggers`
 --
 ALTER TABLE `map_triggers`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `map_walls`
+-- Indexes for table `map_walls`
 --
 ALTER TABLE `map_walls`
   ADD PRIMARY KEY (`id`),
@@ -4711,52 +4714,52 @@ ALTER TABLE `map_walls`
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `players`
+-- Indexes for table `players`
 --
 ALTER TABLE `players`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Index pour la table `players_actions`
+-- Indexes for table `players_actions`
 --
 ALTER TABLE `players_actions`
   ADD PRIMARY KEY (`player_id`,`name`);
 
 --
--- Index pour la table `players_assists`
+-- Indexes for table `players_assists`
 --
 ALTER TABLE `players_assists`
   ADD PRIMARY KEY (`player_id`,`target_id`),
   ADD KEY `target_id` (`target_id`);
 
 --
--- Index pour la table `players_banned`
+-- Indexes for table `players_banned`
 --
 ALTER TABLE `players_banned`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `players_bonus`
+-- Indexes for table `players_bonus`
 --
 ALTER TABLE `players_bonus`
   ADD PRIMARY KEY (`player_id`,`name`);
 
 --
--- Index pour la table `players_connections`
+-- Indexes for table `players_connections`
 --
 ALTER TABLE `players_connections`
   ADD PRIMARY KEY (`id`),
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `players_effects`
+-- Indexes for table `players_effects`
 --
 ALTER TABLE `players_effects`
   ADD PRIMARY KEY (`player_id`,`name`);
 
 --
--- Index pour la table `players_followers`
+-- Indexes for table `players_followers`
 --
 ALTER TABLE `players_followers`
   ADD PRIMARY KEY (`id`),
@@ -4764,13 +4767,13 @@ ALTER TABLE `players_followers`
   ADD KEY `foreground_id` (`foreground_id`);
 
 --
--- Index pour la table `players_forum_missives`
+-- Indexes for table `players_forum_missives`
 --
 ALTER TABLE `players_forum_missives`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `players_forum_rewards`
+-- Indexes for table `players_forum_rewards`
 --
 ALTER TABLE `players_forum_rewards`
   ADD PRIMARY KEY (`id`),
@@ -4778,27 +4781,27 @@ ALTER TABLE `players_forum_rewards`
   ADD KEY `to_player_id` (`to_player_id`);
 
 --
--- Index pour la table `players_ips`
+-- Indexes for table `players_ips`
 --
 ALTER TABLE `players_ips`
   ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `players_items`
+-- Indexes for table `players_items`
 --
 ALTER TABLE `players_items`
   ADD PRIMARY KEY (`player_id`,`item_id`),
   ADD KEY `item_id` (`item_id`);
 
 --
--- Index pour la table `players_items_bank`
+-- Indexes for table `players_items_bank`
 --
 ALTER TABLE `players_items_bank`
   ADD PRIMARY KEY (`player_id`,`item_id`),
   ADD KEY `item_id` (`item_id`);
 
 --
--- Index pour la table `players_items_exchanges`
+-- Indexes for table `players_items_exchanges`
 --
 ALTER TABLE `players_items_exchanges`
   ADD KEY `players_items_exchanges_fk_1` (`exchange_id`),
@@ -4807,7 +4810,7 @@ ALTER TABLE `players_items_exchanges`
   ADD KEY `players_items_exchanges_fk_4` (`target_id`);
 
 --
--- Index pour la table `players_kills`
+-- Indexes for table `players_kills`
 --
 ALTER TABLE `players_kills`
   ADD PRIMARY KEY (`id`),
@@ -4815,7 +4818,7 @@ ALTER TABLE `players_kills`
   ADD KEY `target_id` (`target_id`);
 
 --
--- Index pour la table `players_logs`
+-- Indexes for table `players_logs`
 --
 ALTER TABLE `players_logs`
   ADD PRIMARY KEY (`id`),
@@ -4824,7 +4827,7 @@ ALTER TABLE `players_logs`
   ADD KEY `players_logs_coords_fk_1` (`coords_id`);
 
 --
--- Index pour la table `players_logs_archives`
+-- Indexes for table `players_logs_archives`
 --
 ALTER TABLE `players_logs_archives`
   ADD PRIMARY KEY (`id`),
@@ -4833,366 +4836,366 @@ ALTER TABLE `players_logs_archives`
   ADD KEY `players_logs_archives_coords_fk_1` (`coords_id`);
 
 --
--- Index pour la table `players_options`
+-- Indexes for table `players_options`
 --
 ALTER TABLE `players_options`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `players_pnjs`
+-- Indexes for table `players_pnjs`
 --
 ALTER TABLE `players_pnjs`
   ADD KEY `player_id` (`player_id`),
   ADD KEY `pnj_id` (`pnj_id`);
 
 --
--- Index pour la table `players_psw`
+-- Indexes for table `players_psw`
 --
 ALTER TABLE `players_psw`
   ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `players_quests`
+-- Indexes for table `players_quests`
 --
 ALTER TABLE `players_quests`
   ADD PRIMARY KEY (`player_id`,`quest_id`),
   ADD KEY `quest_id` (`quest_id`);
 
 --
--- Index pour la table `players_quests_steps`
+-- Indexes for table `players_quests_steps`
 --
 ALTER TABLE `players_quests_steps`
   ADD PRIMARY KEY (`player_id`,`quest_id`,`name`),
   ADD KEY `quest_id` (`quest_id`);
 
 --
--- Index pour la table `players_upgrades`
+-- Indexes for table `players_upgrades`
 --
 ALTER TABLE `players_upgrades`
   ADD PRIMARY KEY (`id`),
   ADD KEY `player_id` (`player_id`);
 
 --
--- Index pour la table `quests`
+-- Indexes for table `quests`
 --
 ALTER TABLE `quests`
   ADD PRIMARY KEY (`id`);
 
 --
--- Index pour la table `races`
+-- Indexes for table `races`
 --
 ALTER TABLE `races`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `code` (`code`);
 
 --
--- AUTO_INCREMENT pour les tables déchargées
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT pour la table `coords`
+-- AUTO_INCREMENT for table `coords`
 --
 ALTER TABLE `coords`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51588;
 
 --
--- AUTO_INCREMENT pour la table `forums_keywords`
+-- AUTO_INCREMENT for table `forums_keywords`
 --
 ALTER TABLE `forums_keywords`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `items`
+-- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
--- AUTO_INCREMENT pour la table `items_asks`
+-- AUTO_INCREMENT for table `items_asks`
 --
 ALTER TABLE `items_asks`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `items_bids`
+-- AUTO_INCREMENT for table `items_bids`
 --
 ALTER TABLE `items_bids`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `items_exchanges`
+-- AUTO_INCREMENT for table `items_exchanges`
 --
 ALTER TABLE `items_exchanges`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
--- AUTO_INCREMENT pour la table `map_dialogs`
+-- AUTO_INCREMENT for table `map_dialogs`
 --
 ALTER TABLE `map_dialogs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `map_elements`
+-- AUTO_INCREMENT for table `map_elements`
 --
 ALTER TABLE `map_elements`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=596;
 
 --
--- AUTO_INCREMENT pour la table `map_foregrounds`
+-- AUTO_INCREMENT for table `map_foregrounds`
 --
 ALTER TABLE `map_foregrounds`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
--- AUTO_INCREMENT pour la table `map_items`
+-- AUTO_INCREMENT for table `map_items`
 --
 ALTER TABLE `map_items`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `map_plants`
+-- AUTO_INCREMENT for table `map_plants`
 --
 ALTER TABLE `map_plants`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
--- AUTO_INCREMENT pour la table `map_tiles`
+-- AUTO_INCREMENT for table `map_tiles`
 --
 ALTER TABLE `map_tiles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1041;
 
 --
--- AUTO_INCREMENT pour la table `map_triggers`
+-- AUTO_INCREMENT for table `map_triggers`
 --
 ALTER TABLE `map_triggers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=180;
 
 --
--- AUTO_INCREMENT pour la table `map_walls`
+-- AUTO_INCREMENT for table `map_walls`
 --
 ALTER TABLE `map_walls`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=355;
 
 --
--- AUTO_INCREMENT pour la table `players`
+-- AUTO_INCREMENT for table `players`
 --
 ALTER TABLE `players`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT pour la table `players_connections`
+-- AUTO_INCREMENT for table `players_connections`
 --
 ALTER TABLE `players_connections`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
--- AUTO_INCREMENT pour la table `players_followers`
+-- AUTO_INCREMENT for table `players_followers`
 --
 ALTER TABLE `players_followers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `players_forum_rewards`
+-- AUTO_INCREMENT for table `players_forum_rewards`
 --
 ALTER TABLE `players_forum_rewards`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `players_ips`
+-- AUTO_INCREMENT for table `players_ips`
 --
 ALTER TABLE `players_ips`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT pour la table `players_kills`
+-- AUTO_INCREMENT for table `players_kills`
 --
 ALTER TABLE `players_kills`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `players_logs`
+-- AUTO_INCREMENT for table `players_logs`
 --
 ALTER TABLE `players_logs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
 
 --
--- AUTO_INCREMENT pour la table `players_logs_archives`
+-- AUTO_INCREMENT for table `players_logs_archives`
 --
 ALTER TABLE `players_logs_archives`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `players_psw`
+-- AUTO_INCREMENT for table `players_psw`
 --
 ALTER TABLE `players_psw`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `players_upgrades`
+-- AUTO_INCREMENT for table `players_upgrades`
 --
 ALTER TABLE `players_upgrades`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `quests`
+-- AUTO_INCREMENT for table `quests`
 --
 ALTER TABLE `quests`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT pour la table `races`
+-- AUTO_INCREMENT for table `races`
 --
 ALTER TABLE `races`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- Contraintes pour les tables déchargées
+-- Constraints for dumped tables
 --
 
 --
--- Contraintes pour la table `items`
+-- Constraints for table `items`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`blessed_by_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `items_asks`
+-- Constraints for table `items_asks`
 --
 ALTER TABLE `items_asks`
   ADD CONSTRAINT `items_asks_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
   ADD CONSTRAINT `items_asks_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `items_bids`
+-- Constraints for table `items_bids`
 --
 ALTER TABLE `items_bids`
   ADD CONSTRAINT `items_bids_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
   ADD CONSTRAINT `items_bids_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `items_exchanges`
+-- Constraints for table `items_exchanges`
 --
 ALTER TABLE `items_exchanges`
   ADD CONSTRAINT `items_exchanges_fk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `items_exchanges_fk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `map_dialogs`
+-- Constraints for table `map_dialogs`
 --
 ALTER TABLE `map_dialogs`
   ADD CONSTRAINT `map_dialogs_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `map_elements`
+-- Constraints for table `map_elements`
 --
 ALTER TABLE `map_elements`
   ADD CONSTRAINT `map_elements_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `map_foregrounds`
+-- Constraints for table `map_foregrounds`
 --
 ALTER TABLE `map_foregrounds`
   ADD CONSTRAINT `map_foregrounds_ibfk_3` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `map_items`
+-- Constraints for table `map_items`
 --
 ALTER TABLE `map_items`
   ADD CONSTRAINT `map_items_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
   ADD CONSTRAINT `map_items_ibfk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `map_tiles`
+-- Constraints for table `map_tiles`
 --
 ALTER TABLE `map_tiles`
   ADD CONSTRAINT `map_tiles_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`),
   ADD CONSTRAINT `map_tiles_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `map_triggers`
+-- Constraints for table `map_triggers`
 --
 ALTER TABLE `map_triggers`
   ADD CONSTRAINT `map_triggers_ibfk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `map_walls`
+-- Constraints for table `map_walls`
 --
 ALTER TABLE `map_walls`
   ADD CONSTRAINT `map_walls_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `map_walls_ibfk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `players`
+-- Constraints for table `players`
 --
 ALTER TABLE `players`
   ADD CONSTRAINT `players_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `players_actions`
+-- Constraints for table `players_actions`
 --
 ALTER TABLE `players_actions`
   ADD CONSTRAINT `players_actions_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_assists`
+-- Constraints for table `players_assists`
 --
 ALTER TABLE `players_assists`
   ADD CONSTRAINT `players_assists_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_assists_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_banned`
+-- Constraints for table `players_banned`
 --
 ALTER TABLE `players_banned`
   ADD CONSTRAINT `players_banned_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_bonus`
+-- Constraints for table `players_bonus`
 --
 ALTER TABLE `players_bonus`
   ADD CONSTRAINT `players_bonus_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_connections`
+-- Constraints for table `players_connections`
 --
 ALTER TABLE `players_connections`
   ADD CONSTRAINT `players_connections_fk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_effects`
+-- Constraints for table `players_effects`
 --
 ALTER TABLE `players_effects`
   ADD CONSTRAINT `players_effects_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_followers`
+-- Constraints for table `players_followers`
 --
 ALTER TABLE `players_followers`
   ADD CONSTRAINT `players_followers_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_followers_ibfk_3` FOREIGN KEY (`foreground_id`) REFERENCES `map_foregrounds` (`id`) ON DELETE CASCADE;
 
 --
--- Contraintes pour la table `players_forum_missives`
+-- Constraints for table `players_forum_missives`
 --
 ALTER TABLE `players_forum_missives`
   ADD CONSTRAINT `players_forum_missives_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_forum_rewards`
+-- Constraints for table `players_forum_rewards`
 --
 ALTER TABLE `players_forum_rewards`
   ADD CONSTRAINT `players_forum_rewards_ibfk_1` FOREIGN KEY (`from_player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_forum_rewards_ibfk_2` FOREIGN KEY (`to_player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_items`
+-- Constraints for table `players_items`
 --
 ALTER TABLE `players_items`
   ADD CONSTRAINT `players_items_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_items_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`);
 
 --
--- Contraintes pour la table `players_items_exchanges`
+-- Constraints for table `players_items_exchanges`
 --
 ALTER TABLE `players_items_exchanges`
   ADD CONSTRAINT `players_items_exchanges_fk_1` FOREIGN KEY (`exchange_id`) REFERENCES `items_exchanges` (`id`),
@@ -5201,14 +5204,14 @@ ALTER TABLE `players_items_exchanges`
   ADD CONSTRAINT `players_items_exchanges_fk_4` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_kills`
+-- Constraints for table `players_kills`
 --
 ALTER TABLE `players_kills`
   ADD CONSTRAINT `players_kills_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_kills_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_logs`
+-- Constraints for table `players_logs`
 --
 ALTER TABLE `players_logs`
   ADD CONSTRAINT `players_logs_coords_fk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`),
@@ -5216,40 +5219,40 @@ ALTER TABLE `players_logs`
   ADD CONSTRAINT `players_logs_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_logs_archives`
+-- Constraints for table `players_logs_archives`
 --
 ALTER TABLE `players_logs_archives`
   ADD CONSTRAINT `players_logs_archives_coords_fk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Contraintes pour la table `players_options`
+-- Constraints for table `players_options`
 --
 ALTER TABLE `players_options`
   ADD CONSTRAINT `players_options_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_pnjs`
+-- Constraints for table `players_pnjs`
 --
 ALTER TABLE `players_pnjs`
   ADD CONSTRAINT `players_pnjs_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_pnjs_ibfk_2` FOREIGN KEY (`pnj_id`) REFERENCES `players` (`id`);
 
 --
--- Contraintes pour la table `players_quests`
+-- Constraints for table `players_quests`
 --
 ALTER TABLE `players_quests`
   ADD CONSTRAINT `players_quests_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_quests_ibfk_2` FOREIGN KEY (`quest_id`) REFERENCES `quests` (`id`);
 
 --
--- Contraintes pour la table `players_quests_steps`
+-- Constraints for table `players_quests_steps`
 --
 ALTER TABLE `players_quests_steps`
   ADD CONSTRAINT `players_quests_steps_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_quests_steps_ibfk_2` FOREIGN KEY (`quest_id`) REFERENCES `quests` (`id`);
 
 --
--- Contraintes pour la table `players_upgrades`
+-- Constraints for table `players_upgrades`
 --
 ALTER TABLE `players_upgrades`
   ADD CONSTRAINT `players_upgrades_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
