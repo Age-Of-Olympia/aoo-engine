@@ -22,7 +22,7 @@ if($player->data->godId == '4'){
 // route
 $route = '';
 
-$sql = 'SELECT COUNT(*) AS n FROM map_tiles WHERE name = "route" AND coords_id = ?';
+$sql = 'SELECT COUNT(*) AS n FROM map_routes WHERE coords_id = ?';
 
 $db = new Db();
 

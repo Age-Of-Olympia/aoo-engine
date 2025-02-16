@@ -5,7 +5,7 @@ if($_POST['type'] == 'eraser'){
 } else {
 
 
-    if(!in_array($_POST['type'], array('tiles','foregrounds','walls','triggers','elements','dialogs','plants'))){
+    if(!in_array($_POST['type'], array('tiles','foregrounds','walls','triggers','elements','dialogs','plants','routes'))){
 
         exit('error type');
     }

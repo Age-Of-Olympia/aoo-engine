@@ -233,7 +233,7 @@ class View{
 
             SELECT
             id, 
-            "carreaux" AS name,
+            "route" AS name,
             coords_id,
             "routes" AS whichTable,
             99.5 AS tableOrder
@@ -395,7 +395,7 @@ class View{
                     }
 
 
-                    if($row->name != 'sang' && !str_starts_with($row->name, 'trace_pas')){
+                    if($row->name != 'sang' && !str_starts_with($row->name, 'trace_pas') && $row->name != 'routes'){
                         $classTransparent[$x .','. $y] = 'transparent-gradient';
                     }
                 }

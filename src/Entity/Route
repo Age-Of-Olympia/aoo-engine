@@ -12,12 +12,23 @@ class Route
     #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
+    #[ORM\Column(type: "string", length: 50)]
+    private string $name;
+
     #[ORM\Column(type: "integer")]
-    private string $coord_id;
+    private int $coord_id;
+
+    #[ORM\Column(type: "integer")]
+    private ?int $player_id = null;
 
     public function getId(): int
     {
         return $this->id;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     public function getCoord_computed(): int
@@ -28,5 +39,10 @@ class Route
     public function setCoord_computed(int $coord_id): void
     {
         $this->coord_id = $coord_id;
+    }
+
+    public function getPlayer_id(): int
+    {
+        return $this->player_id;
     }
 }

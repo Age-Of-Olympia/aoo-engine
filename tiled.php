@@ -141,6 +141,8 @@ include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_walls.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_elements.php';
 
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_routes.php';
+
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_triggers.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_foregrounds.php';

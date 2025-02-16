@@ -15,6 +15,8 @@ select  coords_id as coords_id, 'map_dialogs' as type, name as name, params as p
 union
 select  coords_id as coords_id, 'map_elements' as type, name as name, NULL as params from map_elements where coords_id = ?
 union
+select  coords_id as coords_id, 'map_routes' as type, name as name, NULL as params from map_routes where coords_id = ?
+union
 select  coords_id as coords_id, 'map_foregrounds' as type, name as name, NULL as params from map_foregrounds where coords_id = ?
 union
 select  coords_id as coords_id, 'map_plants' as type, name as name, NULL as params from map_plants where coords_id = ?");
