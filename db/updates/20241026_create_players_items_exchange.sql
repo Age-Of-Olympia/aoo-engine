@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS `items_exchanges`;
 CREATE TABLE `items_exchanges` (
                                    `id` int(11) NOT NULL AUTO_INCREMENT,
                                    `player_id` int(11) NOT NULL,
@@ -14,7 +13,6 @@ CREATE TABLE `items_exchanges` (
 ) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
-DROP TABLE IF EXISTS `players_items_exchanges`;
 CREATE TABLE `players_items_exchanges` (
       `exchange_id` int(11) NOT NULL,
       `item_id` int(11) NOT NULL,

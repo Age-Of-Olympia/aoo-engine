@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS `players_banned`;
 CREATE TABLE `players_banned` (
   `player_id` int(11) NOT NULL,
   `ips` text NOT NULL,
