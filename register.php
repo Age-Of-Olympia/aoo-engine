@@ -91,10 +91,11 @@ if(!empty($_POST['race'])){
 
         $player->get_data();
 
+        $plainMail = strtolower($_POST['mail']);
 
         // hash
         $hashedPsw = password_hash($_POST['psw1'], PASSWORD_DEFAULT);
-        $hashedMail = password_hash(strtolower($_POST['mail']), PASSWORD_DEFAULT);
+        $hashedMail = password_hash($plainMail, PASSWORD_DEFAULT);
 
 
         $sql = '
@@ -102,12 +103,13 @@ if(!empty($_POST['race'])){
         players
         SET
         psw = ?,
-        mail = ?
+        mail = ?,
+        plain_mail = ?
         WHERE
         id = ?
         ';
 
-        $db->exe($sql, array($hashedPsw, $hashedMail, $player->id));
+        $db->exe($sql, array($hashedPsw, $hashedMail, $plainMail, $player->id));
 
 
         // add bonus gold

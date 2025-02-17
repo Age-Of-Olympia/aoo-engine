@@ -146,7 +146,7 @@ function edit_player($argumentValues, $player){
     $value = $argumentValues[3];
 
 
-    if(in_array($field, array('id','coords_id','mail','psw','ip'))){
+    if(in_array($field, array('id','coords_id','mail','plain_mail','psw','ip'))){
 
         return '<font color="orange">field "'. $field .'" is protected</font>';
     }

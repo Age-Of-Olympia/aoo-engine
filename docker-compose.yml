@@ -12,7 +12,6 @@ services:
     depends_on:
       - mariadb-aoo4
   mariadb-aoo4:
-    user: ${UID}:${GID}
     image: mariadb:latest
     environment:
       MYSQL_ROOT_PASSWORD: passwordRoot
@@ -22,7 +21,7 @@ services:
     ports:
       - "3306:3306"
     volumes: 
-      - ./data/db:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
       - ./db/init_noupdates.sql:/docker-entrypoint-initdb.d/1-init-data.sql
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -33,3 +32,7 @@ services:
     environment:
       PMA_HOST: mariadb-aoo4
       MYSQL_ROOT_PASSWORD: passwordRoot
+
+volumes:
+  mariadb_data:
+    driver: local

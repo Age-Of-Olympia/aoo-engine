@@ -1,5 +1,7 @@
 <?php
 
+use App\Service\PlayerService;
+
 class Player{
 
     public $id;
@@ -13,6 +15,7 @@ class Player{
     public $turn;
     public $emplacements;
     public $row;
+    public $playerService;
     function __construct($playerId){
 
         $this->id = $playerId;
@@ -27,6 +30,7 @@ class Player{
         $this->debuffs = null;
         $this->turn = null;
         $this->row = null;
+        $this->playerService = new PlayerService();
     }
 
 
@@ -564,7 +568,7 @@ class Player{
 
         $oldCoords = $this->coords;
 
-        $coordsId = View::get_coords_id($goCoords);
+        $coordsId = isset($goCoords->coordsId) ? $goCoords->coordsId : View::get_coords_id($goCoords);
 
         $zChange = ($oldCoords->z != $goCoords->z);
 
@@ -676,10 +680,11 @@ class Player{
             $this->get_data();
         }
 
-
+        // Ajout d'un cap temporaire des PIs pour la fin de la saison 1
+        $xpCap = 3500;
+        $pi = min(max(0,($xpCap - $this->data->xp)),$xp);
         $this->data->xp += $xp;
-        $this->data->pi += $xp;
-
+        $this->data->pi += $pi;
 
         // update rank
         $rank = Str::get_rank($this->data->xp);
@@ -688,7 +693,7 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, array($xp, $xp, $rank, $this->id));
+        $db->exe($sql, array($xp, $pi, $rank, $this->id));
 
 
         $this->refresh_data();
@@ -1612,15 +1617,18 @@ class Player{
 
             // equiped loot chance : half chance
             if($row->equiped){
-
-                $lootChance = floor($lootChance / 2);
-            }
-
-            // pnj loot chance
-            if($this->id < 0){
-
-                $lootChance = 100;
-            }
+                 // pnj will not drop equiped item
+                if($this->id < 0){
+                    $lootChance = 0;
+                }else{
+                    $lootChance = floor($lootChance / 2);
+                }
+            }else{
+                // if pnj and not equiped, will drop everytime
+                if($this->id < 0){
+                    $lootChance = 100;
+                }
+            }        
 
 
             // perform loot
@@ -1979,7 +1987,11 @@ class Player{
             'registerTime'=>$time
         );
 
-        $db->insert('players', $values);
+        $res = $db->insert('players', $values);
+
+        if (!$res) {
+            exit('error inserting player');
+        }
 
         //we allready have the id for pnj and it's negatif 
         $lastId = is_null($id) ? $db->get_last_id('players') : $id;
@@ -2041,9 +2053,9 @@ class Player{
 
 
         // first create dir
-        if(!file_exists('datas/private/players/')){
+        if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/')){
 
-            mkdir('datas/private/players/');
+            mkdir($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/');
         }
 
         $playerJson = json()->decode('players', $this->id);
@@ -2073,6 +2085,10 @@ class Player{
 
         $this->data = $playerJson;
 
+        // Get plain_mail & email_bonus from PlayerService
+        $fields = $this->playerService->getPlayerFields($this->id, ['plain_mail', 'email_bonus']);
+        $this->data->plain_mail = $fields['plain_mail'];
+        $this->data->email_bonus = $fields['email_bonus'] ?? false;
 
         $pathInfo = pathinfo($this->data->portrait);
 

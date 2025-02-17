@@ -7,8 +7,7 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 
-
-$ui = new Ui('Options du Profil');
+$ui = new Ui('Options du Profil', true);
 
 
 ob_start();
@@ -38,31 +37,31 @@ if(isset($_GET['story'])){
     exit();
 }
 
+if(isset($_GET['changeMail'])){
+    include('scripts/account/change_mail.php');
+    exit();
+}
+
+if(isset($_GET['changePsw'])){
+    $player->get_data();
+    include('scripts/account/change_psw.php');
+    exit();
+}
+
 if(isset($_POST['changeName'])){
 
     include('scripts/account/change_name.php');
     exit();
 }
 
-if(isset($_GET['changePsw'])){
-
-    include('scripts/account/change_psw.php');
-    exit();
-}
-
-if(isset($_POST['changeMail'])){
-
-    include('scripts/account/change_mail.php');
-    exit();
-}
-
-
 define('OPTIONS', array(
 
-    'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le forum</sup>",
-    'changeAvatar'=>"Changer d'Avatar<br /><sup>Vous pouvez faire une demande d'Avatar sur le forum</sup>",
-    'changeMdj'=>$player->data->text,
-    'changeStory'=>$player->data->story,
+    'changeMail'=>"Changer Mail<br /><sup>" . 
+        (!empty($player->data->plain_mail) ? htmlspecialchars($player->data->plain_mail) : "") . "</sup>",
+    'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le <a href='https://age-of-olympia.net/forum.php?topic=1725177169' target='_blank'>forum</a></sup>",
+    'changeAvatar'=>"Changer d'Avatar<br /><sup>Vous pouvez faire une demande d'Avatar sur le <a href='https://age-of-olympia.net/forum.php?topic=1725177169' target='_blank'>forum</a></sup>",
+    'changeMdj'=>"",
+    'changeStory'=>"",
     'raceHint'=>"Indice de Race<br /><sup>Affiche une bordure de couleur autour du personnage</sup>",
     'raceHintMax'=>"Indice de Race maximale<br /><sup>Colore également l'arrière plan du personnage</sup>",
     // 'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
@@ -114,14 +113,11 @@ if(!empty($_POST['option'])){
 echo '<a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>';
 echo '<button data-change="name">Changer Nom</button>';
 echo '<a href="account.php?changePsw"><button>Changer Mot de Passe</button></a>';
-echo '<a href="#" class="change-mail"><button>Changer Mail</button></a>';
-
 
 echo '
-<table class="box-shadow marbre" border="1" align="center">';
+<table border="1" align="center" class="marbre">';
 
-
-echo '<tr><th>Options du Profil</th><th></th></tr>';
+echo '<tr><th colspan="2" align="center">Options du Profil</th></tr>';
 
 
 $checked = array();
@@ -150,11 +146,15 @@ foreach(OPTIONS as $k=>$e){
 
             if($k == 'changeMdj'){
 
+                echo "Modifier son MDJ<br /><sup>";
                 echo explode("\n", $player->data->text)[0] .' [...]';
+                echo '</sup>';
             }
             elseif($k == 'changeStory'){
 
+                echo "Modifier son Histoire<br /><sup>";
                 echo explode("\n", $player->data->story)[0] .' [...]';
+                echo '</sup>';
             }
             elseif($k == 'manageUploads'){
 
@@ -211,6 +211,14 @@ foreach(OPTIONS as $k=>$e){
                 <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
                 ';
             }
+            elseif($k == 'changeMail'){
+                // Disable email change for PNJs
+                if($player->id > 0) {
+                    echo '<a href="account.php?changeMail"><button style="width: 100%;">Changer</button></a>';
+                } else {
+                    echo '<button style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>PNJ - Non disponible</button>';
+                }
+            }
             else if($k =='incognitoMode')
             {
                 if($player->have_option('isAdmin'))
@@ -260,4 +268,5 @@ echo '
 <script src="js/account.js"></script>
 <?php
 
-echo Str::minify(ob_get_clean());
+$content = ob_get_clean();
+echo Str::minify($content);

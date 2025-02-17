@@ -1,8 +1,0 @@
-- name: Tester la connexion SSH
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      run: |
-        ssh -vvv ripo8171@aootest.net exit

@@ -3,66 +3,15 @@
 
 echo '<h1>Echanges</h1>';
 
-
-if(isset($_GET['create'])) {
-
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
-    $objects = $_POST['objects'] ?? [];
-    $recipient = Player::get_player_by_name($_POST['recipient']);
-
-    $exchange = new Exchange();
-    $exchange->create($player->id,$recipient->id);
-
-    foreach ($objects as $object) {
-        $decodedObject = json_decode($object, true);
-        $item = new Item($decodedObject['id']);
-        $item->add_item($player, -$decodedObject['n'], true);
-        $exchange->add_item_to_exchange($item->id, $decodedObject['n']);
-    }
-  }
-}
-
-if(isset($_GET['accept']) || isset($_GET['refuse'])) {
-  $exchangeId= !empty($_GET['accept']) ? $_GET['accept'] : $_GET['refuse'];
-  $exchange = new Exchange($exchangeId);
-  $exchange->get_base_data();
-  if ($player->id != $exchange->targetId ){
-    exit('Current player is not the target of the exchange');
-  }
-  $offeringPlayer = new Player($exchange->playerId);
-  $offeringPlayer->get_data();
-  if(isset($_GET['accept'])){
-    $exchange->get_items_data();
-    $exchange->give_items($player);
-    $exchange->accept_exchange();
-    echo "<b>Vous avez accepté l'échange proposé par ".$offeringPlayer->data->name." </b>";
-  }
-  if(isset($_GET['refuse'])){
-    $exchange->get_items_data();
-    $exchange->give_items($offeringPlayer);
-    $exchange->refuse_exchange();
-    echo "<b>Vous avez refusé l'échange proposé par ".$offeringPlayer->data->name." </b>";
-  }
-}
-
-
-if(isset($_GET['cancel']) ) {
-  $exchange = new Exchange($_GET['cancel']);
-  $exchange->get_base_data();
-  if ($player->id !== $exchange->playerId ){
-    exit('Current player is not the source of the exchange');
-  }
-  $exchange->get_items_data();
-  $offeringPlayer = new Player($exchange->playerId);
-  $exchange->give_items($offeringPlayer);
-  $exchange->cancel_exchange();
-
-}
-
 if(isset($_GET['newExchange'])){
 
     include('scripts/merchant/new_exchange.php');
+
+    exit();
+}
+if(isset($_GET['editExchange'])){
+
+    include('scripts/merchant/edit_exchange.php');
 
     exit();
 }
@@ -83,31 +32,55 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
           if ($exchange->playerId != $player->id){
               $fromPlayer = new Player($exchange->playerId);
               $fromPlayer->get_data();
-              echo 'Echange reçu de '.$fromPlayer->data->name. ' le '.date('d/m/Y H:i', $exchange->updateTime) . '. 
-              <a href="merchant.php?targetId='.$target->id.'&exchanges&accept='.$exchange->id.'">Accepter</a> - 
-              <a href="merchant.php?targetId='.$target->id.'&exchanges&refuse='.$exchange->id.'">Refuser</a> <br/>';
-              foreach ($exchange->items as $exchangeItem) {
-                $item  = new Item($exchangeItem->item_id);
-                $item->get_data();
-                echo '<li>'. $exchangeItem->n . ' ' . $item->data->name. '</li>';
+              echo '<section style="background-color: #f0f8ff5e; margin-top:10px;">';
+              echo 'Echange reçu de <a href="infos.php?targetId='.$fromPlayer->id.'">'.$fromPlayer->data->name.'('. $fromPlayer->id .')</a> le '.date('d/m/Y H:i', $exchange->updateTime) . '. 
+              <br> L\'échange sera validé quand les deux joueurs auront accepté.<br>';
+              if($exchange->playerOk == 1){
+                echo $fromPlayer->data->name. ' a accepté<br>';
               }
+              if($exchange->targetOk == 1){
+               echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'">Refuser</a> ( n\'annule pas l\'échange)<br>';
+              }
+              else
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-lastModification="'.$exchange->updateTime.'" data-playerid="'.$player->id.'">Accepter l\'échange</a><br>';
+              echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'" >Annuler ( supprimer )</a><br>';
+              echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a> <br>';
+              echo '<ul class="compact-list">
+              <li style="font-weight: bold;">Vous recevez : </li>';
+              echo $exchange->render_items_for_player($exchange->playerId);
+              echo '<li style="font-weight: bold;">Vous donnez : </li>';
+              echo $exchange->render_items_for_player(  $exchange->targetId);
               echo '</ul> <br/>';
+              echo '</section>';
           }
         }
         echo '<br/>';
         foreach ($exchanges as $exchange) {
             if ($exchange->playerId == $player->id){
+                echo '<section style="background-color: #f0f8ff5e; margin-top:10px;">';
                 $targetPlayer = new Player($exchange->targetId);
                 $targetPlayer->get_data();
-                echo 'Echange proposé à '.$targetPlayer->data->name. ' le '.date('d/m/Y H:i', $exchange->updateTime). '.
-                <a href="merchant.php?targetId='.$target->id.'&exchanges&cancel='.$exchange->id.'">Annuler</a> 
-                <br><ul class="compact-list">';
-                foreach ($exchange->items as $exchangeItem) {
-                  $item  = new Item($exchangeItem->item_id);
-                  $item->get_data();
-                  echo '<li>'. $exchangeItem->n . ' ' . $item->data->name. '</li>';
+                echo 'Echange proposé à <a href="infos.php?targetId='.$targetPlayer->id.'">'.$targetPlayer->data->name.'('. $targetPlayer->id .')</a> le '.date('d/m/Y H:i', $exchange->updateTime). '.
+                <br> L\'échange sera validé quand les deux joueurs auront accepté.<br>';
+
+                if($exchange->targetOk == 1){
+                    echo $targetPlayer->data->name. ' a accepté<br>';
                 }
+                if($exchange->playerOk == 1){
+                 echo 'Vous avez accepté. => <a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="refuse" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'">Refuser</a> ( n\'annule pas l\'échange) <br>';
+                }
+                else 
+                  echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="accept" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'" data-lastModification="'.$exchange->updateTime.'" >Accepter l\'échange</a> <br>';
+               
+                echo '<a class="action" href="#" data-url="api/exchanges/exchanges-edit.php?targetId='.$target->id.'" data-action="cancel" data-id="'.$exchange->id.'" data-playerid="'.$player->id.'">Annuler ( supprimer )</a><br>'; 
+                echo '<a href="merchant.php?targetId='.$target->id.'&exchanges&editExchange='.$exchange->id.'">Modifier</a>  <br>';
+                echo '<br><ul class="compact-list">
+                <li style="font-weight: bold;">Vous recevez : </li>';
+                echo $exchange->render_items_for_player($exchange->targetId);
+                echo '<li style="font-weight: bold;">Vous donnez : </li>';
+                echo $exchange->render_items_for_player( $exchange->playerId);
                 echo '</ul> <br/>';
+                echo '</section>';
             }
         }
     ?>
@@ -120,7 +93,30 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
   </div>
 
 </div>
+<script>
+   $('.action').click(function(e){
+    e.preventDefault();
+    let elem = e.currentTarget;
+    let url = elem.dataset.url;
+    const dataset = elem.dataset;
+    const payload = { ...dataset };
+    delete payload.url;
 
 
-
-
+    aooFetch(url,payload,null)
+    .then(data => {
+      if(data.error) {
+        alert(data.error);
+      }
+      else if(data.message) {
+        alert(data.message);
+      }
+      //console.log('Success:', data);
+      location.reload();
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+      location.reload();
+    });
+   });
+</script>

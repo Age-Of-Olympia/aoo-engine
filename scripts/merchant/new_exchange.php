@@ -2,8 +2,7 @@
 
 
 
-echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des marchands, c\'est ici. <br/>
-Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </div>';
+echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des marchands, c\'est ici. </div>';
 
 
 ?>
@@ -16,31 +15,14 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
   <div class="button-container">
     <div>
       <input id="autocomplete" type="text" placeholder="Rechercher">
+      <span id="exchange-recipient"></span>
     </div>
   </div>
 
   <form id="object-list-form">
       <div class="new-exchange-container hidden">
-        <div>
-            <h3>Objets à envoyer à <span id="exchange-recipient"> </span></h3> 
-            <div id="object-list">
-              <!-- Objects to be exchanged -->
-            </div>
-
-            <?php
-
-            $player = new Player($_SESSION['playerId']);
-
-            $itemList = Item::get_item_list($player, $bank=true);
-
-            echo Ui::print_inventory($itemList);
-
-            ?>
-
-        </div>
-
-        <button id="cancel-button" >Annuler</button>
-        <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Proposer l'échange</button>
+        <button id="cancel-button" disabled>Annuler</button>
+        <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Creer l'échange</button>
       </div>
   </form>
   <div class="button-container">
@@ -82,9 +64,9 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
       minLength: 2,
       select: function(event, ui) {
         $('#exchange-recipient').text(ui.item.label);
-        if(objects.length > 0 ){
-          $('#validate-button').prop('disabled', false);
-        }
+        $('#validate-button').prop('disabled', false);
+        $('#autocomplete').hide();
+        $('#cancel-button').prop('disabled', false);
       }
     }).data("ui-autocomplete")._renderItem = function(ul, item) {
       return $("<li>")
@@ -93,9 +75,12 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
     };
 
     $('#cancel-button').click(function(e) {
-        objects = [];
-        updateObjectList();
+       // objects = [];
+       // updateObjectList();
+        $('#validate-button').prop('disabled', true);
+        $('#cancel-button').prop('disabled', true);
         $('#exchange-recipient').text('');
+        $('#autocomplete').show();
         e.preventDefault();
     });
 
@@ -108,74 +93,31 @@ Le prix d\'un échange est de 15PO payés par celui qui propose l\'échange </di
                 value: recipient
             }).appendTo('#object-list-form');
         }
-        e.preventDefault(); 
-        $('#object-list-form input[name="objects[]"]').remove();
-        objects.forEach(function(object, index) {
-              $('<input>').attr({
-                  type: 'hidden',
-                  name: 'objects[]',
-                  value: JSON.stringify(object)  
-              }).appendTo('#object-list-form');
-          });
+        e.preventDefault();
+        $('#validate-button').prop('disabled', true);
+        $('#cancel-button').prop('disabled', true);
         $.ajax({
-              url: 'merchant.php?targetId=<?php echo $target->id ?>&exchanges&create',  
+              url: 'api/exchanges/exchanges-create.php?targetId=<?php echo $target->id ?>',  
               method: 'POST',
+              dataType: 'json',
               data: $('#object-list-form').serialize(), // Serialize form data
               success: function(response) {
-                window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>';
+                if(response.error){
+                  alert(response.error);
+                  return;
+                }
+                window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&editExchange='+response.result;
               },
               error: function(xhr, status, error) {
-                alert('Erreur technique.')
+                alert('Erreur technique.');
+                $('#validate-button').prop('disabled', false);
+                $('#cancel-button').prop('disabled', false);
               }
           });
       });
 
 
-      $('.action').click(function(e){
 
-
-          var n = 0;
-
-          n = prompt('Combien?', window.n);
-
-          if(n == null){
-
-            return false;
-          }
-          if(n == '' || n < 1 || n > window.n){
-
-            alert('Nombre invalide!');
-            return false;
-          }
-
-          var objectName = window.name;
-          var objectId= window.id;
-          var objectCount  = n;
-
-          var existingObject = objects.find(obj => obj.id === objectId);
-
-          if (existingObject) {
-            existingObject.n = objectCount;
-          } else {
-            objects.push({ id: objectId, name:objectName ,n: objectCount });
-          }
-          updateObjectList();
-
-          if($('#exchange-recipient').text().trim() !== ""){
-            $('#validate-button').prop('disabled', false);
-          }
-
-          e.preventDefault();
-
-      })
-
-
-    function updateObjectList() {
-        $('#object-list').empty(); 
-        objects.forEach(function(obj) {
-          $('#object-list').append('<div>Objet : ' + obj.name + ' - Quantité: ' + obj.n + '</div>');
-        });
-    }
   });
 
 

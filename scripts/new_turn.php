@@ -30,8 +30,9 @@ else if(!empty($_SESSION['playerId'])){
 
             echo '<h1><font color="red">Nouveau Tour</font></h1>';
 
-
+            echo '<div style="text-align: center;">';
             echo '<a href="index.php"><img class="box-shadow" src="img/ui/illustrations/sunset.webp" /></a>';
+            echo '</div>';
 
             $player->get_caracs();
 
@@ -220,11 +221,13 @@ else if(!empty($_SESSION['playerId'])){
                 echo '</table>';
 
             echo '<br /><a href="index.php"><button>Jouer</button></a>';
-
+            // Only show email prompt for real players (positive IDs)
+            if($player->id > 0 && empty($player->data->plain_mail) && !$player->data->email_bonus) {
+                echo ' <a href="account.php?changeMail"><button>Renseigner mon mail (+20 XP)</button></a>';
+            }
 
             // anti berserk
             $antiBerserkTime = $player->data->lastActionTime + (0.25 * $playerTurn);
-
 
             // update
             $sql = '
@@ -234,8 +237,6 @@ else if(!empty($_SESSION['playerId'])){
             nextTurnTime = ?,
             lastActionTime = 0,
             antiBerserkTime = ?,
-            xp = xp + ?,
-            pi = pi + ?,
             malus = malus - ?,
             fatigue = fatigue - ?
             WHERE
@@ -245,14 +246,15 @@ else if(!empty($_SESSION['playerId'])){
             $values = array(
                 $nextTurnTime,
                 $antiBerserkTime,
-                $gainXp,
-                $gainXp,
                 $recovMalus,
                 $recovFat,
                 $player->id
             );
 
             $db->exe($sql, $values);
+            
+            // Ajout de l'xp de début de tour
+            $player->put_xp($gainXp);
 
             $player->refresh_data();
             $player->refresh_caracs();
