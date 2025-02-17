@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $exchange->accept_exchange($isTarget);
         $result["message"] .= "Vous avez accepté l'échange avec " . $offeringPlayer->data->name;
         if ($exchange->playerOk == 1 && $exchange->targetOk == 1) {
-          $result["message"] .= ". Cela à validé l'échange";
+          $result["message"] .= ". Cela a validé l'échange.";
           $exchange->get_items_data();
           $fromOfferingToTarget = $exchange->give_items(from_player: $offeringPlayer, to_player: $targetPlayer);
           $fromTargetToOffering = $exchange->give_items(from_player: $targetPlayer, to_player: $offeringPlayer);

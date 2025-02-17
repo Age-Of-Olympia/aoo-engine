@@ -21,7 +21,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
 
   <form id="object-list-form">
       <div class="new-exchange-container hidden">
-        <button id="cancel-button" >Annuler</button>
+        <button id="cancel-button" disabled>Annuler</button>
         <button  id="validate-button" class="exchange-button" disabled><span class="ra ra-scroll-unfurled"></span> Creer l'échange</button>
       </div>
   </form>
@@ -66,6 +66,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
         $('#exchange-recipient').text(ui.item.label);
         $('#validate-button').prop('disabled', false);
         $('#autocomplete').hide();
+        $('#cancel-button').prop('disabled', false);
       }
     }).data("ui-autocomplete")._renderItem = function(ul, item) {
       return $("<li>")
@@ -77,6 +78,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
        // objects = [];
        // updateObjectList();
         $('#validate-button').prop('disabled', true);
+        $('#cancel-button').prop('disabled', true);
         $('#exchange-recipient').text('');
         $('#autocomplete').show();
         e.preventDefault();
@@ -91,7 +93,9 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                 value: recipient
             }).appendTo('#object-list-form');
         }
-        e.preventDefault(); 
+        e.preventDefault();
+        $('#validate-button').prop('disabled', true);
+        $('#cancel-button').prop('disabled', true);
         $.ajax({
               url: 'api/exchanges/exchanges-create.php?targetId=<?php echo $target->id ?>',  
               method: 'POST',
@@ -105,7 +109,9 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
                 window.location.href= 'merchant.php?exchanges&targetId=<?php echo $_GET['targetId'] ?>&editExchange='+response.result;
               },
               error: function(xhr, status, error) {
-                alert('Erreur technique.')
+                alert('Erreur technique.');
+                $('#validate-button').prop('disabled', false);
+                $('#cancel-button').prop('disabled', false);
               }
           });
       });
