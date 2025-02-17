@@ -18,7 +18,7 @@ foreach($actionJson->targetIgnore as $emp){
     }
 }
 
-// update caracs
+// update caracs & refresh equipment
 $target->get_caracs();
 
 
@@ -35,6 +35,6 @@ foreach($itemToEquip as $emp=>$item){
 }
 
 
-// apply caracs without ignored equipement
+// apply caracs without ignored equipement. at this point if ignoring hands, "poing" is equiped in $player but not in db
 $target->caracs = $caracsCp;
 
