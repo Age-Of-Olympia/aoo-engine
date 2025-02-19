@@ -1,6 +1,15 @@
 # Activer le moteur de réécriture d'URL
 RewriteEngine On
 
+# Si le mode maintenance est activé, rediriger vers la page de maintenance
+RewriteCond %{DOCUMENT_ROOT}/maintenance.flag -f
+RewriteCond %{REQUEST_URI} !/maintenance\.html$ [NC]
+RewriteCond %{REQUEST_URI} !\.(jpe?g|png|gif|css|js|otf)$ [NC]
+RewriteRule ^.*$ /maintenance.html [R=503,L]
+
+# Définir la page d'erreur pour le code 503
+ErrorDocument 503 /maintenance.html
+
 # Bloquer l'accès à tous les fichiers dans le dossier /sessions
 RewriteRule ^sessions/ - [F,L]
 
