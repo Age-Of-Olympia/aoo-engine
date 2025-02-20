@@ -24,6 +24,21 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `audit`
+--
+
+CREATE TABLE audit (
+    id INT AUTO_INCREMENT NOT NULL,
+    audit_key INT NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    timestamp DATETIME NOT NULL,
+    user_id INT DEFAULT NULL,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    details TEXT DEFAULT NULL,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
 -- Table structure for table `coords`
 --
 
