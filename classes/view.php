@@ -598,19 +598,21 @@ class View{
 
         $row = $res->fetch_object();
         $isMask = false;
-
-        if(($row->mask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
-            list($maskW, $maskH) = getimagesize('img/tiles/' . $row->mask . '.webp');
-            $scrollingMask = $row->sm;
-            $verticalScrolling = $row->vs;
-            $mask = 'img\/tiles\/' . $row->mask . '.webp';
-            $isMask = true;
+            
+        if(($row != NULL)){
+            if(($row->mask != NULL) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
+                list($maskW, $maskH) = getimagesize('img/weather/' . $row->mask . '.webp');
+                $scrollingMask = $row->sm;
+                $verticalScrolling = $row->vs;
+                $mask = 'img\/weather\/' . $row->mask . '.webp';
+                $isMask = true;
+            }
         }
         elseif((!empty($planJson->mask)) && $this->coords->z >= 0 && !in_array('noMask', $this->options)){
             if(!empty($planJson->scrollingMask)){
                 list($maskW, $maskH) = getimagesize($planJson->mask);
                 $scrollingMask = $planJson->scrollingMask;
-                $verticalScrolling = $planJson->verticalScrolling;
+                $verticalScrolling = isset($planJson->verticalScrolling) ? $planJson->verticalScrolling : NULL;
                 $mask = $planJson->mask;
                 $isMask = true;
             }
