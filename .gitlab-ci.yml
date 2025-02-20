@@ -1,6 +1,7 @@
 stages:
   - prepare
   - release
+  - deployment
 
 prepare_job:
   stage: prepare
@@ -27,3 +28,17 @@ release-job:
     name: 'Release $CI_COMMIT_TAG'
     ref: '$CI_COMMIT_SHA'
     description: release_notes.md
+
+deploy-job-non-prod:
+  stage: deployment
+  image: alpine
+  environment:
+    name: dynamic-env/$CI_COMMIT_REF_NAME
+    url: https://${ENV_DOMAIN_NAME}
+  before_script:
+    - apk add curl
+  script:
+    - curl "${CI_ENVIRONMENT_URL}/admin/deploy.php?type=code&passphrase=${DEPLOY_KEY_PASS}&ci"
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "staging"
+    - if: $CI_COMMIT_REF_NAME == "saison-2"
