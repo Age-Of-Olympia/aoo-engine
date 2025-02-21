@@ -11,3 +11,4 @@ vendor/
 .bash_history
 .env
 bin/composer
+.vscode/settings.json

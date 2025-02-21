@@ -4,10 +4,11 @@ $(document).ready(function() {
 
 
     $('#add-dest').click(function(e) {
-
-
+        
         $('#dest').hide();
         $('#dest-list').show();
+        $('#autocomplete').show();
+
     });
 
 

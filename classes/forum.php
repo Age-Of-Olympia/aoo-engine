@@ -438,12 +438,12 @@ class Forum{
 
 
         if(is_numeric($dest)){
-
-
             $dest = new Player($dest);
-
-            $dest->get_data();
+        }else{
+            $dest = Player::get_player_by_name($dest);
         }
+        
+        $dest->get_data();
 
         if(!$destTbl){
 

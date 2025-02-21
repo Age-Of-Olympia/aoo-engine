@@ -9,7 +9,7 @@ if(!$topJson){
 }
 
 
-$ui = new Ui(htmlentities($topJson->title));
+$ui = new Ui(htmlentities($topJson->title), true);
 
 
 ob_start();
