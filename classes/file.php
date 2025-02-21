@@ -227,7 +227,7 @@ class File{
                 if ($newX >= 0 && $newX < $width) {
                     $color = imagecolorat($img, $newX, $y);
                     $alpha = ($color >> 24) & 0x7F; // Extraire le canal alpha (transparence)
-                    $alpha = 127 - ((127 - $alpha) * $opacity); // Appliquer l'opacité
+                    $alpha = intval(127 - ((127 - $alpha) * $opacity)); // Appliquer l'opacité
                     $color = ($color & 0xFFFFFF) | ($alpha << 24); // Recomposer la couleur avec le nouveau canal alpha
                     imagesetpixel($tmpImg, $x, $y, $color);
                 }
