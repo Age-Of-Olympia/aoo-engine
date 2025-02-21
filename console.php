@@ -43,50 +43,69 @@ if (isset($_POST['cmdLine']) && isset($_POST['completion'])){
     }
 }
 
+function ExecuteCommand($command, $commandLineSplit)
+{
+    if(isset($commandLineSplit[0]) &&($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')){
+        $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4:console#'. $command->getName(). '">'. $command->getName(). '</a> ' .$command->printArguments()."<br/>"
+        .$command->getDescription();
+        return ['message' => 'Help for command ' . $command->getName() . ': ',
+                'result' => $result];
+    }
+    else {
+        if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
+            try{
+                $result = $command->executeIfAuthorized($commandLineSplit);
+               return ['message' => 'command found ' . $command->getName() . '. Executing.',
+                       'result' => $result];
+            }catch(Throwable $e){
+                $result = "Unexpected technical error, check command syntax : ".$command->getName()." ".$command->printArguments() 
+                . "  - Error details : ". $e->getMessage();
+                
+                return ['error' => $result];
+            }
+        } else {
+            $result = 'missing mandatory arguments ' . $command->printArguments();
+           
+            return ['error' => $result];
+        }
+    }
+}
+
 //execution
 if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     $inputString = $_POST['cmdLine'];
 
     $factory = initCommmandFactory();
-
-    $commandLineSplit = Command::getCommandLineSplit($inputString);
-
-    $command = $factory->getCommand($commandLineSplit[0]);
-    array_shift($commandLineSplit); //remove first part
-    if($command){
-
-        if(isset($commandLineSplit[0]) &&($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')){
-            $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4:console#'. $command->getName(). '">'. $command->getName(). '</a> ' .$command->printArguments()."<br/>"
-            .$command->getDescription();
-            echo json_encode(['message' => 'Help for command ' . $command->getName() . ': ',
-                'result' => $result]);
-        }
-        else {
-            if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
-                try{
-                    $result = $command->executeIfAuthorized($commandLineSplit);
-                    echo json_encode(['message' => 'command found ' . $command->getName() . '. Executing.',
-                    'result' => $result]);
-                }catch(Throwable $e){
-                    $result = "Unexpected technical error, check command syntax : ".$command->getName()." ".$command->printArguments() 
-                    . "  - Error details : ". $e->getMessage();
-                    $error = $result;
-                    echo json_encode(['error' => $result]);
-                }
-            } else {
-                $result = 'missing mandatory arguments ' . $command->printArguments();
-                $error = $result;
-                echo json_encode(['error' => $result]);
-            }
-        }
-
-
-    }else{
-        $result = ['error' => 'Unknown command'];
-        $error = $result['error'];
-        echo json_encode($result);
+    $GLOBALS['consoleENV'] = ['self' => $_SESSION['playerId']];
+    $commandsList = Command::getCommandsFromInputString($inputString);
+    $commandsResults = array();
+    if(count($commandsList) == 0){
+        $commandsResults[] = ['error' => "Failed to parse command line"];
     }
 
+    for ($i = 0; $i < count($commandsList); $i++){
+        $commandLine = Command::ReplaceEnvVarriable($commandsList[$i]);
+        $commandLineSplit = Command::getCommandLineSplit($commandLine);
+        $commandeName = $commandLineSplit[0];
+        $command = $factory->getCommand($commandeName);
+        array_shift($commandLineSplit); //remove first part
+       
+        if($command){
+            $commandsResults[] = ExecuteCommand($command, $commandLineSplit);
+        }else{
+            $error = 'Unknown command ' . $commandeName;
+            $commandsResults[] = ['error' => $error];
+        }
+        if(isset($commandsResults[count($commandsResults)-1]['error'])){
+            if($i < count($commandsList) - 1){
+                $commandsResults[] = ['error' => 'Command ' . $commandeName . ' failed, stopping execution, '.strval(count($commandsList) -1 - $i).' ommited'];
+            }
+            break;
+        }
+    }
+
+    // echo results
+    echo json_encode($commandsResults);
 
     // history command
     if(!isset($_SESSION['cmdHistory'])){
@@ -94,7 +113,8 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         $_SESSION['cmdHistory'] = array();
     }
 
-    $_SESSION['cmdHistory'][] = $_POST['cmdLine'];
+    if(count($commandsList) == 1)
+        $_SESSION['cmdHistory'][] = $_POST['cmdLine'];
 
 
     // track
@@ -104,18 +124,6 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
 
         mkdir($path, 0775, true); // recursive = true
     }
-
-    $error = (!empty($error)) ? $error : $result;
-
-    $log = array(
-        'mainPlayerId'=>$_SESSION['mainPlayerId'],
-        'playerId'=>$_SESSION['playerId'],
-        'time'=>time(),
-        'Y/m/d'=>date('Y/m/d', time()),
-        'H:i:s'=>date('H:i:s', time()),
-        'cmdLine'=>$_POST['cmdLine'],
-        'result'=>$error
-    );
 
     // Chemin vers le fichier csv
     $logFile = $path .'track.csv';
@@ -143,8 +151,21 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         echo json_encode(['error' => 'unable to write track.csv']);
     }
 
-    // Convertir $result en ligne CSV et l'écrire dans le fichier
-    fputcsv($fileHandle, $log);
+    foreach($commandsResults as $result){
+        $resultTxt = isset($result['result']) ? $result['result'] : (isset($result['error']) ? $result['error'] : 'No result');
+        $log = array(
+            'mainPlayerId'=>$_SESSION['mainPlayerId'],
+            'playerId'=>$_SESSION['playerId'],
+            'time'=>time(),
+            'Y/m/d'=>date('Y/m/d', time()),
+            'H:i:s'=>date('H:i:s', time()),
+            'cmdLine'=>$_POST['cmdLine'],
+            'result'=>$resultTxt
+        );
+        // Convertir $result en ligne CSV et l'écrire dans le fichier
+        fputcsv($fileHandle, $log);
+    }
+  
 
     // Fermer le fichier
     fclose($fileHandle);
