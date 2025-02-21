@@ -837,13 +837,46 @@ class Player{
     }
 
     public function remove_upgrade($upgradeName, $n){
-
-        $sql = 'delete from players_upgrades where player_id = ? and name = ? limit ?';
-
+        
         $db = new Db();
+        
+        $db->start_transaction('remove_upgrade');
 
-        $db->exe($sql, array($this->id, $upgradeName,$n));
+        try{
 
+        
+            $sql = '
+            select sum(upgrades.cost) as total from (select cost from players_upgrades where player_id = ? and name = ? order by cost desc limit ?) as upgrades
+            ';
+
+            $res = $db->exe($sql, array($this->id, $upgradeName,$n));
+
+            $row = $res->fetch_object();
+
+            $total_pi_rembouser = $row->total;
+
+            $sql = '
+            UPDATE players
+            SET
+            pi = pi + ?
+            WHERE
+            id = ?
+            ';
+
+            $sql = $db->exe($sql, array($total_pi_rembouser, $this->id));
+
+
+            $sql = 'delete from players_upgrades where player_id = ? and name = ? order by cost desc limit ?';
+
+
+            $db->exe($sql, array($this->id, $upgradeName,$n));
+
+            $db->commit_transaction('remove_upgrade');
+    
+        } catch (Throwable $th) {
+            $db->rollback_transaction('remove_ugprade');
+            ExitError('Erreur lors du retrait de l\'upgrade. ');
+        }            
 
         if($upgradeName == 'p'){
 
