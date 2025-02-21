@@ -18,6 +18,8 @@ Exemple:
 > player deletelastlog Orcrist
 > player addupgrade Ocyrhoée Mvt
 > player addupgrade Shaolan A 12
+> player removeupgrade Orcrist A 
+> player removeupgrade Leyrion Agi 2
 EOT);
     }
 
@@ -59,6 +61,10 @@ EOT);
 
         if($action == 'addupgrade'){
             return add_upgrade($argumentValues,$player);
+        }
+
+        if($action == 'removeupgrade'){
+            return remove_upgrade($argumentValues,$player);
         }
 
         if($action == 'addlog'){
@@ -340,6 +346,28 @@ function add_upgrade($argumentValues, $player)
     }
 
     return $argumentValues[2] .' ajouté à '. $player->data->name;
+}
+
+function remove_upgrade($argumentValues, $player)
+{
+    if(!isset($argumentValues[2])){
+        return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';
+    }
+
+    $upgradeName = strtolower($argumentValues[2]);
+    if(!array_key_exists($upgradeName, CARACS)){
+        return '<font color="red">error unknown upgrade</font>';
+    }
+    $n = 1 ;
+    if (isset($argumentValues[3])){
+        $n = $argumentValues[3];
+        if( filter_var($n, FILTER_VALIDATE_INT) === false || $n == 0) {
+            return '<font color="red">Invalid number of ugrade to remove</font>';
+        }
+    }
+    $player->remove_upgrade($upgradeName, $n);
+
+    return $n . ' '.$argumentValues[2] .' retiré à '. $player->data->name;
 }
 
 function add_log($argumentValues, $player){
