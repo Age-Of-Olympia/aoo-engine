@@ -9,6 +9,7 @@ prepare_job:
   rules:
   - if: '$CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+$/'
   script:
+    - apk add bash
     - ./scripts/generate-release-notes.sh > release_notes.md
   artifacts:
     paths:
