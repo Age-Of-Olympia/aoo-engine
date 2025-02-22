@@ -39,5 +39,5 @@ deploy-job-non-prod:
   script:
     - curl ${CURL_OPTS} "${CI_ENVIRONMENT_URL}/admin/deploy.php?type=code&passphrase=${DEPLOY_KEY_PASS}&ci"
   rules:
-    - if: $CI_COMMIT_REF_NAME == "staging"
-    - if: $CI_COMMIT_REF_NAME == "saison-2"
+    - if: $CI_COMMIT_REF_NAME == "staging" && $CI_MERGE_REQUEST_ID == null
+    - if: $CI_COMMIT_REF_NAME == "saison-2" && $CI_MERGE_REQUEST_ID == null
