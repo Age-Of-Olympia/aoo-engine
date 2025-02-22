@@ -273,7 +273,7 @@ if($res->num_rows){
 
 
     $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
-    $coordBackup = $player->coord;
+    $coordBackup = $player->coords;
     $player->coords = $goCoords;
     Log::put($player, $player, $text, $type="loot");
     $player->coords = $coordBackup;
