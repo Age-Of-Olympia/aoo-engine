@@ -1737,23 +1737,21 @@ class Player{
 
 
     public function distribute_xp() {
-
-
         $return = array();
-
         $target_id = $this->id;
-
         $timeLimit = time() - ONE_DAY;
 
         // Récupérer les détails de la cible
-        $target_rank = $this->data->rank;
-        $xp_to_distribute = $target_rank * 10;
+        if(!isset($this->data)){
+            $this->get_data();
+        }
 
+        // Calculer l'XP à distribuer - 0 si inactif, sinon rank * 10
+        $target_rank = $this->data->rank;
+        $xp_to_distribute = $this->data->isInactive ? 0 : ($target_rank * 10);
         $return['xp_to_distribute'] = $xp_to_distribute;
 
-
         self::clean_players_assists();
-
 
         // Récupérer les assists des dernières 24 heures pour cette cible
         $stmt = db()->prepare("
@@ -1765,23 +1763,30 @@ class Player{
         $stmt->bind_param('ii', $target_id, $timeLimit);
         $stmt->execute();
         $result = $stmt->get_result();
-
         $assists = $result->fetch_all(MYSQLI_ASSOC);
 
+        // Si la cible est inactif, donner 0 XP à tous les participants
+        if($this->data->isInactive) {
+            foreach($assists as $assist) {
+                $return[$assist['player_id']] = 0;
+            }
+            return $return;
+        }
+
+        // Sinon, faire comme d'habitude
         $total_weight = 0;
         $weights = [];
         $xp_distribution = [];
 
-        // Calculer les poids basés sur la différence de rang et les dommages
+        // Calculer les poids en fonction de la difference de rang et des dommages
         foreach ($assists as $assist) {
             $weight = ($target_rank / max(1, $assist['player_rank'])) * $assist['damages'];
             $weights[$assist['player_id']] = $weight;
             $total_weight += $weight;
         }
 
-        // Vérifier que le total des poids n'est pas zéro pour éviter la division par zéro
         if ($total_weight > 0) {
-            // Répartir l'XP selon les poids calculés
+            // Distribuer l'XP selon les poids calculés
             $total_distributed_xp = 0;
             foreach ($weights as $player_id => $weight) {
                 $xp_share = floor(($weight / $total_weight) * $xp_to_distribute);
@@ -1789,37 +1794,32 @@ class Player{
                 $total_distributed_xp += $xp_share;
             }
 
-            // Calculer l'XP restante
+            // Calculer le reste d'XP
             $remaining_xp = $xp_to_distribute - $total_distributed_xp;
 
-            // Ajouter l'XP restante au dernier joueur qui a infligé des dégâts
+            // Ajouter le reste d'XP à la dernière personne qui a infligé des dommages
             if (!empty($assists)) {
                 $last_assist_player_id = $assists[0]['player_id'];
                 $xp_distribution[$last_assist_player_id] += $remaining_xp;
             }
 
-            // Mettre à jour l'XP des joueurs
+            // Mise à jour des XP des joueurs
             foreach ($xp_distribution as $player_id => $xp_share) {
-
                 $return[$player_id] = $xp_share;
             }
         } else {
-            // Si total_weight est zéro, distribuer l'XP de manière égale à tous les participants
+            // Si le poids total est à zero, distribuer l'XP équitablement entre les participants
             if (!empty($assists)) {
                 $equal_xp_share = floor($xp_to_distribute / count($assists));
                 foreach ($assists as $assist) {
-
-                    $return[$player_id] = $xp_to_distribute;
+                    $return[$assist['player_id']] = $equal_xp_share;
                 }
 
-                // Ajouter l'XP restante (due à l'arrondi) au dernier joueur qui a infligé des dégâts
+                // Ajouter le reste d'XP (de la répartition) à la dernière personne qui a infligé des dommages
                 $remaining_xp = $xp_to_distribute - ($equal_xp_share * count($assists));
-
                 $return['remaining_xp'] = $remaining_xp;
-
             }
         }
-
         return $return;
     }
 
@@ -1954,7 +1954,9 @@ class Player{
 
             $playerXp = 1;
         }
-
+        if($target->data->isInactive){
+            $playerXp = 1;
+        }
 
         return $playerXp;
     }
@@ -2095,7 +2097,6 @@ class Player{
 
             $player->get_row();
 
-
             // unset some unwanted var
             unset($player->row->psw);
             unset($player->row->mail);
@@ -2115,6 +2116,9 @@ class Player{
         $fields = $this->playerService->getPlayerFields($this->id, ['plain_mail', 'email_bonus']);
         $this->data->plain_mail = $fields['plain_mail'];
         $this->data->email_bonus = $fields['email_bonus'] ?? false;
+
+        // Set inactive status using playerService
+        $this->data->isInactive = $this->playerService->isInactive($this->data->lastLoginTime);
 
         $pathInfo = pathinfo($this->data->portrait);
 
