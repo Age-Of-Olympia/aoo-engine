@@ -177,17 +177,6 @@ class View{
 
             SELECT
             id, name, coords_id,
-            "plants" AS whichTable,
-            97.5 AS tableOrder
-            FROM
-            map_plants
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
-
-            UNION
-
-            SELECT
-            id, name, coords_id,
             "items" AS whichTable,
             96 AS tableOrder
             FROM
@@ -206,7 +195,30 @@ class View{
             map_elements
             WHERE
             coords_id IN ('. implode(',', $this->inSightId) .')
+            
+            UNION
 
+            SELECT
+            id, name, coords_id,
+            "plants" AS whichTable,
+            97.5 AS tableOrder
+            FROM
+            map_plants
+            WHERE
+            coords_id IN ('. implode(',', $this->inSightId) .')
+
+            UNION
+
+            SELECT
+            id, 
+            "route" AS name,
+            coords_id,
+            "routes" AS whichTable,
+            97.6 AS tableOrder
+            FROM
+            map_routes
+            WHERE
+            coords_id IN ('. implode(',', $this->inSightId) .')
             UNION
 
             SELECT
@@ -226,19 +238,6 @@ class View{
             99 AS tableOrder
             FROM
             map_walls
-            WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
-            
-            UNION
-
-            SELECT
-            id, 
-            "route" AS name,
-            coords_id,
-            "routes" AS whichTable,
-            99.5 AS tableOrder
-            FROM
-            map_routes
             WHERE
             coords_id IN ('. implode(',', $this->inSightId) .')
 
