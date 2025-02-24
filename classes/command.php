@@ -90,7 +90,7 @@ abstract class Command
         return $matches[0];
     }
 
-    public static function ReplaceEnvVarriable($commandLine){
+    public static function ReplaceEnvVariable($commandLine){
         foreach ($GLOBALS['consoleENV'] as $key => $value) {
             $commandLine = str_replace('{'.$key.'}', $value, $commandLine);
         }

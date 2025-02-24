@@ -84,7 +84,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     }
 
     for ($i = 0; $i < count($commandsList); $i++){
-        $commandLine = Command::ReplaceEnvVarriable($commandsList[$i]);
+        $commandLine = Command::ReplaceEnvVariable($commandsList[$i]);
         $commandLineSplit = Command::getCommandLineSplit($commandLine);
         $commandeName = $commandLineSplit[0];
         $command = $factory->getCommand($commandeName);
