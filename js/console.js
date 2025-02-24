@@ -130,12 +130,21 @@ function submit_command(cmdLine){
             try{
                 responseObj=JSON.parse(response);
             }catch(e){
-                responseObj={error:'Error: '+response};
+                responseObj=[{error:'Error: '+response}];
             }
-            if(responseObj.error){
-                $('#console-content').append('<span class="response-error">'+responseObj.error+ '</span>');
-            }else{
-                $('#console-content').append('<span class="response">'+responseObj.message+ '<br />'+ responseObj.result+'</span>');
+            let hadAnyError=false;
+            
+            for(let i=0; i<responseObj.length; i++){
+                if(responseObj[i].error){
+                    hadAnyError=true;
+                    $('#console-content').append('<span class="response-error">'+responseObj[i].error+ '</span>');
+                }else{
+                    $('#console-content').append('<span class="response">'+responseObj[i].message+ '<br />'+ responseObj[i].result+'</span>');
+                }
+            }
+
+            if(!hadAnyError)
+            {
                 $('#input-line').val('');
             }
             scrollDown();

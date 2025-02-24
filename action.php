@@ -205,8 +205,6 @@ if($actionJson->targetType != 'self'){
     if($actionJson->playerJet == 'cc/ct'){
 
         if($distance == 1){
-
-
             // melee
 
             $actionJson->playerJet = 'cc';
@@ -356,26 +354,24 @@ if(!empty($success) && $success == true){
 
 
         $playerDamages = (is_numeric($actionJson->playerDamages)) ? $actionJson->playerDamages : $player->caracs->{$actionJson->playerDamages};
-
-
-        if(!empty($actionJson->bonusDamages)){
-
-
-            if(!is_numeric($actionJson->bonusDamages)){
-
-
-                $actionJson->bonusDamages = $player->caracs->{$actionJson->bonusDamages};
-            }
-
-
-            $playerDamages += $actionJson->bonusDamages;
-        }
+        $playerDamagesBonus = empty($actionJson->bonusDamages)? 0 :((is_numeric($actionJson->bonusDamages)) ? $actionJson->bonusDamages : $target->caracs->{$actionJson->bonusDamages});
 
 
         $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $target->caracs->{$actionJson->targetDamages};
         $targetDamagesBonus = empty($actionJson->targetDamagesBonus)? 0 :((is_numeric($actionJson->targetDamagesBonus)) ? $actionJson->targetDamagesBonus : $target->caracs->{$actionJson->targetDamagesBonus});
 
-        $totalDamages = $playerDamages - ($targetDamages + $targetDamagesBonus);
+        $baseDamages = $playerDamages - $targetDamages;
+        
+        
+        $bonusDamages = $playerDamagesBonus - $targetDamagesBonus;
+
+        //minimum damages seulement si l'adversaire à une defense bonus
+        if($targetDamagesBonus > 0){
+            $bonusDamages = max($bonusDamages, 0);
+            $baseDamages = max($baseDamages, 0);
+        }
+
+        $totalDamages = $baseDamages + $bonusDamages;
 
         // tir damages reduce and distance malus has same rules to be applied ( tir + distance > 2 )
         if($distanceMalus){
@@ -411,6 +407,24 @@ if(!empty($success) && $success == true){
         $distanceDmgReduceTxt = ($distanceDmgReduce) ? ' - '. $distanceDmgReduce .' (Distance)' : '';
 
         $critTxt = (!empty($critAdd)) ? ' (+ '. $critAdd .')' : '';
+        $bonusDamageTxt="";
+        if($playerDamagesBonus>0){
+            $bonusDamageTxt=" + (".$playerDamagesBonus;
+            if($targetDamagesBonus>0){
+                $bonusDamageTxt.=" - ".$targetDamagesBonus;
+            }
+            $bonusDamageTxt.=")";
+        }
+
+        $bonusCaracTxt="";
+        if(!empty($actionJson->bonusDamages) && !is_numeric($actionJson->bonusDamages)){
+            $bonusCaracTxt = '+('. CARACS[$actionJson->bonusDamages];
+            if(!empty($actionJson->targetDamagesBonus) && !is_numeric($actionJson->targetDamagesBonus)){
+                $bonusCaracTxt.=" - ".CARACS[$actionJson->targetDamagesBonus];
+            }
+            
+            $bonusCaracTxt .= ')';
+        }
 
 
         include('scripts/actions/esquive.php');
@@ -425,7 +439,7 @@ if(!empty($success) && $success == true){
             echo '
             Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
 
-            <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>
+            <div class="action-details">('. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .')'.$bonusCaracTxt.' = ('. $playerDamages .' - '. $targetDamages .')'.$bonusDamageTxt. $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>
             ';
 
 

@@ -85,6 +85,18 @@ abstract class Command
         return $commandLineSplit;
     }
 
+    public static function getCommandsFromInputString($inputString){
+        preg_match_all('/(?:[^";]|"(?:\\\\.|[^\\\\"])*")++/', $inputString, $matches);
+        return $matches[0];
+    }
+
+    public static function ReplaceEnvVariable($commandLine){
+        foreach ($GLOBALS['consoleENV'] as $key => $value) {
+            $commandLine = str_replace('{'.$key.'}', $value, $commandLine);
+        }
+        return $commandLine;
+    }
+
     abstract public function execute(  array $argumentValues ): string;
 
     public function executeIfAuthorized( array $argumentValues ): string {

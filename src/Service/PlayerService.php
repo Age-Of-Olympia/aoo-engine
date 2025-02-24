@@ -10,15 +10,15 @@ class PlayerService
 {
     private Db $db;
 
+    public function __construct()
+    {
+        $this->db = new Db();
+    }
+
     private function getPlayerField(int $playerId, string $field): mixed
     {
         $fields = $this->getPlayerFields($playerId, [$field]);
         return $fields[$field] ?? null;
-    }
-
-    public function __construct()
-    {
-        $this->db = new Db();
     }
 
     public function getPlainEmail(int $playerId): ?string
@@ -50,5 +50,17 @@ class PlayerService
         }
 
         return array_fill_keys($fields, null);
+    }
+
+    /**
+     * Helper function to calculate if a login time is considered inactive
+     * @param int $lastLoginTime The last login time to check
+     * @return bool True if inactive, false otherwise
+     */
+    public function isInactive(int $lastLoginTime): bool
+    {
+        $current_time = time();
+        $inactive_threshold = $current_time - (INACTIVE_TIME);
+        return $lastLoginTime < $inactive_threshold;
     }
 }

@@ -10,7 +10,7 @@ foreach($actionJson->targetIgnore as $emp){
 
 
         // unequip
-        $target->equip($target->emplacements->{$emp}, $doNotRefresh=true);
+        $target->equip($target->emplacements->{$emp}, doNotRefresh:true);
 
         $itemToEquip[$emp] = $target->emplacements->{$emp};
 
@@ -18,7 +18,7 @@ foreach($actionJson->targetIgnore as $emp){
     }
 }
 
-// update caracs
+// update caracs & refresh equipment
 $target->get_caracs();
 
 
@@ -30,14 +30,11 @@ $caracsCp = clone $target->caracs;
 foreach($itemToEquip as $emp=>$item){
 
 
-    $target->equip($item, $doNotRefresh=true);
+    $target->equip($item, doNotRefresh:true);
 
-
-    // unset again
-    unset($target->emplacements->{$emp});
 }
 
 
-// apply caracs without ignored equipement
+// apply caracs without ignored equipement. at this point if ignoring hands, "poing" is equiped in $player but not in db
 $target->caracs = $caracsCp;
 
