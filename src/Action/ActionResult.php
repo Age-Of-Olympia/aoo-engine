@@ -33,4 +33,6 @@ class ActionResult
         $this->message = $message;
         return $this;
     }
+
+    // Ajout de critères de visibilité ?
 }

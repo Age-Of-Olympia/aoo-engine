@@ -18,11 +18,14 @@ class ActionEffect
     #[ORM\JoinColumn(nullable: false)]
     private ?Action $action = null;
 
-    #[ORM\Column(type: "boolean", options: ["default" => false])]
+    #[ORM\Column(type: "boolean", name: "apply_to_self", options: ["default" => false])]
     private bool $applyToSelf = false;
 
     #[ORM\Column(type: "string", length: 100, nullable: true)]
     private ?string $name = null;
+
+    #[ORM\Column(type: "boolean", name: "on_success", options: ["default" => true])]
+    private bool $onSuccess = false;
 
     #[ORM\OneToMany(
         mappedBy: "effect",
@@ -82,6 +85,17 @@ class ActionEffect
     public function setName(?string $name): self
     {
         $this->name = $name;
+        return $this;
+    }
+
+    public function isOnSuccess(): bool
+    {
+        return $this->onSuccess;
+    }
+
+    public function setOnSuccess(bool $onSuccess): self
+    {
+        $this->onSuccess = $onSuccess;
         return $this;
     }
 

@@ -1,5 +1,5 @@
 <?php
-namespace App\Condition;
+namespace App\Action\Condition;
 
 use App\Action\Condition\ConditionInterface;
 use Player;
@@ -8,13 +8,13 @@ use View;
 
 class RangeBetweenDistanceCondition implements ConditionInterface
 {
-    private ?string $errorMessage = null;
 
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): bool
+    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
     {
+        $result = new ConditionResult(true);
         if (!$target) {
-            $this->errorMessage = "No target specified.";
-            return false;
+            $errorMessage[0] = "Aucune cible n'a été spécifiée.";
+            return new ConditionResult(false, null, $errorMessage);
         }
 
         $params = $condition->getParameters(); // e.g. {"min":2,"max":6}
@@ -23,15 +23,11 @@ class RangeBetweenDistanceCondition implements ConditionInterface
 
         $distance = View::get_distance($actor->get_coords(), $target->get_coords());
         if ($distance < $min || $distance > $max) {
-            $this->errorMessage = "Distance $distance is outside the allowed range [$min - $max].";
-            return false;
+            $errorMessage[0] = "Le distance $distance n'est pas dans l'intervalle [$min - $max].";
+            return new ConditionResult(false, null, $errorMessage);
         }
 
-        return true;
+        return $result;
     }
 
-    public function getErrorMessage(): ?string
-    {
-        return $this->errorMessage;
-    }
 }

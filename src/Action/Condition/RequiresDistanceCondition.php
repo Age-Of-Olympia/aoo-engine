@@ -11,24 +11,25 @@ class RequiresDistanceCondition implements ConditionInterface
 {
     private ?string $errorMessage = null;
 
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): bool
+    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
     {
+        $result = new ConditionResult(true);
         if (!$target) {
-            $this->errorMessage = "No target to check distance.";
-            return false;
+            $errorMessage[0] = "Aucune cible n'a été spécifiée.";
+            return new ConditionResult(false, null, $errorMessage);
         }
 
-        $params = $condition->getParameters(); // e.g. ["max" => 5]
+        $params = $condition->getParameters(); // e.g. { "max": 1 }
         $maxDist = $params['max'] ?? 1;
 
         $distance = View::get_distance($actor->get_coords(), $target->get_coords());
 
         if ($distance > $maxDist) {
-            $this->errorMessage = "Target is too far (distance $distance > max $maxDist)";
-            return false;
+            $errorMessage[0] = "La cible est trop loin ! (distance $distance > max $maxDist)";
+            return new ConditionResult(false, null, $errorMessage);
         }
 
-        return true;
+        return $result;
     }
 
     public function getErrorMessage(): ?string

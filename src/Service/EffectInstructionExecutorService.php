@@ -5,7 +5,7 @@ include '../../classes/player.php';
 use Player;
 use App\Entity\EffectInstruction;
 
-class EffectInstructionExecutor
+class EffectInstructionExecutorService
 {
     /**
      * Execute a single instruction (one row from `effect_instructions`)

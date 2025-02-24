@@ -23,6 +23,7 @@ class Action
         cascade: ["persist", "remove"],
         orphanRemoval: true
     )]
+    #[ORM\OrderBy(["execution_order" => "ASC"])]
     private Collection $conditions;
 
     #[ORM\OneToMany(
@@ -106,6 +107,17 @@ class Action
     public function getEffects(): Collection
     {
         return $this->effects;
+    }
+
+    /**
+     * @return Collection<int, ActionEffect>
+     */
+    public function getOnSuccessEffects(bool $success = true): Collection
+    {
+        $filteredCollection = $this->effects->filter(function($element) use ($success) {
+            return $element->onSuccess == $success;
+        });
+        return $filteredCollection;
     }
 
     public function addEffect(ActionEffect $effect): self

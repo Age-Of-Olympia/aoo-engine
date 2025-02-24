@@ -1,7 +1,8 @@
 <?php
 namespace App\Action\Condition;
 
-use App\Condition\MinimumDistanceCondition;
+use App\Action\Condition\MinimumDistanceCondition;
+use App\Action\Condition\ComputeCondition;
 use App\Entity\ActionCondition;
 
 class ConditionRegistry
@@ -13,9 +14,14 @@ class ConditionRegistry
     {
         // For each known Condition Type, we store an instance:
         $this->conditions = [
-            'RequiresDistance'    => new RequiresDistanceCondition(),
+            'RequiresDistance'    => new RequiresDistanceCondition(), // should include wall check ?
+            // 'RequiresTraitValue' => new RequiresTraitValueCondition(), // number of action, maximum life ?
+            // 'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
-            'MinimumDistanceCondition' => new MinimumDistanceCondition(),
+            'MinimumDistance' => new MinimumDistanceCondition(),
+            
+            
+            'Compute' => new ComputeCondition(), // include equipment effect ?
             //'RequiresCaracValue'  => new RequiresCaracValueCondition(),
             // etc...
         ];

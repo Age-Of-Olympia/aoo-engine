@@ -1,7 +1,5 @@
 <?php
 
-use App\Entity\EntityManagerFactory;
-use App\Entity\Race;
 use App\Service\RaceService;
 
 $dir = 'img/portraits/'. $player->data->race .'/';

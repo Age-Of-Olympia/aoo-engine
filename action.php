@@ -2,6 +2,9 @@
 
 require_once('config.php');
 
+use App\Service\ActionExecutorService;
+use App\Service\ActionService;
+
 
 ob_start();
 
@@ -150,6 +153,9 @@ if($player->have_option('showActionDetails')){
  * PERFORM ACTION
  */
 
+$actionExecutor = new ActionExecutorService();
+$actionService = new ActionService();
+
 
 // log
 $log = $actionJson->log;
@@ -208,6 +214,8 @@ if($actionJson->targetType != 'self'){
 
 
             // melee
+            $meleeAction = $actionService->getActionByName("cc");
+            $actionExecutor->executeAction($meleeAction,$player,$target);
 
             $actionJson->playerJet = 'cc';
         }

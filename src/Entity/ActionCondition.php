@@ -22,6 +22,12 @@ class ActionCondition
     #[ORM\JoinColumn(nullable: false)]
     private ?Action $action = null;
 
+    #[ORM\Column(type: "integer", name: "execution_order")]
+    private ?int $executionOrder = null;
+
+    #[ORM\Column(type: "boolean")]
+    private bool $blocking = false;
+
     // -------------------------
     // Getters & Setters
     // -------------------------
@@ -67,6 +73,28 @@ class ActionCondition
     public function setAction(?Action $action): self
     {
         $this->action = $action;
+        return $this;
+    }
+
+    public function getExecutionOrder(): ?int
+    {
+        return $this->executionOrder;
+    }
+
+    public function setExecutionOrder(int $executionOrder): self
+    {
+        $this->executionOrder = $executionOrder;
+        return $this;
+    }
+
+    public function isBlocking(): bool
+    {
+        return $this->blocking;
+    }
+
+    public function setBlocking(bool $blocking): self
+    {
+        $this->blocking = $blocking;
         return $this;
     }
 }
