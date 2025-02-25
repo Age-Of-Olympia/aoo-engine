@@ -22,7 +22,7 @@ union
 select  coords_id as coords_id, 'map_plants' as type, name as name, NULL as params from map_plants where coords_id = ?");
 
 
-$stmt->bind_param('iiiiiii',$coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId);
+$stmt->bind_param('iiiiiiii',$coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId);
 $stmt->execute();
 $result = $stmt->get_result();
 
