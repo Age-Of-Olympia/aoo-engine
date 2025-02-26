@@ -1209,7 +1209,7 @@ class Player{
         if($all){
 
             $sql = '
-            SELECT COUNT(*) AS n
+            SELECT player_id, COUNT(*) AS n
             FROM
             players_forum_missives
             WHERE
@@ -1222,23 +1222,26 @@ class Player{
             )
             AND
             viewed = 0
-            ';
+            GROUP BY player_id';
 
             $res = $db->exe($sql, array($_SESSION['mainPlayerId'], $_SESSION['mainPlayerId']));
         }
         else{
 
 
-            $sql = 'SELECT COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0';
+            $sql = 'SELECT player_id, COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0';
 
             $res = $db->exe($sql, $this->id);
         }
 
-        $row = $res->fetch_object();
+        $result = array();
 
-        $n = $row->n;
+        while($row = $res->fetch_object()){
 
-        return $n;
+            $result[$row->player_id] = $row->n;
+        }
+
+        return  $result;
     }
 
 

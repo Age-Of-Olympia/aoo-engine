@@ -88,7 +88,7 @@ foreach($playersTbl as $pnj){
     $raceJson = json()->decode('races', $pnj->data->race);
 
 
-    $mails = $pnj->get_new_mails();
+    $mails = $pnj->get_new_mails()[$pnj->id];
 
     if($mails){
 

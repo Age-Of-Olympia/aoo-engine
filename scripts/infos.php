@@ -63,7 +63,7 @@ if(!empty($_SESSION['playerId'])){
                 <sup>Prochain tour à <a href="#" title="dans '. $timeToNextTurn .'">'. date('H:i', $player->data->nextTurnTime). $adminInfos .'</a></sup>
             </td>
             <td>
-                <div id="player-avatar">
+                <div id="player-avatar" data-id="'. $player->id .'">
                     <a href="pnjs.php"><img src="'. $player->data->avatar .'" /></a>
                 </div>
             </td>

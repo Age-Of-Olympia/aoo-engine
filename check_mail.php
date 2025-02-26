@@ -8,4 +8,4 @@ $player = new Player($_SESSION['playerId']);
 $db = new Db();
 
 
-echo $player->get_new_mails($all=true);
+echo json_encode($player->get_new_mails($all=true));
