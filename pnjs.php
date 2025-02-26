@@ -57,7 +57,7 @@ echo '<section class="marbre pnj-container">';
 
 Use App\Service\PlayerEffectService;
 $playerEffectService = new PlayerEffectService();
-
+$allMails = $main->get_new_mails(true);
 foreach($playersTbl as $pnj){
 
 
@@ -88,7 +88,7 @@ foreach($playersTbl as $pnj){
     $raceJson = json()->decode('races', $pnj->data->race);
 
 
-    $mails = $pnj->get_new_mails()[$pnj->id];
+    $mails = isset($allMails[$pnj->id]) ? $allMails[$pnj->id] : 0;
 
     if($mails){
 
@@ -118,13 +118,14 @@ foreach($playersTbl as $pnj){
     ';
 }
 
-
+if(!empty($hiddenPnjs)){
 echo '
 </section>
 
 <section class="marbre pnj-container hidden-pnjs"><div id="display-hidden-pnjs" style="cursor:pointer"> + Afficher la liste des PNJs Masqués.</div>
 <div id="hidden-pnjs-list">
 ';
+}
 foreach($hiddenPnjs as $hiddenPnj){
     $hiddenPnj->get_data();
     $raceJson = json()->decode('races', $hiddenPnj->data->race);  

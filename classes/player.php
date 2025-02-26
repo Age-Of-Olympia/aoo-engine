@@ -1229,7 +1229,7 @@ class Player{
         else{
 
 
-            $sql = 'SELECT player_id, COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0';
+            $sql = 'SELECT player_id, COUNT(*) AS n FROM players_forum_missives WHERE player_id = ? AND viewed = 0 GROUP BY player_id';
 
             $res = $db->exe($sql, $this->id);
         }
