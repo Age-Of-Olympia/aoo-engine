@@ -6,7 +6,7 @@ use Player;
 
 use App\Entity\ActionCondition;
 
-class ForbidIfHasEffectCondition implements ConditionInterface
+class ForbidIfHasEffectCondition extends BaseCondition
 {
     public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
     {

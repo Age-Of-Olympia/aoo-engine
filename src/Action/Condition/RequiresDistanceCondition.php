@@ -7,7 +7,7 @@ use View;
 use App\Entity\ActionCondition;
 
 
-class RequiresDistanceCondition implements ConditionInterface
+class RequiresDistanceCondition extends BaseCondition
 {
     private ?string $errorMessage = null;
 

@@ -19,12 +19,6 @@ class EffectInstruction
     #[ORM\Column(type: "string", length: 50)]
     private string $operation;
 
-    #[ORM\Column(type: "boolean")]
-    private bool $onSuccess;
-
-    #[ORM\Column(type: "boolean")]
-    private bool $onFailure;
-
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $parameters = null;
 
@@ -65,28 +59,6 @@ class EffectInstruction
     public function setOperation(string $operation): self
     {
         $this->operation = $operation;
-        return $this;
-    }
-
-    public function isOnSuccess(): bool
-    {
-        return $this->onSuccess;
-    }
-
-    public function setOnSuccess(bool $onSuccess): self
-    {
-        $this->onSuccess = $onSuccess;
-        return $this;
-    }
-
-    public function isOnFailure(): bool
-    {
-        return $this->onFailure;
-    }
-
-    public function setOnFailure(bool $onFailure): self
-    {
-        $this->onFailure = $onFailure;
         return $this;
     }
 

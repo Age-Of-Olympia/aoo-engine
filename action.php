@@ -33,10 +33,10 @@ if($actionJson->targetType == 'none'){
 $player = new Player($_SESSION['playerId']);
 
 
-if($player->get_left('a') < 1){
+// if($player->get_left('a') < 1){
 
-    exit('<font color="red">Pas assez d\'Actions.</font>');
-}
+//     exit('<font color="red">Pas assez d\'Actions.</font>');
+// }
 
 if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->get_left('pm')){
 

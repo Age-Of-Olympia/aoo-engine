@@ -15,17 +15,17 @@ enum Roll: string
     case cc_agi = "cc_agi";
 }
 
-class ComputeCondition implements ConditionInterface
+class ComputeCondition extends BaseCondition
 {
     
     public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
     {
         if (!$target) {
-            $errorMessage[0] = "Aucune cible n'a été spécifiée.";
-            return new ConditionResult(false, null, $errorMessage);
+            $errorMessages[0] = "Aucune cible n'a été spécifiée.";
+            return new ConditionResult(success: false, conditionSuccessMessages:$errorMessages);
         }
 
-        $params = $condition->getParameters(); // e.g. {"actorRollType":"cc", "targetRollType": "cc/agi", "actorDamages": "f", "targetDamages": "e", "equipmentPosition": "hand1"}
+        $params = $condition->getParameters(); // e.g. {"actorRollType":"cc", "targetRollType": "cc/agi", "equipmentPosition": "hand1"}
         
         $actorRollType = $params['actorRollType'];
         

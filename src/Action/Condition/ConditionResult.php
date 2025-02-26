@@ -6,8 +6,8 @@ class ConditionResult
 {
     private bool $success;
 
-    private $conditionSuccessMessage = array();
-    private $conditionFailureMessage = array();
+    private $conditionSuccessMessages = array();
+    private $conditionFailureMessages = array();
 
     private $actorRoll = array();
     private $targetRoll = array();
@@ -15,10 +15,10 @@ class ConditionResult
     private ?int $actorTotal;
     private ?int $targetTotal;
 
-    public function __construct(bool $success, $conditionSuccessMessage = null, $conditionFailureMessage = null, $actorRoll = null, $targetRoll = null, $actorTotal = null, $targetTotal = null) {
+    public function __construct(bool $success, ?array $conditionSuccessMessages = null, ?array $conditionFailureMessages = null, ?array $actorRoll = null, ?array $targetRoll = null, ?int $actorTotal = null, ?int $targetTotal = null) {
         $this->success = $success;
-        $this->conditionSuccessMessage = $conditionSuccessMessage;
-        $this->conditionFailureMessage = $conditionFailureMessage;
+        $this->conditionSuccessMessages = $conditionSuccessMessages;
+        $this->conditionFailureMessages = $conditionFailureMessages;
         $this->actorRoll = $actorRoll;
         $this->targetRoll = $targetRoll;
         $this->actorTotal = $actorTotal;
@@ -29,12 +29,12 @@ class ConditionResult
         return $this->success;
     }
 
-    public function getConditionSuccessMessage(): ?array {
-        return $this->conditionSuccessMessage;
+    public function getConditionSuccessMessages(): ?array {
+        return $this->conditionSuccessMessages;
     }
 
-    public function getConditionFailureMessage(): ?array {
-        return $this->conditionFailureMessage;
+    public function getConditionFailureMessages(): ?array {
+        return $this->conditionFailureMessages;
     }
 
     public function getActorRoll(): ?array {

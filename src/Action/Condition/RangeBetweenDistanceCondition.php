@@ -6,7 +6,7 @@ use Player;
 use App\Entity\ActionCondition;
 use View;
 
-class RangeBetweenDistanceCondition implements ConditionInterface
+class RangeBetweenDistanceCondition extends BaseCondition
 {
 
     public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult

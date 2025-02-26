@@ -21,10 +21,10 @@ class Action
         mappedBy: "action",
         targetEntity: ActionCondition::class,
         cascade: ["persist", "remove"],
-        orphanRemoval: true
+        orphanRemoval: true,
     )]
-    #[ORM\OrderBy(["execution_order" => "ASC"])]
-    private Collection $conditions;
+    #[ORM\OrderBy(["executionOrder" => "ASC"])]
+    private Collection $actionConditions;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -42,7 +42,7 @@ class Action
 
     public function __construct()
     {
-        $this->conditions = new ArrayCollection();
+        $this->actionConditions = new ArrayCollection();
         $this->effects    = new ArrayCollection();
         $this->races    = new ArrayCollection();
     }
@@ -76,15 +76,15 @@ class Action
     /**
      * @return Collection<int, ActionCondition>
      */
-    public function getConditions(): Collection
+    public function getActionConditions(): Collection
     {
-        return $this->conditions;
+        return $this->actionConditions;
     }
 
     public function addCondition(ActionCondition $condition): self
     {
-        if (!$this->conditions->contains($condition)) {
-            $this->conditions->add($condition);
+        if (!$this->actionConditions->contains($condition)) {
+            $this->actionConditions->add($condition);
             $condition->setAction($this);
         }
         return $this;
@@ -92,7 +92,7 @@ class Action
 
     public function removeCondition(ActionCondition $condition): self
     {
-        if ($this->conditions->removeElement($condition)) {
+        if ($this->actionConditions->removeElement($condition)) {
             // set the owning side to null (unless already changed)
             if ($condition->getAction() === $this) {
                 $condition->setAction(null);
@@ -115,7 +115,7 @@ class Action
     public function getOnSuccessEffects(bool $success = true): Collection
     {
         $filteredCollection = $this->effects->filter(function($element) use ($success) {
-            return $element->onSuccess == $success;
+            return $element->isOnSuccess() == $success;
         });
         return $filteredCollection;
     }

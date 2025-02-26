@@ -348,32 +348,32 @@ function add_upgrade($argumentValues, $player)
     return $argumentValues[2] .' ajouté à '. $player->data->name;
 }
 
-function add_pnj($player, $target)
-{
+// function add_pnj($player, $target)
+// {
 
-    $target->get_data();
+//     $target->get_data();
 
-    //Si le pnj ajouté a l'option isSuperAdmin, seul un superAdmin lui même peut l'ajouter a un player
-    if($target->have('options','isSuperAdmin') ){ 
-        include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
-    }
-
-
-    $values = array(
-        'pnj_id'=>$target->id
-    );
-
-    $db = new Db();
-
-    $db->delete('players_pnjs', $values);
-
-    $values['player_id'] = $player->id;
-
-    $db->insert('players_pnjs', $values);
+//     //Si le pnj ajouté a l'option isSuperAdmin, seul un superAdmin lui même peut l'ajouter a un player
+//     if($target->have('options','isSuperAdmin') ){ 
+//         include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+//     }
 
 
-    return 'PNJ '. $target->data->name .' ajouté au joueur '.$player->data->name ;
-}
+//     $values = array(
+//         'pnj_id'=>$target->id
+//     );
+
+//     $db = new Db();
+
+//     $db->delete('players_pnjs', $values);
+
+//     $values['player_id'] = $player->id;
+
+//     $db->insert('players_pnjs', $values);
+
+
+//     return 'PNJ '. $target->data->name .' ajouté au joueur '.$player->data->name ;
+// }
 
 function remove_upgrade($argumentValues, $player)
 {
