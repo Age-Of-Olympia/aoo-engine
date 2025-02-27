@@ -729,7 +729,7 @@ class Player{
     }
 
 
-    public function put_kill($target, $xp, $assist=0){
+    public function put_kill($target, $xp, $assist=0, $is_inactive=false){
 
 
         $db = new Db();
@@ -741,6 +741,7 @@ class Player{
             'target_rank'=>$target->data->rank,
             'xp'=>$xp,
             'assist'=>$assist,
+            'is_inactive'=>$is_inactive,
             'time'=>time(),
             'plan'=>$target->coords->plan
         );
