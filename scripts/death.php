@@ -32,7 +32,11 @@ echo '
 
         if($k == 'xp_to_distribute'){
 
-            echo 'Partage de '. $e .'Xp:<br />';
+            if($e == 0 && $target->data->isInactive) {
+                echo 'Partage de '. $e .'Xp (joueur inactif):<br />';
+            } else {
+                echo 'Partage de '. $e .'Xp:<br />';
+            }
 
             continue;
         }
