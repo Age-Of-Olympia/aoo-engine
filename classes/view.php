@@ -210,9 +210,7 @@ class View{
             UNION
 
             SELECT
-            id, 
-            "route" AS name,
-            coords_id,
+            id, name, coords_id,
             "routes" AS whichTable,
             97.6 AS tableOrder
             FROM
