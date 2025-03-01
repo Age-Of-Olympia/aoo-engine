@@ -437,7 +437,7 @@ if(!empty($success) && $success == true){
 
 
             echo '
-            Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
+            Vous infligez '. $totalDamages .' dégâts à '. $target->data->name . ($target->data->isInactive ? ' (Joueur inactif)' : '') .'.
 
             <div class="action-details">('. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .')'.$bonusCaracTxt.' = ('. $playerDamages .' - '. $targetDamages .')'.$bonusDamageTxt. $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>
             ';

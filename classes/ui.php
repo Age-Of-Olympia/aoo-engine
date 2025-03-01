@@ -34,7 +34,7 @@ class ui{
                 <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
-                <script src="js/main.js?v=20250218"></script>
+                <script src="js/main.js?v=20250226"></script>
                 <script src="js/console.js?v=20250221"></script>
                 <link href="css/main.min.css?v=20250212" rel="stylesheet" />
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';

@@ -139,35 +139,50 @@ $(document).ready(function(){
 
     var checkMailFunction = function () {
 
-        $.ajax({
-            type: "GET",
-            url: 'check_mail.php',
-            data: {}, // serializes the form's elements.
-            success: function(data)
-            {
-                let trimedData = data.trim();
-                if(trimedData != '0'){
+        let url = 'check_mail.php';
+        aooFetch(url)
+            .then(data => {
+                let avatar = $('#player-avatar');
+                let currentPlayerId = parseInt(avatar.attr('data-id'));
 
-                    var $avatar = $('#player-avatar');
-
-                    var $popup = $('<div class="cartouche bulle blink" style="pointer-events: none;">'+ trimedData +'</div>');
-
-                    $avatar.append($popup);
-
-                    // change favicon
-                    $("link[rel*='icon']").attr("href", "img/ui/favicons/favicon_alert.png");
-
-                    // change title
-                    if(trimedData.length > 0 && trimedData.length < 10){
-
-                        var newTitle = '('+ trimedData +') '+ baseTitle;
-
-                        $(document).prop('title', newTitle);
+                let otherCharactersNewMails = 0;
+                let currentCharacterNewMails = 0;
+                for (const playerid in data) {
+                    if (playerid == currentPlayerId) {
+                        currentCharacterNewMails = data[playerid];
+                    } else {
+                        otherCharactersNewMails += data[playerid];
                     }
-
                 }
-            }
-        });
+                let totalNewMails = otherCharactersNewMails + currentCharacterNewMails;
+
+                let popupOtherCharacter = $('#other-characters-mails');
+                if (!popupOtherCharacter.length)
+                    popupOtherCharacter = $('<div id="other-characters-mails" class="cartouche bulle blink" style="pointer-events: none; display:none; background:blue;"></div>').appendTo(avatar);
+
+                let popupCurrentCharacter = $('#current-characters-mails');
+                if (!popupCurrentCharacter.length)
+                    popupCurrentCharacter = $('<div id="current-characters-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></div>').appendTo('#missive-btn');
+
+                popupCurrentCharacter.text(currentCharacterNewMails);
+                popupCurrentCharacter.toggle(currentCharacterNewMails > 0);
+
+                popupOtherCharacter.text(otherCharactersNewMails);
+                popupOtherCharacter.toggle(otherCharactersNewMails > 0);
+
+                // change favicon
+                $("link[rel*='icon']").attr("href", totalNewMails > 0 ? "img/ui/favicons/favicon_alert.png" : "img/ui/favicons/favicon.png");
+
+                // change title
+                var newTitle = baseTitle;
+                if (totalNewMails > 0) {
+                    newTitle = '(' + totalNewMails + ') ' + newTitle;
+                }
+                $(document).prop('title', newTitle);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
 
         setTimeout(checkMailFunction, 60000);
 
