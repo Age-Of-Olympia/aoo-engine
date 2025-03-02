@@ -2,6 +2,7 @@
 
 require_once('config.php');
 
+use App\Action\ActionFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 
@@ -155,6 +156,8 @@ if($player->have_option('showActionDetails')){
 
 $actionExecutor = new ActionExecutorService();
 $actionService = new ActionService();
+// Initialisation de la fabrique avec le répertoire des actions
+ActionFactory::initialize('src/Action');
 
 
 // log
@@ -212,10 +215,13 @@ if($actionJson->targetType != 'self'){
 
         if($distance == 1){
 
-
-            // melee
-            $meleeAction = $actionService->getActionByName("cc");
-            $actionExecutor->executeAction($meleeAction,$player,$target);
+            // Utilisation
+            try {
+                $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
+                $actionExecutor->executeAction($action,$player,$target);
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
 
             $actionJson->playerJet = 'cc';
         }

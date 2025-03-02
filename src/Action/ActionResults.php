@@ -10,6 +10,7 @@ class ActionResults
         private bool $success,
         private array $conditionsResultsArray,
         private array $effectsResultsArray,
+        private array $xpResultsArray,
         private array $logsArray
     ) {
     }
@@ -44,6 +45,17 @@ class ActionResults
     public function setEffectsResultsArray(array $effectsResultsArray): self
     {
         $this->effectsResultsArray = $effectsResultsArray;
+        return $this;
+    }
+
+    public function getXpResultsArray(): array
+    {
+        return $this->xpResultsArray;
+    }
+
+    public function setXpResultsArray(array $xpResultsArray): self
+    {
+        $this->xpResultsArray = $xpResultsArray;
         return $this;
     }
 

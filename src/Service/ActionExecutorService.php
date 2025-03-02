@@ -5,9 +5,8 @@ use App\Entity\Action;
 use Player;
 use App\Entity\ActionEffect;
 use App\Action\ActionResults;
-use App\Action\Condition\BaseCondition;
 use App\Action\Condition\ConditionRegistry;
-use App\Action\Effect\EffectResult;
+use App\Interface\ActionInterface;
 
 class ActionExecutorService
 {
@@ -19,8 +18,7 @@ class ActionExecutorService
         $this->effectInstructionExecutor = new EffectInstructionExecutorService();
     }
 
-
-    public function executeAction(Action $action, Player $actor, ?Player $target): ActionResults
+    public function executeAction(ActionInterface $action, Player $actor, ?Player $target): ActionResults
     {
         // ajouter des conditions génériques ? posséder une action, ne pas être dans les enfers ?
         $conditionResultsArray = array();
@@ -48,13 +46,14 @@ class ActionExecutorService
         }
 
         // 2) apply each effect
+        $effectResultsArray = array();
         if ($globalConditionsResult) {
             foreach ($action->getOnSuccessEffects() as $effectEntity) {
-                $effectResultsArray = $this->applyActionEffect($effectEntity, $actor, $target);
+                array_push($effectResultsArray, $this->applyActionEffect($effectEntity, $actor, $target));
             }
         } else {
             foreach ($action->getOnSuccessEffects(false) as $effectEntity) {
-                $effectResultsArray = $this->applyActionEffect($effectEntity, $actor, $target);
+                array_push($effectResultsArray, $this->applyActionEffect($effectEntity, $actor, $target));
             }
         }
 
@@ -68,12 +67,15 @@ class ActionExecutorService
         // Update Anti-zerk
 
         // 4) calculate XP
-
+        $actorXp = $action->calculateActorXp($globalConditionsResult, $actor, $target);
+        $targetXp = $action->calculateTargetXp($globalConditionsResult, $actor, $target);
+        $xpResultsArray["actor"] = $actorXp;
+        $xpResultsArray["target"] = $targetXp;
         // 5) LOG
         $logsArray = array();
 
         // should contain conditionsResults, effectsResults and costs results !!!
-        return new ActionResults(true, $conditionResultsArray, $effectResultsArray, $logsArray);
+        return new ActionResults(true, $conditionResultsArray, $effectResultsArray, $xpResultsArray, $logsArray);
     }
 
     private function applyActionEffect(ActionEffect $effectEntity, Player $actor, ?Player $target): array

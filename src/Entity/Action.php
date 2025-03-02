@@ -1,21 +1,22 @@
 <?php
 namespace App\Entity;
 
+use App\Interface\ActionInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "actions")]
-class Action
+#[ORM\InheritanceType('SINGLE_TABLE')]
+#[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
+abstract class Action implements ActionInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
     private ?int $id = null;
-
-    #[ORM\Column(type: "string", length: 100)]
-    private string $name;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -59,17 +60,6 @@ class Action
     public function setId(int $id): self
     {
         $this->id = $id;
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
         return $this;
     }
 
@@ -164,4 +154,7 @@ class Action
         }
         return $this;
     }
+
+    abstract public function calculateActorXp(bool $success, Player $actor, Player $target): int;
+    abstract public function calculateTargetXp(bool $success, Player $actor, Player $target): int;
 }

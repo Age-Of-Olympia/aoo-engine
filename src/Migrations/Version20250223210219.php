@@ -22,7 +22,7 @@ final class Version20250223210219 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE TABLE action_conditions (id INT AUTO_INCREMENT NOT NULL, conditionType VARCHAR(100) NOT NULL, parameters JSON DEFAULT NULL, action_id INT NOT NULL, execution_order INT NULL, blocking BOOLEAN NOT NULL DEFAULT FALSE , INDEX IDX_97C463639D32F035 (action_id), PRIMARY KEY(id))');
         $this->addSql('CREATE TABLE action_effects (id INT AUTO_INCREMENT NOT NULL, apply_to_self TINYINT(1) DEFAULT 0 NOT NULL, name VARCHAR(100) DEFAULT NULL, action_id INT NOT NULL, INDEX IDX_92A9B44B9D32F035 (action_id), PRIMARY KEY(id))');
-        $this->addSql('CREATE TABLE actions (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(100) NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE TABLE actions (id INT AUTO_INCREMENT NOT NULL, type VARCHAR(255) NOT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE TABLE effect_instructions (id INT AUTO_INCREMENT NOT NULL, operation VARCHAR(50) NOT NULL, onSuccess TINYINT(1) NOT NULL, onFailure TINYINT(1) NOT NULL, parameters JSON DEFAULT NULL, orderIndex INT DEFAULT 0 NOT NULL, effect_id INT NOT NULL, INDEX IDX_9DA2AC6FF5E9B83B (effect_id), PRIMARY KEY(id))');
         $this->addSql('CREATE TABLE race_actions (race_id INT NOT NULL, action_id INT NOT NULL, INDEX IDX_1AF8249F6E59D40D (race_id), INDEX IDX_1AF8249F9D32F035 (action_id), PRIMARY KEY(race_id, action_id))');
         $this->addSql('ALTER TABLE action_conditions ADD CONSTRAINT FK_97C463639D32F035 FOREIGN KEY (action_id) REFERENCES actions (id)');
