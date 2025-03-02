@@ -155,6 +155,9 @@ abstract class Action implements ActionInterface
         return $this;
     }
 
-    abstract public function calculateActorXp(bool $success, Player $actor, Player $target): int;
-    abstract public function calculateTargetXp(bool $success, Player $actor, Player $target): int;
+    abstract public function calculateXp(bool $success, Player $actor, Player $target): array;
+
+    public function hideWhenSuccess(): bool {
+        return false;
+    }
 }

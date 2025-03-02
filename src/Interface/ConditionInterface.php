@@ -1,6 +1,7 @@
 <?php
-namespace App\Action\Condition;
+namespace App\Interface;
 
+use App\Action\Condition\ConditionResult;
 use Player;
 
 use App\Entity\ActionCondition;

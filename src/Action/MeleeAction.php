@@ -9,7 +9,16 @@ use Player;
 #[ORM\Entity]
 class MeleeAction extends Action
 {
-    public function calculateActorXp(bool $success, Player $actor, Player $target): int
+    public function calculateXp(bool $success, Player $actor, Player $target): array
+    {
+        $actorXp = $this->calculateActorXp($success, $actor, $target);
+        $targetXp = $this->calculateTargetXp($success, $actor, $target);
+        $xpResultsArray["actor"] = $actorXp;
+        $xpResultsArray["target"] = $targetXp;
+        return $xpResultsArray;
+    }
+
+    private function calculateActorXp(bool $success, Player $actor, Player $target): int
     {
         if ($success) {
             if (!isset($actor->data)) {
@@ -45,7 +54,7 @@ class MeleeAction extends Action
         return $playerXp;
     }
 
-    public function calculateTargetXp(bool $success, Player $actor, Player $target): int
+    private function calculateTargetXp(bool $success, Player $actor, Player $target): int
     {
         if ($success) {
             $targetXp = 0;

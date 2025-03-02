@@ -1,7 +1,6 @@
 <?php
 namespace App\Service;
 
-use App\Entity\Action;
 use Player;
 use App\Entity\ActionEffect;
 use App\Action\ActionResults;
@@ -22,30 +21,38 @@ class ActionExecutorService
     {
         // ajouter des conditions génériques ? posséder une action, ne pas être dans les enfers ?
         $conditionResultsArray = array();
-        $globalConditionsResult = true;
         $conditionsToPay = array();
         // 1) Check conditions
-        foreach ($action->getActionConditions() as $condEntity) {
-            $condition = $this->conditionRegistry->getCondition($condEntity->getConditionType());
-            if (!$condition) {
-                return new ActionResults(false, array(), array(), array());
-            }
-
-            $conditionResult = $condition->check($actor, $target, $condEntity);
-            $globalConditionsResult = $globalConditionsResult && $conditionResult->isSuccess();
-            array_push($conditionResultsArray, $conditionResult);
-
-            if (!$conditionResult->isSuccess() && $condEntity->isBlocking()) {
-                break;
-            }
-
-            // this condition has a cost and must be removed if the action is performed
-            if ($condition->toRemove()) {
-                array_push($conditionsToPay, $condEntity);
-            }
-        }
+        $globalConditionsResult = $this->checkConditions($action, $actor, $target, $conditionResultsArray, $conditionsToPay);
 
         // 2) apply each effect
+        $effectResultsArray = $this->applyEffects($globalConditionsResult, $action, $actor, $target);
+
+        // 3) apply costs
+        $this->applyCosts($conditionsToPay, $actor);
+
+        // Update Anti-zerk
+
+        // 4) calculate XP
+        $xpResultsArray = $action->calculateXp($globalConditionsResult, $actor, $target);
+        // 5) LOG
+        $logsArray = array();
+
+        // should contain conditionsResults, effectsResults and costs results !!!
+        return new ActionResults(true, $conditionResultsArray, $effectResultsArray, $xpResultsArray, $logsArray);
+    }
+
+    private function applyCosts($conditionsToPay, $actor)
+    {
+        foreach ($conditionsToPay as $conditionToPay) {
+            foreach ($conditionToPay->getParameters() as $key => $value) {
+                $actor->put_bonus([$key => -$value]);
+            }
+        }
+    }
+
+    private function applyEffects($globalConditionsResult, $action, $actor, $target): array
+    {
         $effectResultsArray = array();
         if ($globalConditionsResult) {
             foreach ($action->getOnSuccessEffects() as $effectEntity) {
@@ -56,26 +63,33 @@ class ActionExecutorService
                 array_push($effectResultsArray, $this->applyActionEffect($effectEntity, $actor, $target));
             }
         }
+        return $effectResultsArray;
+    }
 
-        // 3) apply costs
-        foreach ($conditionsToPay as $conditionToPay) {
-            foreach ($conditionToPay->getParameters() as $key => $value) {
-                $actor->put_bonus([$key => -$value]);
+    private function checkConditions($action, $actor, $target, &$conditionResultsArray, &$conditionsToPay): bool
+    {
+        $globalConditionsResult = true;
+        foreach ($action->getActionConditions() as $condEntity) {
+            $condition = $this->conditionRegistry->getCondition($condEntity->getConditionType());
+            if (!$condition) {
+                return false;
+            }
+        
+            $conditionResult = $condition->check($actor, $target, $condEntity);
+            $globalConditionsResult = $globalConditionsResult && $conditionResult->isSuccess();
+            array_push($conditionResultsArray, $conditionResult);
+        
+            if (!$conditionResult->isSuccess() && $condEntity->isBlocking()) {
+                break;
+            }
+        
+            // this condition has a cost and must be removed if the action is performed
+            if ($condition->toRemove()) {
+                array_push($conditionsToPay, $condEntity);
             }
         }
 
-        // Update Anti-zerk
-
-        // 4) calculate XP
-        $actorXp = $action->calculateActorXp($globalConditionsResult, $actor, $target);
-        $targetXp = $action->calculateTargetXp($globalConditionsResult, $actor, $target);
-        $xpResultsArray["actor"] = $actorXp;
-        $xpResultsArray["target"] = $targetXp;
-        // 5) LOG
-        $logsArray = array();
-
-        // should contain conditionsResults, effectsResults and costs results !!!
-        return new ActionResults(true, $conditionResultsArray, $effectResultsArray, $xpResultsArray, $logsArray);
+        return $globalConditionsResult;
     }
 
     private function applyActionEffect(ActionEffect $effectEntity, Player $actor, ?Player $target): array

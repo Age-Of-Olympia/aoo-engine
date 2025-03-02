@@ -3,7 +3,7 @@ namespace App\Action\Condition;
 
 use App\Action\Condition\MinimumDistanceCondition;
 use App\Action\Condition\ComputeCondition;
-use App\Entity\ActionCondition;
+use App\Interface\ConditionInterface;
 
 class ConditionRegistry
 {
