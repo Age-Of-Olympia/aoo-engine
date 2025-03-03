@@ -5,7 +5,7 @@ require_once('config.php');
 use App\Action\ActionFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;
-
+use App\View\ActionResultsView;
 
 ob_start();
 
@@ -154,10 +154,9 @@ if($player->have_option('showActionDetails')){
  * PERFORM ACTION
  */
 
-$actionExecutor = new ActionExecutorService();
-$actionService = new ActionService();
 // Initialisation de la fabrique avec le répertoire des actions
 ActionFactory::initialize('src/Action');
+$actionResultsView = null;
 
 
 // log
@@ -218,12 +217,38 @@ if($actionJson->targetType != 'self'){
             // Utilisation
             try {
                 $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
-                $actionExecutor->executeAction($action,$player,$target);
+                $actionExecutor = new ActionExecutorService($action, $player,$target);
+                $actionResults = $actionExecutor->executeAction();
+                $actionResultsView = new ActionResultsView($actionResults);
+                $actionResultsView->displayActionResults();
+
+                $logDetails = $actionResultsView->getActionResults();
+                $actorMainLog = $actionResults->getLogsArray()["actor"];
+                $targetMainLog = $actionResults->getLogsArray()["target"];
+
+                $logTime = time();
+                if(!empty($actorMainLog)){
+                    if (isset($action->hideWhenSuccess) && isset($success) && $success && $action->hideWhenSuccess) {
+                        $type = "hidden_action";
+                    } else {
+                        $type = "action";
+                    }
+                    Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
+                }
+
+                if(!empty($targetMainLog)){
+                    if (isset($action->hideWhenSuccess) && isset($success) && $success && $action->hideWhenSuccess) {
+                        $type = "hidden_action_other_player";
+                    } else {
+                        $type = "action_other_player";
+                    }
+                    Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
+                }
+
+                goto fin;
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
-
-            $actionJson->playerJet = 'cc';
         }
 
         elseif($distance > 1){
@@ -645,6 +670,7 @@ if(!empty($targetLog)){
 
 echo $data;
 
+fin:
 $targetPvAfter = $target->get_left('pv');
 
 if($targetPvBefore != $targetPvAfter){

@@ -22,11 +22,11 @@ class EffectResult
         return $this->success;
     }
 
-    public function getEffectSuccessMessages(): ?array {
+    public function getEffectSuccessMessages(): array {
         return $this->effectSuccessMessages;
     }
 
-    public function getEffectFailureMessages(): ?array {
+    public function getEffectFailureMessages(): array {
         return $this->effectFailureMessages;
     }
 

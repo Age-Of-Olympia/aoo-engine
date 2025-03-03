@@ -18,6 +18,21 @@ class MeleeAction extends Action
         return $xpResultsArray;
     }
 
+    public function getLogMessages(Player $actor, Player $target): array
+    {
+        //Player should have a method to give correct weapon (with inheritance ?)
+        if ($actor->data->race != 'animal') {
+            $weapon = " avec ".$actor->emplacements->main1->data->name.".";
+        } else {
+            $weapon = ".";
+        }
+        $actorLog = $actor->data->name." a attaqué ".$target->data->name.$weapon;
+        $targetLog = $target->data->name." a été attaqué par ".$actor->data->name.$weapon;
+        $infosArray["actor"] = $actorLog; 
+        $infosArray["target"] = $targetLog;
+        return $infosArray;
+    }
+
     private function calculateActorXp(bool $success, Player $actor, Player $target): int
     {
         if ($success) {
@@ -49,7 +64,7 @@ class MeleeAction extends Action
                 $playerXp = 1;
             }
         } else {
-            $playerXp = 1;
+            $playerXp = 0;
         }
         return $playerXp;
     }
@@ -63,4 +78,5 @@ class MeleeAction extends Action
         }
         return $targetXp;
     }
+
 }

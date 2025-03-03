@@ -68,7 +68,7 @@ class EffectInstructionExecutorService
             //handle not working case
         }
 
-        return new EffectResult(true,effectSuccessMessages:$effectSuccessMessages,totalDamages:$totalDamages);
+        return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array(), totalDamages:$totalDamages);
         
     }
 
@@ -95,7 +95,7 @@ class EffectInstructionExecutorService
             break;
         }
 
-        return new EffectResult(true,effectSuccessMessages:$effectSuccessMessages);
+        return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array());
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){
