@@ -79,4 +79,8 @@ class MeleeAction extends Action
         return $targetXp;
     }
 
+    public function activateAntiBerserk(): bool {
+        return true;
+    }
+
 }

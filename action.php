@@ -50,10 +50,10 @@ $player->get_caracs();
 
 
 // anti berserk
-if(!isset($actionJson->noBerserkCheck)){
+// if(!isset($actionJson->noBerserkCheck)){
 
-    include('scripts/actions/check_berserk.php');
-}
+//     include('scripts/actions/check_berserk.php');
+// }
 
 
 // target
@@ -217,9 +217,10 @@ if($actionJson->targetType != 'self'){
             // Utilisation
             try {
                 $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
-                $actionExecutor = new ActionExecutorService($action, $player,$target);
+                $actionExecutor = new ActionExecutorService($action, $player, $target);
                 $actionResults = $actionExecutor->executeAction();
                 $actionResultsView = new ActionResultsView($actionResults);
+                // this make a "echo" needed while the huge action.php file exists
                 $actionResultsView->displayActionResults();
 
                 $logDetails = $actionResultsView->getActionResults();
@@ -227,8 +228,8 @@ if($actionJson->targetType != 'self'){
                 $targetMainLog = $actionResults->getLogsArray()["target"];
 
                 $logTime = time();
-                if(!empty($actorMainLog)){
-                    if (isset($action->hideWhenSuccess) && isset($success) && $success && $action->hideWhenSuccess) {
+                if(!empty($actorMainLog)) {
+                    if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
                         $type = "hidden_action";
                     } else {
                         $type = "action";
@@ -237,7 +238,7 @@ if($actionJson->targetType != 'self'){
                 }
 
                 if(!empty($targetMainLog)){
-                    if (isset($action->hideWhenSuccess) && isset($success) && $success && $action->hideWhenSuccess) {
+                    if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
                         $type = "hidden_action_other_player";
                     } else {
                         $type = "action_other_player";

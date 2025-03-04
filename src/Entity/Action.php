@@ -160,4 +160,8 @@ abstract class Action implements ActionInterface
     public function hideWhenSuccess(): bool {
         return false;
     }
+
+    public function activateAntiBerserk(): bool {
+        return false;
+    }
 }

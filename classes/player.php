@@ -23,7 +23,7 @@ class Player{
         $this->caracs = (object) array();
         $this->upgrades = (object) array();
         $this->emplacements = (object) array();
-        $this->playerService = new PlayerService();
+        $this->playerService = new PlayerService($playerId);
     }
 
 
@@ -2113,7 +2113,7 @@ class Player{
         $this->data = $playerJson;
 
         // Get plain_mail & email_bonus from PlayerService
-        $fields = $this->playerService->getPlayerFields($this->id, ['plain_mail', 'email_bonus']);
+        $fields = $this->playerService->getPlayerFields(['plain_mail', 'email_bonus']);
         $this->data->plain_mail = $fields['plain_mail'];
         $this->data->email_bonus = $fields['email_bonus'] ?? false;
 

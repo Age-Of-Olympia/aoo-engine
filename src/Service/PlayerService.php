@@ -7,36 +7,22 @@ use Db;
 class PlayerService
 {
     private Db $db;
+    private int $playerId;
 
-    public function __construct()
+    public function __construct(int $playerId)
     {
+        $this->playerId = $playerId;
         $this->db = new Db();
     }
 
-    private function getPlayerField(int $playerId, string $field): mixed
-    {
-        $fields = $this->getPlayerFields($playerId, [$field]);
-        return $fields[$field] ?? null;
-    }
-
-    public function getPlainEmail(int $playerId): ?string
-    {
-        return $this->getPlayerField($playerId, 'plain_mail');
-    }
-
-    public function getEmailBonus(int $playerId): bool
-    {
-        return $this->getPlayerField($playerId, 'email_bonus') ?? false;
-    }
-
-    public function getPlayerFields(int $playerId, array $fields): array
+    public function getPlayerFields(array $fields): array
     {
         if (empty($fields)) {
             return [];
         }
 
         $sql = "SELECT " . implode(', ', $fields) . " FROM players WHERE id = ?";
-        $res = $this->db->exe($sql, array($playerId));
+        $res = $this->db->exe($sql, array($this->playerId));
 
         if ($res && $res->num_rows > 0) {
             $row = $res->fetch_object();
@@ -60,5 +46,18 @@ class PlayerService
         $current_time = time();
         $inactive_threshold = $current_time - (INACTIVE_TIME);
         return $lastLoginTime < $inactive_threshold;
+    }
+
+    public function updateLastActionTime(): void {
+        $sql = '
+            UPDATE
+            players
+            SET
+            lastActionTime = '. time() .'
+            WHERE
+            id = ?
+            ';
+
+        $this->db->exe($sql, $this->playerId);
     }
 }

@@ -19,6 +19,10 @@ class ActionExecutorService
     private Player $actor;
     private Player $target;
     private Action $action;
+    private PlayerService $playerService;
+    // Same for actor ? Possible to loose pv on action and die ?
+    private int $initialTargetPv;
+    private int $finalTargetPv;
     
     public function __construct(Action $action, Player $actor, Player $target){
         $this->conditionRegistry = new ConditionRegistry();
@@ -29,6 +33,8 @@ class ActionExecutorService
         $this->actor = $actor;
         $this->target = $target;
         $this->action = $action;
+        $this->playerService = new PlayerService($actor->id);
+        $this->initialTargetPv = $target->get_left('pv');
     }
 
     public function executeAction(): ActionResults
@@ -40,18 +46,20 @@ class ActionExecutorService
 
         // 2) apply each effect
         $this->applyEffects();
+        $this->finalTargetPv = $this->target->get_left('pv');
 
         // 3) apply costs
         $this->applyCosts();
 
-        // Update Anti-zerk
+        // update Last Action Time (used on new turn to set antiberserk time)
+        $this->playerService->updateLastActionTime();
 
         // 4) calculate XP
         $xpResultsArray = $this->action->calculateXp($this->globalConditionsResult, $this->actor, $this->target);
         // 5) LOG
         $logsArray = $this->action->getLogMessages($this->actor, $this->target);
 
-        // should contain conditionsResults, effectsResults and costs results !!!
+        // contains conditionsResults, effectsResults, costsResults, xpResults and logs
         return new ActionResults($this->globalConditionsResult, $this->conditionResultsArray, $this->effectResultsArray, $xpResultsArray, $logsArray);
     }
 
@@ -118,11 +126,13 @@ class ActionExecutorService
         }
     }
 
-    public function getActionDetails(): array
+    public function getInitialTargetPv(): int
     {
-        if ($this->globalConditionsResult) {
+        return $this->initialTargetPv;
+    }
 
-        }
-        return array();
+    public function getFinalTargetPv(): int
+    {
+        return $this->finalTargetPv;
     }
 }

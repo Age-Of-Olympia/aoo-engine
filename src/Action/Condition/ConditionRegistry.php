@@ -16,7 +16,7 @@ class ConditionRegistry
         $this->conditions = [
             'RequiresDistance'    => new RequiresDistanceCondition(), // should include wall check ?
             'RequiresTraitValue' => new RequiresTraitValueCondition(), // number of action, maximum life ?
-            // 'NoBerserk' => new NoBerserkCondition(),
+            'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
             'MinimumDistance' => new MinimumDistanceCondition(),
             
