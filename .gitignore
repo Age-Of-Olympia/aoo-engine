@@ -12,3 +12,7 @@ vendor/
 .env
 bin/composer
 .vscode/settings.json
+
+# Cache directory
+/cache/
+/cache/*

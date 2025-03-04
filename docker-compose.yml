@@ -7,6 +7,9 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/var/www/html
+      - ${AOO_GAME_DATA:-./datas}:/var/www/html/datas
+      - ${DB_CONFIG:-./config/db_constants.php}:/var/www/html/config/db_constants.php
+      - ${AOO_GAME_IMG:-./img}:/var/www/html/img
     ports:
       - "8000:80"
     depends_on:
@@ -15,7 +18,7 @@ services:
     image: mariadb:latest
     environment:
       MYSQL_ROOT_PASSWORD: passwordRoot
-      MYSQL_DATABASE: aoo4
+      MYSQL_DATABASE: ${DB_NAME:-aoo4}
       MYSQL_USER: run
       MYSQL_PASSWORD: password
     ports:

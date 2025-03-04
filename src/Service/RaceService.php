@@ -32,4 +32,18 @@ class RaceService
         $race = $this->getRaceByName($name);
         return $race ? $race->getId() : null;
     }
+
+    /**
+     * Returns the background color of the Race that matches the given name.
+     */
+    public function getRaceBackgroundColor(string $raceName): string {
+        $raceName = strtolower($raceName);
+        $raceData = json()->decode('races', $raceName);
+
+        if ($raceData && isset($raceData->bgColor)) {
+            return $raceData->bgColor;
+        }
+
+        return '#FFFFFF';
+    }
 }
