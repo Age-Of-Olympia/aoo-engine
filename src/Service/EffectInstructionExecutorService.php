@@ -112,20 +112,29 @@ class EffectInstructionExecutorService
         $player = $params['player'] ?? 'BOTH';
         switch ($player) {
             case 'ACTOR':
-                $effectSuccessMessages[0] = $this->breakObject($actor, $actor->emplacements->main1);
+                $objectBroken = $this->breakObject($actor, "ATTACK");
+                if ($objectBroken != null) {
+                    $effectSuccessMessages[0] = "Vous cassez votre ".$objectBroken->data->name;
+                    $effectSuccessMessages[1] = $this->getRecipeElementBack($actor, $objectBroken);
+                }
                 break;
             case 'TARGET':
-                $effectSuccessMessages[0] = $this->breakObject($target, $target->emplacements->main2);
+                $objectBroken = $this->breakObject($target, "DEFENSE");
+                if ($objectBroken != null) {
+                    $effectSuccessMessages[0] = $objectBroken->data->name .' de '. $target->data->name .' s\'est cassée.';
+                    $effectSuccessMessages[1] = $this->getRecipeElementBack($target, $objectBroken);
+                }
                 break;
             default:
-            $effectSuccessMessages[0] = $this->breakObject($actor, $actor->emplacements->main1);
-            if ($effectSuccessMessages != null) {
-                $effectSuccessMessages[1] = $this->getRecipeElementBack($actor, $actor->emplacements->main1);
+            $objectBroken = $this->breakObject($actor, "ATTACK");
+            if ($objectBroken != null) {
+                $effectSuccessMessages[0] = "Vous cassez votre ".$objectBroken->data->name;
+                $effectSuccessMessages[1] = $this->getRecipeElementBack($actor, $objectBroken);
             }
-            $defenseBroken = $this->breakObject($target, $target->emplacements->main2);
-            array_push($effectSuccessMessages, $defenseBroken);
+            $defenseBroken = $this->breakObject($target, "DEFENSE");
             if ($defenseBroken) {
-                array_push($effectSuccessMessages, $this->getRecipeElementBack($target, $target->emplacements->main2));
+                array_push($effectSuccessMessages, $defenseBroken->data->name .' de '. $target->data->name .' s\'est cassée.');
+                array_push($effectSuccessMessages, $this->getRecipeElementBack($target, $defenseBroken));
             }
             break;
         }
@@ -136,7 +145,7 @@ class EffectInstructionExecutorService
     }
 
     // should be a property of something like breakableInterface implemented by objects, and in fact the result of damaging objects
-    private function breakObject(ActorInterface $player, $type): ?string {
+    private function breakObject(ActorInterface $player, $type): ?object {
         $result = null;
         switch ($type) {
             case 'ATTACK':
@@ -158,21 +167,23 @@ class EffectInstructionExecutorService
                     if(rand(1,100) <= $breakChance || AUTO_BREAK){
                         $player->equip($object);
                         $object->add_item($player, -1);
-                        $result = "Vous cassez votre ".$object->name;
+                        $result = $object;
                     }
                 }
                 break;
             case 'DEFENSE':
                 $equipments = $this->getDamageableDefenseEquipments($player);
-                $equipmentToDamage = array_rand($equipments);
+                if (count($equipments) > 0) {
+                    $equipmentToDamage = array_rand($equipments);
                 
-                $corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
-                $breakChance = $this->getBreakChance($player, $equipmentToDamage, $corruptedMaterial);
+                    $corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
+                    $breakChance = $this->getBreakChance($player, $equipmentToDamage, $corruptedMaterial);
 
-                if(rand(1,100) <= $breakChance || AUTO_BREAK){            
-                    $player->equip($player->emplacements->{$equipmentToDamage});
-                    $player->emplacements->{$equipmentToDamage}->add_item($player, -1);
-                    $result = $player->emplacements->{$equipmentToDamage}->name .' de '. $player->data->name .' s\'est cassée.';
+                    if(rand(1,100) <= $breakChance || AUTO_BREAK){            
+                        $player->equip($player->emplacements->{$equipmentToDamage});
+                        $player->emplacements->{$equipmentToDamage}->add_item($player, -1);
+                        $result = $equipmentToDamage;
+                    }
                 }
                 break;
             default:
@@ -262,7 +273,7 @@ class EffectInstructionExecutorService
             }
         }
         $recupTxt = (count($recup)) ? implode(', ', $recup) : 'rien';
-        return $recupTxt;
+        return "Vous récupérez : ".$recupTxt;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){
