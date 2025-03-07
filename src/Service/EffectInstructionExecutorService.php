@@ -4,6 +4,8 @@ namespace App\Service;
 use App\Action\Effect\EffectResult;
 use Player;
 use App\Entity\EffectInstruction;
+use App\Interface\ActorInterface;
+use Item;
 
 class EffectInstructionExecutorService
 {
@@ -29,6 +31,8 @@ class EffectInstructionExecutorService
                 break;
 
             case 'DAMAGE_OBJECT':
+                $res = $this->executeDamageObject($actor, $target, $params);
+                break;
 
             // Add more operation cases as needed
 
@@ -64,7 +68,7 @@ class EffectInstructionExecutorService
             // put assist
             $actor->put_assist($target, $totalDamages);
 
-            //BREAK WEAPON ?
+            //BREAK WEAPON ? -> not here, not a direct consequence
             
         } {
             //handle not working case
@@ -98,6 +102,167 @@ class EffectInstructionExecutorService
         }
 
         return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array());
+    }
+
+    private function executeDamageObject(Player $actor, Player $target, array $params): EffectResult
+    {
+        $result = new EffectResult(false);
+        $effectSuccessMessages = array();
+        $effectSuccessMessages[0] = null;
+        $player = $params['player'] ?? 'BOTH';
+        switch ($player) {
+            case 'ACTOR':
+                $effectSuccessMessages[0] = $this->breakObject($actor, $actor->emplacements->main1);
+                break;
+            case 'TARGET':
+                $effectSuccessMessages[0] = $this->breakObject($target, $target->emplacements->main2);
+                break;
+            default:
+            $effectSuccessMessages[0] = $this->breakObject($actor, $actor->emplacements->main1);
+            if ($effectSuccessMessages != null) {
+                $effectSuccessMessages[1] = $this->getRecipeElementBack($actor, $actor->emplacements->main1);
+            }
+            $defenseBroken = $this->breakObject($target, $target->emplacements->main2);
+            array_push($effectSuccessMessages, $defenseBroken);
+            if ($defenseBroken) {
+                array_push($effectSuccessMessages, $this->getRecipeElementBack($target, $target->emplacements->main2));
+            }
+            break;
+        }
+        if ($effectSuccessMessages[0] != null) {
+            $result = new EffectResult(true, effectSuccessMessages:$effectSuccessMessages);
+        } 
+        return $result;
+    }
+
+    // should be a property of something like breakableInterface implemented by objects, and in fact the result of damaging objects
+    private function breakObject(ActorInterface $player, $type): ?string {
+        $result = null;
+        switch ($type) {
+            case 'ATTACK':
+                $object = $player->emplacements->main1;
+                if($object->data->name != 'Poing' && !$object->row->enchanted){
+                    $breakChance = ITEM_BREAK;
+                    $corruptions = ITEM_CORRUPTIONS;
+                    $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
+                
+                    foreach($corruptions as $k=>$e){
+                        if($player->haveEffect($k)){
+                            if($player->emplacements->main1->is_crafted_with($e)){
+                                $breakChance = $corruptBreakChance[$k];
+                                break;
+                            }
+                        }
+                    }
+                
+                    if(rand(1,100) <= $breakChance || AUTO_BREAK){
+                        $player->equip($object);
+                        $object->add_item($player, -1);
+                        $result = "Vous cassez votre ".$object->name;
+                    }
+                }
+                break;
+            case 'DEFENSE':
+                $equipments = $this->getDamageableDefenseEquipments($player);
+                $equipmentToDamage = array_rand($equipments);
+                
+                $corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
+                $breakChance = $this->getBreakChance($player, $equipmentToDamage, $corruptedMaterial);
+
+                if(rand(1,100) <= $breakChance || AUTO_BREAK){            
+                    $player->equip($player->emplacements->{$equipmentToDamage});
+                    $player->emplacements->{$equipmentToDamage}->add_item($player, -1);
+                    $result = $player->emplacements->{$equipmentToDamage}->name .' de '. $player->data->name .' s\'est cassée.';
+                }
+                break;
+            default:
+                break;
+        }
+        return $result;
+    }
+
+    private function getCorruptedMaterial($player, $equipmentToDamage): ?string
+    {
+        $corrupted = null;
+        $corruptions = ITEM_CORRUPTIONS;
+        foreach($corruptions as $k=>$e){
+            if($player->haveEffect($k)){
+                if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
+                    $corrupted = $e;
+                    break;
+                }
+            }
+        }
+
+        return $corrupted;
+    }
+
+    private function getBreakChance($player, $equipmentToDamage, $corruptedMaterial)
+    {
+        $breakChance = ITEM_BREAK;
+        $corruptions = ITEM_CORRUPTIONS;
+        $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
+        foreach($corruptions as $k){
+            if($player->haveEffect($k)){
+                if($player->emplacements->{$equipmentToDamage}->is_crafted_with($corruptedMaterial)){
+                    $breakChance = $corruptBreakChance[$k];
+                    break;
+                }
+            }
+        }
+
+        return $breakChance;
+    }
+
+    private function getDamageableDefenseEquipments($player): array
+    {
+        $emplacements = array(
+            'main2'=>"Le bouclier",
+            'tronc'=>"L'armure",
+            'tete'=>"Le casque"
+        );
+        
+        foreach($emplacements as $k=>$e){
+            if(!empty($player->emplacements->{$k}) && !$player->emplacements->{$k}->row->enchanted){
+                continue;
+            }
+            // unset emplacements with no equipement
+            unset($emplacements[$k]);
+        }
+        return $emplacements;
+    }
+
+    private function getRecipeElementBack(ActorInterface $actor, $object): string {
+        $corrupted = array();
+        $corruptions = ITEM_CORRUPTIONS;
+    
+        foreach($corruptions as $k=>$e){
+            if($actor->haveEffect($k)){
+                if($actor->emplacements->main1->is_crafted_with($e)){
+                    array_push($corrupted, $e);
+                    break;
+                }
+            }
+        }
+
+        $recup = array();
+        $recipe = $object->get_recipe();
+
+        foreach($corrupted as $e){
+            unset($recipe[$e]);
+        }
+
+        foreach($recipe as $k=>$e){
+            $craftedWithItem = Item::get_item_by_name($k);
+            $rand = rand(0,$e);
+            if($rand){
+                $craftedWithItem->add_item($actor, $rand);
+                $craftedWithItem->get_data();
+                $recup[] = $craftedWithItem->data->name .' x'. $rand;
+            }
+        }
+        $recupTxt = (count($recup)) ? implode(', ', $recup) : 'rien';
+        return $recupTxt;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){

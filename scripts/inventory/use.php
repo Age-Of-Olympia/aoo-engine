@@ -16,7 +16,7 @@ if(!empty($item->data->emplacement)){
 
     $return = $player->equip($item);
 
-    if($return == 'equip'){
+    if($return == EquipResult::Equip){
 
         if($player->getRemaining('ae') < 1){
 
@@ -32,7 +32,7 @@ if(!empty($item->data->emplacement)){
         $ae = 1;
     }
 
-    elseif($return == 'unequip'){
+    elseif($return == EquipResult::Unequip){
 
         $text = $player->data->name .' a déséquipé '. $item->data->name .'.';
     }

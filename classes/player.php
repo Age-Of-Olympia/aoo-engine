@@ -1,5 +1,6 @@
 <?php
 
+use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\PlayerService;
 
@@ -1355,8 +1356,9 @@ class Player implements ActorInterface {
         }
     }
 
+    
 
-    public function equip($item){
+    public function equip(object $item): EquipResult{
 
 
         $db = new Db();
@@ -1370,7 +1372,7 @@ class Player implements ActorInterface {
 
         if($item->row->name == 'poing'){
 
-            return false;
+            return EquipResult::DoNothing;
         }
 
 
@@ -1384,7 +1386,7 @@ class Player implements ActorInterface {
             if($item->row->cursed){
 
                 echo '<div id="data">Objet Maudit!</div>';
-                return false;
+                return EquipResult::Cursed;
             }
 
 
@@ -1413,7 +1415,7 @@ class Player implements ActorInterface {
                 $this->refresh_view();
             }
 
-            $return = 'unequip';
+            $return = EquipResult::Unequip;
         }
 
 
@@ -1423,14 +1425,12 @@ class Player implements ActorInterface {
             // item is NOT equiped : EQUIP
 
             if(!empty($this->emplacements->{$item->data->emplacement}) && $this->emplacements->{$item->data->emplacement}->id == $item->id){
-
-                exit('unequip');
+                return EquipResult::DoNothing;
             }
 
 
             if(!Item::get_free_emplacement($this)){
-
-                exit('error item limit');
+                return EquipResult::NoRoom;
             }
 
 
@@ -1452,7 +1452,7 @@ class Player implements ActorInterface {
             if($row->n){
 
                 echo '<div id="data">Objet Maudit!</div>';
-                exit('cursed');
+                return EquipResult::Cursed;
             }
 
 
@@ -1532,7 +1532,7 @@ class Player implements ActorInterface {
                 }
             }
 
-            $return = 'equip';
+            $return = EquipResult::Equip;
         }
 
 
