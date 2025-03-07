@@ -14,7 +14,7 @@ if(!isset($_POST['wallId'])){
 $wallId = preg_replace('/[^0-9]/', '', $_POST['wallId']);
 
 
-if($player->get_left('a') < 1){
+if($player->getRemaining('a') < 1){
 
     exit('Pas assez d\'Actions.');
 }
@@ -55,7 +55,7 @@ $wallCoords = (object) array(
 );
 
 
-$distance = View::get_distance($player->get_coords(), $wallCoords);
+$distance = View::get_distance($player->getCoords(), $wallCoords);
 
 
 if($distance > 1){

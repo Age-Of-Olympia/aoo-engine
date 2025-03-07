@@ -4,7 +4,7 @@ require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
-$player->get_coords();
+$player->getCoords();
 
 if(!empty($_POST['delete'])){
     $coordsId = $_POST['coord-id'];

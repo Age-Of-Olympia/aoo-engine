@@ -3,7 +3,7 @@
 $biomes = array();
 
 
-$coords = $player->get_coords();
+$coords = $player->getCoords();
 
 $planJson = json()->decode('plans', $coords->plan);
 

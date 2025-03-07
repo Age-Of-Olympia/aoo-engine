@@ -2,13 +2,12 @@
 
 namespace App\Action\Condition;
 
-use Player;
-
 use App\Entity\ActionCondition;
+use App\Interface\ActorInterface;
 
 class RequiresTraitValueCondition extends BaseCondition
 {
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true);
         $params = $condition->getParameters(); // e.g. { "a": 1, "pm": 10 }
@@ -16,7 +15,7 @@ class RequiresTraitValueCondition extends BaseCondition
         $details = array();
         $costIsAffordable = true;
         foreach ($params as $key => $value) {
-            if ($actor->get_left($key) < $value) {
+            if ($actor->getRemaining($key) < $value) {
                 array_push($details, "Pas assez de ".$key);
                 $costIsAffordable = false;
             }

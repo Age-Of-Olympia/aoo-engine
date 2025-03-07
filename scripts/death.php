@@ -1,7 +1,7 @@
 <?php
 
 
-if($target->get_left('pv') > 0){
+if($target->getRemaining('pv') > 0){
 
     exit('error not dead');
 }

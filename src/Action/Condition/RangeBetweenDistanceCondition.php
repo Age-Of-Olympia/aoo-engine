@@ -1,15 +1,15 @@
 <?php
 namespace App\Action\Condition;
 
-use App\Action\Condition\ConditionInterface;
 use Player;
 use App\Entity\ActionCondition;
+use App\Interface\ActorInterface;
 use View;
 
 class RangeBetweenDistanceCondition extends BaseCondition
 {
 
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true);
         if (!$target) {
@@ -21,7 +21,7 @@ class RangeBetweenDistanceCondition extends BaseCondition
         $min = $params['min'] ?? 1;
         $max = $params['max'] ?? 5;
 
-        $distance = View::get_distance($actor->get_coords(), $target->get_coords());
+        $distance = View::get_distance($actor->getCoords(), $target->getCoords());
         if ($distance < $min || $distance > $max) {
             $errorMessage[0] = "Le distance $distance n'est pas dans l'intervalle [$min - $max].";
             return new ConditionResult(false, null, $errorMessage);

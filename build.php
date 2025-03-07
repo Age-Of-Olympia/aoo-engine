@@ -6,11 +6,11 @@ require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
-$player->get_coords();
+$player->getCoords();
 
 $player->get_caracs();
 
-$aLeft = $player->get_left('a');
+$aLeft = $player->getRemaining('a');
 
 
 if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
@@ -31,7 +31,7 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
     list($x, $y) = $coordsTbl;
 
-    $player->get_coords();
+    $player->getCoords();
 
     $coords = (object) array(
         'x'=>$x,

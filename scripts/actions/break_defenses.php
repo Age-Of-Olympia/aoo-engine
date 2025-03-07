@@ -42,7 +42,7 @@ if(count($emplacements)){
     foreach($corruptions as $k=>$e){
 
 
-        if($target->have_effect($k)){
+        if($target->haveEffect($k)){
 
 
             if($target->emplacements->{$emp}->is_crafted_with($e)){

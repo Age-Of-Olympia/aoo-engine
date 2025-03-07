@@ -1,8 +1,9 @@
 <?php
 
+use App\Interface\ActorInterface;
 use App\Service\PlayerService;
 
-class Player{
+class Player implements ActorInterface {
 
     public $id;
     public $data;
@@ -237,7 +238,7 @@ class Player{
     }
 
 
-    public function get_coords(){
+    public function getCoords(): object{
 
 
         $db = new Db();
@@ -446,12 +447,12 @@ class Player{
 
 
     // effects
-    public function have_effect($name){
+    public function haveEffect(string $name): int{
 
         return $this->have('effects', $name);
     }
 
-    public function add_effect($name, $duration=0){
+    public function addEffect($name, $duration=0): void{
 
 
         // effect exists
@@ -490,9 +491,9 @@ class Player{
         // element control
         if(!empty(ELE_CONTROLS[$name])){
 
-            if($this->have_effect(ELE_CONTROLS[$name])){
+            if($this->haveEffect(ELE_CONTROLS[$name])){
 
-                $this->end_effect(ELE_CONTROLS[$name]);
+                $this->endEffect(ELE_CONTROLS[$name]);
 
                 // echo '<script>alert("'. ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'");document.location.reload();</script>';
             }
@@ -500,10 +501,10 @@ class Player{
             if(!empty(ELE_IS_CONTROLED[$name])){
 
 
-                if($this->have_effect(ELE_IS_CONTROLED[$name])){
+                if($this->haveEffect(ELE_IS_CONTROLED[$name])){
 
-                    $this->end_effect(ELE_IS_CONTROLED[$name]);
-                    $this->end_effect($name);
+                    $this->endEffect(ELE_IS_CONTROLED[$name]);
+                    $this->endEffect($name);
 
                     // echo '<script>alert("'. ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent!");document.location.reload();</script>';
                 }
@@ -516,7 +517,7 @@ class Player{
         return $this->get('effects');
     }
 
-    public function end_effect($name){
+    public function endEffect(string $name): void{
 
 
         $values = array(
@@ -556,7 +557,7 @@ class Player{
         // store older coords
         if(!isset($this->coords)){
 
-            $this->get_coords();
+            $this->getCoords();
         }
 
         $oldCoords = $this->coords;
@@ -630,7 +631,7 @@ class Player{
             }
 
 
-            $this->add_effect($row->name, ONE_DAY);
+            $this->addEffect($row->name, ONE_DAY);
         }
 
 
@@ -940,7 +941,7 @@ class Player{
                 elseif($val > 0){
 
 
-                    $pvLeft = $this->get_left('pv');
+                    $pvLeft = $this->getRemaining('pv');
 
                     if($pvLeft + $val > $this->caracs->pv){
 
@@ -952,7 +953,7 @@ class Player{
             elseif($carac == 'pm' && $val > 0){
 
 
-                $pmLeft = $this->get_left('pm');
+                $pmLeft = $this->getRemaining('pm');
 
                 if($pmLeft + $val > $this->caracs->pm){
 
@@ -1005,7 +1006,7 @@ class Player{
     }
 
 
-    public function get_left($carac){
+    public function getRemaining(string $trait): int{
 
 
         if(!isset($this->caracs) || !get_object_vars($this->caracs)){
@@ -1016,13 +1017,13 @@ class Player{
 
 
 
-        if(!isset($this->turn->$carac)){
+        if(!isset($this->turn->$trait)){
 
 
-            return $this->caracs->$carac;
+            return $this->caracs->$trait;
         }
 
-        return $this->turn->$carac;
+        return $this->turn->$trait;
     }
 
 

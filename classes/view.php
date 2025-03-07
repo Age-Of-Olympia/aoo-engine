@@ -1146,7 +1146,7 @@ class View{
 
         if(!isset($player->coords)){
 
-            $player->get_coords();
+            $player->getCoords();
         }
 
         self::refresh_players_svg($player->coords);

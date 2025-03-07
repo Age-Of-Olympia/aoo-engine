@@ -13,14 +13,14 @@ $coords = explode(',', $_POST['coords']);
 
 $player = new Player($_SESSION['playerId']);
 
-if($player->get_left('mvt') < 1){
+if($player->getRemaining('mvt') < 1){
 
 
     echo '<script>alert("Pas assez de Mouvements.");document.location.reload();</script>';
     exit();
 }
 
-$player->get_coords();
+$player->getCoords();
 
 
 $goCoords = (object) array(
@@ -175,7 +175,7 @@ if($goCoords->z < 0){
         }
 
 
-        if($player->get_left('a') < 1){
+        if($player->getRemaining('a') < 1){
 
 
             echo '<script>alert("Pas assez d\'Actions.");document.location.reload();</script>';
@@ -224,14 +224,14 @@ elseif($goCoords->z > 0){
 
     $row = $res->fetch_object();
 
-    if(!$row->n && !$player->have_effect('vol')){
+    if(!$row->n && !$player->haveEffect('vol')){
 
         echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu."); document.location.reload();</script>';
 
         exit();
     }
 
-    elseif(!$row->n && $player->have_effect('vol')){
+    elseif(!$row->n && $player->haveEffect('vol')){
 
         // vol
         include('scripts/map/vol.php');

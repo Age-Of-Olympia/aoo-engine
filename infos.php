@@ -50,8 +50,8 @@ echo '
 
         $caracsJson = $player->get_caracsJson();
 
-        $player->get_coords();
-        $target->get_coords();
+        $player->getCoords();
+        $target->getCoords();
 
         $distance = View::get_distance($player->coords, $target->coords);
 

@@ -38,7 +38,7 @@ $player->get_data();
 
 
 // distance
-$distance = View::get_distance($player->get_coords(), $coords);
+$distance = View::get_distance($player->getCoords(), $coords);
 
 if($distance > 1){
 

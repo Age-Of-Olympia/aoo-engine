@@ -5,13 +5,13 @@ use Player;
 use View;
 
 use App\Entity\ActionCondition;
-
+use App\Interface\ActorInterface;
 
 class RequiresDistanceCondition extends BaseCondition
 {
     private ?string $errorMessage = null;
 
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true);
         if (!$target) {
@@ -22,7 +22,7 @@ class RequiresDistanceCondition extends BaseCondition
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $maxDist = $params['max'] ?? 1;
 
-        $distance = View::get_distance($actor->get_coords(), $target->get_coords());
+        $distance = View::get_distance($actor->getCoords(), $target->getCoords());
 
         if ($distance > $maxDist) {
             $errorMessage[0] = "La cible est trop loin ! (distance $distance > max $maxDist)";

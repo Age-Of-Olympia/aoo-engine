@@ -34,12 +34,12 @@ if($actionJson->targetType == 'none'){
 $player = new Player($_SESSION['playerId']);
 
 
-// if($player->get_left('a') < 1){
+// if($player->getRemaining('a') < 1){
 
 //     exit('<font color="red">Pas assez d\'Actions.</font>');
 // }
 
-if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->get_left('pm')){
+if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->getRemaining('pm')){
 
     exit('<font color="red">Pas assez de PM.</font>');
 }
@@ -70,7 +70,7 @@ $target->get_caracs();
 
 
 // store target health
-$targetPvBefore = $target->get_left('pv');
+$targetPvBefore = $target->getRemaining('pv');
 
 // healing a full life target
 if(!empty($actionJson->playerHeal)){
@@ -105,7 +105,7 @@ if(!empty($actionJson->targetIgnore)){
 
 
 // distance
-$distance = View::get_distance($player->get_coords(), $target->get_coords());
+$distance = View::get_distance($player->getCoords(), $target->getCoords());
 
 
 include('scripts/actions/check_distance.php');
@@ -126,7 +126,7 @@ if(!empty($actionJson->forbidIf)){
 
         $who = ($e->who == 'player') ? $player : $target;
 
-        if($e->have == 'effect' && $who->have_effect($e->name)){
+        if($e->have == 'effect' && $who->haveEffect($e->name)){
 
             exit('Un effet empêche cette action <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span>');
         }
@@ -568,7 +568,7 @@ $player->put_bonus($bonus);
 
 
 // add effects
-include('scripts/actions/add_effects.php');
+include('scripts/actions/addEffects.php');
 
 
 // drop munition or jet
@@ -672,7 +672,7 @@ if(!empty($targetLog)){
 echo $data;
 
 fin:
-$targetPvAfter = $target->get_left('pv');
+$targetPvAfter = $target->getRemaining('pv');
 
 if($targetPvBefore != $targetPvAfter){
 

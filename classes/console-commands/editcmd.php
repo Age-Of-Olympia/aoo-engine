@@ -32,7 +32,7 @@ EOT);
 
 
             $admin = new Player($_SESSION['playerId']);
-            $admin->get_coords();
+            $admin->getCoords();
 
             $plan = $admin->coords->plan;
 

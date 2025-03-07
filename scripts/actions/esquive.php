@@ -1,6 +1,6 @@
 <?php
 
-if($target->have_effect('parade')){
+if($target->haveEffect('parade')){
 
 
     if(
@@ -10,7 +10,7 @@ if($target->have_effect('parade')){
     ){
 
 
-        $target->end_effect('parade');
+        $target->endEffect('parade');
 
 
         echo '<font color="red">'. $target->data->name .' pare votre attaque grâce à une technique!</font>';
@@ -19,7 +19,7 @@ if($target->have_effect('parade')){
     }
 }
 
-if($target->have_effect('leurre')){
+if($target->haveEffect('leurre')){
 
 
     if(
@@ -27,7 +27,7 @@ if($target->have_effect('leurre')){
     ){
 
 
-        $target->end_effect('leurre');
+        $target->endEffect('leurre');
 
 
         echo '<font color="red">'. $target->data->name .' leurre votre attaque grâce à un sort!</font>';
@@ -36,10 +36,10 @@ if($target->have_effect('leurre')){
     }
 }
 
-if($target->have_effect('dedoublement')){
+if($target->haveEffect('dedoublement')){
 
 
-    $target->end_effect('dedoublement');
+    $target->endEffect('dedoublement');
 
 
     View::delete_double($target);
@@ -53,7 +53,7 @@ if($target->have_effect('dedoublement')){
     include('scripts/actions/on_hide_reload_view.php');
 }
 
-if($target->have_effect('cle_de_bras')){
+if($target->haveEffect('cle_de_bras')){
 
 
     if(
@@ -63,10 +63,10 @@ if($target->have_effect('cle_de_bras')){
     ){
 
 
-        $target->end_effect('cle_de_bras');
+        $target->endEffect('cle_de_bras');
 
 
-        $player->put_bonus(array('mvt'=>-$player->get_left('mvt')));
+        $player->put_bonus(array('mvt'=>-$player->getRemaining('mvt')));
 
         echo '<font color="red">'. $target->data->name .' vous fait une clé de bras et vous immobilise!</font>';
 
@@ -74,7 +74,7 @@ if($target->have_effect('cle_de_bras')){
     }
 }
 
-if($target->have_effect('pas_de_cote')){
+if($target->haveEffect('pas_de_cote')){
 
 
     if(
@@ -84,11 +84,11 @@ if($target->have_effect('pas_de_cote')){
             $actionJson != 'sort'
         )
         &&
-        $target->get_left('mvt') >= 1
+        $target->getRemaining('mvt') >= 1
     ){
 
 
-        $target->end_effect('pas_de_cote');
+        $target->endEffect('pas_de_cote');
 
 
         $goCoords = $target->coords;

@@ -34,7 +34,7 @@ class ActionExecutorService
         $this->target = $target;
         $this->action = $action;
         $this->playerService = new PlayerService($actor->id);
-        $this->initialTargetPv = $target->get_left('pv');
+        $this->initialTargetPv = $target->getRemaining('pv');
     }
 
     public function executeAction(): ActionResults
@@ -46,7 +46,7 @@ class ActionExecutorService
 
         // 2) apply each effect
         $this->applyEffects();
-        $this->finalTargetPv = $this->target->get_left('pv');
+        $this->finalTargetPv = $this->target->getRemaining('pv');
 
         // 3) apply costs
         $this->applyCosts();

@@ -18,7 +18,7 @@ if(!empty($item->data->emplacement)){
 
     if($return == 'equip'){
 
-        if($player->get_left('ae') < 1){
+        if($player->getRemaining('ae') < 1){
 
 
             // undo equip
@@ -41,7 +41,7 @@ if(!empty($item->data->emplacement)){
 elseif($item->row->spell != ''){
 
 
-    if($player->get_left('ae') < 1){
+    if($player->getRemaining('ae') < 1){
 
         exit('error ae');
     }

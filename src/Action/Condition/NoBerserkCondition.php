@@ -1,13 +1,13 @@
 <?php
 namespace App\Action\Condition;
 
-use Player;
 use App\Entity\ActionCondition;
+use App\Interface\ActorInterface;
 
 class NoBerserkCondition extends BaseCondition
 {
 
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true);
 

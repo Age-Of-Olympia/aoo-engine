@@ -40,7 +40,7 @@ if(isset($_GET['quests'])){
     exit();
 }
 
-$player->get_coords();
+$player->getCoords();
 
 if(isset($_GET['mdj'])){
     $logsToDisplay = Log::get($player,$logAge, 'mdj');

@@ -4,6 +4,7 @@ namespace App\Action\Condition;
 use App\Action\Condition\ConditionInterface;
 use Player;
 use App\Entity\ActionCondition;
+use App\Interface\ActorInterface;
 use Dice;
 
 
@@ -18,7 +19,7 @@ enum Roll: string
 class ComputeCondition extends BaseCondition
 {
     
-    public function check(Player $actor, ?Player $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         if (!$target) {
             $errorMessages[0] = "Aucune cible n'a été spécifiée.";
@@ -47,7 +48,7 @@ class ComputeCondition extends BaseCondition
         return $result;
     }
 
-    private function computeMeleeAttack(Player $actor, ?Player $target): ConditionResult 
+    private function computeMeleeAttack(ActorInterface $actor, ?ActorInterface $target): ConditionResult 
     {
         $success = false;
         $dice = new Dice(3);

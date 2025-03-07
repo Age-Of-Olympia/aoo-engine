@@ -28,6 +28,8 @@ class EffectInstructionExecutorService
                 $res = $this->executeApplyStatus($actor, $target, $params);
                 break;
 
+            case 'DAMAGE_OBJECT':
+
             // Add more operation cases as needed
 
             default:
@@ -100,9 +102,9 @@ class EffectInstructionExecutorService
 
     private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){
         if ($apply) {
-            $player->add_effect($effectName, $duration);
+            $player->addEffect($effectName, $duration);
         } else {
-            $player->end_effect($effectName);
+            $player->endEffect($effectName);
         } 
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-function add_effect($e, $player, $target){
+function addEffect($e, $player, $target){
 
 
     $duration = 0;
@@ -26,12 +26,12 @@ function add_effect($e, $player, $target){
 
     if($e->on == 'player'){
 
-        $player->add_effect($e->name, $duration, $hidden);
+        $player->addEffect($e->name, $duration, $hidden);
     }
 
     elseif($e->on == 'target'){
 
-        $target->add_effect($e->name, $duration, $hidden);
+        $target->addEffect($e->name, $duration, $hidden);
     }
 
 
@@ -57,7 +57,7 @@ if(!empty($actionJson->addEffects)){
             ($e->when == 'fail' && (!isset($success) || $success == false))
         ){
 
-            add_effect($e, $player, $target);
+            addEffect($e, $player, $target);
         }
     }
 }
@@ -83,7 +83,7 @@ if(!empty($actionJson->useEmplacement)){
             ($e->when == 'fail' && (!isset($success) || $success == false))
             ){
 
-                add_effect($e, $player, $target);
+                addEffect($e, $player, $target);
             }
         }
     }

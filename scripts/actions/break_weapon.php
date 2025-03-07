@@ -16,7 +16,7 @@ if($player->emplacements->main1->data->name != 'Poing' && !$player->emplacements
     foreach($corruptions as $k=>$e){
 
 
-        if($player->have_effect($k)){
+        if($player->haveEffect($k)){
 
 
             if($player->emplacements->main1->is_crafted_with($e)){

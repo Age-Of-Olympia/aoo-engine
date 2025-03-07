@@ -14,15 +14,15 @@ class ConditionRegistry
     {
         // For each known Condition Type, we store an instance:
         $this->conditions = [
-            'RequiresDistance'    => new RequiresDistanceCondition(), // should include wall check ?
-            'RequiresTraitValue' => new RequiresTraitValueCondition(), // number of action, maximum life ?
+            'RequiresDistance'    => new RequiresDistanceCondition(), // should include wall check ? No : can be different from an action to another
+            'RequiresTraitValue' => new RequiresTraitValueCondition(), 
+            'RequiresWeaponType' => new RequiresWeaponTypeCondition(), 
             'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
             'MinimumDistance' => new MinimumDistanceCondition(),
             
             
             'Compute' => new ComputeCondition(), // include equipment effect ?
-            //'RequiresCaracValue'  => new RequiresCaracValueCondition(),
             // etc...
         ];
     }
