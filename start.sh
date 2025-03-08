@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function show_help() {
-    echo "Usage: ./start.sh [option]"
+    echo "Usage: ./start.sh [option] [force]"
     echo ""
     echo "Options:"
     echo "  <no option>    Start with local data"
@@ -10,12 +10,16 @@ function show_help() {
     echo "                the latest dump from db_dumps/saison-2-*.sql"
     echo "  help          Show this help message"
     echo ""
+    echo "Additional arguments:"
+    echo "  force         Force restore of database dump even if it exists"
+    echo ""
 }
 
 function restore_dump() {
     local dump_file=$1
     local db_name=$2
     local is_saison2=$3
+    local force_restore=$4
     echo "Restoring database from dump..."
     
     # Check if container is running and mysql is responding
@@ -27,11 +31,11 @@ function restore_dump() {
     
     # Check if database exists
     if docker exec aoo-engine-mariadb-aoo4-1 mariadb -uroot -ppasswordRoot -e "USE $db_name" 2>/dev/null; then
-        if [ "$is_saison2" = "true" ]; then
+        if [ "$is_saison2" = "true" ] && [ "$force_restore" != "true" ]; then
             echo "Database $db_name already exists, skipping restore for saison-2"
             return 0
         else
-            # For non-saison2, drop and recreate
+            # Drop and recreate for force restore or non-saison2
             echo "Dropping existing database..."
             docker exec -i aoo-engine-mariadb-aoo4-1 mariadb -uroot -ppasswordRoot -e "DROP DATABASE $db_name;"
         fi
@@ -86,7 +90,7 @@ if [ "$1" == "game-data" ]; then
             # Wait for database to be ready
             echo "Waiting for database to be ready..."
             sleep 10
-            restore_dump "$LATEST_DUMP" "$DB_NAME" "true"
+            restore_dump "$LATEST_DUMP" "$DB_NAME" "true" "${2:-false}"
             docker-compose logs -f
         else
             echo "Error: no saison-2 dump files found in ../aoo-game-data/db_dumps/"
