@@ -11,7 +11,7 @@ function show_help() {
     echo "  help          Show this help message"
     echo ""
     echo "Additional arguments:"
-    echo "  force         Force restore of database dump even if it exists"
+    echo "  force         Force restore of database dump (only for saison-2 branch)"
     echo ""
 }
 
@@ -31,11 +31,16 @@ function restore_dump() {
     
     # Check if database exists
     if docker exec aoo-engine-mariadb-aoo4-1 mariadb -uroot -ppasswordRoot -e "USE $db_name" 2>/dev/null; then
-        if [ "$is_saison2" = "true" ] && [ "$force_restore" != "true" ]; then
-            echo "Database $db_name already exists, skipping restore for saison-2"
-            return 0
+        if [ "$is_saison2" = "true" ]; then
+            if [ "$force_restore" = "true" ]; then
+                echo "Force restore requested, dropping existing database..."
+                docker exec -i aoo-engine-mariadb-aoo4-1 mariadb -uroot -ppasswordRoot -e "DROP DATABASE $db_name;"
+            else
+                echo "Database $db_name already exists, skipping restore for saison-2"
+                return 0
+            fi
         else
-            # Drop and recreate for force restore or non-saison2
+            # For non-saison2, always drop and recreate
             echo "Dropping existing database..."
             docker exec -i aoo-engine-mariadb-aoo4-1 mariadb -uroot -ppasswordRoot -e "DROP DATABASE $db_name;"
         fi
