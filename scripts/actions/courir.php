@@ -1,8 +1,6 @@
 <?php
 
-$rand = rand(1,3);
-
-$mvt = $rand;
+$mvt = 1;
 
 // pouvoir divin
 $pouvoir = '';
@@ -42,7 +40,7 @@ $bonus = array('a'=>-1, 'mvt'=>$mvt);
 echo '
 Vous courez et gagnez '. $mvt .' Mouvements.
 
-<div class="action-details">1d3 = '. $rand .' '. $route .' '. $pouvoir .'</div>
+<div class="action-details">+'. 1 .' '. $route .' '. $pouvoir .'</div>
 ';
 
 

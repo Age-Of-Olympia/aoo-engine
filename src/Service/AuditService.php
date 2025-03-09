@@ -16,7 +16,7 @@ class AuditService
       $this->currentAuditKey = null;
     }
 
-    public function addAuditLog(string $details = null): int
+    public function addAuditLog(?string $details): int
     {
         $audit = new Audit();
         $audit->setAction(__FILE__.":".__LINE__);

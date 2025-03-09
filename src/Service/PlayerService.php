@@ -63,4 +63,26 @@ class PlayerService
         $inactive_threshold = $current_time - (INACTIVE_TIME);
         return $lastLoginTime < $inactive_threshold;
     }
+
+
+    public function searchNonAnonymePlayer(string $searchKey): array
+    {
+        
+        $sql = 'select players.name 
+                from players
+                left JOIN players_options on players_options.player_id=players.id and players_options.name = "anonymeMode"
+                where players.name like ?
+                and players_options.player_id is null
+                ';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, '%'.$searchKey.'%');
+        $list= array();
+
+        while($row = $res->fetch_object()){
+            $list[]=$row->name;
+        }
+        return $list;
+    }
 }

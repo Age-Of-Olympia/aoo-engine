@@ -25,7 +25,18 @@ if (!empty($_POST['addDest'])) {
             }
         }
     }else{
-      Forum::add_dest($_POST['addDest'], $topJson, $destTbl)  ;
+        Forum::add_dest($_POST['addDest'], $topJson, $destTbl)  ;
+        
+        $desti = Player::get_player_by_name($_POST['addDest']);
+        $desti->get_data();
+        //Ajouter l'animateur si la faction est différente
+        if($player->data->faction != $desti->data->faction 
+            &&
+                (($player->data->secretFaction == "") ||
+                 ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))){
+            $raceJson = json()->decode('races', $desti->data->race);
+            Forum::add_dest($raceJson->animateur, $topJson, $destTbl)  ;    
+        }
     }
 
     exit();
@@ -84,7 +95,6 @@ echo '
 
     echo '<select id="dest-list">
         <option disabled selected>Sélectionnez un personnage:</option>';
-
 
     $secretFaction = array();
     $faction = array();
@@ -151,6 +161,8 @@ echo '
 
     echo '</select>';
 
+    echo '<input id="autocomplete" type="text" placeholder="Rechercher" style="display:none; margin-left:20px" />';
+
 echo '</div>';
 
 
@@ -167,3 +179,24 @@ if(count($destTbl) == 1){
 window.topName = "<?php echo $topJson->name ?>";
 </script>
 <script src="js/forum_missives.js"></script>
+<script src="js/autocomplete.js"></script>
+<script>
+
+$(function() {
+    bindAutocomplete(
+      function(event, ui) {
+        
+        $.ajax({
+            type: "POST",
+            url: 'forum.php?topic='+ window.topName,
+            data: {'addDest': ui.item.label},
+            success: function(data) {
+              document.location.reload();
+            }
+        });
+
+        }
+     );
+
+});
+</script>

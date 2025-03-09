@@ -6,7 +6,7 @@ use App\Interface\AuditableInterface;
 
 abstract class BaseService implements AuditableInterface
 {
-    protected $auditService;
+    protected AuditService $auditService;
     protected ?int $currentAuditKey;
 
     public function __construct()

@@ -2,6 +2,9 @@
 
 require_once('config.php');
 
+if(!empty($_SESSION['banned'])){
+    header('Location: index.php');
+}
 
 if(!empty($_GET['forum'])){
 

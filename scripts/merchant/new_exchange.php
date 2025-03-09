@@ -33,6 +33,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
 </div>
 
 <script src="js/progressive_loader.js"></script>
+<script src="js/autocomplete.js"></script>
 
 <script>
 
@@ -45,34 +46,16 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
 
     $actions
     .append('<button class="action" data-action="add-to-exchange">+ Ajouter</button><br />');
-
-    $("#autocomplete").autocomplete({
-      source: function(request, response) {
-        $.ajax({
-          url: "reference_data.php",
-          type: "GET",
-          dataType: "json",
-          data: {
-            data_type:"player_name",
-            term: request.term
-          },
-          success: function(data) {
-            response(data);
-          }
-        });
-      },
-      minLength: 2,
-      select: function(event, ui) {
+    
+    bindAutocomplete(
+      function(event, ui) {
         $('#exchange-recipient').text(ui.item.label);
         $('#validate-button').prop('disabled', false);
         $('#autocomplete').hide();
         $('#cancel-button').prop('disabled', false);
-      }
-    }).data("ui-autocomplete")._renderItem = function(ul, item) {
-      return $("<li>")
-      .append("<div>" + item.label + "</div>")
-      .appendTo(ul);
-    };
+        }
+     );
+
 
     $('#cancel-button').click(function(e) {
        // objects = [];

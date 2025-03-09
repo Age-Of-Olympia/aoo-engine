@@ -1890,33 +1890,7 @@ class Player{
             return false;
         }
 
-
-        // allow admin and same faction
-        if(
-            $this->have_option('isAdmin')
-            ||
-            $target->have_option('isAdmin')
-            ||
-            $this->check_share_factions($target)
-        ){
-
-            return true;
-        }
-
-
-        // allow exotic races or pnj
-        if(
-            $this->id < 0
-            ||
-            $target->id < 0
-            ||
-            file_exists('datas/private/races/'. $target->data->race .'.json')
-            ||
-            file_exists('datas/private/races/'. $this->data->race .'.json')
-        ){
-
-            return true;
-        }
+        return true;
     }
 
 
@@ -2050,6 +2024,9 @@ class Player{
 
         if($pnj){
 
+            //par défaut les pnjs sont créés en mode incognito
+            $player->add_option('incognitoMode');
+
             return $id;
         }
 
@@ -2059,8 +2036,7 @@ class Player{
 
             $player->add_option('isAdmin');
         }
-
-
+        
         Dialog::refresh_register_dialog();
 
 

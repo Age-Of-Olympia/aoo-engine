@@ -305,7 +305,11 @@ if(!$player->have_option('incognitoMode'))
         $footstep.='o';
     }
 
-    Element::put($footstep, $player->data->coords_id,ONE_DAY);
+    $footstepDuration = 16 * ONE_HOUR;
+    if ($player->have_effect("boue")) {
+        $footstepDuration = 32 * ONE_HOUR;
+    }
+    Element::put($footstep, $player->data->coords_id, $footstepDuration);
 }
 
 $player->go($goCoords);

@@ -350,6 +350,9 @@ function add_upgrade($argumentValues, $player)
 
 function remove_upgrade($argumentValues, $player)
 {
+
+    include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+
     if(!isset($argumentValues[2])){
         return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';
     }

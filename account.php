@@ -74,6 +74,8 @@ define('OPTIONS', array(
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'showTuto'=>"Rejouer le tutoriel",
     'incognitoMode'=>"Mode Incognito (admin)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
+    'anonymeMode'=>"Mode Incognito/Anonyme (admin)<br /><sup>Invisible dans les destinataires d'échanges ou de missives</sup>",
+
 ));
 
 
@@ -86,12 +88,11 @@ if(!empty($_POST['option'])){
         exit('error option');
     }
 
-    if($_POST['option']=='incognitoMode')
+    if($_POST['option']=='incognitoMode' || $_POST['option']=='anonymeMode')
     {
-       if(!$player->have_option('isAdmin'))
-           exit('error option');
+       if($player->id>=0)
+           exit('error option for pnj');
     }
-
 
     $player->refresh_view();
 
@@ -139,8 +140,15 @@ foreach($player->get_options() as $e){
 foreach(OPTIONS as $k=>$e){
 
 
+    if(($k =='incognitoMode' ||$k =='anonymeMode' ) && $player->id>=0)
+    { //Option non disponible pour les PJ
+        echo '<tr style="display:none">';
+    }
+    else{
+        echo '<tr>';    
+    }
     echo '
-    <tr>
+    
         <td>
             ';
 
@@ -166,11 +174,6 @@ foreach(OPTIONS as $k=>$e){
 
                 echo '<sup>Vous avez uploadé '. $uploadedN .'/'. $uploadMax .' images</sup>';
             }
-            else if($k=='incognitoMode')
-            {
-                if($player->have_option('isAdmin'))
-                    echo $e;
-            }
             else{
 
                 echo $e;
@@ -178,8 +181,7 @@ foreach(OPTIONS as $k=>$e){
 
             echo '
         </td>
-        <td>
-            ';
+        <td>';
 
             if($k == 'changePortrait'){
 
@@ -217,15 +219,6 @@ foreach(OPTIONS as $k=>$e){
                     echo '<a href="account.php?changeMail"><button style="width: 100%;">Changer</button></a>';
                 } else {
                     echo '<button style="width: 100%; opacity: 0.5; cursor: not-allowed;" disabled>PNJ - Non disponible</button>';
-                }
-            }
-            else if($k =='incognitoMode')
-            {
-                if($player->have_option('isAdmin'))
-                {
-                    echo '
-                    <input type="checkbox" class="option" data-option="'. $k .'" '. $checked[$k] .' />
-                    ';
                 }
             }
             else{
