@@ -15,10 +15,12 @@ $planJson->fromCoords = $player->coords;
 ob_start();
 
 // Affiche la carte S2
-if (isset($_GET['s2'])) {
+if (isset($_GET['s2']) && !isset($_GET['local'])) {
     echo '<div>
         <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
         <a href="map.php"><button>Monde</button></a>
+        <a href="map.php?local"><button>' . $planJson->name . '</button></a>
+        <a href="map.php?local&s2"><button>' . $planJson->name . ' s2</button></a>
         <a href="map.php?s2&regenerate=1"><button>Régénérer la carte</button></a>
     </div><br />';
 
@@ -61,11 +63,18 @@ if (isset($_GET['s2'])) {
     $player = new Player($_SESSION['playerId']);
     $player->get_coords();
 
+    // Debug logging
+    error_log("Debug - Player coordinates: x={$player->coords->x}, y={$player->coords->y}, z={$player->coords->z}");
+    error_log("Debug - Plan ID: " . $planJson->id);
+    
     // Crée le service de vue et génère la carte
-    $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y);
+    $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $planJson->id);
+    
+    error_log("Debug - Selected Layers: " . print_r($selectedLayers, true));
     $mapResult = $viewService->generateGlobalMap($selectedLayers);
+    error_log("Debug - Map Result: " . print_r($mapResult, true));
 
-    if (file_exists($mapResult['imagePath'])) {
+    if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
         // Convertit l'image en base64 pour l'affichage inline
         $imageData = base64_encode(file_get_contents($mapResult['imagePath']));
 
@@ -75,10 +84,11 @@ if (isset($_GET['s2'])) {
             $coords = implode(',', $area['coords']);
             $title = ucfirst(str_replace('_', ' ', $area['name']));
             echo sprintf(
-                '<area shape="rect" coords="%s" title="%s" alt="%s">',
+                '<area shape="rect" coords="%s" title="%s" alt="%s" onmouseover="showTooltip(%s)">',
                 htmlspecialchars($coords),
                 htmlspecialchars($title),
-                htmlspecialchars($title)
+                htmlspecialchars($title),
+                htmlspecialchars(json_encode($area, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT))
             );
         }
         echo '</map>';
@@ -88,18 +98,6 @@ if (isset($_GET['s2'])) {
             '<img class="box-shadow" src="data:image/png;base64,%s" alt="Monde S2" usemap="#terrain-map" style="cursor:help">',
             $imageData
         );
-
-        // Debug -- to remove
-        error_log("Premières zones de la carte :");
-        for ($i = 0; $i < min(5, count($mapResult['imageMap'])); $i++) {
-            $area = $mapResult['imageMap'][$i];
-            error_log(sprintf(
-                "Zone %d: nom=%s, coordonnées=%s",
-                $i,
-                $area['name'],
-                implode(',', $area['coords'])
-            ));
-        }
     } else {
         echo '<p>La carte n\'est pas encore générée. Veuillez cliquer sur "Régénérer la carte".</p>';
     }
@@ -122,6 +120,92 @@ if(!$planJson){
 }
 
 if(isset($_GET['local'])){
+    if (isset($_GET['s2'])) {
+        // Initialise la connexion à la base de données
+        $database = new Db();
+        
+        $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y, $player->coords->plan);
+        
+        echo '<div>
+            <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
+            <a href="map.php"><button>Monde</button></a>
+            <a href="map.php?s2"><button>Monde s2</button></a>
+            <a href="map.php?local"><button>' . $planJson->name . '</button></a>
+            <a href="map.php?local&s2"><button>' . $planJson->name . ' s2</button></a>
+        </div><br />';
+
+        // Formulaire de sélection des couches
+        echo '<div class="layer-controls" style="margin-bottom: 15px;">
+            <form method="GET" action="map.php" style="display: inline-block;">
+                <input type="hidden" name="local" value="1">
+                <input type="hidden" name="s2" value="1">
+                <label><input type="checkbox" name="layers[]" value="tiles" ' . 
+                ((!isset($_GET['layers']) || in_array('tiles', $_GET['layers'] ?? [])) ? 'checked' : '') . 
+                '> Terrain</label>
+                <label><input type="checkbox" name="layers[]" value="elements" ' . 
+                ((!isset($_GET['layers']) || in_array('elements', $_GET['layers'] ?? [])) ? 'checked' : '') . 
+                '> Éléments</label>
+                <label><input type="checkbox" name="layers[]" value="coordinates" ' . 
+                (in_array('coordinates', $_GET['layers'] ?? []) ? 'checked' : '') . 
+                '> Coordonnées</label>
+                <label><input type="checkbox" name="layers[]" value="lieux" ' . 
+                (in_array('lieux', $_GET['layers'] ?? []) ? 'checked' : '') . 
+                '> Lieux</label>
+                <label><input type="checkbox" name="layers[]" value="routes" ' . 
+                (in_array('routes', $_GET['layers'] ?? []) ? 'checked' : '') . 
+                '> Routes</label>
+                <label><input type="checkbox" name="layers[]" value="players" ' . 
+                (in_array('players', $_GET['layers'] ?? []) ? 'checked' : '') . 
+                '> Tous les joueurs</label>
+                <label><input type="checkbox" name="layers[]" value="player" ' . 
+                (in_array('player', $_GET['layers'] ?? []) ? 'checked' : '') . 
+                '> Ma position</label>
+                <button type="submit">Actualiser la carte</button>
+            </form>
+        </div>';
+
+        // Récupère les couches sélectionnées ou utilise les valeurs par défaut
+        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements'];
+        
+        // Debug logging
+        error_log("Debug - Player coordinates: x={$player->coords->x}, y={$player->coords->y}, z={$player->coords->z}");
+        error_log("Debug - Plan ID: " . $planJson->id);
+        
+        // Génère la carte locale pour saison2
+        $mapResult = $viewService->generateLocalMap($player->coords->plan, $selectedLayers);
+        error_log("Debug - Selected Layers: " . print_r($selectedLayers, true));
+        error_log("Debug - Map Result: " . print_r($mapResult, true));
+
+        if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
+            // Convertit l'image en base64 pour l'affichage inline
+            $imageData = base64_encode(file_get_contents($mapResult['imagePath']));
+
+            // Crée le HTML pour la carte cliquable
+            echo '<map name="terrain-map">';
+            foreach ($mapResult['imageMap'] as $area) {
+                $coords = implode(',', $area['coords']);
+                $title = ucfirst(str_replace('_', ' ', $area['name']));
+                echo sprintf(
+                    '<area shape="rect" coords="%s" title="%s" alt="%s">',
+                    htmlspecialchars($coords),
+                    htmlspecialchars($title),
+                    htmlspecialchars($title)
+                );
+            }
+            echo '</map>';
+
+            // Affiche l'image avec la carte cliquable
+            echo sprintf(
+                '<img class="box-shadow" src="data:image/png;base64,%s" alt="Carte locale S2" usemap="#terrain-map" style="cursor:help">',
+                $imageData
+            );
+        } else {
+            echo '<p>Impossible de générer la carte locale S2.</p>';
+        }
+
+        echo Str::minify(ob_get_clean());
+        exit();
+    }
     include('scripts/map/local.php');
     echo Str::minify(ob_get_clean());
     exit();
@@ -132,6 +216,7 @@ if(isset($_GET['local'])){
     <a href="map.php"><button>Monde</button></a>
     <a href="map.php?s2"><button>Monde s2</button></a>
     <a href="map.php?local"><button><?php echo $planJson->name ?></button></a>
+    <a href="map.php?local&s2"><button><?php echo $planJson->name ?> s2</button></a>
 </div>
 
 <?php echo Ui::print_map($player, $planJson) ?>

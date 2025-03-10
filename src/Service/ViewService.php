@@ -5,6 +5,8 @@ namespace App\Service;
 class ViewService {
     private $width = 800;
     private $height = 532;
+    private $localWidth = 600;
+    // private $localHeight = 400;
     private $image;
     private $layers = [];
     private $db;
@@ -19,6 +21,7 @@ class ViewService {
     private $imageMapCoords = [];
     private $playerX;
     private $playerY;
+    private $playerZ;
     private $terrainNames = [
         // Terrain naturel
         'desert_de_l_egeon' => 'Désert',
@@ -53,13 +56,20 @@ class ViewService {
     ];
     
     private $raceService;
+    private $currentPlan;
+    private $offsetX;
+    private $offsetY;
+    private $centerX = 0;
+    private $centerY = 0;
 
-    public function __construct($db, $playerX = null, $playerY = null) {
+    public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $plan = 'olympia') {
         $this->db = $db;
         $this->playerX = $playerX;
         $this->playerY = $playerY;
+        $this->playerZ = $playerZ;
+        $this->currentPlan = $plan;
         $this->raceService = new RaceService($db);
-        $this->calculateBounds();
+        // $this->calculateBounds();
         $this->initializeColors();
     }
     
@@ -131,8 +141,17 @@ class ViewService {
         ];
     }
     
-    private function calculateBounds() {
-        // Calcule les limites en considérant à la fois map_tiles et map_elements
+    private function calculateBounds($z = null) {
+        if (!is_null($z)) {
+            if (is_array($z)) {
+                error_log("Error: z should be an integer but received an array.");
+                $z = null;
+            } else {
+                $z = (int) $z;
+            }
+        }
+        $zCondition = ($this->currentPlan !== 'olympia' && !is_null($z)) ? "AND c.z = $z" : "";
+    
         $query = "SELECT 
                     MIN(x) as minX, 
                     MAX(x) as maxX, 
@@ -142,34 +161,71 @@ class ViewService {
                     SELECT c.x, c.y
                     FROM coords c
                     JOIN map_elements me ON c.id = me.coords_id
-                    WHERE c.plan = 'olympia'
-                    AND me.name NOT LIKE 'trace_pas_%'
+                    WHERE c.plan = '" . $this->currentPlan . "'
+                    AND me.name NOT LIKE 'trace_pas_%' 
+                    $zCondition
                     UNION
                     SELECT c.x, c.y
                     FROM coords c
                     JOIN map_tiles mt ON c.id = mt.coords_id
-                    WHERE c.plan = 'olympia'
+                    WHERE c.plan = '" . $this->currentPlan . "'
+                    $zCondition
                  ) as combined_coords";
-        
+    
         $result = $this->db->exe($query);
         $bounds = mysqli_fetch_assoc($result);
-        
-        $this->minX = $bounds['minX'];
-        $this->maxX = $bounds['maxX'];
-        $this->minY = $bounds['minY'];
-        $this->maxY = $bounds['maxY'];
-        
-        // Calcule les facteurs d'échelle pour adapter les coordonnées à notre image avec des marges
-        $this->scaleX = ($this->width - 2 * $this->margin) / ($this->maxX - $this->minX);
-        $this->scaleY = ($this->height - 2 * $this->margin) / ($this->maxY - $this->minY);
+    
+        if ($bounds['minX'] === null) {
+            $this->minX = -50;
+            $this->maxX = 50;
+            $this->minY = -50;
+            $this->maxY = 50;
+        } else {
+            $this->minX = (int)$bounds['minX'];
+            $this->maxX = (int)$bounds['maxX'];
+            $this->minY = (int)$bounds['minY'];
+            $this->maxY = (int)$bounds['maxY'];
+        }
+    
+        // Scale calculations
+        $rangeX = (float)($this->maxX - $this->minX);
+        $rangeY = (float)($this->maxY - $this->minY);
+    
+        if ($this->currentPlan !== 'olympia') {
+            // Fixed width for local maps
+            $this->width = 600;
+            $this->scaleX = ($this->width - 2 * $this->margin) / $rangeX;
+            $this->scaleY = $this->scaleX;  // Maintain square aspect ratio
+            $this->height = (int)($rangeY * $this->scaleY) + 2 * $this->margin;
+    
+            // Centering
+            $this->centerX = ($this->minX + $this->maxX) / 2;
+            $this->centerY = ($this->minY + $this->maxY) / 2;
+    
+            // Offset to center the map
+            $this->offsetX = ($this->width / 2) - ($this->centerX * $this->scaleX);
+            $this->offsetY = ($this->height / 2) - ($this->centerY * $this->scaleY);
+        } else {
+            $this->scaleX = (float)(($this->width - 2 * $this->margin) / $rangeX);
+            $this->scaleY = (float)(($this->height - 2 * $this->margin) / $rangeY);
+        }
     }
     
     private function transformX($x) {
+        if ($this->currentPlan !== 'olympia') {
+            // Local map: use offset to center the coordinates
+            return (int)($this->offsetX + ($x * $this->scaleX));
+        }
+        // World map: use normal scaling
         return (int)($this->margin + ($x - $this->minX) * $this->scaleX);
     }
     
     private function transformY($y) {
-        // Inverse les coordonnées Y : négatif est sud, positif est nord
+        if ($this->currentPlan !== 'olympia') {
+            // Local map: use offset to center the coordinates and invert Y-axis
+            return (int)($this->offsetY - ($y * $this->scaleY));
+        }
+        // World map: use normal scaling and invert Y-axis
         return (int)($this->height - ($this->margin + ($y - $this->minY) * $this->scaleY));
     }
     
@@ -184,29 +240,38 @@ class ViewService {
     }
     
     private function createLayer() {
-        $layer = imagecreatetruecolor($this->width, $this->height);
-        // Active le canal alpha
+        $width = $this->width;
+        $height = $this->height;
+
+        $layer = imagecreatetruecolor($width, $height);
         imagealphablending($layer, true);
         imagesavealpha($layer, true);
-        // Remplit avec un fond transparent
+
         $transparent = imagecolorallocatealpha($layer, 0, 0, 0, 127);
         imagefill($layer, 0, 0, $transparent);
+
         return $layer;
     }
 
-    public function generateGlobalMap($selectedLayers = ['tiles', 'elements']) {
-        // Réinitialise les coordonnées de la carte image
+    public function generateLocalMap($plan, $selectedLayers = ['tiles', 'elements']) {
+        $oldPlan = $this->currentPlan;
+        $this->currentPlan = $plan;
+    
+        // Calculate bounds for specific Z
+        $this->calculateBounds($this->playerZ);
+    
+        // Reset map coordinates
         $this->imageMapCoords = [];
-        
-        // Crée l'image de base
+    
+        // Create base image
         $this->image = $this->createLayer();
-        
-        // Génère les couches demandées dans un ordre spécifique
+    
+        // Generate selected layers
         if (in_array('tiles', $selectedLayers)) {
-            $this->generateTileLayer();
+            $this->generateTileLayer($this->playerZ);
         }
         if (in_array('elements', $selectedLayers)) {
-            $this->generateElementLayer();
+            $this->generateElementLayer($this->playerZ);
         }
         if (in_array('coordinates', $selectedLayers)) {
             $this->generateCoordinatesLayer();
@@ -220,109 +285,81 @@ class ViewService {
         if (in_array('players', $selectedLayers)) {
             $this->generateAllPlayersLayer();
         }
-        if (in_array('player', $selectedLayers) && $this->playerX !== null && $this->playerY !== null) {
+        if (in_array('player', $selectedLayers) && $this->playerX !== null && $this->playerY !== null && $this->playerZ !== null) {
             $this->generatePlayerLayer();
         }
-        
-        // Composite les couches sur l'image principale
+    
+        // Merge layers into the main image
         foreach ($this->layers as $layer) {
             imagecopy($this->image, $layer, 0, 0, 0, 0, $this->width, $this->height);
-            imagedestroy($layer); // Libère la mémoire
+            imagedestroy($layer);
         }
-        
-        // Ajoute une bordure à l'image finale
-        $borderColor = imagecolorallocate($this->image, 139, 69, 19);
-        imagerectangle($this->image, 0, 0, $this->width-1, $this->height-1, $borderColor);
-        
+    
+        // Only add border for world map
+        if ($this->currentPlan === 'olympia') {
+            $borderColor = imagecolorallocate($this->image, 139, 69, 19);
+            imagerectangle($this->image, 0, 0, $this->width - 1, $this->height - 1, $borderColor);
+        }
+    
+        // Restore original settings
+        $this->currentPlan = $oldPlan;
+    
         return [
             'imagePath' => $this->saveImage(),
             'imageMap' => $this->imageMapCoords
         ];
     }
 
-    private function generateTileLayer() {
+    public function generateGlobalMap($selectedLayers = ['tiles', 'elements']) {
+        return $this->generateLocalMap('olympia', $selectedLayers);
+    }
+
+    private function generateTileLayer($z = null) {
         $layer = $this->createLayer();
-        
+        $zCondition = ($this->currentPlan !== 'olympia' && $z !== null) ? "AND c.z = $z" : "";
+    
         $query = "SELECT mt.*, c.x, c.y
-                 FROM map_tiles mt 
-                 JOIN coords c ON c.id = mt.coords_id
-                 WHERE c.plan = 'olympia'
-                 ORDER BY mt.name";
+                  FROM map_tiles mt 
+                  JOIN coords c ON c.id = mt.coords_id
+                  WHERE c.plan = '" . $this->currentPlan . "'
+                  $zCondition
+                  ORDER BY mt.name";
+    
         $result = $this->db->exe($query);
-        
+    
         while ($tile = mysqli_fetch_assoc($result)) {
             $x = $this->transformX($tile['x']);
             $y = $this->transformY($tile['y']);
             $color = $this->getColorForType($tile['name']);
-            
-            $tileSize = 6; // Taille de 6x6 pixels
-            $x1 = (int)($x - ($tileSize/2));
-            $y1 = (int)($y - ($tileSize/2));
-            $x2 = (int)($x + ($tileSize/2));
-            $y2 = (int)($y + ($tileSize/2));
-            
-            // Dessine la tuile
-            imagefilledrectangle(
-                $layer,
-                $x1, $y1, $x2, $y2,
-                $color
-            );
-            
-            // Récupère le nom d'affichage pour l'infobulle
-            $displayName = $this->terrainNames[$tile['name']] ?? $tile['name'];
-            
-            // Stocke les coordonnées pour la carte image
-            $this->imageMapCoords[] = [
-                'coords' => [$x1, $y1, $x2, $y2],
-                'type' => 'tile',
-                'name' => $displayName,
-                'x' => $tile['x'],
-                'y' => $tile['y']
-            ];
+            $size = ($this->currentPlan === 'olympia') ? 6 : max(2, ceil($this->scaleX));
+            imagefilledrectangle($layer, $x, $y, $x + $size, $y + $size, $color);
         }
-        
+    
         $this->layers[] = $layer;
     }
 
-    private function generateElementLayer() {
+    private function generateElementLayer($z = null) {
         $layer = $this->createLayer();
-        
+        $zCondition = ($this->currentPlan !== 'olympia' && $z !== null) ? "AND c.z = $z" : "";
+    
         $query = "SELECT me.*, c.x, c.y
-                 FROM map_elements me 
-                 JOIN coords c ON c.id = me.coords_id
-                 WHERE c.plan = 'olympia'
-                 AND me.name NOT LIKE 'trace_pas_%'
-                 ORDER BY me.name";
+                  FROM map_elements me 
+                  JOIN coords c ON c.id = me.coords_id
+                  WHERE c.plan = '" . $this->currentPlan . "'
+                  AND me.name NOT LIKE 'trace_pas_%'
+                  $zCondition
+                  ORDER BY me.name";
+    
         $result = $this->db->exe($query);
-        
+    
         while ($element = mysqli_fetch_assoc($result)) {
             $x = $this->transformX($element['x']);
             $y = $this->transformY($element['y']);
             $color = $this->getColorForType($element['name']);
-            
-            $elementSize = 6; // Taille de 6x6 pixels
-            $x1 = (int)($x - ($elementSize/2));
-            $y1 = (int)($y - ($elementSize/2));
-            $x2 = (int)($x + ($elementSize/2));
-            $y2 = (int)($y + ($elementSize/2));
-            
-            // Dessine l'élément
-            imagefilledrectangle(
-                $layer,
-                $x1, $y1, $x2, $y2,
-                $color
-            );
-            
-            // Stocke les coordonnées pour la carte image
-            $this->imageMapCoords[] = [
-                'coords' => [$x1, $y1, $x2, $y2],
-                'type' => 'element',
-                'name' => $element['name'],
-                'x' => $element['x'],
-                'y' => $element['y']
-            ];
+            $size = $this->currentPlan === 'olympia' ? 6 : (int)($this->scaleX / 1.5);
+            imagefilledrectangle($layer, $x, $y, $x + $size, $y + $size, $color);
         }
-        
+    
         $this->layers[] = $layer;
     }
     
@@ -334,39 +371,82 @@ class ViewService {
                         MIN(c.y) as minY, MAX(c.y) as maxY
                  FROM coords c
                  JOIN map_tiles mt ON c.id = mt.coords_id
-                 WHERE c.plan = 'olympia'";
+                 WHERE c.plan = '" . $this->currentPlan . "'";
         $result = $this->db->exe($query);
         $bounds = mysqli_fetch_assoc($result);
         
-        // Crée les couleurs
-        $gridColor = imagecolorallocatealpha($layer, 255, 255, 255, 100);  // Blanc semi-transparent
+        // Crée les couleurs avec plus d'opacité pour les cartes locales
+        $gridAlpha = $this->currentPlan === 'olympia' ? 100 : 70; // Plus opaque pour les cartes locales
+        $gridColor = imagecolorallocatealpha($layer, 255, 255, 255, $gridAlpha);
         $textColor = imagecolorallocate($layer, 255, 255, 255);  // Blanc pour le texte
         $textBg = imagecolorallocate($layer, 0, 0, 0);  // Noir pour le fond du texte
         
+        // For local maps, adjust grid and text based on scale
+        if ($this->currentPlan === 'olympia') {
+            $gridSpacing = 10;
+            $fontSize = 2;
+            $textPadding = 10;
+            $lineThickness = 1;
+        } else {
+            // Calculate grid spacing based on scale to avoid overcrowding
+            $gridSpacing = max(1, (int)(20 / $this->scaleX));
+            // Adjust text size based on scale
+            $fontSize = min(5, max(3, (int)($this->scaleX / 5)));
+            $textPadding = (int)($fontSize * 5);
+            $lineThickness = 2;
+        }
+        
         // Dessine les lignes verticales et les coordonnées X
-        for ($x = $bounds['minX']; $x <= $bounds['maxX']; $x += 10) {  // Toutes les 10 unités
+        for ($x = $bounds['minX']; $x <= $bounds['maxX']; $x += $gridSpacing) {
             $screenX = $this->transformX($x);
             
-            // Dessine la ligne verticale
-            imageline($layer, $screenX, 0, $screenX, $this->height, $gridColor);
+            // Draw thicker lines for local maps
+            for ($i = 0; $i < $lineThickness; $i++) {
+                imageline($layer, $screenX + $i, 0, $screenX + $i, $this->height, $gridColor);
+            }
             
             // Dessine le numéro de coordonnée en haut
             $text = (string)$x;
-            imagefilledrectangle($layer, $screenX - 10, 2, $screenX + 10, 12, $textBg);
-            imagestring($layer, 2, $screenX - strlen($text) * 2, 2, $text, $textColor);
+            imagefilledrectangle($layer, 
+                $screenX - $textPadding, 
+                2, 
+                $screenX + $textPadding, 
+                12 + ($fontSize * 2), 
+                $textBg
+            );
+            imagestring($layer, $fontSize, 
+                (int)($screenX - (strlen($text) * imagefontwidth($fontSize) / 2)), 
+                2, 
+                $text, 
+                $textColor
+            );
         }
         
         // Dessine les lignes horizontales et les coordonnées Y
-        for ($y = $bounds['minY']; $y <= $bounds['maxY']; $y += 10) {  // Toutes les 10 unités
+        for ($y = $bounds['minY']; $y <= $bounds['maxY']; $y += $gridSpacing) {
             $screenY = $this->transformY($y);
             
-            // Dessine la ligne horizontale
-            imageline($layer, 0, $screenY, $this->width, $screenY, $gridColor);
+            // Draw thicker lines for local maps
+            for ($i = 0; $i < $lineThickness; $i++) {
+                imageline($layer, 0, $screenY + $i, $this->width, $screenY + $i, $gridColor);
+            }
             
             // Dessine le numéro de coordonnée sur le côté gauche
             $text = (string)$y;
-            imagefilledrectangle($layer, 2, $screenY - 5, 20, $screenY + 5, $textBg);
-            imagestring($layer, 2, 2, $screenY - 4, $text, $textColor);
+            $textWidth = strlen($text) * imagefontwidth($fontSize);
+            imagefilledrectangle($layer, 
+                2, 
+                $screenY - ($fontSize * 2), 
+                $textWidth + 8, 
+                $screenY + ($fontSize * 2), 
+                $textBg
+            );
+            imagestring($layer, $fontSize, 
+                4, 
+                (int)($screenY - (imagefontheight($fontSize) / 2)), 
+                $text, 
+                $textColor
+            );
         }
         
         $this->layers[] = $layer;
@@ -382,7 +462,7 @@ class ViewService {
             FROM map_foregrounds mf
             JOIN coords c ON c.id = mf.coords_id
             WHERE mf.name LIKE 'unique_%'
-            AND c.plan = 'olympia'
+            AND c.plan = '" . $this->currentPlan . "'
             GROUP BY base_name
             HAVING MIN(mf.coords_id)";  // Prend la première coordonnée pour chaque lieu unique
             
@@ -404,35 +484,44 @@ class ViewService {
             // Formate le nom (majuscule la première lettre)
             $name = ucfirst($location['base_name']);
             
-            // Dessine le marqueur de lieu (forme de plus)
-            $size = 4;
+            // Draw location marker (plus shape)
+            $size = $this->currentPlan === 'olympia' ? 4 : 8;
+            $thickness = $this->currentPlan === 'olympia' ? 1 : 2;
+            
+            // Draw outer glow for local maps
+            if ($this->currentPlan !== 'olympia') {
+                $glowColor = imagecolorallocatealpha($layer, 255, 215, 0, 80); // Semi-transparent gold
+                imagefilledellipse($layer, $x, $y, $size * 3, $size * 3, $glowColor);
+            }
+            
+            // Draw plus shape
             imagefilledrectangle($layer, 
-                $x - 1, $y - $size,
-                $x + 1, $y + $size,
+                $x - $thickness, $y - $size,
+                $x + $thickness, $y + $size,
                 $markerColor
             );
             imagefilledrectangle($layer,
-                $x - $size, $y - 1,
-                $x + $size, $y + 1,
+                $x - $size, $y - $thickness,
+                $x + $size, $y + $thickness,
                 $markerColor
             );
             
-            // Charge une police pour le texte
-            $fontSize = 3;  // Taille 1-5, où 5 est la plus grande
+            // Larger font for local maps
+            $fontSize = $this->currentPlan === 'olympia' ? 3 : 4;
             
-            // Récupère les dimensions du texte
+            // Get text dimensions
             $textWidth = imagefontwidth($fontSize) * strlen($name);
             $textHeight = imagefontheight($fontSize);
             
-            // Positionne le texte en dessous du marqueur
+            // Position text below marker
             $textX = (int)($x - ($textWidth / 2));
-            $textY = $y + $size + 2;  // Petit espace après le marqueur
+            $textY = (int)($y + $size + 2);
             
             // Dessine le texte avec un contour (pour une meilleure lisibilité)
             for ($dx = -1; $dx <= 1; $dx++) {
                 for ($dy = -1; $dy <= 1; $dy++) {
                     if ($dx !== 0 || $dy !== 0) {  // Ignore la position centrale
-                        imagestring($layer, $fontSize, $textX + $dx, $textY + $dy, $name, $textColor);
+                        imagestring($layer, $fontSize, (int)($textX + $dx), (int)($textY + $dy), $name, $textColor);
                     }
                 }
             }
@@ -473,14 +562,15 @@ class ViewService {
             $y = (int)$this->transformY($route['y']);
             
             // Dessine le point de route avec un contour blanc (plus petit)
-            $size = 1;  // Réduit à 1
+            // Draw route point with outline
+            $size = 1;
             imagefilledrectangle($layer, 
                 $x - 1, $y - 1,
                 $x + 1, $y + 1,
                 $routeOutline
             );
             
-            // Dessine le carré marron pour le point de route (plus petit)
+            // Draw route point
             imagefilledrectangle($layer, 
                 $x - $size, $y - $size,
                 $x + $size, $y + $size,
@@ -548,8 +638,16 @@ class ViewService {
             // Alloue la couleur
             $playerColor = imagecolorallocate($layer, $r, $g, $b);
             
-            // Dessine un carré 2x2 pour le joueur
-            $size = 1; // Cela fera un carré 2x2 (1 pixel dans chaque direction à partir du centre)
+            // Draw player marker with size based on map type
+            $size = $this->currentPlan === 'olympia' ? 2 : 4;
+            
+            // Add glow effect for local maps
+            if ($this->currentPlan !== 'olympia') {
+                $glowColor = imagecolorallocatealpha($layer, $r, $g, $b, 80); // Semi-transparent glow
+                imagefilledellipse($layer, $x, $y, $size * 4, $size * 4, $glowColor);
+            }
+            
+            // Draw player marker
             imagefilledrectangle($layer, 
                 $x - $size, $y - $size, 
                 $x + $size, $y + $size, 
@@ -583,12 +681,20 @@ class ViewService {
         $markerColor = imagecolorallocate($layer, 255, 0, 0);  // Rouge
         $pulseColor = imagecolorallocatealpha($layer, 255, 0, 0, 80);  // Rouge semi-transparent
         
+        // Adjust sizes based on map type
+        $pulseSize = $this->currentPlan === 'olympia' ? 8 : 16;
+        $markerSize = $this->currentPlan === 'olympia' ? 4 : 8;
+        
+        // Add extra glow for local maps
+        if ($this->currentPlan !== 'olympia') {
+            $outerGlow = imagecolorallocatealpha($layer, 255, 0, 0, 100);
+            imagefilledellipse($layer, $x, $y, $pulseSize * 3, $pulseSize * 3, $outerGlow);
+        }
+        
         // Dessine le cercle de pulsation extérieur
-        $pulseSize = 8;
         imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
         
         // Dessine le marqueur de position du joueur (cercle plein)
-        $markerSize = 4;
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Ajoute à la carte image pour l'infobulle
@@ -609,9 +715,20 @@ class ViewService {
             mkdir($cacheDir, 0777, true);
         }
         
-        // Génère un nom de fichier unique basé sur les couches sélectionnées
+        // Get appropriate dimensions based on map type
+        $width = $this->currentPlan === 'olympia' ? $this->width : $this->localWidth;
+        $height = $this->currentPlan === 'olympia' ? $this->height : $this->localHeight;
+        
+        // Generate unique filename based on map type, dimensions, and layers
         $layerKey = implode('-', array_keys($this->layers));
-        $cachePath = $cacheDir . '/global_map_' . md5($layerKey) . '.png';
+        $filename = sprintf('%s_map_%dx%d_%s.png',
+            $this->currentPlan,
+            $width,
+            $height,
+            md5($layerKey)
+        );
+        
+        $cachePath = $cacheDir . '/' . $filename;
         imagepng($this->image, $cachePath);
         imagedestroy($this->image);
         
