@@ -49,7 +49,7 @@ echo '
             echo $assistant->data->name .' +'. $e .'Xp<br />';
         }
     }
-
+    $target->refresh_kills();//clear html cache pour le tué 
     echo '
 </div>
 ';
