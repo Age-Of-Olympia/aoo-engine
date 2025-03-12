@@ -214,58 +214,87 @@ if($actionJson->targetType != 'self'){
 
         if($distance == 1){
 
-            // Utilisation
             try {
                 $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
-                $actionExecutor = new ActionExecutorService($action, $player, $target);
-                $actionResults = $actionExecutor->executeAction();
-                $actionResultsView = new ActionResultsView($actionResults);
-                // this make a "echo" needed while the huge action.php file exists
-                $actionResultsView->displayActionResults();
-
-                $logDetails = $actionResultsView->getActionResults();
-                $actorMainLog = $actionResults->getLogsArray()["actor"];
-                $targetMainLog = $actionResults->getLogsArray()["target"];
-
-                $logTime = time();
-                if(!empty($actorMainLog)) {
-                    if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
-                        $type = "hidden_action";
-                    } else {
-                        $type = "action";
-                    }
-                    Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
-                }
-
-                if(!empty($targetMainLog)){
-                    if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
-                        $type = "hidden_action_other_player";
-                    } else {
-                        $type = "action_other_player";
-                    }
-                    Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
-                }
-
-                goto fin;
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
         }
-
         elseif($distance > 1){
-
-
-            // tir / jet
-
-            $actionJson->playerJet = 'ct';
-
-            if($distance > 2){
-
-                $distanceMalus = ($distance - 2) * 3;
+            try {
+                $action = ActionFactory::getAction('Distance'); // Crée une instance de MeleeAction
+            } catch (Exception $e) {
+                echo $e->getMessage();
             }
-
         }
     }
+
+    try {
+        $actionExecutor = new ActionExecutorService($action, $player, $target);
+        $actionResults = $actionExecutor->executeAction();
+        $actionResultsView = new ActionResultsView($actionResults);
+                    // this make a "echo" needed while the huge action.php file exists
+        $actionResultsView->displayActionResults();
+
+        $logDetails = $actionResultsView->getActionResults();
+        $actorMainLog = $actionResults->getLogsArray()["actor"];
+        $targetMainLog = $actionResults->getLogsArray()["target"];
+
+        $logTime = time();
+        if(!empty($actorMainLog)) {
+            if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+                $type = "hidden_action";
+            } else {
+                $type = "action";
+            }
+            Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
+        }
+
+        if(!empty($targetMainLog)){
+            if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+                $type = "hidden_action_other_player";
+            } else {
+                $type = "action_other_player";
+            }
+            Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
+        }
+        
+        
+    } catch (Exception $e) {
+        echo $e->getMessage();
+    }
+
+
+    // $actionExecutor = new ActionExecutorService($action, $player, $target);
+    // $actionResults = $actionExecutor->executeAction();
+    // $actionResultsView = new ActionResultsView($actionResults);
+    //             // this make a "echo" needed while the huge action.php file exists
+    // $actionResultsView->displayActionResults();
+
+    // $logDetails = $actionResultsView->getActionResults();
+    // $actorMainLog = $actionResults->getLogsArray()["actor"];
+    // $targetMainLog = $actionResults->getLogsArray()["target"];
+
+    // $logTime = time();
+    // if(!empty($actorMainLog)) {
+    //     if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+    //         $type = "hidden_action";
+    //     } else {
+    //         $type = "action";
+    //     }
+    //     Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
+    // }
+
+    // if(!empty($targetMainLog)){
+    //     if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+    //         $type = "hidden_action_other_player";
+    //     } else {
+    //         $type = "action_other_player";
+    //     }
+    //     Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
+    // }
+
+    goto fin;
 
     // special defense cc/agi
     if($actionJson->targetJet == 'cc/agi'){
@@ -568,7 +597,7 @@ $player->put_bonus($bonus);
 
 
 // add effects
-include('scripts/actions/addEffects.php');
+include('scripts/actions/add_effects.php');
 
 
 // drop munition or jet

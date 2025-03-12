@@ -7,7 +7,7 @@ use App\Entity\Action;
 use Player;
 
 #[ORM\Entity]
-class MeleeAction extends AttackAction
+class DistanceAction extends AttackAction
 {
-
+    
 }

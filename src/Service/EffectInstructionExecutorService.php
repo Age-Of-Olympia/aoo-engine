@@ -21,6 +21,9 @@ class EffectInstructionExecutorService
         $operation = $instruction->getOperation();
         $params    = $instruction->getParameters() ?? [];
 
+        //three methods should be in action interface
+        //action should be added as executeInstructionParameter
+        //the methods should be called from the action and override in each action
         switch ($operation) {
             case 'MODIFY_STAT': // DROP AMMO ?
                 $res = $this->executeModifyStat($actor, $target, $params);
