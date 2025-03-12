@@ -8,7 +8,7 @@ function selectPreviousTool($customCursor){
     }).each(function() {
       $(this).addClass('selected').css('border', '1px solid red');
 
-      $customCursor.attr('src', $(this).attr('src')).show();
+      $customCursor.find('img').attr('src', $(this).attr('src')).show();
 
       $('body').on('mousemove', function(e) {
         $customCursor.css({
@@ -156,24 +156,36 @@ function teleport(coords){
 
 
 $(document).ready(function(){
-
-
   $('img').each(function(e){
-
       $(this).attr('title', $(this).data('name'));
   });
 
-
-  var $customCursor = $('<img>', {
+  // Create custom cursor container
+  var $customCursor = $('<div>', {
       class: 'custom-cursor',
-      src: $('.map').attr('src')
-  }).appendTo('body').hide();
+      css: {
+          'position': 'absolute',
+          'pointer-events': 'none',
+          'z-index': 1000,
+          'display': 'none'
+      }
+  }).appendTo('body');
 
+  // Add cursor grid container
+  var $cursorGrid = $('<div>', {
+      class: 'cursor-grid',
+      css: {
+          'display': 'grid',
+          'gap': '1px',
+          'background': 'rgba(255,255,255,0.3)',
+          'padding': '1px',
+          'border-radius': '2px'
+      }
+  }).appendTo($customCursor);
 
   selectPreviousTool($customCursor);
 
-
-$('.case').on('contextmenu', function(e) {
+  $('.case').on('contextmenu', function(e) {
     e.preventDefault();
 
     var coords = $(this).data('coords');
@@ -181,6 +193,8 @@ $('.case').on('contextmenu', function(e) {
     var coordsFull = $(this).data('coords-full');
 
     let [x, y] = coords.split(',');
+    x = parseInt(x);
+    y = parseInt(y);
 
     // show coords button
     $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
@@ -188,113 +202,152 @@ $('.case').on('contextmenu', function(e) {
         '<button onclick="teleport(\'' +coords + '\')">TP</button><br>'+
         '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
         '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
-
-
   });
 
-  $('.case').click(function(e){
+  // Handle clicking on foreground items (both single images and split image overlays)
+  $('.map.foregrounds, .clickable-overlay').click(function(e) {
+    e.preventDefault();
+    
+    // Remove previous selection
+    $('.selected').removeClass('selected');
+    $('.foreground-item').css('border-color', '#eee');
+    
+    // Get the foreground item container
+    let $item = $(this).closest('.foreground-item');
+    
+    // Add selection styling
+    $item.css('border-color', '#ff3300');
+    $(this).addClass('selected');
+    
+    // Clear previous cursor
+    $customCursor.empty();
+    $cursorGrid.empty();
 
-      var $selected = $('.selected');
+    // Handle split images
+    if ($(this).data('is-split') === 'true') {
+      let gridSize = parseInt($(this).data('grid-size'));
+      let parts = JSON.parse($(this).data('parts'));
+      
+      // Set up cursor grid
+      $cursorGrid.css({
+        'display': 'grid',
+        'grid-template-columns': `repeat(${gridSize}, 50px)`,
+        'gap': '1px',
+        'padding': '1px'
+      }).appendTo($customCursor);
 
-      if(!$selected[0]){
-        teleport($(this).data('coords'));
-
-        return false;
-
-      }else if( $selected.hasClass('select-name') && $selected.data('name') === 'info'){
-          retrieveCaseData($(this).data('coords'));
-          return false;
-      }
-
-      var src = $selected.attr('src');
-
-      var params = '';
-
-      if($selected.hasClass('ele')){
-
-          src = $selected.data('element');
-      }
-
-      if($selected.hasClass('select-name')){
-
-          src = $selected.data('name');
-      }
-
-      if($selected.data('params') != null){
-
-          params = $('#'+ $selected.data('type') +'-params').val();
-      }
-
-
-      $.ajax({
-          type: "POST",
-          url: 'tiled.php',
-          data: {
-            'coords':$(this).data('coords'),
-            'type':$selected.data('type'),
-            'src':src,
-            'params':params
-          }, // serializes the form's elements.
-          success: function(data)
-          {
-            // alert(data);
-            document.location='tiled.php?selectedTool='+$selected.data('name')+'&selectedParams='+params;
+      // Add all parts to cursor
+      parts.forEach(part => {
+        $('<img>', {
+          src: part.url,
+          css: {
+            'width': '50px',
+            'height': '50px',
+            'display': 'block',
+            'image-rendering': 'pixelated'
           }
+        }).appendTo($cursorGrid);
       });
+    } else {
+      // Single image cursor
+      $('<img>', {
+        src: $(this).attr('src'),
+        css: {
+          'width': '50px',
+          'height': '50px',
+          'display': 'block',
+          'image-rendering': 'pixelated'
+        }
+      }).appendTo($customCursor);
+    }
+
+    // Show cursor and set up movement
+    $customCursor.show();
+    
+    // Update cursor position on mouse move
+    $('body').off('mousemove').on('mousemove', function(e) {
+      let isSplit = $('.selected').data('is-split') === 'true';
+      let gridSize = isSplit ? parseInt($('.selected').data('grid-size')) : 1;
+      let offset = (gridSize * 25);
+      
+      $customCursor.css({
+        left: e.pageX - offset + 'px',
+        top: e.pageY - offset + 'px'
+      });
+    });
   });
 
-  $('.map').click(function(e){
-      if (!$(this).hasClass('selected')) {
+  // Handle placing foregrounds on the map
+  $('.case').click(function(e) {
+    var $selected = $('.selected');
 
-        var $paramsField = $('#' + $(this).data('type') + '-params');
+    if(!$selected[0]){
+      teleport($(this).data('coords'));
+      return;
+    }
 
-        if ($(this).data('params')) {
+    // Get the clicked tile coordinates
+    let [baseX, baseY] = $(this).data('coords').split(',');
+    baseX = parseInt(baseX);
+    baseY = parseInt(baseY);
 
-          let params = $(this).data('params');
-
-          // if($paramsField.val() == ''){
-
-              $paramsField.val(params);
-          // }
-
-          $paramsField.focus().select();
-        }
-        else{
-          $paramsField.val('');
-        }
-
-        $('.map').removeClass('selected').css('border', '0px');
-        $(this).addClass('selected').css('border', '1px solid red');
-
-
-        // Position de l'image sur la page
-        var offsetX = e.offsetX - 25; // 25 pour centrer l'image (50/2)
-        var offsetY = e.offsetY - 25; // 25 pour centrer l'image (50/2)
-
-        $customCursor.css({
-            left: e.pageX + offsetX + 'px',
-            top: e.pageY + offsetY + 'px'
-        }).attr('src', $(this).attr('src')).show();
-
-          $('body').on('mousemove', function(e) {
-              $customCursor.css({
-                  left: e.pageX - 25 +'px',
-                  top: e.pageY - 25+'px'
-              });
+    // For split foregrounds, place all parts at once
+    if ($selected.data('is-split') === 'true') {
+      let gridSize = parseInt($selected.data('grid-size'));
+      let parts = JSON.parse($selected.data('parts'));
+      let baseName = $selected.data('name');
+      
+      // Place all parts in their correct positions
+      Promise.all(parts.map((part, index) => 
+        new Promise((resolve, reject) => {
+          let x = baseX + (index % gridSize);
+          let y = baseY + Math.floor(index / gridSize);
+          $.ajax({
+            type: "POST",
+            url: 'tiled.php',
+            data: {
+              'coords': x + ',' + y,
+              'type': 'foregrounds',
+              'src': part.name,
+              'params': JSON.stringify({
+                'baseName': baseName,
+                'gridSize': gridSize,
+                'partIndex': index,
+                'isPartOfSet': true
+              })
+            },
+            success: resolve,
+            error: reject
           });
-
-      } else{
-        $(this).removeClass('selected').css('border', '0px');
-      }
+        })
+      )).then(() => {
+        document.location = 'tiled.php?selectedTool=' + baseName;
+      });
+    } else {
+      // Regular single-tile placement
+      $.ajax({
+        type: "POST",
+        url: 'tiled.php',
+        data: {
+          'coords': $(this).data('coords'),
+          'type': $selected.data('type'),
+          'src': $selected.data('name')
+        },
+        success: function(data) {
+          if(data == 'ok'){
+            document.location = 'tiled.php?selectedTool=' + $selected.data('name');
+          }
+        }
+      });
+    }
   });
-
 
   $(document).on('click', function(e) {
       if (!["map", "modal-bg", "closeButton", "modal-content", "modal"].some(cls => $(e.target).hasClass(cls)) 
         && $(e.target).attr('type') !== 'text' ) {
           $customCursor.hide();
           $('body').off('mousemove');
-          $('.map').removeClass('selected').css('border', '0px');
+          $('.map').removeClass('selected').css('border', '');
       }
   });
 

@@ -52,15 +52,12 @@ if(!empty($_POST['zone']) && !empty($_POST['type']) && !empty($_POST['src'])){
 }
 
 if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
-
-
     $coords = $player->coords;
 
     $coords->x = explode(',', $_POST['coords'])[0];
     $coords->y = explode(',', $_POST['coords'])[1];
 
     $coordsId = View::get_coords_id($coords);
-
 
     if($_POST['type'] == 'tp'){
         $coords->coordsId = $coordsId;
@@ -73,9 +70,26 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         exit('infos');
     }
 
+    // For foregrounds, handle split image parts
+    if($_POST['type'] == 'foregrounds') {
+        $params = [];
+        if (!empty($_POST['params'])) {
+            $params = json_decode($_POST['params'], true);
+            
+            // If this is part of a split image, store metadata about the split
+            if (isset($params['baseName']) && isset($params['gridSize']) && isset($params['partIndex'])) {
+                $params['isSplitImage'] = true;
+                $params['x'] = $coords->x;
+                $params['y'] = $coords->y;
+            }
+        }
+        
+        $_POST['params'] = json_encode($params);
+    }
+
     include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/erase_or_create_tile.php';
 
-    exit();
+    exit('ok');
 }
 
 
@@ -163,7 +177,3 @@ $modalView->displayModal('tile-info','info-display');
 </style>
 
 <script src="js/tiled.js"></script>
-
-
-
-
