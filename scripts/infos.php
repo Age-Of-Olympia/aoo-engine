@@ -5,8 +5,12 @@ if(!empty($_SESSION['playerId'])){
 
     if(!isset($player)){
 
-
+        if(isset($playerService)){
+            $player = $playerService->GetPlayer($_SESSION['playerId']);
+        }
+        else{
         $player = new Player($_SESSION['playerId']);
+        }
         $player->get_data();
     }
 

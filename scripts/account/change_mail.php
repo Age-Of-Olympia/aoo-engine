@@ -35,6 +35,7 @@ if(!empty($_POST['confirmChange'])){
         $db->exe($sql, array($mail, $_POST['new'], $player->id));
         echo '<div id="data">Mail changé avec succès!</div>';
     }
+    $player->refresh_data();
     exit();
 }
 

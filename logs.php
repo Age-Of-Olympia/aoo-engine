@@ -1,4 +1,5 @@
 <?php
+use App\Service\PlayerService;
 $debug=false;
 if ($debug) {
     $time_start = microtime(true);
@@ -6,13 +7,13 @@ if ($debug) {
 require_once('config.php');
 
 
-
+$playerService = new PlayerService();
 $ui = new Ui('Évènements');
 
-$player = new Player($_SESSION['playerId']);
+$player = $playerService->GetPlayer($_SESSION['playerId']);
 $displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
 
-$player->get_data();
+$player->get_data(false);
 
 $logAge=THREE_DAYS;
 
@@ -84,8 +85,8 @@ echo '
         }
 
 
-        $player = new Player($e->player_id);
-        $player->get_data();
+        $player = $playerService->GetPlayer($e->player_id);
+        $player->get_data(false);
         $playerRaceJson = json()->decode('races', $player->data->race);
 
 
@@ -102,8 +103,8 @@ echo '
         if($e->player_id != $e->target_id){
 
 
-            $target = new Player($e->target_id);
-            $target->get_data();
+            $target = $playerService->GetPlayer($e->target_id);
+            $target->get_data(false);
             $targetRaceJson = json()->decode('races', $target->data->race);
         }
 
