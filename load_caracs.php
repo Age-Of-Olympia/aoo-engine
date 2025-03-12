@@ -109,6 +109,18 @@ echo '
         // }
 
     echo '</tr>';
+    
+    echo '<tr>';
+
+        if(!empty($caracsJson->esquive)){
+            $color = "blue";
+            if($caracsJson->esquive < 0){
+                $color = "red";
+            }
+            echo '<td colspan="'. count(CARACS) .'" style="color:' . $color . '">Esquive : '. $caracsJson->esquive .'.</td>';
+        }
+
+    echo '</tr>';
 
 
     echo '

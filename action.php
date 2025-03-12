@@ -263,6 +263,9 @@ if($actionJson->targetType != 'self'){
 
     $targetJet = (is_numeric($actionJson->targetJet)) ? $dice->roll($actionJson->targetJet) : $dice->roll($target->caracs->{$actionJson->targetJet});
 
+    if(!empty($target->caracs->esquive)){
+        $targetJet[] = $target->caracs->esquive;
+    }
 
     $playerFat = floor($player->data->fatigue / FAT_EVERY);
     $targetFat = floor($target->data->fatigue / FAT_EVERY);
