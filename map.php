@@ -9,8 +9,8 @@ $player = new Player($_SESSION['playerId']);
 $player->get_coords();
 
 $planJson = json()->decode('plans', $player->coords->plan);
-$planJson->id = $player->coords->plan;
-$planJson->fromCoords = $player->coords;
+
+
 
 
 ob_start();
@@ -44,7 +44,8 @@ if(isset($_GET['local'])){
 
     exit();
 }
-
+$planJson->id = $player->coords->plan;
+$planJson->fromCoords = $player->coords;
 ?>
 <div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button><?php echo $planJson->name ?></button></a></div>
 
