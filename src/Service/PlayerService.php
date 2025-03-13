@@ -5,11 +5,11 @@ namespace App\Service;
 use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
 use Db;
-
+use Player;
 class PlayerService
 {
     private Db $db;
-
+    private $playerCache = [];
     public function __construct()
     {
         $this->db = new Db();
@@ -84,5 +84,19 @@ class PlayerService
             $list[]=$row->name;
         }
         return $list;
+    }
+
+    public function GetPlayer($id,bool $readCache =true,bool $writeCache=true)
+    {
+        if($readCache && isset($this->playerCache[$id])){
+            return $this->playerCache[$id];
+        }
+        $result = new Player($id);
+
+        if($writeCache){
+            $this->playerCache[$id] = $result;
+        }
+
+        return $result;
     }
 }

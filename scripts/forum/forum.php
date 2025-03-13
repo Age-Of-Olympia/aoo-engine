@@ -28,10 +28,11 @@ $ui = new Ui($forumJson->name);
 
 ob_start();
 
+use App\Service\PlayerService;
+$playerService = new PlayerService();
 
 include('scripts/infos.php');
 include('scripts/menu.php');
-
 
 echo '<h1>'. $forumJson->name .'</h1>';
 
@@ -125,9 +126,9 @@ $pinnedTopicsHtml=array();
 
 
 
-        $author = new Player($topJson->author);
+        $author = $playerService->GetPlayer($topJson->author);
 
-        $author->get_data();
+        $author->get_data(false);
 
         
         $currentTopicHtml= '
@@ -208,9 +209,9 @@ $pinnedTopicsHtml=array();
                 ';
 
 
-                $lastAuthor = new Player($topJson->last->author);
+                $lastAuthor = $playerService->GetPlayer($topJson->last->author);
 
-                $lastAuthor->get_data();
+                $lastAuthor->get_data(false);
 
                 $date = date('d/m/Y',timestampNormalization($topJson->last->time));
 

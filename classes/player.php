@@ -2064,9 +2064,12 @@ class Player{
         return new Player($row->id);
     }
 
-    public function get_data(){
+    public function get_data(bool $forceRefresh=true){
 
+        if(!$forceRefresh && isset($this->data)){
 
+            return $this->data;
+        }
         // first create dir
         if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/')){
 
@@ -2099,10 +2102,6 @@ class Player{
 
         $this->data = $playerJson;
 
-        // Get plain_mail & email_bonus from PlayerService
-        $fields = $this->playerService->getPlayerFields($this->id, ['plain_mail', 'email_bonus']);
-        $this->data->plain_mail = $fields['plain_mail'];
-        $this->data->email_bonus = $fields['email_bonus'] ?? false;
 
         // Set inactive status using playerService
         $this->data->isInactive = $this->id > 0 ? $this->playerService->isInactive($this->data->lastLoginTime) : false;

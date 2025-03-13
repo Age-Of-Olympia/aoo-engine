@@ -14,6 +14,8 @@ $ui = new Ui(htmlentities($topJson->title), true);
 
 ob_start();
 
+use App\Service\PlayerService;
+$playerService = new PlayerService();
 
 echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.webp" /></a><br /><a href="#last"><img src="img/ui/forum/down.webp" /></a></div>';
 
@@ -25,7 +27,7 @@ if(!isset($_GET['hideMenu'])){
 }
 else{
 
-    $player = new Player($_SESSION['playerId']);
+    $player = $playerService->GetPlayer($_SESSION['playerId']);
 }
 
 
@@ -123,9 +125,9 @@ echo '
                 ';
 
 
-                $author = new Player($postJson->author);
+                $author = $playerService->GetPlayer($postJson->author);
 
-                $author->get_data();
+                $author->get_data(false);
 
                 echo '<a href="infos.php?targetId='. $author->id .'"><img class="box-shadow" src="'. $author->data->mini .'" width="50" /></a>';
 
@@ -220,7 +222,7 @@ echo '
                 if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
 
 
-                    $player = new Player($_SESSION['playerId']);
+                    $player = $playerService->GetPlayer($_SESSION['playerId']);
 
                     if(!$player->have_option('isAdmin')){
 
@@ -248,8 +250,8 @@ echo '
                         foreach($postJson->rewards as $e){
 
 
-                            $giver = new Player($e->player_id);
-                            $giver->get_data();
+                            $giver = $playerService->GetPlayer($e->player_id);
+                            $giver->get_data(false);
 
 
                             echo '<img src="'. $e->img .'" title="'. $giver->data->name .' ('. $e->pr .'Pr)" /><span>&nbsp;</span>';

@@ -129,7 +129,7 @@ echo '
 foreach($hiddenPnjs as $hiddenPnj){
     $hiddenPnj->get_data();
     $raceJson = json()->decode('races', $hiddenPnj->data->race);  
-    $mails = $hiddenPnj->get_new_mails();
+    $mails = isset($allMails[$hiddenPnj->id]) ? $allMails[$hiddenPnj->id] : 0;
     if($mails){
         $mails = '<span class="cartouche bulle-mini blink" data-id="'. $hiddenPnj->id .'">'. $mails .'</span>';
     }else{

@@ -354,7 +354,7 @@ if(!empty($success) && $success == true){
 
 
         $playerDamages = (is_numeric($actionJson->playerDamages)) ? $actionJson->playerDamages : $player->caracs->{$actionJson->playerDamages};
-        $playerDamagesBonus = empty($actionJson->bonusDamages)? 0 :((is_numeric($actionJson->bonusDamages)) ? $actionJson->bonusDamages : $target->caracs->{$actionJson->bonusDamages});
+        $playerDamagesBonus = empty($actionJson->bonusDamages)? 0 :((is_numeric($actionJson->bonusDamages)) ? $actionJson->bonusDamages : $player->caracs->{$actionJson->bonusDamages});
 
 
         $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $target->caracs->{$actionJson->targetDamages};

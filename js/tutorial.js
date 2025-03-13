@@ -45,8 +45,8 @@ $(document).ready(function(){
         $('.go[data-coords="'+ window.dataCoords +'"]'),
         $('.ra-chessboard'),
         $('.ra-key'),
-        $('[href="pnjs.php"]'),
-        $('.ra-quill-ink')
+        $('#missive-btn')
+       
     ];
 
     var text = [
@@ -54,8 +54,7 @@ $(document).ready(function(){
         "Cliquez sur une case adjacente pour vous y déplacer",
         "Cliquez-ici à tout moment pour revenir au Damier.",
         "Vos objets sont entreposés dans votre Inventaire. Parlez à Gaïa pour terminer le tuto et gagner 20Po ainsi qu'un Bâton de Marche.",
-        "Par ailleurs, vous avez un nouveau message!",
-        "Vous pouvez également cliquer ici pour lire cette importante Missive."
+        "Par ailleurs, vous avez un nouveau message! Cliquer ici pour lire cette importante Missive."
     ];
 
     window.cursor = 0;
