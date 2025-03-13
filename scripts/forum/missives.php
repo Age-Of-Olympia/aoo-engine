@@ -21,21 +21,25 @@ if (!empty($_POST['addDest'])) {
             $res = $db->exe($sql, array($faction, $faction));
 
             while($row = $res->fetch_object()){
-                Forum::add_dest($row->id,  $topJson, $destTbl)  ;
+                Forum::add_dest($player,$row->id,  $topJson, $destTbl)  ;
             }
         }
     }else{
-        Forum::add_dest($_POST['addDest'], $topJson, $destTbl)  ;
-        
-        $desti = Player::get_player_by_name($_POST['addDest']);
+
+        if(is_numeric($_POST['addDest'])){
+            $desti = new Player($_POST['addDest']);
+        }else {
+            $desti = Player::get_player_by_name($_POST['addDest']);
+        }
         $desti->get_data();
+        Forum::add_dest( $player,$desti, $topJson, $destTbl);
         //Ajouter l'animateur si la faction est différente
         if($player->data->faction != $desti->data->faction 
             &&
                 (($player->data->secretFaction == "") ||
                  ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))){
             $raceJson = json()->decode('races', $desti->data->race);
-            Forum::add_dest($raceJson->animateur, $topJson, $destTbl)  ;    
+            Forum::add_dest($player,$raceJson->animateur, $topJson, $destTbl)  ;    
         }
     }
 

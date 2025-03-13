@@ -230,7 +230,7 @@ function load_map($argumentValues){
             foreach($keys as $g){
 
 
-                $insertVal[] = '"'. $f->$g .'"';
+                $insertVal[] = '"'. addcslashes($f->$g,'"') .'"';
             }
 
             $insertValues[] = '('. implode(',', $insertVal) .')';
