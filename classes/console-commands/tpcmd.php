@@ -3,19 +3,36 @@
 class TpCmd extends Command
 {
     public function __construct() {
-        parent::__construct("tp",[new Argument('mat',false), new Argument('coords',false)]);
+        parent::__construct("tp",[new Argument('action',true), new Argument('target',true)]);
         parent::setDescription(<<<EOT
-téléporte le joueur [mat] aux coordonnées [coords] (x,y,z,plan).
-Exemple:
-> tp Orcrist 50,125,-5,eryn_dolen 
-> tp Orcrist Sharon (tp Orcrist à côté de Sharon)
-> tp everyone x,y,z,eryn_dolen (change tous le monde de plan sans changer x,y,z)
+Usage:
+> tp <player_name> <x,y,z,plan> (téléporte le joueur aux coordonnées)
+> tp <player_name> <other_player> (téléporte à côté d'un autre joueur)
+> tp everyone <x,y,z,plan> (change tous le monde de plan)
+> tp list-plans (affiche tous les plans disponibles)
 EOT);
     }
 
-    public function execute(  array $argumentValues ) : string
+    public function execute(array $argumentValues) : string
     {
+        if (empty($argumentValues[0])) {
+            return $this->getDescription();
+        }
 
+        if ($argumentValues[0] === 'list-plans') {
+            $db = new Db();
+            $sql = 'SELECT DISTINCT plan FROM `coords` ORDER BY plan';
+            $res = $db->exe($sql);
+
+            $plans = [];
+            while ($row = $res->fetch_object()) {
+                $plans[] = $row->plan;
+            }
+            return "Plans disponibles: " . implode(", ", $plans);
+        }
+        if (empty($argumentValues[1])) {
+            return '<font color="red">target coordinates or player name required</font>';
+        }
 
         $coordsTbl = explode(',', $argumentValues[1]);
 
