@@ -22,7 +22,6 @@ class ActionService
      */
     public function getActionByType(string $type): ?ActionInterface
     {
-        //$query = $this->entityManager->createQuery('SELECT action FROM App\\Entity\\Action action WHERE action INSTANCE OF App\\Action\\'.$type.'Action');
         $query = $this->entityManager->createQuery('SELECT action FROM App\\Action\\'.$type.'Action action');
         $log = $query->getSQL();
         $action = $query->getSingleResult();

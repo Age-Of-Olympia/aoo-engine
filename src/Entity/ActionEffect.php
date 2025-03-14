@@ -33,6 +33,7 @@ class ActionEffect
         cascade: ["persist", "remove"],
         orphanRemoval: true
     )]
+    #[ORM\OrderBy(["orderIndex" => "ASC"])]
     private Collection $instructions;
 
     public function __construct()

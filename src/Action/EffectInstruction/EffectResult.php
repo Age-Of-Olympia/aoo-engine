@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Action\Effect;
+namespace App\Action\EffectInstruction;
 
 class EffectResult
 {
     private bool $success;
 
-    private $effectSuccessMessages = array();
-    private $effectFailureMessages = array();
+    private $effectSuccessMessages;
+    private $effectFailureMessages;
 
     private ?int $totalDamages;
 
-    public function __construct(bool $success, ?array $effectSuccessMessages = null, ?array $effectFailureMessages = null, ?int $totalDamages = null) {
+    public function __construct(bool $success, ?array $effectSuccessMessages = array(), ?array $effectFailureMessages = array(), ?int $totalDamages = 0) {
         $this->success = $success;
         $this->effectSuccessMessages = $effectSuccessMessages;
         $this->effectFailureMessages = $effectFailureMessages;

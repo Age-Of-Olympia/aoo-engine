@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Listener\ActionMetadataListener;
+use App\Listener\EffectInstructionMetadataListener;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\DBAL\DriverManager;
@@ -24,6 +25,7 @@ final class EntityManagerFactory
         }
         $eventManager = self::$em->getEventManager();
         $eventManager->addEventListener(Events::loadClassMetadata, new ActionMetadataListener());
+        $eventManager->addEventListener(Events::loadClassMetadata, new EffectInstructionMetadataListener());
         return self::$em;
     }
 }

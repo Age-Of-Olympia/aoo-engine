@@ -1,11 +1,16 @@
 <?php
 namespace App\Entity;
 
+use App\Action\EffectInstruction\EffectResult;
+use App\Interface\EffectInstructionInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "effect_instructions")]
-class EffectInstruction
+#[ORM\InheritanceType('SINGLE_TABLE')]
+#[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
+abstract class EffectInstruction implements EffectInstructionInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -15,9 +20,6 @@ class EffectInstruction
     #[ORM\ManyToOne(targetEntity: ActionEffect::class, inversedBy: "instructions")]
     #[ORM\JoinColumn(nullable: false)]
     private ?ActionEffect $effect = null;
-
-    #[ORM\Column(type: "string", length: 50)]
-    private string $operation;
 
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $parameters = null;
@@ -51,17 +53,6 @@ class EffectInstruction
         return $this;
     }
 
-    public function getOperation(): string
-    {
-        return $this->operation;
-    }
-
-    public function setOperation(string $operation): self
-    {
-        $this->operation = $operation;
-        return $this;
-    }
-
     public function getParameters(): ?array
     {
         return $this->parameters;
@@ -83,4 +74,6 @@ class EffectInstruction
         $this->orderIndex = $orderIndex;
         return $this;
     }
+
+    abstract public function execute(Player $actor, Player $target): EffectResult;
 }

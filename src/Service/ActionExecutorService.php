@@ -5,13 +5,13 @@ use Player;
 use App\Entity\ActionEffect;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
+use App\EffectInstruction\EffectInstructionFactory;
 use App\Entity\Action;
 use App\Interface\ActionInterface;
 
 class ActionExecutorService
 {
     private ConditionRegistry $conditionRegistry;
-    private EffectInstructionExecutorService $effectInstructionExecutor;
     private bool $globalConditionsResult;
     private array $conditionResultsArray;
     private array $effectResultsArray;
@@ -26,7 +26,6 @@ class ActionExecutorService
     
     public function __construct(Action $action, Player $actor, Player $target){
         $this->conditionRegistry = new ConditionRegistry();
-        $this->effectInstructionExecutor = new EffectInstructionExecutorService();
         $this->conditionResultsArray = array();
         $this->effectResultsArray = array();
         $this->conditionsToPay = array();
@@ -113,16 +112,14 @@ class ActionExecutorService
 
     private function applyActionEffect(ActionEffect $effectEntity): void
     {
-        // Decide who is receiving the effect
-        //$recipient = $effectEntity->getApplyToSelf() ? $actor : ($target ?? $actor);
-
-        // Sort instructions by orderIndex if relevant:
-        $sortedInstructions = $effectEntity->getInstructions()->toArray();
-        usort($sortedInstructions, fn($a, $b) => $a->getOrderIndex() <=> $b->getOrderIndex());
+        //EffectInstructionFactory::initialize('src/Action/EffectInstruction');
+        $effectInstructionService = new EffectInstructionService();
+        $instructions = $effectInstructionService->getEffectInstructionsByEffect($effectEntity->getId());
 
         // Execute instructions in order
-        foreach ($sortedInstructions as $instruction) {
-            array_push($this->effectResultsArray, $this->effectInstructionExecutor->executeInstruction($this->actor, $this->target, $instruction));
+        foreach ($instructions as $instruction) {
+            $result = $instruction->execute($this->actor, $this->target);
+            array_push($this->effectResultsArray, $result);
         }
     }
 
