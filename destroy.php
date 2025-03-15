@@ -142,7 +142,7 @@ if(!empty($refresh) && $refresh){
 }
 
 
-$player->put_bonus($bonus=array('a'=>-1));
+$player->putBonus($bonus=array('a'=>-1));
 
 $player->put_xp(1);
 

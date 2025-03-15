@@ -184,7 +184,7 @@ if($goCoords->z < 0){
 
 
         $bonus = array('a'=>-1);
-        $player->put_bonus($bonus);
+        $player->putBonus($bonus);
 
         $player->put_xp(XP_PER_MINE);
 
@@ -286,7 +286,7 @@ if($planJson){
 
     // cost (neg bonus)
     $bonus = array('mvt'=>-1);
-    $player->put_bonus($bonus);
+    $player->putBonus($bonus);
 }
 
 if(!$player->have_option('incognitoMode'))

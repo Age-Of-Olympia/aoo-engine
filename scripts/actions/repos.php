@@ -63,8 +63,6 @@ if($count){
 
 
 
-// special : dot not add -1 A with $payer->put_bonus() cause it add 1 Fat
-
 $bonus = array();
 
 $values = array(

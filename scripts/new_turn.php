@@ -173,7 +173,7 @@ else if(!empty($_SESSION['playerId'])){
 
                     if(!in_array($k, array('ae','a','mvt'))){
 
-                        $player->put_bonus(array($k=>$val));
+                        $player->putBonus(array($k=>$val));
                     }
 
                     echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+'. $val .'</td></tr>';

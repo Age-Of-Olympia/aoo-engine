@@ -16,7 +16,7 @@ class RequiresTraitValueCondition extends BaseCondition
         $costIsAffordable = true;
         foreach ($params as $key => $value) {
             if ($actor->getRemaining($key) < $value) {
-                array_push($details, "Pas assez de ".$key);
+                array_push($details, "Pas assez de ".CARACS[$key]);
                 $costIsAffordable = false;
             }
 

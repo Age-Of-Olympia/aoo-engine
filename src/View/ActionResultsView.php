@@ -83,11 +83,15 @@ class ActionResultsView
                     }
                 }
             }
-            
         }
+
+        foreach($this->actionResults->getCostsResultsArray() as $costResult) {
+            $actionsDetails = $actionsDetails.$costResult."<br>";
+        }
+
         $actionsDetails = $actionsDetails.'</div>';
 
-        $actionsDetails = $actionsDetails.'<div>Vous gagnez '.$this->actionResults->getXpResultsArray()["actor"].'XP</div>';
+        $actionsDetails = $actionsDetails.'<div>Vous gagnez '.$this->actionResults->getXpResultsArray()["actor"].' XP</div>';
    
         return $actionsDetails;
     }

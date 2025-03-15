@@ -210,9 +210,7 @@ if($actionJson->targetType != 'self'){
 
     // special attack cc/ct
     if($actionJson->playerJet == 'cc/ct'){
-
         if($distance == 1){
-
             try {
                 $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
             } catch (Exception $e) {
@@ -232,7 +230,7 @@ if($actionJson->targetType != 'self'){
         $actionExecutor = new ActionExecutorService($action, $player, $target);
         $actionResults = $actionExecutor->executeAction();
         $actionResultsView = new ActionResultsView($actionResults);
-                    // this make a "echo" needed while the huge action.php file exists
+        // this make a "echo" needed while the huge action.php file exists
         $actionResultsView->displayActionResults();
 
         $logDetails = $actionResultsView->getActionResults();
@@ -258,98 +256,11 @@ if($actionJson->targetType != 'self'){
             Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
         }
         
-        
     } catch (Exception $e) {
         echo $e->getMessage();
     }
 
-
-    // $actionExecutor = new ActionExecutorService($action, $player, $target);
-    // $actionResults = $actionExecutor->executeAction();
-    // $actionResultsView = new ActionResultsView($actionResults);
-    //             // this make a "echo" needed while the huge action.php file exists
-    // $actionResultsView->displayActionResults();
-
-    // $logDetails = $actionResultsView->getActionResults();
-    // $actorMainLog = $actionResults->getLogsArray()["actor"];
-    // $targetMainLog = $actionResults->getLogsArray()["target"];
-
-    // $logTime = time();
-    // if(!empty($actorMainLog)) {
-    //     if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
-    //         $type = "hidden_action";
-    //     } else {
-    //         $type = "action";
-    //     }
-    //     Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
-    // }
-
-    // if(!empty($targetMainLog)){
-    //     if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
-    //         $type = "hidden_action_other_player";
-    //     } else {
-    //         $type = "action_other_player";
-    //     }
-    //     Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
-    // }
-
     goto fin;
-
-    // special defense cc/agi
-    if($actionJson->targetJet == 'cc/agi'){
-
-
-        if($distance == 1){
-
-
-            // melee
-
-            $actionJson->targetJet = max($target->caracs->cc, $target->caracs->agi);
-        }
-
-        elseif($distance > 1){
-
-
-            // tir
-
-
-            // distanceMalus
-            if($distance > 2){
-
-                $distanceMalus = ($distance - 2) * 3;
-            }
-
-
-            $option1 = floor( (3/4*$target->caracs->cc) + (1/4*$target->caracs->agi) );
-            $option2 = floor( (1/4*$target->caracs->cc) + (3/4*$target->caracs->agi) );
-
-
-            $actionJson->targetJet = max($option1, $option2);
-        }
-    }
-
-
-    $playerJet = (is_numeric($actionJson->playerJet)) ? $dice->roll($actionJson->playerJet) : $dice->roll($player->caracs->{$actionJson->playerJet});
-
-    $targetJet = (is_numeric($actionJson->targetJet)) ? $dice->roll($actionJson->targetJet) : $dice->roll($target->caracs->{$actionJson->targetJet});
-
-
-    $playerFat = floor($player->data->fatigue / FAT_EVERY);
-    $targetFat = floor($target->data->fatigue / FAT_EVERY);
-
-
-    $playerTotal = array_sum($playerJet) - $playerFat - $distanceMalus;
-    $targetTotal = array_sum($targetJet) - $targetFat - $target->data->malus;
-
-
-    // tir & too far
-    if($distanceMalus){
-
-
-        $distanceTreshold = floor(($distance) * 2.5);
-        $checkAboveDistance = $playerTotal >= $distanceTreshold;
-    }
-
 
     // spell & too far
     if($actionJson->playerJet == 'fm'){
@@ -377,27 +288,7 @@ if($actionJson->targetType != 'self'){
 
         $success = true;
     }
-    else{
 
-
-        if(!$checkAboveDistance){
-
-
-            echo '<div style="color: red;">Votre action ne porte pas aussi loin.</div>';
-        }
-        else{
-
-
-            // break defenses
-            include('scripts/actions/break_defenses.php');
-
-
-            echo '<div style="color: red;">Échec.</div>';
-
-            // target malus
-            $target->put_malus(1);
-        }
-    }
 }
 elseif($actionJson->targetType == 'self'){
 
@@ -423,45 +314,7 @@ if(!empty($success) && $success == true){
     if(!empty($actionJson->playerDamages)){
 
 
-        $playerDamages = (is_numeric($actionJson->playerDamages)) ? $actionJson->playerDamages : $player->caracs->{$actionJson->playerDamages};
-
-
-        if(!empty($actionJson->bonusDamages)){
-
-
-            if(!is_numeric($actionJson->bonusDamages)){
-
-
-                $actionJson->bonusDamages = $player->caracs->{$actionJson->bonusDamages};
-            }
-
-
-            $playerDamages += $actionJson->bonusDamages;
-        }
-
-
-        $targetDamages = (is_numeric($actionJson->targetDamages)) ? $actionJson->targetDamages : $target->caracs->{$actionJson->targetDamages};
-        $targetDamagesBonus = empty($actionJson->targetDamagesBonus)? 0 :((is_numeric($actionJson->targetDamagesBonus)) ? $actionJson->targetDamagesBonus : $target->caracs->{$actionJson->targetDamagesBonus});
-
-        $totalDamages = $playerDamages - ($targetDamages + $targetDamagesBonus);
-
-        // tir damages reduce and distance malus has same rules to be applied ( tir + distance > 2 )
-        if($distanceMalus){
-
-
-            $distanceDmgReduce = $distance - 2;
-
-            $totalDamages -= $distanceDmgReduce;
-        }
-
-
-        if($totalDamages < 1){
-
-
-            $totalDamages = 1;
-        }
-
-        // crit
+        // crit TO DO
         if(!isset($target->emplacements->tete) || !empty($actionJson->autoCrit)){
 
 
@@ -475,10 +328,6 @@ if(!empty($success) && $success == true){
                 echo '<div><font color="red">Critique! Dégâts augmentés!</font></div>';
             }
         }
-
-        $distanceDmgReduceTxt = ($distanceDmgReduce) ? ' - '. $distanceDmgReduce .' (Distance)' : '';
-
-        $critTxt = (!empty($critAdd)) ? ' (+ '. $critAdd .')' : '';
 
 
         include('scripts/actions/esquive.php');
@@ -498,7 +347,7 @@ if(!empty($success) && $success == true){
 
 
             // put negative bonus (damages)
-            $target->put_bonus(array('pv'=>-$totalDamages));
+            $target->putBonus(array('pv'=>-$totalDamages));
 
 
             // put assist
@@ -537,7 +386,7 @@ if(!empty($success) && $success == true){
         ';
 
 
-        $target->put_bonus(array('pv'=>$playerHeal));
+        $target->putBonus(array('pv'=>$playerHeal));
 
         $playerXp = 3;
         $targetXp = 0;
@@ -568,22 +417,6 @@ if(!empty($actionJson->costs)){
 
 
 
-// last action
-if(!isset($actionJson->noBerserkCheck)){
-
-    $sql = '
-    UPDATE
-    players
-    SET
-    lastActionTime = '. time() .'
-    WHERE
-    id = ?
-    ';
-
-    $db->exe($sql, $player->id);
-}
-
-
 // scripts
 if(!empty($actionJson->script)){
 
@@ -592,7 +425,7 @@ if(!empty($actionJson->script)){
 }
 
 
-$player->put_bonus($bonus);
+$player->putBonus($bonus);
 
 
 // add effects
@@ -638,43 +471,6 @@ if(!isset($playerXp)){
     }
 }
 
-
-/*
- * PRINT AND REQ RESULTS
- */
-
-
-if(
-    (!empty($actionJson->targetJet) && $actionJson->targetJet != 0)
-    &&
-    $actionJson->targetType != 'self'
-){
-
-    $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
-
-    $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-
-    $playerFatTxt = ($playerFat != 0) ? ' - '. $playerFat .' (Fatigue)' : '';
-    $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
-
-    $playerTotalTxt = ($playerFat || $distanceMalus) ? ' = '. $playerTotal : '';
-    $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
-
-
-    echo '<div class="action-details">Jet '. $player->data->name .' = '. implode(' + ', $playerJet) .' = '. array_sum($playerJet) . $distanceMalusTxt . $playerFatTxt . $playerTotalTxt .'</div>';
-
-
-    if($checkAboveDistance){
-
-
-        echo '<div class="action-details">Jet '. $target->data->name .' = '. array_sum($targetJet) . $malusTxt . $targetFatTxt . $targetTotalTxt .'</div>';
-    }
-    else{
-
-        echo '<div class="action-details">Le jet devait être >= à '. $distanceTreshold .'.</div>';
-    }
-
-}
 
 $data = ob_get_clean();
 

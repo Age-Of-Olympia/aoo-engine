@@ -114,6 +114,13 @@ class ComputeCondition extends BaseCondition
         $distanceMalus = 0;
         if($distance > 2){
             $distanceMalus = ($distance - 2) * 3;
+            $actorTotal = $actorTotal - $distanceMalus;
+        }
+
+        $checkAboveDistance = true;
+        if($distance > 1){
+            $distanceTreshold = floor(($distance) * 2.5);
+            $checkAboveDistance = $actorTotal >= $distanceTreshold;
         }
 
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
@@ -125,15 +132,24 @@ class ComputeCondition extends BaseCondition
         $playerTotalTxt = ($playerFat || $distanceMalus) ? ' = '. $actorTotal : '';
         $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
 
-        $conditionDetails[0] = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = '. array_sum($actorRoll) . $distanceMalusTxt . $playerFatTxt . $playerTotalTxt;
-        $conditionDetails[1] = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+        $conditionDetailsSuccess[0] = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = '. array_sum($actorRoll) . $distanceMalusTxt . $playerFatTxt . $playerTotalTxt;
+        $conditionDetailsSuccess[1] = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+        $conditionDetailsFailure = array();
 
-        if(!AUTO_FAIL && ($actorTotal >= $targetTotal))
+        if(!AUTO_FAIL && $checkAboveDistance && ($actorTotal >= $targetTotal))
         {
             $success = true;
         }
 
-        return new ConditionResult($success,$conditionDetails,$conditionDetails,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
+        if (!$success) {
+            $conditionDetailsFailure[0] = $conditionDetailsSuccess[0];
+            $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
+            if (!$checkAboveDistance) {
+                $conditionDetailsFailure[2] = "Le tir n'atteint pas sa cible ! Il fallait un jet supérieur à ". $distanceTreshold . ".";
+            }
+        }
+
+        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
     }
 
 }

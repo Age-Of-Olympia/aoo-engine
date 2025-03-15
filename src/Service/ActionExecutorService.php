@@ -48,7 +48,7 @@ class ActionExecutorService
         $this->finalTargetPv = $this->target->getRemaining('pv');
 
         // 3) apply costs
-        $this->applyCosts();
+        $costsResultsArray = $this->applyCosts();
 
         // update Last Action Time (used on new turn to set antiberserk time)
         $this->playerService->updateLastActionTime();
@@ -59,16 +59,20 @@ class ActionExecutorService
         $logsArray = $this->action->getLogMessages($this->actor, $this->target);
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
-        return new ActionResults($this->globalConditionsResult, $this->conditionResultsArray, $this->effectResultsArray, $xpResultsArray, $logsArray);
+        return new ActionResults($this->globalConditionsResult, $this->conditionResultsArray, $this->effectResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
     }
 
-    private function applyCosts()
+    private function applyCosts(): array
     {
+        $result = array();
         foreach ($this->conditionsToPay as $conditionToPay) {
-            foreach ($conditionToPay->getParameters() as $key => $value) {
-                $this->actor->put_bonus([$key => -$value]);
+            $condition = $this->conditionRegistry->getCondition($conditionToPay->getConditionType());
+            $resultsArray = $condition->applyCosts($this->actor, $this->target, $conditionToPay);
+            foreach ($resultsArray as $subResult) {
+                array_push($result, $subResult);
             }
         }
+        return $result;
     }
 
     private function applyEffects(): void

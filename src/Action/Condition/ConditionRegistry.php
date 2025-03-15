@@ -19,7 +19,7 @@ class ConditionRegistry
             'RequiresWeaponType' => new RequiresWeaponTypeCondition(), 
             'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
-            'MinimumDistance' => new MinimumDistanceCondition(),
+            'RequiresAmmo' => new RequiresAmmoCondition(),
             
             
             'Compute' => new ComputeCondition(), // include equipment effect ?

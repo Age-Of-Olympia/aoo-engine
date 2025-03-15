@@ -23,10 +23,10 @@ if(!empty($actionJson->useEmplacement)){
         }
 
 
-        if(!$munition = $player->get_munition($player->emplacements->{$emplacement}, $equiped=true)){
+        // if(!$munition = $player->get_munition($player->emplacements->{$emplacement}, $equiped=true)){
 
-            exit('Vous devez équiper une munition.');
-        }
+        //     exit('Vous devez équiper une munition.');
+        // }
     }
 }
 

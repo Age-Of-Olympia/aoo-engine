@@ -17,5 +17,7 @@ interface ConditionInterface
      * Do we have to remove the amount of the condition (actions, pm, etc.)
      */
     public function toRemove(): bool;
+
+    public function applyCosts(ActorInterface $actor, ?ActorInterface $target, ActionCondition $conditionToPay): array;
     
 }

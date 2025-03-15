@@ -73,7 +73,7 @@ elseif($item->row->spell != ''){
 // use ae
 if(!empty($ae)){
 
-    $player->put_bonus(array('ae'=>-$ae));
+    $player->putBonus(array('ae'=>-$ae));
 }
 
 

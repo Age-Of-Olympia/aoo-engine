@@ -57,7 +57,7 @@ if($target->haveEffect('cle_de_bras')){
         $target->endEffect('cle_de_bras');
 
 
-        $player->put_bonus(array('mvt'=>-$player->getRemaining('mvt')));
+        $player->putBonus(array('mvt'=>-$player->getRemaining('mvt')));
 
         echo '<font color="red">'. $target->data->name .' vous fait une clé de bras et vous immobilise!</font>';
 

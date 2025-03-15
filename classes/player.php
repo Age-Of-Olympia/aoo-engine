@@ -889,7 +889,7 @@ class Player implements ActorInterface {
         $this->refresh_caracs();
     }
 
-    public function put_bonus($bonus) : bool{
+    public function putBonus($bonus) : bool{
 
 
         if(!isset($this->data)){
@@ -1358,7 +1358,7 @@ class Player implements ActorInterface {
 
     
 
-    public function equip(object $item): EquipResult{
+    public function equip(Item $item): EquipResult{
 
 
         $db = new Db();
@@ -1524,7 +1524,7 @@ class Player implements ActorInterface {
             
 
             // equip munitions
-            if($munition = $this->get_munition($item)){
+            if($munition = $this->getMunition($item)){
 
                 if(!isset($itemList[$munition->id])){
 
@@ -1569,16 +1569,16 @@ class Player implements ActorInterface {
     }
 
 
-    public function get_munition($item, $equiped=false){
+    public function getMunition(Item $object, bool $equiped=false): ?Item {
 
 
-        if(!isset($item->data->munitions)){
+        if(!isset($object->data->munitions)){
 
-            return false;
+            return null;
 
         }
 
-        foreach($item->data->munitions as $e){
+        foreach($object->data->munitions as $e){
 
 
             $munition = Item::get_item_by_name($e);

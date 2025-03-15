@@ -75,7 +75,7 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
     $item->add_item($player, -1);
 
 
-    $player->put_bonus(['a'=>-1]);
+    $player->putBonus(['a'=>-1]);
 
 
     exit();
