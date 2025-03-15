@@ -37,9 +37,9 @@ class ComputeCondition extends BaseCondition
             case Roll::ct->value :
                 $result = $this->computeDistanceAttack($actor, $target, $params);
                 break;
-            // case Roll::fm :
-            //     $this->computeSpellAttack($actor, $target, $params);
-            //     break;
+            case Roll::fm->value :
+                $result = $this->computeSpellAttack($actor, $target, $params);
+                break;
             default:
                 # code...
                 break;
@@ -146,6 +146,66 @@ class ComputeCondition extends BaseCondition
             $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
             if (!$checkAboveDistance) {
                 $conditionDetailsFailure[2] = "Le tir n'atteint pas sa cible ! Il fallait un jet supérieur à ". $distanceTreshold . ".";
+            }
+        }
+
+        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
+    }
+
+    private function computeSpellAttack(ActorInterface $actor, ?ActorInterface $target): ConditionResult 
+    {
+        $success = false;
+        $dice = new Dice(3);
+
+        $actorRollTraitValue = $actor->caracs->fm;
+        $targetRollTraitValue = $actor->caracs->fm;
+
+        $actorRoll = $dice->roll($actorRollTraitValue);
+        $targetRoll = $dice->roll($targetRollTraitValue);
+
+        $playerFat = floor($actor->data->fatigue / FAT_EVERY);
+        $targetFat = floor($target->data->fatigue / FAT_EVERY);
+
+        $actorTotal = array_sum($actorRoll) - $playerFat;
+        $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
+
+        $distance = View::get_distance($actor->getCoords(), $target->getCoords());
+
+        $distanceMalus = 0;
+        if($distance > 2){
+            $distanceMalus = ($distance - 2) * 3;
+            $actorTotal = $actorTotal - $distanceMalus;
+        }
+
+        $checkAboveDistance = true;
+        if($distance > 1){
+            $distanceTreshold = 4 * ($distance - 1);
+            $checkAboveDistance = $actorTotal >= $distanceTreshold;
+        }
+
+        $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
+        $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
+
+        $playerFatTxt = ($playerFat != 0) ? ' - '. $playerFat .' (Fatigue)' : '';
+        $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
+
+        $playerTotalTxt = ($playerFat || $distanceMalus) ? ' = '. $actorTotal : '';
+        $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
+
+        $conditionDetailsSuccess[0] = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = '. array_sum($actorRoll) . $distanceMalusTxt . $playerFatTxt . $playerTotalTxt;
+        $conditionDetailsSuccess[1] = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+        $conditionDetailsFailure = array();
+
+        if(!AUTO_FAIL && $checkAboveDistance && ($actorTotal >= $targetTotal))
+        {
+            $success = true;
+        }
+
+        if (!$success) {
+            $conditionDetailsFailure[0] = $conditionDetailsSuccess[0];
+            $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
+            if (!$checkAboveDistance) {
+                $conditionDetailsFailure[2] = "Le sort n'atteint pas sa cible ! Il fallait un jet supérieur à ". $distanceTreshold . ".";
             }
         }
 

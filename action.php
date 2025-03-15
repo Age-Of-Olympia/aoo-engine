@@ -24,10 +24,10 @@ $actionJson = json()->decode('actions', $_POST['action']);
 
 
 // special no target
-if($actionJson->targetType == 'none'){
+// if($actionJson->targetType == 'none'){
 
-    exit('Ce sort ne peut être lancé.');
-}
+//     exit('Ce sort ne peut être lancé.');
+// }
 
 // player
 $player = new Player($_SESSION['playerId']);
@@ -38,10 +38,10 @@ $player = new Player($_SESSION['playerId']);
 //     exit('<font color="red">Pas assez d\'Actions.</font>');
 // }
 
-if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->getRemaining('pm')){
+// if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->getRemaining('pm')){
 
-    exit('<font color="red">Pas assez de PM.</font>');
-}
+//     exit('<font color="red">Pas assez de PM.</font>');
+// }
 
 $player->get_data();
 
@@ -107,10 +107,10 @@ if(!empty($actionJson->targetIgnore)){
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
 
 
-include('scripts/actions/check_distance.php');
+// include('scripts/actions/check_distance.php');
 
 
-include('scripts/actions/check_equipement.php');
+// include('scripts/actions/check_equipement.php');
 
 
 View::get_walls_between($player->coords, $target->coords);
@@ -219,10 +219,18 @@ if($actionJson->targetType != 'self'){
         }
         elseif($distance > 1){
             try {
-                $action = ActionFactory::getAction('Distance'); // Crée une instance de MeleeAction
+                $action = ActionFactory::getAction('Distance'); // Crée une instance de DistanceAction
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
+        }
+    }
+
+    if($actionJson->playerJet == 'fm'){
+        try {
+            $action = ActionFactory::getAction('Spell'); // Crée une instance de SpellAction
+        } catch (Exception $e) {
+            echo $e->getMessage();
         }
     }
 
