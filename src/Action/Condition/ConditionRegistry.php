@@ -22,7 +22,9 @@ class ConditionRegistry
             'RequiresAmmo' => new RequiresAmmoCondition(),
             
             
-            'Compute' => new ComputeCondition(), // include equipment effect ?
+            'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?
+            'DistanceCompute' => new DistanceComputeCondition(),
+            'SpellCompute' => new SpellComputeCondition(),
             // etc...
         ];
     }
