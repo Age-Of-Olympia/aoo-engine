@@ -5,6 +5,7 @@ namespace App\Action\EffectInstruction;
 use App\Entity\EffectInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
+use Str;
 
 #[ORM\Entity]
 class ApplyStatusEffectInstruction extends EffectInstruction
@@ -18,17 +19,17 @@ class ApplyStatusEffectInstruction extends EffectInstruction
         switch ($player) {
             case 'ACTOR':
                 $this->applyEffect($params[$status], $status, $duration, $actor);
-                $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . $duration . ' TBD à ' . $actor->data->name;
+                $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $actor->data->name;
                 break;
             case 'TARGET':
                 $this->applyEffect($params[$status], $status, $duration, $target);
-                $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . $duration . ' TBD à ' . $target->data->name;
+                $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $target->data->name;
                 break;
             default:
             $this->applyEffect($params[$status], $status, $duration, $actor);
             $this->applyEffect($params[$status], $status, $duration, $target);
-            $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . $duration . ' TBD à ' . $actor->data->name;
-            $effectSuccessMessages[1] = 'L\'effet '.$status.' est appliqué pour ' . $duration . ' TBD à ' . $target->data->name;
+            $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $actor->data->name;
+            $effectSuccessMessages[1] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $target->data->name;
             break;
         }
 

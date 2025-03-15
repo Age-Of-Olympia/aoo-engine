@@ -26,23 +26,4 @@ class EffectInstructionFactory
         return self::$EffectInstructionClasses;
     }
 
-    // public static function getAllEffectInstructions(): array
-    // {  
-    //     $result = array();
-    //     foreach (self::$EffectInstructionClasses as $type) {
-    //         array_push($result, $type);
-    //     } 
-    //     return $result;
-    // }
-
-    // public static function getEffectInstruction($type): EffectInstructionInterface
-    // {
-    //     $EffectInstructionService = new EffectInstructionService();
-    //     if (isset(self::$EffectInstructionClasses[$type])) {
-    //         return $EffectInstructionService->getEffectInstructionByTypeByEffect($type);;
-    //     }
-    //     throw new Exception("EffectInstruction type not found: $type");
-    // }
-
-
 }
