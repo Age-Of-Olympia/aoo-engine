@@ -39,6 +39,33 @@
             "id": 25
         },
         {
+            "name": "parchemin_sort",
+            "recette": [
+                {
+                    "name": "parchemin",
+                    "n": 1,
+                    "id": 27
+                },
+                {
+                    "name": "pierre_mana",
+                    "n": 1,
+                    "id": 95
+                }
+            ],
+            "id": 26
+        },
+        {
+            "name": "parchemin",
+            "recette": [
+                {
+                    "name": "cuir",
+                    "n": 3,
+                    "id": 93
+                }
+            ],
+            "id": 27
+        },
+        {
             "name": "javelot_entrainement",
             "recette": [
                 {
