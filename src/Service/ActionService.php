@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\EntityManagerFactory;
 use App\Entity\Action;
 use App\Interface\ActionInterface;
+use Doctrine\ORM\Query\ResultSetMapping;
 use Exception;
 
 class ActionService
@@ -20,32 +21,33 @@ class ActionService
     /**
      * Returns a Action entity that matches the given type, or null if not found.
      */
-    public function getActionByTypeByName(string $type, ?string $name = null): ?ActionInterface
+    public function getActionByName(string $name): ?ActionInterface
     {
-        $dql = 'SELECT action FROM App\\Action\\'.$type.'Action action';
-        if ($name != null) {
-            $dql = $dql . ' WHERE action.name = :name';
-        }
-        $query = $this->entityManager->createQuery($dql);
-        if ($name != null) {
-            $query->setParameter("name", $name);
-        }
+        $rsm1 = new ResultSetMapping();
+
+        // Map only the 'type' field
+        $rsm1->addScalarResult('type', 'type');
+
+        // Define the native SQL query
+        $sql = 'SELECT type FROM actions where name = :name';
+
+        // Execute the native query with the ResultSetMapping
+        $query1 = $this->entityManager->createNativeQuery($sql, $rsm1);
+        $query1->setParameter("name", $name);
+        $type = $query1->getSingleScalarResult();
+
+
+        $className = ucfirst(strtolower($type)) . 'Action';
+
+        $query2 = $this->entityManager->createQuery(
+            'SELECT action FROM App\\Action\\'.$className.' action where action.name = :name'
+        );
+        $query2->setParameter("name", $name);
         
-        $log = $query->getSQL();
-        $action = $query->getSingleResult();
-        
-        if (!$action) {
-            throw new Exception("Action not found for type: $type");
-        }
-        return $action;
+        $result = $query2->getSingleResult();
+
+       
+        return $result;
     }
 
-    /**
-     * Returns the ID of the Action that matches the given type, or null if not found.
-     */
-    public function getActionIdByType(string $type): ?int
-    {
-        $Action = $this->getActionByTypeByName($type);
-        return $Action ? $Action->getId() : null;
-    }
 }

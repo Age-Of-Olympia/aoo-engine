@@ -27,7 +27,7 @@ class HealAction extends Action
         return $infosArray;
     }
 
-    private function calculateActorXp(bool $success, Player $actor, Player $target): int
+    protected function calculateActorXp(bool $success, Player $actor, Player $target): int
     {
         if ($success) {
             $playerXp = 3;

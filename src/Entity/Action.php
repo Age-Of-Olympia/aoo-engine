@@ -16,10 +16,10 @@ abstract class Action implements ActionInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+    protected ?int $id = null;
 
     #[ORM\Column(type: "string", length: 50)]
-    private string $name;
+    protected string $name;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -28,7 +28,7 @@ abstract class Action implements ActionInterface
         orphanRemoval: true,
     )]
     #[ORM\OrderBy(["executionOrder" => "ASC"])]
-    private Collection $actionConditions;
+    protected Collection $actionConditions;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -36,13 +36,13 @@ abstract class Action implements ActionInterface
         cascade: ["persist", "remove"],
         orphanRemoval: true
     )]
-    private Collection $effects;
+    protected Collection $effects;
 
     /**
      * Many Actions can belong to Many Races by default.
      */
     #[ORM\ManyToMany(targetEntity: Race::class, mappedBy: "actions")]
-    private Collection $races;
+    protected Collection $races;
 
     public function __construct()
     {

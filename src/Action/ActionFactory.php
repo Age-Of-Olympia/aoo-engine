@@ -26,13 +26,12 @@ class ActionFactory
         self::$actionClasses = loadActionClasses($directory);
     }
 
-    public static function getAction(string $type, ?string $name = null): ActionInterface
+    public static function getAction(string $name): ActionInterface
     {
+        // keep by type for melee and shoot
+        // add by name fot the others
         $actionService = new ActionService();
-        $className = ucfirst(strtolower($type)) . 'Action';
-        if (isset(self::$actionClasses[$className])) {
-            return $actionService->getActionByTypeByName($type, $name);;
-        }
-        throw new Exception("Action type not found: $type");
+        $action = $actionService->getActionByName($name);
+        return $action;
     }
 }

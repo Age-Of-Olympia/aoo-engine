@@ -31,7 +31,7 @@ abstract class AttackAction extends Action
         return $infosArray;
     }
 
-    private function calculateActorXp(bool $success, Player $actor, Player $target): int
+    protected function calculateActorXp(bool $success, Player $actor, Player $target): int
     {
         if ($success) {
             if (!isset($actor->data)) {
@@ -67,7 +67,7 @@ abstract class AttackAction extends Action
         return $playerXp;
     }
 
-    private function calculateTargetXp(bool $success, Player $actor, Player $target): int
+    protected function calculateTargetXp(bool $success, Player $actor, Player $target): int
     {
         if ($success) {
             $targetXp = 0;

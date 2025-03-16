@@ -209,32 +209,55 @@ if($actionJson->targetType != 'self'){
 
 
     // special attack cc/ct
+    // if($actionJson->playerJet == 'cc/ct'){
+    //     if($distance == 1){
+    //         try {
+    //             $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
+    //         } catch (Exception $e) {
+    //             echo $e->getMessage();
+    //         }
+    //     }
+    //     elseif($distance > 1){
+    //         try {
+    //             $action = ActionFactory::getAction('Distance'); // Crée une instance de DistanceAction
+    //         } catch (Exception $e) {
+    //             echo $e->getMessage();
+    //         }
+    //     }
+    // }
+
+    // if($actionJson->playerJet == 'fm'){
+    //     try {
+    //         $action = ActionFactory::getAction('Spell', $_POST["action"]); // Crée une instance de SpellAction
+    //     } catch (Exception $e) {
+    //         try {
+    //             $action = ActionFactory::getAction('Heal', $_POST["action"]); // Crée une instance de HealAction
+    //         } catch (Exception $e) {
+    //             echo $e->getMessage();
+    //         }
+    //     }
+    // }
+
     if($actionJson->playerJet == 'cc/ct'){
         if($distance == 1){
             try {
-                $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
+                $action = ActionFactory::getAction('melee'); // Crée une instance de MeleeAction
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
         }
         elseif($distance > 1){
             try {
-                $action = ActionFactory::getAction('Distance'); // Crée une instance de DistanceAction
+                $action = ActionFactory::getAction('distance'); // Crée une instance de DistanceAction
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
         }
-    }
-
-    if($actionJson->playerJet == 'fm'){
+    } else {
         try {
-            $action = ActionFactory::getAction('Spell', $_POST["action"]); // Crée une instance de SpellAction
+            $action = ActionFactory::getAction($_POST["action"]); 
         } catch (Exception $e) {
-            try {
-                $action = ActionFactory::getAction('Heal', $_POST["action"]); // Crée une instance de HealAction
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
+            echo $e->getMessage();
         }
     }
 
