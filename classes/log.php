@@ -80,6 +80,12 @@ class Log{
                 continue;
             }
 
+            // PNJs can see everything
+            if ($player->id <= 0) {
+                $return[] = $row;
+                continue;
+            }
+
             // If the event is about player, either as doer or as target, event is displayed
             // Two lines of travel are stored, one in the departure plan and ont in the arrival plan,
             // We hide one of the two !
@@ -97,7 +103,7 @@ class Log{
                     $return[] = $row;
                 }
                 continue;
-            }  
+            }
 
             // Get Perception
             $caracsJson = json()->decode('players', $player->id .'.caracs');
@@ -121,6 +127,11 @@ class Log{
             $arrayCoordsId = View::get_coords_arround($last_player_coords, $p);
             array_walk($arrayCoordsId, array(Log::class, 'compute_unique_coord'), [$last_player_coords->z, $last_player_coords->plan]);
 
+            $planJson = json()->decode('plans', $row->plan);
+            if (!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false)) {
+                continue;
+            }
+
             if (in_array($row->coords_computed, $arrayCoordsId)) {
                 $return[] = $row;
                 continue;
@@ -130,7 +141,6 @@ class Log{
             // if the player is in his home plan at the moment of the event + it is a travel
             if ($raceJson->plan == $row->plan && $row->movement_plan == $row->plan && $row->type == "travel") {
                 // we get the plan pnj
-                $planJson = json()->decode('plans', $row->plan);
                 if (isset($planJson->pnj)) {
                     $pnj = new Player($planJson->pnj);
                     $pnj->get_coords();
