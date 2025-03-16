@@ -23,22 +23,34 @@ class ActionService
      */
     public function getActionByName(string $name): ?ActionInterface
     {
-        $rsm1 = new ResultSetMapping();
+        $type = $this->getType($name);
+        $result = $this->getAction($type, $name);
 
+        return $result;
+    }
+
+    private function getType($name)
+    {
+        $rsm1 = new ResultSetMapping();
+        
         // Map only the 'type' field
         $rsm1->addScalarResult('type', 'type');
-
+        
         // Define the native SQL query
         $sql = 'SELECT type FROM actions where name = :name';
-
+        
         // Execute the native query with the ResultSetMapping
         $query1 = $this->entityManager->createNativeQuery($sql, $rsm1);
         $query1->setParameter("name", $name);
         $type = $query1->getSingleScalarResult();
 
+        return $type;
+    }
 
+    private function getAction($type, $name)
+    {
         $className = ucfirst(strtolower($type)) . 'Action';
-
+        
         $query2 = $this->entityManager->createQuery(
             'SELECT action FROM App\\Action\\'.$className.' action where action.name = :name'
         );
@@ -46,7 +58,6 @@ class ActionService
         
         $result = $query2->getSingleResult();
 
-       
         return $result;
     }
 

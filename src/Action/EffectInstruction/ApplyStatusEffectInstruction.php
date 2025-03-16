@@ -13,14 +13,23 @@ class ApplyStatusEffectInstruction extends EffectInstruction
     public function execute(Player $actor, Player $target): EffectResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }
-        // e.g. { "player": "actor", "adrenaline": true, "duration": 86400 }
+        // e.g. { "adrenaline": true, "player": "actor", , "duration": 86400 }
+        // e.g. { "finished": true, "player": "actor" }
         $status = array_key_first($params);
         $duration = $params['duration'] ?? 0;
         $player = $params['player'] ?? 'both';
+        $effectSuccessMessages = array();
         switch ($player) {
             case 'actor':
-                $this->applyEffect($params[$status], $status, $duration, $actor);
-                $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $actor->data->name;
+                if ($status == "finished") {
+                    $res = $actor->purge_effects();
+                    if ($res > 0) {
+                        $effectSuccessMessages[0] = $res .' effets terminés.';
+                    }
+                } else {
+                    $this->applyEffect($params[$status], $status, $duration, $actor);
+                    $effectSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $actor->data->name;
+                }
                 break;
             case 'target':
                 $this->applyEffect($params[$status], $status, $duration, $target);

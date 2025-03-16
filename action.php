@@ -23,36 +23,13 @@ if(!isset($_POST['action'])){
 $actionJson = json()->decode('actions', $_POST['action']);
 
 
-// special no target
-// if($actionJson->targetType == 'none'){
-
-//     exit('Ce sort ne peut être lancé.');
-// }
-
 // player
 $player = new Player($_SESSION['playerId']);
 
 
-// if($player->getRemaining('a') < 1){
-
-//     exit('<font color="red">Pas assez d\'Actions.</font>');
-// }
-
-// if(isset($actionJson->costs) && isset($actionJson->costs->pm) && $actionJson->costs->pm > $player->getRemaining('pm')){
-
-//     exit('<font color="red">Pas assez de PM.</font>');
-// }
-
 $player->get_data();
 
 $player->get_caracs();
-
-
-// anti berserk
-// if(!isset($actionJson->noBerserkCheck)){
-
-//     include('scripts/actions/check_berserk.php');
-// }
 
 
 // target
@@ -106,31 +83,7 @@ if(!empty($actionJson->targetIgnore)){
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
 
-
-// include('scripts/actions/check_distance.php');
-
-
-// include('scripts/actions/check_equipement.php');
-
-
 View::get_walls_between($player->coords, $target->coords);
-
-
-// forbid if
-if(!empty($actionJson->forbidIf)){
-
-
-    foreach($actionJson->forbidIf as $e){
-
-
-        $who = ($e->who == 'player') ? $player : $target;
-
-        if($e->have == 'effect' && $who->haveEffect($e->name)){
-
-            exit('Un effet empêche cette action <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span>');
-        }
-    }
-}
 
 
 include('scripts/actions/check_max_spells.php');
@@ -190,53 +143,19 @@ if(!empty($emplacement)){
     }
 }
 
-
+$action = null;
 if($actionJson->targetType != 'self'){
-
 
     if($target->id == $player->id){
 
         exit('error not self');
     }
 
-
     // action
     $dice = new Dice(3);
 
-
     $checkAboveDistance = true;
     $distanceMalus = 0;
-
-
-    // special attack cc/ct
-    // if($actionJson->playerJet == 'cc/ct'){
-    //     if($distance == 1){
-    //         try {
-    //             $action = ActionFactory::getAction('Melee'); // Crée une instance de MeleeAction
-    //         } catch (Exception $e) {
-    //             echo $e->getMessage();
-    //         }
-    //     }
-    //     elseif($distance > 1){
-    //         try {
-    //             $action = ActionFactory::getAction('Distance'); // Crée une instance de DistanceAction
-    //         } catch (Exception $e) {
-    //             echo $e->getMessage();
-    //         }
-    //     }
-    // }
-
-    // if($actionJson->playerJet == 'fm'){
-    //     try {
-    //         $action = ActionFactory::getAction('Spell', $_POST["action"]); // Crée une instance de SpellAction
-    //     } catch (Exception $e) {
-    //         try {
-    //             $action = ActionFactory::getAction('Heal', $_POST["action"]); // Crée une instance de HealAction
-    //         } catch (Exception $e) {
-    //             echo $e->getMessage();
-    //         }
-    //     }
-    // }
 
     if($actionJson->playerJet == 'cc/ct'){
         if($distance == 1){
@@ -246,14 +165,16 @@ if($actionJson->targetType != 'self'){
                 echo $e->getMessage();
             }
         }
-        elseif($distance > 1){
+        elseif($distance > 1 && ($_POST["action"] != 'special/attaque_sautee')){
             try {
                 $action = ActionFactory::getAction('distance'); // Crée une instance de DistanceAction
             } catch (Exception $e) {
                 echo $e->getMessage();
             }
         }
-    } else {
+    } 
+    
+    if ($action == null) {
         try {
             $action = ActionFactory::getAction($_POST["action"]); 
         } catch (Exception $e) {
@@ -261,241 +182,63 @@ if($actionJson->targetType != 'self'){
         }
     }
 
-    try {
-        $actionExecutor = new ActionExecutorService($action, $player, $target);
-        $actionResults = $actionExecutor->executeAction();
-        $actionResultsView = new ActionResultsView($actionResults);
-        // this make a "echo" needed while the huge action.php file exists
-        $actionResultsView->displayActionResults();
-
-        $logDetails = $actionResultsView->getActionResults();
-        $actorMainLog = $actionResults->getLogsArray()["actor"];
-        $targetMainLog = $actionResults->getLogsArray()["target"];
-
-        $logTime = time();
-        if(!empty($actorMainLog)) {
-            if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
-                $type = "hidden_action";
-            } else {
-                $type = "action";
-            }
-            Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
-        }
-
-        if(!empty($targetMainLog)){
-            if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
-                $type = "hidden_action_other_player";
-            } else {
-                $type = "action_other_player";
-            }
-            Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
-        }
-        
-    } catch (Exception $e) {
-        echo $e->getMessage();
-    }
-
-    goto fin;
-
-}
-elseif($actionJson->targetType == 'self'){
-
+} elseif($actionJson->targetType == 'self'){
 
     if($target->id != $player->id){
 
         exit('error self');
     }
 
+    if ($action == null) {
+        try {
+            $action = ActionFactory::getAction($_POST["action"]); 
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }
+
     $success = true;
 }
 
+try {
+    $actionExecutor = new ActionExecutorService($action, $player, $target);
+    $actionResults = $actionExecutor->executeAction();
+    $actionResultsView = new ActionResultsView($actionResults);
+    // this make a "echo" needed while the huge action.php file exists
+    $actionResultsView->displayActionResults();
 
-if(!empty($success) && $success == true){
+    $logDetails = $actionResultsView->getActionResults();
+    $actorMainLog = $actionResults->getLogsArray()["actor"];
+    $targetMainLog = $actionResults->getLogsArray()["target"];
 
-
-    $distanceDmgReduce = 0;
-
-
-    echo '<div style="color: #66ccff;">Réussite!</div>';
-
-
-    if(!empty($actionJson->playerDamages)){
-
-
-        // crit TO DO
-        if(!isset($target->emplacements->tete) || !empty($actionJson->autoCrit)){
-
-
-            if(rand(1,100) <= DMG_CRIT || !empty($actionJson->autoCrit)){
-
-
-                $critAdd = 3;
-
-                $totalDamages += $critAdd;
-
-                echo '<div><font color="red">Critique! Dégâts augmentés!</font></div>';
-            }
+    $logTime = time();
+    if(!empty($actorMainLog)) {
+        if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+            $type = "hidden_action";
+        } else {
+            $type = "action";
         }
+        Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
+    }
 
-
-        include('scripts/actions/esquive.php');
-
-
-        if($totalDamages){
-
-
-            include('scripts/actions/tank.php');
-
-
-            echo '
-            Vous infligez '. $totalDamages .' dégâts à '. $target->data->name .'.
-
-            <div class="action-details">'. CARACS[$actionJson->playerDamages] .' - '. CARACS[$actionJson->targetDamages] .' = '. $playerDamages .' - '. $targetDamages . $distanceDmgReduceTxt . $critTxt .' = '. $totalDamages .' dégâts</div>
-            ';
-
-
-            // put negative bonus (damages)
-            $target->putBonus(array('pv'=>-$totalDamages));
-
-
-            // put assist
-            $player->put_assist($target, $totalDamages);
-
-
-            // weapon break
-            include('scripts/actions/break_weapon.php');
+    if(!empty($targetMainLog)){
+        if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+            $type = "hidden_action_other_player";
+        } else {
+            $type = "action_other_player";
         }
+        Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
     }
-
-
-    elseif(!empty($actionJson->playerHeal)){
-
-
-        $baseHeal = (is_numeric($actionJson->playerHeal)) ? $actionJson->playerHeal : $player->caracs->{$actionJson->playerHeal};
-
-        $bonusHeal = 0;
-
-
-        if(!empty($actionJson->bonusHeal)){
-
-
-            $bonusHeal = $actionJson->bonusHeal;
-        }
-
-
-        $playerHeal = $baseHeal + $bonusHeal;
-
-        $playerHeal = min($playerHeal, $target->caracs->pv - $targetPvBefore);
-
-
-        echo '
-        <div>Vous soignez '. $target->data->name .' de '. $playerHeal .'PV.</div>
-        <div class="action-details">'. CARACS[$actionJson->playerHeal] .' = '. $baseHeal .' + '. $bonusHeal .'</div>
-        ';
-
-
-        $target->putBonus(array('pv'=>$playerHeal));
-
-        $playerXp = 3;
-        $targetXp = 0;
-    }
+    
+} catch (Exception $e) {
+    echo $e->getMessage();
 }
 
+//         include('scripts/actions/esquive.php');
+//         if($totalDamages){
+//             include('scripts/actions/tank.php');
+//         }
 
-/*
- * RESOLVE ACTION
- */
-
-
-$db = new Db();
-
-
-// default cost
-$bonus = array('a'=>-1);
-
-
-// add other costs (ie. PM cost for spells)
-if(!empty($actionJson->costs)){
-
-    foreach($actionJson->costs as $k=>$e){
-
-        $bonus[$k] = -$e;
-    }
-}
-
-
-
-// scripts
-if(!empty($actionJson->script)){
-
-
-    include($actionJson->script);
-}
-
-
-$player->putBonus($bonus);
-
-
-/*
- * XP
- */
-
-
-if(!isset($playerXp)){
-
-
-    // playerXp is not defined by the train.php script
-
-    $playerXp = 1;
-    $targetXp = 0;
-
-    if(
-        (!empty($success) && $success)
-        &&
-        ($actionJson->targetType != 'self' || (!empty($actionJson->targetJet) && $actionJson->targetJet == 0))
-        &&
-        !isset($actionJson->playerHeal)
-    ){
-
-        $playerXp = $player->get_action_xp($target);
-    }
-
-    if(
-        (!isset($success) || $success == false)
-        &&
-        $player->id != $target->id
-    ){
-
-        $playerXp = 0;
-        $targetXp = 2;
-    }
-}
-
-
-$data = ob_get_clean();
-
-$logTime = time();
-if(!empty($log)){
-    if (isset($actionJson->hideWhenSuccess) && isset($success) && $success && $actionJson->hideWhenSuccess) {
-        $type = "hidden_action";
-    } else {
-        $type = "action";
-    }
-    Log::put($player, $target, $log, $type, $data, $logTime);
-}
-
-if(!empty($targetLog)){
-    if (isset($actionJson->hideWhenSuccess) && isset($success) && $success && $actionJson->hideWhenSuccess) {
-        $type = "hidden_action_other_player";
-    } else {
-        $type = "action_other_player";
-    }
-    Log::put($target, $player, $targetLog, $type, $data, $logTime);
-}
-
-echo $data;
-
-fin:
 $targetPvAfter = $target->getRemaining('pv');
 
 if($targetPvBefore != $targetPvAfter){
@@ -535,18 +278,3 @@ if($targetPvBefore != $targetPvAfter){
     <?php
 }
 
-
-// display xp
-if(!empty($playerXp)){
-
-    echo '<div>Vous gagnez '. $playerXp .'Xp.</div>';
-
-    $player->put_xp($playerXp);
-}
-
-if(!empty($targetXp)){
-
-    echo '<div>'. $target->data->name .' gagne '. $targetXp .'Xp.</div>';
-
-    $target->put_xp($targetXp);
-}

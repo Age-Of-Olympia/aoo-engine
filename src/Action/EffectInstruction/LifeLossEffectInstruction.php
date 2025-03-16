@@ -16,14 +16,15 @@ class LifeLossEffectInstruction extends EffectInstruction
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
         $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
         $bonusTraitDamages = $this->getParameters()['bonusDamagesTrait'] ?? 0;
+        $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
         $distanceInfluence = $this->getParameters()['distance'] ?? false;
-
 
         if(!empty($actorTraitDamages) && !empty($targetTraitDamagesTaken)){
             $actorDamages = (is_numeric($actorTraitDamages)) ? $actorTraitDamages : $actor->caracs->{$actorTraitDamages};
-            $targetDamages = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
+            $targetDefense = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
             $bonusDamages = (is_numeric($bonusTraitDamages)) ? $bonusTraitDamages : $target->caracs->{$bonusTraitDamages};
-            $totalDamages = $actorDamages + $bonusDamages - $targetDamages;
+            $bonusDefense = (is_numeric($bonusTraitDefense)) ? $bonusTraitDefense : $target->caracs->{$bonusTraitDefense};
+            $totalDamages = $actorDamages + $bonusDamages - ($targetDefense + $bonusDefense);
             $cellCount = 0;
             if ($distanceInfluence) {
                 $distance = View::get_distance($actor->getCoords(), $target->getCoords());
@@ -41,13 +42,25 @@ class LifeLossEffectInstruction extends EffectInstruction
             $effectSuccessMessages[0] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
             $bonusDamagesText = "";
             if ($bonusDamages > 0) {
-                $bonusDamagesText = ' + ' . $bonusDamages. ' (bonus)';
+                $bonusText = '';
+                if (!is_numeric($bonusTraitDamages)) {
+                    $bonusText = ' '.CARACS[$bonusTraitDamages];
+                }
+                $bonusDamagesText = ' + ' . $bonusDamages. ' (bonus'.$bonusText.')';
+            }
+            $bonusDefenseText = "";
+            if ($bonusDefense > 0) {
+                $bonusText = '';
+                if (!is_numeric($bonusTraitDefense)) {
+                    $bonusText = ' '.CARACS[$bonusTraitDefense];
+                }
+                $bonusDefenseText = ' + ' . $bonusDefense. ' (bonus defense'.$bonusText.')';
             }
             $distanceText = "";
             if ($distanceInfluence) {
                 $distanceText = ' - '. $cellCount. ' (distance)';
             }
-            $effectSuccessMessages[1] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDamages . $distanceText. ' = '. $totalDamages .' dégâts';
+            $effectSuccessMessages[1] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
 
             // put assist
             $actor->put_assist($target, $totalDamages);

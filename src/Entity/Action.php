@@ -44,6 +44,8 @@ abstract class Action implements ActionInterface
     #[ORM\ManyToMany(targetEntity: Race::class, mappedBy: "actions")]
     protected Collection $races;
 
+    protected bool $refreshScreen = false;
+
     public function __construct()
     {
         $this->actionConditions = new ArrayCollection();
@@ -172,6 +174,10 @@ abstract class Action implements ActionInterface
 
     public function hideWhenSuccess(): bool {
         return false;
+    }
+
+    public function refreshScreen(): bool {
+        return $this->refreshScreen;
     }
 
     public function activateAntiBerserk(): bool {

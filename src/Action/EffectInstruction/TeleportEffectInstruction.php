@@ -21,7 +21,7 @@ class TeleportEffectInstruction extends EffectInstruction
             case 'target':
                 $goCoords = $target->coords;
                 $coordsId = View::get_free_coords_id_arround($goCoords);
-                $effectSuccessMessages[0] = $actor->data->name . 'saute sur ' .$target->data->name. ' !';
+                $effectSuccessMessages[0] = $actor->data->name . ' saute sur ' .$target->data->name. ' !';
                 $actor->go($coordsId);
                 break;
             default:

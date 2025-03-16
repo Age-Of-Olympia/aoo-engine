@@ -151,7 +151,9 @@ class Player implements ActorInterface {
         $this->turn = (object) array();
 
         while($row = $res->fetch_object()){
-
+            if ($row->name) {
+                continue;
+            }
 
             $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
         }
@@ -531,7 +533,7 @@ class Player implements ActorInterface {
         $db->delete('players_effects', $values);
     }
 
-    public function purge_effects(){
+    public function purge_effects(): int{
 
 
         $sql = '
@@ -548,7 +550,8 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
-        $db->exe($sql, $this->id);
+        $affectedRows = $db->exe($sql, $this->id, false, true);
+        return $affectedRows;
     }
 
 
@@ -562,6 +565,10 @@ class Player implements ActorInterface {
         }
 
         $oldCoords = $this->coords;
+
+        if (is_numeric($goCoords)) {
+            $goCoords = View::get_coords_from_id($goCoords);
+        }
 
         $coordsId = isset($goCoords->coordsId) ? $goCoords->coordsId : View::get_coords_id($goCoords);
 
@@ -889,7 +896,7 @@ class Player implements ActorInterface {
         $this->refresh_caracs();
     }
 
-    public function putBonus($bonus) : bool{
+    public function putBonus($bonus, bool $fat = true) : bool{
 
 
         if(!isset($this->data)){
@@ -923,8 +930,9 @@ class Player implements ActorInterface {
 
             if($carac == 'a' && $val < 0){
 
-
-                $this->put_fat(FAT_PER_ACTION);
+                if ($fat) {
+                    $this->put_fat(FAT_PER_ACTION);
+                }
             }
 
             elseif($carac == 'pv'){

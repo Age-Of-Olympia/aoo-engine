@@ -38,9 +38,7 @@ $count = $db->get_count($sql);
 
 if($count){
 
-    $player->purge_effects();
-
-    // echo '<div class="action-details">'. $count .' effets terminés.</div>';
+    $res = $player->purge_effects();
 
     $effects = '';
 
@@ -58,7 +56,7 @@ if($count){
     echo '<script>$(".effects").html("'. $effects .'");</script>';
 
 
-    echo $count .' effets terminés.';
+    echo $res .' effets terminés.';
 }
 
 

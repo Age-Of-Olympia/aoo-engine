@@ -91,7 +91,9 @@ class ActionResultsView
 
         $actionsDetails = $actionsDetails.'</div>';
 
-        $actionsDetails = $actionsDetails.'<div>Vous gagnez '.$this->actionResults->getXpResultsArray()["actor"].' XP</div>';
+        if (isset($this->actionResults->getXpResultsArray()["actor"])) {
+            $actionsDetails = $actionsDetails.'<div>Vous gagnez '.$this->actionResults->getXpResultsArray()["actor"].' XP</div>';
+        }
    
         return $actionsDetails;
     }

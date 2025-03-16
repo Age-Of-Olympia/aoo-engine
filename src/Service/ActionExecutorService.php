@@ -21,6 +21,7 @@ class ActionExecutorService
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
     private int $finalTargetPv;
+    private bool $blocked = false;
     
     public function __construct(Action $action, Player $actor, Player $target){
         $this->conditionRegistry = new ConditionRegistry();
@@ -43,14 +44,19 @@ class ActionExecutorService
         $this->applyEffects();
         $this->finalTargetPv = $this->target->getRemaining('pv');
 
-        // 3) apply costs
-        $costsResultsArray = $this->applyCosts();
-
         // update Last Action Time (used on new turn to set antiberserk time)
         $this->playerService->updateLastActionTime();
 
-        // 4) calculate XP
-        $xpResultsArray = $this->action->calculateXp($this->globalConditionsResult, $this->actor, $this->target);
+        $costsResultsArray = array();
+        $xpResultsArray = array();
+        if (!$this->blocked) {
+            // 3) apply costs
+            $costsResultsArray = $this->applyCosts();
+
+            // 4) calculate XP
+            $xpResultsArray = $this->action->calculateXp($this->globalConditionsResult, $this->actor, $this->target);
+        }
+        
         // 5) LOG
         $logsArray = $this->action->getLogMessages($this->actor, $this->target);
 
@@ -98,6 +104,7 @@ class ActionExecutorService
             array_push($this->conditionResultsArray, $conditionResult);
         
             if (!$conditionResult->isSuccess() && $condEntity->isBlocking()) {
+                $this->blocked = true;
                 break;
             }
         
