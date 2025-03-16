@@ -279,20 +279,20 @@ class View{
                 }
 
                 elseif($row->whichTable == 'players'){
-
-
-                    // Hide other players if:
-                    // 1. No plan JSON exists OR
-                    // 2. plan JSON exists and player_visibility is explicitly set to false
-                    if((!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false))
-                       && $row->id > 0 && $row->id != $_SESSION['playerId']){
-                        continue;
-                    }
-
-
                     $player = new Player($row->id);
                     $player->get_data();
 
+                    // Les joueurs normaux sont soumis aux règles de visibilité
+                    if ($_SESSION['playerId'] > 0) {
+                        // Masquer les autres joueurs si :
+                        // 1. Le JSON du plan n'existe pas OU
+                        // 2. Le JSON du plan existe et player_visibility est explicitement défini sur false
+                        if ((!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false))
+                            && $row->id > 0 && $row->id != $_SESSION['playerId']) {
+                            continue;
+                        }
+                    }
+                    // Les PNJs peuvent voir tout le monde, sans restriction de visibilité
 
                     $img = $player->data->avatar;
 
