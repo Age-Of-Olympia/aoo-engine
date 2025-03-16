@@ -17,7 +17,7 @@ enum Roll: string
 abstract class ComputeCondition extends BaseCondition
 {
     protected int $distance;
-    protected string $throwName = "tir";
+    protected string $throwName = "Le tir";
     
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
@@ -56,27 +56,11 @@ abstract class ComputeCondition extends BaseCondition
             $conditionDetailsFailure[0] = $conditionDetailsSuccess[0];
             $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
             if (!$checkAboveDistance) {
-                $conditionDetailsFailure[2] = "Le ".$this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
+                $conditionDetailsFailure[2] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
             }
         }
 
         return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
-    }
-
-    protected function computeTarget($target, $dice)
-    {
-        $option1 = $target->caracs->cc;
-        $option2 = $target->caracs->agi;
-        $targetRollTraitValue = max($option1, $option2);
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        $targetFat = floor($target->data->fatigue / FAT_EVERY);
-        $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
-        $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-        $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
-        $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
-
-        return array($targetRoll, $targetTotal, $targetTxt);
     }
 
     protected function computeActor($actor, $dice)
@@ -95,25 +79,32 @@ abstract class ComputeCondition extends BaseCondition
         return array($actorRoll, $actorTotal, $actorTxt);
     }
 
+    protected function computeTarget($target, $dice)
+    {
+        $option1 = $target->caracs->cc;
+        $option2 = $target->caracs->agi;
+        $targetRollTraitValue = max($option1, $option2);
+        $targetRoll = $dice->roll($targetRollTraitValue);
+        $targetFat = floor($target->data->fatigue / FAT_EVERY);
+        $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
+        $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
+        $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
+        $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
+        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+
+        return array($targetRoll, $targetTotal, $targetTxt);
+    }
+
     protected function getDistanceTreshold() : int {
-        return floor(($this->distance) * 2.5);
+        return 0;
     }
 
     protected function checkDistanceCondition(int $actorTotal): bool {
-        $checkAboveDistance = true;
-        if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold();
-            $checkAboveDistance = $actorTotal >= $distanceTreshold;
-        }
-        return $checkAboveDistance;
+        return true;
     }
     
     protected function getDistanceMalus(): int {
-        $distanceMalus = 0;
-        if($this->distance > 2){
-            $distanceMalus = ($this->distance - 2) * 3;
-        }
-        return $distanceMalus;
+        return 0;
     }
 
 }

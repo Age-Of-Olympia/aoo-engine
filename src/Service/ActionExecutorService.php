@@ -5,9 +5,7 @@ use Player;
 use App\Entity\ActionEffect;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
-use App\EffectInstruction\EffectInstructionFactory;
 use App\Entity\Action;
-use App\Interface\ActionInterface;
 
 class ActionExecutorService
 {
@@ -38,8 +36,6 @@ class ActionExecutorService
 
     public function executeAction(): ActionResults
     {
-        // ajouter des conditions génériques ? posséder une action, ne pas être dans les enfers ?
-        
         // 1) Check conditions
         $this->globalConditionsResult = $this->checkConditions();
 

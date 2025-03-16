@@ -228,9 +228,13 @@ if($actionJson->targetType != 'self'){
 
     if($actionJson->playerJet == 'fm'){
         try {
-            $action = ActionFactory::getAction('Spell'); // Crée une instance de SpellAction
+            $action = ActionFactory::getAction('Spell', $_POST["action"]); // Crée une instance de SpellAction
         } catch (Exception $e) {
-            echo $e->getMessage();
+            try {
+                $action = ActionFactory::getAction('Heal', $_POST["action"]); // Crée une instance de HealAction
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
         }
     }
 
@@ -269,33 +273,6 @@ if($actionJson->targetType != 'self'){
     }
 
     goto fin;
-
-    // spell & too far
-    if($actionJson->playerJet == 'fm'){
-
-
-        $distanceTreshold = 4 * ($distance - 1);
-        $checkAboveDistance = $playerTotal >= $distanceTreshold;
-    }
-
-
-    // success
-    if(
-        !AUTO_FAIL
-        &&
-        (
-            $checkAboveDistance
-            &&
-            (
-                $actionJson->targetJet == 0
-                ||
-                $playerTotal >= $targetTotal
-            )
-        )
-    ){
-
-        $success = true;
-    }
 
 }
 elseif($actionJson->targetType == 'self'){
@@ -434,14 +411,6 @@ if(!empty($actionJson->script)){
 
 
 $player->putBonus($bonus);
-
-
-// add effects
-include('scripts/actions/add_effects.php');
-
-
-// drop munition or jet
-include('scripts/actions/drop_ammo.php');
 
 
 /*

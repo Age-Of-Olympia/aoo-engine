@@ -12,6 +12,7 @@ interface ActionInterface
 {
     public function getId(): ?int;
     public function setId(int $id): self;
+    public function getName(): string;
     public function getActionConditions(): Collection;
     public function addCondition(ActionCondition $condition): self;
     public function removeCondition(ActionCondition $condition): self;

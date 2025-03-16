@@ -1,9 +1,9 @@
 <?php
 namespace App\Action\Condition;
 
-class SpellComputeCondition extends ComputeCondition
+class TechniqueComputeCondition extends ComputeCondition
 {
-    protected string $throwName = "Le sort";
+    protected string $throwName = "La technique";
 
     protected function getDistanceTreshold() : int {
         return floor(($this->distance) * 2.5);

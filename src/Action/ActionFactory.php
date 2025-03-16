@@ -26,12 +26,12 @@ class ActionFactory
         self::$actionClasses = loadActionClasses($directory);
     }
 
-    public static function getAction($type): ActionInterface
+    public static function getAction(string $type, ?string $name = null): ActionInterface
     {
         $actionService = new ActionService();
         $className = ucfirst(strtolower($type)) . 'Action';
         if (isset(self::$actionClasses[$className])) {
-            return $actionService->getActionByType($type);;
+            return $actionService->getActionByTypeByName($type, $name);;
         }
         throw new Exception("Action type not found: $type");
     }

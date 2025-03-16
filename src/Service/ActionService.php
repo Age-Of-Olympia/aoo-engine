@@ -20,9 +20,17 @@ class ActionService
     /**
      * Returns a Action entity that matches the given type, or null if not found.
      */
-    public function getActionByType(string $type): ?ActionInterface
+    public function getActionByTypeByName(string $type, ?string $name = null): ?ActionInterface
     {
-        $query = $this->entityManager->createQuery('SELECT action FROM App\\Action\\'.$type.'Action action');
+        $dql = 'SELECT action FROM App\\Action\\'.$type.'Action action';
+        if ($name != null) {
+            $dql = $dql . ' WHERE action.name = :name';
+        }
+        $query = $this->entityManager->createQuery($dql);
+        if ($name != null) {
+            $query->setParameter("name", $name);
+        }
+        
         $log = $query->getSQL();
         $action = $query->getSingleResult();
         
@@ -37,7 +45,7 @@ class ActionService
      */
     public function getActionIdByType(string $type): ?int
     {
-        $Action = $this->getActionByType($type);
+        $Action = $this->getActionByTypeByName($type);
         return $Action ? $Action->getId() : null;
     }
 }

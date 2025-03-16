@@ -1,8 +1,6 @@
 <?php
 namespace App\Action\Condition;
 
-use App\Action\Condition\MinimumDistanceCondition;
-use App\Action\Condition\ComputeCondition;
 use App\Interface\ConditionInterface;
 
 class ConditionRegistry
@@ -21,11 +19,10 @@ class ConditionRegistry
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),
             
-            
             'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?
             'DistanceCompute' => new DistanceComputeCondition(),
             'SpellCompute' => new SpellComputeCondition(),
-            // etc...
+            'TechniqueCompute' => new TechniqueComputeCondition(),
         ];
     }
 
