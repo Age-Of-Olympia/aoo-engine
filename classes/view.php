@@ -281,9 +281,11 @@ class View{
                 elseif($row->whichTable == 'players'){
 
 
-                    // plan do not exists: solo mod
-                    if(!$planJson && $row->id > 0 && $row->id != $_SESSION['playerId']){
-
+                    // Hide other players if:
+                    // 1. No plan JSON exists OR
+                    // 2. plan JSON exists and player_visibility is explicitly set to false
+                    if((!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false))
+                       && $row->id > 0 && $row->id != $_SESSION['playerId']){
                         continue;
                     }
 
