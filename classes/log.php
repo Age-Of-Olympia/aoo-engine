@@ -80,9 +80,11 @@ class Log{
                 continue;
             }
 
-            // PNJs can see everything
+            // PNJs can only see events in their current plan
             if ($player->id <= 0) {
-                $return[] = $row;
+                if ($row->plan == $player->coords->plan) {
+                    $return[] = $row;
+                }
                 continue;
             }
 
