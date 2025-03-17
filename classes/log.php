@@ -80,14 +80,6 @@ class Log{
                 continue;
             }
 
-            // PNJs can only see events in their current plan
-            if ($player->id <= 0) {
-                if ($row->plan == $player->coords->plan) {
-                    $return[] = $row;
-                }
-                continue;
-            }
-
             // If the event is about player, either as doer or as target, event is displayed
             // Two lines of travel are stored, one in the departure plan and ont in the arrival plan,
             // We hide one of the two !
@@ -130,7 +122,14 @@ class Log{
             array_walk($arrayCoordsId, array(Log::class, 'compute_unique_coord'), [$last_player_coords->z, $last_player_coords->plan]);
 
             $planJson = json()->decode('plans', $row->plan);
-            if (!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false)) {
+            // For PNJs, check if event is in their current plan
+            if ($player->id <= 0) {
+                if ($row->plan != $player->coords->plan) {
+                    continue;
+                }
+            }
+            // Only check player_visibility for normal players
+            else if (!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false)) {
                 continue;
             }
 
