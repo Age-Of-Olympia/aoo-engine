@@ -243,4 +243,26 @@ class Exchange{
         return $return;
     }
 
+    public static function get_all_open_exchanges(){
+
+        $return = array();
+
+        $sql = 'SELECT * FROM items_exchanges
+         AND (target_ok = 0 or player_ok = 0)';
+
+
+        $db = new Db();
+        $res = $db->exe($sql);
+
+        while($row = $res->fetch_object()){
+            $exchange = new Exchange();
+            $exchange->id = $row->id;
+            $exchange->get_base_data();
+            $exchange->get_items_data();
+            $return[] = $exchange;
+        }
+
+        return $return;
+    }
+
 }

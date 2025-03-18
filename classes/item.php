@@ -214,11 +214,15 @@ class Item{
         return true;
     }
 
-    public function get_recipe() : array{
+    public function get_recipe(bool $deprecated=false) : array{
 
 
-        $craftJson = json()->decode('', 'crafts');
+        $craftJson = json()->decode('', $deprecated? 'oldcrafts': 'crafts');
 
+        if(!$craftJson){
+
+           throw new Exception("Craft json not found");
+        }
         $return = array();
 
         foreach($craftJson as $occurrence){
