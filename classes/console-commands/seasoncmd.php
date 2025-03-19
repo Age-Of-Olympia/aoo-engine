@@ -25,7 +25,7 @@ EOT);
             $count = 0;
             $exchanges = Exchange::get_all_open_exchanges();
             foreach ($exchanges as $exchange) {
-                $exchange->db->start_transaction('cancel_exchange');
+                $exchange->db->beginTransaction();
                 try {
                     $offeringPlayer = new Player($exchange->playerId);
                     $targetPlayer = new Player($exchange->targetId);
@@ -34,11 +34,12 @@ EOT);
                     $exchange->give_items(from_player: $targetPlayer, to_player: $targetPlayer);
 
                     $exchange->cancel_exchange();
+                    $exchange->db->commit();
+
                 } catch (Throwable $th) {
-                    $exchange->db->rollback_transaction('cancel_exchange');
-                    exit($count.'/'.sizeof($exchanges).' Exchanges anulés + Erreur lors de l\'annulation de l\'échange:' . $exchange->id);
+                    $exchange->db->rollBack();
+                    throw new Exception($th->getMessage().'<br>'.($count.'/'.sizeof($exchanges).' Exchanges anulés + Erreur lors de l\'annulation de l\'échange:' . $exchange->id));
                 }
-                $exchange->db->commit_transaction('cancel_exchange');
                 $count++;
             }
             Command::SetEnvVariable("seasoncmd",1);
@@ -47,6 +48,7 @@ EOT);
 
         if ($action == 'refundDeprecatedItems') {
             if(!$this->checkEnvState($forced,1,$result)) return $result;
+            
             $result =  $this->refund_deprecated_objects(true);
             $result +=  $this->refund_deprecated_objects(false);
             Command::SetEnvVariable("seasoncmd",2);
@@ -85,7 +87,7 @@ function refund_deprecated_objects(bool $bank)
         $player = new Player($object->player_id);
         $item = new Item($object->item_id);
         $item->get_data();
-        $player->db->start_transaction('refund_deprecated_objects');
+        $player->db->beginTransaction();
         try {
 
             $reciep = $item->get_recipe(true);
@@ -99,10 +101,10 @@ function refund_deprecated_objects(bool $bank)
                 $count++;
             }
 
-            $player->db->commit_transaction('refund_deprecated_objects');
+            $player->db->commit();
         } catch (Throwable $th) {
-            $player->db->rollback_transaction('refund_deprecated_objects');
-            exit('objets remboursés'.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
+            $player->db->rollBack();
+            throw new Exception($th->getMessage().'<br>'.'objets remboursés'.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
         }
     }
 
@@ -148,16 +150,16 @@ function convert_objects(bool $bank, string $name, $convertionData)
         $player = new Player($object->player_id);
         $item = new Item($object->item_id);
         $item->get_data();
-        $player->db->start_transaction('convert_objects');
+        $player->db->beginTransaction();
         try {
             $newItem->add_item($player, $object->n * $convertionData['mult']);
             $item->add_item($player, -$object->n, $bank);
-            $player->db->commit_transaction('convert_objects');
+            $player->db->commit();
             $count++;
         }
         catch (Throwable $th) {
-            $player->db->rollback_transaction('convert_objects');
-            exit($name.'objets convertis en'.$convertionData['new_item'].':'.$count.'/'.sizeof($ItemstoConvert). (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
+            $player->db->rollBack();
+            throw new Exception($th->getMessage().'<br>'.$name.'objets convertis en'.$convertionData['new_item'].':'.$count.'/'.sizeof($ItemstoConvert). (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
         }
     }
 }
