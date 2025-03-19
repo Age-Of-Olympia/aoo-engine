@@ -91,10 +91,41 @@ abstract class Command
     }
 
     public static function ReplaceEnvVariable($commandLine){
+        $subCommands= array();
+        $didAnArray=false;
         foreach ($GLOBALS['consoleENV'] as $key => $value) {
-            $commandLine = str_replace('{'.$key.'}', $value, $commandLine);
+            $needle = '{'.$key.'}';
+            if(strpos($commandLine, $needle) !== false){
+                if(is_array($value)){
+                    if($didAnArray){
+                       throw new Exception('Only one array is allowed in a command line');
+                    }
+                    foreach ($value as $subValue) {
+                        $subCommands[] = str_replace($needle, $subValue, $commandLine);
+                    }
+                    $didAnArray = true;
+                }
+                else{
+                    $subCommands[] = str_replace($needle, $value, $commandLine);
+                }
+            }
         }
-        return $commandLine;
+        if(empty($subCommands)){
+            $subCommands[]= $commandLine;
+        }
+        return $subCommands;
+    }
+    public static function GetEnvVariable($name, $defaultValue)
+    {
+        if(isset($GLOBALS['consoleENV'][$name]))
+            return $GLOBALS['consoleENV'][$name];
+
+            return $defaultValue;
+    }
+
+    public static function SetEnvVariable($name, $newValue)
+    {
+        $GLOBALS['consoleENV'][$name]=$newValue;
     }
 
     abstract public function execute(  array $argumentValues ): string;

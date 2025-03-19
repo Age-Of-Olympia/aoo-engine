@@ -39,7 +39,7 @@ class Player implements ActorInterface {
 
         if(!$res->num_rows){
 
-            exit('error player id');
+            exit('error player id:'.strval($this->id));
         }
 
 

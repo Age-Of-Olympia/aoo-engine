@@ -56,7 +56,7 @@ function ExecuteCommand($command, $commandLineSplit)
             try{
                 $result = $command->executeIfAuthorized($commandLineSplit);
                return ['message' => 'command found ' . $command->getName() . '. Executing.',
-                       'result' => $result];
+                       (startsWithIgnoreCase($result,"error") ? 'error' : 'result') => $result];
             }catch(Throwable $e){
                 $result = "Unexpected technical error, check command syntax : ".$command->getName()." ".$command->printArguments() 
                 . "  - Error details : ". $e->getMessage();
@@ -83,28 +83,42 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     if(count($commandsList) == 0){
         $commandsResults[] = ['error' => "Failed to parse command line"];
     }
+    $dbconn = db();
+    $dbconn->beginTransaction();
+    try{
+        for ($i = 0; $i < count($commandsList); $i++){
+            $subCommands = Command::ReplaceEnvVariable($commandsList[$i]);
+            
+            foreach ($subCommands as $commandLine){
+                
+                $commandLineSplit = Command::getCommandLineSplit($commandLine);
+                $commandeName = $commandLineSplit[0];
+                $command = $factory->getCommand($commandeName);
+                array_shift($commandLineSplit); //remove first part
+            
+                if($command){
+                    $commandsResults[] = ExecuteCommand($command, $commandLineSplit);
+                }else{
+                    $error = 'Unknown command ' . $commandeName;
+                    $commandsResults[] = ['error' => $error];
+                }
+                if(isset($commandsResults[count($commandsResults)-1]['error'])){
 
-    for ($i = 0; $i < count($commandsList); $i++){
-        $commandLine = Command::ReplaceEnvVariable($commandsList[$i]);
-        $commandLineSplit = Command::getCommandLineSplit($commandLine);
-        $commandeName = $commandLineSplit[0];
-        $command = $factory->getCommand($commandeName);
-        array_shift($commandLineSplit); //remove first part
-       
-        if($command){
-            $commandsResults[] = ExecuteCommand($command, $commandLineSplit);
-        }else{
-            $error = 'Unknown command ' . $commandeName;
-            $commandsResults[] = ['error' => $error];
-        }
-        if(isset($commandsResults[count($commandsResults)-1]['error'])){
-            if($i < count($commandsList) - 1){
-                $commandsResults[] = ['error' => 'Command ' . $commandeName . ' failed, stopping execution, '.strval(count($commandsList) -1 - $i).' ommited'];
+                    $commandsResults[] = ['error' => 'Command ' . $commandeName . ' failed, stopping execution, '.strval(count($commandsList) -1 - $i).' ommited'];
+
+                    if(Command::getEnvVariable("revertMode","all") == 'all'){
+                        throw new Exception('faillure revert all changes');
+                    }
+                    break;
+                }
             }
-            break;
         }
+    $dbconn->commit();
     }
-
+    catch (\Exception $e) {
+        $commandsResults[] = ['error' => $e->getMessage()];
+        $dbconn->rollBack();
+    }
     // echo results
     echo json_encode($commandsResults);
 
@@ -170,4 +184,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
 
     // Fermer le fichier
     fclose($fileHandle);
+}
+function startsWithIgnoreCase($string, $startString) {
+    return stripos($string, $startString) === 0;
 }
