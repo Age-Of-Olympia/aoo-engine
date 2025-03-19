@@ -14,3 +14,5 @@ $orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
 
 // configuring the database connection
 $connection = DriverManager::getConnection(DB_CONSTANTS, $orm_db_config);
+global $link;
+$link = $connection;

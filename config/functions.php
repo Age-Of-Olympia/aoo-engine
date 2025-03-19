@@ -7,7 +7,11 @@ function db()
 
     if(!isset($link)){
 
+         //temp lock réutilisation de la connection de doctrine voir bootstrap.php
+         echo "Error: Unable to connect to DB." . PHP_EOL;
 
+         exit;
+        //-----------------
         // db credentials are sotcked in config/db_constants.php
         $link = @mysqli_connect(DB_CONSTANTS['host'], DB_CONSTANTS['user'], DB_CONSTANTS['psw'], DB_CONSTANTS['db']);
 

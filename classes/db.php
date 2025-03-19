@@ -4,22 +4,20 @@ require_once(__DIR__.'/../config/functions.php');
 
 class Db{
     private $db;
+    private $doctrinedb;
     public function __construct(){
         mysqli_report(MYSQLI_REPORT_ERROR);
-        $this->db = db();
+        $this->doctrinedb = db();
+        $this->db = $this->doctrinedb->getNativeConnection();
     }
 
     public function __destruct(){
-
-        if(is_resource($this->db)){
-            $this->db->close();
-        }
     }
 
     public function exe($sql, $array=array(), $returnFalseIfNoAffectedRows = false, $getAffectedRows = false){
 
         sqln();
-
+        
         $params = '';
 
         $stmt = $this->db->prepare($sql);
@@ -256,22 +254,35 @@ class Db{
         // return last id
         return $this->get_last_id($table);
     }
-
+    //planed to be deprecated use beginTransaction() instead
     public function start_transaction(?string $name){
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-        $this->db->begin_transaction(0,$name);
+      $this->doctrinedb->beginTransaction();
     }
-
+    //planed to be deprecated use commit() instead
     public function commit_transaction(?string $name){
         
-        $this->db->commit(0,$name);
+        $this->doctrinedb->commit();
     }
-
+    //planed to be deprecated use rollback() instead
     public function rollback_transaction(?string $name){
         
-        $this->db->rollback(0,$name);
+        $this->doctrinedb->rollback();
 
+    }
+
+    public function beginTransaction(){
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+      $this->doctrinedb->beginTransaction();
+    }  
+
+    public function commit(){
+        $this->doctrinedb->commit();
+    }
+
+    public function rollBack(){
+        $this->doctrinedb->rollBack();
     }
 
     public static function print_in($values){
