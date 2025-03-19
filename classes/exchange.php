@@ -247,8 +247,7 @@ class Exchange{
 
         $return = array();
 
-        $sql = 'SELECT * FROM items_exchanges
-         AND (target_ok = 0 or player_ok = 0)';
+        $sql = 'SELECT * FROM items_exchanges WHERE (target_ok = 0 or player_ok = 0)';
 
 
         $db = new Db();

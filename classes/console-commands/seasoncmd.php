@@ -1,11 +1,11 @@
 <?php
 
 
-class ItemCmd extends AdminCommand
+class SeasonCmd extends AdminCommand
 {
     public function __construct()
     {
-        parent::__construct("season", [new Argument('action', false)]);
+        parent::__construct("season", [new Argument('action', false),new Argument('force', true)]);
         parent::setDescription(<<<EOT
 outils inter saison : 
 ordre recommandé :
@@ -18,7 +18,10 @@ EOT);
     public function execute(array $argumentValues): string
     {
         $action = $argumentValues[0];
+        $forced = isset($argumentValues[1]) && $argumentValues[1]=="--forced";
+        $result = '';
         if ($action == 'cancelExchanges') {
+            if(!$this->checkEnvState($forced,0,$result)) return $result;
             $count = 0;
             $exchanges = Exchange::get_all_open_exchanges();
             foreach ($exchanges as $exchange) {
@@ -33,23 +36,26 @@ EOT);
                     $exchange->cancel_exchange();
                 } catch (Throwable $th) {
                     $exchange->db->rollback_transaction('cancel_exchange');
-                    exit($count . ' Exchanges anulés + Erreur lors de l\'annulation de l\'échange:' . $exchange->id);
+                    exit($count.'/'.sizeof($exchanges).' Exchanges anulés + Erreur lors de l\'annulation de l\'échange:' . $exchange->id);
                 }
                 $exchange->db->commit_transaction('cancel_exchange');
                 $count++;
             }
-
-            return $count . ' Exchanges anulés';
+            Command::SetEnvVariable("seasoncmd",1);
+            return $count.'/'.sizeof($exchanges).' Exchanges anulés';
         }
 
         if ($action == 'refundDeprecatedItems') {
-
-            $result = refund_deprecated_objects(true);
-            $result += refund_deprecated_objects(false);
+            if(!$this->checkEnvState($forced,1,$result)) return $result;
+            $result =  $this->refund_deprecated_objects(true);
+            $result +=  $this->refund_deprecated_objects(false);
+            Command::SetEnvVariable("seasoncmd",2);
             return $result;
         }
 
         if ($action == 'convertItems') {
+            if(!$this->checkEnvState($forced,2,$result)) return $result;
+
             $convertionData = array(
                 //'rocher' => array('new_item' => "caillou", 'mult' => 3),
                 'adonis' => array('new_item' => "cuivre", 'mult' => 1),
@@ -59,19 +65,20 @@ EOT);
             );
             $result = '';
             foreach ($convertionData as $name => $data) {
-                $result += convert_objects(true, $name, $data);
-                $result += convert_objects(false, $name, $data);
+                $result +=  $this->convert_objects(true, $name, $data);
+                $result +=  $this->convert_objects(false, $name, $data);
             }
+            Command::SetEnvVariable("seasoncmd",3);
             return $result;
         }
 
 
         return '<font color="orange">Action : ' . $action . ' unknown</font>';
     }
-}
+
 function refund_deprecated_objects(bool $bank)
 {
-    $deprecatedObjects = get_deprecated_objects($bank);
+    $deprecatedObjects =  $this->get_deprecated_objects($bank);
     $count = 0;
     $ingredientsCount = 0;
     foreach ($deprecatedObjects as $object) {
@@ -135,7 +142,7 @@ function get_objects_by_name(bool $bank,string $name)
 function convert_objects(bool $bank, string $name, $convertionData)
 {
     $newItem = Item::get_item_by_name($convertionData['new_item']);
-    $ItemstoConvert = get_objects_by_name($bank,$name);
+    $ItemstoConvert =  $this->get_objects_by_name($bank,$name);
     $count = 0;
     foreach ($ItemstoConvert as $object) {
         $player = new Player($object->player_id);
@@ -153,4 +160,14 @@ function convert_objects(bool $bank, string $name, $convertionData)
             exit($name.'objets convertis en'.$convertionData['new_item'].':'.$count.'/'.sizeof($ItemstoConvert). (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
         }
     }
+}
+
+function checkEnvState($forced,$expectedState, &$result)
+{
+    if($forced) return true;
+    if(Command::GetEnvVariable("seasoncmd",0)==$expectedState)return true;
+    $result="Error:invalid state, utilisez les commande de saison dans un script ou assumer les consequence en utilisant --forced";
+    return false;
+}
+
 }
