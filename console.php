@@ -183,7 +183,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     }
 
     foreach($commandsResults as $result){
-        $resultTxt = isset($result['result']) ? $result['result'] : (isset($result['error']) ? $result['error'] : 'No result');
+        $resultTxt = isset($result['message']) ? $result['message'] : 'No result';
         $log = array(
             'mainPlayerId'=>$_SESSION['mainPlayerId']??0,
             'playerId'=>$_SESSION['playerId']??0,
