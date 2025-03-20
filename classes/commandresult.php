@@ -8,6 +8,7 @@ class CommandResult
     public function addLog($message,LogType $type=LogType::Log,$level = 1){
         $this->results[] = ['message' => $message, 'type' => $type, 'level' => $level];
         if($type>=LogType::Error){
+
             $this->hasError = true;
         }
     }

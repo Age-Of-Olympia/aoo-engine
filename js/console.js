@@ -142,7 +142,6 @@ function submit_command(cmdLine){
                 Error : 3
             }
             for(let i=0; i<responseObj.length; i++){
-                
                 if(responseObj[i].type>=LogType.Error){ 
                     hadAnyError=true;
                     $('#console-content').append('<span class="response-error">'+responseObj[i].message+ '</span>');

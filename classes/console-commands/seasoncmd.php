@@ -133,22 +133,6 @@ function update_overxP_players()
     return $res;
 }
 
-function convertExtraXP()
-{
-
-    $players = $this->get_overxP_players();
-    $count = 0;
-    foreach ($players as $row) {
-        $player = new Player($row['id']);
-
-            $player->add_xp(-3500);
-            $player->add_item(Item::get_item_by_name('xp'), 1);
-            
-            $count++;
-    }
-        
-    $this->result->Log($count.' joueurs avec trop d\'xp convertis');
-}
 function get_deprecated_objects(bool $bank)
 {
     $bankTable = ($bank) ? '_bank' : '';

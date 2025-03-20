@@ -97,12 +97,14 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         for ($i = 0; $i < count($commandsList); $i++) {
             $subCommands = Command::ReplaceEnvVariable($commandsList[$i]);
 
-            if (!isset($globalTimer) && Command::getEnvVariable("reporttime", '0')=='1')
+            if (!isset($globalTimer) && Command::getEnvVariable("reporttime", '0')=='1') {
                 $globalTimer = new PerfTimer();
+            }
 
             foreach ($subCommands as $commandLine) {
-                if(isset($globalTimer))
+                if(isset($globalTimer)) {
                     $localTimer = new PerfTimer();
+                }
                 $commandLineSplit = Command::getCommandLineSplit($commandLine);
                 $commandeName = $commandLineSplit[0];
                 $command = $factory->getCommand($commandeName);
@@ -116,8 +118,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
                     $arg1 = isset($commandLineSplit[0]) ? $commandLineSplit[0] : '';
                     $commandsResults->Error("Unknown command  {$commandeName} {$arg1}");
                 }
-                if(isset($localTimer))
-                {
+                if(isset($localTimer)) {
                     $execTime=$localTimer->stop();
                     $arg1 = isset($commandLineSplit[0]) ? $commandLineSplit[0] : '';
                     $commandsResults->Log("Command {$commandeName} {$arg1} executed in " . round($execTime, 3) . " seconds");
