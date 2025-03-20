@@ -5,7 +5,8 @@ abstract class Command
     private string $description;
     private array $arguments;
     private CommandFactory $factory;
-
+    public CommandResult $result;
+    
     public function __construct(string $name, array $arguments = [])
     {
         $this->name = $name;

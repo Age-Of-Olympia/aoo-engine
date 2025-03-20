@@ -130,16 +130,20 @@ function submit_command(cmdLine){
             try{
                 responseObj=JSON.parse(response);
             }catch(e){
-                responseObj=[{error:'Error: '+response}];
+                responseObj=[{message:'Error: '+response,type:3,level:0},{mesage:'Error: '+e,type:3,level:0}];
             }
             let hadAnyError=false;
             
             for(let i=0; i<responseObj.length; i++){
-                if(responseObj[i].error){
+                if(responseObj[i].type>=3){
                     hadAnyError=true;
-                    $('#console-content').append('<span class="response-error">'+responseObj[i].error+ '</span>');
-                }else{
-                    $('#console-content').append('<span class="response">'+responseObj[i].message+ '<br />'+ responseObj[i].result+'</span>');
+                    $('#console-content').append('<span class="response-error">'+responseObj[i].message+ '</span>');
+                }
+                else if(responseObj[i].type==2){
+                    $('#console-content').append('<span class="response-error">'+responseObj[i].message+'</span>');
+                }
+                else{
+                    $('#console-content').append('<span class="response">'+responseObj[i].message+'</span>');
                 }
             }
 

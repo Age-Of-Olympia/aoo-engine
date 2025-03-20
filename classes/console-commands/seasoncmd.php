@@ -75,7 +75,7 @@ EOT);
         }
 
 
-        return '<font color="orange">Action : ' . $action . ' unknown</font>';
+        $this->result->Error('Action : ' . $action . ' unknown');
     }
 
 function refund_deprecated_objects(bool $bank)
