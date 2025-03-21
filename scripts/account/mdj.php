@@ -25,7 +25,16 @@ echo '<div><a href="account.php"><button id="cancel"><span class="ra ra-sideswip
 
 echo '<textarea rows="20" class="tr-topic1" style="width: 100%;">'. $player->data->text .'</textarea>';
 
-echo '<div><button id="validate">Valider</button></div>';
+echo '
+    <div id="validation-mdj">
+        <div class="portrait">
+            <img src="'. $player->data->portrait .'" />
+        </div>
+
+        <div>
+            <button id="validate">Valider</button>
+        </div>
+    </div>';
 
 ?>
 <script>

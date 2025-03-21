@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20250516"></script>
                 <script src="js/console.js?v=20250516"></script>
-                <link href="css/main.min.css?v=20250722" rel="stylesheet" />
+                <link href="css/main.min.css?v=20250908" rel="stylesheet" />
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){
