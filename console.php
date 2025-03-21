@@ -68,7 +68,7 @@ function ExecuteCommand($command, $commandLineSplit)
                 }
             } catch (Throwable $e) {
                 $command->result->Error("Unexpected technical error, check command syntax : " . $command->getName() . " " . $command->printArguments());
-                if($e instanceof ErrorException)
+                if($e instanceof ErrorException || $e instanceof Error)
                     throw $e;
                 $command->result->Error( $e->getMessage());
             }
@@ -105,6 +105,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
 
                 if ($command) {
                     $command->result = $commandsResults;//@todo create a new result for each command child base system that is compatible with exeptions 
+                    $command->db = $dbconn;
                     ExecuteCommand($command, $commandLineSplit);
                 } else {
                     $commandsResults->Error('Unknown command ' . $commandeName);

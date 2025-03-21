@@ -6,6 +6,7 @@ abstract class Command
     private array $arguments;
     private CommandFactory $factory;
     public CommandResult $result;
+    public $db;
     
     public function __construct(string $name, array $arguments = [])
     {

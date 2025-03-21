@@ -19,9 +19,9 @@ EOT);
     {
         $action = $argumentValues[0];
         $forced = isset($argumentValues[1]) && $argumentValues[1]=="--forced";
-        $result = '';
+
         if ($action == 'cancelExchanges') {
-            if(!$this->checkEnvState($forced,0,$result)) return $result;
+            $this->checkEnvState($forced,0);
             $count = 0;
             $exchanges = Exchange::get_all_open_exchanges();
             foreach ($exchanges as $exchange) {
@@ -43,20 +43,21 @@ EOT);
                 $count++;
             }
             Command::SetEnvVariable("seasoncmd",1);
-            return $count.'/'.sizeof($exchanges).' Exchanges anulés';
+            $this->result->Log($count.'/'.sizeof($exchanges).' Exchanges anulés');
+            return '';
         }
 
         if ($action == 'refundDeprecatedItems') {
-            if(!$this->checkEnvState($forced,1,$result)) return $result;
+            $this->checkEnvState($forced,1);
             
-            $result =  $this->refund_deprecated_objects(true);
-            $result +=  $this->refund_deprecated_objects(false);
+            $this->refund_deprecated_objects(true);
+            $this->refund_deprecated_objects(false);
             Command::SetEnvVariable("seasoncmd",2);
-            return $result;
+            return '';
         }
 
         if ($action == 'convertItems') {
-            if(!$this->checkEnvState($forced,2,$result)) return $result;
+            $this->checkEnvState($forced,2);
 
             $convertionData = array(
                 //'rocher' => array('new_item' => "caillou", 'mult' => 3),
@@ -65,17 +66,18 @@ EOT);
                 'bois P' => array('new_item' => "pierres de mana", 'mult' => 1),
                 'bois' => array('new_item' => "bois P", 'mult' => 1),
             );
-            $result = '';
+
             foreach ($convertionData as $name => $data) {
-                $result +=  $this->convert_objects(true, $name, $data);
-                $result +=  $this->convert_objects(false, $name, $data);
+                $this->convert_objects(true, $name, $data);
+                $this->convert_objects(false, $name, $data);
             }
             Command::SetEnvVariable("seasoncmd",3);
-            return $result;
+            return '';
         }
 
 
         $this->result->Error('Action : ' . $action . ' unknown');
+        return '';
     }
 
 function refund_deprecated_objects(bool $bank)
@@ -83,32 +85,35 @@ function refund_deprecated_objects(bool $bank)
     $deprecatedObjects =  $this->get_deprecated_objects($bank);
     $count = 0;
     $ingredientsCount = 0;
-    foreach ($deprecatedObjects as $object) {
-        $player = new Player($object->player_id);
-        $item = new Item($object->item_id);
+    foreach ($deprecatedObjects as $row) {
+    $player = new Player($row['player_id']);
+        $item = new Item($row['item_id']);
         $item->get_data();
-        $player->db->beginTransaction();
+        $this->db->beginTransaction();
         try {
 
             $reciep = $item->get_recipe(true);
             if (sizeof($reciep) > 0) { // skip intentionelle des objets sans recette, ceux ci doient etre traités par convertions
                 foreach ($reciep as $k => $e) {
                     $craftedWithItem = Item::get_item_by_name($k);
-                    $craftedWithItem->add_item($player, $e * $object->n);
-                    $ingredientsCount += $e * $object->n;
+                    $craftedWithItem->add_item($player, $e * $row['n']);
+                    $ingredientsCount += $e * $row['n'];
                 }
-                $item->add_item($player, -$object->n, $bank);
+                $item->add_item($player, -$row['n'], $bank);
                 $count++;
             }
 
-            $player->db->commit();
+            $this->db->commit();
         } catch (Throwable $th) {
-            $player->db->rollBack();
-            throw new Exception($th->getMessage().'<br>'.'objets remboursés'.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
+            $this->db->rollBack();
+            $this->result->Log('objets remboursés :'.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : ''));
+            $this->result->Error('Erreur lors du remboursement de l\'objet:' . $row['item_id'] . ' du joueur: ' . $player->id);
+            
+            throw $th;
         }
     }
 
-    return ' objets remboursés'.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : '');
+    $this->result->Log(' objets remboursés '.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : ''));
 }
 function get_deprecated_objects(bool $bank)
 {
@@ -116,15 +121,9 @@ function get_deprecated_objects(bool $bank)
     $bankTable = ($bank) ? '_bank' : '';
     $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.is_deprecated = 1';
 
+    $res =  $this->db->fetchAllAssociative($sql);
 
-    $db = new Db();
-    $res = $db->exe($sql);
-
-    while ($row = $res->fetch_object()) {
-        $return[] = $row;
-    }
-
-    return $return;
+    return $res;
 }
 function get_objects_by_name(bool $bank,string $name)
 {
@@ -132,43 +131,43 @@ function get_objects_by_name(bool $bank,string $name)
     $bankTable = ($bank) ? '_bank' : '';
     $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.name = ?';
 
-    $db = new Db();
-    $res = $db->exe($sql, array($name));
+    $res =  $this->db->fetchAllAssociative($sql, array($name));
 
-    while ($row = $res->fetch_object()) {
-        $return[] = $row;
-    }
-
-    return $return;
+    return $res;
 }
 function convert_objects(bool $bank, string $name, $convertionData)
 {
     $newItem = Item::get_item_by_name($convertionData['new_item']);
     $ItemstoConvert =  $this->get_objects_by_name($bank,$name);
-    $count = 0;
-    foreach ($ItemstoConvert as $object) {
-        $player = new Player($object->player_id);
-        $item = new Item($object->item_id);
+    $countp = 0;
+    $counto = 0;
+    foreach ($ItemstoConvert as $row) {
+        $player = new Player($row['player_id']);
+        $item = new Item($row['item_id']);
         $item->get_data();
-        $player->db->beginTransaction();
+        $this->db->beginTransaction();
         try {
-            $newItem->add_item($player, $object->n * $convertionData['mult']);
-            $item->add_item($player, -$object->n, $bank);
-            $player->db->commit();
-            $count++;
+            $newItem->add_item($player, $row['n'] * $convertionData['mult']);
+            $item->add_item($player, -$row['n'], $bank);
+            $this->db->commit();
+            $counto += $row['n'];
+            $countp++;
         }
         catch (Throwable $th) {
-            $player->db->rollBack();
-            throw new Exception($th->getMessage().'<br>'.$name.'objets convertis en'.$convertionData['new_item'].':'.$count.'/'.sizeof($ItemstoConvert). (($bank) ? ' en banque' : '').'+ Erreur lors du remboursement de l\'objet:' . $object->id . ' du joueur: ' . $player->id);
+            $this->db->rollBack();
+            $this->result->Log($counto.' '.$name.'convertis en '.$counto * $convertionData['mult'].' '.$convertionData['new_item']. (($bank) ? ' en banque' : '').' pour '.$countp.'joueurs');
+            $this->result->Error('Erreur lors de la conversion de l\'objet '.$name.' du joueur: ' . $player->id);
+            throw $th;
         }
     }
+    $this->result->Log($counto.' '.$name.' convertis en '.$counto * $convertionData['mult'].' '.$convertionData['new_item']. (($bank) ? ' en banque' : '').' pour '.$countp.'joueurs');
 }
 
-function checkEnvState($forced,$expectedState, &$result)
+function checkEnvState($forced,$expectedState)
 {
     if($forced) return true;
     if(Command::GetEnvVariable("seasoncmd",0)==$expectedState)return true;
-    $result="Error:invalid state, utilisez les commande de saison dans un script ou assumer les consequence en utilisant --forced";
+    throw new Exception("Error: invalid state, utilisez les commande de saison dans un script ou assumer les consequence en utilisant --forced");
     return false;
 }
 

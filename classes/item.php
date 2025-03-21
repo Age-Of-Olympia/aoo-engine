@@ -221,7 +221,7 @@ class Item{
 
         if(!$craftJson){
 
-           throw new Exception("Craft json not found");
+           throw new Exception(($deprecated? 'oldcrafts': 'crafts').' json not found');
         }
         $return = array();
 
