@@ -12,7 +12,7 @@
 
     "distanceMin": 2,
 
-    "playerJet": "cc/ct",
+    "playerJet": "cc",
     "targetJet": "cc/agi",
 
     "playerDamages": "f",

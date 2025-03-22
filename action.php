@@ -375,11 +375,11 @@ if(!empty($success) && $success == true){
 
         // tir damages reduce and distance malus has same rules to be applied ( tir + distance > 2 )
         if($distanceMalus){
-
-
-            $distanceDmgReduce = $distance - 2;
-
-            $totalDamages -= $distanceDmgReduce;
+            // Skip distance penalty for attaque sautee since it moves to target first
+            if($actionJson->name !== "Attaque Sautée") {
+                $distanceDmgReduce = $distance - 2;
+                $totalDamages -= $distanceDmgReduce;
+            }
         }
 
 
