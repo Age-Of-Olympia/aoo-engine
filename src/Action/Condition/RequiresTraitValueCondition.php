@@ -15,10 +15,15 @@ class RequiresTraitValueCondition extends BaseCondition
         $details = array();
         $costIsAffordable = true;
         foreach ($params as $key => $value) {
-            if ($key == "fat") {
+            if ($key == "uses_fatigue") {
                 continue;
             }
-            if ($actor->getRemaining($key) < $value) {
+            if ($key == "fatigue") {
+                if (!$actor->data->fatigue) {
+                    array_push($details, "Vous n'êtes pas fatigué !");
+                    $costIsAffordable = false;
+                }
+            } else if ($actor->getRemaining($key) < $value) {
                 array_push($details, "Pas assez de ".CARACS[$key]);
                 $costIsAffordable = false;
             }
@@ -35,9 +40,9 @@ class RequiresTraitValueCondition extends BaseCondition
     {
         $result = array();
         $parameters = $conditionToPay->getParameters();
-        $fat = $parameters["fat"] ?? true;
+        $fat = $parameters["uses_fatigue"] ?? true;
         foreach ($parameters as $key => $value) {
-            if ($key == "fat") {
+            if ($key == "fatigue" || $key == "uses_fatigue") {
                 continue;
             }
             $actor->putBonus([$key => -$value], $fat);
