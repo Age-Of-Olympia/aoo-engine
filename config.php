@@ -28,10 +28,10 @@ spl_autoload_register(function ($class_name) {
     }
 });
 
-require_once('config/constants.php');
-require_once('config/db_constants.php');
-require_once('config/bootstrap.php');
-require_once('config/functions.php');
+require_once(__DIR__.'/config/constants.php');
+require_once(__DIR__.'/config/db_constants.php');
+require_once(__DIR__.'/config/bootstrap.php');
+require_once(__DIR__.'/config/functions.php');
 
 if(!defined('NO_LOGIN') && !isset($_SESSION['playerId'])){
 
