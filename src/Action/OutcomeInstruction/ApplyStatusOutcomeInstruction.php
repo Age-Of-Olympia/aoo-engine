@@ -16,7 +16,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
         // e.g. { "adrenaline": true, "player": "actor", , "duration": 86400 }
         // e.g. { "finished": true, "player": "actor" }
         $status = array_key_first($params);
-        if (isset(EFFECTS_HIDDEN[$status])) {
+        if (in_array($status, EFFECTS_HIDDEN)) {
             $this->getOutcome()->getAction()->setHideOnSuccess(true);
         }
         $duration = $params['duration'] ?? 0;

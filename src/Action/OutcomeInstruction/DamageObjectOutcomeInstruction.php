@@ -13,39 +13,39 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target): OutcomeResult {
         $result = new OutcomeResult(false);
-        $effectSuccessMessages = array();
-        $effectSuccessMessages[0] = null;
+        $outcomeSuccessMessages = array();
+        $outcomeSuccessMessages[0] = null;
         $player = $params['player'] ?? 'BOTH';
         switch ($player) {
             case 'ACTOR':
                 $objectBroken = $this->breakObject($actor, "ATTACK");
                 if ($objectBroken != null) {
-                    $effectSuccessMessages[0] = "Vous cassez votre ".$objectBroken->data->name;
-                    $effectSuccessMessages[1] = $this->getRecipeElementBack($actor, $objectBroken);
+                    $outcomeSuccessMessages[0] = "Vous cassez votre ".$objectBroken->data->name;
+                    $outcomeSuccessMessages[1] = $this->getRecipeElementBack($actor, $objectBroken);
                 }
                 break;
             case 'TARGET':
                 $objectBroken = $this->breakObject($target, "DEFENSE");
                 if ($objectBroken != null) {
-                    $effectSuccessMessages[0] = $objectBroken->data->name .' de '. $target->data->name .' s\'est cassée.';
-                    $effectSuccessMessages[1] = $this->getRecipeElementBack($target, $objectBroken);
+                    $outcomeSuccessMessages[0] = $objectBroken->data->name .' de '. $target->data->name .' s\'est cassée.';
+                    $outcomeSuccessMessages[1] = $this->getRecipeElementBack($target, $objectBroken);
                 }
                 break;
             default:
             $objectBroken = $this->breakObject($actor, "ATTACK");
             if ($objectBroken != null) {
-                $effectSuccessMessages[0] = "Vous cassez votre ".$objectBroken->data->name;
-                $effectSuccessMessages[1] = $this->getRecipeElementBack($actor, $objectBroken);
+                $outcomeSuccessMessages[0] = "Vous cassez votre ".$objectBroken->data->name;
+                $outcomeSuccessMessages[1] = $this->getRecipeElementBack($actor, $objectBroken);
             }
             $defenseBroken = $this->breakObject($target, "DEFENSE");
             if ($defenseBroken) {
-                array_push($effectSuccessMessages, $defenseBroken->data->name .' de '. $target->data->name .' s\'est cassée.');
-                array_push($effectSuccessMessages, $this->getRecipeElementBack($target, $defenseBroken));
+                array_push($outcomeSuccessMessages, $defenseBroken->data->name .' de '. $target->data->name .' s\'est cassée.');
+                array_push($outcomeSuccessMessages, $this->getRecipeElementBack($target, $defenseBroken));
             }
             break;
         }
-        if ($effectSuccessMessages[0] != null) {
-            $result = new OutcomeResult(true, outcomeSuccessMessages:$effectSuccessMessages);
+        if ($outcomeSuccessMessages[0] != null) {
+            $result = new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages);
         } 
         return $result;
     }

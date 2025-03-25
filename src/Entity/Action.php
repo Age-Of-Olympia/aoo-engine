@@ -21,6 +21,9 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 50)]
     protected string $name;
 
+    #[ORM\Column(type: "string", length: 50, name: "display_name")]
+    protected string $displayName;
+
     #[ORM\OneToMany(
         mappedBy: "action",
         targetEntity: ActionCondition::class,
@@ -77,6 +80,16 @@ abstract class Action implements ActionInterface
     public function setName(string $name): void
     {
         $this->name = $name;
+    }
+
+    public function getDisplayName(): string
+    {
+        return $this->displayName;
+    }
+
+    public function setDisplayName(string $displayName): void
+    {
+        $this->displayName = $displayName;
     }
 
     /**

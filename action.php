@@ -209,8 +209,10 @@ try {
 
     $logDetails = $actionResultsView->getActionResults();
     $actorMainLog = $actionResults->getLogsArray()["actor"];
-    $targetMainLog = $actionResults->getLogsArray()["target"];
-
+    if($target->id != $player->id) {
+        $targetMainLog = $actionResults->getLogsArray()["target"];
+    }
+    
     $logTime = time();
     if(!empty($actorMainLog)) {
         if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
@@ -221,20 +223,22 @@ try {
         Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
     }
 
-    if(!empty($targetMainLog)){
-        if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
-            $type = "hidden_action_other_player";
-        } else {
-            $type = "action_other_player";
+    if($target->id != $player->id) {
+        if(!empty($targetMainLog)){
+            if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
+                $type = "hidden_action_other_player";
+            } else {
+                $type = "action_other_player";
+            }
+            Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
         }
-        Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
     }
+    
     
 } catch (Exception $e) {
     echo $e->getMessage();
 }
 
-//         include('scripts/actions/esquive.php');
 //         if($totalDamages){
 //             include('scripts/actions/tank.php');
 //         }
