@@ -18,9 +18,18 @@ abstract class ComputeCondition extends BaseCondition
 {
     protected int $distance;
     protected string $throwName = "Le tir";
-    
+
+    public function __construct() {
+        array_push($this->preConditions, new DodgeCondition());
+    }
+
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
+        $preConditionResult = $this->checkPreconditions($actor, $target, $condition);
+        if (!$preConditionResult->isSuccess()) {
+            return $preConditionResult;
+        }
+
         if (!$target) {
             $errorMessages[0] = "Aucune cible n'a été spécifiée.";
             return new ConditionResult(success: false, conditionSuccessMessages:$errorMessages);
@@ -105,6 +114,24 @@ abstract class ComputeCondition extends BaseCondition
     
     protected function getDistanceMalus(): int {
         return 0;
+    }
+
+    public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    {
+        $success = true;
+        $successMessages = array();
+        $failureMessages = array();
+        foreach ($this->preConditions as $key => $preCondition) {
+            $resultCondition = $preCondition->check($actor,$target,$condition);
+            if ($resultCondition->isSuccess()) {
+                $successMessages = array_merge($successMessages, $resultCondition->getConditionSuccessMessages());
+            } else {
+                $failureMessages = array_merge($failureMessages, $resultCondition->getConditionFailureMessages());
+            }
+            $success = $success && $resultCondition->isSuccess();
+        }
+
+        return new ConditionResult($success, $successMessages, $failureMessages);
     }
 
 }

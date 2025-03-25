@@ -15,4 +15,5 @@ interface ActorInterface
   public function equip(Item $item): EquipResult;
   public function getMunition(Item $object, bool $equiped=false): ?Item;
   public function putBonus($bonus) : bool;
+  public function go($goCoords);
 }
