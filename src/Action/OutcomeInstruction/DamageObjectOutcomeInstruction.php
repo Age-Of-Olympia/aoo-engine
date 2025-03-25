@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Action\EffectInstruction;
+namespace App\Action\OutcomeInstruction;
 
-use App\Entity\EffectInstruction;
+use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Item;
 use Player;
 
 #[ORM\Entity]
-class DamageObjectEffectInstruction extends EffectInstruction
+class DamageObjectOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): EffectResult {
-        $result = new EffectResult(false);
+    public function execute(Player $actor, Player $target): OutcomeResult {
+        $result = new OutcomeResult(false);
         $effectSuccessMessages = array();
         $effectSuccessMessages[0] = null;
         $player = $params['player'] ?? 'BOTH';
@@ -45,7 +45,7 @@ class DamageObjectEffectInstruction extends EffectInstruction
             break;
         }
         if ($effectSuccessMessages[0] != null) {
-            $result = new EffectResult(true, effectSuccessMessages:$effectSuccessMessages);
+            $result = new OutcomeResult(true, outcomeSuccessMessages:$effectSuccessMessages);
         } 
         return $result;
     }

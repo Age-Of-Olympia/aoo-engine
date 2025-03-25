@@ -6,15 +6,15 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity]
-#[ORM\Table(name: "action_effects")]
-class ActionEffect
+#[ORM\Table(name: "action_outcomes")]
+class ActionOutcome
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Action::class, inversedBy: "effects")]
+    #[ORM\ManyToOne(targetEntity: Action::class, inversedBy: "outcomes")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Action $action = null;
 
@@ -28,8 +28,8 @@ class ActionEffect
     private bool $onSuccess = false;
 
     #[ORM\OneToMany(
-        mappedBy: "effect",
-        targetEntity: EffectInstruction::class,
+        mappedBy: "outcome",
+        targetEntity: OutcomeInstruction::class,
         cascade: ["persist", "remove"],
         orphanRemoval: true
     )]
@@ -101,14 +101,14 @@ class ActionEffect
     }
 
     /**
-     * @return Collection<int, EffectInstruction>
+     * @return Collection<int, OutcomeInstruction>
      */
     public function getInstructions(): Collection
     {
         return $this->instructions;
     }
 
-    public function addInstruction(EffectInstruction $instruction): self
+    public function addInstruction(OutcomeInstruction $instruction): self
     {
         if (!$this->instructions->contains($instruction)) {
             $this->instructions->add($instruction);
@@ -117,7 +117,7 @@ class ActionEffect
         return $this;
     }
 
-    public function removeInstruction(EffectInstruction $instruction): self
+    public function removeInstruction(OutcomeInstruction $instruction): self
     {
         if ($this->instructions->removeElement($instruction)) {
             // set the owning side to null (unless already changed)

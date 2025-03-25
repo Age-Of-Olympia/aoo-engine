@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Action\EffectInstruction;
+namespace App\Action\OutcomeInstruction;
 
-use App\Entity\EffectInstruction;
+use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Item;
 use Player;
 use View;
 
 #[ORM\Entity]
-class ObjectEffectInstruction extends EffectInstruction
+class ObjectOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): EffectResult {
+    public function execute(Player $actor, Player $target): OutcomeResult {
 
         // e.g. {"action":"steal", "object": 1 }
         $action = $this->getParameters()['action'] ?? '';
         $object = $this->getParameters()['object'] ?? 1;
 
-        $effectSuccessMessages = array();
+        $outcomeSuccessMessages = array();
         if(!empty($action)){
             $gold = new Item($object);
             $goldInTargetInventory = $gold->get_n($target);
@@ -46,12 +46,12 @@ class ObjectEffectInstruction extends EffectInstruction
                 } 
             }
 
-            $effectSuccessMessages[0] = 'Vous obtenez '. $gain .' Po grâce à votre larcin sur '. $target->data->name .'.';
+            $outcomeSuccessMessages[0] = 'Vous obtenez '. $gain .' Po grâce à votre larcin sur '. $target->data->name .'.';
         
         } {
             //handle not working case
         }
 
-        return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array(), totalDamages:$gain);
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$gain);
     }
 }

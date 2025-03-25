@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Action\EffectInstruction;
+namespace App\Action\OutcomeInstruction;
 
-use App\Entity\EffectInstruction;
+use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
 use Str;
 
 #[ORM\Entity]
-class ApplyStatusEffectInstruction extends EffectInstruction
+class ApplyStatusOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): EffectResult {
+    public function execute(Player $actor, Player $target): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }
         // e.g. { "adrenaline": true, "player": "actor", , "duration": 86400 }
@@ -43,7 +43,7 @@ class ApplyStatusEffectInstruction extends EffectInstruction
             break;
         }
 
-        return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array());
+        return new OutcomeResult(true, outcomeSuccessMessages:$effectSuccessMessages, outcomeFailureMessages: array());
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){

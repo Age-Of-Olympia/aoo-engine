@@ -1,8 +1,8 @@
 <?php
 namespace App\Entity;
 
-use App\Action\EffectInstruction\EffectResult;
-use App\Interface\EffectInstructionInterface;
+use App\Action\OutcomeInstruction\OutcomeResult;
+use App\Interface\OutcomeInstructionInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
 
@@ -10,16 +10,16 @@ use Player;
 #[ORM\Table(name: "effect_instructions")]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
-abstract class EffectInstruction implements EffectInstructionInterface
+abstract class OutcomeInstruction implements OutcomeInstructionInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: ActionEffect::class, inversedBy: "instructions")]
+    #[ORM\ManyToOne(targetEntity: ActionOutcome::class, inversedBy: "instructions")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?ActionEffect $effect = null;
+    private ?ActionOutcome $effect = null;
 
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $parameters = null;
@@ -42,12 +42,12 @@ abstract class EffectInstruction implements EffectInstructionInterface
         return $this;
     }
 
-    public function getEffect(): ?ActionEffect
+    public function getEffect(): ?ActionOutcome
     {
         return $this->effect;
     }
 
-    public function setEffect(?ActionEffect $effect): self
+    public function setEffect(?ActionOutcome $effect): self
     {
         $this->effect = $effect;
         return $this;
@@ -75,5 +75,5 @@ abstract class EffectInstruction implements EffectInstructionInterface
         return $this;
     }
 
-    abstract public function execute(Player $actor, Player $target): EffectResult;
+    abstract public function execute(Player $actor, Player $target): OutcomeResult;
 }

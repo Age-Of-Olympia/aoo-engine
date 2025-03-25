@@ -32,11 +32,11 @@ abstract class Action implements ActionInterface
 
     #[ORM\OneToMany(
         mappedBy: "action",
-        targetEntity: ActionEffect::class,
+        targetEntity: ActionOutcome::class,
         cascade: ["persist", "remove"],
         orphanRemoval: true
     )]
-    protected Collection $effects;
+    protected Collection $outcomes;
 
     /**
      * Many Actions can belong to Many Races by default.
@@ -49,7 +49,7 @@ abstract class Action implements ActionInterface
     public function __construct()
     {
         $this->actionConditions = new ArrayCollection();
-        $this->effects    = new ArrayCollection();
+        $this->outcomes    = new ArrayCollection();
         $this->races    = new ArrayCollection();
     }
 
@@ -107,39 +107,39 @@ abstract class Action implements ActionInterface
     }
 
     /**
-     * @return Collection<int, ActionEffect>
+     * @return Collection<int, ActionOutcome>
      */
-    public function getEffects(): Collection
+    public function getOutcomes(): Collection
     {
-        return $this->effects;
+        return $this->outcomes;
     }
 
     /**
-     * @return Collection<int, ActionEffect>
+     * @return Collection<int, ActionOutcome>
      */
-    public function getOnSuccessEffects(bool $success = true): Collection
+    public function getOnSuccessOutcomess(bool $success = true): Collection
     {
-        $filteredCollection = $this->effects->filter(function($element) use ($success) {
+        $filteredCollection = $this->outcomes->filter(function($element) use ($success) {
             return $element->isOnSuccess() == $success;
         });
         return $filteredCollection;
     }
 
-    public function addEffect(ActionEffect $effect): self
+    public function addOutcome(ActionOutcome $outcome): self
     {
-        if (!$this->effects->contains($effect)) {
-            $this->effects->add($effect);
-            $effect->setAction($this);
+        if (!$this->outcomes->contains($outcome)) {
+            $this->outcomes->add($outcome);
+            $outcome->setAction($this);
         }
         return $this;
     }
 
-    public function removeEffect(ActionEffect $effect): self
+    public function removeOutcome(ActionOutcome $outcome): self
     {
-        if ($this->effects->removeElement($effect)) {
+        if ($this->outcomes->removeElement($outcome)) {
             // set the owning side to null (unless already changed)
-            if ($effect->getAction() === $this) {
-                $effect->setAction(null);
+            if ($outcome->getAction() === $this) {
+                $outcome->setAction(null);
             }
         }
         return $this;

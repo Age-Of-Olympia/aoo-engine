@@ -2,7 +2,7 @@
 namespace App\Service;
 
 use Player;
-use App\Entity\ActionEffect;
+use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
 use App\Entity\Action;
@@ -12,7 +12,7 @@ class ActionExecutorService
     private ConditionRegistry $conditionRegistry;
     private bool $globalConditionsResult;
     private array $conditionResultsArray;
-    private array $effectResultsArray;
+    private array $outcomeResultsArray;
     private array $conditionsToPay;
     private Player $actor;
     private Player $target;
@@ -26,7 +26,7 @@ class ActionExecutorService
     public function __construct(Action $action, Player $actor, Player $target){
         $this->conditionRegistry = new ConditionRegistry();
         $this->conditionResultsArray = array();
-        $this->effectResultsArray = array();
+        $this->outcomeResultsArray = array();
         $this->conditionsToPay = array();
         $this->actor = $actor;
         $this->target = $target;
@@ -61,7 +61,7 @@ class ActionExecutorService
         $logsArray = $this->action->getLogMessages($this->actor, $this->target);
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
-        return new ActionResults($this->globalConditionsResult, $this->conditionResultsArray, $this->effectResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
+        return new ActionResults($this->globalConditionsResult, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
     }
 
     private function applyCosts(): array
@@ -80,11 +80,11 @@ class ActionExecutorService
     private function applyEffects(): void
     {
         if ($this->globalConditionsResult) {
-            foreach ($this->action->getOnSuccessEffects() as $effectEntity) {
+            foreach ($this->action->getOnSuccessOutcomess() as $effectEntity) {
                 $this->applyActionEffect($effectEntity, $this->actor, $this->target);
             }
         } else {
-            foreach ($this->action->getOnSuccessEffects(false) as $effectEntity) {
+            foreach ($this->action->getOnSuccessOutcomess(false) as $effectEntity) {
                 $this->applyActionEffect($effectEntity, $this->actor, $this->target);
             }
         }
@@ -117,16 +117,15 @@ class ActionExecutorService
         return $globalConditionsResult;
     }
 
-    private function applyActionEffect(ActionEffect $effectEntity): void
+    private function applyActionEffect(ActionOutcome $outcomeEntity): void
     {
-        //EffectInstructionFactory::initialize('src/Action/EffectInstruction');
-        $effectInstructionService = new EffectInstructionService();
-        $instructions = $effectInstructionService->getEffectInstructionsByEffect($effectEntity->getId());
+        $outcomeInstructionService = new OutcomeInstructionService();
+        $instructions = $outcomeInstructionService->getOutcomeInstructionsByEffect($outcomeEntity->getId());
 
         // Execute instructions in order
         foreach ($instructions as $instruction) {
             $result = $instruction->execute($this->actor, $this->target);
-            array_push($this->effectResultsArray, $result);
+            array_push($this->outcomeResultsArray, $result);
         }
     }
 

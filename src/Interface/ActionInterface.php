@@ -3,7 +3,7 @@
 namespace App\Interface;
 
 use App\Entity\ActionCondition;
-use App\Entity\ActionEffect;
+use App\Entity\ActionOutcome;
 use App\Entity\Race;
 use Doctrine\Common\Collections\Collection;
 use Player;
@@ -16,10 +16,10 @@ interface ActionInterface
     public function getActionConditions(): Collection;
     public function addCondition(ActionCondition $condition): self;
     public function removeCondition(ActionCondition $condition): self;
-    public function getEffects(): Collection;
-    public function getOnSuccessEffects(bool $success = true): Collection;
-    public function addEffect(ActionEffect $effect): self;
-    public function removeEffect(ActionEffect $effect): self;
+    public function getOutcomes(): Collection;
+    public function getOnSuccessOutcomess(bool $success = true): Collection;
+    public function addOutcome(ActionOutcome $outcome): self;
+    public function removeOutcome(ActionOutcome $outcome): self;
     public function getRaces(): Collection;
     public function addRace(Race $race): self;
     public function removeRace(Race $race): self;

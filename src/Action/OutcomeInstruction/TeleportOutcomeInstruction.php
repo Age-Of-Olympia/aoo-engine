@@ -1,27 +1,27 @@
 <?php
 
-namespace App\Action\EffectInstruction;
+namespace App\Action\OutcomeInstruction;
 
-use App\Entity\EffectInstruction;
+use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
 use Str;
 use View;
 
 #[ORM\Entity]
-class TeleportEffectInstruction extends EffectInstruction
+class TeleportOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): EffectResult {
+    public function execute(Player $actor, Player $target): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "coords": "target" }
 
         $coords = $params['coords'];
-        $effectSuccessMessages = array();
+        $outcomeSuccessMessages = array();
         switch ($coords) {
             case 'target':
                 $goCoords = $target->coords;
                 $coordsId = View::get_free_coords_id_arround($goCoords);
-                $effectSuccessMessages[0] = $actor->data->name . ' saute sur ' .$target->data->name. ' !';
+                $outcomeSuccessMessages[0] = $actor->data->name . ' saute sur ' .$target->data->name. ' !';
                 $actor->go($coordsId);
                 break;
             default:
@@ -29,7 +29,7 @@ class TeleportEffectInstruction extends EffectInstruction
                 break;
         }
 
-        return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array());
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
     }
 
 }

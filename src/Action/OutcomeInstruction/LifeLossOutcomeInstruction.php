@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Action\EffectInstruction;
+namespace App\Action\OutcomeInstruction;
 
-use App\Entity\EffectInstruction;
+use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
 use View;
 
 #[ORM\Entity]
-class LifeLossEffectInstruction extends EffectInstruction
+class LifeLossOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): EffectResult {
+    public function execute(Player $actor, Player $target): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
@@ -39,7 +39,7 @@ class LifeLossEffectInstruction extends EffectInstruction
             //ESQUIVE ? (géré dans les conditions ?)
             //TANK ?
             $target->putBonus(array('pv'=>-$totalDamages));
-            $effectSuccessMessages[0] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
+            $outcomeSuccessMessages[0] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
             $bonusDamagesText = "";
             if ($bonusDamages > 0) {
                 $bonusText = '';
@@ -60,7 +60,7 @@ class LifeLossEffectInstruction extends EffectInstruction
             if ($distanceInfluence) {
                 $distanceText = ' - '. $cellCount. ' (distance)';
             }
-            $effectSuccessMessages[1] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
+            $outcomeSuccessMessages[1] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
 
             // put assist
             $actor->put_assist($target, $totalDamages);
@@ -71,6 +71,6 @@ class LifeLossEffectInstruction extends EffectInstruction
             //handle not working case
         }
 
-        return new EffectResult(true, effectSuccessMessages:$effectSuccessMessages, effectFailureMessages: array(), totalDamages:$totalDamages);
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$totalDamages);
     }
 }
