@@ -53,16 +53,12 @@ class json{
 
 
     public function isJson($string) {
-
-
         json_decode($string);
         return json_last_error() === JSON_ERROR_NONE;
     }
 
 
     public static function create_json($path){
-
-
         $myfile = fopen(dirname(__FILE__) .'/../'. $path, "w") or die("Unable to open file!");
         fwrite($myfile, '{"id":"new"}');
         fclose($myfile);
@@ -70,8 +66,6 @@ class json{
 
 
     public static function write_json($path, $data){
-
-
         $myfile = fopen(dirname(__FILE__) .'/../'. $path, "w") or die("Unable to open file!");
         fwrite($myfile, $data);
         fclose($myfile);
@@ -79,9 +73,32 @@ class json{
 
 
     public static function encode($data){
-
-
         return json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE);
     }
 
+    public function get_all($type, $s2 = false) {
+        $paths = [
+            dirname(__FILE__) . '/../datas/public/' . $type . '/',
+            dirname(__FILE__) . '/../datas/private/' . $type . '/'
+        ];
+        
+        $allData = [];
+        
+        foreach ($paths as $path) {
+            if (!is_dir($path)) continue;
+            
+            $pattern = $s2 ? '*_s2.json' : '*.json';
+            $files = glob($path . $pattern);
+            
+            foreach ($files as $file) {
+                $name = basename($file, '.json');
+                $data = $this->decode($type, $name);
+                if ($data) {
+                    $allData[$name] = $data;
+                }
+            }
+        }
+        
+        return $allData;
+    }
 }
