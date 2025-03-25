@@ -38,12 +38,12 @@ class ActionResults
         return $this;
     }
 
-    public function getEffectsResultsArray(): array
+    public function getOutcomesResultsArray(): array
     {
         return $this->effectsResultsArray;
     }
 
-    public function setEffectsResultsArray(array $effectsResultsArray): self
+    public function setOutcomesResultsArray(array $effectsResultsArray): self
     {
         $this->effectsResultsArray = $effectsResultsArray;
         return $this;

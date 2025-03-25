@@ -45,6 +45,7 @@ abstract class Action implements ActionInterface
     protected Collection $races;
 
     protected bool $refreshScreen = false;
+    protected bool $hideOnSuccess = false;
 
     public function __construct()
     {
@@ -172,8 +173,12 @@ abstract class Action implements ActionInterface
 
     abstract public function calculateXp(bool $success, Player $actor, Player $target): array;
 
-    public function hideWhenSuccess(): bool {
-        return false;
+    public function hideOnSuccess(): bool {
+        return $this->hideOnSuccess;
+    }
+
+    public function setHideOnSuccess(bool $hide): void {
+        $this->hideOnSuccess = $hide;
     }
 
     public function refreshScreen(): bool {

@@ -49,13 +49,13 @@ class ActionResultsView
         $actionsDetails = $actionsDetails.'<div class="action-details">';
 
         $effectDetails = array();
-        foreach($this->actionResults->getEffectsResultsArray() as $effectResult) {
+        foreach($this->actionResults->getOutcomesResultsArray() as $effectResult) {
             if ($this->actionResults->isSuccess()) {
-                foreach ($effectResult->getEffectSuccessMessages() as $message) {
+                foreach ($effectResult->getOutcomeSuccessMessages() as $message) {
                     array_push($effectDetails, $message);
                 }
             } else {
-                foreach ($effectResult->getEffectFailureMessages() as $message) {
+                foreach ($effectResult->getOutcomeFailureMessages() as $message) {
                     array_push($effectDetails, $message);
                 }
             }

@@ -213,7 +213,7 @@ try {
 
     $logTime = time();
     if(!empty($actorMainLog)) {
-        if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+        if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
             $type = "hidden_action";
         } else {
             $type = "action";
@@ -222,7 +222,7 @@ try {
     }
 
     if(!empty($targetMainLog)){
-        if ($actionResults->isSuccess() && $action->hideWhenSuccess()) {
+        if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
             $type = "hidden_action_other_player";
         } else {
             $type = "action_other_player";

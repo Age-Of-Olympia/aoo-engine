@@ -10,8 +10,8 @@ interface OutcomeInstructionInterface
 {
     public function getId(): ?int;
     public function setId(int $id): self;
-    public function getEffect(): ?ActionOutcome;
-    public function setEffect(?ActionOutcome $effect): self;
+    public function getOutcome(): ?ActionOutcome;
+    public function setOutcome(?ActionOutcome $effect): self;
     public function getParameters(): ?array;
     public function setParameters(?array $parameters): self;
     public function getOrderIndex(): int;

@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Player;
 
 #[ORM\Entity]
-#[ORM\Table(name: "effect_instructions")]
+#[ORM\Table(name: "outcome_instructions")]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
 abstract class OutcomeInstruction implements OutcomeInstructionInterface
@@ -19,7 +19,7 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
 
     #[ORM\ManyToOne(targetEntity: ActionOutcome::class, inversedBy: "instructions")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?ActionOutcome $effect = null;
+    private ?ActionOutcome $outcome = null;
 
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $parameters = null;
@@ -42,14 +42,14 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
         return $this;
     }
 
-    public function getEffect(): ?ActionOutcome
+    public function getOutcome(): ?ActionOutcome
     {
-        return $this->effect;
+        return $this->outcome;
     }
 
-    public function setEffect(?ActionOutcome $effect): self
+    public function setOutcome(?ActionOutcome $outcome): self
     {
-        $this->effect = $effect;
+        $this->outcome = $outcome;
         return $this;
     }
 

@@ -112,7 +112,7 @@ class ActionOutcome
     {
         if (!$this->instructions->contains($instruction)) {
             $this->instructions->add($instruction);
-            $instruction->setEffect($this);
+            $instruction->setOutcome($this);
         }
         return $this;
     }
@@ -121,8 +121,8 @@ class ActionOutcome
     {
         if ($this->instructions->removeElement($instruction)) {
             // set the owning side to null (unless already changed)
-            if ($instruction->getEffect() === $this) {
-                $instruction->setEffect(null);
+            if ($instruction->getOutcome() === $this) {
+                $instruction->setOutcome(null);
             }
         }
         return $this;

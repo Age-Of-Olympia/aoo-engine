@@ -41,7 +41,7 @@ class ActionExecutorService
         $this->globalConditionsResult = $this->checkConditions();
 
         // 2) apply each effect
-        $this->applyEffects();
+        $this->applyOutcomes();
         $this->finalTargetPv = $this->target->getRemaining('pv');
 
         // update Last Action Time (used on new turn to set antiberserk time)
@@ -77,15 +77,15 @@ class ActionExecutorService
         return $result;
     }
 
-    private function applyEffects(): void
+    private function applyOutcomes(): void
     {
         if ($this->globalConditionsResult) {
-            foreach ($this->action->getOnSuccessOutcomess() as $effectEntity) {
-                $this->applyActionEffect($effectEntity, $this->actor, $this->target);
+            foreach ($this->action->getOnSuccessOutcomess() as $outcomEntity) {
+                $this->applyActionOutcome($outcomEntity, $this->actor, $this->target);
             }
         } else {
-            foreach ($this->action->getOnSuccessOutcomess(false) as $effectEntity) {
-                $this->applyActionEffect($effectEntity, $this->actor, $this->target);
+            foreach ($this->action->getOnSuccessOutcomess(false) as $outcomEntity) {
+                $this->applyActionOutcome($outcomEntity, $this->actor, $this->target);
             }
         }
     }
@@ -117,10 +117,10 @@ class ActionExecutorService
         return $globalConditionsResult;
     }
 
-    private function applyActionEffect(ActionOutcome $outcomeEntity): void
+    private function applyActionOutcome(ActionOutcome $outcomeEntity): void
     {
         $outcomeInstructionService = new OutcomeInstructionService();
-        $instructions = $outcomeInstructionService->getOutcomeInstructionsByEffect($outcomeEntity->getId());
+        $instructions = $outcomeInstructionService->getOutcomeInstructionsByOutcome($outcomeEntity->getId());
 
         // Execute instructions in order
         foreach ($instructions as $instruction) {

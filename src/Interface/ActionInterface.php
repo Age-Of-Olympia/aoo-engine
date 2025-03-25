@@ -25,5 +25,6 @@ interface ActionInterface
     public function removeRace(Race $race): self;
     public function calculateXp(bool $success, Player $actor, Player $target): array;
     public function getLogMessages(Player $actor, Player $target): array;
-    public function hideWhenSuccess(): bool;
+    public function hideOnSuccess(): bool;
+    public function setHideOnSuccess(bool $hide): void;
 }

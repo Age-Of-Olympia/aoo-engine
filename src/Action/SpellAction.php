@@ -9,7 +9,7 @@ use Player;
 class SpellAction extends AttackAction
 {
 
-  public function getLogMessages(Player $actor, Player $target): array
+    public function getLogMessages(Player $actor, Player $target): array
     {
         $actorLog = $actor->data->name." a lancé ".$this->getName()." sur ".$target->data->name.".";
         $targetLog = $target->data->name." a été attaqué par ".$actor->data->name. "avec ".$this->getName().".";

@@ -50,7 +50,7 @@ class StealAction extends AttackAction
         return $playerXp;
     }
 
-    public function hideWhenSuccess(): bool
+    public function hideOnSuccess(): bool
     {
         return true;
     }

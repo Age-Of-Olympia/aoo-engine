@@ -22,12 +22,12 @@ class OutcomeInstructionService
     /**
      * Returns a OutcomeInstruction entity that matches the given type, or null if not found.
      */
-    public function getOutcomeInstructionByTypeByEffect(string $type, int $effectId): ?OutcomeInstructionInterface
+    public function getOutcomeInstructionByTypeByOutcome(string $type, int $outcomeId): ?OutcomeInstructionInterface
     {
         //$query = $this->entityManager->createQuery('SELECT OutcomeInstruction FROM App\\Entity\\OutcomeInstruction OutcomeInstruction WHERE OutcomeInstruction INSTANCE OF App\\OutcomeInstruction\\'.$type.'OutcomeInstruction');
                                                     //'SELECT action FROM App\\Action\\'.$type.'Action action'
-        $query = $this->entityManager->createQuery('SELECT outcome_instructions FROM App\\Action\\OutcomeInstruction\\'.$type.' effect_instructions WHERE effect_instructions.effect = :id');
-        $query->setParameter("id",$effectId);
+        $query = $this->entityManager->createQuery('SELECT outcome_instructions FROM App\\Action\\OutcomeInstruction\\'.$type.' outcome_instructions WHERE outcome_instructions.outcome = :id');
+        $query->setParameter("id",$outcomeId);
         $log = $query->getSQL();
         $OutcomeInstruction = null;
         try {
@@ -38,13 +38,13 @@ class OutcomeInstructionService
         return $OutcomeInstruction;
     }
 
-    public function getOutcomeInstructionsByEffect(int $effectId): array
+    public function getOutcomeInstructionsByOutcome(int $outcomeId): array
     {
         $instructionTypes = OutcomeInstructionFactory::initialize("src/Action/OutcomeInstruction");
 
         $OutcomeInstructions = array();
         foreach ($instructionTypes as $instruction) {
-            $OutcomeInstruction = $this->getOutcomeInstructionByTypeByEffect($instruction, $effectId);
+            $OutcomeInstruction = $this->getOutcomeInstructionByTypeByOutcome($instruction, $outcomeId);
             if ($OutcomeInstruction != null) {
                 array_push($OutcomeInstructions, $OutcomeInstruction);
             }
