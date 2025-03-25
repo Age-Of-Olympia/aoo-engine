@@ -20,6 +20,10 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
             $this->getOutcome()->getAction()->setHideOnSuccess(true);
         }
         $duration = $params['duration'] ?? 0;
+        $timeMessage = 'pour ' . Str::displaySeconds($duration);
+        if ($duration == 0) {
+            $timeMessage = 'jusqu\'au prochain tour';
+        }
         $player = $params['player'] ?? 'both';
         $outcomeSuccessMessages = array();
         switch ($player) {
@@ -31,7 +35,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
                     }
                 } else {
                     $this->applyEffect($params[$status], $status, $duration, $actor);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $actor->data->name;
+                    $outcomeSuccessMessages[0] = 'L\'effet '.$status.' est appliqué ' . $timeMessage . ' à ' . $actor->data->name;
                 }
                 break;
             case 'target':
