@@ -25,6 +25,7 @@ class ConditionRegistry
             'TechniqueCompute' => new TechniqueComputeCondition(),
 
             'Dodge' => new DodgeCondition(),
+            'RequiresGodAffiliation' => new RequiresGodAffiliationCondition()
         ];
     }
 

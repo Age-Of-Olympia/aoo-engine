@@ -29,6 +29,13 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                         } else {
                             $outcomeSuccessMessages[0] = 'Vous n\'aviez pas de fatigue.';
                         }
+                    } else if ($carac == "foi") {
+                        $god = new Player($actor->data->godId);
+                        $god->get_data();
+                        $pf = rand(1,3);
+                        $actor->put_pf($pf);
+                        $outcomeSuccessMessages[0] = 'Vous priez '. $god->data->name .' et gagnez '. $pf .' Points de Foi (total '. $actor->data->pf .'Pf).';
+                        $outcomeSuccessMessages[1] = '1d3 = '. $pf;
                     } else {
                         $bonus = array($carac=>$value);
                         $actor->putBonus($bonus);
