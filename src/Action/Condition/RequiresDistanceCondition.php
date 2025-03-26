@@ -9,8 +9,6 @@ use App\Interface\ActorInterface;
 
 class RequiresDistanceCondition extends BaseCondition
 {
-    private ?string $errorMessage = null;
-
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true);
@@ -43,8 +41,4 @@ class RequiresDistanceCondition extends BaseCondition
         return $result;
     }
 
-    public function getErrorMessage(): ?string
-    {
-        return $this->errorMessage;
-    }
 }

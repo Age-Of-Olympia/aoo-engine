@@ -18,6 +18,7 @@ class ConditionRegistry
             'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),
+            'RequiresResource' => new RequiresResourceCondition(),
             
             'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?
             'DistanceCompute' => new DistanceComputeCondition(),

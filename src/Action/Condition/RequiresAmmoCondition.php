@@ -4,10 +4,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use Db;
-use Player;
 use View;
-
-//add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
 class RequiresAmmoCondition extends BaseCondition
 {
