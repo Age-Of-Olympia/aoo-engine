@@ -24,6 +24,8 @@ SELECT coords_id FROM map_plants
 UNION
 SELECT coords_id FROM map_items
 UNION
+SELECT coords_id FROM map_routes
+UNION
 SELECT coords_id FROM players_logs
 )
 AND
