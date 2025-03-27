@@ -5,7 +5,6 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
-use Str;
 use View;
 
 #[ORM\Entity]
@@ -28,6 +27,8 @@ class TeleportOutcomeInstruction extends OutcomeInstruction
                 # code... to whatever coord ToDo
                 break;
         }
+
+        $this->getOutcome()->getAction()->setRefreshScreen(true);
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
     }

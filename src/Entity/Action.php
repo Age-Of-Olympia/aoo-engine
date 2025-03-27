@@ -198,6 +198,10 @@ abstract class Action implements ActionInterface
         return $this->refreshScreen;
     }
 
+    public function setRefreshScreen(bool $refresh): void {
+        $this->refreshScreen = $refresh;
+    }
+
     public function activateAntiBerserk(): bool {
         return false;
     }

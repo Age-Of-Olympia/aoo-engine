@@ -26,5 +26,7 @@ interface ActionInterface
     public function calculateXp(bool $success, Player $actor, Player $target): array;
     public function getLogMessages(Player $actor, Player $target): array;
     public function hideOnSuccess(): bool;
+    public function refreshScreen(): bool;
     public function setHideOnSuccess(bool $hide): void;
+    public function setRefreshScreen(bool $refresh): void;
 }

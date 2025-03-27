@@ -63,8 +63,8 @@ class RequiresAmmoCondition extends BaseCondition
     
                 // Player::refresh_views_at_z($dropCoords->z);
     
-                // include('scripts/actions/on_hide_reload_view.php');
                 $text = 'Vous perdez '. $actor->emplacements->main1->data->name .'.';
+                $conditionToPay->getAction()->setRefreshScreen(true);
                 array_push($result, $text);
             } else {
                 $text = 'Vous gardez '. $actor->emplacements->main1->data->name .'.';

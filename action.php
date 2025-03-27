@@ -233,6 +233,11 @@ try {
             Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
         }
     }
+
+    if ($action->refreshScreen()) {
+        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.svg');
+        include('scripts/actions/on_hide_reload_view.php');
+    }
     
     
 } catch (Exception $e) {

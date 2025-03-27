@@ -6,54 +6,44 @@ include('scripts/view.php');
 
 echo '</div>';
 
-
 ?>
 <script>
 $(document).ready(function(){
+    // Ensure data contains only the inner HTML of #data
+    const data = $('#data').find('#view').contents();
 
+    // Replace the contents of #view with data
+    $('#view').html(data);
 
-    var data = $('#data').html();
-
-    $('#view').html('').html(data);
-
-
-    $('.case').click(function(e){
-
+    $(document).on('click', '.case', function(e){
         e.preventDefault();
         e.stopPropagation();
-
-        document.location.reload();
+        updateView();
     });
 
+    const targetNode = document.getElementById('ui-card');
 
-
-    // watch the disapearance of #ui-card to reload view
-
-    var targetNode = document.getElementById('ui-card');
-
-    // Function to check visibility
     function checkVisibility() {
-        if ($(targetNode).is(':visible')) {
-        } else {
-
-            // div is invisible
-            document.location.reload();
+        if (!$(targetNode).is(':visible')) {
+            updateView();
         }
     }
 
-    // MutationObserver configuration
-    var observer = new MutationObserver(function(mutationsList, observer) {
-        for(var mutation of mutationsList) {
+    function updateView() {
+        // Update only the necessary parts of the DOM instead of reloading the page
+        $('#view').html(data);
+    }
+
+    const observer = new MutationObserver(function(mutationsList) {
+        for (const mutation of mutationsList) {
             if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
                 checkVisibility();
             }
         }
     });
 
-    // Start observing the target node for configured mutations
-    observer.observe(targetNode, { attributes: true, childList: false, subtree: false });
-
-    // Initial check
+    observer.observe(targetNode, { attributes: true });
     checkVisibility();
 });
+
 </script>
