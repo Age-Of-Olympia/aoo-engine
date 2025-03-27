@@ -151,9 +151,9 @@ class Player implements ActorInterface {
         $this->turn = (object) array();
 
         while($row = $res->fetch_object()){
-            // if ($row->name) {
-            //     continue;
-            // }
+            if ($row->name == "fat") {
+                continue;
+            }
 
             $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
         }
@@ -1598,7 +1598,7 @@ class Player implements ActorInterface {
             }
         }
 
-        return false;
+        return null;
     }
 
 

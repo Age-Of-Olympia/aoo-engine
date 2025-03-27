@@ -35,18 +35,18 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
                     }
                 } else {
                     $this->applyEffect($params[$status], $status, $duration, $actor);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$status.' est appliqué ' . $timeMessage . ' à ' . $actor->data->name;
+                    $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage.' à ' . $actor->data->name;
                 }
                 break;
             case 'target':
                 $this->applyEffect($params[$status], $status, $duration, $target);
-                $outcomeSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $target->data->name;
+                $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
                 break;
             default:
             $this->applyEffect($params[$status], $status, $duration, $actor);
             $this->applyEffect($params[$status], $status, $duration, $target);
-            $outcomeSuccessMessages[0] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $actor->data->name;
-            $outcomeSuccessMessages[1] = 'L\'effet '.$status.' est appliqué pour ' . Str::displaySeconds($duration) . ' à ' . $target->data->name;
+            $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+            $outcomeSuccessMessages[1] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
             break;
         }
 
