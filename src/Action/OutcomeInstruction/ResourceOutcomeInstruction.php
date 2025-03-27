@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Action\OutcomeInstruction;
+
+use App\Entity\OutcomeInstruction;
+use App\Service\ResourceService;
+use Doctrine\ORM\Mapping as ORM;
+use Item;
+use Player;
+use Str;
+use View;
+
+#[ORM\Entity]
+class ResourceOutcomeInstruction extends OutcomeInstruction
+{
+    public function execute(Player $actor, Player $target): OutcomeResult {
+        $ressources = array();
+        $biomes = array();
+
+        $coords = $actor->getCoords();
+        $planJson = json()->decode('plans', $coords->plan);
+        if(!empty($planJson->biomes)){
+            foreach($planJson->biomes as $e){
+                $biomes[$e->wall] = $e->ressource;
+            }
+        }
+
+        $res = ResourceService::findResourcesAround($actor);
+        while($row = $res->fetch_object()){
+
+            if(array_key_exists($biomes[$row->name], $ressources))
+                $ressources[$biomes[$row->name]] += $row->max;
+            else
+                $ressources[$biomes[$row->name]] = $row->max;
+
+        }
+
+        $outcomeSuccessMessages = array();
+
+        foreach($ressources as $k=>$v){
+            $max = $v;
+            $item = Item::get_item_by_name($k);
+            $item->get_data();
+            $rand = rand(1, $max);
+
+            $item->add_item($actor, $rand);
+
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous trouvez '. ucfirst($item->data->name) .' x'. $rand .' ! (1d'. $max .' = '. $rand .')';
+        }
+
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
+
+    }
+
+}

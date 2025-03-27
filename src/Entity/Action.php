@@ -131,7 +131,7 @@ abstract class Action implements ActionInterface
     /**
      * @return Collection<int, ActionOutcome>
      */
-    public function getOnSuccessOutcomess(bool $success = true): Collection
+    public function getOnSuccessOutcomes(bool $success = true): Collection
     {
         $filteredCollection = $this->outcomes->filter(function($element) use ($success) {
             return $element->isOnSuccess() == $success;

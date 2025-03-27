@@ -12,11 +12,11 @@ class RequiresResourceCondition extends BaseCondition
 
         $res = ResourceService::findResourcesAround($actor);
         
-        if($res == 0){
+        if($res->num_rows == 0){
             $errorMessages[0] = 'Il n\'y a rien par ici.';
             $result = new ConditionResult(false, array(), $errorMessages);
         } else {
-            $result = new ConditionResult(true, array(), array(), null, null, $res);
+            $result = new ConditionResult(true, array(), array(), null, null, $res->num_rows);
         }
 
         return $result;

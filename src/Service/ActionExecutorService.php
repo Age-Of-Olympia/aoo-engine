@@ -80,11 +80,11 @@ class ActionExecutorService
     private function applyOutcomes(): void
     {
         if ($this->globalConditionsResult) {
-            foreach ($this->action->getOnSuccessOutcomess() as $outcomEntity) {
+            foreach ($this->action->getOnSuccessOutcomes() as $outcomEntity) {
                 $this->applyActionOutcome($outcomEntity, $this->actor, $this->target);
             }
         } else {
-            foreach ($this->action->getOnSuccessOutcomess(false) as $outcomEntity) {
+            foreach ($this->action->getOnSuccessOutcomes(false) as $outcomEntity) {
                 $this->applyActionOutcome($outcomEntity, $this->actor, $this->target);
             }
         }

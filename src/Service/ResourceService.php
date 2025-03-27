@@ -10,7 +10,7 @@ use View;
 class ResourceService
 {
 
-    public static function findResourcesAround(Player $player): ?int
+    public static function findResourcesAround(Player $player): mixed
     {
         $biomes = array();
         $coords = $player->getCoords();
@@ -41,7 +41,7 @@ class ResourceService
         $db = new Db();
         $res = $db->exe($sql);
 
-        return $res->num_rows;
+        return $res;
     }
 
 }

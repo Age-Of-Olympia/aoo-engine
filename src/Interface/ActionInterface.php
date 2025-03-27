@@ -17,7 +17,7 @@ interface ActionInterface
     public function addCondition(ActionCondition $condition): self;
     public function removeCondition(ActionCondition $condition): self;
     public function getOutcomes(): Collection;
-    public function getOnSuccessOutcomess(bool $success = true): Collection;
+    public function getOnSuccessOutcomes(bool $success = true): Collection;
     public function addOutcome(ActionOutcome $outcome): self;
     public function removeOutcome(ActionOutcome $outcome): self;
     public function getRaces(): Collection;
