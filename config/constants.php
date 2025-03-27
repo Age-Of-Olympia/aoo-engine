@@ -226,7 +226,9 @@ define('WALLS_PV', array(
     'altar_broken'=>50,
     
     'piedestal'=>50,
+    'piedestal_broken'=>50,
     'piedestal_pierre'=>25,
+    'piedestal_pierre_broken'=>25,
     
     'table_bois'=>50,	
     
