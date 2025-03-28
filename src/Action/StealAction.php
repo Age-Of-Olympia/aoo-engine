@@ -9,15 +9,6 @@ use Player;
 #[ORM\Entity]
 class StealAction extends AttackAction
 {
-    public function calculateXp(bool $success, Player $actor, Player $target): array
-    {
-        $actorXp = $this->calculateActorXp($success, $actor, $target);
-        $targetXp =  $this->calculateTargetXp($success, $actor, $target);;
-        $xpResultsArray["actor"] = $actorXp;
-        $xpResultsArray["target"] = $targetXp;
-        return $xpResultsArray;
-    }
-
     public function getLogMessages(Player $actor, Player $target): array
     {
         $actorLog = $actor->data->name." a volé ".$target->data->name.".";

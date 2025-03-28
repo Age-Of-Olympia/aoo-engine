@@ -18,14 +18,15 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
         $player = $params['player'] ?? 'both';
         $carac = $params['carac'] ?? null;
         $value = $params['value'] ?? 0;
+        $outcomeSuccessMessages = array();
         switch ($player) {
             case "actor":
                 if ($carac != null) {
                     if ($carac == "fatigue") {
                         if($actor->data->fatigue){
-                            $actor->put_fat(-$value);
-                            $fat = ($actor->data->fatigue > $value) ? $value : $actor->data->fatigue;
-                            $outcomeSuccessMessages[0] = $fat .' Fatigues enlevées.';
+                            $actor->putFat(-$value);
+                            $fatigue = ($actor->data->fatigue > $value) ? $value : $actor->data->fatigue;
+                            $outcomeSuccessMessages[0] = $fatigue .' Fatigues enlevées.';
                         } else {
                             $outcomeSuccessMessages[0] = 'Vous n\'aviez pas de fatigue.';
                         }

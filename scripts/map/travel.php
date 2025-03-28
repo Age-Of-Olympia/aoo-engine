@@ -121,7 +121,7 @@ if(!empty($_GET['triggerId'])){
 
                         // $player->addEffect('fatigue', $duration=ONE_DAY);
 
-                        $player->put_fat(FAT_EVERY);
+                        $player->putFat(FAT_EVERY);
                     // }
 
 

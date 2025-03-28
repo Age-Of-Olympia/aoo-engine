@@ -92,7 +92,18 @@ class ActionResultsView
         $actionsDetails = $actionsDetails.'</div>';
 
         if (isset($this->actionResults->getXpResultsArray()["actor"])) {
-            $actionsDetails = $actionsDetails.'<div>Vous gagnez '.$this->actionResults->getXpResultsArray()["actor"].' XP</div>';
+            $actorXp = $this->actionResults->getXpResultsArray()["actor"];
+            if ($actorXp > 0) {
+                $actionsDetails = $actionsDetails.'<div>Vous gagnez '.$actorXp.' XP</div>';
+            }
+        }
+
+        if (isset($this->actionResults->getXpResultsArray()["target"])) {
+            $targetXp = $this->actionResults->getXpResultsArray()["target"];
+            if ($targetXp > 0) {
+                $actionsDetails = $actionsDetails.'<div>Votre partenaire gagne '.$targetXp.' XP</div>';
+            }
+            
         }
    
         return $actionsDetails;

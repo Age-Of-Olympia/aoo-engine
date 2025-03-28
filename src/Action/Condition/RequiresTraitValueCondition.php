@@ -19,9 +19,24 @@ class RequiresTraitValueCondition extends BaseCondition
                 continue;
             }
             if ($key == "fatigue") {
-                if (!$actor->data->fatigue) {
+                if (!$actor->data->fatigue && $value == ">0") {
                     array_push($details, "Vous n'êtes pas fatigué !");
                     $costIsAffordable = false;
+                    continue;
+                }
+
+                if ($value == "both") {
+                    $errorMessage = array();
+                    if($target->data->fatigue >= FAT_EVERY){
+                        $errorMessage[sizeof($errorMessage)] = "Votre partenaire est trop fatigué pour s\'entraîner.";
+                    }
+            
+                    if($actor->data->fatigue >= FAT_EVERY){
+                        $errorMessage[sizeof($errorMessage)] = "Vous êtes trop fatigué pour vous entraîner.";
+                    }
+                    if (sizeof($errorMessage) > 0) {
+                        return new ConditionResult(false, null, $errorMessage);
+                    }
                 }
             } else if ($actor->getRemaining($key) < $value) {
                 array_push($details, "Pas assez de ".CARACS[$key]);
@@ -40,12 +55,12 @@ class RequiresTraitValueCondition extends BaseCondition
     {
         $result = array();
         $parameters = $conditionToPay->getParameters();
-        $fat = $parameters["uses_fatigue"] ?? true;
+        $fatigue = $parameters["uses_fatigue"] ?? true;
         foreach ($parameters as $key => $value) {
             if ($key == "fatigue" || $key == "uses_fatigue") {
                 continue;
             }
-            $actor->putBonus([$key => -$value], $fat);
+            $actor->putBonus([$key => -$value], $fatigue);
             $text = "Vous avez dépensé " . $value . " " . CARACS[$key].".";
             array_push($result, $text);
         }

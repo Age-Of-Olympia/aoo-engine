@@ -306,7 +306,7 @@ class Player implements ActorInterface {
 
 
     // have/add/end/get main functions
-    public function have($table, $name){
+    public function have($table, $name): int{
 
 
         if(!in_array($table, array('effects','options','actions'))){
@@ -415,7 +415,7 @@ class Player implements ActorInterface {
 
     // options shortcuts
     public function add_option($name){ $this->add('options', $name); }
-    public function have_option($name){ return $this->have('options', $name); }
+    public function have_option($name): int{ return $this->have('options', $name); }
     public function end_option($name){ $this->end('options', $name); }
     public function get_options(){ return $this->get('options'); }
 
@@ -896,7 +896,7 @@ class Player implements ActorInterface {
         $this->refresh_caracs();
     }
 
-    public function putBonus($bonus, bool $fat = true) : bool{
+    public function putBonus($bonus, bool $fatigue = true) : bool{
 
 
         if(!isset($this->data)){
@@ -930,8 +930,8 @@ class Player implements ActorInterface {
 
             if($carac == 'a' && $val < 0){
 
-                if ($fat) {
-                    $this->put_fat(FAT_PER_ACTION);
+                if ($fatigue) {
+                    $this->putFat(FAT_PER_ACTION);
                 }
             }
 
@@ -1027,7 +1027,9 @@ class Player implements ActorInterface {
 
 
         if(!isset($this->turn->$trait)){
-
+            if ($trait == "fatigue") {
+                return $this->data->fatigue;
+            }
 
             return $this->caracs->$trait;
         }
@@ -1048,26 +1050,26 @@ class Player implements ActorInterface {
         $this->refresh_data();
     }
 
-    public function set_fat($fat){
+    public function set_fat($fatigue){
 
 
         $sql = 'UPDATE players SET fatigue = GREATEST(?, 0) WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, array($fat, $this->id));
+        $db->exe($sql, array($fatigue, $this->id));
 
         $this->refresh_data();
     }
 
-    public function put_fat($fat){
+    public function putFat($fatigue): void{
 
 
         $sql = 'UPDATE players SET fatigue = GREATEST(fatigue + ?, 0) WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, array($fat, $this->id));
+        $db->exe($sql, array($fatigue, $this->id));
 
         $this->refresh_data();
     }

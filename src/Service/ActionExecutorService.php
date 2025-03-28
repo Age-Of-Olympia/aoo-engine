@@ -96,6 +96,7 @@ class ActionExecutorService
         foreach ($this->action->getActionConditions() as $condEntity) {
             $condition = $this->conditionRegistry->getCondition($condEntity->getConditionType());
             if (!$condition) {
+                error_log("Condition not found : ". $condEntity->getConditionType());
                 return false;
             }
         
