@@ -7,43 +7,52 @@ include('scripts/view.php');
 echo '</div>';
 
 ?>
+
 <script>
 $(document).ready(function(){
     // Ensure data contains only the inner HTML of #data
     const data = $('#data').find('#view').contents();
 
-    // Replace the contents of #view with data
-    $('#view').html(data);
-
-    $(document).on('click', '.case', function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        updateView();
-    });
-
-    const targetNode = document.getElementById('ui-card');
-
-    function checkVisibility() {
-        if (!$(targetNode).is(':visible')) {
-            updateView();
-        }
-    }
-
+    // Function to update the view and reattach event listeners
     function updateView() {
-        // Update only the necessary parts of the DOM instead of reloading the page
-        $('#view').html(data);
+        // Replace the contents of #view with data
+        $('#view').empty().append(data);
+
+        // Reattach click event listeners
+        attachEventListeners();
     }
 
-    const observer = new MutationObserver(function(mutationsList) {
-        for (const mutation of mutationsList) {
-            if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
-                checkVisibility();
-            }
-        }
-    });
+    // Function to attach click event listeners
+    function attachEventListeners() {
+        $('.case').off('click').on('click', function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            //updateView();
+        });
+    }
 
-    observer.observe(targetNode, { attributes: true });
-    checkVisibility();
+    // Initial view update and event listener attachment
+    updateView();
+
+    // const targetNode = document.getElementById('ui-card');
+
+    // function checkVisibility() {
+    //     if (!$(targetNode).is(':visible')) {
+    //         updateView();
+    //     }
+    // }
+
+    // const observer = new MutationObserver(function(mutationsList) {
+    //     for (const mutation of mutationsList) {
+    //         if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
+    //             checkVisibility();
+    //         }
+    //     }
+    // });
+
+    // observer.observe(targetNode, { attributes: true });
+    // checkVisibility();
 });
 
 </script>
+<script src="js/view.js"></script>
