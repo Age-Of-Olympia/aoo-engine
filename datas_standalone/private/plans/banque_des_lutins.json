@@ -1,45 +1,25 @@
 {
-
     "name": "Banque des Lutins",
-
     "x": 0,
     "y": 0,
-
-    "biomes":[
-
+    "biomes": [
+        {
+            "wall": "arbre3",
+            "ressource": "bois"
+        },
+        {
+            "wall": "pierre3",
+            "ressource": "pierre"
+        }
     ],
-
-    "exits":{
-
-        "n": [
-        ],
-
-        "s":[
-
-        ],
-
-        "e":[
-
-        ],
-
-        "w":[
-
-        ],
-
-        "ne":[
-
-        ],
-
-        "se":[
-
-        ],
-
-        "nw":[
-
-        ],
-
-        "sw":[
-
-        ]
+    "exits": {
+        "n": [],
+        "s": [],
+        "e": [],
+        "w": [],
+        "ne": [],
+        "se": [],
+        "nw": [],
+        "sw": []
     }
 }
