@@ -58,13 +58,6 @@ if(!empty($actionJson->playerHeal)){
     }
 }
 
-// action on a dead target
-if($targetPvBefore < 1){
-
-    // exit('Ce personnage est mort.');
-}
-
-
 // player : ignore equipement
 if(!empty($actionJson->playerIgnore)){
 
@@ -82,9 +75,7 @@ if(!empty($actionJson->targetIgnore)){
 
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
-
 View::get_walls_between($player->coords, $target->coords);
-
 
 include('scripts/actions/check_max_spells.php');
 
@@ -93,14 +84,10 @@ include('scripts/actions/check_max_spells.php');
  * action details
  */
 
-
 echo '<style>.action-details{display: none;}</style>';
-
 if($player->have_option('showActionDetails')){
-
     echo '<style>.action-details{display: block;}</style>';
 }
-
 
 /*
  * PERFORM ACTION
@@ -110,94 +97,25 @@ if($player->have_option('showActionDetails')){
 ActionFactory::initialize('src/Action');
 $actionResultsView = null;
 
-
-// log
-$log = $actionJson->log;
-if (isset($actionJson->targetLog)) {
-    $targetLog = $actionJson->targetLog;
-    $targetLog = str_replace('PLAYER', $player->data->name, $targetLog);
-    $targetLog = str_replace('TARGET', $target->data->name, $targetLog);
-    $targetLog = str_replace('NAME', $actionJson->name, $targetLog);
-}
-
-$log = str_replace('PLAYER', $player->data->name, $log);
-$log = str_replace('TARGET', $target->data->name, $log);
-$log = str_replace('NAME', $actionJson->name, $log);
-
-
-if(!empty($emplacement)){
-
-    $log = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $log);
-    if (isset($targetLog)) {
-        $targetLog = str_replace('WEAPON', $player->emplacements->{$emplacement}->data->name, $targetLog);
-    }
-    
-    if($player->data->race=='animal')
-    {
-        $log = str_replace('avec WEAPON', '', $log);
-        $log = str_replace('WEAPON', '', $log);
-        if (isset($targetLog)) {
-            $targetLog = str_replace('avec WEAPON', '', $targetLog);
-            $targetLog = str_replace('WEAPON', '', $targetLog);
-        }
-    }
-}
-
 $action = null;
-if($actionJson->targetType != 'self'){
 
-    if($target->id == $player->id){
-
-        exit('error not self');
-    }
-
-    // action
-    $dice = new Dice(3);
-
-    $checkAboveDistance = true;
-    $distanceMalus = 0;
-
-    if($actionJson->playerJet == 'cc/ct'){
-        if($distance == 1){
-            try {
-                $action = ActionFactory::getAction('melee'); // Crée une instance de MeleeAction
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-        }
-        elseif($distance > 1 && ($_POST["action"] != 'special/attaque_sautee')){
-            try {
-                $action = ActionFactory::getAction('distance'); // Crée une instance de DistanceAction
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-        }
-    } 
-    
-    if ($action == null) {
+try {
+    $action = ActionFactory::getAction($_POST["action"]); 
+} catch (Exception $e) {
+    if($distance == 1){
         try {
-            $action = ActionFactory::getAction($_POST["action"]); 
+            $action = ActionFactory::getAction('melee'); // Crée une instance de MeleeAction
         } catch (Exception $e) {
             echo $e->getMessage();
         }
     }
-
-} elseif($actionJson->targetType == 'self'){
-
-    if($target->id != $player->id){
-
-        exit('error self');
-    }
-
-    if ($action == null) {
+    elseif($distance > 1){
         try {
-            $action = ActionFactory::getAction($_POST["action"]); 
+            $action = ActionFactory::getAction('distance'); // Crée une instance de DistanceAction
         } catch (Exception $e) {
             echo $e->getMessage();
         }
     }
-
-    $success = true;
 }
 
 try {
@@ -251,13 +169,9 @@ try {
 $targetPvAfter = $target->getRemaining('pv');
 
 if($targetPvBefore != $targetPvAfter){
-
-
     if($targetPvAfter < 1){
-
         include('scripts/death.php');
     }
-
 
     // update pv red filter
     $pvPct = floor($targetPvAfter / $target->caracs->pv * 100);
@@ -267,17 +181,12 @@ if($targetPvBefore != $targetPvAfter){
     ?>
     <script>
     $(document).ready(function(){
-
         var height = <?php echo $height ?>;
-
         if(height >= 225){
 
             $('.card-portrait').addClass('dead');
             $('#red-filter').hide();
-        }
-
-        else{
-
+        } else {
             $('#red-filter').css({'height':height +'px'});
         }
 

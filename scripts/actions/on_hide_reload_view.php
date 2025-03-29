@@ -34,24 +34,6 @@ $(document).ready(function(){
     // Initial view update and event listener attachment
     updateView();
 
-    // const targetNode = document.getElementById('ui-card');
-
-    // function checkVisibility() {
-    //     if (!$(targetNode).is(':visible')) {
-    //         updateView();
-    //     }
-    // }
-
-    // const observer = new MutationObserver(function(mutationsList) {
-    //     for (const mutation of mutationsList) {
-    //         if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
-    //             checkVisibility();
-    //         }
-    //     }
-    // });
-
-    // observer.observe(targetNode, { attributes: true });
-    // checkVisibility();
 });
 
 </script>

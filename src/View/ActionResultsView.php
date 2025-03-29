@@ -101,7 +101,7 @@ class ActionResultsView
         if (isset($this->actionResults->getXpResultsArray()["target"])) {
             $targetXp = $this->actionResults->getXpResultsArray()["target"];
             if ($targetXp > 0) {
-                $actionsDetails = $actionsDetails.'<div>Votre partenaire gagne '.$targetXp.' XP</div>';
+                $actionsDetails = $actionsDetails.'<div>Votre cible gagne '.$targetXp.' XP</div>';
             }
             
         }

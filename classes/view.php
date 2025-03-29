@@ -1072,8 +1072,6 @@ class View{
 
 
         if($obstacle){
-
-
             echo $js;
             exit();
         }
