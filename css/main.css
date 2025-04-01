@@ -1171,12 +1171,17 @@ article.pnj {
 #forum-textarea{ position: relative; }
 
 #tools{
-
-    /*position: absolute;
-    top: 0;
-    right: 0;*/
-    text-align: right;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
 }
+
+    #tools #tools-portrait {
+        height:55px;
+        width: 35px;
+    }
+
     #tools .tool-button{
 
         width: 35px;

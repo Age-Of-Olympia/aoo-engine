@@ -97,7 +97,7 @@ class Log{
                     $return[] = $row;
                 }
                 continue;
-            }  
+            }
 
             // Get Perception
             $caracsJson = json()->decode('players', $player->id .'.caracs');
@@ -121,6 +121,24 @@ class Log{
             $arrayCoordsId = View::get_coords_arround($last_player_coords, $p);
             array_walk($arrayCoordsId, array(Log::class, 'compute_unique_coord'), [$last_player_coords->z, $last_player_coords->plan]);
 
+            $planJson = json()->decode('plans', $row->plan);
+
+            // For PNJs, check if event is in their current plan
+            if ($player->id <= 0) {
+                if ($row->plan != $player->coords->plan) {
+                    continue;
+                }
+            }
+            // For normal players, use explicit visibility conditions
+            else {
+                $planRequestsHideCharacters = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
+                $isAlwaysVisibleCharacter = $row->player_id <= 0; // PNJ actions are always visible
+
+                if ($planRequestsHideCharacters && !$isAlwaysVisibleCharacter) {
+                    continue;
+                }
+            }
+
             if (in_array($row->coords_computed, $arrayCoordsId)) {
                 $return[] = $row;
                 continue;
@@ -130,7 +148,6 @@ class Log{
             // if the player is in his home plan at the moment of the event + it is a travel
             if ($raceJson->plan == $row->plan && $row->movement_plan == $row->plan && $row->type == "travel") {
                 // we get the plan pnj
-                $planJson = json()->decode('plans', $row->plan);
                 if (isset($planJson->pnj)) {
                     $pnj = new Player($planJson->pnj);
                     $pnj->get_coords();

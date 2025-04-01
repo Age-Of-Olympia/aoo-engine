@@ -49,11 +49,13 @@ if(!empty($_POST['keywords'])){
 
 
             $postJson = json()->decode('forum/posts', $e);
+            if(!$postJson)continue;
 
             $topJson = json()->decode('forum/topics', $postJson->top_id);
+            if(!$topJson)continue;
 
             $forumJson = json()->decode('forum/forums', $topJson->forum_id);
-
+            if(!$forumJson)continue;
 
             if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
 
