@@ -19,7 +19,7 @@ else if(!empty($_SESSION['playerId'])){
     if($player->data->nextTurnTime <= $time){
 
 
-        $player->get_coords();
+        $player->getCoords();
 
         // prevent new turn if dead
         if($player->coords->plan != 'limbes'){
@@ -69,7 +69,7 @@ else if(!empty($_SESSION['playerId'])){
             // end effects
             foreach(EFFECTS_HIDDEN as $e){
 
-                $player->end_effect($e);
+                $player->endEffect($e);
             }
 
 
@@ -135,10 +135,10 @@ else if(!empty($_SESSION['playerId'])){
                     $val = $player->caracs->$e;
 
 
-                    if($k == 'pm' && $player->have_effect('poison_magique')){
+                    if($k == 'pm' && $player->haveEffect('poison_magique')){
 
 
-                        $player->end_effect('poison_magique');
+                        $player->endEffect('poison_magique');
 
 
                         echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+0 (<span class="ra '. EFFECTS_RA_FONT['poison_magique'] .'"></span> Poison Magique)</td></tr>';
@@ -146,10 +146,10 @@ else if(!empty($_SESSION['playerId'])){
                         continue;
                     }
 
-                    elseif($k == 'pv' && $player->have_effect('poison')){
+                    elseif($k == 'pv' && $player->haveEffect('poison')){
 
 
-                        $player->end_effect('poison');
+                        $player->endEffect('poison');
 
 
                         echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+ 0 (<span class="ra '. EFFECTS_RA_FONT['poison'] .'"></span> Poison)</td></tr>';
@@ -157,10 +157,10 @@ else if(!empty($_SESSION['playerId'])){
                         continue;
                     }
 
-                    elseif($k == 'pv' && $player->have_effect('regeneration')){
+                    elseif($k == 'pv' && $player->haveEffect('regeneration')){
 
 
-                        $player->end_effect('regeneration');
+                        $player->endEffect('regeneration');
 
 
                         $val += $player->caracs->rm;
@@ -173,7 +173,7 @@ else if(!empty($_SESSION['playerId'])){
 
                     if(!in_array($k, array('ae','a','mvt'))){
 
-                        $player->put_bonus(array($k=>$val));
+                        $player->putBonus(array($k=>$val));
                     }
 
                     echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+'. $val .'</td></tr>';
@@ -221,6 +221,7 @@ else if(!empty($_SESSION['playerId'])){
                 echo '</table>';
 
             echo '<br /><a href="index.php"><button>Jouer</button></a>';
+
             // Only show email prompt for real players (positive IDs)
             if($player->id > 0 && empty($player->data->plain_mail) && !$player->data->email_bonus) {
                 echo ' <a href="account.php?changeMail"><button>Renseigner mon mail (+20 XP)</button></a>';

@@ -3,7 +3,7 @@
 
 if(!isset($target->coords)){
 
-    $player->get_coords();
+    $player->getCoords();
 }
 
 $goCoords = $player->coords;

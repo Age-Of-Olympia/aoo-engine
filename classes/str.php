@@ -15,6 +15,21 @@ class Str{
         return $difference;
     }
 
+    public static function displaySeconds($seconds) {
+        if ($seconds < 60) {
+            return $seconds . ' secondes';
+        } elseif ($seconds < 3600) {
+            $minutes = floor($seconds / 60);
+            return $minutes . ' minutes';
+        } elseif ($seconds < 86400) {
+            $heures = floor($seconds / 3600);
+            return $heures . ' heures';
+        } else {
+            $jours = floor($seconds / 86400);
+            return $jours . ' jours';
+        }
+    }
+
 
     public static function get_k($int) : string {
 
@@ -135,7 +150,7 @@ class Str{
 
         if( $pr < 25 )
             $rank = "Inconnu";
-        if( $pr < 100 )
+        elseif( $pr < 100 )
             $rank = "Connu";
         elseif( $pr < 250 )
             $rank = "Populaire";

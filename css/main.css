@@ -1,5 +1,4 @@
 body{
-
     background: grey url('../img/ui/bg/bg.jpeg');
     text-align: center;
     font-family: sans-serif;
@@ -52,7 +51,7 @@ table, img, div, textarea{
     max-width: 100%;
 }
 
-td img {
+td img {scrollbar-width: none;
 
     margin: 0;
     padding: 0;
@@ -473,6 +472,7 @@ img {
     overflow-x: scroll;
     padding-bottom: 20px;
     user-select: none;
+    scrollbar-width: none;
 }
 
     #view #svg-container {

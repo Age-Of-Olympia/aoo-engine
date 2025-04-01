@@ -247,7 +247,7 @@ define('WALLS_PV', array(
  */
 
 
-define('DMG_CRIT', 5); // 5% de critique (x2 dégâts) sur un ennemi sans casque
+define('DMG_CRIT', 5); // 5% de critique (+3 dégâts) sur un ennemi sans casque
 
 define('ITEM_DROP', 10); // 10% de drop sur les désarmements et loots
 

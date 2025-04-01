@@ -1,0 +1,9 @@
+{
+    "id": 27,
+    "name": "Parchemin",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "matiere",
+    "text": "Un parchemin est une peau d'animal qui est apprêtée spécialement pour servir de support à l'écriture."
+}

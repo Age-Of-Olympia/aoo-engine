@@ -851,6 +851,39 @@ class View{
         return $coordsId;
     }
 
+    public static function get_coords_from_id($id){
+        $sql = '
+        SELECT
+        x,y,z,plan
+        FROM
+        coords AS c
+        WHERE 
+        c.id = ?
+        ';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $id);
+
+        if(!$res->num_rows){
+
+            exit('error coords');
+        }
+
+
+        $row = $res->fetch_object();
+
+
+        $coords = (object) array(
+            'x'=>$row->x,
+            'y'=>$row->y,
+            'z'=>$row->z,
+            'plan'=>$row->plan
+        );
+
+        return $coords;
+    }
+
 
     public static function get_coords($table, $id){
 
@@ -1050,8 +1083,6 @@ class View{
 
 
         if($obstacle){
-
-
             echo $js;
             exit();
         }
@@ -1157,7 +1188,7 @@ class View{
 
         if(!isset($player->coords)){
 
-            $player->get_coords();
+            $player->getCoords();
         }
 
         self::refresh_players_svg($player->coords);

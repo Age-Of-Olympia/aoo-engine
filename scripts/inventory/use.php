@@ -16,9 +16,9 @@ if(!empty($item->data->emplacement)){
 
     $return = $player->equip($item);
 
-    if($return == 'equip'){
+    if($return == EquipResult::Equip){
 
-        if($player->get_left('ae') < 1){
+        if($player->getRemaining('ae') < 1){
 
 
             // undo equip
@@ -32,7 +32,7 @@ if(!empty($item->data->emplacement)){
         $ae = 1;
     }
 
-    elseif($return == 'unequip'){
+    elseif($return == EquipResult::Unequip){
 
         $text = $player->data->name .' a déséquipé '. $item->data->name .'.';
     }
@@ -41,7 +41,7 @@ if(!empty($item->data->emplacement)){
 elseif($item->row->spell != ''){
 
 
-    if($player->get_left('ae') < 1){
+    if($player->getRemaining('ae') < 1){
 
         exit('error ae');
     }
@@ -73,7 +73,7 @@ elseif($item->row->spell != ''){
 // use ae
 if(!empty($ae)){
 
-    $player->put_bonus(array('ae'=>-$ae));
+    $player->putBonus(array('ae'=>-$ae));
 }
 
 

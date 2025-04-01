@@ -44,7 +44,7 @@ EOT);
             $target = parent::getPlayer($argumentValues[1]);
             $target->get_data();
 
-            $goCoords = $target->get_coords();
+            $goCoords = $target->getCoords();
 
             $coordsId = View::get_free_coords_id_arround($goCoords);
             $goCoords->coordsId = $coordsId;
@@ -70,7 +70,7 @@ EOT);
 
 
             $admin = new Player($_SESSION['playerId']);
-            $admin->get_coords();
+            $admin->getCoords();
 
             $db = new Db();
 
@@ -105,7 +105,7 @@ EOT);
 
             $player->get_data();
 
-            $player->get_coords();
+            $player->getCoords();
 
 
             $goX = (!is_numeric($x)) ? $player->coords->x : $x;

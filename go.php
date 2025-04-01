@@ -13,14 +13,14 @@ $coords = explode(',', $_POST['coords']);
 
 $player = new Player($_SESSION['playerId']);
 
-if($player->get_left('mvt') < 1){
+if($player->getRemaining('mvt') < 1){
 
 
     echo '<script>alert("Pas assez de Mouvements.");document.location.reload();</script>';
     exit();
 }
 
-$player->get_coords();
+$player->getCoords();
 
 
 $goCoords = (object) array(
@@ -175,7 +175,7 @@ if($goCoords->z < 0){
         }
 
 
-        if($player->get_left('a') < 1){
+        if($player->getRemaining('a') < 1){
 
 
             echo '<script>alert("Pas assez d\'Actions.");document.location.reload();</script>';
@@ -184,7 +184,7 @@ if($goCoords->z < 0){
 
 
         $bonus = array('a'=>-1);
-        $player->put_bonus($bonus);
+        $player->putBonus($bonus);
 
         $player->put_xp(XP_PER_MINE);
 
@@ -192,7 +192,7 @@ if($goCoords->z < 0){
         if($player->emplacements->main1->data->name != 'Pioche'){
 
 
-            $player->put_fat(FAT_PER_MINE);
+            $player->putFat(FAT_PER_MINE);
 
             echo '<script>alert("Creuser sans Pioche, qu\'est-ce que ça fatigue!");document.location.reload();</script>';
         }
@@ -224,14 +224,14 @@ elseif($goCoords->z > 0){
 
     $row = $res->fetch_object();
 
-    if(!$row->n && !$player->have_effect('vol')){
+    if(!$row->n && !$player->haveEffect('vol')){
 
         echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu."); document.location.reload();</script>';
 
         exit();
     }
 
-    elseif(!$row->n && $player->have_effect('vol')){
+    elseif(!$row->n && $player->haveEffect('vol')){
 
         // vol
         include('scripts/map/vol.php');
@@ -286,7 +286,7 @@ if($planJson){
 
     // cost (neg bonus)
     $bonus = array('mvt'=>-1);
-    $player->put_bonus($bonus);
+    $player->putBonus($bonus);
 }
 
 if(!$player->have_option('incognitoMode'))
@@ -306,7 +306,7 @@ if(!$player->have_option('incognitoMode'))
     }
 
     $footstepDuration = 16 * ONE_HOUR;
-    if ($player->have_effect("boue")) {
+    if ($player->haveEffect("boue")) {
         $footstepDuration = 32 * ONE_HOUR;
     }
     Element::put($footstep, $player->data->coords_id, $footstepDuration);

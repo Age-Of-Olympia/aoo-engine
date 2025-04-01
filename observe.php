@@ -28,7 +28,7 @@ $player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 
-$coords = $player->get_coords();
+$coords = $player->getCoords();
 
 
 $db = new Db();
@@ -289,7 +289,7 @@ if($res->num_rows){
         $text = $target->data->text;
 
 
-        $pvPct = floor($target->get_left('pv') / $target->caracs->pv * 100);
+        $pvPct = floor($target->getRemaining('pv') / $target->caracs->pv * 100);
 
 
         $factionJson = json()->decode('factions', $target->data->faction);

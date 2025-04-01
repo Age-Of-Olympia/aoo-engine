@@ -263,6 +263,7 @@ function purge_player($argumentValues, $player){
 
 function add_item( $argumentValues,  $player)
 {
+    $action = strtolower($argumentValues[0]);
     if(!isset($argumentValues[2])){
 
         return '<font color="red">error missing option1 [item id or name]. usage: player additem [mat] [existing item id or name] [number]</font>';
@@ -350,6 +351,9 @@ function add_upgrade($argumentValues, $player)
 
 function remove_upgrade($argumentValues, $player)
 {
+    if(!isset($argumentValues[2])){
+        return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';
+    }
 
     include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
 

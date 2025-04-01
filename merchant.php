@@ -27,7 +27,7 @@ if(!$target->have_option('isMerchant'))
 
 
 // distance
-$distance = View::get_distance($player->get_coords(), $target->get_coords());
+$distance = View::get_distance($player->getCoords(), $target->getCoords());
 
 if($distance > 1){
 
@@ -36,12 +36,12 @@ if($distance > 1){
 
 
 // adré
-if($player->have_effect('adrenaline')){
+if($player->haveEffect('adrenaline')){
 
     exit('Vous ne pouvez pas marchander en ayant l\'Adrénaline du combat.');
 }
 
-if($target->have_effect('adrenaline')){
+if($target->haveEffect('adrenaline')){
 
     exit('Vous ne pouvez pas marchander avec un Marchand ayant l\'Adrénaline du combat.');
 }

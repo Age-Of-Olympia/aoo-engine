@@ -5,7 +5,7 @@ $timeLimit = time() - THREE_DAYS;
 
 // copy
 $sql = '
-INSERT INTO
+INSERT IGNORE INTO
 players_logs_archives
 SELECT *
 FROM

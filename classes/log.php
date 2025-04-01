@@ -150,7 +150,7 @@ class Log{
                 // we get the plan pnj
                 if (isset($planJson->pnj)) {
                     $pnj = new Player($planJson->pnj);
-                    $pnj->get_coords();
+                    $pnj->getCoords();
                     // if the pnj is in the plan at the moment (should be at the time of event but it would be one more sql request)
                     if (isset($pnj->coords->plan) && ($pnj->coords->plan == $row->plan)) {
                         $return[] = $row;
@@ -272,7 +272,7 @@ private static function filterRows(array $rows, int $playerId): array {
 
         if(!isset($player->coords)){
 
-            $player->get_coords();
+            $player->getCoords();
         }
 
         $plan = $player->coords->plan;

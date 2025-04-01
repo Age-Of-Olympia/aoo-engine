@@ -36,6 +36,7 @@ if(!empty($_POST['confirmChange'])){
         echo '<div id="data">Mail changé avec succès!</div>';
     }
     $player->refresh_data();
+
     exit();
 }
 

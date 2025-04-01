@@ -1,16 +1,17 @@
 <?php
 use App\Service\PlayerService;
+
 $debug=false;
 if ($debug) {
     $time_start = microtime(true);
 }
 require_once('config.php');
 
-
-$playerService = new PlayerService();
 $ui = new Ui('Évènements');
 
+$playerService = new PlayerService($_SESSION['playerId']);
 $player = $playerService->GetPlayer($_SESSION['playerId']);
+
 $displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
 
 $player->get_data(false);
@@ -41,7 +42,7 @@ if(isset($_GET['quests'])){
     exit();
 }
 
-$player->get_coords();
+$player->getCoords();
 
 if(isset($_GET['mdj'])){
     $logsToDisplay = Log::get($player,$logAge, 'mdj');

@@ -140,7 +140,7 @@ foreach($player->get_options() as $e){
 foreach(OPTIONS as $k=>$e){
 
 
-    if(($k =='incognitoMode' ||$k =='anonymeMode' ) && $player->id>=0)
+    if(($k =='incognitoMode' || $k =='anonymeMode' ) && $player->id>=0)
     { //Option non disponible pour les PJ
         echo '<tr style="display:none">';
     }

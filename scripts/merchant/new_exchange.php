@@ -53,9 +53,8 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
         $('#validate-button').prop('disabled', false);
         $('#autocomplete').hide();
         $('#cancel-button').prop('disabled', false);
-        }
-     );
-
+      }
+    );
 
     $('#cancel-button').click(function(e) {
        // objects = [];

@@ -16,6 +16,7 @@ class AuditService
       $this->currentAuditKey = null;
     }
 
+
     public function addAuditLog(?string $details): int
     {
         $audit = new Audit();
