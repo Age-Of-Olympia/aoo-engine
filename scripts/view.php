@@ -29,7 +29,7 @@ if(!empty($_SESSION['playerId'])){
 
         $player = new Player($_SESSION['playerId']);
 
-        $coords = $player->get_coords();
+        $coords = $player->getCoords();
 
 
         $caracsJson = json()->decode('players', $player->id .'.caracs');

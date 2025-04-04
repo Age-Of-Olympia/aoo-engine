@@ -76,6 +76,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     $inputString = $_POST['cmdLine'];
 
     $factory = initCommmandFactory();
+
     $GLOBALS['consoleENV'] = ['self' => $_SESSION['playerId']];
     $commandsList = Command::getCommandsFromInputString($inputString);
     $commandsResults = array();

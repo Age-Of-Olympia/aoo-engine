@@ -39,7 +39,7 @@ if(!file_exists($path) || !CACHED_INVENT){
     $data .= '
     <script>
     window.freeEmp = '. Item::get_free_emplacement($player) .';
-    window.aeLeft = '. $player->get_left('ae') .';
+    window.aeLeft = '. $player->getRemaining('ae') .';
     </script>
     ';
 

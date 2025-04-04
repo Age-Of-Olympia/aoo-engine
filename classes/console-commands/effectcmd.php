@@ -21,14 +21,14 @@ EOT);
         if($player->have('effects', $argumentValues[1])){
 
 
-            $player->end_effect($argumentValues[1]);
+            $player->endEffect($argumentValues[1]);
 
             return 'Effet '. $argumentValues[1] .' enlevé à '. $player->data->name .'';
         }
 
         else{
 
-            $player->add_effect($argumentValues[1]);
+            $player->addEffect($argumentValues[1]);
 
             return 'Effet '. $argumentValues[1] .' ajouté à '. $player->data->name .'';
         }

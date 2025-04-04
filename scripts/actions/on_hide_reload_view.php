@@ -6,54 +6,35 @@ include('scripts/view.php');
 
 echo '</div>';
 
-
 ?>
+
 <script>
 $(document).ready(function(){
+    // Ensure data contains only the inner HTML of #data
+    const data = $('#data').find('#view').contents();
 
+    // Function to update the view and reattach event listeners
+    function updateView() {
+        // Replace the contents of #view with data
+        $('#view').empty().append(data);
 
-    var data = $('#data').html();
-
-    $('#view').html('').html(data);
-
-
-    $('.case').click(function(e){
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        document.location.reload();
-    });
-
-
-
-    // watch the disapearance of #ui-card to reload view
-
-    var targetNode = document.getElementById('ui-card');
-
-    // Function to check visibility
-    function checkVisibility() {
-        if ($(targetNode).is(':visible')) {
-        } else {
-
-            // div is invisible
-            document.location.reload();
-        }
+        // Reattach click event listeners
+        attachEventListeners();
     }
 
-    // MutationObserver configuration
-    var observer = new MutationObserver(function(mutationsList, observer) {
-        for(var mutation of mutationsList) {
-            if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
-                checkVisibility();
-            }
-        }
-    });
+    // Function to attach click event listeners
+    function attachEventListeners() {
+        $('.case').off('click').on('click', function(e){
+            e.preventDefault();
+            e.stopPropagation();
+            //updateView();
+        });
+    }
 
-    // Start observing the target node for configured mutations
-    observer.observe(targetNode, { attributes: true, childList: false, subtree: false });
+    // Initial view update and event listener attachment
+    updateView();
 
-    // Initial check
-    checkVisibility();
 });
+
 </script>
+<script src="js/view.js"></script>

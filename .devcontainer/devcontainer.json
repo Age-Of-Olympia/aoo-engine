@@ -29,7 +29,8 @@
 				"xdebug.php-debug",
 				"ms-azuretools.vscode-docker",
 				"bmewburn.vscode-intelephense-client",
-				"st-pham.php-refactor-tool"
+				"st-pham.php-refactor-tool",
+				"marsl.vscode-php-refactoring"
 			],
 			"settings": {
        			"remote.autoForwardPorts": false

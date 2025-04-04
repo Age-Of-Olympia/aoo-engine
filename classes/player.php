@@ -1,8 +1,10 @@
 <?php
 
+use App\Enum\EquipResult;
+use App\Interface\ActorInterface;
 use App\Service\PlayerService;
 
-class Player{
+class Player implements ActorInterface {
 
     public $id;
     public $data;
@@ -23,14 +25,7 @@ class Player{
         $this->caracs = (object) array();
         $this->upgrades = (object) array();
         $this->emplacements = (object) array();
-        $this->data =null;
-        $this->coords = null;
-        $this->nude = null;
-        $this->raceData = null;
-        $this->debuffs = null;
-        $this->turn = null;
-        $this->row = null;
-        $this->playerService = new PlayerService();
+        $this->playerService = new PlayerService($playerId);
     }
 
 
@@ -156,7 +151,9 @@ class Player{
         $this->turn = (object) array();
 
         while($row = $res->fetch_object()){
-
+            if ($row->name == "fat") {
+                continue;
+            }
 
             $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
         }
@@ -244,7 +241,7 @@ class Player{
     }
 
 
-    public function get_coords(){
+    public function getCoords(): object{
 
 
         $db = new Db();
@@ -309,7 +306,7 @@ class Player{
 
 
     // have/add/end/get main functions
-    public function have($table, $name){
+    public function have($table, $name): int{
 
 
         if(!in_array($table, array('effects','options','actions'))){
@@ -418,7 +415,7 @@ class Player{
 
     // options shortcuts
     public function add_option($name){ $this->add('options', $name); }
-    public function have_option($name){ return $this->have('options', $name); }
+    public function have_option($name): int{ return $this->have('options', $name); }
     public function end_option($name){ $this->end('options', $name); }
     public function get_options(){ return $this->get('options'); }
 
@@ -453,12 +450,12 @@ class Player{
 
 
     // effects
-    public function have_effect($name){
+    public function haveEffect(string $name): int{
 
         return $this->have('effects', $name);
     }
 
-    public function add_effect($name, $duration=0){
+    public function addEffect($name, $duration=0): void{
 
 
         // effect exists
@@ -497,9 +494,9 @@ class Player{
         // element control
         if(!empty(ELE_CONTROLS[$name])){
 
-            if($this->have_effect(ELE_CONTROLS[$name])){
+            if($this->haveEffect(ELE_CONTROLS[$name])){
 
-                $this->end_effect(ELE_CONTROLS[$name]);
+                $this->endEffect(ELE_CONTROLS[$name]);
 
                 // echo '<script>alert("'. ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'");document.location.reload();</script>';
             }
@@ -507,10 +504,10 @@ class Player{
             if(!empty(ELE_IS_CONTROLED[$name])){
 
 
-                if($this->have_effect(ELE_IS_CONTROLED[$name])){
+                if($this->haveEffect(ELE_IS_CONTROLED[$name])){
 
-                    $this->end_effect(ELE_IS_CONTROLED[$name]);
-                    $this->end_effect($name);
+                    $this->endEffect(ELE_IS_CONTROLED[$name]);
+                    $this->endEffect($name);
 
                     // echo '<script>alert("'. ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent!");document.location.reload();</script>';
                 }
@@ -523,7 +520,7 @@ class Player{
         return $this->get('effects');
     }
 
-    public function end_effect($name){
+    public function endEffect(string $name): void{
 
 
         $values = array(
@@ -536,7 +533,7 @@ class Player{
         $db->delete('players_effects', $values);
     }
 
-    public function purge_effects(){
+    public function purge_effects(): int{
 
 
         $sql = '
@@ -553,7 +550,8 @@ class Player{
 
         $db = new Db();
 
-        $db->exe($sql, $this->id);
+        $affectedRows = $db->exe($sql, $this->id, false, true);
+        return $affectedRows;
     }
 
 
@@ -563,10 +561,14 @@ class Player{
         // store older coords
         if(!isset($this->coords)){
 
-            $this->get_coords();
+            $this->getCoords();
         }
 
         $oldCoords = $this->coords;
+
+        if (is_numeric($goCoords)) {
+            $goCoords = View::get_coords_from_id($goCoords);
+        }
 
         $coordsId = isset($goCoords->coordsId) ? $goCoords->coordsId : View::get_coords_id($goCoords);
 
@@ -637,7 +639,7 @@ class Player{
             }
 
 
-            $this->add_effect($row->name, ONE_DAY);
+            $this->addEffect($row->name, ONE_DAY);
         }
 
 
@@ -895,7 +897,7 @@ class Player{
         $this->refresh_caracs();
     }
 
-    public function put_bonus($bonus) : bool{
+    public function putBonus($bonus, bool $fatigue = true) : bool{
 
 
         if(!isset($this->data)){
@@ -929,8 +931,9 @@ class Player{
 
             if($carac == 'a' && $val < 0){
 
-
-                $this->put_fat(FAT_PER_ACTION);
+                if ($fatigue) {
+                    $this->putFat(FAT_PER_ACTION);
+                }
             }
 
             elseif($carac == 'pv'){
@@ -948,7 +951,7 @@ class Player{
                 elseif($val > 0){
 
 
-                    $pvLeft = $this->get_left('pv');
+                    $pvLeft = $this->getRemaining('pv');
 
                     if($pvLeft + $val > $this->caracs->pv){
 
@@ -960,7 +963,7 @@ class Player{
             elseif($carac == 'pm' && $val > 0){
 
 
-                $pmLeft = $this->get_left('pm');
+                $pmLeft = $this->getRemaining('pm');
 
                 if($pmLeft + $val > $this->caracs->pm){
 
@@ -1013,7 +1016,7 @@ class Player{
     }
 
 
-    public function get_left($carac){
+    public function getRemaining(string $trait): int{
 
 
         if(!isset($this->caracs) || !get_object_vars($this->caracs)){
@@ -1024,13 +1027,15 @@ class Player{
 
 
 
-        if(!isset($this->turn->$carac)){
+        if(!isset($this->turn->$trait)){
+            if ($trait == "fatigue") {
+                return $this->data->fatigue;
+            }
 
-
-            return $this->caracs->$carac;
+            return $this->caracs->$trait;
         }
 
-        return $this->turn->$carac;
+        return $this->turn->$trait;
     }
 
 
@@ -1046,26 +1051,26 @@ class Player{
         $this->refresh_data();
     }
 
-    public function set_fat($fat){
+    public function set_fat($fatigue){
 
 
         $sql = 'UPDATE players SET fatigue = GREATEST(?, 0) WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, array($fat, $this->id));
+        $db->exe($sql, array($fatigue, $this->id));
 
         $this->refresh_data();
     }
 
-    public function put_fat($fat){
+    public function putFat($fatigue): void{
 
 
         $sql = 'UPDATE players SET fatigue = GREATEST(fatigue + ?, 0) WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, array($fat, $this->id));
+        $db->exe($sql, array($fatigue, $this->id));
 
         $this->refresh_data();
     }
@@ -1365,9 +1370,10 @@ class Player{
         }
     }
 
+    
 
-    public function equip($item,$doNotRefresh=false){
 
+    public function equip(Item $item): EquipResult{
 
         $db = new Db();
 
@@ -1380,7 +1386,7 @@ class Player{
 
         if($item->row->name == 'poing'){
 
-            return false;
+            return EquipResult::DoNothing;
         }
 
 
@@ -1394,7 +1400,7 @@ class Player{
             if($item->row->cursed){
 
                 echo '<div id="data">Objet Maudit!</div>';
-                return false;
+                return EquipResult::Cursed;
             }
 
 
@@ -1423,7 +1429,7 @@ class Player{
                 $this->refresh_view();
             }
 
-            $return = 'unequip';
+            $return = EquipResult::Unequip;
         }
 
 
@@ -1433,14 +1439,12 @@ class Player{
             // item is NOT equiped : EQUIP
 
             if(!empty($this->emplacements->{$item->data->emplacement}) && $this->emplacements->{$item->data->emplacement}->id == $item->id){
-
-                exit('unequip');
+                return EquipResult::DoNothing;
             }
 
 
             if(!Item::get_free_emplacement($this)){
-
-                exit('error item limit');
+                return EquipResult::NoRoom;
             }
 
 
@@ -1462,7 +1466,7 @@ class Player{
             if($row->n){
 
                 echo '<div id="data">Objet Maudit!</div>';
-                exit('cursed');
+                return EquipResult::Cursed;
             }
 
 
@@ -1534,7 +1538,7 @@ class Player{
             
 
             // equip munitions
-            if($munition = $this->get_munition($item)){
+            if($munition = $this->getMunition($item)){
 
                 if(!isset($itemList[$munition->id])){
 
@@ -1542,7 +1546,7 @@ class Player{
                 }
             }
 
-            $return = 'equip';
+            $return = EquipResult::Equip;
         }
 
 
@@ -1579,16 +1583,16 @@ class Player{
     }
 
 
-    public function get_munition($item, $equiped=false){
+    public function getMunition(Item $object, bool $equiped=false): ?Item {
 
 
-        if(!isset($item->data->munitions)){
+        if(!isset($object->data->munitions)){
 
-            return false;
+            return null;
 
         }
 
-        foreach($item->data->munitions as $e){
+        foreach($object->data->munitions as $e){
 
 
             $munition = Item::get_item_by_name($e);
@@ -1600,7 +1604,7 @@ class Player{
             }
         }
 
-        return false;
+        return null;
     }
 
 
@@ -2102,6 +2106,13 @@ class Player{
 
         $this->data = $playerJson;
 
+        // Get plain_mail & email_bonus from PlayerService
+        $fields = $this->playerService->getPlayerFields(['plain_mail', 'email_bonus']);
+        $this->data->plain_mail = $fields['plain_mail'];
+        $this->data->email_bonus = $fields['email_bonus'] ?? false;
+
+        // Set inactive status using playerService
+        $this->data->isInactive = $this->playerService->isInactive($this->data->lastLoginTime);
 
         // Set inactive status using playerService
         $this->data->isInactive = $this->id > 0 ? $this->playerService->isInactive($this->data->lastLoginTime) : false;

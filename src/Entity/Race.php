@@ -1,6 +1,8 @@
 <?php
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -32,6 +34,19 @@ class Race
 
     #[ORM\Column(type: "integer", options: array("default"=>1))]
     private int $avatarNextNumber = 1;
+
+    /**
+     * Many Races have Many Actions (the default action pack).
+     * This is a bidirectional association with Action::$races.
+     */
+    #[ORM\ManyToMany(targetEntity: Action::class, inversedBy: "races")]
+    #[ORM\JoinTable(name: "race_actions")]
+    private Collection $actions;
+
+    public function __construct()
+    {
+        $this->actions = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -92,6 +107,31 @@ class Race
     public function incrementAvatarNextNumber(): self
     {
         $this->avatarNextNumber++;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Action>
+     */
+    public function getActions(): Collection
+    {
+        return $this->actions;
+    }
+
+    public function addAction(Action $action): self
+    {
+        if (!$this->actions->contains($action)) {
+            $this->actions->add($action);
+            $action->addRace($this); // keep it bidirectional
+        }
+        return $this;
+    }
+
+    public function removeAction(Action $action): self
+    {
+        if ($this->actions->removeElement($action)) {
+            $action->removeRace($this); // keep it bidirectional
+        }
         return $this;
     }
 

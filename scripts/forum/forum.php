@@ -29,7 +29,7 @@ $ui = new Ui($forumJson->name);
 ob_start();
 
 use App\Service\PlayerService;
-$playerService = new PlayerService();
+$playerService = new PlayerService($_SESSION['playerId']);
 
 include('scripts/infos.php');
 include('scripts/menu.php');

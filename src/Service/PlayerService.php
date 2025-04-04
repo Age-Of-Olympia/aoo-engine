@@ -2,22 +2,24 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
-use App\Entity\Race;
 use Db;
 use Player;
+
 class PlayerService
 {
     private Db $db;
+    private int $playerId;
     private $playerCache = [];
-    public function __construct()
+
+    public function __construct(int $playerId)
     {
+        $this->playerId = $playerId;
         $this->db = new Db();
     }
 
-    private function getPlayerField(int $playerId, string $field): mixed
+    private function getPlayerField(string $field): mixed
     {
-        $fields = $this->getPlayerFields($playerId, [$field]);
+        $fields = $this->getPlayerFields([$field]);
         return $fields[$field] ?? null;
     }
 
@@ -31,14 +33,14 @@ class PlayerService
         return $this->getPlayerField($playerId, 'email_bonus') ?? false;
     }
 
-    public function getPlayerFields(int $playerId, array $fields): array
+    public function getPlayerFields(array $fields): array
     {
         if (empty($fields)) {
             return [];
         }
 
         $sql = "SELECT " . implode(', ', $fields) . " FROM players WHERE id = ?";
-        $res = $this->db->exe($sql, array($playerId));
+        $res = $this->db->exe($sql, array($this->playerId));
 
         if ($res && $res->num_rows > 0) {
             $row = $res->fetch_object();
@@ -74,9 +76,7 @@ class PlayerService
                 and players_options.player_id is null
                 ';
 
-        $db = new Db();
-
-        $res = $db->exe($sql, '%'.$searchKey.'%');
+        $res = $this->db->exe($sql, '%'.$searchKey.'%');
         $list= array();
 
         while($row = $res->fetch_object()){
@@ -85,7 +85,7 @@ class PlayerService
         return $list;
     }
 
-    public function GetPlayer($id,bool $readCache =true,bool $writeCache=true)
+    public function GetPlayer($id, bool $readCache=true, bool $writeCache=true)
     {
         if($readCache && isset($this->playerCache[$id])){
             return $this->playerCache[$id];
@@ -113,4 +113,17 @@ class PlayerService
         return $players;
     }
     
+    public function updateLastActionTime(): void {
+        $sql = '
+            UPDATE
+            players
+            SET
+            lastActionTime = '. time() .'
+            WHERE
+            id = ?
+            ';
+
+        $this->db->exe($sql, $this->playerId);
+    }
+
 }

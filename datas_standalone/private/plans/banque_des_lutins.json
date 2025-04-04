@@ -1,45 +1,30 @@
 {
-
     "name": "Banque des Lutins",
-
+    "shortName": "Banque des Lutins",
     "x": 0,
     "y": 0,
-
-    "biomes":[
-
+    "visibleBoundsMinX": -10,
+    "visibleBoundsMaxX": 10,
+    "visibleBoundsMinY": -10,
+    "visibleBoundsMaxY": 10,
+    "z_levels": [
+        {
+            "z": 0,
+            "z-name": "Banque",
+            "visibleBoundsMinX": -10,
+            "visibleBoundsMaxX": 10,
+            "visibleBoundsMinY": -10,
+            "visibleBoundsMaxY": 10
+        }
     ],
-
-    "exits":{
-
-        "n": [
-        ],
-
-        "s":[
-
-        ],
-
-        "e":[
-
-        ],
-
-        "w":[
-
-        ],
-
-        "ne":[
-
-        ],
-
-        "se":[
-
-        ],
-
-        "nw":[
-
-        ],
-
-        "sw":[
-
-        ]
-    }
+    "biomes": [
+        {
+            "wall": "arbre3",
+            "ressource": "bois"
+        },
+        {
+            "wall": "pierre3",
+            "ressource": "pierre"
+        }
+    ]
 }

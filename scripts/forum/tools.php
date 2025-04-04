@@ -2,6 +2,10 @@
 
 echo '
 <div id="tools">
+    <div id="tools-portrait">
+        <img src="'. $player->data->portrait .'" />
+    </div>
+    <div id="tools-button">
 ';
 
 $tools = array(
@@ -27,6 +31,7 @@ foreach($tools as $k=>$e){
 echo '<div class="tool-button"><a href="https://age-of-olympia.net/wiki/doku.php?id=forum:bbcode" title="Aide"><button>?</button></a></div>';
 
 echo '
+    </div>
 </div>
 ';
 

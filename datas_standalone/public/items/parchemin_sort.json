@@ -1,0 +1,9 @@
+{
+    "id": 26,
+    "name": "Parchemin de Sort",
+    "private": 0,
+    "price": 200,
+    "race": "common",
+    "type": "parchemin",
+    "text": "Un parchemin magique permettant l'apprentissage d'un sort."
+}

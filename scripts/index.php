@@ -165,7 +165,7 @@ echo '<a href="https://www.les12singes.com/84-les-oublies"><img src="img/ui/part
 
 echo '<div style="font-size: 75%; color: #333;"><a href="https://votezpourmoi.com/">Votez Pour Moi</a>, Jeu de simulation de campagne électorale! (<a href="https://votezpourmoi.com/jeu-politique/but-jeu.php">en savoir plus</a>)</div>';
 
-echo '<a href="https://www.qtg.fr/" title="Qu\'est-ce que tu Geeks?"><img src="img/ui/partenaires/qtg.gif" /></a>';
+echo '<a href="https://www.qtg.fr/" title="Qu\'est-ce que tu Geekes ?"><img src="img/ui/partenaires/qtg.gif" /></a>';
 
 
 $annonceJson = json()->decode('', 'annonce');

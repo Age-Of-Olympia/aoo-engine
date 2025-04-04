@@ -5,14 +5,10 @@ namespace App\View;
 class ModalView
 {
 
-    public function __construct()
-    {
-    }
-
     /**
      * affiche le html d'une fenêtre modale
      */
-    public function displayModal(string $modalId, string $modalContentId, string $title = "" , string $initContent = "" )
+    public function displayModal(string $modalId, string $modalContentId, string $title = "" , string $initContent = "" ): void
     {
         $modal ='            
             <div id="'.$modalId.'"  class="modal-bg">

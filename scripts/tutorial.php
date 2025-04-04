@@ -2,7 +2,7 @@
 
 @unlink('datas/private/players/'. $player->id .'.msg.html');
 
-$player->get_coords();
+$player->getCoords();
 
 echo '
 <div id="tooltip"><div class="text">tooltip</div><div class="tooltip-next"><a href="#" class="next">[suite]</a></div></div>

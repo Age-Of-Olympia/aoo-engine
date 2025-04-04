@@ -15,7 +15,7 @@ $ui = new Ui(htmlentities($topJson->title), true);
 ob_start();
 
 use App\Service\PlayerService;
-$playerService = new PlayerService();
+$playerService = new PlayerService($_SESSION['playerId']);
 
 echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.webp" /></a><br /><a href="#last"><img src="img/ui/forum/down.webp" /></a></div>';
 

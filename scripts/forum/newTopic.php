@@ -42,18 +42,20 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
 
         if(!empty($_POST['destId'])){
 
+            $destTbl = Forum::get_top_dest($topJson);
+            $desti = new Player($_POST['destId']);
+            $desti->get_data();
+            if($player->check_missive_permission($desti)){
 
-            $target = new Player($_POST['destId']);
-
-            if($player->check_missive_permission($target)){
-
-
-                $values = array(
-                    'player_id'=>$target->id,
-                    'name'=>$topJson->name
-                );
-
-                $db->insert('players_forum_missives', $values);
+                Forum::add_dest( $player,$desti, $topJson, $destTbl) ;
+                //Ajouter l'animateur si la faction est différente
+                if($player->data->faction != $desti->data->faction 
+                    &&
+                        (($player->data->secretFaction == "") ||
+                         ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))){
+                    $raceJson = json()->decode('races', $desti->data->race);
+                    Forum::add_dest($player,$raceJson->animateur, $topJson, $destTbl);    
+                }
             }
         }
     }

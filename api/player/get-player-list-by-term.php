@@ -10,7 +10,7 @@ if($data_type =='player_name'){
 
     $term = isset($_GET['term']) ? $_GET['term'] : '';
 
-    $playerService = new PlayerService();
+    $playerService = new PlayerService($_SESSION['playerId']);
 
     $suggestions = $playerService->searchNonAnonymePlayer($term);
     

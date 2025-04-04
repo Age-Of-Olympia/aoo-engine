@@ -1,3 +1,4 @@
+.env
 wiki/
 datas/
 img/
@@ -12,3 +13,4 @@ vendor/
 .env
 bin/composer
 .vscode/settings.json
+

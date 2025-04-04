@@ -434,16 +434,16 @@ class Forum{
     }
 
 
-    public static function add_dest($dest, $topJson, $destTbl=false){
+    public static function add_dest($player,$dest, $topJson, $destTbl=false){
 
 
         if(is_numeric($dest)){
             $dest = new Player($dest);
-        }else{
+        }else if(is_string($dest)){
             $dest = Player::get_player_by_name($dest);
         }
         
-        $dest->get_data();
+        $dest->get_data(false);
 
         if(!$destTbl){
 
@@ -456,10 +456,7 @@ class Forum{
             return 'error already in dest';
         }
 
-
-        $player = new Player($_SESSION['playerId']);
-
-        $player->get_data();
+        $player->get_data(false);
 
 
         if(
@@ -476,6 +473,7 @@ class Forum{
         $values = array('player_id'=>$dest->id, 'name'=>$topJson->name);
 
         $db->insert('players_forum_missives', $values);
+        $destTbl[] = $dest->id;
     }
 
 

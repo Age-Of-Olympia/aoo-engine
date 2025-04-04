@@ -10,7 +10,9 @@ if (empty($_GET) || (!isset($_GET['local']) && !isset($_GET['s2']))) {
 
 $ui = new Ui('Carte du Monde');
 $player = new Player($_SESSION['playerId']);
-$player->get_coords();
+
+$player->getCoords();
+
 $planJson = json()->decode('plans', $player->coords->plan);
 $planJson->id = $player->coords->plan;
 $planJson->fromCoords = $player->coords;
@@ -84,7 +86,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 
     // Récupère les coordonnées du joueur
     $player = new Player($_SESSION['playerId']);
-    $player->get_coords();
+    $player->getCoords();
 
     // Crée le service de vue et génère la carte
     $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
@@ -250,4 +252,5 @@ if(!$planJson){
     echo '<img class="box-shadow" src="'. $url .'" />';
     exit();
 }
+
 ?>

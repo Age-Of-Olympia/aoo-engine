@@ -27,12 +27,15 @@ UNION
 SELECT coords_id FROM map_routes
 UNION
 SELECT coords_id FROM players_logs
+UNION
+SELECT coords_id FROM players_logs_archives
 )
 AND
 id != 1
 ';
 
-$db->exe($sql);
+
+//$db->exe($sql);
 
 
 echo 'done';

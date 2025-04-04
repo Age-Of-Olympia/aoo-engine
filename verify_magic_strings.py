@@ -5,8 +5,8 @@ def find_effects_in_file(file_path):
     try:
         with open(file_path, 'rb') as file:
             content = file.read().decode('utf-8', errors='ignore')
-        # Regex pour capturer les valeurs entre "have_effect(" et ")"
-        pattern = re.compile(r"have_effect\('([^']+)'\)")
+        # Regex pour capturer les valeurs entre "haveEffect(" et ")"
+        pattern = re.compile(r"haveEffect\('([^']+)'\)")
         matches = pattern.findall(content)
         return matches
     except Exception as e:

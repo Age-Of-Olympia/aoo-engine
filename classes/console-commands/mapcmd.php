@@ -81,7 +81,7 @@ function save_map($argumentValues){
 
 
     $player = new Player($_SESSION['playerId']);
-    $player->get_coords();
+    $player->getCoords();
 
 
     echo 'saving actual map:<br />';
@@ -164,7 +164,7 @@ function load_map($argumentValues){
 
 
     $player = new Player($_SESSION['playerId']);
-    $player->get_coords();
+    $player->getCoords();
 
 
     echo 'loading on actual map:<br />';
@@ -230,7 +230,7 @@ function load_map($argumentValues){
             foreach($keys as $g){
 
 
-                $insertVal[] = '"'. $f->$g .'"';
+                $insertVal[] = '"'. addcslashes($f->$g,'"') .'"';
             }
 
             $insertValues[] = '('. implode(',', $insertVal) .')';
