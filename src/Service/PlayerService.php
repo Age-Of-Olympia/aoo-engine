@@ -64,7 +64,6 @@ class PlayerService
         return $lastLoginTime < $inactive_threshold;
     }
 
-
     public function searchNonAnonymePlayer(string $searchKey): array
     {
         
@@ -99,4 +98,19 @@ class PlayerService
 
         return $result;
     }
+
+    public function getAllPlayers(): array
+    {
+        $sql = "SELECT * FROM players ORDER BY name ASC";
+        $db = new Db();
+        $result = $db->exe($sql);
+        
+        $players = [];
+        while ($row = $result->fetch_assoc()) {
+            $players[] = $row;
+        }
+        
+        return $players;
+    }
+    
 }

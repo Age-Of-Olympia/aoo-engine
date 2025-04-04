@@ -15,6 +15,16 @@ $planJson = json()->decode('plans', $player->coords->plan);
 $planJson->id = $player->coords->plan;
 $planJson->fromCoords = $player->coords;
 
+$zLevelName = '';
+if (count($planJson->z_levels) > 1) {
+    foreach ($planJson->z_levels as $zLevel) {
+        if ($zLevel->z === $player->coords->z) {
+            $zLevelName = ' - ' . ($zLevel->{'z-name'} ?? 'Niveau ' . $player->coords->z);
+            break;
+        }
+    }
+}
+
 ob_start();
 
 //  Carte globale
@@ -27,11 +37,15 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
         echo '<a href="map.php?s2"><button>Monde</button></a>';
     } else {
         echo '<a href="map.php"><button>Monde</button></a>
-              <a href="map.php?local&s2"><button>' . $planJson->name . '</button></a>';
+              <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>';
     }
-    
-    echo '<a href="map.php?s2&regenerate=1"><button>Régénérer la carte</button></a>
-    </div><br />';
+
+    // Admin-only regenerate button
+    if ($player->have_option('isAdmin')) {
+        echo '<div style="margin-bottom: 15px; padding-top: 10px;">
+            <a href="map.php?s2&regenerate=1"><button>Regénérer la carte (admin)</button></a>
+        </div>';
+    }
 
     // Formulaire de sélection des couches
     echo '<div class="layer-controls" style="margin-bottom: 15px;">
@@ -43,9 +57,6 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
             <label><input type="checkbox" name="layers[]" value="elements" ' . 
             ((!isset($_GET['layers']) || in_array('elements', $_GET['layers'] ?? [])) ? 'checked' : '') . 
             '> Éléments</label>
-            <label><input type="checkbox" name="layers[]" value="foregrounds" ' . 
-            ((!isset($_GET['layers']) || in_array('foregrounds', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Foregrounds</label>
             <label><input type="checkbox" name="layers[]" value="coordinates" ' . 
             ((!isset($_GET['layers']) || in_array('coordinates', $_GET['layers'] ?? [])) ? 'checked' : '') . 
             '> Coordonnées</label>
@@ -56,7 +67,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
             ((!isset($_GET['layers']) || in_array('routes', $_GET['layers'] ?? [])) ? 'checked' : '') . 
             '> Routes</label>
             <label><input type="checkbox" name="layers[]" value="players" ' . 
-            (in_array('players', $_GET['layers'] ?? []) ? 'checked' : '') . 
+            ((!isset($_GET['layers']) || in_array('players', $_GET['layers'] ?? [])) ? 'checked' : '') . 
             '> Tous les joueurs</label>
             <label><input type="checkbox" name="layers[]" value="player" ' . 
             ((!isset($_GET['layers']) || in_array('player', $_GET['layers'] ?? [])) ? 'checked' : '') . 
@@ -66,7 +77,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     </div>';
 
     // Récupère les couches sélectionnées ou utilise les valeurs par défaut
-    $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds'];
+    $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
 
     // Initialise la connexion à la base de données
     $database = new Db();
@@ -122,11 +133,11 @@ if(isset($_GET['local'])){
         // Initialise la connexion à la base de données
         $database = new Db();
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
-        
+
         echo '<div>
-            <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
-            <a href="map.php?s2"><button>Monde</button></a>
-            <a href="map.php?local&s2"><button>' . $planJson->name . '</button></a>
+            <a href="index.php"><button><span class="ra ra-sideswipe"></span>  Retour</button></a>
+            <a href="map.php"><button>Monde</button></a>
+            <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>
         </div><br />';
 
         // Formulaire de sélection des couches
@@ -167,7 +178,25 @@ if(isset($_GET['local'])){
 
         if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
             list($imageWidth, $imageHeight) = getimagesize($mapResult['imagePath']);
-            echo '<div id="ui-map">
+            echo '<div id="ui-map" style="position: relative;">';
+            
+            if ($player->have_option('isAdmin')) {
+                // Sort z_levels by z value in descending order
+                usort($planJson->z_levels, function($a, $b) {
+                    return $b->z <=> $a->z;
+                });
+                
+                echo '<div style="position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); padding: 5px; border-radius: 3px; display: flex; flex-direction: column; gap: 3px;">';
+                foreach ($planJson->z_levels as $zLevel) {
+                    $isCurrent = $player->coords->z == $zLevel->z;
+                    echo '<button style="' . ($isCurrent ? 'background: #007bff; color: white;' : '') . '">
+                        Z' . $zLevel->z . ': ' . ($zLevel->{'z-name'} ?? 'Niveau ' . $zLevel->z) . '
+                    </button>';
+                }
+                echo '</div>';
+            }
+            
+            echo '
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"

@@ -36,6 +36,13 @@ class ColorService {
             'echelle' => [197, 162, 137],           // Original: [139, 69, 19]
             'carreaux' => [223, 223, 223],          // Original: [192, 192, 192]
     
+            // Walls
+            "arbre1" => [140, 100, 90],   // Soft Bark Brown
+            "arbre2" => [150, 165, 190],  // Dusty Indigo
+            "arbre3" => [195, 190, 145],  // Soft Olive
+            "arbre4" => [200, 230, 235],  // Frosted Sky
+            "arbre5" => [240, 245, 240],  // Snow Veil
+
             // Dungeons and caves
             'caverne' => [197, 196, 196],           // Original: [72, 61, 139]
             'mines' => [151, 164, 164],             // Original: [47, 79, 79]

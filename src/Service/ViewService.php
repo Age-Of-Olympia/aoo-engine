@@ -566,7 +566,7 @@ class ViewService {
             FROM map_walls mw
             JOIN coords c ON c.id = mw.coords_id
             WHERE c.plan = '" . $plan . "'
-            AND mw.name LIKE '%mur%'
+            AND (mw.name LIKE '%mur%' OR mw.name LIKE '%arbre%')
             AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
             AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
             $zCondition
@@ -978,7 +978,7 @@ class ViewService {
 
         foreach ($plans as $planName => $planData) {
             // Include if visibleByDefault is explicitly set to true
-            if ($planData->visibleByDefault === true) {
+            if (isset($planData->visibleByDefault) && $planData->visibleByDefault === true) {
                 $allLocations = array_merge($allLocations, $this->getLocationFromPlan($planName));
             }
         }
