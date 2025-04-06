@@ -89,15 +89,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 
     try {
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $worldPlan);
-    } catch (Exception $e) {
-        echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
-        echo 'Carte du monde : ' . htmlspecialchars($e->getMessage());
-        echo '</div>';
-        echo Str::minify(ob_get_clean());
-        exit();
-    }
-    try {
-        $mapResult = $viewService->generateGlobalMap($selectedLayers);
+        $mapResult = $viewService->getGlobalMap();
     } catch (Exception $e) {
         echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
         echo 'Carte du monde : ' . htmlspecialchars($e->getMessage());
@@ -106,7 +98,21 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
         exit();
     }
 
-    if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
+    $hasValidLayers = false;
+    if (is_array($mapResult)) {
+        foreach ($selectedLayers as $layer) {
+            $layerData = $mapResult[$layer] ?? null;
+            $imagePath = $layerData['imagePath'] ?? null;
+
+            $fullPath = $_SERVER['DOCUMENT_ROOT'].$imagePath;
+            if ($imagePath && file_exists($fullPath)) {
+                $hasValidLayers = true;
+                break;
+            }
+        }
+    }
+
+    if ($hasValidLayers) {
         echo '
         <div id="ui-map">
         <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -120,20 +126,29 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
             style="overflow: visible"
             >
             <!-- Parchment background -->
-            <image xlink:href="img/ui/map/parchemin.webp" width="800" height="532" />
+            <image xlink:href="img/ui/map/parchemin.webp" width="800" height="532" />';
             
-            <!-- Overlay the S2 map -->
-            <image xlink:href="' . $mapResult['imagePath'] . '" width="700" height="466" x="60" y="33" />
+            $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
             
-            <!-- Add the player layer as an SVG image if "Ma position" is checked -->
-            ';
-            if (in_array('player', $selectedLayers)) {
-                $playerLayerPath = 'img/maps/global_map_player_' . $_SESSION['playerId'] . '_layer.png';
-                if (file_exists($playerLayerPath)) {
-                    list($width, $height) = getimagesize($playerLayerPath);
-                    echo '<image xlink:href="' . $playerLayerPath . '" width="' . $width . '" height="' . $height . '" x="60" y="33" />';
+            foreach ($layerOrder as $layer) {
+                if (in_array($layer, $selectedLayers) && isset($mapResult[$layer]['imagePath'])) {
+                    $fullPath = $mapResult[$layer]['imagePath'];
+                    echo '<image xlink:href="'.$fullPath.'"
+                         width="700" height="466" x="60" y="33" />';
                 }
             }
+
+            // Special handling for player layer
+            if (in_array('player', $selectedLayers)) {
+                $playerLayerPath = 'img/maps/world_player_' . $_SESSION['playerId'] . '_layer.png';
+                $fullPath = $playerLayerPath;
+                if (file_exists($fullPath)) {
+                    list($width, $height) = getimagesize($fullPath);
+                    echo '<image xlink:href="' . $playerLayerPath . '"
+                         width="' . $width . '" height="' . $height . '" x="60" y="33" />';
+                }
+            }
+
             echo '</svg></div>';
     } else {
         echo '<p>La carte n\'est pas encore générée. Veuillez cliquer sur "Régénérer la carte".</p>';
@@ -204,8 +219,8 @@ if(isset($_GET['local'])){
             </form>
         </div>';
 
-        if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
-            list($imageWidth, $imageHeight) = getimagesize($mapResult['imagePath']);
+        if (isset($mapResult['imagePath']) && file_exists($_SERVER['DOCUMENT_ROOT'].$mapResult['imagePath'])) {
+            list($imageWidth, $imageHeight) = getimagesize($_SERVER['DOCUMENT_ROOT'].$mapResult['imagePath']);
             echo '<div id="ui-map" style="position: relative;">';
             
             if ($player->have_option('isAdmin')) {
@@ -240,15 +255,17 @@ if(isset($_GET['local'])){
                 ';
                 if (in_array('players', $selectedLayers)) {
                     $playersLayerPath = 'img/maps/local_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
-                    if (file_exists($playersLayerPath)) {
-                        list($width, $height) = getimagesize($playersLayerPath);
+                    $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
+                    if (file_exists($fullPath)) {
+                        list($width, $height) = getimagesize($fullPath);
                         echo '<image xlink:href="' . $playersLayerPath . '" width="' . $width . '" height="' . $height . '" />';
                     }
                 }
                 if (in_array('player', $selectedLayers)) {
                     $playerLayerPath = 'img/maps/local_map_player_' . $_SESSION['playerId'] . '_layer.png';
-                    if (file_exists($playerLayerPath)) {
-                        list($width, $height) = getimagesize($playerLayerPath);
+                    $fullPath = $_SERVER['DOCUMENT_ROOT'].$playerLayerPath;
+                    if (file_exists($fullPath)) {
+                        list($width, $height) = getimagesize($fullPath);
                         echo '<image xlink:href="' . $playerLayerPath . '" width="' . $width . '" height="' . $height . '" />';
                     }
                 }
@@ -271,7 +288,7 @@ if(!$planJson){
     echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div><br />';
 
     $url = 'img/ui/illustrations/'. $player->coords->plan .'.webp';
-    if(!file_exists($url)){
+    if(!file_exists($_SERVER['DOCUMENT_ROOT'].$url)){
         $url = 'img/ui/illustrations/gaia.webp';
     }
 

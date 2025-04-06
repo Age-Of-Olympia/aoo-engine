@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Service;
+
+use DateTime;
+use DateTimeZone;
 use Exception;
 
 class ViewService {
@@ -162,6 +165,12 @@ class ViewService {
 
         // Crée l'image de base
         $this->image = $this->createLayer($this->localMapWidth, $this->localMapHeight);
+        $timestamp = (new DateTime('now', new DateTimeZone('UTC')))->format('Ymd-His');
+        $outputDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/local/';
+
+        if (!file_exists($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
 
         // Add cave background if Z is negative
         if ($this->playerZ < 0) {
@@ -187,79 +196,104 @@ class ViewService {
             );
         }
 
-        // Génère les couches demandées dans un ordre spécifique
-        if (in_array('tiles', $selectedLayers)) {
-            $this->generateTileLayer($this->currentPlan);
-        }
-        if (in_array('routes', $selectedLayers)) {
-            $this->generateRoutesLayer($this->currentPlan);
-        }
-        if (in_array('elements', $selectedLayers)) {
-            $this->generateElementLayer($this->currentPlan);
-        }
-        if (in_array('foregrounds', $selectedLayers)) {
-            $this->generateForegroundsLayer($this->currentPlan);
-        }
-        if (in_array('walls', $selectedLayers)) {
-            $this->generateWallLayer($this->currentPlan);
-        }
-        if (in_array('players', $selectedLayers)) {
-            $this->generateLocalPlayersLayer();
-        }
-        if (in_array('player', $selectedLayers)) {
-            $this->generateLocalPlayerLayer();
-        }
-        // Composite les couches sur l'image principale
-        foreach ($this->layers as $layer) {
-            imagecopy($this->image, $layer, 0, 0, 0, 0, $this->localMapWidth, $this->localMapHeight);
-            imagedestroy($layer); // Libère la mémoire
-        }
+        $results = [];
+
+        foreach ($selectedLayers as $layerName) {
+            switch ($layerName) {
+                case 'tiles':
+                    $this->generateTileLayer($this->currentPlan);
+                    break;
+                case 'elements':
+                    $this->generateElementLayer($this->currentPlan);
+                    break;
+                case 'foregrounds':
+                    $this->generateForegroundsLayer($this->currentPlan);
+                    break;
+                case 'walls':
+                    $this->generateWallLayer($this->currentPlan);
+                    break;
+                case 'routes':
+                    $this->generateRoutesLayer($this->currentPlan);
+                     break;
+                case 'players':
+                    $this->generateLocalPlayersLayer();
+                    break;
+                case 'player':
+                    $this->generateLocalPlayerLayer();
+                    break;
+            }
+            
+            $filename = "local_{$this->currentPlan}_{$this->playerZ}_{$layerName}_{$timestamp}.png";
+            $filepath = $outputDir . $filename;
+            
+            if ($layerName === 'tiles') {
+                imagecopy($this->image, $this->layers[$layerName], 0, 0, 0, 0, $this->localMapWidth, $this->localMapHeight);
+                imagepng($this->image, $filepath);
+            } else {
+                $this->image = $this->createLayer($this->localMapWidth, $this->localMapHeight);
+                imagecopy($this->image, $this->layers[$layerName], 0, 0, 0, 0, $this->localMapWidth, $this->localMapHeight);
+                imagepng($this->image, $filepath);
+            }
+            imagedestroy($this->layers[$layerName]);
+            
+            $results[$layerName] = [
+                'imagePath' => "/img/maps/local/{$filename}",
+                'timestamp' => $timestamp
+            ];
+        }   
         
-        // Ajoute une bordure à l'image finale
-        // $borderColor = imagecolorallocate($this->image, 139, 69, 19);
-        // imagerectangle($this->image, 0, 0, $this->width-1, $this->height-1, $borderColor);
-        
-        return [
-            'imagePath' => $this->saveImage()
-        ];
+        return $results;
     }
 
-    public function generateGlobalMap($selectedLayers = ['tiles', 'elements']) {
-        // Crée l'image de base
+    public function generateGlobalMap(?array $selectedLayers = null) {
         $this->image = $this->createLayer();
-        
-        // Génère les couches demandées dans un ordre spécifique
-        if (in_array('tiles', $selectedLayers)) {
-            $this->generateTileLayer($this->worldPlan);
-        }
-        if (in_array('elements', $selectedLayers)) {
-            $this->generateElementLayer($this->worldPlan);
-        }
-        if (in_array('coordinates', $selectedLayers)) {
-            $this->generateCoordinatesLayer($this->worldPlan);
-        }
-        if (in_array('routes', $selectedLayers)) {
-            $this->generateRoutesLayer($this->worldPlan);
-        }
-        if (in_array('locations', $selectedLayers)) {
-            $this->generateLocationsLayer($this->worldPlan);
-        }
-        if (in_array('players', $selectedLayers)) {
-            $this->generateAllPlayersLayer($this->worldPlan);
-        }
-        if (in_array('player', $selectedLayers) && $this->playerX !== null && $this->playerY !== null) {
-            $this->generateWorldPlayerLayer();
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+        $timestamp = (new DateTime('now', new DateTimeZone('UTC')))->format('Ymd-His');
+        $outputDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
+
+        if (!file_exists($outputDir)) {
+            mkdir($outputDir, 0755, true);
         }
         
-        // Composite les couches sur l'image principale
-        foreach ($this->layers as $layer) {
-            imagecopy($this->image, $layer, 0, 0, 0, 0, $this->width, $this->height);
-            imagedestroy($layer); // Libère la mémoire
-        }
+        $results = [];
         
-        return [
-            'imagePath' => $this->saveImage("global")
-        ];
+        foreach ($selectedLayers as $layerName) {            
+            switch ($layerName) {
+                case 'tiles':
+                    $this->generateTileLayer($this->worldPlan);
+                    break;
+                case 'elements':
+                    $this->generateElementLayer($this->worldPlan);
+                    break;
+                case 'coordinates':
+                    $this->generateCoordinatesLayer($this->worldPlan);
+                    break;
+                case 'locations':
+                    $this->generateLocationsLayer($this->worldPlan);
+                    break;
+                case 'routes':
+                    $this->generateRoutesLayer($this->worldPlan);
+                    break;
+                case 'player':
+                    if ($this->playerX !== null && $this->playerY !== null) {
+                        $this->generateWorldPlayerLayer();
+                    }
+                    break;
+            }
+
+            $filename = "world_{$layerName}_{$timestamp}.png";
+            $filepath = $outputDir . $filename;
+
+            imagepng($this->layers[$layerName], $filepath);
+            imagedestroy($this->layers[$layerName]);
+
+            $results[$layerName] = [
+                'imagePath' => "/img/maps/world/{$filename}",
+                'timestamp' => $timestamp
+            ];
+        }
+
+        return $results;
     }
 
     private function generateForegroundsLayer($plan) { 
@@ -300,7 +334,7 @@ class ViewService {
             );
         }
         
-        $this->layers[] = $layer;
+        $this->layers['foregrounds'] = $layer;
     }   
 
     private function generateTileLayer($plan) {
@@ -357,7 +391,7 @@ class ViewService {
             }
         }
         
-        $this->layers[] = $layer;
+        $this->layers['tiles'] = $layer;
     }
 
     private function generateElementLayer($plan) {
@@ -412,7 +446,7 @@ class ViewService {
             );
         }
         
-        $this->layers[] = $layer;
+        $this->layers['elements'] = $layer;
     }
     
     private function generateCoordinatesLayer($plan) {
@@ -462,7 +496,7 @@ class ViewService {
             imagestring($layer, 2, 2, $screenY - 4, $text, $textColor);
         }
         
-        $this->layers[] = $layer;
+        $this->layers['coordinates'] = $layer;
     }
     
     private function generateLocationsLayer($plan) {
@@ -518,7 +552,7 @@ class ViewService {
             imagestring($layer, $fontSize, $textX, $textY, $name, $textFillColor);
         }
         
-        $this->layers[] = $layer;
+        $this->layers['locations'] = $layer;
     }
     
     private function generateRoutesLayer($plan) {
@@ -566,7 +600,7 @@ class ViewService {
             }
         }
         
-        $this->layers[] = $layer;
+        $this->layers['routes'] = $layer;
     }
 
     private function generateWallLayer($plan) {
@@ -610,7 +644,7 @@ class ViewService {
             );
         }
         
-        $this->layers[] = $layer;
+        $this->layers['walls'] = $layer;
     }
 
     private function generateLocalPlayersLayer() {
@@ -737,7 +771,7 @@ class ViewService {
             );
         }
         
-        $this->layers[] = $layer;
+        $this->layers['players'] = $layer;
     }
 
     private function generateLocalPlayerLayer() {
@@ -943,6 +977,7 @@ class ViewService {
             $zLevels = [];
             foreach ($planData->z_levels as $zLevel) {
                 $zLevels[$zLevel->z] = (object)[
+                    'name' => $zLevel->{'z-name'} ?? "Niveau " . $zLevel->z,
                     'visibleBoundsMinX' => $zLevel->visibleBoundsMinX,
                     'visibleBoundsMaxX' => $zLevel->visibleBoundsMaxX,
                     'visibleBoundsMinY' => $zLevel->visibleBoundsMinY,
@@ -996,6 +1031,50 @@ class ViewService {
         }
 
         return $allLocations;
+    }
+
+    public function getAllPlans() {
+        $jsonHelper = new \json();
+        $allPlans = [];
+
+        foreach ($jsonHelper->get_all('plans', true) as $planId => $planData) {
+            $fullPlanData = $this->getPlanData($planId);
+            $allPlans[] = (object)[
+                'id' => $planId,
+                'name' => $planData->name ?? $planId,
+                'shortName' => $planData->shortName ?? $planId,
+                'hasZLevels' => !empty($planData->z_levels),
+                'visibleByDefault' => $planData->visibleByDefault ?? false,
+                'fullData' => $fullPlanData
+            ];
+        }
+
+        return $allPlans;
+    }
+
+    public function getGlobalMap(): array {
+        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+        $mapDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
+        $results = [];
+
+        foreach ($layers as $layer) {
+            $files = glob($mapDir."world_{$layer}_*.png");
+            if (!empty($files)) {
+                usort($files, function($a, $b) {
+                    return filemtime($b) - filemtime($a);
+                });
+
+                $filename = basename($files[0]);
+                $timestamp = substr($filename, strpos($filename, '_', 11) + 1, 15);
+
+                $results[$layer] = [
+                    'imagePath' => "/img/maps/world/{$filename}",
+                    'timestamp' => $timestamp
+                ];
+            }
+        }
+
+        return $results;
     }
 
     private function applyBackground($layer, $planData, $useImage = false) {
