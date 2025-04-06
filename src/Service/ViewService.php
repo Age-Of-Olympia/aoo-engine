@@ -626,6 +626,7 @@ class ViewService {
                 WHERE c.x IS NOT NULL 
                 AND c.y IS NOT NULL
                 AND c.plan = '" . $this->currentPlan . "'
+                AND p.id != " . $this->playerId . "
                 $zCondition
             ";
             
@@ -642,23 +643,21 @@ class ViewService {
                 $x = $this->transformX($player['x'], $mapType);
                 $y = $this->transformY($player['y'], $mapType);
 
-                $size = $this->localScaleX;
-
                 // Récupère la couleur pour la race
                 $raceColor = $raceColors[$player['race']] ?? $raceColors['default'];
                 list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
                 $playerColor = imagecolorallocate($layer, $r, $g, $b);
                 
-                $x1 = (int)($x - ($size/2));
-                $y1 = (int)($y - ($size/2));
-                $x2 = (int)($x + ($size/2));
-                $y2 = (int)($y + ($size/2));
+                $markerColor = $playerColor;
+                $pulseColor = imagecolorallocatealpha($layer, $r, $g, $b, 80);
+
+                // Dessine le cercle de pulsation extérieur
+                $pulseSize = 4;
+                imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
                 
-                imagefilledrectangle(
-                    $layer,
-                    $x1, $y1, $x2, $y2,
-                    $playerColor
-                );
+                // Dessine le marqueur de position du joueur (cercle plein)
+                $markerSize = 2;
+                imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
             }
             
             // Sauvegarde la couche des joueurs en tant qu'image PNG

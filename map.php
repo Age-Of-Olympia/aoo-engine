@@ -149,9 +149,8 @@ if(isset($_GET['local'])){
             <form method="GET" action="map.php" style="display: inline-block;">
                 <input type="hidden" name="local" value="1">
                 <input type="hidden" name="s2" value="1">
-                <label><input type="checkbox" name="layers[]" value="tiles" ' . 
-                ((!isset($_GET['layers']) || in_array('tiles', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Terrain</label>
+                <input type="hidden" name="layers[]" value="tiles">
+                <label><input type="checkbox" name="layers[]" value="tiles" checked disabled> Terrain</label>
                 <label><input type="checkbox" name="layers[]" value="elements" ' . 
                 ((!isset($_GET['layers']) || in_array('elements', $_GET['layers'] ?? [])) ? 'checked' : '') . 
                 '> Éléments</label>
@@ -165,7 +164,7 @@ if(isset($_GET['local'])){
                 ((!isset($_GET['layers']) || in_array('routes', $_GET['layers'] ?? [])) ? 'checked' : '') . 
                 '> Routes</label>
                 <label><input type="checkbox" name="layers[]" value="players" ' . 
-                (in_array('players', $_GET['layers'] ?? []) ? 'checked' : '') . 
+                ((!isset($_GET['layers']) || in_array('players', $_GET['layers'] ?? [])) ? 'checked' : '') . 
                 '> Tous les joueurs</label>
                 <label><input type="checkbox" name="layers[]" value="player" ' . 
                 ((!isset($_GET['layers']) || in_array('player', $_GET['layers'] ?? [])) ? 'checked' : '') . 
