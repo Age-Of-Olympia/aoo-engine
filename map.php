@@ -70,9 +70,6 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
             <label><input type="checkbox" name="layers[]" value="routes" ' . 
             ((!isset($_GET['layers']) || in_array('routes', $_GET['layers'] ?? [])) ? 'checked' : '') . 
             '> Routes</label>
-            <label><input type="checkbox" name="layers[]" value="players" ' . 
-            ((!isset($_GET['layers']) || in_array('players', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Tous les joueurs</label>
             <label><input type="checkbox" name="layers[]" value="player" ' . 
             ((!isset($_GET['layers']) || in_array('player', $_GET['layers'] ?? [])) ? 'checked' : '') . 
             '> Ma position</label>
@@ -81,7 +78,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     </div>';
 
     // Récupère les couches sélectionnées ou utilise les valeurs par défaut
-    $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
+    $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
 
     // Initialise la connexion à la base de données
     $database = new Db();
@@ -134,7 +131,6 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 // Carte locale
 if(isset($_GET['local'])){
     if (isset($_GET['s2'])) {
-        // Initialise la connexion à la base de données
         $database = new Db();
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
 
@@ -174,7 +170,7 @@ if(isset($_GET['local'])){
         </div>';
 
         // Récupère les couches sélectionnées ou utilise les valeurs par défaut
-        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'player'];
+        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
         
         // Génère la carte locale pour saison2
         $mapResult = $viewService->generateLocalMap($selectedLayers);

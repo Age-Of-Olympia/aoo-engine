@@ -652,11 +652,11 @@ class ViewService {
                 $pulseColor = imagecolorallocatealpha($layer, $r, $g, $b, 80);
 
                 // Dessine le cercle de pulsation extérieur
-                $pulseSize = 4;
+                $pulseSize = 6;
                 imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
                 
                 // Dessine le marqueur de position du joueur (cercle plein)
-                $markerSize = 2;
+                $markerSize = 6;
                 imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
             }
             
@@ -737,15 +737,15 @@ class ViewService {
         $y = (int)$this->transformY($this->playerY, $mapType);
 
         // Crée les couleurs pour le marqueur de joueur
-        $markerColor = imagecolorallocate($layer, 255, 0, 0);  // Rouge
-        $pulseColor = imagecolorallocatealpha($layer, 255, 0, 0, 80);  // Rouge semi-transparent
+        $markerColor = imagecolorallocate($layer, 255, 0, 255);  // Magenta
+        $pulseColor = imagecolorallocatealpha($layer, 255, 0, 255, 80);  // Magenta semi-transparent
         
         // Dessine le cercle de pulsation extérieur
-        $pulseSize = 4;
+        $pulseSize = 6;
         imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
         
         // Dessine le marqueur de position du joueur (cercle plein)
-        $markerSize = 2;
+        $markerSize = 6;
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
@@ -774,8 +774,8 @@ class ViewService {
         }
         
         // Crée les couleurs pour le marqueur de joueur
-        $markerColor = imagecolorallocate($layer, 255, 0, 0);  // Rouge
-        $pulseColor = imagecolorallocatealpha($layer, 255, 0, 0, 80);  // Rouge semi-transparent
+        $markerColor = imagecolorallocate($layer, 255, 0, 255);  // Magenta
+        $pulseColor = imagecolorallocatealpha($layer, 255, 0, 255, 80);  // Magenta semi-transparent
         
         // Dessine le cercle de pulsation extérieur
         $pulseSize = 8;
