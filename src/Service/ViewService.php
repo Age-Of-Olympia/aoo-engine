@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Service;
+use Exception;
 
 class ViewService {
     private $width = 700;
@@ -53,47 +54,57 @@ class ViewService {
     }
 
     private function calculateBounds() {
-        $worldPlanBounds = $this->getBoundsFromPlan($this->worldPlan);
+        try {
+            $worldPlanBounds = $this->getBoundsFromPlan($this->worldPlan);
 
-        // Global map
-        if ($worldPlanBounds !== null) {
-            $this->minX = $worldPlanBounds['minX'];
-            $this->maxX = $worldPlanBounds['maxX'];
-            $this->minY = $worldPlanBounds['minY'];
-            $this->maxY = $worldPlanBounds['maxY'];
-            $this->scaleX = ($this->width - 2 * $this->margin) / ($this->maxX - $this->minX);
-            $this->scaleY = ($this->height - 2 * $this->margin) / ($this->maxY - $this->minY);
-        }
+            // Global map
+            if ($worldPlanBounds !== null) {
+                $this->minX = $worldPlanBounds['minX'];
+                $this->maxX = $worldPlanBounds['maxX'];
+                $this->minY = $worldPlanBounds['minY'];
+                $this->maxY = $worldPlanBounds['maxY'];
+                $this->scaleX = ($this->width - 2 * $this->margin) / ($this->maxX - $this->minX);
+                $this->scaleY = ($this->height - 2 * $this->margin) / ($this->maxY - $this->minY);
+            }
 
-        if ($this->currentPlan !== $this->worldPlan) {
-            // Local map
-            $planData = $this->getPlanData($this->currentPlan);
-            if ($planData && isset($planData->z_levels[$this->playerZ])) {
+            if ($this->currentPlan !== $this->worldPlan) {
+                // Local map
+                $planData = $this->getPlanData($this->currentPlan);
+                if (!$planData) {
+                    throw new Exception("Plan data not found for: " . $this->currentPlan);
+                }
+                if (!isset($planData->z_levels[$this->playerZ])) {
+                    throw new Exception("Z-level {$this->playerZ} not found in plan: " . $this->currentPlan);
+                }
+
                 $zLevel = $planData->z_levels[$this->playerZ];
                 $this->localMinX = $zLevel->visibleBoundsMinX;
                 $this->localMaxX = $zLevel->visibleBoundsMaxX;
                 $this->localMinY = $zLevel->visibleBoundsMinY;
                 $this->localMaxY = $zLevel->visibleBoundsMaxY;
+
+                // Scale calculations
+                $rangeX = (float)($this->localMaxX - $this->localMinX);
+                $rangeY = (float)($this->localMaxY - $this->localMinY);
+                
+                // Fixed width for local map
+                $this->localMapWidth = $this->localWidth;
+
+                $this->localScaleX = $this->localMapWidth / $rangeX;
+                $this->localScaleY = $this->localScaleX; // Maintain square aspect ratio
+                $this->localMapHeight = (int)($rangeY * $this->localScaleY);
+
+                // Centering
+                $this->localCenterX = ($this->localMinX + $this->localMaxX) / 2;
+                $this->localCenterY = ($this->localMinY + $this->localMaxY) / 2;
+
+                // Offset to center the map
+                $this->localOffsetX = ($this->localMapWidth / 2) - (($this->localCenterX - $this->localMinX) * $this->localScaleX);
+                $this->localOffsetY = ($this->localMapHeight / 2) - (($this->localCenterY - $this->localMinY) * $this->localScaleY);
             }
-
-            // Scale calculations
-            $rangeX = (float)($this->localMaxX - $this->localMinX);
-            $rangeY = (float)($this->localMaxY - $this->localMinY);
-            
-            // Fixed width for local map
-            $this->localMapWidth = $this->localWidth;
-
-            $this->localScaleX = $this->localMapWidth / $rangeX;
-            $this->localScaleY = $this->localScaleX; // Maintain square aspect ratio
-            $this->localMapHeight = (int)($rangeY * $this->localScaleY);
-    
-            // Centering
-            $this->localCenterX = ($this->localMinX + $this->localMaxX) / 2;
-            $this->localCenterY = ($this->localMinY + $this->localMaxY) / 2;
-    
-            // Offset to center the map
-            $this->localOffsetX = ($this->localMapWidth / 2) - (($this->localCenterX - $this->localMinX) * $this->localScaleX);
-            $this->localOffsetY = ($this->localMapHeight / 2) - (($this->localCenterY - $this->localMinY) * $this->localScaleY);
+        } catch (Exception $e) {
+            error_log("Map bounds error: " . $e->getMessage());
+            throw new Exception("Erreur dans la génération de la map, merci de faire remonter le bug à l'équipe de dev");
         }
     }
     

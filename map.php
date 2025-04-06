@@ -87,9 +87,24 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     $player = new Player($_SESSION['playerId']);
     $player->getCoords();
 
-    // Crée le service de vue et génère la carte
-    $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
-    $mapResult = $viewService->generateGlobalMap($selectedLayers);
+    try {
+        $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $worldPlan);
+    } catch (Exception $e) {
+        echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
+        echo 'Carte du monde : ' . htmlspecialchars($e->getMessage());
+        echo '</div>';
+        echo Str::minify(ob_get_clean());
+        exit();
+    }
+    try {
+        $mapResult = $viewService->generateGlobalMap($selectedLayers);
+    } catch (Exception $e) {
+        echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
+        echo 'Carte du monde : ' . htmlspecialchars($e->getMessage());
+        echo '</div>';
+        echo Str::minify(ob_get_clean());
+        exit();
+    }
 
     if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
         echo '
@@ -132,13 +147,32 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 if(isset($_GET['local'])){
     if (isset($_GET['s2'])) {
         $database = new Db();
-        $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
-
+        // Display navigation buttons first
         echo '<div>
-            <a href="index.php"><button><span class="ra ra-sideswipe"></span>  Retour</button></a>
+            <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
             <a href="map.php?s2"><button>Monde</button></a>
             <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>
         </div><br />';
+
+        // Then handle errors
+        try {
+            $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
+        } catch (Exception $e) {
+            echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
+            echo 'Carte locale : ' . htmlspecialchars($e->getMessage());
+            echo '</div>';
+            echo Str::minify(ob_get_clean());
+            exit();
+        }
+        try {
+            $mapResult = $viewService->generateLocalMap($selectedLayers);
+        } catch (Exception $e) {
+            echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
+            echo 'Carte locale : ' . htmlspecialchars($e->getMessage());
+            echo '</div>';
+            echo Str::minify(ob_get_clean());
+            exit();
+        }
 
         // Formulaire de sélection des couches
         echo '<div class="layer-controls" style="margin-bottom: 15px;">
@@ -172,9 +206,6 @@ if(isset($_GET['local'])){
         // Récupère les couches sélectionnées ou utilise les valeurs par défaut
         $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
         
-        // Génère la carte locale pour saison2
-        $mapResult = $viewService->generateLocalMap($selectedLayers);
-
         if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
             list($imageWidth, $imageHeight) = getimagesize($mapResult['imagePath']);
             echo '<div id="ui-map" style="position: relative;">';
