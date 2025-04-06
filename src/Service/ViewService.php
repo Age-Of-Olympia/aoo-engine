@@ -157,7 +157,9 @@ class ViewService {
         return $layer;
     }
 
-    public function generateLocalMap($selectedLayers = ['tiles']) {
+    public function generateLocalMap(?array $selectedLayers = null) {
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+
         // Crée l'image de base
         $this->image = $this->createLayer($this->localMapWidth, $this->localMapHeight);
 

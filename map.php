@@ -165,6 +165,7 @@ if(isset($_GET['local'])){
             exit();
         }
         try {
+            $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
             $mapResult = $viewService->generateLocalMap($selectedLayers);
         } catch (Exception $e) {
             echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
@@ -203,9 +204,6 @@ if(isset($_GET['local'])){
             </form>
         </div>';
 
-        // Récupère les couches sélectionnées ou utilise les valeurs par défaut
-        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
-        
         if (isset($mapResult['imagePath']) && file_exists($mapResult['imagePath'])) {
             list($imageWidth, $imageHeight) = getimagesize($mapResult['imagePath']);
             echo '<div id="ui-map" style="position: relative;">';
