@@ -2,23 +2,14 @@
 
 require_once('config.php');
 
-// Redirect to s2 map by default if no parameters are specified
-if (empty($_GET) || (!isset($_GET['local']) && !isset($_GET['s2']))) {
-    header('Location: map.php?s2');
-    exit();
-}
-
-$ui = new Ui('Carte du Monde');
+$worldPlan = 'olympia';
 $player = new Player($_SESSION['playerId']);
-
 $player->getCoords();
-
 $planJson = json()->decode('plans', $player->coords->plan);
 $planJson->id = $player->coords->plan;
 $planJson->fromCoords = $player->coords;
-
 $zLevelName = '';
-if (count($planJson->z_levels) > 1) {
+if ($planJson->id !== $worldPlan && property_exists($planJson, 'z_levels') && count($planJson->z_levels) > 1) {
     foreach ($planJson->z_levels as $zLevel) {
         if ($zLevel->z === $player->coords->z) {
             $zLevelName = ' - ' . ($zLevel->{'z-name'} ?? 'Niveau ' . $player->coords->z);
@@ -27,6 +18,17 @@ if (count($planJson->z_levels) > 1) {
     }
 }
 
+// Redirect to s2 map by default if no parameters are specified
+if (empty($_GET) || (!isset($_GET['local']) && !isset($_GET['s2']))) {
+    if ($planJson->id === $worldPlan) {
+        header('Location: map.php?s2'); // Global map for world plan
+    } else {
+        header('Location: map.php?local&s2'); // Local map for other plans
+    }
+    exit();
+}
+
+$ui = new Ui('Carte du Monde');
 ob_start();
 
 //  Carte globale
@@ -35,10 +37,10 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
         <a href="index.php"><button><span class="ra ra-sideswipe"></span>Retour</button></a>';
     
     // Show "Monde" button only if player is on the olympia plan
-    if ($planJson->id === 'olympia') {
+    if ($planJson->id === $worldPlan) {
         echo '<a href="map.php?s2"><button>Monde</button></a>';
     } else {
-        echo '<a href="map.php"><button>Monde</button></a>
+        echo '<a href="map.php?s2"><button>Monde</button></a>
               <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>';
     }
 
@@ -138,7 +140,7 @@ if(isset($_GET['local'])){
 
         echo '<div>
             <a href="index.php"><button><span class="ra ra-sideswipe"></span>  Retour</button></a>
-            <a href="map.php"><button>Monde</button></a>
+            <a href="map.php?s2"><button>Monde</button></a>
             <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>
         </div><br />';
 
