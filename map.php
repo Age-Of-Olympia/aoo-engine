@@ -17,6 +17,7 @@ if ($planJson->id !== $worldPlan && property_exists($planJson, 'z_levels') && co
         }
     }
 }
+$database = new Db();
 
 // Redirect to s2 map by default if no parameters are specified
 if (empty($_GET) || (!isset($_GET['local']) && !isset($_GET['s2']))) {
@@ -47,7 +48,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     // Admin-only map panel redirection
     if ($player->have_option('isAdmin')) {
         echo '<div style="margin-bottom: 15px; padding-top: 10px;">
-            <a href="admin/world_map.php"><button>Admin Map Panel</button></a>
+            <a href="admin/world_map.php"><button>Admin World Map Panel</button></a>
         </div>';
     }
 
@@ -79,13 +80,6 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 
     // Récupère les couches sélectionnées ou utilise les valeurs par défaut
     $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
-
-    // Initialise la connexion à la base de données
-    $database = new Db();
-
-    // Récupère les coordonnées du joueur
-    $player = new Player($_SESSION['playerId']);
-    $player->getCoords();
 
     try {
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $worldPlan);
@@ -161,7 +155,6 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 // Carte locale
 if(isset($_GET['local'])){
     if (isset($_GET['s2'])) {
-        $database = new Db();
         // Display navigation buttons first
         echo '<div>
             <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
@@ -169,25 +162,11 @@ if(isset($_GET['local'])){
             <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>
         </div><br />';
 
-        // Then handle errors
-        try {
-            $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
-        } catch (Exception $e) {
-            echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
-            echo 'Carte locale : ' . htmlspecialchars($e->getMessage());
-            echo '</div>';
-            echo Str::minify(ob_get_clean());
-            exit();
-        }
-        try {
-            $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
-            $mapResult = $viewService->generateLocalMap($selectedLayers);
-        } catch (Exception $e) {
-            echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
-            echo 'Carte locale : ' . htmlspecialchars($e->getMessage());
-            echo '</div>';
-            echo Str::minify(ob_get_clean());
-            exit();
+        // Admin-only map panel redirection
+        if ($player->have_option('isAdmin')) {
+            echo '<div style="margin-bottom: 15px; padding-top: 10px;">
+                <a href="admin/local_maps.php"><button>Admin Local Map Panel</button></a>
+            </div>';
         }
 
         // Formulaire de sélection des couches
@@ -219,8 +198,46 @@ if(isset($_GET['local'])){
             </form>
         </div>';
 
-        if (isset($mapResult['imagePath']) && file_exists($_SERVER['DOCUMENT_ROOT'].$mapResult['imagePath'])) {
-            list($imageWidth, $imageHeight) = getimagesize($_SERVER['DOCUMENT_ROOT'].$mapResult['imagePath']);
+        // Récupère les couches sélectionnées ou utilise les valeurs par défaut
+        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+
+        try {
+            $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
+            $mapResult = $viewService->getLocalMap();
+            $localPlayersLayerPath = $viewService->generateLocalPlayersLayer();
+            $localPlayerLayerPath = $viewService->generateLocalPlayerLayer();
+        } catch (Exception $e) {
+            echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
+            echo 'Carte locale : ' . htmlspecialchars($e->getMessage());
+            echo '</div>';
+            echo Str::minify(ob_get_clean());
+            exit();
+        }
+
+        $hasValidLayers = false;
+        if (is_array($mapResult)) {
+            foreach ($selectedLayers as $layer) {
+                $layerData = $mapResult[$layer] ?? null;
+                $imagePath = $layerData['imagePath'] ?? null;
+    
+                $fullPath = $_SERVER['DOCUMENT_ROOT'].$imagePath;
+                if ($imagePath && file_exists($fullPath)) {
+                    $hasValidLayers = true;
+                    break;
+                }
+            }
+        }
+
+        if ($hasValidLayers) {
+            // Use the 'tiles' layer to get base dimensions
+            $tileLayerPath = $mapResult['tiles']['imagePath'] ?? null; 
+            if ($tileLayerPath && file_exists($_SERVER['DOCUMENT_ROOT'] . $tileLayerPath)) {
+                list($imageWidth, $imageHeight) = getimagesize($_SERVER['DOCUMENT_ROOT'] . $tileLayerPath);
+            } else {
+                $imageWidth = 600;
+                $imageHeight = 400;
+            }
+            
             echo '<div id="ui-map" style="position: relative;">';
             
             if ($player->have_option('isAdmin')) {
@@ -240,19 +257,25 @@ if(isset($_GET['local'])){
             }
             
             echo '
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
-                baseProfile="full"
-                id="svg-map"
-                width="' . $imageWidth . '"
-                height="' . $imageHeight . '"
+            <svg width="' . $imageWidth . '" height="' . $imageHeight . '" viewBox="0 0 ' . $imageWidth . ' ' . $imageHeight . '" 
                 style="overflow: visible">
                 
-                <!-- Overlay the local map -->
-                <image xlink:href="' . $mapResult['imagePath'] . '" width="' . $imageWidth . '" height="' . $imageHeight . '" />
-                <!-- Add the player(s) layer(s) if selected -->
+                <!-- Overlay the map layers - The loop below handles this -->
                 ';
+
+                $layerOrder = ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+
+                foreach ($layerOrder as $layer) {
+                    if (in_array($layer, $selectedLayers) && isset($mapResult[$layer]['imagePath'])) {
+                        $fullPath = $_SERVER['DOCUMENT_ROOT'].$mapResult[$layer]['imagePath'];
+                        if (file_exists($fullPath)) {
+                            list($width, $height) = getimagesize($fullPath);
+                            echo '<image xlink:href="' . $mapResult[$layer]['imagePath'] . '" width="' . $width . '" height="' . $height . '" />';
+                        }
+                    }
+                }
+
+                // Special handling for players & player layers
                 if (in_array('players', $selectedLayers)) {
                     $playersLayerPath = 'img/maps/local_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
                     $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
@@ -261,6 +284,7 @@ if(isset($_GET['local'])){
                         echo '<image xlink:href="' . $playersLayerPath . '" width="' . $width . '" height="' . $height . '" />';
                     }
                 }
+
                 if (in_array('player', $selectedLayers)) {
                     $playerLayerPath = 'img/maps/local_map_player_' . $_SESSION['playerId'] . '_layer.png';
                     $fullPath = $_SERVER['DOCUMENT_ROOT'].$playerLayerPath;
@@ -275,7 +299,6 @@ if(isset($_GET['local'])){
         }
 
         echo Str::minify(ob_get_clean());
-        // exit();
     }
     $playerZ = $player->coords->z;
     include('scripts/map/local_map.php');

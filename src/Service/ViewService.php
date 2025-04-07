@@ -161,7 +161,7 @@ class ViewService {
     }
 
     public function generateLocalMap(?array $selectedLayers = null) {
-        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes'];
 
         // Crée l'image de base
         $this->image = $this->createLayer($this->localMapWidth, $this->localMapHeight);
@@ -501,7 +501,6 @@ class ViewService {
     
     private function generateLocationsLayer($plan) {
         $layer = $this->createLayer();
-        $locations = $this->getAllLocationsFromPlans();
         $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
@@ -510,6 +509,7 @@ class ViewService {
         $textColor = imagecolorallocate($layer, 0, 0, 0);  // Noir pour le texte
         $textFillColor = imagecolorallocate($layer, 255, 255, 255);  // Blanc pour le fond du texte
         
+        $locations = $this->getAllLocationsFromPlans();
         foreach ($locations as $location) {
             $x = (int)$this->transformX($location['x'], $mapType);
             $y = (int)$this->transformY($location['y'], $mapType);
@@ -647,69 +647,62 @@ class ViewService {
         $this->layers['walls'] = $layer;
     }
 
-    private function generateLocalPlayersLayer() {
+    public function generateLocalPlayersLayer() {
         $layer = $this->createLayer($this->localMapWidth, $this->localMapHeight);
         $zCondition = $this->playerZ !== null ? "AND c.z = " . $this->playerZ : "";
         $mapType = "local";
 
-            // Définit les couleurs pour les races
-            $raceColors = [
-                'default' => '#ffffff',
-                'elfe' => '#008000',
-                'geant' => '#661414',
-                'hs' => '#2e6650',
-                'nain' => '#FF0000',
-                'olympien' => '#ff9933',
-                'animal' => '#D2B48C',
-                'lutin' => '#000000',
-                'humain' => '#0000ff',
-            ];
+        $raceColors = [
+            'default' => '#ffffff',
+            'elfe' => '#008000',
+            'geant' => '#661414',
+            'hs' => '#2e6650',
+            'nain' => '#FF0000',
+            'olympien' => '#ff9933',
+            'animal' => '#D2B48C',
+            'lutin' => '#000000',
+            'humain' => '#0000ff',
+        ];
     
-            // Récupère tous les joueurs avec des coordonnées
-            $sql = "
-                SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime
-                FROM players p 
-                JOIN coords c ON c.id = p.coords_id
-                WHERE c.x IS NOT NULL 
+        $sql = "
+            SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime
+            FROM players p 
+            JOIN coords c ON c.id = p.coords_id
+            WHERE c.x IS NOT NULL 
                 AND c.y IS NOT NULL
                 AND c.plan = '" . $this->currentPlan . "'
                 AND p.id != " . $this->playerId . "
                 $zCondition
             ";
             
-            $players = $this->db->exe($sql);
+        $players = $this->db->exe($sql);
 
-            // Dessine chaque joueur
-            foreach ($players as $player) {
-                // Ignore si les coordonnées sont invalides
-                if (!isset($player['x']) || !isset($player['y'])) {
-                    continue;
-                }
-
-                // Récupère les coordonnées
-                $x = $this->transformX($player['x'], $mapType);
-                $y = $this->transformY($player['y'], $mapType);
-
-                // Récupère la couleur pour la race
-                $raceColor = $raceColors[$player['race']] ?? $raceColors['default'];
-                list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
-                $playerColor = imagecolorallocate($layer, $r, $g, $b);
-                
-                $markerColor = $playerColor;
-                $pulseColor = imagecolorallocatealpha($layer, $r, $g, $b, 80);
-
-                // Dessine le cercle de pulsation extérieur
-                $pulseSize = 6;
-                imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
-                
-                // Dessine le marqueur de position du joueur (cercle plein)
-                $markerSize = 6;
-                imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
+        foreach ($players as $player) {
+            if (!isset($player['x']) || !isset($player['y'])) {
+                continue;
             }
+
+            $x = $this->transformX($player['x'], $mapType);
+            $y = $this->transformY($player['y'], $mapType);
+
+            $raceColor = $raceColors[$player['race']] ?? $raceColors['default'];
+            list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
+            $playerColor = imagecolorallocate($layer, $r, $g, $b);
             
-            // Sauvegarde la couche des joueurs en tant qu'image PNG
-            $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
-            imagedestroy($layer);
+            $markerColor = $playerColor;
+            $pulseColor = imagecolorallocatealpha($layer, $r, $g, $b, 80);
+
+            $pulseSize = 6;
+            imagefilledellipse($layer, $x, $y, $pulseSize * 2, $pulseSize * 2, $pulseColor);
+            
+            $markerSize = 6;
+            imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
+        }
+
+        $filePath = $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
+        imagedestroy($layer);
+
+        return $filePath;
     }
 
     private function generateAllPlayersLayer($plan) {
@@ -774,7 +767,7 @@ class ViewService {
         $this->layers['players'] = $layer;
     }
 
-    private function generateLocalPlayerLayer() {
+    public function generateLocalPlayerLayer() {
         $bounds = $this->calculateLocalPlayerLayerBounds();
         $mapType = "local";
 
@@ -796,8 +789,9 @@ class ViewService {
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
-        $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
+        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
         imagedestroy($layer);
+        return $filePath;
     }
 
     public function generateWorldPlayerLayer() {
@@ -833,10 +827,9 @@ class ViewService {
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
-        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
+        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType); // Capture path
         imagedestroy($layer);
-
-        return $filePath;
+        return $filePath; // Return path
     }
 
     private function calculateWorldPlayerLayerBounds() {
@@ -1080,10 +1073,44 @@ class ViewService {
         return $results;
     }
 
+    public function getLocalMap(): array
+    {
+        $layers = ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+        $mapDir = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/';
+        $results = [];
+
+        if ($this->currentPlan === null) {
+            return [];
+        }
+
+        foreach ($layers as $layer) {
+            $pattern = $mapDir . "local_{$this->currentPlan}_{$this->playerZ}_{$layer}_*.png";
+            $files = glob($pattern);
+
+            if (!empty($files)) {
+                usort($files, function ($a, $b) {
+                    return filemtime($b) - filemtime($a);
+                });
+
+                $newestFile = $files[0];
+                $filename = basename($newestFile);
+
+                preg_match('/_(\d{8}-\d{6})\.png$/', $filename, $matches);
+                $timestamp = $matches[1] ?? date('Ymd-His', filemtime($newestFile));
+
+                $results[$layer] = [
+                    'imagePath' => "/img/maps/local/{$filename}",
+                    'timestamp' => $timestamp
+                ];
+            }
+        }
+
+        return $results;
+    }
+
     private function applyBackground($layer, $planData, $useImage = false) {
         if (isset($planData->bg)) {
             if ($useImage) {
-                // Use the background image
                 $bgImagePath = $planData->bg;
                 if (file_exists($bgImagePath)) {
                     $bgImage = imagecreatefrompng($bgImagePath);
@@ -1096,7 +1123,6 @@ class ViewService {
                     imagedestroy($bgImage);
                 }
             } else {
-                // Use the background color
                 $bgKey = pathinfo($planData->bg, PATHINFO_FILENAME);
                 $bgColor = $this->getColorForType($bgKey ?? 'default');
     

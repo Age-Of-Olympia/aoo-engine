@@ -138,6 +138,9 @@ ob_start();
                             echo "<strong>{$plan->name}</strong> (ID: {$plan->id})";
                         ?>
                     </p>
+                    <a href="/tools.php?edit&dir=private&subDir=plans&finalDir=<?= urlencode($plan->id) ?>" class="btn btn-secondary btn-sm mb-3" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> View Plan Content
+                    </a>
                     <?php if ($plan->hasZLevels ?? false): ?>
                         <?php 
                             $zLevels = count($plan->fullData->z_levels ?? []);
