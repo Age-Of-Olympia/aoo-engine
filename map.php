@@ -44,10 +44,10 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
               <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>';
     }
 
-    // Admin-only regenerate button
+    // Admin-only map panel redirection
     if ($player->have_option('isAdmin')) {
         echo '<div style="margin-bottom: 15px; padding-top: 10px;">
-            <a href="map.php?s2&regenerate=1"><button>Regénérer la carte (admin)</button></a>
+            <a href="admin/world_map.php"><button>Admin Map Panel</button></a>
         </div>';
     }
 
@@ -90,6 +90,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     try {
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $worldPlan);
         $mapResult = $viewService->getGlobalMap();
+        $worldPlayerLayerPath = $viewService->generateWorldPlayerLayer();
     } catch (Exception $e) {
         echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
         echo 'Carte du monde : ' . htmlspecialchars($e->getMessage());
@@ -140,18 +141,17 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 
             // Special handling for player layer
             if (in_array('player', $selectedLayers)) {
-                $playerLayerPath = 'img/maps/world_player_' . $_SESSION['playerId'] . '_layer.png';
-                $fullPath = $playerLayerPath;
+                $fullPath = $worldPlayerLayerPath;
                 if (file_exists($fullPath)) {
                     list($width, $height) = getimagesize($fullPath);
-                    echo '<image xlink:href="' . $playerLayerPath . '"
+                    echo '<image xlink:href="' . $worldPlayerLayerPath . '"
                          width="' . $width . '" height="' . $height . '" x="60" y="33" />';
                 }
             }
 
             echo '</svg></div>';
     } else {
-        echo '<p>La carte n\'est pas encore générée. Veuillez cliquer sur "Régénérer la carte".</p>';
+        echo '<p>La carte n\'est pas encore générée.</p>';
     }
 
     echo Str::minify(ob_get_clean());

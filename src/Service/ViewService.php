@@ -800,7 +800,7 @@ class ViewService {
         imagedestroy($layer);
     }
 
-    private function generateWorldPlayerLayer() {
+    public function generateWorldPlayerLayer() {
         // Calculate bounds to include the player's position
         $bounds = $this->calculateWorldPlayerLayerBounds();
         $zCondition = ($this->currentPlan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
@@ -833,8 +833,10 @@ class ViewService {
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
-        $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
+        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
         imagedestroy($layer);
+
+        return $filePath;
     }
 
     private function calculateWorldPlayerLayerBounds() {
@@ -914,7 +916,8 @@ class ViewService {
         // Save the layer as a PNG image
         $filePath = 'img/maps/' . $baseName . '_' . $fileName;
         imagepng($layer, $filePath);
-        // imagedestroy($layer);
+
+        return $filePath;
     }
 
     private function saveImage($mapType = null) {
