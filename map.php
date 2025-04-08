@@ -82,7 +82,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
 
     try {
-        $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $worldPlan);
+        $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
         $mapResult = $viewService->getGlobalMap();
         $worldPlayerLayerPath = $viewService->generateWorldPlayerLayer();
     } catch (Exception $e) {
