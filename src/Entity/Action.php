@@ -41,6 +41,8 @@ abstract class Action implements ActionInterface
     )]
     protected Collection $outcomes;
 
+    protected Collection $automaticOutcomeInstructions;
+
     /**
      * Many Actions can belong to Many Races by default.
      */
@@ -54,6 +56,7 @@ abstract class Action implements ActionInterface
     {
         $this->actionConditions = new ArrayCollection();
         $this->outcomes    = new ArrayCollection();
+        $this->automaticOutcomeInstructions = new ArrayCollection();
         $this->races    = new ArrayCollection();
     }
 
@@ -126,6 +129,34 @@ abstract class Action implements ActionInterface
     public function getOutcomes(): Collection
     {
         return $this->outcomes;
+    }
+
+    /**
+     * @return Collection<int, OutcomeInstruction>
+     */
+    public function getAutomaticOutcomeInstructions(): Collection
+    {
+        return $this->automaticOutcomeInstructions;
+    }
+
+    public function addAutomaticOutcomeInstruction(OutcomeInstruction $outcomeInstruction): self
+    {
+        if (!$this->automaticOutcomeInstructions->contains($outcomeInstruction)) {
+            $this->automaticOutcomeInstructions->add($outcomeInstruction);
+        }
+        return $this;
+    }
+
+    public function removeAutomaticOutcomeInstruction(OutcomeInstruction $outcome): self
+    {
+        $this->automaticOutcomeInstructions->removeElement($outcome);
+        return $this;
+    }
+
+    public function initAutomaticOutcomeInstructions(): self
+    {
+        $this->automaticOutcomeInstructions = new ArrayCollection();
+        return $this;
     }
 
     /**

@@ -7,7 +7,7 @@ use App\Service\PlayerService;
 class Player implements ActorInterface {
 
     public $id;
-    public $data;
+    public object $data;
     public $caracs;
     public $upgrades;
     public $coords;

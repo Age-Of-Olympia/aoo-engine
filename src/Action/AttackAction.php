@@ -2,11 +2,31 @@
 
 namespace App\Action;
 
+use App\Action\OutcomeInstruction\ApplyStatusOutcomeInstruction;
 use App\Entity\Action;
+use App\Interface\OutcomeInstructionInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Player;
 
 abstract class AttackAction extends Action
 {
+    public function initAutomaticOutcomeInstructions(): Action
+    {
+        parent::initAutomaticOutcomeInstructions();
+        $adrenalineOutcomeInstruction = $this->prepareAdrenalineOutcomeInstruction();
+        $this->addAutomaticOutcomeInstruction($adrenalineOutcomeInstruction);
+        return $this;
+    }
+
+    private function prepareAdrenalineOutcomeInstruction(): OutcomeInstructionInterface {
+        $applyAdrenalineOutcomeInstruction = new ApplyStatusOutcomeInstruction;
+        $paramsArray = array();
+        $paramsArray["adrenaline"] = true;
+        $paramsArray["duration"] = 2 * ONE_DAY;
+        $applyAdrenalineOutcomeInstruction->setParameters($paramsArray);
+        return $applyAdrenalineOutcomeInstruction;
+    }
+
     public function calculateXp(bool $success, Player $actor, Player $target): array
     {
         $actorXp = $this->calculateActorXp($success, $actor, $target);

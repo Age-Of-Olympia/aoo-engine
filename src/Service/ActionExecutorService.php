@@ -6,6 +6,7 @@ use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
 use App\Entity\Action;
+use App\Entity\OutcomeInstruction;
 
 class ActionExecutorService
 {
@@ -39,6 +40,8 @@ class ActionExecutorService
     {
         // 1) Check conditions
         $this->globalConditionsResult = $this->checkConditions();
+
+        $this->action->initAutomaticOutcomeInstructions();
 
         // 2) apply each effect
         $this->applyOutcomes();
@@ -80,13 +83,17 @@ class ActionExecutorService
     private function applyOutcomes(): void
     {
         if ($this->globalConditionsResult) {
-            foreach ($this->action->getOnSuccessOutcomes() as $outcomEntity) {
-                $this->applyActionOutcome($outcomEntity, $this->actor, $this->target);
+            foreach ($this->action->getOnSuccessOutcomes() as $outcomeEntity) {
+                $this->applyActionOutcome($outcomeEntity, $this->actor, $this->target);
             }
         } else {
-            foreach ($this->action->getOnSuccessOutcomes(false) as $outcomEntity) {
-                $this->applyActionOutcome($outcomEntity, $this->actor, $this->target);
+            foreach ($this->action->getOnSuccessOutcomes(false) as $outcomeEntity) {
+                $this->applyActionOutcome($outcomeEntity, $this->actor, $this->target);
             }
+        }
+
+        foreach ($this->action->getAutomaticOutcomeInstructions() as $outcomeInstruction) {
+            $this->applyActionOutcomeInstruction($outcomeInstruction);
         }
     }
 
@@ -125,9 +132,14 @@ class ActionExecutorService
 
         // Execute instructions in order
         foreach ($instructions as $instruction) {
-            $result = $instruction->execute($this->actor, $this->target);
-            array_push($this->outcomeResultsArray, $result);
+            $this->applyActionOutcomeInstruction($instruction);
         }
+    }
+
+    private function applyActionOutcomeInstruction(OutcomeInstruction $outcomeInstruction): void
+    {
+        $result = $outcomeInstruction->execute($this->actor, $this->target);
+        array_push($this->outcomeResultsArray, $result);
     }
 
     public function getInitialTargetPv(): int
