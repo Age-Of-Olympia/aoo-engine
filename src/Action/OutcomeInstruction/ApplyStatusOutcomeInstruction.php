@@ -50,7 +50,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
             break;
         }
 
-        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: $outcomeSuccessMessages);
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){
