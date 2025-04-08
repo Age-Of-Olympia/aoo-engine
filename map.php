@@ -277,7 +277,7 @@ if(isset($_GET['local'])){
 
                 // Special handling for players & player layers
                 if (in_array('players', $selectedLayers)) {
-                    $playersLayerPath = 'img/maps/local_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
+                    $playersLayerPath = '/img/maps/local_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
                     $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
                     if (file_exists($fullPath)) {
                         list($width, $height) = getimagesize($fullPath);
@@ -286,7 +286,7 @@ if(isset($_GET['local'])){
                 }
 
                 if (in_array('player', $selectedLayers)) {
-                    $playerLayerPath = 'img/maps/local_map_player_' . $_SESSION['playerId'] . '_layer.png';
+                    $playerLayerPath = '/img/maps/local_map_player_' . $_SESSION['playerId'] . '_layer.png';
                     $fullPath = $_SERVER['DOCUMENT_ROOT'].$playerLayerPath;
                     if (file_exists($fullPath)) {
                         list($width, $height) = getimagesize($fullPath);
