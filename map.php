@@ -181,7 +181,7 @@ if(isset($_GET['local'])){
                 '> Éléments</label>
                 <label><input type="checkbox" name="layers[]" value="foregrounds" ' . 
                 ((!isset($_GET['layers']) || in_array('foregrounds', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Foregrounds</label>
+                '> Décor</label>
                 <label><input type="checkbox" name="layers[]" value="walls" ' . 
                 ((!isset($_GET['layers']) || in_array('walls', $_GET['layers'] ?? [])) ? 'checked' : '') . 
                 '> Murs</label>
@@ -240,22 +240,6 @@ if(isset($_GET['local'])){
             
             echo '<div id="ui-map" style="position: relative;">';
             
-            if ($player->have_option('isAdmin')) {
-                // Sort z_levels by z value in descending order
-                usort($planJson->z_levels, function($a, $b) {
-                    return $b->z <=> $a->z;
-                });
-                
-                echo '<div style="position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); padding: 5px; border-radius: 3px; display: flex; flex-direction: column; gap: 3px;">';
-                foreach ($planJson->z_levels as $zLevel) {
-                    $isCurrent = $player->coords->z == $zLevel->z;
-                    echo '<button style="' . ($isCurrent ? 'background: #007bff; color: white;' : '') . '">
-                        Z' . $zLevel->z . ': ' . ($zLevel->{'z-name'} ?? 'Niveau ' . $zLevel->z) . '
-                    </button>';
-                }
-                echo '</div>';
-            }
-            
             echo '
             <svg width="' . $imageWidth . '" height="' . $imageHeight . '" viewBox="0 0 ' . $imageWidth . ' ' . $imageHeight . '" 
                 style="overflow: visible">
@@ -294,8 +278,26 @@ if(isset($_GET['local'])){
                     }
                 }
                 echo '</svg></div>';
+                
+
+                if ($player->have_option('isAdmin') && !empty($planJson->z_levels)) {
+
+                    usort($planJson->z_levels, function($a, $b) {
+                        return $b->z <=> $a->z;
+                    });
+
+                    echo '<div style="text-align: center; margin: 10px 0; padding: 5px; border-radius: 3px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">';
+                    foreach ($planJson->z_levels as $zLevel) {
+                        $isCurrent = $player->coords->z == $zLevel->z;
+                        $style = $isCurrent ? 'background: #007bff; color: white;' : 'background: white; color: black;';
+                        echo '<button style="padding: 2px 5px; border: 1px solid #ccc; border-radius: 3px; cursor: pointer; ' . $style . '">
+                            Z' . $zLevel->z . ': ' . ($zLevel->{'z-name'} ?? 'Niveau ' . $zLevel->z) . '
+                        </button>';
+                    }
+                    echo '</div>';
+                }
         } else {
-            echo '<p>La carte n\'est pas encore générée. Veuillez cliquer sur "Régénérer la carte".</p>';
+            echo '<p>La carte n\'est pas encore générée.</p>';
         }
 
         echo Str::minify(ob_get_clean());

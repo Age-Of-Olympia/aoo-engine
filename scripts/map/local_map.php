@@ -1,14 +1,21 @@
 <?php
 // scripts/map/local_map.php
 
-// Display current player's Z-coordinate
-if (isset($playerZ)) {
-    echo '<div class="player-info">';
+// Display current player's Z-coordinate and full position
+if (isset($playerZ) && isset($player->coords)) { 
+    echo '<div class="player-info" style="text-align: center; margin-bottom: 10px;">'; 
     echo '<h2>Votre Position</h2>';
-    echo '<p><font style="font-size: 88%;">Niveau (Z): ' . $playerZ . '</font></p>';
+    echo '<p style="font-size: 90%;">'; 
+    echo htmlspecialchars($planJson->name) . ' / ';
+    $displayZLevelName = (strpos($zLevelName, ' - ') === 0) ? substr($zLevelName, 3) : $zLevelName;
+    echo 'Niveau: ' . htmlspecialchars($displayZLevelName) . ' (Z' . htmlspecialchars($playerZ) .  ') <br>'; 
+    echo 'Coords (X: ' . htmlspecialchars($player->coords->x) . ', Y: ' . htmlspecialchars($player->coords->y) . ', Z: ' . htmlspecialchars($player->coords->z) . ')';
+    echo '</p>';
     echo '</div>';
 } else {
-    echo '<p><font color="red">Erreur: Impossible de récupérer votre position.</font></p>';
+    echo '<div class="player-info-error" style="text-align: center; color: red; margin-bottom: 10px;">';
+    echo '<p>Erreur: Impossible de récupérer les informations de position.</p>';
+    echo '</div>';
 }
 
 // Check if there's a PNJ assigned to the plan
