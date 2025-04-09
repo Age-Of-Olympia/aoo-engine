@@ -73,8 +73,8 @@ define('OPTIONS', array(
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'showTuto'=>"Rejouer le tutoriel",
-    'incognitoMode'=>"Mode Incognito (admin)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
-    'anonymeMode'=>"Mode Incognito/Anonyme (admin)<br /><sup>Invisible dans les destinataires d'échanges ou de missives</sup>",
+    'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
+    'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Invisible dans les destinataires d'échanges ou de missives</sup>",
 
 ));
 
@@ -142,7 +142,7 @@ foreach(OPTIONS as $k=>$e){
 
     if(($k =='incognitoMode' || $k =='anonymeMode' ) && $player->id>=0)
     { //Option non disponible pour les PJ
-        echo '<tr style="display:none">';
+        continue;
     }
     else{
         echo '<tr>';    
