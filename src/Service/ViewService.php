@@ -795,25 +795,23 @@ class ViewService {
     }
 
     public function generateWorldPlayerLayer() {
-        // Calculate bounds to include the player's position
         $bounds = $this->calculateWorldPlayerLayerBounds();
-        $zCondition = ($this->currentPlan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
-        $mapType = "global";
-
-        // Create a layer with adjusted size
         $layer = $this->createLayer($bounds['width'], $bounds['height']);
-        
-        if ($this->currentPlan !== 'olympia') {
-            $location = $this->getLocationFromPlan($this->currentPlan);
-            if (isset($location[0]) && is_array($location[0])) {
-                $x = (int)$this->transformX($location[0]['x'], $mapType);
-                $y = (int)$this->transformY($location[0]['y'], $mapType);
-            }
-        } else {
-            $x = (int)$this->transformX($this->playerX, $mapType);
-            $y = (int)$this->transformY($this->playerY, $mapType);
-        }
-        
+
+        // Calculate player's standard pixel position (relative to top-left including margin)
+        $playerPixelX = $this->transformX($this->playerX, "global");
+        $playerPixelY = $this->transformY($this->playerY, "global");
+
+        // Adjust coordinates to be relative to the new layer's origin (0,0)
+        // The layer's top-left corresponds to pixel coordinate (standard_min_pixel - offset)
+        // The player's position relative to the layer's top-left is:
+        // player_standard_pixel - (standard_min_pixel - offset)
+        $drawX = $playerPixelX - ($this->margin - $bounds['offsetX']);
+        $drawY = $playerPixelY - ($this->margin - $bounds['offsetY']);
+
+        $x = (int)$drawX;
+        $y = (int)$drawY;
+
         // Crée les couleurs pour le marqueur de joueur
         $markerColor = imagecolorallocate($layer, 255, 0, 255);  // Magenta
         $pulseColor = imagecolorallocatealpha($layer, 255, 0, 255, 80);  // Magenta semi-transparent
@@ -827,37 +825,47 @@ class ViewService {
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
-        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType); // Capture path
+        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, "global");
         imagedestroy($layer);
         return $filePath; // Return path
     }
 
     private function calculateWorldPlayerLayerBounds() {
-        // Get the plan bounds
-        if ($this->currentPlan !== 'olympia') {
-            $planBounds = $this->getBoundsFromPlan($this->worldPlan);
-        } else {
-            $planBounds = $this->getBoundsFromPlan($this->currentPlan);
-        }
+        $planBounds = $this->getBoundsFromPlan($this->worldPlan);
         if ($planBounds === null) {
-            throw new \Exception("Plan bounds are not available.");
+            throw new \Exception("World plan bounds are not available.");
         }
-    
-        // Use existing scale factors from global map
-        $scaleX = $this->scaleX;
-        $scaleY = $this->scaleY;
-    
-        // Calculate required width and height based on player position
-        $requiredWidth = abs($this->playerX - $planBounds['minX']) + abs($this->playerX - $planBounds['maxX']);
-        $requiredHeight = abs($this->playerY - $planBounds['minY']) + abs($this->playerY - $planBounds['maxY']);
+
+        $playerPixelX = $this->transformX($this->playerX, "global");
+        $playerPixelY = $this->transformY($this->playerY, "global");
+
+        $standardMinPixelX = $this->margin;
+        $standardMaxPixelX = $this->width - $this->margin;
+        $standardMinPixelY = $this->margin;
+        $standardMaxPixelY = $this->height - $this->margin;
+
+        $contentMinPixelX = min($standardMinPixelX, $playerPixelX);
+        $contentMaxPixelX = max($standardMaxPixelX, $playerPixelX);
+        $contentMinPixelY = min($standardMinPixelY, $playerPixelY);
+        $contentMaxPixelY = max($standardMaxPixelY, $playerPixelY);
+
+        $padding = 10;
+        $layerMinPixelX = $contentMinPixelX - $padding;
+        $layerMaxPixelX = $contentMaxPixelX + $padding;
+        $layerMinPixelY = $contentMinPixelY - $padding;
+        $layerMaxPixelY = $contentMaxPixelY + $padding;
+
+        $layerWidth = $layerMaxPixelX - $layerMinPixelX;
+        $layerHeight = $layerMaxPixelY - $layerMinPixelY;
+
+        $offsetX = $standardMinPixelX - $layerMinPixelX;
+        $offsetY = $standardMinPixelY - $layerMinPixelY;
 
         return [
-            'minX' => $planBounds['minX'],
-            'maxX' => $planBounds['maxX'],
-            'minY' => $planBounds['minY'],
-            'maxY' => $planBounds['maxY'],
-            'width' => (int)($requiredWidth * $scaleX),
-            'height' => (int)($requiredHeight * $scaleY)
+            'width' => (int)($layerWidth),
+            'height' => (int)($layerHeight),
+            'offsetX' => (int)($offsetX),
+            'offsetY' => (int)($offsetY)
         ];
     }
 
