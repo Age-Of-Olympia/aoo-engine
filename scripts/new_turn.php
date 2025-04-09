@@ -91,7 +91,7 @@ else if(!empty($_SESSION['playerId'])){
 
 
                 // gain xp
-                $gainXp = 5;
+                $gainXp = XP_PER_TURNS;
 
                 if($player->data->xp + 250 <= $firstPlayerXP){
 

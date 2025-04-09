@@ -21,7 +21,7 @@ class HealAction extends Action
     public function getLogMessages(Player $actor, Player $target): array
     {
         $actorLog = $actor->data->name." a lancé ".$this->getDisplayName()." sur ".$target->data->name.".";
-        $targetLog = $target->data->name." a été attaqué par ".$actor->data->name. "avec ".$this->getDisplayName().".";
+        $targetLog = $target->data->name." a été soigné par ".$actor->data->name. " avec ".$this->getDisplayName().".";
         $infosArray["actor"] = $actorLog; 
         $infosArray["target"] = $targetLog;
         return $infosArray;

@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Player;
 
 #[ORM\Entity]
-class StealAction extends AttackAction
+class StealAction extends Action
 {
     public function getLogMessages(Player $actor, Player $target): array
     {

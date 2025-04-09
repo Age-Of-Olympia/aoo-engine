@@ -44,7 +44,11 @@ class ActionResultsView
         if ($this->actionResults->isSuccess()) {
             $actionsDetails = '<div style="color: #66ccff;">Réussite !</div>';
         } else {
-            $actionsDetails = '<div style="color: red;">Echec !</div>';
+            if ($this->actionResults->isBlocked()) {
+                $actionsDetails = '<div style="color: orange;">Action Impossible.</div>';
+            } else {
+                $actionsDetails = '<div style="color: red;">Echec !</div>';
+            }  
         }
         $actionsDetails = $actionsDetails.'<div class="action-details">';
 

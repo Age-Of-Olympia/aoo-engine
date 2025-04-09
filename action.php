@@ -115,8 +115,9 @@ try {
     }
     
     $logTime = time();
+    $hideLogsCondition = ($actionResults->isSuccess() && $action->hideOnSuccess()) || $actionResults->isBlocked();
     if(!empty($actorMainLog)) {
-        if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
+        if ($hideLogsCondition) {
             $type = "hidden_action";
         } else {
             $type = "action";
@@ -126,7 +127,7 @@ try {
 
     if($target->id != $player->id) {
         if(!empty($targetMainLog)){
-            if ($actionResults->isSuccess() && $action->hideOnSuccess()) {
+            if ($hideLogsCondition) {
                 $type = "hidden_action_other_player";
             } else {
                 $type = "action_other_player";
