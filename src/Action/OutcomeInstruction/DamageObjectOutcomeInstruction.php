@@ -82,8 +82,8 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
                 if (count($equipments) > 0) {
                     $equipmentToDamage = array_rand($equipments);
                 
-                    $corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
-                    $breakChance = $this->getBreakChance($player, $equipmentToDamage, $corruptedMaterial);
+                    //$corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
+                    $breakChance = $this->getBreakChance($player, $equipmentToDamage);
 
                     if(rand(1,100) <= $breakChance || AUTO_BREAK){            
                         $player->equip($player->emplacements->{$equipmentToDamage});
@@ -114,14 +114,14 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
         return $corrupted;
     }
 
-    private function getBreakChance($player, $equipmentToDamage, $corruptedMaterial)
+    private function getBreakChance(ActorInterface $player, $equipmentToDamage)
     {
         $breakChance = ITEM_BREAK;
         $corruptions = ITEM_CORRUPTIONS;
         $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
-        foreach($corruptions as $k){
+        foreach($corruptions as $k => $e){
             if($player->haveEffect($k)){
-                if($player->emplacements->{$equipmentToDamage}->is_crafted_with($corruptedMaterial)){
+                if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
                     $breakChance = $corruptBreakChance[$k];
                     break;
                 }
