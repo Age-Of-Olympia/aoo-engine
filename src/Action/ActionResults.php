@@ -8,6 +8,7 @@ class ActionResults
 {
     public function __construct(
         private bool $success,
+        private bool $blocked,
         private array $conditionsResultsArray,
         private array $effectsResultsArray,
         private array $costsResultsArray,
@@ -24,6 +25,17 @@ class ActionResults
     public function setSuccess(bool $success): self
     {
         $this->success = $success;
+        return $this;
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->blocked;
+    }
+
+    public function setBlocked(bool $blocked): self
+    {
+        $this->blocked = $blocked;
         return $this;
     }
 

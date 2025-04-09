@@ -215,7 +215,22 @@ abstract class Action implements ActionInterface
         return $this;
     }
 
-    abstract public function calculateXp(bool $success, Player $actor, Player $target): array;
+    public function calculateXp(bool $success, Player $actor, Player $target): array
+    {
+        $actorXp = $this->calculateActorXp($success, $actor, $target);
+        $targetXp = $this->calculateTargetXp($success, $actor, $target);
+        $xpResultsArray["actor"] = $actorXp;
+        $xpResultsArray["target"] = $targetXp;
+        return $xpResultsArray;
+    }
+
+    protected function calculateActorXp(bool $success, Player $actor, Player $target): int {
+        return 1;
+    }
+
+    protected function calculateTargetXp(bool $success, Player $actor, Player $target): int {
+        return 1;
+    }
 
     public function hideOnSuccess(): bool {
         return $this->hideOnSuccess;

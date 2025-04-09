@@ -1745,7 +1745,7 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 (72, 'statue_gisant', 0, 0, 0, 0, '', NULL, NULL),
 (73, 'statue_heroique', 0, 0, 0, 0, '', NULL, NULL),
 (74, 'statue_monstrueuse', 0, 0, 0, 0, '', NULL, NULL),
-(75, 'casque_phrygien', 0, 0, 0, 0, '', NULL, NULL),
+(75, 'casque', 0, 0, 0, 0, '', NULL, NULL),
 (76, 'coffre_metal', 0, 0, 0, 0, '', NULL, NULL),
 (77, 'cotte_mailles', 0, 0, 0, 0, '', NULL, NULL),
 (78, 'grenade', 0, 0, 0, 0, '', NULL, NULL),
