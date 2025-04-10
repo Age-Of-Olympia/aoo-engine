@@ -84,7 +84,7 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     try {
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
         $mapResult = $viewService->getGlobalMap();
-        $worldPlayerLayerPath = $viewService->generateWorldPlayerLayer();
+        $worldPlayerLayerData = $viewService->generateWorldPlayerLayer();
     } catch (Exception $e) {
         echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
         echo 'Carte du monde : ' . htmlspecialchars($e->getMessage());
@@ -135,11 +135,20 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 
             // Special handling for player layer
             if (in_array('player', $selectedLayers)) {
-                $fullPath = $worldPlayerLayerPath;
+                $fullPath = $_SERVER['DOCUMENT_ROOT'] . $worldPlayerLayerData['filePath'];
+                
                 if (file_exists($fullPath)) {
                     list($width, $height) = getimagesize($fullPath);
-                    echo '<image xlink:href="' . $worldPlayerLayerPath . '"
-                         width="' . $width . '" height="' . $height . '" x="60" y="33" />';
+                    $offsetX = $worldPlayerLayerData['offsetX'];
+                    $offsetY = $worldPlayerLayerData['offsetY'];
+
+                    // Calculate the correct SVG position
+                    $svgX = 60 - $offsetX;
+                    $svgY = 33 - $offsetY;
+
+                    echo '<image xlink:href="' . $worldPlayerLayerData['filePath'] . '"
+                         width="' . $width . '" height="' . $height . '" 
+                         x="' . $svgX . '" y="' . $svgY . '" />';
                 }
             }
 

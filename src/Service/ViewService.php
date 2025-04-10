@@ -827,7 +827,13 @@ class ViewService {
         // Sauvegarde la couche du joueur en tant qu'image PNG
         $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, "global");
         imagedestroy($layer);
-        return $filePath; // Return path
+        
+        // Return path and offsets needed for positioning in SVG
+        return [
+            'filePath' => $filePath,
+            'offsetX' => $bounds['offsetX'],
+            'offsetY' => $bounds['offsetY']
+        ];
     }
 
     private function calculateWorldPlayerLayerBounds() {
