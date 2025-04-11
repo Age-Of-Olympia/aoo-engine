@@ -15,7 +15,7 @@ class ConditionResult
     private ?int $actorTotal;
     private ?int $targetTotal;
 
-    public function __construct(bool $success, ?array $conditionSuccessMessages = null, ?array $conditionFailureMessages = null, ?array $actorRoll = null, ?array $targetRoll = null, ?int $actorTotal = null, ?int $targetTotal = null) {
+    public function __construct(bool $success, array $conditionSuccessMessages, array $conditionFailureMessages, ?array $actorRoll = null, ?array $targetRoll = null, ?int $actorTotal = null, ?int $targetTotal = null) {
         $this->success = $success;
         $this->conditionSuccessMessages = $conditionSuccessMessages;
         $this->conditionFailureMessages = $conditionFailureMessages;

@@ -12,7 +12,7 @@ class RequiresAmmoCondition extends BaseCondition
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
-        $result = new ConditionResult(true);
+        $result = new ConditionResult(true, array(), array());
         $details = array();
         $costIsAffordable = false;
 
@@ -25,7 +25,7 @@ class RequiresAmmoCondition extends BaseCondition
         }
         
         if (!$costIsAffordable) {
-            $result = new ConditionResult(false, null, $details);
+            $result = new ConditionResult(false, array(), $details);
         }
 
         return $result;

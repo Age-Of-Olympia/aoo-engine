@@ -9,7 +9,6 @@ class RequiresResourceCondition extends BaseCondition
 {
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
-
         $res = ResourceService::findResourcesAround($actor);
         
         if($res->num_rows == 0){

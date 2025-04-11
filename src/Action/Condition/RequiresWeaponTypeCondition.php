@@ -12,7 +12,7 @@ class RequiresWeaponTypeCondition extends BaseCondition
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
-        $result = new ConditionResult(true);
+        $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "type": "melee" } { "type": "tir/jet" } 
         $type = $params['type'] ?? "";
         $weaponTypes = explode(",", $type);
@@ -29,7 +29,7 @@ class RequiresWeaponTypeCondition extends BaseCondition
 
         if (!$weaponTypeOk) {
             $errorMessage[0] = 'Vous n\'êtes pas équipé d\'une arme de '. join("/",$weaponTypesKo). '.';
-            $result = new ConditionResult(false, null, $errorMessage);
+            $result = new ConditionResult(false, array(), $errorMessage);
         }
         
 

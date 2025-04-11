@@ -9,7 +9,7 @@ class RequiresTraitValueCondition extends BaseCondition
 {
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
-        $result = new ConditionResult(true);
+        $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "a": 1, "pm": 10 }
 
         $details = array();
@@ -35,7 +35,7 @@ class RequiresTraitValueCondition extends BaseCondition
                         $errorMessage[sizeof($errorMessage)] = "Vous êtes trop fatigué pour vous entraîner.";
                     }
                     if (sizeof($errorMessage) > 0) {
-                        return new ConditionResult(false, null, $errorMessage);
+                        return new ConditionResult(false, array(), $errorMessage);
                     }
                 }
             } else if ($actor->getRemaining($key) < $value) {
@@ -45,7 +45,7 @@ class RequiresTraitValueCondition extends BaseCondition
         }
         
         if (!$costIsAffordable) {
-            $result = new ConditionResult(false, null, $details);
+            $result = new ConditionResult(false, array(), $details);
         }
 
         return $result;

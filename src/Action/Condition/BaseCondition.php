@@ -14,6 +14,12 @@ abstract class BaseCondition implements ConditionInterface
         return false;
     }
 
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    {
+        $preConditionResult = $this->checkPreconditions($actor, $target, $condition);
+        return $preConditionResult;
+    }
+
     public function applyCosts(ActorInterface $actor, ?ActorInterface $target, ActionCondition $conditionToPay): array
     {
         $result = array();
@@ -31,6 +37,21 @@ abstract class BaseCondition implements ConditionInterface
 
     public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
-        return new ConditionResult(true, array(), array());
+        array_unshift($this->preConditions, new PlanCondition());
+
+        $success = true;
+        $successMessages = array();
+        $failureMessages = array();
+        foreach ($this->preConditions as $key => $preCondition) {
+            $resultCondition = $preCondition->check($actor,$target,$condition);
+            if ($resultCondition->isSuccess()) {
+                $successMessages = array_merge($successMessages, $resultCondition->getConditionSuccessMessages());
+            } else {
+                $failureMessages = array_merge($failureMessages, $resultCondition->getConditionFailureMessages());
+            }
+            $success = $success && $resultCondition->isSuccess();
+        }
+
+        return new ConditionResult($success, $successMessages, $failureMessages);
     }
 }

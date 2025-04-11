@@ -16,7 +16,7 @@ class OptionCondition extends BaseCondition
         if($target->have_option($option)){
             //devrait être un switch avec les options possibles
             $errorMessage[0] = "Ce personnage n\'autorise pas les entraînements.";
-            return new ConditionResult(false, null, $errorMessage);
+            return new ConditionResult(false, array(), $errorMessage);
         }
 
         return $result;
