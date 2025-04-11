@@ -142,7 +142,7 @@ class Item{
 
         $sql = '
         SELECT
-        n
+        n, name
         FROM
         players_items'. $bank .'
         INNER JOIN
