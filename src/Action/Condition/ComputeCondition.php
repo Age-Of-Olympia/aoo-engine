@@ -30,6 +30,7 @@ abstract class ComputeCondition extends BaseCondition
     {
         $preConditionResult = $this->checkPreconditions($actor, $target, $condition);
         if (!$preConditionResult->isSuccess()) {
+            $condition->setBlocking(true);
             return $preConditionResult;
         }
 

@@ -54,12 +54,8 @@ if(!empty($actionJson->targetIgnore)){
     include('scripts/actions/targetIgnore.php');
 }
 
-
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
-if ($distance > 0) {
-    View::get_walls_between($player->coords, $target->coords);
-}
 
 include('scripts/actions/check_max_spells.php');
 

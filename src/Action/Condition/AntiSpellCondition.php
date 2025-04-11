@@ -1,0 +1,33 @@
+<?php
+namespace App\Action\Condition;
+
+use Player;
+use View;
+
+use App\Entity\ActionCondition;
+use App\Interface\ActorInterface;
+
+class AntiSpellCondition extends BaseCondition
+{
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    {
+        $result = new ConditionResult(true, array(), array());
+        $errorMessages = array();
+        $blocked = false;
+        foreach(ITEM_EMPLACEMENT_FORMAT as $emp){
+            if(!empty($actor->emplacements->{$emp})){
+                if(!empty($actor->emplacements->{$emp}->data->spellMalus)){
+                    $blocked = true;
+                    $errorMessages[sizeof($errorMessages)] = $actor->emplacements->{$emp}->data->name .' empêche la magie.';
+                }
+            }
+        }
+
+        if($blocked){
+            return new ConditionResult(false, array(), $errorMessages);
+        }
+
+        return $result;
+    }
+
+}

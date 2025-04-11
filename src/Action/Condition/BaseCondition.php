@@ -31,6 +31,6 @@ abstract class BaseCondition implements ConditionInterface
 
     public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
-        return new ConditionResult(true);
+        return new ConditionResult(true, array(), array());
     }
 }

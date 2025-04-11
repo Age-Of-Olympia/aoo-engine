@@ -5,6 +5,13 @@ class SpellComputeCondition extends ComputeCondition
 {
     protected string $throwName = "Le sort";
 
+    public function __construct()
+    {
+        parent::__construct();
+        array_push($this->preConditions, new ObstacleCondition());
+        array_push($this->preConditions, new AntiSpellCondition());
+    }
+
     protected function getDistanceTreshold() : int {
         return floor(($this->distance) * 2.5);
     }

@@ -1,9 +1,6 @@
 <?php
 namespace App\Action\Condition;
 
-use Player;
-use View;
-
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 

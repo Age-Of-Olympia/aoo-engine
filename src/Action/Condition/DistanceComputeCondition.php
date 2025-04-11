@@ -5,6 +5,12 @@ use View;
 
 class DistanceComputeCondition extends ComputeCondition
 {
+    public function __construct()
+    {
+        parent::__construct();
+        array_push($this->preConditions, new ObstacleCondition());
+    }
+
     protected function getDistanceTreshold() : int {
         return floor(($this->distance) * 2.5);
     }
