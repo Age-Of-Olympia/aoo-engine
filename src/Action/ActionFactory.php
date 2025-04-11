@@ -4,14 +4,12 @@ namespace App\Action;
 
 use App\Interface\ActionInterface;
 use App\Service\ActionService;
-use Exception;
 
 function loadActionClasses($directory)
 {
     $classes = [];
     foreach (glob("$directory/*Action.php") as $file) {
         $className = basename($file, '.php');
-        //require_once $file;
         $classes[$className] = $className;
     }
     return $classes;

@@ -18,9 +18,12 @@ abstract class ComputeCondition extends BaseCondition
 {
     protected int $distance;
     protected string $throwName = "Le tir";
+    protected string $actorRollTrait;
+    protected string $targetRollTrait;
 
     public function __construct() {
         array_push($this->preConditions, new DodgeCondition());
+        array_push($this->preConditions, new NoBerserkCondition());
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
@@ -29,6 +32,10 @@ abstract class ComputeCondition extends BaseCondition
         if (!$preConditionResult->isSuccess()) {
             return $preConditionResult;
         }
+
+        $params = $condition->getParameters(); // e.g. { "max": 1 }
+        $this->actorRollTrait = $params['actorRollType'] ?? null;
+        $this->targetRollTrait = $params['targetRollType'] ?? null;
 
         if (!$target) {
             $errorMessages[0] = "Aucune cible n'a été spécifiée.";
@@ -74,7 +81,7 @@ abstract class ComputeCondition extends BaseCondition
 
     protected function computeActor($actor, $dice)
     {
-        $actorRollTraitValue = $actor->caracs->cc;
+        $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
         $actorFat = floor($actor->data->fatigue / FAT_EVERY);
         $actorTotal = array_sum($actorRoll) - $actorFat;
@@ -90,9 +97,7 @@ abstract class ComputeCondition extends BaseCondition
 
     protected function computeTarget($target, $dice)
     {
-        $option1 = $target->caracs->cc;
-        $option2 = $target->caracs->agi;
-        $targetRollTraitValue = max($option1, $option2);
+        $targetRollTraitValue = $target->caracs->{$this->targetRollTrait};
         $targetRoll = $dice->roll($targetRollTraitValue);
         $targetFat = floor($target->data->fatigue / FAT_EVERY);
         $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;

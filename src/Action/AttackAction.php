@@ -5,7 +5,6 @@ namespace App\Action;
 use App\Action\OutcomeInstruction\ApplyStatusOutcomeInstruction;
 use App\Entity\Action;
 use App\Interface\OutcomeInstructionInterface;
-use Doctrine\Common\Collections\ArrayCollection;
 use Player;
 
 abstract class AttackAction extends Action
