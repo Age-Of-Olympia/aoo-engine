@@ -10,8 +10,6 @@ class PlanCondition extends BaseCondition
     {
         $result = new ConditionResult(true, array(), array());
 
-        $condition->setBlocking(true);
-
         $params = $condition->getParameters();
         $plan = $params["plan"]??"enfers";
 
@@ -22,6 +20,7 @@ class PlanCondition extends BaseCondition
                 $errorMessage[0] = 'Impossible d\'agir sur ce plan : ' + $plan;
             }
             
+            $condition->setBlocking(true);
             $result = new ConditionResult(false, array(), $errorMessage);
         }
 

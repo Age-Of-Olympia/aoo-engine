@@ -29,6 +29,7 @@ class AntiSpellCondition extends BaseCondition
         }
 
         if($blocked){
+            $condition->setBlocking(true);
             return new ConditionResult(false, array(), $errorMessages);
         }
 
