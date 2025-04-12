@@ -128,6 +128,7 @@ class ActionExecutorService
     private function applyActionOutcome(ActionOutcome $outcomeEntity): void
     {
         $outcomeInstructionService = new OutcomeInstructionService();
+        //$instructions = $outcomeEntity->getInstructions();
         $instructions = $outcomeInstructionService->getOutcomeInstructionsByOutcome($outcomeEntity->getId());
 
         // Execute instructions in order

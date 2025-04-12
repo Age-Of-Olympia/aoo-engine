@@ -24,7 +24,18 @@ class TeleportOutcomeInstruction extends OutcomeInstruction
                 $actor->go($coordsId);
                 break;
             default:
-                # code... to whatever coord ToDo
+                $explodedCoord = explode(',', $coords);
+                $coordX = $explodedCoord[0] == "x"?$actor->coords->x:$explodedCoord[0];
+                $coordY = $explodedCoord[1] == "y"?$actor->coords->y:$explodedCoord[1];
+                $coordZ = $explodedCoord[2] == "z"?$actor->coords->z:$explodedCoord[2];
+                $plan = $explodedCoord[3] == "plan"?$actor->coords->plan:$explodedCoord[3];
+                $tpCoords = (object) array(
+                    'x'=>$coordX,
+                    'y'=>$coordY,
+                    'z'=>$coordZ,
+                    'plan'=>$plan
+                );
+                $actor->go($tpCoords);
                 break;
         }
 

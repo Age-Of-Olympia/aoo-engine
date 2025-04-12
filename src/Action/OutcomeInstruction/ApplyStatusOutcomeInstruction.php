@@ -13,7 +13,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
     public function execute(Player $actor, Player $target): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }
-        // e.g. { "adrenaline": true, "player": "actor", , "duration": 86400 }
+        // e.g. { "adrenaline": true, "player": "actor" , "duration": 86400 }
         // e.g. { "finished": true, "player": "actor" }
         $status = array_key_first($params);
         if (in_array($status, EFFECTS_HIDDEN)) {

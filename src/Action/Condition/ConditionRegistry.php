@@ -11,15 +11,18 @@ class ConditionRegistry
     public function __construct()
     {
         // For each known Condition Type, we store an instance:
-        $this->conditions = [            
-            'RequiresDistance'    => new RequiresDistanceCondition(), // should include wall check ? No : can be different from an action to another
-            'RequiresTraitValue' => new RequiresTraitValueCondition(), 
-            'RequiresWeaponType' => new RequiresWeaponTypeCondition(), 
+        $this->conditions = [
+            'Plan' => new PlanCondition(),
+            'Obstacle' => new ObstacleCondition(),
+            'RequiresDistance'    => new RequiresDistanceCondition(),
+            'RequiresTraitValue' => new RequiresTraitValueCondition(),
+            'RequiresWeaponType' => new RequiresWeaponTypeCondition(),
             'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),
             'RequiresResource' => new RequiresResourceCondition(),
             
+            'Compute' => new ComputeCondition(),
             'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?
             'DistanceCompute' => new DistanceComputeCondition(),
             'SpellCompute' => new SpellComputeCondition(),

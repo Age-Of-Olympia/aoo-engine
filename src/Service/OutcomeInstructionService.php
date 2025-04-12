@@ -26,7 +26,7 @@ class OutcomeInstructionService
     {
         //$query = $this->entityManager->createQuery('SELECT OutcomeInstruction FROM App\\Entity\\OutcomeInstruction OutcomeInstruction WHERE OutcomeInstruction INSTANCE OF App\\OutcomeInstruction\\'.$type.'OutcomeInstruction');
                                                     //'SELECT action FROM App\\Action\\'.$type.'Action action'
-        $query = $this->entityManager->createQuery('SELECT outcome_instructions FROM App\\Action\\OutcomeInstruction\\'.$type.' outcome_instructions WHERE outcome_instructions.outcome = :id');
+        $query = $this->entityManager->createQuery('SELECT outcome_instructions FROM App\\Action\\OutcomeInstruction\\'.$type.' outcome_instructions WHERE outcome_instructions.outcome = :id ORDER BY outcome_instructions.orderIndex ASC');
         $query->setParameter("id",$outcomeId);
         $log = $query->getSQL();
         $OutcomeInstruction = null;
@@ -42,15 +42,18 @@ class OutcomeInstructionService
     {
         $instructionTypes = OutcomeInstructionFactory::initialize("src/Action/OutcomeInstruction");
 
-        $OutcomeInstructions = array();
+        $outcomeInstructions = array();
         foreach ($instructionTypes as $instruction) {
-            $OutcomeInstruction = $this->getOutcomeInstructionByTypeByOutcome($instruction, $outcomeId);
-            if ($OutcomeInstruction != null) {
-                array_push($OutcomeInstructions, $OutcomeInstruction);
+            $outcomeInstruction = $this->getOutcomeInstructionByTypeByOutcome($instruction, $outcomeId);
+            if ($outcomeInstruction != null) {
+                array_push($outcomeInstructions, $outcomeInstruction);
             }
         }
         
-        return $OutcomeInstructions;
+        usort($outcomeInstructions, function($a, $b) {
+            return $a->getOrderIndex() <=> $b->getOrderIndex();
+        });
+        return $outcomeInstructions;
     }
 
 }
