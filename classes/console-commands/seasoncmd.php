@@ -129,7 +129,7 @@ function update_overxP_players()
     // si un joueur as + de 3500, set son xp a 3500 etmet l'overflow dans bonus_points
     $sql = 'UPDATE players SET xp = 3500, bonus_points = bonus_points + (xp - 3500) WHERE xp > 3500';
     $res =  $this->db->executeQuery($sql);
-    $this->result->Log($res->rowCount().' joueurs modifiés');
+    $this->result->Log($res->rowCount().' joueurs avec trop d\'xp convertis');
     return $res;
 }
 
@@ -187,7 +187,7 @@ function convert_objects(bool $bank, string $name, $convertionData)
         }
         catch (Throwable $th) {
             $this->db->rollBack();
-            $this->result->Log($counto.' '.$name.'convertis en '.$counto * $convertionData['mult'].' '.$convertionData['new_item']. (($bank) ? ' en banque' : '').' pour '.$countp.'joueurs');
+            $this->result->Log($counto.' '.$name.' convertis en '.$counto * $convertionData['mult'].' '.$convertionData['new_item']. (($bank) ? ' en banque' : '').' pour '.$countp.'joueurs');
             $this->result->Error('Erreur lors de la conversion de l\'objet '.$name.' du joueur: ' . $player->id);
             throw $th;
         }
