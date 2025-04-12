@@ -1,0 +1,1 @@
+ALTER TABLE `items` ADD `is_deprecated` BOOLEAN NOT NULL DEFAULT FALSE AFTER `spell`;

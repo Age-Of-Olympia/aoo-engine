@@ -60,11 +60,10 @@ EOT);
             $this->checkEnvState($forced,2);
 
             $convertionData = array(
-                //'rocher' => array('new_item' => "caillou", 'mult' => 3),
                 'adonis' => array('new_item' => "cuivre", 'mult' => 1),
-                'pierres' => array('new_item' => "fer", 'mult' => 1),
-                'bois P' => array('new_item' => "pierres de mana", 'mult' => 1),
-                'bois' => array('new_item' => "bois P", 'mult' => 1),
+                'pierre' => array('new_item' => "fer", 'mult' => 1),
+                'bois_petrifie' => array('new_item' => "pierre_mana", 'mult' => 1),
+                'bois' => array('new_item' => "bois_petrifie", 'mult' => 1),
             );
 
             foreach ($convertionData as $name => $data) {
@@ -72,6 +71,15 @@ EOT);
                 $this->convert_objects(false, $name, $data);
             }
             Command::SetEnvVariable("seasoncmd",3);
+            return '';
+        }
+
+        if ($action == 'processXP') {
+            $this->checkEnvState($forced,3);
+            
+            $this->update_overxP_players();
+         
+            Command::SetEnvVariable("seasoncmd",4);
             return '';
         }
 
@@ -106,18 +114,43 @@ function refund_deprecated_objects(bool $bank)
             $this->db->commit();
         } catch (Throwable $th) {
             $this->db->rollBack();
-            $this->result->Log('objets remboursés :'.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : ''));
+            $this->result->Log('objets remboursés :'.$count.'/'.sizeof($deprecatedObjects) .', soit ' . $ingredientsCount . ' ingredients' . (($bank) ? ' en banque' : ''));
             $this->result->Error('Erreur lors du remboursement de l\'objet:' . $row['item_id'] . ' du joueur: ' . $player->id);
             
             throw $th;
         }
     }
 
-    $this->result->Log(' objets remboursés '.$count.'/'.sizeof($deprecatedObjects) .', soit' . $ingredientsCount . 'ingredients' . (($bank) ? ' en banque' : ''));
+    $this->result->Log(' objets remboursés '.$count.'/'.sizeof($deprecatedObjects) .', soit ' . $ingredientsCount . ' ingredients' . (($bank) ? ' en banque' : ''));
+    $this->result->Log('information: les objets sans recette ne sont pas remboursés, ils doivent être traités par conversion');
+}
+function update_overxP_players()
+{
+    // si un joueur as + de 3500, set son xp a 3500 etmet l'overflow dans bonus_points
+    $sql = 'UPDATE players SET xp = 3500, bonus_points = bonus_points + (xp - 3500) WHERE xp > 3500';
+    $res =  $this->db->executeQuery($sql);
+    $this->result->Log($res->rowCount().' joueurs modifiés');
+    return $res;
+}
+
+function convertExtraXP()
+{
+
+    $players = $this->get_overxP_players();
+    $count = 0;
+    foreach ($players as $row) {
+        $player = new Player($row['id']);
+
+            $player->add_xp(-3500);
+            $player->add_item(Item::get_item_by_name('xp'), 1);
+            
+            $count++;
+    }
+        
+    $this->result->Log($count.' joueurs avec trop d\'xp convertis');
 }
 function get_deprecated_objects(bool $bank)
 {
-    $return = array();
     $bankTable = ($bank) ? '_bank' : '';
     $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.is_deprecated = 1';
 
@@ -127,7 +160,6 @@ function get_deprecated_objects(bool $bank)
 }
 function get_objects_by_name(bool $bank,string $name)
 {
-    $return = array();
     $bankTable = ($bank) ? '_bank' : '';
     $sql = 'SELECT player_id, item_id,n FROM players_items' . $bankTable . ' INNER JOIN items ON item_id = items.id WHERE items.name = ?';
 
