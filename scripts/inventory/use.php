@@ -1,5 +1,6 @@
 <?php
 
+use App\Enum\EquipResult;
 
 $player->get_data();
 
