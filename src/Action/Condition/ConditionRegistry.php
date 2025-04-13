@@ -30,6 +30,7 @@ class ConditionRegistry
 
             'Dodge' => new DodgeCondition(),
             'RequiresGodAffiliation' => new RequiresGodAffiliationCondition(),
+            'AntiSpell' => new AntiSpellCondition(),
 
             'Option' => new OptionCondition(),
         ];
