@@ -103,7 +103,7 @@ EOT);
 
             $player->add_action($argumentValues[1]);
 
-            return 'Actoin '. $argumentValues[1] .' ajouté à '. $player->data->name .'';
+            return 'Action '. $argumentValues[1] .' ajouté à '. $player->data->name .'';
         }
 
     }

@@ -44,20 +44,10 @@ if(!empty($actionJson->playerHeal)){
     }
 }
 
-// player : ignore equipement
-if(!empty($actionJson->playerIgnore)){
-    include('scripts/actions/playerIgnore.php');
-}
-
-// target : ignore equipement
-if(!empty($actionJson->targetIgnore)){
-    include('scripts/actions/targetIgnore.php');
-}
-
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
 
-include('scripts/actions/check_max_spells.php');
+//include('scripts/actions/check_max_spells.php');
 
 /*
  * action details

@@ -54,7 +54,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function get_caracs($nude=false){
+    public function get_caracs(bool $nude=false): bool {
 
 
         if(!isset($this->data)){
@@ -180,6 +180,7 @@ class Player implements ActorInterface {
         // save .caracs
         $data = Json::encode($this->caracs);
         Json::write_json('datas/private/players/'. $this->id .'.caracs.json', $data);
+        return true;
     }
 
 
@@ -1373,7 +1374,7 @@ class Player implements ActorInterface {
     
 
 
-    public function equip(Item $item): EquipResult{
+    public function equip(Item $item, bool $doNotRefresh = false): EquipResult{
 
         $db = new Db();
 

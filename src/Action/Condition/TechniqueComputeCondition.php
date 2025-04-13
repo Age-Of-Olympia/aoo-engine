@@ -5,6 +5,12 @@ class TechniqueComputeCondition extends ComputeCondition
 {
     protected string $throwName = "La technique";
 
+    public function __construct()
+    {
+        parent::__construct();
+        array_push($this->preConditions, new ObstacleCondition());
+    }
+
     protected function getDistanceTreshold() : int {
         return floor(($this->distance) * 2.5);
     }

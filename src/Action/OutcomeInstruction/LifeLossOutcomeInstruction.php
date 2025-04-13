@@ -3,6 +3,7 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Player;
 use View;
@@ -12,14 +13,24 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target): OutcomeResult {
 
-        // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true }
+        // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
         $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
         $bonusTraitDamages = $this->getParameters()['bonusDamagesTrait'] ?? 0;
         $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
         $distanceInfluence = $this->getParameters()['distance'] ?? false;
+        $targetIgnore = $this->getParameters()['targetIgnore'] ?? false;
+        $actorIgnore = $this->getParameters()['actorIgnore'] ?? false;
         $autoCrit = $this->getParameters()['autoCrit'] ?? false;
         $outcomeSuccessMessages = array();
+
+        if ($targetIgnore != false) {
+            $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
+        }
+
+        if ($actorIgnore != false) {
+            $this->updatePlayerCaracsWithIgnores($actorIgnore, $actor);
+        }
 
         if(!empty($actorTraitDamages) && !empty($targetTraitDamagesTaken)){
             $actorDamages = (is_numeric($actorTraitDamages)) ? $actorTraitDamages : $actor->caracs->{$actorTraitDamages};
@@ -81,4 +92,29 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$totalDamages);
     }
+
+    private function updatePlayerCaracsWithIgnores(array $ignore, ActorInterface $player)
+    {
+        $itemToEquip = array();
+        foreach($ignore as $emp){
+            if(!empty($player->emplacements->{$emp})){
+                // unequip
+                $player->equip($player->emplacements->{$emp}, true);
+                $itemToEquip[$emp] = $player->emplacements->{$emp};
+                unset($player->emplacements->{$emp});
+            }
+        }
+        // update caracs & refresh equipment
+        $player->get_caracs();
+        // store caracs without ignored equipement
+        $caracsCp = clone $player->caracs;
+        // re equip
+        foreach($itemToEquip as $emp=>$item){
+            $player->equip($item, true);
+        }
+    
+        // apply caracs without ignored equipement. at this point if ignoring hands, "poing" is equiped in $player but not in db
+        $player->caracs = $caracsCp;
+    }
 }
+

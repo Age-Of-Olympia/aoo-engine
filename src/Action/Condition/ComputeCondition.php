@@ -97,7 +97,17 @@ class ComputeCondition extends BaseCondition
 
     protected function computeTarget($target, $dice)
     {
-        $targetRollTraitValue = $target->caracs->{$this->targetRollTrait};
+        $traitsArray = explode('/', $this->targetRollTrait);
+        if (sizeof($traitsArray) == 1) {
+            $targetRollTraitValue = $target->caracs->{$this->targetRollTrait};
+        } else if (sizeof($traitsArray) == 2) {
+            $option1 = $target->caracs->{$traitsArray[0]};
+            $option2 = $target->caracs->{$traitsArray[1]};
+            $targetRollTraitValue = max($option1, $option2);
+        } else {
+            return array(0, 0, "Impossible de calculer, erreur de paramétrage.");
+        }
+        
         $targetRoll = $dice->roll($targetRollTraitValue);
         $targetFat = floor($target->data->fatigue / FAT_EVERY);
         $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
