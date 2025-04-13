@@ -47,7 +47,7 @@ if(!empty($actionJson->playerHeal)){
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
 
-//include('scripts/actions/check_max_spells.php');
+include('scripts/actions/check_max_spells.php');
 
 /*
  * action details
