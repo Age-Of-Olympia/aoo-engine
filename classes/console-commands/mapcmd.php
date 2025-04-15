@@ -115,7 +115,7 @@ function save_map($argumentValues){
     $data = array();
 
 
-    foreach(array('tiles','walls','triggers','foregrounds','items','dialogs','plants','elements') as $table){
+    foreach(array('tiles','walls','routes','triggers','foregrounds','items','dialogs','plants','elements') as $table){
 
 
         if(!isset($data[$table])){
