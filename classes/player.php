@@ -684,7 +684,7 @@ class Player implements ActorInterface {
         }
 
         // Ajout d'un cap temporaire des PIs pour la fin de la saison 1
-        $xpCap = 3500;
+        $xpCap = SEASON_XP;
         $pi = min(max(0,($xpCap - $this->data->xp)),$xp);
         $this->data->xp += $xp;
         $this->data->pi += $pi;
