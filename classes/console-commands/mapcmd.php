@@ -140,120 +140,105 @@ function load_map($argumentValues){
 
     ob_start();
 
-
-    if(!isset($argumentValues[1])){
-
+    if (!isset($argumentValues[1])) {
         echo '<font color="orange">error: missing argument [name], ie: "map load eryn_dolen"</font>';
-
         return ob_get_clean();
     }
-
 
     $name = $argumentValues[1];
-
-
     $mapJson = json()->decode('maps', $name);
 
-
-    if(!$mapJson){
-
-        echo '<font color="orange">error: '. PATH . $name .'.json does not exists</font>';
-
+    if (!$mapJson) {
+        echo '<font color="orange">error: ' . PATH . $name . '.json does not exist</font>';
         return ob_get_clean();
     }
-
 
     $player = new Player($_SESSION['playerId']);
     $player->get_coords();
-
 
     echo 'loading on actual map:<br />';
 
     $db = new Db();
 
-    foreach($mapJson as $k=>$e){
+    // Start a transaction
+    $db->start_transaction("map_load");
 
-
-        $sql = '
-        DELETE a
-        FROM map_'. $k .' AS a
-        INNER JOIN
-        coords AS b
-        ON
-        a.coords_id = b.id
-        WHERE
-        b.plan = ?
-        ';
-
-        $db->exe($sql, $player->coords->plan);
-
-
-        $inserts = array();
-
-        $n = 0;
-
-        $insertValues = array();
-
-        foreach($e as $l=>$f){
-
-
-            if(!$n){
-
-                $keys = array_keys((array) $f);
-
-                foreach($keys as $key=>$val){
-
-
-                    if(in_array($val, array('x','y','z','player_id'))){
-
-                        unset($keys[$key]);
-                    }
-                }
-
-                $keys[] = 'coords_id';
-
-                $structure = '(`'. implode('`,`', $keys) .'`)';
-            }
-
-            $coords = (object) array(
-                'x'=>$f->x,
-                'y'=>$f->y,
-                'z'=>$f->z,
-                'plan'=>$player->coords->plan
-            );
-
-            $f->coords_id = View::get_coords_id($coords);
-
-
-            $insertVal = array();
-
-            foreach($keys as $g){
-
-
-                $insertVal[] = '"'. addcslashes($f->$g,'"') .'"';
-            }
-
-            $insertValues[] = '('. implode(',', $insertVal) .')';
-
-            $n++;
-        }
-
-        if(count($insertValues)){
-
-
-            $sql = 'INSERT INTO map_'. $k .' '. $structure .' VALUES
-            '. implode(', ', $insertValues) .';
+    try {
+        foreach ($mapJson as $k => $e) {
+            $sql = '
+            DELETE a
+            FROM map_' . $k . ' AS a
+            INNER JOIN
+            coords AS b
+            ON
+            a.coords_id = b.id
+            WHERE
+            b.plan = ?
             ';
 
-            $sql;
+            $db->exe($sql, $player->coords->plan);
 
-            $db->exe($sql);
+            $insertValues = array();
+            $n = 0;
+            $batchSize = 1000; // Define a batch size for inserts
+
+            foreach ($e as $l => $f) {
+                if (!$n) {
+                    $keys = array_keys((array)$f);
+
+                    foreach ($keys as $key => $val) {
+                        if (in_array($val, array('x', 'y', 'z', 'player_id'))) {
+                            unset($keys[$key]);
+                        }
+                    }
+
+                    $keys[] = 'coords_id';
+                    $structure = '(`' . implode('`,`', $keys) . '`)';
+                }
+
+                $coords = (object)array(
+                    'x' => $f->x,
+                    'y' => $f->y,
+                    'z' => $f->z,
+                    'plan' => $player->coords->plan
+                );
+
+                $f->coords_id = View::get_coords_id($coords);
+
+                $insertVal = array();
+
+                foreach ($keys as $g) {
+                    $insertVal[] = '"' . addcslashes($f->$g, '"') . '"';
+                }
+
+                $insertValues[] = '(' . implode(',', $insertVal) . ')';
+                $n++;
+
+                // Perform batch insert
+                if (count($insertValues) >= $batchSize) {
+                    $sql = 'INSERT INTO map_' . $k . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
+                    $db->exe($sql);
+                    $insertValues = array(); // Reset batch
+                }
+            }
+
+            // Insert any remaining records
+            if (count($insertValues) > 0) {
+                $sql = 'INSERT INTO map_' . $k . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
+                $db->exe($sql);
+            }
+
+            echo $k . ' done (' . $n . ')<br />';
         }
 
-        echo $k .' done ('. $n .')<br />';
+        // Commit the transaction
+        $db->commit_transaction("map_load");
+        echo 'map successfully loaded.';
+    } catch (Exception $e) {
+        // Rollback the transaction in case of error
+        $db->rollback_transaction("map_load");
+        echo '<font color="orange">error: ' . $e->getMessage() . '</font>';
     }
-
-    echo 'map successfuly loaded.';
 
     return ob_get_clean();
 }
