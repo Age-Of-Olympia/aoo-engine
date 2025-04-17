@@ -1,22 +1,23 @@
 <?php
 
 class MapCmd extends AdminCommand
+
 {
+    private $tables = array('tiles', 'routes', 'walls', 'triggers', 'foregrounds', 'items', 'dialogs', 'plants', 'elements');
+
     public function __construct() {
         parent::__construct("map",[new Argument('action',true), new Argument('name',true)]);
         parent::setDescription(<<<EOT
 permet de sauver/charger la map d'un plan
 Exemple:
 > map (affiche la liste des map sauvegardées)
-> map save [nom_map] (sauvegarde la map actuelle)
-> map load [nom_map] (remplace la map actuelle)
+> map save [nom_map] [num_element] (sauvegarde la map actuelle et découpe les fichiers en fonction du nombre d'éléments indiqué)
+> map load [nom_map] (remplace la map actuelle, gère les fichiers en plusieurs parties et permet de reprendre le chargement en cas d'échec)
 EOT);
     }
 
     public function execute(  array $argumentValues ) : string
     {
-
-
         define('PATH', 'datas/private/maps/');
 
         if(!file_exists(PATH)){
@@ -25,119 +26,97 @@ EOT);
         }
 
         if(!isset($argumentValues[0])){
-
-            return list_map();
+            return $this->list_map();
         }
 
         if($argumentValues[0] == 'save'){
-
-            return save_map($argumentValues);
+            return $this->save_map($argumentValues);
         }
 
         if($argumentValues[0] == 'load'){
-
-            return load_map($argumentValues);
+            return $this->load_map($argumentValues);
         }
     }
-}
-
-function list_map(){
 
 
-    ob_start();
-
-    echo 'listing saved maps:<br />';
-
-    $mapsFound = 0;
-
-    foreach(File::scan_dir(PATH) as $file){
-
-
-        echo $file .'<br />';
-
-        $mapsFound++;
+    private function list_map() {
+        ob_start();
+    
+        echo 'Listing saved maps:<br />';
+    
+        $mapsFound = 0;
+        $mapNames = array();
+    
+        // Scan the directory for map files
+        foreach (File::scan_dir(PATH) as $file) {
+            // Check if the file is a map file (complete or part)
+            if (preg_match('/^(.+?)(\_(tiles|routes|walls|triggers|foregrounds|items|dialogs|plants|elements))?(\_part\_\d+)?\.json$/', $file, $matches)) {
+                $baseName = $matches[1];
+                if (!in_array($baseName, $mapNames)) {
+                    $mapNames[] = $baseName;
+                    echo 'Map: ' . $baseName . '<br />';
+                    $mapsFound++;
+    
+                    // List all parts of the map across all tables
+                    foreach (File::scan_dir(PATH) as $partFile) {
+                        if (preg_match('/^' . preg_quote($baseName) . '(\_(tiles|routes|walls|triggers|foregrounds|items|dialogs|plants|elements))?(\_part\_\d+)?\.json$/', $partFile)) {
+                            echo ' - ' . $partFile . '<br />';
+                        }
+                    }
+                }
+            }
+        }
+    
+        echo $mapsFound . ' maps found in ' . PATH;
+    
+        return ob_get_clean();
     }
-
-    echo $mapsFound .' maps found in '. PATH;
-
-    return ob_get_clean();
-}
-
-function save_map($argumentValues){
+    
+    
+    
 
 
+private function save_map($argumentValues) {
     ob_start();
 
-
-    if(!isset($argumentValues[1])){
-
+    if (!isset($argumentValues[1])) {
         echo '<font color="orange">error: missing argument [name], ie: "map save eryn_dolen"</font>';
-
         return ob_get_clean();
     }
 
-
     $name = $argumentValues[1];
-
+    $maxElementsPerFile = isset($argumentValues[2]) ? (int)$argumentValues[2] : 1000; // Default or specified max elements per file
 
     $player = new Player($_SESSION['playerId']);
     $player->get_coords();
 
-
     echo 'saving actual map:<br />';
-
-
-    // $sql = '
-    // SELECT *
-    // FROM
-    // coords
-    // WHERE
-    // plan = ?
-    // ';
-    //
-    // $db = new Db();
-    //
-    // $res = $db->exe($sql, $player->coords->plan);
-    //
-    // $data = array();
-    //
-    // $coordsId = array();
-    //
-    // while($row = $res->fetch_object()){
-    //
-    //
-    //     $data['coords'][] = $row;
-    //
-    //     $coordsId[] = $row->id;
-    // }
-
 
     $data = array();
 
-
-    foreach(array('tiles','walls','triggers','foregrounds','items','dialogs','plants','elements') as $table){
-
-
-        if(!isset($data[$table])){
-
-
+    foreach ($this->tables as $table) {
+        if (!isset($data[$table])) {
             $data[$table] = array();
         }
-
-        $data[$table] = get_table($table, $player->coords->plan);
+        $data[$table] = $this->get_table($table, $player->coords->plan);
     }
 
+    foreach ($data as $table => $tableData) {
+        $fileIndex = 0;
+        $chunks = array_chunk($tableData, $maxElementsPerFile); // Split the array into chunks
 
-    Json::write_json(PATH . $name .'.json', Json::encode($data));
-
-    echo PATH . $name .'.json saved!';
+        foreach ($chunks as $chunk) {
+            $fileName = PATH . $name . '_' . $table . '_part_' . $fileIndex . '.json';
+            Json::write_json($fileName, Json::encode(array($table => $chunk)));
+            echo $fileName . ' saved!<br />';
+            $fileIndex++;
+        }
+    }
 
     return ob_get_clean();
 }
 
-function load_map($argumentValues){
-
-
+private function load_map($argumentValues) {
     ob_start();
 
     if (!isset($argumentValues[1])) {
@@ -146,105 +125,159 @@ function load_map($argumentValues){
     }
 
     $name = $argumentValues[1];
-    $mapJson = json()->decode('maps', $name);
-
-    if (!$mapJson) {
-        echo '<font color="orange">error: ' . PATH . $name . '.json does not exist</font>';
-        return ob_get_clean();
-    }
-
     $player = new Player($_SESSION['playerId']);
     $player->get_coords();
 
     echo 'loading on actual map:<br />';
+    ob_flush();
+    flush();
 
     $db = new Db();
+    $progressFile = PATH . $name . '_progress.json';
 
-    // Start a transaction
-    $db->start_transaction("map_load");
-
-    try {
-        foreach ($mapJson as $k => $e) {
-            $sql = '
-            DELETE a
-            FROM map_' . $k . ' AS a
-            INNER JOIN
-            coords AS b
-            ON
-            a.coords_id = b.id
-            WHERE
-            b.plan = ?
-            ';
-
-            $db->exe($sql, $player->coords->plan);
-
-            $insertValues = array();
-            $n = 0;
-            $batchSize = 1000; // Define a batch size for inserts
-
-            foreach ($e as $l => $f) {
-                if (!$n) {
-                    $keys = array_keys((array)$f);
-
-                    foreach ($keys as $key => $val) {
-                        if (in_array($val, array('x', 'y', 'z', 'player_id'))) {
-                            unset($keys[$key]);
-                        }
-                    }
-
-                    $keys[] = 'coords_id';
-                    $structure = '(`' . implode('`,`', $keys) . '`)';
-                }
-
-                $coords = (object)array(
-                    'x' => $f->x,
-                    'y' => $f->y,
-                    'z' => $f->z,
-                    'plan' => $player->coords->plan
-                );
-
-                $f->coords_id = View::get_coords_id($coords);
-
-                $insertVal = array();
-
-                foreach ($keys as $g) {
-                    $insertVal[] = '"' . addcslashes($f->$g, '"') . '"';
-                }
-
-                $insertValues[] = '(' . implode(',', $insertVal) . ')';
-                $n++;
-
-                // Perform batch insert
-                if (count($insertValues) >= $batchSize) {
-                    $sql = 'INSERT INTO map_' . $k . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
-                    $db->exe($sql);
-                    $insertValues = array(); // Reset batch
-                }
-            }
-
-            // Insert any remaining records
-            if (count($insertValues) > 0) {
-                $sql = 'INSERT INTO map_' . $k . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
-                $db->exe($sql);
-            }
-
-            echo $k . ' done (' . $n . ')<br />';
-        }
-
-        // Commit the transaction
-        $db->commit_transaction("map_load");
-        echo 'map successfully loaded.';
-    } catch (Exception $e) {
-        // Rollback the transaction in case of error
-        $db->rollback_transaction("map_load");
-        echo '<font color="orange">error: ' . $e->getMessage() . '</font>';
+    // Read the progress file to determine the last successfully imported part for each table
+    $progress = array();
+    if (file_exists($progressFile)) {
+        $progress = json_decode(file_get_contents($progressFile), true);
+        echo print_r($progress, true);
     }
 
+    while (true) {
+        $anyPartLoaded = false; // Flag to check if any part was loaded in this iteration
+
+        foreach ($this->tables as $table) {
+            $fileIndex = isset($progress[$table]) ? $progress[$table] : 0;
+            $partFileName = $name . '_' . $table . '_part_' . $fileIndex;
+            echo 'Searching for part file: ' . $partFileName . '<br />';
+            ob_flush();
+            flush();
+
+            if (!file_exists(PATH . $partFileName . '.json')) {
+                echo 'File: ' . $partFileName . ' not found.<br />';
+                if ($fileIndex == 0 && $table == "tiles") {
+                    $partFileName = $name;
+                    echo 'Searching for complete file: ' . $partFileName . '<br />';
+                    if (!file_exists(PATH . $partFileName . '.json')) {
+                        echo 'File: ' . $partFileName . ' not found.<br />';
+                        continue; // Skip to the next table if this part file doesn't exist
+                    }
+                } else {
+                    echo 'File: ' . $partFileName . ' not found.<br />';
+                    continue;
+                }
+                
+            }
+
+            ob_flush();
+            flush();
+
+            $mapJson = json()->decode('maps', $partFileName);
+
+            if (!$mapJson) {
+                echo 'Invalid Json in file: ' . $partFileName . '.json' . '<br />';
+                continue; // Skip to the next table if the JSON is invalid
+            }
+
+            $db->start_transaction("map_load");
+            echo 'Begin transaction for ' . $table . ' part ' . $fileIndex . '.json' . '.<br />';
+
+            ob_flush();
+            flush();
+
+            try {
+                foreach ($mapJson as $data) {
+                    if ($fileIndex == 0) {
+                        // Delete existing data only for the first part or complete file
+                        $sql = '
+                        DELETE a
+                        FROM map_' . $table . ' AS a
+                        INNER JOIN
+                        coords AS b
+                        ON
+                        a.coords_id = b.id
+                        WHERE
+                        b.plan = ?
+                        ';
+
+                        $db->exe($sql, $player->coords->plan);
+                    }
+
+                    $insertValues = array();
+                    $n = 0;
+
+                    foreach ($data as $item) {
+                        if ($n == 0) {
+                            $keys = array_keys((array)$item);
+                            foreach ($keys as $key => $val) {
+                                if (in_array($val, array('x', 'y', 'z', 'player_id'))) {
+                                    unset($keys[$key]);
+                                }
+                            }
+                            $keys[] = 'coords_id';
+                            $structure = '(`' . implode('`,`', $keys) . '`)';
+                        }
+
+                        $coords = (object)array(
+                            'x' => $item->x,
+                            'y' => $item->y,
+                            'z' => $item->z,
+                            'plan' => $player->coords->plan
+                        );
+
+                        $item->coords_id = View::get_coords_id($coords);
+
+                        $insertVal = array();
+                        foreach ($keys as $g) {
+                            $insertVal[] = '"' . addcslashes($item->$g, '"') . '"';
+                        }
+                        $insertValues[] = '(' . implode(',', $insertVal) . ')';
+                        $n++;
+                    }
+
+                    if (count($insertValues)) {
+                        $sql = 'INSERT INTO map_' . $table . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
+                        $db->exe($sql);
+                    }
+
+                    echo $table . ' part ' . $fileIndex . ' done (' . $n . ')<br />';
+                    ob_flush();
+                    flush();
+                }
+
+                // Commit the transaction for this part
+                $db->commit_transaction("map_load");
+                echo 'End transaction for ' . $table . ' part ' . $fileIndex . '.<br />';
+                ob_flush();
+                flush();
+
+                // Update the progress file for this table and part
+                $progress[$table] = $fileIndex + 1;
+                file_put_contents($progressFile, json_encode($progress));
+                $anyPartLoaded = true;
+            } catch (Exception $e) {
+                $db->rollback_transaction("map_load");
+                echo '<font color="orange">error: ' . $e->getMessage() . '</font><br />';
+                echo 'Progress saved. You can resume the process later.<br />';
+                return ob_get_clean();
+            }
+        }
+
+        if (!$anyPartLoaded) {
+            // No more parts to load
+            break;
+        }
+    }
+
+    // Remove the progress file after successful completion
+    if (file_exists($progressFile)) {
+        unlink($progressFile);
+    }
+
+    echo 'map successfully loaded.';
     return ob_get_clean();
 }
 
-function get_table($table, $plan){
-
+private function get_table($table, $plan){
 
     $sql = '
     SELECT *
@@ -277,12 +310,4 @@ function get_table($table, $plan){
     return $data;
 }
 
-function get_inserts($table){
-
-
-    ob_start();
-
-
-
-    return ob_get_clean();
 }
