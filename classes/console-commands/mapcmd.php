@@ -116,11 +116,13 @@ private function save_map($argumentValues) {
     return ob_get_clean();
 }
 
-private function load_map($argumentValues) {
+function load_map($argumentValues) {
     ob_start();
 
     if (!isset($argumentValues[1])) {
         echo '<font color="orange">error: missing argument [name], ie: "map load eryn_dolen"</font>';
+        ob_flush();
+        flush();
         return ob_get_clean();
     }
 
@@ -128,7 +130,7 @@ private function load_map($argumentValues) {
     $player = new Player($_SESSION['playerId']);
     $player->get_coords();
 
-    echo 'loading on actual map:<br />';
+    echo 'Loading on actual map:<br />';
     ob_flush();
     flush();
 
@@ -139,132 +141,205 @@ private function load_map($argumentValues) {
     $progress = array();
     if (file_exists($progressFile)) {
         $progress = json_decode(file_get_contents($progressFile), true);
-        echo print_r($progress, true);
     }
 
-    while (true) {
-        $anyPartLoaded = false; // Flag to check if any part was loaded in this iteration
+    $tables = array('tiles', 'routes', 'walls', 'triggers', 'foregrounds', 'items', 'dialogs', 'plants', 'elements');
 
-        foreach ($this->tables as $table) {
-            $fileIndex = isset($progress[$table]) ? $progress[$table] : 0;
-            $partFileName = $name . '_' . $table . '_part_' . $fileIndex;
-            echo 'Searching for part file: ' . $partFileName . '<br />';
-            ob_flush();
-            flush();
+    // Check if it's a single-file map
+    if (file_exists(PATH . $name . '.json')) {
+        $mapJson = json_decode(file_get_contents(PATH . $name . '.json'), true);
 
-            if (!file_exists(PATH . $partFileName . '.json')) {
-                echo 'File: ' . $partFileName . ' not found.<br />';
-                if ($fileIndex == 0 && $table == "tiles") {
-                    $partFileName = $name;
-                    echo 'Searching for complete file: ' . $partFileName . '<br />';
-                    if (!file_exists(PATH . $partFileName . '.json')) {
-                        echo 'File: ' . $partFileName . ' not found.<br />';
-                        continue; // Skip to the next table if this part file doesn't exist
-                    }
-                } else {
-                    echo 'File: ' . $partFileName . ' not found.<br />';
-                    continue;
-                }
-                
-            }
-
-            ob_flush();
-            flush();
-
-            $mapJson = json()->decode('maps', $partFileName);
-
-            if (!$mapJson) {
-                echo 'Invalid Json in file: ' . $partFileName . '.json' . '<br />';
-                continue; // Skip to the next table if the JSON is invalid
-            }
-
+        if ($mapJson) {
             $db->start_transaction("map_load");
-            echo 'Begin transaction for ' . $table . ' part ' . $fileIndex . '.json' . '.<br />';
-
+            echo 'Begin transaction for single-file map.<br />';
             ob_flush();
             flush();
 
             try {
-                foreach ($mapJson as $data) {
-                    if ($fileIndex == 0) {
-                        // Delete existing data only for the first part or complete file
-                        $sql = '
-                        DELETE a
-                        FROM map_' . $table . ' AS a
-                        INNER JOIN
-                        coords AS b
-                        ON
-                        a.coords_id = b.id
-                        WHERE
-                        b.plan = ?
-                        ';
+                foreach ($tables as $table) {
+                    if (isset($mapJson[$table])) {
+                        $data = $mapJson[$table];
+                        $insertValues = array();
+                        $n = 0;
 
-                        $db->exe($sql, $player->coords->plan);
-                    }
-
-                    $insertValues = array();
-                    $n = 0;
-
-                    foreach ($data as $item) {
-                        if ($n == 0) {
-                            $keys = array_keys((array)$item);
-                            foreach ($keys as $key => $val) {
-                                if (in_array($val, array('x', 'y', 'z', 'player_id'))) {
-                                    unset($keys[$key]);
+                        foreach ($data as $item) {
+                            if ($n == 0) {
+                                $keys = array_keys($item);
+                                foreach ($keys as $key => $val) {
+                                    if (in_array($val, array('x', 'y', 'z', 'player_id'))) {
+                                        unset($keys[$key]);
+                                    }
                                 }
+                                $keys[] = 'coords_id';
+                                $structure = '(`' . implode('`,`', $keys) . '`)';
                             }
-                            $keys[] = 'coords_id';
-                            $structure = '(`' . implode('`,`', $keys) . '`)';
+
+                            $coords = (object)array(
+                                'x' => $item['x'],
+                                'y' => $item['y'],
+                                'z' => $item['z'],
+                                'plan' => $player->coords->plan
+                            );
+
+                            $item['coords_id'] = View::get_coords_id($coords);
+
+                            $insertVal = array();
+                            foreach ($keys as $g) {
+                                $insertVal[] = '"' . addcslashes($item[$g], '"') . '"';
+                            }
+                            $insertValues[] = '(' . implode(',', $insertVal) . ')';
+                            $n++;
                         }
 
-                        $coords = (object)array(
-                            'x' => $item->x,
-                            'y' => $item->y,
-                            'z' => $item->z,
-                            'plan' => $player->coords->plan
-                        );
-
-                        $item->coords_id = View::get_coords_id($coords);
-
-                        $insertVal = array();
-                        foreach ($keys as $g) {
-                            $insertVal[] = '"' . addcslashes($item->$g, '"') . '"';
+                        if (count($insertValues)) {
+                            $sql = 'INSERT INTO map_' . $table . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
+                            $db->exe($sql);
                         }
-                        $insertValues[] = '(' . implode(',', $insertVal) . ')';
-                        $n++;
-                    }
 
-                    if (count($insertValues)) {
-                        $sql = 'INSERT INTO map_' . $table . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
-                        $db->exe($sql);
+                        echo $table . ' done (' . $n . ')<br />';
+                        ob_flush();
+                        flush();
                     }
-
-                    echo $table . ' part ' . $fileIndex . ' done (' . $n . ')<br />';
-                    ob_flush();
-                    flush();
                 }
 
-                // Commit the transaction for this part
+                // Commit the transaction for the single-file map
                 $db->commit_transaction("map_load");
-                echo 'End transaction for ' . $table . ' part ' . $fileIndex . '.<br />';
+                echo 'End transaction for single-file map.<br />';
                 ob_flush();
                 flush();
 
-                // Update the progress file for this table and part
-                $progress[$table] = $fileIndex + 1;
-                file_put_contents($progressFile, json_encode($progress));
-                $anyPartLoaded = true;
             } catch (Exception $e) {
                 $db->rollback_transaction("map_load");
                 echo '<font color="orange">error: ' . $e->getMessage() . '</font><br />';
-                echo 'Progress saved. You can resume the process later.<br />';
+                ob_flush();
+                flush();
                 return ob_get_clean();
             }
+        } else {
+            echo '<font color="orange">error: Invalid JSON in single-file map.</font><br />';
+            ob_flush();
+            flush();
+            return ob_get_clean();
         }
+    } else {
+        // Handle multi-part maps
+        while (true) {
+            $anyPartLoaded = false; // Flag to check if any part was loaded in this iteration
 
-        if (!$anyPartLoaded) {
-            // No more parts to load
-            break;
+            foreach ($tables as $table) {
+                $fileIndex = isset($progress[$table]) ? $progress[$table] : 0;
+                $partFileName = $name . '_' . $table . '_part_' . $fileIndex;
+                echo 'Searching for file: ' . $partFileName . '<br />';
+                ob_flush();
+                flush();
+
+                if (!file_exists(PATH . $partFileName . '.json')) {
+                    echo 'File: ' . $partFileName . ' not found.<br />';
+                    ob_flush();
+                    flush();
+                    continue; // Skip to the next table if this part file doesn't exist
+                }
+
+                $mapJson = json()->decode('maps', $partFileName);
+
+                if (!$mapJson) {
+                    echo 'Invalid Json in file: ' . $partFileName . '.json' . '<br />';
+                    ob_flush();
+                    flush();
+                    continue; // Skip to the next table if the JSON is invalid
+                }
+
+                $db->start_transaction("map_load");
+                echo 'Begin transaction for ' . $table . ' part ' . $fileIndex . '.json' . '.<br />';
+                ob_flush();
+                flush();
+
+                try {
+                    foreach ($mapJson as $data) {
+                        if ($fileIndex == 0) {
+                            // Delete existing data only for the first part or complete file
+                            $sql = '
+                            DELETE a
+                            FROM map_' . $table . ' AS a
+                            INNER JOIN
+                            coords AS b
+                            ON
+                            a.coords_id = b.id
+                            WHERE
+                            b.plan = ?
+                            ';
+
+                            $db->exe($sql, $player->coords->plan);
+                        }
+
+                        $insertValues = array();
+                        $n = 0;
+
+                        foreach ($data as $item) {
+                            if ($n == 0) {
+                                $keys = array_keys((array)$item);
+                                foreach ($keys as $key => $val) {
+                                    if (in_array($val, array('x', 'y', 'z', 'player_id'))) {
+                                        unset($keys[$key]);
+                                    }
+                                }
+                                $keys[] = 'coords_id';
+                                $structure = '(`' . implode('`,`', $keys) . '`)';
+                            }
+
+                            $coords = (object)array(
+                                'x' => $item->x,
+                                'y' => $item->y,
+                                'z' => $item->z,
+                                'plan' => $player->coords->plan
+                            );
+
+                            $item->coords_id = View::get_coords_id($coords);
+
+                            $insertVal = array();
+                            foreach ($keys as $g) {
+                                $insertVal[] = '"' . addcslashes($item->$g, '"') . '"';
+                            }
+                            $insertValues[] = '(' . implode(',', $insertVal) . ')';
+                            $n++;
+                        }
+
+                        if (count($insertValues)) {
+                            $sql = 'INSERT INTO map_' . $table . ' ' . $structure . ' VALUES ' . implode(', ', $insertValues) . ';';
+                            $db->exe($sql);
+                        }
+
+                        echo $table . ' part ' . $fileIndex . ' done (' . $n . ')<br />';
+                        ob_flush();
+                        flush();
+                    }
+
+                    // Commit the transaction for this part
+                    $db->commit_transaction("map_load");
+                    echo 'End transaction for ' . $table . ' part ' . $fileIndex . '.<br />';
+                    ob_flush();
+                    flush();
+
+                    // Update the progress file for this table and part
+                    $progress[$table] = $fileIndex + 1;
+                    file_put_contents($progressFile, json_encode($progress));
+                    $anyPartLoaded = true;
+                } catch (Exception $e) {
+                    $db->rollback_transaction("map_load");
+                    echo '<font color="orange">error: ' . $e->getMessage() . '</font><br />';
+                    ob_flush();
+                    flush();
+                    echo 'Progress saved. You can resume the process later.<br />';
+                    ob_flush();
+                    flush();
+                    return ob_get_clean();
+                }
+            }
+
+            if (!$anyPartLoaded) {
+                // No more parts to load
+                break;
+            }
         }
     }
 
@@ -273,9 +348,12 @@ private function load_map($argumentValues) {
         unlink($progressFile);
     }
 
-    echo 'map successfully loaded.';
+    echo 'Map successfully loaded.';
+    ob_flush();
+    flush();
     return ob_get_clean();
 }
+
 
 private function get_table($table, $plan){
 

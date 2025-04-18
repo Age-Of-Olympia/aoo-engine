@@ -151,7 +151,9 @@ function submit_command(cmdLine){
 
         },
         error: function(xhr, status, error) {
-            $('#console-content').append('<span class="response-error">Error : '+error+ '</span>');
+            // Ajouter plus de détails sur l'erreur
+            let errorMessage = 'Error: ' + error + '<br>Status: ' + status + '<br>Response: ' + xhr.responseText;
+            $('#console-content').append('<span class="response-error">' + errorMessage + '</span>');
             scrollDown();
         }
     });
