@@ -25,9 +25,14 @@ class DodgeCondition extends BaseCondition
         if($target->haveEffect('parade')){
             $targetEffectName = 'parade';
             if(
-                $target->emplacements->main1->data->subtype == 'melee'
-                &&
-                $actor->emplacements->main1->data->subtype == 'melee'
+                (
+                    !isset($target->emplacements->deuxmains)
+                    || $target->emplacements->deuxmains->data->subtype == 'melee'
+                )
+                && isset($target->emplacements->main1)
+                && $target->emplacements->main1->data->subtype == 'melee'
+                && isset($actor->emplacements->main1)
+                && $actor->emplacements->main1->data->subtype == 'melee'
             ){
                 $target->endEffect($targetEffectName);
                 $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à sa technique ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
