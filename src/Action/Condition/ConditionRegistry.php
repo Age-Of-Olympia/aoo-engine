@@ -17,6 +17,7 @@ class ConditionRegistry
             'RequiresDistance'    => new RequiresDistanceCondition(),
             'RequiresTraitValue' => new RequiresTraitValueCondition(),
             'RequiresWeaponType' => new RequiresWeaponTypeCondition(),
+            'RequiresWeaponCraftedWith' => new RequiresWeaponCraftedWithCondition(),
             'NoBerserk' => new NoBerserkCondition(),
             'ForbidIfHasEffect'   => new ForbidIfHasEffectCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),

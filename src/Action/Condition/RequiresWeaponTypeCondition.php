@@ -13,9 +13,8 @@ class RequiresWeaponTypeCondition extends BaseCondition
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
-        $params = $condition->getParameters(); // e.g. { "type": "melee" } { "type": "tir/jet" } 
-        $type = $params['type'] ?? "";
-        $weaponTypes = explode(",", $type);
+        $params = $condition->getParameters(); // e.g. { "type": ["melee"] } { "type": ["tir","jet"] } 
+        $weaponTypes = $params['type'] ?? array();
         $weaponTypeOk = false;
         $weaponTypesKo = array();
         foreach ($weaponTypes as $weaponType) {
