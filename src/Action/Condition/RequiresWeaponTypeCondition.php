@@ -15,15 +15,20 @@ class RequiresWeaponTypeCondition extends BaseCondition
         $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "type": ["melee"] } { "type": ["tir","jet"] } { "type": ["bouclier"], "location": ["main2"] }
         $weaponTypes = $params['type'] ?? array();
-        $location = $params['location'] ?? "main1";
+        $locationArray = $params['location'] ?? ['main1'];
         $weaponTypeOk = false;
         $weaponTypesKo = array();
-        foreach ($weaponTypes as $weaponType) {
-            if($actor->emplacements->{$location}->data->subtype == $weaponType){
-                $weaponTypeOk = true;
-                break;
-            } else {
-                array_push($weaponTypesKo, $weaponType);
+        foreach ($locationArray as $location) {
+            if (!isset($actor->emplacements->{$location}) || $actor->emplacements->{$location} === null) {
+                continue;
+            }
+            foreach ($weaponTypes as $weaponType) {
+                if ($actor->emplacements->{$location}->data->subtype == $weaponType) {
+                    $weaponTypeOk = true;
+                    break 2;
+                } else {
+                    array_push($weaponTypesKo, $weaponType);
+                }
             }
         }
 
