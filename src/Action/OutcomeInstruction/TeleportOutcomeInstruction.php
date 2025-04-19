@@ -23,6 +23,12 @@ class TeleportOutcomeInstruction extends OutcomeInstruction
                 $outcomeSuccessMessages[0] = $actor->data->name . ' saute sur ' .$target->data->name. ' !';
                 $actor->go($coordsId);
                 break;
+            case 'projected':
+                $goCoords = $actor->coords;
+                $coordsId = View::get_free_coords_id_arround($goCoords);
+                $target->go($coordsId);
+                $outcomeSuccessMessages[0] = $target->data->name . ' est projeté !';
+                break;
             default:
                 $explodedCoord = explode(',', $coords);
                 $coordX = $explodedCoord[0] == "x"?$actor->coords->x:$explodedCoord[0];
