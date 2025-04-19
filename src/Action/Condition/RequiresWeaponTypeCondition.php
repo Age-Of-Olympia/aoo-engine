@@ -13,12 +13,13 @@ class RequiresWeaponTypeCondition extends BaseCondition
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
-        $params = $condition->getParameters(); // e.g. { "type": ["melee"] } { "type": ["tir","jet"] } 
+        $params = $condition->getParameters(); // e.g. { "type": ["melee"] } { "type": ["tir","jet"] } { "type": ["bouclier"], "location": ["main2"] }
         $weaponTypes = $params['type'] ?? array();
+        $location = $params['location'] ?? "main1";
         $weaponTypeOk = false;
         $weaponTypesKo = array();
         foreach ($weaponTypes as $weaponType) {
-            if($actor->emplacements->main1->data->subtype == $weaponType){
+            if($actor->emplacements->{$location}->data->subtype == $weaponType){
                 $weaponTypeOk = true;
                 break;
             } else {
@@ -27,7 +28,7 @@ class RequiresWeaponTypeCondition extends BaseCondition
         }
 
         if (!$weaponTypeOk) {
-            $errorMessage[0] = 'Vous n\'êtes pas équipé d\'une arme de '. join("/",$weaponTypesKo). '.';
+            $errorMessage[0] = 'Vous n\'êtes pas équipé d\'une arme de type '. join("/",$weaponTypesKo). '.';
             $result = new ConditionResult(false, array(), $errorMessage);
         }
         
