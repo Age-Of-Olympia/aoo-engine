@@ -22,7 +22,8 @@ class RequiresWeaponCraftedWithCondition extends BaseCondition
             foreach ($craftedWithArray as $craftedWith) {
                 $item = $actor->emplacements->{$location};
                 if ($item->is_crafted_with($craftedWith)) {
-                    $weaponTypeOk = $weaponTypeOk && true;
+                    $weaponTypeOk = true;
+                    break 2;
                 } else {
                     $weaponTypeOk = false;
                     array_push($weaponCraftTypesKo, $craftedWith);
