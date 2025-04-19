@@ -46,7 +46,7 @@ class DodgeCondition extends BaseCondition
             ){
                 $targetEffectName = 'leurre';
                 $target->endEffect($targetEffectName);
-                $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à un sort ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .')"></span>' ;
+                $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à un sort ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
