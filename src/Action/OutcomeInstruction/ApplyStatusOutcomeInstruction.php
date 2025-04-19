@@ -44,9 +44,12 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
                 break;
             default:
             $this->applyEffect($params[$status], $status, $duration, $actor);
-            $this->applyEffect($params[$status], $status, $duration, $target);
             $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $actor->data->name;
-            $outcomeSuccessMessages[1] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
+
+            if ($target->data->name !== $actor->data->name) {
+                $this->applyEffect($params[$status], $status, $duration, $target);
+                $outcomeSuccessMessages[1] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
+            }
             break;
         }
 
