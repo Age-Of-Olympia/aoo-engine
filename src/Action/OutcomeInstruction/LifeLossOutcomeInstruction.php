@@ -86,8 +86,6 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             // put assist
             $actor->put_assist($target, $totalDamages);
             
-        } {
-            //handle not working case
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$totalDamages);

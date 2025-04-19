@@ -141,6 +141,9 @@ abstract class Action implements ActionInterface
 
     public function addAutomaticOutcomeInstruction(OutcomeInstruction $outcomeInstruction): self
     {
+        if (!isset($this->automaticOutcomeInstructions)) {
+            $this->automaticOutcomeInstructions = new ArrayCollection();
+        }
         if (!$this->automaticOutcomeInstructions->contains($outcomeInstruction)) {
             $this->automaticOutcomeInstructions->add($outcomeInstruction);
         }
@@ -155,7 +158,9 @@ abstract class Action implements ActionInterface
 
     public function initAutomaticOutcomeInstructions(): self
     {
-        $this->automaticOutcomeInstructions = new ArrayCollection();
+        if (!isset($this->automaticOutcomeInstructions)) {
+            $this->automaticOutcomeInstructions = new ArrayCollection();
+        }
         return $this;
     }
 

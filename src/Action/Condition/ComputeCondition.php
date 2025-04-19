@@ -1,5 +1,7 @@
 <?php
 namespace App\Action\Condition;
+
+use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use Player;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
@@ -45,6 +47,10 @@ class ComputeCondition extends BaseCondition
         $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
 
         $result = $this->computeAttack($actor, $target);
+
+        if (!$result->isSuccess()) {
+            $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
+        }
 
         return $result;
     }

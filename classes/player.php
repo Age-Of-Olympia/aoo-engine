@@ -1040,8 +1040,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function put_malus($malus){
-
+    public function put_malus($malus): void {
 
         $sql = 'UPDATE players SET malus = GREATEST(malus + ?, 0) WHERE id = ?';
 
