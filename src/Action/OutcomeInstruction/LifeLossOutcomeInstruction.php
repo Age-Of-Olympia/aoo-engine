@@ -35,7 +35,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         if(!empty($actorTraitDamages) && !empty($targetTraitDamagesTaken)){
             $actorDamages = (is_numeric($actorTraitDamages)) ? $actorTraitDamages : $actor->caracs->{$actorTraitDamages};
             $targetDefense = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
-            $bonusDamages = (is_numeric($bonusTraitDamages)) ? $bonusTraitDamages : $target->caracs->{$bonusTraitDamages};
+            $bonusDamages = (is_numeric($bonusTraitDamages)) ? $bonusTraitDamages : $actor->caracs->{$bonusTraitDamages};
             $bonusDefense = (is_numeric($bonusTraitDefense)) ? $bonusTraitDefense : $target->caracs->{$bonusTraitDefense};
             $totalDamages = $actorDamages + $bonusDamages - ($targetDefense + $bonusDefense);
             $cellCount = 0;
