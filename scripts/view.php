@@ -68,6 +68,6 @@ if(!empty($_SESSION['playerId'])){
 
 
     ?>
-    <script src="js/view.js"></script>
+    <script src="js/view.js?v=20252004"></script>
     <?php
 }
