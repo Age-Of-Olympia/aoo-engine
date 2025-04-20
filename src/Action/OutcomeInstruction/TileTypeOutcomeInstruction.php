@@ -20,12 +20,26 @@ class TileTypeOutcomeInstruction extends OutcomeInstruction
 
         $outcomeSuccessMessages = array();
 
-        $row = $mapService->getTileTypeAtCoord("routes", $actor->data->coords_id);
+        $params =$this->getParameters();
+        // e.g. { "type": "routes" }
+
+        $tileType = $params['type'] ?? "routes";
+        $carac = $params['carac'] ?? "mvt";
+        $value = $params['value'] ?? 1;
+
+        $row = $mapService->getTileTypeAtCoord($tileType, $actor->data->coords_id);
 
         if($row->n){
-            $bonus = array("mvt"=>1);
+            $bonus = array($carac=>$value);
             $actor->putBonus($bonus);
-            $outcomeSuccessMessages[0] = 'Vous êtes sur une route ! (+1)';
+            switch ($carac) {
+                case 'mvt':
+                    $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous êtes sur une route ! (+'.$value.')';
+                    break;
+                default:
+                    break;
+            }
+            
         } 
 
         return new OutcomeResult(true,$outcomeSuccessMessages, array());
