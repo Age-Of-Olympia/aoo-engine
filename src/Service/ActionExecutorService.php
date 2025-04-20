@@ -58,6 +58,13 @@ class ActionExecutorService
 
             // 4) calculate XP
             $xpResultsArray = $this->action->calculateXp($this->globalConditionsResult, $this->actor, $this->target);
+            if(!empty($xpResultsArray["actor"])){            
+                $this->actor->put_xp($xpResultsArray["actor"]);
+            }
+            
+            if(!empty($xpResultsArray["target"])){            
+                $this->target->put_xp($xpResultsArray["target"]);
+            }
         }
         
         // 5) LOG
