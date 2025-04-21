@@ -28,7 +28,7 @@ class RequiresTraitValueCondition extends BaseCondition
                 if ($value == "both") {
                     $errorMessage = array();
                     if($target->data->fatigue >= FAT_EVERY){
-                        $errorMessage[sizeof($errorMessage)] = "Votre partenaire est trop fatigué pour s\'entraîner.";
+                        $errorMessage[sizeof($errorMessage)] = "Votre partenaire est trop fatigué pour s'entraîner.";
                     }
             
                     if($actor->data->fatigue >= FAT_EVERY){

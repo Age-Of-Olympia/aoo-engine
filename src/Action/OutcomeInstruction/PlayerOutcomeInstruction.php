@@ -14,6 +14,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
         $params =$this->getParameters();
         // e.g. {"carac": "fatigue", "value" : 4, "player": "actor"}
         // {"carac": "mvt", "value" : 1, "player": "actor"}
+        // {"carac" : "fatigue", "value": 1, "player" : "target"}
         
         $player = $params['player'] ?? 'both';
         $carac = $params['carac'] ?? null;
@@ -43,6 +44,12 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                         $outcomeSuccessMessages[0] = 'Vous courrez ! (+'.$value.' mouvement !)';
                     }
 
+                }
+                break;
+            case "target":
+                if ($carac == "fatigue") {
+                    $actor->putFat($value);
+                    $fatigue = ($actor->data->fatigue > $value) ? $value : $actor->data->fatigue;
                 }
                 break;
             default:
