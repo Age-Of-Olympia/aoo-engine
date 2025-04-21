@@ -48,8 +48,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                 break;
             case "target":
                 if ($carac == "fatigue") {
-                    $actor->putFat($value);
-                    $fatigue = ($actor->data->fatigue > $value) ? $value : $actor->data->fatigue;
+                    $target->putFat($value);
                 }
                 break;
             default:
