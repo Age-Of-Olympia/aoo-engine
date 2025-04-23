@@ -54,8 +54,12 @@ abstract class AttackAction extends Action
             $playerRank = $actor->data->rank;
             $targetRank = $target->data->rank;
             $diff = $playerRank - $targetRank;
+
+            // Get Action upgrades for degressive XP
+            $actorUpgrades = $actor->get_upgrades();
+            $reducAction = $actorUpgrades["A"];
     
-            $playerXp = ACTION_XP - $diff;
+            $playerXp = ACTION_XP - $diff - $reducAction;
     
             if ($playerXp < 1) {
                 $playerXp = 1;
