@@ -1,7 +1,99 @@
+# Avoid duplicate pipelines due fact using rules
+# https://docs.gitlab.com/ee/ci/jobs/job_rules.html#avoid-duplicate-pipelines
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: always
+
 stages:
+  - build
+  - stan
+  - test  
   - prepare
   - release
   - deployment
+
+
+build_image:
+  stage: build
+  tags:
+    - docker-aoo
+  services:
+    - name: docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: "tcp://docker:2375"
+    IMAGE_TAG: "test:latest"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - export DOCKER_IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_TAG"
+    - |
+      if ! docker manifest inspect $DOCKER_IMAGE >/dev/null 2>&1; then
+        echo "Image does not exist, building..."
+        docker build -t $DOCKER_IMAGE -f gitlab-ci/Dockerfile.test .
+        docker push $DOCKER_IMAGE
+      elif [ "$FORCE_REBUILD" = "true" ]; then
+        echo "Changes detected. Forcing image rebuild..."
+        docker build -t $DOCKER_IMAGE -f gitlab-ci/Dockerfile.test .
+        docker push $DOCKER_IMAGE
+      else
+        echo "Image $DOCKER_IMAGE already exists, skipping build."
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      changes:
+        paths:
+          - gitlab-ci/Dockerfile.test
+          - .gitlab-ci.yml
+      variables:
+        FORCE_REBUILD: "true"
+      when: always
+    - exists:
+        - gitlab-ci/Dockerfile.test
+
+test_job:
+  stage: test
+  cache:
+    key:
+      files:
+        - composer.lock
+    paths:
+      - vendor/
+  tags:
+    - docker-aoo
+  image: $CI_REGISTRY_IMAGE/test:latest
+  rules:
+    - when: always
+  script:
+    - composer install --no-progress --no-interaction
+    - make test-ci
+  coverage: '/^\s*Lines:\s*\d+.\d+\%/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: tmp/coverage/cobertura.xml
+    paths:
+      - tmp/coverage
+
+stan_job:
+  stage: stan
+  cache:
+    key:
+      files:
+        - composer.lock
+    paths:
+      - vendor/
+  tags:
+    - docker-aoo
+  image: $CI_REGISTRY_IMAGE/test:latest
+  rules:
+    - when: always
+  script:
+    - composer install --no-progress --no-interaction
+    - make phpstan
 
 prepare_job:
   stage: prepare

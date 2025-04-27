@@ -11,5 +11,9 @@
       "App\\": "src/",
       "Classes\\": "Classes/"
     }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "*",
+    "phpstan/phpstan": "^2.1"
   }
 }
