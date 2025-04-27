@@ -19,10 +19,16 @@ abstract class Action implements ActionInterface
     protected ?int $id = null;
 
     #[ORM\Column(type: "string", length: 50)]
+    protected string $icon;
+
+    #[ORM\Column(type: "string", length: 50)]
     protected string $name;
 
     #[ORM\Column(type: "string", length: 50, name: "display_name")]
     protected string $displayName;
+
+    #[ORM\Column(type: "string", length: 150)]
+    protected string $text;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -85,6 +91,16 @@ abstract class Action implements ActionInterface
         $this->name = $name;
     }
 
+    public function getIcon(): string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(string $icon): void
+    {
+        $this->icon = $icon;
+    }
+
     public function getDisplayName(): string
     {
         return $this->displayName;
@@ -93,6 +109,16 @@ abstract class Action implements ActionInterface
     public function setDisplayName(string $displayName): void
     {
         $this->displayName = $displayName;
+    }
+
+    public function getText(): string
+    {
+        return $this->text;
+    }
+
+    public function setText(string $text): void
+    {
+        $this->text = $text;
     }
 
     /**

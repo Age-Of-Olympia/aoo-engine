@@ -44,7 +44,7 @@ try {
         $offset += $batchSize;
     }
 
-    // 3: Delete old records from the logs table in batches
+    // 3: Delete old records from the logs table
     $offset = 0;
 
     echo "\nDeleting : ";
