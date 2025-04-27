@@ -1399,10 +1399,17 @@ class Player implements ActorInterface {
             // item is cursed
             if($item->row->cursed){
 
-                echo '<div id="data">Objet Maudit!</div>';
+                echo '<div id="data">Objet Maudit !</div>';
                 return EquipResult::Cursed;
             }
 
+            // item is exo from another race
+            if(!empty($item->row->exotique)){
+                if($item->row->exotique != $this->data->race){
+                    echo '<div id="data">Objet exotique d\'une autre race !</div>';
+                    return EquipResult::DoNothing;
+                }
+            }
 
             // item is equiped : UNEQUIP
 
