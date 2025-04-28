@@ -61,8 +61,8 @@ abstract class AttackAction extends Action
     
             $playerXp = ACTION_XP - $diff - $reducAction;
     
-            if ($playerXp < 1) {
-                $playerXp = 1;
+            if ($playerXp < 2) {
+                $playerXp = 2;
             }
     
             if ($actor->data->faction != '' && $actor->data->faction == $target->data->faction) {
@@ -74,6 +74,9 @@ abstract class AttackAction extends Action
             }
             if ($target->data->isInactive) {
                 $playerXp = 1;
+            }
+            if ($diff > 3) {
+                $playerXp = 0;
             }
         } else {
             $playerXp = 0;
