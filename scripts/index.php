@@ -162,6 +162,7 @@ echo '<a href="https://www.tourdejeu.net/annu/fichejeu.php?id=14616" title="Tour
 echo '<br />';
 
 echo '<a href="https://www.les12singes.com/84-les-oublies"><img src="img/ui/partenaires/les_oublies.jpeg" /></a><br />';
+echo '<a href="https://discord.gg/Zhy9WxPHta"><img src="img/ui/partenaires/freedom-chill.png" /></a><br />';
 
 echo '<div style="font-size: 75%; color: #333;"><a href="https://votezpourmoi.com/">Votez Pour Moi</a>, Jeu de simulation de campagne électorale! (<a href="https://votezpourmoi.com/jeu-politique/but-jeu.php">en savoir plus</a>)</div>';
 
