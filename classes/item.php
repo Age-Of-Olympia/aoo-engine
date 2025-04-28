@@ -548,6 +548,15 @@ class Item{
             $return[] = '<font color="blue">démolition+'. $itemJson->demolition .'</font>';
         }
 
+         // special esquive
+         if(!empty($itemJson->esquive)){
+            $color = "red"; 
+            if($itemJson->esquive > 0){
+                $color = "blue";
+            }
+            $return[] = '<font color="' . $color . '">Esq'. $itemJson->esquive .'</font>';
+        }
+        
         // special effects
         if(!empty($itemJson->addEffects)){
 

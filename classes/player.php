@@ -116,6 +116,11 @@ class Player implements ActorInterface {
             }
         }
 
+        // Esquive
+        if(!empty($item->data->esquive)){
+
+            $this->caracs->esquive = $item->data->esquive;
+        }
 
         // elements de debuffs
         $effectsList = $this->get_effects();
