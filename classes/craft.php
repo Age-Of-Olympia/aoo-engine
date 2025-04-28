@@ -8,6 +8,7 @@ class Craft{
     public $itemJson;
     public $itemRecipe;
     public $cost;
+    public $resources = [];
     function __construct($itemParam){
         // item
         $item = strtolower($itemParam);
@@ -80,7 +81,7 @@ class Craft{
             $cost += ($itemJson->price * $quantity);
 
             // store json for further use
-            $this->$name = $itemJson;
+            $this->resources[$name] = $itemJson;
         }
 
         // crafted by n
