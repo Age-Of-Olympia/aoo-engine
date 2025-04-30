@@ -1403,14 +1403,6 @@ class Player implements ActorInterface {
                 return EquipResult::Cursed;
             }
 
-            // item is exo from another race
-            if(!empty($item->row->exotique)){
-                if($item->row->exotique != $this->data->race){
-                    echo '<div id="data">Objet exotique d\'une autre race !</div>';
-                    return EquipResult::DoNothing;
-                }
-            }
-
             // item is equiped : UNEQUIP
 
             $sql = '
@@ -1441,7 +1433,14 @@ class Player implements ActorInterface {
 
 
         else{
-
+            
+            // item is exo from another race
+            if(!empty($item->row->exotique)){
+                if($item->row->exotique != $this->data->race){
+                    echo '<div id="data">Objet exotique d\'une autre race, impossible à équiper !</div>';
+                    return EquipResult::DoNothing;
+                }
+            }
 
             // item is NOT equiped : EQUIP
 
