@@ -800,8 +800,10 @@ class Player implements ActorInterface {
     }
 
     public function refresh_invent(){
-
-        @unlink('datas/private/players/'. $this->id .'.invent.html');
+        $file ='datas/private/players/'. $this->id .'.invent.html';
+        if(file_exists($file)){
+            unlink($file);
+        }
     }
 
     public function refresh_kills(){
