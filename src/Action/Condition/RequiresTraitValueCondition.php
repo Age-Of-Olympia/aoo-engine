@@ -19,11 +19,6 @@ class RequiresTraitValueCondition extends BaseCondition
                 continue;
             }
             if ($key == "fatigue") {
-                if (!$actor->data->fatigue && $value == ">0") {
-                    array_push($details, "Vous n'êtes pas fatigué !");
-                    $costIsAffordable = false;
-                    continue;
-                }
 
                 if ($value == "both") {
                     $errorMessage = array();
