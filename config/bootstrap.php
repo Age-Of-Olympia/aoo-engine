@@ -1,6 +1,7 @@
 <?php
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
+use App\Entity\EntityManagerFactory;
 use Doctrine\ORM\ORMSetup;
 
 require_once dirname(__FILE__)."/../vendor/autoload.php";
@@ -11,8 +12,9 @@ $orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
     paths: [__DIR__.'/../src/Entity'],
     isDevMode: true,
 );
-
+//initialize the EntityManager allow shared connection for our transactions
+$em=EntityManagerFactory::getEntityManager();
 // configuring the database connection
-$connection = DriverManager::getConnection(DB_CONSTANTS, $orm_db_config);
+$connection = $em->getConnection();
 global $link;
 $link = $connection;
