@@ -37,7 +37,7 @@ class Recipe
 
     #[ORM\OneToMany(
         mappedBy: "reciepe",
-        targetEntity: ReciepeIngredient::class,
+        targetEntity: ReciepeResult::class,
         cascade: ["persist", "remove"],
         orphanRemoval: true,
     )]
@@ -60,6 +60,16 @@ class Recipe
     {
         $this->name = $name;
     }
+    public function getRace(): ?Race
+    {
+        return $this->race;
+    }
+
+    public function setRace(?Race $race): void
+    {
+        $this->race = $race;
+    }
+
 
     public function addReciepeIngredient(ReciepeIngredient $reciepeIngredient): void
     {
