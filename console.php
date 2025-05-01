@@ -90,14 +90,19 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     if (count($commandsList) == 0) {
         $commandsResults->Error("Failed to parse command line");
     }
+
     $dbconn = db();
     $dbconn->beginTransaction();
     try {
         for ($i = 0; $i < count($commandsList); $i++) {
             $subCommands = Command::ReplaceEnvVariable($commandsList[$i]);
 
-            foreach ($subCommands as $commandLine) {
+            if (!isset($globalTimer) && Command::getEnvVariable("reporttime", '0')=='1')
+                $globalTimer = new PerfTimer();
 
+            foreach ($subCommands as $commandLine) {
+                if(isset($globalTimer))
+                    $localTimer = new PerfTimer();
                 $commandLineSplit = Command::getCommandLineSplit($commandLine);
                 $commandeName = $commandLineSplit[0];
                 $command = $factory->getCommand($commandeName);
@@ -108,7 +113,14 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
                     $command->db = $dbconn;
                     ExecuteCommand($command, $commandLineSplit);
                 } else {
-                    $commandsResults->Error('Unknown command ' . $commandeName);
+                    $arg1 = isset($commandLineSplit[0]) ? $commandLineSplit[0] : '';
+                    $commandsResults->Error("Unknown command  {$commandeName} {$arg1}");
+                }
+                if(isset($localTimer))
+                {
+                    $execTime=$localTimer->stop();
+                    $arg1 = isset($commandLineSplit[0]) ? $commandLineSplit[0] : '';
+                    $commandsResults->Log("Command {$commandeName} {$arg1} executed in " . round($execTime, 3) . " seconds");
                 }
                 if ($commandsResults->hasError()) {
 
@@ -118,6 +130,9 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
                     $commandsResults->Error('Command ' . $commandeName . ' failed, stopping execution, ' . strval(count($commandsList) - 1 - $i) . ' ommited');
                     break;
                 }
+            }
+            if ($commandsResults->hasError()) {
+                break;
             }
         }
         $dbconn->commit();
@@ -135,6 +150,13 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
 
         $commandsResults->Error('faillure revert all changes');
         $dbconn->rollBack();
+    }
+    finally {
+        if(isset($globalTimer))
+        {
+            $execTime = $globalTimer->stop();
+            $commandsResults->Log('Total execution time : ' . round($execTime, 3) . ' seconds');
+        }
     }
     // echo results
     echo json_encode($commandsResults->getResults());
