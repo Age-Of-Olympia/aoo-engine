@@ -57,7 +57,7 @@ abstract class AttackAction extends Action
 
             // Get Action upgrades for degressive XP
             $actorUpgrades = $actor->get_upgrades();
-            $reducAction = $actorUpgrades["A"];
+            $reducAction = $actorUpgrades->a;
     
             $playerXp = ACTION_XP - $diff - $reducAction;
     
