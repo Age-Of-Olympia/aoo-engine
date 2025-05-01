@@ -1,9 +1,11 @@
 <?php
-use Classes\Command;
+use App\Service\RaceService;
+use App\Entity\EntityManagerFactory;
+use Classes\AdminCommand;
 use Classes\Argument;
 use Classes\Item;
 
-class RecipeCmd extends Command
+class RecipeCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("recipe", [new Argument('action',false),new Argument('item_id',false) ]);
@@ -83,6 +85,39 @@ EOT);
             save_recettes_file($recipes);
             return 'Ingredient added';
         }
+        if ($action == 'import') {
+            $recipes = read_recipe_json_file();
+            $count = 0;
+            $raceService = new RaceService();
+            $em = EntityManagerFactory::getEntityManager();
+            foreach ($recipes as $race => $recette) {
+
+                $race = $raceService->getRaceByName($race);
+                foreach ($recette as $recetteData) {
+                    $recipe = new App\Entity\Recipe();
+                    $recipe->setName($recetteData['name']);
+                    $recipe->setRace($race);
+                   
+                    foreach ($recetteData['recette'] as $ingredient) {
+                        $ingredientObj = new App\Entity\ReciepeIngredient();
+                        $ingredientObj->setItemId($ingredient['id']);
+                        $ingredientObj->setCount($ingredient['n']);
+                        $recipe->addReciepeIngredient($ingredientObj);
+                    }
+                    $resultObj = new App\Entity\ReciepeResult();
+                    $resultObj->setItemId($recetteData['id']);
+                    $resultObj->setCount(1);
+                    $recipe->addReciepeResult($resultObj);
+                    $em->persist($recipe);
+                    $em->flush();//
+                    $count++;
+                }
+            }
+            
+
+            $this->result->Log($count.' recettes importées');
+            return '';
+        }
 
         return '<font color="orange">Action : '.$action.' unknown</font>';
 
@@ -92,7 +127,7 @@ EOT);
 
 function read_recipe_json_file () {
 
-    $jsonString = file_get_contents('datas/public/artisanat/recette.json');
+    $jsonString = file_get_contents('datas/public/crafts.json');
     return json_decode($jsonString, true);
 }
 
