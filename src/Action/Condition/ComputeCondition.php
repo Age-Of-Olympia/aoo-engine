@@ -118,7 +118,7 @@ class ComputeCondition extends BaseCondition
         $targetFat = floor($target->data->fatigue / FAT_EVERY);
         $targetEsq = $this->carac->esquive ?? 0;
         $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
-        if($this->targetRollTrait == "cc" && $this->targetRollTrait == "agi"){
+        if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
             $targetTotal = array_sum($targetRoll) - $targetEsq - $targetFat - $target->data->malus;
         }
         $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
@@ -127,7 +127,7 @@ class ComputeCondition extends BaseCondition
         $targetEsqTxt = ($targetEsq != 0) ? ' - '. $targetEsq .' (Esquive)' : '';
         $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
-        if($this->targetRollTrait == "cc" && $this->targetRollTrait == "agi"){
+        if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
             $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetEsqTxt . $malusTxt . $targetFatTxt . $targetTotalTxt;
         }
 
