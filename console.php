@@ -155,8 +155,8 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     foreach($commandsResults as $result){
         $resultTxt = isset($result['result']) ? $result['result'] : (isset($result['error']) ? $result['error'] : 'No result');
         $log = array(
-            'mainPlayerId'=>$_SESSION['mainPlayerId'],
-            'playerId'=>$_SESSION['playerId'],
+            'mainPlayerId'=>$_SESSION['mainPlayerId']??0,
+            'playerId'=>$_SESSION['playerId']??0,
             'time'=>time(),
             'Y/m/d'=>date('Y/m/d', time()),
             'H:i:s'=>date('H:i:s', time()),
