@@ -48,6 +48,17 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous trouvez '. ucfirst($item->data->name) .' x'. $rand .' ! (1d'. $max .' = '. $rand .')';
         }
 
+        //Une fois la récolte terminée, on regarde si les ressources s'épuisent
+        $res = ResourceService::getResourcesAround($actor);
+        $resourcesIdArray = [];
+        while($row = $res->fetch_object()){
+
+            if($biomes[$row->exhaust] < rand(1, 100))
+                $resourcesIdArray[] = $row->id;
+
+        }
+        ResourceService::exhaustResources($resourcesIdArray);
+
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
 
     }
