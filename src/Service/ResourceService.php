@@ -34,6 +34,8 @@ class ResourceService
         coords_id IN('. implode(',', $coordsArround) .')
         AND
         name IN ("'. implode('","', array_keys($biomes)) .'")
+        AND
+        damages=0
         GROUP BY
         name
         ';
