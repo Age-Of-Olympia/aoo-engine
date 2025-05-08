@@ -19,7 +19,7 @@ class DistanceComputeCondition extends ComputeCondition
     {
         $trait1 = $target->caracs->cc;
         $trait2 = $target->caracs->agi;
-        $targetRollTraitValue = floor(max(3/4 * $trait1 + 1/4 / $trait2, 1/4 * $trait1 + 3/4 / $trait2));
+        $targetRollTraitValue = floor(max(3/4 * $trait1 + 1/4 * $trait2, 1/4 * $trait1 + 3/4 * $trait2));
         $targetRoll = $dice->roll($targetRollTraitValue);
         $targetFat = floor($target->data->fatigue / FAT_EVERY);
         $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
