@@ -11,7 +11,12 @@ test:
 
 test-ci:
 	mkdir -p tmp/coverage
+	composer install --no-progress --no-interaction
 	./vendor/bin/phpunit -c phpunit.xml --coverage-text --colors=never
+
+phpstan-ci:
+	composer install --no-progress --no-interaction
+	$(MAKE) phpstan
 
 coverage:
 	mkdir -p tmp/coverage
