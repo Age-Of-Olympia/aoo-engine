@@ -96,7 +96,7 @@ class ResourceService
         $res = $db->exe($sql);
     }
 
-    public static function replenishResources(array $resourcesId): void
+    public static function regrowResources(array $resourcesId): void
     {
 
         $sql = '
