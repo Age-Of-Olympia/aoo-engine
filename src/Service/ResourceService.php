@@ -35,7 +35,7 @@ class ResourceService
         AND
         name IN ("'. implode('","', array_keys($biomes)) .'")
         AND
-        damages=0
+        damages=-1
         GROUP BY
         name
         ';
