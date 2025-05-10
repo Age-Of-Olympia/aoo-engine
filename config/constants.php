@@ -327,6 +327,14 @@ define('LOOT_CHANCE_DEFAULT', 20);
 
 
 define('LOOT_CHANCE', array(
+    'anneau_caprice'=>200,
+    'anneau_ferocite'=>200,
+    'anneau_finesse'=>200,
+    'anneau_horizon'=>200,
+    'anneau_pretention'=>200,
+    'anneau_puissance'=>200,
+    'anneau_souplesse'=>200,
+    'anneau_tenacite'=>200,
 ));
 
 

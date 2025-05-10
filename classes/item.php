@@ -589,7 +589,7 @@ class Item{
 
         foreach($values as $k=>$e){
 
-            if(in_array($e, array('trophee','munition'))){
+            if(in_array($e, array('trophee','munition', 'doigt'))){
 
                 unset($values[$k]);
             }
