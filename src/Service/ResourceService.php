@@ -71,7 +71,7 @@ class ResourceService
         AND
         name IN ("'. implode('","', array_keys($biomes)) .'")
         AND
-        damages=0
+        damages=-1
         GROUP BY
         name
         ';
@@ -87,7 +87,7 @@ class ResourceService
 
         $sql = '
         UPDATE map_walls
-        SET damages=-1
+        SET damages=-2
         WHERE 
         id IN('. implode(',', $resourcesId) .')
         ';
@@ -101,7 +101,7 @@ class ResourceService
 
         $sql = '
         UPDATE map_walls
-        SET damages=0
+        SET damages=-1
         WHERE 
         id IN('. implode(',', $resourcesId) .')
         ';

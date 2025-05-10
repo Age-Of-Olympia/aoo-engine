@@ -383,10 +383,10 @@ else{
                     echo '<br />';
 
                     // Affichage si la ressource est épuisée ou non
-                    if($row->damages == 0){
+                    if($row->damages == -1){
                         echo '<br /><span style="color:green;"><b>Récoltable.</b></span> <br />';
                     }
-                    if($row->damages == -1){
+                    if($row->damages == -2){
                         echo '<br /><span style="color:red;"><b>Épuisée.</b></span> <br />';
                     }
 
