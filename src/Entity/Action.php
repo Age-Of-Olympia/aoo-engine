@@ -124,7 +124,7 @@ abstract class Action implements ActionInterface
     /**
      * @return Collection<int, ActionCondition>
      */
-    public function getActionConditions(): Collection
+    public function getConditions(): Collection
     {
         return $this->actionConditions;
     }

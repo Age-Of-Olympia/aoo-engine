@@ -13,7 +13,9 @@ interface ActionInterface
     public function getId(): ?int;
     public function setId(int $id): self;
     public function getName(): string;
-    public function getActionConditions(): Collection;
+    public function getIcon(): string;
+    public function getDisplayName(): string;
+    public function getConditions(): Collection;
     public function initAutomaticOutcomeInstructions(): self;
     public function addCondition(ActionCondition $condition): self;
     public function removeCondition(ActionCondition $condition): self;

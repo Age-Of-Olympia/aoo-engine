@@ -1,5 +1,9 @@
 <?php
 
+use App\Entity\EntityManagerFactory;
+use App\Interface\ActionInterface;
+use App\Service\ActionService;
+
 require_once('config.php');
 
 
@@ -238,39 +242,29 @@ if($res->num_rows){
         usort($actions, 'custom_compare');
 
         foreach($actions as $e){
-
-
-            $actionJson = json()->decode('actions', $e);
-
-
-            if(!empty($actionJson->targetType) && $actionJson->targetType == 'none'){
-
+            
+            $actionService = new ActionService();
+            $entityManager = EntityManagerFactory::getEntityManager();
+            if ($e == "attaquer") {
+                if ($player->id != $target->id) {
+                    $actionData = $actionService->getActionByName("melee");
+                    $dataImg .= buildActionToDisplay($target->id, $actionData, "attaquer");
+                }
                 continue;
             }
 
-
-            if($player->id == $target->id){
-
-                if(!isset($actionJson->targetType) || $actionJson->targetType != 'self'){
-
-                    continue;
+            $actionData = $actionService->getActionByName($e);
+            
+            $actionOutcomes = $actionData->getOutcomes();
+            foreach ($actionOutcomes as $actionOutcome) {
+                if ($actionOutcome->getApplyToSelf() && $player->id == $target->id) {
+                    $dataImg .= buildActionToDisplay($target->id, $actionData);
+                    continue 2;
+                } else if (!$actionOutcome->getApplyToSelf() && $player->id != $target->id) {
+                    $dataImg .= buildActionToDisplay($target->id, $actionData);
+                    continue 2;
                 }
             }
-            elseif(!isset($actionJson->targetType) || $actionJson->targetType == 'self'){
-
-                continue;
-            }
-
-
-            $dataImg .= '<button
-                class="action"
-
-                data-target-id="'. $target->id .'"
-                data-action="'. $e .'"
-                >
-                <span class="ra '. $actionJson->raFont .'"></span>
-                <span class="action-name">'. $actionJson->name .'</span>
-                </button><br/>';
         }
 
 
@@ -543,3 +537,30 @@ if(!empty($card)){
 
 
 echo Str::minify(ob_get_clean());
+
+function buildActionToDisplay(int $targetId, ActionInterface $action, ?string $nameOverride = null) : string {
+        $res = '<button
+                class="action"
+
+                data-target-id="'. $targetId .'"
+                data-action="'. $action->getName() .'"
+                >
+                <span class="ra '. $action->getIcon() .'"></span>
+                <span class="action-name">'. $action->getDisplayName() .'</span>
+                </button><br/>';
+
+        if ($nameOverride != null) {
+            $res = '<button
+                class="action"
+
+                data-target-id="'. $targetId .'"
+                data-action="'. $nameOverride .'"
+                >
+                <span class="ra '. $action->getIcon() .'"></span>
+                <span class="action-name">'. ucfirst($nameOverride) .'</span>
+                </button><br/>';
+        }
+
+        return $res;
+
+}
