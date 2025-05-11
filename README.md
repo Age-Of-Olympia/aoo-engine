@@ -54,6 +54,22 @@ define('DB_CONSTANTS', array(
 ```
 sauvegardez et vous être prêt ! 
 
+### Premiers pas sur le jeu
+
+Pour pouvoir lancer le jeu, il faut copier les repertoires `datas_standalone` et `img_standalone` respectivement vers les dossiers `datas` et `img`.
+
+Le fichier `db/init_noupdates.sql` est lancé par le `docker-compose.yml` automatiquement pour peupler la base.
+
+Ces actions vont entre autre créer trois personnages : 
+
+- Cradek, matricule 1, Nain, administrateur
+- Dorna, matricule 2, Nain, joueur
+- Thyrias, matricule 3, Elfe, joueur
+
+Pour s'y connecter, le mot de passe est `test`.
+
+Pour ouvrir la console d'administration il faut utiliser ² une fois connecté ou cliquer sur le bouton pour ouvrir la console dans le menu des paramètres, en haut à droite de l'écran de jeu.
+
 ### Lancement du serveur
 
 Il ne reste plus qu'à démarrer le serveur : 
@@ -84,18 +100,3 @@ Il est évidemment possible de modifier l'environnement de travail en modifiant 
 
 Une fois que c'est fait, il faut alors reconstruire le devcontainer : il faut appuyer sur F1 puis taper "Dev Container" dans le moteur de recherche, les différentes commandes, dont celles de reconstruction, apparaîtront.
 
-### Premiers pas sur le jeu
-
-Pour pouvoir lancer le jeu, il faut copier les repertoires `datas_standalone` et `img_standalone` respectivement vers les dossiers `datas` et `img`.
-
-Le fichier `db/init_noupdates.sql` est lancé par le `docker-compose.yml` automatiquement pour peupler la base.
-
-Ces actions vont entre autre créer trois personnages : 
-
-- Cradek, matricule 1, Nain, administrateur
-- Dorna, matricule 2, Nain, joueur
-- Thyrias, matricule 3, Elfe, joueur
-
-Pour s'y connecter, le mot de passe est `test`.
-
-Pour ouvrir la console d'administration il faut utiliser ² une fois connecté.

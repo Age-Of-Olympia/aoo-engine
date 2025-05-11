@@ -132,10 +132,6 @@ try {
     echo $e->getMessage();
 }
 
-//         if($totalDamages){
-//             include('scripts/actions/tank.php');
-//         }
-
 $targetPvAfter = $target->getRemaining('pv');
 
 if($targetPvBefore != $targetPvAfter){

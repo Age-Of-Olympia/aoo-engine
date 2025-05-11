@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
--- Host: mariadb-aoo4
--- Generation Time: Feb 15, 2025 at 10:12 PM
--- Server version: 11.6.2-MariaDB-ubu2404
--- PHP Version: 8.2.8
+-- Hôte : mariadb-aoo4
+-- Généré le : dim. 11 mai 2025 à 15:19
+-- Version du serveur : 11.6.2-MariaDB-ubu2404
+-- Version de PHP : 8.2.27
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,28 +18,172 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `aoo4`
+-- Base de données : `aoo4`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `audit`
+-- Structure de la table `actions`
 --
 
-CREATE TABLE audit (
-    id INT AUTO_INCREMENT NOT NULL,
-    audit_key INT NOT NULL,
-    action VARCHAR(255) NOT NULL,
-    timestamp DATETIME NOT NULL,
-    user_id INT DEFAULT NULL,
-    ip_address VARCHAR(45) DEFAULT NULL,
-    details TEXT DEFAULT NULL,
-    PRIMARY KEY (id)
+CREATE TABLE `actions` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `icon` varchar(50) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `display_name` varchar(255) DEFAULT NULL,
+  `text` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Déchargement des données de la table `actions`
+--
+
+INSERT INTO `actions` (`id`, `name`, `icon`, `type`, `display_name`, `text`) VALUES
+(1, 'melee', 'ra-crossed-swords', 'melee', 'Corps à corps', NULL),
+(2, 'distance', 'ra-arrow-cluster', 'distance', 'Tirer', NULL),
+(3, 'dmg1/pic_de_pierre', 'ra-drill', 'spell', 'Pic de Pierre', 'Projette un pic de pierre sur l\'adversaire.'),
+(4, 'dps/poings_pierre', 'ra-barbed-arrow', 'spell', 'Poings de Pierre', 'Vos poings deviennent durs comme de la roche millénaire, que vous abattez sur vos ennemis.'),
+(5, 'soins/barbier', 'ra-cut-palm', 'heal', 'Barbier', 'Petites et grandes chirurgies des blessés.'),
+(6, 'special/attaque_sautee', 'ra-axe-swing', 'spell', 'Attaque Sautée', 'Avec une arme de mêlée, déplace immédiatement le personnage au contact de la cible et lui inflige des dégâts magiques.'),
+(7, 'vol_a_la_tire', 'ra-nuclear', 'steal', 'Vol à la tire', 'Dérobe des pièces d\'or !'),
+(8, 'repos', 'ra-campfire', 'rest', 'Repos', NULL),
+(9, 'courir', 'ra-boot-stomp', 'run', 'Courir', NULL),
+(10, 'esquive/cle_de_bras', 'ra-bear-trap', 'spell', 'Clé de bras', 'Pare la prochaine attaque de mêlée et immobilise l\'adversaire (uniquement à Mains nues).'),
+(11, 'prier', 'ra-crowned-heart', 'pray', 'Prier', NULL),
+(12, 'fouiller', 'ra-clover', 'search', 'Fouiller', NULL),
+(13, 'entrainement', 'ra-archery-target', 'train', 'Entraînement', NULL),
+(14, 'tuto/attaquer', 'ra-crossed-swords', 'melee', 'Attaquer', NULL),
+(15, 'dmg2/frappe_vicieuse', 'ra-diving-dagger', 'technique', 'Frappe Vicieuse', 'Ignore l\'armure de l\'adversaire.'),
+(16, 'corrupt/corruption_du_bois', 'ra-biohazard', 'spell', 'Corruption du Bois', 'Augmente la chance que l\'équipement en bois de l\'adversaire se casse.');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `action_conditions`
+--
+
+CREATE TABLE `action_conditions` (
+  `id` int(11) NOT NULL,
+  `conditionType` varchar(100) NOT NULL,
+  `parameters` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`parameters`)),
+  `action_id` int(11) NOT NULL,
+  `execution_order` int(11) DEFAULT NULL,
+  `blocking` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Déchargement des données de la table `action_conditions`
+--
+
+INSERT INTO `action_conditions` (`id`, `conditionType`, `parameters`, `action_id`, `execution_order`, `blocking`) VALUES
+(1, 'RequiresDistance', '{\"max\":1}', 1, 0, 1),
+(2, 'MeleeCompute', '{\"actorRollType\":\"cc\", \"targetRollType\": \"cc/agi\"}', 1, 10, 0),
+(3, 'RequiresTraitValue', '{ \"a\": 1 }', 1, 7, 1),
+(5, 'RequiresWeaponType', '{\"type\": [\"melee\"]}', 1, 1, 1),
+(6, 'RequiresDistance', '{\"min\":2}', 2, 0, 1),
+(7, 'DistanceCompute', '{\"actorRollType\":\"ct\", \"targetRollType\": \"cc/agi\"}', 2, 10, 0),
+(8, 'RequiresTraitValue', '{ \"a\": 1 }', 2, 3, 1),
+(10, 'RequiresWeaponType', '{\"type\": [\"tir\",\"jet\"]}', 2, 1, 1),
+(11, 'RequiresAmmo', '{}', 2, 4, 1),
+(12, 'RequiresDistance', '{\"min\":2}', 3, 0, 1),
+(13, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 4 }', 3, 3, 1),
+(14, 'SpellCompute', '{\"actorRollType\":\"fm\", \"targetRollType\": \"fm\"}', 3, 10, 0),
+(15, 'RequiresDistance', '{\"max\":1}', 4, 0, 1),
+(16, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 8 }', 4, 3, 1),
+(17, 'SpellCompute', '{\"actorRollType\":\"fm\", \"targetRollType\": \"fm\"}', 4, 10, 0),
+(18, 'RequiresDistance', '{\"max\":1}', 5, 0, 1),
+(19, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 8 }', 5, 3, 1),
+(20, 'RequiresDistance', '{\"min\":2}', 6, 0, 1),
+(21, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 12 }', 6, 7, 1),
+(22, 'MeleeCompute', '{\"actorRollType\":\"cc\", \"targetRollType\": \"cc/agi\"}', 6, 10, 0),
+(24, 'RequiresWeaponType', '{\"type\": [\"melee\"]}', 6, 1, 1),
+(25, 'RequiresDistance', '{\"max\":1}', 7, 0, 1),
+(26, 'RequiresTraitValue', '{ \"a\": 1 }', 7, 5, 1),
+(27, 'Compute', '{\"actorRollType\":\"agi\", \"targetRollType\": \"agi\"}', 7, 10, 0),
+(28, 'ForbidIfHasEffect', '{ \"actorEffect\": \"adrenaline\", \"targetEffect\" : \"adrenaline\" }', 7, 6, 1),
+(29, 'RequiresDistance', '{\"max\":0}', 8, 0, 1),
+(30, 'RequiresTraitValue', '{ \"a\": 1, \"uses_fatigue\": false }', 8, 5, 1),
+(31, 'RequiresTraitValue', '{ \"a\": 1 }', 9, 1, 1),
+(32, 'RequiresTraitValue', '{ \"fatigue\": \">0\" }', 8, 1, 1),
+(33, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 7 }', 10, 3, 1),
+(34, 'ForbidIfHasEffect', '{ \"actorEffect\": \"cle_de_bras\" }', 10, 6, 1),
+(35, 'RequiresTraitValue', '{ \"a\": 1 }', 11, 2, 1),
+(36, 'RequiresDistance', '{\"max\":0}', 11, 0, 1),
+(37, 'RequiresGodAffiliation', NULL, 11, 1, 1),
+(38, 'RequiresTraitValue', '{ \"a\": 1 }', 12, 2, 1),
+(39, 'RequiresDistance', '{\"max\":0}', 12, 0, 1),
+(40, 'RequiresResource', NULL, 12, 1, 1),
+(41, 'RequiresTraitValue', '{ \"fatigue\": \"both\" }', 13, 1, 1),
+(42, 'Option', '{\"option\": \"noTrain\"}', 13, 0, 1),
+(43, 'RequiresTraitValue', '{ \"a\": 1 }', 13, 2, 1),
+(44, 'RequiresDistance', '{\"max\":1}', 13, 0, 1),
+(45, 'RequiresDistance', '{\"max\":1}', 14, 0, 1),
+(46, 'RequiresDistance', '{\"max\":1}', 15, 0, 1),
+(47, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 7 }', 15, 3, 1),
+(48, 'TechniqueCompute', '{\"actorRollType\":\"cc\", \"targetRollType\": \"cc/agi\"}', 15, 10, 0),
+(49, 'ForbidIfHasEffect', '{ \"targetEffects\" : [\"corruption_du_metal\",\"corruption_du_bronze\",\"corruption_du_cuir\",\"corruption_des_plantes\"] }', 16, 6, 1),
+(50, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 7 }', 16, 3, 1),
+(51, 'SpellCompute', '{\"actorRollType\":\"fm\", \"targetRollType\": \"fm\"}', 16, 10, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `action_outcomes`
+--
+
+CREATE TABLE `action_outcomes` (
+  `id` int(11) NOT NULL,
+  `apply_to_self` tinyint(1) NOT NULL DEFAULT 0,
+  `name` varchar(100) DEFAULT NULL,
+  `on_success` tinyint(1) NOT NULL DEFAULT 1,
+  `action_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Déchargement des données de la table `action_outcomes`
+--
+
+INSERT INTO `action_outcomes` (`id`, `apply_to_self`, `name`, `on_success`, `action_id`) VALUES
+(1, 0, 'melee_damage', 1, 1),
+(3, 0, 'distance_damage', 1, 2),
+(4, 0, 'spell_damage', 1, 3),
+(7, 0, 'spell_damage', 1, 4),
+(9, 0, 'technique_healing', 1, 5),
+(10, 0, 'melee_damage', 1, 6),
+(11, 0, 'steal_effect', 1, 7),
+(12, 0, 'steal_effect', 0, 7),
+(13, 1, 'rest_effect', 1, 8),
+(14, 0, 'run_effect', 1, 9),
+(15, 1, 'dodge_effect', 1, 10),
+(16, 1, 'pray_effect', 1, 11),
+(17, 1, 'search_effect', 1, 12),
+(18, 0, 'train_effect', 1, 13),
+(19, 0, 'tuto_attack_effect', 1, 14),
+(20, 0, 'technique_damage', 1, 15),
+(21, 0, 'spell_corrupt', 1, 16);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `audit`
+--
+
+CREATE TABLE `audit` (
+  `id` int(11) NOT NULL,
+  `audit_key` int(11) DEFAULT NULL,
+  `action` varchar(255) NOT NULL,
+  `timestamp` datetime NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(255) DEFAULT NULL,
+  `details` longtext DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- Table structure for table `coords`
+-- Structure de la table `coords`
 --
 
 CREATE TABLE `coords` (
@@ -51,7 +195,7 @@ CREATE TABLE `coords` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `coords`
+-- Déchargement des données de la table `coords`
 --
 
 INSERT INTO `coords` (`id`, `x`, `y`, `z`, `plan`) VALUES
@@ -1634,12 +1778,26 @@ INSERT INTO `coords` (`id`, `x`, `y`, `z`, `plan`) VALUES
 (51525, 1, -2, -1, 'gaia2'),
 (51580, -210, 0, 0, 'enfers'),
 (51586, -210, -210, 0, 'enfers'),
-(51587, 6, -8, 0, 'gaia');
+(51587, 6, -8, 0, 'gaia'),
+(51588, -4, 0, 0, 'enfers'),
+(51589, 0, 2, 0, 'enfers');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `forums_keywords`
+-- Structure de la table `doctrine_migration_versions`
+--
+
+CREATE TABLE `doctrine_migration_versions` (
+  `version` varchar(191) NOT NULL,
+  `executed_at` datetime DEFAULT NULL,
+  `execution_time` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `forums_keywords`
 --
 
 CREATE TABLE `forums_keywords` (
@@ -1648,10 +1806,17 @@ CREATE TABLE `forums_keywords` (
   `postName` bigint(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Déchargement des données de la table `forums_keywords`
+--
+
+INSERT INTO `forums_keywords` (`id`, `name`, `postName`) VALUES
+(1, 'message', 1741391472036);
+
 -- --------------------------------------------------------
 
 --
--- Table structure for table `items`
+-- Structure de la table `items`
 --
 
 CREATE TABLE `items` (
@@ -1667,7 +1832,7 @@ CREATE TABLE `items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `items`
+-- Déchargement des données de la table `items`
 --
 
 INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `element`, `blessed_by_id`, `spell`) VALUES
@@ -1789,12 +1954,14 @@ INSERT INTO `items` (`id`, `name`, `private`, `enchanted`, `vorpal`, `cursed`, `
 (124, 'menthe', 0, 0, 0, 0, '', NULL, NULL),
 (125, 'armet_incruste', 0, 1, 0, 0, '', NULL, NULL),
 (126, 'cafe', 0, 0, 0, 0, '', NULL, NULL),
-(127, 'mur_noir', 0, 0, 0, 0, '', NULL, NULL);
+(127, 'mur_noir', 0, 0, 0, 0, '', NULL, NULL),
+(128, 'parchemin_sort', 0, 0, 0, 0, '', NULL, 'dps/poings_pierre'),
+(129, 'parchemin_sort', 0, 0, 0, 0, '', NULL, 'special/attaque_sautee');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `items_asks`
+-- Structure de la table `items_asks`
 --
 
 CREATE TABLE `items_asks` (
@@ -1809,7 +1976,7 @@ CREATE TABLE `items_asks` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `items_bids`
+-- Structure de la table `items_bids`
 --
 
 CREATE TABLE `items_bids` (
@@ -1824,7 +1991,7 @@ CREATE TABLE `items_bids` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `items_exchanges`
+-- Structure de la table `items_exchanges`
 --
 
 CREATE TABLE `items_exchanges` (
@@ -1839,7 +2006,7 @@ CREATE TABLE `items_exchanges` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_dialogs`
+-- Structure de la table `map_dialogs`
 --
 
 CREATE TABLE `map_dialogs` (
@@ -1852,7 +2019,7 @@ CREATE TABLE `map_dialogs` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_elements`
+-- Structure de la table `map_elements`
 --
 
 CREATE TABLE `map_elements` (
@@ -1863,7 +2030,7 @@ CREATE TABLE `map_elements` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `map_elements`
+-- Déchargement des données de la table `map_elements`
 --
 
 INSERT INTO `map_elements` (`id`, `name`, `coords_id`, `endTime`) VALUES
@@ -2366,7 +2533,7 @@ INSERT INTO `map_elements` (`id`, `name`, `coords_id`, `endTime`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_foregrounds`
+-- Structure de la table `map_foregrounds`
 --
 
 CREATE TABLE `map_foregrounds` (
@@ -2376,7 +2543,7 @@ CREATE TABLE `map_foregrounds` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `map_foregrounds`
+-- Déchargement des données de la table `map_foregrounds`
 --
 
 INSERT INTO `map_foregrounds` (`id`, `coords_id`, `name`) VALUES
@@ -2421,7 +2588,7 @@ INSERT INTO `map_foregrounds` (`id`, `coords_id`, `name`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_items`
+-- Structure de la table `map_items`
 --
 
 CREATE TABLE `map_items` (
@@ -2435,7 +2602,7 @@ CREATE TABLE `map_items` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_plants`
+-- Structure de la table `map_plants`
 --
 
 CREATE TABLE `map_plants` (
@@ -2446,7 +2613,7 @@ CREATE TABLE `map_plants` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `map_plants`
+-- Déchargement des données de la table `map_plants`
 --
 
 INSERT INTO `map_plants` (`id`, `name`, `coords_id`, `params`) VALUES
@@ -2513,7 +2680,20 @@ INSERT INTO `map_plants` (`id`, `name`, `coords_id`, `params`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_tiles`
+-- Structure de la table `map_routes`
+--
+
+CREATE TABLE `map_routes` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `coords_id` int(11) DEFAULT NULL,
+  `player_id` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `map_tiles`
 --
 
 CREATE TABLE `map_tiles` (
@@ -2525,7 +2705,7 @@ CREATE TABLE `map_tiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `map_tiles`
+-- Déchargement des données de la table `map_tiles`
 --
 
 INSERT INTO `map_tiles` (`id`, `name`, `coords_id`, `foreground`, `player_id`) VALUES
@@ -3573,7 +3753,7 @@ INSERT INTO `map_tiles` (`id`, `name`, `coords_id`, `foreground`, `player_id`) V
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_triggers`
+-- Structure de la table `map_triggers`
 --
 
 CREATE TABLE `map_triggers` (
@@ -3584,7 +3764,7 @@ CREATE TABLE `map_triggers` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `map_triggers`
+-- Déchargement des données de la table `map_triggers`
 --
 
 INSERT INTO `map_triggers` (`id`, `name`, `coords_id`, `params`) VALUES
@@ -3771,7 +3951,7 @@ INSERT INTO `map_triggers` (`id`, `name`, `coords_id`, `params`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `map_walls`
+-- Structure de la table `map_walls`
 --
 
 CREATE TABLE `map_walls` (
@@ -3783,7 +3963,7 @@ CREATE TABLE `map_walls` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `map_walls`
+-- Déchargement des données de la table `map_walls`
 --
 
 INSERT INTO `map_walls` (`id`, `name`, `player_id`, `coords_id`, `damages`) VALUES
@@ -4025,12 +4205,58 @@ INSERT INTO `map_walls` (`id`, `name`, `player_id`, `coords_id`, `damages`) VALU
 (351, 'arbre1', NULL, 17420, 0),
 (352, 'arbre2', NULL, 17419, 0),
 (353, 'arbre2', NULL, 17435, 0),
-(354, 'arbre3', NULL, 17437, 0);
+(354, 'arbre3', NULL, 17437, 0),
+(355, 'arbre3', NULL, 17179, 0),
+(356, 'pierre3', NULL, 17177, 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players`
+-- Structure de la table `outcome_instructions`
+--
+
+CREATE TABLE `outcome_instructions` (
+  `id` int(11) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `parameters` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`parameters`)),
+  `orderIndex` int(11) NOT NULL DEFAULT 0,
+  `outcome_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Déchargement des données de la table `outcome_instructions`
+--
+
+INSERT INTO `outcome_instructions` (`id`, `type`, `parameters`, `orderIndex`, `outcome_id`) VALUES
+(1, 'lifeloss', '{ \"actorDamagesTrait\": \"f\", \"targetDamagesTrait\": \"e\" }', 0, 1),
+(3, 'damageobject', '{}', 0, 1),
+(4, 'lifeloss', '{ \"actorDamagesTrait\": \"f\", \"targetDamagesTrait\": \"e\", \"distance\": true }', 0, 3),
+(6, 'lifeloss', '{ \"actorDamagesTrait\": \"m\", \"targetDamagesTrait\": \"m\", \"bonusDamagesTrait\": 3, \"distance\": true }', 0, 4),
+(8, 'lifeloss', '{ \"actorDamagesTrait\": \"m\", \"targetDamagesTrait\": \"m\", \"bonusDamagesTrait\": 8 }', 0, 7),
+(10, 'healing', '{ \"actorHealingTrait\": \"agi\" }', 0, 9),
+(11, 'lifeloss', '{ \"actorDamagesTrait\": \"f\", \"targetDamagesTrait\": \"e\", \"bonusDamagesTrait\": \"m\", \"bonusDefenseTrait\": \"m\" }', 3, 10),
+(13, 'teleport', '{ \"coords\": \"target\" }', 1, 10),
+(14, 'object', '{\"action\":\"steal\", \"object\": 1 }', 0, 11),
+(15, 'applystatus', '{ \"adrenaline\": true, \"duration\": 172800 }', 0, 12),
+(16, 'applystatus', '{ \"finished\": true, \"player\": \"actor\" }', 10, 13),
+(17, 'player', '{\"carac\":\"fatigue\", \"value\": 4, \"player\": \"actor\"}', 0, 13),
+(18, 'player', '{\"carac\": \"mvt\", \"value\" : 1, \"player\": \"actor\"}', 0, 14),
+(19, 'applystatus', '{ \"cle_de_bras\": true, \"player\": \"actor\", \"duration\": 0 }', 0, 15),
+(20, 'player', '{\"carac\": \"foi\", \"player\": \"actor\"}', 0, 16),
+(21, 'resource', NULL, 0, 17),
+(22, 'onlylog', NULL, 0, 18),
+(23, 'damageobject', '{}', 0, 3),
+(24, 'damageobject', '{}', 0, 10),
+(25, 'removeaction', '{\"action\":\"tuto/attaquer\"}', 0, 19),
+(26, 'addraceactions', '{}', 1, 19),
+(27, 'teleport', '{ \"coords\": \"x,y,z,gaia2\" }', 2, 19),
+(28, 'lifeloss', '{ \"actorDamagesTrait\": \"f\", \"targetDamagesTrait\": \"e\", \"bonusDamagesTrait\": 2, \"targetIgnore\": [\"tronc\"] }', 3, 20),
+(29, 'applystatus', '{ \"corruption_du_bois\": true, \"player\": \"target\", \"duration\": 259200 }', 0, 21);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `players`
 --
 
 CREATE TABLE `players` (
@@ -4068,19 +4294,22 @@ CREATE TABLE `players` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `players`
+-- Déchargement des données de la table `players`
 --
 
 INSERT INTO `players` (`id`, `name`, `psw`, `mail`, `plain_mail`, `coords_id`, `race`, `xp`, `pi`, `pr`, `malus`, `fatigue`, `godId`, `pf`, `rank`, `avatar`, `portrait`, `text`, `story`, `quest`, `faction`, `factionRole`, `secretFaction`, `secretFactionRole`, `nextTurnTime`, `registerTime`, `lastActionTime`, `lastLoginTime`, `antiBerserkTime`, `lastTravelTime`, `email_bonus`) VALUES
-(-1, 'Gaïa', '', '', '', 15, 'lutin', 0, 0, 0, 0, 0, 0, 0, 1, 'img/avatars/ame/lutin.webp', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'saruta_et_freres', 0, '', 0, 0, 0, 0, 0, 0, 0, 0),
-(1, 'Cradek', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '$2y$10$hkduB0wnA8nfn2C.ck6UA.b6jr56K9WeBDel33IokN/rtogNXQ8C2', '', 15318, 'nain', 6, 6, 0, 0, 1, 0, 0, 1, 'img/avatars/nain/5.png', 'img/portraits/nain/45.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1736181320, 1736117307, 1736120127, 1736121625, 16200, 1736117842, 0),
-(2, 'Dorna', '$2y$10$XJm1A0RZWGRbhvDlUyOP8e/O0hhDLLUwU.VJM00GbmWjydKqeoczy', '$2y$10$pVJivan0Lhqg.x0OSWQzaulIWVr.BPJ.c3Q992jtWsy61FXH84wNS', '', 17004, 'nain', 6, 6, 0, 0, 1, 0, 0, 1, 'img/avatars/nain/73.png', 'img/portraits/nain/44.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1736181749, 1736118099, 1736120060, 1736121647, 16200, 1736118462, 0),
-(3, 'Thyrias', '$2y$10$SzsgPLFIpn11Rg/TDubHj.fvFLGZdgY.Vwx9VD9GlYYhPu5MR3SeG', '$2y$10$1iltdhoPMNdCc9hBNMbdkuVpkb5/Qf7s2CIM0.KgIFwkQmVKXj7p6', '', 15472, 'elfe', 10, 10, 0, 0, 1, 0, 0, 1, 'img/avatars/elfe/70.png', 'img/portraits/elfe/33.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'eryn_dolen', 0, '', 0, 1736184980, 1736120180, 1736120472, 1736120194, 16200, 0, 0);
+(-1, 'Gaïa', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '', '', 15, 'lutin', 10, 10, 0, 0, 0, 0, 0, 1, 'img/avatars/ame/lutin.webp', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'saruta_et_freres', 0, '', 0, 1744286400, 0, 0, 0, 16200, 0, 0),
+(1, 'Cradek', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '$2y$10$hkduB0wnA8nfn2C.ck6UA.b6jr56K9WeBDel33IokN/rtogNXQ8C2', '', 17009, 'nain', 5906, 99, 2, 0, 7, -1, 2, 5, 'img/avatars/nain/5.png', 'img/portraits/nain/45.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1744540273, 1736117307, 1744478783, 1744536431, 1744430285, 1744414037, 0),
+(2, 'Dorna', '$2y$10$XJm1A0RZWGRbhvDlUyOP8e/O0hhDLLUwU.VJM00GbmWjydKqeoczy', '$2y$10$pVJivan0Lhqg.x0OSWQzaulIWVr.BPJ.c3Q992jtWsy61FXH84wNS', '', 15318, 'nain', 77, 77, 0, 34, 0, 0, 0, 1, 'img/avatars/nain/73.png', 'img/portraits/nain/44.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1744540949, 1736118099, 0, 1744534215, 16200, 1744414042, 0),
+(3, 'Thyrias', '$2y$10$SzsgPLFIpn11Rg/TDubHj.fvFLGZdgY.Vwx9VD9GlYYhPu5MR3SeG', '$2y$10$1iltdhoPMNdCc9hBNMbdkuVpkb5/Qf7s2CIM0.KgIFwkQmVKXj7p6', '', 17014, 'elfe', 135, 135, 0, 0, 0, 0, 0, 1, 'img/avatars/elfe/70.png', 'img/portraits/elfe/33.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'eryn_dolen', 0, '', 0, 1745799779, 1736120180, 0, 1744536536, 1744584786, 1744535727, 0),
+(4, 'ElfeDeTest', '$2y$10$Riubh3hGhkkkXmAzJzIRweUbWNscYEdRJXtFFsogw/JjzRRLoTuPS', '$2y$10$QnVaD.mKOx6RoGTWFoXlBeAso4ETFp8sQdEw2zq5D.EKtpTkpHgo.', 'test@test.com', 15469, 'elfe', 25, 25, 0, 2, -2, 0, 0, 1, 'img/avatars/elfe/1.png', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'eryn_dolen', 0, '', 0, 1744484739, 1744482661, 1744482820, 1744482714, 1737697108, 1744482820, 0),
+(5, 'Elfe', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '$2y$10$QnVaD.mKOx6RoGTWFoXlBeAso4ETFp8sQdEw2zq5D.EKtpTkpHgo.', 'elfe1@elfe1.com', 15457, 'elfe', 25, 25, 0, 0, 1, 0, 0, 1, 'img/avatars/elfe/1.png', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'eryn_dolen', 0, '', 0, 1744500900, 1744483371, 1744483652, 1744483513, 16200, 1744483628, 0),
+(6, 'Nain', '$2y$10$2/jUdRSDAnoA3Tl0Ph1R1uGqreJ9jycmb8OSC3lGUiqBsF.ETgnGC', '$2y$10$XkX/0sNbzGVbf3EYIn.9ue7yexpqIcGF8/hT0Pxm8tR6cVaq3.vsK', 'test@test.com', 17015, 'nain', 25, 25, 0, 0, 0, 0, 0, 1, 'img/avatars/nain/1.png', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1744548869, 1744484069, 1744484419, 1744484074, 16200, 1744484419, 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_actions`
+-- Structure de la table `players_actions`
 --
 
 CREATE TABLE `players_actions` (
@@ -4091,18 +4320,21 @@ CREATE TABLE `players_actions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `players_actions`
+-- Déchargement des données de la table `players_actions`
 --
 
 INSERT INTO `players_actions` (`player_id`, `name`, `type`, `charges`) VALUES
 (1, 'attaquer', '', 0),
 (1, 'courir', '', 0),
 (1, 'dmg1/pic_de_pierre', 'sort', 0),
+(1, 'dps/poings_pierre', 'sort', 0),
 (1, 'entrainement', '', 0),
 (1, 'fouiller', '', 0),
 (1, 'prier', '', 0),
 (1, 'repos', '', 0),
 (1, 'soins/barbier', 'sort', 0),
+(1, 'special/attaque_sautee', 'sort', 0),
+(1, 'vol_a_la_tire', '', 0),
 (2, 'attaquer', '', 0),
 (2, 'courir', '', 0),
 (2, 'dmg1/pic_de_pierre', 'sort', 0),
@@ -4112,18 +4344,36 @@ INSERT INTO `players_actions` (`player_id`, `name`, `type`, `charges`) VALUES
 (2, 'repos', '', 0),
 (2, 'soins/barbier', 'sort', 0),
 (3, 'attaquer', '', 0),
+(3, 'corrupt/corruption_du_bois', 'sort', 0),
 (3, 'courir', '', 0),
-(3, 'dmg1/fleche_aquatique', 'sort', 0),
+(3, 'dmg2/frappe_vicieuse', 'sort', 0),
 (3, 'entrainement', '', 0),
 (3, 'fouiller', '', 0),
 (3, 'prier', '', 0),
 (3, 'repos', '', 0),
-(3, 'soins/lien_de_vie', 'sort', 0);
+(3, 'soins/lien_de_vie', 'sort', 0),
+(4, 'tuto/attaquer', '', 0),
+(5, 'attaquer', '', 0),
+(5, 'courir', '', 0),
+(5, 'dmg1/fleche_aquatique', 'sort', 0),
+(5, 'entrainement', '', 0),
+(5, 'fouiller', '', 0),
+(5, 'prier', '', 0),
+(5, 'repos', '', 0),
+(5, 'soins/lien_de_vie', 'sort', 0),
+(6, 'attaquer', '', 0),
+(6, 'courir', '', 0),
+(6, 'dmg1/pic_de_pierre', 'sort', 0),
+(6, 'entrainement', '', 0),
+(6, 'fouiller', '', 0),
+(6, 'prier', '', 0),
+(6, 'repos', '', 0),
+(6, 'soins/barbier', 'sort', 0);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_assists`
+-- Structure de la table `players_assists`
 --
 
 CREATE TABLE `players_assists` (
@@ -4137,19 +4387,19 @@ CREATE TABLE `players_assists` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_banned`
+-- Structure de la table `players_banned`
 --
 
 CREATE TABLE `players_banned` (
   `player_id` int(11) NOT NULL,
   `ips` text NOT NULL,
-  `text` varchar(255) NOT NULL
+  `text` longtext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_bonus`
+-- Structure de la table `players_bonus`
 --
 
 CREATE TABLE `players_bonus` (
@@ -4158,22 +4408,10 @@ CREATE TABLE `players_bonus` (
   `n` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `players_bonus`
---
-
-INSERT INTO `players_bonus` (`player_id`, `name`, `n`) VALUES
-(1, 'a', -1),
-(1, 'mvt', -1),
-(2, 'a', -1),
-(2, 'mvt', -1),
-(3, 'a', -1),
-(3, 'mvt', -2);
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_connections`
+-- Structure de la table `players_connections`
 --
 
 CREATE TABLE `players_connections` (
@@ -4184,26 +4422,10 @@ CREATE TABLE `players_connections` (
   `footprint` varchar(255) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `players_connections`
---
-
-INSERT INTO `players_connections` (`id`, `player_id`, `ip`, `time`, `footprint`) VALUES
-(1, 1, '0b4160b356e71f5df4c73233a8a686d9', 1736117543, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(2, 2, '0b4160b356e71f5df4c73233a8a686d9', 1736118255, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(3, 1, '0b4160b356e71f5df4c73233a8a686d9', 1736118434, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(4, 2, '0b4160b356e71f5df4c73233a8a686d9', 1736118488, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(5, 1, '0b4160b356e71f5df4c73233a8a686d9', 1736118520, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(6, 2, '0b4160b356e71f5df4c73233a8a686d9', 1736118569, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(7, 1, '0b4160b356e71f5df4c73233a8a686d9', 1736120123, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(8, 3, '0b4160b356e71f5df4c73233a8a686d9', 1736120194, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(9, 1, '0b4160b356e71f5df4c73233a8a686d9', 1736121625, '186f3c809ebe9df2f58f8f8c97c5a370'),
-(10, 2, '0b4160b356e71f5df4c73233a8a686d9', 1736121647, '186f3c809ebe9df2f58f8f8c97c5a370');
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_effects`
+-- Structure de la table `players_effects`
 --
 
 CREATE TABLE `players_effects` (
@@ -4215,7 +4437,7 @@ CREATE TABLE `players_effects` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_followers`
+-- Structure de la table `players_followers`
 --
 
 CREATE TABLE `players_followers` (
@@ -4228,7 +4450,7 @@ CREATE TABLE `players_followers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_forum_missives`
+-- Structure de la table `players_forum_missives`
 --
 
 CREATE TABLE `players_forum_missives` (
@@ -4238,18 +4460,21 @@ CREATE TABLE `players_forum_missives` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `players_forum_missives`
+-- Déchargement des données de la table `players_forum_missives`
 --
 
 INSERT INTO `players_forum_missives` (`player_id`, `name`, `viewed`) VALUES
 (1, 1724908803, 1),
 (2, 1724908803, 1),
-(3, 1724908803, 1);
+(3, 1724908803, 1),
+(4, 1724908803, 0),
+(5, 1724908803, 0),
+(6, 1724908803, 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_forum_rewards`
+-- Structure de la table `players_forum_rewards`
 --
 
 CREATE TABLE `players_forum_rewards` (
@@ -4265,7 +4490,7 @@ CREATE TABLE `players_forum_rewards` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_ips`
+-- Structure de la table `players_ips`
 --
 
 CREATE TABLE `players_ips` (
@@ -4275,17 +4500,10 @@ CREATE TABLE `players_ips` (
   `failed` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `players_ips`
---
-
-INSERT INTO `players_ips` (`id`, `ip`, `expTime`, `failed`) VALUES
-(1, '172.20.0.1', 1736121946, 1);
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_items`
+-- Structure de la table `players_items`
 --
 
 CREATE TABLE `players_items` (
@@ -4296,21 +4514,32 @@ CREATE TABLE `players_items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `players_items`
+-- Déchargement des données de la table `players_items`
 --
 
 INSERT INTO `players_items` (`player_id`, `item_id`, `n`, `equiped`) VALUES
-(1, 1, 40, ''),
-(1, 8, 1, ''),
-(2, 1, 20, ''),
+(1, 1, 254, ''),
+(1, 5, 1, ''),
+(1, 8, 5, 'main1'),
+(1, 16, 59, 'munition'),
+(1, 27, 1, ''),
+(1, 29, 7, ''),
+(1, 75, 1, 'tete'),
+(1, 79, 1, ''),
+(1, 86, 11, ''),
+(1, 89, 21, ''),
+(1, 90, 10, ''),
+(1, 93, 8, ''),
+(2, 1, 9, ''),
 (2, 8, 1, ''),
+(2, 75, 1, 'tete'),
 (3, 1, 40, ''),
-(3, 8, 1, '');
+(3, 8, 1, 'main1');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_items_bank`
+-- Structure de la table `players_items_bank`
 --
 
 CREATE TABLE `players_items_bank` (
@@ -4322,7 +4551,7 @@ CREATE TABLE `players_items_bank` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_items_exchanges`
+-- Structure de la table `players_items_exchanges`
 --
 
 CREATE TABLE `players_items_exchanges` (
@@ -4336,7 +4565,7 @@ CREATE TABLE `players_items_exchanges` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_kills`
+-- Structure de la table `players_kills`
 --
 
 CREATE TABLE `players_kills` (
@@ -4347,15 +4576,15 @@ CREATE TABLE `players_kills` (
   `target_rank` int(11) NOT NULL DEFAULT 1,
   `xp` int(11) NOT NULL DEFAULT 0,
   `assist` int(11) NOT NULL DEFAULT 0,
+  `is_inactive` tinyint(1) NOT NULL DEFAULT 0,
   `time` int(11) NOT NULL DEFAULT 0,
-  `plan` varchar(255) NOT NULL DEFAULT '',
-  `is_inactive` int(11) NOT NULL DEFAULT 0
+  `plan` varchar(255) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_logs`
+-- Structure de la table `players_logs`
 --
 
 CREATE TABLE `players_logs` (
@@ -4371,129 +4600,10 @@ CREATE TABLE `players_logs` (
   `coords_computed` varchar(35) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `players_logs`
---
-
-INSERT INTO `players_logs` (`id`, `player_id`, `target_id`, `text`, `hiddenText`, `type`, `plan`, `time`, `coords_id`, `coords_computed`) VALUES
-(1, 1, 1, 'Cradek s\'est déplacé en 1,0,0', '', 'move', 'gaia', 1736117555, 3, '1_0_0_gaia'),
-(2, 1, 1, 'Cradek s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736117577, 4, '1_-1_0_gaia'),
-(3, 1, 1, 'Cradek s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736117578, 8, '2_-2_0_gaia'),
-(4, 1, 1, 'Cradek s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736117579, 13, '3_-3_0_gaia'),
-(5, 1, 1, 'Cradek s\'est déplacé en 4,-4,0', '', 'move', 'gaia', 1736117580, 15, '4_-4_0_gaia'),
-(6, 1, 1, 'Cradek s\'est déplacé en 5,-5,0', '', 'move', 'gaia', 1736117581, 20, '5_-5_0_gaia'),
-(7, 1, 1, 'Cradek s\'est déplacé en 6,-6,0', '', 'move', 'gaia', 1736117582, 30, '6_-6_0_gaia'),
-(8, 1, 1, 'Cradek s\'est déplacé en 7,-7,0', '', 'move', 'gaia', 1736117583, 97, '7_-7_0_gaia'),
-(9, 1, 1, 'Cradek s\'est déplacé en 8,-8,0', '', 'move', 'gaia', 1736117584, 100, '8_-8_0_gaia'),
-(10, 1, 1, 'Cradek s\'est déplacé en 7,-8,0', '', 'move', 'gaia', 1736117585, 99, '7_-8_0_gaia'),
-(11, 1, 1, 'Cradek s\'est déplacé en 6,-8,0', '', 'move', 'gaia', 1736117602, 51587, '6_-8_0_gaia'),
-(12, 1, 1, 'Cradek s\'est déplacé en 5,-7,0', '', 'move', 'gaia', 1736117603, 31, '5_-7_0_gaia'),
-(13, 1, 1, 'Cradek s\'est déplacé en 5,-6,0', '', 'move', 'gaia', 1736117604, 29, '5_-6_0_gaia'),
-(14, 1, 1, 'Cradek s\'est déplacé en 5,-5,0', '', 'move', 'gaia', 1736117605, 20, '5_-5_0_gaia'),
-(15, 1, 1, 'Cradek s\'est déplacé en 4,-4,0', '', 'move', 'gaia', 1736117607, 15, '4_-4_0_gaia'),
-(16, 1, 1, 'Cradek s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736117608, 13, '3_-3_0_gaia'),
-(17, 1, 1, 'Cradek s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736117608, 8, '2_-2_0_gaia'),
-(18, 1, 1, 'Cradek s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736117609, 4, '1_-1_0_gaia'),
-(19, 1, 1, 'Cradek s\'est déplacé en 0,-1,0', '', 'move', 'gaia', 1736117610, 2, '0_-1_0_gaia'),
-(20, 1, 1, 'Cradek s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736117630, 4, '1_-1_0_gaia'),
-(21, 1, 1, 'Cradek s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736117631, 8, '2_-2_0_gaia'),
-(22, 1, 1, 'Cradek s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736117632, 13, '3_-3_0_gaia'),
-(23, 1, 1, 'Cradek s\'est déplacé en 4,-4,0', '', 'move', 'gaia', 1736117632, 15, '4_-4_0_gaia'),
-(24, 1, 1, 'Cradek s\'est déplacé en 5,-5,0', '', 'move', 'gaia', 1736117633, 20, '5_-5_0_gaia'),
-(25, 1, 1, 'Cradek s\'est déplacé en 6,-6,0', '', 'move', 'gaia', 1736117634, 30, '6_-6_0_gaia'),
-(26, 1, 1, 'Cradek s\'est déplacé en 7,-7,0', '', 'move', 'gaia', 1736117635, 97, '7_-7_0_gaia'),
-(27, 1, 1, 'Cradek s\'est déplacé en 8,-8,0', '', 'move', 'gaia', 1736117636, 100, '8_-8_0_gaia'),
-(28, 1, 1, 'Cradek s\'est déplacé en 9,-9,0', '', 'move', 'gaia', 1736117637, 40, '9_-9_0_gaia'),
-(29, 1, 1, 'Cradek s\'est déplacé en 8,-8,0', '', 'move', 'gaia', 1736117659, 100, '8_-8_0_gaia'),
-(30, 1, 1, 'Cradek s\'est déplacé en 7,-7,0', '', 'move', 'gaia', 1736117659, 97, '7_-7_0_gaia'),
-(31, 1, 1, 'Cradek s\'est déplacé en 6,-6,0', '', 'move', 'gaia', 1736117660, 30, '6_-6_0_gaia'),
-(32, 1, 1, 'Cradek s\'est déplacé en 5,-5,0', '', 'move', 'gaia', 1736117661, 20, '5_-5_0_gaia'),
-(33, 1, 1, 'Cradek s\'est déplacé en 4,-4,0', '', 'move', 'gaia', 1736117661, 15, '4_-4_0_gaia'),
-(34, 1, 1, 'Cradek s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736117662, 13, '3_-3_0_gaia'),
-(35, 1, 1, 'Cradek s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736117663, 8, '2_-2_0_gaia'),
-(36, 1, 1, 'Cradek s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736117664, 4, '1_-1_0_gaia'),
-(37, 1, 1, 'Cradek s\'est déplacé en 1,-2,0', '', 'move', 'gaia', 1736117803, 7, '1_-2_0_gaia'),
-(38, 1, 1, 'Cradek s\'est déplacé en 0,0,0', '', 'move', 'banque_des_lutins', 1736117842, 15318, '0_0_0_banque_des_lutins'),
-(39, 1, 1, 'Cradek s\'est déplacé en 0,1,0', '', 'move', 'banque_des_lutins', 1736117850, 17005, '0_1_0_banque_des_lutins'),
-(40, 1, 1, 'Cradek s\'est déplacé en 0,2,0', '', 'move', 'banque_des_lutins', 1736117852, 17000, '0_2_0_banque_des_lutins'),
-(41, 1, 1, 'Cradek s\'est déplacé en 1,2,0', '', 'move', 'banque_des_lutins', 1736117855, 17001, '1_2_0_banque_des_lutins'),
-(42, 1, 1, 'Cradek s\'est déplacé en 1,1,0', '', 'move', 'banque_des_lutins', 1736117861, 17004, '1_1_0_banque_des_lutins'),
-(43, 1, 1, 'Cradek s\'est déplacé en 0,0,0', '', 'move', 'banque_des_lutins', 1736117862, 15318, '0_0_0_banque_des_lutins'),
-(44, 1, 1, 'Cradek s\'est déplacé en 0,-1,0', '', 'move', 'banque_des_lutins', 1736117873, 17014, '0_-1_0_banque_des_lutins'),
-(45, 1, 1, 'Cradek s\'est déplacé en 0,-2,0', '', 'move', 'banque_des_lutins', 1736117874, 17018, '0_-2_0_banque_des_lutins'),
-(46, 1, 1, 'Cradek s\'est déplacé en 0,-3,0', '', 'move', 'banque_des_lutins', 1736117875, 17037, '0_-3_0_banque_des_lutins'),
-(47, 1, 1, 'Cradek s\'est déplacé en 0,-4,0', '', 'move', 'banque_des_lutins', 1736117876, 17098, '0_-4_0_banque_des_lutins'),
-(48, 1, 1, 'Cradek s\'est déplacé en 0,-5,0', '', 'move', 'banque_des_lutins', 1736117877, 17099, '0_-5_0_banque_des_lutins'),
-(49, 1, 1, 'Cradek s\'est déplacé en 0,-6,0', '', 'move', 'banque_des_lutins', 1736117878, 17110, '0_-6_0_banque_des_lutins'),
-(50, 1, 1, 'Cradek s\'est déplacé en 0,-5,0', '', 'move', 'banque_des_lutins', 1736117882, 17099, '0_-5_0_banque_des_lutins'),
-(51, 1, 1, 'Cradek s\'est déplacé en 0,-4,0', '', 'move', 'banque_des_lutins', 1736117883, 17098, '0_-4_0_banque_des_lutins'),
-(52, 1, 1, 'Cradek s\'est déplacé en 0,-3,0', '', 'move', 'banque_des_lutins', 1736117884, 17037, '0_-3_0_banque_des_lutins'),
-(53, 1, 1, 'Cradek s\'est déplacé en 0,-2,0', '', 'move', 'banque_des_lutins', 1736117885, 17018, '0_-2_0_banque_des_lutins'),
-(54, 1, 1, 'Cradek s\'est déplacé en 0,-1,0', '', 'move', 'banque_des_lutins', 1736117885, 17014, '0_-1_0_banque_des_lutins'),
-(55, 1, 1, 'Cradek s\'est déplacé en 0,0,0', '', 'move', 'banque_des_lutins', 1736117886, 15318, '0_0_0_banque_des_lutins'),
-(56, 2, 2, 'Dorna s\'est déplacé en 1,0,0', '', 'move', 'gaia', 1736118265, 3, '1_0_0_gaia'),
-(57, 2, 2, 'Dorna s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736118278, 4, '1_-1_0_gaia'),
-(58, 2, 2, 'Dorna s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736118287, 8, '2_-2_0_gaia'),
-(59, 2, 2, 'Dorna s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736118288, 13, '3_-3_0_gaia'),
-(60, 2, 2, 'Dorna s\'est déplacé en 4,-4,0', '', 'move', 'gaia', 1736118289, 15, '4_-4_0_gaia'),
-(61, 2, 2, 'Dorna s\'est déplacé en 5,-5,0', '', 'move', 'gaia', 1736118290, 20, '5_-5_0_gaia'),
-(62, 2, 2, 'Dorna s\'est déplacé en 6,-6,0', '', 'move', 'gaia', 1736118291, 30, '6_-6_0_gaia'),
-(63, 2, 2, 'Dorna s\'est déplacé en 7,-7,0', '', 'move', 'gaia', 1736118292, 97, '7_-7_0_gaia'),
-(64, 2, 2, 'Dorna s\'est déplacé en 7,-8,0', '', 'move', 'gaia', 1736118292, 99, '7_-8_0_gaia'),
-(65, 2, 2, 'Dorna s\'est déplacé en 8,-8,0', '', 'move', 'gaia', 1736118293, 100, '8_-8_0_gaia'),
-(66, 2, 2, 'Dorna s\'est déplacé en 8,-7,0', '', 'move', 'gaia', 1736118294, 98, '8_-7_0_gaia'),
-(67, 2, 2, 'Dorna s\'est déplacé en 7,-7,0', '', 'move', 'gaia', 1736118296, 97, '7_-7_0_gaia'),
-(68, 2, 2, 'Dorna s\'est déplacé en 6,-6,0', '', 'move', 'gaia', 1736118297, 30, '6_-6_0_gaia'),
-(69, 2, 2, 'Dorna s\'est déplacé en 5,-5,0', '', 'move', 'gaia', 1736118298, 20, '5_-5_0_gaia'),
-(70, 2, 2, 'Dorna s\'est déplacé en 4,-4,0', '', 'move', 'gaia', 1736118299, 15, '4_-4_0_gaia'),
-(71, 2, 2, 'Dorna s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736118300, 13, '3_-3_0_gaia'),
-(72, 2, 2, 'Dorna s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736118301, 8, '2_-2_0_gaia'),
-(73, 2, 2, 'Dorna s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736118301, 4, '1_-1_0_gaia'),
-(74, 2, 2, 'Dorna s\'est déplacé en 0,-2,0', '', 'move', 'gaia', 1736118373, 6, '0_-2_0_gaia'),
-(75, 2, 2, 'Dorna s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736118382, 4, '1_-1_0_gaia'),
-(76, 2, 2, 'Dorna s\'est déplacé en -4,2,0', '', 'move', 'banque_des_lutins', 1736118462, 17182, '-4_2_0_banque_des_lutins'),
-(77, 2, 2, 'Dorna s\'est déplacé en 1,1,0', '', 'move', 'banque_des_lutins', 1736118541, 17004, '1_1_0_banque_des_lutins'),
-(78, 2, 2, 'Dorna s\'est déplacé en 1,1,0', '', 'move', 'gaia2', 1736120060, 181, '1_1_0_gaia2'),
-(79, 2, 1, 'Dorna a attaqué Cradek avec Poing.', '<style>.action-details{display: none;}</style><div style=\"color: #66ccff;\">Réussite!</div><div id=\"data\" style=\"display: none;\"> <div id=\"view\"> <div id=\"svg-container\"> <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> <svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" baseProfile=\"full\" id=\"svg-view\" width=\"450\" height=\"450\" style=\"background: url(\'img/tiles/gaia2.webp\');\" class=\"box-shadow\" > <image id=\"tiles64\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles115\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"100\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles77\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles72\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles65\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles116\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"50\" y=\"350\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles78\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles73\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles66\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles118\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"150\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles60\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles84\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles74\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles69\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles62\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles85\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles75\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles70\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles63\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles113\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"50\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles76\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles71\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"150\" y=\"100\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"350\" y=\"350\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"400\" y=\"350\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"400\" y=\"400\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image id=\"players2\" width=\"50\" height=\"50\" x=\"200\" y=\"200\" href=\"img/avatars/nain/73.png\" class=\"avatar-shadow\" /> <image id=\"players2\" width=\"50\" height=\"50\" data-table=\"players\" x=\"200\" y=\"200\" href=\"img/avatars/nain/73.png\" /> <image id=\"walls117\" width=\"50\" height=\"50\" data-table=\"walls\" x=\"250\" y=\"300\" href=\"img/walls/gaia.png\" /> <image class=\"case \" data-coords=\"-3,5\" x=\"0\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,4\" x=\"0\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,3\" x=\"0\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,2\" x=\"0\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,1\" x=\"0\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,0\" x=\"0\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-1\" x=\"0\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-2\" x=\"0\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-3\" x=\"0\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,5\" x=\"50\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,4\" x=\"50\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,3\" x=\"50\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,2\" x=\"50\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,1\" x=\"50\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,0\" x=\"50\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-1\" x=\"50\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-2\" x=\"50\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-3\" x=\"50\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,5\" x=\"100\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,4\" x=\"100\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,3\" x=\"100\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,2\" x=\"100\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,1\" x=\"100\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,0\" x=\"100\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-1\" x=\"100\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-2\" x=\"100\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-3\" x=\"100\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,5\" x=\"150\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,4\" x=\"150\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,3\" x=\"150\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"0,2\" x=\"150\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"0,1\" x=\"150\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"0,0\" x=\"150\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-1\" x=\"150\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-2\" x=\"150\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-3\" x=\"150\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,5\" x=\"200\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,4\" x=\"200\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,3\" x=\"200\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"1,2\" x=\"200\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"1,1\" x=\"200\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"1,0\" x=\"200\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-1\" x=\"200\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-2\" x=\"200\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-3\" x=\"200\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,5\" x=\"250\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,4\" x=\"250\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,3\" x=\"250\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"2,2\" x=\"250\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"2,1\" x=\"250\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"2,0\" x=\"250\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-1\" x=\"250\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-2\" x=\"250\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-3\" x=\"250\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,5\" x=\"300\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,4\" x=\"300\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,3\" x=\"300\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,2\" x=\"300\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,1\" x=\"300\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,0\" x=\"300\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-1\" x=\"300\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-2\" x=\"300\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-3\" x=\"300\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,5\" x=\"350\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,4\" x=\"350\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,3\" x=\"350\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,2\" x=\"350\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,1\" x=\"350\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,0\" x=\"350\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-1\" x=\"350\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-2\" x=\"350\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-3\" x=\"350\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,5\" x=\"400\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,4\" x=\"400\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,3\" x=\"400\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,2\" x=\"400\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,1\" x=\"400\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,0\" x=\"400\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-1\" x=\"400\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-2\" x=\"400\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-3\" x=\"400\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <rect data-coords=\"\" id=\"go-rect\" x=\"50\" y=\"50\" width=\"50\" height=\"50\" fill=\"green\" style=\"opacity: 0.3; display: none;\" /> <image id=\"go-img\" x=\"50\" y=\"30\" style=\"opacity: 0.8; display: none; pointer-events: none;\" class=\"blink\" href=\"img/ui/view/arrow.webp\" /> <rect data-coords=\"\" id=\"destroy-rect\" x=\"50\" y=\"50\" width=\"50\" height=\"50\" fill=\"red\" style=\"opacity: 0.3; display: none;\" /> <image id=\"destroy-img\" x=\"50\" y=\"30\" style=\"opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg); z-index: 100;\" class=\"blink\" href=\"img/ui/view/arrow.webp\" /> </svg> </div> </div> <script> document.addEventListener(\"DOMContentLoaded\", function() { var scrollableDiv = document.getElementById(\"view\"); scrollableDiv.scrollLeft = (scrollableDiv.scrollWidth - scrollableDiv.clientWidth) / 2; }); </script> <div id=\"ajax-data\"></div>    <script src=\"js/view.js\"></script>\n    </div><script>\n$(document).ready(function(){\n\n\n    var data = $(\'#data\').html();\n\n    $(\'#view\').html(\'\').html(data);\n\n\n    $(\'.case\').click(function(e){\n\n        e.preventDefault();\n        e.stopPropagation();\n\n        document.location.reload();\n    });\n\n\n\n    // watch the disapearance of #ui-card to reload view\n\n    var targetNode = document.getElementById(\'ui-card\');\n\n    // Function to check visibility\n    function checkVisibility() {\n        if ($(targetNode).is(\':visible\')) {\n        } else {\n\n            // div is invisible\n            document.location.reload();\n        }\n    }\n\n    // MutationObserver configuration\n    var observer = new MutationObserver(function(mutationsList, observer) {\n        for(var mutation of mutationsList) {\n            if (mutation.attributeName === \'style\' || mutation.attributeName === \'class\') {\n                checkVisibility();\n            }\n        }\n    });\n\n    // Start observing the target node for configured mutations\n    observer.observe(targetNode, { attributes: true, childList: false, subtree: false });\n\n    // Initial check\n    checkVisibility();\n});\n</script>\n', 'action', 'gaia2', 1736120060, 181, '1_1_0_gaia2'),
-(80, 2, 2, 'Dorna s\'est déplacé en 1,0,0', '', 'move', 'gaia2', 1736120063, 113, '1_0_0_gaia2'),
-(81, 2, 2, 'Dorna s\'est déplacé en 1,-1,0', '', 'move', 'gaia2', 1736120064, 117, '1_-1_0_gaia2'),
-(82, 2, 2, 'Dorna s\'est déplacé en 2,-2,0', '', 'move', 'gaia2', 1736120065, 103, '2_-2_0_gaia2'),
-(83, 2, 2, 'Dorna s\'est déplacé en 3,-3,0', '', 'move', 'gaia2', 1736120066, 101, '3_-3_0_gaia2'),
-(84, 2, 2, 'Dorna s\'est déplacé en 4,-4,0', '', 'move', 'gaia2', 1736120067, 102, '4_-4_0_gaia2'),
-(85, 2, 2, 'Dorna s\'est déplacé en 5,-5,0', '', 'move', 'gaia2', 1736120068, 124, '5_-5_0_gaia2'),
-(86, 2, 2, 'Dorna s\'est déplacé en 6,-6,0', '', 'move', 'gaia2', 1736120068, 132, '6_-6_0_gaia2'),
-(87, 2, 2, 'Dorna est arrivé sur Olympia.', '', 'rez', 'banque_des_lutins', 1736120069, 17065, '6_-6_0_banque_des_lutins'),
-(88, 2, 2, 'Dorna s\'est déplacé en 1,0,0', '', 'move', 'banque_des_lutins', 1736120069, 17010, '1_0_0_banque_des_lutins'),
-(89, 2, 2, 'Dorna s\'est déplacé en 1,1,0', '', 'move', 'banque_des_lutins', 1736120072, 17004, '1_1_0_banque_des_lutins'),
-(90, 1, 1, 'Cradek s\'est déplacé en 0,0,0', '', 'move', 'gaia2', 1736120127, 114, '0_0_0_gaia2'),
-(91, 1, 2, 'Cradek a attaqué Dorna avec Poing.', '<style>.action-details{display: none;}</style><div style=\"color: #66ccff;\">Réussite!</div><div id=\"data\" style=\"display: none;\"> <div id=\"view\"> <div id=\"svg-container\"> <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> <svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" baseProfile=\"full\" id=\"svg-view\" width=\"450\" height=\"450\" style=\"background: url(\'img/tiles/gaia2.webp\');\" class=\"box-shadow\" > <image id=\"tiles75\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles70\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles115\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"50\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles65\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles60\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles76\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles71\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles116\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"300\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles66\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles61\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles84\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"350\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles72\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles117\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"0\" y=\"200\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles67\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles62\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles85\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"350\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles73\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles118\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"100\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles68\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles113\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles63\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles74\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles69\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles114\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"0\" y=\"150\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles64\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"250\" y=\"250\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"300\" y=\"400\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"300\" y=\"300\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"0\" y=\"150\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"350\" y=\"350\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"200\" y=\"50\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"400\" y=\"400\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"250\" y=\"150\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_s.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"250\" y=\"200\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_s.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"400\" y=\"300\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image id=\"players1\" width=\"50\" height=\"50\" x=\"200\" y=\"200\" href=\"img/avatars/nain/5.png\" class=\"avatar-shadow\" /> <image id=\"players1\" width=\"50\" height=\"50\" data-table=\"players\" x=\"200\" y=\"200\" href=\"img/avatars/nain/5.png\" /> <image id=\"walls117\" width=\"50\" height=\"50\" data-table=\"walls\" x=\"300\" y=\"250\" href=\"img/walls/gaia.png\" /> <image class=\"case \" data-coords=\"-4,4\" x=\"0\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,3\" x=\"0\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,2\" x=\"0\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,1\" x=\"0\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,0\" x=\"0\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,-1\" x=\"0\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,-2\" x=\"0\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,-3\" x=\"0\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-4,-4\" x=\"0\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,4\" x=\"50\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,3\" x=\"50\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,2\" x=\"50\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,1\" x=\"50\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,0\" x=\"50\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-1\" x=\"50\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-2\" x=\"50\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-3\" x=\"50\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-3,-4\" x=\"50\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,4\" x=\"100\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,3\" x=\"100\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,2\" x=\"100\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,1\" x=\"100\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,0\" x=\"100\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-1\" x=\"100\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-2\" x=\"100\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-3\" x=\"100\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-4\" x=\"100\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,4\" x=\"150\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,3\" x=\"150\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,2\" x=\"150\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"-1,1\" x=\"150\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"-1,0\" x=\"150\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"-1,-1\" x=\"150\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-2\" x=\"150\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-3\" x=\"150\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-4\" x=\"150\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,4\" x=\"200\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,3\" x=\"200\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,2\" x=\"200\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"0,1\" x=\"200\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"0,0\" x=\"200\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"0,-1\" x=\"200\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-2\" x=\"200\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-3\" x=\"200\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-4\" x=\"200\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,4\" x=\"250\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,3\" x=\"250\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,2\" x=\"250\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"1,1\" x=\"250\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"1,0\" x=\"250\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"1,-1\" x=\"250\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-2\" x=\"250\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-3\" x=\"250\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-4\" x=\"250\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,4\" x=\"300\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,3\" x=\"300\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,2\" x=\"300\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,1\" x=\"300\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,0\" x=\"300\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-1\" x=\"300\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-2\" x=\"300\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-3\" x=\"300\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-4\" x=\"300\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,4\" x=\"350\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,3\" x=\"350\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,2\" x=\"350\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,1\" x=\"350\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,0\" x=\"350\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-1\" x=\"350\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-2\" x=\"350\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-3\" x=\"350\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-4\" x=\"350\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,4\" x=\"400\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,3\" x=\"400\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,2\" x=\"400\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,1\" x=\"400\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,0\" x=\"400\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-1\" x=\"400\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-2\" x=\"400\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-3\" x=\"400\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-4\" x=\"400\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <rect data-coords=\"\" id=\"go-rect\" x=\"50\" y=\"50\" width=\"50\" height=\"50\" fill=\"green\" style=\"opacity: 0.3; display: none;\" /> <image id=\"go-img\" x=\"50\" y=\"30\" style=\"opacity: 0.8; display: none; pointer-events: none;\" class=\"blink\" href=\"img/ui/view/arrow.webp\" /> <rect data-coords=\"\" id=\"destroy-rect\" x=\"50\" y=\"50\" width=\"50\" height=\"50\" fill=\"red\" style=\"opacity: 0.3; display: none;\" /> <image id=\"destroy-img\" x=\"50\" y=\"30\" style=\"opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg); z-index: 100;\" class=\"blink\" href=\"img/ui/view/arrow.webp\" /> </svg> </div> </div> <script> document.addEventListener(\"DOMContentLoaded\", function() { var scrollableDiv = document.getElementById(\"view\"); scrollableDiv.scrollLeft = (scrollableDiv.scrollWidth - scrollableDiv.clientWidth) / 2; }); </script> <div id=\"ajax-data\"></div>    <script src=\"js/view.js\"></script>\n    </div><script>\n$(document).ready(function(){\n\n\n    var data = $(\'#data\').html();\n\n    $(\'#view\').html(\'\').html(data);\n\n\n    $(\'.case\').click(function(e){\n\n        e.preventDefault();\n        e.stopPropagation();\n\n        document.location.reload();\n    });\n\n\n\n    // watch the disapearance of #ui-card to reload view\n\n    var targetNode = document.getElementById(\'ui-card\');\n\n    // Function to check visibility\n    function checkVisibility() {\n        if ($(targetNode).is(\':visible\')) {\n        } else {\n\n            // div is invisible\n            document.location.reload();\n        }\n    }\n\n    // MutationObserver configuration\n    var observer = new MutationObserver(function(mutationsList, observer) {\n        for(var mutation of mutationsList) {\n            if (mutation.attributeName === \'style\' || mutation.attributeName === \'class\') {\n                checkVisibility();\n            }\n        }\n    });\n\n    // Start observing the target node for configured mutations\n    observer.observe(targetNode, { attributes: true, childList: false, subtree: false });\n\n    // Initial check\n    checkVisibility();\n});\n</script>\n', 'action', 'gaia2', 1736120127, 114, '0_0_0_gaia2'),
-(92, 1, 1, 'Cradek s\'est déplacé en 1,-1,0', '', 'move', 'gaia2', 1736120130, 117, '1_-1_0_gaia2'),
-(93, 1, 1, 'Cradek s\'est déplacé en 2,-2,0', '', 'move', 'gaia2', 1736120131, 103, '2_-2_0_gaia2'),
-(94, 1, 1, 'Cradek s\'est déplacé en 3,-3,0', '', 'move', 'gaia2', 1736120131, 101, '3_-3_0_gaia2'),
-(95, 1, 1, 'Cradek s\'est déplacé en 4,-4,0', '', 'move', 'gaia2', 1736120132, 102, '4_-4_0_gaia2'),
-(96, 1, 1, 'Cradek s\'est déplacé en 5,-5,0', '', 'move', 'gaia2', 1736120133, 124, '5_-5_0_gaia2'),
-(97, 1, 1, 'Cradek s\'est déplacé en 6,-6,0', '', 'move', 'gaia2', 1736120133, 132, '6_-6_0_gaia2'),
-(98, 1, 1, 'Cradek est arrivé sur Olympia.', '', 'rez', 'banque_des_lutins', 1736120134, 17065, '6_-6_0_banque_des_lutins'),
-(99, 1, 1, 'Cradek s\'est déplacé en -1,-1,0', '', 'move', 'banque_des_lutins', 1736120134, 17015, '-1_-1_0_banque_des_lutins'),
-(100, 1, 1, 'Cradek s\'est déplacé en 0,0,0', '', 'move', 'banque_des_lutins', 1736120136, 15318, '0_0_0_banque_des_lutins'),
-(101, 3, 3, 'Thyrias s\'est déplacé en 1,-1,0', '', 'move', 'gaia', 1736120219, 4, '1_-1_0_gaia'),
-(102, 3, 3, 'Thyrias s\'est déplacé en 2,-2,0', '', 'move', 'gaia', 1736120220, 8, '2_-2_0_gaia'),
-(103, 3, 3, 'Thyrias s\'est déplacé en 3,-3,0', '', 'move', 'gaia', 1736120221, 13, '3_-3_0_gaia'),
-(104, 3, 3, 'Thyrias s\'est déplacé en 3,-3,0', '', 'move', 'gaia2', 1736120472, 101, '3_-3_0_gaia2');
-INSERT INTO `players_logs` (`id`, `player_id`, `target_id`, `text`, `hiddenText`, `type`, `plan`, `time`, `coords_id`, `coords_computed`) VALUES
-(105, 3, -1, 'Thyrias a attaqué Gaïa avec Poing.', '<style>.action-details{display: none;}</style><div style=\"color: #66ccff;\">Réussite!</div><div id=\"data\" style=\"display: none;\"> <div id=\"view\"> <div id=\"svg-container\"> <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?> <svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" baseProfile=\"full\" id=\"svg-view\" width=\"550\" height=\"550\" style=\"background: url(\'img/tiles/gaia2.webp\');\" class=\"box-shadow\" > <image id=\"tiles77\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles93\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"450\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles61\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles72\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"100\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles88\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles83\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles113\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"0\" y=\"150\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles67\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles78\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles94\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"450\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles62\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles73\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"100\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles89\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles84\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"250\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles116\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"0\" y=\"200\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles68\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles79\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"300\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles95\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"450\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles63\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles74\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"150\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles90\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles85\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"250\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles118\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"0\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles69\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles80\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles96\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"500\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles64\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles75\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"100\" y=\"200\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles91\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"400\" y=\"400\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles86\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles70\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"150\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles81\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles104\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"350\" y=\"500\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles65\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles76\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"150\" y=\"150\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles92\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"450\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles60\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles87\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"250\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles71\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"100\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles82\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"300\" y=\"350\" href=\"img/tiles/carreaux.png\" /> <image id=\"tiles107\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"500\" y=\"400\" href=\"img/tiles/falaise.png\" /> <image id=\"tiles66\" width=\"50\" height=\"50\" data-table=\"tiles\" x=\"200\" y=\"250\" href=\"img/tiles/carreaux.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"300\" y=\"350\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"350\" y=\"200\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"300\" y=\"300\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"150\" y=\"50\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_s.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"350\" y=\"250\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"350\" y=\"350\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"150\" y=\"100\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_s.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"350\" y=\"300\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"400\" y=\"400\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"150\" y=\"150\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"200\" y=\"350\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"300\" y=\"200\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"100\" y=\"100\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"200\" y=\"200\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"250\" y=\"350\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"200\" y=\"300\" style=\"opacity: 1;\" href=\"img/elements/diamant.png\" /> <image width=\"50\" height=\"50\" data-table=\"elements\" x=\"250\" y=\"250\" style=\"opacity: 0.5;\" href=\"img/elements/trace_pas_se.webp\" /> <image id=\"players3\" width=\"50\" height=\"50\" x=\"250\" y=\"250\" href=\"img/avatars/ame/elfe.webp\" class=\"avatar-shadow\" /> <image id=\"players3\" width=\"50\" height=\"50\" data-table=\"players\" x=\"250\" y=\"250\" href=\"img/avatars/ame/elfe.webp\" /> <image id=\"walls117\" width=\"50\" height=\"50\" data-table=\"walls\" x=\"200\" y=\"150\" href=\"img/walls/gaia.png\" /> <image id=\"foregrounds5\" width=\"50\" height=\"50\" data-table=\"foregrounds\" x=\"450\" y=\"450\" href=\"img/foregrounds/olympia-00.png\" /> <image id=\"foregrounds6\" width=\"50\" height=\"50\" data-table=\"foregrounds\" x=\"500\" y=\"450\" href=\"img/foregrounds/olympia-01.png\" /> <image id=\"foregrounds7\" width=\"50\" height=\"50\" data-table=\"foregrounds\" x=\"450\" y=\"500\" href=\"img/foregrounds/olympia-02.png\" /> <image id=\"foregrounds8\" width=\"50\" height=\"50\" data-table=\"foregrounds\" x=\"500\" y=\"500\" href=\"img/foregrounds/olympia-03.png\" /> <use xlink:href=\"#foregrounds5\" /><use xlink:href=\"#foregrounds6\" /><use xlink:href=\"#foregrounds7\" /><use xlink:href=\"#foregrounds8\" /> <image class=\"case \" data-coords=\"-2,2\" x=\"0\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,1\" x=\"0\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,0\" x=\"0\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-1\" x=\"0\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-2\" x=\"0\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-3\" x=\"0\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-4\" x=\"0\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-5\" x=\"0\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-6\" x=\"0\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-7\" x=\"0\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-2,-8\" x=\"0\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,2\" x=\"50\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,1\" x=\"50\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,0\" x=\"50\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-1\" x=\"50\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-2\" x=\"50\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-3\" x=\"50\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-4\" x=\"50\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-5\" x=\"50\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-6\" x=\"50\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-7\" x=\"50\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"-1,-8\" x=\"50\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,2\" x=\"100\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,1\" x=\"100\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,0\" x=\"100\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-1\" x=\"100\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-2\" x=\"100\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-3\" x=\"100\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-4\" x=\"100\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-5\" x=\"100\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-6\" x=\"100\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-7\" x=\"100\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"0,-8\" x=\"100\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,2\" x=\"150\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,1\" x=\"150\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,0\" x=\"150\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-1\" x=\"150\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-2\" x=\"150\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-3\" x=\"150\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-4\" x=\"150\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-5\" x=\"150\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-6\" x=\"150\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-7\" x=\"150\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"1,-8\" x=\"150\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,2\" x=\"200\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,1\" x=\"200\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,0\" x=\"200\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-1\" x=\"200\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"2,-2\" x=\"200\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"2,-3\" x=\"200\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"2,-4\" x=\"200\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-5\" x=\"200\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-6\" x=\"200\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-7\" x=\"200\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"2,-8\" x=\"200\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,2\" x=\"250\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,1\" x=\"250\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,0\" x=\"250\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-1\" x=\"250\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"3,-2\" x=\"250\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"3,-3\" x=\"250\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"3,-4\" x=\"250\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-5\" x=\"250\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-6\" x=\"250\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-7\" x=\"250\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"3,-8\" x=\"250\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,2\" x=\"300\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,1\" x=\"300\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,0\" x=\"300\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-1\" x=\"300\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"4,-2\" x=\"300\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"4,-3\" x=\"300\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case go\" data-coords=\"4,-4\" x=\"300\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-5\" x=\"300\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-6\" x=\"300\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-7\" x=\"300\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"4,-8\" x=\"300\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,2\" x=\"350\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,1\" x=\"350\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,0\" x=\"350\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-1\" x=\"350\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-2\" x=\"350\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-3\" x=\"350\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-4\" x=\"350\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-5\" x=\"350\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-6\" x=\"350\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-7\" x=\"350\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"5,-8\" x=\"350\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,2\" x=\"400\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,1\" x=\"400\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,0\" x=\"400\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-1\" x=\"400\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-2\" x=\"400\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-3\" x=\"400\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-4\" x=\"400\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-5\" x=\"400\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-6\" x=\"400\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-7\" x=\"400\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"6,-8\" x=\"400\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,2\" x=\"450\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,1\" x=\"450\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,0\" x=\"450\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-1\" x=\"450\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-2\" x=\"450\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-3\" x=\"450\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-4\" x=\"450\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-5\" x=\"450\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-6\" x=\"450\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-7\" x=\"450\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"7,-8\" x=\"450\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,2\" x=\"500\" y=\"0\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,1\" x=\"500\" y=\"50\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,0\" x=\"500\" y=\"100\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-1\" x=\"500\" y=\"150\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-2\" x=\"500\" y=\"200\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-3\" x=\"500\" y=\"250\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-4\" x=\"500\" y=\"300\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-5\" x=\"500\" y=\"350\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-6\" x=\"500\" y=\"400\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-7\" x=\"500\" y=\"450\" href=\"img/ui/view/grid.webp\" /> <image class=\"case \" data-coords=\"8,-8\" x=\"500\" y=\"500\" href=\"img/ui/view/grid.webp\" /> <rect data-coords=\"\" id=\"go-rect\" x=\"50\" y=\"50\" width=\"50\" height=\"50\" fill=\"green\" style=\"opacity: 0.3; display: none;\" /> <image id=\"go-img\" x=\"50\" y=\"30\" style=\"opacity: 0.8; display: none; pointer-events: none;\" class=\"blink\" href=\"img/ui/view/arrow.webp\" /> <rect data-coords=\"\" id=\"destroy-rect\" x=\"50\" y=\"50\" width=\"50\" height=\"50\" fill=\"red\" style=\"opacity: 0.3; display: none;\" /> <image id=\"destroy-img\" x=\"50\" y=\"30\" style=\"opacity: 0.8; display: none; pointer-events: none; filter: hue-rotate(-100deg); z-index: 100;\" class=\"blink\" href=\"img/ui/view/arrow.webp\" /> </svg> </div> </div> <script> document.addEventListener(\"DOMContentLoaded\", function() { var scrollableDiv = document.getElementById(\"view\"); scrollableDiv.scrollLeft = (scrollableDiv.scrollWidth - scrollableDiv.clientWidth) / 2; }); </script> <div id=\"ajax-data\"></div>    <script src=\"js/view.js\"></script>\n    </div><script>\n$(document).ready(function(){\n\n\n    var data = $(\'#data\').html();\n\n    $(\'#view\').html(\'\').html(data);\n\n\n    $(\'.case\').click(function(e){\n\n        e.preventDefault();\n        e.stopPropagation();\n\n        document.location.reload();\n    });\n\n\n\n    // watch the disapearance of #ui-card to reload view\n\n    var targetNode = document.getElementById(\'ui-card\');\n\n    // Function to check visibility\n    function checkVisibility() {\n        if ($(targetNode).is(\':visible\')) {\n        } else {\n\n            // div is invisible\n            document.location.reload();\n        }\n    }\n\n    // MutationObserver configuration\n    var observer = new MutationObserver(function(mutationsList, observer) {\n        for(var mutation of mutationsList) {\n            if (mutation.attributeName === \'style\' || mutation.attributeName === \'class\') {\n                checkVisibility();\n            }\n        }\n    });\n\n    // Start observing the target node for configured mutations\n    observer.observe(targetNode, { attributes: true, childList: false, subtree: false });\n\n    // Initial check\n    checkVisibility();\n});\n</script>\n', 'action', 'gaia2', 1736120472, 101, '3_-3_0_gaia2'),
-(106, 3, 3, 'Thyrias s\'est déplacé en 4,-4,0', '', 'move', 'gaia2', 1736120475, 102, '4_-4_0_gaia2'),
-(107, 3, 3, 'Thyrias s\'est déplacé en 5,-5,0', '', 'move', 'gaia2', 1736120476, 124, '5_-5_0_gaia2'),
-(108, 3, 3, 'Thyrias s\'est déplacé en 6,-6,0', '', 'move', 'gaia2', 1736120477, 132, '6_-6_0_gaia2'),
-(109, 3, 3, 'Thyrias est arrivé sur Olympia.', '', 'rez', 'arcadia', 1736120478, 16728, '6_-6_0_arcadia'),
-(110, 3, 3, 'Thyrias s\'est déplacé en -1,0,0', '', 'move', 'arcadia', 1736120478, 15472, '-1_0_0_arcadia'),
-(111, 3, 3, 'Thyrias s\'est déplacé en 0,0,0', '', 'move', 'arcadia', 1736120551, 15457, '0_0_0_arcadia'),
-(112, 3, 3, 'Thyrias s\'est déplacé en -1,0,0', '', 'move', 'arcadia', 1736120555, 15472, '-1_0_0_arcadia');
-
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_logs_archives`
+-- Structure de la table `players_logs_archives`
 --
 
 CREATE TABLE `players_logs_archives` (
@@ -4512,7 +4622,7 @@ CREATE TABLE `players_logs_archives` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_options`
+-- Structure de la table `players_options`
 --
 
 CREATE TABLE `players_options` (
@@ -4521,29 +4631,40 @@ CREATE TABLE `players_options` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `players_options`
+-- Déchargement des données de la table `players_options`
 --
 
 INSERT INTO `players_options` (`player_id`, `name`) VALUES
 (1, 'isAdmin'),
-(1, 'isSuperAdmin');
+(1, 'isSuperAdmin'),
+(2, 'showActionDetails'),
+(1, 'isMerchant'),
+(1, 'showActionDetails'),
+(3, 'showActionDetails');
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_pnjs`
+-- Structure de la table `players_pnjs`
 --
 
 CREATE TABLE `players_pnjs` (
   `player_id` int(11) NOT NULL,
   `pnj_id` int(11) NOT NULL,
-  `displayed` boolean not null default true
+  `displayed` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `players_pnjs`
+--
+
+INSERT INTO `players_pnjs` (`player_id`, `pnj_id`, `displayed`) VALUES
+(1, -1, 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_psw`
+-- Structure de la table `players_psw`
 --
 
 CREATE TABLE `players_psw` (
@@ -4556,7 +4677,7 @@ CREATE TABLE `players_psw` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_quests`
+-- Structure de la table `players_quests`
 --
 
 CREATE TABLE `players_quests` (
@@ -4570,7 +4691,7 @@ CREATE TABLE `players_quests` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_quests_steps`
+-- Structure de la table `players_quests_steps`
 --
 
 CREATE TABLE `players_quests_steps` (
@@ -4584,7 +4705,7 @@ CREATE TABLE `players_quests_steps` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `players_upgrades`
+-- Structure de la table `players_upgrades`
 --
 
 CREATE TABLE `players_upgrades` (
@@ -4597,7 +4718,7 @@ CREATE TABLE `players_upgrades` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `quests`
+-- Structure de la table `quests`
 --
 
 CREATE TABLE `quests` (
@@ -4609,45 +4730,98 @@ CREATE TABLE `quests` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `races`
+-- Structure de la table `races`
 --
 
 CREATE TABLE `races` (
   `id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
   `name` varchar(100) NOT NULL,
-  `description` text DEFAULT NULL,
-  `playable` tinyint(1) DEFAULT NULL,
-  `hidden` tinyint(1) DEFAULT NULL,
-  `portraitNextNumber` int(11) DEFAULT NULL,
-  `avatarNextNumber` int(11) DEFAULT NULL
+  `description` longtext DEFAULT NULL,
+  `playable` tinyint(1) NOT NULL,
+  `hidden` tinyint(1) NOT NULL,
+  `portraitNextNumber` int(11) NOT NULL DEFAULT 1,
+  `avatarNextNumber` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
--- Indexes for dumped tables
+-- Déchargement des données de la table `races`
+--
+
+INSERT INTO races (id, code, name, description, playable, hidden, portraitNextNumber, avatarNextNumber) VALUES
+(1, 'NAIN', 'nain', 'De très petite taille, les Nains sont presque aussi larges que hauts. Leur barbe toujours bien entretenue est leur fierté mais aussi un bon moyen de les reconnaître. Les nains vivent dans des cités souterraines et sont de bons armuriers et inventeurs. Terriblement efficaces en combat rapproché, ils résistent correctement aux tirs et un peu moins bien à la magie. Leur lenteur massive reste leur défaut principal.', TRUE, FALSE, 51, 113),
+(2, 'ELFE', 'elfe', 'C\'est une race élancée aux allures nobles. Ils existaient avant les Olympiens et ne vénèrent pas les Dieux de l\'Olympe. Les Elfes sont des créatures vivant dans les forêts et qui n\'en sortent que rarement. Doués en magie et plutôt bons en tir, les Elfes sont cependant de biens piètres guerriers de mêlée.', TRUE, FALSE, 34, 103),
+(3, 'AME','ame', '', FALSE, TRUE, 2, 1),
+(4, 'LUTIN','lutin', '', FALSE, TRUE, 16, 67);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `race_actions`
+--
+
+CREATE TABLE `race_actions` (
+  `race_id` int(11) NOT NULL,
+  `action_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Index pour les tables déchargées
 --
 
 --
--- Indexes for table `coords`
+-- Index pour la table `actions`
+--
+ALTER TABLE `actions`
+  ADD PRIMARY KEY (`id`) USING BTREE;
+
+--
+-- Index pour la table `action_conditions`
+--
+ALTER TABLE `action_conditions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `IDX_97C463639D32F035` (`action_id`);
+
+--
+-- Index pour la table `action_outcomes`
+--
+ALTER TABLE `action_outcomes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `IDX_92A9B44B9D32F035` (`action_id`);
+
+--
+-- Index pour la table `audit`
+--
+ALTER TABLE `audit`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Index pour la table `coords`
 --
 ALTER TABLE `coords`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `forums_keywords`
+-- Index pour la table `doctrine_migration_versions`
+--
+ALTER TABLE `doctrine_migration_versions`
+  ADD PRIMARY KEY (`version`);
+
+--
+-- Index pour la table `forums_keywords`
 --
 ALTER TABLE `forums_keywords`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `items`
+-- Index pour la table `items`
 --
 ALTER TABLE `items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `blessed_by_id` (`blessed_by_id`);
 
 --
--- Indexes for table `items_asks`
+-- Index pour la table `items_asks`
 --
 ALTER TABLE `items_asks`
   ADD PRIMARY KEY (`id`),
@@ -4655,7 +4829,7 @@ ALTER TABLE `items_asks`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `items_bids`
+-- Index pour la table `items_bids`
 --
 ALTER TABLE `items_bids`
   ADD PRIMARY KEY (`id`),
@@ -4663,7 +4837,7 @@ ALTER TABLE `items_bids`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `items_exchanges`
+-- Index pour la table `items_exchanges`
 --
 ALTER TABLE `items_exchanges`
   ADD PRIMARY KEY (`id`),
@@ -4671,14 +4845,14 @@ ALTER TABLE `items_exchanges`
   ADD KEY `items_exchanges_fk_2` (`target_id`);
 
 --
--- Indexes for table `map_dialogs`
+-- Index pour la table `map_dialogs`
 --
 ALTER TABLE `map_dialogs`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `map_elements`
+-- Index pour la table `map_elements`
 --
 ALTER TABLE `map_elements`
   ADD PRIMARY KEY (`name`,`coords_id`),
@@ -4686,14 +4860,14 @@ ALTER TABLE `map_elements`
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `map_foregrounds`
+-- Index pour la table `map_foregrounds`
 --
 ALTER TABLE `map_foregrounds`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `map_items`
+-- Index pour la table `map_items`
 --
 ALTER TABLE `map_items`
   ADD PRIMARY KEY (`id`),
@@ -4701,14 +4875,22 @@ ALTER TABLE `map_items`
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `map_plants`
+-- Index pour la table `map_plants`
 --
 ALTER TABLE `map_plants`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `map_tiles`
+-- Index pour la table `map_routes`
+--
+ALTER TABLE `map_routes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `players_map_routes_fk_1` (`player_id`),
+  ADD KEY `coords_map_routes_fk_2` (`coords_id`);
+
+--
+-- Index pour la table `map_tiles`
 --
 ALTER TABLE `map_tiles`
   ADD PRIMARY KEY (`id`),
@@ -4716,14 +4898,14 @@ ALTER TABLE `map_tiles`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `map_triggers`
+-- Index pour la table `map_triggers`
 --
 ALTER TABLE `map_triggers`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `map_walls`
+-- Index pour la table `map_walls`
 --
 ALTER TABLE `map_walls`
   ADD PRIMARY KEY (`id`),
@@ -4731,52 +4913,60 @@ ALTER TABLE `map_walls`
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `players`
+-- Index pour la table `outcome_instructions`
+--
+ALTER TABLE `outcome_instructions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `IDX_9DA2AC6FF5E9B83B` (`outcome_id`);
+
+--
+-- Index pour la table `players`
 --
 ALTER TABLE `players`
   ADD PRIMARY KEY (`id`),
   ADD KEY `coords_id` (`coords_id`);
 
 --
--- Indexes for table `players_actions`
+-- Index pour la table `players_actions`
 --
 ALTER TABLE `players_actions`
   ADD PRIMARY KEY (`player_id`,`name`);
 
 --
--- Indexes for table `players_assists`
+-- Index pour la table `players_assists`
 --
 ALTER TABLE `players_assists`
   ADD PRIMARY KEY (`player_id`,`target_id`),
   ADD KEY `target_id` (`target_id`);
 
 --
--- Indexes for table `players_banned`
+-- Index pour la table `players_banned`
 --
 ALTER TABLE `players_banned`
+  ADD PRIMARY KEY (`player_id`),
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `players_bonus`
+-- Index pour la table `players_bonus`
 --
 ALTER TABLE `players_bonus`
   ADD PRIMARY KEY (`player_id`,`name`);
 
 --
--- Indexes for table `players_connections`
+-- Index pour la table `players_connections`
 --
 ALTER TABLE `players_connections`
   ADD PRIMARY KEY (`id`),
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `players_effects`
+-- Index pour la table `players_effects`
 --
 ALTER TABLE `players_effects`
   ADD PRIMARY KEY (`player_id`,`name`);
 
 --
--- Indexes for table `players_followers`
+-- Index pour la table `players_followers`
 --
 ALTER TABLE `players_followers`
   ADD PRIMARY KEY (`id`),
@@ -4784,13 +4974,13 @@ ALTER TABLE `players_followers`
   ADD KEY `foreground_id` (`foreground_id`);
 
 --
--- Indexes for table `players_forum_missives`
+-- Index pour la table `players_forum_missives`
 --
 ALTER TABLE `players_forum_missives`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `players_forum_rewards`
+-- Index pour la table `players_forum_rewards`
 --
 ALTER TABLE `players_forum_rewards`
   ADD PRIMARY KEY (`id`),
@@ -4798,27 +4988,27 @@ ALTER TABLE `players_forum_rewards`
   ADD KEY `to_player_id` (`to_player_id`);
 
 --
--- Indexes for table `players_ips`
+-- Index pour la table `players_ips`
 --
 ALTER TABLE `players_ips`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `players_items`
+-- Index pour la table `players_items`
 --
 ALTER TABLE `players_items`
   ADD PRIMARY KEY (`player_id`,`item_id`),
   ADD KEY `item_id` (`item_id`);
 
 --
--- Indexes for table `players_items_bank`
+-- Index pour la table `players_items_bank`
 --
 ALTER TABLE `players_items_bank`
   ADD PRIMARY KEY (`player_id`,`item_id`),
   ADD KEY `item_id` (`item_id`);
 
 --
--- Indexes for table `players_items_exchanges`
+-- Index pour la table `players_items_exchanges`
 --
 ALTER TABLE `players_items_exchanges`
   ADD KEY `players_items_exchanges_fk_1` (`exchange_id`),
@@ -4827,7 +5017,7 @@ ALTER TABLE `players_items_exchanges`
   ADD KEY `players_items_exchanges_fk_4` (`target_id`);
 
 --
--- Indexes for table `players_kills`
+-- Index pour la table `players_kills`
 --
 ALTER TABLE `players_kills`
   ADD PRIMARY KEY (`id`),
@@ -4835,7 +5025,7 @@ ALTER TABLE `players_kills`
   ADD KEY `target_id` (`target_id`);
 
 --
--- Indexes for table `players_logs`
+-- Index pour la table `players_logs`
 --
 ALTER TABLE `players_logs`
   ADD PRIMARY KEY (`id`),
@@ -4844,7 +5034,7 @@ ALTER TABLE `players_logs`
   ADD KEY `players_logs_coords_fk_1` (`coords_id`);
 
 --
--- Indexes for table `players_logs_archives`
+-- Index pour la table `players_logs_archives`
 --
 ALTER TABLE `players_logs_archives`
   ADD PRIMARY KEY (`id`),
@@ -4853,366 +5043,442 @@ ALTER TABLE `players_logs_archives`
   ADD KEY `players_logs_archives_coords_fk_1` (`coords_id`);
 
 --
--- Indexes for table `players_options`
+-- Index pour la table `players_options`
 --
 ALTER TABLE `players_options`
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `players_pnjs`
+-- Index pour la table `players_pnjs`
 --
 ALTER TABLE `players_pnjs`
+  ADD PRIMARY KEY (`player_id`,`pnj_id`),
   ADD KEY `player_id` (`player_id`),
   ADD KEY `pnj_id` (`pnj_id`);
 
 --
--- Indexes for table `players_psw`
+-- Index pour la table `players_psw`
 --
 ALTER TABLE `players_psw`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `players_quests`
+-- Index pour la table `players_quests`
 --
 ALTER TABLE `players_quests`
   ADD PRIMARY KEY (`player_id`,`quest_id`),
   ADD KEY `quest_id` (`quest_id`);
 
 --
--- Indexes for table `players_quests_steps`
+-- Index pour la table `players_quests_steps`
 --
 ALTER TABLE `players_quests_steps`
   ADD PRIMARY KEY (`player_id`,`quest_id`,`name`),
   ADD KEY `quest_id` (`quest_id`);
 
 --
--- Indexes for table `players_upgrades`
+-- Index pour la table `players_upgrades`
 --
 ALTER TABLE `players_upgrades`
   ADD PRIMARY KEY (`id`),
   ADD KEY `player_id` (`player_id`);
 
 --
--- Indexes for table `quests`
+-- Index pour la table `quests`
 --
 ALTER TABLE `quests`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `races`
+-- Index pour la table `races`
 --
 ALTER TABLE `races`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `code` (`code`);
+  ADD UNIQUE KEY `UNIQ_5DBD1EC977153098` (`code`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- Index pour la table `race_actions`
+--
+ALTER TABLE `race_actions`
+  ADD PRIMARY KEY (`race_id`,`action_id`),
+  ADD KEY `IDX_1AF8249F6E59D40D` (`race_id`),
+  ADD KEY `IDX_1AF8249F9D32F035` (`action_id`);
+
+--
+-- AUTO_INCREMENT pour les tables déchargées
 --
 
 --
--- AUTO_INCREMENT for table `coords`
+-- AUTO_INCREMENT pour la table `actions`
+--
+ALTER TABLE `actions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT pour la table `action_conditions`
+--
+ALTER TABLE `action_conditions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+
+--
+-- AUTO_INCREMENT pour la table `action_outcomes`
+--
+ALTER TABLE `action_outcomes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
+-- AUTO_INCREMENT pour la table `audit`
+--
+ALTER TABLE `audit`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT pour la table `coords`
 --
 ALTER TABLE `coords`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51588;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51590;
 
 --
--- AUTO_INCREMENT for table `forums_keywords`
+-- AUTO_INCREMENT pour la table `forums_keywords`
 --
 ALTER TABLE `forums_keywords`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `items`
+-- AUTO_INCREMENT pour la table `items`
 --
 ALTER TABLE `items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
 
 --
--- AUTO_INCREMENT for table `items_asks`
+-- AUTO_INCREMENT pour la table `items_asks`
 --
 ALTER TABLE `items_asks`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `items_bids`
+-- AUTO_INCREMENT pour la table `items_bids`
 --
 ALTER TABLE `items_bids`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `items_exchanges`
+-- AUTO_INCREMENT pour la table `items_exchanges`
 --
 ALTER TABLE `items_exchanges`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
--- AUTO_INCREMENT for table `map_dialogs`
+-- AUTO_INCREMENT pour la table `map_dialogs`
 --
 ALTER TABLE `map_dialogs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `map_elements`
+-- AUTO_INCREMENT pour la table `map_elements`
 --
 ALTER TABLE `map_elements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=596;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1135;
 
 --
--- AUTO_INCREMENT for table `map_foregrounds`
+-- AUTO_INCREMENT pour la table `map_foregrounds`
 --
 ALTER TABLE `map_foregrounds`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
--- AUTO_INCREMENT for table `map_items`
+-- AUTO_INCREMENT pour la table `map_items`
 --
 ALTER TABLE `map_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
--- AUTO_INCREMENT for table `map_plants`
+-- AUTO_INCREMENT pour la table `map_plants`
 --
 ALTER TABLE `map_plants`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
--- AUTO_INCREMENT for table `map_tiles`
+-- AUTO_INCREMENT pour la table `map_routes`
+--
+ALTER TABLE `map_routes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT pour la table `map_tiles`
 --
 ALTER TABLE `map_tiles`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1041;
 
 --
--- AUTO_INCREMENT for table `map_triggers`
+-- AUTO_INCREMENT pour la table `map_triggers`
 --
 ALTER TABLE `map_triggers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=180;
 
 --
--- AUTO_INCREMENT for table `map_walls`
+-- AUTO_INCREMENT pour la table `map_walls`
 --
 ALTER TABLE `map_walls`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=355;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=357;
 
 --
--- AUTO_INCREMENT for table `players`
+-- AUTO_INCREMENT pour la table `outcome_instructions`
+--
+ALTER TABLE `outcome_instructions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
+-- AUTO_INCREMENT pour la table `players`
 --
 ALTER TABLE `players`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `players_connections`
+-- AUTO_INCREMENT pour la table `players_banned`
+--
+ALTER TABLE `players_banned`
+  MODIFY `player_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT pour la table `players_connections`
 --
 ALTER TABLE `players_connections`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
--- AUTO_INCREMENT for table `players_followers`
+-- AUTO_INCREMENT pour la table `players_followers`
 --
 ALTER TABLE `players_followers`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `players_forum_rewards`
+-- AUTO_INCREMENT pour la table `players_forum_rewards`
 --
 ALTER TABLE `players_forum_rewards`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `players_ips`
---
-ALTER TABLE `players_ips`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT for table `players_kills`
+-- AUTO_INCREMENT pour la table `players_ips`
+--
+ALTER TABLE `players_ips`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT pour la table `players_kills`
 --
 ALTER TABLE `players_kills`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT for table `players_logs`
+-- AUTO_INCREMENT pour la table `players_logs`
 --
 ALTER TABLE `players_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1482;
 
 --
--- AUTO_INCREMENT for table `players_logs_archives`
+-- AUTO_INCREMENT pour la table `players_logs_archives`
 --
 ALTER TABLE `players_logs_archives`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=153;
 
 --
--- AUTO_INCREMENT for table `players_psw`
+-- AUTO_INCREMENT pour la table `players_psw`
 --
 ALTER TABLE `players_psw`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `players_upgrades`
+-- AUTO_INCREMENT pour la table `players_upgrades`
 --
 ALTER TABLE `players_upgrades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
--- AUTO_INCREMENT for table `quests`
+-- AUTO_INCREMENT pour la table `quests`
 --
 ALTER TABLE `quests`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `races`
+-- AUTO_INCREMENT pour la table `races`
 --
 ALTER TABLE `races`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- Constraints for dumped tables
+-- Contraintes pour les tables déchargées
 --
 
 --
--- Constraints for table `items`
+-- Contraintes pour la table `action_conditions`
+--
+ALTER TABLE `action_conditions`
+  ADD CONSTRAINT `FK_97C463639D32F035` FOREIGN KEY (`action_id`) REFERENCES `actions` (`id`);
+
+--
+-- Contraintes pour la table `action_outcomes`
+--
+ALTER TABLE `action_outcomes`
+  ADD CONSTRAINT `FK_92A9B44B9D32F035` FOREIGN KEY (`action_id`) REFERENCES `actions` (`id`);
+
+--
+-- Contraintes pour la table `items`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_ibfk_1` FOREIGN KEY (`blessed_by_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `items_asks`
+-- Contraintes pour la table `items_asks`
 --
 ALTER TABLE `items_asks`
   ADD CONSTRAINT `items_asks_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
   ADD CONSTRAINT `items_asks_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `items_bids`
+-- Contraintes pour la table `items_bids`
 --
 ALTER TABLE `items_bids`
   ADD CONSTRAINT `items_bids_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
   ADD CONSTRAINT `items_bids_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `items_exchanges`
+-- Contraintes pour la table `items_exchanges`
 --
 ALTER TABLE `items_exchanges`
   ADD CONSTRAINT `items_exchanges_fk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `items_exchanges_fk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `map_dialogs`
+-- Contraintes pour la table `map_dialogs`
 --
 ALTER TABLE `map_dialogs`
   ADD CONSTRAINT `map_dialogs_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `map_elements`
+-- Contraintes pour la table `map_elements`
 --
 ALTER TABLE `map_elements`
   ADD CONSTRAINT `map_elements_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `map_foregrounds`
+-- Contraintes pour la table `map_foregrounds`
 --
 ALTER TABLE `map_foregrounds`
   ADD CONSTRAINT `map_foregrounds_ibfk_3` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `map_items`
+-- Contraintes pour la table `map_items`
 --
 ALTER TABLE `map_items`
   ADD CONSTRAINT `map_items_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
   ADD CONSTRAINT `map_items_ibfk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `map_tiles`
+-- Contraintes pour la table `map_routes`
+--
+ALTER TABLE `map_routes`
+  ADD CONSTRAINT `coords_map_routes_fk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`),
+  ADD CONSTRAINT `players_map_routes_fk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
+
+--
+-- Contraintes pour la table `map_tiles`
 --
 ALTER TABLE `map_tiles`
   ADD CONSTRAINT `map_tiles_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`),
   ADD CONSTRAINT `map_tiles_ibfk_2` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `map_triggers`
+-- Contraintes pour la table `map_triggers`
 --
 ALTER TABLE `map_triggers`
   ADD CONSTRAINT `map_triggers_ibfk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `map_walls`
+-- Contraintes pour la table `map_walls`
 --
 ALTER TABLE `map_walls`
   ADD CONSTRAINT `map_walls_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `map_walls_ibfk_2` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `players`
+-- Contraintes pour la table `outcome_instructions`
+--
+ALTER TABLE `outcome_instructions`
+  ADD CONSTRAINT `FK_9DA2AC6FF5E9B83B` FOREIGN KEY (`outcome_id`) REFERENCES `action_outcomes` (`id`);
+
+--
+-- Contraintes pour la table `players`
 --
 ALTER TABLE `players`
   ADD CONSTRAINT `players_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `players_actions`
+-- Contraintes pour la table `players_actions`
 --
 ALTER TABLE `players_actions`
   ADD CONSTRAINT `players_actions_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_assists`
+-- Contraintes pour la table `players_assists`
 --
 ALTER TABLE `players_assists`
   ADD CONSTRAINT `players_assists_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_assists_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_banned`
+-- Contraintes pour la table `players_banned`
 --
 ALTER TABLE `players_banned`
   ADD CONSTRAINT `players_banned_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_bonus`
+-- Contraintes pour la table `players_bonus`
 --
 ALTER TABLE `players_bonus`
   ADD CONSTRAINT `players_bonus_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_connections`
+-- Contraintes pour la table `players_connections`
 --
 ALTER TABLE `players_connections`
   ADD CONSTRAINT `players_connections_fk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_effects`
+-- Contraintes pour la table `players_effects`
 --
 ALTER TABLE `players_effects`
   ADD CONSTRAINT `players_effects_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_followers`
+-- Contraintes pour la table `players_followers`
 --
 ALTER TABLE `players_followers`
   ADD CONSTRAINT `players_followers_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_followers_ibfk_3` FOREIGN KEY (`foreground_id`) REFERENCES `map_foregrounds` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `players_forum_missives`
+-- Contraintes pour la table `players_forum_missives`
 --
 ALTER TABLE `players_forum_missives`
   ADD CONSTRAINT `players_forum_missives_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_forum_rewards`
+-- Contraintes pour la table `players_forum_rewards`
 --
 ALTER TABLE `players_forum_rewards`
   ADD CONSTRAINT `players_forum_rewards_ibfk_1` FOREIGN KEY (`from_player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_forum_rewards_ibfk_2` FOREIGN KEY (`to_player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_items`
+-- Contraintes pour la table `players_items`
 --
 ALTER TABLE `players_items`
   ADD CONSTRAINT `players_items_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_items_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`);
 
 --
--- Constraints for table `players_items_exchanges`
+-- Contraintes pour la table `players_items_exchanges`
 --
 ALTER TABLE `players_items_exchanges`
   ADD CONSTRAINT `players_items_exchanges_fk_1` FOREIGN KEY (`exchange_id`) REFERENCES `items_exchanges` (`id`),
@@ -5221,14 +5487,14 @@ ALTER TABLE `players_items_exchanges`
   ADD CONSTRAINT `players_items_exchanges_fk_4` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_kills`
+-- Contraintes pour la table `players_kills`
 --
 ALTER TABLE `players_kills`
   ADD CONSTRAINT `players_kills_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_kills_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_logs`
+-- Contraintes pour la table `players_logs`
 --
 ALTER TABLE `players_logs`
   ADD CONSTRAINT `players_logs_coords_fk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`),
@@ -5236,43 +5502,50 @@ ALTER TABLE `players_logs`
   ADD CONSTRAINT `players_logs_ibfk_2` FOREIGN KEY (`target_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_logs_archives`
+-- Contraintes pour la table `players_logs_archives`
 --
 ALTER TABLE `players_logs_archives`
   ADD CONSTRAINT `players_logs_archives_coords_fk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`);
 
 --
--- Constraints for table `players_options`
+-- Contraintes pour la table `players_options`
 --
 ALTER TABLE `players_options`
   ADD CONSTRAINT `players_options_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_pnjs`
+-- Contraintes pour la table `players_pnjs`
 --
 ALTER TABLE `players_pnjs`
   ADD CONSTRAINT `players_pnjs_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_pnjs_ibfk_2` FOREIGN KEY (`pnj_id`) REFERENCES `players` (`id`);
 
 --
--- Constraints for table `players_quests`
+-- Contraintes pour la table `players_quests`
 --
 ALTER TABLE `players_quests`
   ADD CONSTRAINT `players_quests_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_quests_ibfk_2` FOREIGN KEY (`quest_id`) REFERENCES `quests` (`id`);
 
 --
--- Constraints for table `players_quests_steps`
+-- Contraintes pour la table `players_quests_steps`
 --
 ALTER TABLE `players_quests_steps`
   ADD CONSTRAINT `players_quests_steps_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
   ADD CONSTRAINT `players_quests_steps_ibfk_2` FOREIGN KEY (`quest_id`) REFERENCES `quests` (`id`);
 
 --
--- Constraints for table `players_upgrades`
+-- Contraintes pour la table `players_upgrades`
 --
 ALTER TABLE `players_upgrades`
   ADD CONSTRAINT `players_upgrades_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`);
+
+--
+-- Contraintes pour la table `race_actions`
+--
+ALTER TABLE `race_actions`
+  ADD CONSTRAINT `FK_1AF8249F6E59D40D` FOREIGN KEY (`race_id`) REFERENCES `races` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_1AF8249F9D32F035` FOREIGN KEY (`action_id`) REFERENCES `actions` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
