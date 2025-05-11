@@ -72,15 +72,11 @@ function print_players($list){
     ';
 }
 
-$list =Player::get_player_list()->list;
-
+$list = Player::get_player_list()->list;
 
 // enlever les pnj
 foreach($list as $k=>$e){
-    if($e->id < 0 || $e->lastLoginTime < time() - INACTIVE_TIME)
-        unset($list[$k]);
-    //Enlever les races "privées" dieux, animaux, protocols... au cas où ce ne soit pas un pnj
-    if(file_exists('datas/private/races/' . $e->race . '.json'))
+    if($e->id <= 1 || $e->lastLoginTime < time() - INACTIVE_TIME)
         unset($list[$k]);
 }
 
