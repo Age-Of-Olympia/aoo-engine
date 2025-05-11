@@ -54,8 +54,8 @@ echo '
 </div>
 ';
 
-//Retrait de 10xRang XP/PI au personnage tué
-$target->put_xp(-10*$target->data->rank);
+//Retrait de 10xRang XP/PI au personnage tué (param dans constants.php)
+$target->put_xp(-DEATH_XP*$target->data->rank);
 
 $target->death();
 
