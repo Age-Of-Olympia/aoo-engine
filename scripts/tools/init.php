@@ -1,22 +1,12 @@
 <?php
 
-// display php errors
-error_reporting(E_ALL);
-ini_set('display_errors', TRUE);
-ini_set('display_startup_errors', TRUE);
-
-
 require_once('config.php');
-
 
 $ui = new Ui('Init');
 
-
 if(!isset($_GET['perform'])){
 
-
     echo '<a href="tools.php?init&perform"><button>(re)init</button></a>';
-
     exit();
 }
 

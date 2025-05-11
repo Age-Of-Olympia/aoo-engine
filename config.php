@@ -2,13 +2,6 @@
 
 session_start();
 
-
-// display php errors
-error_reporting(E_ALL);
-ini_set('display_errors', TRUE);
-ini_set('display_startup_errors', TRUE);
-
-
 // classes autoloader
 spl_autoload_register(function ($class_name) {
     $base_dir = __DIR__ . '/classes/';
