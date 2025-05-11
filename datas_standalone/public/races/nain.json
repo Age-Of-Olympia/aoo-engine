@@ -28,6 +28,7 @@
         "fouiller",
         "prier",
         "repos",
+        "vol_a_la_tire",
         "dmg1\/pic_de_pierre",
         "soins\/barbier"
     ],
@@ -49,6 +50,7 @@
         "fouiller",
         "prier",
         "repos",
+        "vol_a_la_tire",
         "dmg1\/pic_de_pierre",
         "dmg2\/assomoir",
         "soins\/barbier",
@@ -59,5 +61,5 @@
         "special\/attaque_sautee",
         "dps\/poings_pierre"
     ],
-    "animateur": -10
+    "animateur": 1
 }

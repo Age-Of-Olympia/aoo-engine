@@ -29,6 +29,7 @@
         "fouiller",
         "prier",
         "repos",
+        "vol_a_la_tire",
         "dmg1\/fleche_aquatique",
         "soins\/lien_de_vie"
     ],
@@ -49,6 +50,7 @@
         "fouiller",
         "prier",
         "repos",
+        "vol_a_la_tire",
         "dmg1\/fleche_aquatique",
         "dmg2\/frappe_vicieuse",
         "soins\/lien_de_vie",
@@ -58,5 +60,5 @@
         "special\/trait_beni",
         "dps\/glaciation"
     ],
-    "animateur": -5
+    "animateur": 3
 }
