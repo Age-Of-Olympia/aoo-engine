@@ -57,6 +57,7 @@ abstract class Action implements ActionInterface
 
     protected bool $refreshScreen = false;
     protected bool $hideOnSuccess = false;
+    protected string $ormType;
 
     public function __construct()
     {
@@ -79,6 +80,16 @@ abstract class Action implements ActionInterface
     {
         $this->id = $id;
         return $this;
+    }
+
+    public function getOrmType(): string
+    {
+        return $this->ormType;
+    }
+
+    public function setOrmType(string $ormType): void
+    {
+        $this->ormType = $ormType;
     }
 
     public function getName(): string

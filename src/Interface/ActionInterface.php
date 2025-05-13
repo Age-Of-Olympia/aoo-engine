@@ -12,6 +12,8 @@ interface ActionInterface
 {
     public function getId(): ?int;
     public function setId(int $id): self;
+    public function getOrmType(): string;
+    public function setOrmType(string $ormType): void;
     public function getName(): string;
     public function getIcon(): string;
     public function getDisplayName(): string;

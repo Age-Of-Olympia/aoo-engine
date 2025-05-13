@@ -4,6 +4,7 @@ require_once('config.php');
 
 use App\Action\ActionFactory;
 use App\Service\ActionExecutorService;
+use App\Service\ActionService;
 use App\View\ActionResultsView;
 
 ob_start();
@@ -16,8 +17,6 @@ ob_start();
 if(!isset($_POST['action'])){
     exit('error action');
 }
-
-$actionJson = json()->decode('actions', $_POST['action']);
 
 // player
 $player = new Player($_SESSION['playerId']);
@@ -38,11 +37,16 @@ $target->get_caracs();
 $targetPvBefore = $target->getRemaining('pv');
 
 // healing a full life target
-if(!empty($actionJson->playerHeal)){
-    if($targetPvBefore == $target->caracs->pv){
-        exit('Ce personnage n\'a pas besoin de soins.');
+if ($_POST['action'] != 'attaquer') {
+    $actionService = new ActionService();
+    $action = $actionService->getActionByName($_POST['action']);
+    if($action->getOrmType() == 'heal') {
+        if($targetPvBefore == $target->caracs->pv){
+            exit('Ce personnage n\'a pas besoin de soins.');
+        }
     }
 }
+
 
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());

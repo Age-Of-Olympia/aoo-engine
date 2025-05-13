@@ -1,5 +1,7 @@
 <?php
 
+use App\Service\ActionService;
+
 ob_start();
 
 $spellPrices = array(
@@ -120,9 +122,8 @@ foreach($raceJson->spells as $e){
         continue;
     }
 
-
-    $spellJson = json()->decode('actions', $e);
-
+    $actionService = new ActionService();
+    $action = $actionService->getActionByName($e);
 
     echo '
     <tr>
@@ -136,7 +137,7 @@ foreach($raceJson->spells as $e){
 
         echo '
         <td align="left">
-            Parchemin de sort<br /><sup>'. $spellJson->name .'</sup>
+            Parchemin de sort<br /><sup>'. $action->getDisplayName() .'</sup>
         </td>
         ';
 

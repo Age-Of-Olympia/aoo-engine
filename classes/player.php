@@ -2,6 +2,7 @@
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
+use App\Service\ActionService;
 use App\Service\PlayerService;
 
 class Player implements ActorInterface {
@@ -358,11 +359,12 @@ class Player implements ActorInterface {
 
         if($table == 'actions'){
 
-            $actionJson = json()->decode('actions', $name);
-
-            if(!empty($actionJson->type)){
-
-                $values['type'] = $actionJson->type;
+            if ($name != 'attaquer') {
+                $actionService = new ActionService();
+                $action = $actionService->getActionByName($name);
+                if ($action->getOrmType() == 'spell' || $action->getOrmType() == 'technique') {
+                    $values['type'] = 'sort';
+                }
             }
         }
 

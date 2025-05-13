@@ -456,17 +456,8 @@ class Item{
 
     public static function get_formatted_name($name, $row){
 
-
         foreach(ITEMS_OPT as $k=>$e){
             if(!empty($row->$k)){ $name = $e . $name . $e; }
-        }
-
-
-        if(!empty($row->spell)){
-
-            $spellJson = json()->decode('actions', $row->spell);
-
-            $name .= '<br /><sup>'. $spellJson->name .'</sup>';
         }
 
         return $name;

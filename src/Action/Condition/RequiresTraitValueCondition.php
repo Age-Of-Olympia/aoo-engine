@@ -9,6 +9,12 @@ class RequiresTraitValueCondition extends BaseCondition
 {
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
+        $preConditionResult = parent::check($actor, $target, $condition);
+
+        if (!$preConditionResult->isSuccess()) {
+            return $preConditionResult;
+        }
+
         $result = new ConditionResult(true, array(), array());
         $params = $condition->getParameters(); // e.g. { "a": 1, "pm": 10 }
 

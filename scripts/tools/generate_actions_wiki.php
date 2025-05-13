@@ -1,5 +1,7 @@
 <?php
 
+use App\Service\ActionService;
+
 echo '<textarea style="width: 100vw; height: 50vw;">';
 
 
@@ -16,19 +18,17 @@ foreach(RACES as $race){
 
     foreach($raceJson->actionsPack as $action){
 
+        $actionService = new ActionService();
+        $actionData = $actionService->getActionByName($e);
 
-        $actionJson = json()->decode('actions', $action);
-
-        if(!isset($actionJson->type) || $actionJson->type != 'sort'){
-
+        if($actionData->getOrmType() != 'sort' || $actionData->getOrmType() != 'technique'){
             continue;
         }
 
-
-        $type = (!empty($actionJson->subtype)) ? 'technique' : 'sort';
-
+        $type = $actionData->getOrmType();
 
         $bonus = '';
+        // ToDo : aller chercher dans les outcomes s'il y a des bonus de dégâts ou de soins
 
         if(!empty($actionJson->bonusDamages)){
 

@@ -25,6 +25,7 @@ class ActionService
     {
         $type = $this->getType($name);
         $result = $this->getAction($type, $name);
+        $result->setOrmType($type);
 
         return $result;
     }
@@ -47,7 +48,7 @@ class ActionService
         return $type;
     }
 
-    private function getAction($type, $name)
+    private function getAction($type, $name) : ActionInterface
     {
         $className = ucfirst(strtolower($type)) . 'Action';
         
