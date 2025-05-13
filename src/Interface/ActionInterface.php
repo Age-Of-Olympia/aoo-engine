@@ -15,6 +15,7 @@ interface ActionInterface
     public function getOrmType(): string;
     public function setOrmType(string $ormType): void;
     public function getName(): string;
+    public function getText(): string;
     public function getIcon(): string;
     public function getDisplayName(): string;
     public function getConditions(): Collection;

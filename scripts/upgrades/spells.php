@@ -1,5 +1,8 @@
 <?php
 
+use App\Service\ActionService;
+use App\Service\OutcomeInstructionService;
+
 if(isset($_GET['forget']) && !empty($_POST['spell'])){
 
     include('scripts/upgrades/forget_spell.php');
@@ -9,43 +12,79 @@ if(isset($_GET['forget']) && !empty($_POST['spell'])){
     exit();
 }
 
+echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
 
-echo '
-<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
+$spellList = $player->get_spells();
+$spellsN = count($spellList);
+$trStyle = '';
+$buttonStyle = '';
+
+$maxSpells = $player->get_max_spells($spellsN);
+$max = $maxSpells + $spellsN;
+
+if($maxSpells < 0){
+    echo '<tr><th colspan="6"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $max .')</font></th>';
+    $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
+    $buttonStyle = 'class="blink" style="color: red;"';
+} else {
+    echo '<tr><th colspan="6"><font color="blue">Le maximum de sorts que vous pouvez utiliser est de '. $spellsN .'.</font>';
+    if ($max == $spellsN) {
+        echo '<br />Vous avez atteint le maximum de sorts que vous pouvez utiliser.';
+    }
+    echo '</th>';
+}
+
 
 
 echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th colspan="2">Effet</th></tr>';
 
 
-$spellList = $player->get_spells();
 
-$spellsN = count($spellList);
-
-$trStyle = '';
-
-$buttonStyle = '';
-
-$maxSpells = $player->get_max_spells(count($spellList));
-
-if($maxSpells < 0){
-
-    $max = $maxSpells + $spellsN;
-
-    echo '<tr><th colspan="6"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $max .')</font></th>';
-
-    $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
-
-    $buttonStyle = 'class="blink" style="color: red;"';
-}
 
 foreach($spellList as $e){
 
 
-    $spellJson = json()->decode('actions', $e);
+    $actionService = new ActionService();
+    $spell = $actionService->getActionByName($e);
 
+    $img = 'img/spells/'. $e .'.jpeg';
 
-    $img = (!empty($spellJson->img)) ? $spellJson->img : 'img/spells/'. $e .'.jpeg';
+    $conditions = $spell->getConditions();
 
+    foreach($conditions as $condition) {
+        $conditionType = $condition->getConditionType();
+        if ($conditionType == 'RequiresTraitValue') {
+            $conditionParameters = $condition->getParameters();
+            $costArray = array();
+            foreach ($conditionParameters as $key => $value) {
+                if ($key == "uses_fatigue") {
+                    continue;
+                }
+                if ($key == "fatigue") {
+                    continue;
+                }
+                array_push($costArray, $value . CARACS[$key]);
+            }
+            break;
+        }
+    }
+
+    $outcomes = $spell->getOnSuccessOutcomes();
+
+    $bonusDamages = "";
+    $bonusHeal = "";
+
+    $outcomeInstructionService = new OutcomeInstructionService();
+    $instruction = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
+
+    $instructionParameters = $instruction->getParameters();
+    if (isset($instructionParameters['bonusDamagesTrait'])) {
+        $bonusDamages = $instructionParameters['bonusDamagesTrait'];
+    }
+    if (isset($instructionParameters['bonusHeal'])) {
+        $bonusHeal = $instructionParameters['bonusHeal'];
+    }
+    
 
     echo '
     <tr '. $trStyle .'>
@@ -53,25 +92,24 @@ foreach($spellList as $e){
             <img src="'. $img .'" width="50" />
         </td>
         <td align="left">
-            '. $spellJson->name .'
+            '. $spell->getDisplayName() .'
         </td>
         <td>
-            <span class="ra '. $spellJson->raFont .'"></span>
+            <span class="ra '. $spell->getIcon() .'"></span>
         </td>
         <td>
-            '. implode(', ', Item::get_cost($spellJson->costs)) .'
+            '. implode(', ', $costArray) .'
         </td>
         ';
 
         $bonus = '';
 
-        if(!empty($spellJson->bonusDamages)){
-
-            $bonus = '+'. $spellJson->bonusDamages;
+        if($bonusDamages != ""){
+            $bonus = '+'. $bonusDamages;
         }
-        elseif(!empty($spellJson->bonusHeal)){
-
-            $bonus = '+'. $spellJson->bonusHeal;
+        
+        if($bonusHeal != ""){
+            $bonus = '+'. $bonusHeal;
         }
 
 
@@ -80,7 +118,7 @@ foreach($spellList as $e){
 
         echo '
         <td align="left">
-            '. $spellJson->text .'
+            '. $spell->getText() .'
         </td>
         ';
 

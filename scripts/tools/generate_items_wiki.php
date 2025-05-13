@@ -103,7 +103,7 @@ foreach(RACES as $race){
 
     foreach($raceJson->actionsPack as $action){
 
-
+        // ToDo when wiki generation will be reworked
         $actionJson = json()->decode('actions', $action);
 
         if(!isset($actionJson->type) || $actionJson->type != 'sort'){
