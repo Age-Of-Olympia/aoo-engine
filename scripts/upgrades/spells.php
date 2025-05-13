@@ -75,16 +75,22 @@ foreach($spellList as $e){
     $bonusHeal = "";
 
     $outcomeInstructionService = new OutcomeInstructionService();
-    $instruction = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
 
-    $instructionParameters = $instruction->getParameters();
-    if (isset($instructionParameters['bonusDamagesTrait'])) {
-        $bonusDamages = $instructionParameters['bonusDamagesTrait'];
+    $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
+    if (isset($instructionLifeLoss)) {
+        $instructionParameters = $instructionLifeLoss->getParameters();
+        if (isset($instructionParameters['bonusDamagesTrait'])) {
+            $bonusDamages = $instructionParameters['bonusDamagesTrait'];
+        }
     }
-    if (isset($instructionParameters['bonusHeal'])) {
-        $bonusHeal = $instructionParameters['bonusHeal'];
+
+    $instructionHealing = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("HealingOutcomeInstruction", $outcomes[0]->getId());
+    if (isset($instructionHealing)) {
+        $instructionParameters = $instructionHealing->getParameters();
+        if (isset($instructionParameters['bonusHealingTrait'])) {
+            $bonusHeal = $instructionParameters['bonusHealingTrait'];
+        }
     }
-    
 
     echo '
     <tr '. $trStyle .'>
