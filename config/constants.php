@@ -224,6 +224,8 @@ define('WALLS_PV', array(
 
     'altar'=>50,
     'altar_broken'=>50,
+
+    'pierre_precieuse'=>100,
     
     'piedestal'=>50,
     'piedestal_broken'=>50,
