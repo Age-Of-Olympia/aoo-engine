@@ -99,15 +99,26 @@ EOT);
                     $recipe->setRace($race);
                    
                     foreach ($recetteData['recette'] as $ingredient) {
-                        $ingredientObj = new App\Entity\ReciepeIngredient();
+                        $ingredientObj = new App\Entity\RecipeIngredient();
+                        $item = new Item($ingredient['id']);
+                        $item->get_data();
+                        if($item->row->name!= $ingredient['name']){
+                            $this->result->Error("Item name mismatch recipe '{$recetteData['name']}' use '{$item->row->name} but say it use {$ingredient['name']}'");
+                        }
                         $ingredientObj->setItemId($ingredient['id']);
                         $ingredientObj->setCount($ingredient['n']);
-                        $recipe->addReciepeIngredient($ingredientObj);
+                        $recipe->addRecipeIngredient($ingredientObj);
                     }
-                    $resultObj = new App\Entity\ReciepeResult();
+                    $resultObj = new App\Entity\RecipeResult();
                     $resultObj->setItemId($recetteData['id']);
-                    $resultObj->setCount(1);
-                    $recipe->addReciepeResult($resultObj);
+                    $item = new Item($recetteData['id']);
+                    $item->get_data();
+                    if($item->row->name!= $recetteData['name']){
+                        $this->result->Log("Item name mismatch recipe '{$recetteData['name']}' create '{$item->row->name}'");
+                    }
+                    $craftedByN = isset($item->data->craftedByN) ? $item->data->craftedByN : 1;
+                    $resultObj->setCount($craftedByN);
+                    $recipe->addRecipeResult($resultObj);
                     $em->persist($recipe);
                     $em->flush();//
                     $count++;
