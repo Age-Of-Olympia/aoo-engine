@@ -11,8 +11,8 @@ class Recipe
 {
     public function __construct()
     {
-        $this->reciepeIngredients = new ArrayCollection();
-        $this->reciepeResults = new ArrayCollection();
+        $this->recipeIngredients = new ArrayCollection();
+        $this->recipeResults = new ArrayCollection();
     }
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -28,20 +28,20 @@ class Recipe
     protected ?Race $race = null;
 
     #[ORM\OneToMany(
-        mappedBy: "reciepe",
-        targetEntity: ReciepeIngredient::class,
+        mappedBy: "recipe",
+        targetEntity: RecipeIngredient::class,
         cascade: ["persist", "remove"],
         orphanRemoval: true,
     )]
-    protected Collection $reciepeIngredients;
+    protected Collection $recipeIngredients;
 
     #[ORM\OneToMany(
-        mappedBy: "reciepe",
-        targetEntity: ReciepeResult::class,
+        mappedBy: "recipe",
+        targetEntity: RecipeResult::class,
         cascade: ["persist", "remove"],
         orphanRemoval: true,
     )]
-    protected Collection $reciepeResults;
+    protected Collection $recipeResults;
 
     //getters and setters
     public function getId(): ?int
@@ -71,19 +71,29 @@ class Recipe
     }
 
 
-    public function addReciepeIngredient(ReciepeIngredient $reciepeIngredient): void
+    public function addRecipeIngredient(RecipeIngredient $recipeIngredient): void
     {
-        if (!$this->reciepeIngredients->contains($reciepeIngredient)) {
-            $this->reciepeIngredients[] = $reciepeIngredient;
-            $reciepeIngredient->setRecipe($this);
+        if (!$this->recipeIngredients->contains($recipeIngredient)) {
+            $this->recipeIngredients[] = $recipeIngredient;
+            $recipeIngredient->setRecipe($this);
         }
     }
 
-    public function addReciepeResult(ReciepeResult $reciepeResult): void
+
+    public function getRecipeIngredients(): Collection
     {
-        if (!$this->reciepeResults->contains($reciepeResult)) {
-            $this->reciepeResults[] = $reciepeResult;
-            $reciepeResult->setRecipe($this);
+        return $this->recipeIngredients;
+    }
+    public function getRecipeResults(): Collection
+    {
+        return $this->recipeResults;
+    }
+
+    public function addRecipeResult(RecipeResult $recipeResult): void
+    {
+        if (!$this->recipeResults->contains($recipeResult)) {
+            $this->recipeResults[] = $recipeResult;
+            $recipeResult->setRecipe($this);
         }
     }
 
@@ -91,7 +101,7 @@ class Recipe
 
 #[ORM\Entity]
 #[ORM\Table(name: "craft_recipes_ingredients")]
-class ReciepeIngredient
+class RecipeIngredient
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -101,7 +111,7 @@ class ReciepeIngredient
     #[ORM\Column(type: "integer", options: array("default"=>1))]
     private int $count = 1;
 
-    #[ORM\ManyToOne(targetEntity: Recipe::class, inversedBy: "reciepeIngredients")]
+    #[ORM\ManyToOne(targetEntity: Recipe::class, inversedBy: "recipeIngredients")]
     #[ORM\JoinColumn(name: "recipe_id", referencedColumnName: "id", nullable: false)]
     private Recipe $recipe;
 
@@ -137,7 +147,7 @@ class ReciepeIngredient
 
 #[ORM\Entity]
 #[ORM\Table(name: "craft_recipes_results")]
-class ReciepeResult
+class RecipeResult
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -147,7 +157,7 @@ class ReciepeResult
     #[ORM\Column(type: "integer", options: array("default"=>1))]
     private int $count = 1;
 
-    #[ORM\ManyToOne(targetEntity: Recipe::class, inversedBy: "reciepeResults")]
+    #[ORM\ManyToOne(targetEntity: Recipe::class, inversedBy: "recipeResults")]
     #[ORM\JoinColumn(name: "recipe_id", referencedColumnName: "id", nullable: false)]
     private Recipe $recipe;
 
@@ -171,7 +181,7 @@ class ReciepeResult
     {
         $this->item_id = $item_id;
     }
-    public function getRecipe(): Recipe
+    public function getrecipe(): recipe
     {
         return $this->recipe;
     }
