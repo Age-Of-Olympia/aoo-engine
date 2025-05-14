@@ -1,5 +1,5 @@
 <?php
-
+use App\Service\AuditService;
 
 if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) && !empty($_POST['price'])){
 
@@ -24,43 +24,48 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) &&  !empty($_POST['n']) 
 
 
     if(!is_numeric($_POST['price']) || $_POST['price'] < 1){
+        $auditService = new AuditService();
+        $auditService->addAuditLog("Tentative de triche bids/asks");
         exit('<div id="error">Erreur, prix invalide</div>');
+    }
+
+    if(!is_numeric($_POST['n']) || $_POST['n'] < 1){
+        $auditService = new AuditService();
+        $auditService->addAuditLog("Tentative de triche bids/asks");
+        exit('<div id="error">Erreur, nombre invalide</div>');
     }
 
 
     if($_POST['action'] == 'newBid'){
 
+        $db->start_transaction("newbid");
 
-        $nMax = $item->get_n($player);
-
-
-        if($_POST['n'] > $nMax){
-
-            exit('Max. '. $nMax .'!');
+        if($item->add_item($player, -$_POST['n']))
+        { 
+            $db->insert('items_bids', $values);
+        }
+        else{
+            exit('<div id="error">Erreur, vous ne possédez pas assez d\'objets</div>');
         }
 
-        $db->insert('items_bids', $values);
-
-
-        $item->add_item($player, -$_POST['n']);
+        $db->commit_transaction("newbid");
 
     }
     elseif($_POST['action'] == 'newAsk'){
 
-
         $total = $_POST['n'] * $_POST['price'];
 
-
-        if($total > $player->get_gold()){
-            exit('<div id="error">'.'Vous ne possédez pas assez d\'Or pour prétendre acheter '. $_POST['n'] .' '. $item->row->name .'.'.'</div>');
-        }
-
-
-        $db->insert('items_asks', $values);
-
+        $db->start_transaction("newask");
         //remove money to "block" it
         $gold = Item::get_item_by_name('or');
-        $gold->add_item($player, -$total);
+        if($gold->add_item($player, -$total))
+        {
+            $db->insert('items_asks', $values);
+        }
+        else{
+            exit('<div id="error">'.'Vous ne possédez pas assez d\'Or pour prétendre acheter '. $_POST['n'] .' '. $item->row->name .'.'.'</div>');
+        }
+        $db->commit_transaction("newask");
     }
 
     exit('new offer done');

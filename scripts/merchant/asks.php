@@ -43,7 +43,7 @@ if(!empty($_GET['itemId'])){
     }
 
 
-    echo $market->print_detail($item, 'asks', $player->id);
+    echo $market->print_detail($item, 'asks', $player);
 
     exit();
 }

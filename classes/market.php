@@ -146,7 +146,7 @@ class Market{
     }
 
 
-    public function print_detail($item, $table, $player_id){
+    public function print_detail($item, $table, $player){
 
 
         ob_start();
@@ -186,9 +186,15 @@ class Market{
 
             $action = ($table == 'bids') ? 'Acheter' : 'Vendre';
 
-            if($playerJson->id==$player_id){
+            if($playerJson->id==$player->id){
                 $action = ($table == 'bids') ? 'Annuler l\'offre' : 'Annuler la demande';
             }
+            $adminInfos = '';
+            if($player->have_option('isAdmin'))
+            {
+                $adminInfos = ' [<a href="infos.php?targetId='. $player->id .'">' . $playerJson->name .'('.$row->player_id.')</a>]';
+            }
+
 
             echo '
             <tr>
@@ -215,7 +221,7 @@ class Market{
 
                 echo '
                 <td>
-                    '. $playerJson->race .'</font>
+                    '. $playerJson->race . $adminInfos.'</font>
                 </td>
                 ';
 
@@ -332,10 +338,12 @@ class Market{
 
         if(!is_numeric($n) || $n < 1){
 
-            exit('error id');
+            exit('error count');
         }
 
         $db = new Db();
+
+        $db->start_transaction("perform_ask_bid");
 
         $res = $db->get_single('items_'. $table, $id);
 
@@ -372,8 +380,6 @@ class Market{
             $item = new Item($row->item_id);
 
             if(!$item->give_item($player, $target, $n, $bank=true)){
-
-
                 exit('<div id="error">Pas assez de cet objet.</div>');
             }
 
@@ -395,9 +401,7 @@ class Market{
 
             $gold = Item::get_item_by_name('or');
 
-            if(!$gold->give_item($player, $target, $total)){
-
-
+            if(!$gold->give_item($player, $target, $total, $bank=true)){
                 exit('<div id="error">Pas assez d\'Or.</div>');
             }
 
@@ -418,6 +422,8 @@ class Market{
         $values = array('stock'=>0);
 
         $db->delete('items_'. $table, $values);
+
+        $db->commit_transaction("perform_ask_bid");
     }
 
     public function cancel($table, $id, $player){
