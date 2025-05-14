@@ -14,7 +14,6 @@ class CraftView
     public static function renderCraft(): void
     {
 
-        // player
         $player = new Player($_SESSION['playerId']);
         $player->get_data();
 
@@ -277,83 +276,6 @@ class CraftView
                     <a href="item.php?itemId=' . $ingredient->id . '"><img src="' . $ingredientItem->data->mini . '" /></a>
                     <font color="' . $color . '">x' . $ingredient->n . '</font>
                     ';
-
-                // crafting
-                if (!empty($_POST['create'])) {
-
-
-                    ob_start();
-
-                    // this item
-                    if ($_POST['create'] == $artId) {
-
-                        // create art if complete
-                        if ($artComplete) {
-
-
-                            echo 1;
-
-
-                            // artJson
-                            $artJson = $json->decode('items', $artName);
-
-
-                            // crafted by n
-                            $craftedByN = (!empty($artJson->craftedByN)) ? $artJson->craftedByN : 1;
-
-                            // craft
-                            foreach ($recipeIngredients as $ee) {
-
-
-                                // needed item
-                                $neededJson = $json->decode('items', $ee->name);
-
-
-                                // add when crafted item
-                                if (!empty($neededJson->whenCrafted)) {
-
-                                    foreach ($neededJson->whenCrafted as $eee) {
-
-                                        // Inventory::add_item($player, $eee->name, $eee->n);
-
-                                        $whenCraftItem = Item::get_item_by_name($eee->name);
-                                        $whenCraftItem->add_item($player, $eee->n);
-                                    }
-                                }
-
-
-                                // remove item recipe
-                                // Inventory::add_item($player, $ee->name, -$ee->n);
-
-                                $itemRecipe = new Item($ee->id);
-                                $itemRecipe->add_item($player, -$ee->n);
-                            }
-
-                            // add craft item
-                            // Inventory::add_item($player, $artName, $craftedByN);
-
-                            $itemCrafted = Item::get_item_by_name($artName);
-                            $itemCrafted->add_item($player, $craftedByN);
-
-
-                            // CRAFT COST (A)
-
-
-                            // log
-
-                            echo ob_get_clean();
-
-                            exit();
-                        }
-
-                        break;
-                    }
-
-
-                    echo ob_get_clean();
-
-                    continue;
-                }
             }
 
             echo '
@@ -401,19 +323,22 @@ class CraftView
 
                 $(this).attr('disabled', true);
 
-                $.ajax({
-                    type: "POST",
-                    url: 'inventory.php?craft&itemId=<?php echo $_GET['itemId'] ?>',
-                    data: {
-                        'create': artId
-                    },
-                    success: function(data) {
-
-                        alert('Artisanat effectué.');
-                        // alert(data);
+                aooFetch('api/player/craft_item.php', {
+                        'craft_id': artId
+                    }, null)
+                    .then(data => {
+                        if (data.error) {
+                            alert(data.error);
+                        } else if (data.message) {
+                            alert(data.message);
+                        }
                         location.reload();
-                    }
-                });
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        location.reload();
+                    });
+
             });
         </script>
 <?php
