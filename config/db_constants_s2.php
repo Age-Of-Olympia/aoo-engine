@@ -6,5 +6,6 @@ define('DB_CONSTANTS', array(
     'db'=>"aoo4_saison2",
     'password'=>"passwordRoot",
     'dbname'=>"aoo4_saison2",
-    'driver' => 'pdo_mysql',
+    'driver' => 'mysqli',
+    'charset' => 'utf8',
 ));

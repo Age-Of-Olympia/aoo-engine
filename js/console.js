@@ -15,7 +15,7 @@ function submit_cmd(){
         $('#console-content').append('<span class="request">' + line + '</span>');
         submit_command(line);
         if(!window.cmdHistory){
-            window.cmdHistory=array();
+            window.cmdHistory=[];
         }
         window.cmdHistory.push(line);   
         window.historyCursor = window.cmdHistory.length;
@@ -133,13 +133,21 @@ function submit_command(cmdLine){
                 responseObj=[{message:'Error: '+response,type:3,level:0},{mesage:'Error: '+e,type:3,level:0}];
             }
             let hadAnyError=false;
-            
+            //LogType.php sync in js: 
+            LogType = 
+            {
+                Verbose : 0,
+                Log : 1,
+                Warning : 2,
+                Error : 3
+            }
             for(let i=0; i<responseObj.length; i++){
-                if(responseObj[i].type>=3){
+                
+                if(responseObj[i].type>=LogType.Error){ 
                     hadAnyError=true;
                     $('#console-content').append('<span class="response-error">'+responseObj[i].message+ '</span>');
                 }
-                else if(responseObj[i].type==2){
+                else if(responseObj[i].type==LogType.Warning){
                     $('#console-content').append('<span class="response-error">'+responseObj[i].message+'</span>');
                 }
                 else{

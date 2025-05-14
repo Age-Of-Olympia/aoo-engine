@@ -11,21 +11,6 @@ function db()
          echo "Error: Unable to connect to DB." . PHP_EOL;
 
          exit;
-        //-----------------
-        // db credentials are sotcked in config/db_constants.php
-        $link = @mysqli_connect(DB_CONSTANTS['host'], DB_CONSTANTS['user'], DB_CONSTANTS['psw'], DB_CONSTANTS['db']);
-
-        if(!$link){
-
-            // error msg & retry
-            echo "Error: Unable to connect to DB." . PHP_EOL;
-
-            exit;
-        }
-
-        // set charset tot utf8
-        if (!$link->set_charset("utf8"))
-            printf("Error loading character set utf8: %s\n", $link->error);
     }
 
     return $link;

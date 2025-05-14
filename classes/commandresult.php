@@ -1,24 +1,24 @@
 <?php
-
+use App\Enum\LogType;
 class CommandResult
 {
     private $results = [];
     private $hasError = false;
-    public $allReadyIngested = false;
-    public function addLog($message,$type=1,$level = 1){
+    public $allreadyIngested = false;
+    public function addLog($message,LogType $type=LogType::Log,$level = 1){
         $this->results[] = ['message' => $message, 'type' => $type, 'level' => $level];
-        if($type>=3){
+        if($type>=LogType::Error){
             $this->hasError = true;
         }
     }
     public function Error($message,$level = 1){
-        $this->addLog($message,3,$level);
+        $this->addLog($message,LogType::Error,$level);
     }
-    public function Waring($message,$level = 1){
-        $this->addLog($message,2,$level);
+    public function Warning($message,$level = 1){
+        $this->addLog($message,LogType::Warning,$level);
     }
     public function Log($message,$level = 1){
-        $this->addLog($message,1,$level);
+        $this->addLog($message,LogType::Log,$level);
     }
     public function getResults(){
         return $this->results;
@@ -29,7 +29,7 @@ class CommandResult
 
     public function Ingest(CommandResult $child)
     {
-        if($child->allReadyIngested){
+        if($child->allreadyIngested){
             return;
         }
         $this->hasError|= $child->hasError();
@@ -38,6 +38,6 @@ class CommandResult
             $childResults[$i]['level']++;
             $this->results[] =$childResults[$i];
         }
-        $child->allReadyIngested = true;
+        $child->allreadyIngested = true;
     }
 }
