@@ -59,6 +59,9 @@ echo $market->print_bank($player);
 
 ?>
 <script src="js/progressive_loader.js"></script>
+<?php
+if($market->HasTarget()){
+?>
 <script>
 $(document).ready(function(){
 
@@ -98,3 +101,6 @@ $(document).ready(function(){
     });
 });
 </script>
+<?php
+}
+?>

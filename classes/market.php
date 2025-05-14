@@ -3,8 +3,8 @@
 class Market{
 
 
-    private $bids; // offres
-    private $asks; // demandes
+    private $bids=null; // offres
+    private $asks=null; // demandes
     private $target; // le marchand
 
 
@@ -12,13 +12,22 @@ class Market{
 
 
         $this->target = $target;
-        $this->bids = $this->get('bids');
-        $this->asks = $this->get('asks');
     }
 
+    public function HasTarget(){
+        return $this->target != null;
+    }
 
     public function get($table){
 
+        if($this->$table != null){
+
+            return $this->$table;
+        }
+        if($table != 'bids' && $table != 'asks'){
+
+            exit('error table');
+        }
 
         $return = array();
 
@@ -49,6 +58,8 @@ class Market{
             $return[$row->item_id][] = $row;
         }
 
+        $this->$table = $return;
+
         return $return;
     }
 
@@ -70,7 +81,7 @@ class Market{
         ';
 
 
-        foreach($this->$table as $k=>$e){
+        foreach($this->get($table) as $k=>$e){
 
 
             $row = array_pop($e);

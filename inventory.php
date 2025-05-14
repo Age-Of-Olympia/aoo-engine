@@ -20,10 +20,7 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 
 if(isset($_GET['bank'])){
 
-
-    $player = new Player($_SESSION['playerId']);
-
-    $market = new Market($player);
+    $market = new Market(null);
 
     include('scripts/merchant/bank.php');
 
