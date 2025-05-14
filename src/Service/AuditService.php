@@ -20,6 +20,7 @@ class AuditService
     public function addAuditLog(?string $details): int
     {
         $audit = new Audit();
+        //setup for minmal infos arg1: 2= no obj no args; arg2 =stack depth; 
         $bt = debug_backtrace(2,1);
         if(isset($bt[0]) && isset($bt[0]['file']) && isset($bt[0]['line'])){
             $bt[0]['file'] = str_replace($_SERVER['DOCUMENT_ROOT'], '', $bt[0]['file']);
