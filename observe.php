@@ -199,15 +199,15 @@ if($res->num_rows){
 
         $dataName .= '<div class="effects">';
 
-        foreach($target->get_effects() as $e){
+        foreach($target->get_effects() as $actionName){
 
 
-            if(in_array($e, EFFECTS_HIDDEN)){
+            if(in_array($actionName, EFFECTS_HIDDEN)){
 
                 continue;
             }
 
-            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$e] .'"></span></a>';
+            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$actionName] .'"></span></a>';
         }
 
         $dataName .= '</div>';
@@ -241,20 +241,26 @@ if($res->num_rows){
         // Trier le tableau en utilisant la fonction de comparaison personnalisée
         usort($actions, 'custom_compare');
 
-        foreach($actions as $e){
+        foreach($actions as $actionName){
             
             $actionService = new ActionService();
             $entityManager = EntityManagerFactory::getEntityManager();
-            if ($e == "attaquer") {
+            if ($actionName == "attaquer") {
                 if ($player->id != $target->id) {
                     $actionData = $actionService->getActionByName("melee");
+                    if ($actionData == null) {
+                        continue;
+                    }
                     $dataImg .= buildActionToDisplay($target->id, $actionData, "attaquer");
                 }
                 continue;
             }
 
-            $actionData = $actionService->getActionByName($e);
-            
+            $actionData = $actionService->getActionByName($actionName);
+            if ($actionData == null) {
+                continue;
+            }
+
             $actionOutcomes = $actionData->getOutcomes();
             foreach ($actionOutcomes as $actionOutcome) {
                 if ($actionOutcome->getApplyToSelf() && $player->id == $target->id) {

@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\EntityManagerFactory;
 use App\Entity\Action;
 use App\Interface\ActionInterface;
+use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Exception;
 
@@ -23,9 +24,12 @@ class ActionService
      */
     public function getActionByName(string $name): ?ActionInterface
     {
+        $result = null;
         $type = $this->getType($name);
-        $result = $this->getAction($type, $name);
-        $result->setOrmType($type);
+        if ($type != "") {
+            $result = $this->getAction($type, $name);
+            $result->setOrmType($type);
+        }
 
         return $result;
     }
@@ -43,7 +47,11 @@ class ActionService
         // Execute the native query with the ResultSetMapping
         $query1 = $this->entityManager->createNativeQuery($sql, $rsm1);
         $query1->setParameter("name", $name);
-        $type = $query1->getSingleScalarResult();
+        try {
+            $type = $query1->getSingleScalarResult();
+        } catch (NoResultException $e) {
+            $type = "";
+        }
 
         return $type;
     }

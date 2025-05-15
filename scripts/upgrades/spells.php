@@ -19,33 +19,45 @@ $spellsN = count($spellList);
 $trStyle = '';
 $buttonStyle = '';
 
-$maxSpells = $player->get_max_spells($spellsN);
-$max = $maxSpells + $spellsN;
+$maxColSpan = 7;
+if(isset($_GET['forget'])){
+    $maxColSpan++;
+}
 
-if($maxSpells < 0){
-    echo '<tr><th colspan="6"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $max .')</font></th>';
+$numberOfSpellsAvailable = $player->get_spells_available($spellsN);
+$maxSpells = $player->get_max_spells();
+
+if($numberOfSpellsAvailable < 0){
+    echo '<tr><th colspan="'.$maxColSpan.'"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $maxSpells .')</font></th>';
     $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
     $buttonStyle = 'class="blink" style="color: red;"';
 } else {
-    echo '<tr><th colspan="6"><font color="blue">Le maximum de sorts que vous pouvez utiliser est de '. $spellsN .'.</font>';
-    if ($max == $spellsN) {
-        echo '<br />Vous avez atteint le maximum de sorts que vous pouvez utiliser.';
+    echo '<tr><th colspan="'.$maxColSpan.'"><font color="blue">Le maximum de sorts/techniques que vous pouvez utiliser est de '. $maxSpells .'.</font>';
+    if ($maxSpells == $spellsN) {
+        echo '<br />Vous avez atteint le maximum de sorts/techniques que vous pouvez utiliser.';
     }
     echo '</th>';
 }
+echo '</tr>';
 
+echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th>';
 
+if(isset($_GET['forget'])){
+    echo '<th>Action</th>';
+}
 
-echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th colspan="2">Effet</th></tr>';
-
-
-
+echo '</tr>';
 
 foreach($spellList as $e){
 
 
     $actionService = new ActionService();
     $spell = $actionService->getActionByName($e);
+
+    if ($spell == null) {
+        echo '<tr '. $trStyle .'><td colspan="'.$maxColSpan.'">Désolé, il y a un soucis : problème à remonter aux admins : le sort "'.$e.'" semble mal configuré.</td></tr>';
+        continue;
+    }
 
     $img = 'img/spells/'. $e .'.jpeg';
 
@@ -92,6 +104,11 @@ foreach($spellList as $e){
         }
     }
 
+    $type = "Technique";
+    if ($spell->getOrmType() == 'spell') {
+        $type = "Sort";
+    }
+
     echo '
     <tr '. $trStyle .'>
         <td valign="top" width="50">
@@ -128,6 +145,12 @@ foreach($spellList as $e){
         </td>
         ';
 
+        echo '
+        <td>
+            '. $type .'
+        </td>
+        ';
+
 
         if(isset($_GET['forget'])){
 
@@ -137,7 +160,7 @@ foreach($spellList as $e){
                     type="button"
                     class="forget"
                     data-spell="'. $e .'"
-                    data-name="'. $spellJson->name .'"
+                    data-name="'. $spell->getDisplayName() .'"
                     value="Oublier"
                     style="height: 50px;"
                     />
@@ -155,7 +178,7 @@ if(!isset($_GET['forget'])){
 
     echo '
     <tr>
-        <td colspan="6" align="right">
+        <td colspan="'.$maxColSpan.'" align="right">
 
             <a href="upgrades.php?spells&forget"><button '. $buttonStyle .'>Oublier un sort</button></a>
         </td>

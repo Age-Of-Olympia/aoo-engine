@@ -7,12 +7,12 @@ if(!empty($actionJson->type) && $actionJson->type == "sort"){
 
     $spellsN = count($spellList);
 
-    $maxSpells = $player->get_max_spells(count($spellList));
+    $numberOfSpellsAvailable = $player->get_spells_available($spellN);
 
-    if($maxSpells < 0){
+    $maxSpells = $player->get_max_spells();
 
-        $max = $maxSpells + $spellsN;
+    if($numberOfSpellsAvailable < 0){
 
-        exit('<font color="red">Vous ne pouvez pas utiliser vos sorts <a href="upgrades.php?spells">(max.'. $max .')</a>.</font></th>');
+        exit('<font color="red">Vous ne pouvez pas utiliser vos sorts <a href="upgrades.php?spells">(max.'. $maxSpells .')</a>.</font></th>');
     }
 }

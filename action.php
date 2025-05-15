@@ -40,7 +40,7 @@ $targetPvBefore = $target->getRemaining('pv');
 if ($_POST['action'] != 'attaquer') {
     $actionService = new ActionService();
     $action = $actionService->getActionByName($_POST['action']);
-    if($action->getOrmType() == 'heal') {
+    if($action != null && $action->getOrmType() == 'heal') {
         if($targetPvBefore == $target->caracs->pv){
             exit('Ce personnage n\'a pas besoin de soins.');
         }

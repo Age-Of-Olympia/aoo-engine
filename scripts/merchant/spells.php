@@ -124,6 +124,9 @@ foreach($raceJson->spells as $e){
 
     $actionService = new ActionService();
     $action = $actionService->getActionByName($e);
+    if ($action == null) {
+        continue;
+    }
 
     echo '
     <tr>

@@ -362,8 +362,10 @@ class Player implements ActorInterface {
             if ($name != 'attaquer') {
                 $actionService = new ActionService();
                 $action = $actionService->getActionByName($name);
-                if ($action->getOrmType() == 'spell' || $action->getOrmType() == 'technique') {
-                    $values['type'] = 'sort';
+                if ($action != null) {
+                    if ($action->getOrmType() == 'spell' || $action->getOrmType() == 'technique') {
+                        $values['type'] = 'sort';
+                    }
                 }
             }
         }
@@ -1589,8 +1591,25 @@ class Player implements ActorInterface {
         return $return;
     }
 
+    public function get_max_spells() : int{
 
-    public function get_max_spells($spellsN){
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+        $maxSpells = $this->data->rank + 1;
+
+        if($this->data->race == 'hs'){
+
+            $maxSpells += 1;
+        }
+
+        return $maxSpells;
+    }
+
+    public function get_spells_available($spellsN){
 
 
         if(!isset($this->data)){
