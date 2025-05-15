@@ -1592,17 +1592,12 @@ class Player implements ActorInterface {
     }
 
     public function get_max_spells() : int{
-
-
         if(!isset($this->data)){
-
             $this->get_data();
         }
-
         $maxSpells = $this->data->rank + 1;
 
         if($this->data->race == 'hs'){
-
             $maxSpells += 1;
         }
 
@@ -1610,21 +1605,7 @@ class Player implements ActorInterface {
     }
 
     public function get_spells_available($spellsN){
-
-
-        if(!isset($this->data)){
-
-            $this->get_data();
-        }
-
-        $maxSpells = $this->data->rank + 1;
-
-        if($this->data->race == 'hs'){
-
-            $maxSpells += 1;
-        }
-
-        return $maxSpells - $spellsN;
+        return $this->get_max_spells() - $spellsN;
     }
 
 

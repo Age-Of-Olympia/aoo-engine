@@ -50,7 +50,6 @@ echo '</tr>';
 
 foreach($spellList as $e){
 
-
     $actionService = new ActionService();
     $spell = $actionService->getActionByName($e);
 
