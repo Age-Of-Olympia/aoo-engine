@@ -1,23 +1,23 @@
 <?php
-if(!isset($_GET['editExchange'])){
+if (!isset($_GET['editExchange'])) {
   exit('exchange not set');
 }
-    $exchange = new Exchange($_GET['editExchange']);
-    $exchange->get_base_data();
-    if (!$exchange->is_in_progress()) {
-      exit('cet echange n\'est plus de l\'actualité');
-    }
-    $exchange->get_items_data();
-    $objects = [];
+$exchange = new Exchange($_GET['editExchange']);
+$exchange->get_base_data();
+if (!$exchange->is_in_progress()) {
+  exit('cet echange n\'est plus de l\'actualité');
+}
+$exchange->get_items_data();
+$objects = [];
 
-    $player = new Player($_SESSION['playerId']);
-    $player->get_data();
-  
-    if ($player->id != $exchange->targetId && $player->id != $exchange->playerId) {
-      ExitError('Current player is not part of the exchange');
-    }
-    $otherPlayer = new Player( $player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId);
-    $otherPlayer->get_data();
+$player = new Player($_SESSION['playerId']);
+$player->get_data();
+
+if ($player->id != $exchange->targetId && $player->id != $exchange->playerId) {
+  ExitError('Current player is not part of the exchange');
+}
+$otherPlayer = new Player($player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId);
+$otherPlayer->get_data();
 ?>
 <div class="section">
   <div class="section-title">Modification de l'échange</div>

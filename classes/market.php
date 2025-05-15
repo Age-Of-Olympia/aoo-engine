@@ -326,161 +326,31 @@ class Market{
         return ob_get_clean();
     }
 
-
-    public function perform($player, $table, $id, $n){
-
-
-        // check transaction
-        if(!is_numeric($id)){
-
-            exit('error id');
+    //null if no error else return reason
+    public static function CheckMarketAccess($player, $potentialMerchant): ?string
+    {
+        if (!$potentialMerchant->have_option('isMerchant')) {
+            return 'error not merchant';
         }
 
-        if(!is_numeric($n) || $n < 1){
+        // distance
+        $distance = View::get_distance($player->getCoords(), $potentialMerchant->getCoords());
 
-            exit('error count');
+        if ($distance > 1) {
+
+            return ERROR_DISTANCE;
         }
 
-        $db = new Db();
+        // adré
+        if ($player->haveEffect('adrenaline')) {
 
-        $db->start_transaction("perform_ask_bid");
-
-        $res = $db->get_single('items_'. $table, $id);
-
-        if(!$res->num_rows){
-
-
-            exit('error '. $table);
+            return 'Vous ne pouvez pas marchander en ayant l\'Adrénaline du combat.';
         }
 
+        if ($potentialMerchant->haveEffect('adrenaline')) {
 
-        $row = $res->fetch_object();
-
-
-        if($n > $row->stock){
-
-
-            exit('<div id="error">Erreur de stock.</div>');
+            return 'Vous ne pouvez pas marchander avec un Marchand ayant l\'Adrénaline du combat.';
         }
-
-
-        // total cost
-        $total = $n * $row->price;
-
-
-        if($table == 'asks'){
-
-
-            // player sells item to target
-
-
-            // transfer item to target bank
-            $target = new Player($row->player_id);
-
-            $item = new Item($row->item_id);
-
-            if(!$item->give_item($player, $target, $n, $bank=true)){
-                exit('<div id="error">Pas assez de cet objet.</div>');
-            }
-
-
-            // transfer gold to player bank
-            $gold = Item::get_item_by_name('or');
-
-            $gold->add_item($player, $total, $bank=true);
-        }
-
-        elseif($table == 'bids'){
-
-
-            // player buys item from target
-
-
-            // transfer gold to target bank
-            $target = new Player($row->player_id);
-
-            $gold = Item::get_item_by_name('or');
-
-            if(!$gold->give_item($player, $target, $total, $bank=true)){
-                exit('<div id="error">Pas assez d\'Or.</div>');
-            }
-
-
-            // transfer item to player bank
-
-            $item = new Item($row->item_id);
-
-            $item->add_item($player, $n, $bank=true);
-        }
-
-
-        $sql = 'UPDATE items_'. $table .' SET stock = stock - ? WHERE id=?';
-
-        $db->exe($sql, array($n, $row->id));
-
-
-        $values = array('stock'=>0);
-
-        $db->delete('items_'. $table, $values);
-
-        $db->commit_transaction("perform_ask_bid");
-    }
-
-    public function cancel($table, $id, $player){
-       
-        $db = new Db();
-
-        
-        if($table == 'bids'){
-
-            $sql = '
-                SELECT
-                *
-                FROM
-                items_bids
-                where id = ?
-                and player_id = ?
-                ';
-
-
-                $res = $db->exe($sql,  array($id, $player->id));
-
-                while($row = $res->fetch_object()){
-
-                    //give back items
-                    $item = new Item($row->item_id);
-        
-                    $item->add_item($player, $row->stock, $bank=false);
-                    
-                }
-        }
-
-        if($table == 'asks'){
-            $sql = '
-                SELECT
-                *
-                FROM
-                items_asks
-                where id = ?
-                and player_id = ?
-                ';
-
-
-            $res = $db->exe($sql,  array($id, $player->id));
-
-            while($row = $res->fetch_object()){
-
-                //give back gold
-                $gold = Item::get_item_by_name('or');
-                $gold->add_item($player, $row->stock*$row->price);
-            }
-
-        }
-
-        $values = array('id'=>$id, 'player_id'=> $player->id);
-
-        $db->delete('items_'. $table, $values);
-
-
+        return null;
     }
 }

@@ -7,14 +7,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     exit('error no merchant');
   }
-
-  $target = new Player($_GET['targetId']);
-  if (!$target->have_option('isMerchant')) {
-    exit('error not merchant');
-  }
-
   $player = new Player($_SESSION['playerId']);
   $player->get_data();
+
+  $target = new Player($_GET['targetId']);
+
+  $marketAccessError = Market::CheckMarketAccess($player, $target);
+  if($marketAccessError !=null){
+
+      ExitError($marketAccessError);
+  }
   
   $recipient = Player::get_player_by_name($_POST['recipient']);
   if($player->id == $recipient->id){

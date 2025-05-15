@@ -5,12 +5,20 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!isset($_GET['targetId'])) {
 
-    exit('error no merchant');
+    ExitError('error no merchant');
   }
+  
+  $player = new Player($_SESSION['playerId']);
+  $player->get_data();
+  
   $target = new Player($_GET['targetId']);
-  if (!$target->have_option('isMerchant')) {
-    exit('error not merchant');
+
+  $marketAccessError = Market::CheckMarketAccess($player, $target);
+  if($marketAccessError !=null){
+
+      ExitError($marketAccessError);
   }
+
   $POST_DATA = json_decode(file_get_contents('php://input'), true);
   if(!isset($POST_DATA['action']) || !in_array($POST_DATA['action'], ['accept', 'refuse', 'cancel', 'objects'])) {
     ExitError('Invalid request');
@@ -33,8 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ExitError('echange n\'est plus de l\'actualité');
   }
 
-  $player = new Player($_SESSION['playerId']);
-  $player->get_data();
+
 
   if ($player->id != $exchange->targetId && $player->id != $exchange->playerId) {
     ExitError('Current player is not part of the exchange');
@@ -101,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $exchange->cancel_exchange();
     } catch (Throwable $th) {
       $exchange->db->rollback_transaction('cancel_exchange');
-      exit('Erreur lors de l\'annulation de l\'échange');
+      ExitError('Erreur lors de l\'annulation de l\'échange');
     }
     $exchange->db->commit_transaction('cancel_exchange');
     exit();

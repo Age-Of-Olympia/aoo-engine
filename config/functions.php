@@ -81,3 +81,13 @@ function ExitSuccess($success){
     exit(json_encode(["result" => $success]));
 }
 
+function SanitizeIntChecked(&$var, $error = null)
+{
+    if (is_numeric($var)) {
+        $var = (int)$var;
+    } else {
+        ExitError($error ? $error : INVALID_REQ);
+    }
+}
+define('INVALID_REQ', "Invalid request");
+

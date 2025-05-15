@@ -6,7 +6,7 @@ class Item{
     public $row;
     public $data;
 
-    function __construct($itemId, $row=false){
+    function __construct($itemId, $row=false,$checked=false){
 
 
         $this->id = $itemId;
@@ -21,6 +21,10 @@ class Item{
 
         }
 
+        if($checked && $row==null)
+        {
+            ExitError("Item not found");
+        }
 
         $this->row = $row;
     }
@@ -340,27 +344,25 @@ class Item{
     }
 
 
-    public static function get_item_by_name($name, $bank=false){
-
-
-        $bank = ($bank) ? '_bank' : '';
+    public static function get_item_by_name($name, $checked=false){
 
         $db = new Db();
 
-        $sql = '
-        SELECT id FROM items'. $bank .' WHERE name = ?
-        ';
+        $sql = 'SELECT * FROM items WHERE name = ?';
 
         $res = $db->exe($sql, $name);
 
         if(!$res->num_rows){
-
+            if($checked)
+            {
+                ExitError("Item by name not found");
+            }
             return false;
         }
 
         $row = $res->fetch_object();
 
-        return new Item($row->id);
+        return new Item($row->id,$row, $checked);
     }
 
 

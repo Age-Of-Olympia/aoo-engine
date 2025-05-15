@@ -1,14 +1,5 @@
 <?php
 
-if(!empty($_POST['id']) && !empty($_POST['n'])){
-
-
-    $market->perform($player, 'asks', $_POST['id'], $_POST['n']);
-
-    exit();
-}
-
-
 ob_start();
 
 
@@ -60,12 +51,6 @@ if(isset($_GET['newContract'])){
     exit();
 }
 
-if(isset($_GET['cancel'])){
-
-    include('scripts/merchant/cancel_contract.php');
-    
-    exit();
-}
 
 
 echo '<div>Voici les objets que les autres personnages veulent acheter.<br /><font><b>Vendez vos objets ici.</b></font></div>';

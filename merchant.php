@@ -19,31 +19,11 @@ if(!isset($_GET['targetId'])){
 
 
 $target = new Player($_GET['targetId']);
-if(!$target->have_option('isMerchant'))
-{
-    exit('error not merchant');
-}
-// $target->get_data();
 
+$marketAccessError = Market::CheckMarketAccess($player, $target);
+if($marketAccessError !=null){
 
-// distance
-$distance = View::get_distance($player->getCoords(), $target->getCoords());
-
-if($distance > 1){
-
-    exit(ERROR_DISTANCE);
-}
-
-
-// adré
-if($player->haveEffect('adrenaline')){
-
-    exit('Vous ne pouvez pas marchander en ayant l\'Adrénaline du combat.');
-}
-
-if($target->haveEffect('adrenaline')){
-
-    exit('Vous ne pouvez pas marchander avec un Marchand ayant l\'Adrénaline du combat.');
+    exit($marketAccessError);
 }
 
 
