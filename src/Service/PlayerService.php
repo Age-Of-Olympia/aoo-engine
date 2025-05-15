@@ -126,4 +126,12 @@ class PlayerService
         $this->db->exe($sql, $this->playerId);
     }
 
+    public function getNumberOfSpellAvailable() : int{
+        $player = $this->GetPlayer($this->playerId);
+        $spellList = $player->get_spells();
+        $spellsN = count($spellList);
+        $numberOfSpellsAvailable = $player->get_spells_available($spellsN);
+        return $numberOfSpellsAvailable;
+    }
+
 }
