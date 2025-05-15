@@ -153,7 +153,7 @@ class Market{
 
 
 
-        if(!isset($this->$table[$item->id])){
+        if(!isset($this->get($table)[$item->id])){
 
             exit('<div>'. ($table == 'bids') ? 'Acheter' : 'Vendre' .' cet objet: aucun contrat trouvé.</div>');
         }
