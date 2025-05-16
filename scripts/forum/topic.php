@@ -270,7 +270,11 @@ echo '
                         />
                         <span
                             class="give-reward-span"
-                        ></span>';
+                        >';
+                    if($player->have_option('isSuperAdmin')) {
+                        echo '<a href="forum.php?edit='. $post->name .'">Edit</a>';
+                    }
+                    echo '</span>';
                 }
 
                 elseif($postJson->author == $_SESSION['playerId'] && !isset($_GET['hideMenu'])){
