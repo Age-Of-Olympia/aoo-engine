@@ -32,7 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         SanitizeIntChecked($POST_DATA['id']);
         $bidsAsksService->Cancel($POST_DATA['type'], $POST_DATA['id'], $player);
+
     } elseif ($POST_DATA['action'] == 'create') {
+
         SanitizeIntChecked($POST_DATA['price']);
         SanitizeIntChecked($POST_DATA['quantity']);
         SanitizeIntChecked($POST_DATA['item_id']);
@@ -40,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $bidsAsksService->Create($POST_DATA['type'], $POST_DATA['item_id'], $POST_DATA['price'], $POST_DATA['quantity'], $player);
     }
     elseif ($POST_DATA['action'] == 'accept') {
+        
         SanitizeIntChecked($POST_DATA['id']);
         SanitizeIntChecked($POST_DATA['quantity']);
         $bidsAsksService->Accept($POST_DATA['type'], $POST_DATA['id'],$POST_DATA['quantity'], $player);

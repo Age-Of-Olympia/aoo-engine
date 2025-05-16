@@ -103,21 +103,19 @@ class BidsAsksService
                 if ($item->add_item($player, -$quantity)) {
                     $this->db->insert('items_bids', $values);
                 } else {
-                    $auditService = new AuditService();
-                    $auditService->addAuditLog("Tentative de triche bids/asks");
                     ExitError("Vous ne possédez pas assez d\'objets");
                 }
             }
 
             if ($type == 'asks') {
-                $total = $_POST['n'] * $_POST['price'];
+                $total = $quantity * $price;
 
                 //remove money to "block" it
                 $gold = Item::get_item_by_name('or', checked: true);
                 if ($gold->add_item($player, -$total)) {
                     $this->db->insert('items_asks', $values);
                 } else {
-                    ExitError("Vous ne possédez pas assez d\'Or pour prétendre acheter {$_POST['n']} {$item->row->name}.");
+                    ExitError("Vous ne possédez pas assez d\'Or pour prétendre acheter {$quantity} {$item->row->name}.");
                 }
             }
             $this->db->commit_transaction('create_bid_ask');
@@ -125,19 +123,18 @@ class BidsAsksService
             $this->db->rollback_transaction('create_bid_ask');
             ExitError('Erreur lors de la création de l\'offre/demande');
         }
-        ExitSuccess(["message" => "L'offre a été créée.", "redirect" => "merchant.php?{$type}&targetId={$_GET['targetId']}"]);
+        ExitSuccess(["message" => "L'offre/demande a été créée.", "redirect" => "merchant.php?{$type}&targetId={$_GET['targetId']}"]);
     }
 
     public function Accept(string $type, int $id, int $quantity, $player): void
     {
-        $this->db->start_transaction('accept_bid_ask');
-        try {
-
-            if ($quantity < 1) {
+         if ($quantity < 1) {
                 $auditService = new AuditService();
                 $auditService->addAuditLog("Tentative de triche bids/asks");
                 ExitError("Quantité invalide");
             }
+        $this->db->start_transaction('accept_bid_ask');
+        try {
 
             $res = $this->db->get_single('items_' . $type, $id);
 

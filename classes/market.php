@@ -1,30 +1,34 @@
 <?php
 
-class Market{
+class Market
+{
 
 
-    private $bids=null; // offres
-    private $asks=null; // demandes
+    private $bids = null; // offres
+    private $asks = null; // demandes
     private $target; // le marchand
 
 
-    function __construct($target){
+    function __construct($target)
+    {
 
 
         $this->target = $target;
     }
 
-    public function HasTarget(){
+    public function HasTarget()
+    {
         return $this->target != null;
     }
 
-    public function get($table){
+    public function get($table)
+    {
 
-        if($this->$table != null){
+        if ($this->$table != null) {
 
             return $this->$table;
         }
-        if($table != 'bids' && $table != 'asks'){
+        if ($table != 'bids' && $table != 'asks') {
 
             exit('error table');
         }
@@ -37,20 +41,20 @@ class Market{
         SELECT
         *
         FROM
-        items_'. $table .'
+        items_' . $table . '
         ORDER BY
         price
-        '. $order .'
+        ' . $order . '
         ';
 
         $db = new Db();
 
         $res = $db->exe($sql);
 
-        while($row = $res->fetch_object()){
+        while ($row = $res->fetch_object()) {
 
 
-            if(!isset($return[$row->item_id])){
+            if (!isset($return[$row->item_id])) {
 
                 $return[$row->item_id] = array();
             }
@@ -64,7 +68,8 @@ class Market{
     }
 
 
-    public function print_market($table, $player_id){
+    public function print_market($table, $player_id)
+    {
 
 
         ob_start();
@@ -81,7 +86,7 @@ class Market{
         ';
 
 
-        foreach($this->get($table) as $k=>$e){
+        foreach ($this->get($table) as $k => $e) {
 
 
             $row = array_pop($e);
@@ -93,46 +98,46 @@ class Market{
 
             echo '
             <tr
-                class="item '. $table .'"
+                class="item ' . $table . '"
 
-                data-market="'. $table .'"
-                data-name="'. $item->row->name .'"
-                data-id="'. $item->id .'"
+                data-market="' . $table . '"
+                data-name="' . $item->row->name . '"
+                data-id="' . $item->id . '"
                 >
                 ';
 
-                echo '
+            echo '
                 <td>
-                    <img src="'. $item->data->mini .'" />
+                    <img src="' . $item->data->mini . '" />
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>';
-                    //Is player having at least 1 offer?
-                    echo ucfirst($item->data->name);
-                    if (array_filter($this->$table[$k], fn($row) => $row->player_id == $player_id)) {
-                        echo '<b>*</b>';
-                    }
-                echo '
+            //Is player having at least 1 offer?
+            echo ucfirst($item->data->name);
+            if (array_filter($this->$table[$k], fn($row) => $row->player_id == $player_id)) {
+                echo '<b>*</b>';
+            }
+            echo '
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>
-                    '. $row->price .'Po
+                    ' . $row->price . 'Po
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>
-                    <a href="merchant.php?'. $table .'&targetId='. $this->target->id .'&itemId='. $item->id .'">
+                    <a href="merchant.php?' . $table . '&targetId=' . $this->target->id . '&itemId=' . $item->id . '">
                         Négocier
                     </a>
                 </td>
                 ';
 
-                
+
             echo '
             </tr>
             ';
@@ -146,16 +151,17 @@ class Market{
     }
 
 
-    public function print_detail($item, $table, $player){
+    public function print_detail($item, $table, $player)
+    {
 
 
         ob_start();
 
 
 
-        if(!isset($this->get($table)[$item->id])){
+        if (!isset($this->get($table)[$item->id])) {
 
-            exit('<div>'. ($table == 'bids') ? 'Acheter' : 'Vendre' .' cet objet: aucun contrat trouvé.</div>');
+            exit('<div>' . ($table == 'bids') ? 'Acheter' : 'Vendre' . ' cet objet: aucun contrat trouvé.</div>');
         }
 
 
@@ -174,25 +180,25 @@ class Market{
 
         krsort($data);
 
-        foreach($data as $k=>$row){
+        foreach ($data as $k => $row) {
 
 
-            if($k == 0) $color = 'red';
-            elseif($k == count($data)-1) $color = 'blue';
+            if ($k == 0) $color = 'red';
+            elseif ($k == count($data) - 1) $color = 'blue';
             else $color = '';
 
 
             $playerJson = json()->decode('players', $row->player_id);
 
-            $action = ($table == 'bids') ? 'Acheter' : 'Vendre';
-
-            if($playerJson->id==$player->id){
-                $action = ($table == 'bids') ? 'Annuler l\'offre' : 'Annuler la demande';
+            $txt = ($table == 'bids') ? 'Acheter' : 'Vendre';
+            $action = 'accept';
+            if ($playerJson->id == $player->id) {
+                $txt = ($table == 'bids') ? 'Annuler l\'offre' : 'Annuler la demande';
+                $action = 'cancel';
             }
             $adminInfos = '';
-            if($player->have_option('isAdmin'))
-            {
-                $adminInfos = ' [<a href="infos.php?targetId='. $player->id .'">' . $playerJson->name .'('.$row->player_id.')</a>]';
+            if ($player->have_option('isAdmin')) {
+                $adminInfos = ' [<a href="infos.php?targetId=' . $player->id . '">' . $playerJson->name . '(' . $row->player_id . ')</a>]';
             }
 
 
@@ -201,51 +207,52 @@ class Market{
                 ';
 
 
-                echo '
+            echo '
                 <td>
-                    <img src="'. $item->data->mini .'" width="25" />
+                    <img src="' . $item->data->mini . '" width="25" />
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>
-                    <font color="'. $color .'">'. $row->price .'Po</font>
+                    <font color="' . $color . '">' . $row->price . 'Po</font>
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>
-                    x'. $row->stock .'</font>
+                    x' . $row->stock . '</font>
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>
-                    '. $playerJson->race . $adminInfos.'</font>
+                    ' . $playerJson->race . $adminInfos . '</font>
                 </td>
                 ';
 
-                echo '
+            echo '
                 <td>
                     <button
                         class="action"
 
-                        data-item="'. $item->id .'"
-                        data-name="'. ucfirst($item->data->name) .'"
-                        data-action="'. $action .'"
-                        data-stock="'. $row->stock .'"
-                        data-price="'. $row->price .'"
-                        data-id="'. $row->id .'"
+                        data-item="' . $item->id . '"
+                        data-type="' . $table . '"
+                        data-name="' . ucfirst($item->data->name) . '"
+                        data-action="' . $action . '"
+                        data-stock="' . $row->stock . '"
+                        data-price="' . $row->price . '"
+                        data-id="' . $row->id . '"
 
-                        >'. $action .'</button>';
+                        >' . $txt . '</button>';
 
 
 
-                echo '
+            echo '
                 </td>
                 ';
 
-                echo '
+            echo '
             </tr>
             ';
         }
@@ -255,69 +262,67 @@ class Market{
         ';
 
 
-        ?>
+?>
         <script>
-        $(document).ready(function(){
+            $(document).ready(function() {
 
-            $('.action').click(function(e){
+                $('.action').click(function(e) {
 
-                var item = $(this).data('name');
-                var action = $(this).data('action');
-                var stock = $(this).data('stock');
-                var price = $(this).data('price');
-                var id = $(this).data('id');
+                    var item = $(this).data('name');
+                    var action = $(this).data('action');
+                    var stock = $(this).data('stock');
+                    var price = $(this).data('price');
+                    var id = $(this).data('id');
+                    var type = $(this).data('type');
 
-                if(action.startsWith('Annuler')){
-                  window.location.href= 'merchant.php?<?php echo $table ?>&cancel&targetId=<?php echo $this->target->id ?>&id='+id;
-                  return; 
+                    const urlParams = new URLSearchParams(window.location.search);
+                    targetId = urlParams.get('targetId');
+                    let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
+                    let payload = {
+                        'action': action,
+                        'type': type,
+                        'id': id,
+                    };
+
+
+                    if (action == 'cancel') {
+                        confirmtxt = 'Annuler ' + item + ' x' + stock + ' ?';
+                    }
+                    else{
+                    var n = prompt('Combien?', stock);
+
+                    if (n == null || n == '' || n < 1 || n > stock) {
+
+                        return false;
+                    }
+                    total = n * price;
+                    payload.quantity = n;
+                    payload.price = price;
+                    confirmtxt=action + ' ' + item + ' x' + n + '\nà ' + price + 'Po/unité\npour un total de ' + total + 'Po?'
                 }
 
-                var n = prompt('Combien?', stock);
-
-                if(n == null || n == '' || n < 1 || n > stock){
-
-                    return false;
-                }
-                total = n * price;
-
-
-                if(confirm(action +' '+ item +' x'+ n +'\nà '+ price +'Po/unité\npour un total de '+ total +'Po?')){
-
-                    $.ajax({
-                        type: "POST",
-                        url: 'merchant.php?targetId=<?php echo $this->target->id ?>&<?php echo $table ?>',
-                        data: {'id': id, 'n': n}, // serializes the form's elements.
-                        success: function(data)
-                        {
-                            // alert(data);
-                            $dataHtml = $('<div>');
-                            $dataHtml.html(data);
-                            if($dataHtml.find('#error')[0] != null){
-                                alert($dataHtml.find('#error').text());
-                            }
-                            else{
-                                alert('Transaction réussie!\nLes objets ou l\'or ont été déposés sur votre compte en banque.');
-                            }
-                            document.location.reload();
-                        }
-                    });
-                }
+                    if (confirm(confirmtxt)) {
+                        aooFetch(url, payload, null)
+                            .then(autoModal)
+                            .catch(autoError());
+                    }
+                });
             });
-        });
         </script>
-        <?php
+<?php
 
         return ob_get_clean();
     }
 
 
-    public function print_bank($player){
+    public function print_bank($player)
+    {
 
 
         ob_start();
 
 
-        $itemList = Item::get_item_list($player, $bank=true);
+        $itemList = Item::get_item_list($player, $bank = true);
 
 
         echo Ui::print_inventory($itemList);

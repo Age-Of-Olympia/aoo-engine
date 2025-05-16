@@ -57,4 +57,4 @@ echo $data;
 
 ?>
 <script src="js/progressive_loader.js"></script>
-<script src="js/inventory.js"></script>
+<script src="js/inventory.js?v=20250516"></script>

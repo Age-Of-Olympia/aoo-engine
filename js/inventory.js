@@ -51,8 +51,6 @@ $(document).ready(function(){
 
 
             if(window.name == 'or'){
-
-
                 alert('Impossible de vendre cet objet.');
                 return false;
             }
@@ -69,6 +67,20 @@ $(document).ready(function(){
                 alert('Prix invalide!');
                 return false;
             }
+            const urlParams = new URLSearchParams(window.location.search);
+            targetId = urlParams.get('targetId');
+             let url= 'api/exchanges/asks-bids.php?targetId='+targetId;
+             let payload = {
+                'action': 'create',
+                'type': action == 'newAsk' ? 'asks' : 'bids',
+                'item_id': window.id,
+                'quantity': n,
+                'price': price
+             };
+            aooFetch(url,payload,null)
+            .then(autoModal)
+            .catch(autoError());
+            return false;
         }
 
 

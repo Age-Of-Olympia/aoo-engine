@@ -55,6 +55,33 @@ function aooFetch(url,  payload = null, method = null,autoProcess = true) {
         })
 }
 
+function autoModal(data) {
+    if (data.error) {
+        alert(data.error);
+    }
+    else if (data.result) {
+        if (data.result.message)
+            alert(data.result.message);
+        if (data.result.redirect)
+            document.location = data.result.redirect;
+    }
+}
+
+function autoError(log=true,alert=true,reload=true) {
+    return function (error) {
+        console.error('Error:', error);
+        if (log) {
+            console.error('Error:', error);
+        }
+        if (alert) {
+            alert('Une erreur est survenue, veuillez réessayer.');
+        }
+        if (reload) {
+            location.reload();
+        }
+    }
+}
+
 // preload img
 function preload(img, element){
 

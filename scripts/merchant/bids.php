@@ -1,23 +1,4 @@
 <?php
-
-if(!empty($_POST['id']) && !empty($_POST['n'])){
-
-
-    $market->perform($player, 'bids', $_POST['id'], $_POST['n']);
-
-    exit();
-}
-
-
-if(isset($_GET['cancel'])){
-
-    include('scripts/merchant/cancel_contract.php');
-
-    exit();
-}
-
-
-
 ob_start();
 
 

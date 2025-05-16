@@ -1,6 +1,6 @@
-$(document).ready(function(){
+$(document).ready(function () {
 
-    $('#item').change(function(e){
+    $('#item').change(function (e) {
 
         var itemId = $(this).val();
 
@@ -10,10 +10,9 @@ $(document).ready(function(){
 
         $.ajax({
             type: "POST",
-            url: 'merchant.php?targetId='+ window.targetId +'&bids&hideMenu&itemId='+ itemId,
+            url: 'merchant.php?targetId=' + window.targetId + '&bids&hideMenu&itemId=' + itemId,
             data: {}, // serializes the form's elements.
-            success: function(data)
-            {
+            success: function (data) {
                 // alert(data);
                 $('#ajax-data').html(data);
             }
@@ -21,19 +20,19 @@ $(document).ready(function(){
     });
 
 
-    $('#submit').click(function(e){
+    $('#submit').click(function (e) {
 
 
         var itemId = window.itemId;
 
         var n = prompt('Quantité?', 1);
 
-        if(n == null){
+        if (n == null) {
 
             return false;
         }
 
-        if(n == '' || n < 1){
+        if (n == '' || n < 1) {
 
             alert('Nombre invalide!');
             return false;
@@ -45,38 +44,31 @@ $(document).ready(function(){
 
         var price = prompt('Prix à l\'unité?', basePrice);
 
-        if(price == null){
+        if (price == null) {
 
             return false;
         }
 
-        if(price == '' || price < 1){
+        if (price == '' || price < 1) {
 
             alert('Nombre invalide!');
             return false;
         }
 
-        $.ajax({
-            type: "POST",
-            url: 'merchant.php?targetId='+ window.targetId +'&bids&hideMenu&newContract',
-            data: {
-                'action': window.action,
-                'itemId': itemId,
-                'n': n,
-                'price': price
-            }, // serializes the form's elements.
-            success: function(data)
-            {
-                $dataHtml = $('<div>');
-                $dataHtml.html(data);
-                if($dataHtml.find('#error')[0] != null){
-                    alert($dataHtml.find('#error').text());
-                }
-                else{
-                    alert('Nouvelle transaction créée.');
-                }
-                document.location = 'merchant.php?targetId='+ window.targetId +'&asks';
-            }
-        });
+
+
+        const urlParams = new URLSearchParams(window.location.search);
+        targetId = urlParams.get('targetId');
+        let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
+        let payload = {
+            'action': 'create',
+            'type': 'asks',
+            'item_id': itemId,
+            'quantity': n,
+            'price': price
+        };
+        aooFetch(url, payload, null)
+            .then(autoModal)
+            .catch(autoError());
     });
 });
