@@ -115,7 +115,7 @@ class BidsAsksService
                 if ($gold->add_item($player, -$total)) {
                     $this->db->insert('items_asks', $values);
                 } else {
-                    ExitError("Vous ne possédez pas assez d'Or pour prétendre acheter {$quantity} {$item->row->name}.");
+                    ExitError("Vous ne possédez pas assez d'Or pour acheter {$quantity} {$item->row->name}.");
                 }
             }
             $this->db->commit_transaction('create_bid_ask');
