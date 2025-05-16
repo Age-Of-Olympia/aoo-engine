@@ -70,4 +70,29 @@ class ActionService
         return $result;
     }
 
+    public function getCostsArray(?string $actionName, ?ActionInterface $action) : array {
+        if (!isset($action)) {
+            $action = $this->getActionByName($actionName);
+        }
+        $conditions = $action->getConditions();
+        $costArray = array();
+        foreach($conditions as $condition) {
+            $conditionType = $condition->getConditionType();
+            if ($conditionType == 'RequiresTraitValue') {
+                $conditionParameters = $condition->getParameters();
+                foreach ($conditionParameters as $key => $value) {
+                    if ($key == "uses_fatigue") {
+                        continue;
+                    }
+                    if ($key == "fatigue") {
+                        continue;
+                    }
+                    array_push($costArray, $value . CARACS[$key]);
+                }
+                break;
+            }
+        }
+        return $costArray;
+    }
+
 }

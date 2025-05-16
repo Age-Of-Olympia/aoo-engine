@@ -63,7 +63,7 @@ if(!isset($raceJson->spells)){
     exit('<p>Ce personnage ne vend pas de sorts.</p>');
 }
 
-
+$actionService = new ActionService();
 foreach($raceJson->spells as $e){
 
 
@@ -122,7 +122,6 @@ foreach($raceJson->spells as $e){
         continue;
     }
 
-    $actionService = new ActionService();
     $action = $actionService->getActionByName($e);
     if ($action == null) {
         continue;

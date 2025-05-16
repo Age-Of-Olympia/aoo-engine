@@ -240,10 +240,8 @@ if($res->num_rows){
 
         // Trier le tableau en utilisant la fonction de comparaison personnalisée
         usort($actions, 'custom_compare');
-
-        foreach($actions as $actionName){
-            
-            $actionService = new ActionService();
+        $actionService = new ActionService();
+        foreach($actions as $actionName){    
             $entityManager = EntityManagerFactory::getEntityManager();
             if ($actionName == "attaquer") {
                 if ($player->id != $target->id) {

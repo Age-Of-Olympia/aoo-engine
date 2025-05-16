@@ -48,9 +48,8 @@ if(isset($_GET['forget'])){
 
 echo '</tr>';
 
+$actionService = new ActionService();
 foreach($spellList as $e){
-
-    $actionService = new ActionService();
     $spell = $actionService->getActionByName($e);
 
     if ($spell == null) {
@@ -60,25 +59,7 @@ foreach($spellList as $e){
 
     $img = 'img/spells/'. $e .'.jpeg';
 
-    $conditions = $spell->getConditions();
-
-    foreach($conditions as $condition) {
-        $conditionType = $condition->getConditionType();
-        if ($conditionType == 'RequiresTraitValue') {
-            $conditionParameters = $condition->getParameters();
-            $costArray = array();
-            foreach ($conditionParameters as $key => $value) {
-                if ($key == "uses_fatigue") {
-                    continue;
-                }
-                if ($key == "fatigue") {
-                    continue;
-                }
-                array_push($costArray, $value . CARACS[$key]);
-            }
-            break;
-        }
-    }
+    $costArray = $actionService->getCostsArray(null, $spell);
 
     $outcomes = $spell->getOnSuccessOutcomes();
 
