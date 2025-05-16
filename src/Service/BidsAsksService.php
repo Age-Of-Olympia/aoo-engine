@@ -62,9 +62,9 @@ class BidsAsksService
             $this->db->commit_transaction('cancel_bid_ask');
         } catch (Throwable $th) {
             $this->db->rollback_transaction('cancel_bid_ask');
-            ExitError('Erreur lors de l\'annulation');
+            ExitError("Erreur lors de l'annulation");
         }
-        $message = $type == 'asks' ? 'La demande a été annulée.' : 'L\'offre a été annulée.';
+        $message = $type == 'asks' ? "La demande a été annulée." : "L'offre a été annulée.";
         ExitSuccess(["message" => $message, "redirect" => "merchant.php?{$type}&targetId={$_GET['targetId']}"]);
     }
 
@@ -103,7 +103,7 @@ class BidsAsksService
                 if ($item->add_item($player, -$quantity)) {
                     $this->db->insert('items_bids', $values);
                 } else {
-                    ExitError("Vous ne possédez pas assez d\'objets");
+                    ExitError("Vous ne possédez pas assez d'objets");
                 }
             }
 
@@ -115,13 +115,13 @@ class BidsAsksService
                 if ($gold->add_item($player, -$total)) {
                     $this->db->insert('items_asks', $values);
                 } else {
-                    ExitError("Vous ne possédez pas assez d\'Or pour prétendre acheter {$quantity} {$item->row->name}.");
+                    ExitError("Vous ne possédez pas assez d'Or pour prétendre acheter {$quantity} {$item->row->name}.");
                 }
             }
             $this->db->commit_transaction('create_bid_ask');
         } catch (Throwable $th) {
             $this->db->rollback_transaction('create_bid_ask');
-            ExitError('Erreur lors de la création de l\'offre/demande');
+            ExitError("Erreur lors de la création de l'offre/demande");
         }
         ExitSuccess(["message" => "L'offre/demande a été créée.", "redirect" => "merchant.php?{$type}&targetId={$_GET['targetId']}"]);
     }
@@ -171,7 +171,7 @@ class BidsAsksService
                 $gold = Item::get_item_by_name('or', checked: true);
 
                 if (!$gold->give_item($player, $target, $total, bank: true)) {
-                    ExitError("Pas assez d\'Or.");
+                    ExitError("Pas assez d'Or.");
                 }
 
                 // transfer item to player bank
@@ -191,7 +191,7 @@ class BidsAsksService
             $this->db->commit_transaction('accept_bid_ask');
         } catch (Throwable $th) {
             $this->db->rollback_transaction('accept_bid_ask');
-            ExitError('Erreur lors de l\'acceptation');
+            ExitError("Erreur lors de l'acceptation");
         }
         ExitSuccess(["message" => "L'offre a été acceptée.", "redirect" => "merchant.php?{$type}&targetId={$_GET['targetId']}"]);
     }
