@@ -4,7 +4,6 @@ require_once('config.php');
 
 $ui = new Ui('Personnages secondaires');
 
-
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
@@ -33,7 +32,7 @@ foreach($playerPnjs as $playerPnj ){
 
 if(!empty($_POST['switch'])){
 
-
+    $db = new Db();
     if(!isset($playersTbl[$_POST['switch']]) && !isset($hiddenPnjs[$_POST['switch']])){
 
         exit('error pnj');
