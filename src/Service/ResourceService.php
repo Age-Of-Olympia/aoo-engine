@@ -72,8 +72,6 @@ class ResourceService
         name IN ("'. implode('","', array_keys($biomes)) .'")
         AND
         damages=-1
-        GROUP BY
-        name
         ';
 
         $db = new Db();

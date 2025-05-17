@@ -52,12 +52,20 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
         $res = ResourceService::getResourcesAround($actor);
         $resourcesIdArray = [];
         while($row = $res->fetch_object()){
-
-            if($biomes[$row->exhaust] < rand(1, 100))
-                $resourcesIdArray[] = $row->id;
-
+            foreach($planJson->biomes as $e){
+                if($e->wall == $row->name){
+                    $rand = rand(1, 100);
+                    if($e->exhaust < $rand)
+                        $resourcesIdArray[] = $row->id;
+                }
+            }
         }
-        ResourceService::exhaustResources($resourcesIdArray);
+    
+        if(!empty($resourcesIdArray)){
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Un des points n\'a plus rien à récolter...';
+            ResourceService::exhaustResources($resourcesIdArray);
+            $this->getOutcome()->getAction()->setRefreshScreen(true);
+        }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
 
