@@ -37,10 +37,17 @@ $(document).ready(function(){
                 .prop('disabled', false);
             }
             else if(!window.freeEmp && window.type == 'equipement'){
+                if(window.emplacement == "munition" || window.emplacement == "doigt"){
+                    $('.action[data-action="use"]')
+                    .html('Équiper')
+                    .prop('disabled', false);
+                }
+                else{
+                    $('.action[data-action="use"]')
+                    .html('<font color="red">Équiper (Max.)</font>')
+                    .prop('disabled', true);
 
-                $('.action[data-action="use"]')
-                .html('<font color="red">Équiper (Max.)</font>')
-                .prop('disabled', true);
+                }
             }
             else if(window.type == 'parchemin' || window.type == 'structure' || window.type == 'consommable' || window.emplacement != ''){
 

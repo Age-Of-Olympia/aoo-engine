@@ -1466,7 +1466,9 @@ class Player implements ActorInterface {
 
 
             if(!Item::get_free_emplacement($this)){
-                return EquipResult::NoRoom;
+                if($item->data->emplacement != 'munition' && $item->data->emplacement != 'doigt'){
+                    return EquipResult::NoRoom;
+                }
             }
 
 
