@@ -23,12 +23,7 @@ $resourcesIdArray[] = array();
 while($row = $res->fetch_object()){
     
     $planJson = json()->decode('plans', $row->plan);
-    foreach($planJson->biomes as $e){
-        if($e->wall = $row->name){
-            if($e->regrow < rand(1, 100))
-                $resourcesIdArray[] = $row->id;
-        }
-    }
+    $resourcesIdArray = ResourceService::createRegrowArray($planJson, $resourcesIdArray, $row);
 }
 
 ResourceService::regrowResources($resourcesIdArray);

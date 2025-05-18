@@ -52,13 +52,7 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
         $res = ResourceService::getResourcesAround($actor);
         $resourcesIdArray = [];
         while($row = $res->fetch_object()){
-            foreach($planJson->biomes as $e){
-                if($e->wall == $row->name){
-                    $rand = rand(1, 100);
-                    if($e->exhaust < $rand)
-                        $resourcesIdArray[] = $row->id;
-                }
-            }
+             $resourcesIdArray = ResourceService::createExhaustArray($planJson, $resourcesIdArray, $row, $rand);
         }
     
         if(!empty($resourcesIdArray)){
