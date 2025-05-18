@@ -174,7 +174,7 @@ echo '
 ';
 
 
-if($player->coords->plan == $target->coords->plan){
+if($player->coords->plan == $target->coords->plan && $distance <= $caracsJson->p){
 
 
     echo '
