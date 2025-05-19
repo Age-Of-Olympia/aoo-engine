@@ -5,7 +5,8 @@ $db = new Db();
 
 $infos ='';
 
-$stmt = db()->prepare( "select coords_id as coords_id, 'map_tiles' as type, name as name, NULL as params from map_tiles where coords_id = ?
+$db = new Db();
+$sql = "select coords_id as coords_id, 'map_tiles' as type, name as name, NULL as params from map_tiles where coords_id = ?
 union
 select  coords_id as coords_id, 'map_walls' as type, name as name, NULL as params from map_walls where coords_id = ?
 union
@@ -19,14 +20,11 @@ select  coords_id as coords_id, 'map_routes' as type, name as name, NULL as para
 union
 select  coords_id as coords_id, 'map_foregrounds' as type, name as name, NULL as params from map_foregrounds where coords_id = ?
 union
-select  coords_id as coords_id, 'map_plants' as type, name as name, NULL as params from map_plants where coords_id = ?");
+select  coords_id as coords_id, 'map_plants' as type, name as name, NULL as params from map_plants where coords_id = ?";
+$res = $db->exe($sql, array($coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId));
 
 
-$stmt->bind_param('iiiiiiii',$coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId, $coordsId);
-$stmt->execute();
-$result = $stmt->get_result();
-
-$results = $result->fetch_all(MYSQLI_ASSOC);
+$results = $res->fetch_all(MYSQLI_ASSOC);
 
 
 // Convertir en JSON

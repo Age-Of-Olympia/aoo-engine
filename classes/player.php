@@ -1788,16 +1788,16 @@ class Player implements ActorInterface {
         self::clean_players_assists();
 
         // Récupérer les assists des dernières 24 heures pour cette cible
-        $stmt = db()->prepare("
+        $db = new Db();
+        $sql = "
             SELECT player_id, player_rank, damages, time
             FROM players_assists
             WHERE target_id = ? AND time > ?
             ORDER BY time DESC
-        ");
-        $stmt->bind_param('ii', $target_id, $timeLimit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $assists = $result->fetch_all(MYSQLI_ASSOC);
+        ";
+
+        $res = $db->exe($sql, array($target_id, $timeLimit));
+        $assists = $res->fetch_all(MYSQLI_ASSOC);
 
         // Si la cible est inactif, donner 0 XP à tous les participants
         if($this->data->isInactive) {
@@ -2208,31 +2208,11 @@ class Player implements ActorInterface {
         return $list;
     }
 
-    public static function refresh_views_at_z($z){
-
-
-        $sql = 'SELECT players.id FROM players INNER JOIN coords ON coords.id = coords_id WHERE z = ?';
-
-        $db = new Db();
-
-        $res = $db->exe($sql, $z);
-
-        while($row = $res->fetch_object()){
-
-
-            @unlink('datas/private/players/'. $row->id .'.svg');
-        }
-    }
-
-
     public static function clean_players_assists(){
-
-
         $timeLimit = time() - ONE_DAY;
-
-        // Optionnel: supprimer les assists
-        $stmt = db()->prepare("DELETE FROM players_assists WHERE time < ?");
-        $stmt->bind_param('i', $timeLimit);
-        $stmt->execute();
+        $db = new Db();
+        $sql = 'DELETE FROM players_assists WHERE time < ?';
+        $res = $db->exe($sql, array($timeLimit));
+        return $res;
     }
 }
