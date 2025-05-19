@@ -56,7 +56,12 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
         }
     
         if(!empty($resourcesIdArray)){
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Un des points n\'a plus rien à récolter...';
+            if(count($resourcesIdArray) > 1){
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Plusieurs filons sont épuisés...';
+            }
+            else{
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Un des filons n\'a plus rien à récolter...';
+            }
             ResourceService::exhaustResources($resourcesIdArray);
             $this->getOutcome()->getAction()->setRefreshScreen(true);
         }
