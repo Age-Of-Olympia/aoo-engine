@@ -790,13 +790,17 @@ class Player implements ActorInterface {
 
 
     public function refresh_view(){
-
-        @unlink('datas/private/players/'. $this->id .'.svg');
+        $file = 'datas/private/players/'. $this->id .'.svg';
+        if (is_file($file)) {
+            unlink($file); // Delete the file
+        }
     }
 
     public function refresh_data(){
-
-        @unlink('datas/private/players/'. $this->id .'.json');
+        $file = 'datas/private/players/'. $this->id .'.json';
+        if (is_file($file)) {
+            unlink($file); // Delete the file
+        }
     }
 
     public function refresh_invent(){
@@ -807,8 +811,10 @@ class Player implements ActorInterface {
     }
 
     public function refresh_kills(){
-
-        @unlink('datas/private/players/'. $this->id .'.kills.html');
+        $file = 'datas/private/players/'. $this->id .'.kills.html';
+        if(file_exists($file)){
+            unlink($file);
+        }
     }
 
     public function refresh_caracs(){

@@ -1134,9 +1134,10 @@ class View{
 
 
             while($row = $res->fetch_object()){
-
-
-                @unlink('datas/private/players/'. $row->id .'.svg');
+                $file = 'datas/private/players/'. $row->id .'.svg';
+                if (is_file($file)) {
+                    unlink($file); // Delete the file
+                }
             }
 
             return true;
