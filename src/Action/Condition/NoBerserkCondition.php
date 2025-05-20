@@ -10,6 +10,7 @@ class NoBerserkCondition extends BaseCondition
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
+        $condition->setBlocking(true);
 
         if($actor->data->antiBerserkTime > time()) {
             $timeLeft = intval(($actor->data->antiBerserkTime - time()) / 60);

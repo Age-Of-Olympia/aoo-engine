@@ -51,7 +51,9 @@ class ActionExecutorService
             $this->finalTargetPv = $this->target->getRemaining('pv');
 
             // update Last Action Time (used on new turn to set antiberserk time)
-            $this->playerService->updateLastActionTime();
+            if ($this->action->activateAntiBerserk()) {
+                $this->playerService->updateLastActionTime();
+            }
 
             // 3) apply costs
             $costsResultsArray = $this->applyCosts();

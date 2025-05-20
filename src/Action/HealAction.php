@@ -37,4 +37,9 @@ class HealAction extends Action
         return $playerXp;
     }
 
+    public function activateAntiBerserk(): bool
+    {
+        return true;
+    }
+
 }

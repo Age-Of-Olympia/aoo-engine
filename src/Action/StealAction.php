@@ -46,4 +46,9 @@ class StealAction extends Action
         return true;
     }
 
+    public function activateAntiBerserk(): bool
+    {
+        return true;
+    }
+
 }
