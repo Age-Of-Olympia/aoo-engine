@@ -126,7 +126,7 @@ class ResourceService
 
         foreach($planJson->biomes as $e){
                 if($e->wall == $row->name){
-                    if($e->regrow < rand(1, 100))
+                    if($e->regrow < rand(1, 1000))
                         $resourcesIdArray[] = $row->id;
                 }
             }
