@@ -225,7 +225,7 @@ define('WALLS_PV', array(
     'altar'=>50,
     'altar_broken'=>50,
 
-    'pierre_precieuse'=>100,
+    'pierre_precieuse'=>500,
     
     'piedestal'=>50,
     'piedestal_broken'=>50,
@@ -240,6 +240,15 @@ define('WALLS_PV', array(
     'statues6'=>30,
     'statues4'=>30,
     'statues5'=>30,
+    'statue_colosses'=>30,
+    'statue_garde'=>30,
+    'statue_servant'=>30,
+    'totem_sauvage'=>30,
+    'totem_sauvage2'=>30,
+    'totem_sauvage3'=>30,
+    'monolithe_flamboyant'=>30,
+    'pilier'=>30,
+
     
     'cocotier1'=>1,
     'cocotier2'=>1,
