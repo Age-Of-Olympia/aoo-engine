@@ -42,7 +42,7 @@ abstract class BaseCondition implements ConditionInterface
         $success = true;
         $successMessages = array();
         $failureMessages = array();
-        foreach ($this->preConditions as $key => $preCondition) {
+        foreach ($this->preConditions as $preCondition) {
             $resultCondition = $preCondition->check($actor,$target,$condition);
             if ($resultCondition->isSuccess()) {
                 $successMessages = array_merge($successMessages, $resultCondition->getConditionSuccessMessages());
