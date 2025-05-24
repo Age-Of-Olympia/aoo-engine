@@ -24,6 +24,10 @@ $res = $db->exe($sql);
 if ($res) {
     while($row = $res->fetch_object()){
         $gain = floor($row->n * BANK_PCT / 100);
+        // Limitation a 5PO/j de bénéfices max
+        if($gain > 5){
+            $gain = 5;
+        }
         echo '#'. $row->playerId .': '. $row->n .' + '. $gain .'<br />';
     }
 } else {
