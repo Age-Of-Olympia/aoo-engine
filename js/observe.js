@@ -43,6 +43,10 @@ $(document).ready(function(){
 
         let targetId = $(this).data('target-id');
         let action = $(this).data('action');
+        let coordsX = $(this).data('coords-x');
+        let coordsY = $(this).data('coords-y');
+        let coordsZ = $(this).data('coords-z');
+        let coordsPlan = $(this).data('coords-plan');
 
         if(action == 'close-card'){
 
@@ -57,7 +61,7 @@ $(document).ready(function(){
         $.ajax({
             type: "POST",
             url: url,
-            data: {'action':action, 'targetId':targetId}, // serializes the form's elements.
+            data: {'action':action, 'targetId':targetId, 'coordsX': coordsX, 'coordsY': coordsY, 'coordsZ': coordsZ, 'coordsPlan': coordsPlan}, // serializes the form's elements.
             success: function(data)
             {
                 let $action = $('<div>'+ data +'</div>').hide();

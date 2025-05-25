@@ -29,6 +29,10 @@ class Player implements ActorInterface {
         $this->playerService = new PlayerService($playerId);
     }
 
+    public function getId(): int {
+        return $this->id;
+    }
+
 
     public function get_row(){
 

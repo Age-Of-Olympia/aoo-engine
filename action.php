@@ -48,6 +48,12 @@ if ($_POST['action'] != 'attaquer') {
     }
 }
 
+if (($_POST['coordsX'] != $target->getCoords()->x)
+    ||($_POST['coordsY'] != $target->getCoords()->y)
+    ||($_POST['coordsZ'] != $target->getCoords()->z)
+    ||($_POST['coordsPlan'] != $target->getCoords()->plan)) {
+    exit('Votre cible s\'est déplacée.');
+}
 
 // distance
 $distance = View::get_distance($player->getCoords(), $target->getCoords());

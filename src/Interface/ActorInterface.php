@@ -7,6 +7,7 @@ use Item;
 
 interface ActorInterface
 {
+  public function getId(): int;
   public function haveEffect(string $name): int;
   public function addEffect($name, $duration=0): void;
   public function endEffect(string $name): void;

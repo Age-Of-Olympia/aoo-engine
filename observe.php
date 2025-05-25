@@ -2,6 +2,7 @@
 
 use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
+use App\Interface\ActorInterface;
 use App\Service\ActionService;
 
 require_once('config.php');
@@ -249,7 +250,7 @@ if($res->num_rows){
                     if ($actionData == null) {
                         continue;
                     }
-                    $dataImg .= buildActionToDisplay($target->id, $actionData, "attaquer");
+                    $dataImg .= buildActionToDisplay($target, $actionData, "attaquer");
                 }
                 continue;
             }
@@ -262,10 +263,10 @@ if($res->num_rows){
             $actionOutcomes = $actionData->getOutcomes();
             foreach ($actionOutcomes as $actionOutcome) {
                 if ($actionOutcome->getApplyToSelf() && $player->id == $target->id) {
-                    $dataImg .= buildActionToDisplay($target->id, $actionData);
+                    $dataImg .= buildActionToDisplay($target, $actionData);
                     continue 2;
                 } else if (!$actionOutcome->getApplyToSelf() && $player->id != $target->id) {
-                    $dataImg .= buildActionToDisplay($target->id, $actionData);
+                    $dataImg .= buildActionToDisplay($target, $actionData);
                     continue 2;
                 }
             }
@@ -535,18 +536,21 @@ if(!empty($card)){
     echo $card;
 
     ?>
-    <script src="js/observe.js?17"></script>
+    <script src="js/observe.js?19"></script>
     <?php
 }
 
 
 echo Str::minify(ob_get_clean());
 
-function buildActionToDisplay(int $targetId, ActionInterface $action, ?string $nameOverride = null) : string {
+function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?string $nameOverride = null) : string {
         $res = '<button
                 class="action"
-
-                data-target-id="'. $targetId .'"
+                data-coords-x="'.$target->getCoords()->x.'"
+                data-coords-y="'.$target->getCoords()->y.'"
+                data-coords-z="'.$target->getCoords()->z.'"
+                data-coords-plan="'.$target->getCoords()->plan.'"
+                data-target-id="'. $target->getId() .'"
                 data-action="'. $action->getName() .'"
                 >
                 <span class="ra '. $action->getIcon() .'"></span>
@@ -556,8 +560,11 @@ function buildActionToDisplay(int $targetId, ActionInterface $action, ?string $n
         if ($nameOverride != null) {
             $res = '<button
                 class="action"
-
-                data-target-id="'. $targetId .'"
+                data-coords-x="'.$target->getCoords()->x.'"
+                data-coords-y="'.$target->getCoords()->y.'"
+                data-coords-z="'.$target->getCoords()->z.'"
+                data-coords-plan="'.$target->getCoords()->plan.'"
+                data-target-id="'. $target->getId() .'"
                 data-action="'. $nameOverride .'"
                 >
                 <span class="ra '. $action->getIcon() .'"></span>
