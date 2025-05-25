@@ -737,7 +737,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function put_kill($target, $xp, $assist=0, $is_inactive=false){
+    public function put_kill($target, $xp, $assist=0, $is_inactive=0){
 
 
         $db = new Db();
@@ -754,7 +754,10 @@ class Player implements ActorInterface {
             'plan'=>$target->coords->plan
         );
 
-        $db->insert('players_kills', $values);
+        $res = $db->insert('players_kills', $values);
+        if (!$res) {
+            exit('Erreur lors de l\'jout du kill, contactez l\'équipe ! (forum, discord)');
+        }
 
         $this->refresh_kills();
     }
@@ -1832,7 +1835,7 @@ class Player implements ActorInterface {
             $remaining_xp = $xp_to_distribute - $total_distributed_xp;
 
             // Ajouter le reste d'XP à la dernière personne qui a infligé des dommages
-            if (!empty($assists)) {
+            if (!empty($assists) && $remaining_xp > 0) {
                 $last_assist_player_id = $assists[0]['player_id'];
                 $xp_distribution[$last_assist_player_id] += $remaining_xp;
             }

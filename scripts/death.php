@@ -45,7 +45,7 @@ echo '
             $assistant->get_data();
             $assistant->put_xp($e);
             $assist = ($assistant->id == $player->id) ? 0 : 1;
-            $assistant->put_kill($target, $e, $assist, $target->data->isInactive);
+            $assistant->put_kill($target, $e, $assist, ($target->data->isInactive?1:0));
             echo $assistant->data->name .' +'. $e .'Xp<br />';
         }
     }
