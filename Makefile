@@ -1,4 +1,6 @@
-.PHONY: phpstan test test-ci coverage
+.PHONY: all phpstan test test-ci coverage testf
+
+PHPUNIT = XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
 
 all: phpstan test coverage
 
@@ -7,7 +9,12 @@ phpstan:
 
 test:
 	mkdir -p tmp/coverage
-	XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
+	$(PHPUNIT)
+
+testf:
+	$(PHPUNIT) --filter $(word 2,$(MAKECMDGOALS))
+%:
+	@:
 
 test-ci:
 	mkdir -p tmp/coverage
