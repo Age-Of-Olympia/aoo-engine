@@ -69,7 +69,10 @@ if(!empty($_POST['text'])){
 
 
     // delete autosave
-    @unlink('datas/private/players/'. $player->id .'.save');
+    $file = 'datas/private/players/'. $player->id .'.save';
+    if (file_exists($file)) {
+        unlink($file); // Delete the file
+    }
 
 
     ExitSuccess($replyId);

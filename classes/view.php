@@ -1185,7 +1185,9 @@ class View{
 
         $db->delete('map_foregrounds', $values);
 
-        @unlink($url);
+        if (file_exists($url)) {
+            unlink($url); // Delete the file
+        }
 
         if(!isset($player->coords)){
 

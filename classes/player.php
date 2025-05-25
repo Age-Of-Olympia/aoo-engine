@@ -2205,12 +2205,12 @@ class Player implements ActorInterface {
 
             $list = json()->decode('players', 'list');
 
-            $test =__DIR__;
-            
-            @unlink('datas/public/classements/general.html');
-            @unlink('datas/public/classements/bourrins.html');
-            @unlink('datas/public/classements/reputation.html');
-            @unlink('datas/public/classements/fortunes.html');
+            $fileRankList = array('general','bourrins','reputation','fortunes');
+            foreach($fileRankList as $file) {
+                if (file_exists('datas/public/classements/'.$file.'.html')) {
+                    unlink($file); // Delete the file
+                }
+            }
         }
         return $list;
     }

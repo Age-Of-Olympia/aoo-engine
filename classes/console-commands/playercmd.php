@@ -251,8 +251,9 @@ function purge_player($argumentValues, $player){
     ob_start();
 
     foreach($files as $file){
-
-        @unlink($file);
+        if (file_exists($file)) {
+            unlink($file); // Delete the file
+        }
         echo $file;
     }
 

@@ -24,9 +24,10 @@ if(!empty($_POST['img'])){
 
     $db->exe($sql, array($url, $player->id));
 
-
-    @unlink('datas/private/players/'. $player->id .'.json');
-
+    $file = 'datas/private/players/'. $player->id .'.json';
+    if (file_exists($file)) {
+        unlink($file); // Delete the file
+    }
 
     exit();
 }

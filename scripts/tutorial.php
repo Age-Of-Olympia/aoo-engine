@@ -1,6 +1,9 @@
 <?php
 
-@unlink('datas/private/players/'. $player->id .'.msg.html');
+$file = 'datas/private/players/'. $player->id .'.msg.html';
+if (file_exists($file)) {
+    unlink($file); // Delete the file
+}
 
 $player->getCoords();
 

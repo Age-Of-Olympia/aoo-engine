@@ -132,7 +132,10 @@ try {
     }
 
     if ($action->refreshScreen()) {
-        @unlink('datas/private/players/'. $_SESSION['playerId'] .'.svg');
+        $file = 'datas/private/players/'. $_SESSION['playerId'] .'.svg';
+        if (file_exists($file)) {
+            unlink($file); // Delete the file
+        }
         include('scripts/actions/on_hide_reload_view.php');
     }
     
