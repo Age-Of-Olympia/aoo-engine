@@ -24,7 +24,7 @@ class ActionFactory
         self::$actionClasses = loadActionClasses($directory);
     }
 
-    public static function getAction(string $name): ActionInterface
+    public static function getAction(string $name): ?ActionInterface
     {
         // keep by type for melee and shoot
         // add by name fot the others

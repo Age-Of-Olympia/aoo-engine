@@ -59,8 +59,6 @@ if ($numberOfSpellAvailable < 0) {
     exit('<font color="red">Vous ne pouvez pas utiliser vos sorts <a href="upgrades.php?spells">(max.'. $maxSpells .')</a>.</font></th>');
 }
 
-include('scripts/actions/check_max_spells.php');
-
 /*
  * action details
  */
@@ -78,11 +76,9 @@ if($player->have_option('showActionDetails')){
 ActionFactory::initialize('src/Action');
 $actionResultsView = null;
 
-$action = null;
+$action = ActionFactory::getAction($_POST["action"]);
 
-try {
-    $action = ActionFactory::getAction($_POST["action"]); 
-} catch (Exception $e) {
+if ($action == null) {
     if($distance == 1){
         try {
             $action = ActionFactory::getAction('melee'); // Crée une instance de MeleeAction
