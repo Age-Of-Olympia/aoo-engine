@@ -41,6 +41,7 @@
         "enchant\/enchantement_d_armures",
         "enchant\/enchantement_de_boucliers",
         "special\/attaque_sautee",
+        "special\/detection_obstacles",
         "dps\/poings_pierre"
     ],
     "actionsPack": [
@@ -59,6 +60,7 @@
         "enchant\/enchantement_d_armures",
         "enchant\/enchantement_de_boucliers",
         "special\/attaque_sautee",
+        "special\/detection_obstacles",
         "dps\/poings_pierre"
     ],
     "animateur": 1
