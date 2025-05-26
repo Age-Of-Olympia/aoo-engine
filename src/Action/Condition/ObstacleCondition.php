@@ -11,7 +11,17 @@ class ObstacleCondition extends BaseCondition
     {
         $result = new ConditionResult(true, array(), array());
 
-        View::get_walls_between($actor->coords, $target->coords);
+        $params = $condition->getParameters();
+        $display = $params["display"]??false;
+
+        if ($display) {
+            View::get_walls_between($actor->coords, $target->coords);
+            $successMessages = array();
+            $successMessages[0] = "Aucun obstacle ne gène votre attaque !";
+            $result = new ConditionResult(true, $successMessages, array());
+        } else {
+            View::get_walls_between($actor->coords, $target->coords);
+        } 
 
         return $result;
     }
