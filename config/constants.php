@@ -252,7 +252,56 @@ define('WALLS_PV', array(
     
     'cocotier1'=>1,
     'cocotier2'=>1,
-    'cocotier3'=>1
+    'cocotier3'=>1,
+
+//ressources : mettre les damages à -1 pour qu'ils apparaissent comme "récoltable", -2 pour "épuisé"
+
+    'arbre1'=>-1,
+    'arbre2'=>-1,
+    'arbre3'=>-1,
+    'arbre4'=>-1,
+    'arbre5'=>-1,
+    'arbre6'=>-1,
+
+    'arbre_petrifie1'=>-1,
+    'arbre_petrifie2'=>-1,
+    'arbre_petrifie3'=>-1,
+    'arbre_petrifie4'=>-1,
+    'arbre_petrifie5'=>-1,
+    'arbre_petrifie6'=>-1,
+
+    'cendre'=>-1,
+    'cuir'=>-1,
+    'cuivre'=>-1,
+    'etain'=>-1,
+    'fer'=>-1,
+    'nickel'=>-1,
+    'salpetre'=>-1,
+    'tourbe'=>-1,
+    'mana'=>-1,
+    'bronze'=>-1,
+
+    'herbe1'=>-1,
+    'herbe2'=>-1,
+    'herbe3'=>-1,
+
+    'jungle1'=>-1,
+    'jungle2'=>-1,
+    'jungle3'=>-1,  
+
+    'pierre1'=>-1,
+    'pierre2'=>-1,
+    'pierre3'=>-1,     
+    
+    'pierre_noire1'=>-1,
+    'pierre_noire2'=>-1,
+    'pierre_noire3'=>-1,   
+        
+    'rocher_desert1'=>-1,
+    'rocher_desert2'=>-1,
+    'rocher_desert3'=>-1 
+
+
 ));
 
 /*
