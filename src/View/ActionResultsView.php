@@ -73,18 +73,16 @@ class ActionResultsView
 
         $conditionsDetails = array();
         foreach($this->actionResults->getConditionsResultsArray() as $conditionResult) {
-            if ($this->actionResults->isSuccess()) {
+            if ($conditionResult->isSuccess()) {
                 array_push($conditionsDetails, $conditionResult->getConditionSuccessMessages());
             } else {
                 array_push($conditionsDetails, $conditionResult->getConditionFailureMessages());
             }
-            if ($conditionsDetails != null) {
-                foreach ($conditionsDetails as $messages) {
-                    if ($messages != null) {
-                        foreach($messages as $message) {
-                            $actionsDetails = $actionsDetails.$message."<br>";
-                        }
-                    }
+        }
+        foreach ($conditionsDetails as $messages) {
+            if ($messages != null) {
+                foreach ($messages as $message) {
+                    $actionsDetails = $actionsDetails . $message . "<br>";
                 }
             }
         }

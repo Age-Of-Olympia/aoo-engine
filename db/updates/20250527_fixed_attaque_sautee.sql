@@ -1,0 +1,2 @@
+INSERT INTO `action_outcomes` (`id`, `apply_to_self`, `name`, `on_success`, `action_id`) VALUES (NULL, '1', 'attaque_sautee_failed', '0', '6');
+INSERT INTO `outcome_instructions` (`id`, `type`, `parameters`, `orderIndex`, `outcome_id`) VALUES (NULL, 'teleport', '{ \"coords\": \"target\" }', '1', '22');
