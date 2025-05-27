@@ -13,9 +13,20 @@ $database = new Db();
 $viewService = new ViewService($database, 0, 0, 0, 0, $selectedPlan ?? 'olympia');
 
 // Get all available plans (local maps)
-$allPlans = $viewService->getAllPlans();
+$allPlans = $viewService->getAllPlans('all');
 $selectedPlan = $_POST['selected_plan'] ?? null;
 $selectedZLevel = $_POST['selected_z_level'] ?? null;
+
+usort($allPlans, function($a, $b) {
+    $nameA = str_replace('_s2', '', $a->id);
+    $nameB = str_replace('_s2', '', $b->id);
+
+    if ($nameA === $nameB) {
+        return $b->isS2 <=> $a->isS2;
+    }
+
+    return strcasecmp($nameA, $nameB);
+});
 
 // Cleanup button at top
 if (isset($_POST['cleanup_local'])) {
@@ -105,14 +116,18 @@ ob_start();
             <form method="post">
                 <div class="form-group">
                     <label for="planSelect">Choose Plan:</label>
-                    <select class="form-control" id="planSelect" name="selected_plan" required>
-                        <option value="">-- Select a Plan --</option>
-                        <?php foreach ($allPlans as $plan): ?>
-                            <option value="<?=$plan->id?>" <?=($selectedPlan === $plan->id) ? 'selected' : ''?>>
-                                <?=$plan->name?> (<?=$plan->id?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                        <select class="form-control" id="planSelect" name="selected_plan" required>
+                            <option value="">-- Select a Plan --</option>
+                            <?php
+                                $lastPlan = null;
+                                foreach ($allPlans as $plan):
+                                    $seasonBadge = $plan->isS2 ? ' <span class="badge bg-success">S2</span>' : ' <span class="badge bg-secondary">S1</span>';
+                                ?>
+                                <option value="<?= $plan->id ?>" <?= ($selectedPlan === $plan->id) ? 'selected' : '' ?>>
+                                    <?= $plan->name ?> (<?= $plan->id ?>)<?= $seasonBadge ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                 </div>
                 
                 <div class="mt-4">
@@ -129,7 +144,8 @@ ob_start();
                         <?php 
                             $selectedPlanData = array_filter($allPlans, fn($p) => $p->id === $selectedPlan);
                             $plan = reset($selectedPlanData);
-                            echo "<strong>{$plan->name}</strong> (ID: {$plan->id})";
+                            $seasonBadge = $plan->isS2 ? ' <span class="badge bg-success">S2</span>' : ' <span class="badge bg-secondary">S1</span>';
+                            echo "<strong>{$plan->name}</strong> (ID: {$plan->id}) $seasonBadge";
                         ?>
                     </p>
                     <a href="/tools.php?edit&dir=private&subDir=plans&finalDir=<?= urlencode($plan->id) ?>" class="btn btn-secondary btn-sm mb-3" target="_blank">

@@ -9,7 +9,8 @@ define('DB_CONSTANTS', array(
     'db'=>"",
     'password'=>"",
     'dbname'=>"",
-    'driver' => 'pdo_mysql',
+    'driver' => 'mysqli',
+    'charset' => 'utf8',
 ));
 
 

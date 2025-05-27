@@ -1064,12 +1064,16 @@ class ViewService {
 
         foreach ($jsonHelper->get_all('plans', true) as $planId => $planData) {
             $fullPlanData = $this->getPlanData($planId);
+            $isS2 = strpos($planId, '_s2') !== false;
+            $seasonName = $isS2 ? 'S2' : 'S1';
             $allPlans[] = (object)[
                 'id' => $planId,
                 'name' => $planData->name ?? $planId,
                 'shortName' => $planData->shortName ?? $planId,
                 'hasZLevels' => !empty($planData->z_levels),
                 'visibleByDefault' => $planData->visibleByDefault ?? false,
+                'season' => $seasonName,
+                'isS2' => $isS2,
                 'fullData' => $fullPlanData
             ];
         }

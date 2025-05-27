@@ -85,6 +85,7 @@ function admin_layout($title, $content) {
                 <!-- <a href="/admin/players.php" class="nav-link">Manage Players</a> -->
                 <a href="/admin/world_map.php" class="nav-link">Manage World Map</a>
                 <a href="/admin/local_maps.php" class="nav-link">Manage Local Maps</a>
+                <a href="/admin/screenshots.php" class="nav-link">Manage Screenshots</a>
             </nav>
         </div>
         
