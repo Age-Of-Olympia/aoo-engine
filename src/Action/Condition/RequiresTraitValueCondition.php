@@ -25,7 +25,7 @@ class RequiresTraitValueCondition extends BaseCondition
                 continue;
             }
             if ($key == "fatigue") {
-                if ($value == "fatigue_or_effecs" && !$actor->data->fatigue && !$actor->have_effects_to_purge()) {
+                if ($value == "fatigue_or_effects" && !$actor->data->fatigue && !$actor->have_effects_to_purge()) {
                     array_push($details, "Vous n'êtes pas fatigué et n'avez aucun effet à purger!");
                     $costIsAffordable = false;
                     continue;
