@@ -119,7 +119,7 @@ if(!empty($_GET['triggerId'])){
                     // else{
 
 
-                        // $player->addEffect('fatigue', $duration=ONE_DAY);
+                        // $player->addEffect('fatigue', duration:ONE_DAY);
 
                         $player->putFat(FAT_EVERY);
                     // }
@@ -142,8 +142,8 @@ if(!empty($_GET['triggerId'])){
                         $text = $player->data->name .' a voyagé de '. $planJson->name .' à '. $goPlanJson->name .'.';
 
                         $logtime = time();
-                        Log::put($playerClone, $playerClone, $text, $type="travel", '', $logtime);
-                        Log::put($player, $player, $text, $type="travel", '', $logtime);
+                        Log::put($playerClone, $playerClone, $text, type:"travel", hiddenText:'', logTime:$logtime);
+                        Log::put($player, $player, $text, type:"travel", hiddenText:'',logTime: $logtime);
 
                     }
 

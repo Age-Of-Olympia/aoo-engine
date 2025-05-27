@@ -124,7 +124,7 @@ else{
 
         $player->get_data();
 
-        $player->get_caracs($nude=true);
+        $player->get_caracs(nude:true);
 
 
         foreach(CARACS as $k=>$e){

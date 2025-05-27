@@ -42,7 +42,7 @@ $otherPlayer->get_data();
             <h3>Votre Inventaire :</h3>
             <?php
             $player = new Player($_SESSION['playerId']);
-            $itemList = Item::get_item_list($player, $bank=true);
+            $itemList = Item::get_item_list($player, bank:true);
             echo Ui::print_inventory($itemList);
             ?>
         </div>

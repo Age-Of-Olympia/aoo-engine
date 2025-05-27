@@ -263,10 +263,10 @@ class Quest{
         }
         else{
 
-            $this->edit_step($questName, $stepName, $field='endTime', 0);
+            $this->edit_step($questName, $stepName, field:'endTime', value:0);
         }
 
-        return $this->edit_step($questName, $stepName, $field='status', $value);
+        return $this->edit_step($questName, $stepName, field:'status', value:$value);
     }
 
 
@@ -336,7 +336,7 @@ class Quest{
 
         $value = time();
 
-        return $this->edit_step($questName, $stepName, $field='endTime', $value);
+        return $this->edit_step($questName, $stepName, field:'endTime', value:$value);
     }
 
 

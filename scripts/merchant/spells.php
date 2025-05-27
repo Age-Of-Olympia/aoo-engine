@@ -96,7 +96,7 @@ foreach($raceJson->spells as $e){
                     'spell'=>$e
                 );
 
-                $parcheminSort = Item::put_item('parchemin_sort', $private=0, $options);
+                $parcheminSort = Item::put_item('parchemin_sort', private:0, options:$options);
                 $parcheminSort = new Item($parcheminSort);
             }
 

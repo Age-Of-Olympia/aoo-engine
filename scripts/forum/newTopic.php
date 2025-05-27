@@ -24,7 +24,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
 
 
     // create topic
-    $topJson = Forum::put_topic($player, $forumJson, $title=$_POST['name'], $_POST['text']);
+    $topJson = Forum::put_topic($player, $forumJson, title:$_POST['name'], text:$_POST['text']);
 
 
     // missives

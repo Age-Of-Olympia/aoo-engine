@@ -20,7 +20,7 @@ EOT);
 
             $path = 'scripts/tools/';
 
-            $filesTbl = File::scan_dir($path, $without='.php');
+            $filesTbl = File::scan_dir($path, without:'.php');
 
             foreach($filesTbl as $k=>$e){
 

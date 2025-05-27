@@ -7,7 +7,7 @@ echo '
 <div>
 ';
 
-foreach(File::scan_dir('img/plants/', $without=".png") as $e){
+foreach(File::scan_dir('img/plants/', without:".png") as $e){
 
     echo '<img
         class="map plants select-name"

@@ -32,7 +32,7 @@ if(!empty($_POST['text'])){
     $postJson->last_update_date = time();
 
     if($topJson->forum_id != 'Missives'){
-        Forum::put_keywords($postJson->name, $_POST['text'], $deleteBefore=true);
+        Forum::put_keywords($postJson->name, $_POST['text'], deleteBefore:true);
     }
 
 

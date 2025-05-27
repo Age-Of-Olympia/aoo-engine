@@ -12,13 +12,13 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])){
     if($_POST['action'] == 'withdraw'){
 
 
-        if(!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player, $bank=true)){
+        if(!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player, bank:true)){
 
             exit('error n');
         }
 
 
-        if(!$item->add_item($player, -$_POST['n'], $bank=true)){
+        if(!$item->add_item($player, -$_POST['n'], bank:true)){
 
             exit('error withdraw bank');
         }
@@ -43,7 +43,7 @@ if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])){
             exit('error withdraw bank');
         }
 
-        $item->add_item($player, $_POST['n'], $bank=true);
+        $item->add_item($player, $_POST['n'], bank:true);
     }
 
     exit();

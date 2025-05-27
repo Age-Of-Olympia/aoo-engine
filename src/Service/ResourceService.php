@@ -22,7 +22,7 @@ class ResourceService
             }
         }
 
-        $coordsArround = View::get_coords_id_arround($coords, $p=1);
+        $coordsArround = View::get_coords_id_arround($coords, p:1);
 
         $sql = '
         SELECT
@@ -58,7 +58,7 @@ class ResourceService
             }
         }
 
-        $coordsArround = View::get_coords_id_arround($coords, $p=1);
+        $coordsArround = View::get_coords_id_arround($coords, p:1);
 
         $sql = '
         SELECT

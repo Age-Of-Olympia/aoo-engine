@@ -19,7 +19,7 @@ if(!file_exists($url)){
 
     File::write($url, $data);
 
-    File::changeOpacityAndShift($url, $opacity=0.3, $shiftX=10);
+    File::changeOpacityAndShift($url, opacity:0.3, shiftX:10);
 
     $values = array(
         'coords_id'=>$player->data->coords_id,

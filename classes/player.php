@@ -382,7 +382,7 @@ class Player implements ActorInterface {
             if($name == 'isMerchant'){
 
 
-                $this->add_follower('marchand', $params='on');
+                $this->add_follower('marchand', params:'on');
             }
         }
 
@@ -657,7 +657,7 @@ class Player implements ActorInterface {
                 $item = Item::get_item_by_name('canne_a_peche');
 
 
-                if(FISHING || ($item && $item->get_n($this, $bank=false, $equiped=true))){
+                if(FISHING || ($item && $item->get_n($this, bank:false, equiped:true))){
 
 
                     $this->end_option('alreadyFished');
@@ -1652,7 +1652,7 @@ class Player implements ActorInterface {
 
             $munition = Item::get_item_by_name($e);
 
-            if($munition->get_n($this, $bank=false, $equiped) > 0){
+            if($munition->get_n($this, bank:false, equiped:$equiped) > 0){
 
 
                 return $munition;
@@ -1755,7 +1755,7 @@ class Player implements ActorInterface {
 
             $text = $this->data->name .' a perdu des objets: '. implode(', ', $lootList) .'.';
 
-            Log::put($this, $this, $text, $type="loot");
+            Log::put($this, $this, $text, type:"loot");
         }
 
 

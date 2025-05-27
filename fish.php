@@ -40,7 +40,7 @@ if($stopTbl[0] == $stopTbl[1] && $stopTbl[1] == $stopTbl[2]){
 
     $text = $player->data->name .' a pêché un poisson!';
 
-    Log::put($player, $player, $text, $type="fishing");
+    Log::put($player, $player, $text, type:"fishing");
 }
 
 echo '

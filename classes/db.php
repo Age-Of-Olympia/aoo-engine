@@ -203,7 +203,7 @@ class Db{
 
     public function get_first_id($table){
 
-        return $this->get_last_id($table, $order=true);
+        return $this->get_last_id($table, order:true);
     }
 
 
