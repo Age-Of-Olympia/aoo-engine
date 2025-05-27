@@ -78,4 +78,4 @@ if(!empty($ae)){
 }
 
 
-Log::put($player, $player, $text, $type='use');
+Log::put($player, $player, $text, type:'use');

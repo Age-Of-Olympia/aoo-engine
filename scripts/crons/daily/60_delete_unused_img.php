@@ -30,7 +30,7 @@ function search_img($text, &$result){
 $result = array();
 
 
-foreach(File::scan_dir(__DIR__ .'/../../../datas/private/forum/posts/', $without='.json') as $e){
+foreach(File::scan_dir(__DIR__ .'/../../../datas/private/forum/posts/', without:'.json') as $e){
 
     $postJson = json()->decode('forum/posts', $e);
 

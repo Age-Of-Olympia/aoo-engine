@@ -147,7 +147,7 @@ $player->putBonus($bonus=array('a'=>-1));
 $player->put_xp(1);
 
 
-Log::put($player, $player, $text, $type="destroy");
+Log::put($player, $player, $text, type:"destroy");
 
 
 echo 'Vous infligez '. $damages .' dégâts (+1Xp).';

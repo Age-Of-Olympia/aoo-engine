@@ -100,7 +100,7 @@ $ui = new Ui('Construire '. $item->data->name);
 echo '<div><a href="inventory.php#'. $item->id .'"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
-$view = new View($player->coords, $p=1);
+$view = new View($player->coords, p:1);
 
 
 echo '<h1>Construire</h1>';

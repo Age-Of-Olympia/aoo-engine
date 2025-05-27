@@ -202,7 +202,7 @@ if($goCoords->z < 0){
         $pierre->add_item($player, 1);
 
         $text = $player->data->name .' a creusé et a trouvé 1 pierre.';
-        Log::put($player, $player, $text, $type="loot");
+        Log::put($player, $player, $text, type:"loot");
 
         $values = array(
             'name'=>'caverne',
@@ -275,7 +275,7 @@ if($res->num_rows){
     $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
     $coordBackup = $player->coords;
     $player->coords = $goCoords;
-    Log::put($player, $player, $text, $type="loot");
+    Log::put($player, $player, $text, type:"loot");
     $player->coords = $coordBackup;
 }
 

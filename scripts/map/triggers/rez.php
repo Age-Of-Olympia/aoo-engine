@@ -43,4 +43,4 @@ $player->coords->plan = $spawnPlan;
 
 $text = $player->data->name .' est arrivé sur Olympia.';
 
-Log::put($player, $player, $text, $type="rez");
+Log::put($player, $player, $text, type:"rez");

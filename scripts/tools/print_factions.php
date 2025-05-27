@@ -4,7 +4,7 @@
 $ui = new Ui('Print Factions');
 
 
-foreach(File::scan_dir('datas/public/factions/', $without='.json') as $k=>$e){
+foreach(File::scan_dir('datas/public/factions/', without:'.json') as $k=>$e){
 
 
     $facJson = json()->decode('factions', $e);

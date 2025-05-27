@@ -322,7 +322,7 @@ class Market
         ob_start();
 
 
-        $itemList = Item::get_item_list($player, $bank = true);
+        $itemList = Item::get_item_list($player, bank: true);
 
 
         echo Ui::print_inventory($itemList);

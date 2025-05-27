@@ -368,8 +368,7 @@ class Item{
 
     public static function get_equiped_list($player) : array {
 
-
-        return self::get_item_list($player, $bank=false, $equiped=true);
+        return self::get_item_list($player, bank:false, equiped:true);
     }
 
 

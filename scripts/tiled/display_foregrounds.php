@@ -6,7 +6,7 @@ echo '
 <div>
 ';
 
-foreach(File::scan_dir('img/foregrounds/', $without=".png") as $e){
+foreach(File::scan_dir('img/foregrounds/', without:".png") as $e){
 
 
     $url = 'img/foregrounds/'. $e .'.png';

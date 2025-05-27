@@ -402,7 +402,7 @@ function add_log($argumentValues, $player){
 
     $target->get_data();
 
-    Log::put($player, $target, $argumentValues[3], $type="console");
+    Log::put($player, $target, $argumentValues[3], type:"console");
 
     return $player->data->name .' to '. $target->data->name .' log added: "'. $argumentValues[3] .'"';
 }

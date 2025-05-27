@@ -7,7 +7,7 @@ echo '
 <div>
 ';
 
-foreach(File::scan_dir('img/triggers/', $without=".png") as $e){
+foreach(File::scan_dir('img/triggers/', without:".png") as $e){
 
 
     $params = '';
