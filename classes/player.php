@@ -555,13 +555,37 @@ class Player implements ActorInterface {
         AND
         endTime <=  '. time() .'
         AND
-        endTime != 0
+        endTime > 0
         ';
 
         $db = new Db();
 
         $affectedRows = $db->exe($sql, $this->id, false, true);
         return $affectedRows;
+    }
+
+    public function have_effects_to_purge(): bool{
+
+
+        $sql = '
+        SELECT COUNT(*) AS n
+        FROM
+        players_effects
+        WHERE
+        player_id = ?
+        AND
+        endTime <=  '. time() .'
+        AND
+        endTime > 0
+        ';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $this->id);
+        $row = $res->fetch_object();
+
+        
+        return $row->n > 0;
     }
 
 
