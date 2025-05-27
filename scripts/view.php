@@ -48,7 +48,7 @@ if(!empty($_SESSION['playerId'])){
 
         $playerOptions = $player->get_options();
 
-        $view = new View($coords, $p, $tiled=false, $playerOptions);
+        $view = new View($coords, $p,tiled:false, options:$playerOptions);
 
         $data = $view->get_view();
 

@@ -14,7 +14,7 @@ if(!empty($_POST['text'])){
 
     $details = '<div class="action-details">'.$_POST['text'].'</div>';
 
-    Log::put($player, $player, $log, $type="mdj", $details);
+    Log::put($player, $player, $log, type:"mdj", hiddenText:$details);
 
     exit();
 }
