@@ -55,16 +55,7 @@ EOT);
             return 'tp '. $player->data->name .' near '. $target->data->name .'';
         }
 
-        if(count($coordsTbl) != 4){
-
-            return '<font color="red">invalid coords (must be x,y,z,plan)</font>';
-        }
-
-        list($x, $y, $z, $plan) = $coordsTbl;
-
-
         $playersTbl = array();
-
 
         if($argumentValues[0] == 'everyone'){
 
@@ -91,10 +82,25 @@ EOT);
             }
         }
         else{
-
-            $playersTbl = array($player=parent::getPlayer($argumentValues[0]));
+            $player=parent::getPlayer($argumentValues[0]);
+            $player->getCoords();
+            //allow tp of sigle player with no Z or plan 
+            if(!isset($coordsTbl[2])){
+               
+                $coordsTbl[2] = $player->coords->z;
+            }
+            if(!isset($coordsTbl[3])){
+                $coordsTbl[3] = $player->coords->plan;
+            }
+            $playersTbl = array($player);
         }
 
+         if(count($coordsTbl) != 4){
+
+            return '<font color="red">invalid coords (must be x,y,z,plan)</font>';
+        }
+
+        list($x, $y, $z, $plan) = $coordsTbl;
 
         // clean function outputs
         ob_start();
@@ -103,9 +109,8 @@ EOT);
         foreach($playersTbl as $player){
 
 
-            $player->get_data();
-
-            $player->getCoords();
+            $player->get_data(false);
+            $player->getCoords(false);
 
 
             $goX = (!is_numeric($x)) ? $player->coords->x : $x;

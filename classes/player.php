@@ -252,35 +252,34 @@ class Player implements ActorInterface {
     }
 
 
-    public function getCoords(?bool $refresh = true): object{
+    public function getCoords(bool $refresh = true): object{
 
 
+        if (!$refresh && isset($this->coords)) {
+
+            return $this->coords;
+        }
+
+        $this->get_data(false);
         $db = new Db();
 
 
-        if(!isset($this->data)){
-
-            $this->get_data();
-        }
-
-
         // first coords
-        if($this->data->coords_id == NULL){
+        if ($this->data->coords_id == NULL) {
 
 
             $coords = (object) array(
-                'x'=>0,
-                'y'=>0,
-                'z'=>0,
-                'plan'=>'olympia'
+                'x' => 0,
+                'y' => 0,
+                'z' => 0,
+                'plan' => 'olympia'
             );
 
             // spawn player
             $this->move_player($coords);
         }
 
-        if ($refresh) {
-            $sql = '
+        $sql = '
             SELECT
             x, y, z, plan
             FROM
@@ -293,19 +292,19 @@ class Player implements ActorInterface {
             p.id = ?
             ';
 
-            $res = $db->exe($sql, $this->id);
+        $res = $db->exe($sql, $this->id);
 
-            $row = $res->fetch_object();
+        $row = $res->fetch_object();
 
-            $coords = (object) array(
-                'x'=>$row->x,
-                'y'=>$row->y,
-                'z'=>$row->z,
-                'plan'=>$row->plan
-            );
+        $coords = (object) array(
+            'x' => $row->x,
+            'y' => $row->y,
+            'z' => $row->z,
+            'plan' => $row->plan
+        );
 
-            $this->coords = $coords;
-        }
+        $this->coords = $coords;
+
 
         return $this->coords;
     }
@@ -686,16 +685,18 @@ class Player implements ActorInterface {
         $planJson = json()->decode('plans', $this->coords->plan);
 
         if(!$planJson){
-
-
             $this->refresh_view();
         }
         else{
-
-
             View::refresh_players_svg($this->coords);
         }
 
+        if ($goCoords->plan != $this->coords->plan || $zChange) {
+            $goPlanJson = json()->decode('plans', $goCoords->plan);
+            if ($goPlanJson) {
+                View::refresh_players_svg($goCoords);
+            }
+        }
 
         $this->refresh_caracs();
         
