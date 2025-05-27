@@ -87,6 +87,7 @@ class RequiresAmmoCondition extends BaseCondition
                     $actor->emplacements->main1->add_item($actor, -1);
             
                     $text = 'Vous perdez '. $actor->emplacements->main1->data->name .'.';
+                    View::refresh_players_svg($dropCoords);
                     $conditionToPay->getAction()->setRefreshScreen(true);
                     array_push($result, $text);
                 } else {
