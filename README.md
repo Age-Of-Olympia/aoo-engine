@@ -62,6 +62,21 @@ define('DB_CONSTANTS', array(
     'driver' => 'pdo_mysql',
 ));
 ```
+
+A l'aide de la commande : 
+```code
+  id
+```
+
+Récupérer votre uid et votre gid
+puis dupliquez le fichier ".env.dist" vers ".env"
+et mettez le contenu suivant : 
+
+```code
+UID=VOTRE_UID
+GID=VOTRE_GID
+```
+
 sauvegardez et vous être prêt ! 
 
 ### Premiers pas sur le jeu
