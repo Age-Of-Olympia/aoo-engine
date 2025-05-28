@@ -42,5 +42,3 @@ COPY ../. .
 USER ${UID}:${GID}
 
 ENV HOME=/home/vscode
-
-ENTRYPOINT ["./entrypoint.sh"]
