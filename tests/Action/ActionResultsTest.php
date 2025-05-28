@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Action;
+namespace Tests\Action;
 
 use App\Action\ActionResults;
 use PHPUnit\Framework\TestCase;

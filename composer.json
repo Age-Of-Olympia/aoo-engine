@@ -12,6 +12,11 @@
       "Classes\\": "Classes/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
   "require-dev": {
     "phpunit/phpunit": "*",
     "phpstan/phpstan": "^2.1"
