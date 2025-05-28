@@ -3,13 +3,14 @@
 namespace App\Action;
 
 use App\Entity\Action;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
 class HealAction extends Action
 {
-    public function calculateXp(bool $success, Player $actor, Player $target): array
+    public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
     {
         $actorXp = $this->calculateActorXp($success, $actor, $target);
         $targetXp = 0;
@@ -27,7 +28,7 @@ class HealAction extends Action
         return $infosArray;
     }
 
-    protected function calculateActorXp(bool $success, Player $actor, Player $target): int
+    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int
     {
         if ($success) {
             $playerXp = 3;

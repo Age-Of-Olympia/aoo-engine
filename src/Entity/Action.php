@@ -2,6 +2,7 @@
 namespace App\Entity;
 
 use App\Interface\ActionInterface;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -257,7 +258,7 @@ abstract class Action implements ActionInterface
         return $this;
     }
 
-    public function calculateXp(bool $success, Player $actor, Player $target): array
+    public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
     {
         $actorXp = $this->calculateActorXp($success, $actor, $target);
         $targetXp = $this->calculateTargetXp($success, $actor, $target);
@@ -266,11 +267,11 @@ abstract class Action implements ActionInterface
         return $xpResultsArray;
     }
 
-    protected function calculateActorXp(bool $success, Player $actor, Player $target): int {
+    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int {
         return 1;
     }
 
-    protected function calculateTargetXp(bool $success, Player $actor, Player $target): int {
+    protected function calculateTargetXp(bool $success, ActorInterface $actor, ActorInterface $target): int {
         return 1;
     }
 
