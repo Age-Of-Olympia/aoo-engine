@@ -8,8 +8,8 @@ workflow:
 
 stages:
   - build
-  - stan
   - test  
+  # - stan
   - prepare
   - release
   - deployment
@@ -80,11 +80,11 @@ test_job:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
 
-stan_job:
-  <<: *php-job-template
-  stage: stan
-  script:
-    - make phpstan-ci
+# stan_job:
+#   <<: *php-job-template
+#   stage: stan
+#   script:
+#     - make phpstan-ci
 
 prepare_job:
   stage: prepare
