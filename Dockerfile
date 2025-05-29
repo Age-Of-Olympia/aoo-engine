@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get install -y \
     vim \
     git \
-    rsync
+    rsync \
+    make \
+    python3
 
 # Install any extensions you need
 RUN docker-php-ext-configure gd --with-jpeg

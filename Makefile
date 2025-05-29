@@ -29,10 +29,20 @@ coverage:
 	mkdir -p tmp/coverage
 	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-html tmp/coverage --testdox
 
-sqlmap:
-	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:9000/login.php" \
-		--data="name=toto&psw=toto" \
+sqlmap-login:
+	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:80/login.php" \
+		--data="name=test&psw=test" \
 		-p name,psw \
+		--dbms=mysql \
+		--risk=3 \
+		--level=1 \
+		--batch \
+		--output-dir=tmp/security
+
+sqlmap-register:
+	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:80/register.php" \
+		--data="name=test&race=test&psw1=test&psw2=test&mail=test%40test.fr" \
+		-p name,race,psw1,psw2,mail \
 		--dbms=mysql \
 		--risk=3 \
 		--level=1 \
