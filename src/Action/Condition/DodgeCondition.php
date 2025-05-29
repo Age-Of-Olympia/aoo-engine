@@ -77,8 +77,6 @@ class DodgeCondition extends BaseCondition
         if($target->haveEffect('pas_de_cote')){
             if(
                 ( $type != 'sort' )
-                &&
-                $target->getRemaining('mvt') >= 1
             ){
                 $targetEffectName = 'pas_de_cote';
                 $target->endEffect($targetEffectName);
