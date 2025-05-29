@@ -11,6 +11,7 @@ interface ActorInterface
   public function addEffect($name, $duration=0): void;
   public function endEffect(string $name): void;
   public function have_option(string $name): int;
+  public function have_effects_to_purge(): bool;
   public function get_caracs(bool $nude=false): bool;
   public function getCoords(): object;
   public function getRemaining(string $trait): int;
