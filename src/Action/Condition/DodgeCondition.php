@@ -88,7 +88,7 @@ class DodgeCondition extends BaseCondition
 
                 $target->go($goCoords);
 
-                $errorMessages[sizeof($errorMessages)] = $target->data->name .' esquive votre attaque avec un pas de côté ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .')"></span>' ;
+                $errorMessages[sizeof($errorMessages)] = $target->data->name .' esquive votre attaque avec un pas de côté ! <span class="ra ' . EFFECTS_RA_FONT[$targetEffectName] . '"></span>';
                 $result = new ConditionResult(false, $successMessages, $errorMessages);        
                 $this->shouldRefresh = true;
             }
