@@ -31,7 +31,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
                 if ($status == "finished") {
                     $res = $actor->purge_effects();
                     if ($res > 0) {
-                        $outcomeSuccessMessages[0] = $res .' effets terminés.';
+                        $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
                     }
                 } else {
                     $this->applyEffect($params[$status], $status, $duration, $actor);
