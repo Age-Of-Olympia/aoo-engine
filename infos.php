@@ -242,4 +242,4 @@ echo '
 echo Str::minify(ob_get_clean());
 
 ?>
-<script src="js/infos.js"></script>
+<script src="js/infos.js?v=20250529"></script>
