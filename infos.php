@@ -164,6 +164,7 @@ echo '
                 <img src="img/ui/fillers/150.png" />
             </div>
             <p class="preview-text"></p>
+            <p class="preview-caracs"></p>
         </div>
         ';
 
@@ -197,6 +198,7 @@ if($player->coords->plan == $target->coords->plan && $distance <= $caracsJson->p
 
 
                         $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
+                        $caracs = implode(', ',Item::get_item_carac($item->data));
 
                         $type = (!empty($item->data->type)) ? $item->data->type : '';
 
@@ -210,6 +212,7 @@ if($player->coords->plan == $target->coords->plan && $distance <= $caracsJson->p
                                 data-price="'. $item->data->price .'"
                                 data-type="'. $type .'"
                                 data-img="img/items/'. $item->row->name .'.webp"
+                                data-caracs="' . htmlspecialchars($caracs, ENT_QUOTES) .'"
                                 src="'. $item->data->mini .'" /></td>';
                     }
 
