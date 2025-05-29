@@ -49,9 +49,9 @@ if ($_POST['action'] != 'attaquer') {
 }
 
 if (($_POST['coordsX'] != $target->getCoords()->x)
-    ||($_POST['coordsY'] != $target->getCoords()->y)
-    ||($_POST['coordsZ'] != $target->getCoords()->z)
-    ||($_POST['coordsPlan'] != $target->getCoords()->plan)) {
+    ||($_POST['coordsY'] != $target->getCoords(refresh:false)->y)
+    ||($_POST['coordsZ'] != $target->getCoords(refresh:false)->z)
+    ||($_POST['coordsPlan'] != $target->getCoords(refresh:false)->plan)) {
     exit('Votre cible s\'est déplacée.');
 }
 

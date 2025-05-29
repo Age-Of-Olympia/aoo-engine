@@ -547,9 +547,9 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
         $res = '<button
                 class="action"
                 data-coords-x="'.$target->getCoords()->x.'"
-                data-coords-y="'.$target->getCoords()->y.'"
-                data-coords-z="'.$target->getCoords()->z.'"
-                data-coords-plan="'.$target->getCoords()->plan.'"
+                data-coords-y="'.$target->getCoords(refresh:false)->y.'"
+                data-coords-z="'.$target->getCoords(refresh:false)->z.'"
+                data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $action->getName() .'"
                 >
@@ -561,9 +561,9 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
             $res = '<button
                 class="action"
                 data-coords-x="'.$target->getCoords()->x.'"
-                data-coords-y="'.$target->getCoords()->y.'"
-                data-coords-z="'.$target->getCoords()->z.'"
-                data-coords-plan="'.$target->getCoords()->plan.'"
+                data-coords-y="'.$target->getCoords(refresh:false)->y.'"
+                data-coords-z="'.$target->getCoords(refresh:false)->z.'"
+                data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $nameOverride .'"
                 >

@@ -252,7 +252,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function getCoords(): object{
+    public function getCoords(?bool $refresh = true): object{
 
 
         $db = new Db();
@@ -279,34 +279,35 @@ class Player implements ActorInterface {
             $this->move_player($coords);
         }
 
+        if ($refresh) {
+            $sql = '
+            SELECT
+            x, y, z, plan
+            FROM
+            coords AS c
+            INNER JOIN
+            players AS p
+            ON
+            p.coords_id = c.id
+            WHERE
+            p.id = ?
+            ';
 
-        $sql = '
-        SELECT
-        x, y, z, plan
-        FROM
-        coords AS c
-        INNER JOIN
-        players AS p
-        ON
-        p.coords_id = c.id
-        WHERE
-        p.id = ?
-        ';
+            $res = $db->exe($sql, $this->id);
 
-        $res = $db->exe($sql, $this->id);
+            $row = $res->fetch_object();
 
-        $row = $res->fetch_object();
+            $coords = (object) array(
+                'x'=>$row->x,
+                'y'=>$row->y,
+                'z'=>$row->z,
+                'plan'=>$row->plan
+            );
 
-        $coords = (object) array(
-            'x'=>$row->x,
-            'y'=>$row->y,
-            'z'=>$row->z,
-            'plan'=>$row->plan
-        );
+            $this->coords = $coords;
+        }
 
-        $this->coords = $coords;
-
-        return $coords;
+        return $this->coords;
     }
 
 

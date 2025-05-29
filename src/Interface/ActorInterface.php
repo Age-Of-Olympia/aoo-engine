@@ -14,7 +14,7 @@ interface ActorInterface
   public function have_option(string $name): int;
   public function have_effects_to_purge(): bool;
   public function get_caracs(bool $nude=false): bool;
-  public function getCoords(): object;
+  public function getCoords(?bool $refresh = true): object;
   public function getRemaining(string $trait): int;
   public function equip(Item $item, bool $doNotRefresh = false): EquipResult;
   public function getMunition(Item $object, bool $equiped=false): ?Item;
