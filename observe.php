@@ -561,15 +561,9 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
             $res = '<button
                 class="action"
                 data-coords-x="'.$target->getCoords()->x.'"
-<<<<<<< HEAD
                 data-coords-y="'.$target->getCoords(refresh:false)->y.'"
                 data-coords-z="'.$target->getCoords(refresh:false)->z.'"
                 data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
-=======
-                data-coords-y="'.$target->getCoords()->y.'"
-                data-coords-z="'.$target->getCoords()->z.'"
-                data-coords-plan="'.$target->getCoords()->plan.'"
->>>>>>> a1b321c (fix: verification des coordonnees du joueur entre l'affichage du menu et l'action reelle)
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $nameOverride .'"
                 >
