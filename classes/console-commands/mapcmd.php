@@ -36,6 +36,7 @@ EOT);
         if($argumentValues[0] == 'load'){
             return $this->load_map($argumentValues);
         }
+        return false;
     }
 
 
