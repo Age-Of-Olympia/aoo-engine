@@ -41,7 +41,7 @@ sqlmap-login:
 
 sqlmap-register:
 	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:80/register.php" \
-		--data="name=test&race=test&psw1=test&psw2=test&mail=test%40test.fr" \
+		--data="name=test&race=test&psw1=test&psw2=test&mail=test@test.fr" \
 		-p name,race,psw1,psw2,mail \
 		--dbms=mysql \
 		--risk=3 \
