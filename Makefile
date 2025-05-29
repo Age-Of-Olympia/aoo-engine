@@ -28,3 +28,12 @@ phpstan-ci:
 coverage:
 	mkdir -p tmp/coverage
 	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-html tmp/coverage --testdox
+
+sqlmap:
+	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:9000/login.php" \
+		--data="name=toto&psw=toto" \
+		-p name,psw \
+		--dbms=mysql \
+		--risk=3 \
+		--level=1 \
+		--batch
