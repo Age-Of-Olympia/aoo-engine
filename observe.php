@@ -199,15 +199,15 @@ if($res->num_rows){
 
         $dataName .= '<div class="effects">';
 
-        foreach($target->get_effects() as $actionName){
+        foreach($target->get_effects() as $effect){
 
 
-            if(in_array($actionName, EFFECTS_HIDDEN)){
+            if(in_array($effect, EFFECTS_HIDDEN)){
 
                 continue;
             }
 
-            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$actionName] .'"></span></a>';
+            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$effect] .'"></span></a>';
         }
 
         $dataName .= '</div>';
@@ -241,7 +241,7 @@ if($res->num_rows){
         // Trier le tableau en utilisant la fonction de comparaison personnalisée
         usort($actions, 'custom_compare');
         $actionService = new ActionService();
-        foreach($actions as $actionName){    
+        foreach($actions as $actionName){
             $entityManager = EntityManagerFactory::getEntityManager();
             if ($actionName == "attaquer") {
                 if ($player->id != $target->id) {
