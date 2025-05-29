@@ -36,4 +36,5 @@ sqlmap:
 		--dbms=mysql \
 		--risk=3 \
 		--level=1 \
-		--batch
+		--batch \
+		--output-dir=tmp/security

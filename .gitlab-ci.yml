@@ -10,6 +10,7 @@ stages:
   - build
   - test  
   # - stan
+  - security
   - prepare
   - release
   - deployment
@@ -85,6 +86,30 @@ test_job:
 #   stage: stan
 #   script:
 #     - make phpstan-ci
+
+sqlmap_security_test:
+  stage: security
+  image: docker/compose:latest
+  before_script:
+    - apk add --no-cache make python3 py3-pip
+    - pip3 install requests urllib3
+    - export UID=1000
+    - export GID=1000
+    - export DB_NAME=aoo4_test
+  script:
+    - docker-compose up -d
+    - sleep 30 
+    - make sqlmap
+  after_script:
+    - docker-compose down -v
+  artifacts:
+    when: always
+    paths:
+      - tmp/security/
+    expire_in: 1 week
+  allow_failure: true
+  rules:
+    - when: manual
 
 prepare_job:
   stage: prepare
