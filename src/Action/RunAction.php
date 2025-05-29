@@ -25,10 +25,4 @@ class RunAction extends Action
         $infosArray["target"] = '';
         return $infosArray;
     }
-
-    public function activateAntiBerserk(): bool
-    {
-        return true;
-    }
-
 }
