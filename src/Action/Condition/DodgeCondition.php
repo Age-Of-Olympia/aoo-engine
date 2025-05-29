@@ -83,8 +83,9 @@ class DodgeCondition extends BaseCondition
                 $targetEffectName = 'pas_de_cote';
                 $target->endEffect($targetEffectName);
                 $goCoords = $target->coords;
-                //$coordsId = View::get_free_coords_id_arround($target->coords);
-        
+                $coordsId = View::get_free_coords_id_arround($target->coords);
+                $goCoords->id = $coordsId;
+
                 $target->go($goCoords);
 
                 $errorMessages[sizeof($errorMessages)] = $target->data->name .' esquive votre attaque avec un pas de côté ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .')"></span>' ;
