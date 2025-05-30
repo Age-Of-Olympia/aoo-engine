@@ -313,7 +313,7 @@ define('DMG_CRIT', 5); // 5% de critique (+3 dégâts) sur un ennemi sans casque
 
 define('ITEM_DROP', 10); // 10% de drop sur les désarmements et loots
 
-define('ITEM_BREAK', 1); // 1% de break sur une attaque ou une défense
+define('ITEM_BREAK', 0); // 1% de break sur une attaque ou une défense
 
 define('ITEM_LIMIT', 3);
 
@@ -337,11 +337,11 @@ define('ITEM_CORRUPTIONS', array(
 ));
 
 define('ITEM_CORRUPT_BREAKCHANCES', array(
-    'corruption_du_metal'=>15,
-    'corruption_du_bronze'=>10,
-    'corruption_du_bois'=>20,
-    'corruption_des_plantes'=>15,
-    'corruption_du_cuir'=>5
+    'corruption_du_metal'=>0,
+    'corruption_du_bronze'=>0,
+    'corruption_du_bois'=>0,
+    'corruption_des_plantes'=>0,
+    'corruption_du_cuir'=>0
 ));
 
 define('ITEMS_OPT', array(
