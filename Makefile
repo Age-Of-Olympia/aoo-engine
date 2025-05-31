@@ -48,3 +48,10 @@ sqlmap-register:
 		--level=1 \
 		--batch \
 		--output-dir=tmp/security
+
+
+selenium-install:
+	cd selenium_tests && npm install
+
+e2e:
+	cd selenium_tests && npm run test
