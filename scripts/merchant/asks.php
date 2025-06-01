@@ -11,28 +11,38 @@ if(!empty($_GET['itemId'])){
 
 
     echo '<h1>'. ucfirst($item->data->name) .'</h1>';
-
     echo '<div><img src="'. $item->data->mini .'" /></div>';
 
-
     $sql = 'SELECT n FROM players_items WHERE item_id = ? AND player_id = ?';
-
     $db = new Db();
-
     $res = $db->exe($sql, array($item->id, $player->id));
+    $inventaire = 0;
+    $banque = 0;
 
-
-    if(!$res->num_rows){
-
-        echo 'Vous n\'en possédez pas.';
-    }
-    else{
-
+    if($res->num_rows > 0) {
         $row = $res->fetch_object();
-
-        echo 'Vous en possédez '. $row->n .'.';
+        $inventaire = $row->n;
     }
 
+    $res = $db->exe('SELECT n FROM players_items_bank WHERE item_id = ? AND player_id = ?', array($item->id, $player->id));
+    if($res->num_rows > 0) {
+        $row = $res->fetch_object();
+        $banque = $row->n;
+    }
+
+    if($inventaire == 0 && $banque == 0) {
+        echo 'Vous n\'en possédez pas.';
+    } else {
+        echo 'Vous en possédez ';
+        if($inventaire > 0) {
+            echo '<span class="inventaire">' . $inventaire . '</span>';
+            if($banque > 0) echo ' dans l\'inventaire et ';
+        }
+        if($banque > 0) {
+            echo '<span class="banque">' . $banque . ' en banque</span>';
+        }
+        echo '.';
+    }
 
     echo $market->print_detail($item, 'asks', $player);
 

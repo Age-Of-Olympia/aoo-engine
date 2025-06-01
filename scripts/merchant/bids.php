@@ -14,7 +14,13 @@ if(!empty($_GET['itemId'])){
     echo '<div><img src="'. $item->data->mini .'" /></div>';
 
 
-    echo '<div>Vous possédez '. $player->get_gold() .'Po</div>';
+    $or_inventaire = $player->get_gold();
+    $or_banque = $player->get_gold(true);
+    echo '<div>Vous possédez <span class="or-inventaire">'. $or_inventaire .'</span> Po';
+    if ($or_banque > 0) {
+        echo ' et <span class="or-banque">'. $or_banque .'</span> Po en banque';
+    }
+    echo '</div>';
 
 
     echo '<div>Prix de base: '. $item->data->price .'Po</div>';

@@ -1139,12 +1139,9 @@ class Player implements ActorInterface {
     }
 
 
-    public function get_gold(){
-
-
+    public function get_gold($bank=false){
         $item = Item::get_item_by_name('or');
-
-        return $item->get_n($this);
+        return $item->get_n($this, $bank);
     }
 
 
