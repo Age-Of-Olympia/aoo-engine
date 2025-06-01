@@ -69,6 +69,12 @@ if(!isset(WALLS_PV[$row->name])){
     exit('Cet objet est indestructible!');
 }
 
+// Si les PV sont inférieurs à 0, il s'agit d'une ressource indestructible)
+if(WALLS_PV[$row->name] < 0){
+    
+    exit('Cet objet est indestructible!');
+}
+
 $pvMax = WALLS_PV[$row->name];
 
 

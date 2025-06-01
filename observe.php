@@ -370,8 +370,8 @@ else{
                     Structure non-passable.<br />
                     ';
 
-                    if(!empty(WALLS_PV[$row->name])){
-
+                    if(!empty(WALLS_PV[$row->name]) && WALLS_PV[$row->name] > 0){
+                        
                         echo 'Destructible ('. Str::get_status($row->damages, WALLS_PV[$row->name]) .').';
                     }
                     else{
