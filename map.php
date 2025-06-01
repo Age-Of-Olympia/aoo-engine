@@ -8,6 +8,9 @@ require_once('config.php');
 $worldPlan = 'olympia';
 $player = new Player($_SESSION['playerId']);
 $player->getCoords();
+
+$isInHell = (isset($player->coords->plan) && $player->coords->plan === 'enfers');
+
 $planJson = json()->decode('plans', $player->coords->plan);
 $planJson->id = $player->coords->plan;
 $planJson->fromCoords = $player->coords;
@@ -46,6 +49,21 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
     } else {
         echo '<a href="map.php?s2"><button>Monde</button></a>
               <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>';
+    }
+
+    // Afficher le message des enfers si nécessaire
+    if ($isInHell) {
+        echo '<div class="hell-message" style="text-align: center; margin: 20px 0; padding: 15px; background-color: #330000; border: 1px solid #660000; color: #ff6666;">';
+        echo '<h2>Vous êtes aux Enfers</h2>';
+        echo '<p>On va pas vous faire un dessin, vous êtes bien dans le royaume des morts.<br>';
+        echo 'La sortie est en 0,0<br>';
+        echo 'La boutique souvenirs est en 1,1<br>';
+        echo 'L\'amphithéâtre de Perséphone en -10,1<br>';
+        echo 'Et la paillote de Her\'eal en -2,10</p>';
+        echo '</div>';
+        echo '</div>'; // Fermer la div des boutons
+        echo Str::minify(ob_get_clean());
+        exit();
     }
 
     // Admin-only map panel redirection
@@ -163,7 +181,23 @@ if(isset($_GET['local'])){
             <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
             <a href="map.php?s2"><button>Monde</button></a>
             <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>
-        </div><br />';
+        </div>';
+        
+        // Afficher le message des enfers si nécessaire
+        if ($isInHell) {
+            echo '<div class="hell-message" style="text-align: center; margin: 20px 0; padding: 15px; background-color: #330000; border: 1px solid #660000; color: #ff6666;">';
+            echo '<h2>Vous êtes aux Enfers</h2>';
+            echo '<p>On va pas vous faire un dessin, vous êtes bien dans le royaume des morts.<br>';
+            echo 'La sortie est en 0,0<br>';
+            echo 'La boutique souvenirs est en 1,1<br>';
+            echo 'L\'amphithéâtre de Perséphone en -10,1<br>';
+            echo 'Et la paillote de Her\'eal en -2,10</p>';
+            echo '</div>';
+            echo Str::minify(ob_get_clean());
+            exit();
+        }
+        
+        echo '<br />';
 
         // Admin-only map panel redirection
         if ($player->have_option('isAdmin')) {
