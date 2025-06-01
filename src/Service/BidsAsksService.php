@@ -39,10 +39,10 @@ class BidsAsksService
         try {
             if ($type == 'bids') {
                 while ($row = $dbData->fetch_object()) {
-
-                    //give back items
                     $item = new Item($row->item_id, row: false, checked: true);
-                    $item->add_item($player, $row->stock, bank: true);
+                    if (!$item->add_item($player, $row->stock, bank: true)) {
+                        ExitError("Erreur lors du retour des objets dans la banque");
+                    }
                 }
             }
 
@@ -100,10 +100,14 @@ class BidsAsksService
             );
 
             if ($type == 'bids') {
-                if ($item->add_item($player, -$quantity)) {
+                $availableInBank = $item->get_n($player, bank: true);
+                if ($availableInBank < $quantity) {
+                    ExitError("Vous ne possédez pas assez d'objets dans votre banque");
+                }
+                if ($item->add_item($player, -$quantity, bank: true)) {
                     $this->db->insert('items_bids', $values);
                 } else {
-                    ExitError("Vous ne possédez pas assez d'objets");
+                    ExitError("Erreur lors du retrait des objets de la banque");
                 }
             }
 
@@ -175,8 +179,14 @@ class BidsAsksService
                 }
 
                 // transfer item to player bank
-                $item = new Item($row->item_id);
-                $item->add_item($player, $quantity, bank: true);
+                $item = new Item($row->item_id, row: false, checked: true);
+                $availableInBank = $item->get_n($target, bank: true);
+                if ($availableInBank < $quantity) {
+                    ExitError("L'objet n'est plus disponible dans la banque du vendeur");
+                }
+                if (!$item->give_item($target, $player, $quantity, bank: true)) {
+                    ExitError("Erreur lors du transfert de l'objet depuis la banque");
+                }
             }
 
 
@@ -189,6 +199,7 @@ class BidsAsksService
             $this->db->delete('items_' . $type, $values);
 
             $this->db->commit_transaction('accept_bid_ask');
+
         } catch (Throwable $th) {
             $this->db->rollback_transaction('accept_bid_ask');
             ExitError("Erreur lors de l'acceptation");

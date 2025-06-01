@@ -70,64 +70,46 @@ class Item{
     }
 
 
-    public function add_item($player, $n, $bank=false){
-
-
-        $bank = ($bank) ? '_bank' : '';
-
-
-        // format player
-        if(is_numeric($player)){
-
-            $player = new Player($player);
-        }
-
-
-        // enougth?
-        if($n < 0 && $this->get_n($player, $bank) + $n < 0){
-
-            // not enougth
-            return false;
-        }
-
-
-        // error n
+    public function add_item($player, $n, $bank=false) {
         if(!is_numeric($n) || $n == 0){
-
             exit('error n '. $n);
         }
 
-        // insert or update
+        $bankSuffix = ($bank === true) ? '_bank' : '';
+
+        if (is_numeric($player)) {
+            $player = new Player($player);
+        }
+
+        if ($n < 0) {
+            $available = $this->get_n($player, $bank);
+            if ($available + $n < 0) {
+                return false;
+            }
+        }
+
+        $db = new Db();
+        $db->start_transaction('add_item');
+
         $sql = '
-        INSERT INTO
-        players_items'. $bank .'
+        INSERT INTO players_items' . $bankSuffix . '
         (player_id, item_id, n)
         VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE
         n = n + VALUES(n);
         ';
 
-        $db = new Db();
-
         $db->exe($sql, array($player->id, $this->id, $n));
 
-
-        // delete if neg
-        if($n < 0){
-
-
+        if ($n < 0) {
             $sql = '
-            DELETE FROM
-            players_items'. $bank .'
-            WHERE
-            player_id = ?
-            AND
-            n <= 0
+            DELETE FROM players_items' . $bankSuffix . '
+            WHERE player_id = ? AND n <= 0
             ';
-
             $db->exe($sql, $player->id);
         }
 
+        $db->commit_transaction('add_item');
 
         $player->refresh_invent();
 
@@ -135,62 +117,69 @@ class Item{
     }
 
 
-    public function get_n($player, $bank=false, $equiped=false){
+    public function get_n($player, $bank=false, $equiped=false) {
+        if (!isset($this->row) || !isset($this->row->name)) {
+            return 0;
+        }
 
+        $bankSuffix = ($bank === true) ? '_bank' : '';
 
-        $bank = ($bank) ? '_bank' : '';
+        $equipedCondition = $equiped ? 'AND equiped != ""' : '';
 
-        $equiped = ($equiped) ? 'AND equiped != ""' : '';
-
-        $playerId = (is_numeric($player)) ? $player : $player->id;
+        $playerId = is_numeric($player) ? $player : (isset($player->id) ? $player->id : 0);
+        if (!$playerId) {
+            return 0;
+        }
 
         $sql = '
-        SELECT
-        n, name
-        FROM
-        players_items'. $bank .'
-        INNER JOIN
-        items
-        ON
-        item_id = items.id
-        WHERE
-        player_id = ?
-        AND
-        name = ?
-        '. $equiped .'
+        SELECT n, name
+        FROM players_items' . $bankSuffix . '
+        INNER JOIN items ON item_id = items.id
+        WHERE player_id = ? AND name = ? ' . $equipedCondition . '
         ';
 
         $db = new Db();
-
         $res = $db->exe($sql, array($playerId, $this->row->name));
 
-        if(!$res->num_rows){
-
+        if (!$res || !$res->num_rows) {
             return 0;
         }
 
         $row = $res->fetch_object();
-
-        return $row->n;
+        return (int)$row->n;
     }
 
 
-    public function give_item($player, $target, $n, $bank=false){
-
-
-        if($n < 1){
-
-            exit('error n');
+    public function give_item($player, $target, $n, $bank=false) {
+        if ($n < 1) {
+            return false;
         }
-
-
-        if(!$this->add_item($player, -$n)){
-
+        if (!is_object($player) || !is_object($target)) {
             return false;
         }
 
-        $this->add_item($target, $n, $bank);
+        $useBank = ($bank === true);
 
+        $available = $this->get_n($player, $useBank);
+        if ($available < $n) {
+                error_log("Erreur: Quantité insuffisante dans give_item (disponible: $available, demandé: $n)");
+                return false;
+        }
+
+        $db = new Db();
+        $db->start_transaction('give_item');
+
+        if (!$this->add_item($player, -$n, $useBank)) {
+            $db->rollback_transaction('give_item');
+            return false;
+        }
+
+        if (!$this->add_item($target, $n, $useBank)) {
+            $db->rollback_transaction('give_item');
+            return false;
+        }
+
+        $db->commit_transaction('give_item');
         return true;
     }
 
