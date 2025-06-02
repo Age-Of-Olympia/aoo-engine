@@ -16,7 +16,7 @@ if(!empty($_GET['itemId'])){
 
     $or_inventaire = $player->get_gold();
     $or_banque = $player->get_gold(true);
-    echo '<div>Vous possédez <span class="or-inventaire">'. $or_inventaire .'</span> Po';
+    echo '<div>Vous possédez <span class="or-inventaire">'. $or_inventaire .'</span> Po dans l\'inventaire';
     if ($or_banque > 0) {
         echo ' et <span class="or-banque">'. $or_banque .'</span> Po en banque';
     }
@@ -48,7 +48,7 @@ echo '<h1>Offres de Vente</h1>';
   }
 
 
-echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Achetez des objets ici.</b></p></div>';
+echo '<div><p>Voici les objets que les autres personnages veulent vendre.<br /><b>Achetez des objets avec votre <i>or en banque</i>.</b></p></div>';
 
 
 echo $market->print_market('bids',$player->id);

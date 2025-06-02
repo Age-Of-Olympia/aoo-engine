@@ -149,26 +149,29 @@ class BidsAsksService
             if ($quantity > $row->stock) {
                 ExitError("Erreur de stock");
             }
+            if($row->price < 1) {
+                ExitError("Prix invalide");
+            }
             // total cost
             $total = $quantity * $row->price;
 
             if ($type == 'asks') {
-                // player sells item to target
+                // player sells item to target and receives gold
 
-                // transfer item to target bank
                 $target = new Player($row->player_id);
 
                 $item = new Item($row->item_id, row: false, checked: true);
 
+                // transfer item to target bank
                 if (!$item->give_item($player, $target, $quantity, bank: true)) {
                     ExitError("Pas assez de cet objet.");
                 }
 
-                // transfer gold to player bank
+                // transfer gold to player bank from market
                 $gold = Item::get_item_by_name('or', checked: true);
                 $gold->add_item($player, $total, bank: true);
             } elseif ($type == 'bids') {
-                // player buys item from target
+                // player buys item from target and send gold
 
                 // transfer gold to target bank
                 $target = new Player($row->player_id);
@@ -178,13 +181,10 @@ class BidsAsksService
                     ExitError("Pas assez d'Or.");
                 }
 
-                // transfer item to player bank
+                // transfer item from maket to player bank
                 $item = new Item($row->item_id, row: false, checked: true);
-                $availableInBank = $item->get_n($target, bank: true);
-                if ($availableInBank < $quantity) {
-                    ExitError("L'objet n'est plus disponible dans la banque du vendeur");
-                }
-                if (!$item->give_item($target, $player, $quantity, bank: true)) {
+               
+                if (!$item->add_item($player, $quantity, bank: true)) {
                     ExitError("Erreur lors du transfert de l'objet depuis la banque");
                 }
             }

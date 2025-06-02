@@ -70,7 +70,7 @@ class Item{
     }
 
 
-    public function add_item($player, $n, $bank=false) {
+    public function add_item($player, int $n, bool $bank=false):bool {
         if(!is_numeric($n) || $n == 0){
             exit('error n '. $n);
         }
@@ -111,18 +111,23 @@ class Item{
 
         $db->commit_transaction('add_item');
 
-        $player->refresh_invent();
+        if(!$bank)
+            $player->refresh_invent();
 
         return true;
     }
 
 
-    public function get_n($player, $bank=false, $equiped=false) {
+    public function get_n($player, bool $bank=false, bool $equiped=false): int {
         if (!isset($this->row) || !isset($this->row->name)) {
             return 0;
         }
 
         $bankSuffix = ($bank === true) ? '_bank' : '';
+
+        if ($bank && $equiped) {
+            return 0; // Cannot check equipped items in bank
+        }
 
         $equipedCondition = $equiped ? 'AND equiped != ""' : '';
 
@@ -150,7 +155,7 @@ class Item{
     }
 
 
-    public function give_item($player, $target, $n, $bank=false) {
+    public function give_item(Player $player, Player $target, int $n, bool $bank=false) {
         if ($n < 1) {
             return false;
         }
@@ -158,23 +163,15 @@ class Item{
             return false;
         }
 
-        $useBank = ($bank === true);
-
-        $available = $this->get_n($player, $useBank);
-        if ($available < $n) {
-                error_log("Erreur: Quantité insuffisante dans give_item (disponible: $available, demandé: $n)");
-                return false;
-        }
-
         $db = new Db();
         $db->start_transaction('give_item');
 
-        if (!$this->add_item($player, -$n, $useBank)) {
+        if (!$this->add_item($player, -$n, $bank)) {
             $db->rollback_transaction('give_item');
             return false;
         }
 
-        if (!$this->add_item($target, $n, $useBank)) {
+        if (!$this->add_item($target, $n, $bank)) {
             $db->rollback_transaction('give_item');
             return false;
         }
