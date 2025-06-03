@@ -100,14 +100,10 @@ class BidsAsksService
             );
 
             if ($type == 'bids') {
-                $availableInBank = $item->get_n($player, bank: true);
-                if ($availableInBank < $quantity) {
-                    ExitError("Vous ne possédez pas assez d'objets dans votre banque");
-                }
                 if ($item->add_item($player, -$quantity, bank: true)) {
                     $this->db->insert('items_bids', $values);
                 } else {
-                    ExitError("Erreur lors du retrait des objets de la banque");
+                    ExitError("Vous ne possédez pas assez d'objets dans votre banque");
                 }
             }
 
