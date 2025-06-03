@@ -1,5 +1,5 @@
 <?php
-
+use App\Enum\CoordType;
 class View{
 
     private $coords; // Coordonnées de la vue
@@ -17,36 +17,21 @@ class View{
         $this->coords = $coords;
         $this->p = $p;
         $this->tiled = $tiled;
-        $this->inSight = $this->get_inSight();
-        $this->inSightId = $this->get_inSightId();
+
+        $this->inSight = array();
+        $this->inSightId = array();
+        View::get_coords_id_arround($this->inSight, $this->inSightId, $coords, $p);
+
         $this->useTbl = array();
         $this->options = $options;
     }
-
-
-    public function get_inSightId(){
-
-
-        $return = array();
-
-        foreach($this->inSight as $row){
-
-
-            $return[] = $row->id;
-        }
-
-
-        return $return;
-    }
-
-
-    public function get_inSight(){
-
-
-        $minX = $this->coords->x - $this->p;
-        $maxX = $this->coords->x + $this->p;
-        $minY = $this->coords->y - $this->p;
-        $maxY = $this->coords->y + $this->p;
+   
+    //outCoords && $outCoordsId are passed by reference initialized is resposability of caller
+    public static function get_coords_id_arround(&$outCoords,&$outCoordsId,$coords,$p){
+        $minX = $coords->x - $p;
+        $maxX = $coords->x + $p;
+        $minY = $coords->y - $p;
+        $maxY = $coords->y + $p;
 
         $sql = '
         SELECT id, x, y FROM coords
@@ -63,19 +48,17 @@ class View{
             $maxX,
             $minY,
             $maxY,
-            $this->coords->z,
-            $this->coords->plan
+            $coords->z,
+            $coords->plan
         ]);
 
-
-        $return = array();
-
         while($row = $res->fetch_object()){
-
-            $return[$row->id] = $row;
+            if(isset($outCoords))
+                $outCoords[$row->id] = $row;
+            if(isset($outCoordsId))
+                $outCoordsId[] = $row->id;
         }
 
-        return $return;
     }
 
 
@@ -132,7 +115,7 @@ class View{
 
 
             $tiledSql = '';
-
+            $inSightIdImploded = implode(',', $this->inSightId);
             if($this->tiled){
 
                 // only for tiled
@@ -147,7 +130,7 @@ class View{
                 FROM
                 map_triggers
                 WHERE
-                coords_id IN ('. implode(',', $this->inSightId) .')
+                coords_id IN ('. $inSightIdImploded .')
 
                 UNION
 
@@ -158,7 +141,7 @@ class View{
                 FROM
                 map_dialogs
                 WHERE
-                coords_id IN ('. implode(',', $this->inSightId) .')
+                coords_id IN ('. $inSightIdImploded .')
                 ';
             }
 
@@ -171,7 +154,7 @@ class View{
             FROM
             map_tiles
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
 
             UNION
 
@@ -182,7 +165,7 @@ class View{
             FROM
             map_items
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
             GROUP BY coords_id
 
             UNION
@@ -194,7 +177,7 @@ class View{
             FROM
             map_elements
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
             
             UNION
 
@@ -205,7 +188,7 @@ class View{
             FROM
             map_plants
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
 
             UNION
 
@@ -216,7 +199,7 @@ class View{
             FROM
             map_routes
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
             UNION
 
             SELECT
@@ -226,7 +209,7 @@ class View{
             FROM
             players
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
 
             UNION
 
@@ -237,7 +220,7 @@ class View{
             FROM
             map_walls
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
 
             UNION
 
@@ -248,7 +231,7 @@ class View{
             FROM
             map_foregrounds
             WHERE
-            coords_id IN ('. implode(',', $this->inSightId) .')
+            coords_id IN ('. $inSightIdImploded .')
 
             '. $tiledSql .'
 
@@ -658,7 +641,7 @@ class View{
 
     // STATIC
 
-    public static function get_coords_arround($coords, $p){
+    public static function get_coords_arround($coords, $p,CoordType $coordType=CoordType::XY,string $separator=','){
 
 
         $return = array();
@@ -670,8 +653,16 @@ class View{
 
                 $coordX = $i + $coords->x - $p;
                 $coordY = -$j + $coords->y + $p;
-
-                $return[] = $coordX .','. $coordY;
+                switch ($coordType) {
+                    case CoordType::XY:
+                        $return[] = $coordX . $separator . $coordY;
+                        break;
+                    
+                    case CoordType::XYZPLAN:
+                        $return[] = $coordX . $separator . $coordY . $separator . $coords->z . $separator . $coords->plan;
+                        break;
+                }
+                
             }
         }
 
@@ -740,43 +731,6 @@ class View{
 
         return $coordsTaken;
     }
-
-
-    public static function get_coords_id_arround($coords, $p){
-
-
-        $return = array();
-
-        $coordsArround = self::get_coords_arround($coords, $p);
-
-        $inClause = implode('","', $coordsArround);
-
-        $sql = '
-        SELECT
-        id
-        FROM
-        coords
-        WHERE
-        CONCAT(x, ",", y) IN("'. $inClause .'")
-        AND
-        z = ?
-        AND
-        plan = ?
-        ';
-
-        $db = new Db();
-
-        $res = $db->exe($sql, array($coords->z, $coords->plan));
-
-        while($row = $res->fetch_object()){
-
-
-            $return[] = $row->id;
-        }
-
-        return $return;
-    }
-
 
     public static function get_coords_id($goCoords){
 
@@ -885,7 +839,7 @@ class View{
     }
 
 
-    public static function get_coords($table, $id){
+    public static function get_coords($table, $id):object{
 
         $sql = '
         SELECT
@@ -1107,9 +1061,7 @@ class View{
     }
 
 
-    public static function refresh_players_svg($coords=false){
-
-
+    public static function refresh_players_svg(?object $coords=null):void{
         $db = new Db();
 
         if($coords){
@@ -1140,7 +1092,7 @@ class View{
                 }
             }
 
-            return true;
+            return;
         }
 
 

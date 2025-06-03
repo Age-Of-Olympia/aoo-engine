@@ -1,15 +1,9 @@
 <?php
-
+use App\Enum\CoordType;
 class Log{
 
 
     // STATIC
-
-    // Should be mouved in view class (in Log now to have only one file to update to fix)
-    public static function compute_unique_coord(&$inputCoord, $key, array $coordCompletion)
-    {
-        $inputCoord = str_replace(",","_",$inputCoord)."_".$coordCompletion[0]."_".$coordCompletion[1];
-    }
 
     public static function get(Player $player,$maxLogAge=THREE_DAYS,$type=''){
         
@@ -118,8 +112,7 @@ class Log{
             );
             
             // Computing coords
-            $arrayCoordsId = View::get_coords_arround($last_player_coords, $p);
-            array_walk($arrayCoordsId, array(Log::class, 'compute_unique_coord'), [$last_player_coords->z, $last_player_coords->plan]);
+            $arrayCoordsId = View::get_coords_arround($last_player_coords, $p, CoordType::XYZPLAN, separator:'_');
 
             $planJson = json()->decode('plans', $row->plan);
 

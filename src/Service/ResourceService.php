@@ -22,7 +22,10 @@ class ResourceService
             }
         }
 
-        $coordsArround = View::get_coords_id_arround($coords, p:1);
+        $coordsArround = null;
+        $coordsIdArround=array();
+        
+        View::get_coords_id_arround($coordsArround,$coordsIdArround,$coords, p:1);
 
         $sql = '
         SELECT
@@ -31,7 +34,7 @@ class ResourceService
         FROM
         map_walls
         WHERE
-        coords_id IN('. implode(',', $coordsArround) .')
+        coords_id IN('. implode(',', $coordsIdArround) .')
         AND
         name IN ("'. implode('","', array_keys($biomes)) .'")
         AND
@@ -58,7 +61,11 @@ class ResourceService
             }
         }
 
-        $coordsArround = View::get_coords_id_arround($coords, p:1);
+        $coordsArround = null;
+        $coordsIdArround=array();
+        
+        View::get_coords_id_arround($coordsArround,$coordsIdArround,$coords, p:1);
+
 
         $sql = '
         SELECT
@@ -67,7 +74,7 @@ class ResourceService
         FROM
         map_walls
         WHERE
-        coords_id IN('. implode(',', $coordsArround) .')
+        coords_id IN('. implode(',', $coordsIdArround) .')
         AND
         name IN ("'. implode('","', array_keys($biomes)) .'")
         AND
