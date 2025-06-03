@@ -1061,14 +1061,16 @@ class View{
     }
 
 
-    public static function refresh_players_svg(?object $coords=null):void{
+    public static function refresh_players_svg(object $coords,$p=20):void{
+        // based on View::get_coords_id_arround that is the fastest implementation 
         $db = new Db();
+        $minX = $coords->x - $p;
+        $maxX = $coords->x + $p;
+        $minY = $coords->y - $p;
+        $maxY = $coords->y + $p;
 
-        if($coords){
-
-
-            // delete svg cache
-            $sql = '
+        // delete svg cache
+        $sql = '
             SELECT p.id AS id
             FROM
             players AS p
@@ -1076,29 +1078,16 @@ class View{
             coords AS c
             ON
             p.coords_id = c.id
-            WHERE
-            c.z = ?
-            AND
-            c.plan = ?
-            ';
+            WHERE x BETWEEN ? AND ?
+            AND y BETWEEN ? AND ?
+            AND c.z = ?
+            AND c.plan = ?';
 
-            $res = $db->exe($sql, array($coords->z, $coords->plan));
-
-
-            while($row = $res->fetch_object()){
-                $file = 'datas/private/players/'. $row->id .'.svg';
-                if (is_file($file)) {
-                    unlink($file); // Delete the file
-                }
-            }
-
-            return;
-        }
+        $res = $db->exe($sql, array($coords->z, $coords->plan, $minX, $maxX, $minY, $maxY));
 
 
-        $files = glob('datas/private/players/*.svg'); // Get all .svg files in the directory
-
-        foreach ($files as $file) {
+        while ($row = $res->fetch_object()) {
+            $file = 'datas/private/players/' . $row->id . '.svg';
             if (is_file($file)) {
                 unlink($file); // Delete the file
             }
