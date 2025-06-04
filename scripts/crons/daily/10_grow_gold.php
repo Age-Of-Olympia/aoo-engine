@@ -37,7 +37,7 @@ if ($res) {
 // update bank
 $sql = '
 UPDATE players_items_bank
-SET n = n + FLOOR(n * '. BANK_PCT .' / 100)
+SET n = n + ' . $gain . '
 WHERE '. $where .'
 ';
 
