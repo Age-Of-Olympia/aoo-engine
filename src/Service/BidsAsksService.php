@@ -6,6 +6,7 @@ use Db;
 use Throwable;
 use Item;
 use Player;
+use Log;
 
 class BidsAsksService
 {
@@ -102,6 +103,10 @@ class BidsAsksService
             if ($type == 'bids') {
                 if ($item->add_item($player, -$quantity, bank: true)) {
                     $this->db->insert('items_bids', $values);
+                    $logTime = time();
+                    $targetLog = "Vous avez mis en vente des objets";
+                    $objects = "{$quantity} {$item->row->name} à {$price} Or l'unité.";
+                    Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
                 } else {
                     ExitError("Vous ne possédez pas assez d'objets dans votre banque");
                 }
@@ -114,6 +119,10 @@ class BidsAsksService
                 $gold = Item::get_item_by_name('or', checked: true);
                 if ($gold->add_item($player, -$total)) {
                     $this->db->insert('items_asks', $values);
+                    $logTime = time();
+                    $targetLog = "Vous avez créé une demande d'Achat";
+                    $objects = "{$quantity} {$item->row->name} à {$price} Or l'unité.";
+                    Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
                 } else {
                     ExitError("Vous ne possédez pas assez d'Or pour acheter {$quantity} {$item->row->name}.");
                 }
@@ -166,6 +175,16 @@ class BidsAsksService
                 // transfer gold to player bank from market
                 $gold = Item::get_item_by_name('or', checked: true);
                 $gold->add_item($player, $total, bank: true);
+
+                $logTime = time();
+                $targetLog = "Vous avez vendus des objets.";
+                $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
+                Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
+
+                $targetLog = "Des objets que vous demandez vous ont été vendus.";
+                $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
+                Log::put($target, $target, $targetLog, "hidden_action", $objects, $logTime);
+
             } elseif ($type == 'bids') {
                 // player buys item from target and send gold
 
@@ -181,8 +200,16 @@ class BidsAsksService
                 $item = new Item($row->item_id, row: false, checked: true);
                
                 if (!$item->add_item($player, $quantity, bank: true)) {
-                    ExitError("Erreur lors du transfert de l'objet depuis la banque");
+                    ExitError("Erreur lors du transfert de l'objet depuis la banque.");
                 }
+                $logTime = time();
+                $targetLog = "Vous avez acheté des objets.";
+                $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
+                Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
+
+                $targetLog = "Des objets que vous vendez vous ont été achetés.";
+                $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
+                Log::put($target, $target, $targetLog, "hidden_action", $objects, $logTime);
             }
 
 
