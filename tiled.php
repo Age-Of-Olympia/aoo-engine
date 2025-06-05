@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Ui;
+use Classes\View;
+use Classes\Player;
 require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);

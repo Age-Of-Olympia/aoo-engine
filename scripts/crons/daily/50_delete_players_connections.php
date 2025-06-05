@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 /*
  * ce script les entrées dans players connections plus vieilles que 30 jours
  */

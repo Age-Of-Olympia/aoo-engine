@@ -3,7 +3,7 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use View;
+use Classes\View;
 
 class ObstacleCondition extends BaseCondition
 {

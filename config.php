@@ -1,25 +1,6 @@
 <?php
-
+use Classes\Ui;
 session_start();
-
-// classes autoloader
-spl_autoload_register(function ($class_name) {
-    $base_dir = __DIR__ . '/classes/';
-
-    $file_name = strtolower($class_name) . '.php';
-
-    $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($base_dir),
-        RecursiveIteratorIterator::LEAVES_ONLY
-    );
-
-    foreach ($iterator as $file) {
-        if ($file->isFile() && strtolower($file->getFilename()) === $file_name) {
-            require_once $file->getPathname();
-            return;
-        }
-    }
-});
 
 require_once(__DIR__.'/config/constants.php');
 require_once(__DIR__.'/config/db_constants.php');

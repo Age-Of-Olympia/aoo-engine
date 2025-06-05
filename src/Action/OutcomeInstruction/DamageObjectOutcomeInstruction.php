@@ -5,8 +5,8 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Item;
-use Player;
+use Classes\Item;
+use Classes\Player;
 
 #[ORM\Entity]
 class DamageObjectOutcomeInstruction extends OutcomeInstruction

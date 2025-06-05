@@ -1,5 +1,8 @@
 <?php
+namespace Classes;
+
 use App\Enum\LogType;
+
 class CommandResult
 {
     private $results = [];

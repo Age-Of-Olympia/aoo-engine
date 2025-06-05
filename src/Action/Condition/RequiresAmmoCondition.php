@@ -3,9 +3,9 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use Db;
-use Item;
-use View;
+use Classes\Db;
+use Classes\Item;
+use Classes\View;
 
 class RequiresAmmoCondition extends BaseCondition
 {

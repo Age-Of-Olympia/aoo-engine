@@ -4,8 +4,8 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
-use Player;
-use Str;
+use Classes\Player;
+
 
 #[ORM\Entity]
 class AddRaceActionsOutcomeInstruction extends OutcomeInstruction

@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Ui;
+use Classes\Str;
 if(isset($_GET['logout'])){
 
     ob_start();

@@ -1,4 +1,7 @@
 <?php
+namespace Classes;
+
+use Closure;
 
 /**
  * BBCode to HTML converter
@@ -281,7 +284,7 @@ class bbcode
      * @param  Tag[]    $openTags   Array with tags that are opned but not closed
      * @return string
      */
-    protected function generateTag(Tag $tag, &$html, Tag $openingTag = null, array $openTags = [])
+    protected function generateTag(Tag $tag, &$html, ?Tag $openingTag = null, array $openTags = [])
     {
         $code = null;
 

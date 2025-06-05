@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Ui;
+use Classes\Db;
 $ui = new Ui($target->data->name .' (réputation)');
 
 echo '

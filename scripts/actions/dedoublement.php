@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Db;
+use Classes\File;
 
 $data = file_get_contents($player->data->avatar);
 

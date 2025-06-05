@@ -1,7 +1,7 @@
 <?php
 namespace App\Service;
 
-use Player;
+use Classes\Player;
 use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;

@@ -1,5 +1,8 @@
 <?php
+namespace Classes;
+
 use App\Enum\CoordType;
+
 class Log{
 
 

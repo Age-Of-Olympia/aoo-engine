@@ -1,4 +1,9 @@
 <?php
+use Classes\Exchange;
+use Classes\Item;
+use Classes\Player;
+use Classes\Ui;
+
 if (!isset($_GET['editExchange'])) {
   exit('exchange not set');
 }

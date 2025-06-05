@@ -5,7 +5,7 @@ use App\Interface\ActionInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Player;
+use Classes\Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "actions")]

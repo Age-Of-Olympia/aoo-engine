@@ -1,5 +1,8 @@
 <?php
-
+use Classes\Player;
+use Classes\Ui;
+use Classes\Db;
+use Classes\Str;
 require_once('config.php');
 
 $ui = new Ui('Personnages secondaires');

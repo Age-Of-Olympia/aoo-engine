@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 /*
  * ce script delete les missives sans destinataires
  */

@@ -1,4 +1,7 @@
 <?php
+use Classes\Db;
+use Classes\Player;
+use Classes\View;
 
 if(!empty($_SESSION['playerId'])){
 

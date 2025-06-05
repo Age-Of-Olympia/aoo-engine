@@ -1,4 +1,5 @@
 <?php
+namespace Classes;
 
 class json{
     public ?string $id = null;

@@ -2,6 +2,7 @@
 
 use App\Service\ActionService;
 use App\Service\OutcomeInstructionService;
+use Classes\Str;
 
 if(isset($_GET['forget']) && !empty($_POST['spell'])){
 

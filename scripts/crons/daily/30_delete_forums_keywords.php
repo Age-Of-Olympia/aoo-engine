@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 /*
  * ce script delete les forums_keywords si le fichier json n'existe pas
  * */

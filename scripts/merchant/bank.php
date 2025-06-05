@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Item;
+use Classes\Player;
 $player = new Player($_SESSION['playerId']);
 
 

@@ -1,4 +1,6 @@
 <?php
+use Classes\Quest;
+use Classes\Str;
 
 echo '<h1>Quêtes</h1>';
 

@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Player;
+use Classes\File;
 $path = 'datas/private/players/'. $target->id .'.kills.html';
 
 if(!file_exists($path) || !CACHED_KILLS){

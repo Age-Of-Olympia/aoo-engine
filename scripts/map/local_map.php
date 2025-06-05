@@ -1,4 +1,5 @@
 <?php
+use Classes\Player;
 // scripts/map/local_map.php
 
 // Display current player's Z-coordinate and full position

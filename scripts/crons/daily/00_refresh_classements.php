@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Player;
 Player::refresh_list();
 
 @unlink(__DIR__ .'/../../../datas/public/classements/general.html');

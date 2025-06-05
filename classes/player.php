@@ -1,9 +1,12 @@
 <?php
+namespace Classes;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
 use App\Service\PlayerService;
+
+use Throwable;
 
 class Player implements ActorInterface {
 

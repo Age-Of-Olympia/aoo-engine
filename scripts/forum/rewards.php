@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Db;
+use Classes\Forum;
 if(!empty($_POST['post'])){
 
 

@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Item;
+use Classes\Log;
 
 $item = new Item($_POST['itemId']);
 $item->get_data();

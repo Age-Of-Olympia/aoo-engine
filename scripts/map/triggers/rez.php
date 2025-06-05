@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Item;
+use Classes\Log;
+use Classes\View;
 
 // first spawn : change avatar
 if($player->coords->plan == 'gaia2'){

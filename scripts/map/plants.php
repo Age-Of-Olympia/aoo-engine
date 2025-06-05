@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Item;
+use Classes\Log;
 
 $item = Item::get_item_by_name($name);
 

@@ -1,5 +1,9 @@
 <?php
-
+use Classes\Db;
+use Classes\Log;
+use Classes\Player;
+use Classes\Str;
+use Classes\View;
 if(!empty($_GET['triggerId'])){
 
 

@@ -5,6 +5,7 @@ namespace App\Service;
 use DateTime;
 use DateTimeZone;
 use Exception;
+use Classes\Json;
 
 class ViewService {
     private $width = 700;
@@ -945,7 +946,7 @@ class ViewService {
     }
 
     private function getBoundsFromPlan($planName) {
-        $jsonHelper = new \json();
+        $jsonHelper = new Json();
         $planData = $jsonHelper->decode('plans', $planName);
 
         if (!$planData) {
@@ -970,7 +971,7 @@ class ViewService {
     }
 
     private function getPlanData($planName) {
-        $jsonHelper = new \json();
+        $jsonHelper = new Json();
         $planData = $jsonHelper->decode('plans', $planName);
         
         if (!$planData) {
@@ -1008,7 +1009,7 @@ class ViewService {
     }
 
     private function getLocationFromPlan($planName) {
-        $jsonHelper = new \json();
+        $jsonHelper = new Json();
         $planData = $jsonHelper->decode('plans', $planName);
         
         if (!$planData) {
@@ -1024,7 +1025,7 @@ class ViewService {
     }
 
     private function getAllLocationsFromPlans() {
-        $jsonHelper = new \json();
+        $jsonHelper = new Json();
         $plans = $jsonHelper->get_all('plans', true);
         $allLocations = [];
 
@@ -1039,7 +1040,7 @@ class ViewService {
     }
 
     public function getAllPlans() {
-        $jsonHelper = new \json();
+        $jsonHelper = new Json();
         $allPlans = [];
 
         foreach ($jsonHelper->get_all('plans', true) as $planId => $planData) {

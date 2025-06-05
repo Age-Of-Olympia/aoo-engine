@@ -4,7 +4,7 @@ namespace App\Action;
 
 use App\Entity\Action;
 use Doctrine\ORM\Mapping as ORM;
-use Player;
+use Classes\Player;
 
 #[ORM\Entity]
 class HealAction extends Action

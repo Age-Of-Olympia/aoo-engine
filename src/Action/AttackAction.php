@@ -5,7 +5,7 @@ namespace App\Action;
 use App\Action\OutcomeInstruction\ApplyStatusOutcomeInstruction;
 use App\Entity\Action;
 use App\Interface\OutcomeInstructionInterface;
-use Player;
+use Classes\Player;
 
 abstract class AttackAction extends Action
 {

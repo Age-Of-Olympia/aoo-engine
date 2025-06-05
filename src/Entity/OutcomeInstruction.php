@@ -4,7 +4,7 @@ namespace App\Entity;
 use App\Action\OutcomeInstruction\OutcomeResult;
 use App\Interface\OutcomeInstructionInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Player;
+use Classes\Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "outcome_instructions")]

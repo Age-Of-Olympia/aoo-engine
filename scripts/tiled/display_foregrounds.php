@@ -1,4 +1,5 @@
 <?php
+use Classes\File;
 
 echo '<h3>Foregrounds (indestructibles, passables)</h3>';
 

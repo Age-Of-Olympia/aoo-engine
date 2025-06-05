@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Db;
+use Classes\Player;
+use Classes\View;
 if( $_SESSION['playerId'] == $_SESSION['originalPlayerId']){
     $_SESSION['nonewturn']=false;
 }

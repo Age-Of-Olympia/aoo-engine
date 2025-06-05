@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Player;
+use Classes\Ui;
+use Classes\Log;
 
 require_once('config.php');
 

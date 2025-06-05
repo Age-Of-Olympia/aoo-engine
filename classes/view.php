@@ -1,5 +1,8 @@
 <?php
+namespace Classes;
+
 use App\Enum\CoordType;
+
 class View{
 
     private $coords; // Coordonnées de la vue

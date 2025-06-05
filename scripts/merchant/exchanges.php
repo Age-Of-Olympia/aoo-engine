@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Exchange;
+use Classes\Player;
 
 echo '<h1>Echanges</h1>';
 

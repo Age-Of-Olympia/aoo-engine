@@ -6,10 +6,10 @@ use App\Entity\OutcomeInstruction;
 use App\Service\MapService;
 use App\Service\ResourceService;
 use Doctrine\ORM\Mapping as ORM;
-use Item;
-use Player;
-use Str;
-use View;
+use Classes\Item;
+use Classes\Player;
+use Classes\Str;
+use Classes\View;
 
 #[ORM\Entity]
 class TileTypeOutcomeInstruction extends OutcomeInstruction

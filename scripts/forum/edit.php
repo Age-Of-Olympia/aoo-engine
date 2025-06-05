@@ -1,5 +1,9 @@
 <?php
-
+use Classes\Forum;
+use Classes\Json;
+use Classes\Player;
+use Classes\Str;
+use Classes\Ui;
 
 $postJson = json()->decode('forum', 'posts/'. $_GET['edit']);
 

@@ -1,5 +1,7 @@
 <?php
+namespace Classes;
 
+use DirectoryIterator;
 
 class File{
 

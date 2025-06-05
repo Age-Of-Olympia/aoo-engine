@@ -1,4 +1,7 @@
 <?php
+namespace Classes;
+
+use Exception;
 
 class Item{
 

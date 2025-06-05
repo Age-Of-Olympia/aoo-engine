@@ -1,5 +1,10 @@
 <?php
-
+use Classes\Player;
+use Classes\Forum;
+use Classes\Ui;
+use Classes\Str;
+use Classes\Json;
+use Classes\Db;
 
 $topJson = json()->decode('forum', 'topics/'. $_GET['reply']);
 

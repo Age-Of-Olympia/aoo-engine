@@ -1,5 +1,9 @@
 <?php
-
+use App\Service\PlayerService;
+use Classes\Db;
+use Classes\Forum;
+use Classes\Str;
+use Classes\Ui;
 function SearchInPosts($posts, $search)
 {
     $search = strtolower($search);
@@ -28,7 +32,7 @@ $ui = new Ui($forumJson->name);
 
 ob_start();
 
-use App\Service\PlayerService;
+
 $playerService = new PlayerService($_SESSION['playerId']);
 
 include('scripts/infos.php');

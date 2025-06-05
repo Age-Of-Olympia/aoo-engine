@@ -1,5 +1,5 @@
 <?php
-
+namespace Classes;
 /**
  * This class represents a single BBCode tag.
  * It is just a simple class used for storing tag.

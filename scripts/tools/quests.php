@@ -1,5 +1,8 @@
 <?php
-
+use Classes\Ui;
+use Classes\Db;
+use Classes\Player;
+use Classes\Quest;
 
 $actions = array(
     'newQuest',

@@ -1,4 +1,6 @@
 <?php
+namespace Classes;
+
 abstract class AdminCommand extends Command
 {
     public function executeIfAuthorized( array $argumentValues ): string {

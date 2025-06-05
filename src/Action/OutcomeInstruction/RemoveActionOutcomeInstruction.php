@@ -4,8 +4,8 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
-use Player;
-use Str;
+use Classes\Player;
+use Classes\Str;
 
 #[ORM\Entity]
 class RemoveActionOutcomeInstruction extends OutcomeInstruction

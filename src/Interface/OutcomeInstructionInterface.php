@@ -4,7 +4,7 @@ namespace App\Interface;
 
 use App\Action\OutcomeInstruction\OutcomeResult;
 use App\Entity\ActionOutcome;
-use Player;
+use Classes\Player;
 
 interface OutcomeInstructionInterface
 {

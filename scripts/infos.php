@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Player;
+use Classes\Str;
 if(!empty($_SESSION['playerId'])){
 
 

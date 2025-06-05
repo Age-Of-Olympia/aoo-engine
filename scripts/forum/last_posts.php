@@ -1,5 +1,8 @@
 <?php
-
+use Classes\Ui;
+use Classes\Forum;
+use Classes\Player;
+use Classes\Str;
 ob_start();
 
 $ui = new Ui('Derniers Messages du Forum');

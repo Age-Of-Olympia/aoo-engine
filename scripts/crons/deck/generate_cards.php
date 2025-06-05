@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Player;
+use Classes\Json;
 
 
 $list = Player::get_player_list()->list;

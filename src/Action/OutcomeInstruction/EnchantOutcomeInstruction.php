@@ -4,9 +4,9 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
-use Item;
-use Player;
-use View;
+use Classes\Item;
+use Classes\Player;
+use Classes\View;
 
 #[ORM\Entity]
 class EnchantOutcomeInstruction extends OutcomeInstruction

@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 if(!isset(CARACS[$_POST['carac']])){
 
     exit('error carac');

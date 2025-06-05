@@ -1,5 +1,5 @@
 <?php
-
+use Classes\File;
 // drag and drop for upload img
 $uploadedN = count(File::get_uploaded($player));
 $uploadMax = File::get_uploaded_max($player);

@@ -1,4 +1,5 @@
 <?php
+use Classes\Db;
 
 require_once("classes/db.php");
 

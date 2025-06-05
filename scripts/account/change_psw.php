@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Player;
+use Classes\Db;
 
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 

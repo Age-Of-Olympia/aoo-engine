@@ -2,11 +2,11 @@
 namespace App\Action\Condition;
 
 use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
-use Player;
+use Classes\Player;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use Dice;
-use View;
+use Classes\Dice;
+use Classes\View;
 
 enum Roll: string
 {

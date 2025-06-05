@@ -7,6 +7,9 @@ use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
 use App\View\ActionResultsView;
+use Classes\Log;
+use Classes\Player;
+use Classes\View;
 
 ob_start();
 

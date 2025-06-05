@@ -4,9 +4,9 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
-use Item;
-use Player;
-use Str;
+use Classes\Item;
+use Classes\Player;
+use Classes\Str;
 
 #[ORM\Entity]
 class DropWeaponOutcomeInstruction extends OutcomeInstruction

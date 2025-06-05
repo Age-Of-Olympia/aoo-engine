@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Player;
 
 require_once('config.php');
 

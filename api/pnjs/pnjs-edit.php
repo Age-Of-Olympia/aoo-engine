@@ -1,7 +1,7 @@
 <?php
+use App\Service\PlayerPnjService;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
-Use App\Service\PlayerPnjService;
 
 $result = ["message" => ""];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -5,8 +5,8 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Player;
-use View;
+use Classes\Player;
+use Classes\View;
 
 #[ORM\Entity]
 class LifeLossOutcomeInstruction extends OutcomeInstruction

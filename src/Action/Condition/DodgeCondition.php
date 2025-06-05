@@ -5,7 +5,7 @@ namespace App\Action\Condition;
 use App\Action\SpellAction;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use View;
+use Classes\View;
 
 class DodgeCondition extends BaseCondition
 {

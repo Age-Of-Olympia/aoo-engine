@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Str;
+use Classes\Db;
 
 if(!Str::check_name($_POST['changeName'])){
 

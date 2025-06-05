@@ -1,4 +1,7 @@
 <?php
+use Classes\Exchange;
+use Classes\Market;
+use Classes\Player;
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
-
+use Classes\Db;
+use Classes\File;
 $path = __DIR__ .'/deck/';
 
 

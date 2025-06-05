@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Player;
+use Classes\Str;
 
 define('CARACS_BOURRINS', array(
     'pv'=>"Increvables! Si si je vous jure!",

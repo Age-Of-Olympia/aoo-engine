@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Ui;
+use Classes\Item;
 define('NO_LOGIN', true);
 
 require_once('config.php');

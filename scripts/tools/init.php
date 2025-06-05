@@ -1,4 +1,6 @@
 <?php
+use Classes\File;
+use Classes\Ui;
 
 require_once('config.php');
 

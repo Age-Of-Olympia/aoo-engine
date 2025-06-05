@@ -1,5 +1,10 @@
 <?php
-
+use Classes\Player;
+use Classes\Db;
+use Classes\View;
+use Classes\Log;
+use Classes\Item;
+use Classes\Element;
 require_once('config.php');
 
 

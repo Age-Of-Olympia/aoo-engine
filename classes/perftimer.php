@@ -1,4 +1,8 @@
 <?php
+namespace Classes;
+
+use Exception;
+
 class PerfTimer {
     private $start_time=0;
     private $end_time=0;

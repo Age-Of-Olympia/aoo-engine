@@ -4,6 +4,10 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use Classes\Player;
+use Classes\Str;
+use Classes\Ui;
+use Classes\Db;
 
 require_once('config.php');
 

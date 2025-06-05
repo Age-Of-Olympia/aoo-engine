@@ -1,4 +1,6 @@
 <?php
+use Classes\Db;
+use Classes\Log;
 
 if(!empty($_POST['text'])){
 

@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Item;
 
 $paramsTbl = explode(',', $params);
 

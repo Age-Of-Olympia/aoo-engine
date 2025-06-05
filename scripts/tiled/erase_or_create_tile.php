@@ -1,4 +1,5 @@
 <?php
+use Classes\Db;
 
 if($_POST['type'] == 'eraser'){
     include 'erase_map.php';

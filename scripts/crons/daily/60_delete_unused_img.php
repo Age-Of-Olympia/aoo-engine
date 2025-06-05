@@ -1,5 +1,5 @@
 <?php
-
+use Classes\File;
 
 /*
  * ce script unlink toutes les images uploadées qui ne sont pas retrouvées dans les posts du forum.

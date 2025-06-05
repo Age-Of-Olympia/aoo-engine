@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Player;
+use Classes\Item;
+use Classes\Ui;
 
 if(!empty($_POST['action'])){
 

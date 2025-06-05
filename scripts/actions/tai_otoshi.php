@@ -1,5 +1,5 @@
 <?php
-
+use Classes\View;
 
 if(!isset($target->coords)){
 

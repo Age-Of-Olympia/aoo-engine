@@ -6,7 +6,7 @@ use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Entity\Race;
 use Doctrine\Common\Collections\Collection;
-use Player;
+use Classes\Player;
 
 interface ActionInterface
 {

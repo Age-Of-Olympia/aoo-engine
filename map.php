@@ -1,5 +1,8 @@
 <?php
-
+use Classes\Player;
+use Classes\Ui;
+use Classes\Str;
+use Classes\Db;
 require_once('config.php');
 
 $worldPlan = 'olympia';

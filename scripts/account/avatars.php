@@ -3,6 +3,7 @@
 use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
 use App\Service\RaceService;
+use Classes\File;
 
 $dir = 'img/avatars/'. $player->data->race .'/';
 

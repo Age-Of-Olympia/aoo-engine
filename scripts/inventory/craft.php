@@ -1,5 +1,10 @@
 <?php
-
+use Classes\Player;
+use Classes\Item;
+use Classes\Craft;
+use Classes\Json;
+use Classes\Ui;
+use Classes\Str;
 
 // player
 $player = new Player($_SESSION['playerId']);

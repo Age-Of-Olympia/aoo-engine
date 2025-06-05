@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Json;
+use Classes\Ui;
 
 $ui = new Ui('json edit tool');
 

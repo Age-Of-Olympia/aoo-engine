@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 $mvt = 1;
 
 // pouvoir divin

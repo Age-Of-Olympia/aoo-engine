@@ -1,4 +1,5 @@
 <?php
+use Classes\File;
 
 echo '<h3>Tiles (indestructibles, passables)</h3>';
 

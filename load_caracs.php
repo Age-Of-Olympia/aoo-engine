@@ -1,4 +1,6 @@
 <?php
+use Classes\Player;
+use Classes\Str;
 
 require_once('config.php');
 

@@ -1,4 +1,6 @@
 <?php
+use Classes\Player;
+use Classes\Db;
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button>'. $planJson->name .'</button></a></div>';
 

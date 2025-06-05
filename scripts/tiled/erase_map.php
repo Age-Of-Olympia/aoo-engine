@@ -1,4 +1,5 @@
 <?php
+use Classes\Db;
 //delete anything at coords given.
 $mapTypes = array('tiles','walls','triggers','elements','dialogs','plants','foregrounds');
 

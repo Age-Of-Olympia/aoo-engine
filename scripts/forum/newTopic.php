@@ -1,5 +1,9 @@
 <?php
-
+use Classes\Forum;
+use Classes\Player;
+use Classes\Str;
+use Classes\Ui;
+use Classes\Db;
 
 $forumJson = json()->decode('forum', 'forums/'. $_GET['newTopic']);
 

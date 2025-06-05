@@ -1,5 +1,9 @@
 <?php
+namespace Classes;
 
+use DateInterval;
+use DateTimeImmutable;
+use DateTimeZone;
 
 class Str{
 

@@ -1,4 +1,8 @@
 <?php
+namespace Classes;
+
+use Exception;
+
 abstract class Command
 {
     private string $name;

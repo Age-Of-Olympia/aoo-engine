@@ -1,4 +1,6 @@
 <?php
+use Classes\Player;
+use Classes\Ui;
 
 if(!isset($_GET['playerId'])){
 

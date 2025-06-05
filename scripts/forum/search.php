@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Player;
+use Classes\Forum;
+use Classes\Ui;
 
 $ui = new Ui('Forum - Recherche');
 

@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 
 define('NO_LOGIN', true);
 

@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Db;
+use Classes\File;
 use App\Service\RaceService;
 
 $dir = 'img/portraits/'. $player->data->race .'/';

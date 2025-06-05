@@ -3,7 +3,7 @@
 namespace App\Interface;
 
 use App\Enum\EquipResult;
-use Item;
+use Classes\Item;
 
 interface ActorInterface
 {

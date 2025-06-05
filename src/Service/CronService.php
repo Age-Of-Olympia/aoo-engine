@@ -3,9 +3,9 @@
 namespace App\Service;
 
 use App\Service\BaseService;
-use Db;
+use Classes\Db;
 use Exception;
-use File;
+use Classes\File;
 use Throwable;
 
 class CronService extends BaseService

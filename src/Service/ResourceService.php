@@ -3,9 +3,9 @@
 namespace App\Service;
 
 use App\Entity\EntityManagerFactory;
-use Db;
-use Player;
-use View;
+use Classes\Db;
+use Classes\Player;
+use Classes\View;
 
 class ResourceService
 {

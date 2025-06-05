@@ -1,6 +1,7 @@
 <?php
+namespace Classes;
 
-class ui{
+class Ui{
 
     public function __construct($title='', $loadJQueryUi=false){
 

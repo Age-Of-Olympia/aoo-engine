@@ -1,5 +1,9 @@
 <?php
-
+use Classes\Player;
+use Classes\Item;
+use Classes\Ui;
+use Classes\View;
+use Classes\Str;
 
 require_once('config.php');
 

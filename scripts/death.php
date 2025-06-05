@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Player;
+use Classes\Log;
 
 if($target->getRemaining('pv') > 0){
 

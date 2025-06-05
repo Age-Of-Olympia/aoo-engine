@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Player;
+use Classes\Ui;
+use Classes\Str;
 
 define('NO_LOGIN', true);
 

@@ -2,8 +2,8 @@
 
 namespace App\Service;
 
-use Db;
-use Player;
+use Classes\Db;
+use Classes\Player;
 
 class PlayerService
 {

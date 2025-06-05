@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Db;
 
 echo '<h1>Classement des Fortunes</h1>';
 

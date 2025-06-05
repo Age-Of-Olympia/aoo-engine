@@ -1,7 +1,7 @@
 <?php
 namespace App\Action\Condition;
 
-use View;
+use Classes\View;
 
 class DistanceComputeCondition extends ComputeCondition
 {

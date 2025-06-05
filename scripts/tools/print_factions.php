@@ -1,5 +1,6 @@
 <?php
-
+use Classes\File;
+use Classes\Ui;
 
 $ui = new Ui('Print Factions');
 

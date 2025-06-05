@@ -1,5 +1,5 @@
 <?php
-
+use Classes\File;
 
 echo '<h3>Elements (ajoute un effet, passables)</h3>';
 

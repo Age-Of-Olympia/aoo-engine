@@ -1,5 +1,6 @@
 <?php
-
+use Classes\Db;
+use Classes\Item;
 
 $sql = '
 SELECT

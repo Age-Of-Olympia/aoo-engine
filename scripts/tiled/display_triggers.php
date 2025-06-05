@@ -1,5 +1,5 @@
 <?php
-
+use Classes\File;
 
 echo '<h3>Déclencheurs (invisibles)</h3>';
 

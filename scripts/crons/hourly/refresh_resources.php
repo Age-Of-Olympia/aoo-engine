@@ -1,6 +1,7 @@
 <?php
 
 use App\Service\ResourceService;
+use Classes\Db;
 
 $sql = '
 SELECT 

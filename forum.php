@@ -1,4 +1,7 @@
 <?php
+use Classes\Ui;
+use Classes\Forum;
+use Classes\Str;
 
 require_once('config.php');
 

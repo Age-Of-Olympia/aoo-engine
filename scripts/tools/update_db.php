@@ -1,5 +1,5 @@
 <?php
-
+use Classes\Player;
 use App\Service\DataBaseUpdateService;
 
 require_once('config.php');

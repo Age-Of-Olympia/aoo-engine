@@ -1,6 +1,8 @@
 <?php
 
 use App\Enum\EquipResult;
+use Classes\Item;
+use Classes\Log;
 
 $player->get_data();
 

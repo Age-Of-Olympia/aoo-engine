@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Ui;
+use Classes\Str;
+use Classes\Db;
 $ui = new Ui($target->data->name .' (réputation)');
 
 echo '<div><a href="infos.php?targetId='. $target->id .'"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';

@@ -1,4 +1,7 @@
 <?php
+namespace Classes;
+
+use mysqli_result;
 
 require_once(__DIR__.'/../config/functions.php');
 

@@ -1,4 +1,8 @@
 <?php
+use Classes\Player;
+use Classes\Item;
+use Classes\Db;
+use Classes\Str;
 
 if(isset($_GET['bids'])){
 

@@ -1,4 +1,7 @@
 <?php
+namespace Classes;
+
+use RecursiveDirectoryIterator;
 
 class Forum{
 
@@ -482,7 +485,7 @@ class Forum{
 
         if(!$destTbl){
 
-            $destTbl = self::get_top_dest($topjson);
+            $destTbl = self::get_top_dest($topJson);
         }
 
 
