@@ -49,121 +49,17 @@ if (isset($_POST['cmdLine']) && isset($_POST['completion'])){
     }
 }
 
-function ExecuteCommand($command, $commandLineSplit)
-{
-    if (isset($commandLineSplit[0]) && ($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')) {
-        $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4:console#' . $command->getName() . '">' . $command->getName() . '</a> ' . $command->printArguments() . "<br/>"
-            . $command->getDescription();
 
-        $command->result->Log('Help for command ' . $command->getName() . ': ');
-        $command->result->Log($result);
-    } else {
-        if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
-            try {
-                $command->result->Log('command found ' . $command->getName() . '. Executing...');
-                $resultstr = $command->executeIfAuthorized($commandLineSplit);
-                if (!empty($resultstr)) {
-                    if (startsWithIgnoreCase($resultstr, "error")) {
-                        $command->result->Error($resultstr);
-                    } else {
-                        $command->result->Log($resultstr);
-                    }
-                }
-            } catch (Throwable $e) {
-                $command->result->Error("Unexpected technical error, check command syntax : " . $command->getName() . " " . $command->printArguments());
-                if($e instanceof ErrorException || $e instanceof Error)
-                    throw $e;
-                $command->result->Error( $e->getMessage());
-            }
-        } else {
-            $command->result->Error('missing mandatory arguments ' . $command->printArguments());
-        }
-    }
-}
 
 //execution
 if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
     $inputString = $_POST['cmdLine'];
 
-    $factory = initCommmandFactory();
+    $console = new Console();
+    $console->InitAndExec($inputString);
 
-    $GLOBALS['consoleENV'] = ['self' => $_SESSION['playerId']];
-    $commandsList = Command::getCommandsFromInputString($inputString);
-    $commandsResults = new CommandResult();
-    if (count($commandsList) == 0) {
-        $commandsResults->Error("Failed to parse command line");
-    }
-
-    $dbconn = db();
-    $dbconn->beginTransaction();
-    try {
-        for ($i = 0; $i < count($commandsList); $i++) {
-            $subCommands = Command::ReplaceEnvVariable($commandsList[$i]);
-
-            if (!isset($globalTimer) && Command::getEnvVariable("reporttime", '0')=='1') {
-                $globalTimer = new PerfTimer();
-            }
-
-            foreach ($subCommands as $commandLine) {
-                if(isset($globalTimer)) {
-                    $localTimer = new PerfTimer();
-                }
-                $commandLineSplit = Command::getCommandLineSplit($commandLine);
-                $commandeName = $commandLineSplit[0];
-                $command = $factory->getCommand($commandeName);
-                array_shift($commandLineSplit); //remove first part
-
-                if ($command) {
-                    $command->result = $commandsResults;//@todo create a new result for each command child base system that is compatible with exeptions 
-                    $command->db = $dbconn;
-                    ExecuteCommand($command, $commandLineSplit);
-                } else {
-                    $arg1 = isset($commandLineSplit[0]) ? $commandLineSplit[0] : '';
-                    $commandsResults->Error("Unknown command  {$commandeName} {$arg1}");
-                }
-                if(isset($localTimer)) {
-                    $execTime=$localTimer->stop();
-                    $arg1 = isset($commandLineSplit[0]) ? $commandLineSplit[0] : '';
-                    $commandsResults->Log("Command {$commandeName} {$arg1} executed in " . round($execTime, 3) . " seconds");
-                }
-                if ($commandsResults->hasError()) {
-
-                    if (Command::getEnvVariable("revertMode", "all") == 'all') {
-                        throw new Exception('');
-                    }
-                    $commandsResults->Error('Command ' . $commandeName . ' failed, stopping execution, ' . strval(count($commandsList) - 1 - $i) . ' ommited');
-                    break;
-                }
-            }
-            if ($commandsResults->hasError()) {
-                break;
-            }
-        }
-        $dbconn->commit();
-    } catch (Throwable $e) {
-        if(Command::getEnvVariable("debug", "off") == 'on')
-        {
-            $commandsResults->Error($e->__toString());
-        }
-        if ($e->getMessage() != '') {
-            $commandsResults->Error($e->getMessage());
-
-            $commandsResults->Error('L:'.$e->getLine().' File: '.$e->getFile());
-
-        }
-
-        $commandsResults->Error('faillure revert all changes');
-        $dbconn->rollBack();
-    }
-    finally {
-        if(isset($globalTimer))
-        {
-            $execTime = $globalTimer->stop();
-            $commandsResults->Log('Total execution time : ' . round($execTime, 3) . ' seconds');
-        }
-    }
     // echo results
-    echo json_encode($commandsResults->getResults());
+    echo json_encode($console->commandsResults->getResults());
 
     // history command
     if(!isset($_SESSION['cmdHistory'])){
@@ -171,7 +67,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         $_SESSION['cmdHistory'] = array();
     }
 
-    if(count($commandsList) == 1)
+    if(count($console->commandsList) == 1)
         $_SESSION['cmdHistory'][] = $_POST['cmdLine'];
 
 
@@ -209,7 +105,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
         echo json_encode(['error' => 'unable to write track.csv']);
     }
 
-    foreach($commandsResults as $result){
+    foreach($console->commandsResults as $result){
         $resultTxt = isset($result['message']) ? $result['message'] : 'No result';
         $log = array(
             'mainPlayerId'=>$_SESSION['mainPlayerId']??0,
