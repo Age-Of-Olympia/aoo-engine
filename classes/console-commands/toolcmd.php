@@ -1,4 +1,7 @@
 <?php
+use Classes\AdminCommand;
+use Classes\Argument;
+use Classes\File;
 
 class ToolCmd extends AdminCommand
 {

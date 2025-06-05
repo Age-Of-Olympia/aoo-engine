@@ -1,5 +1,7 @@
 <?php
-Use App\Service\PlayerPnjService;
+use App\Service\PlayerPnjService;
+use Classes\Command;
+use Classes\Argument;
 
 class PnjCmd extends Command
 {

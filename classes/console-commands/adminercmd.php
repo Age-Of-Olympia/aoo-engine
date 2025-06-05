@@ -1,4 +1,5 @@
 <?php
+use Classes\AdminCommand;
 
 class AdminerCmd extends AdminCommand
 {

@@ -1,6 +1,5 @@
 <?php
 use Classes\CommandFactory;
-use ReflectionClass;
 
 function initCommmandFactory() : CommandFactory
 {

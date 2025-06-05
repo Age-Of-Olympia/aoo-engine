@@ -1,4 +1,7 @@
 <?php
+use Classes\Command;
+use Classes\Argument;
+use Classes\Db;
 
 class ActionCmd extends Command
 {

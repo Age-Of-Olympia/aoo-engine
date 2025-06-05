@@ -1,4 +1,7 @@
 <?php
+use Classes\Command;
+use Classes\Argument;
+use Classes\Item;
 
 class RecipeCmd extends Command
 {

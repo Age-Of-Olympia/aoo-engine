@@ -1,4 +1,11 @@
 <?php
+use Classes\Command;
+use Classes\Argument;
+use Classes\Db;
+use Classes\Item;
+use Classes\Player;
+use Classes\Log;
+use Classes\File;
 
 class PlayerCmd extends Command
 {

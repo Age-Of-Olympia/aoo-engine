@@ -1,4 +1,8 @@
 <?php
+use Classes\AdminCommand;
+use Classes\Argument;
+use Classes\File;
+use Classes\Player;
 
 class EditCmd extends AdminCommand
 {

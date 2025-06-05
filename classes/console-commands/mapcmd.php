@@ -1,4 +1,11 @@
 <?php
+use Classes\AdminCommand;
+use Classes\Argument;
+use Classes\Db;
+use Classes\File;
+use Classes\Json;
+use Classes\Player;
+use Classes\View;
 
 class MapCmd extends AdminCommand
 

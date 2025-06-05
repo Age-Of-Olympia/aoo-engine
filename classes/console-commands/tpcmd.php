@@ -1,4 +1,9 @@
 <?php
+use Classes\Command;
+use Classes\Argument;
+use Classes\Db;
+use Classes\Player;
+use Classes\View;
 
 class TpCmd extends Command
 {

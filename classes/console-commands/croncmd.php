@@ -1,5 +1,9 @@
 <?php
 use App\Service\CronService;
+use Classes\AdminCommand;
+use Classes\Argument;
+use Classes\Db;
+
 class CronCmd extends AdminCommand
 {
     public function __construct() {

@@ -1,5 +1,8 @@
 <?php
-
+use Classes\Command;
+use Classes\Argument;
+use Classes\Item;
+use Classes\Json;
 
 class ItemCmd extends Command
 {

@@ -1,4 +1,6 @@
 <?php
+use Classes\Command;
+use Classes\Argument;
 
 class EnvCmd extends Command
 {

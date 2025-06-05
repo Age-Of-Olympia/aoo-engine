@@ -1,5 +1,10 @@
 <?php
-
+use Classes\AdminCommand;
+use Classes\Argument;
+use Classes\Player;
+use Classes\Item;
+use Classes\Exchange;
+use Classes\Command;
 
 class SeasonCmd extends AdminCommand
 {

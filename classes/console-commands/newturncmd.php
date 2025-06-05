@@ -1,4 +1,8 @@
 <?php
+use Classes\Command;
+use Classes\Argument;
+use Classes\Db;
+use Classes\Player;
 
 class NewTurnCmd extends Command
 {

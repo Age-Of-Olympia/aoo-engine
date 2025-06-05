@@ -1,4 +1,5 @@
 <?php
+use Classes\Command;
 
 class TiledCmd extends Command
 {
