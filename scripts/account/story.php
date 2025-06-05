@@ -1,5 +1,6 @@
 <?php
 use Classes\Db;
+
 if(!empty($_POST['text'])){
 
     $sql = 'UPDATE players SET story = ? WHERE id = ?';
