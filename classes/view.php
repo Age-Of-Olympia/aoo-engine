@@ -1083,7 +1083,7 @@ class View{
             AND c.z = ?
             AND c.plan = ?';
 
-        $res = $db->exe($sql, array($coords->z, $coords->plan, $minX, $maxX, $minY, $maxY));
+        $res = $db->exe($sql, array($minX, $maxX, $minY, $maxY, $coords->z, $coords->plan));
 
 
         while ($row = $res->fetch_object()) {
