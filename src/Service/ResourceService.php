@@ -115,7 +115,7 @@ class ResourceService
         $res = $db->exe($sql);
     }
 
-    public static function createExhaustArray($planJson, array &$resourcesIdArray, $row): void
+    public static function createExhaustArray(&$planJson, array &$resourcesIdArray, &$row): void
     {
 
         foreach($planJson->biomes as $e){
@@ -127,10 +127,14 @@ class ResourceService
             }
     }
 
-    public static function createRegrowArray($biome, array &$resourcesIdArray, $row): void
+    public static function createRegrowArray(&$planJson, array &$resourcesIdArray, &$row): void
     {
-        if ($biome->regrow < rand(1, 1000))
-            $resourcesIdArray[] = $row->id;
+        foreach ($planJson->biomes as $e) {
+            if ($e->wall == $row->name) {
+                if ($e->regrow < rand(1, 1000))
+                    $resourcesIdArray[] = $row->id;
+                break;
+            }
+        }
     }
-
 }
