@@ -45,11 +45,11 @@ while ($row = $res->fetch_object()) {
         if ($biome === null) {
             echo 'Biome not found for ressource: ' . $row->name . ' in plan: ' . $row->plan . PHP_EOL;
         }
-        if ($biome === null) {
-            continue;
-        }
-        $resourcesIdArray = ResourceService::createRegrowArray($planJson, $resourcesIdArray, $row);
     }
+    if ($biome === null) {
+        continue;
+    }
+    $resourcesIdArray = ResourceService::createRegrowArray($biome, $resourcesIdArray, $row);
 }
 ResourceService::regrowResources($resourcesIdArray);
 
