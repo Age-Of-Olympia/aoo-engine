@@ -101,8 +101,11 @@ class ResourceService
         $res = $db->exe($sql);
     }
 
-    public static function regrowResources(array $resourcesId): void
+    public static function regrowResources(array &$resourcesId): void
     {
+        if(empty($resourcesId)) {
+            return;
+        }
 
         $sql = '
         UPDATE map_walls
