@@ -132,6 +132,9 @@ class ResourceService
 
     public static function createRegrowArray(&$planJson, array &$resourcesIdArray, &$row): void
     {
+        if(!isset($planJson->biomes)) {
+            return;
+        }
         foreach ($planJson->biomes as $e) {
             if ($e->wall == $row->name) {
                 if ($e->regrow > random_int(1, 1000))

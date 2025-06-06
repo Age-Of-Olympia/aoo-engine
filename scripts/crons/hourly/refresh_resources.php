@@ -25,7 +25,10 @@ $resourcesIdArray = array();
 while ($row = $res->fetch_object()) {
 
     $planJson = json()->decode('plans', $row->plan);
-
+    if (!isset($planJson)) {
+        echo 'Error: planJson not found ' . $row->plan . "\n";
+        continue;
+    }
     ResourceService::createRegrowArray($planJson, $resourcesIdArray, $row);
 }
 ResourceService::regrowResources($resourcesIdArray);
