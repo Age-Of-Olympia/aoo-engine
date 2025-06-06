@@ -1,5 +1,5 @@
 <?php
-
+use App\Service\CronService;
 class CronCmd extends AdminCommand
 {
     public function __construct() {
@@ -14,11 +14,18 @@ EOT);
 
     public function execute(  array $argumentValues ) : string
     {
+
         $path = "scripts/crons/$argumentValues[0].php";
-        
-        if(isset($argumentValues[1])) {
-            $path = "scripts/crons/$argumentValues[0]/$argumentValues[1].php";
+        if (!isset($argumentValues[1])) {
+            if (strpos($argumentValues[0], '/') === false) {
+                $cronService = new CronService();
+                $cronService->executeCron($argumentValues[0]);
+                return '';
+            } else {
+                $path = "scripts/crons/$argumentValues[0]/$argumentValues[1].php";
+            }
         }
+        
 
         if (file_exists($path)) {
 
@@ -33,8 +40,8 @@ EOT);
             echo '<br />cron executé';
             return ob_get_clean();
         } else {
-            return 'unknown cron '.$path.', nothing done';
+            $this->result->Error('Le cron '.$path.' n\'existe pas');
+            return '';
         }
-
     }
 }
