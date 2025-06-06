@@ -49,10 +49,15 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
         }
 
         //Une fois la récolte terminée, on regarde si les ressources s'épuisent
-        $res = ResourceService::getResourcesAround($actor);
+        $res = ResourceService::getResourcesAround($actor); //TODO refactor this to avoid double query
         $resourcesIdArray = [];
+        $countTryExhaust=0;
         while($row = $res->fetch_object()){
-             $resourcesIdArray = ResourceService::createExhaustArray($planJson, $resourcesIdArray, $row, $rand);
+            $countTryExhaust++;
+             ResourceService::createExhaustArray($planJson, $resourcesIdArray, $row, $rand);
+             if($countTryExhaust >= $rand) { // On ne veut pas épuiser plus de ressources que le nombre de ressources récoltées
+                 break;
+             }
         }
     
         if(!empty($resourcesIdArray)){
