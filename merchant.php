@@ -84,7 +84,7 @@ elseif(isset($_GET['inventory'])){
     </script>
     <?php
 
-
+    $itemsFromBank = false;
     include('scripts/inventory.php');
 }
 else{

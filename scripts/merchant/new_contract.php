@@ -12,7 +12,7 @@ if(isset($_GET['bids'])){
     </script>
     <?php
 
-
+    $itemsFromBank = true;
     include('scripts/inventory.php');
 }
 

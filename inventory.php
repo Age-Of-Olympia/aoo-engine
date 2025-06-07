@@ -35,5 +35,5 @@ if(isset($_GET['craft'])){
     exit();
 }
 
-
+$itemsFromBank = false;
 include('scripts/inventory.php');

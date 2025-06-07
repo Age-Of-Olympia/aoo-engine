@@ -27,30 +27,20 @@ if(!empty($_POST['action'])){
 
 $path = 'datas/private/players/'. $_SESSION['playerId'] .'.invent.html';
 
-if(!file_exists($path) || !CACHED_INVENT){
+$player = new Player($_SESSION['playerId']);
 
+$itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
+$data = Ui::print_inventory($itemList);
+$data .= '
+<script>
+window.freeEmp = '. Item::get_free_emplacement($player) .';
+window.aeLeft = '. $player->getRemaining('ae') .';
+</script>
+';
 
-    $player = new Player($_SESSION['playerId']);
-
-    $itemList = Item::get_item_list($player->id);
-
-    $data = Ui::print_inventory($itemList);
-
-    $data .= '
-    <script>
-    window.freeEmp = '. Item::get_free_emplacement($player) .';
-    window.aeLeft = '. $player->getRemaining('ae') .';
-    </script>
-    ';
-
-    $myfile = fopen($path, "w") or die("Unable to open file!");
-    fwrite($myfile, $data);
-    fclose($myfile);
-}
-else{
-
-    $data = file_get_contents($path);
-}
+$myfile = fopen($path, "w") or die("Unable to open file!");
+fwrite($myfile, $data);
+fclose($myfile);
 
 echo $data;
 
