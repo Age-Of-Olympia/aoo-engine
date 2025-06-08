@@ -1,8 +1,6 @@
 <?php
 use Classes\Db;
 
-require_once("classes/db.php");
-
 $db = new Db();
 
 
