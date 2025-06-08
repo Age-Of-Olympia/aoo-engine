@@ -6,4 +6,4 @@ export HOME="/home/$(whoami)" \
 && cd ~/public_html/ \
 && ~/bin/composer install \
 && ~/bin/composer dump-autoload \
-&& cp -ra ~/aoo-engine/{*.html,*.php,admin,api,checks,config,classes,css,js,scripts,src} ~/public_html/
+&& cp -ra ~/aoo-engine/{*.html,*.php,admin,api,checks,config,Classes,css,js,scripts,src} ~/public_html/

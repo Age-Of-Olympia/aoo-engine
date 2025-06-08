@@ -5,8 +5,8 @@ function initCommmandFactory() : CommandFactory
 {
     $factory = new CommandFactory();
 
-    // Register all commands in classes/console-commands
-    foreach (glob(dirname(__DIR__). '/classes/console-commands/*cmd.php' ) as $filename) {
+    // Register all commands in Classes/console-commands
+    foreach (glob(dirname(__DIR__). '/Classes/console-commands/*cmd.php' ) as $filename) {
         require_once $filename;
 
         $className = basename($filename, '.php');
