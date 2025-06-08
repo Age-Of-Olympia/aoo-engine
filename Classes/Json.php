@@ -1,7 +1,7 @@
 <?php
 namespace Classes;
 
-class json{
+class Json{
     public ?string $id = null;
     private $paths;
     public function decode($type, $name){
