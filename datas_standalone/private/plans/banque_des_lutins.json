@@ -20,11 +20,27 @@
     "biomes": [
         {
             "wall": "arbre3",
-            "ressource": "bois"
+            "ressource": "bois",
+            "exhaust": 75,
+            "regrow": 20
+        },
+        {
+            "wall": "pierre1",
+            "ressource": "pierre",
+            "exhaust": 75,
+            "regrow": 20
+        },
+        {
+            "wall": "pierre2",
+            "ressource": "pierre",
+            "exhaust": 75,
+            "regrow": 20
         },
         {
             "wall": "pierre3",
-            "ressource": "pierre"
+            "ressource": "pierre",
+            "exhaust": 75,
+            "regrow": 20
         }
     ]
 }
