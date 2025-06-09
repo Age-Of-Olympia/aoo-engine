@@ -376,6 +376,7 @@ define('LOOT_CHANCE_DEFAULT', 20);
 
 
 define('LOOT_CHANCE', array(
+    'or'=>200,
     'anneau_caprice'=>200,
     'anneau_ferocite'=>200,
     'anneau_finesse'=>200,

@@ -1729,26 +1729,16 @@ class Player implements ActorInterface {
 
 
             // perform loot
-            if(rand(1,100) <= $lootChance){
-
-
-                // rand loot n
-                $lootN = floor($row->n * $lootChance / 100);
-
-                if($lootN < 0) $lootN = 1;
-
-                if($lootN > $row->n) $lootN = $row->n;
-
-                if($lootN > 0){
-
-
-                    // drop
-                    $this->drop($loot, $lootN);
-
-                    // populate lootList
-                    $lootList[] = $loot->data->name .' x'. $lootN;
-                }
+            $nbLoot = 0;
+            for ($i = 0; $i < $row->n; $i++) {
+                if(random_int(1,100) <= $lootChance){
+                    $nbLoot++;
+                }    
             }
+            $this->drop($loot, $nbLoot);
+
+            // populate lootList
+            $lootList[] = $loot->data->name .' x'. $nbLoot;
         }
 
         if(count($lootList)){
