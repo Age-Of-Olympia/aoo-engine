@@ -2168,9 +2168,6 @@ class Player implements ActorInterface {
         $this->data->email_bonus = $fields['email_bonus'] ?? false;
 
         // Set inactive status using playerService
-        $this->data->isInactive = $this->playerService->isInactive($this->data->lastLoginTime);
-
-        // Set inactive status using playerService
         $this->data->isInactive = $this->id > 0 ? $this->playerService->isInactive($this->data->lastLoginTime) : false;
 
         $pathInfo = pathinfo($this->data->portrait);
