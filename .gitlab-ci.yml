@@ -89,40 +89,28 @@ stan_job:
 
 sqlmap_security_test:
   stage: security
-  image: docker/compose:latest
+  tags:
+    - docker-aoo
+  services:
+    - name: docker:dind
   variables:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
+    FF_NETWORK_PER_BUILD: "true"
+    DOCKER_BUILDKIT: 1
+    COMPOSE_DOCKER_CLI_BUILD: 1
     UID: "1000"
     GID: "1000"
-    DB_NAME: "aoo4_test"
-    AOO_GAME_DATA: "./datas"
-    DB_CONFIG: "./config/db_constants.php"
-    AOO_GAME_IMG: "./img"
+    DB_NAME: "aoo4"
   before_script:
-    - apk add --no-cache make python3 py3-pip docker curl
-    - pip3 install requests urllib3
-    # Create required directories and files
-    - mkdir -p tmp/security datas img config
-    - cp -r datas_standalone/* datas/ 2>/dev/null || echo "datas_standalone not found, creating empty datas"
-    - cp -r img_standalone/* img/ 2>/dev/null || echo "img_standalone not found, creating empty img"
-    - cp config/db_constants.php.exemple config/db_constants.php 2>/dev/null || echo "Using existing config"
-    - cp .env.dist .env 2>/dev/null || echo "Using existing .env"
+    - apk add --no-cache docker-compose make
   script:
-    - echo "Starting docker-compose services..."
-    - docker-compose up -d
-    - echo "Waiting for services to be ready..."
-    - sleep 45
-    - docker-compose ps
-    - echo "Checking web server health..."
-    - timeout 60 sh -c 'until curl -f http://localhost:9000 >/dev/null 2>&1; do echo "Waiting for web server..."; sleep 5; done' || echo "Web server check failed, continuing anyway"
-    - echo "Running SQLMap security tests..."
-    - make sqlmap
+    - make setup-ci-env
+    - docker-compose up -d webserver mariadb-aoo4
+    - docker-compose exec -T webserver make sqlmap-login
+    - docker-compose exec -T webserver make sqlmap-register
+    - docker cp PHP-AOO4-Local:/var/www/html/tmp/security ./tmp/ 2>/dev/null || true
   after_script:
-    - echo "Collecting logs..."
-    - docker-compose logs webserver || true
-    - docker-compose logs mariadb-aoo4 || true
-    - echo "Stopping services..."
     - docker-compose down -v || true
   artifacts:
     when: always

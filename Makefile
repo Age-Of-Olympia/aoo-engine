@@ -1,8 +1,15 @@
-.PHONY: all phpstan test test-ci coverage testf
+.PHONY: all phpstan test test-ci coverage testf setup-ci-env
 
 PHPUNIT = XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
 
 all: phpstan test coverage
+
+setup-ci-env:
+	mkdir -p datas img config tmp
+	cp -r datas_standalone/* datas/ 2>/dev/null || echo "No datas_standalone found"
+	cp -r img_standalone/* img/ 2>/dev/null || echo "No img_standalone found"
+	cp config/db_constants.php.exemple config/db_constants.php 2>/dev/null || echo "Config already exists"
+	cp .env.dist .env 2>/dev/null || echo ".env already exists"
 
 phpstan:
 	./vendor/bin/phpstan analyse -c phpstan.neon --memory-limit 1G
