@@ -8,7 +8,7 @@ $infos ='';
 $db = new Db();
 $sql = "select coords_id as coords_id, 'map_tiles' as type, name as name, NULL as params from map_tiles where coords_id = ?
 union
-select  coords_id as coords_id, 'map_walls' as type, name as name, NULL as params from map_walls where coords_id = ?
+select  coords_id as coords_id, 'map_walls' as type, name as name, CONCAT('damages = ', damages) as params from map_walls where coords_id = ?
 union
 select  coords_id as coords_id, 'map_triggers' as type, name as name, params as params from map_triggers where coords_id = ?
 union

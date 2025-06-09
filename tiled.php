@@ -73,6 +73,12 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
         include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/tile_info.php';
         exit('infos');
     }
+    
+    if($_POST['type'] == 'harvest_mode'){
+        //TODO here update to -1 if -2 or 0 update to -2 if needed
+        include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/tile_harvest_mode.php';
+        exit('harvest');
+    }
 
     include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/erase_or_create_tile.php';
 

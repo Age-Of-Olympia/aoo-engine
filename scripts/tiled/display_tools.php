@@ -25,14 +25,20 @@ echo '
     />
     
 <img
+    class="map harvest_mode select-name"
+    data-type="harvest_mode"
+    data-params="harvest_mode"
+    data-name="harvest_mode"
+    src="img/tools/scythe.png"
+    />
+    
+<img
     class="map info select-name"
     data-type="infos"
     data-params="info"
     data-name="info"
     src="img/tools/glass.png"
-    />
-    
-    
+    />    
 ';
 
 echo '<div>Params: <input type="text" id="dialogs-params" /></div>';

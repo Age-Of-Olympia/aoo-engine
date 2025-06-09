@@ -21,10 +21,14 @@ foreach(File::scan_dir('img/walls/', $without=".png") as $e){
     echo '<img
         class="map wall select-name"
         data-type="walls"
+        data-params="damages"
         data-name="'. $e .'"
         src="'. $url .'"
     />';
+
+    
 }
+echo '<div>Damages: <input type="text" id="walls-params" /></div>';
 
 echo '
 </div>
