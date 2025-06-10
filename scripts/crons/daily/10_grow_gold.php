@@ -37,7 +37,7 @@ if ($res) {
 // update bank
 $sql = '
 UPDATE players_items_bank
-SET n = n + ' . $gain . '
+SET n = n +  LEAST(FLOOR(n * '. BANK_PCT .' / 100),5)
 WHERE '. $where .'
 ';
 
