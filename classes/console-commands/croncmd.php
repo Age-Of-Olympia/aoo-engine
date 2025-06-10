@@ -15,15 +15,17 @@ EOT);
     public function execute(  array $argumentValues ) : string
     {
 
-        $path = "scripts/crons/$argumentValues[0].php";
         if (!isset($argumentValues[1])) {
             if (strpos($argumentValues[0], '/') === false) {
                 $cronService = new CronService();
                 $cronService->executeCron($argumentValues[0]);
                 return '';
             } else {
-                $path = "scripts/crons/$argumentValues[0]/$argumentValues[1].php";
+                        $path = "scripts/crons/$argumentValues[0].php";
             }
+        }
+        else{
+             $path = "scripts/crons/$argumentValues[0]/$argumentValues[1].php";
         }
         
 
