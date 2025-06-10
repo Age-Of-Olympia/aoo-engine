@@ -8,7 +8,8 @@ class CronCmd extends AdminCommand
 Permet de jouer un cron manuellement
 Exemple:
 > cron daily/archive_logs
-> cron "" daily
+> cron daily 10_grow_gold
+> cron daily
 EOT);
     }
 
