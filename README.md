@@ -17,7 +17,17 @@ Pour que l'environnement fonctionne correctement, il faut installer les pré-req
 
 ### Démarrage
 
-Une fois ce dépôt cloné, le fait de l'ouvrir dans vscode devrait ouvrir le pop-up suivant : 
+Clonez le dépot aoo-engine. Le dépot aoo-game_data n'est pas necessaire au fonctionnement. 
+(Sur Windows, utilisez WSL pour cloner le dépot)
+
+À la racine, dupliquez le fichier `.env.dist`, puis renommez le `.env`.
+Dans `/config/`, supprimez le dossier `db_constant.php` puis cpiez le fichier `db_constants.php.exemple` et renommez le `db_constants.php`.
+Ouvrez le puis ajoutez :
+
+    'driver' => 'mysqli',
+	'charset'=> 'utf8'
+
+Une fois ce dépôt cloné et les modifications précédentes effectuées, le fait de l'ouvrir dans vscode devrait ouvrir le pop-up suivant : 
 
 ![popup qui propose la réouverture du projet avec les Dev Containers](./docs/images/open_devcontainer.png)
 
@@ -56,7 +66,7 @@ sauvegardez et vous être prêt !
 
 ### Premiers pas sur le jeu
 
-Pour pouvoir lancer le jeu, il faut copier les repertoires `datas_standalone` et `img_standalone` respectivement vers les dossiers `datas` et `img`.
+Pour pouvoir lancer le jeu, il faut copier les repertoires que l'on trouve dans `datas_standalone` et `img_standalone` respectivement vers les dossiers `datas` et `img`.
 
 Le fichier `db/init_noupdates.sql` est lancé par le `docker-compose.yml` automatiquement pour peupler la base.
 
