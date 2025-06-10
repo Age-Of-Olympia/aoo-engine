@@ -24,16 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // artJson
             $artJson = $json->decode('items', $artName);
 
-
             // crafted by n
             $craftedByN = $reciep->GetCraftedByN();
-
-
-            // script when crafted
-            if (file_exists('item/craft_script/' . $artName . '.php')) {
-                include('item/craft_script/' . $artName . '.php');
-            }
-
 
             // craft
             foreach ($recipeIngredients as $ingredient) {
@@ -44,19 +36,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // remove item recipe
                 $itemRecipe = new Item($ingredient->id);
-                $itemRecipe->add_item($player, -$ingredient->n);
+                
+                if(!$itemRecipe->add_item($player, -$ingredient->n)) {
+                    ExitError("Vous n\'avez pas assez de {$ingredient->name} pour créer {$artName}");
+                }
             }
-
 
             $itemCrafted = Item::get_item_by_name($artName);
             $itemCrafted->add_item($player, $craftedByN);
             
             $db->commit();
-            ExitSuccess('Vous avez créé ' . $artName . '('.$craftedByN.')');
+            ExitSuccess("Vous avez créé {$artName} ({$craftedByN})");
         } catch (Exception $e) {
             $db->rollback();
-            ExitError('Erreur lors de la création de l\'objet: ' . $e->getMessage());
-           
+            ExitError("Erreur lors de la création de l\'objet: {$e->getMessage()}");
         }
 } else {
 
