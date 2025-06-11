@@ -35,7 +35,11 @@ EOT);
 
 
         $data = Json::encode( (object)$scripts);
-        Json::write_json('datas/private/scripts/'.$mainaccount.'.json', $data);
+        $folder = 'datas/private/console/scripts/';
+        if(!file_exists($folder)){
+            mkdir($folder, 0755,true);
+        }
+        Json::write_json($folder.$mainaccount.'_scripts.json', $data);
         $this->result->Log('Script saved successfully.');
         return '';
     }

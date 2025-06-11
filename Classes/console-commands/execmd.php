@@ -23,7 +23,7 @@ EOT);
             $this->result->Error('You must be logged in to execute a script.');
             return '';
         }
-        $script = json()->decode('scripts', $mainaccount);
+        $script = json()->decode('console/scripts', $mainaccount.'_scripts');
         if($script === false ) {
             $this->result->Error("Script '$name' not found.");
             return '';
