@@ -1,4 +1,9 @@
 <?php
+namespace Classes;
+use Exception;
+use ErrorException;
+use Error;
+use Throwable;
 class Console
 {
    public $commandsResults;

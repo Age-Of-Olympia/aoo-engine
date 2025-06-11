@@ -1,7 +1,5 @@
 <?php
-use Classes\Command;
-use Classes\CommandResult;
-use Classes\PerfTimer;
+use Classes\Console;
 
 define('NO_LOGIN', true);
 
