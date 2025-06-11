@@ -1,5 +1,8 @@
 <?php 
-class ExeCmd extends AdminCommand
+use Classes\Command;
+use Classes\Argument;
+
+class ExeCmd extends Command
 {
     public function __construct() {
         parent::__construct("exe",[new Argument('name',false)]);

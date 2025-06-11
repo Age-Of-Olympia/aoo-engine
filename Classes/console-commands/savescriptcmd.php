@@ -1,5 +1,9 @@
 <?php 
-class SavescriptCmd extends AdminCommand
+use Classes\Command;
+use Classes\Argument;
+use Classes\Json;
+
+class SavescriptCmd extends Command
 {
     public function __construct() {
         parent::__construct("savescript",[new Argument('name',false),new Argument('script',false)]);
