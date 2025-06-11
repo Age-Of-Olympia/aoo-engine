@@ -1,11 +1,10 @@
 <?php
 use Classes\Console;
+use Classes\CommandFactory;
 
 define('NO_LOGIN', true);
 
 require_once('config.php');
-require_once('config/config-console.php');
-
 
 // check session
 if(!isset($_SESSION['playerId'])){
@@ -35,7 +34,7 @@ if(!empty($_POST['cmdHistory'])){
 if (isset($_POST['cmdLine']) && isset($_POST['completion'])){
     $inputString = $_POST['cmdLine'];
 
-    $factory = initCommmandFactory();
+    $factory = CommandFactory::initCommmandFactory();
 
 
     if(sizeof($factory->getCommandsStartingWith($inputString))>0){

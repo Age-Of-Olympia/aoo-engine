@@ -8,11 +8,11 @@ class Console
 {
    public $commandsResults;
    public $commandsList;
-   private $factory;
+   private ?CommandFactory $factory;
    private $dbconn;
     public function InitAndExec($inputString)
     {
-        $this->factory = initCommmandFactory();
+        $this->factory = CommandFactory::initCommmandFactory();
 
         $GLOBALS['consoleENV'] = ['self' => $_SESSION['playerId']];
         $this->commandsResults = new CommandResult();
@@ -48,7 +48,7 @@ class Console
         }
     }
 
-    private function ExecuteCommand($command, $commandLineSplit)
+    private function ExecuteCommand(Command $command, $commandLineSplit)
     {
         if (isset($commandLineSplit[0]) && ($commandLineSplit[0] === 'help' || $commandLineSplit[0] === '--help')) {
             $result = '<a href="https://age-of-olympia.net/wiki/doku.php?id=v4:console#' . $command->getName() . '">' . $command->getName() . '</a> ' . $command->printArguments() . "<br/>"

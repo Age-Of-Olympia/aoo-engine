@@ -1,5 +1,6 @@
 <?php
-
+use Classes\CommandFactory;
+require_once('config.php');
 echo '<textarea style="width: 100vw; height: 50vw;">';
 
 echo '====== Console ======
@@ -9,9 +10,7 @@ En jeu, connecté avec votre compte Admin, appuyez sur ² pour afficher la conso
 Voici la liste des commandes disponibles (* paramètres optionnels)
 ';
 
-require_once('config/config-console.php');
-
-$factory = initCommmandFactory();
+$factory = CommandFactory::initCommmandFactory();
 $result = array();
 
 foreach ($factory->getCommands() as $command ){
