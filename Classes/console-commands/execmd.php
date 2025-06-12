@@ -16,26 +16,26 @@ EOT);
     public function execute(  array $argumentValues ) : string
     {
 
-        $name = $argumentValues[0];
+        $name = strtolower($argumentValues[0]);
         //$script = $argumentValues[1];
         $mainaccount = $_SESSION['mainPlayerId'];
         if(!isset($mainaccount) || $mainaccount == 0) {
-            $this->result->Error('You must be logged in to execute a script.');
+            $this->result->Error('vous devez être connecté pour executer un script.');
             return '';
         }
-        $script = json()->decode('console/scripts', $mainaccount.'_scripts');
-        if($script === false ) {
+        $scripts = json()->decode('console/scripts', $mainaccount.'_scripts');
+        if($scripts === false ) {
             $this->result->Error("Script '$name' not found.");
             return '';
         }
-        $script = (array)$script;
+        $scripts = (array)$scripts;
 
-        if(!isset($script[$name])) {
+        if(!isset($scripts[$name])) {
             $this->result->Error("Script '$name' not found.");
             return '';
         }
 
-         $commandsList = Command::getCommandsFromInputString($script[$name]);
+         $commandsList = Command::getCommandsFromInputString($scripts[$name]);
 
         if (count($commandsList) == 0) {
             $this->result->Error("Failed to parse command line for script '$name'");

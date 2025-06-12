@@ -17,11 +17,15 @@ EOT);
     public function execute(  array $argumentValues ) : string
     {
 
-        $name = $argumentValues[0];
+        $name = strtolower($argumentValues[0]);
         $newscript = $argumentValues[1];
+        if(empty($name) || empty($newscript)){
+            $this->result->Error('vous devez fournir un nom et un contenu pour sauvgarder un script.');
+            return '';
+        }
         $mainaccount = $_SESSION['mainPlayerId'];
         if(!isset($mainaccount) || $mainaccount == 0) {
-            $this->result->Error('You must be logged in to save a script.');
+            $this->result->Error('vous devez être connecté pour sauvgarder un script.');
             return '';
         }
         $scripts = json()->decode('scripts', $mainaccount);
