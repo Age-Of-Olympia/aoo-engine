@@ -7,6 +7,8 @@ require_once('config.php');
 $player = new Player($_SESSION['playerId']);
 $player->getCoords();
 
+include $_SERVER['DOCUMENT_ROOT'] . '/checks/admin-check.php';
+
 if(!empty($_POST['delete'])){
     $coordsId = $_POST['coord-id'];
     $type = $_POST['type'];
@@ -114,7 +116,7 @@ echo '
 
 </style>
 
-<div style="float: left;">
+<div style="float: left; width: 85%;">
 <script src="js/modal.js"></script>
 
 ';
