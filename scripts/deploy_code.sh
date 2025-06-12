@@ -1,4 +1,4 @@
-echo -e "$(date)\n "
+echo "$(date)<br>"
 cd ~/aoo-engine \
 && git pull \
 && git log --oneline -1
