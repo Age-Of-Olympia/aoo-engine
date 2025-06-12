@@ -14,7 +14,7 @@ class Console
     {
         $this->factory = CommandFactory::initCommmandFactory();
 
-        $GLOBALS['consoleENV'] = ['self' => $_SESSION['playerId']];
+        $GLOBALS[consoleEnvKey] = ['self' => $_SESSION['playerId']];
         $this->commandsResults = new CommandResult();
         $this->dbconn = db();
         $this->dbconn->beginTransaction();

@@ -100,7 +100,7 @@ abstract class Command
     public static function ReplaceEnvVariable($commandLine){
         $subCommands= array();
         $didAnArray=false;
-        foreach ($GLOBALS['consoleENV'] as $key => $value) {
+        foreach ($GLOBALS[consoleEnvKey] as $key => $value) {
             $needle = '{'.$key.'}';
             if(strpos($commandLine, $needle) !== false){
                 if(is_array($value)){
@@ -124,15 +124,15 @@ abstract class Command
     }
     public static function GetEnvVariable($name, $defaultValue)
     {
-        if(isset($GLOBALS['consoleENV'][$name]))
-            return $GLOBALS['consoleENV'][$name];
+        if(isset($GLOBALS[consoleEnvKey][$name]))
+            return $GLOBALS[consoleEnvKey][$name];
 
             return $defaultValue;
     }
 
     public static function SetEnvVariable($name, $newValue)
     {
-        $GLOBALS['consoleENV'][$name]=$newValue;
+        $GLOBALS[consoleEnvKey][$name]=$newValue;
     }
 
     abstract public function execute(  array $argumentValues ): string;

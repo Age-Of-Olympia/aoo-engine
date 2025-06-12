@@ -415,6 +415,7 @@ define('MAX_XP_FOR_STEALING', 3);
 
 define('ERROR_DISTANCE', "Vous n'êtes pas à bonne distance.");
 
+define('consoleEnvKey', 'consoleENV');
 
 /*
  * debug & test

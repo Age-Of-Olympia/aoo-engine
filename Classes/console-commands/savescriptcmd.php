@@ -3,12 +3,12 @@ use Classes\Command;
 use Classes\Argument;
 use Classes\Json;
 
-class SavescriptCmd extends Command
+class SaveScriptCmd extends Command
 {
     public function __construct() {
         parent::__construct("savescript",[new Argument('name',false),new Argument('script',false)]);
         parent::setDescription(<<<EOT
-sauvegardeunscript dans votre compte principal ( le compte avec lequel vous êtes connecté ).
+sauvegarde un script dans votre compte principal ( le compte avec lequel vous êtes connecté ).
 Exemple:
 > saveScript backhome "tp {self} birdland""
 EOT);

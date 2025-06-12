@@ -7,10 +7,11 @@ class CommandFactory
     private $commands = [];
 
     public function register(Command $command) {
-        $this->commands[$command->getName()] = $command;
+        $this->commands[strtolower($command->getName())] = $command;
     }
 
     public function getCommand($commandName):?Command {
+        $commandName = strtolower($commandName);
         if (array_key_exists($commandName, $this->commands)) {
             return $this->commands[$commandName];
         }
@@ -19,7 +20,8 @@ class CommandFactory
 
     public function getCommandsStartingWith($prefix) : array{
         $matchingCommands = [];
-
+        $prefix = strtolower($prefix);
+        
         foreach ($this->commands as $commandName => $command) {
             if (strpos($commandName, $prefix) === 0) {
                 $matchingCommands[] = $command->getName();

@@ -2,7 +2,7 @@
 use Classes\Console;
 use Classes\CommandFactory;
 
-define('NO_LOGIN', true);
+define('NO_LOGIN', true);//session check est fait après car c'est un appel api et on ne veut pas d'ui
 
 require_once('config.php');
 
