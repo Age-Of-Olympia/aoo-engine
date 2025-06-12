@@ -4,7 +4,7 @@ cd ~/aoo-engine \
 && git log --oneline -1
 export HOME="/home/$(whoami)" \
 && cd ~/public_html/ \
-&& echo -e "copie des fichier composer :\n " \
+&& echo -e "copie des fichiers composer :\n " \
 && cp -rav ~/aoo-engine/{composer.json,composer.lock} ~/public_html/ \
 && echo -e "composer install + generation autoload :\n " \
 && ~/bin/composer install \
