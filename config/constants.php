@@ -372,7 +372,7 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
 ));
 
 
-define('LOOT_CHANCE_DEFAULT', 20);
+define('LOOT_CHANCE_DEFAULT', 30);
 
 
 define('LOOT_CHANCE', array(
@@ -385,6 +385,16 @@ define('LOOT_CHANCE', array(
     'anneau_puissance'=>200,
     'anneau_souplesse'=>200,
     'anneau_tenacite'=>200,
+    'bois_petrifie'=>50,
+    'cuivre'=>50,
+    'cendre'=>50,
+    'fer'=>50,
+    'tourbe'=>50,
+    'cuir'=>80,
+    'etain'=>80,
+    'nickel'=>80,
+    'pierre_mana'=>80,
+    'salpetre'=>80,
 ));
 
 
