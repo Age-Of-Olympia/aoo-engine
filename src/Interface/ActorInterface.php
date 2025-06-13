@@ -9,7 +9,7 @@ interface ActorInterface
 {
   public function getId(): int;
   public function haveEffect(string $name): int;
-  public function addEffect($name, $duration=0): void;
+  public function addEffect($name, $duration=0, bool $stackable=false, int $value=1): void;
   public function endEffect(string $name): void;
   public function have_option(string $name): int;
   public function have_effects_to_purge(): bool;

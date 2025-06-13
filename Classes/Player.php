@@ -468,7 +468,7 @@ class Player implements ActorInterface {
         return $this->have('effects', $name);
     }
 
-    public function addEffect($name, $duration=0): void{
+    public function addEffect($name, $duration=0, bool $stackable=false, int $value=1): void{
 
 
         // effect exists
@@ -489,19 +489,34 @@ class Player implements ActorInterface {
             $endTime = time() + $duration;
         }
 
+        $sql = '
+        SELECT value 
+        FROM players_effects
+        WHERE player_id = ? AND name = ?';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, array($this->id, $name));
+        $row = $res->fetch_object();
+        if($stackable){
+            $value = $row->value + $value; // On additionne la valeur à celle déjà présente si stackable
+        }
+        else{
+            $value = max($value, $row->value); // Sinon, on prend la valeur maximale entre l'effet (si présent) et la nouvelle valeur
+        }
 
         $sql = '
         INSERT INTO
         players_effects
-        (player_id, name, endTime)
-        VALUES (?, ?, ?)
+        (player_id, name, endTime, value)
+        VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
         endTime = VALUES(endTime);
         ';
 
         $db = new Db();
 
-        $db->exe($sql, array($this->id, $name, $endTime));
+        $db->exe($sql, array($this->id, $name, $endTime, $value));
 
 
         // element control
@@ -983,7 +998,7 @@ class Player implements ActorInterface {
                 if($val < 0){
 
 
-                    $this->put_malus(MALUS_PER_DAMAGES);
+                    //$this->put_malus(MALUS_PER_DAMAGES);
 
                     // add blood on floor
                     Element::put('sang', $this->data->coords_id);

@@ -48,9 +48,7 @@ class ComputeCondition extends BaseCondition
 
         $result = $this->computeAttack($actor, $target);
 
-        if (!$result->isSuccess()) {
-            $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
-        }
+        $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
 
         return $result;
     }
@@ -89,11 +87,17 @@ class ComputeCondition extends BaseCondition
     {
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
-        $actorTotal = array_sum($actorRoll);
+        $actorMaladresse = $actor->get_effect_value("maladresse");
+        $maladresse = isset($actorMaladresse->value) ? $actorMaladresse->value : 0;
+        $bonus = isset($actorRollBonus) ? $actorRollBonus : 0;
+        $totalOther = $bonus - $maladresse;
+        $tooltipOtherTxt = (isset($actorMaladresse->value) ? 'Maladresse : -' . $maladresse . ' ' : '') . (isset($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '');
+        $actorTotal = array_sum($actorRoll) + $totalOther;
+        $actorOtherTxt = ($totalOther != 0) ? (($totalOther > 0) ? ' + '. $totalOther .' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : ' - '. abs($totalOther) .' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)') : '';
         $distanceMalus = $this->getDistanceMalus();
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
-        $actorTotalTxt = $distanceMalus ? ' = '. $actorTotal : '';
+        $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal : '';
         $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = '. array_sum($actorRoll) . $distanceMalusTxt . $actorTotalTxt;
 
         return array($actorRoll, $actorTotal, $actorTxt);

@@ -14,7 +14,7 @@ class MalusOutcomeInstruction extends OutcomeInstruction
     public function execute(Player $actor, Player $target): OutcomeResult {
         $params =$this->getParameters();
         $to = $param["to"] ?? "target";
-        $malus = $params["malus"] ?? 1;
+        $malus = $params["malus"] ?? random_int(1,3);
 
         if ($to == "target") {
             $target->put_malus($malus);
@@ -22,7 +22,10 @@ class MalusOutcomeInstruction extends OutcomeInstruction
             $actor->put_malus($malus);
         }
 
-        return new OutcomeResult(true, array(), array());
+        $outcomeMalusMessages = array();
+        $outcomeMalusMessages[0] = 'Votre action inflige '.$malus.' malus à ' . $target->data->name . '.';
+
+        return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
     }
 
 }

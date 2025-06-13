@@ -113,6 +113,7 @@ define('EFFECTS_RA_FONT', array(
     'corruption_du_cuir'=>'ra-biohazard',
 
     'vol'=>'ra-feather-wing',
+    'maladresse'=>'ra-player-pain',
 
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',
@@ -145,7 +146,8 @@ define('EFFECTS_TXT', array(
     'corruption_du_plantes'=>'Corruption des plantes<br />Augmente le risque que le matériel contenant des plantes (Adonis) se casse.',
     'corruption_du_cuir'=>'Corruption du Cuir<br />Augmente le risque que le matériel contenant du Cuir se casse.',
 
-    'vol'=>"Vol<br />Permet de se déplacer dans les airs."
+    'vol'=>"Vol<br />Permet de se déplacer dans les airs.",
+    'maladresse'=>"Maladresse<br /> Réduit les jets de touche de 1 par charge de Maladresse."
 ));
 
 
@@ -168,6 +170,10 @@ define('ELE_DEBUFFS', array(
     'styx'=>'mvt',
     'sang'=>'fm',
     'lave'=>'a',
+));
+
+define('EFFECT_DEBUFFS', array(
+    'maladresse'=>0
 ));
 
 define('ELE_CONTROLS', array(

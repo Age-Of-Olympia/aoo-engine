@@ -73,6 +73,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
             $target->putBonus(array('pv'=>-$totalDamages));
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
+
             $bonusDamagesText = "";
             if ($bonusDamages > 0) {
                 $bonusText = '';
@@ -94,6 +95,10 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 $distanceText = ' - '. $cellCount. ' (distance)';
             }
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
+
+            $recoverMalus = floor($totalDamages/2);
+            $target->put_malus(-$recoverMalus);
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' récupère '. $recoverMalus .' malus grâce aux dégâts subits.';
 
             // put assist
             $actor->put_assist($target, $totalDamages);
