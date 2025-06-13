@@ -107,8 +107,8 @@ describe.skip('Configuration Page Tests', function () {
 Run tests using npm:
 
 ```bash
-cd selenium_tests
-npm test
+make selenium-install # Install dependencies
+make e2e
 ```
 
 ### Headless Mode

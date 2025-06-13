@@ -6,6 +6,7 @@ This project uses GitLab CI/CD for automated testing, code quality checks. The p
 - Build: Creates Docker images
 - Stan: Static analysis
 - Test: Unit tests with coverage
+- Security: SQLMap security tests
 
 
 ## Local Development
@@ -16,6 +17,7 @@ This project uses GitLab CI/CD for automated testing, code quality checks. The p
 - Make
 - Git
 - Composer
+- Python (for SQLMap)
 
 ### Setting Up Local Environment
 
@@ -32,6 +34,9 @@ Use Make commands to run various tests:
 # Run tests
 make test
 
+# Run test wiht filter
+make testf "TestClassName"
+
 # Run tests with coverage
 make coverage
 
@@ -40,6 +45,12 @@ make phpstan
 
 # Run all tests, coverage, and PHPStan
 make all
+
+# SqlMap login security testing
+make sqlmap-login
+
+# SqlMap register security testing
+make sqlmap-register
 ```
 
 ## CI/CD Pipeline Structure
@@ -102,10 +113,16 @@ stan_job:
 | Command | Description |
 |---------|------------|
 | `make test` | Runs PHPUnit tests |
+| `make testf "TestClassName"` | Runs PHPUnit tests with a specific filter |
 | `make test-ci` | Runs tests with coverage for CI |
 | `make phpstan` | Runs PHPStan analysis |
 | `make phpstan-ci` | Runs PHPStan for CI environment |
 | `make coverage` | Generates coverage report |
+| `make all` | Runs all tests, coverage, and PHPStan analysis |
+| `setup-ci-env` | Sets up app for run in the ci |
+| `sqlmap-login` | SQLMap login security testing |
+| `sqlmap-register` | SQLMap register security testing |
+
 
 ## Docker Configuration
 
@@ -127,7 +144,7 @@ docker build -t test-image -f gitlab-ci/Dockerfile.test .
 ```mermaid
 graph TD
     Start[Push to Repository] --> CheckImage{Docker Image Exists?}
-    
+
     %% Build Stage
     subgraph "Build Stage"
         CheckImage -->|No| BuildNew[Build New Image]
@@ -138,21 +155,41 @@ graph TD
         BuildNew --> PushRegistry[Push to Registry]
         RebuildImage --> PushRegistry
     end
-    
-    %% Image Distribution
-    PushRegistry --> UseImage{Use Built Image}
-    
-    %% Test and Stan Stages
+
+    %% Image Distribution (Shared)
+    subgraph "Image"
+        PushRegistry --> UseImage{Pull Built Image}
+    end
+
+    %% Stan Stage
+    subgraph "Stan Stage"
+        UseImage --> StanJob[Run Static Analysis]
+        StanJob --> RunPHPStan[Execute PHPStan]
+        StanJob --> GenerateStanReport[Generate PHPStan Report]
+    end
+
+    %% Test Stage
     subgraph "Test Stage"
         UseImage --> TestJob[Run Tests]
         TestJob --> RunPHPUnit[Execute PHPUnit]
         TestJob --> GenerateCoverage[Generate Coverage Report]
     end
-    
-    subgraph "Stan Stage"
-        UseImage --> StaticAnalysis[Run Static Analysis]
-        StaticAnalysis --> RunPHPStan[Execute PHPStan]
+
+    %% Security Stage (manual)
+    subgraph "Security Stage"
+        UseApp{Run app in CI}
+        UseApp --> SecurityTest[Run SQLMap Security Test manual]
+        GenerateCoverage --> SecurityTest
+        SecurityTest --> GenerateRaportOnFailure
     end
+
+    %% Annotations for when:on_success
+    classDef onSuccess fill:#dff0d8,stroke:#3c763d,color:#3c763d,font-weight:bold;
+    class StanJob,TestJob,SecurityTest onSuccess;
+
+    StanJob ---|only runs on_success| TestJob
+    TestJob ---|only runs on_success| SecurityTest
+
 ```
 
 ### Pipeline Stages Explanation
@@ -162,12 +199,21 @@ graph TD
    - Builds or rebuilds based on changes
    - Manages image registry
 
-2. **Test Stage**:
+2. **Stan Stage** (Sequential after Build):
    - Uses built image
+   - Runs PHPStan static analysis
+   - Reports code quality issues
+   - **Rules**: `when: on_success` - Only runs if build succeeds
+
+3. **Test Stage** (Sequential after Stan):
+   - Uses same built image
    - Runs PHPUnit tests
    - Generates coverage reports
+   - **Rules**: `when: on_success` - Only runs if stan succeeds
 
-3. **Stan Stage**:
+4. **Security Stage** (Sequential after Test):
    - Uses same built image
-   - Runs PHPStan analysis
-   - Reports code quality issues
+   - Sets up application environment
+   - Runs SQLMap security tests
+   - Generates security reports
+   - **Rules**: `when: on_success` - Only runs if tests succeed
