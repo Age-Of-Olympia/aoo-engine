@@ -8,8 +8,8 @@ workflow:
 
 stages:
   - build
-  - test  
   - stan
+  - test  
   - security
   - prepare
   - release
@@ -28,8 +28,6 @@ stages:
   tags:
     - docker-aoo
   image: $CI_REGISTRY_IMAGE/test:latest
-  rules:
-    - when: always
 
 build_image:
   stage: build
@@ -69,6 +67,14 @@ build_image:
     - exists:
         - gitlab-ci/Dockerfile.test
 
+stan_job:
+  <<: *php-job-template
+  stage: stan
+  script:
+    - make phpstan-ci
+  rules:
+    - when: on_success
+
 test_job:
   <<: *php-job-template
   stage: test
@@ -80,12 +86,8 @@ test_job:
       coverage_report:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
-
-stan_job:
-  <<: *php-job-template
-  stage: stan
-  script:
-    - make phpstan-ci
+  rules:
+    - when: on_success
 
 sqlmap_security_test:
   stage: security
@@ -117,9 +119,9 @@ sqlmap_security_test:
     paths:
       - tmp/security/
     expire_in: 1 week
-  allow_failure: true
   rules:
-    - when: manual
+    - when: manual      
+    - when: on_success 
 
 prepare_job:
   stage: prepare
