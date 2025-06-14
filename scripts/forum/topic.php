@@ -224,17 +224,21 @@ echo '
 
                 $text = $postJson->text;
 
-                if($forumJson->category_id == 'RP' && !isset($topJson->approved)){
+                $player = $playerService->GetPlayer($_SESSION['playerId']);
 
+                if($forumJson->category_id == 'RP' && !isset($topJson->approved)  ){
+                    if($topJson->author == $player->id) {
+                       
+                        $text = '[i]Texte en attente d\'approbation par un modérateur. Il n\'est pas encore affiché aux autres joueurs.[/i] 
+                        
+                        ' . $text;
 
-                    $player = $playerService->GetPlayer($_SESSION['playerId']);
-
-                    if(!$player->have_option('isAdmin')){
-
+                    }else if(!$player->have_option('isAdmin')){
 
                         $text = '[i]Texte dans une langue qui vous est inconnue.[/i]
 
                         hrp: ce texte est en attente de l\'approbation d\'un modérateur.';
+
                     }
                 }
 
