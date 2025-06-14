@@ -6,7 +6,7 @@ namespace Classes;
  *
  * @package ChrisKonnertz\BBCode
  */
-class tag
+class Tag
 {
 
     /**
