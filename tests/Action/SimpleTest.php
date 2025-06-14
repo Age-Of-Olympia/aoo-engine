@@ -4,7 +4,7 @@ namespace Tests\Action;
 
 use PHPUnit\Framework\TestCase;
 
-class ActionTest extends TestCase {
+class SimpleTest extends TestCase {
 
   public function testActionFactory() {
     $this->assertFalse(false);
