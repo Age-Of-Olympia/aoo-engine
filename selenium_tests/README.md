@@ -1,128 +1,54 @@
-# Selenium Testing Documentation
+# E2E Testing Documentation
+
+E2E tests are base on selenium/mocha.
 
 This guide explains how to set up and run Selenium tests for automated UI testing in both local and CI environments.
 
-## Note
+Note: Currently, the full test automation works in the local environment, while CI implementation requires additional setup for data and app build configuration.
 
-Currently, the full test automation works in the local environment, while CI implementation requires additional setup for data and app build configuration.
+# Quick Start
 
-## Quick Start
+## System requirments
 
-### Prerequisites
-
-- Node.js (v18.12 or higher recommended)
+- Node.js (v22.10.0 or higher recommended)
 - npm (comes with Node.js)
 - Chrome browser installed (for local testing)
-
-### Installation
-
-Add these dependencies to your project:
-
-```json
-{
-  "devDependencies": {
-    "selenium-webdriver": "^4.25.0",
-    "chai": "^5.1.2",
-    "chromedriver": "^137.0.0",
-    "mocha": "^10.7.3"
-  }
-}
-```
-
-Install the dependencies:
-
-```bash
-npm install mocha chai selenium-webdriver chromedriver --save-dev
-```
-
-## Configuration
-
-### Test Script Configuration
-
-Add this to your `selenium_tests/package.json`:
-
-```json
-{
-  "scripts": {
-    "test": "mocha selenium_tests/tests/**/*.test.js"
-  }
-}
-```
-
-### WebDriver Configuration
-
-`selenium_tests/config/webdriverConfig.js` allow to configure browser options and timeouts:
-
-```javascript
-import { Builder, By, until } from 'selenium-webdriver';
-import chrome from 'selenium-webdriver/chrome.js';
-
-const CONFIG = {
-    baseUrl: process.env.CI ? 'http://selenium:4444/wd/hub' : 'http://localhost:9000',
-    //baseUrl: process.env.CI ? 'http://selenium:4444/wd/hub' : 'http://localhost:80', => for docker container case
-
-    timeouts: {
-        implicit: 5000,
-        explicit: 10000
-    }
-};
-
-async function setupDriver(browser, headless = true) {
-    let options = new chrome.Options();
-    if (headless) {
-        options.addArguments('--headless');
-    }
-
-    const builder = new Builder()
-        .forBrowser(browser)
-        .setChromeOptions(options);
-
-    // This is required for CI environment (its the url to the selenium server(docker))
-    if (process.env.CI) {
-        builder.usingServer(`http://selenium:4444/wd/hub`);
-    }
-
-    return builder.build();
-}
-
-export { setupDriver, By, until, CONFIG };
-```
-
-### How skip the test ?
-
-Example:
-
-```javascript
-
-describe.skip('Configuration Page Tests', function () {
-    // Define your tests here
-});
-
-```
+- mocha
 
 ## Running Tests
 
-### Local Environment
+Note: Before running tests make sure you have defined correct port and host in the `selenium_tests/config/webdriverConfig.js` file.
 
-Run tests using npm:
+Run tests:
+    `make selenium-install` # Installs necessary dependencies
+    `make e2e`
+    `make e2e-report` #runs tests and generates a report in the folder /tmp/e2e_reports/e2e_report.json
 
-```bash
-make selenium-install # Install dependencies
-make e2e
-```
 
-### Headless Mode
+Run single test using npx and mocha:
+    `npx mocha selenium_tests/tests/pages/auht/TestAuthPage.test`
 
-To run tests in headless mode, modify the driver setup call:
 
+Run tests in headless mode, modify the driver setup call:
+    `await setupDriver(true);`
+
+## Configuration
+
+Configuration is localized here: `selenium_tests/config/webdriverConfig.js`
+
+### How skip the test
+
+Example:
 ```javascript
-await setupDriver(true);
+describe.skip('Configuration Page Tests', function () {
+    ...
+});
 ```
 
 ## GitLab CI Integration
 
 Add this configuration to your `.gitlab-ci.yml`:
-NOTE: its not fully implemented yet, but it shows how to run tests in CI with Selenium.
+NOTE: This is example configuration for Gitlab CI , that not are fully implemented yet, but can be used as a starting point.
 
 ```yaml
 SeleniumTest:

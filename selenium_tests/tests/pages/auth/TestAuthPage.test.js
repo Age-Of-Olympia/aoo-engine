@@ -190,7 +190,7 @@ describe('Auth Tests', function() {
 
     before(async function() {
         this.timeout(10000);
-        driver = await setupDriver('chrome', false);
+        driver = await setupDriver('chrome', true);
         page = new TestAuthPage(driver);
         await driver.manage().setTimeouts({implicit: CONFIG.timeouts.implicit});
     });

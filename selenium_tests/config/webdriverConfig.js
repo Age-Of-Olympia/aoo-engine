@@ -13,6 +13,10 @@ async function setupDriver(browser, headless = true) {
     let options = new chrome.Options();
     if (headless) {
         options.addArguments('--headless');
+        options.addArguments('--window-size=1920,1080');
+        options.addArguments('--no-sandbox');
+    } else {
+        options.addArguments('--start-maximized');
     }
 
     const builder = new Builder()

@@ -9,7 +9,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha tests/testsuite.test.js"
+    "e2e": "mocha '../selenium_tests/tests/**/*.test.js' ",
+    "e2e:report": "mocha '../selenium_tests/tests/**/*.test.js' --timeout 30000  --reporter json --reporter-options output=../tmp/e2e_reports/e2e_report.json"
   },
   "repository": {
     "type": "git",
