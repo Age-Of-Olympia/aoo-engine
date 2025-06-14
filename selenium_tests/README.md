@@ -19,14 +19,22 @@ Note: Currently, the full test automation works in the local environment, while 
 
 Note: Before running tests make sure you have defined correct port and host in the `selenium_tests/config/webdriverConfig.js` file.
 
-Run tests:
-    `make selenium-install` # Installs necessary dependencies
-    `make e2e`
-    `make e2e-report` #runs tests and generates a report in the folder /tmp/e2e_reports/e2e_report.json
+```bash
+make selenium-install` # Installs necessary dependencies
+```
 
+```bash
+make e2e # Runs all E2E tests
+```
 
+```bash
+make e2e-report #runs tests and generates a report in the folder /tmp/e2e_reports/e2e_report.json
+```
+    
 Run single test using npx and mocha:
-    `npx mocha selenium_tests/tests/pages/auht/TestAuthPage.test`
+```bash
+npx mocha selenium_tests/tests/pages/auht/TestAuthPage.test
+```
 
 
 Run tests in headless mode, modify the driver setup call:
