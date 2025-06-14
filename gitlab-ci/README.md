@@ -157,29 +157,28 @@ graph TD
     end
 
     %% Image Distribution (Shared)
-    subgraph "Image"
-        PushRegistry --> UseImage{Pull Built Image}
+    subgraph "Docker Image"
+        PushRegistry --> UseImage{Pull Built Image from registry}
     end
 
     %% Stan Stage
     subgraph "Stan Stage"
-        UseImage --> StanJob[Run Static Analysis]
+        UseImage --> StanJob[Run Static Analysis Job]
         StanJob --> RunPHPStan[Execute PHPStan]
-        StanJob --> GenerateStanReport[Generate PHPStan Report]
+        RunPHPStan --> GenerateStanReport[Generate PHPStan Report]
     end
 
     %% Test Stage
     subgraph "Test Stage"
-        UseImage --> TestJob[Run Tests]
+        UseImage --> TestJob[Run Tests JOb]
         TestJob --> RunPHPUnit[Execute PHPUnit]
-        TestJob --> GenerateCoverage[Generate Coverage Report]
+        RunPHPUnit --> GenerateCoverage[Generate Coverage Report]
     end
 
     %% Security Stage (manual)
     subgraph "Security Stage"
-        UseApp{Run app in CI}
+        UseApp{Run aoo-engine in CI}
         UseApp --> SecurityTest[Run SQLMap Security Test manual]
-        GenerateCoverage --> SecurityTest
         SecurityTest --> GenerateRaportOnFailure
     end
 
