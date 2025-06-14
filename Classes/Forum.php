@@ -231,6 +231,9 @@ class Forum{
             exit('topic file already exists, please retry');
         }
 
+        //Pas besoin de l'approbation d'un admin si le joueur a plus de 50 de reput ou est un admin
+        $approved = ($player->have_option('isAdmin') || $player->data->pr >  50 ) ? 1:null; 
+
         $data = (object) array(
 
             "name"=>$topicId,
@@ -240,6 +243,8 @@ class Forum{
             "author"=>$player->id,
 
             "forum_id"=>$forumJson->name,
+
+            "approved"=>$approved,
 
             "last"=>(object) array("author"=>"", "time"=>0),
 
