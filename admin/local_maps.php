@@ -3,6 +3,7 @@
 require_once __DIR__ . '/layout.php';
 use Classes\Db;
 use App\Service\ViewService;
+use Classes\Db;
 
 // Clear any world map layers when loading local maps
 if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['generated_layers']), 'world_') !== false) {

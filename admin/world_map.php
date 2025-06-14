@@ -4,6 +4,7 @@ use Classes\Db;
 require_once __DIR__ . '/layout.php';
 
 use App\Service\ViewService;
+use Classes\Db;
 
 $database = new Db();
 $viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
