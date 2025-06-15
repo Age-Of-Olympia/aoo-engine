@@ -762,6 +762,10 @@ article.pnj {
         background: url('../img/ui/cards/wet_stone.webp');
     }
 
+    #ui-card .centaure{
+        background: url('../img/ui/cards/dark_green.webp');
+    }
+
     #ui-card .card-name{
 
         text-align: left;
