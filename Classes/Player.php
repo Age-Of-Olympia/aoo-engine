@@ -1725,30 +1725,31 @@ class Player implements ActorInterface {
                 if($this->id < 0){
                     $lootChance = 100;
                 }
-            }        
-
+            }
 
             // perform loot
             $nbLoot = 0;
-            for ($i = 0; $i < $row->n; $i++) {
-                if(random_int(1,100) <= $lootChance){
-                    $nbLoot++;
-                }    
+            if ($lootChance >=100) {
+                $nbLoot= $row->n;
+            } else {
+                for ($i = 0; $i < $row->n; $i++) {
+                    if(random_int(1,100) <= $lootChance){
+                        $nbLoot++;
+                    }
+                }
             }
-            $this->drop($loot, $nbLoot);
 
-            // populate lootList
-            $lootList[] = $loot->data->name .' x'. $nbLoot;
+            if ($nbLoot > 0) {
+                $this->drop($loot, $nbLoot);
+                // populate lootList
+                $lootList[] = $loot->data->name .' x'. $nbLoot;
+            }
         }
 
         if(count($lootList)){
-
-
             $text = $this->data->name .' a perdu des objets: '. implode(', ', $lootList) .'.';
-
             Log::put($this, $this, $text, type:"loot");
         }
-
 
         // spawn to hell
         $coords = (object) array('x'=>0,'y'=>0,'z'=>0,'plan'=>'enfers');
