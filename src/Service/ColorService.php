@@ -22,6 +22,7 @@ class ColorService {
             'redora' =>[85, 85, 85],
             'cimetiere_des_betes_sacrees' => [165, 165, 165],
             'fort_turok' => [190, 185, 180],        // Original: [139, 69, 19]
+            'sol_gris' => [226, 180, 131],            
 
             // Elements
             'boue' => [197, 162, 137],              // Original: [139, 69, 19]
