@@ -299,7 +299,9 @@ class ViewService {
 
     private function generateForegroundsLayer($plan) { 
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
         // Query to fetch tiles and foregrounds
@@ -340,7 +342,9 @@ class ViewService {
 
     private function generateTileLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
         if ($mapType == "local") {
@@ -397,7 +401,9 @@ class ViewService {
 
     private function generateElementLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
         // Set transparency for cave elements
@@ -452,7 +458,9 @@ class ViewService {
     
     private function generateCoordinatesLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
         // Récupère les coordonnées minimales et maximales
@@ -502,7 +510,9 @@ class ViewService {
     
     private function generateLocationsLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
        // Create colors for markers
@@ -558,7 +568,9 @@ class ViewService {
     
     private function generateRoutesLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
         // Requête les routes à partir de map_routes
@@ -606,7 +618,9 @@ class ViewService {
 
     private function generateWallLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
 
         // Requête les murs à partir de map_murs
@@ -650,7 +664,9 @@ class ViewService {
 
     public function generateLocalPlayersLayer() {
         $layer = $this->createLayer($this->localMapWidth, $this->localMapHeight);
-        $zCondition = $this->playerZ !== null ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = "local";
 
         $raceColors = [
@@ -717,7 +733,9 @@ class ViewService {
 
     private function generateAllPlayersLayer($plan) {
         $layer = $this->createLayer();
-        $zCondition = ($plan !== $this->worldPlan && $this->playerZ !== null) ? "AND c.z = " . $this->playerZ : "";
+        $zCondition = $plan === $this->worldPlan 
+            ? "AND c.z = 0" 
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = $plan === $this->worldPlan ? "global" : "local";
         
         // Définit les couleurs pour les races
