@@ -415,6 +415,7 @@ class ViewService {
             WHERE c.plan = '" . $plan . "'
             AND me.name NOT LIKE 'trace_pas_%'
             AND me.name != 'flag_red'
+            AND me.name != 'sang'
             AND c.x BETWEEN " . $this->minX . " AND " . $this->maxX . "
             AND c.y BETWEEN " . $this->minY . " AND " . $this->maxY . "
             $zCondition
