@@ -1,4 +1,4 @@
-# AOO Engine MDS
+# AOO Engine MDS - Groupe Jérôme - Ovsep
 
 Projet réalisé dans le cadre du module de développement encadré à **MyDigitalSchool**.
 
