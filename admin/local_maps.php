@@ -1,5 +1,6 @@
 <?php
 // admin/local_maps.php
+namespace Classes;
 require_once __DIR__ . '/layout.php';
 
 use App\Service\ViewService;
