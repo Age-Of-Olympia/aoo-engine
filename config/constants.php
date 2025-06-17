@@ -395,6 +395,9 @@ define('LOOT_CHANCE', array(
     'nickel'=>80,
     'pierre_mana'=>80,
     'salpetre'=>80,
+    'plume_doree'=>100,
+	'plume_irisee'=>100,
+	'plume_ebenne'=>100
 ));
 
 
