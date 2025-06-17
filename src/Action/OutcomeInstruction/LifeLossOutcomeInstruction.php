@@ -37,7 +37,19 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             $targetDefense = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
             $bonusDamages = (is_numeric($bonusTraitDamages)) ? $bonusTraitDamages : $actor->caracs->{$bonusTraitDamages};
             $bonusDefense = (is_numeric($bonusTraitDefense)) ? $bonusTraitDefense : $target->caracs->{$bonusTraitDefense};
-            $totalDamages = $actorDamages + $bonusDamages - ($targetDefense + $bonusDefense);
+            
+            $baseDamages = $actorDamages - $targetDefense;
+        
+            $additionalDamages = $bonusDamages - $bonusDefense;
+
+            //minimum damages seulement si l'adversaire à une defense bonus
+            if($bonusDefense > 0){
+                $bonusDamages = max($bonusDamages, 0);
+                $baseDamages = max($baseDamages, 0);
+            }
+
+            $totalDamages = $baseDamages + $additionalDamages;
+
             $cellCount = 0;
             if ($distanceInfluence) {
                 $distance = View::get_distance($actor->getCoords(), $target->getCoords());
