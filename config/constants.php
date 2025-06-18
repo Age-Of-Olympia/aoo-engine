@@ -395,6 +395,10 @@ define('LOOT_CHANCE', array(
     'nickel'=>80,
     'pierre_mana'=>80,
     'salpetre'=>80,
+    'emeraude'=>100,
+    'lapis_lazuli'=>100,
+    'opale'=>100,
+    'rubis'=>100,
     'plume_doree'=>100,
 	'plume_irisee'=>100,
 	'plume_ebenne'=>100
