@@ -1,5 +1,7 @@
 <?php
-
+use Classes\Player;
+use Classes\Db;
+use Classes\Item;
 use App\Entity\Recipe;
 use App\Service\RecipeService;
 
@@ -53,33 +55,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 } else {
 
-    $recipeService = new RecipeService();
-
-    $recipes = $recipeService->getRecipes($player, 1);//bois =89
-    echo count($recipes).'found<br>';
-    foreach ($recipes as $recipe) {
+    function PrintReciep($recipe)
+    {
         echo $recipe->GetName() . '<br>';
         echo ($recipe->GetRace() ?$recipe->GetRace()->GetName() :"common") . '<br>';
         foreach ($recipe->GetRecipeIngredients() as $ingredient) {
-            echo 'Ingredient: ' . $ingredient->GetItemId() . ' x' . $ingredient->GetCount() . '<br>';
+            echo 'Ingredient: ' . $ingredient->GetItem()->GetId() . ' x' . $ingredient->GetCount() . '<br>';
         }
         foreach ($recipe->GetRecipeResults() as $result) {
-            echo 'Result: ' . $result->GetItemId() . ' x' . $result->GetCount() . '<br><br><br><br>';
+            echo 'Result: ' . $result->GetItem()->GetId() . ' x' . $result->GetCount() . '<br><br><br><br>';
         }
+        echo '<hr>';
     }
+    $recipeService = new RecipeService();
 
+    $recipes = $recipeService->getRecipes($player);//bois =89
+    echo count($recipes).'found<br>';
+    foreach ($recipes as $recipe) {
+        PrintReciep($recipe);
+    }
+   $id=75; //gladius 19 / casque 75
+   echo " recette pour l'item {$id}<br>";
+   $singleRecipe = $recipeService->getRecipes($player, null, $id );
+    if (count($singleRecipe)) {
+       PrintReciep($singleRecipe[0]);
+    } else {
+        echo 'No recipe found';
+    }
    // var_dump();
+   if(count($recipes)) {
+        
+
+        // Get a single recipe by ID
    $singleRecipe = $recipeService->getRecipeById($recipes[0]->GetId());
     if ($singleRecipe) {
-        echo '<br><br>Single Recipe: ' . $singleRecipe->GetName() . '<br>';
-        echo ($recipe->GetRace() ?$recipe->GetRace()->GetName() :"common") . '<br>';
-        foreach ($singleRecipe->GetRecipeIngredients() as $ingredient) {
-            echo 'Ingredient: ' . $ingredient->GetItemId() . ' x' . $ingredient->GetCount() . '<br>';
-        }
-        foreach ($singleRecipe->GetRecipeResults() as $result) {
-            echo 'Result: ' . $result->GetItemId() . ' x' . $result->GetCount() . '<br>';
-        }
+       PrintReciep($singleRecipe);
     } else {
-        echo 'No recipe found with ID 1.';
+        echo 'No recipe found .';
     }
+}
+else 
+{
+    echo 'No recipes found ';
+}
 }

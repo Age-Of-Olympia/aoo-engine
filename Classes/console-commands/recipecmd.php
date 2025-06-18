@@ -90,6 +90,7 @@ EOT);
             $count = 0;
             $raceService = new RaceService();
             $em = EntityManagerFactory::getEntityManager();
+            $itemRepo = $em->getRepository(App\Entity\Item::class);
             foreach ($recipes as $race => $recette) {
 
                 $race = $raceService->getRaceByName($race);
@@ -105,12 +106,15 @@ EOT);
                         if($item->row->name!= $ingredient['name']){
                             $this->result->Error("Item name mismatch recipe '{$recetteData['name']}' use '{$item->row->name} but say it use {$ingredient['name']}'");
                         }
-                        $ingredientObj->setItemId($ingredient['id']);
+                        $itemEntity = $itemRepo->find($ingredient['id']);
+                        $ingredientObj->setItem( $itemEntity);
                         $ingredientObj->setCount($ingredient['n']);
                         $recipe->addRecipeIngredient($ingredientObj);
                     }
                     $resultObj = new App\Entity\RecipeResult();
-                    $resultObj->setItemId($recetteData['id']);
+                    $itemEntity = $itemRepo->find($recetteData['id']);
+                    $resultObj->setItem($itemEntity);
+                    
                     $item = new Item($recetteData['id']);
                     $item->get_data();
                     if($item->row->name!= $recetteData['name']){

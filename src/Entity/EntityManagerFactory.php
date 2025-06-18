@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Proxy\ProxyFactory;
 
 final class EntityManagerFactory
 {
@@ -17,9 +18,10 @@ final class EntityManagerFactory
     {
         if (self::$em === null) {
             $orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
-                paths: [dirname(__FILE__)],
+                paths: [__DIR__],
                 isDevMode: false
             );
+            $orm_db_config->setAutoGenerateProxyClasses(ProxyFactory::AUTOGENERATE_FILE_NOT_EXISTS_OR_CHANGED);
             $connection = DriverManager::getConnection(DB_CONSTANTS, $orm_db_config);
             self::$em = new EntityManager($connection, $orm_db_config);
         }

@@ -15,7 +15,7 @@ class RecipeService
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 
-    public function getRecipes($player,?int $itemid=null): array
+    public function getRecipes($player,?int $fromItemId=null,?int $forItemId=null): array
     {
         $repo = $this->entityManager->getRepository(Recipe::class);
        
@@ -31,13 +31,19 @@ class RecipeService
                 ->from(Recipe::class, 're')
                 ->leftJoin('re.race', 'ra')
                 ->leftJoin('re.recipeIngredients', 'ri')
+                ->leftJoin('ri.item', 'i')
                 ->leftJoin('re.recipeResults', 'rr')
+                ->leftJoin('rr.item', 'r')
                 ->where('(ra.name = :racename OR ra.id IS NULL)')
                 ->setParameter('racename', $player->data->race);
 
-                if($itemid){
-                    $qb->andWhere('ri.item_id = :itemId')
-                        ->setParameter('itemId', $itemid);
+                if($fromItemId){
+                    $qb->andWhere('i.id = :itemId')
+                        ->setParameter('itemId', $fromItemId);
+                }
+                if($forItemId){
+                    $qb->andWhere('r.id = :forItemId')
+                        ->setParameter('forItemId', $forItemId);
                 }
                 // ->leftJoin('r.recipeIngredients', 'ri')
                 // ->leftJoin('r.recipeResults', 'rr');

@@ -16,39 +16,24 @@ class CraftView
 
         $player = new Player($_SESSION['playerId']);
         $player->get_data();
-
+        $recipeService = new RecipeService();
         ob_start();
 
-        // recette json
-        $json = new Json();
-        $recipesJson = $json->decode('', 'crafts');
 
-        // common recipes
-        $recipeList = $recipesJson->common;
-
-        // add race recipes
-        $playerRace = $player->data->race;
-
-        // merge with racial recipes
-        if (!empty($recipesJson->$playerRace)) {
-
-            $recipeList = array_merge($recipeList, $recipesJson->$playerRace);
-        }
-
-
-        $ingredientList = array();
-
-        foreach ($recipeList as $e) {
-
-            foreach ($e->recette as $i) {
-
-                $ingredientList[$i->id] = true;
-            }
-        }
 
 
         if (!isset($_GET['itemId'])) {
 
+            $recipeList = $recipeService->getRecipes($player);
+            $ingredientList = array();
+
+            foreach ($recipeList as $e) {
+
+                foreach ($e->GetRecipeIngredients() as $i) {
+
+                    $ingredientList[$i->GetItem()->GetId()] = true;
+                }
+            }
 
             $itemList = Item::get_item_list($player->id);
 
@@ -101,14 +86,14 @@ class CraftView
         function get_json_item($item)
         {
 
-            $return = (object) array('data');
-            if (!$return->data = json()->decode('items', $item->name)) {
+            $return = (object) array('data', 'id');
+            if (!$return->data = json()->decode('items', $item->getName())) {
 
-                echo 'error ' . $item->name;
+                echo 'error ' . $item->getName();
             }
 
-            $return->data->mini = 'img/items/' . $item->name . '_mini.webp';
-
+            $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
+            $return->id = $item->getId();
             return $return;
         }
 
@@ -133,16 +118,16 @@ class CraftView
         if (!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->data->race == $player->data->race) {
 
 
-            // craft
-            $craft = new Craft($item->data->name);
+            $recipeList = $recipeService->getRecipes($player, fromItemId: null, forItemId: $item->id);
+
 
             // recette exists
-            if (count($craft->itemRecipe)) {
+            if (count($recipeList)) {
                 echo '
         <div id="item-recipe">
             ';
 
-                foreach ($craft->itemRecipe as $ingredientItem => $n) {
+                foreach ($recipeList as $ingredientItem => $n) {
 
                     // $ingredient = new Item($craft-> $ingredientItem->id);
                     //
@@ -183,10 +168,7 @@ class CraftView
             $playerItemN[$playerItem->name] = $playerItem->n;
         }
 
-
-        // list of craft
-        $craftList = array();
-
+        $recipeList = $recipeService->getRecipes($player, fromItemId: $item->id);
 
         echo '
 <table border="1" class="marbre">
@@ -199,48 +181,24 @@ class CraftView
     ';
 
 
-        // at least one art
-        $atLeastOne = false;
+
 
         foreach ($recipeList as $recipe) {
 
-            // artShow
-            $artShow = false;
-
             // artComplete
-            $artComplete = true;
+            $hasAllIngredients = true;
 
-
-
-            $recipeIngredients = $recipe->recette;
-
-            // search for item in recipe
-            foreach ($recipeIngredients as $ee) {
-                if ($ee->id != strtolower($item->data->id)) {
-                    continue;
-                }
-
-                $artShow = true;
-                $atLeastOne = true;
-            }
-
-
-            // art have NOT item in recipe
-            if (!$artShow) {
-                continue;
-            }
-
-            $artItem = get_json_item($recipe);
-
-            $artName = $recipe->name;
-
-            $artId = $recipe->id;
+            $reciepName = $recipe->GetName();
+            $recipeId = $recipe->getId();
+            $artItem = get_json_item($recipe->getRecipeResults()[0]->GetItem());
 
             // print
             echo '
         <tr>
             <td width="50">
-                <a href="item.php?itemId=' . $artId . '"><img src="' . $artItem->data->mini . '" /></a>
+
+              <a href="item.php?itemId=' . $artItem->id . '"><img src="' . $artItem->data->mini . '" /></a>
+
             </td>
             <td>
                 ' . $artItem->data->name . '<br />
@@ -255,26 +213,26 @@ class CraftView
                 ';
 
             // recipe
-            foreach ($recipeIngredients as $ingredient) {
+            foreach ($recipe->GetRecipeIngredients() as $ingredient) {
 
 
-                $ingredientItem = get_json_item($ingredient);
+                $ingredientItem = get_json_item($ingredient->GetItem());
 
 
                 // color
-                if (!isset($playerItemN[$ingredient->name])) {
+                if (!isset($playerItemN[$ingredientItem->data->name])) {
                     $color = 'red';
-                    $artComplete = false;
-                } elseif ($playerItemN[$ingredient->name] >= $ingredient->n) {
+                    $hasAllIngredients = false;
+                } elseif ($playerItemN[$ingredientItem->data->name] >= $ingredient->getCount()) {
                     $color = 'green';
                 } else {
                     $color = 'orange';
-                    $artComplete = false;
+                    $hasAllIngredients = false;
                 }
 
                 echo '
-                    <a href="item.php?itemId=' . $ingredient->id . '"><img src="' . $ingredientItem->data->mini . '" /></a>
-                    <font color="' . $color . '">x' . $ingredient->n . '</font>
+                    <a href="item.php?itemId=' . $ingredientItem->id . '"><img src="' . $ingredientItem->data->mini . '" /></a>
+                    <font color="' . $color . '">x' . $ingredient->getCount() . '</font>
                     ';
             }
 
@@ -282,11 +240,11 @@ class CraftView
             </td>
             ';
 
-            if ($artComplete) {
+            if ($hasAllIngredients) {
 
                 echo '
                 <td valign="top">
-                    <input type="button" value="Créer" itemId="' . $artId . '" style="width: 100%; height: 50px;" />
+                    <input type="button" value="Créer" itemId="' . $recipeId . '" style="width: 100%; height: 50px;" />
                 </td>
                 ';
             } else {
@@ -302,7 +260,7 @@ class CraftView
 
 
         // no recipies
-        if (!$atLeastOne) {
+        if (!count($recipeList)) {
             echo '<tr><td colspan="4" align="center">Vous ne connaissez aucun artisanat en lien avec cet objet.</td></tr>';
         }
 
