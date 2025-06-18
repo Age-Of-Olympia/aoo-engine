@@ -45,6 +45,23 @@ define('CARACS_RECOVER', array(
     'mvt'=>'mvt'
 ));
 
+define('CARACS_TXT', array(
+    'a'=>'Action',
+    'mvt'=>'Mouvement',
+    'p'=>'Perception',
+    'pv'=>'Points de Vie',
+    'cc'=>'Capacité de Combat',
+    'ct'=>'Capacité de Tir',
+    'f'=>'Force',
+    'e'=>'Endurance',
+    'agi'=>'Agilité',
+    'pm'=>'Points de Magie',
+    'fm'=>'Force Mentale',
+    'm'=>'Puissance Magique',
+    'r'=>'Récupération',
+    'rm'=>'Récupération Magique',
+    'ae'=> 'Action d\'Equipement'
+));
 
 /*
  * time
