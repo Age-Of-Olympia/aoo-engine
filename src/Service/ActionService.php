@@ -81,10 +81,7 @@ class ActionService
             if ($conditionType == 'RequiresTraitValue') {
                 $conditionParameters = $condition->getParameters();
                 foreach ($conditionParameters as $key => $value) {
-                    if ($key == "uses_fatigue") {
-                        continue;
-                    }
-                    if ($key == "fatigue") {
+                    if ($key == "energie") {
                         continue;
                     }
                     array_push($costArray, $value . CARACS[$key]);

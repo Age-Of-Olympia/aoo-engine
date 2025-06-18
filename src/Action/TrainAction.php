@@ -22,34 +22,50 @@ class TrainAction extends Action
     {
         $actorRank = $actor->data->rank;
         $targetRank = $target->data->rank;
+        $actorEnergie = $actor->data->energie;
 
-        if($actorRank == $targetRank){
-            $actorXp = 2;
+        $actorXp = 1;
+        $bonusXp = 0;
+
+        if($actorEnergie > 2){
+            $bonusXp += 1;
         }
-        elseif($actorRank > $targetRank){
-            $actorXp = 1;
+        if($actorEnergie > 0){
+            $bonusXp += 1;
         }
-        elseif($actorRank < $targetRank){
-            $actorXp = 3;
+        if($actorRank < $targetRank){
+            $bonusXp += 1;
         }
-        return $actorXp;
+        
+        // Retire 1 à l'énergie de l'acteur
+        $actor->putEnergie(-1);
+
+        return $actorXp+$bonusXp;
     }
 
     protected function calculateTargetXp(bool $success, Player $actor, Player $target): int
     {
         $actorRank = $actor->data->rank;
         $targetRank = $target->data->rank;
+        $targetEnergie = $target->data->energie;
 
-        if($actorRank == $targetRank){
-            $targetXp = 2;
+        $targetXp = 1;
+        $bonusXp = 0;
+
+        if($targetEnergie > 2){
+            $bonusXp += 1;
         }
-        elseif($actorRank > $targetRank){
-            $targetXp = 3;
+        if($targetEnergie > 0){
+            $bonusXp += 1;
         }
-        elseif($actorRank < $targetRank){
-            $targetXp = 1;
+        if($targetRank < $actorRank){
+            $bonusXp += 1;
         }
-        return $targetXp;
+        
+        // Retire 1 à l'énergie de la cible
+        $target->putEnergie(-1);
+        
+        return $targetXp+$bonusXp;
     }
 
 }

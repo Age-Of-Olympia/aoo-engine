@@ -112,24 +112,6 @@ if(!empty($_GET['triggerId'])){
                         );
                     }
 
-
-                    // travel price
-                    // $item = new Item(1); // or
-                    // if($item->get_n($player) >= TRAVEL_COST){
-                    //
-                    //
-                    //     $item->add_item($player, -TRAVEL_COST);
-                    // }
-                    // else{
-
-
-                        // $player->addEffect('fatigue', duration:ONE_DAY);
-
-                        $player->putFat(FAT_EVERY);
-                    // }
-
-
-
                     $coordsId = View::get_free_coords_id_arround($coords);
 
                     $player->go($coords);

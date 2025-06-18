@@ -12,9 +12,9 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target): OutcomeResult {
         $params =$this->getParameters();
-        // e.g. {"carac": "fatigue", "value" : 4, "player": "actor"}
+        // e.g. {"carac": "energie", "value" : 4, "player": "actor"}
         // {"carac": "mvt", "value" : 1, "player": "actor"}
-        // {"carac" : "fatigue", "value": 1, "player" : "target"}
+        // {"carac" : "energie", "value": 1, "player" : "target"}
         
         $player = $params['player'] ?? 'both';
         $carac = $params['carac'] ?? null;
@@ -23,15 +23,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
         switch ($player) {
             case "actor":
                 if ($carac != null) {
-                    if ($carac == "fatigue") {
-                        if($actor->data->fatigue){
-                            $actor->putFat(-$value);
-                            $fatigue = ($actor->data->fatigue > $value) ? $value : $actor->data->fatigue;
-                            $outcomeSuccessMessages[0] = $fatigue .' Fatigues enlevées.';
-                        } else {
-                            $outcomeSuccessMessages[0] = 'Vous n\'aviez pas de fatigue.';
-                        }
-                    } else if ($carac == "foi") {
+                    if ($carac == "foi") {
                         $god = new Player($actor->data->godId);
                         $god->get_data();
                         $pf = rand(1,3);
@@ -41,15 +33,12 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                     } else {
                         $bonus = array($carac=>$value);
                         $actor->putBonus($bonus);
-                        $outcomeSuccessMessages[0] = 'Vous courez ! (+'.$value.' mouvement !)';
+                        $outcomeSuccessMessages[0] = 'Vous courez ! (+'.$value.' mouvement !)' . $carac . '(valeur) !';
                     }
 
                 }
                 break;
             case "target":
-                if ($carac == "fatigue") {
-                    $target->putFat($value);
-                }
                 break;
             default:
             break;

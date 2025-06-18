@@ -21,12 +21,10 @@ class DistanceComputeCondition extends ComputeCondition
         $trait2 = $target->caracs->agi;
         $targetRollTraitValue = floor(max(3/4 * $trait1 + 1/4 * $trait2, 1/4 * $trait1 + 3/4 * $trait2));
         $targetRoll = $dice->roll($targetRollTraitValue);
-        $targetFat = floor($target->data->fatigue / FAT_EVERY);
-        $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus;
+        $targetTotal = array_sum($targetRoll) - $target->data->malus;
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-        $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
-        $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+        $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
+        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetTotalTxt;
 
         return array($targetRoll, $targetTotal, $targetTxt);
     }

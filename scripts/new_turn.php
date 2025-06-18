@@ -124,18 +124,11 @@ else if(!empty($_SESSION['playerId'])){
                 echo '<tr><td>Malus</td><td align="right">-'. $recovMalus .'</td></tr>';
 
 
-                // update fat
-                $recovFat = min($player->data->fatigue, FAT_PER_TURNS);
-
-                echo '<tr><td>Fatigue</td><td align="right">-'. $recovFat .'</td></tr>';
-
-
                 // recover carac
                 foreach(CARACS_RECOVER as $k=>$e){
 
 
                     $val = $player->caracs->$e;
-
 
                     if($k == 'pm' && $player->haveEffect('poison_magique')){
 
@@ -171,7 +164,16 @@ else if(!empty($_SESSION['playerId'])){
 
                         continue;
                     }
+                    
+                    elseif($k == 'a'){
 
+                        $val = $player->caracs->a;
+                        
+                        // Calcul de la valeur d'énergie
+                        $recovEnergie = ENERGIE_CST-$val;
+                        
+                        continue;
+                    }
 
                     if(!in_array($k, array('ae','a','mvt'))){
 
@@ -241,7 +243,7 @@ else if(!empty($_SESSION['playerId'])){
             lastActionTime = 0,
             antiBerserkTime = ?,
             malus = malus - ?,
-            fatigue = fatigue - ?
+            energie = ?
             WHERE
             id = ?
             ';
@@ -250,7 +252,7 @@ else if(!empty($_SESSION['playerId'])){
                 $nextTurnTime,
                 $antiBerserkTime,
                 $recovMalus,
-                $recovFat,
+                $recovEnergie,
                 $player->id
             );
 

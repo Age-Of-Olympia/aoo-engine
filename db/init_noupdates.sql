@@ -104,9 +104,9 @@ INSERT INTO `action_conditions` (`id`, `conditionType`, `parameters`, `action_id
 (27, 'Compute', '{\"actorRollType\":\"agi\", \"targetRollType\": \"agi\"}', 7, 10, 0),
 (28, 'ForbidIfHasEffect', '{ \"actorEffect\": \"adrenaline\", \"targetEffect\" : \"adrenaline\" }', 7, 6, 1),
 (29, 'RequiresDistance', '{\"max\":0}', 8, 0, 1),
-(30, 'RequiresTraitValue', '{ \"a\": 1, \"uses_fatigue\": false }', 8, 5, 1),
+(30, 'RequiresTraitValue', '{ \"a\": 1 }', 8, 5, 1),
 (31, 'RequiresTraitValue', '{ \"a\": 1 }', 9, 1, 1),
-(32, 'RequiresTraitValue', '{ \"fatigue\": \">0\" }', 8, 1, 1),
+(32, 'RequiresTraitValue', '{ \"repos\": \"effets\" }', 8, 1, 1),
 (33, 'RequiresTraitValue', '{ \"a\": 1, \"pm\": 7 }', 10, 3, 1),
 (34, 'ForbidIfHasEffect', '{ \"actorEffect\": \"cle_de_bras\" }', 10, 6, 1),
 (35, 'RequiresTraitValue', '{ \"a\": 1 }', 11, 2, 1),
@@ -115,7 +115,7 @@ INSERT INTO `action_conditions` (`id`, `conditionType`, `parameters`, `action_id
 (38, 'RequiresTraitValue', '{ \"a\": 1 }', 12, 2, 1),
 (39, 'RequiresDistance', '{\"max\":0}', 12, 0, 1),
 (40, 'RequiresResource', NULL, 12, 1, 1),
-(41, 'RequiresTraitValue', '{ \"fatigue\": \"both\" }', 13, 1, 1),
+(41, 'RequiresTraitValue', '{ \"energie\": \"both\" }', 13, 1, 1),
 (42, 'Option', '{\"option\": \"noTrain\"}', 13, 0, 1),
 (43, 'RequiresTraitValue', '{ \"a\": 1 }', 13, 2, 1),
 (44, 'RequiresDistance', '{\"max\":1}', 13, 0, 1),
@@ -4239,7 +4239,7 @@ INSERT INTO `outcome_instructions` (`id`, `type`, `parameters`, `orderIndex`, `o
 (14, 'object', '{\"action\":\"steal\", \"object\": 1 }', 0, 11),
 (15, 'applystatus', '{ \"adrenaline\": true, \"duration\": 172800 }', 0, 12),
 (16, 'applystatus', '{ \"finished\": true, \"player\": \"actor\" }', 10, 13),
-(17, 'player', '{\"carac\":\"fatigue\", \"value\": 4, \"player\": \"actor\"}', 0, 13),
+(17, 'player', '{\"carac\":\"malus\", \"value\": "r\", \"player\": \"actor\"}', 0, 13),
 (18, 'player', '{\"carac\": \"mvt\", \"value\" : 1, \"player\": \"actor\"}', 0, 14),
 (19, 'applystatus', '{ \"cle_de_bras\": true, \"player\": \"actor\", \"duration\": 0 }', 0, 15),
 (20, 'player', '{\"carac\": \"foi\", \"player\": \"actor\"}', 0, 16),
@@ -4271,7 +4271,7 @@ CREATE TABLE `players` (
   `pi` int(11) NOT NULL DEFAULT 0,
   `pr` int(11) NOT NULL DEFAULT 0,
   `malus` int(11) NOT NULL DEFAULT 0,
-  `fatigue` int(11) NOT NULL DEFAULT 0,
+  `energie` int(11) NOT NULL DEFAULT 0,
   `godId` int(11) NOT NULL DEFAULT 0,
   `pf` int(11) NOT NULL DEFAULT 0,
   `rank` int(11) NOT NULL DEFAULT 1,
@@ -4297,7 +4297,7 @@ CREATE TABLE `players` (
 -- Déchargement des données de la table `players`
 --
 
-INSERT INTO `players` (`id`, `name`, `psw`, `mail`, `plain_mail`, `coords_id`, `race`, `xp`, `pi`, `pr`, `malus`, `fatigue`, `godId`, `pf`, `rank`, `avatar`, `portrait`, `text`, `story`, `quest`, `faction`, `factionRole`, `secretFaction`, `secretFactionRole`, `nextTurnTime`, `registerTime`, `lastActionTime`, `lastLoginTime`, `antiBerserkTime`, `lastTravelTime`, `email_bonus`) VALUES
+INSERT INTO `players` (`id`, `name`, `psw`, `mail`, `plain_mail`, `coords_id`, `race`, `xp`, `pi`, `pr`, `malus`, `energie`, `godId`, `pf`, `rank`, `avatar`, `portrait`, `text`, `story`, `quest`, `faction`, `factionRole`, `secretFaction`, `secretFactionRole`, `nextTurnTime`, `registerTime`, `lastActionTime`, `lastLoginTime`, `antiBerserkTime`, `lastTravelTime`, `email_bonus`) VALUES
 (-1, 'Gaïa', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '', '', 15, 'lutin', 10, 10, 0, 0, 0, 0, 0, 1, 'img/avatars/ame/lutin.webp', 'img/portraits/ame/1.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'saruta_et_freres', 0, '', 0, 1744286400, 0, 0, 0, 16200, 0, 0),
 (1, 'Cradek', '$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe', '$2y$10$hkduB0wnA8nfn2C.ck6UA.b6jr56K9WeBDel33IokN/rtogNXQ8C2', '', 17009, 'nain', 5906, 99, 2, 0, 7, -1, 2, 5, 'img/avatars/nain/5.png', 'img/portraits/nain/45.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1744540273, 1736117307, 1744478783, 1744536431, 1744430285, 1744414037, 0),
 (2, 'Dorna', '$2y$10$XJm1A0RZWGRbhvDlUyOP8e/O0hhDLLUwU.VJM00GbmWjydKqeoczy', '$2y$10$pVJivan0Lhqg.x0OSWQzaulIWVr.BPJ.c3Q992jtWsy61FXH84wNS', '', 15318, 'nain', 77, 77, 0, 34, 0, 0, 0, 1, 'img/avatars/nain/73.png', 'img/portraits/nain/44.jpeg', 'Je suis nouveau, frappez-moi!', 'Je préfère garder cela pour moi.', 'gaia', 'forge_sacree', 0, '', 0, 1744540949, 1736118099, 0, 1744534215, 16200, 1744414042, 0),

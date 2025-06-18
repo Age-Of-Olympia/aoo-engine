@@ -197,9 +197,9 @@ if($goCoords->z < 0){
         if($player->emplacements->main1->data->name != 'Pioche'){
 
 
-            $player->putFat(FAT_PER_MINE);
-
-            echo '<script>alert("Creuser sans Pioche, qu\'est-ce que ça fatigue!");document.location.reload();</script>';
+            $player->put_malus(MALUS_PER_MINE);
+            
+            echo '<script>alert("Creuser sans Pioche, qu\'est-ce que ça fatigue !");document.location.reload();</script>';
         }
 
 

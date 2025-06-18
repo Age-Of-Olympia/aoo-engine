@@ -93,22 +93,14 @@ echo '
 
     echo '<tr>';
 
-        // if($player->data->malus){
-
             echo '<td colspan="'. count(CARACS) .'">Malus ('. $player->data->malus .'): -'. $player->data->malus .' aux jets de défense.</td>';
-        // }
+
 
     echo '</tr>';
 
     echo '<tr>';
 
-        // if($player->data->fatigue >= FAT_EVERY){
-
-
-            $fatMalus = floor($player->data->fatigue / FAT_EVERY);
-
-            echo '<td colspan="'. count(CARACS) .'">Fatigue ('. $player->data->fatigue .'): -'. $fatMalus .' à tous les jets.</td>';
-        // }
+            echo '<td colspan="'. count(CARACS) .'">Énergie ('. $player->data->energie .').</td>';
 
     echo '</tr>';
 

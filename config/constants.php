@@ -114,8 +114,6 @@ define('EFFECTS_RA_FONT', array(
 
     'vol'=>'ra-feather-wing',
 
-    'fatigue'=>'ra-player-pain',
-
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',
     'trace_pas_ne'=> 'ra-footprint',
@@ -410,11 +408,9 @@ define('LOOT_CHANCE', array(
  */
 
 define('TRAVEL_COST', 15);      // travelling cost 15Po
-define('FAT_EVERY', 6);         // every 6 fat, -1 for all rolls
-define('FAT_PER_ACTION', 1);    // each Action add 1 fat
-define('FAT_PER_REST', 4);      // resting delete 4 fat
-define('FAT_PER_TURNS', 2);     // new turn delete 2 fat
-define('FAT_PER_MINE', 3);      // fat when mining without pioche
+define('ENERGIE_CST', 7);        // valeur de la constante d'énergie
+define('MALUS_PER_REST', 4);      // resting delete 4 malus
+define('MALUS_PER_MINE', 20);      // malus quand on creuse sans pioche
 define('MALUS_PER_DAMAGES', 2); // when damages are done, add 2 malus
 define('MALUS_PER_TURNS', 9);   // recup 9 malus / turns
 define('XP_PER_TURNS', 5);      // base 5 xp - rank / turns

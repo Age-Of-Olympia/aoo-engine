@@ -164,10 +164,6 @@ class Player implements ActorInterface {
         $this->turn = (object) array();
 
         while($row = $res->fetch_object()){
-            if ($row->name == "fat") {
-                continue;
-            }
-
             $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
         }
 
@@ -951,7 +947,7 @@ class Player implements ActorInterface {
         $this->refresh_caracs();
     }
 
-    public function putBonus($bonus, bool $fatigue = true) : bool{
+    public function putBonus($bonus) : bool{
 
 
         if(!isset($this->data)){
@@ -981,17 +977,8 @@ class Player implements ActorInterface {
 
 
             $values[] = '('. $this->id .', "'. $carac .'", '. $val .')';
-
-
-            if($carac == 'a' && $val < 0){
-
-                if ($fatigue) {
-                    $this->putFat(FAT_PER_ACTION);
-                }
-            }
-
-            elseif($carac == 'pv'){
-
+            
+            if($carac == 'pv'){
 
                 if($val < 0){
 
@@ -1082,8 +1069,8 @@ class Player implements ActorInterface {
 
 
         if(!isset($this->turn->$trait)){
-            if ($trait == "fatigue") {
-                return $this->data->fatigue;
+            if ($trait == "energie") {
+                return $this->data->energie;
             }
 
             return $this->caracs->$trait;
@@ -1104,27 +1091,16 @@ class Player implements ActorInterface {
         $this->refresh_data();
     }
 
-    public function set_fat($fatigue){
+    public function putEnergie($energie): void{
 
 
-        $sql = 'UPDATE players SET fatigue = GREATEST(?, 0) WHERE id = ?';
-
-        $db = new Db();
-
-        $db->exe($sql, array($fatigue, $this->id));
-
-        $this->refresh_data();
-    }
-
-    public function putFat($fatigue): void{
-
-
-        $sql = 'UPDATE players SET fatigue = GREATEST(fatigue + ?, 0) WHERE id = ?';
+        $sql = 'UPDATE players SET energie = GREATEST(energie + ?, 0) WHERE id = ?';
 
         $db = new Db();
 
-        $db->exe($sql, array($fatigue, $this->id));
+        $db->exe($sql, array($energie, $this->id));
 
+        $this->put_malus(1);
         $this->refresh_data();
     }
 
@@ -1773,8 +1749,8 @@ class Player implements ActorInterface {
         $this->go($coords);
 
 
-        // purge fat & malus
-        $sql = 'UPDATE players SET fatigue = 0, malus = 0 WHERE id = ?';
+        // purge malus
+        $sql = 'UPDATE players SET malus = 0 WHERE id = ?';
         $db->exe($sql, $this->id);
 
         // purge effects & bonus
