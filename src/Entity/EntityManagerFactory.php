@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Events;
+use Doctrine\ORM\Proxy\ProxyFactory;
 
 final class EntityManagerFactory
 {
@@ -17,14 +18,14 @@ final class EntityManagerFactory
     {
         if (self::$em === null) {
             $orm_db_config = ORMSetup::createAttributeMetadataConfiguration(
-                paths: [dirname(__FILE__)],
+                paths: [__DIR__],
                 isDevMode: false
             );
 
             // AJOUT ICI pour proxies
             $proxyDir = __DIR__ . '/../../var/proxies';
             if (!is_dir($proxyDir)) {
-                mkdir($proxyDir, 0777, true);
+                mkdir($proxyDir, 0755, true);
             }
             $orm_db_config->setProxyDir($proxyDir);
             $orm_db_config->setProxyNamespace('Proxies');
