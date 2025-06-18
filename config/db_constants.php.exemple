@@ -1,5 +1,5 @@
 <?php
-
+define('DEV_MODE', true);
 // DB CONSTANT
 // We have redundant data because we are switching to Doctrine
 define('DB_CONSTANTS', array(
