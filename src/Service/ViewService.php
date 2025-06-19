@@ -51,7 +51,7 @@ class ViewService {
         $this->playerZ = $playerZ;
         $this->playerId = $playerId;
         $this->currentPlan = $plan;
-        $this->raceService = new RaceService($db);
+        $this->raceService = new RaceService();
         $this->colorService = new ColorService();
         $this->calculateBounds();
         $this->colors = $this->colorService->initializePastelColors();
@@ -665,7 +665,7 @@ class ViewService {
 
     public function generateLocalPlayersLayer() {
         $layer = $this->createLayer($this->localMapWidth, $this->localMapHeight);
-        $zCondition = $plan === $this->worldPlan 
+        $zCondition = $this->currentPlan === $this->worldPlan 
             ? "AND c.z = 0" 
             : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = "local";
@@ -869,7 +869,7 @@ class ViewService {
             $planBounds = $this->getBoundsFromPlan($this->currentPlan);
         }
         if ($planBounds === null) {
-            throw new \Exception("Plan bounds are not available.");
+            throw new Exception("Plan bounds are not available.");
         }
     
         // Use existing scale factors from global map
