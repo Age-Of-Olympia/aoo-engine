@@ -98,23 +98,32 @@ abstract class Command
     }
 
     public static function ReplaceEnvVariable($commandLine){
+        $commandLine=trim($commandLine);
         $subCommands= array();
         $didAnArray=false;
-        foreach ($GLOBALS[consoleEnvKey] as $key => $value) {
-            $needle = '{'.$key.'}';
-            if(strpos($commandLine, $needle) !== false){
-                if(is_array($value)){
-                    if($didAnArray){
-                       throw new Exception('Only one array is allowed in a command line');
+        $arrayVarToProcess= array();
+        //dirty hack no replace in savescript command
+        if (stripos($commandLine, "savescript") !=0) {
+            foreach ($GLOBALS[consoleEnvKey] as $key => $value) {
+                $needle = '{' . $key . '}';
+                if (strpos($commandLine, $needle) !== false) {
+                    if (is_array($value)) {
+                        $arrayVarToProcess[$key] = $value;
+                    } else {
+                        $commandLine = str_replace($needle, $value, $commandLine);
                     }
-                    foreach ($value as $subValue) {
-                        $subCommands[] = str_replace($needle, $subValue, $commandLine);
-                    }
-                    $didAnArray = true;
                 }
-                else{
-                    $subCommands[] = str_replace($needle, $value, $commandLine);
+            }
+            foreach ($arrayVarToProcess as $key => $value) {
+                $needle = '{' . $key . '}';
+
+                if ($didAnArray) {
+                    throw new Exception('Only one array is allowed in a command line');
                 }
+                foreach ($value as $subValue) {
+                    $subCommands[] = str_replace($needle, $subValue, $commandLine);
+                }
+                $didAnArray = true;
             }
         }
         if(empty($subCommands)){

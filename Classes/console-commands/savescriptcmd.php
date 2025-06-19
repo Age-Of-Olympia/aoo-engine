@@ -28,7 +28,10 @@ EOT);
             $this->result->Error('vous devez être connecté pour sauvgarder un script.');
             return '';
         }
-        $scripts = json()->decode('scripts', $mainaccount);
+        $fileName = $mainaccount.'_scripts';
+        $dataSubFolder = 'console/scripts';
+        $folder = "datas/private/{$dataSubFolder}/";
+        $scripts = json()->decode($dataSubFolder, $fileName);
         if($scripts === false) {
             $scripts =array();
         }
@@ -39,11 +42,11 @@ EOT);
 
 
         $data = Json::encode( (object)$scripts);
-        $folder = 'datas/private/console/scripts/';
+        
         if(!file_exists($folder)){
             mkdir($folder, 0755,true);
         }
-        Json::write_json($folder.$mainaccount.'_scripts.json', $data);
+        Json::write_json($folder.$fileName.'.json', $data);
         $this->result->Log('Script saved successfully.');
         return '';
     }
