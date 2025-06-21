@@ -309,7 +309,6 @@ class Forum{
         return $postId;
     }
 
-
     public static function put_reward($player){
 
 
@@ -420,6 +419,47 @@ class Forum{
         Json::write_json($path, $data);
     }
 
+
+    public static function remove_post($name, $topicJson){
+        self::remove_post_from_topic($name, $topicJson);
+        self::refresh_last_posts($topicJson->name);
+        self::remove_post_json($name);
+        //TODO gérer cas seul post du topic
+        //TODO gérer cas du dpost le plus récent a été supprimé et le plus récent est désormais ailleurs
+        //TODO gérer suppression du topic + Post le plus récent (get_most_recent dans le forum ?)
+    }
+
+    public static function remove_post_json($name){
+
+        $path = 'datas/private/forum/posts/'. $name .'.json';
+        
+        if(file_exists($path)){
+            unlink($path) ;//suppression du fichier       
+        }
+
+    }
+
+    
+    public static function remove_post_from_topic($name, $topicJson){
+
+        $path = 'datas/private/forum/topics/'. $topicJson->name .'.json';
+
+        //suppression de la liste des posts
+        foreach ($topicJson->posts as $index => $objet) {
+            if ($objet->name == $name) {
+                unset($topicJson->posts[$index]);
+                break; 
+            }
+        }
+
+        //Gestion dernier post du topic        
+        $postJson = json()->decode('forum/posts', end($topicJson->posts)->name);
+        $topicJson->last = (object) array("author"=>$postJson->author, "time"=>$name);
+
+        $data = Json::encode($topicJson);
+
+        Json::write_json($path, $data);
+    }
 
     public static function get_top_dest($topJson){
 

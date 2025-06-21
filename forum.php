@@ -41,6 +41,22 @@ elseif(!empty($_GET['edit'])){
     exit();
 }
 
+elseif(!empty($_GET['delete'])){
+
+
+    include('scripts/forum/delete.php');
+
+    exit();
+}
+
+elseif(!empty($_GET['mask'])){
+
+
+    include('scripts/forum/mask.php');
+
+    exit();
+}
+
 elseif(!empty($_GET['newTopic'])){
 
 

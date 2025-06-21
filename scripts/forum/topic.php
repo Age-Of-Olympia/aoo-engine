@@ -281,7 +281,12 @@ echo '
                             class="give-reward-span"
                         >';
                     if($player->have_option('isSuperAdmin')) {
-                        echo '<a href="forum.php?edit='. $post->name .'">Edit</a>';
+                        $page = (isset($_GET['page'])) ? $_GET['page'] : 1;
+                        echo '<a href="forum.php?edit='. $post->name .'">Edit</a> - 
+                        <a href="forum.php?delete='. $post->name .'&page='.$page .'">Supprimer</a>  ';
+                    }
+                    if($player->have_option('isAdmin')) {
+                        echo '<a href="forum.php?mask='. $post->name .'">Mask</a>';
                     }
                     echo '</span>';
                 }
