@@ -498,21 +498,23 @@ class Player implements ActorInterface {
 
         $res = $db->exe($sql, array($this->id, $name));
         $row = $res->fetch_object();
-        if($stackable){
-            $value = $row->value + $value; // On additionne la valeur à celle déjà présente si stackable
-        }
-        else{
-            $value = max($value, $row->value); // Sinon, on prend la valeur maximale entre l'effet (si présent) et la nouvelle valeur
-        }
-
+        
         $sql = '
         INSERT INTO
         players_effects
         (player_id, name, endTime, value)
         VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-        endTime = VALUES(endTime);
         ';
+
+        if($stackable){
+            $value = isset($row->value) ? $row->value + $value : $value; // On additionne la valeur à celle déjà présente si stackable
+            $sql = $sql . 'value = VALUES(value);';
+        }
+        else{
+            $value = max($value, $row->value); // Sinon, on prend la valeur maximale entre l'effet (si présent) et la nouvelle valeur
+            $sql = $sql . 'endTime = VALUES(endTime);';
+        }
 
         $db = new Db();
 
@@ -546,6 +548,21 @@ class Player implements ActorInterface {
     public function get_effects(){
 
         return $this->get('effects');
+    }
+
+    public function get_effect_value($effect){
+
+        $sql = '
+        SELECT value 
+        FROM players_effects
+        WHERE player_id = ? AND name = ?';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, array($this->id, $effect));
+        $row = $res->fetch_object();
+
+        return $row;
     }
 
     public function endEffect(string $name): void{

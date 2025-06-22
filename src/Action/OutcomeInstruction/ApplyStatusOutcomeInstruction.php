@@ -26,6 +26,9 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
         }
         $player = $params['player'] ?? 'both';
         $outcomeSuccessMessages = array();
+        $stacks = ($params["stackable"] ?? false) ? '(+' : '(x';
+        $val = $params["valeur"] ?? 1;
+
         switch ($player) {
             case 'actor':
                 if ($status == "finished") {
@@ -34,21 +37,21 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
                         $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
                     }
                 } else {
-                    $this->applyEffect($params[$status], $status, $duration, false, 1, $actor);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage.' à ' . $actor->data->name;
+                    $this->applyEffect($params[$status], $status, $duration, $params["stackable"] ?? false, $val, $actor);
+                    $outcomeSuccessMessages[0] = 'L\'effet '.$status. ' ' . $stacks . $val . ') <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage.' à ' . $actor->data->name;
                 }
                 break;
             case 'target':
-                $this->applyEffect($params[$status], $status, $duration, false, 1, $target);
-                $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                $this->applyEffect($params[$status], $status, $duration, $params["stackable"] ?? false, $val, $target);
+                $outcomeSuccessMessages[0] = 'L\'effet '.$status. ' ' . $stacks . $val . ') <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
                 break;
             default:
-            $this->applyEffect($params[$status], $status, $duration, false, 1, $actor);
-            $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+            $this->applyEffect($params[$status], $status, $duration, $params["stackable"] ?? false, $val, $actor);
+            $outcomeSuccessMessages[0] = 'L\'effet '.$status. ' ' . $stacks . $val . ') <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $actor->data->name;
 
             if ($target->data->name !== $actor->data->name) {
-                $this->applyEffect($params[$status], $status, $duration, false, 1, $target);
-                $outcomeSuccessMessages[1] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                $this->applyEffect($params[$status], $status, $duration, $params["stackable"] ?? false, $val, $target);
+                $outcomeSuccessMessages[1] = 'L\'effet '.$status. ' ' . $stacks . $val . ') <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> est appliqué '. $timeMessage. ' à ' . $target->data->name;
             }
             break;
         }
