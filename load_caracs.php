@@ -34,7 +34,7 @@ echo '
             }
 
 
-            echo '<th width="30" title="'. CARACS_TXT[$k] .'">'. $e .'</th>';
+            echo '<th width="30" tooltip="'. CARACS_TXT[$k] .'">'. $e .'</th>';
         }
 
         echo '<th>Foi</th>';
