@@ -615,7 +615,7 @@ class View{
             echo '
             <div
                 class="view-mask scrolling-mask"
-                style="background: url(\''. $planJson->mask .'\'); width:'. $size .'px; max-width:'. $size .'px; height:'. $size .'px; "
+                style="background: url(\''. $planJson->mask .'\'); max-width:'. $size .'px; max-height:'. $size .'px; "
                 >
             </div>
             ';
