@@ -37,6 +37,7 @@ $data .= '
 <script>
 window.freeEmp = '. Item::get_free_emplacement($player) .';
 window.aeLeft = '. $player->getRemaining('ae') .';
+window.aLeft = '. $player->getRemaining('a') .';
 </script>
 ';
 
@@ -49,4 +50,4 @@ echo $data;
 
 ?>
 <script src="js/progressive_loader.js"></script>
-<script src="js/inventory.js?v=20250516"></script>
+<script src="js/inventory.js?v=202506245"></script>

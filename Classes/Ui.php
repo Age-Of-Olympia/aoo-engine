@@ -308,7 +308,7 @@ class Ui{
         window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20250526"></script>
+        <script src="js/inventUi.js?v=20250625"></script>
         <?php
 
         return Str::minify(ob_get_clean());

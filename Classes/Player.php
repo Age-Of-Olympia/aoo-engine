@@ -947,7 +947,7 @@ class Player implements ActorInterface {
         $this->refresh_caracs();
     }
 
-    public function putBonus($bonus) : bool{
+    /*public function putBonus($bonus) : bool{
 
 
         if(!isset($this->data)){
@@ -1054,7 +1054,100 @@ class Player implements ActorInterface {
 
 
         return true;
+    }*/
+
+    public function putBonus($bonus, bool $fatigue = true) : bool{
+
+
+        if(!isset($this->data)){
+
+            $this->get_data();
+        }
+
+
+        if(!count($bonus)){
+
+            return false;
+        }
+
+
+        if(!isset($this->caracs) || !count((array) $this->caracs)){
+
+            $this->get_caracs();
+        }
+
+        $values = array();
+
+
+        $db = new Db();
+
+
+        foreach($bonus as $carac=>$val){
+
+            $values[] = '('. $this->id .', "'. $carac .'", '. $val .')';
+
+            //les pv ont un traitement particulier, car en perdre inflige l'effet "sang" et inflige des malus
+            if($carac == 'pv' && $val < 0){
+
+                Element::put('sang', $this->data->coords_id);
+
+                $this->put_malus(MALUS_PER_DAMAGES);
+            }
+
+            //Calcul de la quantité de bonus à ajouter sans dépasser le max                
+            if($val > 0){
+
+                $bonusLeft = $this->getRemaining($carac);
+
+                if ($val > $bonusLeft){
+                    $val = $bonusLeft;
+                }
+            } 
+        }
+
+        $sql = '
+        INSERT INTO
+        players_bonus
+        (`player_id`,`name`,`n`)
+        VALUE '. implode(',', $values) .'
+        ON DUPLICATE KEY UPDATE
+        n = n + VALUES(n);
+        ';
+
+        $db->exe($sql);
+
+
+        if(!isset($this->turn)){
+
+            $this->turn = (object) array();
+        }
+
+        if(!isset($this->turn->$carac)){
+
+            $this->turn->$carac = $this->caracs->$carac;
+        }
+
+        $this->turn->$carac += $val;
+
+
+        $sql = '
+        DELETE FROM
+        players_bonus
+        WHERE
+        name IN ("pm", "pv", "mvt","a","ae")
+        AND
+        n >= 0
+        ';
+
+        $db->exe($sql);
+
+
+        $this->refresh_caracs();
+
+
+        return true;
     }
+	
 
 
     public function getRemaining(string $trait): int{

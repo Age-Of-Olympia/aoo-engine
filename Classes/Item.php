@@ -526,7 +526,17 @@ class Item{
                 $return[] = '<font color="red">'. $e .''. $carac .'</font>';
         }
 
-
+        //special effets
+        if(!empty($itemJson->effet)){
+            foreach($itemJson->effet as $effet){
+                if (str_starts_with($effet,"-")){
+                    $return[] = '<font color="blue">'. $effet .'</font>';
+                } else {
+                    $return[] = '<font color="red">'. $effet .'</font>';
+                }
+            }
+        }
+        
         // special demolition
         if(!empty($itemJson->demolition)){
 

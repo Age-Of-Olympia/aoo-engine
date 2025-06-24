@@ -71,6 +71,79 @@ elseif($item->row->spell != ''){
 
     $ae = 1;
 }
+elseif($item->data->type == 'consommable'){
+    //cas des objets consommables :
+    //coûte 1A pour être consommés
+
+    //On verifie que le joueur a assez d'action
+    if($player->getRemaining('a') < 1){
+
+        exit('error a');
+    }
+
+    //ajout des bonus de l'objet consommé
+    foreach($item->data as $bonus => $qte){
+
+        switch ($bonus) {
+            case "pv":
+            case "pm":
+            case "mvt":
+            case "a":
+            case "ae":
+                $player->putBonus([$bonus=>$qte], false);
+            break;
+        
+            case "malus":
+                $player->put_malus($qte);
+                break;
+
+            case "pr":
+                $player->put_pr($qte);
+                break;
+
+            case "pf":
+                $player->put_pf($qte);
+                break;
+
+            case "effet":
+                //dans le json de l'objet, les effet sont dans un tableau du type ["-sang","poison"]
+                foreach($qte as $effet){
+                    //supression d'un effet
+                    if(str_starts_with($effet, '-')){ 
+
+                        $player->endEffect(str_replace("-","",$effet));
+
+                    }
+                    //ajout d'un effet
+                    else { 
+                        if(in_array($effet, EFFECTS_HIDDEN) || $effet == "poison" || $effet == "poison_magique"){
+
+                            $player->addEffect($effet, 0);
+
+                        }
+                        else {
+
+                            $player->addEffect($effet, ONE_DAY);
+                            
+                        }
+
+                    }
+                }
+                break;
+        }
+
+    }
+
+    //on enlève l'action utilisée
+    $player->putBonus(array('a'=>-1));
+
+    //on enlève un exemplaire de l'objet
+    $item->add_item($player, -1);
+
+    //coût en Ae à 0
+    $ae = 0;
+
+}
 
 
 // use ae

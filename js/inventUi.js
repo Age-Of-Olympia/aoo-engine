@@ -33,27 +33,33 @@ $(document).ready(function(){
             if(window.freeEmp && window.type == 'equipement'){
 
                 $('.action[data-action="use"]')
-                .html('Équiper')
-                .prop('disabled', false);
+                .html('Équiper (1 Ae)')
+                .prop('disabled', (window.aeLeft <= 0));
             }
             else if(!window.freeEmp && window.type == 'equipement'){
                 if(window.emplacement == "munition" || window.emplacement == "doigt"){
                     $('.action[data-action="use"]')
-                    .html('Équiper')
-                    .prop('disabled', false);
+                    .html('Équiper (1 Ae)')
+                    .prop('disabled', (window.aeLeft <= 0));
                 }
                 else{
                     $('.action[data-action="use"]')
                     .html('<font color="red">Équiper (Max.)</font>')
-                    .prop('disabled', true);
+                    .prop('disabled', (window.aeLeft <= 0));
 
                 }
             }
-            else if(window.type == 'parchemin' || window.type == 'structure' || window.type == 'consommable' || window.emplacement != ''){
+            else if(window.type == 'parchemin' || window.type == 'structure' || window.emplacement != ''){
 
                 $('.action[data-action="use"]')
-                .html('Utiliser')
-                .prop('disabled', false);
+                .html('Utiliser (1 Ae)')
+                .prop('disabled', (window.aeLeft <= 0));
+            }
+            else if(window.type == 'consommable'){
+
+                $('.action[data-action="use"]')
+                .html('Utiliser (1 A)')
+                .prop('disabled', (window.aLeft <= 0));
             }
             else{
 
