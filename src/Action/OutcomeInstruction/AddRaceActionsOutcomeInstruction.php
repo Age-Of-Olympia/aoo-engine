@@ -10,7 +10,7 @@ use Classes\Player;
 #[ORM\Entity]
 class AddRaceActionsOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
 
         $raceJson = json()->decode('races', $actor->data->race);
 

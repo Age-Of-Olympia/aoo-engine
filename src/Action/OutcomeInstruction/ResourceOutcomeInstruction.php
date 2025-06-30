@@ -13,7 +13,7 @@ use Classes\View;
 #[ORM\Entity]
 class ResourceOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         $ressources = array();
         $biomes = array();
 

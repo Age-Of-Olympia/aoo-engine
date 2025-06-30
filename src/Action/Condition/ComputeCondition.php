@@ -22,6 +22,8 @@ class ComputeCondition extends BaseCondition
     protected string $throwName = "Le tir";
     protected string $actorRollTrait;
     protected string $targetRollTrait;
+    protected int $actorRollBonus;
+    protected int $targetRollBonus;
 
     public function __construct() {
         array_push($this->preConditions, new DodgeCondition());
@@ -38,6 +40,8 @@ class ComputeCondition extends BaseCondition
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $this->targetRollTrait = $params['targetRollType'] ?? null;
+        $this->actorRollBonus = $params['actorRollBonus'] ?? 0;
+        $this->targetRollBonus = $params['targetRollBonus'] ?? 0;
 
         if (!$target) {
             $errorMessages[0] = "Aucune cible n'a été spécifiée.";
@@ -46,22 +50,24 @@ class ComputeCondition extends BaseCondition
 
         $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
 
-        $result = $this->computeAttack($actor, $target);
+        $result = $this->computeAttack($actor, $target, $this->actorRollBonus, $this->targetRollBonus);
 
-        $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
+        if (!$result->isSuccess()) {
+            $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
+        }
 
         return $result;
     }
 
-    private function computeAttack(ActorInterface $actor, ?ActorInterface $target): ConditionResult 
+    private function computeAttack(ActorInterface $actor, ?ActorInterface $target, int $actorRollBonus, int $targetRollBonus): ConditionResult 
     {
         $success = false;
         $dice = new Dice(3);
 
-        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice);
+        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $actorRollBonus);
         $conditionDetailsSuccess[0] = $actorTxt;
 
-        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice);
+        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $targetRollBonus);
         $conditionDetailsSuccess[1] = $targetTxt;
        
         $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
@@ -83,7 +89,7 @@ class ComputeCondition extends BaseCondition
         return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
     }
 
-    protected function computeActor($actor, $dice)
+    protected function computeActor($actor, $dice, $actorRollBonus)
     {
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
@@ -103,7 +109,7 @@ class ComputeCondition extends BaseCondition
         return array($actorRoll, $actorTotal, $actorTxt);
     }
 
-    protected function computeTarget($target, $dice)
+    protected function computeTarget($target, $dice, $targetRollBonus)
     {
         $traitsArray = explode('/', $this->targetRollTrait);
         if (sizeof($traitsArray) == 1) {
@@ -118,17 +124,31 @@ class ComputeCondition extends BaseCondition
         
         $targetRoll = $dice->roll($targetRollTraitValue);
         $targetEsq = $this->carac->esquive ?? 0;
+<<<<<<< HEAD
         $targetTotal = array_sum($targetRoll) - $target->data->malus;
+=======
+        $bonus = isset($targetRollBonus) ? $targetRollBonus : 0;
+        $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus - $bonus;
+>>>>>>> c506da1 (Push pour un premier test du nouveau système de malus)
         if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
             $targetTotal = array_sum($targetRoll) - $targetEsq - $target->data->malus;
         }
         $targetTotal = array_sum($targetRoll) - $target->data->malus;
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
+<<<<<<< HEAD
         $targetEsqTxt = ($targetEsq != 0) ? ' - '. $targetEsq .' (Esquive)' : '';
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetTotalTxt;
         if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
             $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetEsqTxt . $malusTxt . $targetTotalTxt;
+=======
+        $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
+        $targetOtherTxt = ($targetEsq != 0 || $bonus != 0) ? ' - '. $targetEsq+$bonus .' (Autre)' : '';
+        $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
+        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+        if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
+            $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetFatTxt . $targetTotalTxt;
+>>>>>>> c506da1 (Push pour un premier test du nouveau système de malus)
         }
 
         return array($targetRoll, $targetTotal, $targetTxt);

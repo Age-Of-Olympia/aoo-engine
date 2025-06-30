@@ -11,7 +11,7 @@ use Classes\View;
 #[ORM\Entity]
 class LifeLossOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
@@ -96,9 +96,11 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
 
+            $malus = random_int(1,3);
             $recoverMalus = floor($totalDamages/2);
-            $target->put_malus(-$recoverMalus);
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' récupère '. $recoverMalus .' malus grâce aux dégâts subits.';
+            $target->put_malus($malus-$recoverMalus);
+            $malusText = ($malus - $recoverMalus > 0) ? 'subit ' : ' récupère ';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . $malus . ' - ' . $recoverMalus .' (PV perdus) = ' . abs($malus-$recoverMalus) . ' malus.';
 
             // put assist
             $actor->put_assist($target, $totalDamages);

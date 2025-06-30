@@ -11,7 +11,7 @@ use Classes\Player;
 #[ORM\Entity]
 class DamageObjectOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         $result = new OutcomeResult(false);
         $outcomeSuccessMessages = array();
         $outcomeSuccessMessages[0] = null;

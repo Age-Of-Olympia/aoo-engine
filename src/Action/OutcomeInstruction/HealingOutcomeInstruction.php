@@ -10,7 +10,7 @@ use Classes\View;
 #[ORM\Entity]
 class HealingOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
 
         // e.g. { "actorHealingTrait": "agi" }, { "actorHealingTrait": "agi", "bonusHealingTrait" : "3" }
         $actorTraitHealing = $this->getParameters()['actorHealingTrait'] ?? 0;

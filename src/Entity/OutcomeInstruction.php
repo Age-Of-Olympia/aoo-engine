@@ -75,5 +75,5 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
         return $this;
     }
 
-    abstract public function execute(Player $actor, Player $target): OutcomeResult;
+    abstract public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult;
 }

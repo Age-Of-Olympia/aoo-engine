@@ -3,7 +3,7 @@ namespace App\Action\Condition;
 
 class MeleeComputeCondition extends ComputeCondition
 {
-  protected function computeTarget($target, $dice)
+  protected function computeTarget($target, $dice, $targetRollBonus)
     {
         $option1 = $target->caracs->cc;
         $option2 = $target->caracs->agi;

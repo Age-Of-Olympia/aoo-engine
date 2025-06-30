@@ -10,7 +10,7 @@ use Classes\Str;
 #[ORM\Entity]
 class RemoveActionOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "action": "name" }
         $actionToRemove = $params['action'] ?? null;

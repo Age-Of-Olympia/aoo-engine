@@ -10,7 +10,7 @@ use Classes\Str;
 #[ORM\Entity]
 class ApplyStatusOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }
         // e.g. { "adrenaline": true, "player": "actor" , "duration": 86400 }

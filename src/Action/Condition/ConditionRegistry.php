@@ -26,7 +26,9 @@ class ConditionRegistry
             
             'Compute' => new ComputeCondition(),
             'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?
+            'MeleePureCompute' => new MeleePureComputeCondition(), // Melee compute without malus/effects
             'DistanceCompute' => new DistanceComputeCondition(),
+            'DistancePureCompute' => new DistancePureComputeCondition(), // Distance compute without malus/effects
             'SpellCompute' => new SpellComputeCondition(),
             'TechniqueCompute' => new TechniqueComputeCondition(),
 
