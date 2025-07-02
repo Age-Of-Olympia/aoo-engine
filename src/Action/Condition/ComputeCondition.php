@@ -104,7 +104,7 @@ class ComputeCondition extends BaseCondition
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
         $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal : '';
-        $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = '. array_sum($actorRoll) . $distanceMalusTxt . $actorTotalTxt;
+        $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
 
         return array($actorRoll, $actorTotal, $actorTxt);
     }
@@ -124,31 +124,18 @@ class ComputeCondition extends BaseCondition
         
         $targetRoll = $dice->roll($targetRollTraitValue);
         $targetEsq = $this->carac->esquive ?? 0;
-<<<<<<< HEAD
-        $targetTotal = array_sum($targetRoll) - $target->data->malus;
-=======
         $bonus = isset($targetRollBonus) ? $targetRollBonus : 0;
-        $targetTotal = array_sum($targetRoll) - $targetFat - $target->data->malus - $bonus;
->>>>>>> c506da1 (Push pour un premier test du nouveau système de malus)
+        $targetTotal = array_sum($targetRoll) - $target->data->malus - $bonus;
         if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
             $targetTotal = array_sum($targetRoll) - $targetEsq - $target->data->malus;
         }
         $targetTotal = array_sum($targetRoll) - $target->data->malus;
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-<<<<<<< HEAD
-        $targetEsqTxt = ($targetEsq != 0) ? ' - '. $targetEsq .' (Esquive)' : '';
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetTotalTxt;
-        if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
-            $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetEsqTxt . $malusTxt . $targetTotalTxt;
-=======
-        $targetFatTxt = ($targetFat != 0) ? ' - '. $targetFat .' (Fatigue)' : '';
         $targetOtherTxt = ($targetEsq != 0 || $bonus != 0) ? ' - '. $targetEsq+$bonus .' (Autre)' : '';
-        $targetTotalTxt = ($targetFat || $target->data->malus) ? ' = '. $targetTotal : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetFatTxt . $targetTotalTxt;
+        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt .  $targetTotalTxt;
         if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
-            $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetFatTxt . $targetTotalTxt;
->>>>>>> c506da1 (Push pour un premier test du nouveau système de malus)
+            $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt .  $targetTotalTxt;
         }
 
         return array($targetRoll, $targetTotal, $targetTxt);
