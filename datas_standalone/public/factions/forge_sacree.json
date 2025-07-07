@@ -6,6 +6,8 @@
 
     "raFont": "ra-forging",
 
+    "respawnPlan": "banque_des_lutins",
+
     "role":[
 
         {"name":"Forgeron","showPosition":1,"showForum":1,"defaultRole":1},

@@ -6,6 +6,8 @@
 
     "raFont": "ra-gold-bar",
 
+    "respawnPlan": "banque_des_lutins",
+
     "role":[
 
         {"name":"Gestionnaire","showPosition":1,"editRole":1,"kickMember":1,"addMember":1,"showForum":1,"initRole":1},

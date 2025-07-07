@@ -6,6 +6,8 @@
 
     "raFont": "ra-moon-sun",
 
+    "respawnPlan": "arcadia",
+
     "role":[
 
         {"name":"Guerrier","showPosition":1,"showForum":1,"defaultRole":1},
