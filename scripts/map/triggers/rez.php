@@ -28,7 +28,7 @@ if($player->coords->plan == 'gaia2'){
 $factionJson = json()->decode('factions', $player->data->faction);
 
 
-$spawnPlan = $factionJson->respawnPlan??"olympa";
+$spawnPlan = $factionJson->respawnPlan??"olympia";
 
 
 $goCoords = (object) array(
