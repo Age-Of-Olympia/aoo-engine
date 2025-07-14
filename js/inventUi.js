@@ -49,13 +49,13 @@ $(document).ready(function(){
 
                 }
             }
-            else if(window.type == 'parchemin' || window.type == 'structure' || window.emplacement != ''){
+            else if(window.type == 'parchemin' || window.emplacement != ''){
 
                 $('.action[data-action="use"]')
                 .html('Utiliser (1 Ae)')
                 .prop('disabled', (window.aeLeft <= 0));
             }
-            else if(window.type == 'consommable'){
+            else if(window.type == 'consommable' || window.type == 'structure'){
 
                 $('.action[data-action="use"]')
                 .html('Utiliser (1 A)')
