@@ -447,6 +447,21 @@ define('LOOT_CHANCE', array(
 	'plume_ebenne'=>100
 ));
 
+/*
+    taux de réapparition des plantes par trigger
+    7 => 1 chance sur 7
+*/
+define('GROW_RATE', array(
+    'adonis'=>7,
+    'astral'=>7,
+    'cafe'=>7,
+    'houblon'=>7,
+    'lichen_sacre'=>7,
+    'lotus_noir'=>7,
+    'menthe'=>7,
+    'pavot'=>7
+));
+
 
 /*
  * costs & recups
@@ -488,3 +503,4 @@ define('CACHED_QUESTS', true); // si false, logs>quests n'est pas cached
 define('CACHED_CLASSEMENTS', true); // si false, classemens.php n'est pas cached
 define('AUTO_BREAK', false); // si true, l'équipement casse (100% de chance)
 define('AUTO_FAIL', false); // si true, les attaques ratent forcément
+
