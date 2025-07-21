@@ -12,11 +12,8 @@ foreach(File::scan_dir('img/triggers/', without:".png") as $e){
 
     $params = '';
 
-    if($e == 'exit'){
 
-        $params = 'sw';
-    }
-    elseif($e == 'tp'){
+    if($e == 'tp'){
 
         $params = 'x,y,z,plan';
     }
@@ -24,10 +21,11 @@ foreach(File::scan_dir('img/triggers/', without:".png") as $e){
 
         $params = 'item:name:n,spell:spell_name';
     }
-    elseif($e == 'enter'){
+    elseif($e == 'grow'){
 
-        $params = 'ne';
+        $params = 'adonis';
     }
+
 
 
     echo '<img

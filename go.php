@@ -97,7 +97,7 @@ if($row->n){
 
 
 $sql = '
-SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ?
+SELECT *, "triggers" AS whichTable FROM map_triggers WHERE coords_id = ? and name != "grow"
 UNION
 SELECT *, "plants" AS whichTable FROM map_plants WHERE coords_id = ?
 
