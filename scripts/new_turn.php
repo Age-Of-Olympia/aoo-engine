@@ -87,7 +87,10 @@ else if(!empty($_SESSION['playerId'])){
             if(isset($firstPlayerData->first)){
                 $firstPlayerXP = $firstPlayerData->first->xp;
             }
-
+            function getTooltip($key)
+            {
+                return 'flow="right" tooltip="'. CARACS_TXT[$key].'"';
+            }
             echo '
             <table border="1" align="center" class="marbre">';
 
@@ -113,15 +116,15 @@ else if(!empty($_SESSION['playerId'])){
                     $gainXp =25; 
                 }
 
-                echo '<tr><td>Xp</td><td align="right">+'. $gainXp . $gainXpTxt . '</td></tr>';
+                echo '<tr><td '.getTooltip('xp').'>Xp</td><td align="right">+'. $gainXp . $gainXpTxt . '</td></tr>';
 
-                echo '<tr><td>Pi</td><td align="right">+'. $gainXp .'</td></tr>';
+                echo '<tr><td '.getTooltip(key: 'pi').'>Pi</td><td align="right">+'. $gainXp .'</td></tr>';
 
 
                 // update malus
                 $recovMalus = min($player->data->malus, MALUS_PER_TURNS);
 
-                echo '<tr><td>Malus</td><td align="right">-'. $recovMalus .'</td></tr>';
+                echo '<tr><td '.getTooltip(key: 'malus').'>Malus</td><td align="right">-'. $recovMalus .'</td></tr>';
 
 
                 // recover carac
@@ -136,7 +139,7 @@ else if(!empty($_SESSION['playerId'])){
                         $player->endEffect('poison_magique');
 
 
-                        echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+0 (<span class="ra '. EFFECTS_RA_FONT['poison_magique'] .'"></span> Poison Magique)</td></tr>';
+                        echo '<tr><td '.getTooltip($k).'>'. CARACS[$k] .'</td><td align="right">+0 (<span class="ra '. EFFECTS_RA_FONT['poison_magique'] .'"></span> Poison Magique)</td></tr>';
 
                         continue;
                     }
@@ -147,7 +150,7 @@ else if(!empty($_SESSION['playerId'])){
                         $player->endEffect('poison');
 
 
-                        echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+ 0 (<span class="ra '. EFFECTS_RA_FONT['poison'] .'"></span> Poison)</td></tr>';
+                        echo '<tr><td '.getTooltip($k).'>'. CARACS[$k] .'</td><td align="right">+ 0 (<span class="ra '. EFFECTS_RA_FONT['poison'] .'"></span> Poison)</td></tr>';
 
                         continue;
                     }
@@ -160,7 +163,7 @@ else if(!empty($_SESSION['playerId'])){
 
                         $val += $player->caracs->rm;
 
-                        echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+'. $val .' (<span class="ra '. EFFECTS_RA_FONT['regeneration'] .'"></span> Régénération)</td></tr>';
+                        echo '<tr><td '.getTooltip($k).'>'. CARACS[$k] .'</td><td align="right">+'. $val .' (<span class="ra '. EFFECTS_RA_FONT['regeneration'] .'"></span> Régénération)</td></tr>';
 
                         continue;
                     }
@@ -180,7 +183,7 @@ else if(!empty($_SESSION['playerId'])){
                         $player->putBonus(array($k=>$val));
                     }
 
-                    echo '<tr><td>'. CARACS[$k] .'</td><td align="right">+'. $val .'</td></tr>';
+                    echo '<tr><td '.getTooltip($k).'>'. CARACS[$k] .'</td><td align="right">+'. $val .'</td></tr>';
                 }
 
 

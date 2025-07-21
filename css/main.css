@@ -173,12 +173,12 @@ input[type="text"], input[type="password"], input[type="number"]{
  */
 /* START TOOLTIP STYLES */
 [tooltip] {
-  position: relative; /* opinion 1 */
-  display: inline-block;
   cursor: help;
   text-decoration: underline dotted black;
 }
-
+[tooltip][flow]{
+    position: relative;
+}
 /* Applies to all tooltips */
 [tooltip]::before,
 [tooltip]::after {

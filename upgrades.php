@@ -134,11 +134,19 @@ if(isset($_GET['spells'])){
 
 
 echo '
-<table class="box-shadow marbre" border="1" align="center">';
+<table class="box-shadow marbre" border="1" align="center" style="position:relative; margin-top: 60px;">';
 
 
 echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th>Reste</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
 
+function getTooltip($key)
+{
+    if (!isset(CARACS_TXT_LONG[$key])) {
+
+        return '';
+    }
+    return 'tooltip="' . CARACS_TXT_LONG[$key] . '"';
+}
 
 foreach(CARACS as $k=>$e){
 
@@ -204,7 +212,7 @@ foreach(CARACS as $k=>$e){
 
     echo '
     <tr>
-        <th>
+        <th '. getTooltip($k) .'>
             '. $e .'
         </th>
         <td>

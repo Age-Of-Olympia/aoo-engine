@@ -18,7 +18,7 @@ $turnJson = $player->get_turnJson();
 
 
 echo '
-<table border="1" align="center" class="marbre" id="caracs-menu">
+<table border="1" align="center" class="marbre" id="caracs-menu" style="position:relative;">
     ';
 
     echo '
@@ -37,7 +37,7 @@ echo '
             echo '<th width="30" tooltip="'. CARACS_TXT[$k] .'">'. $e .'</th>';
         }
 
-        echo '<th>Foi</th>';
+        echo '<th tooltip="'. CARACS_TXT["foi"] .'">Foi</th>';
 
         echo '
     </tr>
