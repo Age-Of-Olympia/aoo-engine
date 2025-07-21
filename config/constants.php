@@ -47,7 +47,7 @@ define('CARACS_RECOVER', array(
 
 define('CARACS_TXT', array(
     'a'=>'Action',
-    'mvt'=>'Mouvement',
+    'mvt'=>'Mouvements',
     'p'=>'Perception',
     'pv'=>'Points de Vie',
     'cc'=>'Capacité de Combat',
@@ -60,9 +60,34 @@ define('CARACS_TXT', array(
     'm'=>'Puissance Magique',
     'r'=>'Récupération',
     'rm'=>'Récupération Magique',
-    'ae'=> 'Action d\'Equipement'
+    'ae'=> 'Action d\'Equipement',
+    'foi'=>'Nombre de points de Foi',
+    'xp'=>'Points d\'Expérience',
+    'pi'=>'Points d\'Investissement',
+    'malus'=>'Malus',
 ));
 
+define('CARACS_TXT_LONG', array(
+    'a'=>'Les Action servent à interagir avec le monde, à attaquer, recolter, s\'entrainer',
+    'mvt'=>'Les Mouvements sont votre nombre de déplacements possibles par tour',
+    'p'=>'La Perception correspond au nombre de cases que vous pouvez voir autour de vous',
+    'pv'=>'Points de Vie, ils sont réduits par les dégâts subis. Si vos PV tombent à 0, vous mourrez.',
+    'cc'=>'Capacité de Combat, correspond au nombre de dés que vous lancez pour attaquer au corps à corps et pour vous défendre des attaques au corps à corps et à distance',
+    'ct'=>'Capacité de Tir, correspond au nombre de dés que vous lancez pour attaquer à distance',
+    'f'=>'Force, est utiliser pour calculer les dégâts au corps à corps et a distance',
+    'e'=>'Endurance, permet de résister aux dégâts physique',
+    'agi'=>'Agilité, utilisée pour esquiver les attaques physiques et au vol',
+    'pm'=>'Points de Magie, votre réserve de magie, utilisée pour lancer des sorts',
+    'fm'=>'Force Mentale, correspond au nombre de dés que vous lancez pour attaquer/défendre des attaques magiques',
+    'm'=>'Puissance Magique, utilisée pour calculer les dégâts magiques',
+    'r'=>'Récupération, nombre de point de vie récupérés par tour',
+    'rm'=>'Récupération Magique, nombre de point de magie récupérés par tour',
+    'ae'=> 'Action d\'Equipement, permet d\'équiper ou de déséquiper un objet',
+    'foi'=>'Nombre de points de Foi, gagné en priant votre dieu',
+    'xp'=>'Points d\'Expérience',
+    'pi'=>'Points d\'Investissement, permet d\'améliorer vos caractéristiques',
+    'malus'=>'Malus vos malus réduisent vos jets de défense, ils sont récupérés au fil du temps',
+));
 /*
  * time
  */
