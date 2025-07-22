@@ -3,7 +3,3 @@ parameters:
     paths:
       - tests
       # - src
-    ignoreErrors:
-        - '#Parameter \$item of method Tests\\Action\\Mock\\PlayerMock::equip\(\) has invalid type Item#'
-        - '#Method Tests\\Action\\Mock\\PlayerMock::getMunition\(\) has invalid return type Item#'
-        - '#Parameter \$object of method Tests\\Action\\Mock\\PlayerMock::getMunition\(\) has invalid type Item#'

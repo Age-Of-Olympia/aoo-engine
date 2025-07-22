@@ -4,7 +4,7 @@ namespace Tests\Action\Mock;
 
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
-use Item;
+use Classes\Item;
 
 class PlayerMock implements ActorInterface
 {
@@ -30,6 +30,10 @@ class PlayerMock implements ActorInterface
     $this->caracs = (object) [];
   }
 
+  public function getId(): int {
+    return $this->id;
+  }
+
   // Méthodes requises par ActorInterface
   public function haveEffect(string $name): int
   {
@@ -46,6 +50,10 @@ class PlayerMock implements ActorInterface
     // Implémentation vide pour le mock
   }
 
+  public function have_effects_to_purge(): bool{
+    return false;
+  }
+
   public function have_option(string $name): int
   {
     return 0;
@@ -56,7 +64,7 @@ class PlayerMock implements ActorInterface
     return true;
   }
 
-  public function getCoords(): object
+  public function getCoords(bool $refresh = true): object
   {
     return (object) [
       'x' => 0,
@@ -94,6 +102,10 @@ class PlayerMock implements ActorInterface
   public function putFat($bonus): void
   {
     // Implémentation vide pour le mock
+  }
+
+  public function putEnergie($energie): void{
+
   }
 
   public function go($goCoords)
