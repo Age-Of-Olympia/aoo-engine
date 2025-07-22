@@ -26,7 +26,7 @@ testf:
 test-ci:
 	mkdir -p tmp/coverage
 	composer install --no-progress --no-interaction
-	./vendor/bin/phpunit -c phpunit.xml --coverage-text --colors=never
+	./vendor/bin/phpunit -c phpunit.xml --log-junit phpunit-report.xml --coverage-text --colors=never
 
 phpstan-ci:
 	composer install --no-progress --no-interaction
