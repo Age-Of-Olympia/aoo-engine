@@ -65,7 +65,6 @@ Nous avons mis en place une chaîne CI complète avec les éléments suivants :
 ## Documentation
 
 - CI: https://gitlab.com/ovsmar/aoo-engine-mds/-/tree/dev/gitlab-ci
-- E2E: https://gitlab.com/ovsmar/aoo-engine-mds/-/tree/dev/selenium_tests
 
 ---
 
@@ -73,7 +72,6 @@ Nous avons mis en place une chaîne CI complète avec les éléments suivants :
 
 - Project: https://gitlab.com/ovsmar/aoo-engine-mds/-/tree/dev
 - CI: https://gitlab.com/ovsmar/aoo-engine-mds/-/tree/dev/gitlab-ci
-- E2E: https://gitlab.com/ovsmar/aoo-engine-mds/-/tree/dev/selenium_tests
 - Issue board: https://gitlab.com/ovsmar/aoo-engine-mds/-/boards
 - Container registry: https://gitlab.com/ovsmar/aoo-engine-mds/container_registry
 - Artifacts: https://gitlab.com/ovsmar/aoo-engine-mds/-/artifacts

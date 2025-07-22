@@ -56,16 +56,3 @@ sqlmap-register:
 		--batch \
 		--output-dir=tmp/security
 
-
-selenium-install:
-	cd selenium_tests && npm install
-
-e2e:
-	cd selenium_tests && npm run e2e
-
-e2e-report:
-	cd selenium_tests && npm run e2e:report
-
-e2e-ci:
-	$(MAKE) selenium-install e2e-report
-
