@@ -25,14 +25,10 @@ stages:
         - composer.lock
     paths:
       - vendor/
-  tags:
-    - docker-aoo
   image: $CI_REGISTRY_IMAGE/test:latest
 
 build_image:
   stage: build
-  tags:
-    - docker-aoo
   services:
     - name: docker:dind
   variables:
