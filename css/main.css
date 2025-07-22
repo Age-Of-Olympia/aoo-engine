@@ -228,7 +228,9 @@ input[type="text"], input[type="password"], input[type="number"]{
 
 /* don't show empty tooltips */
 [tooltip='']::before,
-[tooltip='']::after {
+[tooltip='']::after,
+[tooltip]:not([flow])::before
+{
   display: none !important;
 }
 
