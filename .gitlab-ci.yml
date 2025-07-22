@@ -88,8 +88,7 @@ test_job:
 
 sqlmap_security_test:
   stage: security
-  tags:
-    - docker-aoo
+  image: docker
   services:
     - name: docker:dind
   variables:
