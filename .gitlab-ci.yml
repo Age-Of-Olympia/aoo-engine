@@ -80,6 +80,7 @@ test_job:
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
   artifacts:
     reports:
+      junit: phpunit-report.xml
       coverage_report:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
