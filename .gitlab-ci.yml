@@ -11,7 +11,7 @@ workflow:
 stages:
   - build
   - stan
-  - test  
+  - test
   - security
   - prepare
   - release
@@ -119,8 +119,7 @@ sqlmap_security_test:
       - tmp/security/
     expire_in: 1 week
   rules:
-    - when: manual      
-    - when: on_success 
+    - when: never
 
 prepare_job:
   stage: prepare
