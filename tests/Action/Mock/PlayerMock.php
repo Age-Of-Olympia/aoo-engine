@@ -112,4 +112,19 @@ class PlayerMock implements ActorInterface
   {
     // Implémentation vide pour le mock
   }
+
+  public function get_action_xp($target)
+  {
+
+  }
+
+  public function get_data(bool $forceRefresh=true)
+  {
+
+  }
+
+  public function get_upgrades()
+  {
+
+  }
 }
