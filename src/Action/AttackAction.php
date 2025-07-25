@@ -4,6 +4,7 @@ namespace App\Action;
 
 use App\Action\OutcomeInstruction\ApplyStatusOutcomeInstruction;
 use App\Entity\Action;
+use App\Interface\ActorInterface;
 use App\Interface\OutcomeInstructionInterface;
 use Classes\Player;
 
@@ -41,7 +42,7 @@ abstract class AttackAction extends Action
         return $infosArray;
     }
 
-    protected function calculateActorXp(bool $success, Player $actor, Player $target): int
+    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int
     {
         if ($success) {
             if (!isset($actor->data)) {
@@ -84,7 +85,7 @@ abstract class AttackAction extends Action
         return $playerXp;
     }
 
-    protected function calculateTargetXp(bool $success, Player $actor, Player $target): int
+    protected function calculateTargetXp(bool $success, ActorInterface $actor, ActorInterface $target): int
     {
         if ($success) {
             $targetXp = 0;
