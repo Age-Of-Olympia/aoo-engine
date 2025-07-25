@@ -3,8 +3,9 @@
 namespace App\Action;
 
 use App\Entity\Action;
+use App\Interface\ActorInterface;
+use Classes\Player as Player;
 use Doctrine\ORM\Mapping as ORM;
-use Player;
 
 #[ORM\Entity]
 class BaseAction extends Action
@@ -17,7 +18,7 @@ class BaseAction extends Action
     return $infosArray;
   }
 
-  public function calculateXp(bool $success, Player $actor, Player $target): array
+  public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
   {
     $xpResultsArray["actor"] = 0;
     $xpResultsArray["target"] = 0;
