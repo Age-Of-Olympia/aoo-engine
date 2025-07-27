@@ -20,7 +20,7 @@ class HealingOutcomeInstruction extends OutcomeInstruction
         $outcomeSuccessMessages = array();
         if(!empty($actorTraitHealing)){
             $baseHeal = is_numeric($actorTraitHealing) ? $actorTraitHealing : $actor->caracs->{$actorTraitHealing};
-            $bonusHeal = ($bonusTraitHealing  == 0) ? $bonusTraitHealing : $actor->caracs->{$bonusTraitHealing};
+            $bonusHeal = is_numeric($bonusTraitHealing) ? $bonusTraitHealing : $actor->caracs->{$bonusTraitHealing};
             $healing = $baseHeal + $bonusHeal;
             $target->putBonus(array('pv'=>$healing));
             $outcomeSuccessMessages[0] = 'Vous soignez '. $healing .' points de vie à '. $target->data->name.'.';
@@ -33,7 +33,7 @@ class HealingOutcomeInstruction extends OutcomeInstruction
         
         if(!empty($actorTraitPMHealing)){
             $baseHeal = is_numeric($actorTraitPMHealing) ? $actorTraitPMHealing : $actor->caracs->{$actorTraitPMHealing};
-            $bonusHeal = ($bonusTraitPMHealing == 0) ? $bonusTraitPMHealing : $actor->caracs->{$bonusTraitPMHealing};
+            $bonusHeal = is_numeric($bonusTraitPMHealing) ? $bonusTraitPMHealing : $actor->caracs->{$bonusTraitPMHealing};
             $healing = $baseHeal + $bonusHeal;
             $target->putBonus(array('pm'=>$healing));
             $outcomeSuccessMessages[0] = 'Vous rendez '. $healing .' points de mana à '. $target->data->name.'.';
