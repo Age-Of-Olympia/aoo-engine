@@ -3,6 +3,9 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/layout.php';
 
+use Classes\Db;
+use Classes\Player;
+use Classes\View;
 use App\Service\ViewService;
 
 // Initialisation
@@ -37,47 +40,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_screenshot']
         'plan' => $planId
     ];
 
-    $playerId = 1;
+    $playerId = -92;
     $svgUrl = 'datas/private/players/'. $playerId .'.svg';
 
     $player = new Player($playerId);
     $playerOptions = $player->get_options();
 
-    $player->move_player($coords);
-    
-    $caracsJson = json()->decode('players', $player->id .'.caracs');
-    if (!$caracsJson) {
-        $player->get_caracs();
-        $p = $player->caracs->p;
+    // Vérifier que le joueur est un PNJ (ID négatif) avec le mode incognito activé
+    if ($playerId >= 0) {
+        $error = "Erreur : Le joueur utilisé pour les captures d'écran doit être un PNJ (ID négatif).";
+    } elseif (!$player->have('options', 'incognitoMode')) {
+        $error = "Erreur : Le PNJ utilisé pour les captures d'écran doit avoir le mode incognito activé.";
     } else {
-        $p = $caracsJson->p;
-    }
-    
-    // Créer une instance de View
-    $view = new View($coords, $range, false, $playerOptions);
-    $data = $view->get_view();
+        $player->move_player($coords);
 
-    // Extract just the SVG part if there's HTML around it
-    if (strpos($data, '<svg') !== false) {
-        $svgStart = strpos($data, '<svg');
-        $svgEnd = strrpos($data, '</svg>') + 6; // +6 for the length of </svg>
-        $data = substr($data, $svgStart, $svgEnd - $svgStart);
-    }
+        $caracsJson = json()->decode('players', $player->id .'.caracs');
+        if (!$caracsJson) {
+            $player->get_caracs();
+            $p = $player->caracs->p;
+        } else {
+            $p = $caracsJson->p;
+        }
 
-    // Créer le dossier s'il n'existe pas
-    $dir = dirname($svgUrl);
-    if (!file_exists($dir)) {
-        mkdir($dir, 0777, true);
-    }
+        // Créer une instance de View
+        $view = new View($coords, $range, false, $playerOptions);
+        $data = $view->get_view();
 
-    // Sauvegarder la vue SVG
-    file_put_contents($svgUrl, $data);
-    $baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/';
-    $data = str_replace('img/tiles/route.png', 'img/routes/route.png', $data);
-    $data = str_replace('img/', $baseUrl . 'img/', $data);
-    
-    $imageUrl = str_replace($_SERVER['DOCUMENT_ROOT'], $baseUrl, $svgUrl);
-    $showPreview = true;
+        // Extract just the SVG part if there's HTML around it
+        if (strpos($data, '<svg') !== false) {
+            $svgStart = strpos($data, '<svg');
+            $svgEnd = strrpos($data, '</svg>') + 6; // +6 for the length of </svg>
+            $data = substr($data, $svgStart, $svgEnd - $svgStart);
+        }
+
+        // Créer le dossier s'il n'existe pas
+        $dir = dirname($svgUrl);
+        if (!file_exists($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        // Sauvegarder la vue SVG
+        file_put_contents($svgUrl, $data);
+        $baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/';
+        $data = str_replace('img/tiles/route.png', 'img/routes/route.png', $data);
+        $data = str_replace('img/', $baseUrl . 'img/', $data);
+
+        $imageUrl = str_replace($_SERVER['DOCUMENT_ROOT'], $baseUrl, $svgUrl);
+        $showPreview = true;
+
+        // Remettre le joueur à sa position finale (0,7,0) sur le plan arene_s2
+        $finalCoords = (object)[
+            'x' => 0,
+            'y' => 8,
+            'z' => 0,
+            'plan' => 'arene_s2'
+        ];
+        $player->move_player($finalCoords);
+    }
 }
 
 // Afficher le formulaire
