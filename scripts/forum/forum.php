@@ -128,7 +128,9 @@ $pinnedTopicsHtml=array();
 
         $views = (count($topicsViewsTbl)) ? $topicsViewsTbl[$top->name] : Forum::get_views($topJson);
 
-
+        if (!$topJson) {
+            continue;
+        }
 
         $author = $playerService->GetPlayer($topJson->author);
 
