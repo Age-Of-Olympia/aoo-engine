@@ -3,6 +3,7 @@
 namespace App\Action;
 
 use App\Entity\Action;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
@@ -18,7 +19,7 @@ class StealAction extends Action
         return $infosArray;
     }
 
-    protected function calculateActorXp(bool $success, Player $actor, Player $target): int
+    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int
     {
         if ($success) {
             $playerXp = $actor->get_action_xp($target);
@@ -31,7 +32,7 @@ class StealAction extends Action
         return $playerXp;
     }
 
-    protected function calculateTargetXp(bool $success, Player $actor, Player $target): int
+    protected function calculateTargetXp(bool $success, ActorInterface $actor, ActorInterface $target): int
     {
         if ($success) {
             $playerXp = 0;

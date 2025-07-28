@@ -25,10 +25,10 @@ if($player->coords->plan == 'gaia2'){
 }
 
 
-$raceJson = json()->decode('races', $player->data->race);
+$factionJson = json()->decode('factions', $player->data->faction);
 
 
-$spawnPlan = $raceJson->plan;
+$spawnPlan = $factionJson->respawnPlan??"olympia";
 
 
 $goCoords = (object) array(

@@ -22,4 +22,7 @@ interface ActorInterface
   public function put_malus($malus): void;
   public function putEnergie($bonus) : void;
   public function go($goCoords);
+  public function get_action_xp($target);
+  public function get_data(bool $forceRefresh=true);
+  public function get_upgrades();
 }

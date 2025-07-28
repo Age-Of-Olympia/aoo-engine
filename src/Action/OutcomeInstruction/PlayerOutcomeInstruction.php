@@ -33,7 +33,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                     } else {
                         $bonus = array($carac=>$value);
                         $actor->putBonus($bonus);
-                        $outcomeSuccessMessages[0] = 'Vous courez ! (+'.$value.' mouvement !)' . $carac . '(valeur) !';
+                        $outcomeSuccessMessages[0] = 'Vous courez ! (+'.$value.' mouvement !)';
                     }
 
                 }

@@ -1,8 +1,7 @@
 <?php
 // admin/local_maps.php
-namespace Classes;
 require_once __DIR__ . '/layout.php';
-
+use Classes\Db;
 use App\Service\ViewService;
 
 // Clear any world map layers when loading local maps
@@ -73,15 +72,9 @@ if (isset($_POST['cleanup_local'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_local'])) {
     try {
         $layers = ['tiles', 'elements', 'foregrounds', 'walls', 'routes'];
-        
-        // Add Z-level filter if specific level selected
-        $options = [];
-        if (!empty($selectedZLevel)) {
-            $options['z_level'] = $selectedZLevel;
-        }
 
         $viewService = new ViewService($database, 0, 0, $selectedZLevel, 0, $selectedPlan);
-        $results = $viewService->generateLocalMap($layers, $selectedPlan, $options);
+        $results = $viewService->generateLocalMap($layers);
         
         if (!empty($results)) {
             $_SESSION['flash'] = ['type' => 'success', 'message' => "Local map layers generated successfully".(!empty($selectedZLevel) ? " for Z-level $selectedZLevel" : '')];

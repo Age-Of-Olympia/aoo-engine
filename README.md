@@ -62,6 +62,21 @@ define('DB_CONSTANTS', array(
     'driver' => 'pdo_mysql',
 ));
 ```
+
+A l'aide de la commande : 
+```code
+  id
+```
+
+Récupérer votre uid et votre gid
+puis dupliquez le fichier ".env.dist" vers ".env"
+et mettez le contenu suivant : 
+
+```code
+UID=VOTRE_UID
+GID=VOTRE_GID
+```
+
 sauvegardez et vous être prêt ! 
 
 ### Premiers pas sur le jeu
@@ -110,3 +125,53 @@ Il est évidemment possible de modifier l'environnement de travail en modifiant 
 
 Une fois que c'est fait, il faut alors reconstruire le devcontainer : il faut appuyer sur F1 puis taper "Dev Container" dans le moteur de recherche, les différentes commandes, dont celles de reconstruction, apparaîtront.
 
+## Automatisation & CI
+
+Afin de centraliser les commandes et de faciliter le développement, nous avons mis en place un **Makefile** qui est utilisé à la fois en **local** et dans la **CI**.
+
+### Makefile
+
+- Permet de lancer les commandes (tests, build, etc.) très facilement.
+- Utilisé **aussi dans la CI** pour éviter la duplication des scripts.
+- Exemples de commandes :
+
+```bash
+make test
+```
+
+---
+
+## CI
+
+Il s'agit d'un chaîne CI complète avec les éléments suivants :
+
+- **Registry Docker** avec système de cache pour optimiser les builds.
+- **Templates** dans `.gitlab-ci.yml` afin d’éviter la duplication des commandes.
+- **Arrêt automatique** de la CI en cas d’échec d’un test.
+- **Schéma** du fonctionnement de la registry ajouté dans la documentation.
+
+---
+
+## Tests
+
+| Type de test   | Détail                                                                 |
+|----------------|------------------------------------------------------------------------|
+| **Unitaire**   | Tests pertinents sur les fonctions critiques, notamment `calculateXp`. |
+| **Qualité**    | PHPStan appliqué uniquement sur `tests/`. |
+| **Sécurité**   | Vérification des failles de type injection SQL.                        |
+
+---
+
+## Documentation
+
+- CI: https://gitlab.com/age-of-olympia/aoo-engine/-/tree/dev/gitlab-ci
+
+---
+
+## Ressources
+
+- Project: https://gitlab.com/age-of-olympia/aoo-engine/-/tree/dev
+- CI: https://gitlab.com/age-of-olympia/aoo-engine/-/tree/dev/gitlab-ci
+- Issue board: https://gitlab.com/age-of-olympia/aoo-engine/-/boards
+- Container registry: https://gitlab.com/age-of-olympia/aoo-engine/container_registry
+- Artifacts: https://gitlab.com/age-of-olympia/aoo-engine/-/artifacts

@@ -537,6 +537,33 @@ class Item{
             }
         }
         
+        
+        //special pf
+        if(!empty($itemJson->pf)){
+
+            // item have this bonus
+            $carac = $itemJson->pf;
+
+            // bonus blue or malus red
+            if( $carac > 0 )
+                $return[] = '<font color="blue">PF+'. $carac .'</font>';
+            if( $carac < 0 )
+                $return[] = '<font color="red">PF'. $carac .'</font>';
+        }
+
+        //special malus
+        if(!empty($itemJson->malus)){
+
+            // item have this bonus
+            $carac = $itemJson->malus;
+
+            // bonus blue or malus red
+            if( $carac < 0 )
+                $return[] = '<font color="blue">Malus'. $carac .'</font>';
+            if( $carac > 0 )
+                $return[] = '<font color="red">Malus+'. $carac .'</font>';
+        }
+        
         // special demolition
         if(!empty($itemJson->demolition)){
 

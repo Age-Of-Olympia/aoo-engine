@@ -16,14 +16,14 @@ echo '
 
     echo '<div class="text"><b>Age of Olympia,<br />JDR gratuit au tour-par-tour.</b></div>';
 
-    echo '<a href="index.php" action="login" class="index-button">Jouer</a>';
+    echo '<a href="index.php" action="login" id="index-button-play", class="index-button">Jouer</a>';
 
 
     $raceBg = RACES[0];
 
     echo '
     <div id="index-login">
-        <a href="index.php" action="retour" class="index-button">Retour</a>
+        <a href="index.php" action="retour" id="index-button-return" class="index-button">Retour</a>
         <form id="login" method="post" action="login.php">
             <table
                 border="0"
@@ -37,7 +37,7 @@ echo '
             </tr>
             <tr>
             <td>
-            <input name="name" type="text" style="text-align: center;" />
+            <input name="name" type="text" id="name-input" style="text-align: center;" />
             </td>
             </tr>
             <tr>
@@ -47,7 +47,7 @@ echo '
             </tr>
             <tr>
             <td>
-            <input name="psw" type="password" style="text-align: center;" />
+            <input name="psw" type="password" id="psw-input" style="text-align: center;" />
             </td>
             </tr>
             <tr>
@@ -59,7 +59,7 @@ echo '
 
             <button style="display: none" class="submit"></button>
 
-            <a href="index.php" action="submit" class="index-button">Login</a>
+            <a href="index.php" action="submit" id="index-button-login" class="index-button">Login</a>
         </form>
     </div>
     ';
@@ -122,7 +122,7 @@ echo '
 
     if(!isset($_SESSION['playerId'])){
 
-        echo '<a href="register.php" class="index-button">Inscription</a>';
+        echo '<a href="register.php" id="index-button-register" class="index-button">Inscription</a>';
     }
     else{
 

@@ -8,6 +8,9 @@ require_once('config.php');
 $worldPlan = 'olympia';
 $player = new Player($_SESSION['playerId']);
 $player->getCoords();
+
+$isInHell = (isset($player->coords->plan) && $player->coords->plan === 'enfers');
+
 $planJson = json()->decode('plans', $player->coords->plan);
 $planJson->id = $player->coords->plan;
 $planJson->fromCoords = $player->coords;
@@ -22,62 +25,73 @@ if ($planJson->id !== $worldPlan && property_exists($planJson, 'z_levels') && co
 }
 $database = new Db();
 
-// Redirect to s2 map by default if no parameters are specified
-if (empty($_GET) || (!isset($_GET['local']) && !isset($_GET['s2']))) {
+// Redirect to local map by default if not on olympia
+if (empty($_GET)) {
     if ($planJson->id === $worldPlan) {
-        header('Location: map.php?s2'); // Global map for world plan
+        header('Location: map.php?world'); // Global map for world plan
     } else {
-        header('Location: map.php?local&s2'); // Local map for other plans
+        header('Location: map.php?local'); // Local map for other plans
     }
     exit();
 }
 
 $ui = new Ui('Carte du Monde');
 ob_start();
-
+ function generateLayerCheckbox($name, $value) {
+        echo '<label><input type="checkbox" name="layers[]" value="' . $value . '" ' . 
+               ((!isset($_GET['layers']) || in_array('tiles', $_GET['layers'] ?? [])) ? 'checked' : '') . '> ' . $name . '</label>';
+    }
+    function printHell()
+    {
+        echo '<div class="hell-message" style="text-align: center; margin: 20px 0; padding: 15px; background-color: #330000; border: 1px solid #660000; color: #ff6666;">';
+        echo '<h2>Vous êtes aux Enfers</h2>';
+        echo '<p>On va pas vous faire un dessin, vous êtes bien dans le royaume des morts.<br>';
+        echo 'La sortie est en 0,0<br>';
+        echo 'La boutique souvenirs est en 1,1<br>';
+        echo 'L\'amphithéâtre de Perséphone en -10,1<br>';
+        echo 'Et la paillote de Her\'eal en -2,10</p>';
+        echo '</div>';
+    }
 //  Carte globale
-if (isset($_GET['s2']) && !isset($_GET['local'])) {
+if (!isset($_GET['local'])) {
     echo '<div>
         <a href="index.php"><button><span class="ra ra-sideswipe"></span>Retour</button></a>';
     
     // Show "Monde" button only if player is on the olympia plan
     if ($planJson->id === $worldPlan) {
-        echo '<a href="map.php?s2"><button>Monde</button></a>';
+        echo '<a href="map.php?world"><button>Monde</button></a>';
     } else {
-        echo '<a href="map.php?s2"><button>Monde</button></a>
-              <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>';
+        echo '<a href="map.php?world"><button>Monde</button></a>
+              <a href="map.php?local"><button>' . $planJson->name . $zLevelName . '</button></a>';
     }
+    echo '</div>'; // Fermer la div des boutons
 
+    // Afficher le message des enfers si nécessaire
+    if ($isInHell) {
+        printHell();
+        echo Str::minify(ob_get_clean());
+        exit();
+    }
+    echo '<h1>Olympia</h1>';
     // Admin-only map panel redirection
     if ($player->have_option('isAdmin')) {
         echo '<div style="margin-bottom: 15px; padding-top: 10px;">
             <a href="admin/world_map.php"><button>Admin World Map Panel</button></a>
         </div>';
     }
-
+   
     // Formulaire de sélection des couches
     echo '<div class="layer-controls" style="margin-bottom: 15px;">
-        <form method="GET" action="map.php" style="display: inline-block;">
-            <input type="hidden" name="s2" value="1">
-            <label><input type="checkbox" name="layers[]" value="tiles" ' . 
-            ((!isset($_GET['layers']) || in_array('tiles', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Terrain</label>
-            <label><input type="checkbox" name="layers[]" value="elements" ' . 
-            ((!isset($_GET['layers']) || in_array('elements', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Éléments</label>
-            <label><input type="checkbox" name="layers[]" value="coordinates" ' . 
-            ((!isset($_GET['layers']) || in_array('coordinates', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Coordonnées</label>
-            <label><input type="checkbox" name="layers[]" value="locations" ' . 
-            ((!isset($_GET['layers']) || in_array('locations', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Lieux</label>
-            <label><input type="checkbox" name="layers[]" value="routes" ' . 
-            ((!isset($_GET['layers']) || in_array('routes', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Routes</label>
-            <label><input type="checkbox" name="layers[]" value="player" ' . 
-            ((!isset($_GET['layers']) || in_array('player', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-            '> Ma position</label>
-            <button type="submit">Actualiser la carte</button>
+            <form method="GET" action="map.php" style="display: inline-block;">';
+    
+    generateLayerCheckbox('Terrain', 'tiles');
+    generateLayerCheckbox('Éléments', 'elements');
+    generateLayerCheckbox('Coordonnées', 'coordinates');
+    generateLayerCheckbox('Lieux', 'locations');
+    generateLayerCheckbox('Routes', 'routes');
+    generateLayerCheckbox('Ma position', 'player');
+            
+          echo '<button type="submit">Actualiser la carte</button>
         </form>
     </div>';
 
@@ -125,28 +139,28 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
             >
             <!-- Parchment background -->
             <image xlink:href="img/ui/map/parchemin.webp" width="800" height="532" />';
-            
-            $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
-            
-            foreach ($layerOrder as $layer) {
-                if (in_array($layer, $selectedLayers) && isset($mapResult[$layer]['imagePath'])) {
-                    $fullPath = $mapResult[$layer]['imagePath'];
-                    echo '<image xlink:href="'.$fullPath.'"
+
+        $layerOrder = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+
+        foreach ($layerOrder as $layer) {
+            if (in_array($layer, $selectedLayers) && isset($mapResult[$layer]['imagePath'])) {
+                $fullPath = $mapResult[$layer]['imagePath'];
+                echo '<image xlink:href="' . $fullPath . '"
                          width="700" height="466" x="60" y="33" />';
-                }
             }
+        }
 
-            // Special handling for player layer
-            if (in_array('player', $selectedLayers)) {
-                $fullPath = $worldPlayerLayerPath;
-                if (file_exists($fullPath)) {
-                    list($width, $height) = getimagesize($fullPath);
-                    echo '<image xlink:href="' . $worldPlayerLayerPath . '"
+        // Special handling for player layer
+        if (in_array('player', $selectedLayers)) {
+            $fullPath = $worldPlayerLayerPath;
+            if (file_exists($fullPath)) {
+                list($width, $height) = getimagesize($fullPath);
+                echo '<image xlink:href="' . $worldPlayerLayerPath . '"
                          width="' . $width . '" height="' . $height . '" x="60" y="33" />';
-                }
             }
+        }
 
-            echo '</svg></div>';
+        echo '</svg></div>';
     } else {
         echo '<p>La carte n\'est pas encore générée.</p>';
     }
@@ -157,13 +171,21 @@ if (isset($_GET['s2']) && !isset($_GET['local'])) {
 
 // Carte locale
 if(isset($_GET['local'])){
-    if (isset($_GET['s2'])) {
         // Display navigation buttons first
         echo '<div>
             <a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>
-            <a href="map.php?s2"><button>Monde</button></a>
-            <a href="map.php?local&s2"><button>' . $planJson->name . $zLevelName . '</button></a>
-        </div><br />';
+            <a href="map.php?world"><button>Monde</button></a>
+            <a href="map.php?local"><button>' . $planJson->name . $zLevelName . '</button></a>
+        </div>';
+        
+        // Afficher le message des enfers si nécessaire
+        if ($isInHell) {
+            printHell();
+            echo Str::minify(ob_get_clean());
+            exit();
+        }
+        
+        echo '<br />';
 
         // Admin-only map panel redirection
         if ($player->have_option('isAdmin')) {
@@ -171,33 +193,22 @@ if(isset($_GET['local'])){
                 <a href="admin/local_maps.php"><button>Admin Local Map Panel</button></a>
             </div>';
         }
-
+        echo '<h1>'. $planJson->name .'</h1>';
         // Formulaire de sélection des couches
         echo '<div class="layer-controls" style="margin-bottom: 15px;">
             <form method="GET" action="map.php" style="display: inline-block;">
                 <input type="hidden" name="local" value="1">
-                <input type="hidden" name="s2" value="1">
                 <input type="hidden" name="layers[]" value="tiles">
-                <label><input type="checkbox" name="layers[]" value="tiles" checked disabled> Terrain</label>
-                <label><input type="checkbox" name="layers[]" value="elements" ' . 
-                ((!isset($_GET['layers']) || in_array('elements', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Éléments</label>
-                <label><input type="checkbox" name="layers[]" value="foregrounds" ' . 
-                ((!isset($_GET['layers']) || in_array('foregrounds', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Décor</label>
-                <label><input type="checkbox" name="layers[]" value="walls" ' . 
-                ((!isset($_GET['layers']) || in_array('walls', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Murs</label>
-                <label><input type="checkbox" name="layers[]" value="routes" ' . 
-                ((!isset($_GET['layers']) || in_array('routes', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Routes</label>
-                <label><input type="checkbox" name="layers[]" value="players" ' . 
-                ((!isset($_GET['layers']) || in_array('players', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Tous les joueurs</label>
-                <label><input type="checkbox" name="layers[]" value="player" ' . 
-                ((!isset($_GET['layers']) || in_array('player', $_GET['layers'] ?? [])) ? 'checked' : '') . 
-                '> Ma position</label>
-                <button type="submit">Actualiser la carte</button>
+                <label><input type="checkbox" name="layers[]" value="tiles" checked disabled> Terrain</label>';
+                
+                generateLayerCheckbox('Éléments', 'elements');
+                generateLayerCheckbox('Décor', 'foregrounds');
+                generateLayerCheckbox('Murs', 'walls');
+                generateLayerCheckbox('Routes', 'routes');
+                generateLayerCheckbox('Tous les joueurs', 'players');
+                generateLayerCheckbox('Ma position', 'player');
+               
+                echo '<button type="submit">Actualiser la carte</button>
             </form>
         </div>';
 
@@ -304,7 +315,7 @@ if(isset($_GET['local'])){
         }
 
         echo Str::minify(ob_get_clean());
-    }
+
     $playerZ = $player->coords->z;
     include('scripts/map/local_map.php');
     echo Str::minify(ob_get_clean());

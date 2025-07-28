@@ -3,6 +3,7 @@
 namespace App\Action;
 
 use App\Entity\Action;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
@@ -18,7 +19,7 @@ class TrainAction extends Action
         return $infosArray;
     }
 
-    protected function calculateActorXp(bool $success, Player $actor, Player $target): int
+    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int 
     {
         $actorRank = $actor->data->rank;
         $targetRank = $target->data->rank;
@@ -43,7 +44,7 @@ class TrainAction extends Action
         return $actorXp+$bonusXp;
     }
 
-    protected function calculateTargetXp(bool $success, Player $actor, Player $target): int
+    protected function calculateTargetXp(bool $success, ActorInterface $actor, ActorInterface $target): int
     {
         $actorRank = $actor->data->rank;
         $targetRank = $target->data->rank;

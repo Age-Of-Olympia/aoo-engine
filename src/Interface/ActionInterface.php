@@ -29,7 +29,7 @@ interface ActionInterface
     public function getRaces(): Collection;
     public function addRace(Race $race): self;
     public function removeRace(Race $race): self;
-    public function calculateXp(bool $success, Player $actor, Player $target): array;
+    public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array;
     public function getLogMessages(Player $actor, Player $target): array;
     public function hideOnSuccess(): bool;
     public function refreshScreen(): bool;

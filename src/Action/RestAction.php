@@ -3,13 +3,14 @@
 namespace App\Action;
 
 use App\Entity\Action;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
 class RestAction extends Action
 {
-    public function calculateXp(bool $success, Player $actor, Player $target): array
+    public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
     {
         $actorXp = 1;
         $targetXp = 0;
