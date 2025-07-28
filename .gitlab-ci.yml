@@ -1,7 +1,7 @@
-# Avoid duplicate pipelines due fact using rules
-# https://docs.gitlab.com/ee/ci/jobs/job_rules.html#avoid-duplicate-pipelines
-workflow:
+.default_rules:
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $CI_COMMIT_REF_NAME == "staging"
     - if: $CI_COMMIT_REF_NAME == "saison-3"
     - if: $CI_COMMIT_REF_NAME == "main"
@@ -53,6 +53,7 @@ build_image:
         echo "Image $DOCKER_IMAGE already exists, skipping build."
       fi
   rules:
+    - !reference [.default_rules, rules]
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
         paths:
@@ -70,7 +71,7 @@ stan_job:
   script:
     - make phpstan-ci
   rules:
-    - when: on_success
+    - !reference [.default_rules, rules]
 
 test_job:
   <<: *php-job-template
@@ -85,7 +86,7 @@ test_job:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
   rules:
-    - when: on_success
+    - !reference [.default_rules, rules]
 
 sqlmap_security_test:
   stage: security
