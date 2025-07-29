@@ -11,9 +11,8 @@ db/updates_done/
 vendor/
 .bash_history
 .env
-bin/composer
-.vscode/settings.json
-devtest/
-/tmp/*
-.phpunit.result.cache
-.phpunit.cache/*
+bin/
+.phpunit.cache/
+tmp/
+daily.log
+phpunit-report.xml

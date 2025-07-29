@@ -51,7 +51,6 @@ class ScreenshotService
                 return $result;
             }
 
-            $originalPosition = $this->savePlayerPosition($screenshotPlayer);
             $screenshotPlayer->move_player((object)['x' => 0, 'y' => 0, 'z' => 0, 'plan' => $coords['plan']]);
 
             $coordsObject = (object)[
@@ -112,11 +111,14 @@ class ScreenshotService
      * @param string $actionName Name of the action performed
      * @return array Result array
      */
-    public function generateAutomaticScreenshot(Player $actor, string $actionName): array
+    public function generateAutomaticScreenshot(Player $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
     {
         $coords = $actor->getCoords();
         if ($coords->plan !== 'arene_s2') {
             return ['success' => false, 'error' => 'Action not on arene_s2 map'];
+        }
+        if ($coords->x < $coordsMin['x'] || $coords->x > $coordsMax['x'] || $coords->y < $coordsMin['y'] || $coords->y > $coordsMax['y'] ) {
+            return ['success' => false, 'error' => 'Action not inside the arena'];
         }
         $microtime = microtime(true);
         $timestamp = date('Y-m-d_H-i-s', (int)$microtime) . '_' . sprintf('%03d', ($microtime - floor($microtime)) * 1000);

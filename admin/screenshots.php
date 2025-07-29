@@ -4,8 +4,6 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/layout.php';
 
 use Classes\Db;
-use Classes\Player;
-use Classes\View;
 use App\Service\ViewService;
 use App\Service\ScreenshotService;
 

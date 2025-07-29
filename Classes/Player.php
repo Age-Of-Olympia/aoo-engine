@@ -5,7 +5,7 @@ use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
 use App\Service\PlayerService;
-
+use Exception;
 use Throwable;
 
 class Player implements ActorInterface {
