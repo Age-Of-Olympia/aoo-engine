@@ -7,15 +7,11 @@ use Classes\Db;
 use Classes\Player;
 use Classes\View;
 use App\Service\ViewService;
+use App\Service\ScreenshotService;
 
-// Initialisation
 $database = new Db();
-$outputDir = $_SERVER['DOCUMENT_ROOT'] . '/img/screenshots/';
-if (!file_exists($outputDir)) {
-    mkdir($outputDir, 0755, true);
-}
+$screenshotService = new ScreenshotService();
 
-// Récupérer tous les plans
 $viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
 $allPlans = $viewService->getAllPlans('all');
 
@@ -25,81 +21,27 @@ $selectedY = $_POST['y'] ?? '0';
 $selectedZ = $_POST['z'] ?? '0';
 $selectedRange = $_POST['range'] ?? '5';
 
-// Traitement du formulaire
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_screenshot'])) {
-    $planId = $selectedPlanId;
-    $x = (int)$selectedX;
-    $y = (int)$selectedY;
-    $z = (int)$selectedZ;
-    $range = (int)$selectedRange;
-
-    $coords = (object)[
-        'x' => $x,
-        'y' => $y,
-        'z' => $z,
-        'plan' => $planId
+    $coords = [
+        'x' => (int)$selectedX,
+        'y' => (int)$selectedY,
+        'z' => (int)$selectedZ,
+        'plan' => $selectedPlanId
     ];
+    $range = (int)$selectedRange;
+    $timestamp = date('Y-m-d_H-i-s');
+    $filename = "screenshot_{$selectedPlanId}_{$selectedX}_{$selectedY}_{$selectedZ}_{$timestamp}";
+    $result = $screenshotService->generateScreenshot($coords, $range, $filename);
 
-    $playerId = -92;
-    $svgUrl = 'datas/private/players/'. $playerId .'.svg';
-
-    $player = new Player($playerId);
-    $playerOptions = $player->get_options();
-
-    // Vérifier que le joueur est un PNJ (ID négatif) avec le mode incognito activé
-    if ($playerId >= 0) {
-        $error = "Erreur : Le joueur utilisé pour les captures d'écran doit être un PNJ (ID négatif).";
-    } elseif (!$player->have('options', 'incognitoMode')) {
-        $error = "Erreur : Le PNJ utilisé pour les captures d'écran doit avoir le mode incognito activé.";
-    } else {
-        $player->move_player($coords);
-
-        $caracsJson = json()->decode('players', $player->id .'.caracs');
-        if (!$caracsJson) {
-            $player->get_caracs();
-            $p = $player->caracs->p;
-        } else {
-            $p = $caracsJson->p;
-        }
-
-        // Créer une instance de View
-        $view = new View($coords, $range, false, $playerOptions);
-        $data = $view->get_view();
-
-        // Extract just the SVG part if there's HTML around it
-        if (strpos($data, '<svg') !== false) {
-            $svgStart = strpos($data, '<svg');
-            $svgEnd = strrpos($data, '</svg>') + 6; // +6 for the length of </svg>
-            $data = substr($data, $svgStart, $svgEnd - $svgStart);
-        }
-
-        // Créer le dossier s'il n'existe pas
-        $dir = dirname($svgUrl);
-        if (!file_exists($dir)) {
-            mkdir($dir, 0777, true);
-        }
-
-        // Sauvegarder la vue SVG
-        file_put_contents($svgUrl, $data);
-        $baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/';
-        $data = str_replace('img/tiles/route.png', 'img/routes/route.png', $data);
-        $data = str_replace('img/', $baseUrl . 'img/', $data);
-
-        $imageUrl = str_replace($_SERVER['DOCUMENT_ROOT'], $baseUrl, $svgUrl);
+    if ($result['success']) {
+        $success = "Capture d'écran générée avec succès : " . basename($result['filepath']);
+        $imageUrl = str_replace($_SERVER['DOCUMENT_ROOT'], '', $result['filepath']);
         $showPreview = true;
-
-        // Remettre le joueur à sa position finale (0,7,0) sur le plan arene_s2
-        $finalCoords = (object)[
-            'x' => 0,
-            'y' => 8,
-            'z' => 0,
-            'plan' => 'arene_s2'
-        ];
-        $player->move_player($finalCoords);
+    } else {
+        $error = "Erreur lors de la génération : " . $result['error'];
     }
 }
 
-// Afficher le formulaire
 ob_start();
 ?>
 
@@ -176,15 +118,15 @@ ob_start();
             <h3>Aperçu de la capture</h3>
         </div>
         <div class="card-body text-center">
-        <div style="max-width: 100%; overflow: auto;">
-            <?= $data ?>
+            <div style="max-width: 100%; overflow: auto;">
+                <img src="<?= $imageUrl ?>" alt="Capture d'écran" class="img-fluid">
+            </div>
+            <div class="mt-3">
+                <a href="<?= $imageUrl ?>" class="btn btn-primary" download>
+                    <i class="fas fa-download"></i> Télécharger l'image
+                </a>
+            </div>
         </div>
-        <div class="mt-3">
-            <button id="download-png" class="btn btn-primary">
-                <i class="fas fa-download"></i> Télécharger en PNG
-            </button>
-        </div>
-    </div>
     </div>
 <?php endif; ?>
 </div>
@@ -195,7 +137,6 @@ echo admin_layout('Générateur de captures', $content);
 ?>
 
 <script>
-// Fonction pour limiter la concurrence (5 requêtes en parallèle)
 async function limitConcurrency(items, limit, asyncFn) {
     const results = [];
     const executing = [];
@@ -249,15 +190,13 @@ document.getElementById('download-png').addEventListener('click', async () => {
                 reader.readAsDataURL(blob);
             });
         } catch (err) {
-            console.error('[❌] Échec du chargement de l’image :', href, err);
+            console.error('Échec du chargement de l’image :', href, err);
         }
     }
 
-    // Traitement avec limite de 5 connexions simultanées
     await limitConcurrency(imageElements, 5, processImage);
-    console.log('[✅] Toutes les images sont converties en base64');
+    console.log('Toutes les images sont converties en base64');
 
-    // Sérialisation + génération d’image
     const svgData = new XMLSerializer().serializeToString(svgElement);
     const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
     const url = URL.createObjectURL(svgBlob);

@@ -7,6 +7,8 @@ use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
 use App\Entity\Action;
 use App\Entity\OutcomeInstruction;
+use Classes\Db;
+use Classes\View;
 
 class ActionExecutorService
 {
@@ -67,10 +69,14 @@ class ActionExecutorService
             if(!empty($xpResultsArray["target"])){            
                 $this->target->put_xp($xpResultsArray["target"]);
             }
+
         }
         
         // 5) LOG
         $logsArray = $this->action->getLogMessages($this->actor, $this->target);
+
+        // 6) Trigger automatic screenshot if action occurred on arene_s2
+        $this->triggerAutomaticScreenshot();
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
         return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);
@@ -149,6 +155,22 @@ class ActionExecutorService
     {
         $result = $outcomeInstruction->execute($this->actor, $this->target);
         array_push($this->outcomeResultsArray, $result);
+    }
+
+    private function triggerAutomaticScreenshot(): void
+    {
+        try {
+            $screenshotService = new ScreenshotService();
+            $actionName = $this->action->getName() ?? 'unknown';
+
+            $result = $screenshotService->generateAutomaticScreenshot($this->actor, $actionName);
+
+            if (!$result['success'] && $result['error'] !== 'Action not on arene_s2 map') {
+                error_log("Automatic screenshot failed: " . $result['error']);
+            }
+        } catch (Exception $e) {
+            error_log("Error triggering automatic screenshot: " . $e->getMessage());
+        }
     }
 
     public function getInitialTargetPv(): int

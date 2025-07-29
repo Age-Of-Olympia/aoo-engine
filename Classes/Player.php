@@ -709,6 +709,16 @@ class Player implements ActorInterface {
         
         Log::put($this, $this, $text, "move");
 
+        // Trigger automatic screenshot for movements on arene_s2
+        if ($goCoords->plan === 'arene_s2' && $this->id >= 0) {
+            try {
+                $screenshotService = new \App\Service\ScreenshotService();
+                $screenshotService->generateAutomaticScreenshot($this, 'move');
+            } catch (Exception $e) {
+                error_log("Error triggering automatic screenshot for movement: " . $e->getMessage());
+            }
+        }
+
        // delete empty coords will be cron managed for easier debugging
     }
 
