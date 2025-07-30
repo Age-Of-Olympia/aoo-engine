@@ -208,7 +208,7 @@ class ScreenshotService
             $data = str_replace('img/', $baseUrl . 'img/', $data);
         }
 
-        $data = $this->convertImagesToBase64($data);
+        //$data = $this->convertImagesToBase64($data);
         $data = $this->removeScreenshotPlayerFromSvg($data, $player);
 
         return $data ?: null;
