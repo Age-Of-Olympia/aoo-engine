@@ -3,6 +3,7 @@
 namespace App\Action;
 
 use App\Action\OutcomeInstruction\ApplyStatusOutcomeInstruction;
+use App\Action\OutcomeInstruction\ObjectEffectOutcomeInstruction;
 use App\Entity\Action;
 use App\Interface\ActorInterface;
 use App\Interface\OutcomeInstructionInterface;
@@ -15,6 +16,10 @@ abstract class AttackAction extends Action
         parent::initAutomaticOutcomeInstructions();
         $adrenalineOutcomeInstruction = $this->prepareAdrenalineOutcomeInstruction();
         $this->addAutomaticOutcomeInstruction($adrenalineOutcomeInstruction);
+
+        $objectEffectOutcomeInstruction = new ObjectEffectOutcomeInstruction;
+        $this->addAutomaticOutcomeInstruction($objectEffectOutcomeInstruction);
+
         return $this;
     }
 
