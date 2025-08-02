@@ -40,8 +40,9 @@ class DistanceComputeCondition extends ComputeCondition
     
     protected function getDistanceMalus(): int {
         $distanceMalus = 0;
-        if($this->distance > 2){
-            $distanceMalus = ($this->distance - 2) * 3;
+        $cellCount = $this->distance - 1;
+        if($cellCount > 2){
+            $distanceMalus = ($cellCount - 2) * 3;
         }
         return $distanceMalus;
     }
