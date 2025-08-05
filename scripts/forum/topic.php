@@ -297,7 +297,8 @@ echo '
                     echo '
                     <span class="give-reward-span">
 
-                        <a href="forum.php?edit='. $post->name .'">Edit</a>
+                        <a href="forum.php?edit='. $post->name .'">Edit</a>                        
+                        <a href="forum.php?delete='. $post->name .'&page='.$page .'">Supprimer</a>
                     </span>';
                 }
 
