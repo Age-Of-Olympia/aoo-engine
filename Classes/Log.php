@@ -2,16 +2,36 @@
 namespace Classes;
 
 use App\Enum\CoordType;
+use App\Interface\ActorInterface;
 
 class Log{
 
+    // Propriétés pour l'injection de dépendances (tests)
+    private static $dbInstance = null;
+    private static $viewClass = null;
+    private static $jsonInstance = null;
+
+    // Méthodes pour les tests
+    public static function setDbInstance($db): void { self::$dbInstance = $db; }
+    public static function setViewClass(string $class): void { self::$viewClass = $class; }
+    public static function setJsonInstance($json): void { self::$jsonInstance = $json; }
+    public static function resetTestInstances(): void {
+        self::$dbInstance = null;
+        self::$viewClass = null;
+        self::$jsonInstance = null;
+    }
+
+    // Getters pour les dépendances
+    private static function getDb() { return self::$dbInstance ?? new Db(); }
+    private static function getViewClass(): string { return self::$viewClass ?? 'Classes\View'; }
+    private static function json() { return self::$jsonInstance ?? json(); }
 
     // STATIC
 
-    public static function get(Player $player,$maxLogAge=THREE_DAYS,$type=''){
+    public static function get(ActorInterface $player,$maxLogAge=THREE_DAYS,$type=''){
         
         $return = array();
-        $db = new Db();
+        $db = self::getDb();
         $typeCondition = '';
 
         switch ($type) {
@@ -99,7 +119,8 @@ class Log{
             }
 
             // Get Perception
-            $caracsJson = json()->decode('players', $player->id .'.caracs');
+            $jsonInstance = self::json();
+            $caracsJson = $jsonInstance->decode('players', $player->id .'.caracs');
             if(!$caracsJson){
                 $player->get_caracs();
                 $p = $player->caracs->p;
@@ -117,9 +138,10 @@ class Log{
             );
             
             // Computing coords
-            $arrayCoordsId = View::get_coords_arround($last_player_coords, $p, CoordType::XYZPLAN, separator:'_');
+            $viewClass = self::getViewClass();
+            $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $p, CoordType::XYZPLAN, separator:'_');
 
-            $planJson = json()->decode('plans', $row->plan);
+            $planJson = $jsonInstance->decode('plans', $row->plan);
 
             // For PNJs, check if event is in their current plan
             if ($player->id <= 0) {
@@ -218,7 +240,7 @@ private static function filterRows(array $rows, int $playerId): array {
         $return = array();
         $player = new Player($_SESSION['playerId']);
 
-        $db = new Db();
+        $db = self::getDb();
         $timeLimit = time()-$maxLogAge;
 
         $sql = 'SELECT
@@ -246,7 +268,7 @@ private static function filterRows(array $rows, int $playerId): array {
     }
 
 
-    public static function put(Player $player, $target, $text, $type='', $hiddenText='', $logTime=''){
+    public static function put(ActorInterface $player, $target, $text, $type='', $hiddenText='', $logTime=''){
 
 
         if(!isset($player->coords)){
@@ -268,7 +290,8 @@ private static function filterRows(array $rows, int $playerId): array {
             $coordsId = NULL;
             $coordToLog = NULL;
         } else {
-            $coordsId = View::get_coords_id($player->coords);
+            $viewClass = self::getViewClass();
+            $coordsId = $viewClass::get_coords_id($player->coords);
             $coordToLog = $player->coords->x."_".$player->coords->y."_".$player->coords->z."_".$player->coords->plan;
         }
 
@@ -290,7 +313,7 @@ private static function filterRows(array $rows, int $playerId): array {
             'hiddenText'=>$hiddenText
         );
 
-        $db = new Db();
+        $db = self::getDb();
 
         $res = $db->insert('players_logs', $values);
     }
