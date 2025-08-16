@@ -10,7 +10,7 @@ try {
     $sql = '
     CREATE TEMPORARY TABLE temp_max_ids AS
     SELECT MAX(id) AS max_id
-    FROM players_logs_archives
+    FROM players_logs
     WHERE type = \'move\'
     GROUP BY player_id
     ';
