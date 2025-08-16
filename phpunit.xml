@@ -14,8 +14,11 @@
          failOnWarning="true">
 
     <testsuites>
-        <testsuite name="default">
-            <directory>tests</directory>
+        <testsuite name="Action">
+            <directory suffix="Test.php">./tests/Action</directory>
+        </testsuite>
+        <testsuite name="Logs">
+            <directory suffix="Test.php">./tests/Logs</directory>
         </testsuite>
     </testsuites>
 

@@ -6,6 +6,7 @@ use Tests\Logs\Mock\PlayerMock;
 use Tests\Logs\Mock\TestDatabase;
 use Tests\Logs\Mock\ViewMock;
 use Tests\Logs\Mock\JsonMock;
+use PHPUnit\Framework\Attributes\Group;
 use Classes\Log;
 
 class LogTest extends TestCase
@@ -42,9 +43,7 @@ class LogTest extends TestCase
         JsonMock::reset();
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testGetLogsFiltersByType(): void
     {
         // Arrange
@@ -68,9 +67,7 @@ class LogTest extends TestCase
         $this->assertEquals('Message MDJ', $result[0]->text);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testGetLogsFiltersByAge(): void
     {
         // Arrange
@@ -92,9 +89,7 @@ class LogTest extends TestCase
         $this->assertEquals('Recent', $result[0]->text);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testPlayerSeesOwnActions(): void
     {
         // Arrange
@@ -118,9 +113,7 @@ class LogTest extends TestCase
         $this->assertEquals($this->player->id, $result[0]->player_id);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testPlayerSeesActionsTargetingThem(): void
     {
         // Arrange
@@ -144,9 +137,7 @@ class LogTest extends TestCase
         $this->assertEquals($this->player->id, $result[0]->target_id);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testDestroyActionVisibleToWitnesses(): void
     {
         // Arrange
@@ -170,9 +161,7 @@ class LogTest extends TestCase
         $this->assertEquals('Destruction', $result[0]->text);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testDestroyActionNotVisibleIfTooFar(): void
     {
         // Arrange
@@ -194,9 +183,7 @@ class LogTest extends TestCase
         $this->assertEmpty($result);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testHiddenActionNotVisibleToTarget(): void
     {
         // Arrange
@@ -214,9 +201,7 @@ class LogTest extends TestCase
         $this->assertEmpty($result);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testBirdlandLogsAreFiltered(): void
     {
         // Arrange
@@ -240,9 +225,7 @@ class LogTest extends TestCase
         $this->assertEquals('normal_plan', $result[0]->plan);
     }
 
-    /**
-     * @group log-get
-     */
+    #[Group('log-get')]
     public function testPerceptionBasedVisibility(): void
     {
         // Arrange
@@ -270,9 +253,7 @@ class LogTest extends TestCase
         $this->assertEquals('Close action', $result[0]->text);
     }
 
-    /**
-     * @group log-put
-     */
+    #[Group('log-put')]
     public function testPutCreatesLogEntry(): void
     {
         // Arrange
@@ -293,9 +274,7 @@ class LogTest extends TestCase
         $this->assertEquals($type, $result[0]->type);
     }
 
-    /**
-     * @group log-put
-     */
+    #[Group('log-put')]
     public function testPutHandlesIncognitoMode(): void
     {
         // Arrange
@@ -311,9 +290,7 @@ class LogTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /**
-     * @group log-put
-     */
+    #[Group('log-put')]
     public function testPutHiddenActionsHaveNullCoords(): void
     {
         // Act
@@ -326,9 +303,7 @@ class LogTest extends TestCase
         $this->assertNull($result[0]->coords_computed);
     }
 
-    /**
-     * @group log-put
-     */
+    #[Group('log-put')]
     public function testPutUsesCustomTime(): void
     {
         // Arrange
