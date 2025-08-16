@@ -3,6 +3,8 @@
 Dans cette première page se trouve la documentation pour lancer le projet.
 Pour l'architecture du code, il faut suivre ce lien :
 [Architecture du code](docs/architecture.md)
+Pour des explications concernant les tests unitaires des événements du jeu :
+[TEsts U - Logs](docs/unit-test-logs.md)
 
 ## Démarrage de l'environnement de développement
 

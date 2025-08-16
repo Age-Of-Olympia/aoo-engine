@@ -5,9 +5,11 @@ namespace Tests\Action;
 use App\Action\HealAction;
 use PHPUnit\Framework\TestCase;
 use Tests\Action\Mock\PlayerMock;
+use PHPUnit\Framework\Attributes\Group;
 
 class HealActionTest extends TestCase
 {
+  #[Group('action-xp')]
   public function testCalculateXpResultStructure()
   {
     // Vérifier la structure du résultat
@@ -25,6 +27,7 @@ class HealActionTest extends TestCase
     $this->assertIsInt($result['target']);
   }
 
+  #[Group('action-xp')]
   public function testCalculateXpWithSuccess()
   {
     $actor = new PlayerMock(1, 'ActorPlayer', 'test_faction', '', false);
@@ -36,6 +39,7 @@ class HealActionTest extends TestCase
     $this->assertEquals(0, $result['target']);
   }
 
+  #[Group('action-xp')]
   public function testCalculateXpWithFailure()
   {
     $actor = new PlayerMock(1, 'ActorPlayer', 'test_faction', '', false);
@@ -47,6 +51,7 @@ class HealActionTest extends TestCase
     $this->assertEquals(0, $result['target']);
   }
 
+  #[Group('action-xp')]
   public function testCalculateXpWithDifferentFactions()
   {
     $actor = new PlayerMock(1, 'ActorPlayer', 'faction_A', '', false);
@@ -60,6 +65,7 @@ class HealActionTest extends TestCase
     $this->assertEquals(0, $result['target']);
   }
 
+  #[Group('action-xp')]
   public function testCalculateXpWithInactiveTarget()
   {
     $actor = new PlayerMock(1, 'ActorPlayer', 'test_faction', '', false);
@@ -73,6 +79,7 @@ class HealActionTest extends TestCase
     $this->assertEquals(0, $result['target']);
   }
 
+  #[Group('action-xp')]
   public function testCalculateXpWithSameActor()
   {
     // Cas où l'acteur se soigne lui-même

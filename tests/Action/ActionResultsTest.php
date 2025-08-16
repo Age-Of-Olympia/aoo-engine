@@ -4,9 +4,11 @@ namespace Tests\Action;
 
 use App\Action\ActionResults;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
 
 class ActionResultsTest extends TestCase
 {
+  #[Group('action')]
   public function testConstructorAndGetters()
   {
     // Arrange
@@ -39,6 +41,7 @@ class ActionResultsTest extends TestCase
     $this->assertEquals($logsArray, $actionResults->getLogsArray());
   }
 
+  #[Group('action')]
   public function testSetters()
   {
     // Arrange
