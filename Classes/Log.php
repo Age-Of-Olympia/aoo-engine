@@ -78,14 +78,14 @@ class Log{
             }
 
             // If the event is about player, either as doer or as target, event is displayed
-            // Two lines of travel are stored, one in the departure plan and ont in the arrival plan,
-            // We hide one of the two !
-            if ($row->player_id == $player->id && $row->type != "travel") {
+            if ($row->player_id == $player->id) {
                 if ($row->type != "hidden_action_other_player")
                 {
                     $return[] = $row;
                 }
-                continue;
+                if ($row->type != "destroy") {
+                    continue;
+                }
             }
 
             if ($row->target_id == $player->id) {
@@ -93,7 +93,9 @@ class Log{
                 {
                     $return[] = $row;
                 }
-                continue;
+                if ($row->type != "destroy") {
+                    continue;
+                }
             }
 
             // Get Perception
@@ -139,21 +141,6 @@ class Log{
                 $return[] = $row;
                 continue;
             }
-
-            $raceJson = json()->decode('races', $player->data->race);
-            // if the player is in his home plan at the moment of the event + it is a travel
-            if ($raceJson->plan == $row->plan && $row->movement_plan == $row->plan && $row->type == "travel") {
-                // we get the plan pnj
-                if (isset($planJson->pnj)) {
-                    $pnj = new Player($planJson->pnj);
-                    $pnj->getCoords();
-                    // if the pnj is in the plan at the moment (should be at the time of event but it would be one more sql request)
-                    if (isset($pnj->coords->plan) && ($pnj->coords->plan == $row->plan)) {
-                        $return[] = $row;
-                        continue;
-                    }
-                }
-            }
         }
 
         $return = Log::filterRows($return, $player->id);
@@ -195,8 +182,6 @@ private static function filterRows(array $rows, int $playerId): array {
                 (($current->type === "hidden_action" && $next->type === "hidden_action_other_player") ||
                 ($current->type === "hidden_action_other_player" && $next->type === "hidden_action")) 
                 ||
-                ($current->type === "travel" && $next->type === "travel")
-                ||
                 ($current->type === "kill" && $next->type === "kill"))
                 &&
                 (
@@ -207,9 +192,7 @@ private static function filterRows(array $rows, int $playerId): array {
 
             if ($isPair) {
                 if ($current->player_id === $playerId) {
-                    if ($current->type != "travel") {
-                        $filtered[] = $current;
-                    }
+                    $filtered[] = $current;
                 }
                 if ($next->player_id === $playerId) {
                     $filtered[] = $next;
