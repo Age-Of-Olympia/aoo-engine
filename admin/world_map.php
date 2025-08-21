@@ -1,6 +1,5 @@
 <?php
 // admin/maps.php
-use Classes\Db;
 require_once __DIR__ . '/layout.php';
 
 use App\Service\ViewService;
