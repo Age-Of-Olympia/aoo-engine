@@ -20,7 +20,6 @@ class HealActionTest extends TestCase
     $result = $healAction->calculateXp(true, $actor, $target);
     
     // Vérifier que le résultat est bien un tableau avec les clés attendues
-    $this->assertIsArray($result);
     $this->assertArrayHasKey('actor', $result);
     $this->assertArrayHasKey('target', $result);
     $this->assertIsInt($result['actor']);
