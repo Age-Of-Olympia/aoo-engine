@@ -92,7 +92,7 @@ class TestDatabase
     }
 
     // Méthodes utilitaires pour les tests
-    public function insertLog(array $data): int
+    public function insertLog(array $data): string|false
     {
         $defaults = [
             'player_id' => 1,
