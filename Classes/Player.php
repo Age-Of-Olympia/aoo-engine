@@ -2056,7 +2056,7 @@ class Player implements ActorInterface {
         $player->add_action('tuto/attaquer');
 
 
-        ActorInterface::refresh_list();
+        Player::refresh_list();
 
 
         if($pnj){
@@ -2205,7 +2205,7 @@ class Player implements ActorInterface {
         if(!$list){
             // refresh all classements (once per day, done with cron)
 
-            ActorInterface::refresh_list();
+            Player::refresh_list();
 
             $list = json()->decode('players', 'list');
 
