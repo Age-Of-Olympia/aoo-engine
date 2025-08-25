@@ -16,6 +16,15 @@ $caracsJson = $player->get_caracsJson();
 
 $turnJson = $player->get_turnJson();
 
+function getTooltip($key, $i)
+{
+    if (!isset(CARACS_TXT[$key])) {
+
+        return '';
+    }
+    $flow = ($i < 8) ? 'flow="right"' : 'flow="left"';
+    return $flow.' tooltip="' . CARACS_TXT[$key] . '"';
+}
 
 echo '
 <table border="1" align="center" class="marbre" id="caracs-menu" style="position:relative;">
@@ -24,7 +33,7 @@ echo '
     echo '
     <tr>
         ';
-
+        $i=0;
         foreach(CARACS as $k=>$e){
 
 
@@ -32,12 +41,12 @@ echo '
 
                 continue;
             }
+            $i++;
 
-
-            echo '<th width="30" tooltip="'. CARACS_TXT[$k] .'">'. $e .'</th>';
+            echo '<th '. getTooltip($k,$i) .'">'. $e .'</th>';
         }
 
-        echo '<th tooltip="'. CARACS_TXT["foi"] .'">Foi</th>';
+        echo '<th '.  getTooltip("foi",$i+1) .'">Foi</th>';
 
         echo '
     </tr>
