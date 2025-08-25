@@ -70,10 +70,10 @@ abstract class Command
 
     public function getPlayer( $playerIdOrName) {
         if(is_numeric($playerIdOrName)){
-            $player = new ActorInterface($playerIdOrName);
+            $player = new Player($playerIdOrName);
         }
         else{
-            $player = ActorInterface::get_player_by_name($playerIdOrName);
+            $player = Player::get_player_by_name($playerIdOrName);
         }
         return $player;
     }

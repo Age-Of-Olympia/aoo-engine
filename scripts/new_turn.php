@@ -1,6 +1,6 @@
 <?php
 use Classes\Db;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\View;
 if( $_SESSION['playerId'] == $_SESSION['originalPlayerId']){
     $_SESSION['nonewturn']=false;
@@ -14,7 +14,7 @@ else if(!empty($_SESSION['playerId'])){
 
     $time = time();
 
-    $player = new ActorInterface($_SESSION['playerId']);
+    $player = new Player($_SESSION['playerId']);
     $player->get_data();
 
 
@@ -83,7 +83,7 @@ else if(!empty($_SESSION['playerId'])){
             }
 
             $firstPlayerXP = 0;
-            $firstPlayerData = ActorInterface::get_player_list();
+            $firstPlayerData = Player::get_player_list();
             if(isset($firstPlayerData->first)){
                 $firstPlayerXP = $firstPlayerData->first->xp;
             }

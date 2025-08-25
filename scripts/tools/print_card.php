@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Ui;
 
 if(!isset($_GET['playerId'])){
@@ -24,7 +24,7 @@ if(!isset($_GET['playerId'])){
 }
 
 
-$player = new ActorInterface(explode(',', $_GET['playerId'])[0]);
+$player = new Player(explode(',', $_GET['playerId'])[0]);
 
 $player->get_data();
 

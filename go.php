@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Db;
 use Classes\View;
 use Classes\Log;
@@ -16,7 +16,7 @@ if(!isset($_POST['coords'])){
 
 $coords = explode(',', $_POST['coords']);
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 if($player->getRemaining('mvt') < 1){
 

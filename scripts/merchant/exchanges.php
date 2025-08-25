@@ -1,6 +1,6 @@
 <?php
 use Classes\Exchange;
-use Classes\ActorInterface;
+use Classes\Player;
 
 echo '<h1>Echanges</h1>';
 
@@ -31,7 +31,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
         $exchanges = Exchange::get_open_exchanges($player->id);
         foreach ($exchanges as $exchange) {
           if ($exchange->playerId != $player->id){
-              $fromPlayer = new ActorInterface($exchange->playerId);
+              $fromPlayer = new Player($exchange->playerId);
               $fromPlayer->get_data();
               echo '<section style="background-color: #f0f8ff5e; margin-top:10px;">';
               echo 'Echange reçu de <a href="infos.php?targetId='.$fromPlayer->id.'">'.$fromPlayer->data->name.'('. $fromPlayer->id .')</a> le '.date('d/m/Y H:i', $exchange->updateTime) . '. 
@@ -59,7 +59,7 @@ echo '<div>Pour échanger des objets avec d\'autres personnages par le biais des
         foreach ($exchanges as $exchange) {
             if ($exchange->playerId == $player->id){
                 echo '<section style="background-color: #f0f8ff5e; margin-top:10px;">';
-                $targetPlayer = new ActorInterface($exchange->targetId);
+                $targetPlayer = new Player($exchange->targetId);
                 $targetPlayer->get_data();
                 echo 'Echange proposé à <a href="infos.php?targetId='.$targetPlayer->id.'">'.$targetPlayer->data->name.'('. $targetPlayer->id .')</a> le '.date('d/m/Y H:i', $exchange->updateTime). '.
                 <br> L\'échange sera validé quand les deux joueurs auront accepté.<br>';

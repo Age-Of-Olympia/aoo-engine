@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\View;
 use Classes\Db;
 
@@ -27,7 +27,7 @@ if(!$res->num_rows){echo $_POST['targetId'];
 
 $row = $res->fetch_object();
 
-$god = new ActorInterface($row->params);
+$god = new Player($row->params);
 
 $god->get_data();
 
@@ -35,7 +35,7 @@ $god->get_data();
 $coords = View::get_coords('triggers', $row->id);
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 

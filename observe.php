@@ -7,6 +7,7 @@ use App\Service\ActionService;
 use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
+use Classes\Player;
 
 require_once('config.php');
 
@@ -32,7 +33,7 @@ if(!is_numeric($x) || !is_numeric($y)){
 }
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 
@@ -189,7 +190,7 @@ if($res->num_rows){
     while($row = $res->fetch_object()){
 
 
-        $target = new ActorInterface($row->id);
+        $target = new Player($row->id);
 
         $target->get_data();
 
@@ -402,7 +403,7 @@ else{
 
                         $row = $res->fetch_object();
 
-                        $god = new ActorInterface($row->params);
+                        $god = new Player($row->params);
 
                         $god->get_data();
 

@@ -1,9 +1,10 @@
 <?php
 use Classes\Exchange;
 use Classes\Market;
-use Classes\ActorInterface;
 use Classes\Item;
 use Classes\Log;
+use Classes\Player;
+
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -12,10 +13,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ExitError('error no merchant');
   }
   
-  $player = new ActorInterface($_SESSION['playerId']);
+  $player = new Player($_SESSION['playerId']);
   $player->get_data();
   
-  $target = new ActorInterface($_GET['targetId']);
+  $target = new Player($_GET['targetId']);
 
   $marketAccessError = Market::CheckMarketAccess($player, $target);
   if($marketAccessError !=null){
@@ -60,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
       $isTarget = $player->id == $exchange->targetId;
 
-      $offeringPlayer = new ActorInterface($isTarget ? $exchange->playerId : $exchange->targetId);
-      $targetPlayer = new ActorInterface($isTarget ? $exchange->targetId : $exchange->playerId);
+      $offeringPlayer = new Player($isTarget ? $exchange->playerId : $exchange->targetId);
+      $targetPlayer = new Player($isTarget ? $exchange->targetId : $exchange->playerId);
       $offeringPlayer->get_data();
       $targetPlayer->get_data();
       if ($POST_DATA['action'] == 'accept') {
@@ -103,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $exchange->db->start_transaction('cancel_exchange');
     try {
       $exchange->get_items_data();
-      $offeringPlayer = new ActorInterface($exchange->playerId);
-      $targetPlayer = new ActorInterface($exchange->targetId);
+      $offeringPlayer = new Player($exchange->playerId);
+      $targetPlayer = new Player($exchange->targetId);
       //refund items
       $exchange->give_items(from_player: $offeringPlayer, to_player: $offeringPlayer);
       $exchange->give_items(from_player: $targetPlayer, to_player: $targetPlayer);

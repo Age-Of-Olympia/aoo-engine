@@ -238,7 +238,7 @@ private static function filterRows(array $rows, int $playerId): array {
     public static function getAllPlanEvents($plan, $maxLogAge=THREE_DAYS){
 
         $return = array();
-        $player = new ActorInterface($_SESSION['playerId']);
+        $player = new Player($_SESSION['playerId']);
 
         $db = self::getDb();
         $timeLimit = time()-$maxLogAge;

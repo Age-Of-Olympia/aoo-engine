@@ -2,6 +2,7 @@
 namespace Classes;
 
 use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 class Forum{
 
@@ -54,7 +55,7 @@ class Forum{
         }
 
 
-        $target = new ActorInterface($postJson->author);
+        $target = new Player($postJson->author);
 
         $target->put_pr($reward->pr);
 
@@ -136,7 +137,7 @@ class Forum{
 
         $postJson = json()->decode('forum', 'posts/'. end($topJson->posts)->name);
 
-        $author = new ActorInterface($postJson->author);
+        $author = new Player($postJson->author);
         $author->get_data();
 
         $pageN = self::get_pages(count($topJson->posts));
@@ -441,9 +442,9 @@ class Forum{
 
 
         if(is_numeric($dest)){
-            $dest = new ActorInterface($dest);
+            $dest = new Player($dest);
         }else if(is_string($dest)){
-            $dest = ActorInterface::get_player_by_name($dest);
+            $dest = Player::get_player_by_name($dest);
         }
         
         $dest->get_data(false);
@@ -492,7 +493,7 @@ class Forum{
         if(in_array($dest, $destTbl)){
 
 
-            $dest = new ActorInterface($dest);
+            $dest = new Player($dest);
 
             $db = new Db();
 

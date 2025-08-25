@@ -3,12 +3,8 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
-use App\Service\ResourceService;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Item;
-use Classes\ActorInterface;
-use Classes\Str;
-use Classes\View;
 
 #[ORM\Entity]
 class OnlyLogOutcomeInstruction extends OutcomeInstruction

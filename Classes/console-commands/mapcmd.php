@@ -4,7 +4,7 @@ use Classes\Argument;
 use Classes\Db;
 use Classes\File;
 use Classes\Json;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\View;
 
 class MapCmd extends AdminCommand
@@ -95,7 +95,7 @@ private function save_map($argumentValues) {
     $name = $argumentValues[1];
     $maxElementsPerFile = isset($argumentValues[2]) ? (int)$argumentValues[2] : 1000; // Default or specified max elements per file
 
-    $player = new ActorInterface($_SESSION['playerId']);
+    $player = new Player($_SESSION['playerId']);
     $player->getCoords();
 
     echo 'saving actual map:<br />';
@@ -135,7 +135,7 @@ function load_map($argumentValues) {
     }
 
     $name = $argumentValues[1];
-    $player = new ActorInterface($_SESSION['playerId']);
+    $player = new Player($_SESSION['playerId']);
     $player->getCoords();
 
     echo 'Loading on actual map:<br />';

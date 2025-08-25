@@ -1,7 +1,7 @@
 <?php
 use Classes\Forum;
 use Classes\Json;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
 
@@ -18,7 +18,7 @@ $topJson = json()->decode('forum', 'topics/'. $postJson->top_id);
 
 $forumJson = json()->decode('forum', 'forums/'. $topJson->forum_id);
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 

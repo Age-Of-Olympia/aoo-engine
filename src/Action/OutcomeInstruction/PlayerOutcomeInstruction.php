@@ -3,9 +3,9 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\ActorInterface;
-use Classes\Str;
+use Classes\Player;
 
 #[ORM\Entity]
 class PlayerOutcomeInstruction extends OutcomeInstruction
@@ -24,7 +24,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
             case "actor":
                 if ($carac != null) {
                     if ($carac == "foi") {
-                        $god = new ActorInterface($actor->data->godId);
+                        $god = new Player($actor->data->godId);
                         $god->get_data();
                         $pf = rand(1,3);
                         $actor->put_pf($pf);

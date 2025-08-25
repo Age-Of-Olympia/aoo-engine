@@ -1,7 +1,7 @@
 <?php
 use Classes\AdminCommand;
 use Classes\Argument;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Item;
 use Classes\Exchange;
 use Classes\Command;
@@ -32,8 +32,8 @@ EOT);
             foreach ($exchanges as $exchange) {
                 $exchange->db->beginTransaction();
                 try {
-                    $offeringPlayer = new ActorInterface($exchange->playerId);
-                    $targetPlayer = new ActorInterface($exchange->targetId);
+                    $offeringPlayer = new Player($exchange->playerId);
+                    $targetPlayer = new Player($exchange->targetId);
                     //refund items
                     $exchange->give_items(from_player: $offeringPlayer, to_player: $offeringPlayer);
                     $exchange->give_items(from_player: $targetPlayer, to_player: $targetPlayer);
@@ -99,7 +99,7 @@ function refund_deprecated_objects(bool $bank)
     $count = 0;
     $ingredientsCount = 0;
     foreach ($deprecatedObjects as $row) {
-    $player = new ActorInterface($row['player_id']);
+    $player = new Player($row['player_id']);
         $item = new Item($row['item_id']);
         $item->get_data();
         $this->db->beginTransaction();
@@ -163,7 +163,7 @@ function convert_objects(bool $bank, string $name, $convertionData)
     $countp = 0;
     $counto = 0;
     foreach ($ItemstoConvert as $row) {
-        $player = new ActorInterface($row['player_id']);
+        $player = new Player($row['player_id']);
         $item = new Item($row['item_id']);
         $item->get_data();
         $this->db->beginTransaction();

@@ -3,12 +3,10 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Interface\ActorInterface;
 use App\Service\ResourceService;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
-use Classes\ActorInterface;
-use Classes\Str;
-use Classes\View;
 
 #[ORM\Entity]
 class ResourceOutcomeInstruction extends OutcomeInstruction

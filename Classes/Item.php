@@ -82,7 +82,7 @@ class Item{
         $bankSuffix = ($bank === true) ? '_bank' : '';
 
         if (is_numeric($player)) {
-            $player = new ActorInterface($player);
+            $player = new Player($player);
         }
 
         if ($n < 0) {

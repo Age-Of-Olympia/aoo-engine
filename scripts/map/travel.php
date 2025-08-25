@@ -1,7 +1,7 @@
 <?php
 use Classes\Db;
 use Classes\Log;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Str;
 use Classes\View;
 if(!empty($_GET['triggerId'])){
@@ -123,7 +123,7 @@ if(!empty($_GET['triggerId'])){
                         $player->get_data();
 
                         // clone to pass the "from" travel plan
-                        $playerClone = new ActorInterface($player->id);
+                        $playerClone = new Player($player->id);
                         $playerClone->coords = $planJson->fromCoords;
                         $text = $player->data->name .' a voyagé de '. $planJson->name .' à '. $goPlanJson->name .'.';
 

@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Item;
 use Classes\Ui;
 use Classes\View;
@@ -14,11 +14,11 @@ if(!isset($_GET['targetId']) || !is_numeric($_GET['targetId'])){
 }
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 $player->get_data();
 
 
-$target = new ActorInterface($_GET['targetId']);
+$target = new Player($_GET['targetId']);
 $target->get_data();
 
 

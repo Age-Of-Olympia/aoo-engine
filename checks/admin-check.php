@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 
@@ -10,7 +10,7 @@ if(!isset($_SESSION['playerId'])){
 // check admin (only once per session)
 if(!isset($_SESSION['isAdmin'])){
   // check admin
-  $playerToCheck = new ActorInterface($_SESSION['playerId']);
+  $playerToCheck = new Player($_SESSION['playerId']);
   if(!$playerToCheck->have_option('isAdmin')){
       exit('Action réservée aux admin');
   }

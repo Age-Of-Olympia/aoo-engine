@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 // scripts/map/local_map.php
 
 // Display current player's Z-coordinate and full position
@@ -22,7 +22,7 @@ if (isset($playerZ) && isset($player->coords)) {
 // Check if there's a PNJ assigned to the plan
 if (!empty($planJson->pnj)) {
     // Fetch PNJ data
-    $pnj = new ActorInterface($planJson->pnj);
+    $pnj = new Player($planJson->pnj);
     $pnj->get_data();
 
     // Fetch race information

@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Str;
 
 require_once('config.php');
@@ -8,7 +8,7 @@ require_once('config.php');
 ob_start();
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 

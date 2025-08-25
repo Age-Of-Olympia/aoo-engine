@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Log;
 
 if($target->getRemaining('pv') > 0){
@@ -42,7 +42,7 @@ echo '
             continue;
         }
         if(is_numeric($k)){
-            $assistant = new ActorInterface($k);
+            $assistant = new Player($k);
             $assistant->get_data();
             $assistant->put_xp($e);
             $assist = ($assistant->id == $player->id) ? 0 : 1;

@@ -1,12 +1,12 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Ui;
 use Classes\Str;
 use Classes\Db;
 require_once('config.php');
 
 $worldPlan = 'olympia';
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 $player->getCoords();
 
 $isInHell = (isset($player->coords->plan) && $player->coords->plan === 'enfers');

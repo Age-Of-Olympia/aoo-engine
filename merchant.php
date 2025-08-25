@@ -1,6 +1,6 @@
 <?php
 use Classes\Ui;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Market;
 
 require_once('config.php');
@@ -9,7 +9,7 @@ require_once('config.php');
 $ui = new Ui('Marchander', true);
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 
@@ -21,7 +21,7 @@ if(!isset($_GET['targetId'])){
 }
 
 
-$target = new ActorInterface($_GET['targetId']);
+$target = new Player($_GET['targetId']);
 
 $marketAccessError = Market::CheckMarketAccess($player, $target);
 if($marketAccessError !=null){

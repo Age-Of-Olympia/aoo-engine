@@ -1,7 +1,7 @@
 <?php
 use Classes\Item;
-use Classes\ActorInterface;
-$player = new ActorInterface($_SESSION['playerId']);
+use Classes\Player;
+$player = new Player($_SESSION['playerId']);
 
 
 if(!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])){

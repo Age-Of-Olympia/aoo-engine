@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 ActorInterface::refresh_list();
 
 @unlink(__DIR__ .'/../../../datas/public/classements/general.html');

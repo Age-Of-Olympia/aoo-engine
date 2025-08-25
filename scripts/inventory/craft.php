@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Item;
 use Classes\Craft;
 use Classes\Json;
@@ -7,7 +7,7 @@ use Classes\Ui;
 use Classes\Str;
 
 // player
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 $player->get_data();
 
 ob_start();

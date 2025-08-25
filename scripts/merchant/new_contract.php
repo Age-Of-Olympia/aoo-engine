@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Item;
 use Classes\Db;
 use Classes\Str;

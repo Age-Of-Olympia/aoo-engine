@@ -2,7 +2,7 @@
 use Classes\AdminCommand;
 use Classes\Argument;
 use Classes\File;
-use Classes\ActorInterface;
+use Classes\Player;
 
 class EditCmd extends AdminCommand
 {
@@ -35,7 +35,7 @@ EOT);
         if($argumentValues[0] == 'plan'){
 
 
-            $admin = new ActorInterface($_SESSION['playerId']);
+            $admin = new Player($_SESSION['playerId']);
             $admin->getCoords();
 
             $plan = $admin->coords->plan;

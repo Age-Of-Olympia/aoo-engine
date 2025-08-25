@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use Classes\Db;
-use Classes\ActorInterface;
+use Classes\Player;
 
 class PlayerService
 {
@@ -90,7 +90,7 @@ class PlayerService
         if($readCache && isset($this->playerCache[$id])){
             return $this->playerCache[$id];
         }
-        $result = new ActorInterface($id);
+        $result = new Player($id);
 
         if($writeCache){
             $this->playerCache[$id] = $result;

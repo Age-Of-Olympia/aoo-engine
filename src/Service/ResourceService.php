@@ -2,9 +2,8 @@
 
 namespace App\Service;
 
-use App\Entity\EntityManagerFactory;
+use App\Interface\ActorInterface;
 use Classes\Db;
-use Classes\ActorInterface;
 use Classes\View;
 
 class ResourceService

@@ -1,6 +1,6 @@
 <?php
 use Classes\Forum;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
@@ -20,7 +20,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
         ExitError('error session swich');
     }
 
-    $player = new ActorInterface($_SESSION['playerId']);
+    $player = new Player($_SESSION['playerId']);
 
     $player->get_data();
 
@@ -47,7 +47,7 @@ if(!empty($_POST['text']) && !empty($_POST['name'])){
         if(!empty($_POST['destId'])){
 
             $destTbl = Forum::get_top_dest($topJson);
-            $desti = new ActorInterface($_POST['destId']);
+            $desti = new Player($_POST['destId']);
             $desti->get_data();
             if($player->check_missive_permission($desti)){
 
@@ -109,7 +109,7 @@ if($forumJson->name == 'Missives'){
     if(!empty($_GET['targetId'])){
 
 
-        $target = new ActorInterface($_GET['targetId']);
+        $target = new Player($_GET['targetId']);
 
         if($player->check_missive_permission($target)){
 

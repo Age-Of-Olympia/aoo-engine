@@ -1,6 +1,6 @@
 <?php
 use Classes\Db;
-use Classes\ActorInterface;
+use Classes\Player;
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
@@ -85,19 +85,19 @@ if(!empty($_POST['name']) && !empty($_POST['mail'])){
 
     // mat
     if(is_numeric($_POST['name'])){
-        $player = new ActorInterface($_POST['name']);
+        $player = new Player($_POST['name']);
     }
 
     // name
     else{
 
        
-        $listPlayerJson = ActorInterface::get_player_list()->list;
+        $listPlayerJson = Player::get_player_list()->list;
 
         foreach($listPlayerJson as $e){
 
             if($e->name == $_POST['name']){
-                $player = new ActorInterface($e->id);
+                $player = new Player($e->id);
             }
         }
     }

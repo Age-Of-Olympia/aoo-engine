@@ -311,4 +311,14 @@ class PlayerMock implements ActorInterface
     {
         // Mock implementation for assists
     }
+    public function end_action($name) {
+        // Mock implementation for assists
+    }
+    public function drop($item, $n){
+        // Mock implementation for assists
+    }
+    public function put_pf($pf){
+        // Mock implementation for assists
+    }
+  
 }

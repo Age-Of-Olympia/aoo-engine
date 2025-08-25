@@ -4,14 +4,9 @@ namespace Tests\Action\Condition;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
-use App\Action\Condition\RequiresDistanceCondition;
-use App\Action\Condition\RequiresTraitValueCondition;
-use App\Action\Condition\RequiresWeaponTypeCondition;
-use App\Action\Condition\ForbidIfHasEffectCondition;
 use App\Action\Condition\AntiSpellCondition;
 use App\Entity\ActionCondition;
 use Tests\Action\Mock\PlayerMock;
-use Tests\Action\Mock\ActionMock;
 
 class AntiSpellConditionTest extends TestCase
 {

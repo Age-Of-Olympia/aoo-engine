@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Str;
 use Classes\Dialog;
 use Classes\Item;
@@ -91,9 +91,9 @@ if(!empty($_POST['race'])){
         }
 
 
-        $playerId = ActorInterface::put_player($_POST['name'], $_POST['race']);
+        $playerId = Player::put_player($_POST['name'], $_POST['race']);
 
-        $player = new ActorInterface($playerId);
+        $player = new Player($playerId);
 
         $player->get_data();
 
@@ -126,7 +126,7 @@ if(!empty($_POST['race'])){
         }
 
 
-        ActorInterface::refresh_list();
+        Player::refresh_list();
 
 
         // welcome missive
@@ -311,7 +311,7 @@ echo '<h1>Inscription</h1>';
 echo '<div>L\'inscription est gratuite et immédiate!<br /><sup>Le multi-compte est interdit.</sup></div>';
 
 
-$player = new ActorInterface(1);
+$player = new Player(1);
 
 
 $options = array(

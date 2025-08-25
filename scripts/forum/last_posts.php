@@ -1,7 +1,7 @@
 <?php
 use Classes\Ui;
 use Classes\Forum;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Str;
 ob_start();
 
@@ -101,7 +101,7 @@ foreach(array('RP','Privés','HRP') as $cat){
                     >
                     ';
 
-                    $author = new ActorInterface($topJson->last->author);
+                    $author = new Player($topJson->last->author);
 
                     $author->get_data();
 

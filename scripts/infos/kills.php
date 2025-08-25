@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\File;
 $path = 'datas/private/players/'. $target->id .'.kills.html';
 
@@ -40,7 +40,7 @@ if(!file_exists($path) || !CACHED_KILLS){
         $showKills = true;
         $assistant = $target;
 
-        $killed = new ActorInterface($row->target_id);
+        $killed = new Player($row->target_id);
         $killed->get_data();
         $planJson = json()->decode('plans', $row->plan);
 
@@ -83,7 +83,7 @@ if(!file_exists($path) || !CACHED_KILLS){
 
         foreach($assists as $row){
             $assistant = $target;
-            $killed = new ActorInterface($row->target_id);
+            $killed = new Player($row->target_id);
             $killed->get_data();
             $planJson = json()->decode('plans', $row->plan);
 
@@ -122,7 +122,7 @@ if(!file_exists($path) || !CACHED_KILLS){
         ';
 
         foreach($deaths as $row){
-            $assistant = new ActorInterface($row->player_id);
+            $assistant = new Player($row->player_id);
             $assistant->get_data();
             $killed = $target;
             $planJson = json()->decode('plans', $row->plan);

@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Db;
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button>'. $planJson->name .'</button></a></div>';
@@ -204,7 +204,7 @@ echo '
 if(!empty($planJson->pnj)){
 
 
-    $pnj = new ActorInterface($planJson->pnj);
+    $pnj = new Player($planJson->pnj);
 
     $pnj->get_data();
 

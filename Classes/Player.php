@@ -2046,7 +2046,7 @@ class Player implements ActorInterface {
         //we allready have the id for pnj and it's negatif 
         $lastId = is_null($id) ? $db->get_last_id('players') : $id;
 
-        $player = new ActorInterface($lastId);
+        $player = new Player($lastId);
 
         // first init data
         $player->get_data();
@@ -2098,7 +2098,7 @@ class Player implements ActorInterface {
 
         $row = $res->fetch_object();
 
-        return new ActorInterface($row->id);
+        return new Player($row->id);
     }
 
     public function get_data(bool $forceRefresh=true){
@@ -2120,7 +2120,7 @@ class Player implements ActorInterface {
         if(!$playerJson){
 
 
-            $player = new ActorInterface( $this->id);
+            $player = new Player( $this->id);
 
             $player->get_row();
 

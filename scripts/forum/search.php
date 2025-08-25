@@ -1,12 +1,12 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Forum;
 use Classes\Ui;
 
 $ui = new Ui('Forum - Recherche');
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->get_data();
 

@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Db;
 use Classes\Ui;
 require_once('config.php');
@@ -16,7 +16,7 @@ $res = $db->exe($sql, $_SESSION['playerId']);
 while($row = $res->fetch_object()){
 
 
-    $target = new ActorInterface($row->target_id);
+    $target = new Player($row->target_id);
 
     $target->get_data();
 

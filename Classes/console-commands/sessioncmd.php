@@ -1,7 +1,7 @@
 <?php
 use Classes\Command;
 use Classes\Argument;
-use Classes\ActorInterface;
+use Classes\Player;
 
 class SessionCmd extends Command
 {
@@ -27,12 +27,12 @@ EOT);
             if(!is_numeric($login)){
 
 
-                $player = ActorInterface::get_player_by_name($login);
+                $player = Player::get_player_by_name($login);
             }
             else{
 
 
-                $player = new ActorInterface($login);
+                $player = new Player($login);
             }
 
             $player->get_data();

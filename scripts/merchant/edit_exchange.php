@@ -1,7 +1,7 @@
 <?php
 use Classes\Exchange;
 use Classes\Item;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Ui;
 
 if (!isset($_GET['editExchange'])) {
@@ -15,13 +15,13 @@ if (!$exchange->is_in_progress()) {
 $exchange->get_items_data();
 $objects = [];
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 $player->get_data();
 
 if ($player->id != $exchange->targetId && $player->id != $exchange->playerId) {
   ExitError('Current player is not part of the exchange');
 }
-$otherPlayer = new ActorInterface($player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId);
+$otherPlayer = new Player($player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId);
 $otherPlayer->get_data();
 ?>
 <div class="section">
@@ -46,7 +46,7 @@ $otherPlayer->get_data();
             <hr>
             <h3>Votre Inventaire :</h3>
             <?php
-            $player = new ActorInterface($_SESSION['playerId']);
+            $player = new Player($_SESSION['playerId']);
             $itemList = Item::get_item_list($player, bank:true);
             echo Ui::print_inventory($itemList);
             ?>

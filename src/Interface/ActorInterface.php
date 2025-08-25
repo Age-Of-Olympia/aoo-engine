@@ -31,14 +31,17 @@ interface ActorInterface
   public function purge_effects();
 
   public function add_action($name, $charges=false);
+  public function end_action($name);
   public function add_option($name);
   public function get_options();
   public function get_effects();
   public function get_actions();
-  
+
   public static function refresh_list();
   public function get_row();
   public function check_missive_permission($target);
+  public function drop($item, $n);
+  public function put_pf($pf);
   
 
 }

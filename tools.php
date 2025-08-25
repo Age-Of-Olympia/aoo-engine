@@ -1,10 +1,10 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\File;
 
 require_once('config.php');
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
 

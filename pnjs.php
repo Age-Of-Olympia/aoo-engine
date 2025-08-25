@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Ui;
 use Classes\Db;
 use Classes\Str;
@@ -14,7 +14,7 @@ Use App\Service\PlayerPnjService;
 $playerPnjService = new PlayerPnjService();
 
 
-$main = new ActorInterface($_SESSION['mainPlayerId']);
+$main = new Player($_SESSION['mainPlayerId']);
 
 
 $playersTbl = array(
@@ -26,9 +26,9 @@ $hiddenPnjs = array();
 $playerPnjs = $playerPnjService->getByPlayerId($main->id);
 foreach($playerPnjs as $playerPnj ){
     if($playerPnj->isDisplayed()){
-        $playersTbl[$playerPnj->getPnjId()] = new ActorInterface($playerPnj->getPnjId());
+        $playersTbl[$playerPnj->getPnjId()] = new Player($playerPnj->getPnjId());
     }else{
-        $hiddenPnjs[$playerPnj->getPnjId()] = new ActorInterface($playerPnj->getPnjId());
+        $hiddenPnjs[$playerPnj->getPnjId()] = new Player($playerPnj->getPnjId());
     }
 }
 

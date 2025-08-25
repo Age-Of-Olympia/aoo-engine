@@ -1,7 +1,7 @@
 <?php
 use Classes\Db;
 use Classes\Forum;
-use Classes\ActorInterface;
+use Classes\Player;
 $destTbl = Forum::get_top_dest($topJson);
 
 if (!in_array($player->id, $destTbl) || (($player->id >0) && ($player->id != $_SESSION['originalPlayerId']))) {
@@ -29,9 +29,9 @@ if (!empty($_POST['addDest'])) {
     }else{
 
         if(is_numeric($_POST['addDest'])){
-            $desti = new ActorInterface($_POST['addDest']);
+            $desti = new Player($_POST['addDest']);
         }else {
-            $desti = ActorInterface::get_player_by_name($_POST['addDest']);
+            $desti = Player::get_player_by_name($_POST['addDest']);
         }
         $desti->get_data();
         Forum::add_dest( $player,$desti, $topJson, $destTbl);
@@ -68,7 +68,7 @@ echo '
         foreach ($destTbl as $e) {
 
 
-            $dest = new ActorInterface($e);
+            $dest = new Player($e);
             $dest->get_data();
 
             $raceJson = json()->decode('races', $dest->data->race);
@@ -97,7 +97,7 @@ echo '
     </div>';
 
 
-    $playersJson = ActorInterface::get_player_list()->list;
+    $playersJson = Player::get_player_list()->list;
 
     echo '<select id="dest-list">
         <option disabled selected>Sélectionnez un personnage:</option>';

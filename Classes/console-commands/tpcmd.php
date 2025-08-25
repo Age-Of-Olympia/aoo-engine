@@ -2,7 +2,7 @@
 use Classes\Command;
 use Classes\Argument;
 use Classes\Db;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\View;
 
 class TpCmd extends Command
@@ -65,7 +65,7 @@ EOT);
         if($argumentValues[0] == 'everyone'){
 
 
-            $admin = new ActorInterface($_SESSION['playerId']);
+            $admin = new Player($_SESSION['playerId']);
             $admin->getCoords();
 
             $db = new Db();
@@ -83,7 +83,7 @@ EOT);
             while($row = $res->fetch_object()){
 
 
-                $playersTbl[] = new ActorInterface($row->id);
+                $playersTbl[] = new Player($row->id);
             }
         }
         else{

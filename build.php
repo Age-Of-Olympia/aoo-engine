@@ -1,5 +1,5 @@
 <?php
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Item;
 use Classes\View;
 use Classes\Ui;
@@ -7,7 +7,7 @@ use Classes\Ui;
 require_once('config.php');
 
 
-$player = new ActorInterface($_SESSION['playerId']);
+$player = new Player($_SESSION['playerId']);
 
 $player->getCoords();
 

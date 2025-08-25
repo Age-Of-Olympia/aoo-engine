@@ -1,7 +1,7 @@
 <?php
 use Classes\Ui;
 use Classes\Db;
-use Classes\ActorInterface;
+use Classes\Player;
 use Classes\Quest;
 
 $actions = array(
@@ -99,7 +99,7 @@ while($row = $res->fetch_object()){
 
         echo '<div>';
 
-        $player = new ActorInterface($row->player_id);
+        $player = new Player($row->player_id);
 
         $player->get_data();
 
