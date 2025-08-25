@@ -14,19 +14,58 @@
          failOnWarning="true">
 
     <testsuites>
-        <testsuite name="Action">
-            <directory suffix="Test.php">./tests/Action</directory>
+        <testsuite name="Service">
+            <directory suffix="Test.php">tests/Action/Service</directory>
         </testsuite>
+        
+        <testsuite name="Fight">
+            <directory suffix="Test.php">tests/Action/Fight</directory>
+        </testsuite>
+        
         <testsuite name="Logs">
-            <directory suffix="Test.php">./tests/Logs</directory>
+            <directory suffix="Test.php">tests/Logs</directory>
+        </testsuite>
+        
+        <testsuite name="Conditions">
+            <directory suffix="Test.php">tests/Action/Condition/</directory>
+        </testsuite>
+        
+        <testsuite name="Outcomes">
+            <directory suffix="Test.php">tests/Action/OutcomeInstruction/</directory>
         </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
         <include>
-            <directory>src</directory>
+            <directory suffix=".php">src/</directory>
+            <directory suffix=".php">Classes/</directory>
+            <directory suffix=".php">config/</directory>
         </include>
+        <exclude>
+            <directory>vendor/</directory>
+            <directory>tests/</directory>
+        </exclude>
     </source>
+
+    <php>
+        <ini name="display_errors" value="1"/>
+        <ini name="error_reporting" value="E_ALL"/>
+        <ini name="memory_limit" value="1024M"/>
+        
+        <!-- Constants pour les tests -->
+        <const name="THREE_DAYS" value="259200"/>
+        <const name="ONE_DAY" value="86400"/>
+        <const name="ACTION_XP" value="10"/>
+        <const name="MALUS_PER_DAMAGES" value="2"/>
+        <const name="DMG_CRIT" value="10"/>
+        <const name="MIN_GOLD_STOLEN" value="5"/>
+        <const name="MAX_XP_FOR_STEALING" value="15"/>
+        <const name="ITEM_BREAK" value="5"/>
+        <const name="AUTO_BREAK" value="false"/>
+        <const name="AUTO_FAIL" value="false"/>
+        <const name="INACTIVE_TIME" value="604800"/>
+        <const name="SEASON_XP" value="10000"/>
+    </php>
 
     <coverage>
         <report>

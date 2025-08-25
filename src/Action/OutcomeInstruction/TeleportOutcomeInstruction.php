@@ -3,14 +3,14 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
 class TeleportOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "coords": "target" }
 

@@ -54,7 +54,7 @@ class Forum{
         }
 
 
-        $target = new Player($postJson->author);
+        $target = new ActorInterface($postJson->author);
 
         $target->put_pr($reward->pr);
 
@@ -136,7 +136,7 @@ class Forum{
 
         $postJson = json()->decode('forum', 'posts/'. end($topJson->posts)->name);
 
-        $author = new Player($postJson->author);
+        $author = new ActorInterface($postJson->author);
         $author->get_data();
 
         $pageN = self::get_pages(count($topJson->posts));
@@ -441,9 +441,9 @@ class Forum{
 
 
         if(is_numeric($dest)){
-            $dest = new Player($dest);
+            $dest = new ActorInterface($dest);
         }else if(is_string($dest)){
-            $dest = Player::get_player_by_name($dest);
+            $dest = ActorInterface::get_player_by_name($dest);
         }
         
         $dest->get_data(false);
@@ -492,7 +492,7 @@ class Forum{
         if(in_array($dest, $destTbl)){
 
 
-            $dest = new Player($dest);
+            $dest = new ActorInterface($dest);
 
             $db = new Db();
 

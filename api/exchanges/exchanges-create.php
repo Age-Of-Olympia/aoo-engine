@@ -1,7 +1,7 @@
 <?php
 use Classes\Exchange;
 use Classes\Market;
-use Classes\Player;
+use Classes\ActorInterface;
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -10,10 +10,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     exit('error no merchant');
   }
-  $player = new Player($_SESSION['playerId']);
+  $player = new ActorInterface($_SESSION['playerId']);
   $player->get_data();
 
-  $target = new Player($_GET['targetId']);
+  $target = new ActorInterface($_GET['targetId']);
 
   $marketAccessError = Market::CheckMarketAccess($player, $target);
   if($marketAccessError !=null){
@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ExitError($marketAccessError);
   }
   
-  $recipient = Player::get_player_by_name($_POST['recipient']);
+  $recipient = ActorInterface::get_player_by_name($_POST['recipient']);
   if($player->id == $recipient->id){
     ExitError('Vous ne pouvez pas vous échanger des objets à vous même');
   }

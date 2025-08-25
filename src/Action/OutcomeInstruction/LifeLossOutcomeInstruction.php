@@ -5,13 +5,12 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
 class LifeLossOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;

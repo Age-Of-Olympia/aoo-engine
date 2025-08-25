@@ -4,7 +4,6 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
-use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
@@ -33,7 +32,7 @@ if(!is_numeric($x) || !is_numeric($y)){
 }
 
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 $player->get_data();
 
@@ -190,7 +189,7 @@ if($res->num_rows){
     while($row = $res->fetch_object()){
 
 
-        $target = new Player($row->id);
+        $target = new ActorInterface($row->id);
 
         $target->get_data();
 
@@ -403,7 +402,7 @@ else{
 
                         $row = $res->fetch_object();
 
-                        $god = new Player($row->params);
+                        $god = new ActorInterface($row->params);
 
                         $god->get_data();
 

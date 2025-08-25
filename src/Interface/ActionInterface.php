@@ -6,7 +6,6 @@ use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Entity\Race;
 use Doctrine\Common\Collections\Collection;
-use Classes\Player;
 
 interface ActionInterface
 {
@@ -30,7 +29,7 @@ interface ActionInterface
     public function addRace(Race $race): self;
     public function removeRace(Race $race): self;
     public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array;
-    public function getLogMessages(Player $actor, Player $target): array;
+    public function getLogMessages(ActorInterface $actor, ActorInterface $target): array;
     public function hideOnSuccess(): bool;
     public function refreshScreen(): bool;
     public function setHideOnSuccess(bool $hide): void;

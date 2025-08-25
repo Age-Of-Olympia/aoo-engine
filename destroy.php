@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Db; 
 use Classes\View;
 use Classes\Log;
@@ -7,7 +7,7 @@ use Classes\Log;
 require_once('config.php');
 
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 
 if(!isset($_POST['wallId'])){

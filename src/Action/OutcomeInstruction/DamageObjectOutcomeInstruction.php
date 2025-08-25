@@ -6,12 +6,11 @@ use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
-use Classes\Player;
 
 #[ORM\Entity]
 class DamageObjectOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
         $result = new OutcomeResult(false);
         $outcomeSuccessMessages = array();
         $outcomeSuccessMessages[0] = null;

@@ -2,9 +2,9 @@
 namespace App\Entity;
 
 use App\Action\OutcomeInstruction\OutcomeResult;
+use App\Interface\ActorInterface;
 use App\Interface\OutcomeInstructionInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "outcome_instructions")]
@@ -75,5 +75,5 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
         return $this;
     }
 
-    abstract public function execute(Player $actor, Player $target): OutcomeResult;
+    abstract public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult;
 }

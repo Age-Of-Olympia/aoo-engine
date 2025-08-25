@@ -2,7 +2,6 @@
 namespace App\Action\Condition;
 
 use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
-use Classes\Player;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use Classes\Dice;

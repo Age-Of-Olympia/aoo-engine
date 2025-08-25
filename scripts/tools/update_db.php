@@ -1,10 +1,10 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use App\Service\DataBaseUpdateService;
 
 require_once('config.php');
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 include ('checks/super-admin-check.php');
 

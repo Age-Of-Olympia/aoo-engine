@@ -723,7 +723,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function put_xp($xp){
+    public function put_xp(int $xp): void{
 
 
         if(!isset($this->data)){
@@ -806,7 +806,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function put_assist($target, $damages){
+    public function put_assist(ActorInterface $target, int $damages) :void {
 
 
         self::clean_players_assists();
@@ -2046,7 +2046,7 @@ class Player implements ActorInterface {
         //we allready have the id for pnj and it's negatif 
         $lastId = is_null($id) ? $db->get_last_id('players') : $id;
 
-        $player = new Player($lastId);
+        $player = new ActorInterface($lastId);
 
         // first init data
         $player->get_data();
@@ -2056,7 +2056,7 @@ class Player implements ActorInterface {
         $player->add_action('tuto/attaquer');
 
 
-        Player::refresh_list();
+        ActorInterface::refresh_list();
 
 
         if($pnj){
@@ -2098,7 +2098,7 @@ class Player implements ActorInterface {
 
         $row = $res->fetch_object();
 
-        return new Player($row->id);
+        return new ActorInterface($row->id);
     }
 
     public function get_data(bool $forceRefresh=true){
@@ -2120,7 +2120,7 @@ class Player implements ActorInterface {
         if(!$playerJson){
 
 
-            $player = new Player( $this->id);
+            $player = new ActorInterface( $this->id);
 
             $player->get_row();
 
@@ -2205,7 +2205,7 @@ class Player implements ActorInterface {
         if(!$list){
             // refresh all classements (once per day, done with cron)
 
-            Player::refresh_list();
+            ActorInterface::refresh_list();
 
             $list = json()->decode('players', 'list');
 

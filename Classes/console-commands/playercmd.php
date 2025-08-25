@@ -3,7 +3,7 @@ use Classes\Command;
 use Classes\Argument;
 use Classes\Db;
 use Classes\Item;
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Log;
 use Classes\File;
 
@@ -121,7 +121,7 @@ function create_player($argumentValues){
     }
 
 
-    $lastId = Player::put_player($name, $race, $pnj);
+    $lastId = ActorInterface::put_player($name, $race, $pnj);
 
 
     $pnjTxt = ($pnj) ? 'pnj=true' : 'pnj=false';
@@ -395,11 +395,11 @@ function add_log($argumentValues, $player){
 
     if(is_numeric($argumentValues[2])){
 
-        $target = new Player($argumentValues[2]);
+        $target = new ActorInterface($argumentValues[2]);
     }
     else{
 
-        $target = Player::get_player_by_name($argumentValues[2]);
+        $target = ActorInterface::get_player_by_name($argumentValues[2]);
     }
 
 

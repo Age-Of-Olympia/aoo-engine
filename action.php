@@ -7,8 +7,8 @@ use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
 use App\View\ActionResultsView;
+use App\Interface\ActorInterface;
 use Classes\Log;
-use Classes\Player;
 use Classes\View;
 
 ob_start();
@@ -23,7 +23,7 @@ if(!isset($_POST['action'])){
 }
 
 // player
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 $player->get_data();
 $player->get_caracs();
 
@@ -33,7 +33,7 @@ if(!isset($_POST['targetId'])){
     exit('error targetId');
 }
 
-$target = new Player($_POST['targetId']);
+$target = new ActorInterface($_POST['targetId']);
 $target->get_data();
 $target->get_caracs();
 

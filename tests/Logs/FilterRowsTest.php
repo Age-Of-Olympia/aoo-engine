@@ -8,6 +8,7 @@ use Tests\Logs\Mock\ViewMock;
 use Tests\Logs\Mock\JsonMock;
 use PHPUnit\Framework\Attributes\Group;
 use Classes\Log;
+use Tests\Logs\Mock\TestDatabaseLogs;
 
 /**
  * Tests spécifiques pour la méthode filterRows
@@ -15,12 +16,12 @@ use Classes\Log;
 class FilterRowsTest extends TestCase
 {
     private PlayerMock $player;
-    private TestDatabase $testDb;
+    private TestDatabaseLogs $testDb;
 
     protected function setUp(): void
     {
         $this->player = new PlayerMock(1, 'TestPlayer');
-        $this->testDb = new TestDatabase();
+        $this->testDb = new TestDatabaseLogs();
 
         // Injection des mocks
         Log::setDbInstance($this->testDb);

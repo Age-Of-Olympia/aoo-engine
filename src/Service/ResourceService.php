@@ -4,13 +4,13 @@ namespace App\Service;
 
 use App\Entity\EntityManagerFactory;
 use Classes\Db;
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\View;
 
 class ResourceService
 {
 
-    public static function findResourcesAround(Player $player): mixed
+    public static function findResourcesAround(ActorInterface $player): mixed
     {
         $biomes = array();
         $coords = $player->getCoords();
@@ -49,7 +49,7 @@ class ResourceService
         return $res;
     }
 
-    public static function getResourcesAround(Player $player): mixed
+    public static function getResourcesAround(ActorInterface $player): mixed
     {
         $biomes = array();
         $coords = $player->getCoords();

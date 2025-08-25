@@ -4,13 +4,13 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Str;
 
 #[ORM\Entity]
 class PlayerOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
         $params =$this->getParameters();
         // e.g. {"carac": "energie", "value" : 4, "player": "actor"}
         // {"carac": "mvt", "value" : 1, "player": "actor"}
@@ -24,7 +24,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
             case "actor":
                 if ($carac != null) {
                     if ($carac == "foi") {
-                        $god = new Player($actor->data->godId);
+                        $god = new ActorInterface($actor->data->godId);
                         $god->get_data();
                         $pf = rand(1,3);
                         $actor->put_pf($pf);

@@ -3,8 +3,9 @@
 namespace App\Service;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\Action;
 use App\Interface\ActionInterface;
+use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Exception;
@@ -13,10 +14,12 @@ class ActionService
 {
     private $entityManager;
 
-    public function __construct()
+    // Getters pour les dépendances
+
+    public function __construct(?Connection $conn = null)
     {
         // Fetch the entity manager from your custom factory
-        $this->entityManager = EntityManagerFactory::getEntityManager();
+        $this->entityManager = EntityManagerFactory::getEntityManager($conn);
     }
 
     /**

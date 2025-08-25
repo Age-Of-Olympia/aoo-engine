@@ -1,9 +1,9 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Json;
 
 
-$list = Player::get_player_list()->list;
+$list = ActorInterface::get_player_list()->list;
 
 // enlever les pnj
 foreach($list as $k=>$e){

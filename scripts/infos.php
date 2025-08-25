@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Str;
 if(!empty($_SESSION['playerId'])){
 
@@ -10,7 +10,7 @@ if(!empty($_SESSION['playerId'])){
             $player = $playerService->GetPlayer($_SESSION['playerId']);
         }
         else{
-        $player = new Player($_SESSION['playerId']);
+        $player = new ActorInterface($_SESSION['playerId']);
         }
         $player->get_data();
     }

@@ -1,12 +1,12 @@
 <?php
 namespace App\Service;
 
-use Classes\Player;
 use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
 use App\Entity\Action;
 use App\Entity\OutcomeInstruction;
+use App\Interface\ActorInterface;
 use Exception;
 
 class ActionExecutorService
@@ -16,8 +16,8 @@ class ActionExecutorService
     private array $conditionResultsArray;
     private array $outcomeResultsArray;
     private array $conditionsToPay;
-    private Player $actor;
-    private Player $target;
+    private ActorInterface $actor;
+    private ActorInterface $target;
     private Action $action;
     private PlayerService $playerService;
     // Same for actor ? Possible to loose pv on action and die ?
@@ -25,7 +25,7 @@ class ActionExecutorService
     private int $finalTargetPv;
     private bool $blocked = false;
     
-    public function __construct(Action $action, Player $actor, Player $target){
+    public function __construct(Action $action, ActorInterface $actor, ActorInterface $target){
         $this->conditionRegistry = new ConditionRegistry();
         $this->conditionResultsArray = array();
         $this->outcomeResultsArray = array();

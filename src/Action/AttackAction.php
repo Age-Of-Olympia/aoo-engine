@@ -7,7 +7,6 @@ use App\Action\OutcomeInstruction\ObjectEffectOutcomeInstruction;
 use App\Entity\Action;
 use App\Interface\ActorInterface;
 use App\Interface\OutcomeInstructionInterface;
-use Classes\Player;
 
 abstract class AttackAction extends Action
 {
@@ -32,7 +31,7 @@ abstract class AttackAction extends Action
         return $applyAdrenalineOutcomeInstruction;
     }
 
-    public function getLogMessages(Player $actor, Player $target): array
+    public function getLogMessages(ActorInterface $actor, ActorInterface $target): array
     {
         //Player should have a method to give correct weapon (with inheritance ?)
         if ($actor->data->race != 'animal') {

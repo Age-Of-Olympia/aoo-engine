@@ -275,7 +275,7 @@ class View{
                 }
 
                 elseif($row->whichTable == 'players'){
-                    $player = new Player($row->id);
+                    $player = new ActorInterface($row->id);
                     $player->get_data();
 
                     // Les joueurs normaux sont soumis aux règles de visibilité

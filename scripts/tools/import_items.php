@@ -1,10 +1,10 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 
 require_once('config.php');
 
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 if(!$player->have_option('isAdmin')){
 

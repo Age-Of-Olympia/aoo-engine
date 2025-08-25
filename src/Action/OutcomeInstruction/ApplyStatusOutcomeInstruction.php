@@ -3,14 +3,14 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
 use Classes\Str;
 
 #[ORM\Entity]
 class ApplyStatusOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }
         // e.g. { "adrenaline": true, "player": "actor" , "duration": 86400 }
@@ -56,7 +56,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: $outcomeSuccessMessages);
     }
 
-    private function applyEffect (bool $apply, string $effectName, int $duration, Player $player){
+    private function applyEffect (bool $apply, string $effectName, int $duration, ActorInterface $player){
         if ($apply) {
             $player->addEffect($effectName, $duration);
         } else {

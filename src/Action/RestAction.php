@@ -5,7 +5,6 @@ namespace App\Action;
 use App\Entity\Action;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
 
 #[ORM\Entity]
 class RestAction extends Action
@@ -19,7 +18,7 @@ class RestAction extends Action
         return $xpResultsArray;
     }
 
-    public function getLogMessages(Player $actor, Player $target): array
+    public function getLogMessages(ActorInterface $actor, ActorInterface $target): array
     {
         $actorLog = 'Vous vous êtes reposé.';
         $infosArray["actor"] = $actorLog; 

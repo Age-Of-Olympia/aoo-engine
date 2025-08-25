@@ -2,7 +2,7 @@
 use Classes\Command;
 use Classes\Argument;
 use Classes\Db;
-use Classes\Player;
+use Classes\ActorInterface;
 
 class NewTurnCmd extends Command
 {
@@ -18,7 +18,7 @@ EOT);
 
     public function execute(  array $argumentValues ) : string
     {
-        $player = new Player($_SESSION['playerId']);
+        $player = new ActorInterface($_SESSION['playerId']);
 
         if(isset($argumentValues[0]) && $argumentValues[0] == 'real'){
             $sql = 'UPDATE players SET nextTurnTime = ? WHERE id = ?';

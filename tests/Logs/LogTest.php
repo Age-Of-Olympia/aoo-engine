@@ -8,17 +8,18 @@ use Tests\Logs\Mock\ViewMock;
 use Tests\Logs\Mock\JsonMock;
 use PHPUnit\Framework\Attributes\Group;
 use Classes\Log;
+use Tests\Logs\Mock\TestDatabaseLogs;
 
 class LogTest extends TestCase
 {
     private PlayerMock $player;
-    private TestDatabase $testDb;
+    private TestDatabaseLogs $testDb;
     private JsonMock $jsonMock;
 
     protected function setUp(): void
     {
         $this->player = new PlayerMock(1, 'TestPlayer');
-        $this->testDb = new TestDatabase();
+        $this->testDb = new TestDatabaseLogs();
         $this->jsonMock = new JsonMock();
         
         // Injection des mocks dans Log

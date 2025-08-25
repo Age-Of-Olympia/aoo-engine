@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Interface\ActorInterface;
 use Classes\Player;
 use Classes\View;
 use Exception;
@@ -107,11 +108,11 @@ class ScreenshotService
     /**
      * Generate automatic screenshot for actions on arene_s2
      * 
-     * @param Player $actor The player who performed the action
+     * @param ActorInterface $actor The player who performed the action
      * @param string $actionName Name of the action performed
      * @return array Result array
      */
-    public function generateAutomaticScreenshot(Player $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
+    public function generateAutomaticScreenshot(ActorInterface $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
     {
         $coords = $actor->getCoords();
         if ($coords->plan !== 'arene_s2') {
@@ -140,7 +141,7 @@ class ScreenshotService
     /**
      * Validate that the player is suitable for screenshots
      */
-    private function validateScreenshotPlayer(Player $player): array
+    private function validateScreenshotPlayer(ActorInterface $player): array
     {
         if ($player->id >= 0) {
             return [
@@ -149,7 +150,7 @@ class ScreenshotService
             ];
         }
 
-        if (!$player->have('options', 'incognitoMode')) {
+        if (!$player->have_option('incognitoMode')) {
             return [
                 'valid' => false,
                 'error' => 'Screenshot player must have incognito mode enabled'
@@ -162,7 +163,7 @@ class ScreenshotService
     /**
      * Save current player position for later restoration
      */
-    private function savePlayerPosition(Player $player): array
+    private function savePlayerPosition(ActorInterface $player): array
     {
         $coords = $player->getCoords();
         return [
@@ -176,7 +177,7 @@ class ScreenshotService
     /**
      * Restore player to default position
      */
-    private function restorePlayerPosition(Player $player): void
+    private function restorePlayerPosition(ActorInterface $player): void
     {
         $restorePosition = (object) self::DEFAULT_RESTORE_POSITION;
         $player->move_player($restorePosition);
@@ -185,7 +186,7 @@ class ScreenshotService
     /**
      * Generate SVG data using View class
      */
-    private function generateSvgData(Player $player, object $coords, int $range): ?string
+    private function generateSvgData(ActorInterface $player, object $coords, int $range): ?string
     {
         $playerOptions = $player->get_options();
         $caracsJson = json()->decode('players', $player->id .'.caracs');
@@ -283,7 +284,7 @@ class ScreenshotService
      * Remove the screenshot PNJ from the SVG output
      * Post-processes the SVG to hide the player taking the screenshot
      */
-    private function removeScreenshotPlayerFromSvg(string $svgData, Player $player): string
+    private function removeScreenshotPlayerFromSvg(string $svgData, ActorInterface $player): string
     {
         $playerId = $player->id;
         $coordsPattern = '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*>/i';

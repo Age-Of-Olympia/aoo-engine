@@ -2,17 +2,17 @@
 
 use App\Service\BidsAsksService;
 use Classes\Market;
-use Classes\Player;
+use Classes\ActorInterface;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     SanitizeIntChecked($_GET['targetId'], 'error no merchant');
 
-    $player = new Player($_SESSION['playerId']);
+    $player = new ActorInterface($_SESSION['playerId']);
     $player->get_data();
 
-    $target = new Player($_GET['targetId']);
+    $target = new ActorInterface($_GET['targetId']);
 
     $marketAccessError = Market::CheckMarketAccess($player, $target);
     if ($marketAccessError != null) {

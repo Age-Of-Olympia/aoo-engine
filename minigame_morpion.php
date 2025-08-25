@@ -1,11 +1,11 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\File;
 use Classes\Ui;
 
 require_once('config.php');
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 
 $_SESSION['morpionDir'] = 'img/ui/forum/rewards/pokemon/';

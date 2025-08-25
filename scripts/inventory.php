@@ -1,12 +1,12 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Item;
 use Classes\Ui;
 
 if(!empty($_POST['action'])){
 
 
-    $player = new Player($_SESSION['playerId']);
+    $player = new ActorInterface($_SESSION['playerId']);
 
     $itemList = Item::get_item_list($player->id);
 
@@ -29,7 +29,7 @@ if(!empty($_POST['action'])){
 
 $path = 'datas/private/players/'. $_SESSION['playerId'] .'.invent.html';
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 $itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
 $data = Ui::print_inventory($itemList);

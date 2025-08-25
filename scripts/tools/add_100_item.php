@@ -1,8 +1,8 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Db;
 
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 if(!$player->have_option('isAdmin')){
 

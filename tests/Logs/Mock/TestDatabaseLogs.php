@@ -3,7 +3,7 @@ namespace Tests\Logs\Mock;
 
 use PDO;
 
-class TestDatabase
+class TestDatabaseLogs
 {
     private PDO $pdo;
 

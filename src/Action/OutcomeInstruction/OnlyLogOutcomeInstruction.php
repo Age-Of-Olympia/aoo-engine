@@ -6,14 +6,14 @@ use App\Entity\OutcomeInstruction;
 use App\Service\ResourceService;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Str;
 use Classes\View;
 
 #[ORM\Entity]
 class OnlyLogOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
         $actorRank = $actor->data->rank;
         $targetRank = $target->data->rank;
 

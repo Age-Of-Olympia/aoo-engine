@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Ui;
 use Classes\Str;
 
@@ -74,7 +74,7 @@ function print_players($list){
     ';
 }
 
-$list = Player::get_player_list()->list;
+$list = ActorInterface::get_player_list()->list;
 
 // enlever les pnj
 foreach($list as $k=>$e){

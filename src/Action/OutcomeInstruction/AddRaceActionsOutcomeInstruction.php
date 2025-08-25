@@ -4,13 +4,13 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
+use Classes\ActorInterface;
 
 
 #[ORM\Entity]
 class AddRaceActionsOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(ActorInterface $actor, ActorInterface $target): OutcomeResult {
 
         $raceJson = json()->decode('races', $actor->data->race);
 

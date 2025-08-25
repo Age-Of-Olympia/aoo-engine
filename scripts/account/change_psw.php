@@ -1,12 +1,12 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Db;
 
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
 // player
-$player = new Player($_SESSION['playerId']);
+$player = new ActorInterface($_SESSION['playerId']);
 
 $player->get_row();
 

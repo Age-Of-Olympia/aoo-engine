@@ -5,7 +5,7 @@ namespace App\Service;
 use Classes\Db;
 use Throwable;
 use Classes\Item;
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Log;
 class BidsAsksService
 {
@@ -162,7 +162,7 @@ class BidsAsksService
             if ($type == 'asks') {
                 // player sells item to target and receives gold
 
-                $target = new Player($row->player_id);
+                $target = new ActorInterface($row->player_id);
 
                 $item = new Item($row->item_id, row: false, checked: true);
 
@@ -188,7 +188,7 @@ class BidsAsksService
                 // player buys item from target and send gold
 
                 // transfer gold to target bank
-                $target = new Player($row->player_id);
+                $target = new ActorInterface($row->player_id);
                 $gold = Item::get_item_by_name('or', checked: true);
 
                 if (!$gold->give_item($player, $target, $total, bank: true)) {

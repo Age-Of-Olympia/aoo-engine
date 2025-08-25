@@ -5,12 +5,11 @@ namespace App\Action;
 use App\Entity\Action;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Player;
 
 #[ORM\Entity]
 class StealAction extends Action
 {
-    public function getLogMessages(Player $actor, Player $target): array
+    public function getLogMessages(ActorInterface $actor, ActorInterface $target): array
     {
         $actorLog = $actor->data->name." a volé ".$target->data->name.".";
         $targetLog = $target->data->name." a été volé par ".$actor->data->name. ".";

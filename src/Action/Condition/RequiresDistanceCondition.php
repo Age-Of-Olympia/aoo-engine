@@ -1,7 +1,6 @@
 <?php
 namespace App\Action\Condition;
 
-use Classes\Player;
 use Classes\View;
 
 use App\Entity\ActionCondition;

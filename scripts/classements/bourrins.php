@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\Str;
 
 define('CARACS_BOURRINS', array(
@@ -121,7 +121,7 @@ else{
     foreach($list as $player){
 
 
-        $player = new Player($player->id);
+        $player = new ActorInterface($player->id);
 
         $player->get_data();
 

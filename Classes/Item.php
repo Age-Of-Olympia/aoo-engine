@@ -1,6 +1,7 @@
 <?php
 namespace Classes;
 
+use App\Interface\ActorInterface;
 use Exception;
 
 class Item{
@@ -81,7 +82,7 @@ class Item{
         $bankSuffix = ($bank === true) ? '_bank' : '';
 
         if (is_numeric($player)) {
-            $player = new Player($player);
+            $player = new ActorInterface($player);
         }
 
         if ($n < 0) {
@@ -158,7 +159,7 @@ class Item{
     }
 
 
-    public function give_item(Player $player, Player $target, int $n, bool $bank=false) {
+    public function give_item(ActorInterface $player, ActorInterface $target, int $n, bool $bank=false) {
         if ($n < 1) {
             return false;
         }

@@ -1,6 +1,6 @@
 <?php
 use Classes\Db;
-use Classes\Player;
+use Classes\ActorInterface;
 use Classes\View;
 
 if(!empty($_SESSION['playerId'])){
@@ -30,7 +30,7 @@ if(!empty($_SESSION['playerId'])){
         // coords
         $db = new Db();
 
-        $player = new Player($_SESSION['playerId']);
+        $player = new ActorInterface($_SESSION['playerId']);
 
         $coords = $player->getCoords();
 
