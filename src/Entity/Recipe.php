@@ -13,6 +13,7 @@ class Recipe
     {
         $this->recipeIngredients = new ArrayCollection();
         $this->recipeResults = new ArrayCollection();
+        $this->races = new ArrayCollection();
     }
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -23,9 +24,8 @@ class Recipe
     private ?string $name = null;
 
 
-    #[ORM\ManyToOne(targetEntity: Race::class,)]
-    #[ORM\JoinColumn(nullable: true)]
-    protected ?Race $race = null;
+    #[ORM\ManyToMany(targetEntity: Race::class, mappedBy: "recipes")]
+    protected Collection $races;
 
     #[ORM\OneToMany(
         mappedBy: "recipe",
@@ -60,14 +60,29 @@ class Recipe
     {
         $this->name = $name;
     }
-    public function getRace(): ?Race
+      /**
+     * @return Collection<int, Race>
+     */
+    public function getRaces(): Collection
     {
-        return $this->race;
+        return $this->races;
     }
 
-    public function setRace(?Race $race): void
+    public function addRace(Race $race): self
     {
-        $this->race = $race;
+        if (!$this->races->contains($race)) {
+            $this->races->add($race);
+            $race->addRecipe($this); // keep it bidirectional
+        }
+        return $this;
+    }
+
+    public function removeRace(Race $race): self
+    {
+        if ($this->races->removeElement($race)) {
+            $race->removeRecipe($this);
+        }
+        return $this;
     }
 
 
