@@ -1,7 +1,6 @@
 <?php
 use Classes\Player;
 use Classes\Item;
-use Classes\Craft;
 use App\Service\RecipeService;
 use Classes\Ui;
 use Classes\Str;
