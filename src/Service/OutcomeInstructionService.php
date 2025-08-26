@@ -4,12 +4,11 @@ namespace App\Service;
 
 use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Entity\EntityManagerFactory;
-use App\Entity\OutcomeInstruction;
 use App\Interface\OutcomeInstructionInterface;
+use App\Interface\OutcomeInstructionServiceInterface;
 use Doctrine\ORM\NoResultException;
-use Exception;
 
-class OutcomeInstructionService
+class OutcomeInstructionService implements OutcomeInstructionServiceInterface
 {
     private $entityManager;
 

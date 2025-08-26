@@ -2,10 +2,11 @@
 
 namespace App\Service;
 
+use App\Interface\PlayerServiceInterface;
 use Classes\Db;
 use Classes\Player;
 
-class PlayerService
+class PlayerService implements PlayerServiceInterface
 {
     private Db $db;
     private int $playerId;
@@ -85,7 +86,7 @@ class PlayerService
         return $list;
     }
 
-    public function GetPlayer($id, bool $readCache=true, bool $writeCache=true)
+    public function GetPlayer($id, bool $readCache=true, bool $writeCache=true): Player
     {
         if($readCache && isset($this->playerCache[$id])){
             return $this->playerCache[$id];

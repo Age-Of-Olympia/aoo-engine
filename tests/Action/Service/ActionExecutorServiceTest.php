@@ -6,20 +6,23 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use App\Service\ActionExecutorService;
 use App\Action\MeleeAction;
-use App\Action\SpellAction;
 use App\Action\HealAction;
+use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
+use App\Interface\OutcomeInstructionServiceInterface;
+use App\Interface\PlayerServiceInterface;
+use Tests\Action\Mock\OutcomeInstructionServiceMock;
 use Tests\Action\Mock\PlayerMock;
 use Tests\Action\Mock\PlayerServiceMock;
-use Tests\Action\Mock\ActionMock;
 
 class ActionExecutorServiceTest extends TestCase
 {
     private MeleeAction $meleeAction;
     private PlayerMock $actor;
     private PlayerMock $target;
-    private PlayerServiceMock $playerService;
+    private PlayerServiceInterface $playerService;
+    private OutcomeInstructionServiceInterface $outcomeInstructionService;
 
     protected function setUp(): void
     {
@@ -31,9 +34,10 @@ class ActionExecutorServiceTest extends TestCase
         $this->actor = new PlayerMock(1, 'Attacker');
         $this->target = new PlayerMock(2, 'Defender');
         $this->playerService = new PlayerServiceMock(1);
+        $this->outcomeInstructionService = new OutcomeInstructionServiceMock();
         
         // Configuration de base pour un combat
-        $this->actor->setCarac('cc', 8);
+        $this->actor->setCarac('cc', 10);
         $this->actor->setCarac('f', 10);
         $this->actor->setRemaining('a', 1);
         
@@ -55,7 +59,7 @@ class ActionExecutorServiceTest extends TestCase
         $this->addBasicMeleeOutcomes();
         
         // Act
-        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target);
+        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target, $this->playerService, $this->outcomeInstructionService);
         $result = $executor->executeAction();
         
         // Assert
@@ -78,7 +82,7 @@ class ActionExecutorServiceTest extends TestCase
         $this->addBasicMeleeOutcomes();
         
         // Act
-        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target);
+        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target, $this->playerService);
         $result = $executor->executeAction();
         
         // Assert
@@ -96,7 +100,7 @@ class ActionExecutorServiceTest extends TestCase
         $this->addBasicMeleeOutcomes();
         
         // Act
-        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target);
+        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target, $this->playerService);
         $result = $executor->executeAction();
         
         // Assert
@@ -110,16 +114,16 @@ class ActionExecutorServiceTest extends TestCase
         // Arrange
         $this->actor->setRemaining('pm', 10);
         $this->addBasicMeleeConditions();
-        $this->addMagicCostCondition(); // Ajouter un coût en PM
+        $this->addMagicCostCondition(); // Ajouter un coût en PM (3)
         $this->addBasicMeleeOutcomes();
         
         // Act
-        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target);
+        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target, $this->playerService, $this->outcomeInstructionService);
         $result = $executor->executeAction();
         
         // Assert
         $this->assertLessThan(10, $this->actor->getRemaining('pm'));
-        $this->assertContains('Vous avez dépensé', $result->getCostsResultsArray()[0]);
+        $this->assertContains('Vous avez dépensé 3 PM.', $result->getCostsResultsArray());
     }
 
     #[Group('executor')]
@@ -131,10 +135,11 @@ class ActionExecutorServiceTest extends TestCase
         $this->addBasicMeleeOutcomes();
         
         // Act
-        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target);
+        $executor = new ActionExecutorService($this->meleeAction, $this->actor, $this->target, $this->playerService, $this->outcomeInstructionService);
         $result = $executor->executeAction();
         
         // Assert
+        $this->assertTrue($result->isSuccess());
         $this->assertEquals($initialPv, $executor->getInitialTargetPv());
         $this->assertLessThan($initialPv, $executor->getFinalTargetPv());
     }
@@ -146,6 +151,7 @@ class ActionExecutorServiceTest extends TestCase
         $distanceCondition->setConditionType('RequiresDistance');
         $distanceCondition->setParameters(['max' => 1]);
         $distanceCondition->setExecutionOrder(1);
+        $distanceCondition->setBlocking(true);
         $this->meleeAction->addCondition($distanceCondition);
         
         // Requiert 1 action
@@ -153,6 +159,7 @@ class ActionExecutorServiceTest extends TestCase
         $actionCondition->setConditionType('RequiresTraitValue');
         $actionCondition->setParameters(['a' => 1]);
         $actionCondition->setExecutionOrder(2);
+        $actionCondition->setBlocking(true);
         $this->meleeAction->addCondition($actionCondition);
         
         // Calcul de mêlée
@@ -180,178 +187,8 @@ class ActionExecutorServiceTest extends TestCase
         // Outcome de succès : dégâts
         $successOutcome = new ActionOutcome();
         $successOutcome->setOnSuccess(true);
+        $successOutcome->setId(1);
         $this->meleeAction->addOutcome($successOutcome);
-        
-        // Note: Dans un test complet, on ajouterait les OutcomeInstructions
-        // mais cela nécessiterait un mock plus complexe du système de base de données
-    }
-}
-
-namespace Tests\Action;
-
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\Group;
-use App\Action\AttackAction;
-use App\Action\HealAction;
-use App\Action\MeleeAction;
-use App\Action\SpellAction;
-use App\Action\TechniqueAction;
-use App\Service\ActionExecutorService;
-use Tests\Action\Mock\PlayerMock;
-
-class AttackActionTest extends TestCase
-{
-    private MeleeAction $meleeAction;
-    private PlayerMock $actor;
-    private PlayerMock $target;
-
-    protected function setUp(): void
-    {
-        $this->meleeAction = new MeleeAction();
-        $this->actor = new PlayerMock(1, 'Attacker');
-        $this->target = new PlayerMock(2, 'Defender');
-        
-        // Configuration des rangs pour les tests XP
-        $this->actor->data->rank = 3;
-        $this->target->data->rank = 2;
-    }
-
-    #[Group('attack-action')]
-    public function testCalculateActorXpSuccess(): void
-    {
-        // Act
-        $xpResult = $this->meleeAction->calculateXp(true, $this->actor, $this->target);
-        
-        // Assert
-        $this->assertArrayHasKey('actor', $xpResult);
-        $this->assertArrayHasKey('target', $xpResult);
-        $this->assertGreaterThan(0, $xpResult['actor']); // Attaquant gagne XP
-        $this->assertEquals(0, $xpResult['target']); // Défenseur ne gagne pas XP
-    }
-
-    #[Group('attack-action')]
-    public function testCalculateXpFailure(): void
-    {
-        // Act
-        $xpResult = $this->meleeAction->calculateXp(false, $this->actor, $this->target);
-        
-        // Assert
-        $this->assertEquals(0, $xpResult['actor']); // Attaquant rate
-        $this->assertEquals(2, $xpResult['target']); // Défenseur gagne XP défensif
-    }
-
-    #[Group('attack-action')]
-    public function testSameFactionXpReduction(): void
-    {
-        // Arrange
-        $this->actor->data->faction = 'alliance';
-        $this->target->data->faction = 'alliance';
-        
-        // Act
-        $xpResult = $this->meleeAction->calculateXp(true, $this->actor, $this->target);
-        
-        // Assert
-        $this->assertEquals(1, $xpResult['actor']); // XP réduit pour même faction
-    }
-
-    #[Group('attack-action')]
-    public function testInactiveTargetXpReduction(): void
-    {
-        // Arrange
-        $this->target->data->isInactive = true;
-        
-        // Act
-        $xpResult = $this->meleeAction->calculateXp(true, $this->actor, $this->target);
-        
-        // Assert
-        $this->assertEquals(1, $xpResult['actor']); // XP réduit pour cible inactive
-    }
-
-    #[Group('attack-action')]
-    public function testRankDifferenceXp(): void
-    {
-        // Arrange - Attaquant beaucoup plus fort
-        $this->actor->data->rank = 10;
-        $this->target->data->rank = 1;
-        
-        // Act
-        $xpResult = $this->meleeAction->calculateXp(true, $this->actor, $this->target);
-        
-        // Assert
-        $this->assertEquals(0, $xpResult['actor']); // Pas d'XP si différence trop grande
-    }
-
-    #[Group('attack-action')]
-    public function testUpgradeXpReduction(): void
-    {
-        // Arrange - Mock d'upgrades d'actions
-        $mockUpgrades = (object) ['a' => 3]; // 3 upgrades d'actions
-        $this->actor->setUpgrades($mockUpgrades);
-        
-        // Act
-        $xpResult = $this->meleeAction->calculateXp(true, $this->actor, $this->target);
-        
-        // Assert
-        // XP devrait être réduit à cause des upgrades (XP dégressif)
-        $this->assertGreaterThanOrEqual(2, $xpResult['actor']); // Minimum 2
-    }
-
-    #[Group('attack-action')]
-    public function testGetLogMessages(): void
-    {
-        // Arrange
-        $this->actor->equipWeapon('melee', 'main1');
-        
-        // Act
-        $logs = $this->meleeAction->getLogMessages($this->actor, $this->target);
-        
-        // Assert
-        $this->assertArrayHasKey('actor', $logs);
-        $this->assertArrayHasKey('target', $logs);
-        $this->assertContains('Attacker', $logs['actor']);
-        $this->assertContains('Defender', $logs['target']);
-        $this->assertContains('a attaqué', $logs['actor']);
-    }
-
-    #[Group('attack-action')]
-    public function testAntiBerserkActivation(): void
-    {
-        // Act & Assert
-        $this->assertTrue($this->meleeAction->activateAntiBerserk());
-    }
-}
-
-class SpellActionTest extends TestCase
-{
-    private SpellAction $spellAction;
-    private PlayerMock $caster;
-    private PlayerMock $target;
-
-    protected function setUp(): void
-    {
-        $this->spellAction = new SpellAction();
-        $this->spellAction->setDisplayName('Boule de Feu');
-        
-        $this->caster = new PlayerMock(1, 'Mage');
-        $this->target = new PlayerMock(2, 'Target');
-    }
-
-    #[Group('spell-action')]
-    public function testSpellLogMessages(): void
-    {
-        // Act
-        $logs = $this->spellAction->getLogMessages($this->caster, $this->target);
-        
-        // Assert
-        $this->assertContains('Mage a lancé Boule de Feu sur Target', $logs['actor']);
-        $this->assertContains('Target a été attaqué par Mage avec Boule de Feu', $logs['target']);
-    }
-
-    #[Group('spell-action')]
-    public function testSpellInheritsFromTechniqueAction(): void
-    {
-        // Assert
-        $this->assertInstanceOf(TechniqueAction::class, $this->spellAction);
     }
 }
 

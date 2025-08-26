@@ -28,12 +28,14 @@ class PlayerMock implements ActorInterface
         $this->id = $id;
         $this->data = (object) [
             'name' => $name,
+            'race' => 'nain',
             'rank' => 2,
             'faction' => $faction,
             'secretFaction' => $secretFaction,
             'isInactive' => $isInactive,
             'malus' => 0,
             'energie' => 5,
+            'antiBerserkTime' => time(),
         ];
         $this->caracs = (object) [
             'cc' => 5,
@@ -56,7 +58,15 @@ class PlayerMock implements ActorInterface
             'z' => 0,
             'plan' => 'test_plan'
         ];
-        $this->emplacements = (object) [];
+        $this->emplacements = (object) 
+        [
+            'main1' => (object) [
+                'data' => (object) [
+                    'name' => 'poing',
+                ]
+            ]
+        
+        ];
         $this->remainingTraits = [
             'pm' => 10,
             'pv' => 20,

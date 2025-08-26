@@ -7,6 +7,8 @@ use App\Action\Condition\ConditionRegistry;
 use App\Entity\Action;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
+use App\Interface\OutcomeInstructionServiceInterface;
+use App\Interface\PlayerServiceInterface;
 use Exception;
 
 class ActionExecutorService
@@ -19,13 +21,14 @@ class ActionExecutorService
     private ActorInterface $actor;
     private ActorInterface $target;
     private Action $action;
-    private PlayerService $playerService;
+    private PlayerServiceInterface $playerService;
+    private ?OutcomeInstructionServiceInterface $outcomeInstructionService;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
     private int $finalTargetPv;
     private bool $blocked = false;
     
-    public function __construct(Action $action, ActorInterface $actor, ActorInterface $target){
+    public function __construct(Action $action, ActorInterface $actor, ActorInterface $target, ?PlayerServiceInterface $playerService = null, ?OutcomeInstructionServiceInterface $outcomeInstructionService = null){
         $this->conditionRegistry = new ConditionRegistry();
         $this->conditionResultsArray = array();
         $this->outcomeResultsArray = array();
@@ -33,7 +36,8 @@ class ActionExecutorService
         $this->actor = $actor;
         $this->target = $target;
         $this->action = $action;
-        $this->playerService = new PlayerService($actor->id);
+        $this->playerService = $playerService ?? new PlayerService($actor->id);
+        $this->outcomeInstructionService = $outcomeInstructionService;
         $this->initialTargetPv = $target->getRemaining('pv');
     }
 
@@ -141,7 +145,7 @@ class ActionExecutorService
 
     private function applyActionOutcome(ActionOutcome $outcomeEntity): void
     {
-        $outcomeInstructionService = new OutcomeInstructionService();
+        $outcomeInstructionService = $this->outcomeInstructionService ?? new OutcomeInstructionService();
         $instructions = $outcomeInstructionService->getOutcomeInstructionsByOutcome($outcomeEntity->getId());
 
         // Execute instructions in order

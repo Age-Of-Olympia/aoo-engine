@@ -1,7 +1,7 @@
 <?php
 
 use App\Service\ActionService;
-use App\Service\OutcomeInstructionService;
+use App\Interface\OutcomeInstructionServiceInterface;
 use Classes\Str;
 
 if(isset($_GET['forget']) && !empty($_POST['spell'])){
@@ -67,7 +67,7 @@ foreach($spellList as $e){
     $bonusDamages = "";
     $bonusHeal = "";
 
-    $outcomeInstructionService = new OutcomeInstructionService();
+    $outcomeInstructionService = new OutcomeInstructionServiceInterface();
 
     $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
     if (isset($instructionLifeLoss)) {

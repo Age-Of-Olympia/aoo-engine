@@ -87,7 +87,7 @@ $player->get_caracs();
 $main1 = $player->emplacements->main1;
 
 
-if($main1->data->name == 'poings'){
+if($main1->data->name == 'poing'){
 
     exit('Impossible de détruire un objet avec les Poings.');
 }
