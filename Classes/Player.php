@@ -1702,6 +1702,11 @@ class Player implements ActorInterface {
             }
         }
     }
+    public function getRace(): string
+    {
+        $this->get_data(false);
+        return $this->data->race;
+    }
 
     public function get_max_spells() : int{
         if(!isset($this->data)){
@@ -1744,6 +1749,7 @@ class Player implements ActorInterface {
 
         return null;
     }
+
 
 
     public function death(){

@@ -43,9 +43,14 @@ class Race
     #[ORM\JoinTable(name: "race_actions")]
     private Collection $actions;
 
+    #[ORM\ManyToMany(targetEntity: Recipe::class, inversedBy: "races")]
+    #[ORM\JoinTable(name: "race_recipes")]
+    private Collection $recipes;
+
     public function __construct()
     {
         $this->actions = new ArrayCollection();
+        $this->recipes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -131,6 +136,30 @@ class Race
     {
         if ($this->actions->removeElement($action)) {
             $action->removeRace($this); // keep it bidirectional
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Recipe>
+     */
+    public function getRecipes(): Collection
+    {
+        return $this->recipes;
+    }
+    public function addRecipe(Recipe $recipe): self
+    {
+        if (!$this->recipes->contains($recipe)) {
+            $this->recipes->add($recipe);
+            $recipe->addRace($this); //
+        }
+        return $this;
+    }
+
+    public function removeRecipe(Recipe $recipe): self
+    {
+        if ($this->recipes->removeElement($recipe)) {
+            $recipe->removeRace($this); //
         }
         return $this;
     }
