@@ -50,7 +50,7 @@ class RequiresWeaponTypeConditionTest extends TestCase
         
         // Assert
         $this->assertFalse($result->isSuccess());
-        $this->assertContains("Vous n'êtes pas équipé d'une arme de type melee", $result->getConditionFailureMessages());
+        $this->assertContains("Vous n'êtes pas équipé d'une arme de type melee.", $result->getConditionFailureMessages());
     }
 
     #[Group('conditions')]

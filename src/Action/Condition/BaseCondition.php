@@ -1,6 +1,9 @@
 <?php
 namespace App\Action\Condition;
 
+// Should be in a bootstrap for the tests
+require_once(__DIR__.'/../../../config/constants.php');
+
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Interface\ConditionInterface;

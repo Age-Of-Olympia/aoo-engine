@@ -49,7 +49,7 @@ class RequiresDistanceConditionTest extends TestCase
         
         // Assert
         $this->assertFalse($result->isSuccess());
-        $this->assertContains('La cible est trop loin !', $result->getConditionFailureMessages());
+        $this->assertContains('La cible est trop loin ! (distance 2 > max 1)', $result->getConditionFailureMessages());
     }
 
     #[Group('conditions')]
@@ -76,7 +76,7 @@ class RequiresDistanceConditionTest extends TestCase
         
         // Assert
         $this->assertFalse($result->isSuccess());
-        $this->assertContains('La cible est trop proche !', $result->getConditionFailureMessages());
+        $this->assertContains('La cible est trop proche ! (distance 2 < min 5)', $result->getConditionFailureMessages());
     }
 
     #[Group('conditions')]

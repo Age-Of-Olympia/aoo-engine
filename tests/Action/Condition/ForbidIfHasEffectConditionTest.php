@@ -46,22 +46,22 @@ class ForbidIfHasEffectConditionTest extends TestCase
         
         // Assert
         $this->assertFalse($result->isSuccess());
-        $this->assertContains('Un effet empêche l\'action : adrenaline', $result->getConditionFailureMessages());
+        $this->assertContains('Un effet empêche l\'action : adrenaline <span class="ra ra-horn-call"></span>', $result->getConditionFailureMessages());
     }
 
     #[Group('conditions')]
     public function testTargetEffectForbids(): void
     {
         // Arrange
-        $this->target->addEffect('paralysie');
-        $actionCondition = $this->createActionCondition(['targetEffect' => 'paralysie']);
+        $this->target->addEffect('adrenaline');
+        $actionCondition = $this->createActionCondition(['targetEffect' => 'adrenaline']);
         
         // Act
         $result = $this->condition->check($this->actor, $this->target, $actionCondition);
         
         // Assert
         $this->assertFalse($result->isSuccess());
-        $this->assertContains('Un effet empêche l\'action : paralysie', $result->getConditionFailureMessages());
+        $this->assertContains('Un effet empêche l\'action : adrenaline <span class="ra ra-horn-call"></span>', $result->getConditionFailureMessages());
     }
 
     #[Group('conditions')]
@@ -78,7 +78,7 @@ class ForbidIfHasEffectConditionTest extends TestCase
         
         // Assert
         $this->assertFalse($result->isSuccess());
-        $this->assertContains('Un effet empêche l\'action : corruption_du_metal', $result->getConditionFailureMessages());
+        $this->assertContains('Un effet empêche l\'action : corruption_du_metal <span class="ra ra-biohazard"></span>', $result->getConditionFailureMessages());
     }
 
     private function createActionCondition(array $parameters): ActionCondition

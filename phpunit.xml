@@ -51,20 +51,6 @@
         <ini name="display_errors" value="1"/>
         <ini name="error_reporting" value="E_ALL"/>
         <ini name="memory_limit" value="1024M"/>
-        
-        <!-- Constants pour les tests -->
-        <const name="THREE_DAYS" value="259200"/>
-        <const name="ONE_DAY" value="86400"/>
-        <const name="ACTION_XP" value="10"/>
-        <const name="MALUS_PER_DAMAGES" value="2"/>
-        <const name="DMG_CRIT" value="10"/>
-        <const name="MIN_GOLD_STOLEN" value="5"/>
-        <const name="MAX_XP_FOR_STEALING" value="15"/>
-        <const name="ITEM_BREAK" value="5"/>
-        <const name="AUTO_BREAK" value="false"/>
-        <const name="AUTO_FAIL" value="false"/>
-        <const name="INACTIVE_TIME" value="604800"/>
-        <const name="SEASON_XP" value="10000"/>
     </php>
 
     <coverage>
