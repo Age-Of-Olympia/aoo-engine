@@ -97,7 +97,8 @@ EOT);
                 foreach ($recette as $recetteData) {
                     $recipe = new App\Entity\Recipe();
                     $recipe->setName($recetteData['name']);
-                    $recipe->setRace($race);
+                    if($race)
+                        $recipe->addRace($race);
                    
                     foreach ($recetteData['recette'] as $ingredient) {
                         $ingredientObj = new App\Entity\RecipeIngredient();
