@@ -92,7 +92,7 @@ EOT);
             $em = EntityManagerFactory::getEntityManager();
             $itemRepo = $em->getRepository(App\Entity\Item::class);
             foreach ($recipes as $race => $recette) {
-
+                if($race=="ressource")continue;
                 $race = $raceService->getRaceByName($race);
                 foreach ($recette as $recetteData) {
                     $recipe = new App\Entity\Recipe();

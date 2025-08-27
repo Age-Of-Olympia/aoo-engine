@@ -112,6 +112,28 @@ class Recipe
         }
     }
 
+    public function get_cost(): int{
+
+        // default cost
+        $cost = 0;
+
+        // foreach item in recipe
+        foreach($this->getRecipeIngredients() as $ingredientItem){
+
+            $itemJson = json()->decode('items', $ingredientItem->getItem()->getName());
+
+            // add cost x n
+            $cost += ($itemJson->price * $ingredientItem->getCount());
+        }
+
+        // crafted by n
+        if($this->getRecipeResults()[0]->GetCount() > 1){
+            $cost = floor($cost / $this->getRecipeResults()[0]->GetCount());
+        }
+
+        return $cost;
+    }
+
 }
 
 

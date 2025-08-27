@@ -29,13 +29,15 @@ class RecipeService
             ->leftJoin('re.races', 'ra')
             ->leftJoin('re.recipeIngredients', 'ri')
             ->leftJoin('ri.item', 'i')
+            ->leftJoin('re.recipeIngredients', 'rif')//this is a filter not selected
+            ->leftJoin('rif.item', 'if')//this is a filter not selected 
             ->leftJoin('re.recipeResults', 'rr')
             ->leftJoin('rr.item', 'r')
             ->where('(ra.name = :racename OR ra.id IS NULL)')
             ->setParameter('racename', $player->data->race);
 
         if ($fromItemId) {
-            $qb->andWhere('i.id = :itemId')
+            $qb->andWhere('if.id = :itemId')
                 ->setParameter('itemId', $fromItemId);
         }
         if ($forItemId) {
@@ -92,17 +94,17 @@ class RecipeService
             // craft
             foreach ($recipeIngredients as $ingredient) {
                 // remove item recipe
-                $itemRecipe = new \Classes\Item($ingredient->id);
+                $itemRecipe = new \Classes\Item($ingredient->getItem()->getId());
 
-                if (!$itemRecipe->add_item($player, -$ingredient->n)) {
+                if (!$itemRecipe->add_item($player, -$ingredient->GetCount())) {
                     $message = "Vous n\'avez pas assez de {$ingredient->name} pour la recette {$recipe->getName()}";
                     return false;
                 }
             }
             foreach ($recipeResults as $result) {
-                $itemCrafted = \Classes\Item::get_item_by_name($result->GetName());
+                $itemCrafted = \Classes\Item::get_item_by_name($result->getItem()->GetName());
                 $itemCrafted->add_item($player, $result->GetCount());
-                $message += "Vous avez créé {$$result->GetName()} ({$result->GetCount()}) \n";
+                $message .= "Vous avez créé {$result->getItem()->GetName()} ({$result->GetCount()}) \n";
             }
 
             $db->commit();
