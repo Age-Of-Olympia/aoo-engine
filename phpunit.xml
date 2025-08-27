@@ -33,6 +33,14 @@
         <testsuite name="Outcomes">
             <directory suffix="Test.php">tests/Action/OutcomeInstruction/</directory>
         </testsuite>
+
+        <testsuite name="Regression">
+            <directory suffix="Test.php">tests/Action/Regression/</directory>
+        </testsuite>
+
+        <testsuite name="Securityu">
+            <directory suffix="Test.php">tests/Action/Security/</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">

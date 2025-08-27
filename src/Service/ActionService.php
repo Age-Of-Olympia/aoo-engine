@@ -5,10 +5,8 @@ namespace App\Service;
 use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\ResultSetMapping;
-use Exception;
 
 class ActionService
 {
