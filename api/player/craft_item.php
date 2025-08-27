@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $message = '';
     if ($recipeService->TryCraftRecipe($reciep, $player, $message)) {
-        ExitSuccess($message);
+        ExitSuccess(["message" => $message, "redirect" => "inventory.php"]);
     } else {
         ExitError($message);
     }

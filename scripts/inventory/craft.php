@@ -114,23 +114,19 @@ if(!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->da
         <div id="item-recipe">
             ';
 
-        foreach($recipeList as $ingredientItem=>$n){
+        foreach($recipeList[0]->getRecipeIngredients() as $ingredientItem){
 
-            // $ingredient = new Item($craft-> $ingredientItem->id);
-            //
-            // $ingredient->get_data();
-
-            $ingredient = get_json_item((object) array('name'=>$ingredientItem));
+            $ingredient = get_json_item($ingredientItem->GetItem());
 
             echo '
-                <img src="'. $ingredient->data->mini .'" /> x'. $n .'
+                <img src="'. $ingredient->data->mini .'" /> x'. $ingredientItem->getCount() .'
                 ';
         }
 
         echo '<br />';
 
-        if($craft->cost)
-            echo 'Coût des matériaux ~'. $craft->cost .'Po<br />';
+        
+            echo 'Coût des matériaux ~'. $recipeList[0]->get_cost() .'Po<br />';
 
         echo 'Revendu ~'. floor($item->data->price*2/3) .'Po<br />';
         echo 'Acheté ~'. $item->data->price .'Po';
@@ -152,7 +148,7 @@ echo '
 $itemList = Item::get_item_list($player->id);
 
 foreach($itemList as $playerItem){
-    $playerItemN[$playerItem->name] = $playerItem->n;
+    $playerItemN[strtolower($playerItem->name)] = $playerItem->n;
 }
 
 $recipeList = $recipeService->getRecipes($player, fromItemId:$item->id);
@@ -204,14 +200,14 @@ foreach($recipeList as $recipe){
 
 
         $ingredientItem = get_json_item($ingredient->GetItem());
-
+        $ingredentName = strtolower($ingredientItem->data->name);
 
         // color
-        if(!isset($playerItemN[$ingredientItem->data->name])){
+        if(!isset($playerItemN[$ingredentName])){
             $color = 'red';
             $hasAllIngredients = false;
         }
-        elseif($playerItemN[$ingredientItem->data->name] >= $ingredient->getCount()){
+        elseif($playerItemN[$ingredentName] >= $ingredient->getCount()){
             $color = 'green';
         }
         else{
@@ -273,20 +269,8 @@ echo Str::minify(ob_get_clean());
     $(this).attr('disabled', true);
 
     aooFetch('api/player/craft_item.php',{'craft_id':artId},null)
-    .then(data => {
-      if(data.error) {
-        alert(data.error);
-      }
-      else if(data.message) {
-        alert(data.message);
-      }
-      location.reload();
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      location.reload();
-    });
-
+    .then(autoModal)
+    .catch(autoError());
     });
 
 </script>
