@@ -157,7 +157,7 @@ $targetPvAfter = $target->getRemaining('pv');
 
 if($targetPvBefore != $targetPvAfter){
     if($targetPvAfter < 1){
-        include('scripts/death.php');
+        PlayerService::ProcessTargetDeath($player, $target);
     }
 
     // update pv red filter
