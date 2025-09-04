@@ -1,4 +1,6 @@
 <?php
+
+use App\View\FactionView;
 use Classes\Ui;
 use Classes\Player;
 use Classes\Db;
@@ -48,7 +50,7 @@ if(!empty($_GET['faction'])){
 
             $res = $db->exe($sql, array($timeLimit, $_GET['faction']));
 
-            include('scripts/faction_list.php');
+            FactionView::renderFaction($player,$facJson,$res);
 
         }else{
             echo "<p>Cette faction est entourée d'un grand mystère, nul ne connait vraiment ses membres.</p>";
@@ -64,7 +66,7 @@ if(!empty($_GET['faction'])){
 
         $res = $db->exe($sql, array($timeLimit, $_GET['faction']));
 
-        include('scripts/faction_list.php');
+        FactionView::renderFaction($player,$facJson,$res);
     }
 
 
