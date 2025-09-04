@@ -2211,8 +2211,9 @@ class Player implements ActorInterface {
 
             $fileRankList = array('general','bourrins','reputation','fortunes');
             foreach($fileRankList as $file) {
-                if (file_exists('datas/public/classements/'.$file.'.html')) {
-                    unlink($file); // Delete the file
+                $filePath = 'datas/public/classements/'.$file.'.html';
+                if (file_exists($filePath)) {
+                    unlink($filePath); // Delete the file
                 }
             }
         }

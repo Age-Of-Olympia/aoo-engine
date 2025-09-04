@@ -1,4 +1,8 @@
 <?php
+
+use App\View\Classement\BourrinsView;
+use App\View\Classement\FortunesView;
+use App\View\Classement\ReputationsView;
 use Classes\Player;
 use Classes\Ui;
 use Classes\Str;
@@ -74,12 +78,12 @@ function print_players($list){
     ';
 }
 
-$list = Player::get_player_list()->list;
+$playerList = Player::get_player_list()->list;
 
 // enlever les pnj
-foreach($list as $k=>$e){
+foreach($playerList as $k=>$e){
     if($e->id <= 1 || $e->lastLoginTime < time() - INACTIVE_TIME)
-        unset($list[$k]);
+        unset($playerList[$k]);
 }
 
 $ui = new Ui('Classements des joueurs');
@@ -89,23 +93,17 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 
 
 if(isset($_GET['bourrins'])){
-
-    include('scripts/classements/bourrins.php');
-
+    BourrinsView::renderBourrins($playerList);
     exit();
 }
 
 if(isset($_GET['fortunes'])){
-
-    include('scripts/classements/fortunes.php');
-
+    FortunesView::renderFortunes($playerList);
     exit();
 }
 
 if(isset($_GET['reputation'])){
-
-    include('scripts/classements/reputation.php');
-
+    ReputationsView::renderReputations($playerList);
     exit();
 }
 
@@ -119,7 +117,7 @@ function compareByXp($a, $b) {
 }
 
 // Trier le tableau en utilisant la fonction de comparaison
-usort($list, 'compareByXp');
+usort($playerList, 'compareByXp');
 
 
 $path = 'datas/public/classements/general.html';
@@ -135,7 +133,7 @@ else{
 
     ob_start();
 
-    print_players($list);
+    print_players($playerList);
 
     $data = ob_get_clean();
 
@@ -146,7 +144,7 @@ else{
     echo $data;
 
 
-    foreach($list as $e){
+    foreach($playerList as $e){
 
         $first = $e;
         break;
@@ -154,7 +152,7 @@ else{
 
 
     $data = '
-    ~'. count($list) .' joueurs actifs<br />
+    ~'. count($playerList) .' joueurs actifs<br />
     <a href="infos.php?targetId='. $first->id .'">'. $first->name .'</a> domine le <a href="classements.php">classement</a>!
     ';
 
