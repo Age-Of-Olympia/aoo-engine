@@ -4,6 +4,8 @@ use Classes\Db;
 use Classes\Forum;
 use Classes\Str;
 use Classes\Ui;
+use App\View\InfosView;
+use App\View\MenuView;
 function SearchInPosts($posts, $search)
 {
     $search = strtolower($search);
@@ -35,8 +37,8 @@ ob_start();
 
 $playerService = new PlayerService($_SESSION['playerId']);
 
-include('scripts/infos.php');
-include('scripts/menu.php');
+InfosView::renderInfos();
+MenuView::renderMenu();
 
 echo '<h1>'. $forumJson->name .'</h1>';
 

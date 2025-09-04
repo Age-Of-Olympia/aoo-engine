@@ -1,6 +1,8 @@
 <?php
 use Classes\Ui;
 use Classes\Str;
+use App\View\InfosView;
+use App\View\MenuView;
 if(isset($_GET['logout'])){
 
     ob_start();
@@ -47,9 +49,10 @@ ob_start();
 ?>
 <div id="new-turn"><?php include('scripts/new_turn.php') ?></div>
 
-<div id="infos"><?php include('scripts/infos.php') ?></div>
 
-<div id="menu"><?php include('scripts/menu.php') ?></div>
+<div id="infos"><?php InfosView::renderInfos();?></div>
+
+<div id="menu"><?php MenuView::renderMenu(); ?></div>
 
 <?php include('scripts/view.php') ?>
 

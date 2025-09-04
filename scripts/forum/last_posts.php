@@ -3,13 +3,14 @@ use Classes\Ui;
 use Classes\Forum;
 use Classes\Player;
 use Classes\Str;
+use App\View\InfosView;
+use App\View\MenuView;
 ob_start();
 
 $ui = new Ui('Derniers Messages du Forum');
 
-include('scripts/infos.php');
-
-include('scripts/menu.php');
+InfosView::renderInfos();
+MenuView::renderMenu();
 
 
 if(!empty($player->data->registerTime)){

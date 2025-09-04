@@ -4,6 +4,8 @@ use Classes\Json;
 use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
+use App\View\InfosView;
+use App\View\MenuView;
 
 $postJson = json()->decode('forum', 'posts/'. $_GET['edit']);
 
@@ -58,8 +60,8 @@ $ui = new Ui('Éditer un message');
 ob_start();
 
 
-include('scripts/infos.php');
-include('scripts/menu.php');
+InfosView::renderInfos();
+MenuView::renderMenu();
 
 echo '<h1>'. $topJson->title .'</h1>';
 

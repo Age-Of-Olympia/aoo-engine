@@ -5,6 +5,8 @@ use Classes\Ui;
 use Classes\Str;
 use Classes\Json;
 use Classes\Db;
+use App\View\InfosView;
+use App\View\MenuView;
 
 $topJson = json()->decode('forum', 'topics/'. $_GET['reply']);
 
@@ -88,8 +90,8 @@ $ui = new Ui('Répondre');
 
 ob_start();
 
-include('scripts/infos.php');
-include('scripts/menu.php');
+InfosView::renderInfos();
+MenuView::renderMenu();
 
 
 echo '<h1>'. $topJson->title .'</h1>';

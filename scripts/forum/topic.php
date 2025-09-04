@@ -5,6 +5,8 @@ use Classes\Ui;
 use Classes\bbcode;
 use Classes\Str;
 use App\Service\PlayerService;
+use App\View\InfosView;
+use App\View\MenuView;
 
 $topJson = json()->decode('forum', 'topics/'. $_GET['topic']);
 
@@ -27,8 +29,8 @@ echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.webp" /></a><br />
 
 if(!isset($_GET['hideMenu'])){
 
-    include('scripts/infos.php');
-    include('scripts/menu.php');
+    InfosView::renderInfos();
+    MenuView::renderMenu();
 }
 else{
 

@@ -4,6 +4,8 @@ use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
+use App\View\InfosView;
+use App\View\MenuView;
 
 $forumJson = json()->decode('forum', 'forums/'. $_GET['newTopic']);
 
@@ -84,8 +86,8 @@ $ui = new Ui('Nouveau sujet');
 ob_start();
 
 
-include('scripts/infos.php');
-include('scripts/menu.php');
+InfosView::renderInfos();
+MenuView::renderMenu();
 
 
 echo '<h1>'. $forumJson->name .'</h1>';
