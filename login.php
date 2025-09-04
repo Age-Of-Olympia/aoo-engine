@@ -1,5 +1,6 @@
 <?php
 use Classes\Db;
+use App\Service\FirewallService;
 
 define('NO_LOGIN', true);
 
@@ -11,7 +12,8 @@ $db = new Db();
 
 
 // firewall
-include('config/firewall.php');
+$firewall = new FirewallService();
+$firewall->TryPassFirewall();
 
 
 // login
@@ -67,11 +69,7 @@ $row = $result->fetch_assoc();
 
 // wrong password
 if( !password_verify($_POST['psw'], $row['psw'])){
-
-
-    // reccord the fail for firewall
-    include('config/firewall_block.php');
-
+    $firewall->RecoredFailedAttempt();
     exit('Mauvais mot de passe.');
 }
 

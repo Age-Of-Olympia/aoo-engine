@@ -5,6 +5,7 @@ namespace App\View;
 use Classes\Db;
 use Classes\Player;
 use Classes\Str;
+use App\Service\FirewallService;
 
 class ResetPasswordView
 {
@@ -30,9 +31,10 @@ class ResetPasswordView
         // db link
         $db = new Db();
 
-
         // firewall
-        include('config/firewall.php');
+        $firewall = new FirewallService();
+        $firewall->TryPassFirewall();
+        
 
 
         // mat
@@ -137,14 +139,13 @@ class ResetPasswordView
         mail($to, $subject, $message, $headers);
 
 
-
-        // firewall block
-        include('config/firewall_block.php');
+        //simulate failed login to avoid spamming
+        $firewall->RecoredFailedAttempt();
 
 
         exit();
     }
-    
+
     private static function renderGenerateNewPassword(): void
     {
 
