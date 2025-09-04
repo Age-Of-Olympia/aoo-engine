@@ -235,12 +235,6 @@ elseif($goCoords->z > 0){
 
         exit();
     }
-
-    elseif(!$row->n && $player->haveEffect('vol')){
-
-        // vol
-        include('scripts/map/vol.php');
-    }
 }
 
 
