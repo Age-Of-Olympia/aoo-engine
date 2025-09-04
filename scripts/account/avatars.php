@@ -5,6 +5,7 @@ use App\Entity\Race;
 use App\Service\RaceService;
 use Classes\File;
 use App\Service\AdminAuthorizationService;
+use App\Form\UploadImageForm;
 
 
 $dir = 'img/avatars/'. $player->data->race .'/';
@@ -65,4 +66,4 @@ $race = $raceService->getRaceByName($player->data->race);
 $selectedRaceId = $race->getId();
 $selectedType   = 'avatar';
 
-include ($_SERVER['DOCUMENT_ROOT'].'/src/Form/upload_image_form.php');
+UploadImageForm::renderForm($selectedRaceId, $selectedType);

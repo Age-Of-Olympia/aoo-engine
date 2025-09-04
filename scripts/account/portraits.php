@@ -3,6 +3,8 @@ use Classes\Db;
 use Classes\File;
 use App\Service\RaceService;
 use App\Service\AdminAuthorizationService;
+use App\Form\UploadImageForm;
+
 
 $dir = 'img/portraits/'. $player->data->race .'/';
 
@@ -98,4 +100,4 @@ $race = $raceService->getRaceByName($player->data->race);
 $selectedRaceId = $race->getId();
 $selectedType   = 'portrait';
 
-include ($_SERVER['DOCUMENT_ROOT'].'/src/Form/upload_image_form.php');
+UploadImageForm::renderForm($selectedRaceId, $selectedType);
