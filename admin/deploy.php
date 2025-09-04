@@ -4,6 +4,8 @@ define('NO_LOGIN', true);
 
 use App\Service\DataBaseUpdateService;
 use App\Service\AuditService;
+use App\Service\AdminAuthorizationService;
+
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config/config-console.php');
@@ -43,7 +45,7 @@ function getPassphrase(bool $isCI, AuditService $auditService): string {
         $passPhrase = rtrim(file_get_contents('/home/' . get_current_user() . '/etc/ci_passphrase'), "\r\n");
         return $passPhrase;
     } else {
-        include($_SERVER['DOCUMENT_ROOT'] . '/checks/super-admin-check.php');
+        AdminAuthorizationService::DoSuperAdminCheck();
         $passPhrase = rtrim(file_get_contents('/home/' . get_current_user() . '/etc/passphrase'), "\r\n");
         return $passPhrase;
     }

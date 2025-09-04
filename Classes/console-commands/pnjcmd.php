@@ -2,7 +2,7 @@
 use App\Service\PlayerPnjService;
 use Classes\Command;
 use Classes\Argument;
-
+use App\Service\AdminAuthorizationService;
 class PnjCmd extends Command
 {
     public function __construct() {
@@ -28,7 +28,7 @@ EOT);
 
         //Si le pnj ajouté ou retiré a l'option isSuperAdmin, seul un superAdmin lui même peut le retirer ou l'ajouté
         if($target->have('options','isSuperAdmin') ){ 
-            include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+            AdminAuthorizationService::DoSuperAdminCheck();
         }
 
         if($action == 'add'){

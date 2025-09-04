@@ -1,12 +1,12 @@
 <?php
 use Classes\Player;
 use Classes\File;
-
+use App\Service\AdminAuthorizationService;
 require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
-include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+AdminAuthorizationService::DoSuperAdminCheck();
 
 $filesTbl = File::scan_dir('scripts/tools/', without:'.php');
 

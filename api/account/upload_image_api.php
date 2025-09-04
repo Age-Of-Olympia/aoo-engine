@@ -1,11 +1,11 @@
 <?php
-
-include ($_SERVER['DOCUMENT_ROOT'].'/checks/admin-check.php');
-
+require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
+use App\Service\AdminAuthorizationService;
 use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
 use App\Enum\ImageType;
 
+AdminAuthorizationService::DoAdminCheck();
 /**
  * Resize an image to the specified width and height using GD.
  *

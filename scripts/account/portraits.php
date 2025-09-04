@@ -2,6 +2,7 @@
 use Classes\Db;
 use Classes\File;
 use App\Service\RaceService;
+use App\Service\AdminAuthorizationService;
 
 $dir = 'img/portraits/'. $player->data->race .'/';
 
@@ -84,7 +85,7 @@ $(document).ready(function(){
 </script>
 
 <?php
-include("checks/admin-check.php");
+AdminAuthorizationService::DoAdminCheck();
 
 echo '<hr>';
 echo '<div>Panneau d\'administration pour ajouter un portrait '.$player->data->race.'</div>';

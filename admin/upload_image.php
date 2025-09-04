@@ -1,5 +1,8 @@
 <?php
-include ($_SERVER['DOCUMENT_ROOT'].'/checks/admin-check.php');
+use App\Service\AdminAuthorizationService;
+
+AdminAuthorizationService::DoAdminCheck();
+
 require_once __DIR__ . '/layout.php';
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 ob_start();

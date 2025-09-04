@@ -1,6 +1,8 @@
 <?php
 use Classes\Console;
 use Classes\CommandFactory;
+use App\Service\AdminAuthorizationService;
+use Classes\AdminCommand;
 
 define('NO_LOGIN', true);//session check est fait après car c'est un appel api et on ne veut pas d'ui
 
@@ -13,7 +15,7 @@ if(!isset($_SESSION['playerId'])){
     exit();
 }
 
-include $_SERVER['DOCUMENT_ROOT'] . '/checks/admin-check.php';
+AdminAuthorizationService::DoAdminCheck();
 set_error_handler("warning_handler", E_WARNING);
 function warning_handler($errno, $errstr, $errfile, $errline) {
     throw new ErrorException($errstr, $errno, 0, $errfile, $errline);

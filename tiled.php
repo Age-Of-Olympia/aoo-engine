@@ -2,12 +2,13 @@
 use Classes\Ui;
 use Classes\View;
 use Classes\Player;
+use App\Service\AdminAuthorizationService;
 require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 $player->getCoords();
 
-include $_SERVER['DOCUMENT_ROOT'] . '/checks/admin-check.php';
+AdminAuthorizationService::DoAdminCheck();
 
 if(!empty($_POST['delete'])){
     $coordsId = $_POST['coord-id'];

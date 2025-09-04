@@ -1,12 +1,13 @@
 <?php
 use Classes\Player;
 use App\Service\DataBaseUpdateService;
+use App\Service\AdminAuthorizationService;
 
 require_once('config.php');
 
 $player = new Player($_SESSION['playerId']);
 
-include ('checks/super-admin-check.php');
+AdminAuthorizationService::DoSuperAdminCheck();
 
 $dbuService = new DataBaseUpdateService();
 

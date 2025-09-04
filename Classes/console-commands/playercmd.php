@@ -6,7 +6,7 @@ use Classes\Item;
 use Classes\Player;
 use Classes\Log;
 use Classes\File;
-
+use App\Service\AdminAuthorizationService;
 class PlayerCmd extends Command
 {
     public function __construct() {
@@ -359,7 +359,7 @@ function remove_upgrade($argumentValues, $player)
         return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';
     }
 
-    include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+    AdminAuthorizationService::DoSuperAdminCheck();
 
     if(!isset($argumentValues[2])){
         return '<font color="red">error missing option1. usage: player removeupgrade [mat or name] [carac] [n (optionnal default is 1)]</font>';

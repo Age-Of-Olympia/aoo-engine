@@ -1,6 +1,7 @@
 <?php
 use Classes\Command;
 use Classes\Argument;
+use App\Service\AdminAuthorizationService;
 
 class OptionCmd extends Command
 {
@@ -21,7 +22,7 @@ EOT);
         $player->get_data();
 
         if ( $argumentValues[1] == 'isSuperAdmin'){
-            include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+           AdminAuthorizationService::DoSuperAdminCheck();
         }
 
         if($player->have('options', $argumentValues[1])){

@@ -1,6 +1,9 @@
 <?php
-include ($_SERVER['DOCUMENT_ROOT'].'/checks/admin-check.php');
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
+use App\Service\AdminAuthorizationService;
+AdminAuthorizationService::DoAdminCheck();
+
+
 
 // admin/layout.php
 function admin_layout($title, $content) {

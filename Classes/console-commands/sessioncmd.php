@@ -2,7 +2,7 @@
 use Classes\Command;
 use Classes\Argument;
 use Classes\Player;
-
+use App\Service\AdminAuthorizationService;
 class SessionCmd extends Command
 {
     public function __construct() {
@@ -38,7 +38,7 @@ EOT);
             $player->get_data();
 
             if($player->have('options','isSuperAdmin') && $player->id != $_SESSION['originalPlayerId'] ){
-                include $_SERVER['DOCUMENT_ROOT'].'/checks/super-admin-check.php';
+               AdminAuthorizationService::DoSuperAdminCheck();
             }
 
             $_SESSION['playerId'] = $_SESSION['mainPlayerId'] = $player->id;

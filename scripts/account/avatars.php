@@ -4,6 +4,8 @@ use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
 use App\Service\RaceService;
 use Classes\File;
+use App\Service\AdminAuthorizationService;
+
 
 $dir = 'img/avatars/'. $player->data->race .'/';
 
@@ -49,7 +51,7 @@ $(document).ready(function(){
 
 <?php
 
-include("checks/admin-check.php");
+AdminAuthorizationService::DoAdminCheck();
 
 echo '<hr>';
 echo '<div>Panneau d\'administration pour ajouter un avatar '.$player->data->race.'</div>';
