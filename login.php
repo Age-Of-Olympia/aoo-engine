@@ -96,7 +96,7 @@ unset($_SESSION['nonewturn']);
 
 $values = array(
     'player_id'=> $row['id'],
-    'ip'=>md5($ip),
+    'ip'=>md5($firewall->ip),
     'footprint'=>md5( $_POST['footprint']),
     'time'=>time()
 );

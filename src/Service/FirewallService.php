@@ -8,6 +8,7 @@ use Classes\Player;
 class FirewallService
 {
     private int $previousFailedCount = 0;
+    public string $ip = '';
     public function __construct() {}
     public function TryPassFirewall()
     {
@@ -19,8 +20,8 @@ class FirewallService
         $db->exe($sql);
 
         if (array_key_exists('REMOTE_ADDR', $_SERVER)) {
-            $ip = $_SERVER['REMOTE_ADDR'];
-            $sql = 'SELECT * FROM players_ips WHERE ip = "' . $ip . '" AND failed > 0 ';
+            $this->ip = $_SERVER['REMOTE_ADDR'];
+            $sql = 'SELECT * FROM players_ips WHERE ip = "' .  $this->ip . '" AND failed > 0 ';
             $result = $db->exe($sql);
             $row_ip = $result->fetch_assoc();
 

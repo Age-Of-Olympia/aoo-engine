@@ -2,9 +2,6 @@
 
 namespace App\View;
 
-use Classes\Player;
-use Classes\Str;
-
 class FactionView
 {
     public static function renderFaction($player,$facJson,$res,): void
