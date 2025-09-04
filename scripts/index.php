@@ -1,10 +1,9 @@
 <?php
 
+use App\View\ResetPasswordView;
 
 if(isset($_GET['resetPsw'])){
-
-    include('scripts/reset_psw.php');
-
+    ResetPasswordView::renderResetPassword();
     exit();
 }
 
