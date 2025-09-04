@@ -290,13 +290,6 @@ foreach($recipeList as $recipe){
                     // crafted by n
                     $craftedByN = (!empty($artJson->craftedByN)) ? $artJson->craftedByN : 1;
 
-
-                    // script when crafted
-                    if(file_exists('item/craft_script/'. $artName .'.php')){
-                        include('item/craft_script/'. $artName .'.php');
-                    }
-
-
                     // craft
                     foreach($recipeIngredients as $ee){
 
