@@ -1,6 +1,8 @@
 <?php
 use App\Service\PlayerService;
+use App\View\QuestsView;
 use Classes\Log;
+use Classes\Quest;
 use Classes\Str;
 use Classes\Ui;
 $debug=false;
@@ -37,7 +39,7 @@ if($displayAllCondition) {
 if(isset($_GET['quests'])){
 
 
-    include('scripts/logs/quests.php');
+    QuestsView::renderQuests();
 
     echo Str::minify(ob_get_clean());
 
