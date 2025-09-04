@@ -1,4 +1,6 @@
 <?php
+
+use App\Service\InventoryService;
 use Classes\Player;
 use Classes\Item;
 use Classes\Ui;
@@ -12,8 +14,19 @@ if(!empty($_POST['action'])){
 
 
     if(in_array($_POST['action'], array('drop','use'))){
+        $item = new Item($_POST['itemId']);
+        $item->get_data();
 
-        include('scripts/inventory/'. $_POST['action'] .'.php');
+        $player->get_data();
+
+        switch ($_POST['action']) {
+            case 'drop':
+                InventoryService::dropItem($player, $item);
+                break;
+            case 'use':
+                InventoryService::useItem($player, $item);
+                break;
+        };
 
         exit();
     }
