@@ -3,6 +3,8 @@ use Classes\Ui;
 use Classes\Str;
 use App\View\InfosView;
 use App\View\MenuView;
+use App\View\NewTurnView;
+
 if(isset($_GET['logout'])){
 
     ob_start();
@@ -47,7 +49,7 @@ elseif(isset($_GET['logout'])){
 ob_start();
 
 ?>
-<div id="new-turn"><?php include('scripts/new_turn.php') ?></div>
+<div id="new-turn"><?php NewTurnView::renderNewTurn() ?></div>
 
 
 <div id="infos"><?php InfosView::renderInfos();?></div>
