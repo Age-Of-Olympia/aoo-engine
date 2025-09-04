@@ -4,9 +4,12 @@ use App\Service\ActionService;
 use App\Service\OutcomeInstructionService;
 use Classes\Str;
 
-if(isset($_GET['forget']) && !empty($_POST['spell'])){
+if (isset($_GET['forget']) && !empty($_POST['spell'])) {
 
-    include('scripts/upgrades/forget_spell.php');
+    if (!$player->have_spell($_POST['spell'])) {
+        exit('error have spell');
+    }
+    $player->end_spell($_POST['spell']);
 
     echo Str::minify(ob_get_clean());
 
