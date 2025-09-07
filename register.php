@@ -6,6 +6,7 @@ use Classes\Item;
 use Classes\Db;
 use Classes\File;
 use Classes\Ui;
+use App\Service\MissiveService;
 
 define('NO_LOGIN', true);
 
@@ -136,6 +137,15 @@ if(!empty($_POST['race'])){
         $values = array('player_id'=>$player->id, 'name'=>$row->name);
         $db->insert('players_forum_missives', $values);
 
+        $raceJson = json()->decode('races', $player->data->race);
+        $newPlayerName = $player->data->name;
+        $missiveService = new MissiveService();
+        $text = <<<EOT
+Bonjour, 
+Un nouveau joueur vient d'arriver dans la faction : $newPlayerName (mat $player->id)
+On compte sur toi pour l'accueillir comme il se doit.
+EOT;
+        $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
 
         // landing welcome msg
         $data = file_get_contents('datas/private/welcome.msg.html');
