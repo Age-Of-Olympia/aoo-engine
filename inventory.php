@@ -1,14 +1,16 @@
 <?php
 use Classes\Ui;
 use Classes\Market;
+use App\View\Inventory\InventoryView;
+use App\View\Inventory\BankView;
+use App\View\Inventory\CraftView;
+
 require_once('config.php');
 
 
 
 if(!empty($_POST['action']) && $_POST['action'] == 'store'){
-
-    include('scripts/merchant/bank.php');
-
+    BankView::renderBank();
     exit();
 }
 
@@ -23,7 +25,7 @@ if(isset($_GET['bank'])){
 
     $market = new Market(null);
 
-    include('scripts/merchant/bank.php');
+    BankView::renderBank($market);
 
     exit();
 }
@@ -31,10 +33,8 @@ if(isset($_GET['bank'])){
 if(isset($_GET['craft'])){
 
 
-    include('scripts/inventory/craft.php');
+    CraftView::renderCraft();
 
     exit();
 }
-
-$itemsFromBank = false;
-include('scripts/inventory.php');
+InventoryView::renderInventory(itemsFromBank:false);

@@ -2,6 +2,8 @@
 use Classes\Ui;
 use Classes\Player;
 use Classes\Market;
+use App\View\Inventory\InventoryView;
+use App\View\Inventory\BankView;
 
 require_once('config.php');
 
@@ -62,8 +64,7 @@ elseif(isset($_GET['exchanges'])){
 
 elseif(isset($_GET['bank'])){
 
-
-    include('scripts/merchant/bank.php');
+    BankView::renderBank($market,$target);
 }
 
 elseif(isset($_GET['spells'])){
@@ -87,8 +88,7 @@ elseif(isset($_GET['inventory'])){
     </script>
     <?php
 
-    $itemsFromBank = false;
-    include('scripts/inventory.php');
+InventoryView::renderInventory(itemsFromBank:false);
 }
 else{
 
