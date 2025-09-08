@@ -1,4 +1,6 @@
 <?php
+
+use App\View\OnHideReloadView;
 use Classes\View;
 
 if(!isset($target->coords)){
@@ -14,4 +16,4 @@ $target->go($goCoords);
 
 echo $target->data->name .' est projetté!';
 
-include('scripts/actions/on_hide_reload_view.php');
+OnHideReloadView::render();

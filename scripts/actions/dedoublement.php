@@ -1,4 +1,6 @@
 <?php
+
+use App\View\OnHideReloadView;
 use Classes\Db;
 use Classes\File;
 
@@ -42,5 +44,5 @@ if(!file_exists($url)){
     $db->insert('players_followers', $values);
 
 
-    include('scripts/actions/on_hide_reload_view.php');
+    OnHideReloadView::render();
 }

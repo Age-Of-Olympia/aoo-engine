@@ -7,6 +7,7 @@ use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
 use App\View\ActionResultsView;
+use App\View\OnHideReloadView;
 use Classes\Log;
 use Classes\Player;
 use Classes\View;
@@ -145,7 +146,7 @@ try {
         if (file_exists($file)) {
             unlink($file); // Delete the file
         }
-        include('scripts/actions/on_hide_reload_view.php');
+        OnHideReloadView::render();
     }
     
     

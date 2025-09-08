@@ -1,5 +1,6 @@
 <?php
 
+use App\View\OnHideReloadView;
 
 $raceJson = json()->decode('races', $player->data->race);
 
@@ -20,4 +21,4 @@ $goCoords->plan = 'gaia2';
 $player->go($goCoords);
 
 
-include('scripts/actions/on_hide_reload_view.php');
+OnHideReloadView::render();

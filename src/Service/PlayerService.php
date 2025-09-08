@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\View\OnHideReloadView;
 use Classes\Db;
 use Classes\Player;
 use Classes\Log;
@@ -197,7 +198,7 @@ class PlayerService
         $target->death();
 
 
-        include('scripts/actions/on_hide_reload_view.php');
+        OnHideReloadView::render();
     }
 
 }

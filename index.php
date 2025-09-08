@@ -2,6 +2,7 @@
 use Classes\Ui;
 use Classes\Str;
 use App\View\InfosView;
+use App\View\MainView;
 use App\View\MenuView;
 use App\View\NewTurnView;
 
@@ -56,7 +57,7 @@ ob_start();
 
 <div id="menu"><?php MenuView::renderMenu(); ?></div>
 
-<?php include('scripts/view.php') ?>
+<?php MainView::render() ?>
 
 
 <?php
