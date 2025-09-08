@@ -4,12 +4,11 @@ namespace App\View\Merchant;
 
 use Classes\Exchange;
 use Classes\Player;
-use Classes\Market;
 
 
 class ExchangesView
 {
-    public static function renderExchanges(Player $player, Market $market, Player $target): void
+    public static function renderExchanges(Player $player, Player $target): void
     {
 
         echo '<h1>Echanges</h1>';

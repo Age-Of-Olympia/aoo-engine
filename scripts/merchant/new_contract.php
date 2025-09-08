@@ -3,6 +3,7 @@ use Classes\Player;
 use Classes\Item;
 use Classes\Db;
 use Classes\Str;
+use App\View\Inventory\InventoryView;
 
 if(isset($_GET['bids'])){
 
@@ -15,9 +16,7 @@ if(isset($_GET['bids'])){
     });
     </script>
     <?php
-
-    $itemsFromBank = true;
-    include('scripts/inventory.php');
+    InventoryView::renderInventory(itemsFromBank:true);
 }
 
 elseif(isset($_GET['asks'])){
