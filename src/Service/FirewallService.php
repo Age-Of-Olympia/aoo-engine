@@ -33,7 +33,7 @@ class FirewallService
             if ($this->previousFailedCount >= 3) exit($msg);
         }
     }
-    public function RecoredFailedAttempt()
+    public function RecordFailedAttempt()
     {
 
         $db = new Db();

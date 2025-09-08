@@ -69,7 +69,7 @@ $row = $result->fetch_assoc();
 
 // wrong password
 if( !password_verify($_POST['psw'], $row['psw'])){
-    $firewall->RecoredFailedAttempt();
+    $firewall->RecordFailedAttempt();
     exit('Mauvais mot de passe.');
 }
 

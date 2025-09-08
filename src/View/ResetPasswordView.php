@@ -140,7 +140,7 @@ class ResetPasswordView
 
 
         //simulate failed login to avoid spamming
-        $firewall->RecoredFailedAttempt();
+        $firewall->RecordFailedAttempt();
 
 
         exit();
