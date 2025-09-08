@@ -4,6 +4,7 @@ use Classes\Player;
 use Classes\Market;
 use App\View\Inventory\InventoryView;
 use App\View\Inventory\BankView;
+use App\View\Merchant\BidsView;
 
 require_once('config.php');
 
@@ -44,35 +45,21 @@ $market = new Market($target);
 
 
 if(isset($_GET['bids'])){
-
-
-    include('scripts/merchant/bids.php');
+    BidsView::renderBids($player,$market,$target);
 }
-
-
 elseif(isset($_GET['asks'])){
-
-
     include('scripts/merchant/asks.php');
 }
-
 elseif(isset($_GET['exchanges'])){
-
-
     include('scripts/merchant/exchanges.php');
 }
-
 elseif(isset($_GET['bank'])){
 
     BankView::renderBank($market,$target);
 }
-
 elseif(isset($_GET['spells'])){
-
-
     include('scripts/merchant/spells.php');
 }
-
 elseif(isset($_GET['inventory'])){
 
 
@@ -88,11 +75,9 @@ elseif(isset($_GET['inventory'])){
     </script>
     <?php
 
-InventoryView::renderInventory(itemsFromBank:false);
+    InventoryView::renderInventory(itemsFromBank:false);
 }
 else{
-
-
     echo '<h1>Saruta & Frères</h1>
     Marchands d\'Olympia
     ';
