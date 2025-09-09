@@ -2,7 +2,6 @@
 
 namespace App\View;
 
-use Classes\Db;
 use Classes\Player;
 use Classes\View;
 
@@ -18,9 +17,7 @@ class MainView
 
 
             if (isset($_GET['tutorial'])) {
-
-
-                include('scripts/tutorial.php');
+                TutorialView::renderTutorial($player);
             }
 
 
