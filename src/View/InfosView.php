@@ -4,67 +4,57 @@ namespace App\View;
 
 use Classes\Player;
 use Classes\Str;
+use App\Service\PlayerService;
 
 class InfosView
 {
-    public static function renderInfos(): void
+    public static function renderInfos(Player $player): void
     {
-        if (!empty($_SESSION['playerId'])) {
+        $player->get_data(false);
 
 
-            if (!isset($player)) {
+        $raceJson = json()->decode('races', $player->data->race);
 
-                if (isset($playerService)) {
-                    $player = $playerService->GetPlayer($_SESSION['playerId']);
-                } else {
-                    $player = new Player($_SESSION['playerId']);
-                }
-                $player->get_data();
+
+        $lastPostJson = json()->decode('forum', 'lastPosts');
+
+
+
+        $lastPostTime = $lastPostJson->general->time;
+        $lastPost = $lastPostJson->general->text;
+
+        if (!empty($lastPostJson->{$player->data->faction})) {
+
+            if ($lastPostJson->{$player->data->faction}->time > $lastPostTime) {
+                $lastPostTime = $lastPostJson->{$player->data->faction}->time;
+                $lastPost = $lastPostJson->{$player->data->faction}->text;
             }
+        }
 
-
-            $raceJson = json()->decode('races', $player->data->race);
-
-
-            $lastPostJson = json()->decode('forum', 'lastPosts');
-
-
-
-            $lastPostTime = $lastPostJson->general->time;
-            $lastPost = $lastPostJson->general->text;
-
-            if (!empty($lastPostJson->{$player->data->faction})) {
-
-                if ($lastPostJson->{$player->data->faction}->time > $lastPostTime) {
-                    $lastPostTime = $lastPostJson->{$player->data->faction}->time;
-                    $lastPost = $lastPostJson->{$player->data->faction}->text;
-                }
+        if (!empty($player->data->secretFaction) && !empty($lastPostJson->{$player->data->secretFaction})) {
+            if ($lastPostJson->{$player->data->secretFaction}->time > $lastPostTime) {
+                $lastPostTime = $lastPostJson->{$player->data->secretFaction}->time;
+                $lastPost = $lastPostJson->{$player->data->secretFaction}->text;
             }
-
-            if (!empty($player->data->secretFaction) && !empty($lastPostJson->{$player->data->secretFaction})) {
-                if ($lastPostJson->{$player->data->secretFaction}->time > $lastPostTime) {
-                    $lastPostTime = $lastPostJson->{$player->data->secretFaction}->time;
-                    $lastPost = $lastPostJson->{$player->data->secretFaction}->text;
-                }
-            }
+        }
 
 
-            ob_start();
+        ob_start();
 
 
-            echo '
+        echo '
     <div id="top-menu-button"><a id="index-banner" href="index.php?menu"><img src="img/ui/bg/index.webp" /></a></div>';
 
 
-            $timeToNextTurn = Str::convert_time($player->data->nextTurnTime - time());
-            $adminInfos = '';
-            if ($player->id == $_SESSION['originalPlayerId']) {
-                $_SESSION['nonewturn'] = false;
-            } else if (isset($_SESSION['nonewturn']) && $_SESSION['nonewturn']) {
-                $adminInfos = ' <a href="#" onclick="navigator.clipboard.writeText(\'session open ' . $player->id . ' -reactive\');" style="color: #e50000;" title="Nouveau Tour Désactivé (click to copy command)">⌀</a>';
-            }
+        $timeToNextTurn = Str::convert_time($player->data->nextTurnTime - time());
+        $adminInfos = '';
+        if ($player->id == $_SESSION['originalPlayerId']) {
+            $_SESSION['nonewturn'] = false;
+        } else if (isset($_SESSION['nonewturn']) && $_SESSION['nonewturn']) {
+            $adminInfos = ' <a href="#" onclick="navigator.clipboard.writeText(\'session open ' . $player->id . ' -reactive\');" style="color: #e50000;" title="Nouveau Tour Désactivé (click to copy command)">⌀</a>';
+        }
 
-            echo '
+        echo '
     <table border="0" align="center">
         <tr>
 
@@ -88,7 +78,6 @@ class InfosView
     ';
 
 
-            echo Str::minify(ob_get_clean());
-        }
+        echo Str::minify(ob_get_clean());
     }
 }

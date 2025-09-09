@@ -2,6 +2,7 @@
 namespace Classes;
 
 use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 class Forum{
 

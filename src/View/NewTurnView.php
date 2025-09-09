@@ -8,7 +8,7 @@ use Classes\View;
 
 class NewTurnView
 {
-    public static function renderNewTurn()
+    public static function renderNewTurn(Player $player): void
     {
         if ($_SESSION['playerId'] == $_SESSION['originalPlayerId']) {
             $_SESSION['nonewturn'] = false;
@@ -20,9 +20,7 @@ class NewTurnView
 
 
             $time = time();
-
-            $player = new Player($_SESSION['playerId']);
-            $player->get_data();
+            $player->get_data(false);
 
 
             if ($player->data->nextTurnTime <= $time) {

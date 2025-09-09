@@ -5,6 +5,7 @@ use App\View\InfosView;
 use App\View\MainView;
 use App\View\MenuView;
 use App\View\NewTurnView;
+use Classes\Player;
 
 if(isset($_GET['logout'])){
 
@@ -48,16 +49,16 @@ elseif(isset($_GET['logout'])){
 
 
 ob_start();
-
+$player = new Player($_SESSION['playerId']);
+$player->get_data(false);
 ?>
-<div id="new-turn"><?php NewTurnView::renderNewTurn() ?></div>
+<div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>
 
-
-<div id="infos"><?php InfosView::renderInfos();?></div>
+<div id="infos"><?php InfosView::renderInfos($player);?></div>
 
 <div id="menu"><?php MenuView::renderMenu(); ?></div>
 
-<?php MainView::render() ?>
+<?php MainView::render($player) ?>
 
 
 <?php

@@ -28,12 +28,12 @@ class PlayerService
 
     public function getPlainEmail(int $playerId): ?string
     {
-        return $this->getPlayerField($playerId, 'plain_mail');
+        return $this->getPlayerField( 'plain_mail');
     }
 
     public function getEmailBonus(int $playerId): bool
     {
-        return $this->getPlayerField($playerId, 'email_bonus') ?? false;
+        return $this->getPlayerField( 'email_bonus') ?? false;
     }
 
     public function getPlayerFields(array $fields): array

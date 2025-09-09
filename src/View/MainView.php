@@ -10,7 +10,7 @@ use Classes\View;
 
 class MainView
 {
-    public static function render()
+    public static function render(Player $player): void
     {
 
 
@@ -37,11 +37,6 @@ class MainView
             $svgUrl = 'datas/private/players/' . $_SESSION['playerId'] . '.svg';
 
             if (!file_exists($svgUrl)) {
-
-                // coords
-                $db = new Db();
-
-                $player = new Player($_SESSION['playerId']);
 
                 $coords = $player->getCoords();
 
