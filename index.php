@@ -45,6 +45,7 @@ elseif(isset($_GET['logout'])){
     ob_clean();
 
     header('location:index.php');
+    exit();
 }
 
 
