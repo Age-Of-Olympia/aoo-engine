@@ -79,8 +79,14 @@ class Str{
             $rank = 4;
         elseif( $xp < 7500 )
             $rank = 5;
-        else
+        elseif( $xp < 10500 )
             $rank = 6;
+        elseif( $xp < 14000 )
+            $rank = 7;
+        elseif( $xp < 18000 )
+            $rank = 8;
+        else
+            $rank = 9;
 
         return $rank;
     }
