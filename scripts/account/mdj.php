@@ -2,8 +2,12 @@
 use Classes\Db;
 use Classes\Log;
 
-if(!empty($_POST['text'])){
+$ErrorMessageChangeSession = "Changement de personnage avant sauvegarde mdj";
 
+if(!empty($_POST['text'])){
+    if ($_POST['author-id']!=$player->id) {
+        exit($ErrorMessageChangeSession);
+    }
     $sql = 'UPDATE players SET text = ? WHERE id = ?';
 
     $db = new Db();
@@ -28,6 +32,7 @@ echo '<textarea rows="20" class="tr-topic1" style="width: 100%;">'. $player->dat
 echo '
     <div id="validation-mdj">
         <div class="portrait">
+            <input type="hidden" id="id-auteur-mdj" value="'.$player->id.'"/>
             <img src="'. $player->data->portrait .'" />
         </div>
 
@@ -41,14 +46,21 @@ echo '
 $('#validate').click(function(e){
 
     let text = $('textarea').val();
+    let authorId = $('#id-auteur-mdj').val();
 
     $.ajax({
         type: "POST",
         url: 'account.php?mdj',
-        data: {'text':text}, // serializes the form's elements.
+        data: {'text':text,
+            'author-id':authorId
+        }, // serializes the form's elements.
         success: function(data)
         {
-            alert('Votre Message du jour a bien été changé!');
+            if(data.includes('<?echo $ErrorMessageChangeSession;?>')){
+                alert('Erreur lors de la sauvegarde du Mdj, changement de personnage possible, veuillez retenter.')
+            }else{
+                alert('Votre Message du jour a bien été changé!');
+            }
 
             document.location = 'account.php';
         }
