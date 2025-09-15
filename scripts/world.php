@@ -15,4 +15,4 @@ $db = new PDO($dsn, DB_CONSTANTS['user'], DB_CONSTANTS['password']);
 $viewService = new ViewService($db);
 $mapPath = $viewService->generateGlobalMap();
 
-echo "Global map generated successfully at: $mapPath\n";
+echo "Global map generated successfully at: ". serialize($mapPath) ."\n";

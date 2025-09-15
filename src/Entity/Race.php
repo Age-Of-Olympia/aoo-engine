@@ -24,10 +24,10 @@ class Race
     private ?string $description = null;
 
     #[ORM\Column(type: "boolean")]
-    private string $playable;
+    private bool $playable;
 
     #[ORM\Column(type: "boolean")]
-    private string $hidden;
+    private bool $hidden;
 
     #[ORM\Column(type: "integer", options: array("default"=>1))]
     private int $portraitNextNumber = 1;
