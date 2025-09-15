@@ -198,7 +198,7 @@ class PlayerService
         $target->death();
 
 
-        OnHideReloadView::render();
+        OnHideReloadView::render($player);
     }
 
 }

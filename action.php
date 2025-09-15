@@ -146,7 +146,7 @@ try {
         if (file_exists($file)) {
             unlink($file); // Delete the file
         }
-        OnHideReloadView::render();
+        OnHideReloadView::render($player);
     }
     
     

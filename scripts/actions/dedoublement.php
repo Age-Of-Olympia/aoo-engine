@@ -44,5 +44,5 @@ if(!file_exists($url)){
     $db->insert('players_followers', $values);
 
 
-    OnHideReloadView::render();
+    OnHideReloadView::render($player);
 }

@@ -1,17 +1,18 @@
 <?php
 
 namespace App\View;
+use Classes\Player;
 
 
 
 class OnHideReloadView
 {
-    public static function render(): void
+    public static function render(Player $player): void
     {
 
         echo '<div id="data" style="display: none;">';
 
-        MainView::render();
+        MainView::render($player);
 
         echo '</div>';
 

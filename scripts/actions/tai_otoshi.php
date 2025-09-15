@@ -16,4 +16,4 @@ $target->go($goCoords);
 
 echo $target->data->name .' est projetté!';
 
-OnHideReloadView::render();
+OnHideReloadView::render($player);

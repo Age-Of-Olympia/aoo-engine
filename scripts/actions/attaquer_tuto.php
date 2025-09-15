@@ -21,4 +21,4 @@ $goCoords->plan = 'gaia2';
 $player->go($goCoords);
 
 
-OnHideReloadView::render();
+OnHideReloadView::render($player);
