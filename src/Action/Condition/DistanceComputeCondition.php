@@ -32,7 +32,7 @@ class DistanceComputeCondition extends ComputeCondition
     protected function checkDistanceCondition(int $actorTotal): bool {
         $checkAboveDistance = true;
         if($this->distance > 1){
-            $distanceTreshold = $this->getDistanceTreshold($this->distance);
+            $distanceTreshold = $this->getDistanceTreshold();
             $checkAboveDistance = $actorTotal >= $distanceTreshold;
         }
         return $checkAboveDistance;

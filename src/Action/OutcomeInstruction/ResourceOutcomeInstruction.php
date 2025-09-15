@@ -54,7 +54,7 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
         $countTryExhaust=0;
         while($row = $res->fetch_object()){
             $countTryExhaust++;
-             ResourceService::createExhaustArray($planJson, $resourcesIdArray, $row, $rand);
+             ResourceService::createExhaustArray($planJson, $resourcesIdArray, $row);
              if($countTryExhaust >= $rand) { // On ne veut pas épuiser plus de ressources que le nombre de ressources récoltées
                  break;
              }

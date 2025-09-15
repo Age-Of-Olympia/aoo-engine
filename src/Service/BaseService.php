@@ -25,7 +25,7 @@ abstract class BaseService implements AuditableInterface
     protected function executeAndLog(callable $action): bool
     {
         $res = $action();
-        $this->addAuditLog(get_class($this), "Execute And Log has been called");
+        $this->addAuditLog(get_class($this). " : Execute And Log has been called");
         return $res;
     }
 

@@ -98,11 +98,11 @@ class ActionExecutorService
     {
         if ($this->globalConditionsResult) {
             foreach ($this->action->getOnSuccessOutcomes() as $outcomeEntity) {
-                $this->applyActionOutcome($outcomeEntity, $this->actor, $this->target);
+                $this->applyActionOutcome($outcomeEntity);
             }
         } else {
             foreach ($this->action->getOnSuccessOutcomes(false) as $outcomeEntity) {
-                $this->applyActionOutcome($outcomeEntity, $this->actor, $this->target);
+                $this->applyActionOutcome($outcomeEntity);
             }
         }
 
