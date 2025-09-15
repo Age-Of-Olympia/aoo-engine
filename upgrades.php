@@ -253,7 +253,7 @@ echo '
 
 
 echo $player->row->pi .' Points d\'investissement (Pi)<br/>';
-echo 'Familiarisez-vous avec les rêgles du jeu dans le <a href="https://age-of-olympia.net/wiki/doku.php?id=regles:combat" target="_blank">wiki</a>.<br/>';
+echo 'Familiarisez-vous avec les règles du jeu dans le <a href="https://age-of-olympia.net/wiki/doku.php?id=regles:combat" target="_blank">wiki</a>.<br/>';
 
 ?>
 <script src="js/upgrades.js"></script>
