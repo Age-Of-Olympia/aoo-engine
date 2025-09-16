@@ -2,6 +2,7 @@
 use Classes\Item;
 use Classes\Log;
 use Classes\View;
+Use App\Service\PlayerEffectService;
 
 // first spawn : change avatar
 if($player->coords->plan == 'gaia2'){
@@ -15,11 +16,8 @@ if($player->coords->plan == 'gaia2'){
     $item->add_item($player, 1);
 
 
-    // if($player->data->xp == 0){
-    //
-    //     $player->put_xp('500');
-    // }
-
+    $playerEffectService = new PlayerEffectService();
+    $playerEffectService->removeAllEffectForPlayer($player->id);
 
     $player->change_avatar('1.png');
 }
