@@ -56,7 +56,7 @@ $('#validate').click(function(e){
         }, // serializes the form's elements.
         success: function(data)
         {
-            if(data.includes('<?echo $ErrorMessageChangeSession;?>')){
+            if(data.includes('<?= $ErrorMessageChangeSession;?>')){
                 alert('Erreur lors de la sauvegarde du Mdj, changement de personnage possible, veuillez retenter.')
             }else{
                 alert('Votre Message du jour a bien été changé!');
