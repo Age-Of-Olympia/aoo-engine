@@ -22,4 +22,18 @@ class PlayerEffectService
         return $repo->findBy(['player_id' => $playerId]);
     }
 
+    public function removeAllEffectForPlayer(int $playerId)
+    {
+        $repo = $this->entityManager->getRepository(PlayerEffect::class);
+
+        $playerEffects = $repo->findBy(['player_id' => $playerId]);
+
+        foreach ($playerEffects as $playerEffect) {
+
+                $this->entityManager->remove($playerEffect);
+        }
+
+        $this->entityManager->flush();
+    }
+
 }
