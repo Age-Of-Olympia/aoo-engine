@@ -452,12 +452,12 @@ define('LOOT_CHANCE', array(
     7 => 1 chance sur 7
 */
 define('GROW_RATE', array(
-    'adonis'=>7,
-    'astral'=>7,
-    'cafe'=>7,
-    'houblon'=>7,
+    'adonis'=>2,
+    'astral'=>10,
+    'cafe'=>3,
+    'houblon'=>3,
     'lichen_sacre'=>7,
-    'lotus_noir'=>7,
+    'lotus_noir'=>20,
     'menthe'=>7,
     'pavot'=>7
 ));

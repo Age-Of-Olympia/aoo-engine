@@ -67,36 +67,4 @@ class PlantsService
         }
     }
 
-    public static function exhaustResources(array $resourcesId): void
-    {
-
-        $sql = '
-        UPDATE map_walls
-        SET damages=-2
-        WHERE 
-        id IN('. implode(',', $resourcesId) .')
-        ';
-
-        $db = new Db();
-        $res = $db->exe($sql);
-    }
-
-    public static function regrowResources(array &$resourcesId): void
-    {
-        if(empty($resourcesId)) {
-            return;
-        }
-
-        $sql = '
-        UPDATE map_walls
-        SET damages=-1
-        WHERE 
-        id IN('. implode(',', $resourcesId) .')
-        ';
-
-        $db = new Db();
-        $res = $db->exe($sql);
-    }
-
-
 }
