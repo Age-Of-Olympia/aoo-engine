@@ -18,6 +18,9 @@ class PlayerEffect
     #[ORM\Column(type: "integer", nullable: true)]
     private ?int $endTime;
 
+    #[ORM\Column(type: "integer", nullable: true)]
+    private ?int $value;
+
     public function getPlayer_id(): int
     {
         return $this->player_id;
@@ -46,5 +49,15 @@ class PlayerEffect
     public function setEndTime(?int $endTime):void
     {
         $this->endTime = $endTime;
+    }
+
+    public function getValue(): int
+    {
+        return $this->value;
+    }
+
+    public function setValue(string $value): void
+    {
+        $this->value = $value;
     }
 }
