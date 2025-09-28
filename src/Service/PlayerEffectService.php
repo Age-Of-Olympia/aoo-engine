@@ -22,7 +22,7 @@ class PlayerEffectService
         return $repo->findBy(['player_id' => $playerId]);
     }
 
-    public function removeAllEffectForPlayer(int $playerId)
+    public function removeAllEffectsForPlayer(int $playerId)
     {
         $repo = $this->entityManager->getRepository(PlayerEffect::class);
 
@@ -36,4 +36,77 @@ class PlayerEffectService
         $this->entityManager->flush();
     }
 
+    public function addEffectByPlayerId(int $playerId, string $name, int $endTime, int $value, bool $stackable): void
+    {
+        $repo = $this->entityManager->getRepository(PlayerEffect::class);
+
+        // Check si l'effet est déjà présent sur le personnage
+        $existingEffect = $repo->findOneBy([
+        'player_id' => $playerId,
+        'name' => $name,
+        ]);
+
+        if ($existingEffect) {
+            if ($stackable) {
+                $existingEffect->setValue($existingEffect->getValue() + $value);
+            } 
+            else{
+                $existingEffect->setValue($value);
+                $existingEffect->setEndTime($endTime);
+            }
+
+            $this->entityManager->persist($existingEffect);
+        } 
+        else {
+            $newEffect = new PlayerEffect();
+            $newEffect->setPlayer_Id($playerId);
+            $newEffect->setName($name);
+            $newEffect->setEndTime($endTime);
+            $newEffect->setValue($value);
+
+            $this->entityManager->persist($newEffect);
+        }
+
+        $this->entityManager->flush();
+    }
+
+    public function removeEffectByPlayerId(int $playerId, string $name): void
+    {
+        $repo = $this->entityManager->getRepository(PlayerEffect::class);
+
+        // Check si l'effet est déjà présent sur le personnage
+        $existingEffect = $repo->findOneBy([
+        'player_id' => $playerId,
+        'name' => $name,
+        ]);
+
+        if ($existingEffect) {
+            $this->entityManager->remove($existingEffect);
+            $this->entityManager->flush();
+        }
+    }    
+
+    public function subEffectByPlayerId(int $playerId, string $name, int $value): void
+    {
+        $repo = $this->entityManager->getRepository(PlayerEffect::class);
+
+        // Check si l'effet est déjà présent sur le personnage
+        $existingEffect = $repo->findOneBy([
+        'player_id' => $playerId,
+        'name' => $name,
+        ]);
+
+        if ($existingEffect) {
+            $val = $existingEffect->getValue($name);
+            if($value > $val){
+                $this->removeEffectByPlayerId($playerId, $name);
+            }
+            else{
+                $existingEffect->setValue($value - $val);
+            }
+
+            $this->entityManager->persist($existingEffect);
+        } 
+        $this->entityManager->flush();
+    }
 }

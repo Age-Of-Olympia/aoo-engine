@@ -17,7 +17,7 @@ if($player->coords->plan == 'gaia2'){
 
 
     $playerEffectService = new PlayerEffectService();
-    $playerEffectService->removeAllEffectForPlayer($player->id);
+    $playerEffectService->removeAllEffectsForPlayer($player->id);
 
     $player->change_avatar('1.png');
 }
