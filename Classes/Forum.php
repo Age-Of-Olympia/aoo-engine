@@ -290,15 +290,14 @@ class Forum{
         $data = Json::encode($data);
 
         Json::write_json($path, $data);
+        
+        $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
 
-
-        if($topJson->forum_id != 'Missives'){
-
-
+        if($topJson->forum_id != 'Missives' && $forumJson->category_id != 'HRP'){
             $player->put_pr(1);
-
             Forum::put_keywords($postId, $text);
         }
+        
 
 
         self::add_post_in_topic($postId, $topJson);
