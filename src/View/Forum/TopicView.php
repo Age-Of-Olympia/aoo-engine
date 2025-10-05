@@ -10,6 +10,7 @@ use Classes\Str;
 use App\Service\PlayerService;
 use App\View\InfosView;
 use App\View\MenuView;
+use App\View\Forum\CookieView;
 
 
 class TopicView
@@ -266,9 +267,10 @@ class TopicView
                 }
             }
 
+           
 
             if ($postJson->author != $_SESSION['playerId']) {
-
+                CookieView::displayCookieView($postJson,$player);
 
                 echo '
                         <img

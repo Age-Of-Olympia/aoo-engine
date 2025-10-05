@@ -104,6 +104,8 @@ define('ONE_DAY', 86400);
 define('ONE_HOUR', 3600);
 // INACTIVE TIME
 define('INACTIVE_TIME', ONE_WEEK);
+// Nombre de jours pendant lesquels c'est autorisé de donner un cookie sur un post
+define('MAX_DAYS_COOKIE_FORUM', 7);
 
 define('DAYS_OF_WEEK', array(
     'Dimanche',

@@ -1230,16 +1230,19 @@ article.pnj {
         font-size: 88%;
     }
 
+.give-cookie.disable {
+    filter: grayscale(100%);
+}
 
-.give-reward{
+.give-reward,.give-cookie{
 
     opacity: 0.5;
 }
 
-    .give-reward:hover{
+.give-reward:hover, .give-cookie:hover{
 
-        opacity: 1;
-    }
+    opacity: 1;
+}
 
 .cartouche{
 
