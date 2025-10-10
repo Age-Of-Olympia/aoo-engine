@@ -28,7 +28,7 @@ class Log{
 
     // STATIC
 
-    public static function get(ActorInterface $player,$maxLogAge=THREE_DAYS,$type=''){
+    public static function get(ActorInterface $player,$maxLogAge=THREE_DAYS,$type='', ?array& $steps=null){
         
         $return = array();
         $db = self::getDb();
@@ -84,9 +84,13 @@ class Log{
         '.$typeCondition.'
         AND final_logs.time > ?
         ORDER BY final_logs.id DESC';
-
+        if(is_array($steps)) {
+            $steps[] = array("PrepQuerry",microtime(true));
+        }
         $res = $db->exe($sql, array($player->id, $timeLimit));
-
+        if(is_array($steps)) {
+            $steps[] = array("executeQuery",microtime(true));
+        }
         while($row = $res->fetch_object()){
 
             if ($row->type == "move" && $type == "light") {
@@ -164,8 +168,13 @@ class Log{
                 continue;
             }
         }
-
+        if(is_array($steps)) {
+            $steps[] = array("fetch & prefilter",microtime(true));
+        }
         $return = Log::filterRows($return, $player->id);
+        if(is_array($steps)) {
+            $steps[] = array("filter",microtime(true));
+        }
         return $return;
     }
 
@@ -232,10 +241,13 @@ class Log{
 
         $qb->orderBy('final_logs.id', 'DESC');
 
+        if(is_array($steps)) {
+            $steps[] = array("PrepQuerry",microtime(true));
+        }
         $result = $qb->executeQuery();
 
         if(is_array($steps)) {
-            $steps[] = microtime(true);
+            $steps[] = array("executeQuery",microtime(true));
         }
 
         // Get Perception
@@ -255,8 +267,8 @@ class Log{
             'plan'=>""
         );
 
-        if($steps!=null) {
-            $steps[] = microtime(true);
+        if(is_array($steps)) {
+            $steps[] = array("prep carac",microtime(true));
         }
 
         while($row = $result->fetchAssociative()) {
@@ -323,14 +335,14 @@ class Log{
             }
         }
 
-        if($steps!=null) {
-            $steps[] = microtime(true);
+        if(is_array($steps)) {
+            $steps[] = array("fetch & prefilter",microtime(true));
         }
         
         $return = Log::filterRows($return, $player->id);
         
-        if($steps!=null) {
-            $steps[] = microtime(true);
+        if(is_array($steps)) {
+            $steps[] = array("filter",microtime(true));
         }
         
         return $return;

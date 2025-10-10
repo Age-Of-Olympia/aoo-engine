@@ -54,7 +54,7 @@ if ($debug) {
     $time_preGetLog = microtime(true);
 }
 if(isset($_GET['mdj'])){
-    $logsToDisplay = Log::get($player,$logAge, 'mdj');
+    $logsToDisplay = Log::get($player,$logAge, 'mdj',steps: $steps);
 } else if (isset($_GET['light'])) {
     if($useGet2) {
         $logsToDisplay = Log::get2($player,$logAge, 'light', steps: $steps);
@@ -65,7 +65,7 @@ if(isset($_GET['mdj'])){
 } else if ($displayAllCondition && isset($_GET['admin'])) {
     $logsToDisplay = Log::getAllPlanEvents($player->coords->plan,$logAge);
 } else {
-    $logsToDisplay = Log::get($player,$logAge);
+    $logsToDisplay = Log::get($player,$logAge,steps: $steps);
 }
 if ($debug) {
     $time_postGetLog = microtime(true);
@@ -204,16 +204,18 @@ if ($debug) {
     $preGetLogTime = ($time_preGetLog - $time_start);
     $getLog_time = ($time_postGetLog - $time_preGetLog);
     $renderTime = ($time_end - $time_postGetLog);
-    echo '<b>Pre Get Log Time:</b> '.$preGetLogTime.' Mins<br />';
-    echo '<b>Get Log Time:</b> '.$getLog_time.' Mins<br />';
-    echo '<b>Render Time:</b> '.$renderTime.' Mins<br />';
-    echo '<b>Total Execution Time:</b> '.$totalExecution_time.' Mins';
+    echo '<b>Pre Get Log Time:</b> '.$preGetLogTime.' s<br />';
+    echo '<b>Get Log Time:</b> '.$getLog_time.' s<br />';
+    echo '<b>Render Time:</b> '.$renderTime.' s<br />';
+    echo '<b>Total Execution Time:</b> '.$totalExecution_time.' s';
 
-    foreach($steps as $index => $stepTime) {
+    if(is_array($steps))
+        echo '<br /><br /><b>Get Log substeps:</b>';
+    foreach($steps as $index => $stepData) {
         if ($index === 0) {
-            echo '<br /><b>Step '.($index + 1).':</b> '.($stepTime - $time_preGetLog).' Mins (since start)';
+            echo '<br /><b>Step '.($stepData[0]).':</b> '.($stepData[1] - $time_preGetLog).' s';
         } else {
-            echo '<br /><b>Step '.($index + 1).':</b> '.($stepTime - $steps[$index - 1]).' Mins (since last step)';
+            echo '<br /><b>Step '.($stepData[0]).':</b> '.($stepData[1] - $steps[$index - 1][1]).' s';
         }
     }
 }
