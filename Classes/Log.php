@@ -169,6 +169,173 @@ class Log{
         return $return;
     }
 
+    public static function get2(ActorInterface $player,$maxLogAge=THREE_DAYS,$type='', ?array& $steps=null){
+        
+        $return = array();
+        $em = \App\Entity\EntityManagerFactory::getEntityManager();
+        $connection = $em->getConnection();
+        
+        $timeLimit = time()-$maxLogAge;
+
+        // Build the subquery for last player movement
+        $subQb = $connection->createQueryBuilder();
+        $subQb->select('MAX(pl2.id)')
+            ->from('players_logs', 'pl2')
+            ->where('pl2.player_id = :playerId')
+            ->andWhere('pl2.time <= pl.time')
+            ->andWhere('pl2.type = :moveType');
+
+        // Build the main query
+        $qb = $connection->createQueryBuilder();
+        $qb->select(
+                'final_logs.id',
+                'final_logs.player_id',
+                'final_logs.target_id',
+                'final_logs.text',
+                'final_logs.hiddenText',
+                'final_logs.type',
+                'final_logs.plan',
+                'final_logs.time',
+                'final_logs.coords_id',
+                'final_logs.coords_computed',
+                'final_logs.last_player_movement_coords_id AS last_player_coords_id',
+                'c.plan AS movement_plan',
+                'c.x AS movement_x',
+                'c.y AS movement_y',
+                'c.z AS movement_z'
+            )
+            ->from('(
+                SELECT 
+                    logs.*,
+                    logs_player.coords_id AS last_player_movement_coords_id
+                FROM (
+                    SELECT pl.*,
+                        (' . $subQb->getSQL() . ') AS last_player_move_id
+                    FROM players_logs pl
+                ) logs
+                LEFT JOIN players_logs logs_player ON logs.last_player_move_id = logs_player.id
+            )', 'final_logs')
+            ->leftJoin('final_logs', 'coords', 'c', 'final_logs.last_player_movement_coords_id = c.id')
+            ->where('final_logs.time > :timeLimit')
+            ->setParameter('playerId', $player->id)
+            ->setParameter('moveType', 'move')
+            ->setParameter('timeLimit', $timeLimit);
+
+        // Add type condition
+        if ($type === 'mdj') {
+            $qb->andWhere('final_logs.type = :logType')
+                ->setParameter('logType', 'mdj');
+        } else {
+            $qb->andWhere('final_logs.type != :logType')
+                ->setParameter('logType', 'mdj');
+        }
+
+        $qb->orderBy('final_logs.id', 'DESC');
+
+        $result = $qb->executeQuery();
+
+        if(is_array($steps)) {
+            $steps[] = microtime(true);
+        }
+
+        // Get Perception
+        $jsonInstance = self::json();
+        $caracsJson = $jsonInstance->decode('players', $player->id .'.caracs');
+        if(!$caracsJson){
+            $player->get_caracs();
+            $p = $player->caracs->p;
+        } else {
+            $p = $caracsJson->p;
+        }
+
+        $last_player_coords = (object) array(
+            'x'=>0,
+            'y'=>0,
+            'z'=>0,
+            'plan'=>""
+        );
+
+        if($steps!=null) {
+            $steps[] = microtime(true);
+        }
+
+        while($row = $result->fetchAssociative()) {
+            $row = (object) $row; // Convert array to object for compatibility
+
+            if ($row->type == "move" && $type == "light") {
+                continue;
+            }
+
+            if ($row->plan == "birdland") {
+                continue;
+            }
+
+            // If the event is about player, either as doer or as target, event is displayed
+            if ($row->player_id == $player->id) {
+                if ($row->type != "hidden_action_other_player") {
+                    $return[] = $row;
+                }
+                if ($row->type != "destroy") {
+                    continue;
+                }
+            }
+
+            if ($row->target_id == $player->id) {
+                if ($row->type != "hidden_action") {
+                    $return[] = $row;
+                }
+                if ($row->type != "destroy") {
+                    continue;
+                }
+            }
+
+            // Create coord object to call get_coords_id_arround
+            $last_player_coords->x = $row->movement_x;
+            $last_player_coords->y = $row->movement_y;
+            $last_player_coords->z = $row->movement_z;
+            $last_player_coords->plan = $row->movement_plan;
+            
+            // Computing coords
+            $viewClass = self::getViewClass();
+            $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $p, CoordType::XYZPLAN, separator:'_');
+
+            $planJson = $jsonInstance->decode('plans', $row->plan);
+
+            // For PNJs, check if event is in their current plan
+            if ($player->id <= 0) {
+                if ($row->plan != $player->coords->plan) {
+                    continue;
+                }
+            }
+            // For normal players, use explicit visibility conditions
+            else {
+                $planRequestsHideCharacters = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
+                $isAlwaysVisibleCharacter = $row->player_id <= 0; // PNJ actions are always visible
+
+                if ($planRequestsHideCharacters && !$isAlwaysVisibleCharacter) {
+                    continue;
+                }
+            }
+
+            if (in_array($row->coords_computed, $arrayCoordsId)) {
+                $return[] = $row;
+                continue;
+            }
+        }
+
+        if($steps!=null) {
+            $steps[] = microtime(true);
+        }
+        
+        $return = Log::filterRows($return, $player->id);
+        
+        if($steps!=null) {
+            $steps[] = microtime(true);
+        }
+        
+        return $return;
+    }
+
 /**
  * Filters an array of row objects by identifying pairs of rows that meet the specified conditions.
  * 

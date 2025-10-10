@@ -5,8 +5,11 @@ use Classes\Log;
 use Classes\Quest;
 use Classes\Str;
 use Classes\Ui;
-$debug=false;
+$debug=isset($_GET['perf']);
+$useGet2=isset($_GET['test']);
+$steps=null;
 if ($debug) {
+    $steps = array();
     $time_start = microtime(true);
 }
 require_once('config.php');
@@ -47,17 +50,26 @@ if(isset($_GET['quests'])){
 }
 
 $player->getCoords();
-
+if ($debug) {
+    $time_preGetLog = microtime(true);
+}
 if(isset($_GET['mdj'])){
     $logsToDisplay = Log::get($player,$logAge, 'mdj');
 } else if (isset($_GET['light'])) {
-    $logsToDisplay = Log::get($player,$logAge, 'light');
+    if($useGet2) {
+        $logsToDisplay = Log::get2($player,$logAge, 'light', steps: $steps);
+    }
+    else{
+        $logsToDisplay = Log::get($player,$logAge, 'light',steps: $steps);
+    }
 } else if ($displayAllCondition && isset($_GET['admin'])) {
     $logsToDisplay = Log::getAllPlanEvents($player->coords->plan,$logAge);
 } else {
     $logsToDisplay = Log::get($player,$logAge);
 }
-
+if ($debug) {
+    $time_postGetLog = microtime(true);
+}
 
 
 
@@ -188,8 +200,22 @@ echo '
 
 if ($debug) {
     $time_end = microtime(true);
-    $execution_time = ($time_end - $time_start);
-    echo '<b>Total Execution Time:</b> '.$execution_time.' Mins';
+    $totalExecution_time = ($time_end - $time_start);
+    $preGetLogTime = ($time_preGetLog - $time_start);
+    $getLog_time = ($time_postGetLog - $time_preGetLog);
+    $renderTime = ($time_end - $time_postGetLog);
+    echo '<b>Pre Get Log Time:</b> '.$preGetLogTime.' Mins<br />';
+    echo '<b>Get Log Time:</b> '.$getLog_time.' Mins<br />';
+    echo '<b>Render Time:</b> '.$renderTime.' Mins<br />';
+    echo '<b>Total Execution Time:</b> '.$totalExecution_time.' Mins';
+
+    foreach($steps as $index => $stepTime) {
+        if ($index === 0) {
+            echo '<br /><b>Step '.($index + 1).':</b> '.($stepTime - $time_preGetLog).' Mins (since start)';
+        } else {
+            echo '<br /><b>Step '.($index + 1).':</b> '.($stepTime - $steps[$index - 1]).' Mins (since last step)';
+        }
+    }
 }
 
 echo Str::minify(ob_get_clean());
