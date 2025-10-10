@@ -185,7 +185,7 @@ class File{
         }
 
 
-        $max = $player->data->pr;
+        $max = floor($player->data->pr/10);
 
         if($player->have_option('isAdmin')){
 

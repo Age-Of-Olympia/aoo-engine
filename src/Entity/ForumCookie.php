@@ -1,7 +1,6 @@
 <?php
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\BigIntType;
 use Doctrine\ORM\Mapping as ORM;
 
 
@@ -11,8 +10,8 @@ class ForumCookie
 {
     
     #[ORM\Id]
-    #[ORM\Column(type: "bigint")]
-    private BigIntType $post_name;
+    #[ORM\Column(type: "string")]
+    private string $post_name;
 
     #[ORM\Id]
     #[ORM\Column(type: "integer")]
@@ -28,12 +27,12 @@ class ForumCookie
         $this->player_id = $player_id;
     }
 
-    public function setPostName(BigIntType $post_name): void
+    public function setPostName(string $post_name): void
     {
         $this->post_name = $post_name;
     }
 
-       public function getPostName(): BigIntType
+       public function getPostName(): string
     {
         return $this->post_name;
     }

@@ -147,7 +147,7 @@ class BourrinsView
                     ' . $e->data->name . '
                 </td>
                 <td align="center" valign="top"><a href="infos.php?targetId=' . $e->id . '">mat.' . $e->id . '</a></td>
-                <td align="center" valign="top">' . Str::get_reput($e->data->pr) . '</td>
+                <td align="center" valign="top">' . Str::get_reput(floor($e->data->pr/10)) . '</td>
                 <td align="center" valign="top">' . $e->data->xp . '</td>
                 <td align="center" valign="top">' . $e->data->rank . '</td>
             </tr>

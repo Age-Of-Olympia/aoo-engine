@@ -759,12 +759,14 @@ class Player implements ActorInterface {
             $this->get_data();
         }
 
+        if ($this->data->pr < $this->data->pr+$pr){
 
-        for($n=$this->data->pr; $n<=$this->data->pr+$pr; $n++){
+            for($n=$this->data->pr; $n<=$this->data->pr+$pr; $n++){
+                
+                if($n %50 == 0){
 
-            if($n %5 == 0){
-
-                Forum::put_reward($this);
+                    Forum::put_reward($this);
+                }
             }
         }
 

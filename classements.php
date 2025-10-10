@@ -45,7 +45,7 @@ function print_players($list){
 
         $raceJson = json()->decode('races', $player->race);
 
-        $reput = Str::get_reput($player->pr);
+        $reput = Str::get_reput(floor($player->pr/10));
 
         echo '
         <tr style="color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">
@@ -63,7 +63,7 @@ function print_players($list){
             }
             elseif(isset($list[0]->showReput)){
 
-                echo '<td align="center">'. $player->pr .'</td>';
+                echo '<td align="center">'. floor($player->pr/10) .'</td>';
             }
 
             echo '

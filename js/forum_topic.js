@@ -35,4 +35,25 @@ $(document).ready(function(e){
             }
         });
     });
+
+    $('img.give-cookie:not(.disable)').click(function(e){
+
+        var $this = $(this);
+       
+
+        let url= 'api/forum/cookie.php';
+        let payload = {
+        'post-name': $this.data('post-name'),
+        'player-id': $this.data('player-id')
+        };
+        aooFetch(url,payload,null)
+        .then(data=>{
+            $this.addClass("disable");
+            $this.siblings("span").attr('tooltip', data.message);
+            $this.siblings("span").text(parseInt($this.siblings("span").text())+1);
+        }
+        )
+        .catch(autoError());      
+
+    });
 });

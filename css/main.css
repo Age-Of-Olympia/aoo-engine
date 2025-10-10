@@ -1198,6 +1198,12 @@ article.pnj {
     cursor: pointer;
 }
 
+.cookie-container { 
+    display: flex;
+    align-items: flex-end; 
+}
+
+
 .tr-cat{
 
     background: url('../img/ui/bg/marbre.jpeg');
@@ -1213,22 +1219,25 @@ article.pnj {
     background: url('../img/ui/bg/bg_white2.jpeg');
 }
 
-.post-rewards{
-
-    margin-top: 20px;
-    text-align: right;
+.post-rewards-container{
+    margin-top: 20px;    
+    display: flex;
+    align-content: flex-end;
+    justify-content: space-between;
+    gap:15px;
+    align-items: flex-end;
 }
 
-    .post-rewards img{
+.post-rewards img{
 
-        width: 50px;
-        height: 50px;
-    }
+    width: 50px;
+    height: 50px;
+}
 
-    .post-rewards span{
+.post-rewards span{
 
-        font-size: 88%;
-    }
+    font-size: 88%;
+}
 
 .give-cookie.disable {
     filter: grayscale(100%);
@@ -1239,7 +1248,7 @@ article.pnj {
     opacity: 0.5;
 }
 
-.give-reward:hover, .give-cookie:hover{
+.give-reward:hover, .give-cookie:not(.disable):hover{
 
     opacity: 1;
 }

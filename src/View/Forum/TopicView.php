@@ -163,7 +163,7 @@ class TopicView
             $raceJson = json()->decode('races', $author->data->race);
             $pnjText = $author->id < 0 ? ' - PNJ' : '';
 
-            echo '<div style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . Str::get_reput($author->data->pr) . '</a> Rang ' . $author->data->rank . '</i></div>';
+            echo '<div style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . Str::get_reput(floor($author->data->pr/10)) . '</a> Rang ' . $author->data->rank . '</i></div>';
 
 
 
@@ -246,11 +246,14 @@ class TopicView
             $bbcode = new bbcode();
 
             echo '<div style="padding: 10px;">' . $bbcode->render(htmlentities($text)) . '</div>';
-
             echo '
-                <div class="post-rewards">
+                <div class="post-rewards-container">';
+                CookieView::displayCookieView($postJson,$player);
 
-                    ';
+                echo '
+                    <div class="post-rewards">
+
+                        ';
 
             //recompenses
             if (!empty($postJson->rewards)) {
@@ -270,7 +273,6 @@ class TopicView
            
 
             if ($postJson->author != $_SESSION['playerId']) {
-                CookieView::displayCookieView($postJson,$player);
 
                 echo '
                         <img
@@ -296,6 +298,8 @@ class TopicView
             }
 
             echo '
+                </div>
+                
                 </div>
                 ';
 

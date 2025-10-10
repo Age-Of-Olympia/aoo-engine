@@ -57,7 +57,7 @@ class Forum{
 
         $target = new Player($postJson->author);
 
-        $target->put_pr($reward->pr);
+        $target->put_pr($reward->pr*10);
 
 
         $postJson->rewards[] = (object) $reward;
@@ -294,7 +294,7 @@ class Forum{
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
 
         if($topJson->forum_id != 'Missives' && $forumJson->category_id != 'HRP'){
-            $player->put_pr(1);
+            $player->put_pr(10);
             Forum::put_keywords($postId, $text);
         }
         
@@ -346,7 +346,7 @@ class Forum{
 
         $reward = draw_random_reward();
 
-        $path = 'img/ui/forum/rewards/';
+        $path = $_SERVER['DOCUMENT_ROOT'].'/img/ui/forum/rewards/';
 
         $directory = File::get_random_directory($path);
 
