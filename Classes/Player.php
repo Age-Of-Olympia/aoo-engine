@@ -2121,18 +2121,19 @@ class Player implements ActorInterface {
         // first player json
         if(!$playerJson){
 
-
-            $player = new Player( $this->id);
-
-            $player->get_row();
+            $this->get_row();
 
             // unset some unwanted var
-            unset($player->row->psw);
-            unset($player->row->mail);
-            unset($player->row->ip);
+            unset($this->row->psw);
+            unset($this->row->mail);
+            unset($this->row->ip);
+            $pathInfo = pathinfo($this->row->portrait);
+            $this->row->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+            $this->row->faction_img = 'img/factions/'. $this->row->faction .'.png';
+            $this->row->faction_mini = 'img/factions/'. $this->row->faction .'_mini.png';
 
-            $path = 'datas/private/players/'. $player->id .'.json';
-            $data = Json::encode($player->row);
+            $path = 'datas/private/players/'. $this->id .'.json';
+            $data = Json::encode($this->row);
 
             Json::write_json($path, $data);
 
@@ -2141,20 +2142,10 @@ class Player implements ActorInterface {
 
         $this->data = $playerJson;
 
-        // Get plain_mail & email_bonus from PlayerService
-        $fields = $this->playerService->getPlayerFields(['plain_mail', 'email_bonus']);
-        $this->data->plain_mail = $fields['plain_mail'];
-        $this->data->email_bonus = $fields['email_bonus'] ?? false;
-
         // Set inactive status using playerService
         $this->data->isInactive = $this->id > 0 ? $this->playerService->isInactive($this->data->lastLoginTime) : false;
 
-        $pathInfo = pathinfo($this->data->portrait);
-
-        $this->data->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
-
-        $this->data->faction_img = 'img/factions/'. $this->data->faction .'.png';
-        $this->data->faction_mini = 'img/factions/'. $this->data->faction .'_mini.png';
+       
 
 
         return $playerJson;
