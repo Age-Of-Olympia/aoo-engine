@@ -130,7 +130,7 @@ echo '
 
             $pnjText = $target->id<0 ? ' - PNJ' : '';
 
-            echo '<div>'. $raceJson->name . $pnjText .' - <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput(floor($target->data->pr/10)) .'</a> Rang '. $target->data->rank .'</div>';
+            echo '<div>'. $raceJson->name . $pnjText .' - <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput(floor($target->data->pr/COEFFICIENT_PR)) .'</a> Rang '. $target->data->rank .'</div>';
 
 
             $factionJson = json()->decode('factions', $target->data->faction);

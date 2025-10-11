@@ -57,7 +57,7 @@ class Forum{
 
         $target = new Player($postJson->author);
 
-        $target->put_pr($reward->pr*10);
+        $target->put_pr($reward->pr*COEFFICIENT_PR);
 
 
         $postJson->rewards[] = (object) $reward;
@@ -294,7 +294,7 @@ class Forum{
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
 
         if($topJson->forum_id != 'Missives' && $forumJson->category_id != 'HRP'){
-            $player->put_pr(10);
+            $player->put_pr(PR_PER_POST);
             Forum::put_keywords($postId, $text);
         }
         

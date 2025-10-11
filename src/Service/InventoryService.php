@@ -112,7 +112,7 @@ class InventoryService
                         break;
 
                     case "pr":
-                        $player->put_pr($qte*10);
+                        $player->put_pr($qte*COEFFICIENT_PR);
                         break;
 
                     case "pf":

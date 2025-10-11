@@ -185,7 +185,7 @@ class File{
         }
 
 
-        $max = floor($player->data->pr/10);
+        $max = floor($player->data->pr/COEFFICIENT_PR);
 
         if($player->have_option('isAdmin')){
 

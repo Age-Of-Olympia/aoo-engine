@@ -46,9 +46,9 @@ class ForumCookieService
         $author = new Player($postJson->author);
         $player = new Player($playerId);
         if($author->check_share_factions(($player))){
-            $author->put_pr(1);
+            $author->put_pr(PR_PER_COOKIE_SAME_FACTION);
         }else{
-            $author->put_pr(3);
+            $author->put_pr(PR_PER_COOKIE);
         }
         
         $this->create($playerId,$postName);        

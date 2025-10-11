@@ -9,7 +9,7 @@ echo '
 <div id="pr-wrapper" class="glow">
     Points de Réputation:<br />
     <span id="pr">0</span><br />
-    <span id="pr-text">'. Str::get_reput(floor($target->data->pr/10)) .'</span>
+    <span id="pr-text">'. Str::get_reput(floor($target->data->pr/COEFFICIENT_PR)) .'</span>
 </div>
 <style>
 #filler{visibility: hidden;}
@@ -59,7 +59,7 @@ echo '
         $badge.html(value);
 
 
-        if( value == <?php echo floor($target->data->pr/10) ?> ){
+        if( value == <?php echo floor($target->data->pr/COEFFICIENT_PR) ?> ){
 
             $('#pr-text').fadeIn('slow');
 
@@ -120,7 +120,7 @@ else{
 
             if(!empty($pr)){
 
-                echo '</td><td>'. $pr/10;
+                echo '</td><td>'. $pr/COEFFICIENT_PR;
             }
 
 
@@ -161,7 +161,7 @@ else{
     }
 
     echo '
-    </td><td>'. floor($pr/10) .'</td>
+    </td><td>'. floor($pr/COEFFICIENT_PR) .'</td>
     </tr>
     </table>
     ';
