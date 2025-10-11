@@ -248,8 +248,7 @@ class TopicView
             echo '<div style="padding: 10px;">' . $bbcode->render(htmlentities($text)) . '</div>';
             echo '
                 <div class="post-rewards-container">';
-                CookieView::displayCookieView($postJson,$player);
-
+               
                 echo '
                     <div class="post-rewards">
 
@@ -298,9 +297,12 @@ class TopicView
             }
 
             echo '
-                </div>
+                </div>';
+                 if ($topJson->forum_id != 'Missives') {
+                     CookieView::displayCookieView($postJson,$player);
+                }
                 
-                </div>
+        echo '  </div>
                 ';
 
             echo '

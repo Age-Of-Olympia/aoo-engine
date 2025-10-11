@@ -2,7 +2,7 @@
 
 echo '
 <div id="tools">
-    <div id="tools-portrait">
+    <div class="portrait">
         <img src="'. $player->data->portrait .'" />
     </div>
     <div id="tools-button">

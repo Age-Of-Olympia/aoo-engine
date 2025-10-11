@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\EntityManagerFactory;
 use App\Entity\ForumCookie;
 use Classes\Player;
+use Exception;
 
 class ForumCookieService
 {
@@ -43,6 +44,11 @@ class ForumCookieService
     public function giveCookie(int $playerId, String $postName ) : void
     {
         $postJson = json()->decode('forum', 'posts/'. $postName);
+        $topJson = json()->decode('forum', 'topics/' .$postJson->top_id);
+
+        if ($topJson->forum_id == 'Missives') {
+            throw new Exception("Impossible de donner un cookie sur une missive");
+        }  
         $author = new Player($postJson->author);
         $player = new Player($playerId);
         if($author->check_share_factions(($player))){

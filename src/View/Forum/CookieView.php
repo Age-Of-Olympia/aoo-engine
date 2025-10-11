@@ -24,13 +24,19 @@ class CookieView
             }
             $tooltip = substr($tooltip, 0, -2); //remove unwanted trailing - 
         }else{
-            $tooltip  = "Pas de cookie.";
+            $tooltip  = "Pas de cookie";
         }
-        if (!empty($forumCookieService->getForumCookie($player->id, $postJson->name)) || $player->id == $postJson->author){
+        if (!empty($forumCookieService->getForumCookie($player->id, $postJson->name))){
             echo ' <img class="give-cookie disable"
                             src="img/ui/forum/cookie.png"
                             title="Vous avez donné un cookie"
                         />';
+        } else if($player->id == $postJson->author){
+            echo ' <img class="give-cookie disable"
+                            src="img/ui/forum/cookie.png"
+                            title="Vous êtes l\'auteur du message"
+                        />';
+            $tooltip.=' - Vous êtes l\'auteur du message ';
         } else {            
             $postTimestamp = $postJson->name / 1000;
             $sevenDaysAgo = time() - (MAX_DAYS_COOKIE_FORUM * 24 * 60 * 60);
@@ -40,6 +46,7 @@ class CookieView
                             src="img/ui/forum/cookie.png"
                             title="Trop tard pour donner un cookie"
                         />';
+                $tooltip.=' - Trop tard pour donner un cookie ';
             }else{
                     echo '<img data-post-name="' . $postJson->name . '" data-player-id="' . $player->id . '"
                             class="give-cookie"

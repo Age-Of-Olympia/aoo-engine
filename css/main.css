@@ -1226,6 +1226,7 @@ article.pnj {
     justify-content: space-between;
     gap:15px;
     align-items: flex-end;
+    flex-direction: row-reverse;
 }
 
 .post-rewards img{
