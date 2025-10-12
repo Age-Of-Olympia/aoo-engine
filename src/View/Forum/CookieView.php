@@ -55,7 +55,7 @@ class CookieView
             }
         
         }
-        echo '<span class="cookie-giver" tooltip="'.$tooltip.'" flow="left">'.$nbCookie.'</span>';
+        echo '<span class="cookie-giver" tooltip="'.$tooltip.'" flow="right">'.$nbCookie.'</span>';
         echo '</div>';
                 
                    
