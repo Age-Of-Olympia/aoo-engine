@@ -838,21 +838,21 @@ class Player implements ActorInterface {
 
 
     public function refresh_view(){
-        $file = 'datas/private/players/'. $this->id .'.svg';
+        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.svg';
         if (is_file($file)) {
             unlink($file); // Delete the file
         }
     }
 
     public function refresh_data(){
-        $file = 'datas/private/players/'. $this->id .'.json';
+        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.json';
         if (is_file($file)) {
             unlink($file); // Delete the file
         }
     }
 
     public function refresh_invent(){
-        $file ='datas/private/players/'. $this->id .'.invent.html';
+        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.invent.html';
         if(file_exists($file)){
             unlink($file);
         }
