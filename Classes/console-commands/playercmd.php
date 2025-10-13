@@ -237,18 +237,46 @@ function unequip_player($argumentValues, $player){
 
 function purge_player($argumentValues, $player){
 
+    $cacheName = isset($argumentValues[2]) ? strtolower($argumentValues[2]) : 'view';
+    $targetPlayer = isset($argumentValues[3]) ? strtolower($argumentValues[3]) : 'target';
 
-    if($argumentValues[2] == 'view'){
-
-        $files = glob('datas/private/players/'. $player->id .'.svg');
+    if(!in_array($cacheName, array('view','allcaches','playerdata'))){
+        return '<font color="red">error: invalid arg1 "'. $cacheName .'", must be "view", "allcaches" or "playerdata"</font>';
     }
-    elseif($argumentValues[2] == 'all'){
 
-        $files = glob('datas/private/players/'. $player->id .'*');
+    if($targetPlayer!='target' && $targetPlayer != 'allplayers'){
+        return '<font color="red">error: invalid arg2 "'. $targetPlayer .'", must be "target" or "allplayers"</font>';
     }
-    elseif($argumentValues[2] == 'allplayers'){
 
-        $files = glob('datas/private/players/*');
+    if($targetPlayer=='target')
+    {
+        if($cacheName == 'view'){
+
+            $files = glob('datas/private/players/'. $player->id .'.svg');
+        }
+        elseif($cacheName == 'allcaches'){
+
+            $files = glob('datas/private/players/'. $player->id .'*');
+        }
+        elseif($cacheName == 'playerdata'){
+
+            $files = glob('datas/private/players/'. $player->id .'*');
+        }
+    }
+    elseif($targetPlayer == 'allplayers'){
+
+        if($cacheName == 'view'){
+
+            $files = glob('datas/private/players/*.svg');
+        }
+        elseif($cacheName == 'allcaches'){
+
+            $files = glob('datas/private/players/*');
+        }
+        elseif($cacheName == 'playerdata'){
+
+            $files = glob('datas/private/players/*.json');
+        }
     }
 
     ob_start();
@@ -262,7 +290,7 @@ function purge_player($argumentValues, $player){
 
     $return = ob_get_clean();
 
-    return 'player '. $player->data->name .': '. $argumentValues[2] .' cache purged '. $return;
+    return 'Purge cache "'. $cacheName .'" for "'. $targetPlayer .'" done:'.$return;
 }
 
 function add_item( $argumentValues,  $player)
