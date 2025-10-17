@@ -377,7 +377,7 @@ class TopicView
             window.topicName = <?php echo $topJson->name ?>;
             window.pageN = <?php echo $page ?>;
         </script>
-        <script src="js/forum_topic.js"></script>
+        <script src="js/forum_topic.js?v=20251017"></script>
 <?php
     }
 }
