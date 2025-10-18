@@ -346,7 +346,7 @@ class Forum{
 
         $reward = draw_random_reward();
 
-        $path = $_SERVER['DOCUMENT_ROOT'].'/img/ui/forum/rewards/';
+        $path = 'img/ui/forum/rewards/';
 
         $directory = File::get_random_directory($path);
 
