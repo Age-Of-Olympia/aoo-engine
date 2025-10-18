@@ -51,6 +51,28 @@ class RecipeService
         return $results;
     }
 
+    public function adminGetAllRecipes(): array
+    {
+        if(!isset($_SESSION['isAdmin']) || $_SESSION['isAdmin'] !== true)
+        {
+            return array();
+        }
+        
+        $qb = $this->entityManager->createQueryBuilder();
+        //get recipes and it's ingredients
+        $qb->select('re,ri,rr,ra')
+            ->from(Recipe::class, 're')
+            ->leftJoin('re.races', 'ra')
+            ->leftJoin('re.recipeIngredients', 'ri')
+            ->leftJoin('ri.item', 'i')
+            ->leftJoin('re.recipeResults', 'rr')
+            ->leftJoin('rr.item', 'r');
+        $query = $qb->getQuery();
+
+        $results = $query->getResult();
+        return $results;
+    }
+
     public function getRecipeById(int $id): ?Recipe
     {
         $repo = $this->entityManager->getRepository(Recipe::class);
