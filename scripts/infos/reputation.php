@@ -120,7 +120,7 @@ else{
 
             if(!empty($pr)){
 
-                echo '</td><td>'. $pr/COEFFICIENT_PR;
+                echo '</td><td>'. $pr;
             }
 
 
@@ -161,7 +161,7 @@ else{
     }
 
     echo '
-    </td><td>'. floor($pr/COEFFICIENT_PR) .'</td>
+    </td><td>'. floor($pr) .'</td>
     </tr>
     </table>
     ';
