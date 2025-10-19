@@ -107,18 +107,18 @@ class File{
 
     public static function get_random_directory($path) {
 
-
+        $absolutePath = $_SERVER['DOCUMENT_ROOT'].'/'.$path;
         // Check if the path is a valid directory
-        if (!is_dir($path)) {
+        if (!is_dir($absolutePath)) {
             exit("The specified path is not a valid directory.");
         }
 
         // Open the directory
         $directories = [];
-        if ($handle = opendir($path)) {
+        if ($handle = opendir($absolutePath)) {
             // Read the directory entries
             while (false !== ($entry = readdir($handle))) {
-                if ($entry != "." && $entry != ".." && is_dir($path . DIRECTORY_SEPARATOR . $entry)) {
+                if ($entry != "." && $entry != ".." && is_dir($absolutePath . DIRECTORY_SEPARATOR . $entry)) {
                     $directories[] = $entry;
                 }
             }
