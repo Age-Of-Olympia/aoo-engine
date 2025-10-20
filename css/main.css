@@ -1346,6 +1346,13 @@ article.pnj {
 
 #forum-textarea{ position: relative; }
 
+code{
+    white-space: pre-wrap;
+    background: url(../img/ui/bg/bg_white2.jpeg);
+    display: block;
+}
+
+
 #tools{
     display: flex;
     flex-direction: row;
