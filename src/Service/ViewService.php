@@ -275,6 +275,11 @@ class ViewService {
                 case 'routes':
                     $this->generateRoutesLayer($this->worldPlan);
                     break;
+                case 'players':
+                    if ($this->playerX !== null && $this->playerY !== null) {
+                        $this->generateGlobalPlayersLayer();
+                    }
+                    break;
                 case 'player':
                     if ($this->playerX !== null && $this->playerY !== null) {
                         $this->generateWorldPlayerLayer();
@@ -732,23 +737,20 @@ class ViewService {
         return $filePath;
     }
 
-    private function generateAllPlayersLayer($plan) {
+    private function generateGlobalPlayersLayer() {
         $layer = $this->createLayer();
-        $zCondition = $plan === $this->worldPlan 
-            ? "AND c.z = 0" 
-            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
-        $mapType = $plan === $this->worldPlan ? "global" : "local";
+        $mapType = "global";
         
         // Définit les couleurs pour les races
         $raceColors = [
-            'default' => '#ffffff',
+            'default' => '#000000',
             'elfe' => '#008000',
             'geant' => '#661414',
             'hs' => '#2e6650',
             'nain' => '#FF0000',
             'olympien' => '#ff9933',
             'animal' => '#D2B48C',
-            'lutin' => '#000000',
+            'lutin' => '#ffffff',
             'humain' => '#0000ff',
         ];
         
@@ -759,7 +761,7 @@ class ViewService {
             JOIN coords c ON c.id = p.coords_id
             WHERE c.x IS NOT NULL 
             AND c.y IS NOT NULL
-            AND c.plan = '" . $plan . "'
+            AND c.plan = '" . $this->worldPlan . "'
         ";
         
         $players = $this->db->exe($sql);
@@ -776,7 +778,11 @@ class ViewService {
             $y = $this->transformY($player['y'], $mapType);
 
             // Récupère la couleur pour la race
+            // La couleur est noire par défaut si le personnage est à plus de 15 cases du joueur
             $raceColor = $raceColors[$player['race']] ?? $raceColors['default'];
+            if($this->getPlayersDistance($this->playerX,$this->playerY,$x,$y) > 15){
+                $raceColor = $raceColors['default'];
+            }
             
             // Convertit la couleur hexadécimale en RVB
             list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
@@ -1082,7 +1088,7 @@ class ViewService {
     }
 
     public function getGlobalMap(): array {
-        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
         $mapDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
         $results = [];
 
@@ -1170,5 +1176,17 @@ class ViewService {
                 }
             }
         }
+    }
+
+    public function getPlayersDistance($p1X,$p1Y,$p2X,$p2Y): int
+    {
+        $dx = $p2X - $p1X;
+        $dy = $p2Y - $p1Y;
+
+        // Distance euclidienne entre les deux points
+        $distance = sqrt($dx * $dx + $dy * $dy);
+
+        // Retourne un entier (tu peux aussi garder float si tu veux plus de précision)
+        return (int) round($distance);
     }
 }

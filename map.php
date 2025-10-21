@@ -89,6 +89,7 @@ if (!isset($_GET['local'])) {
     generateLayerCheckbox('Coordonnées', 'coordinates');
     generateLayerCheckbox('Lieux', 'locations');
     generateLayerCheckbox('Routes', 'routes');
+    generateLayerCheckbox('Tous les joueurs', 'players');
     generateLayerCheckbox('Ma position', 'player');
             
           echo '<button type="submit">Actualiser la carte</button>
@@ -96,7 +97,7 @@ if (!isset($_GET['local'])) {
     </div>';
 
     // Récupère les couches sélectionnées ou utilise les valeurs par défaut
-    $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+    $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
 
     try {
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
