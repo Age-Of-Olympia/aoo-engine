@@ -5,7 +5,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 class Forum{
-
+    public static int $PostsPerPage = 5;
 
     public static function get_views($topJson){
 
@@ -104,17 +104,8 @@ class Forum{
     }
 
 
-    public static function get_pages($postTotal){
-
-
-        $pagesN = floor($postTotal / 5);
-
-        if($postTotal > $pagesN*5){
-
-            $pagesN++;
-        }
-
-        return $pagesN;
+    public static function get_pages($postTotal):int{
+       return ceil($postTotal / Forum::$PostsPerPage);
     }
 
 

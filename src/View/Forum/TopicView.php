@@ -46,7 +46,7 @@ class TopicView
 
 
         $postMin = 0;
-        $postMax = 4;
+        $postMax = Forum::$PostsPerPage-1;
         $page = 1;
 
         $postTotal = count($topJson->posts);
@@ -65,8 +65,8 @@ class TopicView
 
             $page = $_GET['page'];
 
-            $postMin += ($_GET['page'] - 1) * 5;
-            $postMax += ($_GET['page'] - 1) * 5;
+            $postMin += ($_GET['page'] - 1) * Forum::$PostsPerPage;
+            $postMax += ($_GET['page'] - 1) * Forum::$PostsPerPage;
         }
 
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
