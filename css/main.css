@@ -1197,6 +1197,18 @@ article.pnj {
 
     cursor: pointer;
 }
+.tr-forum td {
+    min-height: 1px;/*fix height hack*/
+    height: 1px;/*fix height hack*/
+}
+.tr-forum td a {
+    color: black;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+}
 
 .cookie-container { 
     display: flex;

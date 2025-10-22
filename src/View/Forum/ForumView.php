@@ -49,7 +49,7 @@ class ForumView
     <a href="forum.php">Forum (' . $forumJson->category_id . ')</a> >
     <a href="forum.php?forum=' . $forumJson->name . '">' . $forumJson->name . '</a>
 
-    <button class="newTopic" style="position: absolute; right: 0px; top: -10px;" data-forum="' . $_GET['forum'] . '"><span class="ra ra-quill-ink"></span> Nouveau sujet</button>
+    <a href="forum.php?newTopic=' . $_GET['forum'] . '" style="position: absolute; right: 0px; top: -10px;"><button class="newTopic" ><span class="ra ra-quill-ink"></span> Nouveau sujet</button></a>
 </div>';
 
 
@@ -61,7 +61,7 @@ class ForumView
     <tr>
         <th>Sujet</th>
         <th width="1%">Réponses</th>
-        <th width="1%">Dernière</th>
+        <th width="100px">Dernière</th>
     </tr>
     ';
 
@@ -128,118 +128,83 @@ class ForumView
             $author = $playerService->GetPlayer($topJson->author);
 
             $author->get_data(false);
-
-
-            $currentTopicHtml = '
-        <tr class="tr-forum">
-            ';
-
-            $currentTopicHtml .= '
-            <td
-                data-topic="' . htmlentities($top->name) . '"
-
-                align="left"
-                >
-                ';
-
-
-            $symbolsTbl = array();
-
-            $topName = htmlentities($topJson->title);
-
-
-            if ($forumJson->category_id == 'RP' && !isset($topJson->approved)) {
-
-
-                $topName .= ' <i><font color="red">(en attente de traduction)</font></i>';
-            }
-
-
-            if (!in_array($player->id, $views)) {
-
-                $symbolsTbl[] = '<span class="ra ra-quill-ink"></span>';
-
-                $topName = '<b>' . htmlentities($topJson->title) . '</b>';
-            }
-
-            if (isset($topJson->pined) && $topJson->pined) {
-
-                $topName = '<i class="ra ra-gavel"></i>' . $topName;
-            }
-
-            $currentTopicHtml .= implode(' ', $symbolsTbl) . $topName;
-
-
-            $currentTopicHtml .= '
-                <div><i>Par ' . $author->data->name . '</i></div>
-                ';
-
-
-            $currentTopicHtml .= '
-            </td>
-            ';
-
-
-            $currentTopicHtml .= '
-            <td align="center"
-            data-topic="' . htmlentities($top->name) . '">
-                ';
-
-
-            $currentTopicHtml .= count($topJson->posts);
-
-
-            $currentTopicHtml .= '
-            </td>
-            ';
-
-
+            $topicID =htmlentities($top->name);
             $postTotal = count($topJson->posts);
 
             $pagesN = Forum::get_pages($postTotal);
+            //title and author
+            {
 
+                $topName = htmlentities($topJson->title);
+                $extra = '';
 
-            $currentTopicHtml .= '
-            <td
-                align="right"
-                style="font-size: 88%;"
-                data-topic="' . htmlentities($top->name) . '&page=' . $pagesN . '#' . $topJson->last->time . '"
-                >
-                ';
+                if (!in_array($player->id, $views)) {
+                    $topName = '<span class="ra ra-quill-ink"></span><b>' . htmlentities($topJson->title) . '</b>';
+                }
+                if ($forumJson->category_id == 'RP' && !isset($topJson->approved)) {
+                    $extra .= ' <i><font color="red">(en attente de traduction)</font></i>';
+                }
 
+                if (isset($topJson->pined) && $topJson->pined) {
 
-            $lastAuthor = $playerService->GetPlayer($topJson->last->author);
+                    $topName = '<i class="ra ra-gavel"></i>' . $topName;
+                }
 
-            $lastAuthor->get_data(false);
-
-            $date = date('d/m/Y', timestampNormalization($topJson->last->time));
-
-            if ($date == date('d/m/Y', time())) {
-
-                $date = 'Aujourd\'hui';
-            } elseif ($date == date('d/m/Y', time() - 86400)) {
-
-                $date = 'Hier';
+                $currentTopicHtml =<<<HTML
+            <tr class="tr-forum">
+                <td align="left">
+                    <a href="forum.php?topic={$topicID}">
+                        <div>{$topName}</div>
+                        {$extra}
+                        <i>Par {$author->data->name}</i>
+                    </a>
+                </td>
+            HTML;
+            }
+            //reply count
+            {
+                $currentTopicHtml .=<<<HTML
+                <td align="center">
+                    <a href="forum.php?topic={$topicID}">
+                        {$postTotal}
+                    </a>
+                </td>
+                HTML;
             }
 
-            $currentTopicHtml .= '
-                <div>
-                    Par ' . $lastAuthor->data->name . '
-                    <div>
-                        ' . $date . '<br />
-                        à ' . date('H:i', timestampNormalization($topJson->last->time)) . '
-                </div>
-                ';
 
 
-            $currentTopicHtml .= '
-            </td>
-            ';
+            //last post
+            {
+                $lastAuthor = $playerService->GetPlayer($topJson->last->author);
+
+                $lastAuthor->get_data(false);
+
+                $date = date('d/m/Y', timestampNormalization($topJson->last->time));
+                $time =date('H:i', timestampNormalization($topJson->last->time));
+                if ($date == date('d/m/Y', time())) {
+
+                    $date = 'Aujourd\'hui';
+                } elseif ($date == date('d/m/Y', time() - 86400)) {
+
+                    $date = 'Hier';
+                }
 
 
-            $currentTopicHtml .= '
-        </tr>
-        ';
+                $currentTopicHtml .= <<<HTML
+                    <td align="right" style="font-size: 88%;">
+                        <a href="forum.php?topic={$topicID}&page={$pagesN}#{$topJson->last->time}">
+                            <span>Par  {$lastAuthor->data->name}</span>
+                            <div>
+                                {$date }<br />
+                                à {$time}
+                            </div>
+                        </a>
+                    </td> 
+                </tr>
+                HTML;
+            }
+
             if (isset($topJson->pined) && $topJson->pined) {
                 $pinnedTopicsHtml[timestampNormalization($topJson->last->time)] =  $currentTopicHtml;
             } else {
@@ -262,23 +227,12 @@ class ForumView
 ';
 
 
-        echo '<div><button class="newTopic" data-forum="' . $_GET['forum'] . '"><span class="ra ra-quill-ink"></span> Nouveau sujet</button></div>';
+        echo '<div><a href="forum.php?newTopic=' . $_GET['forum'] . '"><button class="newTopic" ><span class="ra ra-quill-ink"></span> Nouveau sujet</button></a></div>';
 
 
 ?>
         <script>
-            $(document).ready(function(e) {
 
-                $('.marbre td').click(function(e) {
-
-                    document.location = 'forum.php?topic=' + $(this).data('topic');
-                });
-
-                $('.newTopic').click(function(e) {
-
-                    document.location = 'forum.php?newTopic=' + $(this).data('forum');
-                });
-            });
         </script>
 <?php
 
