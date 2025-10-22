@@ -248,7 +248,7 @@ class ViewService {
 
     public function generateGlobalMap(?array $selectedLayers = null) {
         $this->image = $this->createLayer();
-        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
         $timestamp = (new DateTime('now', new DateTimeZone('UTC')))->format('Ymd-His');
         $outputDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
 
@@ -1186,7 +1186,6 @@ class ViewService {
         // Distance euclidienne entre les deux points
         $distance = sqrt($dx * $dx + $dy * $dy);
 
-        // Retourne un entier (tu peux aussi garder float si tu veux plus de précision)
         return (int) round($distance);
     }
 }
