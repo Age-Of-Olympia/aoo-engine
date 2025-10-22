@@ -779,10 +779,7 @@ class ViewService {
 
             // Récupère la couleur pour la race
             // La couleur est noire par défaut si le personnage est à plus de 15 cases du joueur
-            $raceColor = $raceColors[$player['race']] ?? $raceColors['default'];
-            if($this->getPlayersDistance($this->playerX,$this->playerY,$x,$y) > 15){
-                $raceColor = $raceColors['default'];
-            }
+            $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > 15) ? $raceColors['default'] : ($raceColors[$player['race']] ?? $raceColors['default']);
             
             // Convertit la couleur hexadécimale en RVB
             list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
@@ -827,7 +824,7 @@ class ViewService {
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
-        $filePath = $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
+        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
         imagedestroy($layer);
         return $filePath;
     }
@@ -1181,14 +1178,8 @@ class ViewService {
         }
     }
 
-    public function getPlayersDistance($p1X,$p1Y,$p2X,$p2Y): int
+    public function getPlayersDistance($p1X, $p1Y, $p2X, $p2Y): int
     {
-        $dx = $p2X - $p1X;
-        $dy = $p2Y - $p1Y;
-
-        // Distance euclidienne entre les deux points
-        $distance = sqrt($dx * $dx + $dy * $dy);
-
-        return (int) round($distance);
+        return max(abs($p2X - $p1X), abs($p2Y - $p1Y));
     }
 }

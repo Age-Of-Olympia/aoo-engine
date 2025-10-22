@@ -158,7 +158,7 @@ if (!isset($_GET['local'])) {
             $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
             if (file_exists($fullPath)) {
                 list($width, $height) = getimagesize($fullPath);
-                echo '<image xlink:href="' . $playersLayerPath . '" width="' . $width . '" height="' . $height . '" />';
+                echo '<image xlink:href="' . $playersLayerPath . '" width="' . $width . '" height="' . $height . '" x="60" y="33" />';
             }
         }
 
