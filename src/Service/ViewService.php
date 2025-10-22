@@ -277,7 +277,7 @@ class ViewService {
                     break;
                 case 'players':
                     if ($this->playerX !== null && $this->playerY !== null) {
-                        $this->generateGlobalPlayersLayer();
+                        $this->generateWorldPlayersLayer();
                     }
                     break;
                 case 'player':
@@ -737,7 +737,7 @@ class ViewService {
         return $filePath;
     }
 
-    private function generateGlobalPlayersLayer() {
+    public function generateWorldPlayersLayer() {
         $layer = $this->createLayer();
         $mapType = "global";
         
@@ -799,7 +799,10 @@ class ViewService {
             );
         }
         
-        $this->layers['players'] = $layer;
+        $filePath = $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
+        imagedestroy($layer);
+
+        return $filePath;
     }
 
     public function generateLocalPlayerLayer() {
@@ -824,7 +827,7 @@ class ViewService {
         imagefilledellipse($layer, $x, $y, $markerSize, $markerSize, $markerColor);
         
         // Sauvegarde la couche du joueur en tant qu'image PNG
-        $filePath = $this->saveLayer($layer, 'layer.png', $this->playerId, $mapType);
+        $filePath = $this->saveLayer($layer, 'players_layer.png', $this->playerId, $mapType);
         imagedestroy($layer);
         return $filePath;
     }
@@ -1088,7 +1091,7 @@ class ViewService {
     }
 
     public function getGlobalMap(): array {
-        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
+        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
         $mapDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
         $results = [];
 

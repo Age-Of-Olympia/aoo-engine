@@ -102,6 +102,7 @@ if (!isset($_GET['local'])) {
     try {
         $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
         $mapResult = $viewService->getGlobalMap();
+        $worldPlayersLayerPath = $viewService->generateWorldPlayersLayer();
         $worldPlayerLayerPath = $viewService->generateWorldPlayerLayer();
     } catch (Exception $e) {
         echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;">';
@@ -151,7 +152,16 @@ if (!isset($_GET['local'])) {
             }
         }
 
-        // Special handling for player layer
+        // Special handling for players & player layer
+        if (in_array('players', $selectedLayers)) {
+            $playersLayerPath = '/img/maps/global_map_player_' . $_SESSION['playerId'] . '_players_layer.png';
+            $fullPath = $_SERVER['DOCUMENT_ROOT'].$playersLayerPath;
+            if (file_exists($fullPath)) {
+                list($width, $height) = getimagesize($fullPath);
+                echo '<image xlink:href="' . $playersLayerPath . '" width="' . $width . '" height="' . $height . '" />';
+            }
+        }
+
         if (in_array('player', $selectedLayers)) {
             $fullPath = $worldPlayerLayerPath;
             if (file_exists($fullPath)) {
@@ -160,7 +170,6 @@ if (!isset($_GET['local'])) {
                          width="' . $width . '" height="' . $height . '" x="60" y="33" />';
             }
         }
-
         echo '</svg></div>';
     } else {
         echo '<p>La carte n\'est pas encore générée.</p>';
