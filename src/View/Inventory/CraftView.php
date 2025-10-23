@@ -183,7 +183,7 @@ class CraftView
             // artComplete
             $hasAllIngredients = true;
 
-            $reciepName = $recipe->GetName();
+            $recipeName = $recipe->GetName();
             $recipeId = $recipe->getId();
             $artItem = get_json_item($recipe->getRecipeResults()[0]->GetItem());
 
