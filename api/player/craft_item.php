@@ -17,13 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $craftID = (int)$POST_DATA['craft_id'];
     $recipeService = new RecipeService();
 
-    $reciep = $recipeService->getRecipeById($craftID);
+    $recipe = $recipeService->getRecipeById($craftID);
     // this item
-    if (!$reciep) {
+    if (!$recipe) {
         ExitError('Recette introuvable');
     }
     $message = '';
-    if ($recipeService->TryCraftRecipe($reciep, $player, $message)) {
+    if ($recipeService->TryCraftRecipe($recipe, $player, $message)) {
         ExitSuccess(["message" => $message, "redirect" => "inventory.php"]);
     } else {
         ExitError($message);

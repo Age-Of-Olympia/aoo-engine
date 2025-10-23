@@ -5,11 +5,11 @@ ob_start();
 $recipeService = new RecipeService();
 $recipes = $recipeService->adminGetAllRecipes();
 foreach ($recipes as $recipe) {
-    PrintReciep($recipe);
+    PrintRecipe($recipe);
 }
 $content = ob_get_clean();
 echo admin_layout('Recettes de craft', $content);
-function PrintReciep($recipe)
+function PrintRecipe($recipe)
 {
     echo $recipe->GetName() . '<br>';
     if($recipe->getRaces()->count() > 0) {
