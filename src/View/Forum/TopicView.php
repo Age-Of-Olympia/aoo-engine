@@ -82,19 +82,9 @@ class TopicView
 
            MissiveView::renderMissive($topJson, $player, $playerService);
         }
+        $lastRenderedPost = 0;
 
-
-        if (Forum::put_view($topJson) && $topJson->forum_id == 'Missives') {
-
-
-            // put viewed in db
-
-            $sql = 'UPDATE players_forum_missives SET viewed = 1 WHERE player_id = ? AND name = ?';
-
-            $db = new Db();
-
-            $db->exe($sql, array($player->id, $topJson->name));
-        }
+        
 
 
         if (!isset($_GET['hideMenu'])) {
@@ -124,6 +114,7 @@ class TopicView
 
             $postJson = json()->decode('forum', 'posts/' . $post->name);
 
+            $lastRenderedPost = $postJson->name;
 
             echo '
         <tr class="tr-topic2 box-shadow">
@@ -367,6 +358,17 @@ class TopicView
             }
 
             echo '<a href="forum.php?topic=' . htmlentities($_GET['topic']) . $hideMenu . '&page=' . $i . '">' . $preText . 'page ' . $i . $postText . '</a> ';
+        }
+
+        Forum::put_view($topJson);
+        if ($topJson->forum_id == 'Missives') {
+            // put viewed in db
+
+            $sql = 'UPDATE players_forum_missives SET viewed = 1, last_post=? WHERE player_id = ? AND name = ? AND last_post <?';
+
+            $db = new Db();
+
+            $db->exe($sql, array($lastRenderedPost,$player->id, $topJson->name,$lastRenderedPost));
         }
 
 

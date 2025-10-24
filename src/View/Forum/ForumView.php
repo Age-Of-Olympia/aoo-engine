@@ -82,7 +82,7 @@ class ForumView
 
             $db = new Db();
 
-            $sql = 'SELECT name, viewed FROM players_forum_missives WHERE player_id = ?';
+            $sql = 'SELECT name, viewed, last_post FROM players_forum_missives WHERE player_id = ?';
 
             $res = $db->exe($sql, $player->id);
 
@@ -91,14 +91,14 @@ class ForumView
 
                 $topicsTbl[] = (object) array('name' => $row->name);
 
-                if ($row->viewed) {
-
-
-                    $topicsViewsTbl[$row->name] = array($player->id);
-                } else {
-
-                    $topicsViewsTbl[$row->name] = array();
+                $lastPostCompat=$row->last_post;
+                if($row->viewed && $row->last_post==0)
+                {
+                    $lastPostCompat=-1; // we can detect migration case
                 }
+               
+                $topicsViewsTbl[$row->name] = (object)array($player->id=>$lastPostCompat);
+                
             }
         }
 
@@ -130,15 +130,26 @@ class ForumView
             $author->get_data(false);
             $topicID =htmlentities($top->name);
             $postTotal = count($topJson->posts);
+            $lastPost = $topJson->last->time;
+            $lastReadedPost =ForumView::GetLastReadedPost($player->id, $lastPost, $views);
+            $isTopicUnread = $lastReadedPost < $lastPost;
+
+            $nextUnreadedpageLink="";
+            if ($isTopicUnread && $lastReadedPost > 0) {
+                $nextPostData = ForumView::GetNextPostData($lastReadedPost, $topJson);
+                $nextUnreadedpageLink="&page={$nextPostData['page']}#{$nextPostData['post']}";
+            }
 
             $pagesN = Forum::get_pages($postTotal);
+            $lastPageLink = "&page={$pagesN}#{$lastPost}";
+            $pageLink=$isTopicUnread ? $nextUnreadedpageLink : $lastPageLink;
             //title and author
             {
 
                 $topName = htmlentities($topJson->title);
                 $extra = '';
 
-                if (!in_array($player->id, $views)) {
+                if ($isTopicUnread) {
                     $topName = '<span class="ra ra-quill-ink"></span><b>' . htmlentities($topJson->title) . '</b>';
                 }
                 if ($forumJson->category_id == 'RP' && !isset($topJson->approved)) {
@@ -153,7 +164,7 @@ class ForumView
                 $currentTopicHtml =<<<HTML
             <tr class="tr-forum">
                 <td align="left">
-                    <a href="forum.php?topic={$topicID}">
+                    <a href="forum.php?topic={$topicID}{$pageLink}">
                         <div>{$topName}</div>
                         {$extra}
                         <i>Par {$author->data->name}</i>
@@ -165,7 +176,7 @@ class ForumView
             {
                 $currentTopicHtml .=<<<HTML
                 <td align="center">
-                    <a href="forum.php?topic={$topicID}">
+                    <a href="forum.php?topic={$topicID}{$pageLink}">
                         {$postTotal}
                     </a>
                 </td>
@@ -193,7 +204,7 @@ class ForumView
 
                 $currentTopicHtml .= <<<HTML
                     <td align="right" style="font-size: 88%;">
-                        <a href="forum.php?topic={$topicID}&page={$pagesN}#{$topJson->last->time}">
+                        <a href="forum.php?topic={$topicID}{$lastPageLink}">
                             <span>Par  {$lastAuthor->data->name}</span>
                             <div>
                                 {$date }<br />
@@ -249,4 +260,35 @@ class ForumView
         }
         return false;
     }
+
+   
+    public static function GetLastReadedPost(int $playerId,int $lastPost, $TopicView): int
+    {
+        if(is_array($TopicView))
+        {
+            return in_array($playerId, $TopicView) ? $lastPost : -1;
+        }
+        else
+        {
+            if(isset($TopicView->$playerId))
+            {
+               return $TopicView->$playerId < 0 ? $lastPost : $TopicView->$playerId;
+            }
+            return -1;
+        }
+    }
+     public static function GetNextPostData(int $postId, $data): array
+     {
+        $posts = $data->posts;
+        $index = array_search($postId, array_column($posts, 'name'));
+        if(isset($posts[$index+1]))
+        {
+           $index++;
+        }
+        if ($index === false) {
+            $index= 0; // Post not found, return first page as default
+        }
+        $nextPostId= $posts[$index]->name;
+        return array('post'=>$nextPostId, 'page'=> (int)floor(($index) / Forum::$PostsPerPage) + 1);
+     }
 }

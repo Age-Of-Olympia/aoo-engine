@@ -1,0 +1,1 @@
+ALTER TABLE `players_forum_missives` ADD `last_post` BIGINT NOT NULL DEFAULT '0' AFTER `viewed`;
