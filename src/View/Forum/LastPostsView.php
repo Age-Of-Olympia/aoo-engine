@@ -38,9 +38,13 @@ class LastPostsView
 
         echo '
 <table border="1" class="marbre" align="center" width="500" id="forum-last-posts">
+    <tr>
+        <th>Sujet</th>
+        <th width="100px">Dernière</th>
+    </tr>
 ';
 
-
+        $topicsHtml = array();
         foreach (array('RP', 'Privés', 'HRP') as $cat) {
 
 
@@ -81,43 +85,14 @@ class LastPostsView
 
 
                     if (in_array($player->id, $topJson->views)) {
-
-
                         continue;
                     }
-
-                    echo '
-            <tr>
-                <td align="left">
-                ';
-
-                    echo '<b><a href="forum.php?topic=' . htmlentities($topJson->name) . '">' . htmlentities($topJson->title) . '</a></b>';
-
-                    echo '<br>';
-
-                    echo '<i>Dans ' . $forJson->name . '</i>';
-
-                    echo '
-                </td>
-                ';
-
+                    $topicID =htmlentities($topJson->name);
+                    $topicTitle = htmlentities($topJson->title);
                     $postTotal = count($topJson->posts);
-
                     $pagesN = Forum::get_pages($postTotal);
-
-                    echo '
-                <td
-                    width="1%"
-                    style="white-space: nowrap; font-size: 88%;"
-                    align="right"
-                    >
-                    ';
-
                     $author = $playerService->GetPlayer($topJson->last->author);
-
                     $author->get_data(false);
-
-
                     $date = date('d/m/Y', timestampNormalization($topJson->last->time));
 
                     if ($date == date('d/m/Y', time())) {
@@ -127,29 +102,40 @@ class LastPostsView
 
                         $date = 'Hier';
                     }
+                    $time = date('H:i', timestampNormalization($topJson->last->time));
 
-                    echo '<a href="forum.php?topic=' . htmlentities($topJson->name) . '&page=' . $pagesN . '#' . $topJson->last->time . '">';
+                    $currentTopicHtml=<<<HTML
+                    <tr>
+                        <td align="left">
+                            <b><a href="forum.php?topic={$topicID}">{$topicTitle}</a></b>
+                            <br>
+                            <i>Dans {$forJson->name}</i>
+                        </td>
 
-                    echo 'Par ' . $author->data->name;
-                    echo '<br />';
-                    echo $date;
-                    echo '<br />';
-                    echo 'à ' . date('H:i', timestampNormalization($topJson->last->time));
+                        <td style="white-space: nowrap; font-size: 88%;"align="right">
+                            <a href="forum.php?topic={$topicID}&page={$pagesN}#{$topJson->last->time}">
 
-                    echo '</a>';
+                            Par {$author->data->name}
+                            <br />
+                            {$date}
+                            <br />
+                            à {$time}
 
-                    echo '
-                </td>
-            </tr>
-            ';
+                            </a>
+                        </td>
+                    </tr>
+                    HTML;
+                    $topicsHtml[timestampNormalization($topJson->last->time)] =  $currentTopicHtml;
                 }
             }
         }
+        
+        krsort($topicsHtml);
+        foreach ($topicsHtml as $currentTopicHtml) {
+            echo $currentTopicHtml;
+        }
 
-
-        echo '
-</table>
-';
+        echo '</table>';
 
         echo Str::minify(ob_get_clean());
     }
