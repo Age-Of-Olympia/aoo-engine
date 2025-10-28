@@ -878,21 +878,16 @@ class ViewService {
             throw new Exception("Plan bounds are not available.");
         }
     
-        // Use existing scale factors from global map
-        $scaleX = $this->scaleX;
-        $scaleY = $this->scaleY;
-    
-        // Calculate required width and height based on player position
-        $requiredWidth = abs($this->playerX - $planBounds['minX']) + abs($this->playerX - $planBounds['maxX']);
-        $requiredHeight = abs($this->playerY - $planBounds['minY']) + abs($this->playerY - $planBounds['maxY']);
-
+        // The player layer must have the same dimensions as the other global map layers
+        // (like generateWorldPlayersLayer does) to ensure coordinate transformations work correctly
+        // since transformY() uses $this->height for calculations
         return [
             'minX' => $planBounds['minX'],
             'maxX' => $planBounds['maxX'],
             'minY' => $planBounds['minY'],
             'maxY' => $planBounds['maxY'],
-            'width' => (int)($requiredWidth * $scaleX),
-            'height' => (int)($requiredHeight * $scaleY)
+            'width' => $this->width,
+            'height' => $this->height
         ];
     }
 
@@ -907,21 +902,16 @@ class ViewService {
             $this->localMaxY = $zLevel->visibleBoundsMaxY;
         }
     
-        // Use existing scale factors from local map
-        $scaleX = $this->localScaleX;
-        $scaleY = $this->localScaleY;
-    
-        // Calculate required width and height based on player position
-        $requiredWidth = abs($this->playerX - $this->localMinX) + abs($this->playerX - $this->localMaxX);
-        $requiredHeight = abs($this->playerY - $this->localMinY) + abs($this->playerY - $this->localMaxY);
-    
+        // The player layer must have the same dimensions as the other local map layers
+        // (like generateLocalPlayersLayer does) to ensure coordinate transformations work correctly
+        // since transformY() uses $this->localMapHeight for calculations
         return [
             'minX' => $this->localMinX,
             'maxX' => $this->localMaxX,
             'minY' => $this->localMinY,
             'maxY' => $this->localMaxY,
-            'width' => (int)($requiredWidth * $scaleX),
-            'height' => (int)($requiredHeight * $scaleY)
+            'width' => $this->localMapWidth,
+            'height' => $this->localMapHeight
         ];
     }
 
