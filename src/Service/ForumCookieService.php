@@ -46,15 +46,18 @@ class ForumCookieService
         $postJson = json()->decode('forum', 'posts/'. $postName);
         $topJson = json()->decode('forum', 'topics/' .$postJson->top_id);
 
-        if ($topJson->forum_id == 'Missives') {
-            throw new Exception("Impossible de donner un cookie sur une missive");
-        }  
-        $author = new Player($postJson->author);
-        $player = new Player($playerId);
-        if($author->check_share_factions(($player))){
-            $author->put_pr(PR_PER_COOKIE_SAME_FACTION);
-        }else{
-            $author->put_pr(PR_PER_COOKIE);
+        if ($topJson->forum_id == 'Missives' ) {
+            if(!ENABLE_NO_PR_COOKIES_IN_MISSIVES)
+                throw new Exception("Impossible de donner un cookie sur une missive");
+        }
+        else {
+            $author = new Player($postJson->author);
+            $player = new Player($playerId);
+            if ($author->check_share_factions(($player))) {
+                $author->put_pr(PR_PER_COOKIE_SAME_FACTION);
+            } else {
+                $author->put_pr(PR_PER_COOKIE);
+            }
         }
         
         $this->create($playerId,$postName);        

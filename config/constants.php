@@ -112,6 +112,10 @@ define('PR_PER_POST', 10);
 define('PR_PER_COOKIE', 3);
 // nombre de PR par post (1PR=10)
 define('PR_PER_COOKIE_SAME_FACTION', 1);
+//active les cookie dans les missives
+define('ENABLE_NO_PR_COOKIES_IN_MISSIVES', TRUE);
+
+
 // Coefficient de division en base pour affichage
 define('COEFFICIENT_PR', 10);
 

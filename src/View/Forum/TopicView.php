@@ -289,7 +289,7 @@ class TopicView
 
             echo '
                 </div>';
-                 if ($topJson->forum_id != 'Missives') {
+                 if ($topJson->forum_id != 'Missives' || ENABLE_NO_PR_COOKIES_IN_MISSIVES) {
                      CookieView::displayCookieView($postJson,$player);
                 }
                 
