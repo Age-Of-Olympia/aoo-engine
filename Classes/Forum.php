@@ -19,23 +19,26 @@ class Forum{
     }
 
 
-    public static function put_view($topJson){
-
+    public static function put_view($topJson, $lastRenderedPost){
 
         if(!isset($topJson->views)){
 
-            $topJson->views = array();
+            $topJson->views = (object)array();
         }
 
-        if(in_array($_SESSION['playerId'], $topJson->views)){
-
-
+        if(is_array($topJson->views) && array_is_list($topJson->views)){ //migrate
+            $oldViews = $topJson->views;
+            $topJson->views = (object)array();
+            foreach($oldViews as $playerIdMigrate){
+                $topJson->views->{$playerIdMigrate} = $topJson->last->time;
+            }
+        }
+        $playerId = $_SESSION['playerId'];
+        if(isset($topJson->views->$playerId) && $topJson->views->$playerId >= $lastRenderedPost){
             return false;
         }
-
-
-        $topJson->views[] = $_SESSION['playerId'];
-
+           
+        $topJson->views->{$playerId} = $lastRenderedPost;
 
         $data = Json::encode($topJson);
 
@@ -96,11 +99,11 @@ class Forum{
     public static function delete_views($topJson){
 
 
-        $topJson->views = array();
+        // $topJson->views = array();
 
-        $data = Json::encode($topJson);
+        // $data = Json::encode($topJson);
 
-        Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
+        // Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
     }
 
 
@@ -249,7 +252,7 @@ class Forum{
         // create post
         self::put_post($player, $topJson, $text);
 
-        self::put_last_author($player, $topJson);
+        //self::put_last_author($player, $topJson);
 
 
         return $topJson;
@@ -363,7 +366,7 @@ class Forum{
         $path = 'datas/private/forum/topics/'. $topJson->name .'.json';
 
         $topJson->last->author = $player->id;
-        $topJson->last->time = time();
+        $topJson->last->time = $topJson->name;
 
         $data = Json::encode($topJson);
 

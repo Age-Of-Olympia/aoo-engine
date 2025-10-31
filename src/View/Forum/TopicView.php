@@ -360,8 +360,8 @@ class TopicView
             echo '<a href="forum.php?topic=' . htmlentities($_GET['topic']) . $hideMenu . '&page=' . $i . '">' . $preText . 'page ' . $i . $postText . '</a> ';
         }
 
-        Forum::put_view($topJson);
-        if ($topJson->forum_id == 'Missives') {
+        
+        if (Forum::put_view($topJson,$lastRenderedPost) && $topJson->forum_id == 'Missives') {
             // put viewed in db
 
             $sql = 'UPDATE players_forum_missives SET viewed = 1, last_post=? WHERE player_id = ? AND name = ? AND last_post <?';

@@ -240,13 +240,6 @@ class ForumView
 
         echo '<div><a href="forum.php?newTopic=' . $_GET['forum'] . '"><button class="newTopic" ><span class="ra ra-quill-ink"></span> Nouveau sujet</button></a></div>';
 
-
-?>
-        <script>
-
-        </script>
-<?php
-
         echo Str::minify(ob_get_clean());
     }
     public static function SearchInPosts($posts, $search)
@@ -264,7 +257,7 @@ class ForumView
    
     public static function GetLastReadedPost(int $playerId,int $lastPost, $TopicView): int
     {
-        if(is_array($TopicView))
+        if(is_array($TopicView) && array_is_list($TopicView))
         {
             return in_array($playerId, $TopicView) ? $lastPost : -1;
         }
