@@ -44,7 +44,15 @@ class Forum{
 
         Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
 
+        if($topJson->forum_id == 'Missives')
+        {
+            // put viewed in db
+            $sql = 'UPDATE players_forum_missives SET viewed = 1, last_post=? WHERE player_id = ? AND name = ? AND last_post <?';
 
+            $db = new Db();
+
+            $db->exe($sql, array($lastRenderedPost,$playerId, $topJson->name,$lastRenderedPost));
+        }
         return true;
     }
 
@@ -93,17 +101,6 @@ class Forum{
 
 
         return true;
-    }
-
-
-    public static function delete_views($topJson){
-
-
-        // $topJson->views = array();
-
-        // $data = Json::encode($topJson);
-
-        // Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
     }
 
 
@@ -392,8 +389,6 @@ class Forum{
 
         Json::write_json($path, $data);
 
-
-        self::delete_views($topJson);
     }
 
 
