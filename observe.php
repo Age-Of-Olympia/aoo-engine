@@ -204,15 +204,15 @@ if($res->num_rows){
 
         $dataName .= '<div class="effects">';
 
-        foreach($target->get_effects() as $effect){
+        foreach($target->getEffects() as $effect){
 
 
-            if(in_array($effect, EFFECTS_HIDDEN)){
+            if(in_array($effect->getName(), EFFECTS_HIDDEN)){
 
                 continue;
             }
 
-            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$effect] .'"></span></a>';
+            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span></a>';
         }
 
         $dataName .= '</div>';

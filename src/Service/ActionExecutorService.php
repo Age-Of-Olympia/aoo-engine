@@ -24,6 +24,8 @@ class ActionExecutorService
     private int $initialTargetPv;
     private int $finalTargetPv;
     private bool $blocked = false;
+    private array $actorRoll = array();
+    private array $targetRoll = array();
     
     public function __construct(Action $action, Player $actor, Player $target){
         $this->conditionRegistry = new ConditionRegistry();
@@ -122,6 +124,8 @@ class ActionExecutorService
             }
         
             $conditionResult = $condition->check($this->actor, $this->target, $condEntity);
+            $this->actorRoll = $conditionResult->getActorRoll() ?? ['actor1','actor2'];
+            $this->targetRoll = $conditionResult->getTargetRoll() ?? ['target1','target2'];
             $globalConditionsResult = $globalConditionsResult && $conditionResult->isSuccess();
             array_push($this->conditionResultsArray, $conditionResult);
         
@@ -152,7 +156,7 @@ class ActionExecutorService
 
     private function applyActionOutcomeInstruction(OutcomeInstruction $outcomeInstruction): void
     {
-        $result = $outcomeInstruction->execute($this->actor, $this->target);
+        $result = $outcomeInstruction->execute($this->actor, $this->target, array($this->actorRoll,$this->targetRoll));
         array_push($this->outcomeResultsArray, $result);
     }
 

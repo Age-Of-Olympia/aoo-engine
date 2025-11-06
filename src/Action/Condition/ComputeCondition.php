@@ -22,6 +22,9 @@ class ComputeCondition extends BaseCondition
     protected string $throwName = "Le tir";
     protected string $actorRollTrait;
     protected string $targetRollTrait;
+    protected int $actorRollBonus;
+    protected int $targetRollBonus;
+
 
     public function __construct() {
         array_push($this->preConditions, new DodgeCondition());
@@ -38,6 +41,21 @@ class ComputeCondition extends BaseCondition
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $this->targetRollTrait = $params['targetRollType'] ?? null;
+        $this->actorRollBonus = $params['actorRollBonus'] ?? 0;
+        $this->targetRollBonus = $params['targetRollBonus'] ?? 0;
+        $target->playerPassiveService->getPassivesByPlayerId($target->getId());
+
+        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
+            if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
+                $this->actorRollBonus += $actor->playerPassiveService->getComputedValueByPlayerIdByName($actor->id,$actorPassive->getName());
+            }
+        }
+
+        foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
+            if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
+                $this->targetRollBonus += $target->playerPassiveService->getComputedValueByPlayerIdByName($target->id,$targetPassive->getName());
+            }
+        }
 
         if (!$target) {
             $errorMessages[0] = "Aucune cible n'a été spécifiée.";
@@ -46,7 +64,7 @@ class ComputeCondition extends BaseCondition
 
         $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
 
-        $result = $this->computeAttack($actor, $target);
+        $result = $this->computeAttack($actor, $target, $this->actorRollBonus, $this->targetRollBonus);
 
         if (!$result->isSuccess()) {
             $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
@@ -55,15 +73,15 @@ class ComputeCondition extends BaseCondition
         return $result;
     }
 
-    private function computeAttack(ActorInterface $actor, ?ActorInterface $target): ConditionResult 
+    private function computeAttack(ActorInterface $actor, ?ActorInterface $target, int $actorRollBonus, int $targetRollBonus): ConditionResult 
     {
         $success = false;
         $dice = new Dice(3);
 
-        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice);
+        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $actorRollBonus);
         $conditionDetailsSuccess[0] = $actorTxt;
 
-        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice);
+        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $targetRollBonus);
         $conditionDetailsSuccess[1] = $targetTxt;
        
         $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
@@ -85,21 +103,36 @@ class ComputeCondition extends BaseCondition
         return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
     }
 
-    protected function computeActor($actor, $dice)
+    protected function computeActor($actor, $dice, $actorRollBonus)
     {
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
-        $actorTotal = array_sum($actorRoll);
+        $actorEffetMaladresse = $actor->getEffectValue("maladresse");
+        $actorEffetDexterite = $actor->getEffectValue("dexterite");
+        $effetMaladresse = !empty($actorEffetMaladresse) ? $actorEffetMaladresse : 0;
+        $effetDexterite = !empty($actorEffetDexterite) ? $actorEffetDexterite : 0;
+        $bonus = !empty($actorRollBonus) ? $actorRollBonus : 0;
+        $totalOther = $bonus + $effetDexterite - $effetMaladresse;
+        $tooltipOtherTxt = 
+            (!empty($actorEffetDexterite) || !empty($actorEffetMaladresse)
+            ? 'Effets :' .
+            (!empty($actorEffetDexterite) ? ' ' . $effetDexterite : '') .
+            (!empty($actorEffetMaladresse) ? ' - ' . $effetMaladresse : '') . ' '
+            : ''
+            ) .
+            (!empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '');
+        $actorTotal = array_sum($actorRoll) + $totalOther;
+        $actorOtherTxt = ($totalOther != 0) ? (($totalOther > 0) ? ' + '. $totalOther .' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : ' - '. abs($totalOther) .' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)') : '';
         $distanceMalus = $this->getDistanceMalus();
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
-        $actorTotalTxt = $distanceMalus ? ' = '. $actorTotal : '';
-        $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = '. array_sum($actorRoll) . $distanceMalusTxt . $actorTotalTxt;
+        $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal : '';
+        $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
 
         return array($actorRoll, $actorTotal, $actorTxt);
     }
 
-    protected function computeTarget($target, $dice)
+    protected function computeTarget($target, $dice, $targetRollBonus)
     {
         $traitsArray = explode('/', $this->targetRollTrait);
         if (sizeof($traitsArray) == 1) {
@@ -113,19 +146,25 @@ class ComputeCondition extends BaseCondition
         }
         
         $targetRoll = $dice->roll($targetRollTraitValue);
-        $targetEsq = $this->carac->esquive ?? 0;
-        $targetTotal = array_sum($targetRoll) - $target->data->malus;
-        if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
-            $targetTotal = array_sum($targetRoll) - $targetEsq - $target->data->malus;
-        }
-        $targetTotal = array_sum($targetRoll) - $target->data->malus;
+        $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
+        $targetEffetProtection = $target->getEffectValue("protection");
+        $effetVulnerabilite = !empty($targetEffetVulnerabilite) ? $targetEffetVulnerabilite : 0;
+        $effetProtection = !empty($targetEffetProtection) ? $targetEffetProtection : 0;
+        $bonus = isset($targetRollBonus) ? $targetRollBonus : 0;
+        $totalOther = $bonus + $effetProtection - $effetVulnerabilite;
+        $targetTotal = array_sum($targetRoll) - $target->data->malus + $totalOther;
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-        $targetEsqTxt = ($targetEsq != 0) ? ' - '. $targetEsq .' (Esquive)' : '';
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetTotalTxt;
-        if($this->targetRollTrait == "cc" || $this->targetRollTrait == "agi"){
-            $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetEsqTxt . $malusTxt . $targetTotalTxt;
-        }
+        $tooltipOtherTxt = 
+            (!empty($actorEffetDexterite) || !empty($targetEffetVulnerabilite)
+            ? 'Effets :' .
+            (!empty($targetEffetProtection) ? ' ' . $effetProtection : '') .
+            (!empty($targetEffetVulnerabilite) ? ' - ' . $effetVulnerabilite : '') . ' '
+            : ''
+            ) .
+            (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
+        $targetOtherTxt = ($bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : $totalOther) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : '';
+        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
 
         return array($targetRoll, $targetTotal, $targetTxt);
     }

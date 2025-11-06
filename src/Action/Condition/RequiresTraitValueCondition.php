@@ -20,6 +20,7 @@ class RequiresTraitValueCondition extends BaseCondition
 
         $details = array();
         $costIsAffordable = true;
+
         foreach ($params as $key => $value) {
             if ($key == "energie") {
                 if ($value == "both") {
@@ -35,6 +36,32 @@ class RequiresTraitValueCondition extends BaseCondition
                     $costIsAffordable = false;
                     continue;
                 }
+            }    
+            else if(is_array($value)){
+                $passives = $actor->getPassives($actor->getId());
+                $defaultValue = 0;
+                if(!empty($passives)){
+                    foreach ($value as $item) {
+                        foreach ($passives as $passive) {
+                            if($passive->getName() == $item[0]){
+                                if($actor->getRemaining($key) < ($item[1])){
+                                    array_push($details, "Pas assez de ".CARACS[$key]);
+                                    $costIsAffordable = false;
+                                    break 3;
+                                }
+                                break 3;
+                            }
+                        }
+                        if($item[0] == "none"){
+                            $defaultValue = $item[1];
+                        }
+                    }  
+
+                }
+                if ($actor->getRemaining($key) < $defaultValue) {
+                    array_push($details, "Pas assez de ".CARACS[$key]);
+                    $costIsAffordable = false;
+                }    
             } else if ($actor->getRemaining($key) < $value) {
                 array_push($details, "Pas assez de ".CARACS[$key]);
                 $costIsAffordable = false;
@@ -55,6 +82,35 @@ class RequiresTraitValueCondition extends BaseCondition
         foreach ($parameters as $key => $value) {
             if ($key == "energie") {
                 continue;
+            }
+            if(is_array($value)){
+                $passives = $actor->getPassives($actor->getId());
+                $defaultValue = 0;
+                if(!empty($passives)){
+                    foreach ($value as $item) {
+                        foreach ($passives as $passive) {
+                            if($passive->getName() == $item[0]){
+                                $actor->putBonus([$key => -$item[1]]);
+                                $text = "Vous avez dépensé " . $item[1] . " " . CARACS[$key].".";
+                                array_push($result, $text);
+                                break 3;
+                            }
+                        }
+                        if($item[0] == "none"){
+                            $defaultValue = $item[1];
+                        }
+                    }  
+
+                }
+                foreach ($value as $item) {
+                    if($item[0] == "none"){
+                        $defaultValue = $item[1];
+                    }
+                }
+                $actor->putBonus([$key => -$defaultValue]);
+                $text = "Vous avez dépensé " . $defaultValue . " " . CARACS[$key].".";
+                array_push($result, $text);
+                break;
             }
             $actor->putBonus([$key => -$value]);
             $text = "Vous avez dépensé " . $value . " " . CARACS[$key].".";

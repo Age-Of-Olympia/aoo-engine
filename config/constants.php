@@ -170,6 +170,15 @@ define('EFFECTS_RA_FONT', array(
 
     'vol'=>'ra-feather-wing',
 
+    //nouveaux effets
+    'maladresse' => 'ra-cut-palm',
+    'dexterite' => 'ra-plain-dagger',
+    'vulnerabilite' => 'ra-broken-shield',
+    'protection' => 'ra-shield',
+    'aveuglement' => 'ra-bleeding-eye',
+    'acuite_visuelle' => 'ra-eyeball',
+    'ralentissement' => 'ra-snail',
+
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',
     'trace_pas_ne'=> 'ra-footprint',
@@ -220,10 +229,15 @@ define('ELE_DEBUFFS', array(
     'ronce'=>'agi',
     'boue'=>'f',
     'diamant'=>'m',
+    'aveuglement' => 'p',
 
     'styx'=>'mvt',
     'sang'=>'fm',
     'lave'=>'a',
+));
+
+define('ELE_BUFFS', array(
+    'acuite_visuelle' => 'p',
 ));
 
 define('ELE_CONTROLS', array(

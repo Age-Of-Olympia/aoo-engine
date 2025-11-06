@@ -11,7 +11,7 @@ use Classes\Str;
 #[ORM\Entity]
 class DropWeaponOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         $outcomeSuccessMessages = array();
         $outcomeFailureMessages = array();
         $params =$this->getParameters();

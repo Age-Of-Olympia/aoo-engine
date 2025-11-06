@@ -756,7 +756,7 @@ class ViewService {
         
         // Récupère tous les joueurs avec des coordonnées
         $sql = "
-            SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime
+            SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime, p.visible
             FROM players p 
             JOIN coords c ON c.id = p.coords_id
             WHERE c.x IS NOT NULL 
@@ -769,7 +769,7 @@ class ViewService {
         // Dessine chaque joueur
         foreach ($players as $player) {
             // Ignore si les coordonnées sont invalides
-            if (!isset($player['x']) || !isset($player['y'])) {
+            if (!isset($player['x']) || !isset($player['y']) || $player->visible == "furtif") {
                 continue;
             }
 
@@ -779,7 +779,8 @@ class ViewService {
 
             // Récupère la couleur pour la race
             // La couleur est noire par défaut si le personnage est à plus de 15 cases du joueur
-            $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > 15) ? $raceColors['default'] : ($raceColors[$player['race']] ?? $raceColors['default']);
+            $selectedRace = is_null($player->visible) ? $player['race'] : $player->visible;
+            $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > 15) ? $raceColors['default'] : ($raceColors[$selectedRace] ?? $raceColors['default']);
             
             // Convertit la couleur hexadécimale en RVB
             list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");

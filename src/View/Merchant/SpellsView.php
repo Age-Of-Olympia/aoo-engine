@@ -144,7 +144,7 @@ class SpellsView
 
             echo '
         <td>
-            <img src="img/spells/' . $e . '.jpeg" />
+            <img src="img/spells/' . (file_exists('img/spells/'.$e.'.jpeg') ? $e : 'todo') . '.jpeg" />
         </td>
         ';
 

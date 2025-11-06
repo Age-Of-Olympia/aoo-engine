@@ -10,7 +10,7 @@ use Classes\Str;
 #[ORM\Entity]
 class ObjectEffectOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
 
         $main1 = $actor->emplacements->main1;
 

@@ -185,18 +185,13 @@ class NewTurnView
                     }
 
 
-                    // recover Ae, A, Mvt
-                    $sql = '
-                DELETE FROM
-                players_bonus
-                WHERE
-                player_id = ?
-                AND
-                name IN("ae","a","mvt")
-                ';
+                // recover Ae, A, Mvt
+                $player->playerBonusService->recoverNewTurn($player->id);
 
-                    $db->exe($sql, $player->id);
-
+                if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"ralentissement")){
+                    $player->playerBonusService->setBonusByPlayerIdByName($player->id,"mvt",
+                    -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id,"ralentissement"));
+                }
 
                     // end effects
                     $sql = '

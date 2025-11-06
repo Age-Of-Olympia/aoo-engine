@@ -61,7 +61,7 @@ foreach($spellList as $e){
         continue;
     }
 
-    $img = 'img/spells/'. $e .'.jpeg';
+    $img = (file_exists('img/spells/'.$e.'.jpeg') ? 'img/spells/'. $e .'.jpeg' : 'img/spells/todo.jpeg');
 
     $costArray = $actionService->getCostsArray(null, $spell);
 

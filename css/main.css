@@ -1513,6 +1513,48 @@ blockquote{
     color: cyan;
 }
 
+/* maladresse */
+.ra-cut-palm{
+
+    color: red;
+}
+
+/* dexterite */
+.ra-plain-dagger{
+
+    color: #66d9ff;
+}
+
+/* ralentissement */
+.ra-snail{
+
+    color: red;
+}
+
+/* aveuglement */
+.ra-bleeding-eye{
+
+    color: red;
+}
+
+/* acuite-visuelle */
+.ra-eyeball{
+
+    color: green;
+}
+
+/* vulnerabilite */
+.ra-broken-shield{
+
+    color: red;
+}
+
+/* protection */
+.ra-shield{
+
+    color: #66d9ff;
+}
+
 /* sorts de soins */
 .ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{
 

@@ -15,7 +15,7 @@ class DistanceComputeCondition extends ComputeCondition
         return floor(($this->distance) * 2.5);
     }
 
-    protected function computeTarget($target, $dice)
+    protected function computeTarget($target, $dice, $targetRollBonus)
     {
         $trait1 = $target->caracs->cc;
         $trait2 = $target->caracs->agi;

@@ -10,7 +10,7 @@ use Classes\View;
 #[ORM\Entity]
 class TeleportOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "coords": "target" }
 

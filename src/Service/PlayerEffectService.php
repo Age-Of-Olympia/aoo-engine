@@ -22,6 +22,33 @@ class PlayerEffectService
         return $repo->findBy(['player_id' => $playerId]);
     }
 
+    public function getEffectValueByPlayerIdByEffectName(int $playerId, string $name): int
+    {
+        $repo = $this->entityManager->getRepository(PlayerEffect::class);
+
+        $results = $repo->findBy([
+            'player_id' => $playerId,
+            'name' => $name
+        ]);
+
+        if(!empty($results)){
+            return $results[0]->getValue();
+        }
+        return 0;
+    }
+
+    public function hasEffectByPlayerIdByEffectName(int $playerId, string $name): bool
+    {
+        $repo = $this->entityManager->getRepository(PlayerEffect::class);
+
+        $results = $repo->findBy([
+            'player_id' => $playerId,
+            'name' => $name
+        ]);
+
+        return !empty($results);
+    }
+
     public function removeAllEffectsForPlayer(int $playerId)
     {
         $repo = $this->entityManager->getRepository(PlayerEffect::class);

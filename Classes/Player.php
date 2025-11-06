@@ -5,6 +5,10 @@ use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
 use App\Service\PlayerService;
+use App\Service\PlayerReductionPassiveService;
+use App\Service\PlayerPassiveService;
+use App\Service\PlayerEffectService;
+use App\Service\PlayerBonusService;
 use Exception;
 use Throwable;
 
@@ -18,10 +22,16 @@ class Player implements ActorInterface {
     public $nude;
     public $raceData;
     public $debuffs;
+    public $buffs;
     public $turn;
     public $emplacements;
     public $row;
     public $playerService;
+    public $playerReductionPassiveService;
+    public $playerPassiveService;
+    public $playerEffectService;
+    public $playerBonusService;
+    
     function __construct($playerId){
 
         $this->id = $playerId;
@@ -30,6 +40,12 @@ class Player implements ActorInterface {
         $this->upgrades = (object) array();
         $this->emplacements = (object) array();
         $this->playerService = new PlayerService($playerId);
+        $this->playerReductionPassiveService = new PlayerReductionPassiveService();
+        $this->playerPassiveService = new PlayerPassiveService();
+        $this->playerEffectService = new PlayerEffectService();
+        $this->playerBonusService = new PlayerBonusService();
+
+        $this->playerPassiveService->setEsquivePlayer($this);
     }
 
     public function getId(): int {
@@ -88,7 +104,6 @@ class Player implements ActorInterface {
             return false;
         }
 
-
         $this->nude = clone $this->caracs;
 
 
@@ -127,24 +142,32 @@ class Player implements ActorInterface {
         // Esquive
         if(!empty($item->data->esquive)){
 
-            $this->caracs->esquive = $item->data->esquive;
+            $this->caracs->esquive = (isset($this->caracs->esquive)) ? $this->caracs->esquive + $item->data->esquive : $item->data->esquive;
         }
 
         // elements de debuffs
-        $effectsList = $this->get_effects();
+        $effectsList = $this->playerEffectService->getEffectsByPlayerId($this->id);
 
         $this->debuffs = (object) array();
-
+        $this->buffs = (object) array();
 
         foreach($effectsList as $e){
 
 
-            if(!empty(ELE_DEBUFFS[$e])){
+            if(!empty(ELE_DEBUFFS[$e->getName()])){
 
 
-                $this->caracs->{ELE_DEBUFFS[$e]} -= 1;
+                $this->caracs->{ELE_DEBUFFS[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
 
-                $this->debuffs->{ELE_DEBUFFS[$e]} = $e;
+                $this->debuffs->{ELE_DEBUFFS[$e->getName()]} = $e->getName();
+            }
+
+            if(!empty(ELE_BUFFS[$e->getName()])){
+
+
+                $this->caracs->{ELE_BUFFS[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
+
+                $this->buffs->{ELE_BUFFS[$e->getName()]} = $e->getName();
             }
         }
 
@@ -192,6 +215,9 @@ class Player implements ActorInterface {
         return true;
     }
 
+    public function setEsquive(int $esquive): void{
+        $this->caracs->esquive = $esquive;
+    }
 
     public function get_caracsJson(){
 
@@ -465,18 +491,10 @@ class Player implements ActorInterface {
     // effects
     public function haveEffect(string $name): int{
 
-        return $this->have('effects', $name);
+        return $this->playerEffectService->hasEffectByPlayerIdByEffectName($this->id,$name);
     }
 
-    public function addEffect($name, $duration=0): void{
-
-
-        // effect exists
-        if(!isset(EFFECTS_RA_FONT[$name])){
-
-            exit('error effect name');
-        }
-
+    public function addEffect($name, $duration=0, int $value=1, bool $stackable=false): void{
 
         // duration (0 is unlimited)
         if($duration == 0){
@@ -489,20 +507,13 @@ class Player implements ActorInterface {
             $endTime = time() + $duration;
         }
 
+        $this->playerEffectService->addEffectByPlayerId($this->id,$name,$endTime,$value, $stackable);
 
-        $sql = '
-        INSERT INTO
-        players_effects
-        (player_id, name, endTime)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-        endTime = VALUES(endTime);
-        ';
+        // effect exists
+        if(!isset(EFFECTS_RA_FONT[$name])){
 
-        $db = new Db();
-
-        $db->exe($sql, array($this->id, $name, $endTime));
-
+            exit('error effect name');
+        }
 
         // element control
         if(!empty(ELE_CONTROLS[$name])){
@@ -528,22 +539,19 @@ class Player implements ActorInterface {
         }
     }
 
-    public function get_effects(){
+    public function getEffects(){
 
-        return $this->get('effects');
+        return $this->playerEffectService->getEffectsByPlayerId($this->id);
+    }
+
+    public function getEffectValue($name){
+
+        return $this->playerEffectService->getEffectValueByPlayerIdByEffectName($this->id,$name);
     }
 
     public function endEffect(string $name): void{
 
-
-        $values = array(
-            'player_id'=>$this->id,
-            'name'=>$name
-        );
-
-        $db = new Db();
-
-        $db->delete('players_effects', $values);
+        $this->playerEffectService->removeEffectByPlayerId($this->id,$name);
     }
 
     public function purge_effects(): int{
@@ -1459,6 +1467,7 @@ class Player implements ActorInterface {
                 $item->id
             ));
 
+            $this->applyUnequipItemBonus($item);
 
             // refresh view when P change
             if(isset($item->data->p)){
@@ -1582,6 +1591,7 @@ class Player implements ActorInterface {
                 $item->id
             ));
             
+            $this->applyEquipItemBonus($item);
 
             // equip munitions
             if($munition = $this->getMunition($item)){
@@ -1607,6 +1617,66 @@ class Player implements ActorInterface {
         }
 
         return $return;
+    }
+
+    public function applyEquipItemBonus(Item $item): void {
+        $db = new Db();
+
+        // Associe chaque bonus possible à sa valeur si elle existe
+        $bonusMap = [
+            'mvt' => $item->data->mvt ?? null,
+            'pv'  => $item->data->pv ?? null,
+            'pm'  => $item->data->pm ?? null,
+        ];
+
+        foreach ($bonusMap as $name => $value) {
+            if ($value !== null) {
+
+                // Crée la ligne si elle n'existe pas encore
+                $sql = '
+                    INSERT IGNORE INTO players_bonus (player_id, name, n)
+                    VALUES (?, ?, 0)
+                ';
+                $db->exe($sql, [$this->id, $name]);
+
+                // Met à jour la valeur (soustrait le bonus)
+                $sql = '
+                    UPDATE players_bonus
+                    SET n = n - ?
+                    WHERE player_id = ? AND name = ?
+                ';
+                $db->exe($sql, [(float)$value, $this->id, $name]);
+            }
+        }
+    }
+
+    public function applyUnequipItemBonus(Item $item): void {
+        $db = new Db();
+
+        $bonusMap = [
+            'mvt' => $item->data->mvt ?? null,
+            'pv'  => $item->data->pv ?? null,
+            'pm'  => $item->data->pm ?? null,
+        ];
+
+        foreach ($bonusMap as $name => $value) {
+            if ($value !== null) {
+                // On réajoute le bonus
+                $sql = '
+                    INSERT INTO players_bonus (player_id, name, n)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE n = n + VALUES(n)
+                ';
+                $db->exe($sql, [$this->id, $name, (float)$value]);
+
+                // On supprime la ligne si le bonus devient nul ou positif
+                $sql = '
+                    DELETE FROM players_bonus
+                    WHERE player_id = ? AND name = ? AND n >= 0
+                ';
+                $db->exe($sql, [$this->id, $name]);
+            }
+        }
     }
 
     public function get_max_spells() : int{
@@ -2219,5 +2289,9 @@ class Player implements ActorInterface {
         $sql = 'DELETE FROM players_assists WHERE time < ?';
         $res = $db->exe($sql, array($timeLimit));
         return $res;
+    }
+
+    public function getPassives($playerId): array{
+        return $this->playerReductionPassiveService->getPassivesByPlayerId($playerId);
     }
 }

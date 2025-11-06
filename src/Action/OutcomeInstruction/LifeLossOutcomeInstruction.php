@@ -11,13 +11,15 @@ use Classes\View;
 #[ORM\Entity]
 class LifeLossOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
         $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
         $bonusTraitDamages = $this->getParameters()['bonusDamagesTrait'] ?? 0;
         $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
+        $othersDamages = 0;
+        $othersDefense = 0;
         $distanceInfluence = $this->getParameters()['distance'] ?? false;
         $targetIgnore = $this->getParameters()['targetIgnore'] ?? false;
         $actorIgnore = $this->getParameters()['actorIgnore'] ?? false;
@@ -32,6 +34,18 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             $this->updatePlayerCaracsWithIgnores($actorIgnore, $actor);
         }
 
+        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
+            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
+                $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdByName($actor->id,$actorPassive->getName());
+            }
+        }
+
+        foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
+            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
+                $othersDefense += $target->playerPassiveService->getComputedValueByPlayerIdByName($target->id,$targetPassive->getName());
+            }
+        }
+
         if(!empty($actorTraitDamages) && !empty($targetTraitDamagesTaken)){
             $actorDamages = (is_numeric($actorTraitDamages)) ? $actorTraitDamages : $actor->caracs->{$actorTraitDamages};
             $targetDefense = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
@@ -40,7 +54,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             
             $baseDamages = $actorDamages - $targetDefense;
         
-            $additionalDamages = $bonusDamages - $bonusDefense;
+            $additionalDamages = ($bonusDamages + $othersDamages) - ($bonusDefense + $othersDefense);
 
             //minimum damages seulement si l'adversaire à une defense bonus
             if($bonusDefense > 0){
@@ -79,7 +93,17 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 if (!is_numeric($bonusTraitDamages)) {
                     $bonusText = ' '.CARACS[$bonusTraitDamages];
                 }
-                $bonusDamagesText = ' + ' . $bonusDamages. ' (bonus'.$bonusText.')';
+                $bonusDamagesText = ' + ' . $bonusDamages. ' (Bonus'.$bonusText.')';
+            }
+            if ($othersDamages > 0) {
+                $othersDamagesText = ' + ' . $othersDamages. ' (Bonus compétence)';
+            }
+            if ($bonusDamages < 0) {
+                $bonusText = '';
+                if (!is_numeric($bonusTraitDamages)) {
+                    $bonusText = ' '.CARACS[$bonusTraitDamages];
+                }
+                $bonusDamagesText = ' - ' . abs($bonusDamages). ' (Bonus'.$bonusText.')';
             }
             $bonusDefenseText = "";
             if ($bonusDefense > 0) {
@@ -87,13 +111,20 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 if (!is_numeric($bonusTraitDefense)) {
                     $bonusText = ' '.CARACS[$bonusTraitDefense];
                 }
-                $bonusDefenseText = ' + ' . $bonusDefense. ' (bonus defense'.$bonusText.')';
+                $bonusDefenseText = ' + ' . $bonusDefense. ' (Bonus défense'.$bonusText.')';
+            }
+            if ($bonusDefense < 0) {
+                $bonusText = '';
+                if (!is_numeric($bonusTraitDefense)) {
+                    $bonusText = ' '.CARACS[$bonusTraitDefense];
+                }
+                $bonusDefenseText = ' - ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
             }
             $distanceText = "";
             if ($distanceInfluence) {
-                $distanceText = ' - '. $cellCount. ' (distance)';
+                $distanceText = ' - '. $cellCount. ' (Distance)';
             }
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. $othersDamagesText . ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
 
             // put assist
             $actor->put_assist($target, $totalDamages);

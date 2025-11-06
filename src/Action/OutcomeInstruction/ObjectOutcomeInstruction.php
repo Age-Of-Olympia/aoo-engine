@@ -11,7 +11,7 @@ use Classes\View;
 #[ORM\Entity]
 class ObjectOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target): OutcomeResult {
+    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
 
         // e.g. {"action":"steal", "object": 1 }
         $action = $this->getParameters()['action'] ?? '';
