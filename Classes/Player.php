@@ -1002,9 +1002,6 @@ class Player implements ActorInterface {
 
                 if($val < 0){
 
-
-                    $this->put_malus(MALUS_PER_DAMAGES);
-
                     // add blood on floor
                     Element::put('sang', $this->data->coords_id);
                 }

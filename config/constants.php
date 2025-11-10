@@ -527,7 +527,6 @@ define('TRAVEL_COST', 15);      // travelling cost 15Po
 define('ENERGIE_CST', 7);        // valeur de la constante d'énergie
 define('MALUS_PER_REST', 4);      // resting delete 4 malus
 define('MALUS_PER_MINE', 20);      // malus quand on creuse sans pioche
-define('MALUS_PER_DAMAGES', 2); // when damages are done, add 2 malus
 define('MALUS_PER_TURNS', 9);   // recup 9 malus / turns
 define('XP_PER_TURNS', 5);      // base 5 xp - rank / turns
 define('XP_PER_MINE', 1);       // chaque case creusé rapporte 1xp

@@ -87,7 +87,8 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
             $target->putBonus(array('pv'=>-$totalDamages));
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
-            $bonusDamagesText = "";
+            $bonusDamagesText = '';
+            $othersDamagesText = '';
             if ($bonusDamages > 0) {
                 $bonusText = '';
                 if (!is_numeric($bonusTraitDamages)) {
@@ -124,7 +125,15 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             if ($distanceInfluence) {
                 $distanceText = ' - '. $cellCount. ' (Distance)';
             }
+
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. $othersDamagesText . ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
+            
+            $malus = random_int(1,3);
+            $recoverMalus = floor($totalDamages/2);
+
+            $target->put_malus($malus-$recoverMalus);
+            $malusText = ($malus - $recoverMalus > 0) ? 'subit ' : ' récupère ';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus) . ' <span style="text-decoration: underline;" title="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . '">malus</span>.';
 
             // put assist
             $actor->put_assist($target, $totalDamages);

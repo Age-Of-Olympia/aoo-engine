@@ -3,7 +3,6 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
-use Classes\View;
 
 class ForbidOnEquipedObjectStatusCondition extends BaseCondition
 {

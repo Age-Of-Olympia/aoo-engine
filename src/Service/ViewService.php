@@ -779,7 +779,15 @@ class ViewService {
 
             // Récupère la couleur pour la race
             // La couleur est noire par défaut si le personnage est à plus de 15 cases du joueur
-            $selectedRace = is_null($player->visible) ? $player['race'] : $player->visible;
+            // On n'affiche pas la case si le joueur est tagué comme invisible
+            $selectedRace = $player['race'];
+            if(!is_null($player->visible)){
+                if($player->visible == 'invisible'){
+                    continue;
+                }
+                $selectedRace = $player->visible;
+            }
+
             $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > 15) ? $raceColors['default'] : ($raceColors[$selectedRace] ?? $raceColors['default']);
             
             // Convertit la couleur hexadécimale en RVB

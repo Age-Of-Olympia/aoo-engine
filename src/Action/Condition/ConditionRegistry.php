@@ -25,10 +25,15 @@ class ConditionRegistry
             'RequiresResource' => new RequiresResourceCondition(),
             
             'Compute' => new ComputeCondition(),
+            'ComputePure' => new ComputePureCondition(), // Jet pur, sans prise en compte des Malus ou des Effets
             'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?
-            'DistanceCompute' => new DistanceComputeCondition(),
+            'MeleePureCompute' => new MeleePureComputeCondition(), 
+            'DistanceCompute' => new DistanceComputeCondition(), 
+            'DistancePureCompute' => new DistancePureComputeCondition(),
             'SpellCompute' => new SpellComputeCondition(),
+            'SpellPureCompute' => new SpellPureComputeCondition(),
             'TechniqueCompute' => new TechniqueComputeCondition(),
+            'TechniquePureCompute' => new TechniquePureComputeCondition(),
 
             'Dodge' => new DodgeCondition(),
             'RequiresGodAffiliation' => new RequiresGodAffiliationCondition(),
