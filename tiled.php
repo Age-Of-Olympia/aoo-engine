@@ -506,6 +506,8 @@ echo '
     <button id="ajax-data-close" title="Fermer">✕</button>
 </div>
 
+<div id="admin-coords"></div>
+
 <script>
 // Close ajax-data box when clicking the X button
 document.addEventListener("DOMContentLoaded", function() {
@@ -545,7 +547,8 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script src="js/tiled.js?v=20251111u"></script>
+<script src="js/admin-tools.js?v=20251111i"></script>
+<script src="js/tiled.js?v=20251111i"></script>
 
 
 

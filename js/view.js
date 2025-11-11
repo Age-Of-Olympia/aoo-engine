@@ -3,6 +3,36 @@ $(document).ready(function(){
 
     window.clickedCases = [];
 
+    // Right-click coordinate tool (available for everyone, TP button only for admins)
+    $(document).on('contextmenu', '.case', function(e) {
+        e.preventDefault();
+
+        var coords = $(this).data('coords');
+
+        if(!coords) {
+            return;
+        }
+
+        let [x, y] = coords.split(',');
+
+        // Build HTML with coords button (always shown) and TP button (admin only)
+        var html = '<button id="admin-coords-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button>';
+
+        if(window.isAdmin) {
+            html += '<br><button onclick="teleport(\'' + coords + '\')">TP</button>';
+        }
+
+        html += '</div>';
+
+        $('#admin-coords').html(html);
+
+        // Bind close button
+        $('#admin-coords-close').off('click').on('click', function(e) {
+            e.stopPropagation();
+            $('#admin-coords').html('');
+        });
+    });
+
 
     $('.case').click(function(e){
 

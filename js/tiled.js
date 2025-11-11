@@ -172,67 +172,6 @@ $(document).on("click", ".delete-btn", function () {
   });
 });
 
-function teleport(coords){
-
-  if(!confirm('TP?')){
-      return false;
-  }
-
-  // Remember current selection
-  var $selected = $('.map.selected');
-  var selectedToolName = $selected.data('name');
-  var selectedToolSrc = $selected.attr('src');
-  var selectedParams = $selected.data('params') ? $('#' + $selected.data('type') + '-params').val() : '';
-
-  $.ajax({
-      type: "POST",
-      url: 'tiled.php',
-      data: {
-          'coords':coords,
-          'type':'tp',
-          'src':1
-      }, // serializes the form's elements.
-      success: function(data)
-      {
-        // Reload only the map view
-        $.ajax({
-          type: "GET",
-          url: 'tiled.php',
-          data: {'view_only': 1},
-          success: function(viewHtml) {
-            $('#map-view-container').html(viewHtml);
-
-            // Reselect tool if there was one
-            if(selectedToolName) {
-              $('.map').filter(function() {
-                return $(this).data('name') === selectedToolName;
-              }).each(function() {
-                $(this).addClass('selected').css('border', '1px solid red');
-                var $customCursor = $('.custom-cursor');
-                $customCursor.attr('src', selectedToolSrc).show();
-
-                // Rebind mousemove handler for cursor tracking
-                $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
-                  $customCursor.css({
-                    left: e.pageX - 25 +'px',
-                    top: e.pageY - 25+'px'
-                  });
-                });
-
-                if(selectedParams) {
-                  $('#' + $(this).data('type') + '-params').val(selectedParams);
-                }
-              });
-            }
-          }
-        });
-      }
-  });
-
-
-}
-
-
 $(document).ready(function(){
 
 
@@ -261,18 +200,16 @@ $(document).ready(function(){
 
     let [x, y] = coords.split(',');
 
-    // show coords button
-    $('#ajax-data').html('<button id="ajax-data-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">'+coordsFull+'</button><br>'+
+    // show coords button in separate admin container
+    $('#admin-coords').html('<button id="admin-coords-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">'+coordsFull+'</button><br>'+
         '<button onclick="teleport(\'' +coords + '\')">TP</button><br>'+
         '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
         '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
 
-    $('#ajax-data').addClass('has-content');
-
     // Rebind close button
-    $('#ajax-data-close').off('click').on('click', function(e) {
+    $('#admin-coords-close').off('click').on('click', function(e) {
         e.stopPropagation();
-        $('#ajax-data').html('<button id="ajax-data-close" title="Fermer">✕</button>').removeClass('has-content');
+        $('#admin-coords').html('');
     });
 
 
