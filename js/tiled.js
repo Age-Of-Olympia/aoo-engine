@@ -115,6 +115,12 @@ function displayInfo(infosJson){
 
 //Delete button on "info" modal
 $(document).on("click", ".delete-btn", function () {
+  // Remember current selection
+  var $selected = $('.map.selected');
+  var selectedToolName = $selected.data('name');
+  var selectedToolSrc = $selected.attr('src');
+  var selectedParams = $selected.data('params') ? $('#' + $selected.data('type') + '-params').val() : '';
+
   $.ajax({
     type: "POST",
     url: 'tiled.php',
@@ -122,19 +128,61 @@ $(document).on("click", ".delete-btn", function () {
       'delete':1,
       'coord-id':$(this).data("coord-id"),
       'type': $(this).data("type")
-    }, 
+    },
     success: function()
     {
-      document.location='tiled.php';
+      // Reload only the map view
+      $.ajax({
+        type: "GET",
+        url: 'tiled.php',
+        data: {'view_only': 1},
+        success: function(viewHtml) {
+          $('#map-view-container').html(viewHtml);
+          // Close the modal
+          const infoModal = document.getElementById('tile-info');
+          if(infoModal) {
+            infoModal.style.display = 'none';
+          }
+
+          // Reselect tool if there was one
+          if(selectedToolName) {
+            $('.map').filter(function() {
+              return $(this).data('name') === selectedToolName;
+            }).each(function() {
+              $(this).addClass('selected').css('border', '1px solid red');
+              var $customCursor = $('.custom-cursor');
+              $customCursor.attr('src', selectedToolSrc).show();
+
+              // Rebind mousemove handler for cursor tracking
+              $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
+                $customCursor.css({
+                  left: e.pageX - 25 +'px',
+                  top: e.pageY - 25+'px'
+                });
+              });
+
+              if(selectedParams) {
+                $('#' + $(this).data('type') + '-params').val(selectedParams);
+              }
+            });
+          }
+        }
+      });
     }
   });
 });
 
 function teleport(coords){
-  
+
   if(!confirm('TP?')){
       return false;
   }
+
+  // Remember current selection
+  var $selected = $('.map.selected');
+  var selectedToolName = $selected.data('name');
+  var selectedToolSrc = $selected.attr('src');
+  var selectedParams = $selected.data('params') ? $('#' + $selected.data('type') + '-params').val() : '';
 
   $.ajax({
       type: "POST",
@@ -146,8 +194,38 @@ function teleport(coords){
       }, // serializes the form's elements.
       success: function(data)
       {
-          // alert(data);
-        document.location='tiled.php';
+        // Reload only the map view
+        $.ajax({
+          type: "GET",
+          url: 'tiled.php',
+          data: {'view_only': 1},
+          success: function(viewHtml) {
+            $('#map-view-container').html(viewHtml);
+
+            // Reselect tool if there was one
+            if(selectedToolName) {
+              $('.map').filter(function() {
+                return $(this).data('name') === selectedToolName;
+              }).each(function() {
+                $(this).addClass('selected').css('border', '1px solid red');
+                var $customCursor = $('.custom-cursor');
+                $customCursor.attr('src', selectedToolSrc).show();
+
+                // Rebind mousemove handler for cursor tracking
+                $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
+                  $customCursor.css({
+                    left: e.pageX - 25 +'px',
+                    top: e.pageY - 25+'px'
+                  });
+                });
+
+                if(selectedParams) {
+                  $('#' + $(this).data('type') + '-params').val(selectedParams);
+                }
+              });
+            }
+          }
+        });
       }
   });
 
@@ -173,7 +251,8 @@ $(document).ready(function(){
   selectPreviousTool($customCursor);
 
 
-$('.case').on('contextmenu', function(e) {
+  // Use event delegation so it works with dynamically loaded map content
+  $(document).on('contextmenu', '.case', function(e) {
     e.preventDefault();
 
     var coords = $(this).data('coords');
@@ -192,7 +271,8 @@ $('.case').on('contextmenu', function(e) {
 
   });
 
-  $('.case').click(function(e){
+  // Use event delegation so it works with dynamically loaded map content
+  $(document).on('click', '.case', function(e){
 
       var $selected = $('.selected');
 
@@ -226,6 +306,10 @@ $('.case').on('contextmenu', function(e) {
       }
 
 
+      // Store current selection before AJAX
+      var selectedToolName = $selected.data('name');
+      var selectedToolSrc = $selected.attr('src');
+
       $.ajax({
           type: "POST",
           url: 'tiled.php',
@@ -237,8 +321,44 @@ $('.case').on('contextmenu', function(e) {
           }, // serializes the form's elements.
           success: function(data)
           {
-            // alert(data);
-            document.location='tiled.php?selectedTool='+$selected.data('name')+'&selectedParams='+params;
+            // Reload only the map view instead of the entire page
+            $.ajax({
+              type: "GET",
+              url: 'tiled.php',
+              data: {
+                'view_only': 1,
+                'selectedTool': selectedToolName,
+                'selectedParams': params
+              },
+              success: function(viewHtml) {
+                $('#map-view-container').html(viewHtml);
+
+                // Reselect the tool after map reload
+                $('.map').filter(function() {
+                  return $(this).data('name') === selectedToolName;
+                }).each(function() {
+                  $(this).addClass('selected').css('border', '1px solid red');
+
+                  // Update cursor and rebind mousemove
+                  var $customCursor = $('.custom-cursor');
+                  $customCursor.attr('src', selectedToolSrc).show();
+
+                  // Rebind mousemove handler for cursor tracking
+                  $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
+                    $customCursor.css({
+                      left: e.pageX - 25 +'px',
+                      top: e.pageY - 25+'px'
+                    });
+                  });
+
+                  // Restore params if any
+                  var $paramsField = $('#' + $(this).data('type') + '-params');
+                  if($paramsField.length && params) {
+                    $paramsField.val(params);
+                  }
+                });
+              }
+            });
           }
       });
   });
