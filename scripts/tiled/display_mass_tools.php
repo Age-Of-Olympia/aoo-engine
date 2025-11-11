@@ -1,25 +1,15 @@
 <?php
 
 
-?><h3>Appliquer sur une zone</h3>
-
-<div>
-
- <style>
-        .small-input {
-          max-width: 50px ;
-        }
-    </style>
-    
-<div>
-    <div id="zone-tiles">
-      Debut:<br/>
-       x<input type="text" class="small-input" id="zone-params-begin-x" />  y<input type="text" class="small-input" id="zone-params-begin-y" />  <br/>
-      Fin: <br/>
-       x<input type="text" class="small-input" id="zone-params-end-x" />  y<input type="text" class="small-input" id="zone-params-end-y" />
-       <br/>
-       <button id="zone-apply">Appliquer</button>
-    </div>
+?><span style="font-size: 11px; font-weight: bold;">Zone:</span>
+<div style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
+    <span style="font-size: 10px;">Début</span>
+    x<input type="text" style="width: 40px; padding: 2px;" id="zone-params-begin-x" />
+    y<input type="text" style="width: 40px; padding: 2px;" id="zone-params-begin-y" />
+    <span style="font-size: 10px;">Fin</span>
+    x<input type="text" style="width: 40px; padding: 2px;" id="zone-params-end-x" />
+    y<input type="text" style="width: 40px; padding: 2px;" id="zone-params-end-y" />
+    <button id="zone-apply" style="padding: 4px 8px; font-size: 11px;">Appliquer</button>
 </div>
 
 
