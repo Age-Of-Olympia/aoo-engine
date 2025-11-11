@@ -1,7 +1,8 @@
 <?php
 use Classes\File;
 
-echo '<h3>Déclencheurs (invisibles)</h3>';
+echo '<details>';
+echo '<summary style="cursor: pointer; font-weight: bold; margin: 10px 0;"><h3 style="display: inline;">Déclencheurs (invisibles)</h3></summary>';
 
 echo '
 <div>
@@ -34,6 +35,7 @@ foreach(File::scan_dir('img/triggers/', without:".png") as $e){
         data-params="'. $params .'"
         data-name="'. $e .'"
         src="img/triggers/'. $e .'.png"
+        loading="lazy"
     />';
 }
 
@@ -43,5 +45,6 @@ echo '<div>Params: <input type="text" id="triggers-params" /></div>';
 
 echo '
 </div>
+</details>
 ';
 
