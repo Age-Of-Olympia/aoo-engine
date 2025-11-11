@@ -379,10 +379,10 @@ $(document).ready(function(){
 
           let params = $(this).data('params');
 
-          // if($paramsField.val() == ''){
-
+          // Only set default params if field is empty - preserve user input
+          if($paramsField.val() == ''){
               $paramsField.val(params);
-          // }
+          }
 
           // Only focus on desktop to avoid unwanted scrolling on mobile
           if (window.innerWidth > 768) {
@@ -390,7 +390,10 @@ $(document).ready(function(){
           }
         }
         else{
-          $paramsField.val('');
+          // Only clear field if it's empty - preserve user input for tools without default params
+          if($paramsField.val() == ''){
+            $paramsField.val('');
+          }
         }
 
         $('.map').removeClass('selected').css('border', '0px');
