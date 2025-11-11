@@ -262,11 +262,19 @@ $(document).ready(function(){
     let [x, y] = coords.split(',');
 
     // show coords button
-    $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
+    $('#ajax-data').html('<button id="ajax-data-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
         '<button OnClick="copyToClipboard(this);">'+coordsFull+'</button><br>'+
         '<button onclick="teleport(\'' +coords + '\')">TP</button><br>'+
         '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
         '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
+
+    $('#ajax-data').addClass('has-content');
+
+    // Rebind close button
+    $('#ajax-data-close').off('click').on('click', function(e) {
+        e.stopPropagation();
+        $('#ajax-data').html('<button id="ajax-data-close" title="Fermer">✕</button>').removeClass('has-content');
+    });
 
 
   });
@@ -377,7 +385,10 @@ $(document).ready(function(){
               $paramsField.val(params);
           // }
 
-          $paramsField.focus().select();
+          // Only focus on desktop to avoid unwanted scrolling on mobile
+          if (window.innerWidth > 768) {
+            $paramsField.focus().select();
+          }
         }
         else{
           $paramsField.val('');
