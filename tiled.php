@@ -96,6 +96,11 @@ $view = new View($player->coords, p:10, tiled:true);
 
 $data = $view->get_view();
 
+// View-only mode: return just the map view HTML for AJAX refresh
+if(!empty($_GET['view_only'])){
+    echo $data;
+    exit();
+}
 
 
 echo '
@@ -109,7 +114,7 @@ echo '
         flex-direction: column;
     }
 
-    @media (max-width: 1200px) { 
+    @media (max-width: 1200px) {
             #tool-div {
                  flex-direction: row;
             }
@@ -117,7 +122,7 @@ echo '
 
 </style>
 
-<div style="float: left; width: 85%;">
+<div id="map-view-container" style="float: left; width: 85%;">
 <script src="js/modal.js"></script>
 
 ';
@@ -174,7 +179,7 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script src="js/tiled.js"></script>
+<script src="js/tiled.js?v=20251111e"></script>
 
 
 
