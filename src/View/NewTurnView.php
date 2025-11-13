@@ -10,6 +10,11 @@ class NewTurnView
 {
     public static function renderNewTurn(Player $player): void
     {
+        // Skip new turn for tutorial players
+        if (!empty($_SESSION['in_tutorial'])) {
+            return;
+        }
+
         if ($_SESSION['playerId'] == $_SESSION['originalPlayerId']) {
             $_SESSION['nonewturn'] = false;
         }

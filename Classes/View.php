@@ -12,9 +12,10 @@ class View{
     private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
     private $options; // player->get_options()
+    private $playerId; // ID du joueur pour qui la vue est générée
 
 
-    function __construct($coords, $p, $tiled=false, $options=array()){
+    function __construct($coords, $p, $tiled=false, $options=array(), $playerId=null){
 
 
         $this->coords = $coords;
@@ -27,6 +28,9 @@ class View{
 
         $this->useTbl = array();
         $this->options = $options;
+
+        // Use provided playerId or fall back to session
+        $this->playerId = $playerId ?? ($_SESSION['playerId'] ?? null);
     }
    
     //outCoords && $outCoordsId are passed by reference initialized is resposability of caller
@@ -279,12 +283,12 @@ class View{
                     $player->get_data();
 
                     // Les joueurs normaux sont soumis aux règles de visibilité
-                    if ($_SESSION['playerId'] > 0) {
+                    if ($this->playerId > 0) {
                         // Masquer les autres joueurs si :
                         // 1. Le JSON du plan n'existe pas OU
                         // 2. Le JSON du plan existe et player_visibility est explicitement défini sur false
                         if ((!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false))
-                            && $row->id > 0 && $row->id != $_SESSION['playerId']) {
+                            && $row->id > 0 && $row->id != $this->playerId) {
                             continue;
                         }
                     }

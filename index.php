@@ -50,7 +50,25 @@ elseif(isset($_GET['logout'])){
 
 
 ob_start();
-$player = new Player($_SESSION['playerId']);
+
+// DEBUG: Show session state (remove this later)
+if ($_SESSION['playerId'] == 7) {
+    error_log("INDEX.PHP SESSION DEBUG:");
+    error_log("  playerId: " . ($_SESSION['playerId'] ?? 'NOT SET'));
+    error_log("  in_tutorial: " . ($_SESSION['in_tutorial'] ?? 'NOT SET'));
+    error_log("  tutorial_player_id: " . ($_SESSION['tutorial_player_id'] ?? 'NOT SET'));
+}
+
+// Use tutorial character if in tutorial mode
+$playerId = $_SESSION['playerId'];
+if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_player_id'])) {
+    $playerId = $_SESSION['tutorial_player_id'];
+    error_log("  USING TUTORIAL PLAYER: $playerId");
+} else {
+    error_log("  USING REAL PLAYER: $playerId");
+}
+
+$player = new Player($playerId);
 $player->get_data(false);
 ?>
 <div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>

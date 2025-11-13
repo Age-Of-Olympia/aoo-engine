@@ -1,0 +1,332 @@
+/**
+ * Tutorial System CSS
+ * Age of Olympia v4 - Tutorial Mode Styling
+ */
+
+/* Tutorial Overlay - very subtle, doesn't block view */
+#tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1); /* Much lighter, barely visible */
+    z-index: 9998;
+    display: none;
+    pointer-events: none; /* Allow clicking through */
+}
+
+/* Tutorial Controls - fixed at top */
+#tutorial-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 20px;
+    border-radius: 10px;
+    z-index: 10001;
+    min-width: 250px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border: 2px solid #4CAF50;
+}
+
+#tutorial-progress {
+    color: white;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* XP Bar */
+#tutorial-xp-bar {
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+.xp-bar-container {
+    width: 100%;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.5s ease-out;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.xp-text {
+    color: white;
+    font-size: 11px;
+    text-align: center;
+}
+
+/* Tutorial Buttons */
+.btn-tutorial-primary,
+.btn-tutorial-secondary {
+    padding: 8px 16px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.btn-tutorial-primary {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-tutorial-primary:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
+.btn-tutorial-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-tutorial-secondary {
+    background: #666;
+    color: white;
+    width: 100%;
+}
+
+.btn-tutorial-secondary:hover {
+    background: #555;
+}
+
+/* Tooltip Styles */
+.tutorial-tooltip {
+    position: fixed; /* Changed from absolute to fixed */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    max-width: 450px;
+    min-width: 350px;
+    display: none;
+    /* Default position: bottom-left */
+    bottom: 20px;
+    left: 20px;
+}
+
+.tooltip-content {
+    position: relative;
+}
+
+.tooltip-title {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-text {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.tooltip-text strong {
+    font-weight: bold;
+    color: #FFD700;
+}
+
+.tooltip-text .highlight {
+    background: rgba(255, 215, 0, 0.3);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.tooltip-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+/* Tooltip arrow positions */
+.tutorial-tooltip.top .tooltip-arrow {
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 10px 10px 0 10px;
+    border-color: #667eea transparent transparent transparent;
+}
+
+.tutorial-tooltip.bottom .tooltip-arrow {
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 10px 10px 10px;
+    border-color: transparent transparent #667eea transparent;
+}
+
+.tutorial-tooltip.left .tooltip-arrow {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 10px 0 10px 10px;
+    border-color: transparent transparent transparent #667eea;
+}
+
+.tutorial-tooltip.right .tooltip-arrow {
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 10px 10px 10px 0;
+    border-color: transparent #667eea transparent transparent;
+}
+
+.tutorial-tooltip.center .tooltip-arrow {
+    display: none;
+}
+
+/* Tooltip Error */
+.tooltip-error {
+    background: rgba(244, 67, 54, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    border: 2px solid #c62828;
+}
+
+.tooltip-error strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.tooltip-error p {
+    margin: 5px 0 0 0;
+    font-size: 13px;
+}
+
+/* Element Highlighting */
+.tutorial-highlight {
+    position: absolute;
+    border: 3px solid #4CAF50;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.6),
+                inset 0 0 20px rgba(76, 175, 80, 0.2);
+    background: rgba(76, 175, 80, 0.1);
+    display: none;
+}
+
+.tutorial-highlight.pulsate {
+    animation: tutorial-pulse 2s infinite;
+}
+
+@keyframes tutorial-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.6),
+                    inset 0 0 20px rgba(76, 175, 80, 0.2);
+        border-color: #4CAF50;
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(76, 175, 80, 1),
+                    inset 0 0 40px rgba(76, 175, 80, 0.4);
+        border-color: #8BC34A;
+    }
+}
+
+/* Tutorial Complete Modal */
+#tutorial-complete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10002;
+    display: none;
+}
+
+#tutorial-complete-modal .modal-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    animation: tutorial-complete-appear 0.5s ease-out;
+}
+
+@keyframes tutorial-complete-appear {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+#tutorial-complete-modal h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#tutorial-complete-modal p {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+#tutorial-complete-modal button {
+    margin-top: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #tutorial-controls {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+    }
+
+    .tutorial-tooltip {
+        max-width: 90vw;
+        min-width: 280px;
+        font-size: 13px;
+    }
+
+    .tooltip-title {
+        font-size: 18px;
+    }
+}
+
+/* Badge - "MODE TUTORIEL" indicator */
+#tutorial-badge {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 10001;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}

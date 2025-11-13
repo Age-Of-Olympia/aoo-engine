@@ -16,7 +16,13 @@ if(!isset($_POST['coords'])){
 
 $coords = explode(',', $_POST['coords']);
 
-$player = new Player($_SESSION['playerId']);
+// Use tutorial character if in tutorial mode
+$playerId = $_SESSION['playerId'];
+if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_player_id'])) {
+    $playerId = $_SESSION['tutorial_player_id'];
+}
+
+$player = new Player($playerId);
 
 if($player->getRemaining('mvt') < 1){
 

@@ -21,7 +21,7 @@ class MainView
             }
 
 
-            $msgUrl = 'datas/private/players/' . $_SESSION['playerId'] . '.msg.html';
+            $msgUrl = 'datas/private/players/' . $player->id . '.msg.html';
 
             if (file_exists($msgUrl)) {
 
@@ -31,7 +31,7 @@ class MainView
             }
 
 
-            $svgUrl = 'datas/private/players/' . $_SESSION['playerId'] . '.svg';
+            $svgUrl = 'datas/private/players/' . $player->id . '.svg';
 
             if (!file_exists($svgUrl)) {
 
@@ -53,7 +53,7 @@ class MainView
 
                 $playerOptions = $player->get_options();
 
-                $view = new View($coords, $p, tiled: false, options: $playerOptions);
+                $view = new View($coords, $p, tiled: false, options: $playerOptions, playerId: $player->id);
 
                 $data = $view->get_view();
 
