@@ -226,9 +226,10 @@ class TutorialManager
      *
      * @param int $stepNumber
      * @param string $version
+     * @param bool $applyPrerequisites - Whether to apply prerequisites (true for resume, false for normal rendering)
      * @return array|null
      */
-    public function getCurrentStepForClient(int $stepNumber, string $version = '1.0.0'): ?array
+    public function getCurrentStepForClient(int $stepNumber, string $version = '1.0.0', bool $applyPrerequisites = false): ?array
     {
         $step = $this->getStep($stepNumber, $version);
 
@@ -238,8 +239,11 @@ class TutorialManager
 
         $stepData = $step->getData();
 
-        // Prerequisites are now applied in advanceStep() only, not here
-        // This method just returns data for rendering the current step
+        // Apply prerequisites ONLY when explicitly requested (e.g., on resume)
+        // NOT during normal rendering to avoid resetting resources on every render
+        if ($applyPrerequisites && isset($stepData['config']['prerequisites'])) {
+            $this->context->ensurePrerequisites($stepData['config']['prerequisites']);
+        }
 
         // Generate dynamic validation hint (e.g., for movement steps showing remaining movements)
         // This ensures tooltips show current state, not static text

@@ -77,11 +77,21 @@ abstract class AbstractStep
      * - {CURRENT_LEVEL}
      * - {CURRENT_PI}
      * - {CURRENT_MVT}
+     * - {MOVEMENT_HINT} - Dynamic hint showing current movement count
      * - etc.
      */
     protected function replacePlaceholders(string $text): string
     {
-        $player = $this->context->getPlayer();
+        // Use TutorialHelper to get the correct player (tutorial player, not main player)
+        $playerId = \App\Tutorial\TutorialHelper::getActivePlayerId();
+        $player = new \Classes\Player($playerId);
+        $player->get_data();
+
+        // Get dynamic validation hint if this step has one
+        $movementHint = '';
+        if (method_exists($this, 'getValidationHint')) {
+            $movementHint = $this->getValidationHint();
+        }
 
         $replacements = [
             '{PLAYER_NAME}' => $player->data->name ?? 'Aventurier',
@@ -90,6 +100,7 @@ abstract class AbstractStep
             '{CURRENT_PI}' => (string)$this->context->getTutorialPI(),
             '{CURRENT_MVT}' => (string)($player->data->mvt ?? 0),
             '{MAX_MVT}' => (string)($player->data->mvt ?? 4),
+            '{MOVEMENT_HINT}' => $movementHint,
         ];
 
         return str_replace(

@@ -396,11 +396,18 @@ class View{
 
                     if($row->whichTable == 'players'){
 
+                        // Add "current-player" class and ID for tutorial targeting
+                        $playerClass = 'avatar-shadow';
+                        $currentPlayerId = '';
+                        if ($row->id == $this->playerId) {
+                            $playerClass .= ' current-player';
+                            $currentPlayerId = 'current-player-avatar'; // Additional ID for reliable targeting
+                        }
 
                         echo '
                         <image
 
-                            id="'. $id .'"
+                            id="'. ($currentPlayerId ?: $id) .'"
 
                             width="50"
                             height="50"
@@ -410,7 +417,7 @@ class View{
 
                             href="'. $img .'"
 
-                            class="avatar-shadow"
+                            class="'. $playerClass .'"
                             />
                         ';
                     }

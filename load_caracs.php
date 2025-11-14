@@ -74,7 +74,15 @@ echo '
                 $left = $turnJson->$k .'/';
             }
 
-            echo '<td>'. $left . $caracsJson->$k .'</td>';
+            // Add IDs for tutorial targeting
+            $idAttr = '';
+            if ($k === 'mvt') {
+                $idAttr = ' id="mvt-counter"';
+            } elseif ($k === 'a') {
+                $idAttr = ' id="action-counter"';
+            }
+
+            echo '<td' . $idAttr . '>'. $left . $caracsJson->$k .'</td>';
         }
 
         echo '<td>'. $player->data->pf .'</td>';

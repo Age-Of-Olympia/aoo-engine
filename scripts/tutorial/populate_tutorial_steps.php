@@ -71,7 +71,7 @@ $steps = [
         'next_step' => 'map_grid',
         'config' => [
             'text' => 'Vous êtes le personnage au centre de la carte. Votre nom est <strong>{PLAYER_NAME}</strong>. Bienvenue dans le monde d\'Olympia!',
-            'target_selector' => '#player-avatar',
+            'target_selector' => '#current-player-avatar',
             'tooltip_position' => 'bottom',
             'requires_validation' => false,
             // Blocking mode (default for info)
@@ -152,8 +152,8 @@ $steps = [
         'next_step' => 'deplete_movements',
         'config' => [
             'text' => '<strong>ATTENTION!</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Regardez le panneau : vous avez <span class="highlight">4 Mouvements (M)</span> par tour. Chaque déplacement consomme 1 mouvement.',
-            'target_selector' => '#mvt-display, .mvt-counter',
-            'tooltip_position' => 'left',
+            'target_selector' => '#mvt-counter',
+            'tooltip_position' => 'right',
             'requires_validation' => false,
             // Blocking mode - just read and click "Next"
             'blocked_click_message' => 'Lisez l\'information sur les mouvements limités et cliquez sur "Suivant".',
@@ -176,15 +176,24 @@ $steps = [
         'title' => 'Utilisez tous vos mouvements',
         'next_step' => 'turn_system',
         'config' => [
-            'text' => 'Maintenant, <strong>déplacez-vous 4 fois</strong> pour utiliser tous vos mouvements. Regardez le compteur diminuer à chaque déplacement!',
-            'target_selector' => '#mvt-display, .mvt-counter',
-            'tooltip_position' => 'left',
+            'text' => 'Maintenant, <strong>déplacez-vous pour utiliser tous vos mouvements</strong>. Regardez le compteur diminuer à chaque déplacement! {MOVEMENT_HINT}',
+            'target_selector' => '#mvt-counter',
+            'tooltip_position' => 'right',
             'requires_validation' => true,
             'validation_type' => 'movements_depleted',
             'validation_hint' => 'Continuez à vous déplacer pour utiliser tous vos mouvements',
             // Semi-blocking mode
             'allowed_interactions' => ['.case', '.case.go', '#go-rect', '#go-img'],
             'blocked_click_message' => 'Déplacez-vous sur les cases adjacentes pour utiliser vos mouvements.',
+            // Enable movement consumption for this step
+            'context_changes' => [
+                'consume_movements' => true
+            ],
+            // Restore movements when advancing TO this step (from step 6)
+            'prerequisites' => [
+                'mvt' => 4,
+                'auto_restore' => true
+            ],
             'prepare_next_step' => [
                 'restore_mvt' => 4,  // Restore for next step
                 'restore_actions' => 2
@@ -218,8 +227,8 @@ $steps = [
         'next_step' => 'available_actions',
         'config' => [
             'text' => 'En plus des mouvements, vous avez des <strong>Points d\'Action (A)</strong>. Ils permettent d\'effectuer des actions comme fouiller, attaquer, se reposer...',
-            'target_selector' => '#action-display',
-            'tooltip_position' => 'left',
+            'target_selector' => '#action-counter',
+            'tooltip_position' => 'right',
             'requires_validation' => false,
             // Blocking mode (default for action_intro)
             'blocked_click_message' => 'Observez votre compteur de Points d\'Action et cliquez sur "Suivant".',

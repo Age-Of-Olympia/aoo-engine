@@ -61,10 +61,10 @@ class MainView
                 fwrite($myfile, $data);
                 fclose($myfile);
 
-                echo $data;
+                echo '<div id="game-map">' . $data . '</div>';
             } else {
 
-                echo file_get_contents($svgUrl);
+                echo '<div id="game-map">' . file_get_contents($svgUrl) . '</div>';
             }
 
             echo '<div id="ajax-data"></div>';

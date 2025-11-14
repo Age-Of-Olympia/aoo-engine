@@ -301,8 +301,13 @@ if($planJson || $consumeMovement){
     // cost (neg bonus)
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);
+
+    // CRITICAL: Regenerate JSON cache after consuming movement
+    // This ensures load_caracs.php shows correct movement count
+    $player->get_caracs();
+
     if ($consumeMovement) {
-        error_log("[go.php] Consumed movement for tutorial player {$player->id}");
+        error_log("[go.php] Consumed movement for tutorial player {$player->id}, regenerated cache");
     }
 }
 

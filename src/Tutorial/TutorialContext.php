@@ -261,7 +261,11 @@ class TutorialContext
         }
 
         $autoRestore = $prerequisites['auto_restore'] ?? false;
-        $player = $this->getPlayer();
+
+        // CRITICAL: Use TutorialHelper to get the correct player
+        $playerId = \App\Tutorial\TutorialHelper::getActivePlayerId();
+        $player = new \Classes\Player($playerId);
+        $player->get_data();
 
         // Check and restore movement points
         if (isset($prerequisites['mvt'])) {
@@ -419,7 +423,10 @@ class TutorialContext
      */
     private function setPlayerMovements(int $targetAmount): void
     {
-        $player = $this->getPlayer();
+        // CRITICAL: Get the actual tutorial player instance (not context's cached player)
+        $playerId = \App\Tutorial\TutorialHelper::getActivePlayerId();
+        $player = new \Classes\Player($playerId);
+        $player->get_data();
 
         // Log current state BEFORE clearing
         $db = new \Classes\Db();
@@ -459,11 +466,15 @@ class TutorialContext
         }
         // If bonusNeeded == 0, we're at base movement, no bonus needed
 
-        // Refresh caracs to reflect the change
+        // CRITICAL: Refresh caracs to regenerate JSON cache files
+        // This writes to:
+        // - datas/private/players/{id}.turn.json (with bonuses)
+        // - datas/private/players/{id}.caracs.json (base stats)
         $player->get_caracs();
         $finalRemaining = $player->getRemaining('mvt');
 
         error_log("[TutorialContext] AFTER set - player_id={$player->id}, finalRemaining={$finalRemaining} (target was {$targetAmount})");
+        error_log("[TutorialContext] JSON cache regenerated: {$player->id}.turn.json, {$player->id}.caracs.json");
 
         // Verify it matches
         if ($finalRemaining != $targetAmount) {

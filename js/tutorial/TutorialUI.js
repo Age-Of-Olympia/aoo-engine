@@ -162,13 +162,15 @@ class TutorialUI {
      *
      * @param {object} validationData - Data to validate the current step
      * @param {boolean} skipUIUpdate - If true, save progress but don't update UI
+     * @param {boolean} showFeedbackOnFailure - If true, show hint and shake when validation fails (for manual button clicks)
      */
-    async next(validationData = {}, skipUIUpdate = false) {
+    async next(validationData = {}, skipUIUpdate = false, showFeedbackOnFailure = false) {
         try {
             console.log('[TutorialUI] Advancing to next step...', {
                 validationData,
                 currentSession: this.currentSession,
-                skipUIUpdate: skipUIUpdate
+                skipUIUpdate: skipUIUpdate,
+                showFeedbackOnFailure: showFeedbackOnFailure
             });
 
             if (!this.currentSession) {
@@ -212,9 +214,15 @@ class TutorialUI {
 
                 return true;
             } else {
-                // Validation not met yet - this is expected for multi-action steps
+                // Validation not met yet
                 console.log('[TutorialUI] Validation not met yet:', response.hint || response.error);
-                // Don't show error - player just needs to continue the required actions
+
+                // Only show feedback if this was a manual button click
+                if (showFeedbackOnFailure) {
+                    const hint = response.hint || response.error || 'Suivez les instructions du tutoriel.';
+                    this.showBlockedInteractionWarning(hint);
+                }
+
                 return false;
             }
         } catch (error) {
@@ -656,10 +664,14 @@ class TutorialUI {
 
         if (prereqs.mvt !== undefined) {
             console.log(`[TutorialUI] Step requires ${prereqs.mvt} movement(s)`);
+            // Refresh characteristics panel if it's open (to show updated movement count)
+            this.refreshCaracsPanel();
         }
 
         if (prereqs.actions !== undefined) {
             console.log(`[TutorialUI] Step requires ${prereqs.actions} action point(s)`);
+            // Refresh characteristics panel if it's open
+            this.refreshCaracsPanel();
         }
 
         if (prereqs.ensure_enemy) {
@@ -668,6 +680,27 @@ class TutorialUI {
 
         if (prereqs.ensure_item) {
             console.log(`[TutorialUI] Step requires item: ${prereqs.ensure_item}`);
+        }
+    }
+
+    /**
+     * Refresh characteristics panel if it's currently open
+     */
+    refreshCaracsPanel() {
+        // Only refresh if panel is visible
+        if ($('#load-caracs').is(':visible')) {
+            console.log('[TutorialUI] Refreshing characteristics panel...');
+            $.ajax({
+                type: "POST",
+                url: "load_caracs.php",
+                success: function(data) {
+                    $("#load-caracs").html(data);
+                    console.log('[TutorialUI] Characteristics panel refreshed');
+                },
+                error: function() {
+                    console.error('[TutorialUI] Failed to refresh characteristics panel');
+                }
+            });
         }
     }
 

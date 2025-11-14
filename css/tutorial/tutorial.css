@@ -155,11 +155,17 @@
     border: 3px solid #D4AF37;
     z-index: 10000;
     max-width: 450px;
-    min-width: 350px;
+    min-width: 300px;
     display: none;
     /* Default position: bottom-left */
     bottom: 20px;
     left: 20px;
+}
+
+/* Center positioning: smaller width, doesn't cover screen */
+.tutorial-tooltip.center {
+    max-width: 400px;
+    min-width: 280px;
 }
 
 .tooltip-content {
@@ -233,7 +239,12 @@
 }
 
 .tutorial-tooltip.center .tooltip-arrow {
-    display: none;
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: none !important;
+    position: static !important;
 }
 
 /* Tooltip Error */

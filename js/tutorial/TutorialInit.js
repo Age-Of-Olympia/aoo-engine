@@ -30,7 +30,8 @@
         // Set up next button handler (delegated event)
         $(document).on('click', '#tutorial-next', function() {
             console.log('[Tutorial] Next button clicked');
-            window.tutorialUI.next();
+            // Pass true for showFeedbackOnFailure to show hint when validation fails
+            window.tutorialUI.next({}, false, true);
         });
 
         console.log('[Tutorial] Initialized successfully');

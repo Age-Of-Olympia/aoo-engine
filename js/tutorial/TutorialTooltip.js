@@ -30,9 +30,11 @@ class TutorialTooltip {
             this.$tooltip.removeClass('top bottom left right center').addClass(position);
         } else {
             // Create new tooltip
+            // Only create arrow if NOT centered (center tooltips don't need arrows)
+            const arrowHtml = position !== 'center' ? '<div class="tooltip-arrow"></div>' : '';
             this.$tooltip = $(`
                 <div class="tutorial-tooltip ${position}">
-                    <div class="tooltip-arrow"></div>
+                    ${arrowHtml}
                     <div class="tooltip-content">
                         <h3 class="tooltip-title">${title}</h3>
                         <div class="tooltip-text">${text}</div>
@@ -168,11 +170,15 @@ class TutorialTooltip {
             top = windowHeight - tooltipHeight - 10;
         }
 
-        // Apply position
+        // Apply position - clear all position properties to avoid conflicts
         this.$tooltip.css({
+            position: 'absolute',
             top: `${top}px`,
             left: `${left}px`,
-            position: 'absolute'
+            bottom: 'auto',   // Clear bottom to prevent stretching
+            right: 'auto',    // Clear right to prevent stretching
+            width: 'auto',    // Clear width
+            height: 'auto'    // Clear height
         });
     }
 
@@ -181,12 +187,14 @@ class TutorialTooltip {
      */
     positionCenter() {
         this.$tooltip.css({
+            position: 'fixed',
             bottom: '20px',
             left: '20px',
             top: 'auto',
             right: 'auto',
             transform: 'none',
-            position: 'fixed'
+            width: 'auto',    // Clear any previous width
+            height: 'auto'    // Clear any previous height that would stretch it
         });
     }
 
