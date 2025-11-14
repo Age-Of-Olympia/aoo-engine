@@ -7,6 +7,7 @@
  */
 
 use App\Tutorial\TutorialManager;
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 
 define('NO_LOGIN', true);
@@ -43,8 +44,11 @@ if (!$sessionId) {
 }
 
 try {
+    // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+    $activePlayerId = TutorialHelper::getActivePlayerId();
+
     // Load player
-    $player = new Player($playerId);
+    $player = new Player($activePlayerId);
     $player->get_data();
 
     // Create tutorial manager

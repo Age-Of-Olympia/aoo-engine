@@ -7,6 +7,7 @@
  */
 
 use App\Tutorial\TutorialManager;
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 use Classes\Db;
 
@@ -28,10 +29,12 @@ try {
     $db = new Db();
 
     // Check for active (non-completed) tutorial session
-    $sql = 'SELECT tutorial_session_id, current_step, total_steps, tutorial_mode, tutorial_version, xp_earned
-            FROM tutorial_progress
-            WHERE player_id = ? AND completed = 0
-            ORDER BY started_at DESC
+    $sql = 'SELECT tp.tutorial_session_id, tp.current_step, tp.total_steps, tp.tutorial_mode,
+                   tp.tutorial_version, tp.xp_earned, tpl.player_id as tutorial_player_id
+            FROM tutorial_progress tp
+            LEFT JOIN tutorial_players tpl ON tpl.tutorial_session_id = tp.tutorial_session_id
+            WHERE tp.player_id = ? AND tp.completed = 0 AND tpl.is_active = 1
+            ORDER BY tp.started_at DESC
             LIMIT 1';
 
     $result = $db->exe($sql, [$playerId]);
@@ -48,10 +51,31 @@ try {
         $resumeResult = $manager->resumeTutorial($session['tutorial_session_id']);
 
         if ($resumeResult['success']) {
+            // CRITICAL: Set session variables so TutorialHelper works correctly
+            // This ensures go.php, index.php, etc. all use the tutorial player
+            // This is the ONLY place (besides start.php) that should set these vars
+            if ($session['tutorial_player_id']) {
+                TutorialHelper::startTutorialMode(
+                    $session['tutorial_session_id'],
+                    $session['tutorial_player_id']
+                );
+
+                error_log("[Resume] Set tutorial session vars: session_id={$session['tutorial_session_id']}, tutorial_player_id={$session['tutorial_player_id']}, main_player={$playerId}");
+
+                // Force session write to persist across requests
+                session_write_close();
+                session_start(); // Restart for subsequent operations
+            }
+
+            // Get step data using tutorial player
             $stepData = $manager->getCurrentStepForClient(
                 (int)$session['current_step'],
                 $session['tutorial_version']
             );
+
+            // Get tutorial player's data for level/pi
+            $tutorialPlayer = new Player($session['tutorial_player_id'] ?? $playerId);
+            $tutorialPlayer->get_data();
 
             echo json_encode([
                 'success' => true,
@@ -62,6 +86,8 @@ try {
                 'mode' => $session['tutorial_mode'],
                 'version' => $session['tutorial_version'],
                 'xp_earned' => (int)$session['xp_earned'],
+                'level' => $tutorialPlayer->data->level ?? 1,
+                'pi' => $tutorialPlayer->data->pi ?? 0,
                 'step_data' => $stepData
             ]);
         } else {

@@ -138,6 +138,15 @@ class TutorialManager
             $conn = $em->getConnection();
             $this->tutorialPlayer = TutorialPlayer::loadBySession($conn, $sessionId);
 
+            // CRITICAL: Switch context to use tutorial player instead of main player
+            // This ensures movement checks, validation hints, etc. use tutorial player's data
+            if ($this->tutorialPlayer) {
+                $tutorialPlayerObj = new Player($this->tutorialPlayer->id);
+                $tutorialPlayerObj->get_data();
+                $this->context->setPlayer($tutorialPlayerObj);
+                error_log("[TutorialManager] Switched context to tutorial player {$this->tutorialPlayer->id}");
+            }
+
             return [
                 'success' => true,
                 'session_id' => $sessionId,
@@ -227,7 +236,21 @@ class TutorialManager
             return null;
         }
 
-        return array_merge($step->getData(), [
+        $stepData = $step->getData();
+
+        // Prerequisites are now applied in advanceStep() only, not here
+        // This method just returns data for rendering the current step
+
+        // Generate dynamic validation hint (e.g., for movement steps showing remaining movements)
+        // This ensures tooltips show current state, not static text
+        if ($step->requiresValidation() && method_exists($step, 'getValidationHint')) {
+            $dynamicHint = $step->getValidationHint();
+            if ($dynamicHint) {
+                $stepData['validation_hint'] = $dynamicHint;
+            }
+        }
+
+        return array_merge($stepData, [
             'tutorial_state' => $this->context->getPublicState()
         ]);
     }
@@ -288,6 +311,12 @@ class TutorialManager
             return $this->completeTutorial();
         }
 
+        // Prepare resources for next step (if configured in current step)
+        $stepData = $step->getData();
+        if (isset($stepData['config']['prepare_next_step'])) {
+            $this->context->prepareForNextStep($stepData['config']['prepare_next_step']);
+        }
+
         // Update progress in database
         $updateSql = 'UPDATE tutorial_progress
                       SET current_step = ?,
@@ -301,6 +330,15 @@ class TutorialManager
             $this->context->serializeState(),
             $this->sessionId
         ]);
+
+        // Apply prerequisites for the NEXT step (only when advancing to it)
+        $nextStepObj = $this->getStep($nextStep, $version);
+        if ($nextStepObj) {
+            $nextStepConfig = $nextStepObj->getData();
+            if (isset($nextStepConfig['config']['prerequisites'])) {
+                $this->context->ensurePrerequisites($nextStepConfig['config']['prerequisites']);
+            }
+        }
 
         // Get next step data for client
         $nextStepData = $this->getCurrentStepForClient($nextStep, $version);

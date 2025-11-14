@@ -3,17 +3,52 @@
  * Age of Olympia v4 - Tutorial Mode Styling
  */
 
-/* Tutorial Overlay - very subtle, doesn't block view */
+/* Tutorial Overlay - blocks interactions based on step mode */
 #tutorial-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.1); /* Much lighter, barely visible */
+    background: rgba(0, 0, 0, 0.5); /* Darker for visibility */
     z-index: 9998;
     display: none;
-    pointer-events: none; /* Allow clicking through */
+    pointer-events: auto; /* Block clicks by default */
+    cursor: help; /* Indicate it's interactive */
+}
+
+/* Blocking mode - full overlay, help cursor, blocks ALL clicks */
+#tutorial-overlay.blocking {
+    cursor: help;
+    background: rgba(0, 0, 0, 0.6);
+    pointer-events: auto;
+}
+
+/* Semi-blocking mode - invisible overlay, does NOT block (JS handles blocking) */
+#tutorial-overlay.semi-blocking {
+    cursor: default;
+    background: transparent; /* Completely invisible */
+    pointer-events: none; /* Does NOT block - JS intercepts clicks via capture phase */
+}
+
+/* Open mode - hidden/transparent */
+#tutorial-overlay.open {
+    display: none;
+    pointer-events: none;
+}
+
+/* Visual highlight for allowed elements (minimal to avoid breaking SVG) */
+.tutorial-allowed-element {
+    cursor: pointer !important;
+    /* No visual effects - they cause issues with SVG rendering */
+}
+
+/* Tutorial controls must always be clickable */
+#tutorial-controls,
+#tutorial-controls *,
+.tutorial-tooltip,
+.tutorial-tooltip * {
+    pointer-events: auto !important;
 }
 
 /* Tutorial Controls - fixed at top */
@@ -21,13 +56,13 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    background: rgba(0, 0, 0, 0.9);
+    background: linear-gradient(135deg, rgba(74, 56, 41, 0.95), rgba(97, 78, 63, 0.95));
     padding: 15px 20px;
     border-radius: 10px;
     z-index: 10001;
     min-width: 250px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    border: 2px solid #4CAF50;
+    border: 2px solid #D4AF37;
 }
 
 #tutorial-progress {
@@ -38,7 +73,7 @@
     font-weight: bold;
 }
 
-/* XP Bar */
+/* Tutorial Progress Bar (shows step progression + earned XP) */
 #tutorial-xp-bar {
     margin-top: 10px;
     margin-bottom: 15px;
@@ -56,9 +91,9 @@
 
 .xp-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    background: linear-gradient(90deg, #B8860B, #D4AF37, #DAA520);
     transition: width 0.5s ease-out;
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
 }
 
 .xp-text {
@@ -80,13 +115,15 @@
 }
 
 .btn-tutorial-primary {
-    background: #4CAF50;
+    background: linear-gradient(135deg, #C96D3A, #D4753E);
     color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .btn-tutorial-primary:hover {
-    background: #45a049;
+    background: linear-gradient(135deg, #B85C2B, #C96D3A);
     transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(212, 117, 62, 0.4);
 }
 
 .btn-tutorial-primary:disabled {
@@ -96,23 +133,26 @@
 }
 
 .btn-tutorial-secondary {
-    background: #666;
-    color: white;
+    background: linear-gradient(135deg, #614E3F, #4A3829);
+    color: #E8E4D9;
     width: 100%;
+    border: 1px solid #8B7355;
 }
 
 .btn-tutorial-secondary:hover {
-    background: #555;
+    background: linear-gradient(135deg, #4A3829, #3A2819);
+    color: white;
 }
 
 /* Tooltip Styles */
 .tutorial-tooltip {
     position: fixed; /* Changed from absolute to fixed */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #9D2B2E 0%, #B8383B 50%, #C96D3A 100%);
+    color: #F5F5DC;
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border: 3px solid #D4AF37;
     z-index: 10000;
     max-width: 450px;
     min-width: 350px;
@@ -141,14 +181,15 @@
 
 .tooltip-text strong {
     font-weight: bold;
-    color: #FFD700;
+    color: #D4AF37;
 }
 
 .tooltip-text .highlight {
-    background: rgba(255, 215, 0, 0.3);
+    background: rgba(212, 175, 55, 0.3);
     padding: 2px 5px;
     border-radius: 3px;
     font-weight: bold;
+    border-bottom: 1px solid #D4AF37;
 }
 
 .tooltip-arrow {
@@ -164,7 +205,7 @@
     left: 50%;
     transform: translateX(-50%);
     border-width: 10px 10px 0 10px;
-    border-color: #667eea transparent transparent transparent;
+    border-color: #9D2B2E transparent transparent transparent;
 }
 
 .tutorial-tooltip.bottom .tooltip-arrow {
@@ -172,7 +213,7 @@
     left: 50%;
     transform: translateX(-50%);
     border-width: 0 10px 10px 10px;
-    border-color: transparent transparent #667eea transparent;
+    border-color: transparent transparent #9D2B2E transparent;
 }
 
 .tutorial-tooltip.left .tooltip-arrow {
@@ -180,7 +221,7 @@
     top: 50%;
     transform: translateY(-50%);
     border-width: 10px 0 10px 10px;
-    border-color: transparent transparent transparent #667eea;
+    border-color: transparent transparent transparent #9D2B2E;
 }
 
 .tutorial-tooltip.right .tooltip-arrow {
@@ -188,7 +229,7 @@
     top: 50%;
     transform: translateY(-50%);
     border-width: 10px 10px 10px 0;
-    border-color: transparent #667eea transparent transparent;
+    border-color: transparent #9D2B2E transparent transparent;
 }
 
 .tutorial-tooltip.center .tooltip-arrow {
@@ -197,11 +238,11 @@
 
 /* Tooltip Error */
 .tooltip-error {
-    background: rgba(244, 67, 54, 0.9);
+    background: rgba(157, 43, 46, 0.9);
     padding: 10px;
     border-radius: 5px;
     margin: 10px 0;
-    border: 2px solid #c62828;
+    border: 2px solid #B8383B;
 }
 
 .tooltip-error strong {
@@ -217,13 +258,13 @@
 /* Element Highlighting */
 .tutorial-highlight {
     position: absolute;
-    border: 3px solid #4CAF50;
+    border: 3px solid #D4AF37;
     border-radius: 8px;
     pointer-events: none;
     z-index: 9999;
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.6),
-                inset 0 0 20px rgba(76, 175, 80, 0.2);
-    background: rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.7),
+                inset 0 0 20px rgba(212, 175, 55, 0.2);
+    background: rgba(212, 175, 55, 0.15);
     display: none;
 }
 
@@ -233,14 +274,14 @@
 
 @keyframes tutorial-pulse {
     0%, 100% {
-        box-shadow: 0 0 20px rgba(76, 175, 80, 0.6),
-                    inset 0 0 20px rgba(76, 175, 80, 0.2);
-        border-color: #4CAF50;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.7),
+                    inset 0 0 20px rgba(212, 175, 55, 0.2);
+        border-color: #D4AF37;
     }
     50% {
-        box-shadow: 0 0 40px rgba(76, 175, 80, 1),
-                    inset 0 0 40px rgba(76, 175, 80, 0.4);
-        border-color: #8BC34A;
+        box-shadow: 0 0 40px rgba(218, 165, 32, 1),
+                    inset 0 0 40px rgba(218, 165, 32, 0.4);
+        border-color: #DAA520;
     }
 }
 
@@ -260,10 +301,11 @@
 }
 
 #tutorial-complete-modal .modal-content {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #9D2B2E 0%, #C96D3A 100%);
+    color: #F5F5DC;
     padding: 40px;
     border-radius: 20px;
+    border: 4px solid #D4AF37;
     text-align: center;
     max-width: 400px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -294,6 +336,22 @@
 
 #tutorial-complete-modal button {
     margin-top: 20px;
+    background: linear-gradient(135deg, #D4AF37, #DAA520);
+    color: #3A2819;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#tutorial-complete-modal button:hover {
+    background: linear-gradient(135deg, #DAA520, #FFD700);
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
 }
 
 /* Responsive adjustments */
@@ -321,12 +379,61 @@
     position: fixed;
     top: 80px;
     right: 20px;
-    background: #4CAF50;
-    color: white;
+    background: linear-gradient(135deg, #C96D3A, #D4753E);
+    color: #F5F5DC;
     padding: 8px 15px;
     border-radius: 5px;
+    border: 2px solid #D4AF37;
     font-weight: bold;
     font-size: 12px;
     z-index: 10001;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Shake animation for tooltip */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.tutorial-tooltip.shake {
+    animation: shake 0.6s;
+}
+
+/* Warning icon in tooltip */
+.tooltip-warning {
+    display: inline-block;
+    margin-right: 8px;
+    color: #FFD700;
+    font-size: 18px;
+    animation: pulse-icon 1s infinite;
+}
+
+@keyframes pulse-icon {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+/* Blocked interaction message in tooltip */
+.tooltip-blocked-message {
+    background: rgba(212, 175, 55, 0.25);
+    border: 2px solid #D4AF37;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 15px;
+    animation: fade-in 0.3s;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.tooltip-blocked-message p {
+    margin: 0;
+    color: #F5F5DC;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

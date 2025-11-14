@@ -8,6 +8,7 @@
 
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialFeatureFlag;
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 
 // No login check - we'll handle it ourselves
@@ -60,6 +61,22 @@ if (!in_array($mode, ['first_time', 'replay', 'practice'])) {
 }
 
 try {
+    // IMPORTANT: Cancel any existing active tutorials before starting a new one
+    // This ensures we don't have orphaned tutorial sessions
+    $db = new Classes\Db();
+    $cancelSql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW()
+                  WHERE player_id = ? AND completed = 0';
+    $db->exe($cancelSql, [$playerId]);
+
+    $deactivateSql = 'UPDATE tutorial_players SET is_active = 0, deleted_at = NOW()
+                      WHERE tutorial_session_id IN (
+                          SELECT tutorial_session_id FROM tutorial_progress
+                          WHERE player_id = ? AND completed = 1 AND completed_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                      )';
+    $db->exe($deactivateSql, [$playerId]);
+
+    error_log("[Start] Cancelled any existing active tutorials for player {$playerId}");
+
     // Load player
     $player = new Player($playerId);
     $player->get_data();
@@ -72,9 +89,7 @@ try {
 
     if ($result['success']) {
         // Store tutorial session in PHP session
-        $_SESSION['tutorial_session_id'] = $result['session_id'];
-        $_SESSION['tutorial_player_id'] = $result['tutorial_player_id'];
-        $_SESSION['in_tutorial'] = true;
+        TutorialHelper::startTutorialMode($result['session_id'], $result['tutorial_player_id']);
 
         // Force session write to ensure it persists
         session_write_close();

@@ -4,6 +4,8 @@ namespace App\Tutorial\Steps\Movement;
 
 use App\Tutorial\Steps\AbstractStep;
 use App\Tutorial\TutorialContext;
+use App\Tutorial\TutorialHelper;
+use Classes\Player;
 
 /**
  * Movement step - Validates that player has moved
@@ -33,9 +35,22 @@ class MovementStep extends AbstractStep
                 return isset($data['action']) && $data['action'] === 'move';
 
             case 'movements_depleted':
-                // Check that player has used all movements
-                $player = $this->context->getPlayer();
-                $mvtRemaining = $player->data->mvt ?? 0;
+                // Check that player has used all movements // Loading it first, maybe better way to check ?
+                $activePlayerId = TutorialHelper::getActivePlayerId();
+                // Load player
+                $player = new Player($activePlayerId);
+                // Not working, wrong player (main character)
+                //$player = $this->context->getPlayer();
+                // Force fresh reload to get latest turn data from database
+                $player->get_data();
+                $player->get_caracs(); // This loads turn data from DB into $player->turn
+
+                // Use getRemaining() which checks $player->turn (live data from DB)
+                $mvtRemaining = $player->getRemaining('mvt');
+
+                error_log("[MovementStep] Checking movements_depleted: mvt={$mvtRemaining}, playerId={$player->id}");
+                error_log("[MovementStep] Turn object: " . json_encode($player->turn ?? null));
+
                 return $mvtRemaining === 0;
 
             case 'specific_count':
@@ -50,16 +65,21 @@ class MovementStep extends AbstractStep
     }
 
     /**
-     * Get validation hint
+     * Get validation hint (public so TutorialManager can generate dynamic hints)
      */
-    protected function getValidationHint(): string
+    public function getValidationHint(): string
     {
         $validationType = $this->config['validation_type'] ?? 'any_movement';
 
         switch ($validationType) {
             case 'movements_depleted':
-                $player = $this->context->getPlayer();
-                $mvtRemaining = $player->data->mvt ?? 0;
+                // Use authoritative source for player ID (consistent with validate())
+                $activePlayerId = TutorialHelper::getActivePlayerId();
+                $player = new Player($activePlayerId);
+                $player->get_data();
+                // Get live movement count from database
+                $player->get_caracs();
+                $mvtRemaining = $player->getRemaining('mvt');
                 return "Il vous reste encore {$mvtRemaining} mouvement(s). Continuez à vous déplacer!";
 
             case 'specific_count':

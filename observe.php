@@ -4,6 +4,7 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
@@ -33,11 +34,8 @@ if(!is_numeric($x) || !is_numeric($y)){
 }
 
 
-// Use tutorial character if in tutorial mode
-$playerId = $_SESSION['playerId'];
-if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_player_id'])) {
-    $playerId = $_SESSION['tutorial_player_id'];
-}
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
 $player = new Player($playerId);
 

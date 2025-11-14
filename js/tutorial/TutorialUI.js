@@ -4,7 +4,7 @@
  * Manages the complete tutorial user interface including:
  * - API communication
  * - Step rendering
- * - XP bar display
+ * - Progress bar display (step progression + earned XP)
  * - Navigation controls
  */
 class TutorialUI {
@@ -23,6 +23,9 @@ class TutorialUI {
 
         // State
         this.isActive = false;
+
+        // UI observers for validation
+        this.panelObserver = null;
     }
 
     /**
@@ -62,16 +65,8 @@ class TutorialUI {
                     return true;
                 }
 
-                // Render first step
-                if (response.step_data) {
-                    this.renderStep(response.step_data);
-                }
-
-                // Show tutorial overlay
-                this.showTutorialOverlay();
-
-                // Mark tutorial as actively running
-                sessionStorage.setItem('tutorial_active', 'true');
+                // Activate tutorial UI
+                this.activateTutorialUI(response.step_data);
 
                 return true;
             } else {
@@ -100,20 +95,17 @@ class TutorialUI {
                 this.currentStep = response.current_step;
                 this.totalSteps = response.total_steps;
                 this.xpEarned = response.xp_earned;
+                this.level = response.level || 1;
+                this.pi = response.pi || 0;
                 this.isActive = true;
 
                 console.log('[TutorialUI] Resuming tutorial', response);
 
-                // Render current step
-                if (response.step_data) {
-                    this.renderStep(response.step_data);
-                }
+                // Activate tutorial UI
+                this.activateTutorialUI(response.step_data);
 
-                // Show tutorial overlay
-                this.showTutorialOverlay();
-
-                // Mark tutorial as actively running (for auto-resume after page reload)
-                sessionStorage.setItem('tutorial_active', 'true');
+                // Update XP bar with resumed progress
+                this.updateXPBar();
 
                 return true;
             } else {
@@ -127,25 +119,66 @@ class TutorialUI {
     }
 
     /**
+     * Activate tutorial UI (common logic for start and resume)
+     *
+     * This method ensures the correct order:
+     * 1. Create overlay first
+     * 2. Render step (which applies interaction mode to the overlay)
+     * 3. Mark as active in sessionStorage
+     *
+     * @param {Object} stepData - Step data to render
+     */
+    activateTutorialUI(stepData) {
+        // Show tutorial overlay FIRST (must exist before renderStep)
+        this.showTutorialOverlay();
+
+        // Render step (which applies interaction mode to overlay)
+        if (stepData) {
+            this.renderStep(stepData);
+        }
+
+        // Mark tutorial as actively running (for auto-resume after page reload)
+        sessionStorage.setItem('tutorial_active', 'true');
+    }
+
+    /**
      * Notify tutorial of game action (called by game code)
      *
      * Example: window.tutorialUI.notifyAction('movement', { from: [x1,y1], to: [x2,y2] })
+     *
+     * @param {string} actionType - Type of action performed
+     * @param {object} actionData - Action data for validation
+     * @param {boolean} skipUIUpdate - If true, save progress but don't update UI (for pre-reload)
      */
-    notifyAction(actionType, actionData = {}) {
-        console.log('[TutorialUI] Action notification:', actionType, actionData);
+    notifyAction(actionType, actionData = {}, skipUIUpdate = false) {
+        console.log('[TutorialUI] Action notification:', actionType, actionData, 'skipUI:', skipUIUpdate);
 
         // Auto-advance with validation data
-        this.next(actionData);
+        this.next(actionData, skipUIUpdate);
     }
 
     /**
      * Advance to next step
+     *
+     * @param {object} validationData - Data to validate the current step
+     * @param {boolean} skipUIUpdate - If true, save progress but don't update UI
      */
-    async next(validationData = {}) {
+    async next(validationData = {}, skipUIUpdate = false) {
         try {
-            console.log('[TutorialUI] Advancing to next step...', { validationData });
+            console.log('[TutorialUI] Advancing to next step...', {
+                validationData,
+                currentSession: this.currentSession,
+                skipUIUpdate: skipUIUpdate
+            });
 
-            const response = await this.apiCall('/api/tutorial/advance.php', {
+            if (!this.currentSession) {
+                console.error('[TutorialUI] ERROR: No current session! Cannot advance.');
+                alert('Erreur: Session tutoriel introuvable. Veuillez redémarrer le tutoriel.');
+                return false;
+            }
+
+            // Use special handling for advance - don't throw on validation failures
+            const response = await this.apiCallWithValidation('/api/tutorial/advance.php', {
                 session_id: this.currentSession,
                 validation_data: validationData
             });
@@ -153,7 +186,9 @@ class TutorialUI {
             if (response.success) {
                 if (response.completed) {
                     // Tutorial complete!
-                    this.onTutorialComplete(response);
+                    if (!skipUIUpdate) {
+                        this.onTutorialComplete(response);
+                    }
                 } else {
                     // Update state
                     this.currentStep = response.current_step;
@@ -161,20 +196,25 @@ class TutorialUI {
                     this.level = response.level;
                     this.pi = response.pi;
 
-                    // Update XP bar
-                    this.updateXPBar();
+                    // Only update UI if not skipping (e.g., before page reload)
+                    if (!skipUIUpdate) {
+                        // Update XP bar
+                        this.updateXPBar();
 
-                    // Render next step
-                    if (response.step_data) {
-                        this.renderStep(response.step_data);
+                        // Render next step
+                        if (response.step_data) {
+                            this.renderStep(response.step_data);
+                        }
+                    } else {
+                        console.log('[TutorialUI] Skipping UI update - page will reload');
                     }
                 }
 
                 return true;
             } else {
-                // Validation failed
-                console.warn('[TutorialUI] Validation failed', response);
-                this.showValidationError(response.error, response.hint);
+                // Validation not met yet - this is expected for multi-action steps
+                console.log('[TutorialUI] Validation not met yet:', response.hint || response.error);
+                // Don't show error - player just needs to continue the required actions
                 return false;
             }
         } catch (error) {
@@ -194,6 +234,29 @@ class TutorialUI {
         if (this.highlighter) {
             this.highlighter.clearAll();
         }
+
+        // Clear previous allowed interactions
+        $('.tutorial-allowed-element').removeClass('tutorial-allowed-element');
+
+        // Clear previous observers
+        this.cleanupObservers();
+
+        // Apply interaction mode (blocking, semi-blocking, or open)
+        this.applyInteractionMode(stepData);
+
+        // Ensure prerequisites are met
+        this.ensurePrerequisites(stepData);
+
+        // Auto-check validation for steps that can complete without user action
+        // (e.g., movement_depleted when player loads page with 0 movements)
+        if (stepData.requires_validation) {
+            setTimeout(() => {
+                this.checkAutoValidation(stepData);
+            }, 1000); // Wait 1s for page to fully load
+        }
+
+        // Setup UI observers for validation (ui_interaction steps)
+        this.setupUIObservers(stepData);
 
         // Show step tooltip
         this.showStepTooltip(stepData);
@@ -255,6 +318,7 @@ class TutorialUI {
         $('body').append($overlay);
 
         // Create controls container
+        const initialProgress = (this.currentStep / this.totalSteps) * 100;
         const $controls = $(`
             <div id="tutorial-controls">
                 <div id="tutorial-progress">
@@ -262,9 +326,9 @@ class TutorialUI {
                 </div>
                 <div id="tutorial-xp-bar">
                     <div class="xp-bar-container">
-                        <div class="xp-bar-fill" style="width: 0%"></div>
+                        <div class="xp-bar-fill" style="width: ${Math.min(initialProgress, 100)}%"></div>
                     </div>
-                    <div class="xp-text">Niveau ${this.level} - XP: ${this.xpEarned}</div>
+                    <div class="xp-text">Étape ${this.currentStep}/${this.totalSteps} • XP gagné: ${this.xpEarned}</div>
                 </div>
                 <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
             </div>
@@ -278,11 +342,355 @@ class TutorialUI {
     }
 
     /**
+     * Apply interaction mode to step
+     */
+    applyInteractionMode(stepData) {
+        const mode = stepData.interaction_mode || this.getDefaultInteractionMode(stepData.step_type);
+        const $overlay = $('#tutorial-overlay');
+
+        // Remove previous mode classes
+        $overlay.removeClass('blocking semi-blocking open');
+
+        // Remove ALL event handlers from overlay (from previous modes)
+        $overlay.off('click');
+
+        // Remove previous event blocker (from semi-blocking mode)
+        if (this.eventBlocker) {
+            console.log('[TutorialUI] Removing previous event blocker');
+            document.removeEventListener('click', this.eventBlocker, true);
+            this.eventBlocker = null;
+        }
+
+        // Disconnect observer from previous mode
+        if (this.domObserver) {
+            this.domObserver.disconnect();
+            this.domObserver = null;
+        }
+
+        console.log('[TutorialUI] Applying interaction mode:', mode);
+
+        if (mode === 'blocking') {
+            // Full blocking - show overlay, disable all game interactions
+            $overlay.addClass('blocking').show();
+            this.setupOverlayClickHandler(stepData);
+
+        } else if (mode === 'semi-blocking') {
+            // Partial blocking - allow only specific elements
+            $overlay.addClass('semi-blocking').show();
+            this.allowSpecificInteractions(stepData.config?.allowed_interactions || []);
+            this.setupSemiBlockingEventHandler(stepData);
+
+        } else if (mode === 'open') {
+            // No blocking
+            $overlay.addClass('open').hide();
+        }
+    }
+
+    /**
+     * Get default interaction mode based on step type
+     */
+    getDefaultInteractionMode(stepType) {
+        const defaults = {
+            'info': 'blocking',
+            'welcome': 'blocking',
+            'dialog': 'blocking',
+            'movement': 'semi-blocking',
+            'movement_limit': 'semi-blocking',
+            'action': 'semi-blocking',
+            'action_intro': 'blocking',
+            'combat': 'semi-blocking',
+            'combat_intro': 'blocking',
+            'exploration': 'open'
+        };
+
+        return defaults[stepType] || 'blocking';
+    }
+
+    /**
+     * Setup click handler on overlay (for blocking mode)
+     */
+    setupOverlayClickHandler(stepData) {
+        const $overlay = $('#tutorial-overlay');
+
+        $overlay.off('click').on('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Get blocked click message
+            const message = stepData.config?.blocked_click_message ||
+                           stepData.config?.target_description ?
+                           `Pour continuer, ${stepData.config.target_description}.` :
+                           'Suivez les instructions du tutoriel pour continuer.';
+
+            // Show message in tooltip + shake
+            this.showBlockedInteractionWarning(message);
+        });
+    }
+
+    /**
+     * Setup event handler for semi-blocking mode
+     * Intercepts clicks in capture phase, allows clicks on allowed elements only
+     */
+    setupSemiBlockingEventHandler(stepData) {
+        console.log('[TutorialUI] Setting up semi-blocking event handler');
+
+        const allowedSelectors = stepData.config?.allowed_interactions || [];
+
+        // Create event blocker function
+        this.eventBlocker = (e) => {
+            const target = e.target;
+
+            console.log('[TutorialUI] Click detected on:', target, 'classes:', target.className);
+
+            // Always allow clicks on tutorial UI elements
+            if ($(target).closest('#tutorial-controls, .tutorial-tooltip, #tutorial-next').length > 0 ||
+                $(target).is('#tutorial-next')) {
+                console.log('[TutorialUI] ✅ Tutorial UI click allowed');
+                return; // Allow clicks on tutorial UI
+            }
+
+            // Check if click is on an allowed element
+            for (const selector of allowedSelectors) {
+                // Use jQuery to check if element matches selector (works with SVG)
+                const matches = $(target).is(selector);
+                const hasParent = $(target).closest(selector).length > 0;
+
+                console.log(`[TutorialUI] Checking selector "${selector}": matches=${matches}, hasParent=${hasParent}`);
+
+                if (matches || hasParent) {
+                    console.log('[TutorialUI] ✅ Click allowed on:', selector, target);
+                    return; // Allow the click to proceed
+                }
+            }
+
+            // Block all other clicks
+            console.log('[TutorialUI] ❌ Click blocked - no matching selector found');
+            e.stopPropagation();
+            e.preventDefault();
+
+            // Show warning
+            const message = stepData.config?.blocked_click_message || 'Suivez les instructions du tutoriel.';
+            this.showBlockedInteractionWarning(message);
+        };
+
+        // Add event listener in capture phase (before jQuery handlers)
+        document.addEventListener('click', this.eventBlocker, true);
+    }
+
+    /**
+     * Show blocked interaction warning in tooltip
+     */
+    showBlockedInteractionWarning(message) {
+        const $tooltip = $('.tutorial-tooltip');
+
+        // Remove any existing warning
+        $('.tooltip-blocked-message').remove();
+
+        // Add warning to tooltip
+        const $warning = $(`
+            <div class="tooltip-blocked-message">
+                <p>
+                    <span class="tooltip-warning"><i class="ra ra-crossed-sabres"></i></span>
+                    ${message}
+                </p>
+            </div>
+        `);
+
+        $('.tooltip-content').append($warning);
+
+        // Shake the tooltip
+        $tooltip.addClass('shake');
+        setTimeout(() => {
+            $tooltip.removeClass('shake');
+        }, 600);
+
+        // Auto-remove warning after 4 seconds
+        setTimeout(() => {
+            $warning.fadeOut(() => $warning.remove());
+        }, 4000);
+    }
+
+    /**
+     * Allow specific interactions (semi-blocking mode)
+     */
+    allowSpecificInteractions(selectors) {
+        console.log('[TutorialUI] Allowing interactions:', selectors);
+
+        // Store selectors for re-application
+        this.allowedSelectors = selectors;
+
+        // Function to apply allowed class
+        const applyAllowedClasses = () => {
+            selectors.forEach(selector => {
+                const $elements = $(selector);
+                console.log(`[TutorialUI] Found ${$elements.length} elements for selector: ${selector}`);
+                $elements.addClass('tutorial-allowed-element');
+            });
+
+            const totalAllowed = $('.tutorial-allowed-element').length;
+            console.log(`[TutorialUI] Total allowed elements: ${totalAllowed}`);
+        };
+
+        // Apply initially
+        applyAllowedClasses();
+
+        // Watch for DOM changes and re-apply (for when game updates tiles)
+        if (this.domObserver) {
+            this.domObserver.disconnect();
+        }
+
+        this.domObserver = new MutationObserver(() => {
+            console.log('[TutorialUI] DOM changed, re-applying allowed classes');
+            applyAllowedClasses();
+        });
+
+        // Observe the main game container for changes
+        const gameContainer = document.body;
+        this.domObserver.observe(gameContainer, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+
+    /**
+     * Setup UI observers for validation
+     * Automatically detects when UI interactions occur and sends validation
+     */
+    setupUIObservers(stepData) {
+        // Only setup observers for ui_interaction steps that require validation
+        if (stepData.step_type !== 'ui_interaction' || !stepData.requires_validation) {
+            return;
+        }
+
+        const validationType = stepData.config?.validation_type;
+        console.log('[TutorialUI] Setting up UI observer for:', validationType);
+
+        if (validationType === 'ui_panel_opened') {
+            const panel = stepData.config?.validation_params?.panel;
+            if (panel === 'characteristics') {
+                this.setupPanelVisibilityObserver('#load-caracs');
+            }
+        }
+    }
+
+    /**
+     * Setup MutationObserver to watch for panel visibility
+     * Automatically sends validation when panel becomes visible
+     */
+    setupPanelVisibilityObserver(panelSelector) {
+        const panel = document.querySelector(panelSelector);
+        if (!panel) {
+            console.warn('[TutorialUI] Panel not found:', panelSelector);
+            return;
+        }
+
+        console.log('[TutorialUI] Setting up panel visibility observer for:', panelSelector);
+
+        this.panelObserver = new MutationObserver((mutations) => {
+            // Check if panel is now visible
+            const isVisible = $(panelSelector).is(':visible');
+
+            if (isVisible && this.isActive) {
+                console.log('[TutorialUI] Panel became visible, sending validation');
+
+                // Send validation
+                window.notifyTutorial('ui_interaction', {
+                    panel: 'characteristics',
+                    panel_visible: true,
+                    timestamp: Date.now()
+                });
+
+                // Disconnect observer - we only need to detect this once
+                if (this.panelObserver) {
+                    this.panelObserver.disconnect();
+                    this.panelObserver = null;
+                }
+            }
+        });
+
+        // Observe style and attribute changes on the panel
+        this.panelObserver.observe(panel, {
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+
+        // Also check immediately in case panel is already visible
+        const isVisible = $(panelSelector).is(':visible');
+        if (isVisible && this.isActive) {
+            console.log('[TutorialUI] Panel already visible on setup');
+            window.notifyTutorial('ui_interaction', {
+                panel: 'characteristics',
+                panel_visible: true,
+                timestamp: Date.now()
+            });
+        }
+    }
+
+    /**
+     * Cleanup all observers
+     */
+    cleanupObservers() {
+        if (this.panelObserver) {
+            console.log('[TutorialUI] Cleaning up panel observer');
+            this.panelObserver.disconnect();
+            this.panelObserver = null;
+        }
+    }
+
+    /**
+     * Ensure step prerequisites are met
+     */
+    ensurePrerequisites(stepData) {
+        const prereqs = stepData.config?.prerequisites || {};
+
+        if (Object.keys(prereqs).length === 0) {
+            return; // No prerequisites
+        }
+
+        console.log('[TutorialUI] Checking prerequisites:', prereqs);
+
+        // Note: Actual resource restoration happens server-side in TutorialContext
+        // This is just for client-side display/validation
+
+        if (prereqs.mvt !== undefined) {
+            console.log(`[TutorialUI] Step requires ${prereqs.mvt} movement(s)`);
+        }
+
+        if (prereqs.actions !== undefined) {
+            console.log(`[TutorialUI] Step requires ${prereqs.actions} action point(s)`);
+        }
+
+        if (prereqs.ensure_enemy) {
+            console.log(`[TutorialUI] Step requires enemy: ${prereqs.ensure_enemy}`);
+        }
+
+        if (prereqs.ensure_item) {
+            console.log(`[TutorialUI] Step requires item: ${prereqs.ensure_item}`);
+        }
+    }
+
+    /**
      * Hide tutorial overlay
      */
     hideTutorialOverlay() {
         $('#tutorial-overlay').fadeOut(() => $('#tutorial-overlay').remove());
         $('#tutorial-controls').fadeOut(() => $('#tutorial-controls').remove());
+
+        // Clean up event blocker
+        if (this.eventBlocker) {
+            document.removeEventListener('click', this.eventBlocker, true);
+            this.eventBlocker = null;
+        }
+
+        // Clean up observers
+        if (this.domObserver) {
+            this.domObserver.disconnect();
+            this.domObserver = null;
+        }
+
+        this.cleanupObservers();
 
         if (this.tooltip) {
             this.tooltip.hide();
@@ -296,15 +704,20 @@ class TutorialUI {
     }
 
     /**
-     * Update XP bar
+     * Update progress bar
+     * Shows tutorial step progression and earned XP
      */
     updateXPBar() {
-        // Calculate XP progress (simple: every 100 XP = 1 level)
-        const xpForNextLevel = 100 * (this.level + 1);
-        const xpProgress = (this.xpEarned / xpForNextLevel) * 100;
+        // Calculate tutorial progression (current step / total steps)
+        const barProgress = (this.currentStep / this.totalSteps) * 100;
 
-        $('#tutorial-xp-bar .xp-bar-fill').css('width', `${Math.min(xpProgress, 100)}%`);
-        $('#tutorial-xp-bar .xp-text').text(`Niveau ${this.level} - XP: ${this.xpEarned}`);
+        // Update progress bar fill
+        $('#tutorial-xp-bar .xp-bar-fill').css('width', `${Math.min(barProgress, 100)}%`);
+
+        // Show step progression and earned XP
+        const stepText = `Étape ${this.currentStep}/${this.totalSteps}`;
+        const xpText = `XP gagné: ${this.xpEarned}`;
+        $('#tutorial-xp-bar .xp-text').text(`${stepText} • ${xpText}`);
     }
 
     /**
@@ -393,10 +806,107 @@ class TutorialUI {
         const response = await fetch(url, options);
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            // Try to get error details from response body
+            let errorDetails = response.statusText;
+            try {
+                const errorBody = await response.json();
+                errorDetails = errorBody.error || errorBody.message || errorDetails;
+                console.error('[TutorialUI] API error details:', errorBody);
+            } catch (e) {
+                // If response body is not JSON, use statusText
+            }
+            throw new Error(`HTTP ${response.status}: ${errorDetails}`);
         }
 
         return await response.json();
+    }
+
+    /**
+     * API call helper for validation endpoints
+     * Unlike apiCall, this returns error responses instead of throwing for 400 status
+     */
+    async apiCallWithValidation(url, data = {}, method = 'POST') {
+        const options = {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        if (method === 'POST') {
+            options.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(url, options);
+
+        // For validation endpoints, 400 with error response is expected
+        if (!response.ok && response.status === 400) {
+            // Try to parse error response
+            try {
+                const errorBody = await response.json();
+                console.log('[TutorialUI] Validation response:', errorBody);
+                return errorBody; // Return the error response instead of throwing
+            } catch (e) {
+                // If we can't parse it, throw
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        }
+
+        // For other errors (401, 404, 500, etc.), throw as usual
+        if (!response.ok) {
+            let errorDetails = response.statusText;
+            try {
+                const errorBody = await response.json();
+                errorDetails = errorBody.error || errorBody.message || errorDetails;
+                console.error('[TutorialUI] API error details:', errorBody);
+            } catch (e) {
+                // If response body is not JSON, get the text to see what error page was returned
+                const errorText = await response.text();
+                console.error('[TutorialUI] Non-JSON error response:', errorText.substring(0, 500));
+                errorDetails = 'Server error (non-JSON response)';
+            }
+            throw new Error(`HTTP ${response.status}: ${errorDetails}`);
+        }
+
+        // Try to parse JSON response
+        // Clone first BEFORE consuming the body
+        const responseClone = response.clone();
+        try {
+            return await response.json();
+        } catch (e) {
+            // JSON parse failed - probably got HTML error page
+            const responseText = await responseClone.text();
+            console.error('[TutorialUI] JSON parse failed. Response text:', responseText.substring(0, 1000));
+            throw new Error('Server returned invalid JSON (probably an error page). Check console for details.');
+        }
+    }
+
+    /**
+     * Check if step can auto-validate (without user action)
+     * Used for steps like "deplete movements" where validation should happen automatically
+     */
+    async checkAutoValidation(stepData) {
+        // Only auto-validate for specific step types
+        const autoValidateTypes = ['movement_limit'];
+
+        if (!autoValidateTypes.includes(stepData.step_type)) {
+            return; // This step type doesn't support auto-validation
+        }
+
+        console.log('[TutorialUI] Checking auto-validation for step', stepData.step_number);
+
+        // Try to validate automatically (e.g., movements_depleted)
+        // Use notifyAction which calls this.next() internally
+        try {
+            // Call notifyAction like the game would, but with auto-validation flag
+            this.notifyAction('auto_validation', {
+                step_type: stepData.step_type,
+                timestamp: Date.now()
+            }, false); // Don't skip UI update - we want to advance if valid
+        } catch (error) {
+            console.error('[TutorialUI] Auto-validation error:', error);
+            // Don't show error to user - just silently continue
+        }
     }
 }
 

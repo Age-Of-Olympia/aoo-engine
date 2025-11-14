@@ -71,7 +71,7 @@ class MainView
 
 
 ?>
-            <script src="js/view.js?v=20252004"></script>
+            <script src="js/view.js?v=20251113004"></script>
 <?php
         }
     }

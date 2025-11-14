@@ -5,6 +5,7 @@ use Classes\View;
 use Classes\Log;
 use Classes\Item;
 use Classes\Element;
+use App\Tutorial\TutorialHelper;
 require_once('config.php');
 
 
@@ -16,11 +17,8 @@ if(!isset($_POST['coords'])){
 
 $coords = explode(',', $_POST['coords']);
 
-// Use tutorial character if in tutorial mode
-$playerId = $_SESSION['playerId'];
-if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_player_id'])) {
-    $playerId = $_SESSION['tutorial_player_id'];
-}
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
 $player = new Player($playerId);
 
@@ -286,12 +284,26 @@ if($res->num_rows){
 
 
 
-if($planJson){
+// Tutorial mode: Check if movements should be consumed for current step
+$consumeMovement = false;
+if ($player->coords->plan === 'tutorial') {
+    // Check tutorial context to see if movements should be limited
+    if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_session_id'])) {
+        // Tutorial can disable movement consumption for certain steps (unlimited movement)
+        // By default, tutorial does NOT consume movements (legacy behavior)
+        // Steps can enable consumption via context_changes['consume_movements'] = true
+        $consumeMovement = !empty($_SESSION['tutorial_consume_movements']);
+        error_log("[go.php] Tutorial mode: player={$player->id}, consume_movements=" . ($consumeMovement ? 'true' : 'false'));
+    }
+}
 
-
+if($planJson || $consumeMovement){
     // cost (neg bonus)
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);
+    if ($consumeMovement) {
+        error_log("[go.php] Consumed movement for tutorial player {$player->id}");
+    }
 }
 
 if(!$player->have_option('incognitoMode'))

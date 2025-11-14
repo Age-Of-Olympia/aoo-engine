@@ -48,6 +48,14 @@ class TutorialContext
     }
 
     /**
+     * Set player (used when switching to tutorial player on resume)
+     */
+    public function setPlayer(Player $player): void
+    {
+        $this->player = $player;
+    }
+
+    /**
      * Get mode (first_time, replay, practice)
      */
     public function getMode(): string
@@ -235,6 +243,231 @@ class TutorialContext
             $this->tutorialLevel = $data['tutorial_level'] ?? 1;
             $this->tutorialPI = $data['tutorial_pi'] ?? 0;
             $this->tutorialState = array_merge($this->tutorialState, $data['state'] ?? []);
+        }
+    }
+
+    /**
+     * Ensure step prerequisites are met
+     *
+     * This is called before rendering each step to guarantee resources are available
+     *
+     * @param array $prerequisites Step prerequisite configuration
+     * @return bool True if prerequisites met/restored, false if failed
+     */
+    public function ensurePrerequisites(array $prerequisites): bool
+    {
+        if (empty($prerequisites)) {
+            return true; // No prerequisites
+        }
+
+        $autoRestore = $prerequisites['auto_restore'] ?? false;
+        $player = $this->getPlayer();
+
+        // Check and restore movement points
+        if (isset($prerequisites['mvt'])) {
+            $required = (int) $prerequisites['mvt'];
+            // Get actual movement from turn system
+            $player->get_caracs();
+            $current = $player->getRemaining('mvt');
+
+            // Get caller context for debugging
+            $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+            $caller = isset($backtrace[1]) ? $backtrace[1]['function'] : 'unknown';
+
+            error_log("[TutorialContext] Prerequisites mvt check: required={$required}, current={$current}, auto_restore={$autoRestore}, caller={$caller}");
+
+            if ($current < $required) {
+                if ($autoRestore) {
+                    // SET movement to exact amount (not add)
+                    $this->setPlayerMovements($required);
+                    error_log("[TutorialContext] Restored movement: {$current} → {$required}");
+                } else {
+                    error_log("[TutorialContext] ERROR: Insufficient movement (need {$required}, have {$current})");
+                    return false;
+                }
+            } else {
+                error_log("[TutorialContext] Movement OK: have {$current}, need {$required} - no restoration needed");
+            }
+        }
+
+        // Check and restore action points
+        if (isset($prerequisites['actions'])) {
+            $required = (int) $prerequisites['actions'];
+            $current = $player->data->a ?? 0;
+
+            if ($current < $required) {
+                if ($autoRestore) {
+                    $player->data->a = $required;
+                    error_log("[TutorialContext] Restored actions: {$current} → {$required}");
+                } else {
+                    error_log("[TutorialContext] ERROR: Insufficient actions (need {$required}, have {$current})");
+                    return false;
+                }
+            }
+        }
+
+        // Mark entities to spawn (actual spawning handled by game logic)
+        if (isset($prerequisites['ensure_enemy'])) {
+            $this->setState('ensure_enemy', $prerequisites['ensure_enemy']);
+            error_log("[TutorialContext] Marking enemy to spawn: {$prerequisites['ensure_enemy']}");
+        }
+
+        if (isset($prerequisites['ensure_item'])) {
+            $this->setState('ensure_item', $prerequisites['ensure_item']);
+            error_log("[TutorialContext] Marking item to spawn: {$prerequisites['ensure_item']}");
+        }
+
+        if (isset($prerequisites['ensure_npc'])) {
+            $this->setState('ensure_npc', $prerequisites['ensure_npc']);
+            error_log("[TutorialContext] Marking NPC to ensure: {$prerequisites['ensure_npc']}");
+        }
+
+        return true;
+    }
+
+    /**
+     * Prepare resources for next step
+     *
+     * Called after current step completes to ensure next step has resources
+     *
+     * @param array $preparation Preparation configuration
+     */
+    public function prepareForNextStep(array $preparation): void
+    {
+        if (empty($preparation)) {
+            return;
+        }
+
+        $player = $this->getPlayer();
+
+        // Restore movement points
+        if (isset($preparation['restore_mvt'])) {
+            $amount = (int) $preparation['restore_mvt'];
+            $this->setPlayerMovements($amount);
+            error_log("[TutorialContext] Prepared movement for next step: {$amount}");
+        }
+
+        // Restore action points
+        if (isset($preparation['restore_actions'])) {
+            $amount = (int) $preparation['restore_actions'];
+            $player->data->a = $amount;
+            error_log("[TutorialContext] Prepared actions for next step: {$amount}");
+        }
+
+        // Mark entities to spawn for next step
+        if (isset($preparation['spawn_enemy'])) {
+            $this->setState('spawn_enemy_next', $preparation['spawn_enemy']);
+            error_log("[TutorialContext] Will spawn enemy for next step: {$preparation['spawn_enemy']}");
+        }
+
+        if (isset($preparation['spawn_item'])) {
+            $this->setState('spawn_item_next', $preparation['spawn_item']);
+            error_log("[TutorialContext] Will spawn item for next step: {$preparation['spawn_item']}");
+        }
+
+        // Mark entities to remove
+        if (isset($preparation['remove_enemy'])) {
+            $this->setState('remove_enemy', $preparation['remove_enemy']);
+            error_log("[TutorialContext] Will remove enemy: {$preparation['remove_enemy']}");
+        }
+
+        if (isset($preparation['remove_item'])) {
+            $this->setState('remove_item', $preparation['remove_item']);
+            error_log("[TutorialContext] Will remove item: {$preparation['remove_item']}");
+        }
+    }
+
+    /**
+     * Get current movement points
+     */
+    public function getCurrentMovement(): int
+    {
+        return $this->player->data->mvt ?? 0;
+    }
+
+    /**
+     * Get current action points
+     */
+    public function getCurrentActions(): int
+    {
+        return $this->player->data->a ?? 0;
+    }
+
+    /**
+     * Set movement points (for tutorial resource management)
+     */
+    public function setMovement(int $amount): void
+    {
+        $this->player->data->mvt = $amount;
+    }
+
+    /**
+     * Set action points (for tutorial resource management)
+     */
+    public function setActions(int $amount): void
+    {
+        $this->player->data->a = $amount;
+    }
+
+    /**
+     * Set player movements to exact amount (not add)
+     *
+     * This method properly SETS movements by clearing existing bonuses first,
+     * then calculating and applying the exact bonus needed.
+     *
+     * @param int $targetAmount The exact number of movements to set
+     */
+    private function setPlayerMovements(int $targetAmount): void
+    {
+        $player = $this->getPlayer();
+
+        // Log current state BEFORE clearing
+        $db = new \Classes\Db();
+        $checkSql = 'SELECT * FROM players_bonus WHERE player_id = ? AND name = "mvt"';
+        $checkResult = $db->exe($checkSql, [$player->id]);
+        $existingBonuses = [];
+        while ($row = $checkResult->fetch_assoc()) {
+            $existingBonuses[] = $row;
+        }
+        error_log("[TutorialContext] BEFORE clear - player_id={$player->id}, existing bonuses: " . json_encode($existingBonuses));
+
+        // Clear existing movement bonuses from database
+        $sql = 'DELETE FROM players_bonus WHERE player_id = ? AND name = "mvt"';
+        $deleteResult = $db->exe($sql, [$player->id]);
+        error_log("[TutorialContext] Deleted movement bonuses for player {$player->id}");
+
+        // Get base movement from race/characteristics
+        $player->get_caracs();
+        $baseMovement = $player->caracs->mvt ?? 4;
+        $currentRemaining = $player->getRemaining('mvt');
+
+        // Calculate bonus needed to reach target
+        $bonusNeeded = $targetAmount - $baseMovement;
+
+        error_log("[TutorialContext] setPlayerMovements: player_id={$player->id}, target={$targetAmount}, base={$baseMovement}, currentRemaining={$currentRemaining}, bonusNeeded={$bonusNeeded}");
+
+        // Apply bonus if needed
+        if ($bonusNeeded > 0) {
+            $player->putBonus(array('mvt' => $bonusNeeded));
+            error_log("[TutorialContext] Applied bonus: +{$bonusNeeded}");
+        } elseif ($bonusNeeded < 0) {
+            // Negative bonus (penalty)
+            $player->putBonus(array('mvt' => $bonusNeeded));
+            error_log("[TutorialContext] Applied penalty: {$bonusNeeded}");
+        } else {
+            error_log("[TutorialContext] No bonus needed (at base movement)");
+        }
+        // If bonusNeeded == 0, we're at base movement, no bonus needed
+
+        // Refresh caracs to reflect the change
+        $player->get_caracs();
+        $finalRemaining = $player->getRemaining('mvt');
+
+        error_log("[TutorialContext] AFTER set - player_id={$player->id}, finalRemaining={$finalRemaining} (target was {$targetAmount})");
+
+        // Verify it matches
+        if ($finalRemaining != $targetAmount) {
+            error_log("[TutorialContext] ERROR: Movement mismatch! Expected {$targetAmount}, got {$finalRemaining}");
         }
     }
 }

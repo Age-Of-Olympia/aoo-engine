@@ -1,14 +1,17 @@
 <?php
 use Classes\Player;
 use Classes\Str;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
 
 ob_start();
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 
 $player->get_data();
 

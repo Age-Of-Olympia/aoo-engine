@@ -6,6 +6,7 @@
  * Cancels the current tutorial session
  */
 
+use App\Tutorial\TutorialHelper;
 use Classes\Db;
 
 define('NO_LOGIN', true);
@@ -26,20 +27,41 @@ try {
     $sessionId = $input['session_id'] ?? null;
 
     // Clear tutorial session from PHP session
-    unset($_SESSION['tutorial_session_id']);
-    unset($_SESSION['tutorial_player_id']);
-    unset($_SESSION['in_tutorial']);
+    TutorialHelper::exitTutorialMode();
+
+    error_log("[Cancel] Cleared tutorial session vars for player {$_SESSION['playerId']}");
+
+    // Force session write to persist the cleared vars
+    session_write_close();
+    session_start();
 
     // Mark tutorial as completed (cancelled) in database
     $db = new Db();
 
     if ($sessionId) {
+        // Mark progress as completed
         $sql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW() WHERE tutorial_session_id = ?';
         $db->exe($sql, [$sessionId]);
+
+        // Deactivate tutorial player
+        $sql2 = 'UPDATE tutorial_players SET is_active = 0, deleted_at = NOW() WHERE tutorial_session_id = ?';
+        $db->exe($sql2, [$sessionId]);
+
+        error_log("[Cancel] Marked tutorial as completed and deactivated tutorial player for session {$sessionId}");
     } else {
         // If no session ID provided, cancel any active tutorial for this player
         $sql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW() WHERE player_id = ? AND completed = 0';
         $db->exe($sql, [$_SESSION['playerId']]);
+
+        // Deactivate all tutorial players for this main player
+        $sql2 = 'UPDATE tutorial_players SET is_active = 0, deleted_at = NOW()
+                 WHERE tutorial_session_id IN (
+                     SELECT tutorial_session_id FROM tutorial_progress
+                     WHERE player_id = ? AND completed = 1 AND completed_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                 )';
+        $db->exe($sql2, [$_SESSION['playerId']]);
+
+        error_log("[Cancel] Marked all active tutorials as completed and deactivated tutorial players for player {$_SESSION['playerId']}");
     }
 
     echo json_encode([

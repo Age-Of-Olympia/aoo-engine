@@ -24,7 +24,15 @@ class TutorialView
             window.playerId = <?php echo $_SESSION['playerId'] ?>;
             window.dataCoords = "<?php echo $player->coords->x + 1 ?>,<?php echo $player->coords->y ?>";
         </script>
-        <script src="js/tutorial.js"></script>
+
+        <!-- Tutorial CSS -->
+        <link href="css/tutorial/tutorial.css?v=20251114a" rel="stylesheet">
+
+        <!-- Tutorial JavaScript - NEW MODULAR SYSTEM -->
+        <script src="js/tutorial/TutorialUI.js?v=20251114d"></script>
+        <script src="js/tutorial/TutorialHighlighter.js?v=20251113"></script>
+        <script src="js/tutorial/TutorialTooltip.js?v=20251113"></script>
+        <script src="js/tutorial/TutorialInit.js?v=20251113"></script>
 <?php
     }
 }

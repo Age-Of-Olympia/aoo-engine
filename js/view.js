@@ -3,6 +3,25 @@ $(document).ready(function(){
 
     window.clickedCases = [];
 
+    // Caracs panel persistence (save/restore state across reloads)
+    $(document).on('click', '#show-caracs', function() {
+        // Wait for panel to toggle, then save state
+        setTimeout(function() {
+            var isOpen = $('#load-caracs').is(':visible');
+            sessionStorage.setItem('caracs_panel_open', isOpen ? 'true' : 'false');
+            console.log('[View] Saved caracs panel state:', isOpen);
+        }, 100);
+    });
+
+    // Auto-restore caracs panel if it was open before reload
+    if (sessionStorage.getItem('caracs_panel_open') === 'true') {
+        console.log('[View] Restoring open caracs panel');
+        // Trigger click to open panel
+        setTimeout(function() {
+            $('#show-caracs').click();
+        }, 500);
+    }
+
 
     $('.case').click(function(e){
 
@@ -109,7 +128,25 @@ $(document).ready(function(){
                     return false;
                 }
 
-                document.location.reload();
+                // Notify tutorial system about successful movement
+                if (window.tutorialUI && window.tutorialUI.isActive) {
+                    console.log('[View] Notifying tutorial about movement to:', coords);
+
+                    // Send validation but skip UI update (page will reload)
+                    window.notifyTutorial('movement', {
+                        action: 'move',  // Required for validation
+                        coords: coords,
+                        timestamp: Date.now()
+                    }, true); // skipUIUpdate = true to avoid showing next step before reload
+
+                    // Give tutorial 100ms to save, then reload
+                    setTimeout(function() {
+                        document.location.reload();
+                    }, 100);
+                } else {
+                    // No tutorial active, reload immediately
+                    document.location.reload();
+                }
             }
         });
     });

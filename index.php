@@ -5,6 +5,7 @@ use App\View\InfosView;
 use App\View\MainView;
 use App\View\MenuView;
 use App\View\NewTurnView;
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 
 if(isset($_GET['logout'])){
@@ -59,14 +60,9 @@ if ($_SESSION['playerId'] == 7) {
     error_log("  tutorial_player_id: " . ($_SESSION['tutorial_player_id'] ?? 'NOT SET'));
 }
 
-// Use tutorial character if in tutorial mode
-$playerId = $_SESSION['playerId'];
-if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_player_id'])) {
-    $playerId = $_SESSION['tutorial_player_id'];
-    error_log("  USING TUTORIAL PLAYER: $playerId");
-} else {
-    error_log("  USING REAL PLAYER: $playerId");
-}
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
+error_log("  USING PLAYER: $playerId (tutorial mode: " . (TutorialHelper::isInTutorial() ? 'YES' : 'NO') . ")");
 
 $player = new Player($playerId);
 $player->get_data(false);

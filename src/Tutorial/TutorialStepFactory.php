@@ -5,6 +5,7 @@ namespace App\Tutorial;
 use App\Tutorial\Steps\AbstractStep;
 use App\Tutorial\Steps\GenericStep;
 use App\Tutorial\Steps\DialogStep;
+use App\Tutorial\Steps\UIInteractionStep;
 use App\Tutorial\Steps\Movement\MovementStep;
 use App\Tutorial\TutorialContext;
 
@@ -26,6 +27,9 @@ class TutorialStepFactory
 
         // Dialog steps
         'dialog' => DialogStep::class,
+
+        // UI Interaction steps
+        'ui_interaction' => UIInteractionStep::class,
 
         // Movement steps
         'movement' => MovementStep::class,

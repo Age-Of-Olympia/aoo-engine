@@ -2,6 +2,7 @@
 
 namespace App\View;
 
+use App\Tutorial\TutorialHelper;
 use Classes\Db;
 use Classes\Player;
 use Classes\View;
@@ -11,7 +12,7 @@ class NewTurnView
     public static function renderNewTurn(Player $player): void
     {
         // Skip new turn for tutorial players
-        if (!empty($_SESSION['in_tutorial'])) {
+        if (TutorialHelper::isInTutorial()) {
             return;
         }
 

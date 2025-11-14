@@ -70,15 +70,20 @@ class TutorialHighlighter {
      * Position highlight box around element
      */
     positionHighlight($highlight, $element) {
-        const offset = $element.offset();
-        const width = $element.outerWidth();
-        const height = $element.outerHeight();
+        const element = $element[0];
+
+        // For SVG elements, use getBoundingClientRect() instead of jQuery offset()
+        const rect = element.getBoundingClientRect();
+
+        // Account for page scroll
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
 
         $highlight.css({
-            top: `${offset.top - 5}px`,
-            left: `${offset.left - 5}px`,
-            width: `${width + 10}px`,
-            height: `${height + 10}px`
+            top: `${rect.top + scrollTop - 5}px`,
+            left: `${rect.left + scrollLeft - 5}px`,
+            width: `${rect.width + 10}px`,
+            height: `${rect.height + 10}px`
         });
     }
 

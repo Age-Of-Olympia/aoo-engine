@@ -52,6 +52,7 @@ abstract class AbstractStep
             'requires_validation' => $this->requiresValidation(),
             'validation_hint' => $this->getValidationHint(),
             'xp_reward' => $this->xpReward,
+            'interaction_mode' => $this->getInteractionMode(),
             'config' => $this->config
         ];
     }
@@ -123,9 +124,9 @@ abstract class AbstractStep
     }
 
     /**
-     * Get validation hint for user
+     * Get validation hint for user (public so TutorialManager can generate dynamic hints)
      */
-    protected function getValidationHint(): string
+    public function getValidationHint(): string
     {
         return $this->config['validation_hint'] ?? '';
     }
@@ -145,6 +146,36 @@ abstract class AbstractStep
     }
 
     /**
+     * Get interaction mode (blocking, semi-blocking, or open)
+     *
+     * Can be overridden in config or by subclasses
+     */
+    protected function getInteractionMode(): string
+    {
+        // Explicit override in config
+        if (isset($this->config['interaction_mode'])) {
+            return $this->config['interaction_mode'];
+        }
+
+        // Default based on step type
+        $defaults = [
+            'info' => 'blocking',
+            'welcome' => 'blocking',
+            'dialog' => 'blocking',
+            'ui_interaction' => 'semi-blocking',
+            'movement' => 'semi-blocking',
+            'movement_limit' => 'semi-blocking',
+            'action' => 'semi-blocking',
+            'action_intro' => 'blocking',
+            'combat' => 'semi-blocking',
+            'combat_intro' => 'blocking',
+            'exploration' => 'open'
+        ];
+
+        return $defaults[$this->stepType] ?? 'blocking';
+    }
+
+    /**
      * Called when step is completed
      *
      * Awards XP and executes any step-specific completion logic
@@ -159,6 +190,12 @@ abstract class AbstractStep
         // Apply context changes if specified
         if (isset($this->config['context_changes'])) {
             $this->applyContextChanges($context, $this->config['context_changes']);
+        }
+
+        // Apply prerequisites for NEXT step if specified
+        // This ensures resources are ready for the following step
+        if (isset($this->config['prepare_next_step'])) {
+            $this->prepareNextStep($context, $this->config['prepare_next_step']);
         }
     }
 
@@ -175,10 +212,24 @@ abstract class AbstractStep
             $context->setState('unlimited_actions', $changes['unlimited_actions']);
         }
 
+        // Control whether movements are consumed when player moves
+        // By default (legacy), tutorial does NOT consume movements
+        // Set consume_movements: true to enable movement consumption
+        if (isset($changes['consume_movements'])) {
+            $consumeMovements = (bool) $changes['consume_movements'];
+            $context->setState('consume_movements', $consumeMovements);
+            $_SESSION['tutorial_consume_movements'] = $consumeMovements;
+            error_log("[AbstractStep] Set consume_movements: " . ($consumeMovements ? 'true' : 'false'));
+        }
+
         if (isset($changes['set_mvt_limit'])) {
             $context->setState('mvt_limit', $changes['set_mvt_limit']);
-            // Apply to player
-            $context->getPlayer()->data->mvt = $changes['set_mvt_limit'];
+            // Use ensurePrerequisites() to properly SET movements (not add)
+            // This goes through the turn/bonus system, not direct data->mvt
+            $context->ensurePrerequisites([
+                'mvt' => $changes['set_mvt_limit'],
+                'auto_restore' => true
+            ]);
         }
 
         if (isset($changes['set_action_limit'])) {
@@ -186,6 +237,18 @@ abstract class AbstractStep
             // Apply to player
             $context->getPlayer()->data->a = $changes['set_action_limit'];
         }
+    }
+
+    /**
+     * Prepare resources for next step (called after current step completes)
+     *
+     * This ensures the next step has the resources it needs
+     * Delegates to TutorialContext for proper resource management
+     */
+    protected function prepareNextStep(TutorialContext $context, array $preparation): void
+    {
+        // Delegate to TutorialContext which has proper movement/action restoration logic
+        $context->prepareForNextStep($preparation);
     }
 
     /**
