@@ -259,53 +259,80 @@ define('ELE_PROD', array(
 
 // PV: if not defined, undestructible
 define('WALLS_PV', array(
+
+    //murs
     'mur_pierre'=>150,
     'mur_pierre_broken'=>150,
-
     'mur_pierre_bleue'=>150,
     'mur_pierre_bleue_broken'=>150,
-
     'mur_noir'=>120,
     'mur_noir_broken'=>120,
-    
     'mur_bois'=>100,
-    'mur_bois_petrifie'=>125,
+    'mur_bois_broken'=>100,
+    'mur_bois_petrifie'=>120,
+    'mur_bois_petrifie_broken'=>120,
+    'mur_vegetal'=>120,
+    'mur_vegetal_broken'=>120,
+    'mur_fer'=>180,
+    'mur_fer_broken'=>180,
+    'mur_crepusculaire'=>120,
+    'mur_crepusculaire_broken'=>120,
+    'mur_blanc'=>180,
+    'mur_blanc_broken'=>180,
+    'muret'=>40,
+    'barricade'=>40,
 
+    //coffres
     'coffre_metal'=>100,
     'coffre_bois'=>30,
     'coffre_bois_petrifie'=>40,
-
     'coffre_metal_broken'=>100,
     'coffre_bois_broken'=>30,
     'coffre_bois_petrifie_broken'=>40,
 
-    'altar'=>50,
-    'altar_broken'=>50,
-
     'pierre_precieuse'=>500,
-    
-    'piedestal'=>50,
-    'piedestal_broken'=>50,
-    'piedestal_pierre'=>25,
-    'piedestal_pierre_broken'=>25,
-    
-    'table_bois'=>50,	
-    
-    'statues1'=>30,
-    'statues2'=>30,
-    'statue_heroique'=>30,
-    'statues6'=>30,
-    'statues4'=>30,
-    'statues5'=>30,
-    'statue_colosses'=>30,
-    'statue_garde'=>30,
-    'statue_servant'=>30,
-    'totem_sauvage'=>30,
-    'totem_sauvage2'=>30,
-    'totem_sauvage3'=>30,
-    'monolithe_flamboyant'=>30,
-    'pilier'=>30,
 
+    //décos
+    'altar'=>25,
+    'altar_broken'=>25,
+    
+    'piedestal'=>15,
+    'piedestal_broken'=>15,
+    'piedestal_pierre'=>10,
+    'piedestal_pierre_broken'=>10,
+    
+    'table_bois'=>5,
+    'table_bois_broken'=>5,	
+    'tonneau'=>5,
+    'tonneau_broken'=>5,
+    'torche_sol'=>10,
+    'torche_sol_broken'=>10,
+    'trone'=>25,
+    'trone_broken'=>25,			
+    'tombe2'=>10,
+    'statue_monstrueuse'=>10,
+    'statue_ailee'=>10,
+    'statue_heroique'=>10,
+    'lanternesurpied_geant'=>10,
+    'monolithe_flamboyant'=>10,
+    'statue_colosse'=>10,
+    'totem_crane'=>10,
+    'statue_garde'=>10,
+    'statue_servant'=>10,
+    'totem_sauvage'=>10,
+    'totem_magique'=>10,
+    'pilier_nain'=>10,
+    'statue_gisant'=>10,
+    'pilier'=>10,
+    'statue_noble'=>10,
+    'statue_heroique'=>10,
+    'flamme_bleue'=>10,
+    'sarcophage'=>50,
+    'statue_kraken'=>30,
+    'tombe'=>30,
+    'tombe_detruite'=>10,
+
+    //cocotiers
     
     'cocotier1'=>1,
     'cocotier2'=>1,
