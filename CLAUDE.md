@@ -442,6 +442,226 @@ Results saved to `tmp/security/`.
 - **main**: Production branch
 - CI runs on: staging, saison-3, main
 
+## Game Mechanics
+
+### Core Gameplay Loop
+
+Age of Olympia is a **turn-based survival RPG** where players:
+1. Perform actions (move, search, attack, gather resources)
+2. Actions consume **PA (Points d'Action)** or **MVT (Mouvement points)**
+3. Wait for **DLA (Délai Avant Action)** - cooldown timer between turns
+4. Progress through leveling, combat, and resource gathering
+
+### Turn System
+
+**Key Concepts**:
+- **Turn**: A player's turn data is stored in `players.turn` (JSON field)
+- **PA (Points d'Action)**: Action points for most activities
+- **MVT (Mouvement)**: Movement points specifically for moving on the map
+- **DLA (Délai Avant Action)**: Cooldown time until next turn (in seconds)
+- **nextTurnTime**: Unix timestamp when next turn is available
+
+**Turn Refresh**:
+- Players get new PA/MVT when `nextTurnTime` <= current time
+- Turn data is loaded via `$player->get_caracs()` which populates `$player->turn`
+- Remaining points checked via `$player->getRemaining('pa')` or `$player->getRemaining('mvt')`
+
+### Map System
+
+**Coordinate System**:
+- Grid-based map with (x, y, z) coordinates
+- **Plans**: Different map layers (e.g., 'gaia', 'tutorial')
+- Coordinates stored in `coords` table with unique entries per location
+- Players reference `coords_id` in `players` table
+
+**Map Elements**:
+- **Walls** (`map_walls`): Impassable terrain, trees, rocks, resources
+  - `damages: -1` = récoltable (gatherable resource)
+  - `damages: -2` = épuisé (depleted resource)
+  - `damages: 0` = normal wall (impassable)
+- **Items** (`map_items`): Ground items players can pick up
+- **Foregrounds** (`map_foregrounds`): Visual decorations (non-interactive)
+
+**Resource Gathering**:
+- Resources are **walls** (in `map_walls` table), NOT items
+- Trees (`arbre1`, `arbre2`) and stones (`pierre1`, `pierre2`) are walls
+- Check `WALLS_PV` constant in `config/constants.php` for resource types
+- Players must move **adjacent** to resource, then use `fouiller` action
+- Gathered materials (wood, stone) go to player inventory as items
+
+### Actions System
+
+**Action Types**:
+- **Movement**: `se_deplacer` (costs MVT points)
+- **Search**: `fouiller` (gather resources from adjacent tiles)
+- **Combat**: `attaquer`, `attaque_double`
+- **Rest**: `repos` (restore PA/MVT)
+- **Training**: `entrainement` (gain XP)
+- **Prayer**: `prier` (faction-specific benefits)
+
+**Action Storage**:
+- Available actions: `players_actions` table (player_id, name, type, charges)
+- Action definitions: `src/Action/*Action.php` (Doctrine entities)
+- Options: `players_options` table (player_id, name)
+
+**Important Options**:
+- `showActionDetails`: Shows calculation details and dice rolls (now DEFAULT for new players)
+- `isAdmin`: Administrator privileges
+- `incognitoMode`: PNJ invisibility mode
+- `raceHint`: Show race color borders
+
+### Player System
+
+**Player Creation**:
+- Main function: `Player::put_player($name, $race, $pnj=false)` in `Classes/Player.php:2021`
+- Creates entry in `players` table
+- Initializes at coordinates (0,0) on plan 'gaia'
+- Default options applied:
+  - First player (ID 1) gets `isAdmin`
+  - All new players get `showActionDetails` (as of recent change)
+  - PNJs get `incognitoMode`
+
+**Player Data**:
+- Core data: `$player->data` (loaded via `$player->get_data()`)
+- Turn data: `$player->turn` (loaded via `$player->get_caracs()`)
+- Coordinates: `$player->coords` (loaded via `$player->getCoords()`)
+- Inventory: `$player->inventory` (loaded via `$player->get_inventory()`)
+
+**Player Types**:
+- **Regular Players**: Positive IDs (1, 2, 3, ...)
+- **NPCs/PNJs**: Negative IDs (-1, -2, -3, ...)
+- **Tutorial Players**: Positive IDs, tracked in `tutorial_players` table
+
+### Tutorial System
+
+**Architecture** (`src/Tutorial/`):
+- **TutorialManager**: Orchestrates tutorial flow, step progression
+- **TutorialContext**: Holds player state, session data
+- **TutorialHelper**: Utility functions (session management, player switching)
+- **TutorialPlayer**: Temporary player characters for tutorial sessions
+- **TutorialView**: Renders tutorial UI on index page
+
+**Tutorial Flow**:
+1. Player starts tutorial via "Commencer le tutoriel" button
+2. `api/tutorial/start.php` creates tutorial session and tutorial player
+3. Tutorial player spawned on `plan='tutorial'` at (0,0)
+4. Steps rendered by `js/tutorial/TutorialUI.js` with tooltips and highlights
+5. Player completes validation requirements to advance steps
+6. On completion or cancel, tutorial player is deactivated and main player restored
+
+**Tutorial Database Tables**:
+- `tutorial_configurations`: Step definitions (step_id, config JSON, version)
+- `tutorial_progress`: Active tutorial sessions (player_id, current_step, xp_earned)
+- `tutorial_players`: Temporary player characters (real_player_id, tutorial_session_id, player_id)
+- `tutorial_enemies`: Spawned enemies for combat training
+
+**Step Types** (in `src/Tutorial/Steps/`):
+- **AbstractStep**: Base class for all steps
+- **InfoStep**: Informational dialogs (blocking, no validation)
+- **MovementStep**: Movement validation (any_movement, movements_depleted, position)
+- **ActionStep**: Action usage validation (action_used, action_available)
+- **UIInteractionStep**: UI interaction validation (ui_panel_opened, ui_interaction)
+- **CombatStep**: Combat-related validation
+
+**Step Configuration** (JSON in `tutorial_configurations.config`):
+```json
+{
+  "text": "Step description shown to player",
+  "target_selector": ".css-selector-to-highlight",
+  "target_description": "human-readable target description",
+  "tooltip_position": "top|right|bottom|left",
+  "interaction_mode": "blocking|semi-blocking|open",
+  "requires_validation": true|false,
+  "validation_type": "position|movements_depleted|action_used|ui_interaction",
+  "validation_params": { "x": 0, "y": 0 },
+  "validation_hint": "Message shown when validation fails",
+  "allowed_interactions": [".selector1", ".selector2"],
+  "blocked_click_message": "Error message for blocked clicks",
+  "prerequisites": { "mvt": 3, "pa": 2, "auto_restore": true }
+}
+```
+
+**Tutorial JavaScript** (`js/tutorial/`):
+- **TutorialUI.js**: Main controller (API calls, step rendering, validation)
+- **TutorialTooltip.js**: Tooltip positioning and display
+- **TutorialHighlighter.js**: Element highlighting with pulse animation
+- **TutorialInit.js**: Initialization and event wiring
+
+**Interaction Modes**:
+- **blocking**: Full overlay, only tutorial controls clickable
+- **semi-blocking**: Overlay with specific allowed elements (e.g., movement tiles, action buttons)
+- **open**: No overlay, player can interact freely
+
+**Session Management**:
+- Tutorial session stored in PHP `$_SESSION['tutorial_session_id']` and `$_SESSION['tutorial_player_id']`
+- Active state tracked in `sessionStorage.tutorial_active` for auto-resume
+- Player switching via `TutorialHelper::startTutorialMode()` and `exitTutorialMode()`
+
+**Tutorial Player Isolation**:
+- Tutorial players exist on separate `plan='tutorial'` map
+- Negative IDs range: -100000 to -999999 (managed by TutorialPlayer)
+- Tutorial enemies spawned via `TutorialManager::spawnTutorialEnemy()`
+- All tutorial data cleaned up on cancel or completion
+
+### Important Database Tables
+
+**Players**:
+- `players`: Main player data (id, name, race, coords_id, xp, pi, nextTurnTime, turn JSON)
+- `players_actions`: Player available actions (player_id, name, type, charges)
+- `players_options`: Player preferences (player_id, name)
+- `players_items`: Player inventory (player_id, item_id, quantity)
+- `players_logs`: Event logs (player_id, target_id, message, timestamp)
+
+**Map**:
+- `coords`: Coordinate entries (id, x, y, z, plan)
+- `map_walls`: Walls and resources (coords_id, name, damages, pvmax)
+- `map_items`: Ground items (coords_id, item_id, quantity)
+- `map_foregrounds`: Decorative foregrounds (coords_id, name)
+
+**Tutorial**:
+- `tutorial_configurations`: Step definitions (step_id, step_number, step_type, config, version)
+- `tutorial_progress`: Session tracking (tutorial_session_id, player_id, current_step, completed)
+- `tutorial_players`: Tutorial characters (id, player_id, real_player_id, tutorial_session_id)
+- `tutorial_enemies`: Combat training enemies (tutorial_session_id, enemy_player_id, enemy_coords_id)
+
+### Key Constants (`config/constants.php`)
+
+**Resource Configuration**:
+```php
+// WALLS_PV defines wall types and their gather behavior
+'arbre1' => -1,  // Gatherable tree
+'arbre2' => -1,  // Gatherable tree
+'pierre1' => -1, // Gatherable stone
+'pierre2' => -1, // Gatherable stone
+// -1 = récoltable (gatherable)
+// -2 = épuisé (depleted)
+// 0+ = normal wall hit points
+```
+
+**Races**:
+- Defined in `RACES` constant
+- Each race has faction, starting stats, portrait/avatar paths
+- Examples: 'Humain', 'Elfe', 'Nain'
+
+### Frontend Map System
+
+**Map Rendering**:
+- Map tiles rendered as `.case` elements with `data-coords` attribute
+- Example: `<div class="case" data-coords="0,1" x="0" y="1">`
+- Click on tile opens observation panel via `observe.php`
+- Player avatar shown as SVG element within tile
+
+**UI Panels**:
+- **Actions Panel** (`#ui-card`): Shows available actions for selected tile
+- **Characteristics Panel**: Shows player stats
+- Panels loaded via AJAX to `observe.php` with coords parameter
+
+**AJAX Flow**:
+1. Click map tile → `observe.php?coords=x,y`
+2. Server renders observation data (actions, player stats)
+3. Response injected into `#ajax-data` div
+4. Tutorial system waits for panel visibility before showing tooltips
+
 ## Additional Documentation
 
 - Architecture diagram: `docs/images/Logique-Aoo.png`

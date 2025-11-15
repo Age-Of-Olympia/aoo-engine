@@ -100,6 +100,12 @@ class TutorialPlayer
             ]);
         }
 
+        // Enable action details by default for tutorial players
+        $conn->insert('players_options', [
+            'player_id' => $actualPlayerId,
+            'name' => 'showActionDetails'
+        ]);
+
         // Then create the tutorial_players tracking entry
         $conn->insert('tutorial_players', [
             'real_player_id' => $realPlayerId,

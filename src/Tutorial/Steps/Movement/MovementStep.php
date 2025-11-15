@@ -48,9 +48,6 @@ class MovementStep extends AbstractStep
                 // Use getRemaining() which checks $player->turn (live data from DB)
                 $mvtRemaining = $player->getRemaining('mvt');
 
-                error_log("[MovementStep] Checking movements_depleted: mvt={$mvtRemaining}, playerId={$player->id}");
-                error_log("[MovementStep] Turn object: " . json_encode($player->turn ?? null));
-
                 return $mvtRemaining === 0;
 
             case 'specific_count':
@@ -58,6 +55,30 @@ class MovementStep extends AbstractStep
                 $requiredMoves = $this->config['required_moves'] ?? 1;
                 $moveCount = $data['move_count'] ?? 0;
                 return $moveCount >= $requiredMoves;
+
+            case 'position':
+                // Check that player is at a specific position
+                $activePlayerId = TutorialHelper::getActivePlayerId();
+                $player = new Player($activePlayerId);
+                $player->get_data();
+                $player->getCoords();
+
+                $requiredX = $this->config['validation_params']['x'] ?? null;
+                $requiredY = $this->config['validation_params']['y'] ?? null;
+
+                if ($requiredX === null || $requiredY === null) {
+                    error_log("[MovementStep] Position validation missing x or y parameters");
+                    return false;
+                }
+
+                $currentX = $player->coords->x ?? null;
+                $currentY = $player->coords->y ?? null;
+
+                $isAtPosition = ($currentX == $requiredX && $currentY == $requiredY);
+
+                error_log("[MovementStep] Position validation: player at ({$currentX},{$currentY}), required ({$requiredX},{$requiredY}), result: " . ($isAtPosition ? 'TRUE' : 'FALSE'));
+
+                return $isAtPosition;
 
             default:
                 return false;
@@ -85,6 +106,11 @@ class MovementStep extends AbstractStep
             case 'specific_count':
                 $requiredMoves = $this->config['required_moves'] ?? 1;
                 return "Déplacez-vous {$requiredMoves} fois pour continuer.";
+
+            case 'position':
+                $requiredX = $this->config['validation_params']['x'] ?? '?';
+                $requiredY = $this->config['validation_params']['y'] ?? '?';
+                return "Déplacez-vous sur la case ({$requiredX},{$requiredY}) marquée en jaune.";
 
             default:
                 return parent::getValidationHint();

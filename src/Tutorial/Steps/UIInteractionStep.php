@@ -20,6 +20,7 @@ class UIInteractionStep extends AbstractStep
      * - ui_button_clicked: Check if a specific button was clicked
      * - ui_setting_changed: Check if a setting was toggled
      * - ui_element_hidden: Check if an element was hidden/removed
+     * - ui_interaction: Check if a specific element was clicked (generic)
      */
     public function validate(array $data): bool
     {
@@ -68,6 +69,15 @@ class UIInteractionStep extends AbstractStep
 
                 return $requiredElement && $element === $requiredElement && $isHidden === true;
 
+            case 'ui_interaction':
+                // Generic UI interaction - check if a specific element was clicked
+                $requiredElement = $this->config['validation_params']['element_clicked'] ?? null;
+                $clickedElement = $data['element_clicked'] ?? null;
+
+                error_log("[UIInteractionStep] Validating ui_interaction: required={$requiredElement}, clicked={$clickedElement}");
+
+                return $requiredElement && $clickedElement === $requiredElement;
+
             default:
                 return false;
         }
@@ -92,6 +102,10 @@ class UIInteractionStep extends AbstractStep
             case 'ui_setting_changed':
                 $setting = $this->config['validation_params']['setting'] ?? 'le paramètre';
                 return "Modifiez {$setting} pour continuer.";
+
+            case 'ui_interaction':
+                // Use the validation_hint from config if available
+                return $this->config['validation_hint'] ?? "Cliquez sur l'élément indiqué pour continuer.";
 
             default:
                 return parent::getValidationHint();

@@ -239,7 +239,7 @@ class TutorialUI {
     /**
      * Render tutorial step
      */
-    renderStep(stepData) {
+    async renderStep(stepData) {
         console.log('[TutorialUI] Rendering step', stepData);
 
         // Clear previous highlights
@@ -254,7 +254,8 @@ class TutorialUI {
         this.cleanupObservers();
 
         // Ensure required panels are in correct state BEFORE applying interaction mode
-        this.ensurePanelVisibility(stepData);
+        // Wait for panels to be ready before showing tooltip/highlight
+        await this.ensurePanelVisibility(stepData);
 
         // Apply interaction mode (blocking, semi-blocking, or open)
         this.applyInteractionMode(stepData);
@@ -273,10 +274,10 @@ class TutorialUI {
         // Setup UI observers for validation (ui_interaction steps)
         this.setupUIObservers(stepData);
 
-        // Show step tooltip
+        // Show step tooltip (now after panel is ready)
         this.showStepTooltip(stepData);
 
-        // Highlight target element if specified
+        // Highlight target element if specified (now after panel is ready)
         if (stepData.target_selector && this.highlighter) {
             this.highlighter.highlight(stepData.target_selector, {
                 pulsate: stepData.requires_validation
@@ -450,6 +451,7 @@ class TutorialUI {
         console.log('[TutorialUI] Setting up semi-blocking event handler');
 
         const allowedSelectors = stepData.config?.allowed_interactions || [];
+        const validationType = stepData.config?.validation_type;
 
         // Create event blocker function
         this.eventBlocker = (e) => {
@@ -474,6 +476,12 @@ class TutorialUI {
 
                 if (matches || hasParent) {
                     console.log('[TutorialUI] ✅ Click allowed on:', selector, target);
+
+                    // Track click for UI interaction validation
+                    if (validationType === 'ui_interaction') {
+                        this.trackElementClick(selector, target, stepData);
+                    }
+
                     return; // Allow the click to proceed
                 }
             }
@@ -523,6 +531,23 @@ class TutorialUI {
         setTimeout(() => {
             $warning.fadeOut(() => $warning.remove());
         }, 4000);
+    }
+
+    /**
+     * Track element click for UI interaction validation
+     * Sends validation data to advance the tutorial when the expected element is clicked
+     */
+    trackElementClick(selector, targetElement, stepData) {
+        console.log('[TutorialUI] Tracking click for validation:', selector);
+
+        // Extract the selector for validation
+        const elementClicked = selector;
+
+        // Send validation data to advance the step
+        this.notifyAction('ui_interaction', {
+            element_clicked: elementClicked,
+            target_selector: stepData.config?.target_selector
+        });
     }
 
     /**
@@ -818,10 +843,63 @@ class TutorialUI {
      * Ensure required panels are visible/hidden based on step requirements
      */
     ensurePanelVisibility(stepData) {
-        const targetSelector = stepData.config?.target_selector;
+        // Use target_selector from stepData directly, not from config
+        const targetSelector = stepData.target_selector;
+
+        console.log('[TutorialUI] ensurePanelVisibility called with targetSelector:', targetSelector);
 
         if (!targetSelector) {
-            return;
+            console.log('[TutorialUI] No target selector, skipping panel visibility');
+            return Promise.resolve(); // Return resolved promise if nothing to do
+        }
+
+        // If step targets an action button, ensure player actions panel is open
+        if (targetSelector.includes('.action[data-action=')) {
+            console.log('[TutorialUI] Detected action button target, checking panel...');
+            const $actionsPanel = $('#ui-card');
+
+            if (!$actionsPanel.is(':visible')) {
+                console.log('[TutorialUI] Opening player actions panel for step');
+
+                // Return a promise that resolves when panel is ready
+                return new Promise((resolve) => {
+                    // Store resolve callback for later
+                    this.panelReadyCallback = resolve;
+
+                    // Get player coords from window (set in TutorialView.php)
+                    let playerCoords = window.dataCoords;
+
+                    // Fallback: if dataCoords not available yet, wait briefly for it
+                    if (!playerCoords) {
+                        console.log('[TutorialUI] window.dataCoords not ready, waiting briefly...');
+
+                        let coordsRetries = 0;
+                        const maxCoordsRetries = 3; // Max 300ms - if not ready quickly, use avatar method
+
+                        const waitForCoords = () => {
+                            if (window.dataCoords) {
+                                console.log('[TutorialUI] window.dataCoords now available:', window.dataCoords);
+                                playerCoords = window.dataCoords;
+                                this.openPlayerCardDirect(playerCoords);
+                            } else if (coordsRetries < maxCoordsRetries) {
+                                coordsRetries++;
+                                setTimeout(waitForCoords, 100);
+                            } else {
+                                console.log('[TutorialUI] window.dataCoords not available after 300ms, using avatar fallback');
+                                this.openPlayerCardViaAvatar();
+                            }
+                        };
+
+                        waitForCoords();
+                    } else {
+                        // Coords available, open card directly
+                        this.openPlayerCardDirect(playerCoords);
+                    }
+                });
+            } else {
+                console.log('[TutorialUI] Actions panel already visible');
+                return Promise.resolve(); // Panel already visible
+            }
         }
 
         // If step targets characteristics panel or movement/action counters, ensure panel is open
@@ -836,27 +914,137 @@ class TutorialUI {
             if (!$caracsPanel.is(':visible')) {
                 console.log('[TutorialUI] Opening characteristics panel for step');
 
-                // Simulate clicking the show caracs button
-                $('#show-caracs').click();
+                // Return a promise that resolves when panel is ready
+                return new Promise((resolve) => {
+                    // Simulate clicking the show caracs button
+                    $('#show-caracs').click();
 
-                // Wait for panel to fully appear before continuing
-                // This prevents tooltips from rendering before panel is visible
-                const checkPanelVisible = () => {
-                    if ($('#load-caracs').is(':visible')) {
-                        console.log('[TutorialUI] Panel now visible, refreshing...');
-                        this.refreshCaracsPanel();
-                    } else {
-                        // Panel not visible yet, check again
-                        setTimeout(checkPanelVisible, 100);
-                    }
-                };
+                    // Wait for panel to fully appear before continuing
+                    // This prevents tooltips from rendering before panel is visible
+                    let retries = 0;
+                    const maxRetries = 50; // Max 5 seconds (50 * 100ms)
 
-                setTimeout(checkPanelVisible, 100);
+                    const checkPanelVisible = () => {
+                        if ($('#load-caracs').is(':visible')) {
+                            console.log('[TutorialUI] Panel now visible, refreshing...');
+                            this.refreshCaracsPanel();
+                            resolve(); // Panel ready
+                        } else if (retries < maxRetries) {
+                            // Panel not visible yet, check again
+                            retries++;
+                            setTimeout(checkPanelVisible, 100);
+                        } else {
+                            // Give up after max retries
+                            console.error('[TutorialUI] Panel failed to appear after 5 seconds, continuing anyway');
+                            resolve(); // Continue anyway
+                        }
+                    };
+
+                    setTimeout(checkPanelVisible, 100);
+                });
             } else {
                 // Panel already open, just refresh to show current values
                 this.refreshCaracsPanel();
+                return Promise.resolve();
             }
         }
+
+        // No panel needed, return resolved promise
+        return Promise.resolve();
+    }
+
+    /**
+     * Open player card directly by making AJAX call to observe.php
+     */
+    openPlayerCardDirect(coords) {
+        console.log('[TutorialUI] Opening player card via direct AJAX call with coords:', coords);
+
+        $.ajax({
+            type: "POST",
+            url: 'observe.php',
+            data: {'coords': coords},
+            success: (data) => {
+                console.log('[TutorialUI] observe.php returned, loading card into #ajax-data');
+                $('#ajax-data').html(data);
+
+                // Cache the result like view.js does
+                window.clickedCases = window.clickedCases || {};
+                window.clickedCases[coords] = data;
+
+                // Wait for panel to appear
+                this.waitForActionsPanel();
+            },
+            error: (xhr, status, error) => {
+                console.error('[TutorialUI] Failed to load player card:', error);
+            }
+        });
+    }
+
+    /**
+     * Open player card by finding coords from avatar element (fallback method)
+     */
+    openPlayerCardViaAvatar() {
+        console.log('[TutorialUI] Trying to get coords from avatar element...');
+
+        const $avatar = $('#current-player-avatar');
+        if ($avatar.length > 0) {
+            // Avatar has x,y attributes - use these to find the .case element
+            const avatarX = $avatar.attr('x');
+            const avatarY = $avatar.attr('y');
+
+            console.log('[TutorialUI] Avatar at position x:', avatarX, 'y:', avatarY);
+
+            // Find the .case element at this position
+            const $case = $(`.case[x="${avatarX}"][y="${avatarY}"]`);
+
+            if ($case.length > 0) {
+                const coords = $case.data('coords');
+                console.log('[TutorialUI] Found case at avatar position with coords:', coords);
+
+                if (coords) {
+                    this.openPlayerCardDirect(coords);
+                } else {
+                    console.error('[TutorialUI] Case found but has no data-coords attribute!');
+                }
+            } else {
+                console.error('[TutorialUI] No .case element found at avatar position');
+            }
+        } else {
+            console.error('[TutorialUI] Avatar not found!');
+        }
+    }
+
+    /**
+     * Wait for actions panel to appear after clicking player tile
+     */
+    waitForActionsPanel() {
+        let retries = 0;
+        const maxRetries = 50; // Max 5 seconds
+        const checkPanelVisible = () => {
+            if ($('#ui-card').is(':visible')) {
+                console.log('[TutorialUI] Actions panel now visible');
+
+                // Resolve the promise if callback exists
+                if (this.panelReadyCallback) {
+                    console.log('[TutorialUI] Calling panelReadyCallback - tooltip can now be shown');
+                    this.panelReadyCallback();
+                    this.panelReadyCallback = null;
+                }
+            } else if (retries < maxRetries) {
+                retries++;
+                setTimeout(checkPanelVisible, 100);
+            } else {
+                console.error('[TutorialUI] Actions panel failed to appear after 5 seconds');
+
+                // Resolve anyway to prevent hanging
+                if (this.panelReadyCallback) {
+                    console.log('[TutorialUI] Timeout - resolving anyway to prevent hang');
+                    this.panelReadyCallback();
+                    this.panelReadyCallback = null;
+                }
+            }
+        };
+        setTimeout(checkPanelVisible, 100);
     }
 
     /**
@@ -970,30 +1158,74 @@ class TutorialUI {
     onTutorialComplete(response) {
         console.log('[TutorialUI] Tutorial complete!', response);
 
-        // Show completion message
+        // Show completion celebration
         const $modal = $(`
-            <div id="tutorial-complete-modal">
-                <div class="modal-content">
-                    <h2>🎉 Tutoriel terminé!</h2>
-                    <p>${response.message || 'Félicitations!'}</p>
-                    <p><strong>XP gagnés:</strong> ${response.xp_earned || 0}</p>
-                    <p><strong>Niveau final:</strong> ${response.final_level || 1}</p>
-                    <button id="tutorial-complete-continue" class="btn-tutorial-primary">
-                        Continuer vers le jeu
+            <div id="tutorial-complete-modal" class="tutorial-celebration">
+                <div class="modal-content celebration-content">
+                    <div class="celebration-header">
+                        <h2>🎉 Tutoriel terminé! 🎉</h2>
+                        <div class="celebration-stars">✨ ⭐ ✨</div>
+                    </div>
+                    <p class="celebration-message">${response.message || 'Félicitations! Vous êtes prêt pour l\'aventure!'}</p>
+                    <div class="rewards-display">
+                        <div class="reward-item">
+                            <span class="reward-icon">⚡</span>
+                            <span class="reward-label">XP gagnés</span>
+                            <span class="reward-value">${response.xp_earned || 0}</span>
+                        </div>
+                        <div class="reward-item">
+                            <span class="reward-icon">💎</span>
+                            <span class="reward-label">PI gagnés</span>
+                            <span class="reward-value">${response.pi_earned || 0}</span>
+                        </div>
+                        <div class="reward-item">
+                            <span class="reward-icon">🏆</span>
+                            <span class="reward-label">Niveau atteint</span>
+                            <span class="reward-value">${response.final_level || 1}</span>
+                        </div>
+                    </div>
+                    <button id="tutorial-complete-continue" class="btn-tutorial-primary celebration-btn">
+                        🎮 Commencer l'aventure!
                     </button>
+                    <p class="auto-redirect-text">Redirection automatique dans <span id="redirect-countdown">5</span>s...</p>
                 </div>
             </div>
         `);
 
         $('body').append($modal);
-        $modal.fadeIn();
+        $modal.fadeIn(600);
 
+        // Auto-redirect countdown
+        let countdown = 5;
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            $('#redirect-countdown').text(countdown);
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                this.completeTutorialAndRedirect();
+            }
+        }, 1000);
+
+        // Manual redirect on button click
         $('#tutorial-complete-continue').on('click', () => {
-            $modal.fadeOut(() => $modal.remove());
+            clearInterval(countdownInterval);
+            this.completeTutorialAndRedirect();
+        });
+    }
+
+    /**
+     * Complete tutorial and redirect to main game
+     */
+    completeTutorialAndRedirect() {
+        const $modal = $('#tutorial-complete-modal');
+        $modal.fadeOut(400, () => {
+            $modal.remove();
             this.hideTutorialOverlay();
-            // Clear active flag since tutorial is complete
+            // Clear tutorial state
             sessionStorage.removeItem('tutorial_active');
-            window.location.reload();
+            sessionStorage.removeItem('tutorial_session_id');
+            // Reload to main game (without tutorial mode)
+            window.location.href = 'index.php';
         });
     }
 

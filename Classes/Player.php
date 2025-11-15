@@ -75,11 +75,34 @@ class Player implements ActorInterface {
 
         $this->raceData = $raceJson;
 
+        // Initialize caracs object if not exists
+        if (!isset($this->caracs) || !is_object($this->caracs)) {
+            $this->caracs = new \stdClass();
+        }
+
+        // Initialize raceData if decode failed
+        if (!$this->raceData || !is_object($this->raceData)) {
+            error_log("[Player] WARNING: Race data not found for race '{$this->data->race}' (player {$this->id}). Using defaults.");
+            $this->raceData = new \stdClass();
+            // Initialize default race stats to 0
+            foreach(CARACS as $k=>$e){
+                $this->raceData->$k = 0;
+            }
+        }
+
         $this->get_upgrades();
 
-        foreach(CARACS as $k=>$e){
+        // Double-check all objects are initialized (defensive programming)
+        if (!is_object($this->caracs)) $this->caracs = new \stdClass();
+        if (!is_object($this->raceData)) $this->raceData = new \stdClass();
+        if (!is_object($this->upgrades)) $this->upgrades = new \stdClass();
 
-            $this->caracs->$k = $this->raceData->$k + $this->upgrades->$k;
+        foreach(CARACS as $k=>$e){
+            // Ensure properties exist before adding
+            $raceValue = isset($this->raceData->$k) ? $this->raceData->$k : 0;
+            $upgradeValue = isset($this->upgrades->$k) ? $this->upgrades->$k : 0;
+
+            $this->caracs->$k = $raceValue + $upgradeValue;
         }
 
 
@@ -236,6 +259,10 @@ class Player implements ActorInterface {
 
     public function get_upgrades(){
 
+        // Initialize upgrades object if not exists
+        if (!isset($this->upgrades) || !is_object($this->upgrades)) {
+            $this->upgrades = new \stdClass();
+        }
 
         foreach(CARACS as $k=>$e){
 
@@ -2075,7 +2102,10 @@ class Player implements ActorInterface {
 
             $player->add_option('isAdmin');
         }
-        
+
+        // Enable action details by default for all new players
+        $player->add_option('showActionDetails');
+
         Dialog::refresh_register_dialog();
 
 

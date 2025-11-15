@@ -7,10 +7,14 @@
  */
 
 use App\Tutorial\TutorialHelper;
+use App\Entity\EntityManagerFactory;
 use Classes\Db;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
+
+// Start output buffering to catch any PHP errors/warnings
+ob_start();
 
 header('Content-Type: application/json');
 
@@ -37,8 +41,52 @@ try {
 
     // Mark tutorial as completed (cancelled) in database
     $db = new Db();
+    $em = EntityManagerFactory::getEntityManager();
+    $conn = $em->getConnection();
 
     if ($sessionId) {
+        // Clean up tutorial enemy for this session
+        try {
+            $stmt = $conn->prepare("
+                SELECT enemy_player_id, enemy_coords_id
+                FROM tutorial_enemies
+                WHERE tutorial_session_id = ?
+            ");
+            $stmt->bindValue(1, $sessionId);
+            $result = $stmt->executeQuery();
+
+            $cleanedCount = 0;
+            while ($row = $result->fetchAssociative()) {
+                $enemyId = $row['enemy_player_id'];
+                $coordsId = $row['enemy_coords_id'];
+
+                if ($enemyId) {
+                    // Delete related records first to avoid foreign key constraints
+                    $conn->delete('players_logs', ['player_id' => $enemyId]);
+                    $conn->delete('players_logs', ['target_id' => $enemyId]);
+                    $conn->delete('players_actions', ['player_id' => $enemyId]);
+                    $conn->delete('players_items', ['player_id' => $enemyId]);
+                    $conn->delete('players_effects', ['player_id' => $enemyId]);
+                    $conn->delete('players_kills', ['player_id' => $enemyId]);
+                    $conn->delete('players_kills', ['target_id' => $enemyId]);
+
+                    $conn->delete('players', ['id' => $enemyId]);
+                }
+                if ($coordsId) {
+                    $conn->delete('coords', ['id' => $coordsId]);
+                }
+                $cleanedCount++;
+            }
+
+            $conn->delete('tutorial_enemies', ['tutorial_session_id' => $sessionId]);
+
+            if ($cleanedCount > 0) {
+                error_log("[Cancel] Removed {$cleanedCount} tutorial enemy/enemies for session {$sessionId}");
+            }
+        } catch (\Exception $e) {
+            error_log("[Cancel] Error removing tutorial enemy: " . $e->getMessage());
+        }
+
         // Mark progress as completed
         $sql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW() WHERE tutorial_session_id = ?';
         $db->exe($sql, [$sessionId]);
@@ -50,6 +98,54 @@ try {
         error_log("[Cancel] Marked tutorial as completed and deactivated tutorial player for session {$sessionId}");
     } else {
         // If no session ID provided, cancel any active tutorial for this player
+        // First, get session IDs to clean up enemies
+        $sql = 'SELECT tutorial_session_id FROM tutorial_progress WHERE player_id = ? AND completed = 0';
+        $result = $db->exe($sql, [$_SESSION['playerId']]);
+
+        $sessionIds = [];
+        while ($row = $result->fetch_assoc()) {
+            $sessionIds[] = $row['tutorial_session_id'];
+        }
+
+        // Clean up enemies for all sessions
+        foreach ($sessionIds as $sid) {
+            try {
+                $stmt = $conn->prepare("
+                    SELECT enemy_player_id, enemy_coords_id
+                    FROM tutorial_enemies
+                    WHERE tutorial_session_id = ?
+                ");
+                $stmt->bindValue(1, $sid);
+                $result2 = $stmt->executeQuery();
+
+                while ($row = $result2->fetchAssociative()) {
+                    $enemyId = $row['enemy_player_id'];
+                    $coordsId = $row['enemy_coords_id'];
+
+                    if ($enemyId) {
+                        // Delete related records first
+                        $conn->delete('players_logs', ['player_id' => $enemyId]);
+                        $conn->delete('players_logs', ['target_id' => $enemyId]);
+                        $conn->delete('players_actions', ['player_id' => $enemyId]);
+                        $conn->delete('players_items', ['player_id' => $enemyId]);
+                        $conn->delete('players_effects', ['player_id' => $enemyId]);
+                        $conn->delete('players_kills', ['player_id' => $enemyId]);
+                        $conn->delete('players_kills', ['target_id' => $enemyId]);
+
+                        $conn->delete('players', ['id' => $enemyId]);
+                    }
+                    if ($coordsId) {
+                        $conn->delete('coords', ['id' => $coordsId]);
+                    }
+                }
+
+                $conn->delete('tutorial_enemies', ['tutorial_session_id' => $sid]);
+            } catch (\Exception $e) {
+                error_log("[Cancel] Error removing tutorial enemy for session {$sid}: " . $e->getMessage());
+            }
+        }
+
+        // Mark progress as completed
         $sql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW() WHERE player_id = ? AND completed = 0';
         $db->exe($sql, [$_SESSION['playerId']]);
 
@@ -64,6 +160,9 @@ try {
         error_log("[Cancel] Marked all active tutorials as completed and deactivated tutorial players for player {$_SESSION['playerId']}");
     }
 
+    // Clean output buffer (remove any PHP warnings/errors)
+    ob_clean();
+
     echo json_encode([
         'success' => true,
         'message' => 'Tutorial cancelled'
@@ -72,6 +171,10 @@ try {
 } catch (Exception $e) {
     error_log("Tutorial cancel error: " . $e->getMessage());
     http_response_code(500);
+
+    // Clean output buffer (remove any PHP warnings/errors)
+    ob_clean();
+
     echo json_encode([
         'success' => false,
         'error' => 'Failed to cancel tutorial'
