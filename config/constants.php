@@ -323,7 +323,6 @@ define('WALLS_PV', array(
     'totem_sauvage'=>10,
     'totem_magique'=>10,
     'pilier_nain'=>10,
-    'statue_gisant'=>10,
     'pilier'=>10,
     'statue_noble'=>10,
     'flamme_bleue'=>10,
