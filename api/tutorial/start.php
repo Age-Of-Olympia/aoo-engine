@@ -95,8 +95,8 @@ try {
         session_write_close();
         session_start(); // Restart for any subsequent operations
 
-        // Get first step data
-        $firstStepData = $manager->getCurrentStepForClient(0, $version);
+        // Get first step data using step_id
+        $firstStepData = $manager->getCurrentStepForClientById($result['current_step'], $version);
 
         echo json_encode([
             'success' => true,

@@ -62,10 +62,12 @@ class TutorialStepFactory
     public static function createFromData(array $stepData, TutorialContext $context): AbstractStep
     {
         $stepType = $stepData['step_type'];
-        $stepNumber = (int)$stepData['step_number'];
+        $stepNumber = (float)($stepData['step_number'] ?? 0);
         $title = $stepData['title'];
         $config = is_array($stepData['config']) ? $stepData['config'] : json_decode($stepData['config'], true);
         $xpReward = (int)($stepData['xp_reward'] ?? 0);
+        $stepId = $stepData['step_id'] ?? null;
+        $nextStep = $stepData['next_step'] ?? null;
 
         // Get appropriate class for this step type
         $className = self::getStepClass($stepType);
@@ -76,7 +78,9 @@ class TutorialStepFactory
             $stepType,
             $title,
             $config ?? [],
-            $xpReward
+            $xpReward,
+            $stepId,
+            $nextStep
         );
     }
 

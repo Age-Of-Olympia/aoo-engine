@@ -10,7 +10,8 @@
 class TutorialUI {
     constructor() {
         this.currentSession = null;
-        this.currentStep = 0;
+        this.currentStep = null;  // step_id (string)
+        this.currentStepPosition = 0;  // actual position (number for display)
         this.totalSteps = 0;
         this.xpEarned = 0;
         this.level = 1;
@@ -50,7 +51,8 @@ class TutorialUI {
 
             if (response.success) {
                 this.currentSession = response.session_id;
-                this.currentStep = response.current_step;
+                this.currentStep = response.current_step;  // step_id (string)
+                this.currentStepPosition = response.current_step_position || 1;  // position (number)
                 this.totalSteps = response.total_steps;
                 this.isActive = true;
 
@@ -92,7 +94,8 @@ class TutorialUI {
 
             if (response.success && response.has_active_tutorial) {
                 this.currentSession = response.session_id;
-                this.currentStep = response.current_step;
+                this.currentStep = response.current_step;  // step_id (string)
+                this.currentStepPosition = response.current_step_position || 1;  // position (number)
                 this.totalSteps = response.total_steps;
                 this.xpEarned = response.xp_earned;
                 this.level = response.level || 1;
@@ -193,7 +196,8 @@ class TutorialUI {
                     }
                 } else {
                     // Update state
-                    this.currentStep = response.current_step;
+                    this.currentStep = response.current_step;  // step_id (string)
+                    this.currentStepPosition = response.current_step_position || this.currentStepPosition + 1;  // position (number)
                     this.xpEarned = response.xp_earned;
                     this.level = response.level;
                     this.pi = response.pi;
@@ -248,6 +252,9 @@ class TutorialUI {
 
         // Clear previous observers
         this.cleanupObservers();
+
+        // Ensure required panels are in correct state BEFORE applying interaction mode
+        this.ensurePanelVisibility(stepData);
 
         // Apply interaction mode (blocking, semi-blocking, or open)
         this.applyInteractionMode(stepData);
@@ -326,17 +333,17 @@ class TutorialUI {
         $('body').append($overlay);
 
         // Create controls container
-        const initialProgress = (this.currentStep / this.totalSteps) * 100;
+        const initialProgress = (this.currentStepPosition / this.totalSteps) * 100;
         const $controls = $(`
             <div id="tutorial-controls">
                 <div id="tutorial-progress">
-                    <span id="tutorial-step-counter">Étape ${this.currentStep + 1} / ${this.totalSteps}</span>
+                    <span id="tutorial-step-counter">Étape ${this.currentStepPosition} / ${this.totalSteps}</span>
                 </div>
                 <div id="tutorial-xp-bar">
                     <div class="xp-bar-container">
                         <div class="xp-bar-fill" style="width: ${Math.min(initialProgress, 100)}%"></div>
                     </div>
-                    <div class="xp-text">Étape ${this.currentStep}/${this.totalSteps} • XP gagné: ${this.xpEarned}</div>
+                    <div class="xp-text">Étape ${this.currentStepPosition}/${this.totalSteps} • XP gagné: ${this.xpEarned}</div>
                 </div>
                 <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
             </div>
@@ -578,7 +585,14 @@ class TutorialUI {
         if (validationType === 'ui_panel_opened') {
             const panel = stepData.config?.validation_params?.panel;
             if (panel === 'characteristics') {
-                this.setupPanelVisibilityObserver('#load-caracs');
+                this.setupPanelVisibilityObserver('#load-caracs', 'characteristics');
+            } else if (panel === 'actions') {
+                this.setupActionsPanelObserver();
+            }
+        } else if (validationType === 'ui_element_hidden') {
+            const element = stepData.config?.validation_params?.element;
+            if (element) {
+                this.setupElementHiddenObserver(element);
             }
         }
     }
@@ -587,7 +601,7 @@ class TutorialUI {
      * Setup MutationObserver to watch for panel visibility
      * Automatically sends validation when panel becomes visible
      */
-    setupPanelVisibilityObserver(panelSelector) {
+    setupPanelVisibilityObserver(panelSelector, panelType) {
         const panel = document.querySelector(panelSelector);
         if (!panel) {
             console.warn('[TutorialUI] Panel not found:', panelSelector);
@@ -605,7 +619,7 @@ class TutorialUI {
 
                 // Send validation
                 window.notifyTutorial('ui_interaction', {
-                    panel: 'characteristics',
+                    panel: panelType,
                     panel_visible: true,
                     timestamp: Date.now()
                 });
@@ -629,8 +643,125 @@ class TutorialUI {
         if (isVisible && this.isActive) {
             console.log('[TutorialUI] Panel already visible on setup');
             window.notifyTutorial('ui_interaction', {
-                panel: 'characteristics',
+                panel: panelType,
                 panel_visible: true,
+                timestamp: Date.now()
+            });
+        }
+    }
+
+    /**
+     * Setup MutationObserver to watch for actions panel (player card in #ajax-data)
+     * Automatically sends validation when actions panel is opened
+     */
+    setupActionsPanelObserver() {
+        const ajaxData = document.querySelector('#ajax-data');
+        if (!ajaxData) {
+            console.warn('[TutorialUI] #ajax-data not found');
+            return;
+        }
+
+        console.log('[TutorialUI] Setting up actions panel observer');
+
+        this.panelObserver = new MutationObserver((mutations) => {
+            // Check if #ajax-data contains a player card with action buttons
+            const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
+            const hasCaseInfos = $('#ajax-data .case-infos').length > 0;
+
+            if ((hasActions || hasCaseInfos) && this.isActive) {
+                console.log('[TutorialUI] Actions panel opened, sending validation');
+
+                // Send validation
+                window.notifyTutorial('ui_interaction', {
+                    panel: 'actions',
+                    panel_visible: true,
+                    timestamp: Date.now()
+                });
+
+                // Disconnect observer - we only need to detect this once
+                if (this.panelObserver) {
+                    this.panelObserver.disconnect();
+                    this.panelObserver = null;
+                }
+            }
+        });
+
+        // Observe content changes in #ajax-data
+        this.panelObserver.observe(ajaxData, {
+            childList: true,
+            subtree: true
+        });
+
+        // Also check immediately in case panel is already open
+        const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
+        const hasCaseInfos = $('#ajax-data .case-infos').length > 0;
+        if ((hasActions || hasCaseInfos) && this.isActive) {
+            console.log('[TutorialUI] Actions panel already visible on setup');
+            window.notifyTutorial('ui_interaction', {
+                panel: 'actions',
+                panel_visible: true,
+                timestamp: Date.now()
+            });
+        }
+    }
+
+    /**
+     * Setup MutationObserver to watch for element hiding
+     * Automatically sends validation when element is hidden
+     */
+    setupElementHiddenObserver(elementSelector) {
+        const targetElement = document.querySelector(elementSelector);
+        if (!targetElement) {
+            console.warn('[TutorialUI] Element not found for hidden observer:', elementSelector);
+            return;
+        }
+
+        console.log('[TutorialUI] Setting up element hidden observer for:', elementSelector);
+
+        this.panelObserver = new MutationObserver((mutations) => {
+            // Check if element is now hidden
+            const element = document.querySelector(elementSelector);
+            const isHidden = !element || !$(elementSelector).is(':visible');
+
+            if (isHidden && this.isActive) {
+                console.log('[TutorialUI] Element hidden, sending validation');
+
+                // Send validation
+                window.notifyTutorial('ui_interaction', {
+                    element: elementSelector,
+                    is_hidden: true,
+                    timestamp: Date.now()
+                });
+
+                // Disconnect observer - we only need to detect this once
+                if (this.panelObserver) {
+                    this.panelObserver.disconnect();
+                    this.panelObserver = null;
+                }
+            }
+        });
+
+        // Observe style and attribute changes on the element and its parent
+        this.panelObserver.observe(targetElement, {
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+
+        // Also observe if element is removed from DOM
+        if (targetElement.parentNode) {
+            this.panelObserver.observe(targetElement.parentNode, {
+                childList: true,
+                subtree: true
+            });
+        }
+
+        // Check immediately in case element is already hidden
+        const isHidden = !$(elementSelector).is(':visible');
+        if (isHidden && this.isActive) {
+            console.log('[TutorialUI] Element already hidden on setup');
+            window.notifyTutorial('ui_interaction', {
+                element: elementSelector,
+                is_hidden: true,
                 timestamp: Date.now()
             });
         }
@@ -680,6 +811,51 @@ class TutorialUI {
 
         if (prereqs.ensure_item) {
             console.log(`[TutorialUI] Step requires item: ${prereqs.ensure_item}`);
+        }
+    }
+
+    /**
+     * Ensure required panels are visible/hidden based on step requirements
+     */
+    ensurePanelVisibility(stepData) {
+        const targetSelector = stepData.config?.target_selector;
+
+        if (!targetSelector) {
+            return;
+        }
+
+        // If step targets characteristics panel or movement/action counters, ensure panel is open
+        const caracsPanelTargets = ['#load-caracs', '#mvt-counter', '#action-counter'];
+        const needsCaracsPanel = caracsPanelTargets.some(selector =>
+            targetSelector.includes(selector) || targetSelector === selector
+        );
+
+        if (needsCaracsPanel) {
+            const $caracsPanel = $('#load-caracs');
+
+            if (!$caracsPanel.is(':visible')) {
+                console.log('[TutorialUI] Opening characteristics panel for step');
+
+                // Simulate clicking the show caracs button
+                $('#show-caracs').click();
+
+                // Wait for panel to fully appear before continuing
+                // This prevents tooltips from rendering before panel is visible
+                const checkPanelVisible = () => {
+                    if ($('#load-caracs').is(':visible')) {
+                        console.log('[TutorialUI] Panel now visible, refreshing...');
+                        this.refreshCaracsPanel();
+                    } else {
+                        // Panel not visible yet, check again
+                        setTimeout(checkPanelVisible, 100);
+                    }
+                };
+
+                setTimeout(checkPanelVisible, 100);
+            } else {
+                // Panel already open, just refresh to show current values
+                this.refreshCaracsPanel();
+            }
         }
     }
 
@@ -748,7 +924,7 @@ class TutorialUI {
         $('#tutorial-xp-bar .xp-bar-fill').css('width', `${Math.min(barProgress, 100)}%`);
 
         // Show step progression and earned XP
-        const stepText = `Étape ${this.currentStep}/${this.totalSteps}`;
+        const stepText = `Étape ${this.currentStepPosition}/${this.totalSteps}`;
         const xpText = `XP gagné: ${this.xpEarned}`;
         $('#tutorial-xp-bar .xp-text').text(`${stepText} • ${xpText}`);
     }
@@ -757,7 +933,7 @@ class TutorialUI {
      * Update progress indicator
      */
     updateProgressIndicator() {
-        $('#tutorial-step-counter').text(`Étape ${this.currentStep + 1} / ${this.totalSteps}`);
+        $('#tutorial-step-counter').text(`Étape ${this.currentStepPosition} / ${this.totalSteps}`);
     }
 
     /**

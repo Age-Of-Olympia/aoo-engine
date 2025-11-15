@@ -57,16 +57,25 @@ class TutorialManager
             $player->data->race ?? null
         );
 
+        // Get first step_id for this version (lowest step_number)
+        $firstStepSql = 'SELECT step_id FROM tutorial_configurations
+                         WHERE version = ? AND is_active = 1
+                         ORDER BY step_number ASC LIMIT 1';
+        $firstStepResult = $this->db->exe($firstStepSql, [$version]);
+        $firstStepRow = $firstStepResult->fetch_assoc();
+        $firstStepId = $firstStepRow['step_id'] ?? 'gaia_welcome';  // Fallback
+
         // Create progress record in database
         $sql = 'INSERT INTO tutorial_progress
                 (player_id, tutorial_session_id, current_step, total_steps, tutorial_mode, tutorial_version, data)
-                VALUES (?, ?, 0, ?, ?, ?, ?)';
+                VALUES (?, ?, ?, ?, ?, ?, ?)';
 
         $initialData = $this->context->serializeState();
 
         $this->db->exe($sql, [
             $player->id,
             $this->sessionId,
+            $firstStepId,  // Use step_id instead of 0
             $totalSteps,
             $mode,
             $version,
@@ -77,7 +86,7 @@ class TutorialManager
             'success' => true,
             'session_id' => $this->sessionId,
             'tutorial_player_id' => $this->tutorialPlayer->actualPlayerId, // Use actual players table ID
-            'current_step' => 0,
+            'current_step' => $firstStepId,  // Return step_id
             'total_steps' => $totalSteps,
             'mode' => $mode,
             'version' => $version
@@ -222,6 +231,124 @@ class TutorialManager
     }
 
     /**
+     * Get step data by step_id (name)
+     *
+     * @param string $stepId
+     * @param string $version
+     * @return array|null
+     */
+    public function getStepDataById(string $stepId, string $version = '1.0.0'): ?array
+    {
+        $sql = 'SELECT * FROM tutorial_configurations
+                WHERE version = ? AND step_id = ? AND is_active = 1';
+
+        $result = $this->db->exe($sql, [$version, $stepId]);
+
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $config = json_decode($row['config'], true);
+
+            return [
+                'step_id' => $row['step_id'],
+                'next_step' => $row['next_step'],
+                'step_number' => (float)$row['step_number'],
+                'step_type' => $row['step_type'],
+                'title' => $row['title'],
+                'config' => $config,
+                'xp_reward' => (int)$row['xp_reward']
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get step object by step_id (name)
+     *
+     * @param string $stepId
+     * @param string $version
+     * @return Steps\AbstractStep|null
+     */
+    public function getStepById(string $stepId, string $version = '1.0.0'): ?Steps\AbstractStep
+    {
+        $stepData = $this->getStepDataById($stepId, $version);
+
+        if (!$stepData) {
+            return null;
+        }
+
+        return TutorialStepFactory::createFromData($stepData, $this->context);
+    }
+
+    /**
+     * Get current step with full data for client (by step_id)
+     *
+     * @param string $stepId
+     * @param string $version
+     * @param bool $applyPrerequisites - Whether to apply prerequisites (true for resume, false for normal rendering)
+     * @return array|null
+     */
+    public function getCurrentStepForClientById(string $stepId, string $version = '1.0.0', bool $applyPrerequisites = false): ?array
+    {
+        $step = $this->getStepById($stepId, $version);
+
+        if (!$step) {
+            return null;
+        }
+
+        $stepData = $step->getData();
+
+        // Calculate actual step position (1st, 2nd, 3rd...) for progression display
+        // This counts how many steps come before this one (ordered by step_number)
+        $stepData['step_position'] = $this->calculateStepPosition($stepId, $version);
+
+        // Apply prerequisites ONLY when explicitly requested (e.g., on resume)
+        // NOT during normal rendering to avoid resetting resources on every render
+        if ($applyPrerequisites && isset($stepData['config']['prerequisites'])) {
+            $this->context->ensurePrerequisites($stepData['config']['prerequisites']);
+        }
+
+        // Generate dynamic validation hint (e.g., for movement steps showing remaining movements)
+        // This ensures tooltips show current state, not static text
+        if ($step->requiresValidation() && method_exists($step, 'getValidationHint')) {
+            $dynamicHint = $step->getValidationHint();
+            if ($dynamicHint) {
+                $stepData['validation_hint'] = $dynamicHint;
+            }
+        }
+
+        return array_merge($stepData, [
+            'tutorial_state' => $this->context->getPublicState()
+        ]);
+    }
+
+    /**
+     * Calculate the actual position of a step in the sequence (1-indexed)
+     *
+     * @param string $stepId
+     * @param string $version
+     * @return int Position in sequence (1 for first step, 2 for second, etc.)
+     */
+    private function calculateStepPosition(string $stepId, string $version = '1.0.0'): int
+    {
+        // Count how many steps come before this one (ordered by step_number)
+        $sql = 'SELECT COUNT(*) as position
+                FROM tutorial_configurations
+                WHERE version = ?
+                AND is_active = 1
+                AND step_number <= (
+                    SELECT step_number
+                    FROM tutorial_configurations
+                    WHERE version = ? AND step_id = ?
+                )';
+
+        $result = $this->db->exe($sql, [$version, $version, $stepId]);
+        $row = $result->fetch_assoc();
+
+        return (int)($row['position'] ?? 1);
+    }
+
+    /**
      * Get current step with full data for client
      *
      * @param int $stepNumber
@@ -279,17 +406,17 @@ class TutorialManager
         }
 
         $progress = $result->fetch_assoc();
-        $currentStep = (int)$progress['current_step'];
+        $currentStepId = $progress['current_step'];  // Now a step_id (string), not number
         $totalSteps = (int)$progress['total_steps'];
         $version = $progress['tutorial_version'];
 
-        // Get current step object
-        $step = $this->getStep($currentStep, $version);
+        // Get current step object by step_id
+        $step = $this->getStepById($currentStepId, $version);
 
         if (!$step) {
             return [
                 'success' => false,
-                'error' => 'Step not found'
+                'error' => 'Step not found: ' . $currentStepId
             ];
         }
 
@@ -309,19 +436,21 @@ class TutorialManager
         // Execute step completion logic (awards XP, applies context changes)
         $step->onComplete($this->context);
 
-        // Check if tutorial is complete
-        $nextStep = $currentStep + 1;
-        if ($nextStep >= $totalSteps) {
+        // Get step data to find next_step
+        $stepData = $step->getData();
+        $nextStepId = $stepData['next_step'] ?? null;
+
+        // Check if tutorial is complete (no next step)
+        if ($nextStepId === null) {
             return $this->completeTutorial();
         }
 
         // Prepare resources for next step (if configured in current step)
-        $stepData = $step->getData();
         if (isset($stepData['config']['prepare_next_step'])) {
             $this->context->prepareForNextStep($stepData['config']['prepare_next_step']);
         }
 
-        // Update progress in database
+        // Update progress in database with next step_id
         $updateSql = 'UPDATE tutorial_progress
                       SET current_step = ?,
                           xp_earned = ?,
@@ -329,14 +458,14 @@ class TutorialManager
                       WHERE tutorial_session_id = ?';
 
         $this->db->exe($updateSql, [
-            $nextStep,
+            $nextStepId,
             $this->context->getTutorialXP(),
             $this->context->serializeState(),
             $this->sessionId
         ]);
 
         // Apply prerequisites for the NEXT step (only when advancing to it)
-        $nextStepObj = $this->getStep($nextStep, $version);
+        $nextStepObj = $this->getStepById($nextStepId, $version);
         if ($nextStepObj) {
             $nextStepConfig = $nextStepObj->getData();
             if (isset($nextStepConfig['config']['prerequisites'])) {
@@ -345,11 +474,13 @@ class TutorialManager
         }
 
         // Get next step data for client
-        $nextStepData = $this->getCurrentStepForClient($nextStep, $version);
+        $nextStepData = $this->getCurrentStepForClientById($nextStepId, $version);
 
         return [
             'success' => true,
-            'current_step' => $nextStep,
+            'current_step' => $nextStepId,  // Return step_id
+            'current_step_number' => $nextStepData['step_number'] ?? null,  // Step number (for ordering)
+            'current_step_position' => $nextStepData['step_position'] ?? 1,  // Actual position (for display)
             'total_steps' => $totalSteps,
             'xp_earned' => $this->context->getTutorialXP(),
             'level' => $this->context->getTutorialLevel(),

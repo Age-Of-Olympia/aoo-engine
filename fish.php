@@ -2,14 +2,17 @@
 use Classes\Player;
 use Classes\Ui;
 use Classes\Log;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
 
 $ui = new Ui('Ça mord!');
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';

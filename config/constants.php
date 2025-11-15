@@ -518,3 +518,9 @@ define('CACHED_CLASSEMENTS', true); // si false, classemens.php n'est pas cached
 define('AUTO_BREAK', false); // si true, l'équipement casse (100% de chance)
 define('AUTO_FAIL', false); // si true, les attaques ratent forcément
 
+/*
+ * Tutorial System
+ */
+// Enable tutorial for specific test players (including player 7 with admin NPC access)
+define('TUTORIAL_V2_TEST_PLAYERS', [1, 2, 3, 7]);
+

@@ -41,7 +41,11 @@ class Db{
         if(count($values)) {
             // params type
             foreach($values as $key => $value) {
-                if(is_numeric($value)) {
+                if(is_int($value)) {
+                    $params .= 'i';
+                } elseif(is_float($value) || (is_numeric($value) && strpos($value, '.') !== false)) {
+                    $params .= 'd';  // 'd' for double/float
+                } elseif(is_numeric($value)) {
                     $params .= 'i';
                 } else {
                     $params .= 's';

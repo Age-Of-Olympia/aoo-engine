@@ -6,6 +6,7 @@ use App\Action\ActionFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
+use App\Tutorial\TutorialHelper;
 use App\View\ActionResultsView;
 use App\View\OnHideReloadView;
 use Classes\Log;
@@ -23,8 +24,11 @@ if(!isset($_POST['action'])){
     exit('error action');
 }
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
+
 // player
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 $player->get_data();
 $player->get_caracs();
 

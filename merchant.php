@@ -8,14 +8,17 @@ use App\View\Merchant\AsksView;
 use App\View\Merchant\BidsView;
 use App\View\Merchant\ExchangesView;
 use App\View\Merchant\SpellsView;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
 
 $ui = new Ui('Marchander', true);
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 
 $player->get_data();
 

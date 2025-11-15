@@ -1,13 +1,16 @@
 <?php
 use Classes\Player;
-use Classes\Db; 
+use Classes\Db;
 use Classes\View;
 use Classes\Log;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 
 
 if(!isset($_POST['wallId'])){

@@ -19,6 +19,7 @@ class UIInteractionStep extends AbstractStep
      * - ui_panel_opened: Check if a specific UI panel was opened
      * - ui_button_clicked: Check if a specific button was clicked
      * - ui_setting_changed: Check if a setting was toggled
+     * - ui_element_hidden: Check if an element was hidden/removed
      */
     public function validate(array $data): bool
     {
@@ -27,12 +28,19 @@ class UIInteractionStep extends AbstractStep
         switch ($validationType) {
             case 'ui_panel_opened':
                 // Check that the specified panel was opened
-                // For characteristics panel, we check if load-caracs div is visible
                 // This is validated client-side and sent to us
                 $requiredPanel = $this->config['validation_params']['panel'] ?? null;
                 $panelVisible = $data['panel_visible'] ?? false;
+                $panel = $data['panel'] ?? null;
 
-                return $requiredPanel === 'characteristics' && $panelVisible === true;
+                // Support both characteristics panel and actions panel
+                if ($requiredPanel === 'characteristics') {
+                    return $panel === 'characteristics' && $panelVisible === true;
+                } elseif ($requiredPanel === 'actions') {
+                    return $panel === 'actions' && $panelVisible === true;
+                }
+
+                return false;
 
             case 'ui_button_clicked':
                 // Check that the specified button was clicked
@@ -51,6 +59,14 @@ class UIInteractionStep extends AbstractStep
                        isset($data['setting']) &&
                        $data['setting'] === $requiredSetting &&
                        $actualValue === $requiredValue;
+
+            case 'ui_element_hidden':
+                // Check that an element was hidden
+                $requiredElement = $this->config['validation_params']['element'] ?? null;
+                $element = $data['element'] ?? null;
+                $isHidden = $data['is_hidden'] ?? false;
+
+                return $requiredElement && $element === $requiredElement && $isHidden === true;
 
             default:
                 return false;

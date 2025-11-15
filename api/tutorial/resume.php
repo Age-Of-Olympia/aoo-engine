@@ -70,8 +70,8 @@ try {
             // Get step data using tutorial player
             // DO NOT apply prerequisites on resume - only apply when ADVANCING to a step
             // Otherwise movements/resources get reset every time player moves (page reloads)
-            $stepData = $manager->getCurrentStepForClient(
-                (int)$session['current_step'],
+            $stepData = $manager->getCurrentStepForClientById(
+                $session['current_step'],  // Now a step_id (string)
                 $session['tutorial_version'],
                 false  // applyPrerequisites = false (don't reset resources on resume)
             );
@@ -84,7 +84,9 @@ try {
                 'success' => true,
                 'has_active_tutorial' => true,
                 'session_id' => $session['tutorial_session_id'],
-                'current_step' => (int)$session['current_step'],
+                'current_step' => $session['current_step'],  // step_id (string)
+                'current_step_number' => $stepData['step_number'] ?? null,  // Step number (for ordering)
+                'current_step_position' => $stepData['step_position'] ?? 1,  // Actual position (for display)
                 'total_steps' => (int)$session['total_steps'],
                 'mode' => $session['tutorial_mode'],
                 'version' => $session['tutorial_version'],

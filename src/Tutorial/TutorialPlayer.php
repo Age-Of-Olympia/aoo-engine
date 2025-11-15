@@ -91,6 +91,15 @@ class TutorialPlayer
 
         $actualPlayerId = (int) $conn->lastInsertId();
 
+        // Give the tutorial character basic actions
+        $basicActions = ['fouiller', 'repos', 'attaquer', 'courir', 'prier', 'entrainement'];
+        foreach ($basicActions as $actionName) {
+            $conn->insert('players_actions', [
+                'player_id' => $actualPlayerId,
+                'name' => $actionName
+            ]);
+        }
+
         // Then create the tutorial_players tracking entry
         $conn->insert('tutorial_players', [
             'real_player_id' => $realPlayerId,

@@ -14,18 +14,22 @@ abstract class AbstractStep
 {
     protected TutorialContext $context;
     protected array $config;
-    protected int $stepNumber;
+    protected ?string $stepId;  // step_id (name)
+    protected ?string $nextStep;  // next_step_id
+    protected float $stepNumber;  // For display/ordering only
     protected string $stepType;
     protected string $title;
     protected int $xpReward;
 
     public function __construct(
         TutorialContext $context,
-        int $stepNumber,
+        float $stepNumber,
         string $stepType,
         string $title,
         array $config,
-        int $xpReward = 0
+        int $xpReward = 0,
+        ?string $stepId = null,
+        ?string $nextStep = null
     ) {
         $this->context = $context;
         $this->stepNumber = $stepNumber;
@@ -33,6 +37,8 @@ abstract class AbstractStep
         $this->title = $title;
         $this->config = $config;
         $this->xpReward = $xpReward;
+        $this->stepId = $stepId;
+        $this->nextStep = $nextStep;
     }
 
     /**
@@ -43,6 +49,8 @@ abstract class AbstractStep
     public function getData(): array
     {
         return [
+            'step_id' => $this->stepId,
+            'next_step' => $this->nextStep,
             'step_number' => $this->stepNumber,
             'step_type' => $this->stepType,
             'title' => $this->title,

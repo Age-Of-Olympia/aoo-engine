@@ -2,6 +2,7 @@
 use Classes\Player;
 use Classes\View;
 use Classes\Db;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
@@ -34,8 +35,10 @@ $god->get_data();
 
 $coords = View::get_coords('triggers', $row->id);
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 
 $player->get_data();
 

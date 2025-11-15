@@ -33,19 +33,64 @@ $steps = [
     // Section 1: Welcome & World
     [
         'step_id' => 'gaia_welcome',
-        'step_number' => 0,  // Keep for backward compatibility during transition
-        'step_type' => 'dialog',
+        'step_number' => 0,
+        'step_type' => 'ui_interaction',
         'title' => 'Bienvenue!',
-        'next_step' => 'turn_based_intro',
+        'next_step' => 'close_card',
         'config' => [
             'dialog_id' => 'gaia_welcome',
-            'text' => 'Parlez à Gaïa pour commencer votre apprentissage.',
-            'requires_validation' => false,
-            // Blocking mode (default for dialog)
-            'blocked_click_message' => 'Parlez d\'abord à Gaïa pour commencer le tutoriel.',
-            'allowed_interactions' => ['.npc[data-npc="gaia"]', '.dialog-option']
+            'text' => '<strong>Cliquez sur Gaïa</strong> (le personnage à côté de vous) pour commencer votre apprentissage.',
+            'target_selector' => null,
+            'tooltip_position' => 'center',
+            'requires_validation' => true,
+            'validation_type' => 'ui_panel_opened',
+            'validation_params' => ['panel' => 'actions'],
+            'validation_hint' => 'Cliquez sur Gaïa pour ouvrir sa fiche',
+            // Semi-blocking mode - allow clicking on nearby tiles and dialog
+            'interaction_mode' => 'semi-blocking',
+            'allowed_interactions' => [
+                '.case',  // Allow clicking on any tile
+                'image',  // Allow clicking on any character image
+                '.case-infos',  // Allow interacting with the opened character card
+                '.case-infos a',  // Allow clicking links
+                '.case-infos button',  // Allow clicking buttons
+                '.dialog-option'  // Allow clicking dialog choices
+            ],
+            'blocked_click_message' => 'Cliquez sur Gaïa (le personnage à côté de vous) pour lui parler.'
         ],
         'xp_reward' => 5
+    ],
+    [
+        'step_id' => 'close_card',
+        'step_number' => 0.5,
+        'step_type' => 'ui_interaction',
+        'title' => 'Fermer la fiche',
+        'next_step' => 'turn_based_intro',
+        'config' => [
+            'text' => 'Vous pouvez <strong>fermer la fiche de personnage</strong> en cliquant sur le bouton de fermeture, sur une case vide, ou dans le vide du damier.',
+            'target_selector' => '#ui-card',
+            'tooltip_position' => 'left',
+            'requires_validation' => true,
+            'validation_type' => 'ui_element_hidden',
+            'validation_params' => ['element' => '#ui-card'],
+            // Semi-blocking mode - allow all ways to close
+            'interaction_mode' => 'semi-blocking',
+            'allowed_interactions' => [
+                '.case',                        // Click on any tile
+                'image',                        // Click on characters
+                '#game-map',                    // Click on map container (void)
+                'svg',                          // Click on SVG background (void)
+                '.close-card',                  // Close button
+                'button[data-action="close-card"]',  // Close button (explicit)
+                '.action.close-card',           // Close button (full selector)
+                '#ui-card .action',             // Any action button in card
+                '#ui-card',                     // Card itself
+                '.card-actions',                // Actions area in card
+                '.card-actions button',         // Any button in actions area
+            ],
+            'blocked_click_message' => 'Cliquez sur le bouton de fermeture, une case, ou dans le vide pour fermer la fiche.'
+        ],
+        'xp_reward' => 0
     ],
     [
         'step_id' => 'turn_based_intro',
@@ -70,7 +115,7 @@ $steps = [
         'title' => 'Vous voici!',
         'next_step' => 'map_grid',
         'config' => [
-            'text' => 'Vous êtes le personnage au centre de la carte. Votre nom est <strong>{PLAYER_NAME}</strong>. Bienvenue dans le monde d\'Olympia!',
+            'text' => 'Vous êtes le personnage au centre du damier. Votre nom est <strong>{PLAYER_NAME}</strong>. Bienvenue dans le monde d\'Olympia!',
             'target_selector' => '#current-player-avatar',
             'tooltip_position' => 'bottom',
             'requires_validation' => false,
@@ -91,7 +136,7 @@ $steps = [
             'tooltip_position' => 'top',
             'requires_validation' => false,
             // Blocking mode (default for info)
-            'blocked_click_message' => 'Observez la carte et cliquez sur "Suivant" pour continuer.'
+            'blocked_click_message' => 'Observez le damier et cliquez sur "Suivant" pour continuer.'
         ],
         'xp_reward' => 5
     ],
@@ -110,7 +155,11 @@ $steps = [
             'validation_type' => 'any_movement',
             'validation_hint' => 'Cliquez sur une case adjacente pour vous déplacer',
             // Semi-blocking mode (default for movement)
-            'allowed_interactions' => ['.case', '.case.go', '#go-rect', '#go-img'],
+            'allowed_interactions' => [
+                '.case', '.case.go', '#go-rect', '#go-img',
+                'image',  // Allow clicking on characters (doesn't interfere with movement)
+                '.case-infos'  // Allow viewing character info if opened
+            ],
             'blocked_click_message' => 'Pour vous déplacer, cliquez sur une case adjacente (en vert).',
             'context_changes' => [
                 'unlimited_mvt' => true  // Unlimited movement for first move
@@ -139,7 +188,11 @@ $steps = [
             'validation_params' => ['panel' => 'characteristics'],
             'validation_hint' => 'Cliquez sur le bouton "Caractéristiques" pour afficher vos stats',
             // Semi-blocking mode
-            'allowed_interactions' => ['#show-caracs'],
+            'allowed_interactions' => [
+                '#show-caracs',
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Cliquez sur le bouton "Caractéristiques" dans le menu pour continuer.'
         ],
         'xp_reward' => 5
@@ -155,7 +208,11 @@ $steps = [
             'target_selector' => '#mvt-counter',
             'tooltip_position' => 'right',
             'requires_validation' => false,
-            // Blocking mode - just read and click "Next"
+            // Semi-blocking mode - allow viewing characters
+            'allowed_interactions' => [
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Lisez l\'information sur les mouvements limités et cliquez sur "Suivant".',
             'context_changes' => [
                 'unlimited_mvt' => false,
@@ -183,7 +240,11 @@ $steps = [
             'validation_type' => 'movements_depleted',
             'validation_hint' => 'Continuez à vous déplacer pour utiliser tous vos mouvements',
             // Semi-blocking mode
-            'allowed_interactions' => ['.case', '.case.go', '#go-rect', '#go-img'],
+            'allowed_interactions' => [
+                '.case', '.case.go', '#go-rect', '#go-img',
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Déplacez-vous sur les cases adjacentes pour utiliser vos mouvements.',
             // Enable movement consumption for this step
             'context_changes' => [
@@ -212,7 +273,11 @@ $steps = [
             'target_selector' => '#next-turn-timer',
             'tooltip_position' => 'bottom',
             'requires_validation' => false,
-            // Blocking mode (default for info)
+            // Semi-blocking mode - allow viewing characters
+            'allowed_interactions' => [
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Lisez l\'explication sur les tours et cliquez sur "Suivant".'
         ],
         'xp_reward' => 5
@@ -230,7 +295,11 @@ $steps = [
             'target_selector' => '#action-counter',
             'tooltip_position' => 'right',
             'requires_validation' => false,
-            // Blocking mode (default for action_intro)
+            // Semi-blocking mode - allow viewing characters
+            'allowed_interactions' => [
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Observez votre compteur de Points d\'Action et cliquez sur "Suivant".',
             'context_changes' => [
                 'set_mvt_limit' => 4,  // Restore movements
@@ -247,16 +316,28 @@ $steps = [
     [
         'step_id' => 'available_actions',
         'step_number' => 10,
-        'step_type' => 'info',
+        'step_type' => 'ui_interaction',
         'title' => 'Actions disponibles',
         'next_step' => 'search_action',
         'config' => [
-            'text' => 'Les actions disponibles dépendent de votre situation. Regardez le panneau d\'actions pour voir ce que vous pouvez faire.',
-            'target_selector' => '#actions-panel',
+            'text' => 'Pour voir vos actions disponibles, <strong>cliquez sur votre personnage</strong> (au centre du damier). Cela ouvrira le panneau d\'actions.',
+            'target_selector' => '#current-player-avatar',
             'tooltip_position' => 'left',
-            'requires_validation' => false,
-            // Blocking mode (default for info)
-            'blocked_click_message' => 'Regardez le panneau d\'actions et cliquez sur "Suivant".'
+            'requires_validation' => true,
+            'validation_type' => 'ui_panel_opened',
+            'validation_params' => ['panel' => 'actions'],
+            'validation_hint' => 'Cliquez sur votre personnage pour ouvrir le panneau d\'actions',
+            // Semi-blocking mode - allow clicking on player's tile and avatar
+            'interaction_mode' => 'semi-blocking',
+            'allowed_interactions' => [
+                '.case',                      // Allow clicking on any tile (to reach player)
+                '.case[data-coords="0,0"]',   // Current player's tile (explicit)
+                '#current-player-avatar',     // Current player's avatar image
+                'image.current-player',       // Fallback selector
+                'image',                      // Allow clicking on any character image
+                '.case-infos'                 // Allow interacting with the opened panel
+            ],
+            'blocked_click_message' => 'Cliquez sur votre personnage au centre du damier pour voir vos actions disponibles.'
         ],
         'xp_reward' => 5
     ],
@@ -276,7 +357,13 @@ $steps = [
             'validation_params' => ['action' => 'fouiller'],
             'validation_hint' => 'Cliquez sur l\'action Fouiller',
             // Semi-blocking mode (default for action)
-            'allowed_interactions' => ['.action[data-action="fouiller"]', '.action-button.fouiller'],
+            'allowed_interactions' => [
+                '.action[data-action="fouiller"]',
+                'button.action',
+                '.case-infos',  // Allow interacting with the panel
+                '.case-infos a',  // Allow clicking links in the panel
+                '.case-infos button'  // Allow clicking buttons in the panel
+            ],
             'blocked_click_message' => 'Pour continuer, cliquez sur le bouton "Fouiller" dans le panneau d\'actions.',
             'prerequisites' => [
                 'actions' => 1,
@@ -298,11 +385,21 @@ $steps = [
         'next_step' => 'combat_intro',
         'config' => [
             'dialog_id' => 'gaia_combat',
-            'text' => 'Gaïa va vous apprendre à combattre.',
+            'text' => '<strong>Cliquez sur Gaïa</strong> pour apprendre le combat.',
+            'target_selector' => null,  // Point to Gaia when we know her position
+            'tooltip_position' => 'center',
             'requires_validation' => false,
-            // Blocking mode (default for dialog)
-            'blocked_click_message' => 'Parlez à Gaïa pour apprendre le combat.',
-            'allowed_interactions' => ['.npc[data-npc="gaia"]', '.dialog-option'],
+            // Semi-blocking mode - allow clicking on NPCs and dialog
+            'interaction_mode' => 'semi-blocking',
+            'allowed_interactions' => [
+                '.case',  // Allow clicking on any tile (to find NPCs)
+                'image',  // Allow clicking on any character image
+                '.case-infos',  // Allow interacting with the opened character card
+                '.case-infos a',  // Allow clicking links
+                '.case-infos button',  // Allow clicking buttons
+                '.dialog-option'  // Allow clicking dialog choices
+            ],
+            'blocked_click_message' => 'Cliquez sur Gaïa pour lui parler et apprendre le combat.',
             'prepare_next_step' => [
                 'spawn_enemy' => 'tutorial_dummy'  // Spawn enemy for combat
             ]
@@ -320,7 +417,11 @@ $steps = [
             'target_selector' => '#characteristics-panel',
             'tooltip_position' => 'left',
             'requires_validation' => false,
-            // Blocking mode (default for combat_intro)
+            // Semi-blocking mode - allow viewing characters
+            'allowed_interactions' => [
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Lisez les explications sur le combat et cliquez sur "Suivant".'
         ],
         'xp_reward' => 5
@@ -340,7 +441,11 @@ $steps = [
             'validation_type' => 'combat_initiated',
             'validation_hint' => 'Attaquez l\'ennemi d\'entraînement',
             // Semi-blocking mode (default for combat)
-            'allowed_interactions' => ['.enemy.tutorial', '.action[data-action="attack"]', '.ra-crossed-swords'],
+            'allowed_interactions' => [
+                '.enemy.tutorial', '.action[data-action="attack"]', '.ra-crossed-swords',
+                'image',  // Allow clicking on characters
+                '.case-infos'  // Allow viewing character cards
+            ],
             'blocked_click_message' => 'Pour combattre, cliquez sur l\'Âme d\'entraînement puis sur l\'icône d\'attaque.',
             'prerequisites' => [
                 'actions' => 1,

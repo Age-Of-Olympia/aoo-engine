@@ -301,7 +301,10 @@ if($res->num_rows){
 
         $factionJson = json()->decode('factions', $target->data->faction);
 
-        $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
+        $faction = '';
+        if ($factionJson && isset($factionJson->raFont)) {
+            $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
+        }
 
         if(
             $target->data->secretFaction != ''
