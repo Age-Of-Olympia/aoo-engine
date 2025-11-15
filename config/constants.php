@@ -325,7 +325,6 @@ define('WALLS_PV', array(
     'statue_gisant'=>10,
     'pilier'=>10,
     'statue_noble'=>10,
-    'statue_heroique'=>10,
     'flamme_bleue'=>10,
     'sarcophage'=>50,
     'statue_kraken'=>30,
