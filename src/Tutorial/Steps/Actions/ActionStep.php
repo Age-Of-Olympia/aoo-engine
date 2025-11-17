@@ -39,7 +39,10 @@ class ActionStep extends AbstractStep
      */
     protected function validateActionUsed(array $data): bool
     {
-        $requiredAction = $this->config['action_name'] ?? null;
+        // Check for action_name in validation_params first (new format), then root level (legacy)
+        $requiredAction = $this->config['validation_params']['action_name']
+                       ?? $this->config['action_name']
+                       ?? null;
 
         if (!$requiredAction) {
             // No specific action required
@@ -72,7 +75,10 @@ class ActionStep extends AbstractStep
      */
     protected function validateActionAvailable(array $data): bool
     {
-        $requiredAction = $this->config['action_name'] ?? null;
+        // Check for action_name in validation_params first (new format), then root level (legacy)
+        $requiredAction = $this->config['validation_params']['action_name']
+                       ?? $this->config['action_name']
+                       ?? null;
 
         if (!$requiredAction) {
             return true;
@@ -96,7 +102,10 @@ class ActionStep extends AbstractStep
         }
 
         // Generate default hint based on validation type
-        $actionName = $this->config['action_name'] ?? 'action';
+        // Check for action_name in validation_params first (new format), then root level (legacy)
+        $actionName = $this->config['validation_params']['action_name']
+                   ?? $this->config['action_name']
+                   ?? 'action';
 
         switch ($validationType) {
             case 'action_used':
