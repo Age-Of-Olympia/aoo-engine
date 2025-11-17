@@ -9,13 +9,15 @@
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialMapInstance;
+use App\Entity\EntityManagerFactory;
 use Classes\Player;
 
 // No login check - we'll handle it ourselves
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -64,6 +66,32 @@ try {
     // IMPORTANT: Cancel any existing active tutorials before starting a new one
     // This ensures we don't have orphaned tutorial sessions
     $db = new Classes\Db();
+
+    // Get session IDs to clean up map instances
+    $sessionsSql = 'SELECT tutorial_session_id FROM tutorial_progress WHERE player_id = ? AND completed = 0';
+    $sessionsResult = $db->exe($sessionsSql, [$playerId]);
+
+    $sessionIds = [];
+    while ($row = $sessionsResult->fetch_assoc()) {
+        $sessionIds[] = $row['tutorial_session_id'];
+    }
+
+    // Clean up map instances for cancelled tutorials
+    if (!empty($sessionIds)) {
+        $em = EntityManagerFactory::getEntityManager();
+        $conn = $em->getConnection();
+        $mapInstance = new TutorialMapInstance($conn);
+
+        foreach ($sessionIds as $sid) {
+            try {
+                $mapInstance->deleteInstance($sid);
+                error_log("[Start] Deleted tutorial map instance for cancelled session {$sid}");
+            } catch (\Exception $e) {
+                error_log("[Start] Error deleting map instance for session {$sid}: " . $e->getMessage());
+            }
+        }
+    }
+
     $cancelSql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW()
                   WHERE player_id = ? AND completed = 0';
     $db->exe($cancelSql, [$playerId]);

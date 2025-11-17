@@ -7,6 +7,7 @@
  */
 
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialMapInstance;
 use App\Entity\EntityManagerFactory;
 use Classes\Db;
 
@@ -16,7 +17,7 @@ require_once(__DIR__ . '/../../config.php');
 // Start output buffering to catch any PHP errors/warnings
 ob_start();
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 // Check authentication
 if (!isset($_SESSION['playerId'])) {
@@ -44,7 +45,18 @@ try {
     $em = EntityManagerFactory::getEntityManager();
     $conn = $em->getConnection();
 
+    // Initialize map instance service for cleanup
+    $mapInstance = new TutorialMapInstance($conn);
+
     if ($sessionId) {
+        // Clean up tutorial map instance for this session
+        try {
+            $mapInstance->deleteInstance($sessionId);
+            error_log("[Cancel] Deleted tutorial map instance for session {$sessionId}");
+        } catch (\Exception $e) {
+            error_log("[Cancel] Error deleting map instance: " . $e->getMessage());
+        }
+
         // Clean up tutorial enemy for this session
         try {
             $stmt = $conn->prepare("
@@ -107,8 +119,17 @@ try {
             $sessionIds[] = $row['tutorial_session_id'];
         }
 
-        // Clean up enemies for all sessions
+        // Clean up map instances and enemies for all sessions
         foreach ($sessionIds as $sid) {
+            // Delete map instance
+            try {
+                $mapInstance->deleteInstance($sid);
+                error_log("[Cancel] Deleted tutorial map instance for session {$sid}");
+            } catch (\Exception $e) {
+                error_log("[Cancel] Error deleting map instance for session {$sid}: " . $e->getMessage());
+            }
+
+            // Delete enemy
             try {
                 $stmt = $conn->prepare("
                     SELECT enemy_player_id, enemy_coords_id
