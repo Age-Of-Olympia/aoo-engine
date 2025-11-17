@@ -13,7 +13,7 @@ use Classes\Player;
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
