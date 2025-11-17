@@ -1,18 +1,9 @@
-.env
-wiki/
-datas/
-img/
-config/db_constants.php
-sessions/
-db/updates_done/
-/data/
-/.idea/
-*.kate-swp
-vendor/
-.bash_history
-.env
-bin/
-.phpunit.cache/
-tmp/
-daily.log
-phpunit-report.xml
+# Test data and outputs
+data_tests/
+node_modules/
+
+# Database migrations (generated)
+db/migrations/
+
+# Datas symlink or directory
+datas
