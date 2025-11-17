@@ -539,6 +539,25 @@ class TutorialUI {
                         this.trackElementClick(selector, target, stepData);
                     }
 
+                    // Check if this is an action button click (for action_used validation)
+                    if (validationType === 'action_used') {
+                        const $target = $(target).closest('button.action, .action[data-action]');
+                        if ($target.length > 0) {
+                            const actionName = $target.data('action') || $target.attr('data-action');
+                            if (actionName) {
+                                console.log('[TutorialUI] Action button clicked during tutorial:', actionName);
+                                // Notify tutorial system about the action
+                                // Use a small delay to let the click event complete first
+                                setTimeout(() => {
+                                    this.notifyAction('action_used', {
+                                        action_name: actionName,
+                                        button: $target.text().trim()
+                                    });
+                                }, 50);
+                            }
+                        }
+                    }
+
                     return; // Allow the click to proceed
                 }
             }
