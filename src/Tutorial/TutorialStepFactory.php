@@ -7,6 +7,7 @@ use App\Tutorial\Steps\GenericStep;
 use App\Tutorial\Steps\DialogStep;
 use App\Tutorial\Steps\UIInteractionStep;
 use App\Tutorial\Steps\Movement\MovementStep;
+use App\Tutorial\Steps\Actions\ActionStep;
 use App\Tutorial\TutorialContext;
 
 /**
@@ -38,7 +39,7 @@ class TutorialStepFactory
 
         // Action steps
         'action_intro' => GenericStep::class,
-        'action' => GenericStep::class,
+        'action' => ActionStep::class,
 
         // Combat steps
         'combat_intro' => GenericStep::class,

@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Tutorial\Steps\Actions;
+
+use App\Tutorial\Steps\AbstractStep;
+use App\Tutorial\TutorialContext;
+
+/**
+ * ActionStep - Validates that player used a specific action
+ *
+ * Validation types:
+ * - action_used: Player clicked an action button
+ * - action_available: Check if player has a specific action available
+ */
+class ActionStep extends AbstractStep
+{
+    /**
+     * Validate that the required action was used
+     */
+    public function validate(array $data): bool
+    {
+        $validationType = $this->config['validation_type'] ?? 'action_used';
+
+        switch ($validationType) {
+            case 'action_used':
+                return $this->validateActionUsed($data);
+
+            case 'action_available':
+                return $this->validateActionAvailable($data);
+
+            default:
+                // Unknown validation type - pass by default
+                return true;
+        }
+    }
+
+    /**
+     * Validate that player used the required action
+     */
+    protected function validateActionUsed(array $data): bool
+    {
+        $requiredAction = $this->config['action_name'] ?? null;
+
+        if (!$requiredAction) {
+            // No specific action required
+            return true;
+        }
+
+        // Check if the action_name from validation data matches
+        $usedAction = $data['action_name'] ?? null;
+
+        if ($usedAction === $requiredAction) {
+            return true;
+        }
+
+        // Special case: "attaquer" can be either "melee" or "distance" in backend
+        // but button always has data-action="attaquer"
+        if ($requiredAction === 'attaquer' && in_array($usedAction, ['melee', 'distance', 'attaquer'])) {
+            return true;
+        }
+
+        // Special case: allow validation by melee/distance if that's what's configured
+        if (in_array($requiredAction, ['melee', 'distance']) && $usedAction === 'attaquer') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Validate that player has the required action available
+     */
+    protected function validateActionAvailable(array $data): bool
+    {
+        $requiredAction = $this->config['action_name'] ?? null;
+
+        if (!$requiredAction) {
+            return true;
+        }
+
+        // This would need to check player's available actions from database
+        // For now, assume validation passes (can be enhanced later)
+        return true;
+    }
+
+    /**
+     * Get validation hint message
+     */
+    public function getValidationHint(): string
+    {
+        $validationType = $this->config['validation_type'] ?? 'action_used';
+
+        // Use custom hint if provided
+        if (!empty($this->config['validation_hint'])) {
+            return $this->config['validation_hint'];
+        }
+
+        // Generate default hint based on validation type
+        $actionName = $this->config['action_name'] ?? 'action';
+
+        switch ($validationType) {
+            case 'action_used':
+                return "Utilisez l'action {$actionName} pour continuer.";
+
+            case 'action_available':
+                return "Vous devez avoir l'action {$actionName} disponible.";
+
+            default:
+                return "Effectuez l'action requise pour continuer.";
+        }
+    }
+}
