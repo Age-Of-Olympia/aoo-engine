@@ -599,9 +599,133 @@ Age of Olympia is a **turn-based survival RPG** where players:
 
 **Tutorial Player Isolation**:
 - Tutorial players exist on separate `plan='tutorial'` map
-- Negative IDs range: -100000 to -999999 (managed by TutorialPlayer)
+- Positive IDs tracked in `tutorial_players` table
 - Tutorial enemies spawned via `TutorialManager::spawnTutorialEnemy()`
 - All tutorial data cleaned up on cancel or completion
+
+**Player Visibility System**:
+The tutorial implements complete player isolation using the `player_visibility` setting in plan JSON:
+
+1. **Plan Configuration** (`datas/private/plans/tutorial.json`):
+   ```json
+   {
+       "player_visibility": false,  // Hide other players
+       "biomes": [...]              // Resource definitions
+   }
+   ```
+
+2. **Three-Layer Isolation**:
+   - **Map Rendering** (`Classes/View.php:290`): Other players not drawn on map
+   - **Movement Blocking** (`go.php:70`): Other players don't block coordinates
+   - **Character Card** (`observe.php:125`): Other players not listed in observation panel
+
+3. **Implementation Pattern** (consistent across all three):
+   ```php
+   $planJson = json()->decode('plans', $player->coords->plan);
+   $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
+
+   if ($playerVisibilityEnabled) {
+       // Normal mode: show/block other players
+   } else {
+       // Tutorial mode: only show current player and NPCs
+       // Filter: (p.id = ? OR p.id < 0)
+   }
+   ```
+
+**Movement Control**:
+Tutorial supports both infinite and limited movement via session flag:
+
+- **Infinite Movement** (default): `$_SESSION['tutorial_consume_movements']` not set
+- **Limited Movement**: Set via step prerequisites `{"mvt": 3, "auto_restore": true}`
+- **Implementation** (`go.php:289-305`):
+  ```php
+  $isTutorial = ($player->coords->plan === 'tutorial');
+  $consumeMovement = !empty($_SESSION['tutorial_consume_movements']);
+
+  // Consume movement if:
+  // - Plan has JSON (non-tutorial) OR tutorial explicitly requests it
+  if(($planJson && !$isTutorial) || $consumeMovement){
+      $player->putBonus(['mvt' => -1]);
+  }
+  ```
+- This allows tutorial plan to have resource JSON without forcing movement consumption
+
+**Active Player Detection**:
+Critical pattern for tutorial compatibility - always use `TutorialHelper::getActivePlayerId()`:
+
+```php
+// WRONG - Always uses main player
+$player = new Player($_SESSION['playerId']);
+
+// CORRECT - Uses tutorial player if active, otherwise main player
+use App\Tutorial\TutorialHelper;
+$activePlayerId = TutorialHelper::getActivePlayerId();
+$player = new Player($activePlayerId);
+```
+
+**Files requiring active player detection**:
+- Movement: `go.php` ✅
+- Observation: `observe.php` ✅
+- Inventory: `src/View/Inventory/InventoryView.php` ✅
+- Bank: `src/View/Inventory/BankView.php` ✅
+- Craft: `src/View/Inventory/CraftView.php` ✅
+- Actions: Various action handlers ✅
+
+**Step Validation Types**:
+
+**MovementStep** (`src/Tutorial/Steps/Movement/MovementStep.php`):
+- `any_movement`: Player moved at all
+- `movements_depleted`: Player used all MVT points
+- `specific_count`: Player moved X times
+- `position`: Player at exact coordinates (x, y)
+- `adjacent_to_position`: Player adjacent to target (Manhattan distance = 1) - useful for resource gathering
+
+**UIInteractionStep** (`src/Tutorial/Steps/UIInteractionStep.php`):
+- `ui_panel_opened`: Specific panel visible
+- `ui_button_clicked`: Specific button clicked
+- `ui_interaction`: Generic element click validation (tracks `element_clicked` parameter)
+
+**Advanced Step Configuration**:
+```json
+{
+  "show_delay": 500,  // Delay tooltip/highlight (ms) for UI to settle
+  "validation_type": "adjacent_to_position",
+  "validation_params": {
+    "target_x": 0,
+    "target_y": 1  // Tree position - validates ANY adjacent tile
+  }
+}
+```
+
+**Tutorial UX Best Practices**:
+1. **Clear Previous State**: Remove hints/warnings when advancing steps
+2. **UTF-8 Encoding**: Always use `header('Content-Type: application/json; charset=utf-8')` in APIs
+3. **Timing**: Use `show_delay` for steps that need UI to settle first
+4. **Navigation**: Make menu navigation explicit (Inventaire → see items → Damier → return)
+5. **Validation Hints**: Clear messages removed automatically on step advance
+
+**Common Tutorial Issues & Solutions**:
+
+| Issue | Symptom | Solution |
+|-------|---------|----------|
+| **"Coordonnées invalides"** | Movement blocked during tutorial | Check `player_visibility` in plan JSON and `go.php` isolation logic |
+| **Wrong player inventory** | Main player items shown instead of tutorial player's | Use `TutorialHelper::getActivePlayerId()` instead of `$_SESSION['playerId']` |
+| **Encoding issues** | French accents display as "rÃ©coltable" | Add `charset=utf-8` to `Content-Type` header in API responses |
+| **Hints persist** | Previous step hints visible on new step | Call `$('.tooltip-blocked-message').remove()` in `renderStep()` |
+| **Highlight wrong position** | Element highlighted 3 tiles away | Use `getBoundingClientRect()` for positioning, check selector matches single element |
+| **Tooltip appears too fast** | Tooltip before UI ready | Add `show_delay: 500` to step config |
+| **Movement always consumed** | Can't have unlimited movement with plan JSON | Exclude tutorial from auto-consumption: `($planJson && !$isTutorial)` |
+
+**Resource Gathering Setup**:
+1. Create plan JSON: `datas/private/plans/tutorial.json`
+2. Add `player_visibility: false` to hide other players
+3. Define biomes with wall types and resources:
+   ```json
+   {"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}
+   ```
+4. Ensure walls exist in `map_walls` with `damages: -1` (récoltable)
+5. Validate with `adjacent_to_position` instead of exact position
+6. Use multi-step flow: move → inspect → gather → check inventory
 
 ### Important Database Tables
 
