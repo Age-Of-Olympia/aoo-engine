@@ -11,6 +11,10 @@ class TutorialTooltip {
     constructor() {
         this.$tooltip = null;
         this.errorTimeout = null;
+        this.currentTargetSelector = null;
+        this.currentPosition = 'center';
+        this.repositionObserver = null;
+        this._repositionPending = false;
     }
 
     /**
@@ -54,11 +58,27 @@ class TutorialTooltip {
         // Remove any error messages
         $('.tooltip-error').remove();
 
+        // Store current target and position for repositioning
+        this.currentTargetSelector = targetSelector;
+        this.currentPosition = position;
+
         // Position tooltip
-        if (targetSelector) {
-            const $target = $(targetSelector);
+        this.repositionTooltip();
+
+        // Setup MutationObserver to track DOM changes and reposition tooltip
+        this.setupRepositionObserver();
+
+        console.log('[TutorialTooltip] Shown', { title, targetSelector, position });
+    }
+
+    /**
+     * Reposition tooltip based on current target
+     */
+    repositionTooltip() {
+        if (this.currentTargetSelector) {
+            const $target = $(this.currentTargetSelector);
             if ($target.length > 0) {
-                this.positionNear($target, position);
+                this.positionNear($target, this.currentPosition);
             } else {
                 // Target not found, center it
                 this.positionCenter();
@@ -66,8 +86,41 @@ class TutorialTooltip {
         } else {
             this.positionCenter();
         }
+    }
 
-        console.log('[TutorialTooltip] Shown', { title, targetSelector, position });
+    /**
+     * Setup MutationObserver to reposition tooltip when DOM changes
+     */
+    setupRepositionObserver() {
+        // Disconnect previous observer if exists
+        if (this.repositionObserver) {
+            this.repositionObserver.disconnect();
+        }
+
+        // Only observe if we have a target to follow
+        if (!this.currentTargetSelector) {
+            return;
+        }
+
+        // Watch for DOM changes that might affect tooltip position
+        this.repositionObserver = new MutationObserver(() => {
+            // Use requestAnimationFrame to debounce rapid changes
+            if (!this._repositionPending) {
+                this._repositionPending = true;
+                requestAnimationFrame(() => {
+                    this.repositionTooltip();
+                    this._repositionPending = false;
+                });
+            }
+        });
+
+        // Observe body for any changes (panels opening, cards appearing, etc.)
+        this.repositionObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
     }
 
     /**
@@ -117,6 +170,16 @@ class TutorialTooltip {
             clearTimeout(this.errorTimeout);
             this.errorTimeout = null;
         }
+
+        // Disconnect reposition observer
+        if (this.repositionObserver) {
+            this.repositionObserver.disconnect();
+            this.repositionObserver = null;
+        }
+
+        // Clear target tracking
+        this.currentTargetSelector = null;
+        this.currentPosition = 'center';
     }
 
     /**
@@ -151,7 +214,8 @@ class TutorialTooltip {
 
             case 'right':
                 top = targetOffset.top + (targetHeight / 2) - (tooltipHeight / 2);
-                left = targetOffset.left + targetWidth + 20;
+                // Add extra spacing for map tiles to avoid covering them
+                left = targetOffset.left + targetWidth + 80;
                 break;
 
             default: // center

@@ -20,6 +20,14 @@
         window.tutorialTooltip = new TutorialTooltip();
         window.tutorialHighlighter = new TutorialHighlighter();
 
+        // Create step navigator if available (optional debug feature)
+        if (typeof TutorialStepNavigator !== 'undefined') {
+            window.tutorialStepNavigator = new TutorialStepNavigator(window.tutorialUI);
+            window.tutorialUI.navigator = window.tutorialStepNavigator;
+        } else {
+            console.log('[Tutorial] Step navigator not available (optional feature)');
+        }
+
         // Wire up components
         window.tutorialUI.tooltip = window.tutorialTooltip;
         window.tutorialUI.highlighter = window.tutorialHighlighter;

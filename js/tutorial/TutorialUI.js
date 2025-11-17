@@ -242,6 +242,23 @@ class TutorialUI {
     async renderStep(stepData) {
         console.log('[TutorialUI] Rendering step', stepData);
 
+        // Store stepData for external access (e.g., E2E tests)
+        this.stepData = stepData;
+
+        // Check if this step wants to auto-close the card when rendered
+        if (stepData.config?.auto_close_card) {
+            console.log('[TutorialUI] Auto-closing card for this step...');
+            const closeBtn = document.querySelector('.close-card, #ui-card .close');
+            if (closeBtn) {
+                closeBtn.click();
+                console.log('[TutorialUI] Card closed');
+            } else {
+                $('#ui-card').hide();
+            }
+            // Wait a moment for card to close
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
         // Clear previous highlights
         if (this.highlighter) {
             this.highlighter.clearAll();
@@ -249,6 +266,9 @@ class TutorialUI {
 
         // Clear previous allowed interactions
         $('.tutorial-allowed-element').removeClass('tutorial-allowed-element');
+
+        // Clear previous warning/hint messages from previous step
+        $('.tooltip-blocked-message').remove();
 
         // Clear previous observers
         this.cleanupObservers();
@@ -274,6 +294,14 @@ class TutorialUI {
         // Setup UI observers for validation (ui_interaction steps)
         this.setupUIObservers(stepData);
 
+        // Check if step has a show_delay (for steps that need UI to settle first)
+        const showDelay = stepData.config?.show_delay || 0;
+
+        if (showDelay > 0) {
+            console.log(`[TutorialUI] Delaying tooltip/highlight by ${showDelay}ms`);
+            await new Promise(resolve => setTimeout(resolve, showDelay));
+        }
+
         // Show step tooltip (now after panel is ready)
         this.showStepTooltip(stepData);
 
@@ -282,6 +310,30 @@ class TutorialUI {
             this.highlighter.highlight(stepData.target_selector, {
                 pulsate: stepData.requires_validation
             });
+        }
+
+        // Highlight additional elements (e.g., counter values)
+        if (stepData.config?.additional_highlights && this.highlighter) {
+            const additionalHighlights = stepData.config.additional_highlights;
+            if (Array.isArray(additionalHighlights)) {
+                additionalHighlights.forEach(selector => {
+                    // Don't re-highlight the main target
+                    if (selector !== stepData.target_selector) {
+                        this.highlighter.highlight(selector, { pulsate: false });
+                    }
+                });
+            }
+        }
+
+        // Check for auto-advance flag
+        if (stepData.config?.auto_advance_delay) {
+            const delay = parseInt(stepData.config.auto_advance_delay);
+            console.log(`[TutorialUI] Step will auto-advance in ${delay}ms`);
+
+            setTimeout(() => {
+                console.log('[TutorialUI] Auto-advancing step...');
+                this.next({}, false);
+            }, delay);
         }
 
         // Update progress indicator
@@ -393,6 +445,11 @@ class TutorialUI {
         } else if (mode === 'semi-blocking') {
             // Partial blocking - allow only specific elements
             $overlay.addClass('semi-blocking').show();
+
+            // Make overlay transparent to clicks so they pass through to elements underneath
+            // The event handler in capture phase will still intercept and block non-allowed clicks
+            $overlay.css('pointer-events', 'none');
+
             this.allowSpecificInteractions(stepData.config?.allowed_interactions || []);
             this.setupSemiBlockingEventHandler(stepData);
 

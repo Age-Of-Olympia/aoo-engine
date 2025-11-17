@@ -56,10 +56,74 @@ class TutorialHighlighter {
                 $element: $element
             });
 
-            // Update position on window resize
-            $(window).on('resize.tutorial', () => {
+            // Update position on window resize or scroll
+            $(window).on('resize.tutorial scroll.tutorial', () => {
                 this.positionHighlight($highlight, $element);
             });
+
+            // Update position when #view changes (map updates after movement)
+            const viewObserver = new MutationObserver(() => {
+                this.positionHighlight($highlight, $element);
+            });
+
+            const viewElement = document.getElementById('view');
+            if (viewElement) {
+                viewObserver.observe(viewElement, {
+                    childList: true,
+                    subtree: true
+                });
+                this.highlights[this.highlights.length - 1].viewObserver = viewObserver;
+            }
+
+            // Update position when characteristics panel appears/disappears
+            // This prevents highlights from being offset when the panel loads after highlighting
+            const caracObserver = new MutationObserver(() => {
+                this.positionHighlight($highlight, $element);
+            });
+
+            const caracElement = document.getElementById('load-caracs');
+            if (caracElement) {
+                caracObserver.observe(caracElement, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style'] // Watch for display changes
+                });
+                this.highlights[this.highlights.length - 1].caracObserver = caracObserver;
+            }
+
+            // Also watch for any changes to the body that might affect layout
+            const bodyObserver = new MutationObserver(() => {
+                // Use requestAnimationFrame to debounce rapid changes
+                if (!this._repositionPending) {
+                    this._repositionPending = true;
+                    requestAnimationFrame(() => {
+                        this.positionHighlight($highlight, $element);
+                        this._repositionPending = false;
+                    });
+                }
+            });
+
+            bodyObserver.observe(document.body, {
+                childList: true,
+                subtree: false // Only watch direct children of body
+            });
+            this.highlights[this.highlights.length - 1].bodyObserver = bodyObserver;
+
+            // Watch for DOM changes on the element (e.g., when button expands)
+            const observer = new MutationObserver(() => {
+                this.positionHighlight($highlight, $element);
+            });
+
+            observer.observe(element, {
+                attributes: true,    // Watch for attribute changes (class, style)
+                childList: true,     // Watch for child elements being added/removed
+                subtree: true,       // Watch descendants too
+                characterData: true  // Watch for text changes
+            });
+
+            // Store observer for cleanup
+            this.highlights[this.highlights.length - 1].observer = observer;
 
             // Fade in
             $highlight.fadeIn(200);
@@ -93,12 +157,22 @@ class TutorialHighlighter {
     clearAll() {
         this.highlights.forEach(item => {
             item.$highlight.fadeOut(200, () => item.$highlight.remove());
+
+            // Disconnect MutationObserver if exists
+            if (item.observer) {
+                item.observer.disconnect();
+            }
+
+            // Disconnect viewObserver if exists
+            if (item.viewObserver) {
+                item.viewObserver.disconnect();
+            }
         });
 
         this.highlights = [];
 
-        // Remove resize listener
-        $(window).off('resize.tutorial');
+        // Remove resize and scroll listeners
+        $(window).off('resize.tutorial scroll.tutorial');
 
         console.log('[TutorialHighlighter] Cleared all highlights');
     }
