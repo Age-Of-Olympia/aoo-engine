@@ -80,6 +80,33 @@ class MovementStep extends AbstractStep
 
                 return $isAtPosition;
 
+            case 'adjacent_to_position':
+                // Check that player is adjacent to a specific position (including diagonals)
+                $activePlayerId = TutorialHelper::getActivePlayerId();
+                $player = new Player($activePlayerId);
+                $player->get_data();
+                $player->getCoords();
+
+                $targetX = $this->config['validation_params']['target_x'] ?? null;
+                $targetY = $this->config['validation_params']['target_y'] ?? null;
+
+                if ($targetX === null || $targetY === null) {
+                    error_log("[MovementStep] Adjacent position validation missing target_x or target_y parameters");
+                    return false;
+                }
+
+                $currentX = $player->coords->x ?? null;
+                $currentY = $player->coords->y ?? null;
+
+                // Check if player is adjacent (Chebyshev distance = 1, allows all 8 directions including diagonals)
+                $deltaX = abs($currentX - $targetX);
+                $deltaY = abs($currentY - $targetY);
+                $isAdjacent = ($deltaX <= 1 && $deltaY <= 1 && ($deltaX + $deltaY > 0));
+
+                error_log("[MovementStep] Adjacent validation: player at ({$currentX},{$currentY}), target ({$targetX},{$targetY}), deltaX={$deltaX}, deltaY={$deltaY}, result: " . ($isAdjacent ? 'TRUE' : 'FALSE'));
+
+                return $isAdjacent;
+
             default:
                 return false;
         }
@@ -111,6 +138,9 @@ class MovementStep extends AbstractStep
                 $requiredX = $this->config['validation_params']['x'] ?? '?';
                 $requiredY = $this->config['validation_params']['y'] ?? '?';
                 return "Déplacez-vous sur la case ({$requiredX},{$requiredY}) marquée en jaune.";
+
+            case 'adjacent_to_position':
+                return $this->config['validation_hint'] ?? "Déplacez-vous sur une case adjacente à l'objectif.";
 
             default:
                 return parent::getValidationHint();

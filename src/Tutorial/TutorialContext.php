@@ -297,6 +297,13 @@ class TutorialContext
         // Check and restore action points
         if (isset($prerequisites['actions'])) {
             $required = (int) $prerequisites['actions'];
+
+            // Ensure player data is loaded
+            if (!$player->data || $player->data === false) {
+                error_log("[TutorialContext] ERROR: Player data not loaded for player {$player->id}");
+                $player->get_data();
+            }
+
             $current = $player->data->a ?? 0;
 
             if ($current < $required) {
@@ -354,6 +361,13 @@ class TutorialContext
         // Restore action points
         if (isset($preparation['restore_actions'])) {
             $amount = (int) $preparation['restore_actions'];
+
+            // Ensure player data is loaded
+            if (!$player->data || $player->data === false) {
+                error_log("[TutorialContext] ERROR: Player data not loaded for player {$player->id}");
+                $player->get_data();
+            }
+
             $player->data->a = $amount;
             error_log("[TutorialContext] Prepared actions for next step: {$amount}");
         }
@@ -386,6 +400,11 @@ class TutorialContext
      */
     public function getCurrentMovement(): int
     {
+        // Ensure player data is loaded
+        if (!$this->player->data || $this->player->data === false) {
+            $this->player->get_data();
+        }
+
         return $this->player->data->mvt ?? 0;
     }
 
@@ -394,6 +413,11 @@ class TutorialContext
      */
     public function getCurrentActions(): int
     {
+        // Ensure player data is loaded
+        if (!$this->player->data || $this->player->data === false) {
+            $this->player->get_data();
+        }
+
         return $this->player->data->a ?? 0;
     }
 
@@ -402,6 +426,11 @@ class TutorialContext
      */
     public function setMovement(int $amount): void
     {
+        // Ensure player data is loaded
+        if (!$this->player->data || $this->player->data === false) {
+            $this->player->get_data();
+        }
+
         $this->player->data->mvt = $amount;
     }
 
@@ -410,6 +439,11 @@ class TutorialContext
      */
     public function setActions(int $amount): void
     {
+        // Ensure player data is loaded
+        if (!$this->player->data || $this->player->data === false) {
+            $this->player->get_data();
+        }
+
         $this->player->data->a = $amount;
     }
 

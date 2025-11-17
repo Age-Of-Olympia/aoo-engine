@@ -39,10 +39,13 @@ class TutorialPlayer
     /**
      * Create a new tutorial character for a tutorial session
      *
+     * Creates an isolated map instance for this tutorial session to prevent
+     * resource/NPC conflicts with other concurrent tutorial players.
+     *
      * @param Connection $conn
      * @param int $realPlayerId Real player account ID
      * @param string $tutorialSessionId Tutorial session UUID
-     * @param int $startingCoordsId Starting position on tutorial map
+     * @param int|null $startingCoordsId Starting position (deprecated - will be auto-generated from instance)
      * @param string|null $race Character race (defaults to real player's race)
      * @return self
      */
@@ -50,10 +53,20 @@ class TutorialPlayer
         Connection $conn,
         int $realPlayerId,
         string $tutorialSessionId,
-        int $startingCoordsId,
+        ?int $startingCoordsId = null,
         ?string $race = null
     ): self {
-        // Get real player's race if not specified
+        // Step 1: Create isolated map instance for this tutorial session
+        error_log("[TutorialPlayer] Creating map instance for session {$tutorialSessionId}");
+        $mapInstance = new TutorialMapInstance($conn);
+        $instanceData = $mapInstance->createInstance($tutorialSessionId);
+
+        $instancePlanName = $instanceData['plan_name'];
+        $startingCoordsId = $instanceData['starting_coords_id'];
+
+        error_log("[TutorialPlayer] Map instance created: {$instancePlanName}, starting at coords_id {$startingCoordsId}");
+
+        // Step 2: Get real player's race if not specified
         if ($race === null) {
             $stmt = $conn->prepare('SELECT race, name FROM players WHERE id = ?');
             $stmt->bindValue(1, $realPlayerId);
@@ -66,7 +79,7 @@ class TutorialPlayer
         // Create tutorial character name
         $name = "Apprenti_" . substr($tutorialSessionId, 0, 8); // Unique name for tutorial character
 
-        // First, create an actual player entry in the players table
+        // Step 3: Create actual player entry in the players table
         // Tutorial characters use regular positive IDs (negative IDs are for NPCs)
         // They're distinguished by being tracked in the tutorial_players table
 
@@ -287,9 +300,22 @@ class TutorialPlayer
         // Hard delete from actual players table to clean up
         if ($this->playerId || $this->actualPlayerId) {
             $playerIdToDelete = $this->playerId ?? $this->actualPlayerId;
-            $this->conn->delete('players', [
-                'id' => $playerIdToDelete
-            ]);
+
+            // Delete foreign key references FIRST to avoid constraint errors
+            // Delete logs where this player is the subject or target
+            $this->conn->delete('players_logs', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_logs', ['target_id' => $playerIdToDelete]);
+
+            // Delete other related records
+            $this->conn->delete('players_actions', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_items', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_effects', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_options', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_connections', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_bonus', ['player_id' => $playerIdToDelete]);
+
+            // Now safe to delete the player record
+            $this->conn->delete('players', ['id' => $playerIdToDelete]);
         }
     }
 

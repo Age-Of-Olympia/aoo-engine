@@ -22,12 +22,14 @@ class TutorialManager
     private string $sessionId;
     private Db $db;
     private ?TutorialPlayer $tutorialPlayer = null;
+    private TutorialStepRepository $stepRepository;
 
     public function __construct(Player $player, string $mode = 'first_time')
     {
         $this->context = new TutorialContext($player, $mode);
         $this->sessionId = $this->generateSessionId();
         $this->db = new Db();
+        $this->stepRepository = new TutorialStepRepository();
     }
 
     /**
@@ -42,12 +44,16 @@ class TutorialManager
         $mode = $this->context->getMode();
 
         // Get total steps for this version
-        $totalSteps = $this->getTotalSteps($version);
+        $totalSteps = $this->stepRepository->getTotalSteps($version);
 
         // Create tutorial character (temporary character for this session)
         $em = EntityManagerFactory::getEntityManager();
         $conn = $em->getConnection();
         $startingCoordsId = $this->getOrCreateTutorialStartCoords($conn);
+
+        // Clean up any previous active tutorial players for this real player
+        // This prevents accumulation of orphaned tutorial characters
+        $this->cleanupPreviousTutorialPlayers($conn, $player->id);
 
         $this->tutorialPlayer = TutorialPlayer::create(
             $conn,
@@ -57,13 +63,11 @@ class TutorialManager
             $player->data->race ?? null
         );
 
+        // Spawn tutorial dummy enemy for combat training
+        $this->spawnTutorialEnemy($conn, $this->sessionId);
+
         // Get first step_id for this version (lowest step_number)
-        $firstStepSql = 'SELECT step_id FROM tutorial_configurations
-                         WHERE version = ? AND is_active = 1
-                         ORDER BY step_number ASC LIMIT 1';
-        $firstStepResult = $this->db->exe($firstStepSql, [$version]);
-        $firstStepRow = $firstStepResult->fetch_assoc();
-        $firstStepId = $firstStepRow['step_id'] ?? 'gaia_welcome';  // Fallback
+        $firstStepId = $this->stepRepository->getFirstStepId($version) ?? 'gaia_welcome';
 
         // Create progress record in database
         $sql = 'INSERT INTO tutorial_progress
@@ -191,25 +195,7 @@ class TutorialManager
      */
     public function getStepData(int $stepNumber, string $version = '1.0.0'): ?array
     {
-        $sql = 'SELECT * FROM tutorial_configurations
-                WHERE version = ? AND step_number = ? AND is_active = 1';
-
-        $result = $this->db->exe($sql, [$version, $stepNumber]);
-
-        if ($result && $result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $config = json_decode($row['config'], true);
-
-            return [
-                'step_number' => (int)$row['step_number'],
-                'step_type' => $row['step_type'],
-                'title' => $row['title'],
-                'config' => $config,
-                'xp_reward' => (int)$row['xp_reward']
-            ];
-        }
-
-        return null;
+        return $this->stepRepository->getStepByNumber((float)$stepNumber, $version);
     }
 
     /**
@@ -239,27 +225,7 @@ class TutorialManager
      */
     public function getStepDataById(string $stepId, string $version = '1.0.0'): ?array
     {
-        $sql = 'SELECT * FROM tutorial_configurations
-                WHERE version = ? AND step_id = ? AND is_active = 1';
-
-        $result = $this->db->exe($sql, [$version, $stepId]);
-
-        if ($result && $result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $config = json_decode($row['config'], true);
-
-            return [
-                'step_id' => $row['step_id'],
-                'next_step' => $row['next_step'],
-                'step_number' => (float)$row['step_number'],
-                'step_type' => $row['step_type'],
-                'title' => $row['title'],
-                'config' => $config,
-                'xp_reward' => (int)$row['xp_reward']
-            ];
-        }
-
-        return null;
+        return $this->stepRepository->getStepById($stepId, $version);
     }
 
     /**
@@ -331,21 +297,7 @@ class TutorialManager
      */
     private function calculateStepPosition(string $stepId, string $version = '1.0.0'): int
     {
-        // Count how many steps come before this one (ordered by step_number)
-        $sql = 'SELECT COUNT(*) as position
-                FROM tutorial_configurations
-                WHERE version = ?
-                AND is_active = 1
-                AND step_number <= (
-                    SELECT step_number
-                    FROM tutorial_configurations
-                    WHERE version = ? AND step_id = ?
-                )';
-
-        $result = $this->db->exe($sql, [$version, $version, $stepId]);
-        $row = $result->fetch_assoc();
-
-        return (int)($row['position'] ?? 1);
+        return $this->stepRepository->calculateStepPosition($stepId, $version);
     }
 
     /**
@@ -494,6 +446,22 @@ class TutorialManager
      */
     private function completeTutorial(): array
     {
+        // Get Doctrine connection for cleanup operations
+        $em = EntityManagerFactory::getEntityManager();
+        $conn = $em->getConnection();
+
+        // Clean up tutorial map instance
+        try {
+            $mapInstance = new TutorialMapInstance($conn);
+            $mapInstance->deleteInstance($this->sessionId);
+            error_log("[TutorialManager] Deleted tutorial map instance for session {$this->sessionId}");
+        } catch (\Exception $e) {
+            error_log("[TutorialManager] Error deleting map instance: " . $e->getMessage());
+        }
+
+        // Clean up tutorial enemy
+        $this->removeTutorialEnemy($conn, $this->sessionId);
+
         // Transfer tutorial rewards to real player
         if ($this->tutorialPlayer) {
             $this->tutorialPlayer->transferRewardsToRealPlayer();
@@ -562,16 +530,305 @@ class TutorialManager
      */
     private function getTotalSteps(string $version): int
     {
-        $sql = 'SELECT COUNT(*) as total FROM tutorial_configurations
-                WHERE version = ? AND is_active = 1';
-        $result = $this->db->exe($sql, [$version]);
+        return $this->stepRepository->getTotalSteps($version);
+    }
 
-        if ($result) {
-            $row = $result->fetch_assoc();
-            return (int)$row['total'];
+    /**
+     * Clean up previous tutorial players for this real player
+     *
+     * Deactivates and deletes any existing tutorial players to prevent accumulation
+     * of orphaned tutorial characters in the database.
+     *
+     * @param \Doctrine\DBAL\Connection $conn
+     * @param int $realPlayerId
+     */
+    private function cleanupPreviousTutorialPlayers($conn, int $realPlayerId): void
+    {
+        try {
+            // Find all active tutorial players for this real player
+            $sql = 'SELECT id, player_id, tutorial_session_id FROM tutorial_players
+                    WHERE real_player_id = ? AND is_active = 1 AND deleted_at IS NULL';
+            $stmt = $conn->prepare($sql);
+            $stmt->bindValue(1, $realPlayerId);
+            $result = $stmt->executeQuery();
+
+            $cleanedCount = 0;
+            while ($row = $result->fetchAssociative()) {
+                $tutorialPlayerId = $row['id'];
+                $actualPlayerId = $row['player_id'];
+                $sessionId = $row['tutorial_session_id'];
+
+                // Clean up associated tutorial enemy for this session
+                if ($sessionId) {
+                    $this->removeTutorialEnemy($conn, $sessionId);
+                }
+
+                // Soft delete in tutorial_players table
+                $conn->update('tutorial_players', [
+                    'is_active' => 0,
+                    'deleted_at' => date('Y-m-d H:i:s')
+                ], [
+                    'id' => $tutorialPlayerId
+                ]);
+
+                // Hard delete from players table and related records
+                if ($actualPlayerId) {
+                    // Delete related records first to avoid foreign key constraints
+                    // Tutorial players shouldn't have many records, but logs and actions are common
+                    $conn->delete('players_logs', ['player_id' => $actualPlayerId]);
+                    $conn->delete('players_logs', ['target_id' => $actualPlayerId]);
+                    $conn->delete('players_actions', ['player_id' => $actualPlayerId]);
+                    $conn->delete('players_items', ['player_id' => $actualPlayerId]);
+                    $conn->delete('players_effects', ['player_id' => $actualPlayerId]);
+                    $conn->delete('players_options', ['player_id' => $actualPlayerId]);
+                    $conn->delete('players_connections', ['player_id' => $actualPlayerId]);
+                    $conn->delete('players_bonus', ['player_id' => $actualPlayerId]);
+
+                    // Now safe to delete the player
+                    $conn->delete('players', ['id' => $actualPlayerId]);
+                }
+
+                $cleanedCount++;
+            }
+
+            if ($cleanedCount > 0) {
+                error_log("[TutorialManager] Cleaned up {$cleanedCount} orphaned tutorial player(s) for real player {$realPlayerId}");
+            }
+        } catch (\Exception $e) {
+            // Log but don't block tutorial start
+            error_log("[TutorialManager] Error cleaning up tutorial players: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Spawn tutorial enemy for combat training
+     *
+     * Creates a weak enemy NPC (negative ID) near the tutorial starting position
+     * Each tutorial session gets its own unique enemy instance
+     *
+     * @param mixed $conn Database connection
+     * @param string $sessionId Tutorial session ID to track the enemy
+     */
+    private function spawnTutorialEnemy($conn, string $sessionId): void
+    {
+        try {
+            // Generate unique negative ID for this tutorial enemy
+            // Use -100000 range to avoid conflicts with regular NPCs (-9001 to -3)
+            $enemyId = -100000 - mt_rand(1, 899999); // Range: -100001 to -999999
+
+            // Ensure ID is unique
+            $checkStmt = $conn->prepare("SELECT id FROM players WHERE id = ?");
+            $checkStmt->bindValue(1, $enemyId);
+            $result = $checkStmt->executeQuery();
+
+            // If ID exists (unlikely), try again with current timestamp
+            if ($result->fetchOne()) {
+                $enemyId = -100000 - (int)(microtime(true) * 1000);
+            }
+
+            // Create coordinates for enemy (position 3,0 on instance plan - away from Gaïa at 1,0)
+            // Get instance plan name from tutorial_players table
+            $planStmt = $conn->prepare("
+                SELECT c.plan FROM coords c
+                INNER JOIN tutorial_players tp ON c.id = (
+                    SELECT coords_id FROM players WHERE id = tp.player_id LIMIT 1
+                )
+                WHERE tp.tutorial_session_id = ?
+                LIMIT 1
+            ");
+            $planStmt->bindValue(1, $sessionId);
+            $planResult = $planStmt->executeQuery();
+            $instancePlan = $planResult->fetchOne() ?: 'tutorial';
+
+            $stmt = $conn->prepare("
+                INSERT INTO coords (x, y, z, plan)
+                VALUES (0, -1, 0, ?)
+            ");
+            $stmt->bindValue(1, $instancePlan);
+            $stmt->executeQuery();
+            $enemyCoordsId = $conn->lastInsertId();
+
+            // Create tutorial dummy NPC with explicit negative ID
+            // NPCs (enemies) use negative matricules in this game
+            $stmt = $conn->prepare("
+                INSERT INTO players (id, name, psw, mail, plain_mail, coords_id, race, xp, bonus_points, pi, avatar, portrait, text)
+                VALUES (?, ?, '', 'dummy@tutorial.local', 'dummy@tutorial.local', ?, 'ame', 10, 0, 0, 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'Âme d''entraînement')
+            ");
+            $stmt->bindValue(1, $enemyId);
+            $stmt->bindValue(2, 'Âme d\'entraînement');
+            $stmt->bindValue(3, $enemyCoordsId);
+            $stmt->executeQuery();
+
+            // Track the enemy in tutorial_enemies table for cleanup
+            $stmt = $conn->prepare("
+                INSERT INTO tutorial_enemies (tutorial_session_id, enemy_player_id, enemy_coords_id, created_at)
+                VALUES (?, ?, ?, NOW())
+            ");
+            $stmt->bindValue(1, $sessionId);
+            $stmt->bindValue(2, $enemyId);
+            $stmt->bindValue(3, $enemyCoordsId);
+            $stmt->executeQuery();
+
+            error_log("[TutorialManager] Spawned tutorial enemy NPC (id={$enemyId}) at coords_id={$enemyCoordsId} for session {$sessionId}");
+        } catch (\Exception $e) {
+            error_log("[TutorialManager] Error spawning tutorial enemy: " . $e->getMessage());
+            // Don't block tutorial start if enemy spawn fails
+        }
+    }
+
+    /**
+     * Remove tutorial enemy for a session
+     *
+     * Cleans up the tutorial dummy enemy when tutorial completes or is cancelled
+     *
+     * @param mixed $conn Database connection
+     * @param string $sessionId Tutorial session ID
+     */
+    private function removeTutorialEnemy($conn, string $sessionId): void
+    {
+        try {
+            // Find all enemies for this session
+            $stmt = $conn->prepare("
+                SELECT enemy_player_id, enemy_coords_id
+                FROM tutorial_enemies
+                WHERE tutorial_session_id = ?
+            ");
+            $stmt->bindValue(1, $sessionId);
+            $result = $stmt->executeQuery();
+
+            $cleanedCount = 0;
+            while ($row = $result->fetchAssociative()) {
+                $enemyId = $row['enemy_player_id'];
+                $coordsId = $row['enemy_coords_id'];
+
+                // Delete player and related records
+                if ($enemyId) {
+                    // Delete related records first to avoid foreign key constraints
+                    $conn->delete('players_logs', ['player_id' => $enemyId]);
+                    $conn->delete('players_logs', ['target_id' => $enemyId]);
+                    $conn->delete('players_actions', ['player_id' => $enemyId]);
+                    $conn->delete('players_items', ['player_id' => $enemyId]);
+                    $conn->delete('players_effects', ['player_id' => $enemyId]);
+                    $conn->delete('players_kills', ['player_id' => $enemyId]);
+                    $conn->delete('players_kills', ['target_id' => $enemyId]);
+
+                    // Now safe to delete the enemy NPC
+                    $conn->delete('players', ['id' => $enemyId]);
+                }
+
+                // Delete coordinates
+                if ($coordsId) {
+                    $conn->delete('coords', ['id' => $coordsId]);
+                }
+
+                $cleanedCount++;
+            }
+
+            // Delete tracking records
+            $conn->delete('tutorial_enemies', ['tutorial_session_id' => $sessionId]);
+
+            if ($cleanedCount > 0) {
+                error_log("[TutorialManager] Removed {$cleanedCount} tutorial enemy/enemies for session {$sessionId}");
+            }
+        } catch (\Exception $e) {
+            error_log("[TutorialManager] Error removing tutorial enemy: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Jump to a specific step (for debugging/testing)
+     *
+     * @param string $sessionId Tutorial session ID
+     * @param int $targetStepNumber Step number to jump to
+     * @return bool Success
+     */
+    public function jumpToStep(string $sessionId, int $targetStepNumber): bool
+    {
+        $em = EntityManagerFactory::getEntityManager();
+
+        // Get tutorial progress
+        $progress = $em->getRepository(\App\Entity\TutorialProgress::class)
+            ->findOneBy(['tutorialSessionId' => $sessionId]);
+
+        if (!$progress) {
+            error_log("Tutorial progress not found for session: $sessionId");
+            return false;
         }
 
-        return 0;
+        // Get all steps
+        $steps = $em->getRepository(\App\Entity\TutorialConfiguration::class)
+            ->findBy([], ['stepNumber' => 'ASC']);
+
+        // Find target step
+        $targetStep = null;
+        foreach ($steps as $step) {
+            if ($step->getStepNumber() === $targetStepNumber) {
+                $targetStep = $step;
+                break;
+            }
+        }
+
+        if (!$targetStep) {
+            error_log("Step number $targetStepNumber not found");
+            return false;
+        }
+
+        // Update progress
+        $progress->setCurrentStep($targetStepNumber);
+        $progress->setData(array_merge(
+            json_decode($progress->getData(), true) ?? [],
+            [
+                'jumped_to_step' => $targetStepNumber,
+                'jump_timestamp' => time()
+            ]
+        ));
+
+        $em->flush();
+
+        // Apply any step prerequisites
+        $this->applyStepPrerequisites($progress->getPlayerId(), $targetStep);
+
+        return true;
+    }
+
+    /**
+     * Apply step prerequisites (mvt, pa, auto_restore, etc.)
+     */
+    private function applyStepPrerequisites(int $playerId, $stepConfig): void
+    {
+        $config = json_decode($stepConfig->getConfig(), true);
+        $prerequisites = $config['prerequisites'] ?? null;
+
+        if (!$prerequisites) {
+            return;
+        }
+
+        $player = new Player($playerId);
+
+        // Set MVT limit if specified
+        if (isset($prerequisites['mvt'])) {
+            $_SESSION['tutorial_mvt_limit'] = $prerequisites['mvt'];
+
+            if ($prerequisites['auto_restore'] ?? false) {
+                // Restore MVT to limit
+                $player->putBonus(['mvt' => $prerequisites['mvt']]);
+            }
+        }
+
+        // Set PA limit if specified
+        if (isset($prerequisites['pa'])) {
+            $_SESSION['tutorial_pa_limit'] = $prerequisites['pa'];
+
+            if ($prerequisites['auto_restore'] ?? false) {
+                // Restore PA to limit
+                $player->putBonus(['pa' => $prerequisites['pa']]);
+            }
+        }
+
+        // Set action limit if specified
+        if (isset($prerequisites['action_limit'])) {
+            $_SESSION['tutorial_action_limit'] = $prerequisites['action_limit'];
+        }
     }
 
     /**
