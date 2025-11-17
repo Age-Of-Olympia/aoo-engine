@@ -546,14 +546,11 @@ class TutorialUI {
                             const actionName = $target.data('action') || $target.attr('data-action');
                             if (actionName) {
                                 console.log('[TutorialUI] Action button clicked during tutorial:', actionName);
-                                // Notify tutorial system about the action
-                                // Use a small delay to let the click event complete first
-                                setTimeout(() => {
-                                    this.notifyAction('action_used', {
-                                        action_name: actionName,
-                                        button: $target.text().trim()
-                                    });
-                                }, 50);
+
+                                // Don't notify immediately - wait for action to actually execute
+                                // Actions require 2 clicks: 1st expands button, 2nd executes
+                                // We'll watch for the action result to appear in .card-text
+                                this.watchForActionResult(actionName);
                             }
                         }
                     }
@@ -1153,6 +1150,55 @@ class TutorialUI {
     /**
      * Hide tutorial overlay
      */
+    /**
+     * Watch for action result to appear in DOM (after action executes)
+     */
+    watchForActionResult(actionName) {
+        console.log('[TutorialUI] Watching for action result:', actionName);
+
+        // Check if already watching
+        if (this.actionResultObserver) {
+            console.log('[TutorialUI] Already watching for action result, skipping');
+            return;
+        }
+
+        // Watch for changes in .card-text (where action results appear)
+        const cardText = document.querySelector('.card-text');
+        if (!cardText) {
+            console.warn('[TutorialUI] .card-text not found, cannot watch for action result');
+            return;
+        }
+
+        this.actionResultObserver = new MutationObserver((mutations) => {
+            // Check if action result text appeared (not just "Lancé de dés...")
+            const content = cardText.textContent;
+            if (content && !content.includes('Lancé de dés') && content.trim().length > 10) {
+                console.log('[TutorialUI] Action result detected! Content:', content.substring(0, 50));
+
+                // Disconnect observer
+                if (this.actionResultObserver) {
+                    this.actionResultObserver.disconnect();
+                    this.actionResultObserver = null;
+                }
+
+                // Notify tutorial system
+                this.notifyAction('action_used', {
+                    action_name: actionName,
+                    result_detected: true
+                });
+            }
+        });
+
+        // Observe changes to card-text
+        this.actionResultObserver.observe(cardText, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+
+        console.log('[TutorialUI] Action result observer started');
+    }
+
     hideTutorialOverlay() {
         $('#tutorial-overlay').fadeOut(() => $('#tutorial-overlay').remove());
         $('#tutorial-controls').fadeOut(() => $('#tutorial-controls').remove());
@@ -1161,6 +1207,12 @@ class TutorialUI {
         if (this.eventBlocker) {
             document.removeEventListener('click', this.eventBlocker, true);
             this.eventBlocker = null;
+        }
+
+        // Clean up action result observer
+        if (this.actionResultObserver) {
+            this.actionResultObserver.disconnect();
+            this.actionResultObserver = null;
         }
 
         // Clean up observers
