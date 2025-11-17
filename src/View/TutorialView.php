@@ -31,7 +31,7 @@ class TutorialView
         <!-- Tutorial JavaScript - NEW MODULAR SYSTEM -->
         <script src="js/tutorial/TutorialUI.js?v=20251115m"></script>
         <script src="js/tutorial/TutorialHighlighter.js?v=20251115b"></script>
-        <script src="js/tutorial/TutorialTooltip.js?v=20251115b"></script>
+        <script src="js/tutorial/TutorialTooltip.js?v=20251116c"></script>
         <script src="js/tutorial/TutorialInit.js?v=20251115a"></script>
 <?php
     }
