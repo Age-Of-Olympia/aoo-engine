@@ -121,28 +121,62 @@ $planJson = json()->decode('plans', $player->coords->plan);
 
 
 if($planJson){
+    // Check if player_visibility is disabled (tutorial mode)
+    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
-    $sql = '
-    SELECT
-    p.id AS id,
-    name
-    FROM
-    players AS p
-    INNER JOIN
-    coords AS c
-    ON
-    p.coords_id = c.id
-    WHERE
-    c.x = ?
-    AND
-    c.y = ?
-    AND
-    c.z = ?
-    AND
-    c.plan = ?
-    ';
+    if ($playerVisibilityEnabled) {
+        // Show all players at this location
+        $sql = '
+        SELECT
+        p.id AS id,
+        name
+        FROM
+        players AS p
+        INNER JOIN
+        coords AS c
+        ON
+        p.coords_id = c.id
+        WHERE
+        c.x = ?
+        AND
+        c.y = ?
+        AND
+        c.z = ?
+        AND
+        c.plan = ?
+        ';
 
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+    } else {
+        // Player visibility disabled - only show current player and NPCs
+        $sql = '
+        SELECT
+        p.id AS id,
+        name
+        FROM
+        players AS p
+        INNER JOIN
+        coords AS c
+        ON
+        p.coords_id = c.id
+        WHERE
+        c.x = ?
+        AND
+        c.y = ?
+        AND
+        c.z = ?
+        AND
+        c.plan = ?
+        AND
+        (
+            p.id = ?
+            OR
+            p.id < 0
+        )
+        ';
+
+        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
+    }
 }
 
 elseif(!$planJson){
@@ -291,7 +325,12 @@ if($res->num_rows){
 
         $pnjText = $target->id<0 ? ' - PNJ' : '';
 
-        $dataType = $raceJson->name . $pnjText;
+        // Handle missing race data
+        if (!$raceJson || !is_object($raceJson)) {
+            $dataType = ucfirst($target->data->race ?? 'inconnu') . $pnjText;
+        } else {
+            $dataType = $raceJson->name . $pnjText;
+        }
 
         $text = $target->data->text;
 
@@ -394,10 +433,10 @@ else{
 
                     // Affichage si la ressource est épuisée ou non
                     if($row->damages == -1){
-                        echo '<br /><span style="color:green;"><b>Récoltable.</b></span> <br />';
+                        echo '<br /><span class="resource-status resource-harvestable" style="color:green;"><b>Récoltable.</b></span> <br />';
                     }
                     if($row->damages == -2){
-                        echo '<br /><span style="color:red;"><b>Épuisée.</b></span> <br />';
+                        echo '<br /><span class="resource-status resource-exhausted" style="color:red;"><b>Épuisée.</b></span> <br />';
                     }
 
                     // altar

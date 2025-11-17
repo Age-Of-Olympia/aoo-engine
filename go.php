@@ -65,15 +65,20 @@ $inPlayerSql = '';
 $values = $coordsId;
 
 if($planJson = json()->decode('plans', $player->coords->plan)){
+    // Only block occupied coordinates if player_visibility is not explicitly disabled
+    // This allows tutorial players to move freely without seeing each other
+    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
-    $inPlayerSql = '
-    OR
-    id IN(
-        SELECT coords_id FROM players WHERE coords_id = ?
-        )
-    ';
+    if ($playerVisibilityEnabled) {
+        $inPlayerSql = '
+        OR
+        id IN(
+            SELECT coords_id FROM players WHERE coords_id = ?
+            )
+        ';
 
-    $values = array($coordsId, $coordsId);
+        $values = array($coordsId, $coordsId);
+    }
 }
 
 
@@ -286,18 +291,23 @@ if($res->num_rows){
 
 // Tutorial mode: Check if movements should be consumed for current step
 $consumeMovement = false;
-if ($player->coords->plan === 'tutorial') {
+$isTutorial = (strpos($player->coords->plan, 'tut_') === 0);
+if ($isTutorial) {
     // Check tutorial context to see if movements should be limited
     if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_session_id'])) {
         // Tutorial can disable movement consumption for certain steps (unlimited movement)
         // By default, tutorial does NOT consume movements (legacy behavior)
         // Steps can enable consumption via context_changes['consume_movements'] = true
         $consumeMovement = !empty($_SESSION['tutorial_consume_movements']);
-        error_log("[go.php] Tutorial mode: player={$player->id}, consume_movements=" . ($consumeMovement ? 'true' : 'false'));
+        error_log("[go.php] Tutorial mode: player={$player->id}, plan={$player->coords->plan}, consume_movements=" . ($consumeMovement ? 'true' : 'false'));
     }
 }
 
-if($planJson || $consumeMovement){
+// Consume movement if:
+// - Plan has JSON config (non-tutorial plans with resources) OR
+// - Tutorial explicitly requests movement consumption
+// Note: Tutorial plan JSON existence doesn't trigger consumption (only $consumeMovement flag does)
+if(($planJson && !$isTutorial) || $consumeMovement){
     // cost (neg bonus)
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);

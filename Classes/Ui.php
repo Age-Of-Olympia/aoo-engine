@@ -58,6 +58,7 @@ class Ui{
                 <script src="js/tutorial/TutorialUI.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialTooltip.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialHighlighter.js?v=' . $tutorialVersion . '"></script>
+                <script src="js/tutorial/TutorialGameIntegration.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
         ';
 
