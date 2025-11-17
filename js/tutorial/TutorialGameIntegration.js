@@ -27,16 +27,30 @@
             const $button = $(this);
             const actionName = $button.data('action') || $button.attr('data-action');
 
+            console.log('[TutorialGameIntegration] Button clicked - Element:', this);
+            console.log('[TutorialGameIntegration] Button classes:', this.className);
+            console.log('[TutorialGameIntegration] data-action attr:', $button.attr('data-action'));
+            console.log('[TutorialGameIntegration] .data("action"):', $button.data('action'));
+            console.log('[TutorialGameIntegration] Final actionName:', actionName);
+
             if (actionName) {
                 console.log('[TutorialGameIntegration] Action button clicked:', actionName);
 
                 // Notify tutorial system
                 if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
+                    console.log('[TutorialGameIntegration] Calling notifyAction with:', {
+                        action_name: actionName,
+                        button: $button.text().trim()
+                    });
                     window.tutorialUI.notifyAction('action_used', {
                         action_name: actionName,
                         button: $button.text().trim()
                     });
+                } else {
+                    console.warn('[TutorialGameIntegration] tutorialUI.notifyAction not available!');
                 }
+            } else {
+                console.warn('[TutorialGameIntegration] No actionName found for button');
             }
         });
 
@@ -109,11 +123,28 @@
         console.log('[TutorialGameIntegration] Integration complete');
     }
 
-    // Initialize when document is ready
+    // Initialize when document is ready AND when tutorialUI becomes available
+    let initAttempts = 0;
+    const maxAttempts = 50; // Try for up to 5 seconds (50 * 100ms)
+
+    function checkAndInit() {
+        if (window.tutorialUI) {
+            // TutorialUI exists, initialize integration
+            initTutorialGameIntegration();
+        } else if (initAttempts < maxAttempts) {
+            // TutorialUI not ready yet, check again soon
+            initAttempts++;
+            setTimeout(checkAndInit, 100);
+        } else {
+            // Give up after max attempts
+            console.log('[TutorialGameIntegration] TutorialUI not available after 5 seconds, skipping integration');
+        }
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTutorialGameIntegration);
+        document.addEventListener('DOMContentLoaded', checkAndInit);
     } else {
-        initTutorialGameIntegration();
+        checkAndInit();
     }
 
     // Also expose for manual initialization

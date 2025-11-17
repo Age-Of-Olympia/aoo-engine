@@ -44,6 +44,12 @@ class ActionStep extends AbstractStep
                        ?? $this->config['action_name']
                        ?? null;
 
+        // DEBUG: Log what we're looking for and what we received
+        error_log("[ActionStep] DEBUG validateActionUsed:");
+        error_log("  Required action: " . ($requiredAction ?? 'NULL'));
+        error_log("  Validation data received: " . json_encode($data));
+        error_log("  Config validation_params: " . json_encode($this->config['validation_params'] ?? []));
+
         if (!$requiredAction) {
             // No specific action required
             return true;
@@ -51,6 +57,7 @@ class ActionStep extends AbstractStep
 
         // Check if the action_name from validation data matches
         $usedAction = $data['action_name'] ?? null;
+        error_log("  Used action from data: " . ($usedAction ?? 'NULL'));
 
         if ($usedAction === $requiredAction) {
             return true;
