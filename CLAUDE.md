@@ -13,7 +13,10 @@ The project runs in a **VSCode Dev Container** with Docker. Three containers are
 - **mariadb-aoo4**: MariaDB database (port 3306)
 - **phpmyadmin**: Database management interface (port 8081)
 
-The webserver is accessible at `http://localhost:9000`.
+**IMPORTANT - Port Configuration:**
+- **From host machine**: `http://localhost:9000` (mapped to container port 80)
+- **From inside devcontainer**: `http://localhost` or `http://localhost:80` (direct access to Apache)
+- When running scripts/tests inside the container, always use `http://localhost` (port 80)
 
 ### Starting the Server
 
