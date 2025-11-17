@@ -981,10 +981,10 @@ class TutorialUI {
                     let retries = 0;
                     const maxRetries = 50; // Max 5 seconds (50 * 100ms)
 
-                    const checkPanelVisible = () => {
+                    const checkPanelVisible = async () => {
                         if ($('#load-caracs').is(':visible')) {
                             console.log('[TutorialUI] Panel now visible, refreshing...');
-                            this.refreshCaracsPanel();
+                            await this.refreshCaracsPanel(); // Wait for panel to be fully refreshed
                             resolve(); // Panel ready
                         } else if (retries < maxRetries) {
                             // Panel not visible yet, check again
@@ -1001,8 +1001,7 @@ class TutorialUI {
                 });
             } else {
                 // Panel already open, just refresh to show current values
-                this.refreshCaracsPanel();
-                return Promise.resolve();
+                return this.refreshCaracsPanel(); // Return the promise
             }
         }
 
@@ -1111,17 +1110,24 @@ class TutorialUI {
         // Only refresh if panel is visible
         if ($('#load-caracs').is(':visible')) {
             console.log('[TutorialUI] Refreshing characteristics panel...');
-            $.ajax({
-                type: "POST",
-                url: "load_caracs.php",
-                success: function(data) {
-                    $("#load-caracs").html(data);
-                    console.log('[TutorialUI] Characteristics panel refreshed');
-                },
-                error: function() {
-                    console.error('[TutorialUI] Failed to refresh characteristics panel');
-                }
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "POST",
+                    url: "load_caracs.php",
+                    success: function(data) {
+                        $("#load-caracs").html(data);
+                        console.log('[TutorialUI] Characteristics panel refreshed');
+                        // Wait a bit more for DOM to settle and elements to be fully positioned
+                        setTimeout(() => resolve(), 100);
+                    },
+                    error: function() {
+                        console.error('[TutorialUI] Failed to refresh characteristics panel');
+                        reject();
+                    }
+                });
             });
+        } else {
+            return Promise.resolve();
         }
     }
 
