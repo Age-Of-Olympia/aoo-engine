@@ -1172,8 +1172,12 @@ class TutorialUI {
         this.actionResultObserver = new MutationObserver((mutations) => {
             // Check if action result text appeared (not just "Lancé de dés...")
             const content = cardText.textContent;
+            console.log('[TutorialUI] Card text changed. Content:', content.substring(0, 100));
+            console.log('[TutorialUI] Contains dice?', content.includes('Lancé de dés'));
+            console.log('[TutorialUI] Content length:', content.trim().length);
+
             if (content && !content.includes('Lancé de dés') && content.trim().length > 10) {
-                console.log('[TutorialUI] Action result detected! Content:', content.substring(0, 50));
+                console.log('[TutorialUI] ✅ Action result detected! Notifying with actionName:', actionName);
 
                 // Disconnect observer
                 if (this.actionResultObserver) {
@@ -1196,7 +1200,7 @@ class TutorialUI {
             characterData: true
         });
 
-        console.log('[TutorialUI] Action result observer started');
+        console.log('[TutorialUI] Action result observer started for:', actionName);
     }
 
     hideTutorialOverlay() {
