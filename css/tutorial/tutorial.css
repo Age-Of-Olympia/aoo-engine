@@ -102,9 +102,17 @@
     text-align: center;
 }
 
+/* Tutorial Button Container */
+.tutorial-controls-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
 /* Tutorial Buttons */
 .btn-tutorial-primary,
-.btn-tutorial-secondary {
+.btn-tutorial-secondary,
+.btn-tutorial-danger {
     padding: 8px 16px;
     border-radius: 5px;
     border: none;
@@ -112,6 +120,7 @@
     font-size: 14px;
     font-weight: bold;
     transition: all 0.2s;
+    flex: 1; /* Equal width in container */
 }
 
 .btn-tutorial-primary {
@@ -135,13 +144,24 @@
 .btn-tutorial-secondary {
     background: linear-gradient(135deg, #614E3F, #4A3829);
     color: #E8E4D9;
-    width: 100%;
     border: 1px solid #8B7355;
 }
 
 .btn-tutorial-secondary:hover {
     background: linear-gradient(135deg, #4A3829, #3A2819);
     color: white;
+}
+
+.btn-tutorial-danger {
+    background: linear-gradient(135deg, #B71C1C, #D32F2F);
+    color: white;
+    border: 1px solid #8B1515;
+}
+
+.btn-tutorial-danger:hover {
+    background: linear-gradient(135deg, #A01818, #B71C1C);
+    transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(211, 47, 47, 0.4);
 }
 
 /* Tooltip Styles */

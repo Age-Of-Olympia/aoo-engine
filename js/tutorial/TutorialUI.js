@@ -191,8 +191,11 @@ class TutorialUI {
             if (response.success) {
                 if (response.completed) {
                     // Tutorial complete!
+                    console.log('[TutorialUI] ✅ TUTORIAL COMPLETED! Response:', response);
                     if (!skipUIUpdate) {
                         this.onTutorialComplete(response);
+                    } else {
+                        console.warn('[TutorialUI] Skipping completion UI update (skipUIUpdate=true)');
                     }
                 } else {
                     // Update state
@@ -259,9 +262,9 @@ class TutorialUI {
             await new Promise(resolve => setTimeout(resolve, 300));
         }
 
-        // Clear previous highlights
+        // Clear previous highlights (wait for fade animation to complete)
         if (this.highlighter) {
-            this.highlighter.clearAll();
+            await this.highlighter.clearAll();
         }
 
         // Clear previous allowed interactions
@@ -307,6 +310,7 @@ class TutorialUI {
 
         // Highlight target element if specified (now after panel is ready)
         if (stepData.target_selector && this.highlighter) {
+            console.log('[TutorialUI] Creating highlight for step:', stepData.step_id, 'selector:', stepData.target_selector);
             this.highlighter.highlight(stepData.target_selector, {
                 pulsate: stepData.requires_validation
             });
@@ -316,9 +320,11 @@ class TutorialUI {
         if (stepData.config?.additional_highlights && this.highlighter) {
             const additionalHighlights = stepData.config.additional_highlights;
             if (Array.isArray(additionalHighlights)) {
+                console.log('[TutorialUI] Creating additional highlights for step:', stepData.step_id, 'count:', additionalHighlights.length);
                 additionalHighlights.forEach(selector => {
                     // Don't re-highlight the main target
                     if (selector !== stepData.target_selector) {
+                        console.log('[TutorialUI] Additional highlight:', selector);
                         this.highlighter.highlight(selector, { pulsate: false });
                     }
                 });
@@ -353,9 +359,17 @@ class TutorialUI {
         const text = stepData.text || '';
         const targetSelector = stepData.target_selector;
         const position = stepData.tooltip_position || 'center';
+        // Convert to boolean properly: 1/true = true, 0/false/null/undefined = false
+        const requiresValidation = Boolean(stepData.requires_validation);
+
+        console.log('[TutorialUI] showStepTooltip', {
+            step_id: stepData.step_id,
+            requires_validation_raw: stepData.requires_validation,
+            requiresValidation: requiresValidation
+        });
 
         if (this.tooltip) {
-            this.tooltip.show(title, text, targetSelector, position);
+            this.tooltip.show(title, text, targetSelector, position, requiresValidation);
         } else {
             // Fallback: simple display
             console.log('[TutorialUI] Tooltip not initialized, showing alert');
@@ -398,13 +412,24 @@ class TutorialUI {
                     </div>
                     <div class="xp-text">Étape ${this.currentStepPosition}/${this.totalSteps} • XP gagné: ${this.xpEarned}</div>
                 </div>
-                <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
+                <div class="tutorial-controls-buttons">
+                    <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
+                    <button id="tutorial-cancel" class="btn-tutorial-danger">❌ Quitter</button>
+                </div>
             </div>
         `);
         $('body').append($controls);
 
         // Bind skip button
         $('#tutorial-skip').on('click', () => this.skip());
+
+        // Bind cancel button - always allow exit to main character
+        $('#tutorial-cancel').on('click', () => {
+            console.log('[TutorialUI] Cancel button clicked');
+            if (confirm('Voulez-vous vraiment quitter le tutoriel? Vous pourrez le reprendre plus tard.')) {
+                this.cancel();
+            }
+        });
 
         console.log('[TutorialUI] Overlay shown');
     }
@@ -1294,7 +1319,13 @@ class TutorialUI {
      * Tutorial complete
      */
     onTutorialComplete(response) {
-        console.log('[TutorialUI] Tutorial complete!', response);
+        console.log('[TutorialUI] ========================================');
+        console.log('[TutorialUI] 🎉 onTutorialComplete() called');
+        console.log('[TutorialUI] Response:', JSON.stringify(response, null, 2));
+        console.log('[TutorialUI] ========================================');
+
+        // Remove any existing modal first
+        $('#tutorial-complete-modal').remove();
 
         // Show completion celebration
         const $modal = $(`
