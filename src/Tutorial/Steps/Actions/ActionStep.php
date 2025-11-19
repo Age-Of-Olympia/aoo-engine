@@ -19,11 +19,21 @@ class ActionStep extends AbstractStep
      */
     public function validate(array $data): bool
     {
+        // Write debug to a file we can access
+        $debug = "[ActionStep] validate() called for step: " . ($this->stepId ?? 'unknown') . "\n";
+        $debug .= "[ActionStep] This class: " . get_class($this) . "\n";
+        $debug .= "[ActionStep] Data received: " . json_encode($data) . "\n";
+
         $validationType = $this->config['validation_type'] ?? 'action_used';
+        $debug .= "[ActionStep] validation_type: " . $validationType . "\n";
+
+        file_put_contents('/var/www/html/tmp/action_debug.log', $debug, FILE_APPEND);
 
         switch ($validationType) {
             case 'action_used':
-                return $this->validateActionUsed($data);
+                $result = $this->validateActionUsed($data);
+                file_put_contents('/var/www/html/tmp/action_debug.log', "[ActionStep] validateActionUsed returned: " . ($result ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
+                return $result;
 
             case 'action_available':
                 return $this->validateActionAvailable($data);
@@ -44,15 +54,27 @@ class ActionStep extends AbstractStep
                        ?? $this->config['action_name']
                        ?? null;
 
+        // TEMPORARY DEBUG LOGGING
+        $debug = "[ActionStep] validateActionUsed called\n";
+        $debug .= "[ActionStep] Step ID: " . ($this->stepId ?? 'unknown') . "\n";
+        $debug .= "[ActionStep] Required action: " . json_encode($requiredAction) . "\n";
+        $debug .= "[ActionStep] Received data: " . json_encode($data) . "\n";
+        $debug .= "[ActionStep] validation_params: " . json_encode($this->config['validation_params'] ?? []) . "\n";
+        file_put_contents('/var/www/html/tmp/action_debug.log', $debug, FILE_APPEND);
+
         if (!$requiredAction) {
+            error_log("[ActionStep] No required action, returning true");
             // No specific action required
             return true;
         }
 
         // Check if the action_name from validation data matches
         $usedAction = $data['action_name'] ?? null;
+        file_put_contents('/var/www/html/tmp/action_debug.log', "[ActionStep] Used action: " . json_encode($usedAction) . "\n", FILE_APPEND);
+        file_put_contents('/var/www/html/tmp/action_debug.log', "[ActionStep] Comparing: " . json_encode($usedAction) . " === " . json_encode($requiredAction) . "\n", FILE_APPEND);
 
         if ($usedAction === $requiredAction) {
+            file_put_contents('/var/www/html/tmp/action_debug.log', "[ActionStep] Exact match! Returning true\n", FILE_APPEND);
             return true;
         }
 
