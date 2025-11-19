@@ -283,12 +283,12 @@ define('WALLS_PV', array(
     'barricade'=>40,
 
     //coffres
-    'coffre_metal'=>100,
-    'coffre_bois'=>30,
-    'coffre_bois_petrifie'=>40,
-    'coffre_metal_broken'=>100,
-    'coffre_bois_broken'=>30,
-    'coffre_bois_petrifie_broken'=>40,
+    'coffre_metal'=>1,
+    'coffre_bois'=>1,
+    'coffre_bois_petrifie'=>1,
+    'coffre_metal_broken'=>1,
+    'coffre_bois_broken'=>1,
+    'coffre_bois_petrifie_broken'=>1,
 
     'pierre_precieuse'=>500,
 
