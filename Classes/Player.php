@@ -36,6 +36,80 @@ class Player implements ActorInterface {
         return $this->id;
     }
 
+    /**
+     * Check if this is a real player (not tutorial, not NPC)
+     * Uses player_type discriminator column
+     */
+    public function isRealPlayer(): bool {
+        // NPCs always have negative IDs
+        if ($this->id < 0) {
+            return false;
+        }
+
+        // Load player data if not already loaded
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        // Check player_type discriminator (defaults to 'real' if not set)
+        return ($this->data->player_type ?? 'real') === 'real';
+    }
+
+    /**
+     * Check if this is a tutorial player (temporary character)
+     */
+    public function isTutorialPlayer(): bool {
+        // Tutorial players have positive IDs but player_type='tutorial'
+        if ($this->id < 0) {
+            return false;
+        }
+
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        return ($this->data->player_type ?? 'real') === 'tutorial';
+    }
+
+    /**
+     * Check if this is an NPC (non-player character)
+     */
+    public function isNPC(): bool {
+        // NPCs traditionally have negative IDs
+        if ($this->id < 0) {
+            return true;
+        }
+
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        return ($this->data->player_type ?? 'real') === 'npc';
+    }
+
+    /**
+     * Check if this player should appear in public lists (rankings, leaderboards)
+     * Only real players appear in public lists
+     */
+    public function isPubliclyVisible(): bool {
+        return $this->isRealPlayer();
+    }
+
+    /**
+     * Get player type ('real', 'tutorial', 'npc')
+     */
+    public function getPlayerType(): string {
+        if ($this->id < 0) {
+            return 'npc';
+        }
+
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        return $this->data->player_type ?? 'real';
+    }
+
 
     public function get_row(){
 
@@ -2117,8 +2191,10 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
+        // Filter by player_type='real' to prevent looking up tutorial players or NPCs
+        // Used in exchanges, missives, and console commands
         $sql = '
-        SELECT id FROM players WHERE name = ?
+        SELECT id FROM players WHERE name = ? AND player_type = "real"
         ';
 
         $res = $db->exe($sql, $name);
@@ -2185,7 +2261,9 @@ class Player implements ActorInterface {
     public static function refresh_list(){
 
 
-        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players ORDER BY name';
+        // CRITICAL: Filter by player_type to exclude tutorial players and NPCs from public lists
+        // Only real players (player_type='real') should appear in rankings and leaderboards
+        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players WHERE player_type = "real" ORDER BY name';
 
         $db = new Db();
 

@@ -696,14 +696,15 @@ class ViewService {
     
         $sql = "
             SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime
-            FROM players p 
+            FROM players p
             JOIN coords c ON c.id = p.coords_id
             LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
-            WHERE c.x IS NOT NULL 
+            WHERE c.x IS NOT NULL
                 AND c.y IS NOT NULL
                 AND c.plan = '" . $this->currentPlan . "'
                 AND p.id != " . $this->playerId . "
                 AND po.player_id IS NULL
+                AND p.player_type = 'real'
                 $zCondition
             ";
             

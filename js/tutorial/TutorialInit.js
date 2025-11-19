@@ -257,5 +257,107 @@
         }
     }
 
+    /**
+     * Check if logged in as tutorial character and show emergency exit button
+     */
+    async function checkIfTutorialCharacter() {
+        try {
+            const response = await fetch('/api/tutorial/check_tutorial_character.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+
+            if (data.is_tutorial_character) {
+                console.log('[Tutorial] Detected tutorial character - showing emergency exit button');
+                showEmergencyExitButton(data.real_player_name);
+            }
+        } catch (error) {
+            console.error('[Tutorial] Failed to check if tutorial character:', error);
+        }
+    }
+
+    /**
+     * Show emergency exit button for stuck tutorial characters
+     */
+    function showEmergencyExitButton(realPlayerName) {
+        // Don't show if button already exists
+        if (document.getElementById('tutorial-emergency-exit')) {
+            return;
+        }
+
+        const $exitButton = $(`
+            <div id="tutorial-emergency-exit" style="
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #B71C1C, #D32F2F);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                border: 2px solid #8B1515;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+                z-index: 10000;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.3s;
+            ">
+                <div style="font-size: 14px; margin-bottom: 5px;">🚨 Mode Tutoriel Actif</div>
+                <div style="font-size: 12px; opacity: 0.9; margin-bottom: 10px;">
+                    Retourner à ${realPlayerName || 'votre personnage principal'}
+                </div>
+                <button id="tutorial-emergency-exit-btn" style="
+                    background: white;
+                    color: #B71C1C;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    width: 100%;
+                    transition: all 0.2s;
+                ">
+                    ← Quitter le Tutoriel
+                </button>
+            </div>
+        `);
+
+        $('body').append($exitButton);
+
+        // Add hover effect
+        $('#tutorial-emergency-exit-btn').hover(
+            function() { $(this).css('background', '#f5f5f5'); },
+            function() { $(this).css('background', 'white'); }
+        );
+
+        // Bind click handler
+        $('#tutorial-emergency-exit-btn').on('click', async function() {
+            if (confirm('Voulez-vous quitter le mode tutoriel et retourner à votre personnage principal?')) {
+                try {
+                    const response = await fetch('/api/tutorial/exit_tutorial_mode.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        console.log('[Tutorial] Successfully exited tutorial mode');
+                        window.location.href = 'index.php';
+                    } else {
+                        alert('Erreur: ' + (data.error || 'Impossible de quitter le tutoriel'));
+                    }
+                } catch (error) {
+                    console.error('[Tutorial] Exit error:', error);
+                    alert('Erreur lors de la sortie du tutoriel');
+                }
+            }
+        });
+    }
+
+    // Check on page load
+    $(document).ready(function() {
+        setTimeout(checkIfTutorialCharacter, 1000);
+    });
+
     console.log('[Tutorial] Init script loaded');
 })();

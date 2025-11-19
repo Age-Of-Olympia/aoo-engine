@@ -346,6 +346,9 @@ class TutorialManager
      */
     public function advanceStep(array $validationData = []): array
     {
+        error_log("[TutorialManager] advanceStep() called with validationData: " . json_encode($validationData));
+        error_log("[TutorialManager] Stack trace: " . json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5)));
+
         // Get current progress
         $sql = 'SELECT * FROM tutorial_progress WHERE tutorial_session_id = ?';
         $result = $this->db->exe($sql, [$this->sessionId]);
@@ -468,21 +471,29 @@ class TutorialManager
         // Clean up tutorial enemy
         $this->removeTutorialEnemy($conn, $this->sessionId);
 
+        // Capture XP/PI before deletion
+        $xpEarned = $this->tutorialPlayer ? $this->tutorialPlayer->xp : $this->context->getTutorialXP();
+        $piEarned = $this->tutorialPlayer ? $this->tutorialPlayer->pi : 0;
+
         // Transfer tutorial rewards to real player
         if ($this->tutorialPlayer) {
-            $this->tutorialPlayer->transferRewardsToRealPlayer();
-            $this->tutorialPlayer->delete(); // Soft delete tutorial character
+            try {
+                $this->tutorialPlayer->transferRewardsToRealPlayer();
+                $this->tutorialPlayer->delete(); // Soft delete tutorial character
+                error_log("[TutorialManager] Tutorial player deleted successfully");
+            } catch (\Exception $e) {
+                error_log("[TutorialManager] Error deleting tutorial player: " . $e->getMessage());
+                error_log("[TutorialManager] Stack trace: " . $e->getTraceAsString());
+                // Continue anyway - rewards already transferred, just cleanup failed
+            }
         }
 
-        // Mark as completed in database
+        // Mark as completed in database (even if deletion failed)
         $sql = 'UPDATE tutorial_progress
                 SET completed = 1, completed_at = CURRENT_TIMESTAMP
                 WHERE tutorial_session_id = ?';
 
         $this->db->exe($sql, [$this->sessionId]);
-
-        $xpEarned = $this->tutorialPlayer ? $this->tutorialPlayer->xp : $this->context->getTutorialXP();
-        $piEarned = $this->tutorialPlayer ? $this->tutorialPlayer->pi : 0;
 
         return [
             'success' => true,
@@ -656,9 +667,10 @@ class TutorialManager
 
             // Create tutorial dummy NPC with explicit negative ID
             // NPCs (enemies) use negative matricules in this game
+            // Use player_type='npc' discriminator to mark as NPC
             $stmt = $conn->prepare("
-                INSERT INTO players (id, name, psw, mail, plain_mail, coords_id, race, xp, bonus_points, pi, avatar, portrait, text)
-                VALUES (?, ?, '', 'dummy@tutorial.local', 'dummy@tutorial.local', ?, 'ame', 10, 0, 0, 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'Âme d''entraînement')
+                INSERT INTO players (id, player_type, name, psw, mail, plain_mail, coords_id, race, xp, bonus_points, pi, avatar, portrait, text)
+                VALUES (?, 'npc', ?, '', 'dummy@tutorial.local', 'dummy@tutorial.local', ?, 'ame', 10, 0, 0, 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'Âme d''entraînement')
             ");
             $stmt->bindValue(1, $enemyId);
             $stmt->bindValue(2, 'Âme d\'entraînement');

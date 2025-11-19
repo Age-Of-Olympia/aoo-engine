@@ -122,13 +122,14 @@ ON
     c.id = p.coords_id
 WHERE
     c.plan = ?
+AND p.player_type = "real"
 AND p.id NOT IN (
-SELECT 
-`players_options`.`player_id` 
-FROM `players_options` 
-INNER JOIN players_options as po 
-ON po.player_id = p.id 
-WHERE `players_options`.`name`="incognitoMode" 
+SELECT
+`players_options`.`player_id`
+FROM `players_options`
+INNER JOIN players_options as po
+ON po.player_id = p.id
+WHERE `players_options`.`name`="incognitoMode"
 )
 GROUP BY faction
 ';

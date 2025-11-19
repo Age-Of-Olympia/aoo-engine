@@ -25,7 +25,7 @@ class MissiveView
                     $player->data->faction == $faction ||
                     ($player->data->secretFaction != '' && $player->data->secretFaction == $faction)
                 ) {
-                    $sql = 'SELECT id FROM players where ( faction = ? or secretFaction = ?) ORDER BY name';
+                    $sql = 'SELECT id FROM players where ( faction = ? or secretFaction = ?) AND player_type = "real" ORDER BY name';
 
                     $db = new Db();
 

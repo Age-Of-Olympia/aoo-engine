@@ -81,13 +81,16 @@ class TutorialPlayer
 
         // Step 3: Create actual player entry in the players table
         // Tutorial characters use regular positive IDs (negative IDs are for NPCs)
-        // They're distinguished by being tracked in the tutorial_players table
+        // They're distinguished by player_type discriminator column
 
         // Get default avatar (map icon) and portrait (character image) for race
         $defaultAvatar = 'img/avatars/' . strtolower($race) . '/1.png';
         $defaultPortrait = 'img/portraits/' . strtolower($race) . '/1.jpeg';
 
         $conn->insert('players', [
+            'player_type' => 'tutorial',  // ← DISCRIMINATOR: marks this as tutorial player
+            'tutorial_session_id' => $tutorialSessionId,  // ← Link to tutorial session
+            'real_player_id_ref' => $realPlayerId,  // ← Link to real player account
             'name' => $name,
             'psw' => '', // No password for tutorial characters
             'mail' => '',
@@ -301,25 +304,65 @@ class TutorialPlayer
         if ($this->playerId || $this->actualPlayerId) {
             $playerIdToDelete = $this->playerId ?? $this->actualPlayerId;
 
-            // Delete foreign key references FIRST to avoid constraint errors
-            // Delete logs where this player is the subject or target
-            $this->conn->delete('players_logs', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_logs', ['target_id' => $playerIdToDelete]);
+            // Delete ALL foreign key references FIRST to avoid constraint errors
+            error_log("[TutorialPlayer] Deleting tutorial player $playerIdToDelete and related records...");
 
-            // Delete other related records
-            $this->conn->delete('players_actions', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_items', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_effects', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_options', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_connections', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_bonus', ['player_id' => $playerIdToDelete]);
+            try {
+                // Delete from all tables that reference players table
+                // Use raw SQL for better error handling and performance
+                $tables = [
+                    // Player-specific data
+                    'players_logs' => ['player_id', 'target_id'],
+                    'players_actions' => ['player_id'],
+                    'players_items' => ['player_id'],
+                    'players_effects' => ['player_id'],
+                    'players_options' => ['player_id'],
+                    'players_connections' => ['player_id'],
+                    'players_bonus' => ['player_id'],
+                    'players_assists' => ['player_id', 'target_id'],
+                    'players_kills' => ['player_id', 'target_id'],
+                    'players_upgrades' => ['player_id'],
+                    'players_quests' => ['player_id'],
+                    'players_quests_steps' => ['player_id'],
+                    'players_forum_missives' => ['player_id'],
+                    'players_forum_rewards' => ['from_player_id', 'to_player_id'],
+                    'players_followers' => ['player_id'],
+                    'players_banned' => ['player_id'],
+                    'players_pnjs' => ['player_id', 'pnj_id'],
+                    // Map-related (tutorial player shouldn't have these, but just in case)
+                    'map_walls' => ['player_id'],
+                    'map_tiles' => ['player_id'],
+                    'map_routes' => ['player_id'],
+                    // Items/exchanges (tutorial player shouldn't have these)
+                    'items_asks' => ['player_id'],
+                    'items_bids' => ['player_id'],
+                    'items_exchanges' => ['player_id', 'target_id'],
+                    'players_items_exchanges' => ['player_id', 'target_id'],
+                ];
 
-            // Delete assists (foreign key constraint)
-            $this->conn->delete('players_assists', ['player_id' => $playerIdToDelete]);
-            $this->conn->delete('players_assists', ['target_id' => $playerIdToDelete]);
+                foreach ($tables as $table => $columns) {
+                    foreach ($columns as $column) {
+                        $deleted = $this->conn->executeStatement(
+                            "DELETE FROM $table WHERE $column = ?",
+                            [$playerIdToDelete]
+                        );
+                        if ($deleted > 0) {
+                            error_log("[TutorialPlayer] Deleted $deleted records from $table ($column)");
+                        }
+                    }
+                }
 
-            // Now safe to delete the player record
-            $this->conn->delete('players', ['id' => $playerIdToDelete]);
+                // Now safe to delete the player record
+                error_log("[TutorialPlayer] Deleting player record $playerIdToDelete");
+                $this->conn->executeStatement(
+                    'DELETE FROM players WHERE id = ?',
+                    [$playerIdToDelete]
+                );
+                error_log("[TutorialPlayer] Tutorial player $playerIdToDelete deleted successfully");
+            } catch (\Exception $e) {
+                error_log("[TutorialPlayer] Error during deletion: " . $e->getMessage());
+                throw $e; // Re-throw to be caught by TutorialManager
+            }
         }
     }
 
