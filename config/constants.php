@@ -314,6 +314,8 @@ define('WALLS_PV', array(
     'statue_ailee'=>10,
     'statue_heroique'=>10,
     'statue_gisant'=>10,
+    'statue_forestiere'=>10,
+    'roue_a_aubes'=>10,
     'lanternesurpied_geant'=>10,
     'monolithe_flamboyant'=>10,
     'statue_colosses'=>10,
