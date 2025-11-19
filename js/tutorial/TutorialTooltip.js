@@ -24,27 +24,52 @@ class TutorialTooltip {
      * @param {string} text Tooltip content (HTML allowed)
      * @param {string|null} targetSelector Element to point to
      * @param {string} position Position (top, bottom, left, right, center)
+     * @param {boolean} requiresValidation If true, hide "Suivant" button (user must interact with game)
      */
-    show(title, text, targetSelector = null, position = 'center') {
+    show(title, text, targetSelector = null, position = 'center', requiresValidation = false) {
         // Update existing tooltip if present, otherwise create new
         if (this.$tooltip && this.$tooltip.length > 0) {
             // Update existing tooltip
             this.$tooltip.find('.tooltip-title').text(title);
             this.$tooltip.find('.tooltip-text').html(text);
             this.$tooltip.removeClass('top bottom left right center').addClass(position);
+
+            // Handle "Suivant" button based on validation requirement
+            const $nextButton = this.$tooltip.find('#tutorial-next');
+            if (requiresValidation) {
+                // Hide button if it exists
+                $nextButton.hide();
+            } else {
+                // Show button if it exists, or create it if it doesn't
+                if ($nextButton.length > 0) {
+                    $nextButton.show();
+                } else {
+                    // Button doesn't exist, create it
+                    this.$tooltip.find('.tooltip-content').append(`
+                        <button id="tutorial-next" class="btn-tutorial-primary">
+                            Suivant →
+                        </button>
+                    `);
+                }
+            }
         } else {
             // Create new tooltip
             // Only create arrow if NOT centered (center tooltips don't need arrows)
             const arrowHtml = position !== 'center' ? '<div class="tooltip-arrow"></div>' : '';
+            // Only show "Suivant" button if validation is NOT required
+            const nextButtonHtml = requiresValidation ? '' : `
+                <button id="tutorial-next" class="btn-tutorial-primary">
+                    Suivant →
+                </button>
+            `;
+
             this.$tooltip = $(`
                 <div class="tutorial-tooltip ${position}">
                     ${arrowHtml}
                     <div class="tooltip-content">
                         <h3 class="tooltip-title">${title}</h3>
                         <div class="tooltip-text">${text}</div>
-                        <button id="tutorial-next" class="btn-tutorial-primary">
-                            Suivant →
-                        </button>
+                        ${nextButtonHtml}
                     </div>
                 </div>
             `);
@@ -68,7 +93,7 @@ class TutorialTooltip {
         // Setup MutationObserver to track DOM changes and reposition tooltip
         this.setupRepositionObserver();
 
-        console.log('[TutorialTooltip] Shown', { title, targetSelector, position });
+        console.log('[TutorialTooltip] Shown', { title, targetSelector, position, requiresValidation });
     }
 
     /**

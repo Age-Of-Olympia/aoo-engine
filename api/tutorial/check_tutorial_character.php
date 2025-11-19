@@ -17,8 +17,10 @@ use Doctrine\DBAL\DriverManager;
 try {
     $playerId = $_SESSION['playerId'] ?? null;
 
+    error_log("[check_tutorial_character] Session player ID: " . ($playerId ?? 'NULL'));
+
     if (!$playerId) {
-        echo json_encode(['is_tutorial_character' => false]);
+        echo json_encode(['is_tutorial_character' => false, 'debug' => 'No player ID in session']);
         exit;
     }
 
@@ -30,14 +32,17 @@ try {
         'driver' => 'pdo_mysql',
     ]);
 
-    // Check if this player_id is a tutorial character
+    // Check if this player_id is a tutorial character (active or not)
+    // We check without is_active filter because users can get stuck even after tutorial ends
     $result = $conn->fetchAssociative(
         "SELECT tp.real_player_id, p.name as real_player_name
          FROM tutorial_players tp
          LEFT JOIN players p ON p.id = tp.real_player_id
-         WHERE tp.player_id = ? AND tp.is_active = 1",
+         WHERE tp.player_id = ?",
         [$playerId]
     );
+
+    error_log("[check_tutorial_character] Query result: " . json_encode($result));
 
     if ($result) {
         echo json_encode([
@@ -46,7 +51,10 @@ try {
             'real_player_name' => $result['real_player_name']
         ]);
     } else {
-        echo json_encode(['is_tutorial_character' => false]);
+        echo json_encode([
+            'is_tutorial_character' => false,
+            'debug' => "No tutorial_players record found for player_id: $playerId"
+        ]);
     }
 
 } catch (Exception $e) {

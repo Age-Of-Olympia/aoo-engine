@@ -279,13 +279,31 @@ class TutorialMapInstance
 
         $coordsIdList = implode(',', $coordsIds);
 
-        // Delete NPCs on this instance (negative player IDs)
-        $npcsDeleted = $this->conn->executeStatement("
-            DELETE FROM players WHERE coords_id IN ({$coordsIdList}) AND id < 0
+        // First, get all NPC IDs on this instance
+        $npcIds = $this->conn->fetchFirstColumn("
+            SELECT id FROM players WHERE coords_id IN ({$coordsIdList}) AND id < 0
         ");
 
-        if ($npcsDeleted > 0) {
-            error_log("[TutorialMapInstance] Deleted {$npcsDeleted} NPCs from instance");
+        // Delete foreign key references for each NPC
+        if (!empty($npcIds)) {
+            $npcIdList = implode(',', $npcIds);
+
+            // Delete all foreign key references
+            $this->conn->executeStatement("DELETE FROM players_logs WHERE player_id IN ({$npcIdList}) OR target_id IN ({$npcIdList})");
+            $this->conn->executeStatement("DELETE FROM players_actions WHERE player_id IN ({$npcIdList})");
+            $this->conn->executeStatement("DELETE FROM players_items WHERE player_id IN ({$npcIdList})");
+            $this->conn->executeStatement("DELETE FROM players_effects WHERE player_id IN ({$npcIdList})");
+            $this->conn->executeStatement("DELETE FROM players_kills WHERE player_id IN ({$npcIdList}) OR target_id IN ({$npcIdList})");
+            $this->conn->executeStatement("DELETE FROM players_assists WHERE player_id IN ({$npcIdList}) OR target_id IN ({$npcIdList})");
+
+            // Now safe to delete NPCs
+            $npcsDeleted = $this->conn->executeStatement("
+                DELETE FROM players WHERE id IN ({$npcIdList})
+            ");
+
+            if ($npcsDeleted > 0) {
+                error_log("[TutorialMapInstance] Deleted {$npcsDeleted} NPCs from instance");
+            }
         }
 
         // Delete all map elements

@@ -261,6 +261,7 @@
      * Check if logged in as tutorial character and show emergency exit button
      */
     async function checkIfTutorialCharacter() {
+        console.log('[Tutorial] Checking if tutorial character...');
         try {
             const response = await fetch('/api/tutorial/check_tutorial_character.php', {
                 method: 'POST',
@@ -268,9 +269,13 @@
             });
             const data = await response.json();
 
+            console.log('[Tutorial] Check result:', data);
+
             if (data.is_tutorial_character) {
                 console.log('[Tutorial] Detected tutorial character - showing emergency exit button');
                 showEmergencyExitButton(data.real_player_name);
+            } else {
+                console.log('[Tutorial] Not a tutorial character, no exit button needed');
             }
         } catch (error) {
             console.error('[Tutorial] Failed to check if tutorial character:', error);

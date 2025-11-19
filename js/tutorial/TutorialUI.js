@@ -189,6 +189,7 @@ class TutorialUI {
             });
 
             if (response.success) {
+                console.log('[TutorialUI] ✅ ADVANCE SUCCESSFUL! New step:', response.current_step);
                 if (response.completed) {
                     // Tutorial complete!
                     console.log('[TutorialUI] ✅ TUTORIAL COMPLETED! Response:', response);
@@ -199,11 +200,13 @@ class TutorialUI {
                     }
                 } else {
                     // Update state
+                    console.log('[TutorialUI] Previous step was:', this.currentStep);
                     this.currentStep = response.current_step;  // step_id (string)
                     this.currentStepPosition = response.current_step_position || this.currentStepPosition + 1;  // position (number)
                     this.xpEarned = response.xp_earned;
                     this.level = response.level;
                     this.pi = response.pi;
+                    console.log('[TutorialUI] Updated to step:', this.currentStep, 'position:', this.currentStepPosition);
 
                     // Only update UI if not skipping (e.g., before page reload)
                     if (!skipUIUpdate) {
@@ -212,7 +215,10 @@ class TutorialUI {
 
                         // Render next step
                         if (response.step_data) {
+                            console.log('[TutorialUI] ✅ Advance SUCCESS - rendering new step:', response.step_data.step_id);
                             this.renderStep(response.step_data);
+                        } else {
+                            console.error('[TutorialUI] ⚠️ Advance SUCCESS but no step_data in response!', response);
                         }
                     } else {
                         console.log('[TutorialUI] Skipping UI update - page will reload');
@@ -244,6 +250,7 @@ class TutorialUI {
      */
     async renderStep(stepData) {
         console.log('[TutorialUI] Rendering step', stepData);
+        console.log('[TutorialUI] renderStep() called from:', new Error().stack);
 
         // Store stepData for external access (e.g., E2E tests)
         this.stepData = stepData;

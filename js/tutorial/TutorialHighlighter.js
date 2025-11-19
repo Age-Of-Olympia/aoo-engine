@@ -103,10 +103,21 @@ class TutorialHighlighter {
 
     /**
      * Clear all highlights
+     *
+     * @returns {Promise} Resolves when all highlights are removed
      */
     clearAll() {
+        const fadePromises = [];
+
         this.highlights.forEach(item => {
-            item.$highlight.fadeOut(200, () => item.$highlight.remove());
+            // Create promise for fadeOut animation
+            const fadePromise = new Promise(resolve => {
+                item.$highlight.fadeOut(200, () => {
+                    item.$highlight.remove();
+                    resolve();
+                });
+            });
+            fadePromises.push(fadePromise);
 
             // Untrack from position manager
             if (item.trackingId) {
@@ -122,6 +133,9 @@ class TutorialHighlighter {
         this.highlights = [];
 
         console.log('[TutorialHighlighter] Cleared all highlights');
+
+        // Return promise that resolves when all fadeOuts complete
+        return Promise.all(fadePromises);
     }
 
     /**
