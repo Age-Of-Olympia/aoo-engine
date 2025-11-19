@@ -153,7 +153,7 @@
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     border: 3px solid #D4AF37;
-    z-index: 10000;
+    z-index: 10002; /* Higher than tutorial-controls (10001) */
     max-width: 450px;
     min-width: 300px;
     display: none;
