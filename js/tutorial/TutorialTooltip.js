@@ -13,8 +13,8 @@ class TutorialTooltip {
         this.errorTimeout = null;
         this.currentTargetSelector = null;
         this.currentPosition = 'center';
-        this.repositionObserver = null;
-        this._repositionPending = false;
+        this.positionManager = new TutorialPositionManager();
+        this.trackingId = null;
     }
 
     /**
@@ -75,6 +75,10 @@ class TutorialTooltip {
      * Reposition tooltip based on current target
      */
     repositionTooltip() {
+        if (!this.$tooltip) {
+            return;
+        }
+
         if (this.currentTargetSelector) {
             const $target = $(this.currentTargetSelector);
             if ($target.length > 0) {
@@ -92,34 +96,22 @@ class TutorialTooltip {
      * Setup MutationObserver to reposition tooltip when DOM changes
      */
     setupRepositionObserver() {
-        // Disconnect previous observer if exists
-        if (this.repositionObserver) {
-            this.repositionObserver.disconnect();
+        // Untrack previous if exists
+        if (this.trackingId) {
+            this.positionManager.untrack(this.trackingId);
+            this.trackingId = null;
         }
 
-        // Only observe if we have a target to follow
-        if (!this.currentTargetSelector) {
+        // Always track for window resize (even centered tooltips can be affected by viewport changes)
+        // Only skip if no tooltip exists
+        if (!this.$tooltip) {
             return;
         }
 
-        // Watch for DOM changes that might affect tooltip position
-        this.repositionObserver = new MutationObserver(() => {
-            // Use requestAnimationFrame to debounce rapid changes
-            if (!this._repositionPending) {
-                this._repositionPending = true;
-                requestAnimationFrame(() => {
-                    this.repositionTooltip();
-                    this._repositionPending = false;
-                });
-            }
-        });
-
-        // Observe body for any changes (panels opening, cards appearing, etc.)
-        this.repositionObserver.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['style', 'class']
+        // Use shared position manager for automatic repositioning
+        this.trackingId = `tooltip_${Date.now()}`;
+        this.positionManager.track(this.trackingId, this.$tooltip, () => {
+            this.repositionTooltip();
         });
     }
 
@@ -171,10 +163,10 @@ class TutorialTooltip {
             this.errorTimeout = null;
         }
 
-        // Disconnect reposition observer
-        if (this.repositionObserver) {
-            this.repositionObserver.disconnect();
-            this.repositionObserver = null;
+        // Untrack from position manager
+        if (this.trackingId) {
+            this.positionManager.untrack(this.trackingId);
+            this.trackingId = null;
         }
 
         // Clear target tracking
@@ -186,9 +178,9 @@ class TutorialTooltip {
      * Position tooltip near target element
      */
     positionNear($target, position) {
-        const targetOffset = $target.offset();
-        const targetWidth = $target.outerWidth();
-        const targetHeight = $target.outerHeight();
+        // Use shared position manager for accurate positioning
+        const pos = TutorialPositionManager.getElementPosition($target);
+
         const tooltipWidth = this.$tooltip.outerWidth();
         const tooltipHeight = this.$tooltip.outerHeight();
         const windowWidth = $(window).width();
@@ -198,24 +190,24 @@ class TutorialTooltip {
 
         switch (position) {
             case 'top':
-                top = targetOffset.top - tooltipHeight - 20;
-                left = targetOffset.left + (targetWidth / 2) - (tooltipWidth / 2);
+                top = pos.top - tooltipHeight - 20;
+                left = pos.left + (pos.width / 2) - (tooltipWidth / 2);
                 break;
 
             case 'bottom':
-                top = targetOffset.top + targetHeight + 20;
-                left = targetOffset.left + (targetWidth / 2) - (tooltipWidth / 2);
+                top = pos.top + pos.height + 20;
+                left = pos.left + (pos.width / 2) - (tooltipWidth / 2);
                 break;
 
             case 'left':
-                top = targetOffset.top + (targetHeight / 2) - (tooltipHeight / 2);
-                left = targetOffset.left - tooltipWidth - 20;
+                top = pos.top + (pos.height / 2) - (tooltipHeight / 2);
+                left = pos.left - tooltipWidth - 20;
                 break;
 
             case 'right':
-                top = targetOffset.top + (targetHeight / 2) - (tooltipHeight / 2);
+                top = pos.top + (pos.height / 2) - (tooltipHeight / 2);
                 // Add extra spacing for map tiles to avoid covering them
-                left = targetOffset.left + targetWidth + 80;
+                left = pos.left + pos.width + 80;
                 break;
 
             default: // center
@@ -223,15 +215,30 @@ class TutorialTooltip {
                 return;
         }
 
-        // Boundary detection - don't go off screen
+        // Boundary detection - ONLY adjust horizontal position to stay on screen
+        // Don't adjust vertical position as it causes tooltip to jump when viewport height changes
+        const originalTop = top;
+        const originalLeft = left;
+
+        // Only adjust left/right to prevent going off-screen horizontally
         if (left < 10) left = 10;
         if (left + tooltipWidth > windowWidth - 10) {
             left = windowWidth - tooltipWidth - 10;
         }
 
+        // For vertical: only prevent going above the top, but allow going below viewport
+        // This prevents the tooltip from jumping when dev tools open/close
         if (top < 10) top = 10;
-        if (top + tooltipHeight > windowHeight - 10) {
-            top = windowHeight - tooltipHeight - 10;
+        // Remove bottom boundary check - let it go below viewport if needed
+
+        // Debug: log if position changed due to boundary detection
+        if (top !== originalTop || left !== originalLeft) {
+            console.log('[TutorialTooltip] Boundary adjusted', {
+                original: { top: originalTop, left: originalLeft },
+                adjusted: { top, left },
+                window: { width: windowWidth, height: windowHeight },
+                tooltip: { width: tooltipWidth, height: tooltipHeight }
+            });
         }
 
         // Apply position - clear all position properties to avoid conflicts

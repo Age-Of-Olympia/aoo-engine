@@ -10,6 +10,7 @@
 class TutorialHighlighter {
     constructor() {
         this.highlights = [];
+        this.positionManager = new TutorialPositionManager();
     }
 
     /**
@@ -50,72 +51,27 @@ class TutorialHighlighter {
             // Add to DOM
             $('body').append($highlight);
 
+            // Generate unique ID for tracking
+            const trackingId = `highlight_${Date.now()}_${index}`;
+
             // Track for cleanup
             this.highlights.push({
                 $highlight: $highlight,
-                $element: $element
+                $element: $element,
+                trackingId: trackingId
             });
 
-            // Update position on window resize or scroll
-            $(window).on('resize.tutorial scroll.tutorial', () => {
+            // Use shared position manager for automatic repositioning
+            this.positionManager.track(trackingId, $highlight, ($hl) => {
+                this.positionHighlight($hl, $element);
+            });
+
+            // Watch for DOM changes on the element itself (e.g., when button expands)
+            const elementObserver = new MutationObserver(() => {
                 this.positionHighlight($highlight, $element);
             });
 
-            // Update position when #view changes (map updates after movement)
-            const viewObserver = new MutationObserver(() => {
-                this.positionHighlight($highlight, $element);
-            });
-
-            const viewElement = document.getElementById('view');
-            if (viewElement) {
-                viewObserver.observe(viewElement, {
-                    childList: true,
-                    subtree: true
-                });
-                this.highlights[this.highlights.length - 1].viewObserver = viewObserver;
-            }
-
-            // Update position when characteristics panel appears/disappears
-            // This prevents highlights from being offset when the panel loads after highlighting
-            const caracObserver = new MutationObserver(() => {
-                this.positionHighlight($highlight, $element);
-            });
-
-            const caracElement = document.getElementById('load-caracs');
-            if (caracElement) {
-                caracObserver.observe(caracElement, {
-                    childList: true,
-                    subtree: true,
-                    attributes: true,
-                    attributeFilter: ['style'] // Watch for display changes
-                });
-                this.highlights[this.highlights.length - 1].caracObserver = caracObserver;
-            }
-
-            // Also watch for any changes to the body that might affect layout
-            const bodyObserver = new MutationObserver(() => {
-                // Use requestAnimationFrame to debounce rapid changes
-                if (!this._repositionPending) {
-                    this._repositionPending = true;
-                    requestAnimationFrame(() => {
-                        this.positionHighlight($highlight, $element);
-                        this._repositionPending = false;
-                    });
-                }
-            });
-
-            bodyObserver.observe(document.body, {
-                childList: true,
-                subtree: false // Only watch direct children of body
-            });
-            this.highlights[this.highlights.length - 1].bodyObserver = bodyObserver;
-
-            // Watch for DOM changes on the element (e.g., when button expands)
-            const observer = new MutationObserver(() => {
-                this.positionHighlight($highlight, $element);
-            });
-
-            observer.observe(element, {
+            elementObserver.observe(element, {
                 attributes: true,    // Watch for attribute changes (class, style)
                 childList: true,     // Watch for child elements being added/removed
                 subtree: true,       // Watch descendants too
@@ -123,7 +79,7 @@ class TutorialHighlighter {
             });
 
             // Store observer for cleanup
-            this.highlights[this.highlights.length - 1].observer = observer;
+            this.highlights[this.highlights.length - 1].elementObserver = elementObserver;
 
             // Fade in
             $highlight.fadeIn(200);
@@ -134,20 +90,14 @@ class TutorialHighlighter {
      * Position highlight box around element
      */
     positionHighlight($highlight, $element) {
-        const element = $element[0];
-
-        // For SVG elements, use getBoundingClientRect() instead of jQuery offset()
-        const rect = element.getBoundingClientRect();
-
-        // Account for page scroll
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        // Use shared position manager for accurate positioning
+        const pos = TutorialPositionManager.getElementPosition($element);
 
         $highlight.css({
-            top: `${rect.top + scrollTop - 5}px`,
-            left: `${rect.left + scrollLeft - 5}px`,
-            width: `${rect.width + 10}px`,
-            height: `${rect.height + 10}px`
+            top: `${pos.top - 5}px`,
+            left: `${pos.left - 5}px`,
+            width: `${pos.width + 10}px`,
+            height: `${pos.height + 10}px`
         });
     }
 
@@ -158,21 +108,18 @@ class TutorialHighlighter {
         this.highlights.forEach(item => {
             item.$highlight.fadeOut(200, () => item.$highlight.remove());
 
-            // Disconnect MutationObserver if exists
-            if (item.observer) {
-                item.observer.disconnect();
+            // Untrack from position manager
+            if (item.trackingId) {
+                this.positionManager.untrack(item.trackingId);
             }
 
-            // Disconnect viewObserver if exists
-            if (item.viewObserver) {
-                item.viewObserver.disconnect();
+            // Disconnect element observer if exists
+            if (item.elementObserver) {
+                item.elementObserver.disconnect();
             }
         });
 
         this.highlights = [];
-
-        // Remove resize and scroll listeners
-        $(window).off('resize.tutorial scroll.tutorial');
 
         console.log('[TutorialHighlighter] Cleared all highlights');
     }

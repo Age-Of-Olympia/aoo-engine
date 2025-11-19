@@ -55,6 +55,7 @@ class Ui{
 
                 <!-- Tutorial System -->
                 <link href="css/tutorial/tutorial.css?v=' . $tutorialVersion . '" rel="stylesheet">
+                <script src="js/tutorial/TutorialPositionManager.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialUI.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialTooltip.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialHighlighter.js?v=' . $tutorialVersion . '"></script>
