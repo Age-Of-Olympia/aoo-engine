@@ -291,7 +291,7 @@ class TutorialPlayer
     {
         // Soft delete in tutorial_players table
         $this->conn->update('tutorial_players', [
-            'is_active' => false,
+            'is_active' => 0,  // Use 0 instead of false for integer column
             'deleted_at' => date('Y-m-d H:i:s')
         ], [
             'id' => $this->id
@@ -313,6 +313,10 @@ class TutorialPlayer
             $this->conn->delete('players_options', ['player_id' => $playerIdToDelete]);
             $this->conn->delete('players_connections', ['player_id' => $playerIdToDelete]);
             $this->conn->delete('players_bonus', ['player_id' => $playerIdToDelete]);
+
+            // Delete assists (foreign key constraint)
+            $this->conn->delete('players_assists', ['player_id' => $playerIdToDelete]);
+            $this->conn->delete('players_assists', ['target_id' => $playerIdToDelete]);
 
             // Now safe to delete the player record
             $this->conn->delete('players', ['id' => $playerIdToDelete]);

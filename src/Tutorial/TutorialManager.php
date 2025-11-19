@@ -365,6 +365,10 @@ class TutorialManager
         // Get current step object by step_id
         $step = $this->getStepById($currentStepId, $version);
 
+        // DEBUG
+        file_put_contents('/var/www/html/tmp/action_debug.log', "[TutorialManager] Current step ID: $currentStepId\n", FILE_APPEND);
+        file_put_contents('/var/www/html/tmp/action_debug.log', "[TutorialManager] Step class: " . ($step ? get_class($step) : 'NULL') . "\n", FILE_APPEND);
+
         if (!$step) {
             return [
                 'success' => false,
@@ -373,7 +377,9 @@ class TutorialManager
         }
 
         // Validate step if required
+        file_put_contents('/var/www/html/tmp/action_debug.log', "[TutorialManager] Requires validation: " . ($step->requiresValidation() ? 'YES' : 'NO') . "\n", FILE_APPEND);
         if ($step->requiresValidation()) {
+            file_put_contents('/var/www/html/tmp/action_debug.log', "[TutorialManager] Calling validate() with data: " . json_encode($validationData) . "\n", FILE_APPEND);
             $isValid = $step->validate($validationData);
 
             if (!$isValid) {
@@ -711,6 +717,8 @@ class TutorialManager
                     $conn->delete('players_effects', ['player_id' => $enemyId]);
                     $conn->delete('players_kills', ['player_id' => $enemyId]);
                     $conn->delete('players_kills', ['target_id' => $enemyId]);
+                    $conn->delete('players_assists', ['player_id' => $enemyId]);
+                    $conn->delete('players_assists', ['target_id' => $enemyId]);
 
                     // Now safe to delete the enemy NPC
                     $conn->delete('players', ['id' => $enemyId]);
