@@ -177,19 +177,25 @@ class TutorialResourceManager
             // Create enemy NPC
             $this->conn->insert('players', [
                 'id' => $enemyId,
-                'name' => 'Dummy Training',
+                'name' => 'Mannequin d\'entraînement',
                 'coords_id' => $enemyCoordsId,
-                'race' => 'Humain',
+                'race' => 'Ame',
                 'xp' => 0,
                 'pi' => 0,
                 'energie' => 50, // Weak enemy
                 'psw' => '',
                 'mail' => '',
                 'plain_mail' => '',
-                'avatar' => 'img/avatars/humain/1.png',
-                'portrait' => 'img/portraits/humain/1.jpeg',
+                'avatar' => 'img/avatars/ame/default.webp',
+                'portrait' => 'img/portraits/ame/default.webp',
                 'text' => 'Mannequin d\'entrainement pour le tutoriel'
             ]);
+
+            // Initialize enemy caracs (characteristics)
+            // Use Classes\Player to set up proper stats
+            require_once dirname(__FILE__) . '/../../Classes/Player.php';
+            $enemyPlayer = new \Classes\Player($enemyId);
+            $enemyPlayer->get_caracs(); // This will generate initial caracs with proper PV
 
             // Track enemy in tutorial_enemies table
             $this->conn->insert('tutorial_enemies', [
@@ -200,9 +206,52 @@ class TutorialResourceManager
 
             error_log("[TutorialResourceManager] Spawned tutorial enemy {$enemyId} at ({$enemyX}, {$enemyY}) for session {$sessionId}");
 
+            // Invalidate cached SVG for tutorial player
+            $this->invalidateTutorialPlayerCache($sessionId);
+
         } catch (\Exception $e) {
             // Don't fail tutorial start if enemy spawn fails
             error_log("[TutorialResourceManager] Error spawning tutorial enemy: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Invalidate cached files for tutorial player
+     *
+     * Deletes cached SVG and other generated files to force regeneration
+     * when map state changes (e.g., enemy spawned, resources gathered)
+     *
+     * @param string $sessionId Tutorial session UUID
+     */
+    private function invalidateTutorialPlayerCache(string $sessionId): void
+    {
+        try {
+            // Get tutorial player ID
+            $stmt = $this->conn->prepare("
+                SELECT player_id
+                FROM tutorial_players
+                WHERE tutorial_session_id = ? AND is_active = 1
+                LIMIT 1
+            ");
+            $stmt->bindValue(1, $sessionId);
+            $result = $stmt->executeQuery();
+            $row = $result->fetchAssociative();
+
+            if (!$row) {
+                return;
+            }
+
+            $tutorialPlayerId = $row['player_id'];
+
+            // Delete cached SVG
+            $svgPath = dirname(__FILE__) . '/../../datas/private/players/' . $tutorialPlayerId . '.svg';
+            if (file_exists($svgPath)) {
+                unlink($svgPath);
+                error_log("[TutorialResourceManager] Invalidated SVG cache for tutorial player {$tutorialPlayerId}");
+            }
+
+        } catch (\Exception $e) {
+            error_log("[TutorialResourceManager] Error invalidating cache: " . $e->getMessage());
         }
     }
 
