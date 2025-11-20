@@ -335,7 +335,9 @@ if($res->num_rows){
         $text = $target->data->text;
 
 
-        $pvPct = floor($target->getRemaining('pv') / $target->caracs->pv * 100);
+        $pvPct = ($target->caracs->pv > 0)
+            ? floor($target->getRemaining('pv') / $target->caracs->pv * 100)
+            : 100;
 
 
         $factionJson = json()->decode('factions', $target->data->faction);
