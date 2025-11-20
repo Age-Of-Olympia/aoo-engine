@@ -38,7 +38,7 @@ try {
     // If step_id is provided, look up the step_number
     if ($targetStepId !== null) {
         $conn = getConnection();
-        $stmt = $conn->prepare("SELECT step_number FROM tutorial_configurations WHERE step_id = ?");
+        $stmt = $conn->prepare("SELECT step_number FROM tutorial_steps WHERE step_id = ? AND is_active = 1");
         $stmt->execute([$targetStepId]);
         $result = $stmt->fetch();
 

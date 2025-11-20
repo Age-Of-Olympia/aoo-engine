@@ -63,47 +63,9 @@ if (!in_array($mode, ['first_time', 'replay', 'practice'])) {
 }
 
 try {
-    // IMPORTANT: Cancel any existing active tutorials before starting a new one
-    // This ensures we don't have orphaned tutorial sessions
-    $db = new Classes\Db();
-
-    // Get session IDs to clean up map instances
-    $sessionsSql = 'SELECT tutorial_session_id FROM tutorial_progress WHERE player_id = ? AND completed = 0';
-    $sessionsResult = $db->exe($sessionsSql, [$playerId]);
-
-    $sessionIds = [];
-    while ($row = $sessionsResult->fetch_assoc()) {
-        $sessionIds[] = $row['tutorial_session_id'];
-    }
-
-    // Clean up map instances for cancelled tutorials
-    if (!empty($sessionIds)) {
-        $em = EntityManagerFactory::getEntityManager();
-        $conn = $em->getConnection();
-        $mapInstance = new TutorialMapInstance($conn);
-
-        foreach ($sessionIds as $sid) {
-            try {
-                $mapInstance->deleteInstance($sid);
-                error_log("[Start] Deleted tutorial map instance for cancelled session {$sid}");
-            } catch (\Exception $e) {
-                error_log("[Start] Error deleting map instance for session {$sid}: " . $e->getMessage());
-            }
-        }
-    }
-
-    $cancelSql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW()
-                  WHERE player_id = ? AND completed = 0';
-    $db->exe($cancelSql, [$playerId]);
-
-    $deactivateSql = 'UPDATE tutorial_players SET is_active = 0, deleted_at = NOW()
-                      WHERE tutorial_session_id IN (
-                          SELECT tutorial_session_id FROM tutorial_progress
-                          WHERE player_id = ? AND completed = 1 AND completed_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
-                      )';
-    $db->exe($deactivateSql, [$playerId]);
-
-    error_log("[Start] Cancelled any existing active tutorials for player {$playerId}");
+    // Phase 4: Cleanup is now handled by TutorialManager.startTutorial()
+    // via TutorialResourceManager.cleanupPrevious() in correct order
+    // No need for manual cleanup here
 
     // Load player
     $player = new Player($playerId);
