@@ -192,6 +192,10 @@ class NewTurnView
                     $player->playerBonusService->setBonusByPlayerIdByName($player->id,"mvt",
                     -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id,"ralentissement"));
                 }
+                
+                // Retire les effets de camouflage
+                $player->playerService->playerResetVisible();
+
 
                     // end effects
                     $sql = '

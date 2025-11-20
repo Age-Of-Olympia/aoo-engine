@@ -31,6 +31,12 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 150)]
     protected string $text;
 
+    #[ORM\Column(type: "integer", length: 50)]
+    protected int $niveau;
+
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
+    protected ?string $race = null;
+
     #[ORM\OneToMany(
         mappedBy: "action",
         targetEntity: ActionCondition::class,
@@ -131,6 +137,16 @@ abstract class Action implements ActionInterface
     public function setText(string $text): void
     {
         $this->text = $text;
+    }
+
+    public function getNiveau(): int
+    {
+        return $this->niveau;
+    }
+
+    public function setNiveau(int $niveau): void
+    {
+        $this->niveau = $niveau;
     }
 
     /**

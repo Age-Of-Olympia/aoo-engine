@@ -11,20 +11,10 @@ class PlayerPassive
     #[ORM\Column(type: "integer")]
     private int $player_id;
 
-    #[ORM\Column(type: "string", length: 255)]
-    private string $name;
-
-    #[ORM\Column(type: "json")]
-    private array $traits;
-
-    #[ORM\Column(type: "string", length: 255)]
-    private string $type;
-
-    #[ORM\Column(type: "string", length: 255)]
-    private string $carac;
-
-    #[ORM\Column(type: "decimal", precision: 5, scale: 2)]
-    private ?string $value = null;
+    #[ORM\Id]
+    #[ORM\ManyToOne(targetEntity: ActionPassive::class)]
+    #[ORM\JoinColumn(name: "passive_id", referencedColumnName: "id")]
+    private ActionPassive $passive;
 
     public function getPlayerId(): int
     {
@@ -36,54 +26,13 @@ class PlayerPassive
         $this->player_id = $player_id;
     }
 
-    public function getName(): string
+    public function getPassive(): ActionPassive
     {
-        return $this->name;
+        return $this->passive;
     }
 
-    public function setName(string $name): void
+    public function setPassive(ActionPassive $passive)
     {
-        $this->name = $name;
-    }
-
-    public function getTraits(): array
-    {
-        return $this->traits;
-    }
-
-    public function setTraits(array $traits): void
-    {
-        $this->traits = $traits;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    public function setType(string $type): void
-    {
-        $this->type = $type;
-    }
-
-    public function getCarac(): string
-    {
-        return $this->carac;
-    }
-
-    public function setCarac(string $carac): void
-    {
-        $this->carac = $carac;
-    }
-
-    public function getValue(): float
-    {
-        return $this->value !== null ? (float) $this->value : 0.0;
-    }
-
-    public function setValue(float $value): void
-    {
-        // La valeur est stockée en string avec Doctrine
-        $this->value = number_format($value, 2, '.', '');
+        $this->passive = $passive;
     }
 }

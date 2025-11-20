@@ -20,6 +20,16 @@ final class EntityManagerFactory
                 paths: [dirname(__FILE__)],
                 isDevMode: false
             );
+
+            // AJOUT ICI pour proxies
+            $proxyDir = __DIR__ . '/../../var/proxies';
+            if (!is_dir($proxyDir)) {
+                mkdir($proxyDir, 0777, true);
+            }
+            $orm_db_config->setProxyDir($proxyDir);
+            $orm_db_config->setProxyNamespace('Proxies');
+            $orm_db_config->setAutoGenerateProxyClasses(true);
+            
             $connection = DriverManager::getConnection(DB_CONSTANTS, $orm_db_config);
             self::$em = new EntityManager($connection, $orm_db_config);
         }

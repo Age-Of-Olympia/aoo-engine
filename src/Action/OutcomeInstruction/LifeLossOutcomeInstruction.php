@@ -16,7 +16,8 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
         $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
-        $bonusTraitDamages = $this->getParameters()['bonusDamagesTrait'] ?? 0;
+        $bonusTraitDamagesParameters = $this->getParameters()['bonusDamagesTrait'];
+        $bonusTraitDamages = (is_array($bonusTraitDamagesParameters) ? floor($actor->caracs->{$bonusTraitDamagesParameters[0]}/$bonusTraitDamagesParameters[1]) : $bonusTraitDamagesParameters) ?? 0;
         $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
         $othersDamages = 0;
         $othersDefense = 0;
@@ -35,14 +36,14 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         }
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
-            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdByName($actor->id,$actorPassive->getName());
+            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive)) {
+                $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
-            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                $othersDefense += $target->playerPassiveService->getComputedValueByPlayerIdByName($target->id,$targetPassive->getName());
+            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive)) {
+                $othersDefense += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId());
             }
         }
 
@@ -75,12 +76,10 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
 
             //CRIT
-            if(!isset($target->emplacements->tete) || $autoCrit){
-                if(rand(1,100) <= DMG_CRIT || $autoCrit){ 
+            if(rand(1,100) <= DMG_CRIT || $autoCrit){ 
                     $critAdd = 3;
                     $totalDamages += $critAdd;
                     $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = '<font color="red">Critique ! Dégâts augmentés ! +3 !</font>';
-                }
             }
     
             //TANK ?

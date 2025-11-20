@@ -201,4 +201,18 @@ class PlayerService
         OnHideReloadView::render($player);
     }
 
+    public function playerResetVisible(): void
+    {
+        $sql = '
+            UPDATE
+            players
+            SET
+            visible = NULL
+            WHERE
+            id = ?
+            ';
+
+        $this->db->exe($sql, $this->playerId);
+    }
+
 }

@@ -893,6 +893,18 @@ class Player implements ActorInterface {
         $this->refresh_data();
     }
 
+    public function put_visible($value){
+
+
+        $sql = 'UPDATE players SET visible = ? WHERE id = ?';
+
+        $db = new Db();
+
+        $db->exe($sql, array($value, $this->id));
+
+        $this->refresh_data();
+    }
+
 
     public function put_upgrade($upgradeName, $cost){
 
@@ -2288,7 +2300,11 @@ class Player implements ActorInterface {
         return $res;
     }
 
-    public function getPassives($playerId): array{
+    public function getPassives(int $playerId): array{
         return $this->playerReductionPassiveService->getPassivesByPlayerId($playerId);
+    }
+
+    public function getEquipedItems(): array {
+        return Item::get_equiped_list($this);
     }
 }

@@ -37,6 +37,26 @@ class RequiresTraitValueCondition extends BaseCondition
                     continue;
                 }
             }    
+            else if($key == "furtif"){
+                $furtifValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"furtif") + 1;
+                if($actor->getRemaining("pm") < (floor($value[0]*$furtifValue))){
+                    array_push($details, "Pas assez de PM");
+                    $costIsAffordable = false;
+                    break;
+                }
+                if($actor->getRemaining("mvt") < (floor($value[1]*$furtifValue))){
+                    array_push($details, "Pas assez de Mvt");
+                    $costIsAffordable = false;
+                    break;
+                }
+            }   
+            else if($key == "remaining"){
+                if($actor->getRemaining($value) < 1){
+                    array_push($details, "Pas assez de ".CARACS[$value]);
+                    $costIsAffordable = false;
+                    break;
+                }
+            }   
             else if(is_array($value)){
                 $passives = $actor->getPassives($actor->getId());
                 $defaultValue = 0;
@@ -82,6 +102,26 @@ class RequiresTraitValueCondition extends BaseCondition
         foreach ($parameters as $key => $value) {
             if ($key == "energie") {
                 continue;
+            }
+            if ($key == "furtif") {
+                $furtifValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"furtif") + 1;
+                $pmCost = floor($value[0]*$furtifValue);
+                $mvtCost = floor($value[1]*$furtifValue);
+                $actor->putBonus(["pm" => -$pmCost]);
+                $text1 = "Vous avez dépensé " . $pmCost . " PM.";
+                array_push($result, $text1);
+                $actor->putBonus(["mvt" => -$mvtCost]);
+                $text1 = "Vous avez dépensé " . $mvtCost . " Mvt.";
+                array_push($result, $text1);
+                $actor->playerEffectService->addEffectByPlayerId($actor->id, "furtif", time() + TWO_DAYS, $furtifValue, false);
+                break;
+            }
+            if ($key == "remaining") {
+                $nb = $actor->getRemaining($value);
+                $actor->putBonus([$value => -$nb]);
+                $text = "Vous avez dépensé " . $nb . " " . CARACS[$value] . ".";
+                array_push($result, $text);
+                break;
             }
             if(is_array($value)){
                 $passives = $actor->getPassives($actor->getId());

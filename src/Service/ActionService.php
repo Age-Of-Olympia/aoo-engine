@@ -92,4 +92,22 @@ class ActionService
         return $costArray;
     }
 
+    public function getPrice($name) : int
+    {
+        $niveau = $this->getActionByName($name)->getNiveau();
+
+        switch ($niveau) {
+            case 1:
+                return 50;
+            case 2:
+                return 100;
+            case 3:
+                return 200;
+            case 4:
+                return 300;
+            default:
+                return 50;
+        }
+    }
+
 }

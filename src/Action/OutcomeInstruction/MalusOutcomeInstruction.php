@@ -13,31 +13,25 @@ class MalusOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
         
-        
-        $difference = null;
+        $malus = random_int(1,3);
         $params = $this->getParameters();
 
         if(!empty($this->getParameters()['rollDivisor'])){
             $difference = max(0,floor((array_sum($rollsArray[0]) - array_sum($rollsArray[1]))/$params['rollDivisor']));
+            $malusText = $malus . ' + ' . $difference . ' (Jet)';
         }
+
+        $malusTot = (isset($difference)) ? $malus+$difference : $malus;
 
         $to = $param["to"] ?? "target";
-        $malus = $difference ?? random_int(1,3);
-
-        $malusAtt = 0;
-        $malusAttText = null;
-        if (isset($params['addBonusMalus']) && $params['addBonusMalus']) {
-            $malusAtt = random_int(1,3);
-            $malusAttText = $malusAtt . ' + ';
-        }
 
         if ($to == "target") {
-            $target->put_malus($malus+$malusAtt);
+            $target->put_malus($malusTot);
         } else if ($to == "actor") {
-            $actor->put_malus($$malus+$malusAtt);
+            $actor->put_malus($malusTot);
         }
 
-        $malusTotalTxt = ($malusAttText) ? $malusAttText . $malus . ' = ' . $malusAtt+$malus : $malus;
+        $malusTotalTxt = ($malusText) ? $malusText . ' = ' . $malusTot : $malus;
         $outcomeMalusMessages = array();
         $outcomeMalusMessages[0] = 'Votre action inflige '. $malusTotalTxt .' malus à ' . $target->data->name . '.';
 

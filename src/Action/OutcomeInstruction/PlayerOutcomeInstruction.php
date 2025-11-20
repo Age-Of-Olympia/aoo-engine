@@ -30,6 +30,10 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                         $actor->put_pf($pf);
                         $outcomeSuccessMessages[0] = 'Vous priez '. $god->data->name .' et gagnez '. $pf .' Points de Foi (total '. $actor->data->pf .'Pf).';
                         $outcomeSuccessMessages[1] = '1d3 = '. $pf;
+                    }    
+                    else if ($carac == "visible") {
+                        $actor->put_visible($value);
+                        $outcomeSuccessMessages[0] = 'Vous agissez avec furtivité...';
                     } else {
                         $bonus = array($carac=>$value);
                         $actor->putBonus($bonus);

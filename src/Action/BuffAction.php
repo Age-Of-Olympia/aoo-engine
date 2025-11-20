@@ -12,7 +12,11 @@ class BuffAction extends Action
 {
     public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
     {
-        $actorXp = $this->calculateActorXp($success, $actor, $target);
+        if ($success) {
+            $actorXp = 1;
+        } else {
+            $actorXp = 0;
+        }
         $targetXp = 0;
         $xpResultsArray["actor"] = $actorXp;
         $xpResultsArray["target"] = $targetXp;
@@ -21,26 +25,9 @@ class BuffAction extends Action
 
     public function getLogMessages(Player $actor, Player $target): array
     {
-        $actorLog = $actor->data->name." a lancé ".$this->getDisplayName()." sur ".$target->data->name.".";
-        $targetLog = $target->data->name." a bénéficié de ".$this->getDisplayName(). " par ".$actor->data->name.".";
+        $actorLog = $actor->data->name." a lancé ".$this->getDisplayName().".";
         $infosArray["actor"] = $actorLog; 
-        $infosArray["target"] = $targetLog;
+        $infosArray["target"] = '';
         return $infosArray;
     }
-
-    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int
-    {
-        if ($success) {
-            $playerXp = 3;
-        } else {
-            $playerXp = 0;
-        }
-        return $playerXp;
-    }
-
-    public function activateAntiBerserk(): bool
-    {
-        return true;
-    }
-
 }

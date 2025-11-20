@@ -81,7 +81,7 @@ class SpellsView
 
             $dir = explode('/', $e)[0];
 
-            $price = $spellPrices[$dir];
+            $price = $spellPrices[$dir] ?? $actionService->getPrice($e);
 
 
             if (!empty($_POST['spellId'])) {
