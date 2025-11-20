@@ -6,28 +6,34 @@
  */
 
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
+use App\Service\CsrfProtectionService;
 
 $database = new Db();
+$csrf = new CsrfProtectionService();
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF Protection
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+    } catch (\RuntimeException $e) {
+        setFlash('danger', 'Security validation failed. Please refresh and try again.');
+        redirectTo('tutorial.php');
+    }
+
     if (isset($_POST['toggle_step'])) {
         $stepId = (int)$_POST['step_id'];
         $isActive = (int)$_POST['is_active'];
 
         try {
             $database->exe("UPDATE tutorial_steps SET is_active = ? WHERE id = ?", [$isActive, $stepId]);
-            $_SESSION['flash'] = [
-                'type' => 'success',
-                'message' => 'Step ' . ($isActive ? 'enabled' : 'disabled') . ' successfully'
-            ];
+            setFlash('success', 'Step ' . ($isActive ? 'enabled' : 'disabled') . ' successfully');
         } catch (Exception $e) {
-            $_SESSION['flash'] = [
-                'type' => 'danger',
-                'message' => 'Failed to update step: ' . $e->getMessage()
-            ];
+            error_log("[TutorialAdmin] Toggle error: " . $e->getMessage());
+            setFlash('danger', 'Failed to update step');
         }
     }
 
@@ -37,17 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Delete cascades to all related tables
             $database->exe("DELETE FROM tutorial_steps WHERE id = ?", [$stepId]);
-            $_SESSION['flash'] = [
-                'type' => 'success',
-                'message' => 'Step deleted successfully'
-            ];
+            setFlash('success', 'Step deleted successfully');
         } catch (Exception $e) {
-            $_SESSION['flash'] = [
-                'type' => 'danger',
-                'message' => 'Failed to delete step: ' . $e->getMessage()
-            ];
+            error_log("[TutorialAdmin] Delete error: " . $e->getMessage());
+            setFlash('danger', 'Failed to delete step');
         }
     }
+
+    // Regenerate token after POST
+    $csrf->regenerateToken();
 }
 
 // Fetch statistics
@@ -86,6 +90,7 @@ $result = $database->exe("
         ts.version,
         ts.step_number,
         ts.step_id,
+        ts.next_step,
         ts.step_type,
         ts.title,
         ts.xp_reward,
@@ -197,7 +202,8 @@ ob_start();
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Step</th>
+                            <th>Step ID</th>
+                            <th>Next Step</th>
                             <th>Title</th>
                             <th>Type</th>
                             <th>Mode</th>
@@ -215,6 +221,13 @@ ob_start();
                                 <td>
                                     <code><?=$step['step_id'] ?? '-'?></code>
                                 </td>
+                                <td>
+                                    <?php if ($step['next_step']): ?>
+                                        <code><?=htmlspecialchars($step['next_step'])?></code>
+                                    <?php else: ?>
+                                        <em class="text-muted">end</em>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?=htmlspecialchars($step['title'])?></td>
                                 <td>
                                     <span class="badge badge-info"><?=$step['step_type']?></span>
@@ -231,6 +244,7 @@ ob_start();
                                 <td class="text-center"><?=$step['xp_reward']?></td>
                                 <td>
                                     <form method="post" style="display: inline;">
+                                        <?= $csrf->renderTokenField() ?>
                                         <input type="hidden" name="step_id" value="<?=$step['id']?>">
                                         <input type="hidden" name="is_active" value="<?=$step['is_active'] ? 0 : 1?>">
                                         <button
@@ -274,6 +288,7 @@ ob_start();
 
 <!-- Delete Confirmation Form -->
 <form id="deleteForm" method="post" style="display: none;">
+    <?= $csrf->renderTokenField() ?>
     <input type="hidden" name="step_id" id="deleteStepId">
     <input type="hidden" name="delete_step" value="1">
 </form>

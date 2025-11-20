@@ -6,10 +6,13 @@
  */
 
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
+use App\Service\CsrfProtectionService;
 
 $database = new Db();
+$csrf = new CsrfProtectionService();
 
 $stepId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $isEdit = $stepId !== null;
@@ -85,14 +88,10 @@ ob_start();
         </a>
     </div>
 
-    <?php if (isset($_SESSION['flash'])): ?>
-        <div class="alert alert-<?=$_SESSION['flash']['type']?>" role="alert">
-            <?= htmlspecialchars($_SESSION['flash']['message']) ?>
-        </div>
-        <?php unset($_SESSION['flash']); ?>
-    <?php endif; ?>
+    <?= renderFlashMessage() ?>
 
     <form method="post" action="tutorial-step-save.php" id="stepForm">
+        <?= $csrf->renderTokenField() ?>
         <?php if ($isEdit): ?>
             <input type="hidden" name="db_step_id" value="<?=$stepId?>">
         <?php endif; ?>
@@ -147,7 +146,7 @@ ob_start();
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="step_number">Step Number *</label>
                                     <input type="number" step="0.1" class="form-control" id="step_number" name="step_number"
@@ -155,12 +154,20 @@ ob_start();
                                     <small class="form-text text-muted">Decimal allowed (e.g., 0.5, 1.0, 1.5)</small>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="step_id">Step ID</label>
                                     <input type="text" class="form-control" id="step_id" name="step_id"
                                            value="<?= $isEdit ? htmlspecialchars($step['step_id'] ?? '') : '' ?>">
                                     <small class="form-text text-muted">Human-readable identifier (e.g., "first_movement")</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="next_step">Next Step ID</label>
+                                    <input type="text" class="form-control" id="next_step" name="next_step"
+                                           value="<?= $isEdit ? htmlspecialchars($step['next_step'] ?? '') : '' ?>">
+                                    <small class="form-text text-muted">Next step identifier (empty = final step)</small>
                                 </div>
                             </div>
                         </div>
@@ -231,6 +238,20 @@ ob_start();
                         </div>
 
                         <div class="form-group">
+                            <label for="target_description">Target Description</label>
+                            <input type="text" class="form-control" id="target_description" name="target_description"
+                                   value="<?= $isEdit && $stepUi ? htmlspecialchars($stepUi['target_description'] ?? '') : '' ?>">
+                            <small class="form-text text-muted">Human-readable description (e.g., "Characteristics button")</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="highlight_selector">Highlight Selector</label>
+                            <input type="text" class="form-control font-monospace" id="highlight_selector" name="highlight_selector"
+                                   value="<?= $isEdit && $stepUi ? htmlspecialchars($stepUi['highlight_selector'] ?? '') : '' ?>">
+                            <small class="form-text text-muted">Alternative CSS selector for highlighting (if different from target)</small>
+                        </div>
+
+                        <div class="form-group">
                             <label for="tooltip_position">Tooltip Position</label>
                             <select class="form-control" id="tooltip_position" name="tooltip_position">
                                 <option value="top" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'top' ? 'selected' : '' ?>>Top</option>
@@ -274,6 +295,14 @@ ob_start();
                                     <small class="form-text text-muted">Auto-advance to next step after this delay (leave empty for manual only)</small>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="allow_manual_advance" name="allow_manual_advance" value="1"
+                                   <?= $isEdit && $stepUi && $stepUi['allow_manual_advance'] ? 'checked' : 'checked' ?>>
+                            <label class="form-check-label" for="allow_manual_advance">
+                                Allow manual advance (show "Next" button)
+                            </label>
                         </div>
 
                         <div class="form-check mb-3">
@@ -346,10 +375,32 @@ ob_start();
                             </div>
 
                             <div class="form-group">
+                                <label for="movement_count">Movement Count</label>
+                                <input type="number" class="form-control" id="movement_count" name="movement_count"
+                                       value="<?= $isEdit && $stepValidation && $stepValidation['movement_count'] !== null ? $stepValidation['movement_count'] : '' ?>">
+                                <small class="form-text text-muted">For specific_count validation (number of movements required)</small>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="action_name">Action Name</label>
                                 <input type="text" class="form-control" id="action_name" name="action_name"
                                        value="<?= $isEdit && $stepValidation ? htmlspecialchars($stepValidation['action_name'] ?? '') : '' ?>">
                                 <small class="form-text text-muted">For action_used validation (e.g., "fouiller", "attaquer")</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="action_charges_required">Action Charges Required</label>
+                                <input type="number" class="form-control" id="action_charges_required" name="action_charges_required"
+                                       value="<?= $isEdit && $stepValidation ? $stepValidation['action_charges_required'] : 1 ?>">
+                                <small class="form-text text-muted">Number of times action must be used (default: 1)</small>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="combat_required" name="combat_required" value="1"
+                                       <?= $isEdit && $stepValidation && $stepValidation['combat_required'] ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="combat_required">
+                                    Combat required
+                                </label>
                             </div>
 
                             <div class="form-group">
@@ -360,10 +411,24 @@ ob_start();
                             </div>
 
                             <div class="form-group">
+                                <label for="element_selector">Element Selector</label>
+                                <input type="text" class="form-control font-monospace" id="element_selector" name="element_selector"
+                                       value="<?= $isEdit && $stepValidation ? htmlspecialchars($stepValidation['element_selector'] ?? '') : '' ?>">
+                                <small class="form-text text-muted">For ui_element_hidden validation (CSS selector of element that should be hidden)</small>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="element_clicked">Element Clicked</label>
                                 <input type="text" class="form-control font-monospace" id="element_clicked" name="element_clicked"
                                        value="<?= $isEdit && $stepValidation ? htmlspecialchars($stepValidation['element_clicked'] ?? '') : '' ?>">
                                 <small class="form-text text-muted">For ui_interaction validation (CSS selector)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dialog_id">Dialog ID</label>
+                                <input type="text" class="form-control" id="dialog_id" name="dialog_id"
+                                       value="<?= $isEdit && $stepValidation ? htmlspecialchars($stepValidation['dialog_id'] ?? '') : '' ?>">
+                                <small class="form-text text-muted">Dialog that must be completed (references tutorial_dialogs.dialog_id)</small>
                             </div>
                         </div>
                     </div>
@@ -425,6 +490,34 @@ ob_start();
                                 Unlimited action points
                             </label>
                         </div>
+
+                        <hr>
+                        <h5>Entity Setup</h5>
+
+                        <div class="form-group">
+                            <label for="spawn_enemy">Spawn Enemy</label>
+                            <input type="text" class="form-control" id="spawn_enemy" name="spawn_enemy"
+                                   value="<?= $isEdit && $stepPrerequisites ? htmlspecialchars($stepPrerequisites['spawn_enemy'] ?? '') : '' ?>">
+                            <small class="form-text text-muted">Enemy type to spawn (e.g., "tutorial_dummy")</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ensure_harvestable_tree_x">Harvestable Tree X</label>
+                                    <input type="number" class="form-control" id="ensure_harvestable_tree_x" name="ensure_harvestable_tree_x"
+                                           value="<?= $isEdit && $stepPrerequisites && $stepPrerequisites['ensure_harvestable_tree_x'] !== null ? $stepPrerequisites['ensure_harvestable_tree_x'] : '' ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ensure_harvestable_tree_y">Harvestable Tree Y</label>
+                                    <input type="number" class="form-control" id="ensure_harvestable_tree_y" name="ensure_harvestable_tree_y"
+                                           value="<?= $isEdit && $stepPrerequisites && $stepPrerequisites['ensure_harvestable_tree_y'] !== null ? $stepPrerequisites['ensure_harvestable_tree_y'] : '' ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Ensure a harvestable tree exists at these coordinates for gathering steps</small>
                     </div>
                 </div>
             </div>
