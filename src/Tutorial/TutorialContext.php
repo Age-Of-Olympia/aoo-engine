@@ -233,10 +233,19 @@ class TutorialContext
 
     /**
      * Restore state from database
+     *
+     * Phase 4: Now accepts both string (JSON) and array formats for compatibility
+     *
+     * @param string|array $serializedState State data (JSON string or already-decoded array)
      */
-    public function restoreState(string $serializedState): void
+    public function restoreState(string|array $serializedState): void
     {
-        $data = json_decode($serializedState, true);
+        // Handle both JSON string and already-decoded array
+        if (is_string($serializedState)) {
+            $data = json_decode($serializedState, true);
+        } else {
+            $data = $serializedState;
+        }
 
         if ($data) {
             $this->tutorialXP = $data['tutorial_xp'] ?? 0;

@@ -23,13 +23,10 @@ class TutorialPlayer
     public ?int $playerId = null; // ID in the actual players table
     public int $actualPlayerId; // Alias for playerId (for backwards compatibility)
     public string $name;
-    public int $coordsId;
-    public string $race;
-    public int $xp;
-    public int $pi;
-    public int $energie;
-    public int $level;
     public bool $isActive;
+
+    // NOTE: coords_id, race, energie, level, xp, pi removed from tutorial_players table
+    // These are now tracked in TutorialContext or players table only
 
     public function __construct(Connection $conn)
     {
@@ -127,12 +124,6 @@ class TutorialPlayer
             'real_player_id' => $realPlayerId,
             'tutorial_session_id' => $tutorialSessionId,
             'name' => $name,
-            'coords_id' => $startingCoordsId,
-            'race' => $race,
-            'xp' => 0,
-            'pi' => 0,
-            'energie' => 100,
-            'level' => 1,
             'is_active' => true
         ]);
 
@@ -214,67 +205,37 @@ class TutorialPlayer
         $this->playerId = isset($data['player_id']) ? (int) $data['player_id'] : null;
         $this->actualPlayerId = $this->playerId ?? 0; // Set actualPlayerId for backwards compatibility
         $this->name = $data['name'];
-        $this->coordsId = (int) $data['coords_id'];
-        $this->race = $data['race'];
-        $this->xp = (int) $data['xp'];
-        $this->pi = (int) $data['pi'];
-        $this->energie = (int) $data['energie'];
-        $this->level = (int) $data['level'];
         $this->isActive = (bool) $data['is_active'];
     }
 
     /**
-     * Update tutorial character data
+     * NOTE: save(), moveTo(), and awardXP() methods removed.
+     *
+     * Progression tracking (XP, PI, level) is now handled by TutorialContext.
+     * Position is tracked in players.coords_id (not tutorial_players).
+     * The tutorial_players table is now a lightweight reference table only.
      */
-    public function save(): void
-    {
-        $this->conn->update('tutorial_players', [
-            'coords_id' => $this->coordsId,
-            'xp' => $this->xp,
-            'pi' => $this->pi,
-            'energie' => $this->energie,
-            'level' => $this->level,
-            'is_active' => $this->isActive
-        ], [
-            'id' => $this->id
-        ]);
-    }
 
     /**
-     * Move tutorial character to new position
-     */
-    public function moveTo(int $newCoordsId): void
-    {
-        $this->coordsId = $newCoordsId;
-        $this->save();
-    }
-
-    /**
-     * Award XP to tutorial character
-     */
-    public function awardXP(int $amount): void
-    {
-        $this->xp += $amount;
-
-        // Level up logic (simple: every 100 XP = 1 level)
-        $newLevel = floor($this->xp / 100) + 1;
-        if ($newLevel > $this->level) {
-            $this->level = $newLevel;
-            $this->pi += 5; // Award 5 PI per level
-        }
-
-        $this->save();
-    }
-
-    /**
-     * Get tutorial character position
+     * Get tutorial character position (from players table, not tutorial_players)
      */
     public function getPosition(): array
     {
-        $stmt = $this->conn->prepare('SELECT x, y, z, plan FROM coords WHERE id = ?');
-        $stmt->bindValue(1, $this->coordsId);
+        if (!$this->playerId) {
+            throw new \RuntimeException("Cannot get position: tutorial player not linked to players table");
+        }
+
+        $stmt = $this->conn->prepare('SELECT c.x, c.y, c.z, c.plan
+                                       FROM players p
+                                       JOIN coords c ON p.coords_id = c.id
+                                       WHERE p.id = ?');
+        $stmt->bindValue(1, $this->playerId);
         $result = $stmt->executeQuery();
         $coords = $result->fetchAssociative();
+
+        if (!$coords) {
+            throw new \RuntimeException("Position not found for tutorial player {$this->playerId}");
+        }
 
         return [
             'x' => (int) $coords['x'],
@@ -292,117 +253,70 @@ class TutorialPlayer
      */
     public function delete(): void
     {
-        // Soft delete in tutorial_players table
-        $this->conn->update('tutorial_players', [
-            'is_active' => 0,  // Use 0 instead of false for integer column
-            'deleted_at' => date('Y-m-d H:i:s')
-        ], [
-            'id' => $this->id
-        ]);
+        $playerIdToDelete = $this->playerId ?? $this->actualPlayerId;
 
-        // Hard delete from actual players table to clean up
-        if ($this->playerId || $this->actualPlayerId) {
-            $playerIdToDelete = $this->playerId ?? $this->actualPlayerId;
+        if (!$playerIdToDelete) {
+            error_log("[TutorialPlayer] No player ID to delete for tutorial_players ID {$this->id}");
+            return;
+        }
 
-            // Delete ALL foreign key references FIRST to avoid constraint errors
-            error_log("[TutorialPlayer] Deleting tutorial player $playerIdToDelete and related records...");
+        error_log("[TutorialPlayer] Deleting tutorial player {$playerIdToDelete} and related records...");
 
-            try {
-                // Delete from all tables that reference players table
-                // Use raw SQL for better error handling and performance
-                $tables = [
-                    // Player-specific data
-                    'players_logs' => ['player_id', 'target_id'],
-                    'players_actions' => ['player_id'],
-                    'players_items' => ['player_id'],
-                    'players_effects' => ['player_id'],
-                    'players_options' => ['player_id'],
-                    'players_connections' => ['player_id'],
-                    'players_bonus' => ['player_id'],
-                    'players_assists' => ['player_id', 'target_id'],
-                    'players_kills' => ['player_id', 'target_id'],
-                    'players_upgrades' => ['player_id'],
-                    'players_quests' => ['player_id'],
-                    'players_quests_steps' => ['player_id'],
-                    'players_forum_missives' => ['player_id'],
-                    'players_forum_rewards' => ['from_player_id', 'to_player_id'],
-                    'players_followers' => ['player_id'],
-                    'players_banned' => ['player_id'],
-                    'players_pnjs' => ['player_id', 'pnj_id'],
-                    // Map-related (tutorial player shouldn't have these, but just in case)
-                    'map_walls' => ['player_id'],
-                    'map_tiles' => ['player_id'],
-                    'map_routes' => ['player_id'],
-                    // Items/exchanges (tutorial player shouldn't have these)
-                    'items_asks' => ['player_id'],
-                    'items_bids' => ['player_id'],
-                    'items_exchanges' => ['player_id', 'target_id'],
-                    'players_items_exchanges' => ['player_id', 'target_id'],
-                ];
+        // Use centralized cleanup service to avoid code duplication
+        $cleanup = new TutorialPlayerCleanup($this->conn, new \Psr\Log\NullLogger());
 
-                foreach ($tables as $table => $columns) {
-                    foreach ($columns as $column) {
-                        $deleted = $this->conn->executeStatement(
-                            "DELETE FROM $table WHERE $column = ?",
-                            [$playerIdToDelete]
-                        );
-                        if ($deleted > 0) {
-                            error_log("[TutorialPlayer] Deleted $deleted records from $table ($column)");
-                        }
-                    }
-                }
-
-                // Now safe to delete the player record
-                error_log("[TutorialPlayer] Deleting player record $playerIdToDelete");
-                $this->conn->executeStatement(
-                    'DELETE FROM players WHERE id = ?',
-                    [$playerIdToDelete]
-                );
-                error_log("[TutorialPlayer] Tutorial player $playerIdToDelete deleted successfully");
-            } catch (\Exception $e) {
-                error_log("[TutorialPlayer] Error during deletion: " . $e->getMessage());
-                throw $e; // Re-throw to be caught by TutorialManager
-            }
+        try {
+            $cleanup->deleteTutorialPlayer($this->id, $playerIdToDelete);
+            error_log("[TutorialPlayer] Tutorial player {$playerIdToDelete} deleted successfully");
+        } catch (TutorialPlayerCleanupException $e) {
+            error_log("[TutorialPlayer] Error during deletion: " . $e->getMessage());
+            throw $e; // Re-throw to be caught by TutorialManager
         }
     }
 
     /**
      * Transfer tutorial rewards to real player
      *
-     * This is called when tutorial completes successfully
+     * This is called when tutorial completes successfully.
+     * XP/PI amounts come from TutorialContext (not tutorial_players table).
+     *
+     * @param int $xpEarned XP earned during tutorial
+     * @param int $piEarned PI earned during tutorial
      */
-    public function transferRewardsToRealPlayer(): void
+    public function transferRewardsToRealPlayer(int $xpEarned, int $piEarned): void
     {
         // Update real player's XP
         $this->conn->executeStatement('
             UPDATE players
             SET xp = xp + ?, pi = pi + ?
             WHERE id = ?
-        ', [$this->xp, $this->pi, $this->realPlayerId]);
+        ', [$xpEarned, $piEarned, $this->realPlayerId]);
 
         // Log the transfer
         error_log(sprintf(
             "Tutorial rewards transferred: Player %d received %d XP and %d PI from tutorial",
             $this->realPlayerId,
-            $this->xp,
-            $this->pi
+            $xpEarned,
+            $piEarned
         ));
     }
 
     /**
      * Convert to array for API responses
+     *
+     * NOTE: race, xp, pi, level, energie are no longer stored in tutorial_players table.
+     * These come from players table or TutorialContext. This method now returns minimal data.
      */
     public function toArray(): array
     {
         return [
             'id' => $this->id,
+            'tutorial_players_id' => $this->id,
+            'player_id' => $this->playerId,
+            'real_player_id' => $this->realPlayerId,
+            'tutorial_session_id' => $this->tutorialSessionId,
             'name' => $this->name,
-            'race' => $this->race,
-            'xp' => $this->xp,
-            'pi' => $this->pi,
-            'level' => $this->level,
-            'energie' => $this->energie,
-            'position' => $this->getPosition()
+            'is_active' => $this->isActive
         ];
     }
 }

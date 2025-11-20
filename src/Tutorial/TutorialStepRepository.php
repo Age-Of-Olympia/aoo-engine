@@ -345,9 +345,11 @@ class TutorialStepRepository
             $config['prerequisites'] = $prerequisites;
         }
 
-        // Add context changes if present
-        if (!empty($contextChanges)) {
-            $config['context_changes'] = $contextChanges;
+        // Add context changes if present OR if boolean flags from prerequisites
+        $hasContextFlags = $row['consume_movements'] || $row['unlimited_mvt'] || $row['unlimited_pa'];
+
+        if (!empty($contextChanges) || $hasContextFlags) {
+            $config['context_changes'] = $contextChanges ?? [];
 
             // Also add boolean flags from prerequisites table
             if ($row['consume_movements']) $config['context_changes']['consume_movements'] = true;

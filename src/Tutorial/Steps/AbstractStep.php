@@ -301,4 +301,28 @@ abstract class AbstractStep
     {
         return $this->xpReward;
     }
+
+    /**
+     * Get config array
+     */
+    public function getConfig(): array
+    {
+        return $this->config;
+    }
+
+    /**
+     * Get step ID
+     */
+    public function getStepId(): string
+    {
+        return $this->stepId ?? '';
+    }
+
+    /**
+     * Get next step ID
+     */
+    public function getNextStep(): ?string
+    {
+        return $this->nextStep;
+    }
 }
