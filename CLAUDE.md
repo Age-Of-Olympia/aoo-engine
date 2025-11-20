@@ -553,10 +553,24 @@ Age of Olympia is a **turn-based survival RPG** where players:
 6. On completion or cancel, tutorial player is deactivated and main player restored
 
 **Tutorial Database Tables**:
-- `tutorial_configurations`: Step definitions (step_id, config JSON, version)
-- `tutorial_progress`: Active tutorial sessions (player_id, current_step, xp_earned)
-- `tutorial_players`: Temporary player characters (real_player_id, tutorial_session_id, player_id)
-- `tutorial_enemies`: Spawned enemies for combat training
+- **Session & Player Tracking**:
+  - `tutorial_progress`: Active tutorial sessions (player_id, tutorial_session_id, current_step, xp_earned, completed, tutorial_mode, tutorial_version)
+  - `tutorial_players`: Temporary player characters (id, real_player_id, tutorial_session_id, player_id, name, is_active)
+  - `tutorial_enemies`: Spawned enemies for combat training (tutorial_session_id, enemy_player_id, enemy_coords_id)
+
+- **Step Configuration (Normalized Schema)**:
+  - `tutorial_steps`: Core step definitions (id, version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active)
+  - `tutorial_step_ui`: UI configuration 1:1 (step_id, target_selector, tooltip_position, interaction_mode, show_delay, etc.)
+  - `tutorial_step_validation`: Validation rules 1:1 (step_id, requires_validation, validation_type, validation_hint, target_x, target_y, etc.)
+  - `tutorial_step_prerequisites`: Resource requirements 1:1 (step_id, mvt_required, pa_required, auto_restore, consume_movements, etc.)
+  - `tutorial_step_features`: Special features 1:1 (step_id, celebration, show_rewards, redirect_delay)
+  - `tutorial_step_highlights`: Additional highlights 1:N (step_id, selector)
+  - `tutorial_step_interactions`: Allowed interactions for semi-blocking mode 1:N (step_id, selector, description)
+  - `tutorial_step_context_changes`: Context state modifications 1:N (step_id, context_key, context_value)
+  - `tutorial_step_next_preparation`: Preparation for next step 1:N (step_id, preparation_key, preparation_value)
+
+- **Dialogs**:
+  - `tutorial_dialogs`: Dialog configurations (id, dialog_id, npc_name, dialog_data JSON, is_active)
 
 **Step Types** (in `src/Tutorial/Steps/`):
 - **AbstractStep**: Base class for all steps
@@ -566,23 +580,20 @@ Age of Olympia is a **turn-based survival RPG** where players:
 - **UIInteractionStep**: UI interaction validation (ui_panel_opened, ui_interaction)
 - **CombatStep**: Combat-related validation
 
-**Step Configuration** (JSON in `tutorial_configurations.config`):
-```json
-{
-  "text": "Step description shown to player",
-  "target_selector": ".css-selector-to-highlight",
-  "target_description": "human-readable target description",
-  "tooltip_position": "top|right|bottom|left",
-  "interaction_mode": "blocking|semi-blocking|open",
-  "requires_validation": true|false,
-  "validation_type": "position|movements_depleted|action_used|ui_interaction",
-  "validation_params": { "x": 0, "y": 0 },
-  "validation_hint": "Message shown when validation fails",
-  "allowed_interactions": [".selector1", ".selector2"],
-  "blocked_click_message": "Error message for blocked clicks",
-  "prerequisites": { "mvt": 3, "pa": 2, "auto_restore": true }
-}
-```
+**Step Configuration**:
+Steps are stored in the normalized database schema. The `TutorialStepRepository` performs JOINs across all step tables and converts them into a configuration array that AbstractStep subclasses use. Configuration includes:
+
+- **Core** (`tutorial_steps`): step_id, next_step, step_number, step_type, title, text, xp_reward
+- **UI** (`tutorial_step_ui`): target_selector, tooltip_position, interaction_mode, show_delay, auto_advance_delay
+- **Validation** (`tutorial_step_validation`): requires_validation, validation_type, validation_hint, target_x/y, action_name
+- **Prerequisites** (`tutorial_step_prerequisites`): mvt_required, pa_required, auto_restore, consume_movements
+- **Features** (`tutorial_step_features`): celebration, show_rewards, redirect_delay
+- **Highlights** (`tutorial_step_highlights`): Additional elements to highlight (1:N)
+- **Interactions** (`tutorial_step_interactions`): Allowed clicks in semi-blocking mode (1:N)
+- **Context Changes** (`tutorial_step_context_changes`): State modifications on step completion (1:N)
+- **Next Preparation** (`tutorial_step_next_preparation`): Setup for next step (1:N)
+
+Steps are accessed via `TutorialStepRepository::getStepById($stepId, $version)` or `getStepByNumber($stepNumber, $version)`.
 
 **Tutorial JavaScript** (`js/tutorial/`):
 - **TutorialUI.js**: Main controller (API calls, step rendering, validation)
@@ -746,10 +757,13 @@ $player = new Player($activePlayerId);
 - `map_foregrounds`: Decorative foregrounds (coords_id, name)
 
 **Tutorial**:
-- `tutorial_configurations`: Step definitions (step_id, step_number, step_type, config, version)
-- `tutorial_progress`: Session tracking (tutorial_session_id, player_id, current_step, completed)
-- `tutorial_players`: Tutorial characters (id, player_id, real_player_id, tutorial_session_id)
+- `tutorial_steps`: Core step definitions (id, version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active)
+- `tutorial_step_ui`, `tutorial_step_validation`, `tutorial_step_prerequisites`, `tutorial_step_features`: 1:1 step configuration tables
+- `tutorial_step_highlights`, `tutorial_step_interactions`, `tutorial_step_context_changes`, `tutorial_step_next_preparation`: 1:N step configuration tables
+- `tutorial_progress`: Session tracking (tutorial_session_id, player_id, current_step, completed, tutorial_mode, tutorial_version, xp_earned)
+- `tutorial_players`: Tutorial characters (id, real_player_id, tutorial_session_id, player_id, name, is_active)
 - `tutorial_enemies`: Combat training enemies (tutorial_session_id, enemy_player_id, enemy_coords_id)
+- `tutorial_dialogs`: Dialog configurations (dialog_id, npc_name, dialog_data JSON)
 
 ### Key Constants (`config/constants.php`)
 
