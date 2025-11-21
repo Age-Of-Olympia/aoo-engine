@@ -15,7 +15,17 @@ use Classes\Db;
  */
 class TutorialFeatureFlag
 {
+    /**
+     * Settings cache with TTL
+     * @var array{data: array, timestamp: int}|null
+     */
     private static ?array $settingsCache = null;
+
+    /**
+     * Cache TTL in seconds (5 minutes)
+     * Balances performance vs. responsiveness to setting changes
+     */
+    private const CACHE_TTL_SECONDS = 300;
 
     /**
      * Is new tutorial system enabled globally?
@@ -93,28 +103,52 @@ class TutorialFeatureFlag
     }
 
     /**
-     * Get all settings from database
+     * Get all settings from database (with TTL-based caching)
+     *
+     * Cache expires after CACHE_TTL_SECONDS to ensure settings changes
+     * are reflected without requiring manual cache clear or process restart.
+     *
+     * @return array Settings key-value pairs
      */
     public static function getSettings(): array
     {
+        // Check if cache exists and is still valid
         if (self::$settingsCache !== null) {
-            return self::$settingsCache;
+            $cacheAge = time() - self::$settingsCache['timestamp'];
+            if ($cacheAge < self::CACHE_TTL_SECONDS) {
+                // Cache still valid
+                return self::$settingsCache['data'];
+            }
+            // Cache expired, will reload
         }
 
         try {
             $db = new Db();
             $result = $db->exe("SELECT setting_key, setting_value FROM tutorial_settings");
 
-            self::$settingsCache = [];
+            $settings = [];
             while ($row = $result->fetch_assoc()) {
-                self::$settingsCache[$row['setting_key']] = $row['setting_value'];
+                $settings[$row['setting_key']] = $row['setting_value'];
             }
+
+            // Store with timestamp for TTL checking
+            self::$settingsCache = [
+                'data' => $settings,
+                'timestamp' => time()
+            ];
+
+            return $settings;
         } catch (\Exception $e) {
             error_log("[TutorialFeatureFlag] Error loading settings: " . $e->getMessage());
-            self::$settingsCache = [];
-        }
 
-        return self::$settingsCache;
+            // Store empty cache with timestamp to avoid repeated failed queries
+            self::$settingsCache = [
+                'data' => [],
+                'timestamp' => time()
+            ];
+
+            return [];
+        }
     }
 
     /**
@@ -166,10 +200,41 @@ class TutorialFeatureFlag
 
     /**
      * Clear the settings cache (useful after external updates)
+     *
+     * Forces immediate reload on next getSettings() call.
+     * Automatically called after updateSetting().
      */
     public static function clearCache(): void
     {
         self::$settingsCache = null;
+    }
+
+    /**
+     * Get cache statistics (for debugging/monitoring)
+     *
+     * @return array{cached: bool, age_seconds: int|null, ttl_seconds: int, expires_in: int|null}
+     */
+    public static function getCacheStats(): array
+    {
+        if (self::$settingsCache === null) {
+            return [
+                'cached' => false,
+                'age_seconds' => null,
+                'ttl_seconds' => self::CACHE_TTL_SECONDS,
+                'expires_in' => null
+            ];
+        }
+
+        $age = time() - self::$settingsCache['timestamp'];
+        $expiresIn = self::CACHE_TTL_SECONDS - $age;
+
+        return [
+            'cached' => true,
+            'age_seconds' => $age,
+            'ttl_seconds' => self::CACHE_TTL_SECONDS,
+            'expires_in' => max(0, $expiresIn),
+            'is_expired' => $age >= self::CACHE_TTL_SECONDS
+        ];
     }
 
     /**
