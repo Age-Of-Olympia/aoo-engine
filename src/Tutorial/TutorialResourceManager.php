@@ -144,9 +144,10 @@ class TutorialResourceManager
             $playerY = (int) $playerData['y'];
             $plan = $playerData['plan'];
 
-            // Find nearby position for enemy (1-2 tiles away)
-            $enemyX = $playerX + rand(1, 2);
-            $enemyY = $playerY + rand(0, 1);
+            // Find nearby position for enemy (2 tiles away to avoid Gaïa at 1,0)
+            // Gaïa (NPC guide) is at (1,0), so spawn enemy at (2,1) instead
+            $enemyX = $playerX + 2;
+            $enemyY = $playerY + 1;
 
             // Get or create coordinates for enemy
             $coordsStmt = $this->conn->prepare("
@@ -196,6 +197,15 @@ class TutorialResourceManager
             require_once dirname(__FILE__) . '/../../Classes/Player.php';
             $enemyPlayer = new \Classes\Player($enemyId);
             $enemyPlayer->get_caracs(); // This will generate initial caracs with proper PV
+
+            // Set enemy PV to 50 so it survives tutorial attacks
+            $this->conn->executeStatement(
+                "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', 50)
+                 ON DUPLICATE KEY UPDATE n = 50",
+                [$enemyId]
+            );
+            // Refresh caracs with the new PV bonus
+            $enemyPlayer->get_caracs();
 
             // Track enemy in tutorial_enemies table
             $this->conn->insert('tutorial_enemies', [
