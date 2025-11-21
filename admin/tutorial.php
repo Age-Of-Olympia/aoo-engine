@@ -123,68 +123,183 @@ ob_start();
         <?php unset($_SESSION['flash']); ?>
     <?php endif; ?>
 
-    <!-- Statistics Dashboard -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Total Steps</h5>
-                    <p class="card-text display-4"><?=$stats['total']?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Active Steps</h5>
-                    <p class="card-text display-4"><?=$stats['active']?></p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Tutorial Sessions</h5>
-                    <p class="card-text display-4"><?=$stats['sessions']['total_sessions']?></p>
-                    <small class="text-muted">
-                        <?=$stats['sessions']['completed']?> completed,
-                        <?=$stats['sessions']['in_progress']?> in progress
-                    </small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Completion Rate</h5>
-                    <p class="card-text display-4">
-                        <?php
-                        $rate = $stats['sessions']['total_sessions'] > 0
-                            ? round(($stats['sessions']['completed'] / $stats['sessions']['total_sessions']) * 100)
-                            : 0;
-                        echo $rate . '%';
-                        ?>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="steps-tab" data-toggle="tab" href="#steps-panel" role="tab">
+                <i class="fas fa-list-ol"></i> Steps <span class="badge badge-primary ml-1"><?=$stats['total']?></span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="sessions-tab" data-toggle="tab" href="#sessions-panel" role="tab">
+                <i class="fas fa-users"></i> Sessions <span class="badge badge-info ml-1"><?=$stats['sessions']['total_sessions']?></span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="stats-tab" data-toggle="tab" href="#stats-panel" role="tab">
+                <i class="fas fa-chart-bar"></i> Statistics
+            </a>
+        </li>
+    </ul>
 
-    <!-- Steps by Type -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Steps by Type</h3>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <?php foreach ($stats['by_type'] as $type => $count): ?>
-                    <div class="col-md-3 mb-2">
-                        <span class="badge badge-primary"><?=$type?>: <?=$count?></span>
+    <div class="tab-content">
+        <!-- Sessions Panel -->
+        <div class="tab-pane fade" id="sessions-panel" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3><i class="fas fa-users"></i> Tutorial Sessions</h3>
+                    <div>
+                        <button class="btn btn-outline-secondary btn-sm" id="refreshSessions">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
                     </div>
-                <?php endforeach; ?>
+                </div>
+                <div class="card-body">
+                    <!-- Quick Stats Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="session-stat-card bg-light p-3 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-success text-white rounded-circle p-2 mr-3">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <div class="stat-value h4 mb-0"><?=$stats['sessions']['completed']?></div>
+                                        <small class="text-muted">Completed</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="session-stat-card bg-light p-3 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-primary text-white rounded-circle p-2 mr-3">
+                                        <i class="fas fa-spinner"></i>
+                                    </div>
+                                    <div>
+                                        <div class="stat-value h4 mb-0"><?=$stats['sessions']['in_progress']?></div>
+                                        <small class="text-muted">In Progress</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="session-stat-card bg-light p-3 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-info text-white rounded-circle p-2 mr-3">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <div>
+                                        <?php
+                                        $rate = $stats['sessions']['total_sessions'] > 0
+                                            ? round(($stats['sessions']['completed'] / $stats['sessions']['total_sessions']) * 100)
+                                            : 0;
+                                        ?>
+                                        <div class="stat-value h4 mb-0"><?=$rate?>%</div>
+                                        <small class="text-muted">Completion Rate</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sessions Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="sessionsTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Progress</th>
+                                    <th>Current Step</th>
+                                    <th>XP Earned</th>
+                                    <th>Status</th>
+                                    <th>Last Update</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessionsTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted" id="sessionsPaginationInfo">
+                            Showing 0 sessions
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="sessionsPagination">
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+
+        <!-- Statistics Panel -->
+        <div class="tab-pane fade" id="stats-panel" role="tabpanel">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-muted">Total Steps</h5>
+                            <p class="card-text display-4"><?=$stats['total']?></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-muted">Active Steps</h5>
+                            <p class="card-text display-4 text-success"><?=$stats['active']?></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-muted">Inactive Steps</h5>
+                            <p class="card-text display-4 text-secondary"><?=$stats['total'] - $stats['active']?></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title text-muted">Versions</h5>
+                            <p class="card-text display-4">1</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps by Type -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-tags"></i> Steps by Type</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <?php foreach ($stats['by_type'] as $type => $count): ?>
+                            <div class="col-md-3 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge badge-primary mr-2" style="min-width: 30px;"><?=$count?></span>
+                                    <span><?=$type?></span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Steps Panel (Main Content) -->
+        <div class="tab-pane fade show active" id="steps-panel" role="tabpanel">
 
     <!-- Steps Table -->
     <div class="card">
@@ -284,6 +399,31 @@ ob_start();
         </div>
     </div>
 
+        </div><!-- End Steps Panel -->
+    </div><!-- End Tab Content -->
+
+</div>
+
+<!-- Session Detail Modal -->
+<div class="modal fade" id="sessionDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-graduate"></i> Session Details</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="sessionDetailContent">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Delete Confirmation Form -->
@@ -294,12 +434,371 @@ ob_start();
 </form>
 
 <script>
+// CSRF Token for AJAX requests
+const csrfToken = '<?= $csrf->getToken() ?>';
+
 function confirmDelete(stepId, title) {
     if (confirm('Are you sure you want to delete step "' + title + '"?\n\nThis will also delete:\n- UI configuration\n- Validation rules\n- Prerequisites\n- Allowed interactions\n\nThis action cannot be undone.')) {
         document.getElementById('deleteStepId').value = stepId;
         document.getElementById('deleteForm').submit();
     }
 }
+
+// =========================================
+// Tab Switching with Bootstrap
+// =========================================
+document.querySelectorAll('[data-toggle="tab"]').forEach(tab => {
+    tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+
+        // Hide all tab panes
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('show', 'active');
+        });
+
+        // Remove active from all tabs
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // Show target pane
+        document.querySelector(targetId).classList.add('show', 'active');
+        this.classList.add('active');
+
+        // Load sessions when tab is opened
+        if (targetId === '#sessions-panel') {
+            loadSessions();
+        }
+    });
+});
+
+// =========================================
+// Sessions Management
+// =========================================
+let sessionsCurrentPage = 0;
+const sessionsPerPage = 10;
+
+async function loadSessions(page = 0) {
+    sessionsCurrentPage = page;
+    const offset = page * sessionsPerPage;
+
+    const tbody = document.getElementById('sessionsTableBody');
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">
+        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+    </td></tr>`;
+
+    try {
+        const response = await fetch(`tutorial-sessions-api.php?action=list&limit=${sessionsPerPage}&offset=${offset}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to load sessions');
+        }
+
+        renderSessions(data.sessions, data.total);
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">
+            <i class="fas fa-exclamation-triangle"></i> ${error.message}
+        </td></tr>`;
+    }
+}
+
+function renderSessions(sessions, total) {
+    const tbody = document.getElementById('sessionsTableBody');
+
+    if (sessions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">
+            <i class="fas fa-inbox"></i> No tutorial sessions yet
+        </td></tr>`;
+        document.getElementById('sessionsPaginationInfo').textContent = 'No sessions';
+        return;
+    }
+
+    tbody.innerHTML = sessions.map(session => {
+        const progress = session.step_number && session.total_steps
+            ? Math.round((session.step_number / session.total_steps) * 100)
+            : 0;
+
+        const statusBadge = session.completed
+            ? '<span class="badge badge-success"><i class="fas fa-check"></i> Completed</span>'
+            : '<span class="badge badge-primary"><i class="fas fa-spinner"></i> In Progress</span>';
+
+        const lastUpdate = new Date(session.updated_at).toLocaleString('fr-FR');
+
+        return `
+            <tr>
+                <td>
+                    <strong>${escapeHtml(session.player_name || 'Unknown')}</strong>
+                    <br><small class="text-muted">${escapeHtml(session.player_race || '')}</small>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px; min-width: 100px;">
+                        <div class="progress-bar ${session.completed ? 'bg-success' : ''}"
+                             role="progressbar"
+                             style="width: ${progress}%"
+                             aria-valuenow="${progress}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            ${progress}%
+                        </div>
+                    </div>
+                    <small class="text-muted">Step ${session.step_number || '?'} / ${session.total_steps || '?'}</small>
+                </td>
+                <td>
+                    <code>${escapeHtml(session.current_step || 'N/A')}</code>
+                    <br><small class="text-muted">${escapeHtml(session.current_step_title || '')}</small>
+                </td>
+                <td class="text-center">
+                    <span class="badge badge-warning">${session.xp_earned || 0} XP</span>
+                </td>
+                <td>${statusBadge}</td>
+                <td><small>${lastUpdate}</small></td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="viewSessionDetail('${session.tutorial_session_id}')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="resetSession('${session.tutorial_session_id}')" title="Reset Session">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteSession('${session.tutorial_session_id}')" title="Delete Session">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Update pagination info
+    const start = sessionsCurrentPage * sessionsPerPage + 1;
+    const end = Math.min(start + sessions.length - 1, total);
+    document.getElementById('sessionsPaginationInfo').textContent =
+        `Showing ${start}-${end} of ${total} sessions`;
+
+    // Render pagination
+    renderSessionsPagination(total);
+}
+
+function renderSessionsPagination(total) {
+    const totalPages = Math.ceil(total / sessionsPerPage);
+    const pagination = document.getElementById('sessionsPagination');
+
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    // Previous button
+    html += `<li class="page-item ${sessionsCurrentPage === 0 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="loadSessions(${sessionsCurrentPage - 1}); return false;">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+    </li>`;
+
+    // Page numbers
+    for (let i = 0; i < totalPages; i++) {
+        if (i === 0 || i === totalPages - 1 || Math.abs(i - sessionsCurrentPage) <= 2) {
+            html += `<li class="page-item ${i === sessionsCurrentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="loadSessions(${i}); return false;">${i + 1}</a>
+            </li>`;
+        } else if (Math.abs(i - sessionsCurrentPage) === 3) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+
+    // Next button
+    html += `<li class="page-item ${sessionsCurrentPage >= totalPages - 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="loadSessions(${sessionsCurrentPage + 1}); return false;">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    </li>`;
+
+    pagination.innerHTML = html;
+}
+
+async function viewSessionDetail(sessionId) {
+    const modal = document.getElementById('sessionDetailModal');
+    const content = document.getElementById('sessionDetailContent');
+
+    content.innerHTML = `<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>`;
+    $(modal).modal('show');
+
+    try {
+        const response = await fetch(`tutorial-sessions-api.php?action=detail&session_id=${sessionId}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to load session details');
+        }
+
+        content.innerHTML = renderSessionDetail(data);
+    } catch (error) {
+        content.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+    }
+}
+
+function renderSessionDetail(data) {
+    const session = data.session;
+    const steps = data.steps;
+    const tutorialPlayer = data.tutorial_player;
+
+    // Find current step index
+    const currentIndex = steps.findIndex(s => s.is_current);
+
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5><i class="fas fa-user"></i> Player Info</h5>
+                <table class="table table-sm">
+                    <tr><td>Name:</td><td><strong>${escapeHtml(session.player_name)}</strong></td></tr>
+                    <tr><td>Race:</td><td>${escapeHtml(session.player_race)}</td></tr>
+                    <tr><td>XP Earned:</td><td><span class="badge badge-warning">${session.xp_earned} XP</span></td></tr>
+                    <tr><td>Status:</td><td>${session.completed
+                        ? '<span class="badge badge-success">Completed</span>'
+                        : '<span class="badge badge-primary">In Progress</span>'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h5><i class="fas fa-info-circle"></i> Session Info</h5>
+                <table class="table table-sm">
+                    <tr><td>Session ID:</td><td><code>${session.tutorial_session_id}</code></td></tr>
+                    <tr><td>Version:</td><td>${session.tutorial_version}</td></tr>
+                    <tr><td>Started:</td><td>${new Date(session.created_at).toLocaleString('fr-FR')}</td></tr>
+                    <tr><td>Last Update:</td><td>${new Date(session.updated_at).toLocaleString('fr-FR')}</td></tr>
+                </table>
+            </div>
+        </div>
+    `;
+
+    // Tutorial player info if exists
+    if (tutorialPlayer) {
+        html += `
+            <div class="alert alert-info mb-4">
+                <h6><i class="fas fa-user-graduate"></i> Tutorial Player</h6>
+                <small>
+                    Name: <strong>${escapeHtml(tutorialPlayer.tutorial_player_name)}</strong> |
+                    Position: (${tutorialPlayer.x}, ${tutorialPlayer.y}) on ${tutorialPlayer.plan} |
+                    Active: ${tutorialPlayer.is_active ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'}
+                </small>
+            </div>
+        `;
+    }
+
+    // Step progress timeline
+    html += `<h5><i class="fas fa-tasks"></i> Progress Timeline</h5>`;
+    html += `<div class="timeline">`;
+
+    steps.forEach((step, index) => {
+        const isCompleted = index < currentIndex;
+        const isCurrent = step.is_current;
+        const isPending = index > currentIndex;
+
+        let markerClass = 'bg-secondary';
+        if (isCompleted) markerClass = 'bg-success';
+        if (isCurrent) markerClass = 'bg-primary';
+
+        html += `
+            <div class="timeline-item ${isCurrent ? 'in-progress' : ''}">
+                <div class="timeline-marker ${markerClass}"></div>
+                <div class="timeline-content ${isPending ? 'text-muted' : ''}">
+                    <div class="d-flex justify-content-between">
+                        <strong>${step.step_number}. ${escapeHtml(step.title)}</strong>
+                        <span class="badge badge-light">${step.step_type}</span>
+                    </div>
+                    <small>
+                        <code>${step.step_id}</code>
+                        ${step.xp_reward ? `<span class="ml-2 badge badge-warning">${step.xp_reward} XP</span>` : ''}
+                    </small>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    return html;
+}
+
+async function resetSession(sessionId) {
+    if (!confirm('Reset this session to the beginning?\n\nThe player will start from step 1 with 0 XP.')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('session_id', sessionId);
+        formData.append('csrf_token', csrfToken);
+
+        const response = await fetch('tutorial-sessions-api.php?action=reset', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to reset session');
+        }
+
+        showToast('success', 'Session reset successfully');
+        loadSessions(sessionsCurrentPage);
+    } catch (error) {
+        showToast('danger', error.message);
+    }
+}
+
+async function deleteSession(sessionId) {
+    if (!confirm('Delete this session?\n\nThis will remove all progress data. This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('session_id', sessionId);
+        formData.append('csrf_token', csrfToken);
+
+        const response = await fetch('tutorial-sessions-api.php?action=delete', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to delete session');
+        }
+
+        showToast('success', 'Session deleted successfully');
+        loadSessions(sessionsCurrentPage);
+    } catch (error) {
+        showToast('danger', error.message);
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show toast-notification`;
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// Refresh button handler
+document.getElementById('refreshSessions').addEventListener('click', () => {
+    loadSessions(sessionsCurrentPage);
+});
 </script>
 
 <style>
@@ -324,6 +823,126 @@ function confirmDelete(stepId, title) {
 .btn-group {
     display: flex;
     gap: 0.25rem;
+}
+
+/* Tab Navigation */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+    border-radius: 0.25rem 0.25rem 0 0;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    color: #495057;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    background: #f8f9fa;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background: transparent;
+}
+
+/* Session Stats Cards */
+.session-stat-card {
+    transition: transform 0.2s ease;
+}
+
+.session-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Timeline Styles */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #6c757d;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #dee2e6;
+    margin-top: 2px;
+}
+
+.timeline-item.in-progress .timeline-marker {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.2); }
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* Toast Notifications */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Progress bar improvements */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 </style>
 

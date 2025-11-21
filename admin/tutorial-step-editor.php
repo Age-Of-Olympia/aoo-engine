@@ -90,6 +90,31 @@ ob_start();
 
     <?= renderFlashMessage() ?>
 
+    <!-- Quick Actions Panel -->
+    <div class="card mb-3 quick-actions-card">
+        <div class="card-body py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-muted"><i class="fas fa-bolt"></i> Quick Actions</h6>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-outline-secondary" id="btn-preview" title="Preview step">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <?php if ($isEdit): ?>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-duplicate" title="Duplicate this step">
+                        <i class="fas fa-copy"></i> Duplicate
+                    </button>
+                    <?php endif; ?>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-export" title="Export as JSON">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="btn-test" title="Test this step">
+                        <i class="fas fa-play"></i> Test
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form method="post" action="tutorial-step-save.php" id="stepForm">
         <?= $csrf->renderTokenField() ?>
         <?php if ($isEdit): ?>
@@ -101,31 +126,37 @@ ob_start();
             <li class="nav-item">
                 <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab">
                     Basic Info
+                    <span class="tab-status" id="status-basic"></span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="ui-tab" data-toggle="tab" href="#ui" role="tab">
                     UI Config
+                    <span class="tab-status" id="status-ui"></span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="validation-tab" data-toggle="tab" href="#validation" role="tab">
                     Validation
+                    <span class="tab-status" id="status-validation"></span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="prerequisites-tab" data-toggle="tab" href="#prerequisites" role="tab">
                     Prerequisites
+                    <span class="tab-status" id="status-prerequisites"></span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="interactions-tab" data-toggle="tab" href="#interactions" role="tab">
                     Interactions
+                    <span class="tab-status" id="status-interactions"></span>
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="advanced-tab" data-toggle="tab" href="#advanced" role="tab">
                     Advanced
+                    <span class="tab-status" id="status-advanced"></span>
                 </a>
             </li>
         </ul>
@@ -175,7 +206,10 @@ ob_start();
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="step_type">Step Type *</label>
+                                    <label for="step_type">
+                                        Step Type *
+                                        <i class="fas fa-question-circle help-icon" title="The type determines which validation and UI options are relevant"></i>
+                                    </label>
                                     <select class="form-control" id="step_type" name="step_type" required>
                                         <option value="">-- Select Type --</option>
                                         <option value="info" <?= $isEdit && $step['step_type'] === 'info' ? 'selected' : '' ?>>Info</option>
@@ -191,10 +225,33 @@ ob_start();
                                         <option value="exploration" <?= $isEdit && $step['step_type'] === 'exploration' ? 'selected' : '' ?>>Exploration</option>
                                     </select>
                                     <small class="form-text text-muted">
-                                        Use <strong>ui_interaction</strong> for info steps with "Suivant" button (see Validation tab for "Manual Advance" helper)
+                                        Use <strong>ui_interaction</strong> for info steps with "Suivant" button
                                     </small>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="template_selector">
+                                        Quick Start Template
+                                        <i class="fas fa-magic help-icon" title="Load pre-configured settings for common step patterns"></i>
+                                    </label>
+                                    <select class="form-control" id="template_selector">
+                                        <option value="">-- Choose a template --</option>
+                                        <option value="info_manual_advance">📝 Info Step (Manual Advance)</option>
+                                        <option value="movement_basic">🚶 Movement Step</option>
+                                        <option value="movement_position">🎯 Move to Position</option>
+                                        <option value="action_use">⚡ Use Action</option>
+                                        <option value="ui_open_panel">🖼️ Open UI Panel</option>
+                                        <option value="combat_basic">⚔️ Combat Step</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Load pre-configured settings for common step patterns
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="xp_reward">XP Reward</label>
@@ -863,6 +920,302 @@ document.addEventListener('click', function(e) {
             row.remove();
         }
     }
+});
+
+// =========================================
+// ENHANCED FEATURES - Phase 1 & 2
+// =========================================
+
+// Template System
+document.getElementById('template_selector').addEventListener('change', function() {
+    const templateId = this.value;
+    if (!templateId) return;
+
+    const template = TUTORIAL_TEMPLATES[templateId];
+    if (!template) return;
+
+    // Confirm with user
+    if (!confirm(`Load template "${template.name}"?\n\n${template.description}\n\nThis will overwrite current settings.`)) {
+        this.value = '';
+        return;
+    }
+
+    // Apply template config
+    const config = template.config;
+
+    // Basic fields
+    if (config.step_type) document.getElementById('step_type').value = config.step_type;
+    if (config.xp_reward !== undefined) document.getElementById('xp_reward').value = config.xp_reward;
+
+    // UI fields
+    if (config.interaction_mode) document.getElementById('interaction_mode').value = config.interaction_mode;
+    if (config.tooltip_position) document.getElementById('tooltip_position').value = config.tooltip_position;
+    if (config.show_delay !== undefined) document.getElementById('show_delay').value = config.show_delay;
+
+    // Validation fields
+    if (config.requires_validation !== undefined) {
+        document.getElementById('requires_validation').checked = config.requires_validation;
+        document.getElementById('requires_validation').dispatchEvent(new Event('change'));
+    }
+    if (config.validation_type) document.getElementById('validation_type').value = config.validation_type;
+    if (config.element_clicked) document.getElementById('element_clicked').value = config.element_clicked;
+
+    // Prerequisites
+    if (config.mvt_required !== undefined) document.getElementById('mvt_required').value = config.mvt_required;
+    if (config.pa_required !== undefined) document.getElementById('pa_required').value = config.pa_required;
+    if (config.auto_restore !== undefined) document.getElementById('auto_restore').checked = config.auto_restore;
+
+    // Action fields
+    if (config.action_name) document.getElementById('action_name').value = config.action_name;
+
+    // Show success message & trigger updates
+    showToast('success', `Template "${template.name}" loaded! Fill in the remaining fields.`);
+    updateFieldVisibility();
+    updateTabStatus();
+
+    // Reset dropdown
+    this.value = '';
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// Contextual Field Visibility
+function updateFieldVisibility() {
+    const stepType = document.getElementById('step_type').value;
+    const validationType = document.getElementById('validation_type').value;
+
+    // Define which fields are relevant for each step type
+    const fieldRelevance = {
+        'movement': {
+            show: ['target_x', 'target_y', 'movement_count', 'mvt_required'],
+            hide: ['action_name', 'panel_id', 'dialog_id', 'pa_required']
+        },
+        'movement_limit': {
+            show: ['target_x', 'target_y', 'movement_count', 'mvt_required'],
+            hide: ['action_name', 'panel_id', 'dialog_id', 'pa_required']
+        },
+        'action': {
+            show: ['action_name', 'action_charges_required', 'pa_required'],
+            hide: ['panel_id', 'dialog_id', 'target_x', 'target_y']
+        },
+        'ui_interaction': {
+            show: ['element_clicked', 'element_selector', 'panel_id'],
+            hide: ['action_name', 'target_x', 'target_y', 'combat_required']
+        },
+        'combat': {
+            show: ['action_name', 'combat_required', 'pa_required'],
+            hide: ['panel_id', 'dialog_id']
+        },
+        'dialog': {
+            show: ['dialog_id'],
+            hide: ['target_x', 'target_y', 'action_name', 'panel_id']
+        },
+        'info': {
+            show: [],
+            hide: ['target_x', 'target_y', 'action_name', 'panel_id', 'dialog_id']
+        },
+        'welcome': {
+            show: [],
+            hide: ['target_x', 'target_y', 'action_name', 'panel_id', 'dialog_id']
+        }
+    };
+
+    // Apply visibility rules
+    const rules = fieldRelevance[stepType] || { show: [], hide: [] };
+
+    rules.show.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.closest('.form-group').style.display = 'block';
+            field.closest('.form-group').classList.add('relevant-field');
+        }
+    });
+
+    rules.hide.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.closest('.form-group').style.display = 'none';
+            field.closest('.form-group').classList.remove('relevant-field');
+        }
+    });
+
+    // Validation-specific visibility
+    if (validationType === 'position' || validationType === 'adjacent_to_position') {
+        ['target_x', 'target_y'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) field.closest('.form-group').style.display = 'block';
+        });
+    }
+
+    if (validationType === 'action_used') {
+        const field = document.getElementById('action_name');
+        if (field) field.closest('.form-group').style.display = 'block';
+    }
+
+    if (validationType === 'ui_panel_opened') {
+        const field = document.getElementById('panel_id');
+        if (field) field.closest('.form-group').style.display = 'block';
+    }
+}
+
+// Tab Status Indicators
+function updateTabStatus() {
+    // Basic Info tab
+    const title = document.getElementById('title').value;
+    const text = document.getElementById('text').value;
+    const stepType = document.getElementById('step_type').value;
+
+    const basicComplete = title && text && stepType;
+    updateStatusIcon('status-basic', basicComplete ? 'complete' : 'incomplete');
+
+    // UI Config tab
+    const interactionMode = document.getElementById('interaction_mode').value;
+    const uiComplete = interactionMode !== '';
+    updateStatusIcon('status-ui', uiComplete ? 'complete' : 'optional');
+
+    // Validation tab
+    const requiresValidation = document.getElementById('requires_validation').checked;
+    const validationType = document.getElementById('validation_type').value;
+
+    let validationComplete = !requiresValidation;
+    if (requiresValidation) {
+        validationComplete = validationType !== '';
+    }
+    updateStatusIcon('status-validation', validationComplete ? 'complete' : 'warning');
+
+    // Prerequisites, Interactions, Advanced - optional
+    updateStatusIcon('status-prerequisites', 'optional');
+    updateStatusIcon('status-interactions', 'optional');
+    updateStatusIcon('status-advanced', 'optional');
+}
+
+function updateStatusIcon(elementId, status) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const icons = {
+        complete: '<i class="fas fa-check-circle text-success"></i>',
+        warning: '<i class="fas fa-exclamation-triangle text-warning"></i>',
+        incomplete: '<i class="fas fa-times-circle text-danger"></i>',
+        optional: '<i class="fas fa-circle text-muted"></i>'
+    };
+
+    element.innerHTML = icons[status] || '';
+}
+
+// Quick Actions: Preview
+document.getElementById('btn-preview').addEventListener('click', function() {
+    const title = document.getElementById('title').value || 'Untitled Step';
+    const text = document.getElementById('text').value || 'No text provided';
+    const position = document.getElementById('tooltip_position').value || 'center';
+
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'previewModal';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Step Preview</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="preview-container">
+                        <div class="tutorial-tooltip ${position}">
+                            <div class="tooltip-content">
+                                <h3 class="tooltip-title">${title}</h3>
+                                <div class="tooltip-text">${text}</div>
+                                <button class="btn-tutorial-primary">Suivant →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    $(modal).modal('show');
+    $(modal).on('hidden.bs.modal', function() {
+        modal.remove();
+    });
+});
+
+// Quick Actions: Duplicate
+const duplicateBtn = document.getElementById('btn-duplicate');
+if (duplicateBtn) {
+    duplicateBtn.addEventListener('click', function() {
+        if (confirm('Create a duplicate of this step?\n\nThe new step will have all the same settings but a new step number.')) {
+            document.getElementById('step_id').value = '';
+            const currentNumber = parseFloat(document.getElementById('step_number').value) || 0;
+            document.getElementById('step_number').value = currentNumber + 0.1;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('info', 'Step duplicated! Update the step number and save.');
+        }
+    });
+}
+
+// Quick Actions: Export JSON
+document.getElementById('btn-export').addEventListener('click', function() {
+    const formData = new FormData(document.getElementById('stepForm'));
+    const json = {};
+    formData.forEach((value, key) => {
+        json[key] = value;
+    });
+
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tutorial-step-${json.step_id || 'export'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast('success', 'Step exported as JSON!');
+});
+
+// Quick Actions: Test
+document.getElementById('btn-test').addEventListener('click', function() {
+    showToast('info', 'Test functionality coming soon! This will load the step in a test environment.');
+});
+
+// Toast Notification Function
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show toast-notification`;
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// Event listeners for updates
+document.getElementById('step_type').addEventListener('change', () => {
+    updateFieldVisibility();
+    updateTabStatus();
+});
+
+document.getElementById('validation_type').addEventListener('change', updateFieldVisibility);
+
+document.querySelectorAll('input, select, textarea').forEach(field => {
+    field.addEventListener('change', updateTabStatus);
+    field.addEventListener('input', updateTabStatus);
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    updateFieldVisibility();
+    updateTabStatus();
 });
 </script>
 

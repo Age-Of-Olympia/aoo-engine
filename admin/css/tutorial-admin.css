@@ -1,0 +1,362 @@
+/**
+ * Tutorial Admin Panel - Enhanced UI/UX Styles
+ */
+
+/* ========================================
+   Template Selector
+   ======================================== */
+#template_selector:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* ========================================
+   Relevant Field Highlighting
+   ======================================== */
+.relevant-field {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+    padding-left: 1rem;
+    transition: all 0.3s ease;
+}
+
+.relevant-field label {
+    font-weight: 600;
+    color: #007bff;
+}
+
+/* ========================================
+   Tab Status Indicators
+   ======================================== */
+.tab-status {
+    margin-left: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.tab-status .fa-check-circle {
+    color: #28a745;
+}
+
+.tab-status .fa-exclamation-triangle {
+    color: #ffc107;
+}
+
+.tab-status .fa-times-circle {
+    color: #dc3545;
+}
+
+.tab-status .fa-circle {
+    color: #6c757d;
+}
+
+/* ========================================
+   Quick Actions Panel
+   ======================================== */
+.quick-actions-card {
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+/* ========================================
+   Preview Modal
+   ======================================== */
+.preview-container {
+    min-height: 400px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-container .tutorial-tooltip {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    max-width: 400px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.preview-container .tooltip-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    color: #333;
+}
+
+.preview-container .tooltip-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.preview-container .btn-tutorial-primary {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.preview-container .btn-tutorial-primary:hover {
+    background: #0056b3;
+}
+
+/* ========================================
+   Toast Notifications
+   ======================================== */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   Form Improvements
+   ======================================== */
+.form-group label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group small.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.help-icon {
+    color: #6c757d;
+    cursor: help;
+    margin-left: 0.25rem;
+}
+
+.help-icon:hover {
+    color: #007bff;
+}
+
+/* ========================================
+   Collapsible Sections
+   ======================================== */
+.advanced-section {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.advanced-section summary {
+    padding: 1rem;
+    background: #f8f9fa;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.advanced-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.advanced-section summary::after {
+    content: '▼';
+    transition: transform 0.3s ease;
+}
+
+.advanced-section[open] summary::after {
+    transform: rotate(-180deg);
+}
+
+.advanced-content {
+    padding: 1rem;
+}
+
+.optional-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: #6c757d;
+    color: white;
+    border-radius: 12px;
+}
+
+/* ========================================
+   Session Management Styles
+   ======================================== */
+.session-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    background: white;
+    transition: box-shadow 0.3s ease;
+}
+
+.session-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.session-card-completed {
+    border-left: 4px solid #28a745;
+    padding: 0.75rem;
+    background: #f8f9fa;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #28a745;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-item.in-progress .timeline-marker {
+    background: #007bff;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+@media (max-width: 768px) {
+    .quick-actions-card {
+        position: static;
+    }
+
+    .preview-container {
+        min-height: 300px;
+    }
+
+    .timeline {
+        padding-left: 1.5rem;
+    }
+}
+
+/* ========================================
+   Validation States
+   ======================================== */
+.form-control.is-valid {
+    border-color: #28a745;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.valid-feedback {
+    color: #28a745;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* ========================================
+   Loading States
+   ======================================== */
+.btn.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
