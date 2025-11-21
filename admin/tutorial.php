@@ -156,51 +156,15 @@ ob_start();
                 </div>
                 <div class="card-body">
                     <!-- Quick Stats Row -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="session-stat-card bg-light p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <div class="stat-icon bg-success text-white rounded-circle p-2 mr-3">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                    <div>
-                                        <div class="stat-value h4 mb-0"><?=$stats['sessions']['completed']?></div>
-                                        <small class="text-muted">Completed</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="session-stat-card bg-light p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <div class="stat-icon bg-primary text-white rounded-circle p-2 mr-3">
-                                        <i class="fas fa-spinner"></i>
-                                    </div>
-                                    <div>
-                                        <div class="stat-value h4 mb-0"><?=$stats['sessions']['in_progress']?></div>
-                                        <small class="text-muted">In Progress</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="session-stat-card bg-light p-3 rounded">
-                                <div class="d-flex align-items-center">
-                                    <div class="stat-icon bg-info text-white rounded-circle p-2 mr-3">
-                                        <i class="fas fa-percentage"></i>
-                                    </div>
-                                    <div>
-                                        <?php
-                                        $rate = $stats['sessions']['total_sessions'] > 0
-                                            ? round(($stats['sessions']['completed'] / $stats['sessions']['total_sessions']) * 100)
-                                            : 0;
-                                        ?>
-                                        <div class="stat-value h4 mb-0"><?=$rate?>%</div>
-                                        <small class="text-muted">Completion Rate</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <?php
+                    $rate = $stats['sessions']['total_sessions'] > 0
+                        ? round(($stats['sessions']['completed'] / $stats['sessions']['total_sessions']) * 100)
+                        : 0;
+                    ?>
+                    <div class="session-stats-inline mb-3">
+                        <span class="stat-badge bg-success"><i class="fas fa-check"></i> <?=$stats['sessions']['completed']?> Completed</span>
+                        <span class="stat-badge bg-primary"><i class="fas fa-spinner"></i> <?=$stats['sessions']['in_progress']?> In Progress</span>
+                        <span class="stat-badge bg-info"><i class="fas fa-percentage"></i> <?=$rate?>% Completion</span>
                     </div>
 
                     <!-- Sessions Table -->
@@ -305,7 +269,14 @@ ob_start();
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2>Tutorial Steps</h2>
-            <div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary" id="btn-export-all" title="Export all steps as JSON">
+                    <i class="fas fa-upload"></i> Export All
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-import-all" title="Import steps from JSON">
+                    <i class="fas fa-download"></i> Import All
+                </button>
+                <input type="file" id="import-all-file-input" accept=".json" style="display: none;">
                 <a href="tutorial-step-editor.php" class="btn btn-success">
                     <i class="fas fa-plus"></i> Add New Step
                 </a>
@@ -404,24 +375,20 @@ ob_start();
 
 </div>
 
-<!-- Session Detail Modal -->
-<div class="modal fade" id="sessionDetailModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-user-graduate"></i> Session Details</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+<!-- Session Detail Modal (hidden by default, shown via JS) -->
+<div class="admin-modal-overlay" id="sessionDetailModal" style="display: none;">
+    <div class="admin-modal">
+        <div class="admin-modal-header">
+            <h5><i class="fas fa-user-graduate"></i> Session Details</h5>
+            <button type="button" class="admin-modal-close" onclick="closeSessionModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body" id="sessionDetailContent">
+            <div class="text-center py-4">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
             </div>
-            <div class="modal-body" id="sessionDetailContent">
-                <div class="text-center py-4">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
+        </div>
+        <div class="admin-modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeSessionModal()">Close</button>
         </div>
     </div>
 </div>
@@ -445,32 +412,54 @@ function confirmDelete(stepId, title) {
 }
 
 // =========================================
-// Tab Switching with Bootstrap
+// Tab Switching with URL Hash Persistence
 // =========================================
+function switchToTab(targetId) {
+    // Hide all tab panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('show', 'active');
+    });
+
+    // Remove active from all tabs
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+
+    // Show target pane
+    const targetPane = document.querySelector(targetId);
+    if (targetPane) {
+        targetPane.classList.add('show', 'active');
+    }
+
+    // Set active tab
+    const activeTab = document.querySelector(`[href="${targetId}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+
+    // Update URL hash
+    history.replaceState(null, null, targetId);
+
+    // Load sessions when tab is opened
+    if (targetId === '#sessions-panel') {
+        loadSessions();
+    }
+}
+
 document.querySelectorAll('[data-toggle="tab"]').forEach(tab => {
     tab.addEventListener('click', function(e) {
         e.preventDefault();
         const targetId = this.getAttribute('href');
-
-        // Hide all tab panes
-        document.querySelectorAll('.tab-pane').forEach(pane => {
-            pane.classList.remove('show', 'active');
-        });
-
-        // Remove active from all tabs
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-
-        // Show target pane
-        document.querySelector(targetId).classList.add('show', 'active');
-        this.classList.add('active');
-
-        // Load sessions when tab is opened
-        if (targetId === '#sessions-panel') {
-            loadSessions();
-        }
+        switchToTab(targetId);
     });
+});
+
+// Restore tab from URL hash on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash;
+    if (hash && document.querySelector(hash)) {
+        switchToTab(hash);
+    }
 });
 
 // =========================================
@@ -620,12 +609,16 @@ function renderSessionsPagination(total) {
     pagination.innerHTML = html;
 }
 
+function closeSessionModal() {
+    document.getElementById('sessionDetailModal').style.display = 'none';
+}
+
 async function viewSessionDetail(sessionId) {
     const modal = document.getElementById('sessionDetailModal');
     const content = document.getElementById('sessionDetailContent');
 
     content.innerHTML = `<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>`;
-    $(modal).modal('show');
+    modal.style.display = 'flex';
 
     try {
         const response = await fetch(`tutorial-sessions-api.php?action=detail&session_id=${sessionId}`);
@@ -799,6 +792,97 @@ function showToast(type, message) {
 document.getElementById('refreshSessions').addEventListener('click', () => {
     loadSessions(sessionsCurrentPage);
 });
+
+// =========================================
+// Export All / Import All Steps
+// =========================================
+
+// Export All Steps
+document.getElementById('btn-export-all').addEventListener('click', async function() {
+    try {
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+
+        const response = await fetch('tutorial-sessions-api.php?action=export_all_steps');
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to export steps');
+        }
+
+        // Download as JSON file
+        const blob = new Blob([JSON.stringify(data.steps, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tutorial-steps-export-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        showToast('success', `Exported ${data.steps.length} steps successfully!`);
+    } catch (error) {
+        showToast('danger', error.message);
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="fas fa-upload"></i> Export All';
+    }
+});
+
+// Import All Steps
+document.getElementById('btn-import-all').addEventListener('click', function() {
+    document.getElementById('import-all-file-input').click();
+});
+
+document.getElementById('import-all-file-input').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+        try {
+            const steps = JSON.parse(event.target.result);
+
+            if (!Array.isArray(steps)) {
+                throw new Error('Invalid format: expected an array of steps');
+            }
+
+            const confirmMsg = `Import ${steps.length} steps?\n\n` +
+                `This will add/update steps based on step_id.\n` +
+                `Existing steps with matching step_id will be updated.\n` +
+                `New step_ids will be created as new steps.`;
+
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('steps', JSON.stringify(steps));
+            formData.append('csrf_token', csrfToken);
+
+            const response = await fetch('tutorial-sessions-api.php?action=import_all_steps', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to import steps');
+            }
+
+            showToast('success', `Import complete! Created: ${data.created}, Updated: ${data.updated}`);
+
+            // Reload page to show new steps
+            setTimeout(() => window.location.reload(), 1500);
+        } catch (err) {
+            showToast('danger', 'Import failed: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+
+    // Reset input
+    this.value = '';
+});
 </script>
 
 <style>
@@ -828,45 +912,62 @@ document.getElementById('refreshSessions').addEventListener('click', () => {
 /* Tab Navigation */
 .nav-tabs {
     border-bottom: 2px solid #dee2e6;
+    display: flex;
+    gap: 4px;
+}
+
+.nav-tabs .nav-item {
+    list-style: none;
 }
 
 .nav-tabs .nav-link {
     border-radius: 0.25rem 0.25rem 0 0;
     padding: 0.75rem 1.25rem;
     font-weight: 500;
-    color: #495057;
-    border: none;
+    color: #6c757d;
+    border: 1px solid transparent;
     border-bottom: 2px solid transparent;
     margin-bottom: -2px;
+    background: transparent;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .nav-tabs .nav-link:hover {
-    border-color: transparent;
+    color: #495057;
     background: #f8f9fa;
+    border-color: #e9ecef #e9ecef transparent;
 }
 
 .nav-tabs .nav-link.active {
     color: #007bff;
-    border-bottom-color: #007bff;
-    background: transparent;
+    background: white;
+    border-color: #dee2e6 #dee2e6 white;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: -2px;
 }
 
-/* Session Stats Cards */
-.session-stat-card {
-    transition: transform 0.2s ease;
-}
-
-.session-stat-card:hover {
-    transform: translateY(-2px);
-}
-
-.stat-icon {
-    width: 40px;
-    height: 40px;
+/* Session Stats Inline */
+.session-stats-inline {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
+
+.stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+}
+
+.stat-badge.bg-success { background: #27ae60; }
+.stat-badge.bg-primary { background: #3498db; }
+.stat-badge.bg-info { background: #17a2b8; }
 
 /* Timeline Styles */
 .timeline {
@@ -943,6 +1044,113 @@ document.getElementById('refreshSessions').addEventListener('click', () => {
 .progress-bar {
     font-size: 0.75rem;
     font-weight: 600;
+}
+
+/* Admin Modal Styles */
+.admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.admin-modal {
+    background: white;
+    border-radius: 8px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.admin-modal-header h5 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.admin-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    line-height: 1;
+}
+
+.admin-modal-close:hover {
+    color: #333;
+}
+
+.admin-modal-body {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.admin-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #dee2e6;
+    text-align: right;
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 4px;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-link {
+    display: block;
+    padding: 6px 12px;
+    text-decoration: none;
+    color: #007bff;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.page-link:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+    color: #0056b3;
+}
+
+.page-item.active .page-link {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    background: #f8f9fa;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 </style>
 
