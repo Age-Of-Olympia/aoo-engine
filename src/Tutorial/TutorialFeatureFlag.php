@@ -2,28 +2,40 @@
 
 namespace App\Tutorial;
 
+use Classes\Db;
+
 /**
  * Feature flags for tutorial system
  *
  * Allows gradual rollout without breaking existing functionality.
  * Can enable new tutorial system for specific players (admins, testers)
  * while keeping old system active for everyone else.
+ *
+ * Settings are stored in tutorial_settings table and can be managed via admin panel.
  */
 class TutorialFeatureFlag
 {
+    private static ?array $settingsCache = null;
+
     /**
      * Is new tutorial system enabled globally?
      */
     public static function isEnabled(): bool
     {
-        // Check environment variable first
+        // Check environment variable first (allows override)
         if (isset($_ENV['TUTORIAL_V2_ENABLED'])) {
             return filter_var($_ENV['TUTORIAL_V2_ENABLED'], FILTER_VALIDATE_BOOLEAN);
         }
 
-        // Check constant (can be set in config.php)
+        // Check constant (can be set in config.php, allows override)
         if (defined('TUTORIAL_V2_ENABLED')) {
             return TUTORIAL_V2_ENABLED === true;
+        }
+
+        // Check database setting
+        $settings = self::getSettings();
+        if (isset($settings['global_enabled'])) {
+            return filter_var($settings['global_enabled'], FILTER_VALIDATE_BOOLEAN);
         }
 
         // Default: disabled (safe default)
@@ -42,25 +54,122 @@ class TutorialFeatureFlag
             return true;
         }
 
-        // Allow specific test players (admins)
-        $testPlayers = self::getTestPlayers();
-        return in_array($playerId, $testPlayers);
+        // Allow specific whitelisted players
+        $whitelistedPlayers = self::getWhitelistedPlayers();
+        return in_array($playerId, $whitelistedPlayers, true);
     }
 
     /**
-     * Get list of test players who can access new tutorial
-     *
-     * Default: Cradek (1), Dorna (2), Thyrias (3)
+     * Get list of whitelisted players who can access tutorial
      */
-    private static function getTestPlayers(): array
+    public static function getWhitelistedPlayers(): array
     {
-        // Check if defined in config
+        // Check if defined in config (allows override)
         if (defined('TUTORIAL_V2_TEST_PLAYERS')) {
             return TUTORIAL_V2_TEST_PLAYERS;
         }
 
+        // Check database setting
+        $settings = self::getSettings();
+        if (isset($settings['whitelisted_players']) && $settings['whitelisted_players'] !== '') {
+            $ids = array_map('intval', explode(',', $settings['whitelisted_players']));
+            return array_filter($ids, fn($id) => $id > 0);
+        }
+
         // Default test players (the 3 dev accounts)
         return [1, 2, 3];
+    }
+
+    /**
+     * Check if auto-show for new players is enabled
+     */
+    public static function isAutoShowNewPlayersEnabled(): bool
+    {
+        $settings = self::getSettings();
+        if (isset($settings['auto_show_new_players'])) {
+            return filter_var($settings['auto_show_new_players'], FILTER_VALIDATE_BOOLEAN);
+        }
+        return true; // Default: enabled
+    }
+
+    /**
+     * Get all settings from database
+     */
+    public static function getSettings(): array
+    {
+        if (self::$settingsCache !== null) {
+            return self::$settingsCache;
+        }
+
+        try {
+            $db = new Db();
+            $result = $db->exe("SELECT setting_key, setting_value FROM tutorial_settings");
+
+            self::$settingsCache = [];
+            while ($row = $result->fetch_assoc()) {
+                self::$settingsCache[$row['setting_key']] = $row['setting_value'];
+            }
+        } catch (\Exception $e) {
+            error_log("[TutorialFeatureFlag] Error loading settings: " . $e->getMessage());
+            self::$settingsCache = [];
+        }
+
+        return self::$settingsCache;
+    }
+
+    /**
+     * Update a setting in the database
+     */
+    public static function updateSetting(string $key, string $value): bool
+    {
+        try {
+            $db = new Db();
+            $db->exe(
+                "INSERT INTO tutorial_settings (setting_key, setting_value)
+                 VALUES (?, ?)
+                 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)",
+                [$key, $value]
+            );
+
+            // Clear cache
+            self::$settingsCache = null;
+
+            return true;
+        } catch (\Exception $e) {
+            error_log("[TutorialFeatureFlag] Error updating setting: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Add a player to the whitelist
+     */
+    public static function addWhitelistedPlayer(int $playerId): bool
+    {
+        $current = self::getWhitelistedPlayers();
+        if (!in_array($playerId, $current, true)) {
+            $current[] = $playerId;
+            return self::updateSetting('whitelisted_players', implode(',', $current));
+        }
+        return true;
+    }
+
+    /**
+     * Remove a player from the whitelist
+     */
+    public static function removeWhitelistedPlayer(int $playerId): bool
+    {
+        $current = self::getWhitelistedPlayers();
+        $updated = array_filter($current, fn($id) => $id !== $playerId);
+        return self::updateSetting('whitelisted_players', implode(',', $updated));
+    }
+
+    /**
+     * Clear the settings cache (useful after external updates)
+     */
+    public static function clearCache(): void
+    {
+        self::$settingsCache = null;
     }
 
     /**
