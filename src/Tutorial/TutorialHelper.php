@@ -26,11 +26,38 @@ class TutorialHelper
     {
         // If in tutorial mode, use tutorial player ID
         if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_player_id'])) {
-            return (int) $_SESSION['tutorial_player_id'];
+            $tutorialPlayerId = (int) $_SESSION['tutorial_player_id'];
+
+            // Validate that the tutorial player still exists
+            if (self::validateTutorialPlayer($tutorialPlayerId)) {
+                return $tutorialPlayerId;
+            }
+
+            // Tutorial player was deleted/cleaned up - clear stale session
+            error_log("[TutorialHelper] Tutorial player {$tutorialPlayerId} no longer exists - clearing stale session");
+            self::exitTutorialMode();
         }
 
         // Otherwise use main player ID
         return (int) ($_SESSION['playerId'] ?? 0);
+    }
+
+    /**
+     * Validate that a tutorial player exists in the database
+     *
+     * @param int $tutorialPlayerId Tutorial player ID to validate
+     * @return bool True if player exists, false otherwise
+     */
+    private static function validateTutorialPlayer(int $tutorialPlayerId): bool
+    {
+        try {
+            $db = new \Classes\Db();
+            $result = $db->exe("SELECT id FROM players WHERE id = ?", [$tutorialPlayerId]);
+            return $result && $result->num_rows > 0;
+        } catch (\Exception $e) {
+            error_log("[TutorialHelper] Error validating tutorial player: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

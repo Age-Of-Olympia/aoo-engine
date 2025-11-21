@@ -104,6 +104,14 @@ class TutorialPlayer
 
         $actualPlayerId = (int) $conn->lastInsertId();
 
+        // IMPORTANT: Delete any stale JSON cache for this player ID
+        // This can happen if the player ID was previously used and has a cached file
+        $cacheFile = $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $actualPlayerId . '.json';
+        if (file_exists($cacheFile)) {
+            unlink($cacheFile);
+            error_log("[TutorialPlayer] Deleted stale cache file for player {$actualPlayerId}");
+        }
+
         // Give the tutorial character basic actions
         $basicActions = ['fouiller', 'repos', 'attaquer', 'courir', 'prier', 'entrainement'];
         foreach ($basicActions as $actionName) {
