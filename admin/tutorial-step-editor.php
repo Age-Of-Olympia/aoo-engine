@@ -190,6 +190,9 @@ ob_start();
                                         <option value="combat_intro" <?= $isEdit && $step['step_type'] === 'combat_intro' ? 'selected' : '' ?>>Combat Intro</option>
                                         <option value="exploration" <?= $isEdit && $step['step_type'] === 'exploration' ? 'selected' : '' ?>>Exploration</option>
                                     </select>
+                                    <small class="form-text text-muted">
+                                        Use <strong>ui_interaction</strong> for info steps with "Suivant" button (see Validation tab for "Manual Advance" helper)
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -419,9 +422,30 @@ ob_start();
 
                             <div class="form-group">
                                 <label for="element_clicked">Element Clicked</label>
-                                <input type="text" class="form-control font-monospace" id="element_clicked" name="element_clicked"
-                                       value="<?= $isEdit && $stepValidation ? htmlspecialchars($stepValidation['element_clicked'] ?? '') : '' ?>">
-                                <small class="form-text text-muted">For ui_interaction validation (CSS selector)</small>
+                                <div class="input-group">
+                                    <input type="text" class="form-control font-monospace" id="element_clicked" name="element_clicked"
+                                           value="<?= $isEdit && $stepValidation ? htmlspecialchars($stepValidation['element_clicked'] ?? '') : '' ?>">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnManualAdvance" title="Configure as Manual Advance step">
+                                            <i class="fas fa-hand-pointer"></i> Manual Advance
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="form-text text-muted">
+                                    For ui_interaction validation (CSS selector).
+                                    <strong>Tip:</strong> Use <code>tutorial_next</code> to create an info step where clicking "Suivant" button advances the step.
+                                </small>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <strong><i class="fas fa-info-circle"></i> Manual Advance Pattern:</strong>
+                                <p class="mb-1">For informational steps that require user acknowledgment:</p>
+                                <ol class="mb-0 pl-3">
+                                    <li>Set <strong>Validation Type</strong> to <code>ui_interaction</code></li>
+                                    <li>Set <strong>Element Clicked</strong> to <code>tutorial_next</code></li>
+                                    <li>Set <strong>Step Type</strong> (Basic Info tab) to <code>ui_interaction</code></li>
+                                </ol>
+                                <p class="mb-0 mt-2"><small>This will show the "Suivant" button and advance when clicked.</small></p>
                             </div>
 
                             <div class="form-group">
@@ -714,6 +738,46 @@ document.querySelectorAll('[data-toggle="tab"]').forEach(tab => {
 // Toggle validation fields visibility
 document.getElementById('requires_validation').addEventListener('change', function() {
     document.getElementById('validationFields').style.display = this.checked ? 'block' : 'none';
+});
+
+// Manual Advance button - auto-configure for info step with "Suivant" button
+document.getElementById('btnManualAdvance').addEventListener('click', function() {
+    // 1. Set step_type to ui_interaction
+    const stepTypeField = document.getElementById('step_type');
+    if (stepTypeField) {
+        stepTypeField.value = 'ui_interaction';
+    }
+
+    // 2. Check/enable validation
+    const requiresValidationCheckbox = document.getElementById('requires_validation');
+    if (!requiresValidationCheckbox.checked) {
+        requiresValidationCheckbox.checked = true;
+        requiresValidationCheckbox.dispatchEvent(new Event('change'));
+    }
+
+    // 3. Set validation type
+    document.getElementById('validation_type').value = 'ui_interaction';
+
+    // 4. Set element_clicked
+    document.getElementById('element_clicked').value = 'tutorial_next';
+
+    // Show success message
+    alert('✅ Manual Advance configured!\n\n' +
+          'All settings applied:\n' +
+          '- Step Type: ui_interaction\n' +
+          '- Requires Validation: enabled\n' +
+          '- Validation Type: ui_interaction\n' +
+          '- Element Clicked: tutorial_next\n\n' +
+          'This step will now show the "Suivant" button and advance when clicked.');
+
+    // Briefly highlight the step_type field to show it was changed
+    if (stepTypeField) {
+        stepTypeField.style.backgroundColor = '#d4edda';
+        stepTypeField.style.transition = 'background-color 0.3s';
+        setTimeout(() => {
+            stepTypeField.style.backgroundColor = '';
+        }, 1500);
+    }
 });
 
 // Add/Remove Interaction
