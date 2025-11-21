@@ -309,8 +309,14 @@ class TutorialContext
 
             // Ensure player data is loaded
             if (!$player->data || $player->data === false) {
-                error_log("[TutorialContext] ERROR: Player data not loaded for player {$player->id}");
+                error_log("[TutorialContext] ERROR: Player data not loaded for player {$player->id}, attempting to load...");
                 $player->get_data();
+
+                // Verify data was loaded successfully
+                if (!$player->data || $player->data === false) {
+                    error_log("[TutorialContext] CRITICAL: Failed to load player data for player {$player->id}");
+                    return false;
+                }
             }
 
             $current = $player->data->a ?? 0;
@@ -412,6 +418,12 @@ class TutorialContext
         // Ensure player data is loaded
         if (!$this->player->data || $this->player->data === false) {
             $this->player->get_data();
+
+            // Return 0 if data still not loaded
+            if (!$this->player->data || $this->player->data === false) {
+                error_log("[TutorialContext] CRITICAL: Failed to load player data in getCurrentMovement()");
+                return 0;
+            }
         }
 
         return $this->player->data->mvt ?? 0;
@@ -425,6 +437,12 @@ class TutorialContext
         // Ensure player data is loaded
         if (!$this->player->data || $this->player->data === false) {
             $this->player->get_data();
+
+            // Return 0 if data still not loaded
+            if (!$this->player->data || $this->player->data === false) {
+                error_log("[TutorialContext] CRITICAL: Failed to load player data in getCurrentActions()");
+                return 0;
+            }
         }
 
         return $this->player->data->a ?? 0;
@@ -438,6 +456,11 @@ class TutorialContext
         // Ensure player data is loaded
         if (!$this->player->data || $this->player->data === false) {
             $this->player->get_data();
+
+            // Throw exception if data still not loaded
+            if (!$this->player->data || $this->player->data === false) {
+                throw new \RuntimeException("Failed to load player data in setMovement()");
+            }
         }
 
         $this->player->data->mvt = $amount;
@@ -451,6 +474,11 @@ class TutorialContext
         // Ensure player data is loaded
         if (!$this->player->data || $this->player->data === false) {
             $this->player->get_data();
+
+            // Throw exception if data still not loaded
+            if (!$this->player->data || $this->player->data === false) {
+                throw new \RuntimeException("Failed to load player data in setActions()");
+            }
         }
 
         $this->player->data->a = $amount;
