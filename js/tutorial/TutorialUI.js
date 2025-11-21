@@ -78,7 +78,8 @@ class TutorialUI {
             }
         } catch (error) {
             console.error('[TutorialUI] Start error', error);
-            alert('Erreur lors du démarrage du tutoriel');
+            const errorMsg = error.message || 'Erreur inconnue';
+            alert(`Impossible de démarrer le tutoriel: ${errorMsg}\n\nVeuillez recharger la page et réessayer.`);
             return false;
         }
     }
@@ -117,6 +118,7 @@ class TutorialUI {
             }
         } catch (error) {
             console.error('[TutorialUI] Resume error', error);
+            alert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
             return false;
         }
     }
@@ -269,7 +271,7 @@ class TutorialUI {
             }
         } catch (error) {
             console.error('[TutorialUI] Advance error', error);
-            alert('Erreur lors de l\'avancement du tutoriel');
+            alert(`Erreur lors de l'avancement du tutoriel: ${error.message || 'Erreur inconnue'}\n\nSi le problème persiste, essayez de quitter et reprendre le tutoriel.`);
             return false;
         }
     }
@@ -1399,7 +1401,7 @@ class TutorialUI {
                 }
             } catch (error) {
                 console.error('[TutorialUI] Cancel error', error);
-                alert('Erreur lors de l\'annulation du tutoriel');
+                alert(`Erreur lors de l'annulation du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVous pouvez fermer cette fenêtre et recharger la page.`);
             }
         }
     }
