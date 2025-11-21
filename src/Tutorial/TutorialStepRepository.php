@@ -78,7 +78,20 @@ class TutorialStepRepository
                     -- Features
                     f.celebration,
                     f.show_rewards,
-                    f.redirect_delay
+                    f.redirect_delay,
+                    -- 1:N relationships using JSON aggregation (eliminates N+1 queries)
+                    (SELECT JSON_ARRAYAGG(selector)
+                     FROM tutorial_step_interactions
+                     WHERE step_id = ts.id) as interactions_json,
+                    (SELECT JSON_ARRAYAGG(selector)
+                     FROM tutorial_step_highlights
+                     WHERE step_id = ts.id) as highlights_json,
+                    (SELECT JSON_OBJECTAGG(context_key, context_value)
+                     FROM tutorial_step_context_changes
+                     WHERE step_id = ts.id) as context_changes_json,
+                    (SELECT JSON_OBJECTAGG(preparation_key, preparation_value)
+                     FROM tutorial_step_next_preparation
+                     WHERE step_id = ts.id) as next_preparation_json
                 FROM tutorial_steps ts
                 LEFT JOIN tutorial_step_ui ui ON ts.id = ui.step_id
                 LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
@@ -157,7 +170,20 @@ class TutorialStepRepository
                     -- Features
                     f.celebration,
                     f.show_rewards,
-                    f.redirect_delay
+                    f.redirect_delay,
+                    -- 1:N relationships using JSON aggregation (eliminates N+1 queries)
+                    (SELECT JSON_ARRAYAGG(selector)
+                     FROM tutorial_step_interactions
+                     WHERE step_id = ts.id) as interactions_json,
+                    (SELECT JSON_ARRAYAGG(selector)
+                     FROM tutorial_step_highlights
+                     WHERE step_id = ts.id) as highlights_json,
+                    (SELECT JSON_OBJECTAGG(context_key, context_value)
+                     FROM tutorial_step_context_changes
+                     WHERE step_id = ts.id) as context_changes_json,
+                    (SELECT JSON_OBJECTAGG(preparation_key, preparation_value)
+                     FROM tutorial_step_next_preparation
+                     WHERE step_id = ts.id) as next_preparation_json
                 FROM tutorial_steps ts
                 LEFT JOIN tutorial_step_ui ui ON ts.id = ui.step_id
                 LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
@@ -257,17 +283,29 @@ class TutorialStepRepository
      */
     private function convertRowToStepData(array $row): array
     {
-        // Fetch allowed interactions for this step
-        $interactions = $this->getStepInteractions((int)$row['id']);
+        // Parse JSON-aggregated 1:N relationships (eliminates 4 additional queries)
+        $interactions = $row['interactions_json'] ? json_decode($row['interactions_json'], true) : [];
+        $highlights = $row['highlights_json'] ? json_decode($row['highlights_json'], true) : [];
+        $contextChanges = $row['context_changes_json'] ? json_decode($row['context_changes_json'], true) : [];
+        $prepareNextStep = $row['next_preparation_json'] ? json_decode($row['next_preparation_json'], true) : [];
 
-        // Fetch additional highlights
-        $highlights = $this->getStepHighlights((int)$row['id']);
+        // Convert context change values to appropriate types
+        if (!empty($contextChanges)) {
+            foreach ($contextChanges as $key => $value) {
+                if (is_numeric($value)) {
+                    $contextChanges[$key] = (int)$value;
+                }
+            }
+        }
 
-        // Fetch context changes
-        $contextChanges = $this->getStepContextChanges((int)$row['id']);
-
-        // Fetch next step preparation
-        $prepareNextStep = $this->getStepNextPreparation((int)$row['id']);
+        // Convert preparation values to appropriate types
+        if (!empty($prepareNextStep)) {
+            foreach ($prepareNextStep as $key => $value) {
+                if (is_numeric($value)) {
+                    $prepareNextStep[$key] = (int)$value;
+                }
+            }
+        }
 
         // Build config array matching old JSON structure
         $config = [
@@ -393,87 +431,8 @@ class TutorialStepRepository
         ];
     }
 
-    /**
-     * Get allowed interactions for a step
-     */
-    private function getStepInteractions(int $stepId): array
-    {
-        $sql = 'SELECT selector FROM tutorial_step_interactions WHERE step_id = ?';
-        $result = $this->db->exe($sql, [$stepId]);
-
-        $interactions = [];
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                $interactions[] = $row['selector'];
-            }
-        }
-
-        return $interactions;
-    }
-
-    /**
-     * Get additional highlights for a step
-     */
-    private function getStepHighlights(int $stepId): array
-    {
-        $sql = 'SELECT selector FROM tutorial_step_highlights WHERE step_id = ?';
-        $result = $this->db->exe($sql, [$stepId]);
-
-        $highlights = [];
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                $highlights[] = $row['selector'];
-            }
-        }
-
-        return $highlights;
-    }
-
-    /**
-     * Get context changes for a step
-     */
-    private function getStepContextChanges(int $stepId): array
-    {
-        $sql = 'SELECT context_key, context_value FROM tutorial_step_context_changes WHERE step_id = ?';
-        $result = $this->db->exe($sql, [$stepId]);
-
-        $changes = [];
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                // Convert string values to appropriate types
-                $value = $row['context_value'];
-                if (is_numeric($value)) {
-                    $value = (int)$value;
-                }
-
-                $changes[$row['context_key']] = $value;
-            }
-        }
-
-        return $changes;
-    }
-
-    /**
-     * Get next step preparation actions
-     */
-    private function getStepNextPreparation(int $stepId): array
-    {
-        $sql = 'SELECT preparation_key, preparation_value FROM tutorial_step_next_preparation WHERE step_id = ?';
-        $result = $this->db->exe($sql, [$stepId]);
-
-        $preparation = [];
-        if ($result) {
-            while ($row = $result->fetch_assoc()) {
-                // Convert string values to appropriate types
-                $value = $row['preparation_value'];
-                if (is_numeric($value)) {
-                    $value = (int)$value;
-                }
-
-                $preparation[$row['preparation_key']] = $value;
-            }
-        }
-
-        return $preparation;
-    }
+    // Removed: getStepInteractions(), getStepHighlights(), getStepContextChanges(), getStepNextPreparation()
+    // These methods have been replaced by JSON aggregation in the main queries (eliminates N+1 query pattern).
+    // The data is now fetched in a single query using JSON_ARRAYAGG and JSON_OBJECTAGG,
+    // reducing 5 queries per step to just 1 query.
 }
