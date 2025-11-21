@@ -370,29 +370,55 @@ class TutorialManager
      * Complete tutorial
      *
      * Phase 4: Refactored to use service layer (50 lines → 22 lines, -56%)
+     *
+     * Rewards (XP/PI) are only given on first completion.
+     * Replays show a message indicating no rewards.
      */
     private function completeTutorial(): array
     {
         // Capture rewards from TutorialContext (source of truth for progression)
         $xpEarned = $this->context->getTutorialXP();
-        $piEarned = 0; // PI awarded from level-ups in context
 
-        // Transfer rewards and delete resources
-        if ($this->tutorialPlayer) {
+        // PI is awarded 1:1 with XP
+        $piEarned = $xpEarned;
+
+        // Check if this is a replay (player already completed tutorial before)
+        $realPlayerId = $this->tutorialPlayer ? $this->tutorialPlayer->realPlayerId : $this->context->getPlayer()->id;
+        $isReplay = $this->sessionManager->hasCompletedBefore($realPlayerId);
+
+        // Only transfer rewards on first completion
+        $actualXpAwarded = 0;
+        $actualPiAwarded = 0;
+
+        if (!$isReplay && $this->tutorialPlayer) {
             $this->tutorialPlayer->transferRewardsToRealPlayer($xpEarned, $piEarned);
+            $actualXpAwarded = $xpEarned;
+            $actualPiAwarded = $piEarned;
+        }
+
+        // Delete tutorial resources
+        if ($this->tutorialPlayer) {
             $this->resourceManager->deleteTutorialPlayer($this->tutorialPlayer, $this->sessionId);
         }
 
         // Complete session in database
         $this->sessionManager->completeSession($this->sessionId, $xpEarned);
 
+        // Build completion message based on whether rewards were given
+        if ($isReplay) {
+            $message = "Félicitations! Tu as terminé le tutoriel! Tu l'avais déjà complété auparavant, donc tu ne reçois pas de récompenses cette fois.";
+        } else {
+            $message = "Félicitations! Tu as terminé le tutoriel! Tu as gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI!";
+        }
+
         return [
             'success' => true,
             'completed' => true,
-            'xp_earned' => $xpEarned,
-            'pi_earned' => $piEarned,
+            'xp_earned' => $actualXpAwarded,
+            'pi_earned' => $actualPiAwarded,
             'final_level' => $this->context->getTutorialLevel(),
-            'message' => "Félicitations! Tu as terminé le tutoriel! Tu as gagné {$xpEarned} XP et {$piEarned} PI!"
+            'is_replay' => $isReplay,
+            'message' => $message
         ];
     }
 

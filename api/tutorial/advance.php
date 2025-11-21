@@ -77,7 +77,9 @@ try {
                 'completed' => true,
                 'message' => $result['message'] ?? 'Tutorial completed!',
                 'xp_earned' => $result['xp_earned'] ?? 0,
-                'final_level' => $result['final_level'] ?? 1
+                'pi_earned' => $result['pi_earned'] ?? 0,
+                'final_level' => $result['final_level'] ?? 1,
+                'is_replay' => $result['is_replay'] ?? false
             ]);
         } else {
             // Return next step data
