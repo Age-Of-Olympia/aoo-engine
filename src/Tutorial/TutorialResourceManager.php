@@ -144,10 +144,10 @@ class TutorialResourceManager
             $playerY = (int) $playerData['y'];
             $plan = $playerData['plan'];
 
-            // Find nearby position for enemy (2 tiles away to avoid Gaïa at 1,0)
-            // Gaïa (NPC guide) is at (1,0), so spawn enemy at (2,1) instead
-            $enemyX = $playerX + 2;
-            $enemyY = $playerY + 1;
+            // Find nearby position for enemy (offset to avoid Gaïa at 1,0)
+            // Gaïa (NPC guide) is at (1,0), so spawn enemy with offset
+            $enemyX = $playerX + TutorialConstants::ENEMY_SPAWN_OFFSET_X;
+            $enemyY = $playerY + TutorialConstants::ENEMY_SPAWN_OFFSET_Y;
 
             // Get or create coordinates for enemy
             $coordsStmt = $this->conn->prepare("

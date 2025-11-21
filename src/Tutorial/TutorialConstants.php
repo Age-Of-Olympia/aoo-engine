@@ -67,6 +67,17 @@ class TutorialConstants
      */
     const TUTORIAL_ENEMY_ID_RANGE = 899999;
 
+    /**
+     * Enemy spawn position relative to player
+     *
+     * When spawning a tutorial enemy, it's placed at this offset from the player's position.
+     * (X offset, Y offset) = (2, 1) means 2 tiles east, 1 tile south from player
+     *
+     * @var array{int, int}
+     */
+    const ENEMY_SPAWN_OFFSET_X = 2;
+    const ENEMY_SPAWN_OFFSET_Y = 1;
+
     // ========================================================================
     // TUTORIAL PROGRESSION CONSTANTS
     // ========================================================================
