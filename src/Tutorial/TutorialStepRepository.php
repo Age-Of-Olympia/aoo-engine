@@ -284,10 +284,10 @@ class TutorialStepRepository
     private function convertRowToStepData(array $row): array
     {
         // Parse JSON-aggregated 1:N relationships (eliminates 4 additional queries)
-        $interactions = $row['interactions_json'] ? json_decode($row['interactions_json'], true) : [];
-        $highlights = $row['highlights_json'] ? json_decode($row['highlights_json'], true) : [];
-        $contextChanges = $row['context_changes_json'] ? json_decode($row['context_changes_json'], true) : [];
-        $prepareNextStep = $row['next_preparation_json'] ? json_decode($row['next_preparation_json'], true) : [];
+        $interactions = $this->parseJsonArray($row['interactions_json'] ?? null);
+        $highlights = $this->parseJsonArray($row['highlights_json'] ?? null);
+        $contextChanges = $this->parseJsonObject($row['context_changes_json'] ?? null);
+        $prepareNextStep = $this->parseJsonObject($row['next_preparation_json'] ?? null);
 
         // Convert context change values to appropriate types
         if (!empty($contextChanges)) {
@@ -435,4 +435,48 @@ class TutorialStepRepository
     // These methods have been replaced by JSON aggregation in the main queries (eliminates N+1 query pattern).
     // The data is now fetched in a single query using JSON_ARRAYAGG and JSON_OBJECTAGG,
     // reducing 5 queries per step to just 1 query.
+
+    /**
+     * Parse JSON array from database (handles NULL and decode errors)
+     *
+     * @param string|null $json JSON string from JSON_ARRAYAGG
+     * @return array Decoded array or empty array on failure
+     */
+    private function parseJsonArray(?string $json): array
+    {
+        if ($json === null || $json === '') {
+            return [];
+        }
+
+        $decoded = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("[TutorialStepRepository] JSON decode error for array: " . json_last_error_msg() . " | JSON: " . substr($json, 0, 100));
+            return [];
+        }
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * Parse JSON object from database (handles NULL and decode errors)
+     *
+     * @param string|null $json JSON string from JSON_OBJECTAGG
+     * @return array Decoded associative array or empty array on failure
+     */
+    private function parseJsonObject(?string $json): array
+    {
+        if ($json === null || $json === '') {
+            return [];
+        }
+
+        $decoded = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("[TutorialStepRepository] JSON decode error for object: " . json_last_error_msg() . " | JSON: " . substr($json, 0, 100));
+            return [];
+        }
+
+        return is_array($decoded) ? $decoded : [];
+    }
 }
