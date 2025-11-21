@@ -724,3 +724,31 @@
 #tutorial-step-nav-toggle-btn.hidden {
     display: none;
 }
+
+/* Inventory panel for tutorial AJAX mode */
+#inventory-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1a2e;
+    border: 2px solid #D4AF37;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 10000;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+#inventory-panel h3 {
+    color: #D4AF37;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#inventory-panel .inventory-ajax-panel {
+    color: #f0f0f0;
+}
