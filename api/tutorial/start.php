@@ -40,12 +40,7 @@ if (!TutorialFeatureFlag::isEnabledForPlayer($playerId)) {
     http_response_code(403);
     echo json_encode([
         'success' => false,
-        'error' => 'Tutorial not available',
-        'debug' => [
-            'player_id' => $playerId,
-            'is_enabled_globally' => TutorialFeatureFlag::isEnabled(),
-            'test_players' => [1, 2, 3]
-        ]
+        'error' => 'Tutorial not available'
     ]);
     exit;
 }
