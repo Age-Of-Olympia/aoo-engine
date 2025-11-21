@@ -7,6 +7,7 @@
  */
 
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialSessionManager;
 use App\Tutorial\TutorialMapInstance;
 use App\Tutorial\TutorialEnemyCleanup;
 use App\Entity\EntityManagerFactory;
@@ -32,6 +33,13 @@ try {
     // Get input from JSON body
     $input = json_decode(file_get_contents('php://input'), true);
     $sessionId = $input['session_id'] ?? null;
+
+    // Validate session ID format if provided
+    if ($sessionId && !TutorialSessionManager::validateSessionIdFormat($sessionId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid session_id format']);
+        exit;
+    }
 
     // Clear tutorial session from PHP session
     TutorialHelper::exitTutorialMode();

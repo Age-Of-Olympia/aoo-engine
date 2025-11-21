@@ -8,6 +8,7 @@
 
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialSessionManager;
 use Classes\Player;
 
 define('NO_LOGIN', true);
@@ -40,6 +41,13 @@ $validationData = $input['validation_data'] ?? [];
 if (!$sessionId) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Missing session_id']);
+    exit;
+}
+
+// Validate session ID format
+if (!TutorialSessionManager::validateSessionIdFormat($sessionId)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid session_id format']);
     exit;
 }
 
@@ -108,7 +116,6 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Internal server error',
-        'debug' => $e->getMessage()
+        'error' => 'Internal server error'
     ]);
 }
