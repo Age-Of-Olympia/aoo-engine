@@ -271,10 +271,8 @@ class TutorialContext
 
         $autoRestore = $prerequisites['auto_restore'] ?? false;
 
-        // CRITICAL: Use TutorialHelper to get the correct player
-        $playerId = \App\Tutorial\TutorialHelper::getActivePlayerId();
-        $player = new \Classes\Player($playerId);
-        $player->get_data();
+        // CRITICAL: Use TutorialHelper to load the correct player with validation
+        $player = \App\Tutorial\TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: false);
 
         // Check and restore movement points
         if (isset($prerequisites['mvt'])) {
@@ -495,9 +493,7 @@ class TutorialContext
     private function setPlayerMovements(int $targetAmount): void
     {
         // CRITICAL: Get the actual tutorial player instance (not context's cached player)
-        $playerId = \App\Tutorial\TutorialHelper::getActivePlayerId();
-        $player = new \Classes\Player($playerId);
-        $player->get_data();
+        $player = \App\Tutorial\TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: true);
 
         // Log current state BEFORE clearing
         $db = new \Classes\Db();

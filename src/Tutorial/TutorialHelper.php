@@ -132,4 +132,75 @@ class TutorialHelper
     {
         return (int) ($_SESSION['playerId'] ?? 0);
     }
+
+    /**
+     * Load player with full data and validation
+     *
+     * Loads the active player (tutorial or main) with all necessary data.
+     * This is a centralized method to avoid duplicate player loading code.
+     *
+     * @param bool $loadCaracs Whether to load characteristics (turn data)
+     * @param bool $throwOnFailure Whether to throw exception if data load fails
+     * @return \Classes\Player Loaded player instance
+     * @throws \RuntimeException If player data fails to load and throwOnFailure is true
+     */
+    public static function loadActivePlayer(bool $loadCaracs = false, bool $throwOnFailure = false): \Classes\Player
+    {
+        $activePlayerId = self::getActivePlayerId();
+        $player = new \Classes\Player($activePlayerId);
+
+        // Load player data
+        $player->get_data();
+
+        // Validate data loaded successfully
+        if (!$player->data || $player->data === false) {
+            $errorMsg = "Failed to load player data for player {$activePlayerId}";
+            error_log("[TutorialHelper] {$errorMsg}");
+
+            if ($throwOnFailure) {
+                throw new \RuntimeException($errorMsg);
+            }
+        }
+
+        // Load characteristics if requested
+        if ($loadCaracs) {
+            $player->get_caracs();
+        }
+
+        return $player;
+    }
+
+    /**
+     * Load specific player with full data and validation
+     *
+     * @param int $playerId Player ID to load
+     * @param bool $loadCaracs Whether to load characteristics (turn data)
+     * @param bool $throwOnFailure Whether to throw exception if data load fails
+     * @return \Classes\Player Loaded player instance
+     * @throws \RuntimeException If player data fails to load and throwOnFailure is true
+     */
+    public static function loadPlayer(int $playerId, bool $loadCaracs = false, bool $throwOnFailure = false): \Classes\Player
+    {
+        $player = new \Classes\Player($playerId);
+
+        // Load player data
+        $player->get_data();
+
+        // Validate data loaded successfully
+        if (!$player->data || $player->data === false) {
+            $errorMsg = "Failed to load player data for player {$playerId}";
+            error_log("[TutorialHelper] {$errorMsg}");
+
+            if ($throwOnFailure) {
+                throw new \RuntimeException($errorMsg);
+            }
+        }
+
+        // Load characteristics if requested
+        if ($loadCaracs) {
+            $player->get_caracs();
+        }
+
+        return $player;
+    }
 }

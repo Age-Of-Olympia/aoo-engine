@@ -35,15 +35,8 @@ class MovementStep extends AbstractStep
                 return isset($data['action']) && $data['action'] === 'move';
 
             case 'movements_depleted':
-                // Check that player has used all movements // Loading it first, maybe better way to check ?
-                $activePlayerId = TutorialHelper::getActivePlayerId();
-                // Load player
-                $player = new Player($activePlayerId);
-                // Not working, wrong player (main character)
-                //$player = $this->context->getPlayer();
-                // Force fresh reload to get latest turn data from database
-                $player->get_data();
-                $player->get_caracs(); // This loads turn data from DB into $player->turn
+                // Check that player has used all movements
+                $player = TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: false);
 
                 // Use getRemaining() which checks $player->turn (live data from DB)
                 $mvtRemaining = $player->getRemaining('mvt');
@@ -58,9 +51,7 @@ class MovementStep extends AbstractStep
 
             case 'position':
                 // Check that player is at a specific position
-                $activePlayerId = TutorialHelper::getActivePlayerId();
-                $player = new Player($activePlayerId);
-                $player->get_data();
+                $player = TutorialHelper::loadActivePlayer(loadCaracs: false, throwOnFailure: false);
                 $player->getCoords();
 
                 $requiredX = $this->config['validation_params']['x'] ?? null;
@@ -74,7 +65,8 @@ class MovementStep extends AbstractStep
                 $currentX = $player->coords->x ?? null;
                 $currentY = $player->coords->y ?? null;
 
-                $isAtPosition = ($currentX == $requiredX && $currentY == $requiredY);
+                // Use strict comparison for coordinates
+                $isAtPosition = ($currentX === $requiredX && $currentY === $requiredY);
 
                 error_log("[MovementStep] Position validation: player at ({$currentX},{$currentY}), required ({$requiredX},{$requiredY}), result: " . ($isAtPosition ? 'TRUE' : 'FALSE'));
 
@@ -82,9 +74,7 @@ class MovementStep extends AbstractStep
 
             case 'adjacent_to_position':
                 // Check that player is adjacent to a specific position (including diagonals)
-                $activePlayerId = TutorialHelper::getActivePlayerId();
-                $player = new Player($activePlayerId);
-                $player->get_data();
+                $player = TutorialHelper::loadActivePlayer(loadCaracs: false, throwOnFailure: false);
                 $player->getCoords();
 
                 $targetX = $this->config['validation_params']['target_x'] ?? null;
@@ -98,9 +88,15 @@ class MovementStep extends AbstractStep
                 $currentX = $player->coords->x ?? null;
                 $currentY = $player->coords->y ?? null;
 
+                // Validate coordinates are numeric
+                if (!is_numeric($currentX) || !is_numeric($currentY) || !is_numeric($targetX) || !is_numeric($targetY)) {
+                    error_log("[MovementStep] Invalid coordinate types for adjacent validation");
+                    return false;
+                }
+
                 // Check if player is adjacent (Chebyshev distance = 1, allows all 8 directions including diagonals)
-                $deltaX = abs($currentX - $targetX);
-                $deltaY = abs($currentY - $targetY);
+                $deltaX = abs((int)$currentX - (int)$targetX);
+                $deltaY = abs((int)$currentY - (int)$targetY);
                 $isAdjacent = ($deltaX <= 1 && $deltaY <= 1 && ($deltaX + $deltaY > 0));
 
                 error_log("[MovementStep] Adjacent validation: player at ({$currentX},{$currentY}), target ({$targetX},{$targetY}), deltaX={$deltaX}, deltaY={$deltaY}, result: " . ($isAdjacent ? 'TRUE' : 'FALSE'));
@@ -121,12 +117,8 @@ class MovementStep extends AbstractStep
 
         switch ($validationType) {
             case 'movements_depleted':
-                // Use authoritative source for player ID (consistent with validate())
-                $activePlayerId = TutorialHelper::getActivePlayerId();
-                $player = new Player($activePlayerId);
-                $player->get_data();
                 // Get live movement count from database
-                $player->get_caracs();
+                $player = TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: false);
                 $mvtRemaining = $player->getRemaining('mvt');
                 return "Il vous reste encore {$mvtRemaining} mouvement(s). Continuez à vous déplacer!";
 
