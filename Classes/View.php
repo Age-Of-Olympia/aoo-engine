@@ -123,6 +123,14 @@ class View{
 
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
+
+            // Safety check: if no coords in sight, skip the query
+            if (empty($this->inSightId)) {
+                error_log("[View] No coords found in sight for current position - skipping map elements query");
+                echo '</svg>';
+                return;
+            }
+
             if($this->tiled){
 
                 // only for tiled
@@ -402,6 +410,10 @@ class View{
                         if ($row->id == $this->playerId) {
                             $playerClass .= ' current-player';
                             $currentPlayerId = 'current-player-avatar'; // Additional ID for reliable targeting
+                        }
+                        // Add tutorial-enemy class for tutorial enemy targeting
+                        if ($row->id < 0 && $player->data->name === "Mannequin d'entraînement") {
+                            $playerClass .= ' tutorial-enemy';
                         }
 
                         echo '
