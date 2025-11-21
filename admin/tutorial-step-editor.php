@@ -105,8 +105,12 @@ ob_start();
                     </button>
                     <?php endif; ?>
                     <button type="button" class="btn btn-outline-secondary" id="btn-export" title="Export as JSON">
-                        <i class="fas fa-download"></i> Export
+                        <i class="fas fa-upload"></i> Export
                     </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btn-import" title="Import from JSON">
+                        <i class="fas fa-download"></i> Import
+                    </button>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
                     <button type="button" class="btn btn-outline-info" id="btn-test" title="Test this step">
                         <i class="fas fa-play"></i> Test
                     </button>
@@ -1026,17 +1030,19 @@ function updateFieldVisibility() {
 
     rules.show.forEach(fieldId => {
         const field = document.getElementById(fieldId);
-        if (field) {
-            field.closest('.form-group').style.display = 'block';
-            field.closest('.form-group').classList.add('relevant-field');
+        const formGroup = field?.closest('.form-group');
+        if (formGroup) {
+            formGroup.style.display = 'block';
+            formGroup.classList.add('relevant-field');
         }
     });
 
     rules.hide.forEach(fieldId => {
         const field = document.getElementById(fieldId);
-        if (field) {
-            field.closest('.form-group').style.display = 'none';
-            field.closest('.form-group').classList.remove('relevant-field');
+        const formGroup = field?.closest('.form-group');
+        if (formGroup) {
+            formGroup.style.display = 'none';
+            formGroup.classList.remove('relevant-field');
         }
     });
 
@@ -1044,18 +1050,21 @@ function updateFieldVisibility() {
     if (validationType === 'position' || validationType === 'adjacent_to_position') {
         ['target_x', 'target_y'].forEach(id => {
             const field = document.getElementById(id);
-            if (field) field.closest('.form-group').style.display = 'block';
+            const formGroup = field?.closest('.form-group');
+            if (formGroup) formGroup.style.display = 'block';
         });
     }
 
     if (validationType === 'action_used') {
         const field = document.getElementById('action_name');
-        if (field) field.closest('.form-group').style.display = 'block';
+        const formGroup = field?.closest('.form-group');
+        if (formGroup) formGroup.style.display = 'block';
     }
 
     if (validationType === 'ui_panel_opened') {
         const field = document.getElementById('panel_id');
-        if (field) field.closest('.form-group').style.display = 'block';
+        const formGroup = field?.closest('.form-group');
+        if (formGroup) formGroup.style.display = 'block';
     }
 }
 
@@ -1110,25 +1119,22 @@ document.getElementById('btn-preview').addEventListener('click', function() {
     const text = document.getElementById('text').value || 'No text provided';
     const position = document.getElementById('tooltip_position').value || 'center';
 
-    // Create modal
-    const modal = document.createElement('div');
-    modal.className = 'modal fade';
-    modal.id = 'previewModal';
-    modal.innerHTML = `
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Step Preview</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="preview-container">
-                        <div class="tutorial-tooltip ${position}">
-                            <div class="tooltip-content">
-                                <h3 class="tooltip-title">${title}</h3>
-                                <div class="tooltip-text">${text}</div>
-                                <button class="btn-tutorial-primary">Suivant →</button>
-                            </div>
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'preview-modal-overlay';
+    overlay.innerHTML = `
+        <div class="preview-modal">
+            <div class="preview-modal-header">
+                <h5>Step Preview</h5>
+                <button type="button" class="preview-modal-close">&times;</button>
+            </div>
+            <div class="preview-modal-body">
+                <div class="preview-container">
+                    <div class="tutorial-tooltip ${position}">
+                        <div class="tooltip-content">
+                            <h3 class="tooltip-title">${title}</h3>
+                            <div class="tooltip-text">${text}</div>
+                            <button class="btn-tutorial-primary">Suivant &rarr;</button>
                         </div>
                     </div>
                 </div>
@@ -1136,10 +1142,12 @@ document.getElementById('btn-preview').addEventListener('click', function() {
         </div>
     `;
 
-    document.body.appendChild(modal);
-    $(modal).modal('show');
-    $(modal).on('hidden.bs.modal', function() {
-        modal.remove();
+    document.body.appendChild(overlay);
+
+    // Close on button click or overlay click
+    overlay.querySelector('.preview-modal-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
     });
 });
 
@@ -1177,9 +1185,129 @@ document.getElementById('btn-export').addEventListener('click', function() {
     showToast('success', 'Step exported as JSON!');
 });
 
+// Quick Actions: Import
+document.getElementById('btn-import').addEventListener('click', function() {
+    document.getElementById('import-file-input').click();
+});
+
+document.getElementById('import-file-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const json = JSON.parse(event.target.result);
+
+            if (!confirm('Import this step configuration?\n\nThis will overwrite current form values.')) {
+                return;
+            }
+
+            // Map JSON keys to form fields
+            const fieldMap = {
+                'version': 'version',
+                'step_number': 'step_number',
+                'step_id': 'step_id',
+                'next_step': 'next_step',
+                'step_type': 'step_type',
+                'xp_reward': 'xp_reward',
+                'title': 'title',
+                'text': 'text',
+                'target_selector': 'target_selector',
+                'target_description': 'target_description',
+                'highlight_selector': 'highlight_selector',
+                'tooltip_position': 'tooltip_position',
+                'interaction_mode': 'interaction_mode',
+                'blocked_click_message': 'blocked_click_message',
+                'show_delay': 'show_delay',
+                'auto_advance_delay': 'auto_advance_delay',
+                'validation_type': 'validation_type',
+                'validation_hint': 'validation_hint',
+                'target_x': 'target_x',
+                'target_y': 'target_y',
+                'movement_count': 'movement_count',
+                'action_name': 'action_name',
+                'action_charges_required': 'action_charges_required',
+                'panel_id': 'panel_id',
+                'element_selector': 'element_selector',
+                'element_clicked': 'element_clicked',
+                'dialog_id': 'dialog_id',
+                'mvt_required': 'mvt_required',
+                'pa_required': 'pa_required',
+                'spawn_enemy': 'spawn_enemy',
+                'ensure_harvestable_tree_x': 'ensure_harvestable_tree_x',
+                'ensure_harvestable_tree_y': 'ensure_harvestable_tree_y',
+                'redirect_delay': 'redirect_delay'
+            };
+
+            // Apply values to text/number/select fields
+            for (const [jsonKey, fieldId] of Object.entries(fieldMap)) {
+                const field = document.getElementById(fieldId);
+                if (field && json[jsonKey] !== undefined) {
+                    field.value = json[jsonKey];
+                }
+            }
+
+            // Handle checkbox fields
+            const checkboxFields = {
+                'is_active': 'is_active',
+                'allow_manual_advance': 'allow_manual_advance',
+                'auto_close_card': 'auto_close_card',
+                'requires_validation': 'requires_validation',
+                'combat_required': 'combat_required',
+                'auto_restore': 'auto_restore',
+                'consume_movements': 'consume_movements',
+                'unlimited_mvt': 'unlimited_mvt',
+                'unlimited_pa': 'unlimited_pa',
+                'celebration': 'celebration',
+                'show_rewards': 'show_rewards'
+            };
+
+            for (const [jsonKey, fieldId] of Object.entries(checkboxFields)) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.checked = json[jsonKey] === '1' || json[jsonKey] === 1 || json[jsonKey] === true;
+                }
+            }
+
+            // Trigger validation fields visibility
+            document.getElementById('requires_validation').dispatchEvent(new Event('change'));
+
+            // Update UI
+            updateFieldVisibility();
+            updateTabStatus();
+
+            showToast('success', 'Step imported successfully!');
+        } catch (err) {
+            showToast('danger', 'Failed to import: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+
+    // Reset input so same file can be selected again
+    this.value = '';
+});
+
 // Quick Actions: Test
 document.getElementById('btn-test').addEventListener('click', function() {
-    showToast('info', 'Test functionality coming soon! This will load the step in a test environment.');
+    const stepId = document.getElementById('step_id').value;
+    const dbStepId = document.querySelector('input[name="db_step_id"]')?.value;
+
+    if (!stepId && !dbStepId) {
+        showToast('warning', 'Please save the step first before testing.');
+        return;
+    }
+
+    // Open game in new tab with tutorial test mode
+    const testUrl = `/?tutorial_test=1&step=${encodeURIComponent(stepId || dbStepId)}`;
+
+    const confirmMsg = `Open the game to test this step?\n\n` +
+        `Step ID: ${stepId || 'N/A'}\n\n` +
+        `Note: You need to be logged in and have an active tutorial session to test steps.`;
+
+    if (confirm(confirmMsg)) {
+        window.open(testUrl, '_blank');
+    }
 });
 
 // Toast Notification Function
@@ -1246,6 +1374,103 @@ document.addEventListener('DOMContentLoaded', () => {
 .btn-lg {
     padding: 0.75rem 1.5rem;
     font-size: 1.1rem;
+}
+
+/* Preview Modal Styles */
+.preview-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.preview-modal {
+    background: white;
+    border-radius: 8px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.preview-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.preview-modal-header h5 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.preview-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    line-height: 1;
+}
+
+.preview-modal-close:hover {
+    color: #333;
+}
+
+.preview-modal-body {
+    padding: 1.5rem;
+}
+
+.preview-container {
+    min-height: 300px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-container .tutorial-tooltip {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    max-width: 400px;
+}
+
+.preview-container .tooltip-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    color: #333;
+}
+
+.preview-container .tooltip-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.preview-container .btn-tutorial-primary {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
 }
 </style>
 
