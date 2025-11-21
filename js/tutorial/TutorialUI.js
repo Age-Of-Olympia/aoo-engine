@@ -132,6 +132,9 @@ class TutorialUI {
      * @param {Object} stepData - Step data to render
      */
     activateTutorialUI(stepData) {
+        // Close any open panels to start with a clean state
+        this.closeAllPanels();
+
         // Show tutorial overlay FIRST (must exist before renderStep)
         this.showTutorialOverlay();
 
@@ -142,6 +145,32 @@ class TutorialUI {
 
         // Mark tutorial as actively running (for auto-resume after page reload)
         sessionStorage.setItem('tutorial_active', 'true');
+    }
+
+    /**
+     * Close all UI panels for a clean tutorial start
+     */
+    closeAllPanels() {
+        // Close characteristics panel if open
+        const caracsPanel = document.querySelector('#caracs-panel');
+        if (caracsPanel && caracsPanel.style.display !== 'none') {
+            $('#caracs-panel').hide();
+            console.log('[TutorialUI] Closed characteristics panel');
+        }
+
+        // Close inventory panel if open
+        const inventoryPanel = document.querySelector('#inventory-panel');
+        if (inventoryPanel && inventoryPanel.style.display !== 'none') {
+            $('#inventory-panel').hide();
+            console.log('[TutorialUI] Closed inventory panel');
+        }
+
+        // Close any open UI card
+        const uiCard = document.querySelector('#ui-card');
+        if (uiCard) {
+            $('#ui-card').hide();
+            console.log('[TutorialUI] Closed UI card');
+        }
     }
 
     /**
@@ -433,11 +462,14 @@ class TutorialUI {
         `);
         $('body').append($controls);
 
-        // Bind skip button
-        $('#tutorial-skip').on('click', () => this.skip());
+        // Bind skip button - use event delegation for reliability
+        $(document).off('click', '#tutorial-skip').on('click', '#tutorial-skip', () => {
+            console.log('[TutorialUI] Skip button handler fired');
+            this.skip();
+        });
 
         // Bind cancel button - always allow exit to main character
-        $('#tutorial-cancel').on('click', () => {
+        $(document).off('click', '#tutorial-cancel').on('click', '#tutorial-cancel', () => {
             console.log('[TutorialUI] Cancel button clicked');
             if (confirm('Voulez-vous vraiment quitter le tutoriel? Vous pourrez le reprendre plus tard.')) {
                 this.cancel();
@@ -511,7 +543,8 @@ class TutorialUI {
             'action_intro': 'blocking',
             'combat': 'semi-blocking',
             'combat_intro': 'blocking',
-            'exploration': 'open'
+            'exploration': 'open',
+            'ui_interaction': 'semi-blocking'
         };
 
         return defaults[stepType] || 'blocking';
@@ -574,6 +607,12 @@ class TutorialUI {
 
                     // Track click for UI interaction validation
                     if (validationType === 'ui_interaction') {
+                        // Check if this is a navigation link - prevent default to let trackElementClick handle navigation
+                        const $link = $(target).closest('a[href]');
+                        if ($link.length > 0 && $link.attr('href') && !$link.attr('href').startsWith('#')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
                         this.trackElementClick(selector, target, stepData);
                     }
 
@@ -651,6 +690,28 @@ class TutorialUI {
     trackElementClick(selector, targetElement, stepData) {
         console.log('[TutorialUI] Tracking click for validation:', selector);
 
+        // Check if this is a navigation link - if so, we need to wait for validation
+        const $link = $(targetElement).closest('a[href]');
+        const isNavigationLink = $link.length > 0 && $link.attr('href') && !$link.attr('href').startsWith('#');
+
+        if (isNavigationLink) {
+            const href = $link.attr('href');
+            console.log('[TutorialUI] Navigation link clicked, advancing step before navigation to:', href);
+
+            // Send validation and wait for it before navigating
+            this.next({
+                element_clicked: selector,
+                target_selector: stepData.config?.target_selector
+            }, true).then(() => {  // skipUIUpdate=true since we're navigating anyway
+                console.log('[TutorialUI] Step advanced, now navigating to:', href);
+                window.location.href = href;
+            }).catch(err => {
+                console.error('[TutorialUI] Failed to advance step, navigating anyway:', err);
+                window.location.href = href;
+            });
+            return;
+        }
+
         // Extract the selector for validation
         const elementClicked = selector;
 
@@ -710,12 +771,18 @@ class TutorialUI {
      * Automatically detects when UI interactions occur and sends validation
      */
     setupUIObservers(stepData) {
-        // Only setup observers for ui_interaction steps that require validation
-        if (stepData.step_type !== 'ui_interaction' || !stepData.requires_validation) {
+        // Setup observers for ANY step that requires validation with UI-related validation types
+        if (!stepData.requires_validation) {
             return;
         }
 
         const validationType = stepData.config?.validation_type;
+
+        // Only setup observers for UI-related validation types
+        const uiValidationTypes = ['ui_panel_opened', 'ui_element_hidden', 'ui_interaction', 'ui_button_clicked'];
+        if (!uiValidationTypes.includes(validationType)) {
+            return;
+        }
         console.log('[TutorialUI] Setting up UI observer for:', validationType);
 
         if (validationType === 'ui_panel_opened') {
@@ -724,6 +791,8 @@ class TutorialUI {
                 this.setupPanelVisibilityObserver('#load-caracs', 'characteristics');
             } else if (panel === 'actions') {
                 this.setupActionsPanelObserver();
+            } else if (panel === 'inventory') {
+                this.setupPanelVisibilityObserver('#inventory-panel', 'inventory');
             }
         } else if (validationType === 'ui_element_hidden') {
             const element = stepData.config?.validation_params?.element;
@@ -800,12 +869,14 @@ class TutorialUI {
         console.log('[TutorialUI] Setting up actions panel observer');
 
         this.panelObserver = new MutationObserver((mutations) => {
-            // Check if #ajax-data contains a player card with action buttons
+            // Check if #ajax-data contains any card content (actions, case-infos, or ui-card)
             const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
             const hasCaseInfos = $('#ajax-data .case-infos').length > 0;
+            const hasUiCard = $('#ui-card').length > 0 && $('#ui-card').is(':visible');
+            const hasAnyContent = $('#ajax-data').children().length > 0;
 
-            if ((hasActions || hasCaseInfos) && this.isActive) {
-                console.log('[TutorialUI] Actions panel opened, sending validation');
+            if ((hasActions || hasCaseInfos || hasUiCard || hasAnyContent) && this.isActive) {
+                console.log('[TutorialUI] Actions panel opened, sending validation (hasActions:', hasActions, 'hasCaseInfos:', hasCaseInfos, 'hasUiCard:', hasUiCard, ')');
 
                 // Send validation
                 window.notifyTutorial('ui_interaction', {
@@ -829,9 +900,11 @@ class TutorialUI {
         });
 
         // Also check immediately in case panel is already open
-        const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
-        const hasCaseInfos = $('#ajax-data .case-infos').length > 0;
-        if ((hasActions || hasCaseInfos) && this.isActive) {
+        const hasActionsNow = $('#ajax-data .action, #ajax-data button.action').length > 0;
+        const hasCaseInfosNow = $('#ajax-data .case-infos').length > 0;
+        const hasUiCardNow = $('#ui-card').length > 0 && $('#ui-card').is(':visible');
+        const hasAnyContentNow = $('#ajax-data').children().length > 0;
+        if ((hasActionsNow || hasCaseInfosNow || hasUiCardNow || hasAnyContentNow) && this.isActive) {
             console.log('[TutorialUI] Actions panel already visible on setup');
             window.notifyTutorial('ui_interaction', {
                 panel: 'actions',
@@ -847,6 +920,19 @@ class TutorialUI {
      */
     setupElementHiddenObserver(elementSelector) {
         const targetElement = document.querySelector(elementSelector);
+
+        // Check immediately if element is already hidden/doesn't exist
+        const isAlreadyHidden = !targetElement || !$(elementSelector).is(':visible');
+        if (isAlreadyHidden && this.isActive) {
+            console.log('[TutorialUI] Element already hidden/not found, auto-advancing');
+            window.notifyTutorial('ui_interaction', {
+                element: elementSelector,
+                is_hidden: true,
+                timestamp: Date.now()
+            });
+            return;
+        }
+
         if (!targetElement) {
             console.warn('[TutorialUI] Element not found for hidden observer:', elementSelector);
             return;
@@ -891,16 +977,6 @@ class TutorialUI {
             });
         }
 
-        // Check immediately in case element is already hidden
-        const isHidden = !$(elementSelector).is(':visible');
-        if (isHidden && this.isActive) {
-            console.log('[TutorialUI] Element already hidden on setup');
-            window.notifyTutorial('ui_interaction', {
-                element: elementSelector,
-                is_hidden: true,
-                timestamp: Date.now()
-            });
-        }
     }
 
     /**
