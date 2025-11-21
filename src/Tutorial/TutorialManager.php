@@ -137,11 +137,13 @@ class TutorialManager
             error_log("[TutorialManager] Switched context to tutorial player {$this->tutorialPlayer->actualPlayerId}");
         }
 
-        // Get current step data with prerequisites applied
+        // Get current step data WITHOUT applying prerequisites
+        // Prerequisites should only be applied when ADVANCING TO a step, not when resuming
+        // Otherwise resources get restored on every validation check
         $stepData = $this->progressManager->getCurrentStepForClient(
             $session['current_step'],
             $session['version'],
-            true // apply prerequisites
+            false // DO NOT apply prerequisites on resume
         );
 
         return array_merge($session, [

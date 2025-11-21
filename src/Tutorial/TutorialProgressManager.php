@@ -236,22 +236,24 @@ class TutorialProgressManager
         $config = $step->getConfig();
         $prerequisites = $config['prerequisites'] ?? null;
 
-        if (!$prerequisites) {
-            return;
-        }
-
         $player = $this->context->getPlayer();
         $playerId = $player->id;
 
-        // Ensure prerequisites are met
-        $this->context->ensurePrerequisites($prerequisites);
-
-        // Set consume_movements flag in session
-        if (isset($prerequisites['consume_movements'])) {
-            $_SESSION['tutorial_consume_movements'] = $prerequisites['consume_movements'];
+        // Ensure prerequisites are met (if any)
+        if ($prerequisites) {
+            $this->context->ensurePrerequisites($prerequisites);
+            error_log("[TutorialProgressManager] Applied prerequisites for step {$step->getStepId()}: " . json_encode($prerequisites));
         }
 
-        error_log("[TutorialProgressManager] Applied prerequisites for step {$step->getStepId()}: " . json_encode($prerequisites));
+        // Set consume_movements flag in session from prerequisites OR context_changes
+        // (consume_movements can be in either location depending on how it was configured)
+        // This must happen regardless of whether prerequisites exist
+        $consumeMovements = $prerequisites['consume_movements'] ?? $config['context_changes']['consume_movements'] ?? null;
+
+        if ($consumeMovements !== null) {
+            $_SESSION['tutorial_consume_movements'] = (bool)$consumeMovements;
+            error_log("[TutorialProgressManager] SET SESSION tutorial_consume_movements = " . ($consumeMovements ? 'true' : 'false'));
+        }
     }
 
     /**

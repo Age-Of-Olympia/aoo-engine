@@ -291,7 +291,8 @@ if($res->num_rows){
 
 // Tutorial mode: Check if movements should be consumed for current step
 $consumeMovement = false;
-$isTutorial = (strpos($player->coords->plan, 'tut_') === 0);
+// Check if player is on a tutorial plan (either 'tutorial' or plans starting with 'tut_')
+$isTutorial = ($player->coords->plan === 'tutorial' || strpos($player->coords->plan, 'tut_') === 0);
 if ($isTutorial) {
     // Check tutorial context to see if movements should be limited
     if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_session_id'])) {
