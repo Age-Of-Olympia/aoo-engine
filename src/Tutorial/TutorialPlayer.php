@@ -80,9 +80,18 @@ class TutorialPlayer
         // Tutorial characters use regular positive IDs (negative IDs are for NPCs)
         // They're distinguished by player_type discriminator column
 
+        // Validate race
+        $validRaces = RACES_EXT; // Use extended races list (includes all player races)
+        if (!in_array(strtolower($race), $validRaces, true)) {
+            throw new \InvalidArgumentException(
+                "Invalid race '{$race}'. Valid races: " . implode(', ', $validRaces)
+            );
+        }
+
         // Get default avatar (map icon) and portrait (character image) for race
-        $defaultAvatar = 'img/avatars/' . strtolower($race) . '/1.png';
-        $defaultPortrait = 'img/portraits/' . strtolower($race) . '/1.jpeg';
+        $raceLower = strtolower($race);
+        $defaultAvatar = "img/avatars/{$raceLower}/1.png";
+        $defaultPortrait = "img/portraits/{$raceLower}/1.jpeg";
 
         $conn->insert('players', [
             'player_type' => 'tutorial',  // ← DISCRIMINATOR: marks this as tutorial player
