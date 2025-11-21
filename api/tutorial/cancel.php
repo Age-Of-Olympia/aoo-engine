@@ -60,39 +60,65 @@ try {
     $sessionManager = new \App\Tutorial\TutorialSessionManager();
 
     if ($sessionId) {
-        // Cancel specific session
+        // Cancel specific session with transaction
         try {
-            // Get tutorial player for this session
-            $tutorialPlayer = $resourceManager->getTutorialPlayer($sessionId);
+            // Begin transaction for atomic cleanup
+            $conn->beginTransaction();
 
-            if ($tutorialPlayer) {
-                // Delete all resources in correct order (enemies → players → coords)
-                $resourceManager->deleteTutorialPlayer($tutorialPlayer, $sessionId);
+            try {
+                // Get tutorial player for this session
+                $tutorialPlayer = $resourceManager->getTutorialPlayer($sessionId);
+
+                if ($tutorialPlayer) {
+                    // Delete all resources in correct order (enemies → players → coords)
+                    $resourceManager->deleteTutorialPlayer($tutorialPlayer, $sessionId);
+                }
+
+                // Mark session as cancelled
+                $sessionManager->cancelSession($sessionId);
+
+                // Commit transaction
+                $conn->commit();
+
+                error_log("[Cancel] Cancelled tutorial session {$sessionId}");
+            } catch (\Exception $e) {
+                // Rollback on error
+                $conn->rollBack();
+                throw $e;
             }
-
-            // Mark session as cancelled
-            $sessionManager->cancelSession($sessionId);
-
-            error_log("[Cancel] Cancelled tutorial session {$sessionId}");
         } catch (\Exception $e) {
             error_log("[Cancel] Error cancelling session {$sessionId}: " . $e->getMessage());
+            // Don't throw - return success anyway to let user exit tutorial
         }
     } else {
         // If no session ID provided, cancel any active tutorial for this player
         $playerId = $_SESSION['playerId'];
 
         try {
-            // Clean up all resources for this player
-            $cleanedCount = $resourceManager->cleanupPrevious($playerId);
+            // Begin transaction for atomic cleanup
+            $conn->beginTransaction();
 
-            // Mark all progress as completed
-            $sql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW()
-                    WHERE player_id = ? AND completed = 0';
-            $db->exe($sql, [$playerId]);
+            try {
+                // Clean up all resources for this player
+                $cleanedCount = $resourceManager->cleanupPrevious($playerId);
 
-            error_log("[Cancel] Cancelled {$cleanedCount} active tutorial(s) for player {$playerId}");
+                // Mark all progress as completed
+                $sql = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW()
+                        WHERE player_id = ? AND completed = 0';
+                $db->exe($sql, [$playerId]);
+
+                // Commit transaction
+                $conn->commit();
+
+                error_log("[Cancel] Cancelled {$cleanedCount} active tutorial(s) for player {$playerId}");
+            } catch (\Exception $e) {
+                // Rollback on error
+                $conn->rollBack();
+                throw $e;
+            }
         } catch (\Exception $e) {
             error_log("[Cancel] Error cancelling tutorials for player {$playerId}: " . $e->getMessage());
+            // Don't throw - return success anyway to let user exit tutorial
         }
     }
 
