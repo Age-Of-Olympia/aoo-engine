@@ -489,63 +489,46 @@ class TutorialContext
      * then calculating and applying the exact bonus needed.
      *
      * @param int $targetAmount The exact number of movements to set
+     * @throws \RuntimeException If final movement doesn't match target
      */
     private function setPlayerMovements(int $targetAmount): void
     {
-        // CRITICAL: Get the actual tutorial player instance (not context's cached player)
+        // Get the actual tutorial player instance (not context's cached player)
         $player = \App\Tutorial\TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: true);
 
-        // Log current state BEFORE clearing
-        $db = new \Classes\Db();
-        $checkSql = 'SELECT * FROM players_bonus WHERE player_id = ? AND name = "mvt"';
-        $checkResult = $db->exe($checkSql, [$player->id]);
-        $existingBonuses = [];
-        while ($row = $checkResult->fetch_assoc()) {
-            $existingBonuses[] = $row;
-        }
-        error_log("[TutorialContext] BEFORE clear - player_id={$player->id}, existing bonuses: " . json_encode($existingBonuses));
-
-        // Clear existing movement bonuses from database
-        $sql = 'DELETE FROM players_bonus WHERE player_id = ? AND name = "mvt"';
-        $deleteResult = $db->exe($sql, [$player->id]);
-        error_log("[TutorialContext] Deleted movement bonuses for player {$player->id}");
-
-        // Get base movement from race/characteristics
-        $player->get_caracs();
-        $baseMovement = $player->caracs->mvt ?? 4;
-        $currentRemaining = $player->getRemaining('mvt');
+        // Clear existing movement bonuses
+        $this->clearMovementBonuses($player->id);
 
         // Calculate bonus needed to reach target
+        $player->get_caracs();
+        $baseMovement = $player->caracs->mvt ?? 4;
         $bonusNeeded = $targetAmount - $baseMovement;
 
-        error_log("[TutorialContext] setPlayerMovements: player_id={$player->id}, target={$targetAmount}, base={$baseMovement}, currentRemaining={$currentRemaining}, bonusNeeded={$bonusNeeded}");
-
         // Apply bonus if needed
-        if ($bonusNeeded > 0) {
-            $player->putBonus(array('mvt' => $bonusNeeded));
-            error_log("[TutorialContext] Applied bonus: +{$bonusNeeded}");
-        } elseif ($bonusNeeded < 0) {
-            // Negative bonus (penalty)
-            $player->putBonus(array('mvt' => $bonusNeeded));
-            error_log("[TutorialContext] Applied penalty: {$bonusNeeded}");
-        } else {
-            error_log("[TutorialContext] No bonus needed (at base movement)");
+        if ($bonusNeeded !== 0) {
+            $player->putBonus(['mvt' => $bonusNeeded]);
         }
-        // If bonusNeeded == 0, we're at base movement, no bonus needed
 
-        // CRITICAL: Refresh caracs to regenerate JSON cache files
-        // This writes to:
-        // - datas/private/players/{id}.turn.json (with bonuses)
-        // - datas/private/players/{id}.caracs.json (base stats)
+        // Refresh caracs to regenerate JSON cache files
         $player->get_caracs();
         $finalRemaining = $player->getRemaining('mvt');
 
-        error_log("[TutorialContext] AFTER set - player_id={$player->id}, finalRemaining={$finalRemaining} (target was {$targetAmount})");
-        error_log("[TutorialContext] JSON cache regenerated: {$player->id}.turn.json, {$player->id}.caracs.json");
-
-        // Verify it matches
-        if ($finalRemaining != $targetAmount) {
-            error_log("[TutorialContext] ERROR: Movement mismatch! Expected {$targetAmount}, got {$finalRemaining}");
+        // Verify result matches target
+        if ($finalRemaining !== $targetAmount) {
+            $errorMsg = "Movement mismatch! Expected {$targetAmount}, got {$finalRemaining} (player {$player->id})";
+            error_log("[TutorialContext] ERROR: {$errorMsg}");
+            throw new \RuntimeException($errorMsg);
         }
+    }
+
+    /**
+     * Clear all movement bonuses for a player
+     *
+     * @param int $playerId Player ID
+     */
+    private function clearMovementBonuses(int $playerId): void
+    {
+        $db = new \Classes\Db();
+        $db->exe('DELETE FROM players_bonus WHERE player_id = ? AND name = "mvt"', [$playerId]);
     }
 }
