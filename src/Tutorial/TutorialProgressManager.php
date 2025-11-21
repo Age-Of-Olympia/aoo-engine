@@ -124,16 +124,21 @@ class TutorialProgressManager
         // Get total steps from session
         $totalSteps = $this->stepRepository->getTotalSteps($version);
 
+        // Prepare next step data
+        $nextStepData = $this->prepareStepForClient($nextStep, $version);
+
         // Return next step data for client
+        // Note: current_step contains step_id (string), current_step_position contains display position (int)
         return [
             'success' => true,
             'completed' => false,
-            'current_step' => $nextStepId,
+            'current_step' => $nextStepId,  // step_id (string, e.g., "first_movement")
+            'current_step_position' => $nextStepData['step_position'] ?? 1,  // display position (int, e.g., 1, 2, 3...)
             'total_steps' => $totalSteps,
             'xp_earned' => $this->context->getTutorialXP(),
             'level' => $this->context->getTutorialLevel(),
             'pi' => $this->context->getTutorialPI(),
-            'next_step_data' => $this->prepareStepForClient($nextStep, $version)
+            'next_step_data' => $nextStepData
         ];
     }
 

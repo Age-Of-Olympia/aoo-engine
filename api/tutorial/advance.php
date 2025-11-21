@@ -93,7 +93,8 @@ try {
             // Return next step data
             echo json_encode([
                 'success' => true,
-                'current_step' => $result['current_step'],
+                'current_step' => $result['current_step'],  // step_id (string)
+                'current_step_position' => $result['current_step_position'] ?? 1,  // display position (int)
                 'total_steps' => $result['total_steps'],
                 'xp_earned' => $result['xp_earned'],
                 'level' => $result['level'],

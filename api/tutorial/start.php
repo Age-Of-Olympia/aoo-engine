@@ -88,7 +88,8 @@ try {
             'session_id' => $result['session_id'],
             'tutorial_player_id' => $result['tutorial_player_id'],
             'total_steps' => $result['total_steps'],
-            'current_step' => $result['current_step'],
+            'current_step' => $result['current_step'],  // step_id (string)
+            'current_step_position' => $firstStepData['step_position'] ?? 1,  // display position (int)
             'mode' => $result['mode'],
             'version' => $result['version'],
             'step_data' => $firstStepData,
