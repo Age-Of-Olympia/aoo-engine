@@ -366,17 +366,23 @@ class TutorialUI {
         const text = stepData.text || '';
         const targetSelector = stepData.target_selector;
         const position = stepData.tooltip_position || 'center';
-        // Convert to boolean properly: 1/true = true, 0/false/null/undefined = false
-        const requiresValidation = Boolean(stepData.requires_validation);
+
+        // Determine if we should hide the "Suivant" button:
+        // - Hide if validation is required AND it's NOT a manual-advance step
+        // - Show if no validation required OR if it's a manual-advance step (clicking button IS the validation)
+        const isManualAdvance = stepData.config?.validation_type === 'ui_interaction' &&
+                               stepData.config?.validation_params?.element_clicked === 'tutorial_next';
+        const hideNextButton = Boolean(stepData.requires_validation) && !isManualAdvance;
 
         console.log('[TutorialUI] showStepTooltip', {
             step_id: stepData.step_id,
             requires_validation_raw: stepData.requires_validation,
-            requiresValidation: requiresValidation
+            isManualAdvance: isManualAdvance,
+            hideNextButton: hideNextButton
         });
 
         if (this.tooltip) {
-            this.tooltip.show(title, text, targetSelector, position, requiresValidation);
+            this.tooltip.show(title, text, targetSelector, position, hideNextButton);
         } else {
             // Fallback: simple display
             console.log('[TutorialUI] Tooltip not initialized, showing alert');
