@@ -54,12 +54,12 @@ function admin_layout($title, $content) {
         }
 
         .admin-sidebar {
-            width: 250px;
-            min-width: 250px;
+            width: 180px;
+            min-width: 180px;
             background: #2c3e50;
-            padding: 20px 15px;
+            padding: 15px 10px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            font-size: 14px;
+            font-size: 13px;
             position: fixed;
             top: 0;
             left: 0;
@@ -110,7 +110,7 @@ function admin_layout($title, $content) {
             background: #ecf0f1;
             overflow-x: auto;
             font-size: 14px;
-            margin-left: 250px;
+            margin-left: 180px;
         }
 
         .admin-main h1 {
@@ -158,6 +158,63 @@ function admin_layout($title, $content) {
         .btn-secondary:hover { background: #7f8c8d; }
         .btn-warning { background: #f39c12; }
         .btn-info { background: #3498db; }
+
+        /* Outline buttons with proper contrast */
+        .btn-outline-primary {
+            background: transparent;
+            border: 1px solid #3498db;
+            color: #2471a3;
+        }
+        .btn-outline-primary:hover {
+            background: #3498db;
+            color: white;
+        }
+        .btn-outline-secondary {
+            background: transparent;
+            border: 1px solid #7f8c8d;
+            color: #5d6d7e;
+        }
+        .btn-outline-secondary:hover {
+            background: #7f8c8d;
+            color: white;
+        }
+        .btn-outline-success {
+            background: transparent;
+            border: 1px solid #27ae60;
+            color: #1e8449;
+        }
+        .btn-outline-success:hover {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-outline-warning {
+            background: transparent;
+            border: 1px solid #d68910;
+            color: #9c6d0b;
+        }
+        .btn-outline-warning:hover {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-outline-danger {
+            background: transparent;
+            border: 1px solid #e74c3c;
+            color: #c0392b;
+        }
+        .btn-outline-danger:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-outline-info {
+            background: transparent;
+            border: 1px solid #3498db;
+            color: #2471a3;
+        }
+        .btn-outline-info:hover {
+            background: #3498db;
+            color: white;
+        }
+
         .btn-sm { padding: 4px 8px; font-size: 12px; }
         .btn-lg { padding: 12px 24px; font-size: 16px; }
         .btn-group { display: inline-flex; gap: 4px; }
