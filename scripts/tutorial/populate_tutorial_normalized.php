@@ -426,6 +426,7 @@ $steps = [
             'target_selector' => '.action[data-action="fouiller"]',
             'tooltip_position' => 'left',
             'interaction_mode' => 'semi-blocking',
+            'auto_close_card' => true,
         ],
         'validation' => [
             'requires_validation' => true,
