@@ -238,6 +238,20 @@ class TutorialUI {
 
             if (response.success) {
                 console.log('[TutorialUI] ✅ ADVANCE SUCCESSFUL! New step:', response.current_step);
+
+                // Check if the COMPLETED step wanted to auto-close the card
+                if (this.stepData?.config?.auto_close_card && !skipUIUpdate) {
+                    console.log('[TutorialUI] Completed step requested auto-close card, closing...');
+                    const closeBtn = document.querySelector('.close-card, #ui-card .close');
+                    if (closeBtn) {
+                        closeBtn.click();
+                        console.log('[TutorialUI] Card closed via button click');
+                    } else {
+                        $('#ui-card').hide();
+                        console.log('[TutorialUI] Card hidden via jQuery');
+                    }
+                }
+
                 if (response.completed) {
                     // Tutorial complete!
                     console.log('[TutorialUI] ✅ TUTORIAL COMPLETED! Response:', response);
@@ -305,19 +319,8 @@ class TutorialUI {
         // Store stepData for external access (e.g., E2E tests)
         this.stepData = stepData;
 
-        // Check if this step wants to auto-close the card when rendered
-        if (stepData.config?.auto_close_card) {
-            console.log('[TutorialUI] Auto-closing card for this step...');
-            const closeBtn = document.querySelector('.close-card, #ui-card .close');
-            if (closeBtn) {
-                closeBtn.click();
-                console.log('[TutorialUI] Card closed');
-            } else {
-                $('#ui-card').hide();
-            }
-            // Wait a moment for card to close
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
+        // Note: auto_close_card is now handled when the step COMPLETES in next() function,
+        // not when the step STARTS. This matches the UI label "Auto-close action card on step complete".
 
         // Clear previous highlights (wait for fade animation to complete)
         if (this.highlighter) {
