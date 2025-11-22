@@ -294,6 +294,12 @@ class TutorialStepRepository
             foreach ($contextChanges as $key => $value) {
                 if (is_numeric($value)) {
                     $contextChanges[$key] = (int)$value;
+                } elseif (is_string($value)) {
+                    // Convert 'true'/'false' strings to boolean
+                    $lowerValue = strtolower($value);
+                    if ($lowerValue === 'true' || $lowerValue === 'false') {
+                        $contextChanges[$key] = ($lowerValue === 'true');
+                    }
                 }
             }
         }
@@ -389,10 +395,17 @@ class TutorialStepRepository
         if (!empty($contextChanges) || $hasContextFlags) {
             $config['context_changes'] = $contextChanges ?? [];
 
-            // Also add boolean flags from prerequisites table
-            if ($row['consume_movements']) $config['context_changes']['consume_movements'] = true;
-            if ($row['unlimited_mvt']) $config['context_changes']['unlimited_mvt'] = true;
-            if ($row['unlimited_pa']) $config['context_changes']['unlimited_actions'] = true;
+            // Add boolean flags from prerequisites table ONLY if not already in context_changes
+            // Context changes table takes precedence over prerequisites table
+            if (!isset($config['context_changes']['consume_movements']) && $row['consume_movements']) {
+                $config['context_changes']['consume_movements'] = true;
+            }
+            if (!isset($config['context_changes']['unlimited_mvt']) && $row['unlimited_mvt']) {
+                $config['context_changes']['unlimited_mvt'] = true;
+            }
+            if (!isset($config['context_changes']['unlimited_actions']) && $row['unlimited_pa']) {
+                $config['context_changes']['unlimited_actions'] = true;
+            }
         }
 
         // Add next step preparation if present

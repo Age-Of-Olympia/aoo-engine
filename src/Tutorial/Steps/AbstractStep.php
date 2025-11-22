@@ -208,7 +208,10 @@ abstract class AbstractStep
 
         // Apply context changes if specified
         if (isset($this->config['context_changes'])) {
+            error_log("[AbstractStep] Applying context changes for step {$this->stepId}: " . json_encode($this->config['context_changes']));
             $this->applyContextChanges($context, $this->config['context_changes']);
+        } else {
+            error_log("[AbstractStep] No context changes for step {$this->stepId}");
         }
 
         // Apply prerequisites for NEXT step if specified
@@ -224,18 +227,18 @@ abstract class AbstractStep
     protected function applyContextChanges(TutorialContext $context, array $changes): void
     {
         if (isset($changes['unlimited_mvt'])) {
-            $context->setState('unlimited_mvt', $changes['unlimited_mvt']);
+            $context->setState('unlimited_mvt', $this->toBool($changes['unlimited_mvt']));
         }
 
         if (isset($changes['unlimited_actions'])) {
-            $context->setState('unlimited_actions', $changes['unlimited_actions']);
+            $context->setState('unlimited_actions', $this->toBool($changes['unlimited_actions']));
         }
 
         // Control whether movements are consumed when player moves
         // By default (legacy), tutorial does NOT consume movements
         // Set consume_movements: true to enable movement consumption
         if (isset($changes['consume_movements'])) {
-            $consumeMovements = (bool) $changes['consume_movements'];
+            $consumeMovements = $this->toBool($changes['consume_movements']);
             $context->setState('consume_movements', $consumeMovements);
             $_SESSION['tutorial_consume_movements'] = $consumeMovements;
             error_log("[AbstractStep] Set consume_movements: " . ($consumeMovements ? 'true' : 'false'));
@@ -324,5 +327,20 @@ abstract class AbstractStep
     public function getNextStep(): ?string
     {
         return $this->nextStep;
+    }
+
+    /**
+     * Convert string or mixed value to boolean
+     * Handles 'true'/'false' strings from database
+     */
+    private function toBool($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return strtolower($value) === 'true' || $value === '1';
+        }
+        return (bool) $value;
     }
 }

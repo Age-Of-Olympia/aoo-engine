@@ -249,6 +249,36 @@ class TutorialStepSaveService
     {
         $this->db->exe("DELETE FROM tutorial_step_context_changes WHERE step_id = ?", [$stepId]);
 
+        // Auto-add checkbox values to context changes
+        $autoContextChanges = [];
+
+        // Add unlimited_mvt if checked
+        if (!empty($data['unlimited_mvt'])) {
+            $autoContextChanges['unlimited_mvt'] = 'true';
+        }
+
+        // Add unlimited_pa if checked
+        if (!empty($data['unlimited_pa'])) {
+            $autoContextChanges['unlimited_actions'] = 'true';
+        }
+
+        // Add consume_movements if checked (or false if unlimited_mvt is checked)
+        if (!empty($data['consume_movements'])) {
+            $autoContextChanges['consume_movements'] = 'true';
+        } elseif (!empty($data['unlimited_mvt'])) {
+            // If unlimited movements, explicitly disable consumption
+            $autoContextChanges['consume_movements'] = 'false';
+        }
+
+        // Save auto-added context changes first
+        foreach ($autoContextChanges as $key => $value) {
+            $this->db->exe(
+                "INSERT INTO tutorial_step_context_changes (step_id, context_key, context_value) VALUES (?, ?, ?)",
+                [$stepId, $key, $value]
+            );
+        }
+
+        // Then save manual context changes
         if (!empty($data['context_keys']) && is_array($data['context_keys'])) {
             $keys = $data['context_keys'];
             $values = $data['context_values'] ?? [];
@@ -257,7 +287,8 @@ class TutorialStepSaveService
                 $key = $this->validator->validateString($keys[$i] ?? '', 50);
                 $value = $this->validator->validateText($values[$i] ?? '', 255);
 
-                if ($key !== null) {
+                if ($key !== null && !isset($autoContextChanges[$key])) {
+                    // Don't duplicate auto-added keys
                     $this->db->exe(
                         "INSERT INTO tutorial_step_context_changes (step_id, context_key, context_value) VALUES (?, ?, ?)",
                         [$stepId, $key, $value ?? '']
