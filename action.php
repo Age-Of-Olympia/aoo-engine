@@ -166,7 +166,13 @@ if($targetPvBefore != $targetPvAfter){
     }
 
     // update pv red filter
-    $pvPct = floor($targetPvAfter / $target->caracs->pv * 100);
+    $maxPv = $target->caracs->pv ?? 0;
+    if ($maxPv > 0) {
+        $pvPct = floor($targetPvAfter / $maxPv * 100);
+    } else {
+        // If max PV is 0, target is dead or invalid
+        $pvPct = 0;
+    }
     $height = floor((100 - $pvPct) * 225 / 100);
     $height = min($height, 225);
 
