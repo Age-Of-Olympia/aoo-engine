@@ -137,7 +137,7 @@ ob_start();
         </li>
         <li class="nav-item">
             <a class="nav-link" id="stats-tab" data-toggle="tab" href="#stats-panel" role="tab">
-                <i class="fas fa-chart-bar"></i> Statistics
+                <i class="fas fa-chart-bar"></i> Statistics <span class="badge badge-success ml-1"><?=$stats['active']?></span>
             </a>
         </li>
     </ul>
