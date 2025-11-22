@@ -10,7 +10,7 @@ define('DOMAIN', 'http://localhost/www/aoo4/');
 
 define('RACES', array('nain','geant','olympien','hs','elfe'));
 
-define('RACES_EXT', array('nain','geant','olympien','hs','elfe','lutin','humain','dieu'));
+define('RACES_EXT', array('nain','geant','olympien','hs','elfe','lutin','humain','dieu','ame'));
 
 
 /*
@@ -521,6 +521,6 @@ define('AUTO_FAIL', false); // si true, les attaques ratent forcément
 /*
  * Tutorial System
  */
-// Enable tutorial for specific test players (including player 7 with admin NPC access)
-define('TUTORIAL_V2_TEST_PLAYERS', [1, 2, 3, 7]);
+// Tutorial whitelist is now managed via the admin panel at /admin/tutorial-settings.php
+// No config override needed - use the database for easy editing
 

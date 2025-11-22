@@ -175,12 +175,12 @@ class TutorialResourceManager
             // Generate unique enemy ID (negative for NPCs)
             $enemyId = TutorialConstants::generateEnemyId();
 
-            // Create enemy NPC
+            // Create enemy NPC (using 'ame' race - weak tutorial dummy)
             $this->conn->insert('players', [
                 'id' => $enemyId,
                 'name' => 'Mannequin d\'entraînement',
                 'coords_id' => $enemyCoordsId,
-                'race' => 'Ame',
+                'race' => 'ame',
                 'xp' => 0,
                 'pi' => 0,
                 'energie' => 50, // Weak enemy
@@ -188,7 +188,7 @@ class TutorialResourceManager
                 'mail' => '',
                 'plain_mail' => '',
                 'avatar' => 'img/avatars/ame/default.webp',
-                'portrait' => 'img/portraits/ame/default.webp',
+                'portrait' => 'img/portraits/ame/1.jpeg',
                 'text' => 'Mannequin d\'entrainement pour le tutoriel'
             ]);
 
