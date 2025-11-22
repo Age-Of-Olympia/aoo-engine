@@ -76,7 +76,7 @@ $steps = [
         'xp_reward' => 5,
         'ui' => [
             'target_selector' => '.case[data-coords="1,0"]',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'semi-blocking',
         ],
         'validation' => [
@@ -101,7 +101,7 @@ $steps = [
         'xp_reward' => 5,
         'ui' => [
             'target_selector' => '#ui-card .close-card',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'semi-blocking',
             'show_delay' => 300,
         ],
@@ -192,6 +192,7 @@ $steps = [
             'target_selector' => '#show-caracs',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'semi-blocking',
+            'show_delay' => 700,
         ],
         'validation' => [
             'requires_validation' => true,
@@ -215,6 +216,7 @@ $steps = [
             'target_selector' => '#mvt-counter',
             'tooltip_position' => 'right',
             'interaction_mode' => 'semi-blocking',
+            'show_delay' => 700,
         ],
         'validation' => [
             'requires_validation' => true,
@@ -307,7 +309,7 @@ $steps = [
         'xp_reward' => 5,
         'ui' => [
             'target_selector' => '#ui-card',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'blocking',
             'show_delay' => 300,
         ],
@@ -324,7 +326,7 @@ $steps = [
         'xp_reward' => 5,
         'ui' => [
             'target_selector' => '#ui-card .close-card',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'semi-blocking',
             'auto_close_card' => true,
         ],
@@ -409,7 +411,7 @@ $steps = [
         'xp_reward' => 5,
         'ui' => [
             'target_selector' => '#ui-card',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'center',
             'interaction_mode' => 'blocking',
             'show_delay' => 300,
         ],
@@ -420,11 +422,11 @@ $steps = [
         'step_type' => 'action',
         'title' => 'Fouiller !',
         'text' => 'Cliquez sur <strong>Fouiller</strong> pour récolter du bois de l\'arbre.',
-        'next_step' => 'action_consumed',
+        'next_step' => 'fouiller_result',
         'xp_reward' => 15,
         'ui' => [
             'target_selector' => '.action[data-action="fouiller"]',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'semi-blocking',
             'auto_close_card' => true,
         ],
@@ -445,8 +447,23 @@ $steps = [
         ],
     ],
     [
-        'step_id' => 'action_consumed',
+        'step_id' => 'fouiller_result',
         'step_number' => 19,
+        'step_type' => 'info',
+        'title' => 'Action réussie !',
+        'text' => 'Regardez ! L\'action <strong>Fouiller a été utilisée</strong> et vous pouvez voir son résultat juste au-dessus. Vous avez récolté du bois !',
+        'next_step' => 'action_consumed',
+        'xp_reward' => 5,
+        'ui' => [
+            'target_selector' => '#action-data',
+            'tooltip_position' => 'right',
+            'interaction_mode' => 'blocking',
+            'show_delay' => 700,
+        ],
+    ],
+    [
+        'step_id' => 'action_consumed',
+        'step_number' => 20,
         'step_type' => 'info',
         'title' => 'Action consommée',
         'text' => 'Vous avez récolté du <strong>bois</strong> ! Remarquez que l\'action a consommé <strong>1 PA</strong>. Vos PA se régénèrent aussi à chaque tour.',
@@ -461,7 +478,7 @@ $steps = [
     // ===== SECTION 5: INVENTORY =====
     [
         'step_id' => 'open_inventory',
-        'step_number' => 20,
+        'step_number' => 21,
         'step_type' => 'ui_interaction',
         'title' => 'Votre inventaire',
         'text' => 'Ouvrez votre <strong>Inventaire</strong> pour voir le bois récolté.',
@@ -484,7 +501,7 @@ $steps = [
     ],
     [
         'step_id' => 'inventory_wood',
-        'step_number' => 21,
+        'step_number' => 22,
         'step_type' => 'info',
         'title' => 'Du bois !',
         'text' => 'Voilà votre <strong>bois</strong> ! Les ressources récoltées vont dans votre inventaire. Vous pourrez les utiliser pour fabriquer des objets.',
@@ -494,12 +511,12 @@ $steps = [
             'target_selector' => '.item-case[data-name="bois"]',
             'tooltip_position' => 'left',
             'interaction_mode' => 'blocking',
-            'show_delay' => 300,
+            'show_delay' => 700,
         ],
     ],
     [
         'step_id' => 'close_inventory',
-        'step_number' => 22,
+        'step_number' => 23,
         'step_type' => 'ui_interaction',
         'title' => 'Retour au jeu',
         'text' => 'Fermez l\'inventaire pour revenir au jeu. Cliquez sur <strong>Damier</strong>.',
@@ -524,7 +541,7 @@ $steps = [
     // ===== SECTION 6: COMBAT =====
     [
         'step_id' => 'combat_intro',
-        'step_number' => 23,
+        'step_number' => 24,
         'step_type' => 'info',
         'title' => 'Le Combat',
         'text' => 'Maintenant, passons au <strong>combat</strong> ! C\'est essentiel pour survivre dans Olympia. Un ennemi d\'entraînement va apparaître.',
@@ -540,7 +557,7 @@ $steps = [
     ],
     [
         'step_id' => 'enemy_spawned',
-        'step_number' => 24,
+        'step_number' => 25,
         'step_type' => 'info',
         'title' => 'Votre adversaire',
         'text' => 'Voici une <strong>Âme d\'entraînement</strong> ! C\'est un ennemi inoffensif créé pour le tutoriel. Approchez-vous !',
@@ -558,7 +575,7 @@ $steps = [
     ],
     [
         'step_id' => 'walk_to_enemy',
-        'step_number' => 25,
+        'step_number' => 26,
         'step_type' => 'movement',
         'title' => 'Approchez l\'ennemi',
         'text' => 'Déplacez-vous vers l\'<strong>Âme d\'entraînement</strong>. Vous devez être sur la <strong>même case</strong> ou adjacent pour attaquer.',
@@ -589,7 +606,7 @@ $steps = [
     ],
     [
         'step_id' => 'click_enemy',
-        'step_number' => 26,
+        'step_number' => 27,
         'step_type' => 'ui_interaction',
         'title' => 'Cibler l\'ennemi',
         'text' => '<strong>Cliquez sur l\'Âme d\'entraînement</strong> pour voir ses informations et l\'option d\'attaque.',
@@ -614,15 +631,15 @@ $steps = [
     ],
     [
         'step_id' => 'attack_enemy',
-        'step_number' => 27,
+        'step_number' => 28,
         'step_type' => 'combat',
         'title' => 'Attaquez !',
         'text' => 'Cliquez sur <strong>Attaquer</strong> pour frapper l\'Âme d\'entraînement !',
-        'next_step' => 'tutorial_complete',
+        'next_step' => 'attack_result',
         'xp_reward' => 20,
         'ui' => [
             'target_selector' => '.action[data-action="attaquer"]',
-            'tooltip_position' => 'left',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'semi-blocking',
         ],
         'validation' => [
@@ -641,11 +658,26 @@ $steps = [
             ['button.action', 'Boutons d\'action'],
         ],
     ],
+    [
+        'step_id' => 'attack_result',
+        'step_number' => 29,
+        'step_type' => 'info',
+        'title' => 'Ennemi blessé !',
+        'text' => 'Excellent ! Vous pouvez voir le <strong>résultat de l\'attaque</strong> : l\'ennemi a perdu des PV ! Regardez la barre rouge qui indique les dégâts.',
+        'next_step' => 'tutorial_complete',
+        'xp_reward' => 5,
+        'ui' => [
+            'target_selector' => '#red-filter',
+            'tooltip_position' => 'right',
+            'interaction_mode' => 'blocking',
+            'show_delay' => 700,
+        ],
+    ],
 
     // ===== SECTION 7: COMPLETION =====
     [
         'step_id' => 'tutorial_complete',
-        'step_number' => 28,
+        'step_number' => 30,
         'step_type' => 'completion',
         'title' => 'Tutoriel terminé !',
         'text' => '<strong>Félicitations !</strong> Vous avez terminé le tutoriel ! Vous savez maintenant vous déplacer, récolter des ressources et combattre. Bonne chance dans Olympia !',

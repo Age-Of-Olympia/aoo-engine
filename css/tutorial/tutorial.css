@@ -449,7 +449,7 @@
         right: 0;
         left: 0;
         min-width: auto;
-        padding: 6px 10px;
+        padding: 4px 6px;
         border-radius: 0;
         background: linear-gradient(135deg, rgba(74, 56, 41, 0.95), rgba(97, 78, 63, 0.95));
         border-top: 1px solid #D4AF37;
@@ -460,12 +460,12 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: 4px;
         z-index: 10001;
     }
 
     #tutorial-progress {
-        font-size: 10px;
+        font-size: 9px;
         margin-bottom: 0;
         display: inline;
         white-space: nowrap;
@@ -485,6 +485,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        overflow: hidden;
     }
 
     /* Thin progress bar at absolute bottom */
@@ -507,11 +508,13 @@
     }
 
     .xp-text {
-        font-size: 10px;
+        font-size: 9px;
         margin: 0;
         white-space: nowrap;
         text-align: center;
         color: white;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .tutorial-controls-buttons {
@@ -523,21 +526,22 @@
 
     /* Skip button inline and compact */
     #tutorial-skip {
-        padding: 4px 8px;
-        font-size: 10px;
+        padding: 3px 6px;
+        font-size: 9px;
         min-height: 0;
         height: auto;
         border-radius: 3px;
         background: linear-gradient(135deg, #614E3F, #4A3829);
         color: #E8E4D9;
         border: 1px solid #8B7355;
+        white-space: nowrap;
     }
 
     /* Tooltips - Force to safe positions on mobile */
     .tutorial-tooltip {
         /* Always position at bottom center on mobile for visibility */
         position: fixed !important;
-        bottom: 35px !important; /* Above ultra-compact controls */
+        bottom: 28px !important; /* Above ultra-compact controls (~24px height) */
         left: 50% !important;
         right: auto !important;
         top: auto !important;
@@ -547,7 +551,7 @@
         width: auto;
         padding: 15px 18px;
         font-size: 14px;
-        max-height: calc(100vh - 80px);
+        max-height: calc(100vh - 75px);
         overflow-y: auto;
     }
 
@@ -594,107 +598,125 @@
     /* Complete Modal - Very compact mobile optimization */
     #tutorial-complete-modal .modal-content {
         max-width: calc(100vw - 40px);
-        padding: 20px 18px;
-        max-height: 60vh;
+        padding: 18px 16px;
+        max-height: 55vh;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     #tutorial-complete-modal .modal-content::before,
     #tutorial-complete-modal .modal-content::after {
-        font-size: 14px;
-        top: 8px;
+        font-size: 12px;
+        top: 6px;
     }
 
     #tutorial-complete-modal .modal-content::before {
-        left: 8px;
+        left: 6px;
     }
 
     #tutorial-complete-modal .modal-content::after {
-        right: 8px;
+        right: 6px;
     }
 
     #tutorial-complete-modal h2 {
-        font-size: 20px;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
+        font-size: 18px;
+        margin-bottom: 10px;
+        padding-bottom: 6px;
         border-bottom-width: 2px;
+        width: 100%;
     }
 
     #tutorial-complete-modal p {
         font-size: 13px;
-        margin: 8px 0;
+        margin: 6px 0;
         line-height: 1.4;
+        width: 100%;
     }
 
     #tutorial-complete-modal button {
-        padding: 10px 20px;
-        font-size: 14px;
-        margin-top: 12px;
-        min-height: 42px;
-        width: 100%;
+        padding: 8px 16px;
+        font-size: 13px;
+        margin-top: 10px;
+        min-height: 38px;
+        width: auto;
+        max-width: calc(100vw - 80px);
+        align-self: center;
+        white-space: nowrap;
     }
 
     /* Celebration Modal - Very compact mobile optimized */
     .celebration-content {
         max-width: calc(100vw - 40px);
-        padding: 20px 18px;
-        max-height: 60vh;
+        padding: 18px 16px;
+        max-height: 55vh;
         overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .celebration-header h2 {
-        font-size: 22px;
-        margin-bottom: 8px;
-        padding-bottom: 8px;
+        font-size: 20px;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
         border-bottom-width: 2px;
+        width: 100%;
     }
 
     .celebration-stars {
-        font-size: 18px;
-        margin: 8px 0;
+        font-size: 16px;
+        margin: 6px 0;
     }
 
     .celebration-message {
-        font-size: 14px;
-        margin: 12px 0;
+        font-size: 13px;
+        margin: 10px 0;
         line-height: 1.4;
+        width: 100%;
     }
 
     .rewards-display {
-        gap: 10px;
-        margin: 15px 0;
+        gap: 8px;
+        margin: 12px 0;
         grid-template-columns: 1fr;
+        width: 100%;
     }
 
     .reward-item {
-        padding: 12px 10px;
+        padding: 10px 8px;
     }
 
     .reward-icon {
-        font-size: 28px;
-        margin-bottom: 6px;
+        font-size: 24px;
+        margin-bottom: 4px;
     }
 
     .reward-label {
         font-size: 10px;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
     }
 
     .reward-value {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .celebration-btn {
-        padding: 10px 25px !important;
-        font-size: 14px !important;
-        margin-top: 12px !important;
-        min-height: 42px !important;
-        width: 100% !important;
+        padding: 8px 20px !important;
+        font-size: 13px !important;
+        margin-top: 10px !important;
+        min-height: 38px !important;
+        width: auto !important;
+        max-width: calc(100vw - 80px) !important;
+        align-self: center !important;
+        white-space: nowrap !important;
     }
 
     .auto-redirect-text {
-        margin-top: 12px;
-        font-size: 12px;
+        margin-top: 10px;
+        font-size: 11px;
+        width: 100%;
     }
 
     /* Step Navigator - Hide on mobile to save space */
@@ -722,12 +744,12 @@
 /* Extra small mobile devices */
 @media (max-width: 480px) {
     #tutorial-controls {
-        padding: 5px 8px;
-        gap: 6px;
+        padding: 3px 5px;
+        gap: 3px;
     }
 
     #tutorial-progress {
-        font-size: 9px;
+        font-size: 8px;
     }
 
     #tutorial-xp-bar {
@@ -735,25 +757,25 @@
     }
 
     .xp-text {
-        font-size: 9px;
+        font-size: 8px;
     }
 
     #tutorial-skip {
-        padding: 3px 6px;
-        font-size: 9px;
+        padding: 2px 5px;
+        font-size: 8px;
     }
 
     .tutorial-tooltip {
-        bottom: 30px !important;
+        bottom: 24px !important;
         padding: 12px 14px;
         font-size: 13px;
-        max-height: calc(100vh - 70px);
+        max-height: calc(100vh - 65px);
     }
 
     .tooltip-title {
-        font-size: 15px;
-        margin-bottom: 8px;
-        padding-bottom: 6px;
+        font-size: 14px;
+        margin-bottom: 6px;
+        padding-bottom: 5px;
     }
 
     .tooltip-text {
@@ -761,64 +783,72 @@
     }
 
     #tutorial-complete-modal .modal-content {
-        padding: 18px 14px;
-        max-height: 55vh;
+        padding: 16px 12px;
+        max-height: 50vh;
     }
 
     #tutorial-complete-modal h2 {
-        font-size: 18px;
-        margin-bottom: 10px;
-        padding-bottom: 6px;
+        font-size: 16px;
+        margin-bottom: 8px;
+        padding-bottom: 5px;
     }
 
     #tutorial-complete-modal p {
         font-size: 12px;
-        margin: 6px 0;
+        margin: 5px 0;
     }
 
     #tutorial-complete-modal button {
-        padding: 9px 18px;
-        font-size: 13px;
-        min-height: 40px;
+        padding: 7px 14px;
+        font-size: 12px;
+        min-height: 36px;
+        max-width: calc(100vw - 60px);
+        white-space: nowrap;
     }
 
     .celebration-content {
-        padding: 18px 14px;
-        max-height: 55vh;
+        padding: 16px 12px;
+        max-height: 50vh;
     }
 
     .celebration-header h2 {
-        font-size: 20px;
-        margin-bottom: 6px;
-        padding-bottom: 6px;
+        font-size: 18px;
+        margin-bottom: 5px;
+        padding-bottom: 5px;
     }
 
     .celebration-stars {
-        font-size: 16px;
-        margin: 6px 0;
+        font-size: 14px;
+        margin: 5px 0;
     }
 
     .celebration-message {
-        font-size: 13px;
-        margin: 10px 0;
+        font-size: 12px;
+        margin: 8px 0;
     }
 
     .reward-item {
-        padding: 10px 8px;
+        padding: 8px 6px;
     }
 
     .reward-icon {
-        font-size: 26px;
+        font-size: 22px;
     }
 
     .reward-value {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .celebration-btn {
-        padding: 9px 20px !important;
-        font-size: 13px !important;
-        min-height: 40px !important;
+        padding: 7px 16px !important;
+        font-size: 12px !important;
+        min-height: 36px !important;
+        max-width: calc(100vw - 60px) !important;
+        white-space: nowrap !important;
+    }
+
+    .auto-redirect-text {
+        font-size: 10px;
     }
 }
 
