@@ -474,7 +474,7 @@ class TutorialUI {
         $(document).off('click', '#tutorial-cancel').on('click', '#tutorial-cancel', () => {
             console.log('[TutorialUI] Cancel button clicked');
             if (confirm('Voulez-vous vraiment quitter le tutoriel? Vous pourrez le reprendre plus tard.')) {
-                this.cancel();
+                this.skip();
             }
         });
 

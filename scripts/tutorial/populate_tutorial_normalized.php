@@ -61,7 +61,7 @@ $steps = [
         'next_step' => 'meet_gaia',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '.case[data-coords="0,0"] image',
+            'target_selector' => '.case[data-coords="0,0"]',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'blocking',
         ],
@@ -75,7 +75,7 @@ $steps = [
         'next_step' => 'close_card',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '.case[data-coords="1,0"] image',
+            'target_selector' => '.case[data-coords="1,0"]',
             'tooltip_position' => 'left',
             'interaction_mode' => 'semi-blocking',
         ],
@@ -163,6 +163,8 @@ $steps = [
         'interactions' => [
             ['.case', 'Cases du damier'],
             ['.case.go', 'Cases accessibles'],
+            ['#go-rect', 'Bouton de déplacement (rectangle)'],
+            ['#go-img', 'Bouton de déplacement (image)'],
         ],
     ],
     [
@@ -227,6 +229,8 @@ $steps = [
         'interactions' => [
             ['.case', 'Cases du damier'],
             ['.case.go', 'Cases accessibles'],
+            ['#go-rect', 'Bouton de déplacement (rectangle)'],
+            ['#go-img', 'Bouton de déplacement (image)'],
         ],
         'context_changes' => [
             ['consume_movements', 'true'],
@@ -277,7 +281,7 @@ $steps = [
         'next_step' => 'actions_panel_info',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '.case[data-coords="0,0"] image',
+            'target_selector' => '#current-player-avatar',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'semi-blocking',
         ],
@@ -290,6 +294,7 @@ $steps = [
         'interactions' => [
             ['.case', 'Cases du damier'],
             ['image', 'Personnages'],
+            ['#current-player-avatar', 'Avatar du joueur'],
         ],
     ],
     [
@@ -363,6 +368,8 @@ $steps = [
         'interactions' => [
             ['.case', 'Cases du damier'],
             ['.case.go', 'Cases accessibles'],
+            ['#go-rect', 'Bouton de déplacement (rectangle)'],
+            ['#go-img', 'Bouton de déplacement (image)'],
         ],
         'highlights' => [
             '.case[data-coords="0,1"]',
@@ -575,6 +582,8 @@ $steps = [
         'interactions' => [
             ['.case', 'Cases du damier'],
             ['.case.go', 'Cases accessibles'],
+            ['#go-rect', 'Bouton de déplacement (rectangle)'],
+            ['#go-img', 'Bouton de déplacement (image)'],
         ],
     ],
     [
