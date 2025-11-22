@@ -188,7 +188,23 @@ class TutorialUI {
     notifyAction(actionType, actionData = {}, skipUIUpdate = false) {
         console.log('[TutorialUI] Action notification:', actionType, actionData, 'skipUI:', skipUIUpdate);
 
+        if (!this.stepData) {
+            console.log('[TutorialUI] No current step data, ignoring action notification');
+            return;
+        }
+
+        const requiresValidation = this.stepData.requires_validation;
+        const allowManualAdvance = this.stepData.config?.allow_manual_advance;
+
+        // If step has manual advance enabled and doesn't require validation,
+        // it should ONLY advance via the manual Next button, not via notifyAction
+        if (allowManualAdvance && !requiresValidation) {
+            console.log('[TutorialUI] Step has manual advance and no validation, ignoring notifyAction (use Next button instead)');
+            return;
+        }
+
         // Auto-advance with validation data
+        // The server-side validation will determine if this action is valid for the current step
         this.next(actionData, skipUIUpdate);
     }
 
