@@ -441,54 +441,70 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    /* Tutorial Controls - Make compact and move to bottom for better reachability */
+    /* Tutorial Controls - Compact single-line layout for mobile */
     #tutorial-controls {
         top: auto;
         bottom: 10px;
         right: 10px;
         left: 10px;
         min-width: auto;
-        padding: 10px 12px;
+        padding: 8px 10px;
         border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
 
     #tutorial-progress {
-        font-size: 12px;
-        margin-bottom: 8px;
+        font-size: 11px;
+        margin-bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #tutorial-step-counter {
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     #tutorial-xp-bar {
-        margin-top: 8px;
-        margin-bottom: 10px;
+        margin-top: 0;
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 0;
     }
 
     .xp-bar-container {
-        height: 16px;
+        height: 12px;
+        margin-bottom: 0;
     }
 
     .xp-text {
-        font-size: 10px;
+        font-size: 9px;
+        margin-top: 2px;
     }
 
     .tutorial-controls-buttons {
         gap: 6px;
-        margin-top: 8px;
+        margin-top: 0;
     }
 
     .btn-tutorial-primary,
     .btn-tutorial-secondary,
     .btn-tutorial-danger {
-        padding: 10px 12px;
-        font-size: 13px;
+        padding: 8px 10px;
+        font-size: 12px;
         /* Better touch targets */
-        min-height: 44px;
+        min-height: 40px;
     }
 
     /* Tooltips - Force to safe positions on mobile */
     .tutorial-tooltip {
         /* Always position at bottom center on mobile for visibility */
         position: fixed !important;
-        bottom: 80px !important; /* Above controls */
+        bottom: 70px !important; /* Above compact controls */
         left: 50% !important;
         right: auto !important;
         top: auto !important;
@@ -496,9 +512,9 @@
         max-width: calc(100vw - 20px);
         min-width: 0;
         width: auto;
-        padding: 18px 20px;
+        padding: 15px 18px;
         font-size: 14px;
-        max-height: calc(100vh - 200px);
+        max-height: calc(100vh - 150px);
         overflow-y: auto;
     }
 
@@ -542,92 +558,110 @@
         font-size: 10px;
     }
 
-    /* Complete Modal - Full mobile optimization */
+    /* Complete Modal - Compact mobile optimization */
     #tutorial-complete-modal .modal-content {
-        max-width: calc(100vw - 30px);
-        padding: 30px 25px;
-        max-height: 90vh;
+        max-width: calc(100vw - 40px);
+        padding: 25px 20px;
+        max-height: 70vh;
         overflow-y: auto;
     }
 
+    #tutorial-complete-modal .modal-content::before,
+    #tutorial-complete-modal .modal-content::after {
+        font-size: 16px;
+        top: 10px;
+    }
+
+    #tutorial-complete-modal .modal-content::before {
+        left: 10px;
+    }
+
+    #tutorial-complete-modal .modal-content::after {
+        right: 10px;
+    }
+
     #tutorial-complete-modal h2 {
-        font-size: 28px;
-        margin-bottom: 20px;
-        padding-bottom: 12px;
+        font-size: 22px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom-width: 2px;
     }
 
     #tutorial-complete-modal p {
-        font-size: 15px;
-        margin: 12px 0;
+        font-size: 14px;
+        margin: 10px 0;
+        line-height: 1.5;
     }
 
     #tutorial-complete-modal button {
-        padding: 14px 28px;
-        font-size: 16px;
-        margin-top: 20px;
-        min-height: 48px;
+        padding: 12px 24px;
+        font-size: 15px;
+        margin-top: 15px;
+        min-height: 44px;
         width: 100%;
     }
 
-    /* Celebration Modal - Mobile optimized */
+    /* Celebration Modal - Compact mobile optimized */
     .celebration-content {
-        max-width: calc(100vw - 30px);
-        padding: 35px 25px;
-        max-height: 90vh;
+        max-width: calc(100vw - 40px);
+        padding: 25px 20px;
+        max-height: 70vh;
         overflow-y: auto;
     }
 
     .celebration-header h2 {
-        font-size: 30px;
-        margin-bottom: 12px;
-        padding-bottom: 12px;
+        font-size: 24px;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom-width: 2px;
     }
 
     .celebration-stars {
-        font-size: 24px;
-        margin: 12px 0;
+        font-size: 20px;
+        margin: 10px 0;
     }
 
     .celebration-message {
-        font-size: 16px;
-        margin: 20px 0;
+        font-size: 15px;
+        margin: 15px 0;
+        line-height: 1.5;
     }
 
     .rewards-display {
-        gap: 15px;
-        margin: 25px 0;
+        gap: 12px;
+        margin: 20px 0;
         grid-template-columns: 1fr;
     }
 
     .reward-item {
-        padding: 20px 15px;
+        padding: 15px 12px;
     }
 
     .reward-icon {
-        font-size: 36px;
-        margin-bottom: 10px;
+        font-size: 32px;
+        margin-bottom: 8px;
     }
 
     .reward-label {
-        font-size: 12px;
-        margin-bottom: 6px;
+        font-size: 11px;
+        margin-bottom: 5px;
     }
 
     .reward-value {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .celebration-btn {
-        padding: 14px 35px !important;
-        font-size: 17px !important;
-        margin-top: 20px !important;
-        min-height: 48px !important;
+        padding: 12px 30px !important;
+        font-size: 15px !important;
+        margin-top: 15px !important;
+        min-height: 44px !important;
         width: 100% !important;
     }
 
     .auto-redirect-text {
-        margin-top: 20px;
-        font-size: 14px;
+        margin-top: 15px;
+        font-size: 13px;
     }
 
     /* Step Navigator - Hide on mobile to save space */
@@ -655,33 +689,40 @@
 /* Extra small mobile devices */
 @media (max-width: 480px) {
     #tutorial-controls {
-        padding: 8px 10px;
+        padding: 6px 8px;
     }
 
     #tutorial-progress {
-        font-size: 11px;
+        font-size: 10px;
+        gap: 6px;
+    }
+
+    .xp-bar-container {
+        height: 10px;
     }
 
     .xp-text {
-        font-size: 9px;
+        font-size: 8px;
     }
 
     .btn-tutorial-primary,
     .btn-tutorial-secondary,
     .btn-tutorial-danger {
-        padding: 8px 10px;
-        font-size: 12px;
+        padding: 7px 8px;
+        font-size: 11px;
+        min-height: 38px;
     }
 
     .tutorial-tooltip {
-        bottom: 70px !important;
-        padding: 15px 16px;
+        bottom: 60px !important;
+        padding: 12px 14px;
         font-size: 13px;
     }
 
     .tooltip-title {
         font-size: 16px;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
     }
 
     .tooltip-text {
@@ -689,27 +730,64 @@
     }
 
     #tutorial-complete-modal .modal-content {
-        padding: 25px 20px;
+        padding: 20px 16px;
+        max-height: 65vh;
     }
 
     #tutorial-complete-modal h2 {
-        font-size: 24px;
+        font-size: 20px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
     }
 
     #tutorial-complete-modal p {
+        font-size: 13px;
+        margin: 8px 0;
+    }
+
+    #tutorial-complete-modal button {
+        padding: 10px 20px;
         font-size: 14px;
+        min-height: 42px;
     }
 
     .celebration-content {
-        padding: 30px 20px;
+        padding: 20px 16px;
+        max-height: 65vh;
     }
 
     .celebration-header h2 {
-        font-size: 26px;
+        font-size: 22px;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+    }
+
+    .celebration-stars {
+        font-size: 18px;
+        margin: 8px 0;
     }
 
     .celebration-message {
-        font-size: 15px;
+        font-size: 14px;
+        margin: 12px 0;
+    }
+
+    .reward-item {
+        padding: 12px 10px;
+    }
+
+    .reward-icon {
+        font-size: 28px;
+    }
+
+    .reward-value {
+        font-size: 20px;
+    }
+
+    .celebration-btn {
+        padding: 10px 25px !important;
+        font-size: 14px !important;
+        min-height: 42px !important;
     }
 }
 
