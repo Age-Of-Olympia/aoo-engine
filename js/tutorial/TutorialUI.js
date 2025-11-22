@@ -461,7 +461,6 @@ class TutorialUI {
                 </div>
                 <div class="tutorial-controls-buttons">
                     <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
-                    <button id="tutorial-cancel" class="btn-tutorial-danger">❌ Quitter</button>
                 </div>
             </div>
         `);
@@ -471,14 +470,6 @@ class TutorialUI {
         $(document).off('click', '#tutorial-skip').on('click', '#tutorial-skip', () => {
             console.log('[TutorialUI] Skip button handler fired');
             this.skip();
-        });
-
-        // Bind cancel button - always allow exit to main character
-        $(document).off('click', '#tutorial-cancel').on('click', '#tutorial-cancel', () => {
-            console.log('[TutorialUI] Cancel button clicked');
-            if (confirm('Voulez-vous vraiment quitter le tutoriel? Vous pourrez le reprendre plus tard.')) {
-                this.skip();
-            }
         });
 
         console.log('[TutorialUI] Overlay shown');
@@ -1446,16 +1437,14 @@ class TutorialUI {
                             <span class="reward-label">PI gagnés</span>
                             <span class="reward-value">${response.pi_earned || 0}</span>
                         </div>
-                        <div class="reward-item">
-                            <span class="reward-icon">🏆</span>
-                            <span class="reward-label">Niveau atteint</span>
-                            <span class="reward-value">${response.final_level || 1}</span>
-                        </div>
                     </div>
                     <button id="tutorial-complete-continue" class="btn-tutorial-primary celebration-btn">
                         🎮 Commencer l'aventure!
                     </button>
-                    <p class="auto-redirect-text">Redirection automatique dans <span id="redirect-countdown">${redirectDelaySec}</span>s...</p>
+                    <p class="auto-redirect-text" id="auto-redirect-text">
+                        Redirection automatique dans <span id="redirect-countdown">${redirectDelaySec}</span>s...
+                        <button id="cancel-redirect" class="btn-tutorial-secondary" style="margin-left: 10px; padding: 2px 8px; font-size: 0.9em;">Annuler</button>
+                    </p>
                 </div>
             </div>
         `);
@@ -1465,7 +1454,7 @@ class TutorialUI {
 
         // Auto-redirect countdown (use configured delay)
         let countdown = redirectDelaySec;
-        const countdownInterval = setInterval(() => {
+        let countdownInterval = setInterval(() => {
             countdown--;
             $('#redirect-countdown').text(countdown);
             if (countdown <= 0) {
@@ -1478,6 +1467,15 @@ class TutorialUI {
         $('#tutorial-complete-continue').on('click', () => {
             clearInterval(countdownInterval);
             this.completeTutorialAndRedirect();
+        });
+
+        // Cancel auto-redirect
+        $('#cancel-redirect').on('click', () => {
+            clearInterval(countdownInterval);
+            $('#auto-redirect-text').fadeOut(300, function() {
+                $(this).html('<em style="opacity: 0.7;">Redirection automatique annulée</em>').fadeIn(300);
+            });
+            console.log('[TutorialUI] Auto-redirect cancelled by user');
         });
     }
 
