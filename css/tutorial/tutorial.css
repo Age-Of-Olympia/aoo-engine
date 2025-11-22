@@ -476,23 +476,29 @@
         white-space: nowrap;
     }
 
-    /* Reposition XP bar to bottom of screen as thin strip */
+    /* Reposition XP bar container to bottom of screen as thin strip */
     #tutorial-xp-bar {
+        position: relative;
+        margin: 0;
+        order: 2;
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Thin progress bar at absolute bottom */
+    .xp-bar-container {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        margin: 0;
-        z-index: 10000;
-        height: 3px;
-    }
-
-    .xp-bar-container {
         height: 3px;
         margin-bottom: 0;
         border-radius: 0;
         background: rgba(139, 69, 19, 0.3);
         border: none;
+        z-index: 10000;
     }
 
     .xp-bar-fill {
@@ -504,9 +510,8 @@
         font-size: 10px;
         margin: 0;
         white-space: nowrap;
-        text-align: left;
-        display: inline;
-        order: 2;
+        text-align: center;
+        color: white;
     }
 
     .tutorial-controls-buttons {
@@ -716,10 +721,17 @@
 
 /* Extra small mobile devices */
 @media (max-width: 480px) {
+    #tutorial-controls {
+        padding: 5px 8px;
+        gap: 6px;
+    }
+
     #tutorial-progress {
         font-size: 9px;
-        gap: 6px;
-        padding: 5px 8px;
+    }
+
+    #tutorial-xp-bar {
+        flex-grow: 0;
     }
 
     .xp-text {

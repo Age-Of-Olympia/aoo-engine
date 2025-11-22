@@ -470,13 +470,13 @@ class TutorialUI {
         const $controls = $(`
             <div id="tutorial-controls">
                 <div id="tutorial-progress">
-                    <span id="tutorial-step-counter">Étape ${this.currentStepPosition} / ${this.totalSteps}</span>
+                    <span id="tutorial-step-counter">Étape ${this.currentStepPosition}</span>
                 </div>
                 <div id="tutorial-xp-bar">
                     <div class="xp-bar-container">
                         <div class="xp-bar-fill" style="width: ${Math.min(initialProgress, 100)}%"></div>
                     </div>
-                    <div class="xp-text">Étape ${this.currentStepPosition}/${this.totalSteps} • XP gagné: ${this.xpEarned}</div>
+                    <div class="xp-text">XP gagné: ${this.xpEarned}</div>
                 </div>
                 <div class="tutorial-controls-buttons">
                     <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
@@ -1378,17 +1378,16 @@ class TutorialUI {
         // Update progress bar fill
         $('#tutorial-xp-bar .xp-bar-fill').css('width', `${Math.min(barProgress, 100)}%`);
 
-        // Show step progression and earned XP
-        const stepText = `Étape ${this.currentStepPosition}/${this.totalSteps}`;
+        // Show earned XP (step shown separately in progress indicator)
         const xpText = `XP gagné: ${this.xpEarned}`;
-        $('#tutorial-xp-bar .xp-text').text(`${stepText} • ${xpText}`);
+        $('#tutorial-xp-bar .xp-text').text(xpText);
     }
 
     /**
      * Update progress indicator
      */
     updateProgressIndicator() {
-        $('#tutorial-step-counter').text(`Étape ${this.currentStepPosition} / ${this.totalSteps}`);
+        $('#tutorial-step-counter').text(`Étape ${this.currentStepPosition}`);
     }
 
     /**
