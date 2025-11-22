@@ -279,16 +279,16 @@ class TutorialTooltip {
     }
 
     /**
-     * Position tooltip at bottom-left (default position, doesn't block map)
+     * Position tooltip at center of screen (truly centered, doesn't block specific elements)
      */
     positionCenter() {
         this.$tooltip.css({
             position: 'fixed',
-            bottom: '20px',
-            left: '20px',
-            top: 'auto',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            bottom: 'auto',
             right: 'auto',
-            transform: 'none',
             width: 'auto',    // Clear any previous width
             height: 'auto'    // Clear any previous height that would stretch it
         });
