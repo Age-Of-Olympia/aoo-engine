@@ -470,13 +470,12 @@ $steps = [
             'target_selector' => '#show-inventory',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'semi-blocking',
-            'auto_advance_delay' => 500,
-            'allow_manual_advance' => true,
         ],
         'validation' => [
-            'requires_validation' => false,
-            'validation_type' => 'ui_button_clicked',
+            'requires_validation' => true,
+            'validation_type' => 'ui_interaction',
             'validation_hint' => 'Cliquez sur le bouton Inventaire',
+            'element_clicked' => 'show-inventory',
         ],
         'interactions' => [
             ['#show-inventory', 'Bouton Inventaire'],

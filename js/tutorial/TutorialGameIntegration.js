@@ -97,6 +97,18 @@
             }, 100);
         });
 
+        // Intercept inventory button (#show-inventory)
+        $(document).on('click', '#show-inventory', function(e) {
+            console.log('[TutorialGameIntegration] Inventory button (#show-inventory) clicked');
+
+            if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
+                window.tutorialUI.notifyAction('ui_interaction', {
+                    element_clicked: 'show-inventory',
+                    panel: 'inventory'
+                }, true); // skipUIUpdate = true because page will reload
+            }
+        });
+
         // Intercept inventory link
         $(document).on('click', 'a[href="inventory.php"]', function(e) {
             console.log('[TutorialGameIntegration] Inventory link clicked');
