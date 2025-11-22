@@ -30,7 +30,7 @@ class TutorialView
         </script>
 
         <!-- Tutorial CSS -->
-        <link href="css/tutorial/tutorial.css?v=20251122k" rel="stylesheet">
+        <link href="css/tutorial/tutorial.css?v=20251122m" rel="stylesheet">
 
         <!-- Tutorial JavaScript - NEW MODULAR SYSTEM -->
         <script src="js/tutorial/TutorialPositionManager.js?v=20251118a"></script>
