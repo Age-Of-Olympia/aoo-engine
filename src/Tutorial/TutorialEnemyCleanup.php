@@ -41,6 +41,12 @@ class TutorialEnemyCleanup
         // Player effects/buffs
         ['table' => 'players_effects', 'columns' => ['player_id']],
 
+        // Player bonus/characteristics (CRITICAL: enemy gets PV bonus on spawn)
+        ['table' => 'players_bonus', 'columns' => ['player_id']],
+
+        // Player options
+        ['table' => 'players_options', 'columns' => ['player_id']],
+
         // Combat statistics (both as killer and victim)
         ['table' => 'players_kills', 'columns' => ['player_id', 'target_id']],
         ['table' => 'players_assists', 'columns' => ['player_id', 'target_id']],
