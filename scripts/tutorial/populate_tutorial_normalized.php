@@ -490,7 +490,7 @@ $steps = [
         'next_step' => 'close_inventory',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '#inventory-panel',
+            'target_selector' => '.item-case[data-name="bois"]',
             'tooltip_position' => 'left',
             'interaction_mode' => 'blocking',
             'show_delay' => 300,
