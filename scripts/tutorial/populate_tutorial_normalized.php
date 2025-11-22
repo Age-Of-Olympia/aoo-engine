@@ -64,6 +64,7 @@ $steps = [
             'target_selector' => '.case[data-coords="0,0"]',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'blocking',
+            'show_delay' => 200,
         ],
     ],
     [
@@ -125,13 +126,14 @@ $steps = [
         'step_number' => 5,
         'step_type' => 'info',
         'title' => 'Se déplacer',
-        'text' => 'Regardez les <strong>cases vertes</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer. Cliquez sur l\'une d\'elles pour bouger.',
+        'text' => 'Regardez les <strong>cases</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer si elles sont vides. Cliquez sur l\'une d\'elles pour bouger.',
         'next_step' => 'first_move',
         'xp_reward' => 5,
         'ui' => [
             'target_selector' => '.case.go',
-            'tooltip_position' => 'center',
+            'tooltip_position' => 'top',
             'interaction_mode' => 'blocking',
+            'show_delay' => 300,
         ],
         'highlights' => [
             '.case.go',
@@ -142,12 +144,12 @@ $steps = [
         'step_number' => 6,
         'step_type' => 'movement',
         'title' => 'Premier pas',
-        'text' => 'Cliquez sur une <strong>case verte</strong> pour vous déplacer !',
+        'text' => 'Cliquez sur une <strong>case mise en valeur</strong> pour vous déplacer !',
         'next_step' => 'movement_limit_warning',
         'xp_reward' => 10,
         'ui' => [
             'target_selector' => '.case.go',
-            'tooltip_position' => 'center',
+            'tooltip_position' => 'top',
             'interaction_mode' => 'semi-blocking',
         ],
         'validation' => [
@@ -161,10 +163,14 @@ $steps = [
             'unlimited_mvt' => true,
         ],
         'interactions' => [
-            ['.case', 'Cases du damier'],
-            ['.case.go', 'Cases accessibles'],
-            ['#go-rect', 'Bouton de déplacement (rectangle)'],
-            ['#go-img', 'Bouton de déplacement (image)'],
+            ['.case', null],
+            ['.case.go', null],
+            ['#go-rect', null],
+            ['#go-img', null],
+        ],
+        'context_changes' => [
+            ['unlimited_mvt', 'true'],
+            ['consume_movements', 'false'],
         ],
     ],
     [
@@ -247,8 +253,10 @@ $steps = [
         'next_step' => 'actions_intro',
         'xp_reward' => 5,
         'ui' => [
-            'tooltip_position' => 'center',
+            'target_selector' => '#mvt-counter',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'blocking',
+            'show_delay' => 700,
         ],
         'next_preparation' => [
             ['restore_mvt', '4'],
@@ -265,8 +273,10 @@ $steps = [
         'next_step' => 'click_yourself',
         'xp_reward' => 5,
         'ui' => [
-            'tooltip_position' => 'center',
+            'target_selector' => '#action-counter',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'blocking',
+            'show_delay' => 700,
         ],
         'prerequisites' => [
             'mvt_required' => 4,
@@ -308,7 +318,7 @@ $steps = [
         'next_step' => 'close_card_for_tree',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '#ui-card',
+            'target_selector' => '.card-actions',
             'tooltip_position' => 'right',
             'interaction_mode' => 'blocking',
             'show_delay' => 300,
@@ -351,7 +361,7 @@ $steps = [
         'xp_reward' => 10,
         'ui' => [
             'target_selector' => '.case[data-coords="0,1"]',
-            'tooltip_position' => 'bottom',
+            'tooltip_position' => 'center',
             'interaction_mode' => 'semi-blocking',
         ],
         'validation' => [
@@ -368,10 +378,10 @@ $steps = [
             'ensure_harvestable_tree_y' => 1,
         ],
         'interactions' => [
-            ['.case', 'Cases du damier'],
-            ['.case.go', 'Cases accessibles'],
-            ['#go-rect', 'Bouton de déplacement (rectangle)'],
-            ['#go-img', 'Bouton de déplacement (image)'],
+            ['.case', null],
+            ['.case.go', null],
+            ['#go-rect', null],
+            ['#go-img', null],
         ],
         'highlights' => [
             '.case[data-coords="0,1"]',
@@ -410,8 +420,8 @@ $steps = [
         'next_step' => 'use_fouiller',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '#ui-card',
-            'tooltip_position' => 'center',
+            'target_selector' => '.resource-status',
+            'tooltip_position' => 'left',
             'interaction_mode' => 'blocking',
             'show_delay' => 300,
         ],
@@ -422,7 +432,7 @@ $steps = [
         'step_type' => 'action',
         'title' => 'Fouiller !',
         'text' => 'Cliquez sur <strong>Fouiller</strong> pour récolter du bois de l\'arbre.',
-        'next_step' => 'fouiller_result',
+        'next_step' => 'action_consumed',
         'xp_reward' => 15,
         'ui' => [
             'target_selector' => '.action[data-action="fouiller"]',
@@ -441,24 +451,9 @@ $steps = [
             'auto_restore' => true,
         ],
         'interactions' => [
-            ['.action[data-action="fouiller"]', 'Bouton Fouiller'],
-            ['.case-infos', 'Fiche'],
-            ['button.action', 'Boutons d\'action'],
-        ],
-    ],
-    [
-        'step_id' => 'fouiller_result',
-        'step_number' => 19,
-        'step_type' => 'info',
-        'title' => 'Action réussie !',
-        'text' => 'Regardez ! L\'action <strong>Fouiller a été utilisée</strong> et vous pouvez voir son résultat juste au-dessus. Vous avez récolté du bois !',
-        'next_step' => 'action_consumed',
-        'xp_reward' => 5,
-        'ui' => [
-            'target_selector' => '#action-data',
-            'tooltip_position' => 'right',
-            'interaction_mode' => 'blocking',
-            'show_delay' => 700,
+            ['.action[data-action="fouiller"]', null],
+            ['.case-infos', null],
+            ['button.action', null],
         ],
     ],
     [
@@ -470,8 +465,10 @@ $steps = [
         'next_step' => 'open_inventory',
         'xp_reward' => 5,
         'ui' => [
-            'tooltip_position' => 'center',
+            'target_selector' => '#action-counter',
+            'tooltip_position' => 'right',
             'interaction_mode' => 'blocking',
+            'show_delay' => 700,
         ],
     ],
 
@@ -488,15 +485,16 @@ $steps = [
             'target_selector' => '#show-inventory',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'semi-blocking',
+            'show_delay' => 300,
         ],
         'validation' => [
             'requires_validation' => true,
             'validation_type' => 'ui_interaction',
             'validation_hint' => 'Cliquez sur le bouton Inventaire',
-            'element_clicked' => 'show-inventory',
+            'element_clicked' => '#show-inventory',
         ],
         'interactions' => [
-            ['#show-inventory', 'Bouton Inventaire'],
+            ['#show-inventory', null],
         ],
     ],
     [
@@ -508,7 +506,7 @@ $steps = [
         'next_step' => 'close_inventory',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '.item-case[data-name="bois"]',
+            'target_selector' => '.item-case[data-name="Bois"]',
             'tooltip_position' => 'left',
             'interaction_mode' => 'blocking',
             'show_delay' => 700,
@@ -519,22 +517,23 @@ $steps = [
         'step_number' => 23,
         'step_type' => 'ui_interaction',
         'title' => 'Retour au jeu',
-        'text' => 'Fermez l\'inventaire pour revenir au jeu. Cliquez sur <strong>Damier</strong>.',
+        'text' => 'Fermez l\'inventaire pour revenir au jeu. Cliquez sur <strong>Retour</strong>.',
         'next_step' => 'combat_intro',
         'xp_reward' => 5,
         'ui' => [
-            'target_selector' => '#show-damier',
+            'target_selector' => '#back',
             'tooltip_position' => 'bottom',
             'interaction_mode' => 'semi-blocking',
+            'show_delay' => 200,
         ],
         'validation' => [
             'requires_validation' => true,
-            'validation_type' => 'ui_panel_opened',
+            'validation_type' => 'ui_interaction',
             'validation_hint' => 'Retournez au damier',
-            'panel_id' => 'damier',
+            'element_clicked' => '#back',
         ],
         'interactions' => [
-            ['#show-damier', 'Bouton Damier'],
+            ['#back', null],
         ],
     ],
 
@@ -583,7 +582,7 @@ $steps = [
         'xp_reward' => 10,
         'ui' => [
             'target_selector' => '.tutorial-enemy',
-            'tooltip_position' => 'bottom',
+            'tooltip_position' => 'center',
             'interaction_mode' => 'semi-blocking',
         ],
         'validation' => [
@@ -598,10 +597,10 @@ $steps = [
             'auto_restore' => true,
         ],
         'interactions' => [
-            ['.case', 'Cases du damier'],
-            ['.case.go', 'Cases accessibles'],
-            ['#go-rect', 'Bouton de déplacement (rectangle)'],
-            ['#go-img', 'Bouton de déplacement (image)'],
+            ['.case', null],
+            ['.case.go', null],
+            ['#go-rect', null],
+            ['#go-img', null],
         ],
     ],
     [
