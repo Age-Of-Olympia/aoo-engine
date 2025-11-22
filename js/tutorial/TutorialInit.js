@@ -132,12 +132,18 @@
         }
 
         // Auto-resume if tutorial is actively running (after page reload during tutorial)
-        if (sessionStorage.getItem('tutorial_active') === 'true') {
+        const tutorialActive = sessionStorage.getItem('tutorial_active');
+        console.log('[Tutorial] Checking auto-resume - tutorial_active:', tutorialActive);
+
+        if (tutorialActive === 'true') {
             console.log('[Tutorial] Auto-resuming active tutorial...');
             setTimeout(() => {
+                console.log('[Tutorial] Calling window.resumeTutorial()...');
                 window.resumeTutorial();
             }, 500);
             return;
+        } else {
+            console.log('[Tutorial] NOT auto-resuming - tutorial_active is not "true"');
         }
 
         try {

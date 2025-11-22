@@ -87,7 +87,8 @@ try {
                 'xp_earned' => $result['xp_earned'] ?? 0,
                 'pi_earned' => $result['pi_earned'] ?? 0,
                 'final_level' => $result['final_level'] ?? 1,
-                'is_replay' => $result['is_replay'] ?? false
+                'is_replay' => $result['is_replay'] ?? false,
+                'step_data' => $result['final_step_data'] ?? null  // Include final step config for redirect_delay
             ]);
         } else {
             // Return next step data
