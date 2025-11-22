@@ -251,14 +251,31 @@ class TutorialProgressManager
             error_log("[TutorialProgressManager] Applied prerequisites for step {$step->getStepId()}: " . json_encode($prerequisites));
         }
 
-        // Set consume_movements flag in session from prerequisites OR context_changes
-        // (consume_movements can be in either location depending on how it was configured)
-        // This must happen regardless of whether prerequisites exist
-        $consumeMovements = $prerequisites['consume_movements'] ?? $config['context_changes']['consume_movements'] ?? null;
+        // Set consume_movements flag in session
+        // PRIORITY: context_changes table takes precedence over prerequisites table
+        // This allows the step editor checkboxes to override old configurations
+        $consumeMovements = null;
+
+        if (isset($config['context_changes']['consume_movements'])) {
+            $consumeMovements = $config['context_changes']['consume_movements'];
+            error_log("[TutorialProgressManager] Got consume_movements from context_changes: " . var_export($consumeMovements, true));
+        } elseif (isset($prerequisites['consume_movements'])) {
+            $consumeMovements = $prerequisites['consume_movements'];
+            error_log("[TutorialProgressManager] Got consume_movements from prerequisites: " . var_export($consumeMovements, true));
+        }
 
         if ($consumeMovements !== null) {
-            $_SESSION['tutorial_consume_movements'] = (bool)$consumeMovements;
-            error_log("[TutorialProgressManager] SET SESSION tutorial_consume_movements = " . ($consumeMovements ? 'true' : 'false'));
+            // Convert to boolean (handles both boolean and string values)
+            $consumeBool = is_string($consumeMovements)
+                ? (strtolower($consumeMovements) === 'true' || $consumeMovements === '1')
+                : (bool)$consumeMovements;
+
+            $_SESSION['tutorial_consume_movements'] = $consumeBool;
+            error_log("[TutorialProgressManager] SET SESSION tutorial_consume_movements = " . ($consumeBool ? 'true' : 'false'));
+        } else {
+            // Default: tutorial does NOT consume movements (legacy behavior)
+            $_SESSION['tutorial_consume_movements'] = false;
+            error_log("[TutorialProgressManager] consume_movements is NULL for step " . $step->getStepId() . ", defaulting to false");
         }
     }
 
