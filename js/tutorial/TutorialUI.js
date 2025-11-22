@@ -92,6 +92,7 @@ class TutorialUI {
             console.log('[TutorialUI] Checking for resume...');
 
             const response = await this.apiCall('/api/tutorial/resume.php', {}, 'GET');
+            console.log('[TutorialUI] Resume API response:', response);
 
             if (response.success && response.has_active_tutorial) {
                 this.currentSession = response.session_id;
@@ -103,7 +104,7 @@ class TutorialUI {
                 this.pi = response.pi || 0;
                 this.isActive = true;
 
-                console.log('[TutorialUI] Resuming tutorial', response);
+                console.log('[TutorialUI] Resuming tutorial - current_step:', this.currentStep, 'step_id:', response.step_data?.step_id);
 
                 // Activate tutorial UI
                 this.activateTutorialUI(response.step_data);
@@ -113,7 +114,7 @@ class TutorialUI {
 
                 return true;
             } else {
-                console.log('[TutorialUI] No active tutorial to resume');
+                console.log('[TutorialUI] No active tutorial to resume - response:', response);
                 return false;
             }
         } catch (error) {
@@ -238,6 +239,7 @@ class TutorialUI {
                     this.level = response.level;
                     this.pi = response.pi;
                     console.log('[TutorialUI] Updated to step:', this.currentStep, 'position:', this.currentStepPosition);
+                    console.log('[TutorialUI] sessionStorage.tutorial_active is:', sessionStorage.getItem('tutorial_active'));
 
                     // Only update UI if not skipping (e.g., before page reload)
                     if (!skipUIUpdate) {
@@ -252,7 +254,8 @@ class TutorialUI {
                             console.error('[TutorialUI] ⚠️ Advance SUCCESS but no step_data in response!', response);
                         }
                     } else {
-                        console.log('[TutorialUI] Skipping UI update - page will reload');
+                        console.log('[TutorialUI] Skipping UI update - page will reload. sessionStorage.tutorial_active:', sessionStorage.getItem('tutorial_active'));
+                        console.log('[TutorialUI] Next step that should load on new page:', response.current_step);
                     }
                 }
 
@@ -1415,6 +1418,11 @@ class TutorialUI {
         console.log('[TutorialUI] Response:', JSON.stringify(response, null, 2));
         console.log('[TutorialUI] ========================================');
 
+        // Get redirect delay from step config (in milliseconds, default 5000ms = 5s)
+        const redirectDelayMs = response.step_data?.config?.redirect_delay ?? 5000;
+        const redirectDelaySec = Math.ceil(redirectDelayMs / 1000);
+        console.log('[TutorialUI] Redirect delay:', redirectDelayMs, 'ms (', redirectDelaySec, 'seconds)');
+
         // Remove any existing modal first
         $('#tutorial-complete-modal').remove();
 
@@ -1447,7 +1455,7 @@ class TutorialUI {
                     <button id="tutorial-complete-continue" class="btn-tutorial-primary celebration-btn">
                         🎮 Commencer l'aventure!
                     </button>
-                    <p class="auto-redirect-text">Redirection automatique dans <span id="redirect-countdown">5</span>s...</p>
+                    <p class="auto-redirect-text">Redirection automatique dans <span id="redirect-countdown">${redirectDelaySec}</span>s...</p>
                 </div>
             </div>
         `);
@@ -1455,8 +1463,8 @@ class TutorialUI {
         $('body').append($modal);
         $modal.fadeIn(600);
 
-        // Auto-redirect countdown
-        let countdown = 5;
+        // Auto-redirect countdown (use configured delay)
+        let countdown = redirectDelaySec;
         const countdownInterval = setInterval(() => {
             countdown--;
             $('#redirect-countdown').text(countdown);

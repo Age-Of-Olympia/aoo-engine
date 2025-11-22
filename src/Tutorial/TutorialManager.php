@@ -346,7 +346,14 @@ class TutorialManager
 
             // If tutorial completed, handle completion
             if ($result['completed'] ?? false) {
-                return $this->completeTutorial();
+                $completionResult = $this->completeTutorial();
+
+                // Include final step data for client-side config (e.g., redirect_delay)
+                if (isset($result['final_step_data'])) {
+                    $completionResult['final_step_data'] = $result['final_step_data'];
+                }
+
+                return $completionResult;
             }
 
             return $result;
