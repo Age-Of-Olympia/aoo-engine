@@ -94,7 +94,7 @@ class TutorialProgressManager
                 'completed' => true,
                 'message' => 'Tutorial completed!',
                 'xp_earned' => $this->context->getTutorialXP(),
-                'final_step_data' => $step->toArray()  // Include final step config for client
+                'final_step_data' => $step->getData()  // Include final step config for client
             ];
         }
 
