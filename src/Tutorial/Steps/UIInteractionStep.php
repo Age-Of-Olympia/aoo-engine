@@ -34,11 +34,13 @@ class UIInteractionStep extends AbstractStep
                 $panelVisible = $data['panel_visible'] ?? false;
                 $panel = $data['panel'] ?? null;
 
-                // Support both characteristics panel and actions panel
+                // Support characteristics, actions, and inventory panels
                 if ($requiredPanel === 'characteristics') {
                     return $panel === 'characteristics' && $panelVisible === true;
                 } elseif ($requiredPanel === 'actions') {
                     return $panel === 'actions' && $panelVisible === true;
+                } elseif ($requiredPanel === 'inventory') {
+                    return $panel === 'inventory' && $panelVisible === true;
                 }
 
                 return false;
