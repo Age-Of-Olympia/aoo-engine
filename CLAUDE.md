@@ -30,6 +30,11 @@ apache2-foreground
 
 Use VSCode's "Listen for Xdebug" debug configuration. Xdebug is pre-configured in the dev container.
 
+**CRITICAL - Log Files:**
+- **DO NOT** attempt to read Apache log files (`/var/log/apache2/error.log`) - they are redirected to container stdout and reading them will freeze/hang
+- Instead, use `docker logs` command or view container output directly
+- The user can provide logs from their terminal when needed
+
 ### Test Accounts
 
 Three default characters are created:
