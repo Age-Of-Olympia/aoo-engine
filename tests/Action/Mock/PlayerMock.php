@@ -127,4 +127,9 @@ class PlayerMock implements ActorInterface
   {
 
   }
+
+  public function getPassives(int $id): array
+  {
+    return [];
+  }
 }
