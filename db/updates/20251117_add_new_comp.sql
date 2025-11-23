@@ -1,4 +1,4 @@
-INSERT INTO actions (name, icon, type, displayName, text, niveau, race)
+INSERT INTO actions (name, icon, type, display_name, text, niveau, race)
 VALUES 
 (
     'epuisement','ra-crossed-axes','technique','Épuisement',
@@ -64,7 +64,8 @@ VALUES
     'jet_infuse','ra-crossbow','technique','Jet infusé',
     'Attaque de jet infusé de magie.',
      3, null
-)(
+),
+(
     'epuisement_arcanique','ra-fairy-wand','spell','Épuisement arcanique',
     'Sort pur qui vise à épuiser l''adversaire plutôt que le blesser.',
      1, null
@@ -240,7 +241,7 @@ VALUES
     83,1,'buff_camouflage_hs',1,75
 );
 
-INSERT INTO actions_conditions (conditionType, parameters, action_id, execution_order, blocking)
+INSERT INTO action_conditions (conditionType, parameters, action_id, execution_order, blocking)
 VALUES 
 (
     'RequiresDistance','{"max":1}',46,0,1
