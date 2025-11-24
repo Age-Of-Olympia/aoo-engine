@@ -5,9 +5,16 @@ CREATE TABLE players_reduction_passives (
 );
 
 CREATE TABLE players_passives (
-    id INT AUTO_INCREMENT PRIMARY KEY,
     player_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL
+    passive_id INT NOT NULL,
+    
+    PRIMARY KEY (player_id, passive_id),
+
+    CONSTRAINT fk_players_passives_passive
+        FOREIGN KEY (passive_id)
+        REFERENCES action_passives(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE action_passives (
@@ -25,3 +32,6 @@ CREATE TABLE action_passives (
 ALTER TABLE actions 
 ADD COLUMN niveau INT NOT NULL DEFAULT 1,
 ADD COLUMN race VARCHAR(255);
+
+ALTER TABLE players 
+ADD COLUMN visible VARCHAR(255);
