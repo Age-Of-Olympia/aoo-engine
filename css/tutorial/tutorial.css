@@ -199,6 +199,30 @@
     min-width: 280px;
 }
 
+/* Draggable tooltip (center-positioned on desktop) */
+.tutorial-tooltip.draggable {
+    cursor: move;
+    cursor: grab;
+}
+
+.tutorial-tooltip.draggable:active,
+.tutorial-tooltip.dragging {
+    cursor: grabbing;
+}
+
+/* Add subtle visual hint that tooltip is draggable */
+.tutorial-tooltip.draggable .tooltip-title::before {
+    content: '⋮⋮';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8B6F47;
+    opacity: 0.4;
+    font-size: 18px;
+    letter-spacing: -2px;
+}
+
 .tooltip-content {
     position: relative;
 }
