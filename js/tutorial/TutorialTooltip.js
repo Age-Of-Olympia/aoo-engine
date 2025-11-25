@@ -15,6 +15,12 @@ class TutorialTooltip {
         this.currentPosition = 'center';
         this.positionManager = new TutorialPositionManager();
         this.trackingId = null;
+
+        // Drag state
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.draggedPosition = null; // Store custom position after drag
     }
 
     /**
@@ -83,6 +89,13 @@ class TutorialTooltip {
         // Remove any error messages
         $('.tooltip-error').remove();
 
+        // Reset dragged position if target or position changed
+        const targetChanged = this.currentTargetSelector !== targetSelector;
+        const positionChanged = this.currentPosition !== position;
+        if (targetChanged || positionChanged) {
+            this.draggedPosition = null;
+        }
+
         // Store current target and position for repositioning
         this.currentTargetSelector = targetSelector;
         this.currentPosition = position;
@@ -92,6 +105,9 @@ class TutorialTooltip {
 
         // Setup MutationObserver to track DOM changes and reposition tooltip
         this.setupRepositionObserver();
+
+        // Enable dragging for center-positioned tooltips on desktop
+        this.setupDragging();
 
         console.log('[TutorialTooltip] Shown', { title, targetSelector, position, requiresValidation });
     }
@@ -141,6 +157,89 @@ class TutorialTooltip {
     }
 
     /**
+     * Setup dragging for center-positioned tooltips on desktop
+     */
+    setupDragging() {
+        if (!this.$tooltip) {
+            return;
+        }
+
+        // Only enable dragging for:
+        // 1. Center-positioned tooltips
+        // 2. Desktop view (viewport width > 768px)
+        const isDesktop = $(window).width() > 768;
+        const isCentered = this.currentPosition === 'center';
+
+        if (!isDesktop || !isCentered) {
+            this.$tooltip.removeClass('draggable');
+            return;
+        }
+
+        // Add draggable class for cursor styling
+        this.$tooltip.addClass('draggable');
+
+        // Remove previous drag handlers if they exist
+        this.$tooltip.off('mousedown.drag');
+
+        // Add drag handlers
+        this.$tooltip.on('mousedown.drag', (e) => {
+            // Only drag from title or tooltip content, not buttons
+            if ($(e.target).is('button') || $(e.target).closest('button').length > 0) {
+                return;
+            }
+
+            this.isDragging = true;
+            this.dragStartX = e.clientX;
+            this.dragStartY = e.clientY;
+
+            // Get current position
+            const tooltipRect = this.$tooltip[0].getBoundingClientRect();
+            const tooltipLeft = tooltipRect.left;
+            const tooltipTop = tooltipRect.top;
+
+            // Add dragging class for cursor feedback
+            this.$tooltip.addClass('dragging');
+
+            // Mouse move handler
+            const onMouseMove = (moveEvent) => {
+                if (!this.isDragging) return;
+
+                const deltaX = moveEvent.clientX - this.dragStartX;
+                const deltaY = moveEvent.clientY - this.dragStartY;
+
+                const newLeft = tooltipLeft + deltaX;
+                const newTop = tooltipTop + deltaY;
+
+                // Apply new position
+                this.$tooltip.css({
+                    position: 'fixed',
+                    left: `${newLeft}px`,
+                    top: `${newTop}px`,
+                    transform: 'none' // Remove center transform
+                });
+
+                // Store dragged position
+                this.draggedPosition = { left: newLeft, top: newTop };
+            };
+
+            // Mouse up handler
+            const onMouseUp = () => {
+                this.isDragging = false;
+                this.$tooltip.removeClass('dragging');
+                $(document).off('mousemove.drag mouseup.drag');
+            };
+
+            // Attach document-level handlers
+            $(document).on('mousemove.drag', onMouseMove);
+            $(document).on('mouseup.drag', onMouseUp);
+
+            e.preventDefault(); // Prevent text selection
+        });
+
+        console.log('[TutorialTooltip] Drag enabled', { isDesktop, isCentered });
+    }
+
+    /**
      * Show error message
      */
     showError(error, hint = null) {
@@ -177,6 +276,10 @@ class TutorialTooltip {
      */
     hide() {
         if (this.$tooltip) {
+            // Remove drag handlers
+            this.$tooltip.off('mousedown.drag');
+            $(document).off('mousemove.drag mouseup.drag');
+
             this.$tooltip.fadeOut(200, () => {
                 this.$tooltip.remove();
                 this.$tooltip = null;
@@ -194,9 +297,11 @@ class TutorialTooltip {
             this.trackingId = null;
         }
 
-        // Clear target tracking
+        // Clear target tracking and drag state
         this.currentTargetSelector = null;
         this.currentPosition = 'center';
+        this.isDragging = false;
+        this.draggedPosition = null; // Reset dragged position for next tooltip
     }
 
     /**
@@ -280,18 +385,34 @@ class TutorialTooltip {
 
     /**
      * Position tooltip at center of screen (truly centered, doesn't block specific elements)
+     * If user has dragged the tooltip, preserve that position
      */
     positionCenter() {
-        this.$tooltip.css({
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bottom: 'auto',
-            right: 'auto',
-            width: 'auto',    // Clear any previous width
-            height: 'auto'    // Clear any previous height that would stretch it
-        });
+        // If tooltip has been manually dragged, keep it there
+        if (this.draggedPosition) {
+            this.$tooltip.css({
+                position: 'fixed',
+                left: `${this.draggedPosition.left}px`,
+                top: `${this.draggedPosition.top}px`,
+                transform: 'none',
+                bottom: 'auto',
+                right: 'auto',
+                width: 'auto',
+                height: 'auto'
+            });
+        } else {
+            // Default: center the tooltip
+            this.$tooltip.css({
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                bottom: 'auto',
+                right: 'auto',
+                width: 'auto',    // Clear any previous width
+                height: 'auto'    // Clear any previous height that would stretch it
+            });
+        }
     }
 
     /**
