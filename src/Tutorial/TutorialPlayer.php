@@ -93,8 +93,14 @@ class TutorialPlayer
         $defaultAvatar = "img/avatars/{$raceLower}/1.png";
         $defaultPortrait = "img/portraits/{$raceLower}/1.jpeg";
 
+        // Generate IDs using the new range-based system
+        $actualPlayerId = getNextEntityId('tutorial');  // Get ID in tutorial range (10000000+)
+        $displayId = getNextDisplayId('tutorial');      // Get sequential display ID (1, 2, 3...)
+
         $conn->insert('players', [
+            'id' => $actualPlayerId,
             'player_type' => 'tutorial',  // ← DISCRIMINATOR: marks this as tutorial player
+            'display_id' => $displayId,   // ← Sequential ID for display (Tutorial Player #1, #2, etc.)
             'tutorial_session_id' => $tutorialSessionId,  // ← Link to tutorial session
             'real_player_id_ref' => $realPlayerId,  // ← Link to real player account
             'name' => $name,
@@ -110,8 +116,6 @@ class TutorialPlayer
             'portrait' => $defaultPortrait,
             'text' => 'Personnage de tutoriel'
         ]);
-
-        $actualPlayerId = (int) $conn->lastInsertId();
 
         // IMPORTANT: Delete any stale JSON cache for this player ID
         // This can happen if the player ID was previously used and has a cached file

@@ -2092,7 +2092,7 @@ class Player implements ActorInterface {
      */
 
 
-    public static function put_player($name, $race, $pnj=false) : int{
+    public static function put_player($name, $race, $pnj=false, $type='real') : int{
 
 
         $db = new Db();
@@ -2108,18 +2108,13 @@ class Player implements ActorInterface {
         $coordsId = View::get_coords_id($goCoords);
 
 
-        $id = null;
-
-        if($pnj){
-
-
-            $id = $db->get_first_id('players') - 1;
-
-            if(!$id){
-
-                $id = -1;
-            }
+        // Determine player type and generate IDs
+        if ($pnj) {
+            $type = 'npc';
         }
+
+        $id = getNextEntityId($type);
+        $displayId = getNextDisplayId($type);
 
 
         $raceJson = json()->decode('races', $race);
@@ -2130,6 +2125,8 @@ class Player implements ActorInterface {
 
         $values = array(
             'id'=>$id,
+            'player_type'=>$type,
+            'display_id'=>$displayId,
             'name'=>$name,
             'race'=>$race,
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
@@ -2146,10 +2143,8 @@ class Player implements ActorInterface {
             exit('error inserting player');
         }
 
-        //we allready have the id for pnj and it's negatif 
-        $lastId = is_null($id) ? $db->get_last_id('players') : $id;
-
-        $player = new Player($lastId);
+        // ID is already assigned via getNextEntityId()
+        $player = new Player($id);
 
         // first init data
         $player->get_data();
@@ -2171,8 +2166,8 @@ class Player implements ActorInterface {
         }
 
 
-        // first id
-        if($lastId == 1){
+        // first real player gets admin
+        if($type == 'real' && $displayId == 1){
 
             $player->add_option('isAdmin');
         }
@@ -2183,7 +2178,7 @@ class Player implements ActorInterface {
         Dialog::refresh_register_dialog();
 
 
-        return $lastId;
+        return $id;
     }
 
     public static function get_player_by_name($name){
