@@ -172,12 +172,15 @@ class TutorialResourceManager
                 $enemyCoordsId = (int) $this->conn->lastInsertId();
             }
 
-            // Generate unique enemy ID (negative for NPCs)
-            $enemyId = TutorialConstants::generateEnemyId();
+            // Generate unique enemy ID using new ID system (NPCs use negative IDs)
+            $enemyId = getNextEntityId('npc');
+            $displayId = getNextDisplayId('npc');
 
             // Create enemy NPC (using 'ame' race - weak tutorial dummy)
             $this->conn->insert('players', [
                 'id' => $enemyId,
+                'player_type' => 'npc',
+                'display_id' => $displayId,
                 'name' => 'Mannequin d\'entraînement',
                 'coords_id' => $enemyCoordsId,
                 'race' => 'ame',
