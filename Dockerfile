@@ -24,7 +24,8 @@ RUN apt-get install -y \
     make \
     python3 \
     npm \
-    nodejs
+    nodejs \
+    default-mysql-client
 
 # Install chrome and chromedriver
 RUN apt-get update -qq -y && \
