@@ -4,6 +4,18 @@ define('DOMAIN', 'http://localhost/www/aoo4/');
 
 
 /*
+ * Entity ID Ranges
+ * Separate ID ranges for different entity types to ensure real players have sequential IDs
+ */
+define('ENTITY_ID_RANGES', [
+    'real' => ['start' => 1, 'end' => 9999999],
+    'tutorial' => ['start' => 10000000, 'end' => 19999999],
+    'building' => ['start' => 20000000, 'end' => 29999999],
+    'npc' => ['start' => PHP_INT_MIN, 'end' => -1],
+]);
+
+
+/*
  * races
  */
 
