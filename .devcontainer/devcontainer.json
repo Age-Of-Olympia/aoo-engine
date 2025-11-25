@@ -30,7 +30,8 @@
 				"ms-azuretools.vscode-docker",
 				"bmewburn.vscode-intelephense-client",
 				"st-pham.php-refactor-tool",
-				"marsl.vscode-php-refactoring"
+				"marsl.vscode-php-refactoring",
+				"Anthropic.claude-code"
 			],
 			"settings": {
        			"remote.autoForwardPorts": false
