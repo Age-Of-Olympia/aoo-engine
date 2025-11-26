@@ -3,6 +3,9 @@ use Classes\Player;
 use Classes\Ui;
 use Classes\Str;
 use Classes\File;
+use Classes\Db;
+use App\Tutorial\TutorialFeatureFlag;
+use App\Tutorial\TutorialSessionManager;
 
 require_once('config.php');
 
@@ -58,9 +61,9 @@ if(isset($_POST['changeName'])){
     exit();
 }
 
-define('OPTIONS', array(
-
-    'changeMail'=>"Changer Mail<br /><sup>" . 
+// Build options array dynamically
+$options = array(
+    'changeMail'=>"Changer Mail<br /><sup>" .
         (!empty($player->data->plain_mail) ? htmlspecialchars($player->data->plain_mail) : "") . "</sup>",
     'changePortrait'=>"Changer de Portrait<br /><sup>Vous pouvez faire une demande de Portrait sur le <a href='https://age-of-olympia.net/forum.php?topic=1725177169' target='_blank'>forum</a></sup>",
     'changeAvatar'=>"Changer d'Avatar<br /><sup>Vous pouvez faire une demande d'Avatar sur le <a href='https://age-of-olympia.net/forum.php?topic=1725177169' target='_blank'>forum</a></sup>",
@@ -76,11 +79,23 @@ define('OPTIONS', array(
     'dlag'=>"DLA glissante<br /><sup>Décale l'heure du prochain tour</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
-    'showTuto'=>"Rejouer le tutoriel",
     'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
     'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Invisible dans les destinataires d'échanges ou de missives</sup>",
+);
 
-));
+// Conditionally add tutorial replay option
+// Show for players who have completed tutorial before (regardless of feature flag)
+$db = new Db();
+$sessionManager = new TutorialSessionManager($db);
+$hasCompletedTutorial = $sessionManager->hasCompletedBefore($player->id);
+
+// Always show replay option if player has completed tutorial
+// The feature flag will determine which tutorial system to use (new vs old)
+if ($hasCompletedTutorial || !TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
+    $options['showTuto'] = "Rejouer le tutoriel";
+}
+
+define('OPTIONS', $options);
 
 
 
@@ -212,10 +227,18 @@ foreach(OPTIONS as $k=>$e){
                 ';
             }
             elseif($k == 'showTuto'){
-
-                echo '
-                <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
-                ';
+                // Feature flag determines which tutorial system to use
+                if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
+                    // New tutorial system - use URL parameter to trigger replay
+                    echo '
+                    <a href="index.php?replay_tutorial=1"><button style="width: 100%;">Tutoriel</button></a>
+                    ';
+                } else {
+                    // Old tutorial system
+                    echo '
+                    <a href="index.php?tutorial"><button style="width: 100%;">Tutoriel</button></a>
+                    ';
+                }
             }
             elseif($k == 'changeMail'){
                 // Disable email change for PNJs
@@ -263,6 +286,8 @@ echo '
     window.oldName = "<?php echo $player->data->name ?>";
 </script>
 <script src="js/account.js"></script>
+
+
 <?php
 
 $content = ob_get_clean();
