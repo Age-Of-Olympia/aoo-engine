@@ -4,8 +4,6 @@ namespace App\Tutorial;
 
 use Classes\Player;
 use Classes\Db;
-use App\Entity\EntityManagerFactory;
-use Psr\Log\NullLogger;
 
 /**
  * Tutorial Manager (Phase 0 - Skeleton)
@@ -413,9 +411,9 @@ class TutorialManager
 
         // Build completion message based on whether rewards were given
         if ($isReplay) {
-            $message = "Félicitations! Tu as terminé le tutoriel! Tu l'avais déjà complété auparavant, donc tu ne reçois pas de récompenses cette fois.";
+            $message = "Félicitations ! Tu as terminé le tutoriel ! Tu l'avais déjà complété auparavant, donc tu ne reçois pas de récompenses cette fois.";
         } else {
-            $message = "Félicitations! Tu as terminé le tutoriel! Tu as gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI!";
+            $message = "Félicitations ! Tu as terminé le tutoriel ! Tu as gagné {$actualXpAwarded} XP et {$actualPiAwarded} PI !";
         }
 
         return [
@@ -469,51 +467,43 @@ class TutorialManager
      */
     public function jumpToStep(string $sessionId, int $targetStepNumber): bool
     {
-        $em = EntityManagerFactory::getEntityManager();
+        // Load session to get version
+        $session = $this->sessionManager->loadSession($sessionId);
 
-        // Get tutorial progress
-        $progress = $em->getRepository(\App\Entity\TutorialProgress::class)
-            ->findOneBy(['tutorialSessionId' => $sessionId]);
-
-        if (!$progress) {
-            error_log("Tutorial progress not found for session: $sessionId");
+        if (!$session) {
+            error_log("[TutorialManager] Tutorial session not found: $sessionId");
             return false;
         }
 
-        // Get all steps
-        $steps = $em->getRepository(\App\Entity\TutorialConfiguration::class)
-            ->findBy([], ['stepNumber' => 'ASC']);
+        $version = $session['version'] ?? '1.0.0';
 
-        // Find target step
-        $targetStep = null;
-        foreach ($steps as $step) {
-            if ($step->getStepNumber() === $targetStepNumber) {
-                $targetStep = $step;
-                break;
+        // Convert step number to step ID using repository
+        $stepData = $this->stepRepository->getStepByNumber((float)$targetStepNumber, $version);
+
+        if (!$stepData) {
+            error_log("[TutorialManager] Step number $targetStepNumber not found for version $version");
+            return false;
+        }
+
+        $targetStepId = $stepData['step_id'];
+
+        try {
+            // Delegate to ProgressManager which handles prerequisites and session updates
+            $success = $this->progressManager->jumpToStep($sessionId, $targetStepId, $version);
+
+            if ($success) {
+                error_log("[TutorialManager] Successfully jumped to step $targetStepNumber ($targetStepId) for session $sessionId");
             }
-        }
 
-        if (!$targetStep) {
-            error_log("Step number $targetStepNumber not found");
+            return $success;
+
+        } catch (Exceptions\TutorialStepException $e) {
+            error_log("[TutorialManager] Failed to jump to step: " . $e->getMessage());
+            return false;
+        } catch (\Exception $e) {
+            error_log("[TutorialManager] Unexpected error jumping to step: " . $e->getMessage());
             return false;
         }
-
-        // Update progress
-        $progress->setCurrentStep($targetStepNumber);
-        $progress->setData(array_merge(
-            json_decode($progress->getData(), true) ?? [],
-            [
-                'jumped_to_step' => $targetStepNumber,
-                'jump_timestamp' => time()
-            ]
-        ));
-
-        $em->flush();
-
-        // Apply any step prerequisites
-        $this->applyStepPrerequisites($progress->getPlayerId(), $targetStep);
-
-        return true;
     }
 
 
