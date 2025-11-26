@@ -1449,7 +1449,7 @@ class TutorialUI {
                         <h2>🎉 Tutoriel terminé! 🎉</h2>
                         <div class="celebration-stars">✨ ⭐ ✨</div>
                     </div>
-                    <p class="celebration-message">${response.message || 'Félicitations! Vous êtes prêt pour l\'aventure!'}</p>
+                    <p class="celebration-message">${response.message || 'Félicitations ! Vous êtes prêt pour l\'aventure !'}</p>
                     <div class="rewards-display">
                         <div class="reward-item">
                             <span class="reward-icon">⚡</span>

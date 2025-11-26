@@ -469,7 +469,7 @@ $steps = [
         'next_step' => null,  // Final step
         'config' => [
             'dialog_id' => 'gaia_completion',
-            'text' => 'Félicitations! Vous avez terminé le tutoriel de base.',
+            'text' => 'Félicitations ! Vous avez terminé le tutoriel de base.',
             'requires_validation' => false,
             // Blocking mode (default for dialog)
             'blocked_click_message' => 'Parlez à Gaïa pour terminer le tutoriel.',
