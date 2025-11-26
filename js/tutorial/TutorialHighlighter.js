@@ -146,6 +146,9 @@ class TutorialHighlighter {
                 console.log('[TutorialHighlighter] ✅ Fade-in complete! Display:', $highlight.css('display'), 'Opacity:', $highlight.css('opacity'));
             });
         });
+
+        // Show the spotlight overlay (single dark layer for all highlights)
+        this.showSpotlightOverlay();
     }
 
     /**
@@ -212,6 +215,9 @@ class TutorialHighlighter {
 
         this.highlights = [];
 
+        // Hide the spotlight overlay
+        this.hideSpotlightOverlay();
+
         console.log('[TutorialHighlighter] Cleared all highlights');
 
         // Return promise that resolves when all fadeOuts complete
@@ -238,6 +244,34 @@ class TutorialHighlighter {
         this.highlights.forEach(item => {
             this.positionHighlight(item.$highlight, item.$element);
         });
+    }
+
+    /**
+     * Show the spotlight overlay (single dark layer)
+     */
+    showSpotlightOverlay() {
+        // Create overlay if it doesn't exist
+        if ($('#tutorial-spotlight-overlay').length === 0) {
+            $('body').append('<div id="tutorial-spotlight-overlay"></div>');
+        }
+
+        // Hide the regular tutorial overlay to avoid double darkening
+        $('#tutorial-overlay').addClass('has-spotlight');
+
+        // Show spotlight overlay
+        $('#tutorial-spotlight-overlay').fadeIn(200);
+    }
+
+    /**
+     * Hide the spotlight overlay
+     */
+    hideSpotlightOverlay() {
+        $('#tutorial-spotlight-overlay').fadeOut(200, () => {
+            $('#tutorial-spotlight-overlay').remove();
+        });
+
+        // Restore regular tutorial overlay
+        $('#tutorial-overlay').removeClass('has-spotlight');
     }
 }
 
