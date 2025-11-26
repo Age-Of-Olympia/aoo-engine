@@ -161,8 +161,12 @@ class TutorialResourceManager
 
             if ($coords) {
                 $enemyCoordsId = $coords['id'];
+                error_log("[TutorialResourceManager] Found existing coords {$enemyCoordsId} for enemy at ({$enemyX}, {$enemyY})");
             } else {
-                // Create new coordinates
+                // Coords should exist from map instance creation
+                // If they don't, something went wrong - log and create them
+                error_log("[TutorialResourceManager] WARNING: Coords ({$enemyX}, {$enemyY}) not found on plan {$plan}. Creating now.");
+
                 $this->conn->insert('coords', [
                     'x' => $enemyX,
                     'y' => $enemyY,
@@ -170,6 +174,19 @@ class TutorialResourceManager
                     'plan' => $plan
                 ]);
                 $enemyCoordsId = (int) $this->conn->lastInsertId();
+
+                // Validate that the insert worked
+                if (!$enemyCoordsId || $enemyCoordsId <= 0) {
+                    throw new \RuntimeException("Failed to create coords for enemy at ({$enemyX}, {$enemyY}) on plan {$plan}");
+                }
+
+                error_log("[TutorialResourceManager] Created new coords {$enemyCoordsId} for enemy");
+            }
+
+            // CRITICAL: Verify coords_id actually exists in database before using it
+            $verifyCoords = $this->conn->fetchOne("SELECT id FROM coords WHERE id = ?", [$enemyCoordsId]);
+            if (!$verifyCoords) {
+                throw new \RuntimeException("Coords validation failed! coords_id {$enemyCoordsId} does not exist in database for enemy spawn at ({$enemyX}, {$enemyY}) on plan {$plan}");
             }
 
             // Generate unique enemy ID using new ID system (NPCs use negative IDs)
