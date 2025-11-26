@@ -1128,7 +1128,7 @@ Create improved dialogs for Gaïa:
   "dialog": [
     {
       "id": "bonjour",
-      "text": "Félicitations! Tu as terminé le tutoriel. Tu es maintenant prêt(e) à explorer Olympia. Adieu, petite âme!",
+      "text": "Félicitations ! Tu as terminé le tutoriel. Tu es maintenant prêt(e) à explorer Olympia. Adieu, petite âme !",
       "options": [
         {"go": "EXIT", "text": "[Partir vers Olympia]"}
       ]
