@@ -80,6 +80,16 @@ make testf CalculateXpTest
 XDEBUG_MODE=coverage ./vendor/bin/phpunit --filter CalculateXpTest --testdox
 ```
 
+## Git Workflow
+
+**CRITICAL - NEVER COMMIT WITHOUT USER VALIDATION:**
+- **DO NOT** create commits automatically after making changes
+- **ALWAYS** wait for the user to explicitly ask you to commit
+- Show the user what changed and wait for their validation
+- Only commit when the user says "commit", "make a commit", or similar
+- This applies even if you think the change is complete and correct
+- User needs to test and validate changes before they are committed
+
 ## Code Quality & Proactive Refactoring
 
 **IMPORTANT**: Be proactive in identifying and fixing code smells, anti-patterns, and opportunities for refactoring. Don't wait for the user to point them out.
