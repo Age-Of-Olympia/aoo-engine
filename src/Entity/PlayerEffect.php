@@ -51,12 +51,12 @@ class PlayerEffect
         $this->endTime = $endTime;
     }
 
-    public function getValue(): int
+    public function getValue(): ?int
     {
         return $this->value;
     }
 
-    public function setValue(string $value): void
+    public function setValue(?int $value): void
     {
         $this->value = $value;
     }
