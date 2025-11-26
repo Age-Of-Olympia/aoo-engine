@@ -6,7 +6,10 @@ use App\View\MainView;
 use App\View\MenuView;
 use App\View\NewTurnView;
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialFeatureFlag;
+use App\Tutorial\TutorialSessionManager;
 use Classes\Player;
+use Classes\Db;
 
 if(isset($_GET['logout'])){
 
@@ -66,12 +69,36 @@ error_log("  USING PLAYER: $playerId (tutorial mode: " . (TutorialHelper::isInTu
 
 $player = new Player($playerId);
 $player->get_data(false);
+
+// Auto-trigger tutorial for new players (if feature flag enabled)
+if (!TutorialHelper::isInTutorial()) {
+    if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
+        $db = new Db();
+        $sessionManager = new TutorialSessionManager($db);
+
+        // Check if player is brand new (no tutorial progress at all)
+        $hasCompleted = $sessionManager->hasCompletedBefore($player->id);
+        $activeSession = $sessionManager->getActiveSession($player->id);
+
+        if (!$hasCompleted && $activeSession === null) {
+            // Brand new player - set flag to auto-start tutorial
+            $_SESSION['auto_start_tutorial'] = true;
+        }
+    }
+}
 ?>
 <div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>
 
 <div id="infos"><?php InfosView::renderInfos($player);?></div>
 
 <div id="menu"><?php MenuView::renderMenu(); ?></div>
+
+<?php
+// Clear auto-start flag after menu is rendered (JavaScript will pick it up)
+if (isset($_SESSION['auto_start_tutorial'])) {
+    unset($_SESSION['auto_start_tutorial']);
+}
+?>
 
 <?php MainView::render($player) ?>
 

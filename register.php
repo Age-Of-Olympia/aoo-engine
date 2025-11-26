@@ -6,7 +6,9 @@ use Classes\Item;
 use Classes\Db;
 use Classes\File;
 use Classes\Ui;
+use Classes\View;
 use App\Service\MissiveService;
+use App\Tutorial\TutorialFeatureFlag;
 
 define('NO_LOGIN', true);
 
@@ -98,6 +100,34 @@ if(!empty($_POST['race'])){
 
         $player->get_data();
 
+        // Check if new tutorial system is enabled for this player
+        $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);
+
+        if ($useNewTutorial) {
+            // New tutorial system: remove old tutorial action and spawn on olympia
+            $player->end_action('tuto/attaquer');
+
+            // Spawn on faction's respawn plan (olympia) instead of gaia
+            $factionJson = json()->decode('factions', $player->data->faction);
+            $spawnPlan = $factionJson->respawnPlan ?? "olympia";
+
+            $goCoords = (object) array(
+                'x' => 0,
+                'y' => 0,
+                'z' => 0,
+                'plan' => $spawnPlan
+            );
+
+            $coordsId = View::get_free_coords_id_arround($goCoords);
+
+            // Update player's coordinates to olympia
+            $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
+            $db->exe($sql, array($coordsId, $player->id));
+
+            // Reload player data with new coordinates
+            $player->get_data();
+        }
+
         $plainMail = strtolower($_POST['mail']);
 
         // hash
@@ -147,10 +177,11 @@ On compte sur toi pour l'accueillir comme il se doit.
 EOT;
         $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
 
-        // landing welcome msg
-        $data = file_get_contents('datas/private/welcome.msg.html');
-
-        File::write('datas/private/players/'. $player->id .'.msg.html', $data);
+        // landing welcome msg (only for old tutorial system)
+        if (!$useNewTutorial) {
+            $data = file_get_contents('datas/private/welcome.msg.html');
+            File::write('datas/private/players/'. $player->id .'.msg.html', $data);
+        }
 
 
         echo 'Personnage '. $player->data->name .' (matricule '. $player->id .') créé avec succès!<br />';
