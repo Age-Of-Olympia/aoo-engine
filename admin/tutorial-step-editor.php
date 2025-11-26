@@ -322,7 +322,9 @@ ob_start();
                                 <option value="bottom" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'bottom' ? 'selected' : 'selected' ?>>Bottom</option>
                                 <option value="left" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'left' ? 'selected' : '' ?>>Left</option>
                                 <option value="right" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'right' ? 'selected' : '' ?>>Right</option>
-                                <option value="center" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center' ? 'selected' : '' ?>>Center</option>
+                                <option value="center" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center' ? 'selected' : '' ?>>Center (Middle)</option>
+                                <option value="center-top" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center-top' ? 'selected' : '' ?>>Center (Top)</option>
+                                <option value="center-bottom" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center-bottom' ? 'selected' : '' ?>>Center (Bottom)</option>
                             </select>
                         </div>
 
