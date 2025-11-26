@@ -1075,47 +1075,61 @@ class TutorialUI {
             return Promise.resolve(); // Return resolved promise if nothing to do
         }
 
-        // If step targets an action button, ensure player actions panel is open
+        // If step targets an action button, ensure correct actions panel is open
         if (targetSelector.includes('.action[data-action=')) {
             console.log('[TutorialUI] Detected action button target, checking panel...');
             const $actionsPanel = $('#ui-card');
 
+            // Check if this is a combat step targeting enemy actions
+            const isCombatStep = stepData.step_type === 'combat' ||
+                                 stepData.action_name === 'attaquer' ||
+                                 stepData.action_name === 'attaque_double';
+
             if (!$actionsPanel.is(':visible')) {
-                console.log('[TutorialUI] Opening player actions panel for step');
+                console.log('[TutorialUI] Opening actions panel for step (combat:', isCombatStep, ')');
 
                 // Return a promise that resolves when panel is ready
                 return new Promise((resolve) => {
                     // Store resolve callback for later
                     this.panelReadyCallback = resolve;
 
-                    // Get player coords from window (set in TutorialView.php)
-                    let playerCoords = window.dataCoords;
-
-                    // Fallback: if dataCoords not available yet, wait briefly for it
-                    if (!playerCoords) {
-                        console.log('[TutorialUI] window.dataCoords not ready, waiting briefly...');
-
-                        let coordsRetries = 0;
-                        const maxCoordsRetries = 3; // Max 300ms - if not ready quickly, use avatar method
-
-                        const waitForCoords = () => {
-                            if (window.dataCoords) {
-                                console.log('[TutorialUI] window.dataCoords now available:', window.dataCoords);
-                                playerCoords = window.dataCoords;
-                                this.openPlayerCardDirect(playerCoords);
-                            } else if (coordsRetries < maxCoordsRetries) {
-                                coordsRetries++;
-                                setTimeout(waitForCoords, 100);
-                            } else {
-                                console.log('[TutorialUI] window.dataCoords not available after 300ms, using avatar fallback');
-                                this.openPlayerCardViaAvatar();
-                            }
-                        };
-
-                        waitForCoords();
+                    if (isCombatStep) {
+                        // Combat step - open enemy panel
+                        console.log('[TutorialUI] Combat step detected, opening enemy panel');
+                        this.openEnemyCard();
                     } else {
-                        // Coords available, open card directly
-                        this.openPlayerCardDirect(playerCoords);
+                        // Non-combat action - open player panel
+                        console.log('[TutorialUI] Non-combat step, opening player panel');
+
+                        // Get player coords from window (set in TutorialView.php)
+                        let playerCoords = window.dataCoords;
+
+                        // Fallback: if dataCoords not available yet, wait briefly for it
+                        if (!playerCoords) {
+                            console.log('[TutorialUI] window.dataCoords not ready, waiting briefly...');
+
+                            let coordsRetries = 0;
+                            const maxCoordsRetries = 3; // Max 300ms - if not ready quickly, use avatar method
+
+                            const waitForCoords = () => {
+                                if (window.dataCoords) {
+                                    console.log('[TutorialUI] window.dataCoords now available:', window.dataCoords);
+                                    playerCoords = window.dataCoords;
+                                    this.openPlayerCardDirect(playerCoords);
+                                } else if (coordsRetries < maxCoordsRetries) {
+                                    coordsRetries++;
+                                    setTimeout(waitForCoords, 100);
+                                } else {
+                                    console.log('[TutorialUI] window.dataCoords not available after 300ms, using avatar fallback');
+                                    this.openPlayerCardViaAvatar();
+                                }
+                            };
+
+                            waitForCoords();
+                        } else {
+                            // Coords available, open card directly
+                            this.openPlayerCardDirect(playerCoords);
+                        }
                     }
                 });
             } else {
@@ -1199,6 +1213,93 @@ class TutorialUI {
                 console.error('[TutorialUI] Failed to load player card:', error);
             }
         });
+    }
+
+    /**
+     * Open enemy card for combat steps
+     */
+    openEnemyCard() {
+        console.log('[TutorialUI] Opening enemy card...');
+
+        // Find the enemy image element (marked with .tutorial-enemy class)
+        const $enemyImage = $('.tutorial-enemy, .enemy');
+
+        if ($enemyImage.length > 0) {
+            console.log('[TutorialUI] Found enemy image element');
+
+            // The enemy image is in SVG layer, not inside .case
+            // Get x,y attributes from the image element
+            const enemyX = $enemyImage.attr('x');
+            const enemyY = $enemyImage.attr('y');
+
+            console.log('[TutorialUI] Enemy position - x:', enemyX, 'y:', enemyY);
+
+            if (enemyX !== undefined && enemyY !== undefined) {
+                // Find the .case tile at this position
+                const $tile = $(`.case[x="${enemyX}"][y="${enemyY}"]`);
+
+                if ($tile.length > 0) {
+                    const coords = $tile.data('coords');
+                    console.log('[TutorialUI] Found tile at enemy position with coords:', coords);
+
+                    if (coords) {
+                        // Open the enemy's observation panel
+                        $.ajax({
+                            type: "POST",
+                            url: 'observe.php',
+                            data: {'coords': coords},
+                            success: (data) => {
+                                console.log('[TutorialUI] observe.php returned enemy data, loading into #ajax-data');
+                                $('#ajax-data').html(data);
+
+                                // Cache the result
+                                window.clickedCases = window.clickedCases || {};
+                                window.clickedCases[coords] = data;
+
+                                // Wait for panel to appear
+                                this.waitForActionsPanel();
+                            },
+                            error: (xhr, status, error) => {
+                                console.error('[TutorialUI] Failed to load enemy card:', error);
+                                // Fallback: resolve anyway to prevent blocking
+                                if (this.panelReadyCallback) {
+                                    this.panelReadyCallback();
+                                    this.panelReadyCallback = null;
+                                }
+                            }
+                        });
+                    } else {
+                        console.error('[TutorialUI] Tile at enemy position has no coords!');
+                        // Resolve callback to prevent blocking
+                        if (this.panelReadyCallback) {
+                            this.panelReadyCallback();
+                            this.panelReadyCallback = null;
+                        }
+                    }
+                } else {
+                    console.error('[TutorialUI] No tile found at enemy position x:', enemyX, 'y:', enemyY);
+                    // Resolve callback to prevent blocking
+                    if (this.panelReadyCallback) {
+                        this.panelReadyCallback();
+                        this.panelReadyCallback = null;
+                    }
+                }
+            } else {
+                console.error('[TutorialUI] Enemy image has no x,y attributes!');
+                // Resolve callback to prevent blocking
+                if (this.panelReadyCallback) {
+                    this.panelReadyCallback();
+                    this.panelReadyCallback = null;
+                }
+            }
+        } else {
+            console.error('[TutorialUI] No enemy element found on map!');
+            // Resolve callback to prevent blocking
+            if (this.panelReadyCallback) {
+                this.panelReadyCallback();
+                this.panelReadyCallback = null;
+            }
+        }
     }
 
     /**
