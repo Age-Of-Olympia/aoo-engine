@@ -34,9 +34,10 @@ class MenuView
             // Output minified HTML
             echo Str::minify(ob_get_clean());
 
-            // Menu event handlers (not minified)
+            /* Menu event handlers (not minified) */
             echo '<script>
                 $(document).ready(function() {
+                    /* Character panel toggle handler */
                     $("#show-caracs").click(function(e) {
                         e.preventDefault();
                         if ($("#load-caracs").is(":hidden")) {
@@ -51,6 +52,57 @@ class MenuView
                             $("#load-caracs").hide();
                         }
                     });
+
+                    /* Auto-refresh/open character panel after tutorial completion */
+                    if (sessionStorage.getItem("tutorial_just_completed") === "true") {
+                        console.log("[Menu] Tutorial just completed - refreshing character cache and panel");
+                        sessionStorage.removeItem("tutorial_just_completed");
+
+                        /* Delay slightly to ensure page is fully loaded */
+                        setTimeout(function() {
+                            /* Step 1: Refresh the server-side cache first */
+                            $.ajax({
+                                type: "POST",
+                                url: "/api/player/refresh_caracs.php",
+                                dataType: "json",
+                                success: function(response) {
+                                    console.log("[Menu] Cache refreshed:", response);
+
+                                    /* Step 2: Now load the panel with fresh data */
+                                    $.ajax({
+                                        type: "POST",
+                                        url: "load_caracs.php",
+                                        success: function(data) {
+                                            /* Always update content (whether panel was visible or not) */
+                                            $("#load-caracs").html(data);
+
+                                            /* Ensure panel is visible */
+                                            if ($("#load-caracs").is(":hidden")) {
+                                                $("#load-caracs").fadeIn();
+                                                console.log("[Menu] Character panel opened with updated stats");
+                                            } else {
+                                                console.log("[Menu] Character panel refreshed with updated stats");
+                                            }
+                                        }
+                                    });
+                                },
+                                error: function(xhr, status, error) {
+                                    console.error("[Menu] Failed to refresh cache:", error);
+                                    /* Still try to load panel even if cache refresh failed */
+                                    $.ajax({
+                                        type: "POST",
+                                        url: "load_caracs.php",
+                                        success: function(data) {
+                                            $("#load-caracs").html(data);
+                                            if ($("#load-caracs").is(":hidden")) {
+                                                $("#load-caracs").fadeIn();
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }, 500);
+                    }
 
                     $(".menu-link").click(function(e) {
                         e.preventDefault();
