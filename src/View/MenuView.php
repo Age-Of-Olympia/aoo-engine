@@ -54,7 +54,9 @@ class MenuView
                     });
 
                     /* Auto-refresh/open character panel after tutorial completion */
-                    if (sessionStorage.getItem("tutorial_just_completed") === "true") {
+                    /* ONLY trigger if tutorial is not currently active (to avoid opening during replay) */
+                    if (sessionStorage.getItem("tutorial_just_completed") === "true" &&
+                        sessionStorage.getItem("tutorial_active") !== "true") {
                         console.log("[Menu] Tutorial just completed - refreshing character cache and panel");
                         sessionStorage.removeItem("tutorial_just_completed");
 
