@@ -23,6 +23,21 @@ define('NO_LOGIN', true);
 require_once('config.php');
 
 
+// Handle tutorial replay redirect BEFORE any output
+// Must happen before new Ui() to allow header() redirect
+if (isset($_GET['replay_tutorial']) && $_GET['replay_tutorial'] == '1' && !empty($_SESSION['playerId'])) {
+    if (TutorialFeatureFlag::isEnabledForPlayer($_SESSION['playerId'])) {
+        // Player wants to replay tutorial - set flag to auto-start
+        $_SESSION['auto_start_tutorial'] = true;
+        error_log("[index.php] Replay tutorial requested for player {$_SESSION['playerId']}, redirecting to clean URL");
+
+        // Redirect to clean URL (without the parameter) to prevent loop
+        header('Location: index.php');
+        exit();
+    }
+}
+
+
 $ui = new Ui($title="Index");
 
 
@@ -71,6 +86,7 @@ $player = new Player($playerId);
 $player->get_data(false);
 
 // Auto-trigger tutorial for new players (if feature flag enabled)
+// Note: Replay tutorial redirect is handled earlier in the file (before new Ui())
 if (!TutorialHelper::isInTutorial()) {
     if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
         $db = new Db();
