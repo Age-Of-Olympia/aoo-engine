@@ -64,9 +64,9 @@ class MenuView
                     console.log("[Menu] Setting up tutorial button handler");
                     console.log("[Menu] Button exists:", $("#tutorial-start-btn").length);
 
-                    $("#tutorial-start-btn").click(function(e) {
-                        e.preventDefault();
-                        console.log("[Menu] Tutorial button clicked");
+                    /* Tutorial start function (shared between button and auto-trigger) */
+                    function startTutorialFlow() {
+                        console.log("[Menu] Starting tutorial flow");
 
                         if (typeof window.initTutorial === "function" && !window.tutorialUI) {
                             console.log("[Menu] Initializing tutorial system");
@@ -102,7 +102,21 @@ class MenuView
                                 }
                             }
                         });
+                    }
+
+                    /* Button click handler */
+                    $("#tutorial-start-btn").click(function(e) {
+                        e.preventDefault();
+                        console.log("[Menu] Tutorial button clicked");
+                        startTutorialFlow();
                     });
+                    ' . (isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial'] ? '
+                    /* Auto-trigger for new players */
+                    console.log("[Menu] Auto-starting tutorial for new player");
+                    setTimeout(function() {
+                        startTutorialFlow();
+                    }, 1000); /* Small delay to ensure page is fully loaded */
+                    ' : '') . '
                 });
             </script>';
             }
