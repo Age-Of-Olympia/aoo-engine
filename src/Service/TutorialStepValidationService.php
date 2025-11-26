@@ -30,7 +30,7 @@ class TutorialStepValidationService
     ];
 
     private const VALID_TOOLTIP_POSITIONS = [
-        'top', 'bottom', 'left', 'right', 'center'
+        'top', 'bottom', 'left', 'right', 'center', 'center-top', 'center-bottom'
     ];
 
     /**
