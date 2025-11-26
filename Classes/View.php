@@ -762,6 +762,13 @@ class View{
 
         $db = new Db();
 
+        // Validate input
+        if (!isset($goCoords->x, $goCoords->y, $goCoords->z, $goCoords->plan)) {
+            error_log("[View::get_coords_id] ERROR: Missing required coordinate fields");
+            error_log("[View::get_coords_id] Coords object: " . print_r($goCoords, true));
+            return null;
+        }
+
         $sql = '
         SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?
         ';
@@ -771,10 +778,24 @@ class View{
 
         if(!$res->num_rows){
 
+            // Create coordinates with only the required fields
+            $coordsData = [
+                'x' => (int)$goCoords->x,
+                'y' => (int)$goCoords->y,
+                'z' => (int)$goCoords->z,
+                'plan' => (string)$goCoords->plan
+            ];
 
-            $db->insert('coords', (array) $goCoords);
+            try {
+                $db->insert('coords', $coordsData);
+                $coordsId = $db->get_last_id('coords');
 
-            $coordsId = $db->get_last_id('coords');
+                error_log("[View::get_coords_id] Created new coords: id={$coordsId}, x={$coordsData['x']}, y={$coordsData['y']}, z={$coordsData['z']}, plan={$coordsData['plan']}");
+            } catch (\Exception $e) {
+                error_log("[View::get_coords_id] ERROR creating coords: " . $e->getMessage());
+                error_log("[View::get_coords_id] Coords data: " . print_r($coordsData, true));
+                return null;
+            }
         }
 
         else{
