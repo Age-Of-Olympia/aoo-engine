@@ -26,9 +26,30 @@ try {
         exit;
     }
 
-    // Load player and regenerate cache
+    // Delete cached JSON files to force regeneration from database
+    $playerJsonPath = $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $playerId . '.json';
+    $caracsJsonPath = $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $playerId . '.caracs.json';
+    $turnJsonPath = $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $playerId . '.turn.json';
+
+    $deletedFiles = [];
+    if (file_exists($playerJsonPath)) {
+        unlink($playerJsonPath);
+        $deletedFiles[] = 'player.json';
+    }
+    if (file_exists($caracsJsonPath)) {
+        unlink($caracsJsonPath);
+        $deletedFiles[] = 'caracs.json';
+    }
+    if (file_exists($turnJsonPath)) {
+        unlink($turnJsonPath);
+        $deletedFiles[] = 'turn.json';
+    }
+
+    error_log("[refresh_caracs] Deleted cache files for player {$playerId}: " . implode(', ', $deletedFiles));
+
+    // Load player and regenerate cache from fresh database data
     $player = new Player($playerId);
-    $player->get_data();
+    $player->get_data();  // Will reload from DB since cache was deleted
 
     // Force regeneration of caracs and turn cache
     $player->get_caracs();
@@ -38,7 +59,8 @@ try {
     echo json_encode([
         'success' => true,
         'player_id' => $playerId,
-        'message' => 'Character cache refreshed'
+        'deleted_cache' => $deletedFiles,
+        'message' => 'Character cache refreshed from database'
     ]);
 
 } catch (Exception $e) {
