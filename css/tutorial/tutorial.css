@@ -120,12 +120,9 @@
 
 .step-current {
     color: #FFD700;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
-}
-
-.step-total {
-    color: rgba(255, 255, 255, 0.7);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 /* Progress Bar */
@@ -598,11 +595,11 @@
     #tutorial-controls {
         position: fixed;
         top: auto;
-        bottom: 0;
+        bottom: 4px; /* Just above the 3px progress bar strip */
         right: 0;
         left: 0;
         min-width: auto;
-        padding: 4px 6px;
+        padding: 5px 8px;
         border-radius: 0;
         background: linear-gradient(135deg, rgba(74, 56, 41, 0.95), rgba(97, 78, 63, 0.95));
         border-top: 1px solid #D4AF37;
@@ -613,88 +610,112 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 4px;
+        gap: 6px;
         z-index: 10001;
     }
 
+    /* Progress section - compact horizontal layout */
     #tutorial-progress {
-        font-size: 9px;
-        margin-bottom: 0;
-        display: inline;
-        white-space: nowrap;
+        padding: 0;
+        background: none;
+        border: none;
         flex-shrink: 0;
+        order: 1;
     }
 
-    #tutorial-step-counter {
+    .progress-header {
+        display: none; /* Hide scroll icon and "Tutoriel" title on mobile */
+    }
+
+    .progress-steps {
+        margin-bottom: 0;
+    }
+
+    .step-counter {
+        font-size: 10px;
         white-space: nowrap;
     }
 
-    /* Reposition XP bar container to bottom of screen as thin strip */
+    .step-current {
+        font-size: 14px;
+    }
+
+    .progress-bar-wrapper {
+        /* Move progress bar to absolute bottom of screen */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 3px;
+        margin: 0;
+        border-radius: 0;
+        background: rgba(139, 69, 19, 0.3);
+        z-index: 10000;
+        box-shadow: none;
+    }
+
+    .progress-bar-fill {
+        height: 3px;
+        border-radius: 0;
+    }
+
+    /* XP section - compact inline */
     #tutorial-xp-bar {
-        position: relative;
+        padding: 0;
+        background: none;
+        border: none;
         margin: 0;
         order: 2;
         flex-grow: 1;
         display: flex;
         justify-content: center;
         align-items: center;
-        overflow: hidden;
     }
 
-    /* Thin progress bar at absolute bottom */
-    .xp-bar-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        margin-bottom: 0;
-        border-radius: 0;
-        background: rgba(139, 69, 19, 0.3);
-        border: none;
-        z-index: 10000;
+    .xp-info {
+        gap: 4px;
     }
 
-    .xp-bar-fill {
-        height: 3px;
-        border-radius: 0;
+    .xp-icon {
+        font-size: 12px;
     }
 
     .xp-text {
-        font-size: 9px;
-        margin: 0;
+        font-size: 10px;
         white-space: nowrap;
-        text-align: center;
-        color: white;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 
+    .xp-value {
+        font-size: 12px;
+    }
+
+    /* Skip button - compact */
     .tutorial-controls-buttons {
-        display: inline;
-        margin: 0;
+        padding: 0;
+        gap: 4px;
         order: 3;
         flex-shrink: 0;
     }
 
-    /* Skip button inline and compact */
     #tutorial-skip {
-        padding: 3px 6px;
-        font-size: 9px;
+        padding: 4px 8px;
+        font-size: 10px;
         min-height: 0;
         height: auto;
         border-radius: 3px;
-        background: linear-gradient(135deg, #614E3F, #4A3829);
-        color: #E8E4D9;
-        border: 1px solid #8B7355;
         white-space: nowrap;
     }
 
-    /* Tooltips - Force to safe positions on mobile */
+    .btn-icon {
+        margin-right: 3px;
+        font-size: 10px;
+    }
+
+    /* Tooltips - Force to safe positions on mobile, above controls */
     .tutorial-tooltip {
-        /* Always position at bottom center on mobile for visibility */
         position: fixed !important;
-        bottom: 28px !important; /* Above ultra-compact controls (~24px height) */
+        bottom: 42px !important; /* Above controls (4px) + controls height (~30px) + margin (8px) */
         left: 50% !important;
         right: auto !important;
         top: auto !important;
@@ -704,8 +725,18 @@
         width: auto;
         padding: 15px 18px;
         font-size: 14px;
-        max-height: calc(100vh - 75px);
+        max-height: calc(100vh - 85px);
         overflow-y: auto;
+        cursor: default !important; /* Not draggable on mobile */
+    }
+
+    /* Disable draggable on mobile */
+    .tutorial-tooltip.draggable {
+        cursor: default !important;
+    }
+
+    .tutorial-tooltip.draggable::before {
+        display: none; /* Hide drag handle on mobile */
     }
 
     /* Center class should behave the same on mobile */
@@ -749,14 +780,22 @@
     }
 
     /* Complete Modal - Very compact mobile optimization */
+    #tutorial-complete-modal {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
     #tutorial-complete-modal .modal-content {
-        max-width: calc(100vw - 40px);
-        padding: 18px 16px;
-        max-height: 55vh;
+        max-width: calc(100vw - 30px);
+        width: 90vw;
+        padding: 16px;
+        max-height: 85vh;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
         align-items: center;
+        margin: auto;
     }
 
     #tutorial-complete-modal .modal-content::before,
@@ -775,64 +814,79 @@
 
     #tutorial-complete-modal h2 {
         font-size: 18px;
-        margin-bottom: 10px;
-        padding-bottom: 6px;
+        margin-bottom: 8px;
+        padding-bottom: 5px;
         border-bottom-width: 2px;
         width: 100%;
     }
 
     #tutorial-complete-modal p {
         font-size: 13px;
-        margin: 6px 0;
+        margin: 4px 0;
         line-height: 1.4;
         width: 100%;
     }
 
     #tutorial-complete-modal button {
-        padding: 8px 16px;
-        font-size: 13px;
-        margin-top: 10px;
-        min-height: 38px;
+        padding: 12px 20px;
+        font-size: 14px;
+        margin-top: 12px;
+        min-height: 50px;
+        height: auto;
         width: auto;
-        max-width: calc(100vw - 80px);
+        min-width: 200px;
+        max-width: calc(100vw - 60px);
         align-self: center;
-        white-space: nowrap;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* Celebration Modal - Very compact mobile optimized */
+    #tutorial-complete-modal.tutorial-celebration {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
     .celebration-content {
-        max-width: calc(100vw - 40px);
-        padding: 18px 16px;
-        max-height: 55vh;
+        max-width: calc(100vw - 30px);
+        width: 90vw;
+        padding: 16px;
+        max-height: 85vh;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
         align-items: center;
+        margin: auto;
     }
 
     .celebration-header h2 {
-        font-size: 20px;
-        margin-bottom: 6px;
-        padding-bottom: 6px;
+        font-size: 18px;
+        margin-bottom: 5px;
+        padding-bottom: 5px;
         border-bottom-width: 2px;
         width: 100%;
     }
 
     .celebration-stars {
-        font-size: 16px;
-        margin: 6px 0;
+        font-size: 14px;
+        margin: 4px 0;
     }
 
     .celebration-message {
         font-size: 13px;
-        margin: 10px 0;
+        margin: 6px 0;
         line-height: 1.4;
         width: 100%;
     }
 
     .rewards-display {
-        gap: 8px;
-        margin: 12px 0;
+        gap: 6px;
+        margin: 8px 0;
         grid-template-columns: 1fr;
         width: 100%;
     }
@@ -856,18 +910,26 @@
     }
 
     .celebration-btn {
-        padding: 8px 20px !important;
-        font-size: 13px !important;
-        margin-top: 10px !important;
-        min-height: 38px !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        margin-top: 12px !important;
+        min-height: 50px !important;
+        height: auto !important;
         width: auto !important;
-        max-width: calc(100vw - 80px) !important;
+        min-width: 200px !important;
+        max-width: calc(100vw - 60px) !important;
         align-self: center !important;
-        white-space: nowrap !important;
+        white-space: normal !important;
+        text-align: center !important;
+        line-height: 1.4 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .auto-redirect-text {
-        margin-top: 10px;
+        margin-top: 6px;
+        margin-bottom: 0;
         font-size: 11px;
         width: 100%;
     }
@@ -897,32 +959,44 @@
 /* Extra small mobile devices */
 @media (max-width: 480px) {
     #tutorial-controls {
-        padding: 3px 5px;
-        gap: 3px;
+        padding: 4px 6px;
+        gap: 4px;
     }
 
-    #tutorial-progress {
-        font-size: 8px;
+    .step-counter {
+        font-size: 9px;
     }
 
-    #tutorial-xp-bar {
-        flex-grow: 0;
+    .step-current {
+        font-size: 12px;
+    }
+
+    .xp-icon {
+        font-size: 11px;
     }
 
     .xp-text {
-        font-size: 8px;
+        font-size: 9px;
+    }
+
+    .xp-value {
+        font-size: 11px;
     }
 
     #tutorial-skip {
-        padding: 2px 5px;
-        font-size: 8px;
+        padding: 3px 6px;
+        font-size: 9px;
+    }
+
+    .btn-icon {
+        font-size: 9px;
     }
 
     .tutorial-tooltip {
-        bottom: 24px !important;
+        bottom: 38px !important; /* Controls at 4px + ~26px height + 8px margin */
         padding: 12px 14px;
         font-size: 13px;
-        max-height: calc(100vh - 65px);
+        max-height: calc(100vh - 75px);
     }
 
     .tooltip-title {
@@ -1006,66 +1080,195 @@
 }
 
 /* Landscape mobile - Different approach */
-@media (max-width: 768px) and (orientation: landscape) {
-    /* In landscape, keep controls at top but compact */
+@media (max-width: 1000px) and (orientation: landscape) {
+    /* In landscape, keep controls at top-right corner */
     #tutorial-controls {
-        top: 5px;
+        top: 10px;
         bottom: auto;
-        padding: 6px 10px;
+        right: 10px;
+        left: auto;
+        padding: 8px 12px;
+        flex-direction: column;
+        min-width: 200px;
+        border-radius: 8px;
+        border: 2px solid #8B4513;
     }
 
+    /* Restore vertical layout for landscape */
     #tutorial-progress {
-        font-size: 11px;
-        margin-bottom: 5px;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(101, 67, 33, 0.3));
+        border-bottom: 2px solid rgba(139, 69, 19, 0.5);
+        order: 1;
     }
 
-    #tutorial-xp-bar {
-        margin-top: 5px;
+    .progress-header {
+        display: flex; /* Show header in landscape */
         margin-bottom: 6px;
     }
 
-    .xp-bar-container {
-        height: 14px;
+    .progress-icon {
+        font-size: 14px;
+    }
+
+    .progress-title {
+        font-size: 13px;
+    }
+
+    .progress-steps {
+        margin-bottom: 8px;
+    }
+
+    .step-counter {
+        font-size: 11px;
+    }
+
+    .step-current {
+        font-size: 16px;
+    }
+
+    .progress-bar-wrapper {
+        display: block; /* Show progress bar in landscape */
+    }
+
+    #tutorial-xp-bar {
+        padding: 8px 12px;
+        background: linear-gradient(135deg, rgba(50, 35, 20, 0.5), rgba(70, 48, 30, 0.5));
+        border-bottom: 2px solid rgba(139, 69, 19, 0.5);
+        order: 2;
     }
 
     .xp-text {
-        font-size: 9px;
+        font-size: 11px;
+    }
+
+    .xp-value {
+        font-size: 13px;
     }
 
     .tutorial-controls-buttons {
-        gap: 5px;
-        margin-top: 6px;
+        padding: 8px 12px;
+        gap: 6px;
+        order: 3;
     }
 
-    .btn-tutorial-primary,
-    .btn-tutorial-secondary,
-    .btn-tutorial-danger {
-        padding: 6px 10px;
+    #tutorial-skip {
+        padding: 6px 12px;
         font-size: 11px;
-        min-height: 36px;
     }
 
-    /* Tooltip in landscape - position at right side */
-    .tutorial-tooltip {
+    /* Tooltip in landscape - position at left side */
+    .tutorial-tooltip,
+    .tutorial-tooltip.center,
+    .tutorial-tooltip.top,
+    .tutorial-tooltip.bottom,
+    .tutorial-tooltip.left,
+    .tutorial-tooltip.right {
         bottom: auto !important;
         top: 50% !important;
-        left: auto !important;
-        right: 10px !important;
+        left: 10px !important;
+        right: auto !important;
         transform: translateY(-50%) !important;
-        max-width: 300px;
-        max-height: calc(100vh - 120px);
+        max-width: 180px !important;
+        min-width: 160px !important;
+        max-height: calc(100vh - 40px) !important;
+        padding: 10px 12px !important;
+        font-size: 12px !important;
     }
 
-    /* Modals - reduce size in landscape */
+    /* Hide arrows in landscape mode */
+    .tutorial-tooltip .tooltip-arrow,
+    .tutorial-tooltip.center .tooltip-arrow,
+    .tutorial-tooltip.top .tooltip-arrow,
+    .tutorial-tooltip.bottom .tooltip-arrow,
+    .tutorial-tooltip.left .tooltip-arrow,
+    .tutorial-tooltip.right .tooltip-arrow {
+        display: none !important;
+    }
+
+    .tooltip-title {
+        font-size: 14px !important;
+        margin-bottom: 8px !important;
+        padding-bottom: 6px !important;
+    }
+
+    .tooltip-text {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Modals - Very compact for landscape */
     #tutorial-complete-modal .modal-content,
     .celebration-content {
-        max-height: 80vh;
-        padding: 20px;
+        max-height: 90vh !important;
+        max-width: 90vw !important;
+        padding: 15px 20px !important;
+        overflow-y: auto !important;
+    }
+
+    /* Hide decorative corner ornaments in landscape */
+    #tutorial-complete-modal .modal-content::before,
+    #tutorial-complete-modal .modal-content::after,
+    .celebration-content::before,
+    .celebration-content::after {
+        display: none !important;
+    }
+
+    #tutorial-complete-modal h2,
+    .celebration-header h2 {
+        font-size: 18px !important;
+        margin: 0 0 10px 0 !important;
+        padding-bottom: 8px !important;
+        border-bottom-width: 2px !important;
+    }
+
+    .celebration-stars {
+        font-size: 14px !important;
+        margin: 8px 0 !important;
+    }
+
+    #tutorial-complete-modal p,
+    .celebration-message {
+        font-size: 12px !important;
+        margin: 8px 0 !important;
+        line-height: 1.4 !important;
     }
 
     .rewards-display {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        margin: 12px 0 !important;
+    }
+
+    .reward-item {
+        padding: 10px 8px !important;
+    }
+
+    .reward-icon {
+        font-size: 20px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .reward-label {
+        font-size: 9px !important;
+        margin-bottom: 3px !important;
+    }
+
+    .reward-value {
+        font-size: 16px !important;
+    }
+
+    #tutorial-complete-modal button,
+    .celebration-btn {
+        padding: 8px 20px !important;
+        font-size: 12px !important;
+        margin-top: 10px !important;
+        min-height: 36px !important;
+    }
+
+    .auto-redirect-text {
+        margin-top: 8px !important;
+        font-size: 10px !important;
     }
 }
 
