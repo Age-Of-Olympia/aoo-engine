@@ -1514,6 +1514,8 @@ class TutorialUI {
             // Clear tutorial state
             sessionStorage.removeItem('tutorial_active');
             sessionStorage.removeItem('tutorial_session_id');
+            // Set flag to auto-open character panel after reload
+            sessionStorage.setItem('tutorial_just_completed', 'true');
             // Reload to main game (without tutorial mode)
             window.location.href = 'index.php';
         });

@@ -321,6 +321,28 @@ Views in `src/View/` render UI components:
 
 **CRITICAL**: When modifying JavaScript or CSS files, you MUST update version parameters to prevent browser caching issues.
 
+### JavaScript Comments in Minified Output
+
+**CRITICAL**: When writing inline JavaScript in PHP files that use `Str::minify()`:
+- **NEVER use `//` single-line comments** - they will break minified code
+- **ALWAYS use `/* */` multi-line comments** instead
+- Minification puts code on one line, causing `//` to comment out everything after it
+- This applies to any JavaScript in PHP files that gets minified (MenuView.php, etc.)
+
+```php
+// ❌ BAD - Will break when minified
+echo '<script>
+    // This comment will break minified code
+    $(document).ready(function() { ... });
+</script>';
+
+// ✅ GOOD - Safe for minification
+echo '<script>
+    /* This comment is safe for minified code */
+    $(document).ready(function() { ... });
+</script>';
+```
+
 ### Why This Matters
 Browsers aggressively cache JS/CSS files. Without cache-busting, users will continue using old cached versions even after you deploy changes, leading to:
 - Features not working
