@@ -482,7 +482,7 @@ class TutorialUI {
                     </div>
                     <div class="progress-steps">
                         <span id="tutorial-step-counter" class="step-counter">
-                            Étape <span class="step-current">${this.currentStepPosition}</span>/<span class="step-total">${this.totalSteps}</span>
+                            Étape <span class="step-current">${this.currentStepPosition}</span>
                         </span>
                     </div>
                     <div class="progress-bar-wrapper">
