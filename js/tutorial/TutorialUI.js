@@ -476,16 +476,30 @@ class TutorialUI {
         const $controls = $(`
             <div id="tutorial-controls">
                 <div id="tutorial-progress">
-                    <span id="tutorial-step-counter">Étape ${this.currentStepPosition}</span>
+                    <div class="progress-header">
+                        <span class="progress-icon">📜</span>
+                        <span class="progress-title">Tutoriel</span>
+                    </div>
+                    <div class="progress-steps">
+                        <span id="tutorial-step-counter" class="step-counter">
+                            Étape <span class="step-current">${this.currentStepPosition}</span>/<span class="step-total">${this.totalSteps}</span>
+                        </span>
+                    </div>
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar-fill" style="width: ${Math.min(initialProgress, 100)}%"></div>
+                    </div>
                 </div>
                 <div id="tutorial-xp-bar">
-                    <div class="xp-bar-container">
-                        <div class="xp-bar-fill" style="width: ${Math.min(initialProgress, 100)}%"></div>
+                    <div class="xp-info">
+                        <span class="xp-icon">⚡</span>
+                        <span class="xp-text">XP: <span class="xp-value">${this.xpEarned}</span></span>
                     </div>
-                    <div class="xp-text">XP gagné: ${this.xpEarned}</div>
                 </div>
                 <div class="tutorial-controls-buttons">
-                    <button id="tutorial-skip" class="btn-tutorial-secondary">Passer le tutoriel</button>
+                    <button id="tutorial-skip" class="btn-tutorial-secondary">
+                        <span class="btn-icon">❌</span>
+                        <span class="btn-text">Passer</span>
+                    </button>
                 </div>
             </div>
         `);
@@ -1378,22 +1392,17 @@ class TutorialUI {
      * Shows tutorial step progression and earned XP
      */
     updateXPBar() {
-        // Calculate tutorial progression (current step / total steps)
-        const barProgress = (this.currentStep / this.totalSteps) * 100;
-
-        // Update progress bar fill
-        $('#tutorial-xp-bar .xp-bar-fill').css('width', `${Math.min(barProgress, 100)}%`);
-
-        // Show earned XP (step shown separately in progress indicator)
-        const xpText = `XP gagné: ${this.xpEarned}`;
-        $('#tutorial-xp-bar .xp-text').text(xpText);
+        // Update XP display
+        $('.xp-value').text(this.xpEarned);
     }
 
     /**
      * Update progress indicator
      */
     updateProgressIndicator() {
-        $('#tutorial-step-counter').text(`Étape ${this.currentStepPosition}`);
+        $('.step-current').text(this.currentStepPosition);
+        const progress = (this.currentStepPosition / this.totalSteps) * 100;
+        $('.progress-bar-fill').css('width', `${Math.min(progress, 100)}%`);
     }
 
     /**

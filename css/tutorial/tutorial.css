@@ -64,57 +64,149 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    background: linear-gradient(135deg, rgba(74, 56, 41, 0.95), rgba(97, 78, 63, 0.95));
-    padding: 15px 20px;
-    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(60, 42, 28, 0.98), rgba(80, 58, 40, 0.98));
+    padding: 0;
+    border-radius: 12px;
     z-index: 10001;
-    min-width: 250px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    border: 2px solid #D4AF37;
+    min-width: 280px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
+                0 0 0 3px rgba(139, 69, 19, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 2px solid #8B4513;
+    overflow: hidden;
 }
 
+/* Tutorial Progress Section */
 #tutorial-progress {
-    color: white;
-    font-size: 14px;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(101, 67, 33, 0.3));
+    padding: 12px 16px;
+    border-bottom: 2px solid rgba(139, 69, 19, 0.5);
+}
+
+.progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.progress-icon {
+    font-size: 18px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.progress-title {
+    color: #FFD700;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5),
+                 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.progress-steps {
     margin-bottom: 10px;
+}
+
+.step-counter {
+    display: block;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
     text-align: center;
+    font-weight: 600;
+}
+
+.step-current {
+    color: #FFD700;
+    font-size: 18px;
     font-weight: bold;
 }
 
-/* Tutorial Progress Bar (shows step progression + earned XP) */
-#tutorial-xp-bar {
-    margin-top: 10px;
-    margin-bottom: 15px;
+.step-total {
+    color: rgba(255, 255, 255, 0.7);
 }
 
-.xp-bar-container {
+/* Progress Bar */
+.progress-bar-wrapper {
     width: 100%;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
     overflow: hidden;
-    margin-bottom: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.xp-bar-fill {
+.progress-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #B8860B, #D4AF37, #DAA520);
-    transition: width 0.5s ease-out;
-    box-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+    background: linear-gradient(90deg, #B8860B, #FFD700, #FFA500);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    position: relative;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+}
+
+/* XP Section */
+#tutorial-xp-bar {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(50, 35, 20, 0.5), rgba(70, 48, 30, 0.5));
+    border-bottom: 2px solid rgba(139, 69, 19, 0.5);
+}
+
+.xp-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.xp-icon {
+    font-size: 16px;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 .xp-text {
-    color: white;
-    font-size: 11px;
-    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.xp-value {
+    color: #FFD700;
+    font-size: 15px;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 /* Tutorial Button Container */
 .tutorial-controls-buttons {
     display: flex;
     gap: 8px;
-    margin-top: 10px;
+    padding: 12px 16px;
+}
+
+.btn-icon {
+    margin-right: 6px;
+}
+
+.btn-text {
+    font-weight: 600;
 }
 
 /* Tutorial Buttons */
