@@ -230,6 +230,12 @@ class TutorialUI {
                 return false;
             }
 
+            // Hide tooltip immediately when validation is triggered
+            // This prevents confusion during the API call / page reload
+            if (this.tooltip && !skipUIUpdate) {
+                this.tooltip.hide();
+            }
+
             // Use special handling for advance - don't throw on validation failures
             const response = await this.apiCallWithValidation('/api/tutorial/advance.php', {
                 session_id: this.currentSession,
