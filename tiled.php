@@ -174,7 +174,7 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script src="js/tiled.js"></script>
+<script src="js/tiled.js?v=20251126"></script>
 
 
 

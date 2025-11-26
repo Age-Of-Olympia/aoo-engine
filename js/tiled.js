@@ -194,6 +194,11 @@ $('.case').on('contextmenu', function(e) {
 
   $('.case').click(function(e){
 
+      // Block clicks if tutorial overlay is in blocking mode
+      if ($('#tutorial-overlay').hasClass('blocking')) {
+          return false;
+      }
+
       var $selected = $('.selected');
 
       if(!$selected[0]){
