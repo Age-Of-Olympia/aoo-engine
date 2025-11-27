@@ -160,22 +160,34 @@ if(!empty($_POST['race'])){
         Player::refresh_list();
 
 
-        // welcome missive
+        // welcome missive (copy from player 1 if exists)
         $sql = 'SELECT name FROM players_forum_missives WHERE player_id = 1 ORDER BY name LIMIT 1';
         $res = $db->exe($sql);
-        $row = $res->fetch_object();
-        $values = array('player_id'=>$player->id, 'name'=>$row->name);
-        $db->insert('players_forum_missives', $values);
+        if ($res && $row = $res->fetch_object()) {
+            $values = array('player_id'=>$player->id, 'name'=>$row->name);
+            $db->insert('players_forum_missives', $values);
+        }
 
         $raceJson = json()->decode('races', $player->data->race);
         $newPlayerName = $player->data->name;
-        $missiveService = new MissiveService();
-        $text = <<<EOT
-Bonjour, 
+
+        // Send welcome missive to faction animateur (NPC) if configured and exists
+        if (!empty($raceJson->animateur) && $raceJson->animateur != 0) {
+            // Check if animateur player exists
+            $db = new Db();
+            $checkSql = 'SELECT id FROM players WHERE id = ?';
+            $result = $db->exe($checkSql, [$raceJson->animateur]);
+
+            if ($result && $result->num_rows > 0) {
+                $missiveService = new MissiveService();
+                $text = <<<EOT
+Bonjour,
 Un nouveau joueur vient d'arriver dans la faction : $newPlayerName (mat $player->id)
 On compte sur toi pour l'accueillir comme il se doit.
 EOT;
-        $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
+                $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
+            }
+        }
 
         // landing welcome msg (only for old tutorial system)
         if (!$useNewTutorial) {
