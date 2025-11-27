@@ -2,6 +2,7 @@
 
 // DB CONSTANT
 // We have redundant data because we are switching to Doctrine
+// Note: utf8mb4 charset is enforced in EntityManagerFactory::getEntityManager()
 define('DB_CONSTANTS', array(
     'host'=>"localhost",
     'user'=>"root",
@@ -10,7 +11,7 @@ define('DB_CONSTANTS', array(
     'password'=>"",
     'dbname'=>"",
     'driver' => 'mysqli',
-    'charset' => 'utf8',
+    'charset' => 'utf8mb4',
 ));
 
 
