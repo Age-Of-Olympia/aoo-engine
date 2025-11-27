@@ -13,6 +13,11 @@ class TutorialView
             unlink($file); // Delete the file
         }
 
+        // Refresh player's view to show tutorial state
+        $player->refresh_view();
+        $player->refresh_data();
+        $player->refresh_caracs();
+
         $player->getCoords();
 
         // Safety check for null coords
@@ -25,19 +30,10 @@ class TutorialView
 
 ?>
         <script>
+            /* Tutorial data - scripts already loaded by Ui.php */
             window.playerId = <?php echo $_SESSION['playerId'] ?>;
             window.dataCoords = "<?php echo $coordX + 1 ?>,<?php echo $coordY ?>";
         </script>
-
-        <!-- Tutorial CSS -->
-        <link href="css/tutorial/tutorial.css?v=20251126q" rel="stylesheet">
-
-        <!-- Tutorial JavaScript - NEW MODULAR SYSTEM -->
-        <script src="js/tutorial/TutorialPositionManager.js?v=20251118a"></script>
-        <script src="js/tutorial/TutorialUI.js?v=20251126t"></script>
-        <script src="js/tutorial/TutorialHighlighter.js?v=20251125e"></script>
-        <script src="js/tutorial/TutorialTooltip.js?v=20251126h"></script>
-        <script src="js/tutorial/TutorialInit.js?v=20251122d"></script>
 <?php
     }
 }
