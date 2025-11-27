@@ -1,3 +1,23 @@
+.env
+wiki/
+datas/
+img/
+config/db_constants.php
+sessions/
+db/updates_done/
+/data/
+/.idea/
+*.kate-swp
+vendor/
+.bash_history
+.env
+bin/
+.phpunit.cache/
+tmp/
+daily.log
+phpunit-report.xml
+*.settings.local
+
 # Test data and outputs
 data_tests/
 node_modules/
