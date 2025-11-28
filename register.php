@@ -126,6 +126,9 @@ if(!empty($_POST['race'])){
 
             // Reload player data with new coordinates
             $player->get_data();
+
+            // Enable invisibleMode so new players are invisible until they complete tutorial
+            $player->add_option('invisibleMode');
         }
 
         $plainMail = strtolower($_POST['mail']);
