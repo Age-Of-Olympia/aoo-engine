@@ -203,7 +203,7 @@ class TutorialResourceManager
                 'race' => 'ame',
                 'xp' => 0,
                 'pi' => 0,
-                'energie' => 50, // Weak enemy
+                'energie' => 100, // Enough HP to survive tutorial attacks
                 'psw' => '',
                 'mail' => '',
                 'plain_mail' => '',
@@ -213,19 +213,12 @@ class TutorialResourceManager
             ]);
 
             // Initialize enemy caracs (characteristics)
-            // Use Classes\Player to set up proper stats
+            // The 'ame' race has proper base stats (PV: 100, F: 1, E: 1)
             require_once dirname(__FILE__) . '/../../Classes/Player.php';
             $enemyPlayer = new \Classes\Player($enemyId);
-            $enemyPlayer->get_caracs(); // This will generate initial caracs with proper PV
+            $enemyPlayer->get_caracs(); // Generate caracs from race base stats
 
-            // Set enemy PV to 50 so it survives tutorial attacks
-            $this->conn->executeStatement(
-                "INSERT INTO players_bonus (player_id, name, n) VALUES (?, 'pv', 50)
-                 ON DUPLICATE KEY UPDATE n = 50",
-                [$enemyId]
-            );
-            // Refresh caracs with the new PV bonus
-            $enemyPlayer->get_caracs();
+            error_log("[TutorialResourceManager] Initialized enemy {$enemyId} with 'ame' race base stats");
 
             // Track enemy in tutorial_enemies table
             $this->conn->insert('tutorial_enemies', [
