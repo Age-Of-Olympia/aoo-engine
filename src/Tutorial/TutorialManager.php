@@ -83,6 +83,11 @@ class TutorialManager
             $player->data->race ?? null
         );
 
+        // Update context to use tutorial player (for placeholder replacement)
+        $tutorialPlayerInstance = new \Classes\Player($this->tutorialPlayer->actualPlayerId);
+        $tutorialPlayerInstance->get_data();
+        $this->context->setPlayer($tutorialPlayerInstance);
+
         // Get first step data with prerequisites applied
         $stepData = $this->progressManager->getCurrentStepForClient(
             $firstStepId,
@@ -237,6 +242,9 @@ class TutorialManager
 
         $stepData = $step->getData();
 
+        // Process dynamic placeholders in step text (e.g., {max_mvt})
+        $stepData = $this->processPlaceholders($stepData);
+
         // Calculate actual step position (1st, 2nd, 3rd...) for progression display
         // This counts how many steps come before this one (ordered by step_number)
         $stepData['step_position'] = $this->calculateStepPosition($stepId, $version);
@@ -274,6 +282,36 @@ class TutorialManager
     }
 
     /**
+     * Process dynamic placeholders in step data
+     *
+     * Replaces placeholders like {max_mvt} with actual values from the tutorial player.
+     * This allows step text to adapt to different races and player stats.
+     *
+     * @param array $stepData Step data from AbstractStep::getData()
+     * @return array Step data with placeholders replaced
+     */
+    private function processPlaceholders(array $stepData): array
+    {
+        // Get the tutorial player to access their race and stats
+        $tutorialPlayerId = $this->context->getPlayer()->id;
+        $tutorialPlayer = new Player($tutorialPlayerId);
+
+        // Create placeholder service
+        $placeholderService = new TutorialPlaceholderService($tutorialPlayer);
+
+        // Process text fields that may contain placeholders
+        $textFields = ['title', 'text', 'validation_hint'];
+
+        foreach ($textFields as $field) {
+            if (isset($stepData[$field]) && is_string($stepData[$field])) {
+                $stepData[$field] = $placeholderService->replacePlaceholders($stepData[$field]);
+            }
+        }
+
+        return $stepData;
+    }
+
+    /**
      * Get current step with full data for client
      *
      * @param int $stepNumber
@@ -290,6 +328,9 @@ class TutorialManager
         }
 
         $stepData = $step->getData();
+
+        // Process dynamic placeholders in step text (e.g., {max_mvt})
+        $stepData = $this->processPlaceholders($stepData);
 
         // Apply prerequisites ONLY when explicitly requested (e.g., on resume)
         // NOT during normal rendering to avoid resetting resources on every render
@@ -399,6 +440,10 @@ class TutorialManager
             $this->tutorialPlayer->transferRewardsToRealPlayer($xpEarned, $piEarned);
             $actualXpAwarded = $xpEarned;
             $actualPiAwarded = $piEarned;
+
+            // Remove invisibleMode from real player now that they completed tutorial
+            $realPlayer = new \Classes\Player($realPlayerId);
+            $realPlayer->end_option('invisibleMode');
         }
 
         // Delete tutorial resources
