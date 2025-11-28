@@ -85,23 +85,147 @@ error_log("  USING PLAYER: $playerId (tutorial mode: " . (TutorialHelper::isInTu
 $player = new Player($playerId);
 $player->get_data(false);
 
-// Auto-trigger tutorial for new players (if feature flag enabled)
-// Note: Replay tutorial redirect is handled earlier in the file (before new Ui())
-if (!TutorialHelper::isInTutorial()) {
-    if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
-        $db = new Db();
-        $sessionManager = new TutorialSessionManager($db);
+// Check if player is brand new (should auto-start tutorial instead of showing modal)
+$isBrandNew = false;
+if (TutorialFeatureFlag::isEnabledForPlayer($player->id) && !TutorialHelper::isInTutorial()) {
+    $db = new Db();
+    $sessionManager = new TutorialSessionManager($db);
+    $hasCompleted = $sessionManager->hasCompletedBefore($player->id);
+    $activeSession = $sessionManager->getActiveSession($player->id);
 
-        // Check if player is brand new (no tutorial progress at all)
-        $hasCompleted = $sessionManager->hasCompletedBefore($player->id);
-        $activeSession = $sessionManager->getActiveSession($player->id);
+    if (!$hasCompleted && $activeSession === null) {
+        $isBrandNew = true;
+        $_SESSION['auto_start_tutorial'] = true;
 
-        if (!$hasCompleted && $activeSession === null) {
-            // Brand new player - set flag to auto-start tutorial
-            $_SESSION['auto_start_tutorial'] = true;
+        // Show loading overlay for brand new players
+        echo '<div id="tutorial-loading-overlay" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        ">
+            <div style="text-align: center; color: #fff;">
+                <h2 style="margin-bottom: 20px;">Chargement du tutoriel...</h2>
+                <div class="spinner" style="
+                    border: 4px solid rgba(255,255,255,0.3);
+                    border-top: 4px solid #fff;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto;
+                "></div>
+            </div>
+        </div>
+        <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
+        </style>';
     }
 }
+
+// Check if player is invisible and not admin - they need to complete or skip tutorial
+// BUT don't show modal for brand new players (they'll auto-start tutorial)
+$isInvisible = $player->have_option('invisibleMode');
+$isAdmin = $player->have_option('isAdmin');
+$inTutorial = TutorialHelper::isInTutorial();
+
+if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew) {
+    // Player is invisible (registered but didn't complete tutorial) - show modal
+    echo '<div id="invisible-player-modal" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            text-align: center;
+            color: #fff;
+        ">
+            <h2>Tutoriel non terminé</h2>
+            <p>Tu dois compléter le tutoriel pour commencer l\'aventure.</p>
+            <p>Que souhaites-tu faire ?</p>
+            <div style="margin-top: 20px;">
+                <button id="resume-tutorial-btn" style="
+                    padding: 10px 20px;
+                    margin: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                ">Reprendre le tutoriel</button>
+                <button id="skip-tutorial-btn" style="
+                    padding: 10px 20px;
+                    margin: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    background: #f44336;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                ">Passer le tutoriel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    $(document).ready(function() {
+        // Resume tutorial button
+        $("#resume-tutorial-btn").click(function() {
+            window.location.href = "index.php?replay_tutorial=1";
+        });
+
+        // Skip tutorial button
+        $("#skip-tutorial-btn").click(function() {
+            if (confirm("Es-tu sûr de vouloir passer le tutoriel ? Tu ne recevras pas les récompenses.")) {
+                $.post("api/tutorial/skip.php", {}, function(response) {
+                    if (response.success) {
+                        window.location.reload();
+                    } else {
+                        alert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
+                    }
+                }, "json").fail(function() {
+                    alert("Erreur de connexion au serveur");
+                });
+            }
+        });
+
+        // Block all clicks outside modal
+        $("body").on("click", function(e) {
+            if (!$(e.target).closest("#invisible-player-modal").length) {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+    </script>';
+
+    // Don't render the rest of the page - just exit after modal
+    exit();
+}
+
+// Note: Auto-start tutorial logic has been moved earlier (before modal check)
 ?>
 <div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>
 
