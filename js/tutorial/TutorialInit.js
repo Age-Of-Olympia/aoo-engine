@@ -147,7 +147,8 @@
         }
 
         try {
-            const response = await fetch('/api/tutorial/resume.php');
+            // Add check_only parameter to prevent setting session vars on initial check
+            const response = await fetch('/api/tutorial/resume.php?check_only=1');
 
             if (!response.ok) {
                 console.log('[Tutorial] Resume API returned', response.status);
@@ -354,6 +355,13 @@
 
                     if (data.success) {
                         console.log('[Tutorial] Successfully exited tutorial mode');
+
+                        // Clear tutorial sessionStorage flags to prevent auto-resume
+                        sessionStorage.removeItem('tutorial_active');
+                        sessionStorage.removeItem('tutorial_session_id');
+                        sessionStorage.removeItem('tutorial_just_started');
+                        sessionStorage.setItem('tutorial_just_cancelled', 'true');
+
                         window.location.href = 'index.php';
                     } else {
                         alert('Erreur: ' + (data.error || 'Impossible de quitter le tutoriel'));

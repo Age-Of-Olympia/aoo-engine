@@ -106,6 +106,15 @@ class TutorialUI {
 
                 console.log('[TutorialUI] Resuming tutorial - current_step:', this.currentStep, 'step_id:', response.step_data?.step_id);
 
+                // Check if we need to reload to switch to tutorial map
+                if (response.reload_required) {
+                    console.log('[TutorialUI] Reloading to switch to tutorial map...');
+                    // Set flag to auto-resume after reload
+                    sessionStorage.setItem('tutorial_just_started', 'true');
+                    window.location.reload();
+                    return true;
+                }
+
                 // Activate tutorial UI
                 this.activateTutorialUI(response.step_data);
 

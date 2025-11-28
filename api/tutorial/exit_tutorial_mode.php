@@ -14,12 +14,13 @@ require_once(__DIR__ . '/../../config/bootstrap.php');
 use Doctrine\DBAL\DriverManager;
 
 try {
+    $tutorialSessionId = $_SESSION['tutorial_session_id'] ?? null;
     $playerId = $_SESSION['playerId'] ?? null;
 
-    if (!$playerId) {
+    if (!$tutorialSessionId && !$playerId) {
         echo json_encode([
             'success' => false,
-            'error' => 'No player ID in session'
+            'error' => 'No tutorial session or player ID in session'
         ]);
         exit;
     }
@@ -32,11 +33,19 @@ try {
         'driver' => 'pdo_mysql',
     ]);
 
-    // Get the real player ID for this tutorial character
-    $result = $conn->fetchAssociative(
-        "SELECT real_player_id FROM tutorial_players WHERE player_id = ?",
-        [$playerId]
-    );
+    // Get the real player ID using tutorial_session_id (preferred) or player_id (fallback)
+    if ($tutorialSessionId) {
+        $result = $conn->fetchAssociative(
+            "SELECT real_player_id FROM tutorial_players WHERE tutorial_session_id = ? AND is_active = 1",
+            [$tutorialSessionId]
+        );
+    } else {
+        // Fallback: try to find by player_id (in case session var is missing)
+        $result = $conn->fetchAssociative(
+            "SELECT real_player_id FROM tutorial_players WHERE player_id = ? AND is_active = 1",
+            [$playerId]
+        );
+    }
 
     if (!$result || !$result['real_player_id']) {
         echo json_encode([

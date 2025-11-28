@@ -13,11 +13,13 @@ require_once(__DIR__ . '/../../config/db_constants.php');
 require_once(__DIR__ . '/../../config/bootstrap.php');
 
 use Doctrine\DBAL\DriverManager;
+use App\Tutorial\TutorialHelper;
 
 try {
-    $playerId = $_SESSION['playerId'] ?? null;
+    // IMPORTANT: Use getActivePlayerId() to get tutorial player when in tutorial mode
+    $playerId = TutorialHelper::getActivePlayerId();
 
-    error_log("[check_tutorial_character] Session player ID: " . ($playerId ?? 'NULL'));
+    error_log("[check_tutorial_character] Active player ID: " . ($playerId ?? 'NULL'));
 
     if (!$playerId) {
         echo json_encode(['is_tutorial_character' => false, 'debug' => 'No player ID in session']);
