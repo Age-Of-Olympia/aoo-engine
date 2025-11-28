@@ -185,9 +185,31 @@ class MenuView
                         ' . (isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial'] ? '
                         /* Auto-trigger for new players */
                         console.log("[Menu] Auto-starting tutorial for new player");
+
+                        /* Wait for tutorial scripts to be loaded before starting */
+                        var tutorialLoadCheckInterval = setInterval(function() {
+                            /* Check if tutorial initialization function exists */
+                            if (typeof window.initTutorial === "function") {
+                                console.log("[Menu] Tutorial scripts loaded, starting...");
+                                clearInterval(tutorialLoadCheckInterval);
+                                setTimeout(function() {
+                                    startTutorialFlow();
+                                }, 500); /* Small delay after scripts load */
+                            } else {
+                                console.log("[Menu] Waiting for tutorial scripts to load...");
+                            }
+                        }, 200); /* Check every 200ms */
+
+                        /* Fallback timeout in case scripts never load */
                         setTimeout(function() {
-                            startTutorialFlow();
-                        }, 1000); /* Small delay to ensure page is fully loaded */
+                            clearInterval(tutorialLoadCheckInterval);
+                            if (typeof window.initTutorial !== "function") {
+                                console.error("[Menu] Tutorial scripts failed to load after 10s");
+                                alert("Erreur: Le système de tutoriel n\'a pas pu se charger. Rechargez la page.");
+                                /* Remove loading overlay if it exists */
+                                $("#tutorial-loading-overlay").remove();
+                            }
+                        }, 10000); /* 10 second timeout */
                         ' : '') . '
                     });
                 </script>';
