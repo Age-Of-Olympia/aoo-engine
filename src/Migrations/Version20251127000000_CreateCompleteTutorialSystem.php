@@ -13,6 +13,9 @@ use Doctrine\Migrations\AbstractMigration;
  * This migration creates the complete tutorial system with all 15 tables
  * and populates them with the current production-ready tutorial content.
  *
+ * PREREQUISITES:
+ * - Race file: datas/private/races/ame.json must exist (tutorial dummy race with base stats)
+ *
  * Tables created:
  * - tutorial_progress: Session tracking
  * - tutorial_players: Temporary tutorial characters
@@ -49,6 +52,28 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
     public function up(Schema $schema): void
     {
         /* ================================================================
+         * STEP 0: Add tutorial-related columns to players table
+         * ================================================================ */
+
+        // Add discriminator and tutorial tracking columns to players table
+        $this->addSql("
+            ALTER TABLE players
+            ADD COLUMN IF NOT EXISTS player_type VARCHAR(20) DEFAULT 'real' COMMENT 'Entity type: real, tutorial, building, npc',
+            ADD COLUMN IF NOT EXISTS display_id INT NULL COMMENT 'Sequential display ID for UI (e.g., Tutorial Player #1)',
+            ADD COLUMN IF NOT EXISTS tutorial_session_id VARCHAR(36) NULL COMMENT 'Tutorial session UUID (for tutorial players)',
+            ADD COLUMN IF NOT EXISTS real_player_id_ref INT NULL COMMENT 'Real player ID reference (for tutorial players)'
+        ");
+
+        // Add index for tutorial queries
+        $this->addSql("
+            CREATE INDEX IF NOT EXISTS idx_player_type ON players(player_type)
+        ");
+
+        $this->addSql("
+            CREATE INDEX IF NOT EXISTS idx_tutorial_session ON players(tutorial_session_id)
+        ");
+
+        /* ================================================================
          * STEP 1: Create all tutorial tables (normalized schema)
          * ================================================================ */
 
@@ -59,12 +84,16 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 player_id INT NOT NULL,
                 tutorial_session_id VARCHAR(36) NOT NULL COMMENT 'UUID for each tutorial attempt',
                 current_step VARCHAR(100) NOT NULL DEFAULT '1.0' COMMENT 'Current step number',
+                total_steps INT DEFAULT 0 COMMENT 'Total steps in tutorial version',
                 completed BOOLEAN DEFAULT FALSE COMMENT 'Has player completed this session',
                 started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 completed_at TIMESTAMP NULL,
                 tutorial_mode ENUM('first_time', 'replay', 'practice') DEFAULT 'first_time' COMMENT 'Tutorial context',
                 tutorial_version VARCHAR(20) NOT NULL DEFAULT '1.0.0' COMMENT 'Tutorial version',
                 xp_earned INT DEFAULT 0 COMMENT 'Total XP earned during this tutorial session',
+                data LONGTEXT NULL COMMENT 'Additional session data (JSON)',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_player_id (player_id),
                 INDEX idx_session_id (tutorial_session_id),
                 INDEX idx_completed (completed),
@@ -79,7 +108,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 real_player_id INT NOT NULL COMMENT 'Link to actual player account',
                 tutorial_session_id VARCHAR(36) NOT NULL COMMENT 'Link to tutorial_progress session',
-                player_id INT NOT NULL COMMENT 'Tutorial player ID in players table',
+                player_id INT NULL COMMENT 'Tutorial player ID in players table (set after INSERT)',
                 name VARCHAR(255) NOT NULL COMMENT 'Character name',
                 is_active BOOLEAN DEFAULT TRUE COMMENT 'Is this tutorial character currently active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -298,6 +327,93 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
         ");
 
         /* ================================================================
+         * STEP 1.5: Create tutorial map template (9x9 grid with walls)
+         * ================================================================ */
+
+        // Create template tutorial map coordinates (plan='tutorial')
+        // This serves as the template that gets copied for each tutorial instance
+        // 9x9 grid centered at (0,0): from (-4,-4) to (4,4)
+        // Inner playable area: 7x7 from (-3,-3) to (3,3)
+        $this->addSql("
+            INSERT IGNORE INTO coords (x, y, z, plan)
+            SELECT x, y, 0 as z, 'tutorial' as plan
+            FROM (
+                SELECT -4 as x UNION SELECT -3 UNION SELECT -2 UNION SELECT -1 UNION SELECT 0
+                UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+            ) as xs
+            CROSS JOIN (
+                SELECT -4 as y UNION SELECT -3 UNION SELECT -2 UNION SELECT -1 UNION SELECT 0
+                UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4
+            ) as ys
+        ");
+
+        // Add walls around the perimeter (border walls to enclose the tutorial area)
+        // North wall (y = -4)
+        $this->addSql("
+            INSERT IGNORE INTO map_walls (name, coords_id, damages)
+            SELECT 'mur_pierre', c.id, 0
+            FROM coords c
+            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.y = -4
+        ");
+
+        // South wall (y = 4)
+        $this->addSql("
+            INSERT IGNORE INTO map_walls (name, coords_id, damages)
+            SELECT 'mur_pierre', c.id, 0
+            FROM coords c
+            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.y = 4
+        ");
+
+        // West wall (x = -4)
+        $this->addSql("
+            INSERT IGNORE INTO map_walls (name, coords_id, damages)
+            SELECT 'mur_pierre', c.id, 0
+            FROM coords c
+            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = -4
+        ");
+
+        // East wall (x = 4)
+        $this->addSql("
+            INSERT IGNORE INTO map_walls (name, coords_id, damages)
+            SELECT 'mur_pierre', c.id, 0
+            FROM coords c
+            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 4
+        ");
+
+        // Add a gatherable tree at (0,1) for resource gathering tutorial
+        $this->addSql("
+            INSERT IGNORE INTO map_walls (name, coords_id, damages)
+            SELECT 'arbre1', c.id, -1
+            FROM coords c
+            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 0 AND c.y = 1
+        ");
+
+        // Add Gaïa NPC (tutorial guide) at (1,0)
+        // She will be copied to each tutorial instance when TutorialMapInstance creates the map
+        $this->addSql("
+            INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, xp, pi, energie, psw, mail, plain_mail, avatar, portrait, text)
+            SELECT
+                -999999 as id,
+                'npc' as player_type,
+                999999 as display_id,
+                'Gaïa' as name,
+                c.id as coords_id,
+                'dieu' as race,
+                0 as xp,
+                0 as pi,
+                100 as energie,
+                '' as psw,
+                '' as mail,
+                '' as plain_mail,
+                'img/avatars/dieu/25.png' as avatar,
+                'img/portraits/dieu/1.jpeg' as portrait,
+                'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.' as text
+            FROM coords c
+            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 1 AND c.y = 0
+            LIMIT 1
+        ");
+
+        /* ================================================================
          * STEP 2: Insert tutorial settings
          * ================================================================ */
 
@@ -316,17 +432,21 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
          * ================================================================ */
 
         $this->addSql("
-            INSERT INTO tutorial_progress (player_id, tutorial_session_id, current_step, completed, started_at, completed_at, tutorial_mode, tutorial_version, xp_earned)
+            INSERT INTO tutorial_progress (player_id, tutorial_session_id, current_step, total_steps, completed, started_at, completed_at, tutorial_mode, tutorial_version, xp_earned, data, created_at, updated_at)
             SELECT
                 id as player_id,
                 UUID() as tutorial_session_id,
                 '30.0' as current_step,
+                29 as total_steps,
                 TRUE as completed,
                 registerTime as started_at,
                 registerTime as completed_at,
                 'first_time' as tutorial_mode,
                 '1.0.0' as tutorial_version,
-                0 as xp_earned
+                0 as xp_earned,
+                '{}' as data,
+                registerTime as created_at,
+                registerTime as updated_at
             FROM players
             WHERE id > 0
             ON DUPLICATE KEY UPDATE player_id=player_id
@@ -349,13 +469,16 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
 
     private function insertTutorialSteps(): void
     {
+        // Set charset to utf8mb4 for proper French accent encoding
+        $this->addSql("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+
         $this->addSql("
             INSERT INTO tutorial_steps (version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active) VALUES
             ('1.0.0', 'welcome', 'your_character', 1.0, 'info', 'Bienvenue !', 'Bienvenue dans Age of Olympia ! Ce tutoriel va vous apprendre les bases du jeu. Suivez les instructions pour découvrir comment explorer, récolter et combattre.', 5, 1),
             ('1.0.0', 'your_character', 'meet_gaia', 2.0, 'info', 'Votre personnage', 'Voici <strong>votre personnage</strong> ! Il est représenté au centre du damier. C''est vous dans le monde d''Olympia.', 5, 1),
             ('1.0.0', 'meet_gaia', 'close_card', 3.0, 'info', 'Gaïa, votre guide', 'Voici <strong>Gaïa</strong>, la déesse de la Terre. Elle sera votre guide tout au long de ce tutoriel. Cliquez sur elle pour voir sa fiche.', 5, 1),
             ('1.0.0', 'close_card', 'movement_intro', 4.0, 'ui_interaction', 'Fermer la fiche', 'Vous pouvez <strong>fermer la fiche</strong> en cliquant sur le bouton X, sur une case vide, ou ailleurs sur le damier.', 5, 1),
-            ('1.0.0', 'movement_intro', 'first_move', 5.0, 'info', 'Se déplacer', 'Regardez les <strong>cases</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer si elles sont vides. Cliquez sur l''une d''elles pour bouger.', 5, 1),
+            ('1.0.0', 'movement_intro', 'first_move', 5.0, 'info', 'Se déplacer', 'Regardez les <strong>cases</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer si elles sont vides.', 5, 1),
             ('1.0.0', 'first_move', 'movement_limit_warning', 6.0, 'movement', 'Premier pas', 'Cliquez sur une <strong>case mise en valeur</strong> pour vous déplacer !', 10, 1),
             ('1.0.0', 'movement_limit_warning', 'show_characteristics', 7.0, 'info', 'Mouvements limités !', '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez 4 mouvements par tour. Chaque déplacement en consomme 1.', 5, 1),
             ('1.0.0', 'show_characteristics', 'deplete_movements', 8.0, 'ui_interaction', 'Vos caractéristiques', 'Cliquez sur <strong>\"Caractéristiques\"</strong> pour voir vos stats, dont vos mouvements restants.', 5, 1),
@@ -367,16 +490,16 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             ('1.0.0', 'close_card_for_tree', 'walk_to_tree', 14.0, 'ui_interaction', 'Direction l''arbre', 'Fermez cette fiche. Nous allons aller vers un <strong>arbre</strong> pour le récolter.', 5, 1),
             ('1.0.0', 'walk_to_tree', 'observe_tree', 15.0, 'movement', 'Approchez de l''arbre', 'Déplacez-vous vers l''<strong>arbre</strong> marqué sur le damier. Vous devez être sur une case <strong>adjacente</strong> pour le récolter.', 10, 1),
             ('1.0.0', 'observe_tree', 'tree_info', 16.0, 'ui_interaction', 'Observer l''arbre', '<strong>Cliquez sur l''arbre</strong> pour voir ses informations.', 5, 1),
-            ('1.0.0', 'tree_info', 'use_fouiller', 17.0, 'info', 'Ressource récoltable', 'Cet arbre est <strong>récoltable</strong> ! Vous voyez l''indication \"récoltable\" sous le damier, en bas de votre écran. L''action <strong>Fouiller</strong> permet de récolter.', 5, 1),
+            ('1.0.0', 'tree_info', 'use_fouiller', 17.0, 'info', 'Ressource récoltable', 'Cet arbre est <strong>récoltable</strong> ! Vous voyez l''indication \"récoltable\" sous le damier, en bas de votre écran.', 5, 1),
             ('1.0.0', 'use_fouiller', 'action_consumed', 18.0, 'action', 'Fouiller !', 'Cliquez sur <strong>Fouiller</strong> pour récolter du bois de l''arbre.', 15, 1),
             ('1.0.0', 'action_consumed', 'open_inventory', 20.0, 'info', 'Action consommée', 'Vous avez récolté du <strong>bois</strong> ! Remarquez que l''action a consommé <strong>1 PA</strong>. Vos PA se régénèrent aussi à chaque tour.', 5, 1),
             ('1.0.0', 'open_inventory', 'inventory_wood', 21.0, 'ui_interaction', 'Votre inventaire', 'Ouvrez votre <strong>Inventaire</strong> pour voir le bois récolté.', 5, 1),
             ('1.0.0', 'inventory_wood', 'close_inventory', 22.0, 'info', 'Du bois !', 'Voilà votre <strong>bois</strong> ! Les ressources récoltées vont dans votre inventaire. Vous pourrez les utiliser pour fabriquer des objets.', 5, 1),
             ('1.0.0', 'close_inventory', 'combat_intro', 23.0, 'ui_interaction', 'Retour au jeu', 'Fermez l''inventaire pour revenir au jeu. Cliquez sur <strong>Retour</strong>.', 5, 1),
-            ('1.0.0', 'combat_intro', 'enemy_spawned', 24.0, 'info', 'Le Combat', 'Maintenant, passons au <strong>combat</strong> ! C''est essentiel pour survivre dans Olympia. Un ennemi d''entraînement va apparaître.', 5, 1),
+            ('1.0.0', 'combat_intro', 'enemy_spawned', 24.0, 'info', 'Le Combat', 'Maintenant, passons au <strong>combat</strong> ! C''est essentiel pour survivre dans Olympia. Un ennemi d''entraînement vous attend.', 5, 1),
             ('1.0.0', 'enemy_spawned', 'walk_to_enemy', 25.0, 'info', 'Votre adversaire', 'Voici une <strong>âme d''entraînement</strong> ! C''est un ennemi inoffensif créé pour le tutoriel. Approchez-vous !', 5, 1),
-            ('1.0.0', 'walk_to_enemy', 'click_enemy', 26.0, 'movement', 'Approchez l''ennemi', 'Déplacez-vous vers l''<strong>âme d''entraînement</strong>. Vous devez être sur la <strong>même case</strong> ou adjacent pour attaquer.', 10, 1),
-            ('1.0.0', 'click_enemy', 'attack_enemy', 27.0, 'ui_interaction', 'Cibler l''ennemi', '<strong>Cliquez sur l''âme d''entraînement</strong> pour voir ses informations et l''option d''attaque.', 5, 1),
+            ('1.0.0', 'walk_to_enemy', 'click_enemy', 26.0, 'movement', 'Approchez l''ennemi', 'Déplacez-vous vers l''<strong>âme d''entraînement</strong>. Vous devez être sur une <strong>case adjacente</strong> pour attaquer.', 10, 1),
+            ('1.0.0', 'click_enemy', 'attack_enemy', 27.0, 'ui_interaction', 'Cibler l''ennemi', '<strong>Cliquez sur l''âme d''entraînement</strong> pour voir ses informations et l''action d''attaque.', 5, 1),
             ('1.0.0', 'attack_enemy', 'attack_result', 28.0, 'combat', 'Attaquez !', 'Cliquez sur <strong>Attaquer</strong> pour frapper l''âme d''entraînement !', 20, 1),
             ('1.0.0', 'attack_result', 'tutorial_complete', 29.0, 'info', 'Ennemi blessé !', 'Excellent ! Vous pouvez voir le <strong>résultat de l''attaque</strong> : l''ennemi a perdu des PV ! Regardez la barre rouge qui indique les dégâts.', 5, 1),
             ('1.0.0', 'tutorial_complete', NULL, 30.0, 'info', 'Tutoriel terminé !', '<strong>Félicitations !</strong> Vous avez terminé le tutoriel ! Vous savez maintenant vous déplacer, récolter des ressources et combattre. Bonne chance dans Olympia !', 50, 1)
