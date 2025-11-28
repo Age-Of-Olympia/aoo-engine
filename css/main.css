@@ -987,7 +987,6 @@ article.pnj {
         position: absolute;
         top: 30px;
         right: -5px;
-        max-height: 100px;
         text-align: right;
         z-index: 1;
     }
