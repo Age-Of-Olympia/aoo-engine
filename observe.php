@@ -125,17 +125,21 @@ if($planJson){
     $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
     if ($playerVisibilityEnabled) {
-        // Show all players at this location
+        // Show all players at this location (except invisible ones)
         $sql = '
         SELECT
         p.id AS id,
-        name
+        p.name
         FROM
         players AS p
         INNER JOIN
         coords AS c
         ON
         p.coords_id = c.id
+        LEFT JOIN
+        players_options AS po
+        ON
+        po.player_id = p.id AND po.name = "invisibleMode"
         WHERE
         c.x = ?
         AND
@@ -144,21 +148,27 @@ if($planJson){
         c.z = ?
         AND
         c.plan = ?
+        AND
+        (p.id = ? OR po.player_id IS NULL)
         ';
 
-        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
     } else {
-        // Player visibility disabled - only show current player and NPCs
+        // Player visibility disabled - only show current player and NPCs (except invisible ones)
         $sql = '
         SELECT
         p.id AS id,
-        name
+        p.name
         FROM
         players AS p
         INNER JOIN
         coords AS c
         ON
         p.coords_id = c.id
+        LEFT JOIN
+        players_options AS po
+        ON
+        po.player_id = p.id AND po.name = "invisibleMode"
         WHERE
         c.x = ?
         AND
@@ -173,9 +183,11 @@ if($planJson){
             OR
             p.id < 0
         )
+        AND
+        (p.id = ? OR po.player_id IS NULL)
         ';
 
-        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
+        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id, $player->id));
     }
 }
 
@@ -184,13 +196,17 @@ elseif(!$planJson){
     $sql = '
     SELECT
     p.id AS id,
-    name
+    p.name
     FROM
     players AS p
     INNER JOIN
     coords AS c
     ON
     p.coords_id = c.id
+    LEFT JOIN
+    players_options AS po
+    ON
+    po.player_id = p.id AND po.name = "invisibleMode"
     WHERE
     c.x = ?
     AND
@@ -205,9 +221,11 @@ elseif(!$planJson){
         OR
         p.id < 0
     )
+    AND
+    (p.id = ? OR po.player_id IS NULL)
     ';
 
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
+    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id, $player->id));
 }
 
 

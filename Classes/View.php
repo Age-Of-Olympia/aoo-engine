@@ -83,6 +83,15 @@ class View{
 
         $planJson = json()->decode('plans', $this->coords->plan);
 
+        // Load invisible players to filter them from view
+        $invisiblePlayers = array();
+        $db = new Db();
+        $invisibleSQL = "SELECT player_id FROM `players_options` WHERE name='invisibleMode'";
+        $resInvisible = $db->exe($invisibleSQL);
+        while($row = $resInvisible->fetch_object()){
+            $invisiblePlayers[$row->player_id] = true;
+        }
+
         $tile = (!empty($planJson->bg)) ? $planJson->bg : 'img/tiles/'. $this->coords->plan .'.webp';
 
         if(!file_exists($tile)){
@@ -289,6 +298,11 @@ class View{
                 elseif($row->whichTable == 'players'){
                     $player = new Player($row->id);
                     $player->get_data();
+
+                    // Skip invisible players (except when viewing your own character)
+                    if ($row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
+                        continue;
+                    }
 
                     // Les joueurs normaux sont soumis aux règles de visibilité
                     if ($this->playerId > 0) {

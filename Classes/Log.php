@@ -457,8 +457,8 @@ private static function filterRows(array $rows, int $playerId): array {
 
         $plan = $player->coords->plan;
 
-        // hide log in incognitoMode
-        if($player->have_option('incognitoMode')){
+        // hide log in incognitoMode or invisibleMode
+        if($player->have_option('incognitoMode') || $player->have_option('invisibleMode')){
             $text = "Plan d'origine : ".$plan." - ".$text;
             $plan = "birdland"; // show logs in birdlands for posterity
         }

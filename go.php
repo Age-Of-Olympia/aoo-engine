@@ -73,7 +73,9 @@ if($planJson = json()->decode('plans', $player->coords->plan)){
         $inPlayerSql = '
         OR
         id IN(
-            SELECT coords_id FROM players WHERE coords_id = ?
+            SELECT coords_id FROM players
+            LEFT JOIN players_options AS po ON po.player_id = players.id AND po.name = "invisibleMode"
+            WHERE coords_id = ? AND po.player_id IS NULL
             )
         ';
 
@@ -322,7 +324,7 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     }
 }
 
-if(!$player->have_option('incognitoMode'))
+if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode'))
 {
     $footstep='trace_pas_';
     if($originalGooCoords->y>$player->coords->y){
