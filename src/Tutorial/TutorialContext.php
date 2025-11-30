@@ -277,6 +277,13 @@ class TutorialContext
         // Check and restore movement points
         if (isset($prerequisites['mvt'])) {
             $required = (int) $prerequisites['mvt'];
+
+            // Special value -1 means "use race's max movement"
+            if ($required === -1) {
+                $required = $this->getPlayerMaxMovement($player);
+                error_log("[TutorialContext] Using race-specific max movement: {$required}");
+            }
+
             // Get actual movement from turn system
             $player->get_caracs();
             $current = $player->getRemaining('mvt');
@@ -530,5 +537,35 @@ class TutorialContext
     {
         $db = new \Classes\Db();
         $db->exe('DELETE FROM players_bonus WHERE player_id = ? AND name = "mvt"', [$playerId]);
+    }
+
+    /**
+     * Get player's maximum movement points from race base stats
+     *
+     * This allows tutorial steps to dynamically adapt to race-specific movement values.
+     * Different races have different base movements:
+     * - Nain: 4, Elfe: 5, Olympien: 5, Géant: 5, HS: 6
+     *
+     * @param \Classes\Player $player Player instance
+     * @return int Maximum movement points for this player's race
+     */
+    private function getPlayerMaxMovement(\Classes\Player $player): int
+    {
+        // Ensure player data is loaded
+        if (!isset($player->data)) {
+            $player->get_data();
+        }
+
+        // Get race data from JSON
+        $race = $player->data->race ?? 'nain';
+        $raceJson = (new \Classes\Json())->decode('races', $race);
+
+        if ($raceJson && isset($raceJson->mvt)) {
+            return (int) $raceJson->mvt;
+        }
+
+        // Fallback to default (Nain base movement)
+        error_log("[TutorialContext] WARNING: Could not find mvt for race '{$race}', using default 4");
+        return 4;
     }
 }

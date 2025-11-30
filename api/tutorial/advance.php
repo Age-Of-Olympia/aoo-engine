@@ -115,9 +115,11 @@ try {
 
 } catch (Exception $e) {
     error_log("Tutorial advance error: " . $e->getMessage());
+    error_log("Tutorial advance stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Internal server error'
+        'error' => 'Internal server error',
+        'debug' => $e->getMessage()
     ]);
 }
