@@ -43,10 +43,62 @@ try {
         exit;
     }
 
+    // Initialize player with race actions
+    $player->get_data();
+    $raceJson = json()->decode('races', $player->data->race);
+
+    // Add all race-specific actions (keep tuto/attaquer for legacy compatibility)
+    // Use have_action() to check before adding to avoid duplicates
+    // Wrap in try-catch to handle Doctrine errors gracefully
+    if ($raceJson && !empty($raceJson->actions)) {
+        $addedCount = 0;
+        foreach($raceJson->actions as $actionName) {
+            try {
+                // Only add if player doesn't already have this action
+                if (!$player->have_action($actionName)) {
+                    $player->add_action($actionName);
+                    $addedCount++;
+                }
+            } catch (\Exception $e) {
+                // Log Doctrine errors but continue processing other actions
+                error_log("[Skip Tutorial] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
+            }
+        }
+        error_log("[Skip Tutorial] Player {$playerId} initialized with {$addedCount} new actions for race {$player->data->race}");
+    }
+
     // Remove invisibleMode
     $player->end_option('invisibleMode');
 
     error_log("[Skip Tutorial] Player {$playerId} skipped tutorial, invisibleMode removed");
+
+    // Move player from waiting_room to faction's respawn plan
+    $player->getCoords();
+    if ($player->coords->plan === 'waiting_room') {
+        $factionJson = json()->decode('factions', $player->data->faction);
+        $respawnPlan = $factionJson->respawnPlan ?? "olympia";
+
+        $goCoords = (object) array(
+            'x' => 0,
+            'y' => 0,
+            'z' => 0,
+            'plan' => $respawnPlan
+        );
+
+        $coordsId = \Classes\View::get_free_coords_id_arround($goCoords);
+
+        // Update player's coordinates
+        $db = new \Classes\Db();
+        $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
+        $db->exe($sql, array($coordsId, $playerId));
+
+        error_log("[Skip Tutorial] Player {$playerId} moved from waiting_room to {$respawnPlan}");
+    }
+
+    // Grant skip rewards as consolation for not completing tutorial
+    $skipReward = TUTORIAL_SKIP_REWARD;
+    $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
+    error_log("[Skip Tutorial] Player {$playerId} received skip reward: {$skipReward['xp']} XP/PI");
 
     echo json_encode([
         'success' => true,
@@ -55,9 +107,11 @@ try {
 
 } catch (Exception $e) {
     error_log("[Skip Tutorial] Error: " . $e->getMessage());
+    error_log("[Skip Tutorial] Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Failed to skip tutorial'
+        'error' => 'Failed to skip tutorial',
+        'debug' => $e->getMessage()
     ]);
 }
