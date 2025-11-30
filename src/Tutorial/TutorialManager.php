@@ -444,6 +444,18 @@ class TutorialManager
             // Remove invisibleMode from real player now that they completed tutorial
             $realPlayer = new \Classes\Player($realPlayerId);
             $realPlayer->end_option('invisibleMode');
+
+            // Initialize player with race actions
+            $realPlayer->get_data();
+            $raceJson = json()->decode('races', $realPlayer->data->race);
+
+            // Add all race-specific actions (keep tuto/attaquer for legacy compatibility)
+            if ($raceJson && !empty($raceJson->actions)) {
+                foreach($raceJson->actions as $actionName) {
+                    $realPlayer->add_action($actionName);
+                }
+                error_log("[Tutorial Complete] Player {$realPlayerId} initialized with " . count($raceJson->actions) . " actions for race {$realPlayer->data->race}");
+            }
         }
 
         // Delete tutorial resources
