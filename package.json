@@ -2,5 +2,8 @@
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.0.37",
     "puppeteer": "^24.30.0"
+  },
+  "devDependencies": {
+    "cypress": "^15.7.0"
   }
 }
