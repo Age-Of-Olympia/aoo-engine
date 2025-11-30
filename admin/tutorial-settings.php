@@ -75,6 +75,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Update reward settings
+    if (isset($_POST['update_rewards'])) {
+        $skipXP = max(0, (int)($_POST['skip_reward_xp'] ?? 50));
+        $skipPI = max(0, (int)($_POST['skip_reward_pi'] ?? 50));
+        $completionXP = max(0, (int)($_POST['completion_reward_xp'] ?? 390));
+        $completionPI = max(0, (int)($_POST['completion_reward_pi'] ?? 390));
+
+        TutorialFeatureFlag::updateSetting('skip_reward_xp', (string)$skipXP);
+        TutorialFeatureFlag::updateSetting('skip_reward_pi', (string)$skipPI);
+        TutorialFeatureFlag::updateSetting('completion_reward_xp', (string)$completionXP);
+        TutorialFeatureFlag::updateSetting('completion_reward_pi', (string)$completionPI);
+
+        setFlash('success', 'Reward settings updated successfully');
+    }
+
     // Regenerate CSRF token
     $csrf->regenerateToken();
     TutorialFeatureFlag::clearCache();
@@ -88,6 +103,12 @@ $settings = TutorialFeatureFlag::getSettings();
 $globalEnabled = filter_var($settings['global_enabled'] ?? '0', FILTER_VALIDATE_BOOLEAN);
 $autoShowNewPlayers = filter_var($settings['auto_show_new_players'] ?? '1', FILTER_VALIDATE_BOOLEAN);
 $whitelistedPlayers = TutorialFeatureFlag::getWhitelistedPlayers();
+
+// Load reward settings
+$skipRewardXP = (int)($settings['skip_reward_xp'] ?? 50);
+$skipRewardPI = (int)($settings['skip_reward_pi'] ?? 50);
+$completionRewardXP = (int)($settings['completion_reward_xp'] ?? 390);
+$completionRewardPI = (int)($settings['completion_reward_pi'] ?? 390);
 
 // Fetch player details for whitelist
 $whitelistedPlayerDetails = [];
@@ -139,6 +160,118 @@ ob_start();
             </p>
         </div>
     <?php endif; ?>
+
+    <!-- Reward Settings Card (Full Width) -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+            <h3><i class="fas fa-trophy"></i> Tutorial Rewards</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <?= $csrf->renderTokenField() ?>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <!-- Skip Rewards -->
+                    <div>
+                        <h5 style="margin-bottom: 15px; color: #f44336;">
+                            <i class="fas fa-forward"></i> Skip Rewards (Without Completion)
+                        </h5>
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                            Rewards given when player skips the tutorial without completing it.
+                        </p>
+
+                        <div class="form-group">
+                            <label for="skip_reward_xp">
+                                <strong>XP Reward</strong>
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="skip_reward_xp"
+                                name="skip_reward_xp"
+                                value="<?= $skipRewardXP ?>"
+                                min="0"
+                                required
+                            >
+                            <small class="form-text">Experience points for skipping</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="skip_reward_pi">
+                                <strong>PI Reward</strong>
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="skip_reward_pi"
+                                name="skip_reward_pi"
+                                value="<?= $skipRewardPI ?>"
+                                min="0"
+                                required
+                            >
+                            <small class="form-text">Investment points for skipping</small>
+                        </div>
+                    </div>
+
+                    <!-- Completion Rewards -->
+                    <div>
+                        <h5 style="margin-bottom: 15px; color: #4CAF50;">
+                            <i class="fas fa-check-circle"></i> Completion Rewards
+                        </h5>
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 15px;">
+                            Rewards given when player completes all tutorial steps.
+                        </p>
+
+                        <div class="form-group">
+                            <label for="completion_reward_xp">
+                                <strong>XP Reward</strong>
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="completion_reward_xp"
+                                name="completion_reward_xp"
+                                value="<?= $completionRewardXP ?>"
+                                min="0"
+                                required
+                            >
+                            <small class="form-text">Experience points for completion</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="completion_reward_pi">
+                                <strong>PI Reward</strong>
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="completion_reward_pi"
+                                name="completion_reward_pi"
+                                value="<?= $completionRewardPI ?>"
+                                min="0"
+                                required
+                            >
+                            <small class="form-text">Investment points for completion</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                    <button type="submit" name="update_rewards" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Reward Settings
+                    </button>
+
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <small>
+                            <strong>Current Difference:</strong>
+                            Completion gives <strong><?= $completionRewardXP - $skipRewardXP ?> more XP</strong>
+                            and <strong><?= $completionRewardPI - $skipRewardPI ?> more PI</strong> than skipping.
+                        </small>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
         <!-- Global Settings Card -->
