@@ -114,7 +114,8 @@ class TutorialPlayer
             'energie' => 100,
             'avatar' => $defaultAvatar,
             'portrait' => $defaultPortrait,
-            'text' => 'Personnage de tutoriel'
+            'text' => 'Personnage de tutoriel',
+            'nextTurnTime' => time() + 86400  // Set to 24h in future to prevent NewTurn page
         ]);
 
         // IMPORTANT: Delete any stale JSON cache for this player ID
