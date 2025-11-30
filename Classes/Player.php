@@ -261,7 +261,14 @@ class Player implements ActorInterface {
         $this->turn = (object) array();
 
         while($row = $res->fetch_object()){
-            $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
+            // Some bonuses (pi, xp) are not in caracs, they're in data
+            $baseValue = 0;
+            if (isset($this->caracs->{$row->name})) {
+                $baseValue = $this->caracs->{$row->name};
+            } elseif (isset($this->data->{$row->name})) {
+                $baseValue = $this->data->{$row->name};
+            }
+            $this->turn->{$row->name} = $baseValue + $row->n;
         }
 
 
