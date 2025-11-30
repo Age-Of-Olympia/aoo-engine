@@ -16,6 +16,10 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install zip
 
+# Install Node.js 20.x
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
 # Utils
 RUN apt-get install -y \
     vim \
@@ -23,8 +27,6 @@ RUN apt-get install -y \
     rsync \
     make \
     python3 \
-    npm \
-    nodejs \
     default-mysql-client
 
 # Install chrome and chromedriver
@@ -45,6 +47,16 @@ RUN apt-get update -qq -y && \
     unzip -j chromedriver-linux64.zip chromedriver-linux64/chromedriver && \
     rm chromedriver-linux64.zip && \
     mv chromedriver /usr/local/bin/
+
+# Install Cypress dependencies for headless mode
+RUN apt-get install -y \
+    libgtk-3-0 \
+    libgbm1 \
+    libnotify4 \
+    libxss1 \
+    libxtst6 \
+    xauth \
+    xvfb
 
 # Install any extensions you need
 RUN docker-php-ext-configure gd --with-jpeg
