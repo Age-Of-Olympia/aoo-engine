@@ -1,0 +1,156 @@
+# Cypress Test Run Summary
+
+**Date:** 2025-11-30
+**Time:** 10:59:21
+**Test Duration:** 12 seconds
+**Results:** 6 passing / 7 failing
+
+---
+
+## 📁 Test Artifacts Location
+
+### Screenshots
+**Location:** `data_tests/cypress/screenshots/2025-11-30T10-59-21/tutorial-complete-workflow.cy.js/`
+
+**14 screenshots captured:**
+- ✅ `04_after_wait.png` (30K) - Game page after waiting
+- ✅ `05_no_tutorial_yet.png` (30K) - Game page, tutorial not started
+- ✅ `07_after_cancel.png` (30K) - After cancel attempt
+- ✅ `08_invisible_mode_check.png` (30K) - After invisibleMode check
+- ✅ `10_player_placement_verified.png` (30K) - Player placement check
+- ✅ `12_final_game_state.png` (19K) - Final game state
+- ✅ `scenario2_04_logged_out.png` (19K) - Logout confirmation
+- ❌ `Step 1 Register new player (failed).png` (72K) - Registration error
+- ❌ `Step 2 First login should show loading overlay (failed).png` (74K) - Login error
+- ❌ `Step 6 Verify skip rewards granted (failed).png` (75K) - No rewards
+- ❌ `Step 8 Verify player has race actions (failed).png` (72K) - No actions
+- ❌ `Scenario 2 - Register second test player (failed).png` (68K) - Registration error
+- ❌ `Scenario 2 - Login and let tutorial start (failed).png` (64K) - Login error
+- ❌ `Scenario 2 - Login again - should show modal (failed).png` (62K) - Login error
+
+### Video
+**Location:** `data_tests/cypress/videos/2025-11-30T10-59-21/tutorial-complete-workflow.cy.js.mp4`
+
+---
+
+## ✅ Tests Passing (6/13)
+
+1. ✅ Step 3: Wait for tutorial to initialize
+2. ✅ Step 4: Cancel tutorial to trigger skip rewards flow
+3. ✅ Step 5: Verify invisibleMode removed
+4. ✅ Step 7: Verify player placement at correct race spawn
+5. ✅ Step 9: Final summary screenshot
+6. ✅ Scenario 2: Logout without completing tutorial
+
+---
+
+## ❌ Tests Failing (7/13)
+
+### Registration Failures (2 tests)
+1. ❌ **Scenario 1 - Step 1: Register new player**
+   - Error: "error name"
+   - Issue: Player name format invalid (contains numbers/special chars)
+
+2. ❌ **Scenario 2 - Register second test player**
+   - Error: "error name"
+   - Same issue as above
+
+### Login Failures (3 tests)
+3. ❌ **Scenario 1 - Step 2: First login should show loading overlay**
+   - Error: "Aucun personnage ne porte ce nom"
+   - Issue: Player doesn't exist (because registration failed)
+
+4. ❌ **Scenario 2 - Login and let tutorial start**
+   - Error: "Aucun personnage ne porte ce nom"
+   - Same as above
+
+5. ❌ **Scenario 2 - Login again - should show modal**
+   - Error: "Aucun personnage ne porte ce nom"
+   - Same as above
+
+### Reward/Action Failures (2 tests)
+6. ❌ **Scenario 1 - Step 6: Verify skip rewards granted**
+   - Expected: 50 XP, 50 PI
+   - Actual: 0 XP, 0 PI
+   - Issue: Tutorial never started, so no rewards granted
+
+7. ❌ **Scenario 1 - Step 8: Verify player has race actions**
+   - Expected: >= 5 actions
+   - Actual: 0 actions
+   - Issue: Tutorial never started, so no actions added
+
+---
+
+## 🔍 Root Causes
+
+### Primary Issue: Player Name Validation
+The generated player names (e.g., `Hscyp123456`) fail `Str::check_name()` validation in `register.php`.
+
+**Fix Needed:** Use simpler names without numbers (e.g., "Hscypone", "Hscyptwo")
+
+### Secondary Issue: Tutorial Not Auto-Starting
+Even when registration/login work, the tutorial doesn't auto-start for brand new players.
+
+**Possible Causes:**
+1. Feature flag check failing
+2. Auto-start logic not triggering
+3. JavaScript not executing
+
+**Evidence:** Screenshots show normal game page instead of loading overlay
+
+---
+
+## 📊 Test Coverage
+
+### What We're Testing
+- ✅ Player registration flow
+- ✅ Login with session management
+- ✅ Tutorial auto-start detection
+- ✅ invisibleMode removal
+- ✅ Player placement verification
+- ✅ Skip rewards grant
+- ✅ Race actions grant
+- ✅ Modal display for returning players
+
+### What Works
+- Cypress test infrastructure
+- Screenshot capture with game content
+- Video recording
+- API requests (login.php)
+- Database queries
+- Session management
+
+---
+
+## 🎯 Next Steps
+
+1. **Fix player name generation** - Use alphabetic names only
+2. **Investigate tutorial auto-start** - Check index.php logic
+3. **Verify feature flags** - Ensure tutorial enabled for test players
+4. **Re-run tests** - With fixed names
+
+---
+
+## 📝 Files Modified
+
+1. `cypress.config.js` - Added timestamped folders
+2. `cypress/support/commands.js` - Fixed login command
+3. `cypress/e2e/tutorial-complete-workflow.cy.js` - Updated player names
+4. `Dockerfile` - Added Node.js 20 + Cypress dependencies
+
+---
+
+## 💡 Lessons Learned
+
+1. **Timestamped folders are essential** - Each test run needs its own folder
+2. **Name validation is strict** - Player names must pass `Str::check_name()`
+3. **Login uses cy.request()** - Not form submission, preserves cookies
+4. **Screenshots show actual content** - Not just blank screens!
+5. **Tutorial auto-start needs investigation** - Feature flags work, but auto-start doesn't trigger
+
+---
+
+**Generated by:** Claude Code
+**Test Framework:** Cypress 15.7.0
+**Browser:** Electron 138 (headless)
+**Node Version:** v20.19.6
