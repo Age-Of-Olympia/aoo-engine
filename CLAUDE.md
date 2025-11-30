@@ -395,6 +395,31 @@ Check these files when looking for JS/CSS includes:
 - Connection config: `config/db_constants.php` (must be created from `.exemple` file)
 - Use PHPMyAdmin at `http://localhost:8081` for database inspection
 
+### UTF-8 Encoding with MySQL
+
+**CRITICAL**: When updating database records with UTF-8 content (French accents, special characters), always use the `--default-character-set=utf8mb4` flag to prevent encoding corruption.
+
+```bash
+# ❌ WRONG - Will corrupt UTF-8 characters
+mysql -h mariadb-aoo4 -u root -ppasswordRoot database_name -e "UPDATE table SET text = 'déplacer';"
+# Result: "dÃ©placer" (corrupted)
+
+# ✅ CORRECT - Preserves UTF-8 encoding
+mysql -h mariadb-aoo4 -u root -ppasswordRoot database_name --default-character-set=utf8mb4 -e "UPDATE table SET text = 'déplacer';"
+# Result: "déplacer" (correct)
+```
+
+**Why this matters**:
+- Without the charset flag, MySQL client assumes latin1 encoding
+- French text gets double-encoded: UTF-8 → latin1 → UTF-8
+- Displays as "Ã©" instead of "é", "Ã " instead of "à", etc.
+- Affects all user-facing text (tutorial steps, descriptions, error messages)
+
+**Best practices**:
+- Always add `--default-character-set=utf8mb4` to all MySQL commands
+- Test the output with `SELECT` after `UPDATE` to verify encoding
+- Use PHPMyAdmin for manual edits (handles encoding automatically)
+
 ## Configuration Files
 
 ### Required Setup Files
