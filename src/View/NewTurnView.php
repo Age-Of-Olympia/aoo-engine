@@ -272,6 +272,35 @@ class NewTurnView
                     $player->refresh_caracs();
                     $player->refresh_invent(); // for Ae
 
+                    // Check if tutorial should auto-start (for brand new players)
+                    // This must be done BEFORE exit() since NewTurn page blocks normal flow
+                    // Only redirect if NOT already in tutorial mode (prevents loop)
+                    if (isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial'] && !isset($_SESSION['in_tutorial'])) {
+                        echo '<script>
+                        console.log("[NewTurn] Auto-starting tutorial after new turn...");
+                        $(document).ready(function() {
+                            // Wait for tutorial scripts to load
+                            var checkInterval = setInterval(function() {
+                                if (typeof window.initTutorial === "function") {
+                                    clearInterval(checkInterval);
+                                    console.log("[NewTurn] Tutorial scripts loaded, redirecting...");
+                                    // Redirect to index.php with tutorial=start parameter
+                                    window.location.href = "index.php?tutorial=start";
+                                }
+                            }, 200);
+
+                            // Timeout after 5 seconds
+                            setTimeout(function() {
+                                clearInterval(checkInterval);
+                                if (typeof window.initTutorial !== "function") {
+                                    console.error("[NewTurn] Tutorial scripts failed to load");
+                                    // Just redirect to index anyway
+                                    window.location.href = "index.php";
+                                }
+                            }, 5000);
+                        });
+                        </script>';
+                    }
 
                     exit();
                 }
