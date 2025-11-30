@@ -16,7 +16,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
         $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
-        $bonusTraitDamagesParameters = $this->getParameters()['bonusDamagesTrait'];
+        $bonusTraitDamagesParameters = $this->getParameters()['bonusDamagesTrait'] ?? 0;
         $bonusTraitDamages = (is_array($bonusTraitDamagesParameters) ? floor($actor->caracs->{$bonusTraitDamagesParameters[0]}/$bonusTraitDamagesParameters[1]) : $bonusTraitDamagesParameters) ?? 0;
         $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
         $othersDamages = 0;

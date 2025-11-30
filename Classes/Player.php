@@ -893,19 +893,6 @@ class Player implements ActorInterface {
         $this->refresh_data();
     }
 
-    public function put_visible($value){
-
-
-        $sql = 'UPDATE players SET visible = ? WHERE id = ?';
-
-        $db = new Db();
-
-        $db->exe($sql, array($value, $this->id));
-
-        $this->refresh_data();
-    }
-
-
     public function put_upgrade($upgradeName, $cost){
 
         $values = array(

@@ -10,6 +10,18 @@ use Classes\Player;
 #[ORM\Entity]
 class HealAction extends BuffAction
 {
+    public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
+    {
+        if ($success) {
+            $actorXp = 3;
+        } else {
+            $actorXp = 0;
+        }
+        $targetXp = 0;
+        $xpResultsArray["actor"] = $actorXp;
+        $xpResultsArray["target"] = $targetXp;
+        return $xpResultsArray;
+    }
 
     public function getLogMessages(Player $actor, Player $target): array
     {

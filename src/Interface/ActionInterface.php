@@ -19,7 +19,7 @@ interface ActionInterface
     public function getIcon(): string;
     public function getDisplayName(): string;
     public function getConditions(): Collection;
-    public function getNiveau(): int;
+    public function getLevel(): int;
     public function initAutomaticOutcomeInstructions(): self;
     public function addCondition(ActionCondition $condition): self;
     public function removeCondition(ActionCondition $condition): self;

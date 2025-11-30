@@ -194,7 +194,7 @@ class NewTurnView
                 }
                 
                 // Retire les effets de camouflage
-                $player->playerService->playerResetVisible();
+                $player->playerService->playerUpdateVisible(NULL);
 
 
                     // end effects

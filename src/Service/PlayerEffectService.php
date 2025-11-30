@@ -76,9 +76,15 @@ class PlayerEffectService
         if ($existingEffect) {
             if ($stackable) {
                 $existingEffect->setValue($existingEffect->getValue() + $value);
+                // Update l'endtime dans le cas particulier de l'effet "furtif"
+                if($name == "furtif"){
+                    $existingEffect->setEndTime($endTime);
+                }
             } 
             else{
-                $existingEffect->setValue($value);
+                if($existingEffect->getValue() < $value){
+                    $existingEffect->setValue($value);
+                }
                 $existingEffect->setEndTime($endTime);
             }
 

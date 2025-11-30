@@ -769,7 +769,7 @@ class ViewService {
         // Dessine chaque joueur
         foreach ($players as $player) {
             // Ignore si les coordonnées sont invalides
-            if (!isset($player['x']) || !isset($player['y']) || $player->visible == "furtif") {
+            if (!isset($player['x']) || !isset($player['y']) || $player['visible'] == "invisible") {
                 continue;
             }
 
@@ -781,11 +781,8 @@ class ViewService {
             // La couleur est noire par défaut si le personnage est à plus de 15 cases du joueur
             // On n'affiche pas la case si le joueur est tagué comme invisible
             $selectedRace = $player['race'];
-            if(!is_null($player->visible)){
-                if($player->visible == 'invisible'){
-                    continue;
-                }
-                $selectedRace = $player->visible;
+            if(!is_null($player['visible'])){
+                $selectedRace = $player['visible'];
             }
 
             $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > 15) ? $raceColors['default'] : ($raceColors[$selectedRace] ?? $raceColors['default']);

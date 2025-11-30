@@ -32,7 +32,7 @@ class PlayerOutcomeInstruction extends OutcomeInstruction
                         $outcomeSuccessMessages[1] = '1d3 = '. $pf;
                     }    
                     else if ($carac == "visible") {
-                        $actor->put_visible($value);
+                        $actor->playerService->playerUpdateVisible($value);
                         $outcomeSuccessMessages[0] = 'Vous agissez avec furtivité...';
                     } else {
                         $bonus = array($carac=>$value);

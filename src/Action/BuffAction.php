@@ -13,7 +13,7 @@ class BuffAction extends Action
     public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
     {
         if ($success) {
-            $actorXp = 3;
+            $actorXp = 2;
         } else {
             $actorXp = 0;
         }

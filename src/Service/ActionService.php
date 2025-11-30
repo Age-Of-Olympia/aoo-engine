@@ -94,9 +94,9 @@ class ActionService
 
     public function getPrice($name) : int
     {
-        $niveau = $this->getActionByName($name)->getNiveau();
+        $level = $this->getActionByName($name)->getLevel();
 
-        switch ($niveau) {
+        switch ($level) {
             case 1:
                 return 50;
             case 2:

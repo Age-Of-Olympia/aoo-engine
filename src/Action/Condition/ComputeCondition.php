@@ -47,13 +47,13 @@ class ComputeCondition extends BaseCondition
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                $this->actorRollBonus += $actor->playerPassiveService->getComputedValueByPlayerIdByName($actor->id,$actorPassive->getName());
+                $this->actorRollBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                $this->targetRollBonus += $target->playerPassiveService->getComputedValueByPlayerIdByName($target->id,$targetPassive->getName());
+                $this->targetRollBonus += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId());
             }
         }
 
@@ -65,6 +65,10 @@ class ComputeCondition extends BaseCondition
         $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
 
         $result = $this->computeAttack($actor, $target, $this->actorRollBonus, $this->targetRollBonus);
+
+        if (!$result->isSuccess()) {
+            $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
+        }
 
         return $result;
     }
@@ -152,15 +156,15 @@ class ComputeCondition extends BaseCondition
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
         $tooltipOtherTxt = 
-            (!empty($actorEffetDexterite) || !empty($targetEffetVulnerabilite)
+            (!empty($targetEffetProtection) || !empty($targetEffetVulnerabilite)
             ? 'Effets :' .
             (!empty($targetEffetProtection) ? ' ' . $effetProtection : '') .
             (!empty($targetEffetVulnerabilite) ? ' - ' . $effetVulnerabilite : '') . ' '
             : ''
             ) .
             (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
-        $targetOtherTxt = ($bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : $totalOther) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
+        $targetOtherTxt = ($bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : '';
+        $targetTxt = 'Test : ' . $tooltipOtherTxt . 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
 
         return array($targetRoll, $targetTotal, $targetTxt);
     }

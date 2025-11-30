@@ -25,12 +25,12 @@ CREATE TABLE action_passives (
     carac VARCHAR(255),
     value DECIMAL(3,2),
     conditions LONGTEXT,
-    niveau INT NOT NULL,
+    level INT NOT NULL,
     race VARCHAR(255)
 );
 
 ALTER TABLE actions 
-ADD COLUMN niveau INT NOT NULL DEFAULT 1,
+ADD COLUMN level INT NOT NULL DEFAULT 1,
 ADD COLUMN race VARCHAR(255);
 
 ALTER TABLE players 

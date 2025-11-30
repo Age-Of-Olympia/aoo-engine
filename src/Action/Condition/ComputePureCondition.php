@@ -38,13 +38,13 @@ class ComputePureCondition extends BaseCondition
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                $this->actorRollBonus += $actor->playerPassiveService->getComputedValueByPlayerIdByName($actor->id,$actorPassive->getName());
+                $this->actorRollBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                $this->targetRollBonus += $target->playerPassiveService->getComputedValueByPlayerIdByName($target->id,$targetPassive->getName());
+                $this->targetRollBonus += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName());
             }
         }
 

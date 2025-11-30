@@ -20,7 +20,7 @@ class MeleeComputeCondition extends ComputeCondition
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
         $tooltipOtherTxt = 
-            (!empty($actorEffetDexterite) || !empty($targetEffetVulnerabilite)
+            (!empty($targetEffetProtection) || !empty($targetEffetVulnerabilite)
             ? 'Effets :' .
             (!empty($targetEffetProtection) ? ' ' . $effetProtection : '') .
             (!empty($targetEffetVulnerabilite) ? ' - ' . $effetVulnerabilite : '') . ' '
@@ -28,7 +28,7 @@ class MeleeComputeCondition extends ComputeCondition
             ) .
             (($targetEsq != 0) ? 'Esquive : ' . ($targetEsq < 0 ? ' - ' . abs($targetEsq) : $targetEsq) . ' ' : '') .
             (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
-        $targetOtherTxt = ($targetEsq != 0 || $bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : $totalOther) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : '';
+        $targetOtherTxt = ($targetEsq != 0 || $bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : '';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
 
         return array($targetRoll, $targetTotal, $targetTxt);

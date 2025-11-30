@@ -31,7 +31,7 @@ class MalusOutcomeInstruction extends OutcomeInstruction
             $actor->put_malus($malusTot);
         }
 
-        $malusTotalTxt = ($malusText) ? $malusText . ' = ' . $malusTot : $malus;
+        $malusTotalTxt = isset($malusText) ? $malusText . ' = ' . $malusTot : $malus;
         $outcomeMalusMessages = array();
         $outcomeMalusMessages[0] = 'Votre action inflige '. $malusTotalTxt .' malus à ' . $target->data->name . '.';
 

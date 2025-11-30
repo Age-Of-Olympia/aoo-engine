@@ -113,7 +113,6 @@ class RequiresTraitValueCondition extends BaseCondition
                 $actor->putBonus(["mvt" => -$mvtCost]);
                 $text1 = "Vous avez dépensé " . $mvtCost . " Mvt.";
                 array_push($result, $text1);
-                $actor->playerEffectService->addEffectByPlayerId($actor->id, "furtif", time() + TWO_DAYS, $furtifValue, false);
                 break;
             }
             if ($key == "remaining") {

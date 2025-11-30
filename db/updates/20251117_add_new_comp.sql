@@ -1,4 +1,4 @@
-INSERT INTO actions (name, icon, type, display_name, text, niveau, race)
+INSERT INTO actions (name, icon, type, display_name, text, level, race)
 VALUES 
 (
     'epuisement','ra-crossed-axes','technique','Épuisement',
@@ -41,7 +41,7 @@ VALUES
      1, null
 ),
 (
-    'tir_precis','ra-crossbow','technique','Tire précis',
+    'tir_precis','ra-crossbow','technique','Tir précis',
     'Attaque à distance plus précise au détriment des dégâts.',
      1, null
 ),
@@ -86,12 +86,12 @@ VALUES
      1, null
 ),
 (
-    'coup_precis','ra-fairy-wand','spell','Coup précis',
+    'coup_precis','ra-fairy-wand','buff','Coup précis',
     'Bénédiction qui augmente la précision de la cible.',
      1, null
 ),
 (
-    'peau_de_granit','ra-fairy-wand','spell','Peau de granit',
+    'peau_de_granit','ra-fairy-wand','buff','Peau de granit',
     'Bénédiction qui augmente la défense de la cible.',
      1, null
 ),
@@ -106,7 +106,7 @@ VALUES
      1, null
 ),
 (
-    'restauration_mineure','ra-fairy-wand','spell','Restauration mineure',
+    'restauration_mineure','ra-fairy-wand','buff','Restauration mineure',
     'Bénédiction qui rétablit de la vigueur à la cible.',
      1, null
 ),
@@ -116,37 +116,37 @@ VALUES
      2, null
 ),
 (
-    'exploration','ra-aware','technique','Exploration',
+    'exploration','ra-aware','buff','Exploration',
     'Explorer les environs.',
      1, null
 ),
 (
-    'discretion','ra-player-dodge','technique','Discrétion',
+    'discretion','ra-player-dodge','buff','Discrétion',
     'Disparaît temporairement de la carte du monde.',
      3, null
 ),
 (
-    'camouflage-olympien','ra-player-dodge','technique','Camouflage (Olympien)',
+    'camouflage-olympien','ra-player-dodge','buff','Camouflage (Olympien)',
     'Se fait passer pour un Olympien sur la carte du monde.',
      4, null
 ),
 (
-    'camouflage-nain','ra-player-dodge','technique','Camouflage (Nain)',
+    'camouflage-nain','ra-player-dodge','buff','Camouflage (Nain)',
     'Se fait passer pour un Nain sur la carte du monde.',
      4, null
 ),
 (
-    'camouflage-elfe','ra-player-dodge','technique','Camouflage (Elfe)',
+    'camouflage-elfe','ra-player-dodge','buff','Camouflage (Elfe)',
     'Se fait passer pour un Elfe sur la carte du monde.',
      4, null
 ),
 (
-    'camouflage-geant','ra-player-dodge','technique','Camouflage (Géant)',
+    'camouflage-geant','ra-player-dodge','buff','Camouflage (Géant)',
     'Se fait passer pour un Géant sur la carte du monde.',
      4, null
 ),
 (
-    'camouflage-hs','ra-player-dodge','technique','Camouflage (HS)',
+    'camouflage-hs','ra-player-dodge','buff','Camouflage (HS)',
     'Se fait passer pour un Homme Sauvage sur la carte du monde.',
      4, null
 );
@@ -313,7 +313,7 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":8}',52,5,1
 ),
 (
-    'MeleePureCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',52,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',52,7,0
 ),
 (
     'RequiresDistance','{"min":2}',53,0,1
@@ -367,7 +367,7 @@ VALUES
     'RequiresDistance','{"min":2}',57,0,1
 ),
 (
-    'RequiresWeaponType','{"type": ["tir"]}',57,1,1
+    'RequiresWeaponType','{"type": ["tir","jet"]}',57,1,1
 ),
 (
     'RequiresTraitValue','{"a":1, "pm":4}',57,5,1
@@ -409,7 +409,7 @@ VALUES
     'RequiresDistance','{"min":2}',61,0,1
 ),
 (
-    'RequiresTraitValue','{"a":1, "pm":6}',61,50,1
+    'RequiresTraitValue','{"a":1, "pm":6}',61,5,1
 ),
 (
     'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm", "actorRollBonus" : -6}',61,7,0
@@ -442,10 +442,16 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":4}',65,5,1
 ),
 (
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',65,7,0
+),
+(
     'RequiresDistance','{"min":2}',66,0,1
 ),
 (
     'RequiresTraitValue','{"a":1, "pm":6}',66,5,1
+),
+(
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',66,7,0
 ),
 (
     'RequiresDistance','{"max":1}',67,0,1
@@ -520,6 +526,9 @@ VALUES
     'applystatus','{ "ralentissement": true, "stackable": false, "value": [2,3,4], "player": "target", "duration": 1}',10,58
 ),
 (
+    'malus','{}',9,59
+),
+(
     'applystatus','{ "maladresse": true, "stackable": false, "value": ["rollDivisor",2], "player": "target", "duration": 86400}',10,59
 ),
 (
@@ -541,6 +550,9 @@ VALUES
     'applystatus','{ "ralentissement": true, "stackable": false, "value": [1,2], "player": "target", "duration": 1}',10,64
 ),
 (
+    'malus','{}',9,65
+),
+(
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": ["rollDivisor",3], "player": "target", "duration": 86400}',10,65
 ),
 (
@@ -556,6 +568,9 @@ VALUES
     'lifeloss','{ "actorDamagesTrait": "m", "targetDamagesTrait": "m", "bonusDamagesTrait": 5}',10,69
 ),
 (
+    'malus','{}',9,70
+),
+(
     'applystatus','{ "aveuglement": true, "stackable": false, "value": 1, "player": "target", "duration": 86400}',10,70
 ),
 (
@@ -565,7 +580,13 @@ VALUES
     'applystatus','{ "protection": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,72
 ),
 (
+    'malus','{}',9,73
+),
+(
     'applystatus','{ "maladresse": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,73
+),
+(
+    'malus','{}',9,74
 ),
 (
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,74

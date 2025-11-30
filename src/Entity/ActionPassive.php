@@ -31,7 +31,7 @@ class ActionPassive
     private ?array $conditions = null;
 
     #[ORM\Column(type: "integer")]
-    private int $niveau;
+    private int $level;
 
     #[ORM\Column(type: "string", length: 255)]
     private string $race;
@@ -108,14 +108,14 @@ class ActionPassive
         return $this;
     }
 
-    public function getNiveau(): int
+    public function getLevel(): int
     {
-        return $this->niveau;
+        return $this->level;
     }
 
-    public function setNiveau(int $niveau)
+    public function setLevel(int $level)
     {
-        $this->niveau = $niveau;
+        $this->level = $level;
     }
 
     public function getRace(): string

@@ -32,7 +32,7 @@ abstract class Action implements ActionInterface
     protected string $text;
 
     #[ORM\Column(type: "integer", length: 50)]
-    protected int $niveau;
+    protected int $level;
 
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $race = null;
@@ -139,14 +139,14 @@ abstract class Action implements ActionInterface
         $this->text = $text;
     }
 
-    public function getNiveau(): int
+    public function getLevel(): int
     {
-        return $this->niveau;
+        return $this->level;
     }
 
-    public function setNiveau(int $niveau): void
+    public function setLevel(int $level): void
     {
-        $this->niveau = $niveau;
+        $this->level = $level;
     }
 
     /**

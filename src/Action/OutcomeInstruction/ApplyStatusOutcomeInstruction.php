@@ -25,19 +25,21 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
             $timeMessage = 'jusqu\'au prochain tour';
         }
         $player = $params['player'] ?? 'both';
-        $valueParam = $params['value'] ?? null;
-        $value = (is_array( $valueParam) ? 
-                    ( 
-                        $valueParam[0] == "rollDivisor" ? 
-                        max(0,floor((array_sum($rollsArray[0]) - array_sum($rollsArray[1]))/ $valueParam[1])) : 
-                        $valueParam[array_rand( $valueParam)]
-                    ) : 
-                    $valueParam) ?? 1; 
-        if(is_array($value)){
-            if($value[0] === 'remaining'){
-                $value = $actor->getRemaining($value[1]);
-            }
+        $valueParam = $params['value'] ?? 1;
+        if(is_array( $valueParam)){
+            switch ($valueParam[0]) {
+                case 'rollDivisor':
+                    $value = max(0,floor((array_sum($rollsArray[0]) - array_sum($rollsArray[1]))/ $valueParam[1]));
+                case 'remaining':
+                    $value = $actor->getRemaining($valueParam[1]);
+                default:
+                    $value = $valueParam[array_rand( $valueParam)];
+            } 
+        }    
+        else{
+            $value = $valueParam;
         }
+
         $stackable = $params['stackable'] ?? false;
         $outcomeSuccessMessages = array();
         switch ($player) {
@@ -57,8 +59,8 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
                 $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
                 break;
             default:
-            $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $actor);
-            $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+                $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $actor);
+                $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
 
             if ($target->data->name !== $actor->data->name) {
                 $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $target);

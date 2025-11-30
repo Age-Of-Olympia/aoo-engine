@@ -102,7 +102,7 @@ echo '
                         $endTime = '';
                     }
 
-                    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#'. $effect->getName() .'"><span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span><span style="font-size: 88%;">'. $endTime .'</span></a><br />';
+                    echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#'. $effect->getName() .'"><span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') '.$endTime .'</span></a><br />';
                 }
 
             echo '</div>';
