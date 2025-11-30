@@ -274,7 +274,15 @@ ob_start();
                         <div class="form-group">
                             <label for="text">Step Text *</label>
                             <textarea class="form-control" id="text" name="text" rows="5" required><?= $isEdit ? htmlspecialchars($step['text']) : '' ?></textarea>
-                            <small class="form-text text-muted">Supports HTML. Use <strong>&lt;strong&gt;</strong> for emphasis.</small>
+                            <small class="form-text text-muted">
+                                Supports HTML. Use <strong>&lt;strong&gt;</strong> for emphasis.
+                                <br>
+                                <strong>Dynamic placeholders:</strong>
+                                <code>{max_mvt}</code> (race max movement),
+                                <code>{max_pa}</code> (max action points),
+                                <code>{player_name}</code>,
+                                <code>{race}</code>
+                            </small>
                         </div>
 
                         <div class="form-check">
@@ -532,9 +540,16 @@ ob_start();
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="mvt_required">Movement Points Required</label>
+                                    <label for="mvt_required">
+                                        Movement Points Required
+                                        <i class="fas fa-info-circle text-info" title="Use -1 for race-adaptive max movement"></i>
+                                    </label>
                                     <input type="number" class="form-control" id="mvt_required" name="mvt_required"
                                            value="<?= $isEdit && $stepPrerequisites && $stepPrerequisites['mvt_required'] !== null ? $stepPrerequisites['mvt_required'] : '' ?>">
+                                    <small class="form-text text-muted">
+                                        Fixed number (e.g., 1, 2, 3) or <strong>-1</strong> for race max
+                                        <span class="text-info">(Nain: 4, Elfe: 5, HS: 6)</span>
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -542,8 +557,20 @@ ob_start();
                                     <label for="pa_required">Action Points Required</label>
                                     <input type="number" class="form-control" id="pa_required" name="pa_required"
                                            value="<?= $isEdit && $stepPrerequisites && $stepPrerequisites['pa_required'] !== null ? $stepPrerequisites['pa_required'] : '' ?>">
+                                    <small class="form-text text-muted">Number of action points (usually 1 or 2)</small>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="alert alert-info mb-3">
+                            <strong><i class="fas fa-magic"></i> Race-Adaptive Movement:</strong>
+                            <p class="mb-1">Use <code>-1</code> for Movement Points to automatically adapt to player's race:</p>
+                            <ul class="mb-0 pl-3">
+                                <li><strong>Nain:</strong> 4 movements</li>
+                                <li><strong>Elfe / Olympien / Géant:</strong> 5 movements</li>
+                                <li><strong>HS (Homme-Sauvage):</strong> 6 movements</li>
+                            </ul>
+                            <p class="mb-0 mt-2"><small>Perfect for "deplete all movements" steps or teaching movement limits!</small></p>
                         </div>
 
                         <div class="form-check mb-3">
@@ -728,6 +755,12 @@ ob_start();
 
                         <h5>Next Step Preparation</h5>
                         <p class="text-muted">Actions to run after step completion (for next step)</p>
+
+                        <div class="alert alert-info mb-3">
+                            <strong><i class="fas fa-lightbulb"></i> Tip:</strong>
+                            For <code>restore_mvt</code>, you can use <strong>-1</strong> to restore race max movements.
+                            <small class="d-block mt-1">Example: <code>restore_mvt: -1</code> gives Nain 4, Elfe 5, HS 6 movements.</small>
+                        </div>
 
                         <div id="nextPrepList">
                             <?php foreach ($nextPreparation as $index => $prep): ?>
