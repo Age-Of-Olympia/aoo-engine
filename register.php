@@ -104,12 +104,11 @@ if(!empty($_POST['race'])){
         $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);
 
         if ($useNewTutorial) {
-            // New tutorial system: remove old tutorial action and spawn on olympia
+            // New tutorial system: remove old tutorial action and spawn in waiting room
             $player->end_action('tuto/attaquer');
 
-            // Spawn on faction's respawn plan (olympia) instead of gaia
-            $factionJson = json()->decode('factions', $player->data->faction);
-            $spawnPlan = $factionJson->respawnPlan ?? "olympia";
+            // Spawn on waiting_room plan until player makes tutorial decision
+            $spawnPlan = "waiting_room";
 
             $goCoords = (object) array(
                 'x' => 0,
@@ -120,7 +119,7 @@ if(!empty($_POST['race'])){
 
             $coordsId = View::get_free_coords_id_arround($goCoords);
 
-            // Update player's coordinates to olympia
+            // Update player's coordinates to waiting_room
             $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
             $db->exe($sql, array($coordsId, $player->id));
 
@@ -129,6 +128,8 @@ if(!empty($_POST['race'])){
 
             // Enable invisibleMode so new players are invisible until they complete tutorial
             $player->add_option('invisibleMode');
+
+            error_log("[Register] New player {$player->id} spawned on waiting_room plan with invisibleMode");
         }
 
         $plainMail = strtolower($_POST['mail']);

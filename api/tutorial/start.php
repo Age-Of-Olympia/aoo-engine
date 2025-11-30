@@ -76,6 +76,9 @@ try {
         // Store tutorial session in PHP session
         TutorialHelper::startTutorialMode($result['session_id'], $result['tutorial_player_id']);
 
+        // Clear auto-start flag now that tutorial has started
+        unset($_SESSION['auto_start_tutorial']);
+
         // Force session write to ensure it persists
         session_write_close();
         session_start(); // Restart for any subsequent operations
