@@ -87,15 +87,39 @@ $player->get_data(false);
 
 // Check if player is brand new (should auto-start tutorial instead of showing modal)
 $isBrandNew = false;
+error_log("[index.php] Checking if player {$player->id} is brand new for tutorial");
+error_log("[index.php] Tutorial enabled: " . (TutorialFeatureFlag::isEnabledForPlayer($player->id) ? 'YES' : 'NO'));
+error_log("[index.php] In tutorial: " . (TutorialHelper::isInTutorial() ? 'YES' : 'NO'));
+
+// Calculate total tutorial XP/PI dynamically from database
+// Note: XP and PI are the same - when you earn XP, you also earn PI
+// XP is permanent total, PI can be spent on character improvements
+$totalTutorialXP = 0;
+$totalTutorialPI = 0;
+if (TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
+    $db = new Db();
+    /* Sum all XP rewards from active tutorial steps */
+    $sql = "SELECT SUM(xp_reward) as total_xp FROM tutorial_steps WHERE version = '1.0.0' AND is_active = 1 AND xp_reward IS NOT NULL";
+    $result = $db->exe($sql);
+    if ($result && $row = $result->fetch_assoc()) {
+        $totalTutorialXP = (int)$row['total_xp'];
+        $totalTutorialPI = $totalTutorialXP; /* PI = XP (but PI can be spent) */
+    }
+}
+
 if (TutorialFeatureFlag::isEnabledForPlayer($player->id) && !TutorialHelper::isInTutorial()) {
     $db = new Db();
     $sessionManager = new TutorialSessionManager($db);
     $hasCompleted = $sessionManager->hasCompletedBefore($player->id);
     $activeSession = $sessionManager->getActiveSession($player->id);
 
+    error_log("[index.php] hasCompleted: " . ($hasCompleted ? 'YES' : 'NO'));
+    error_log("[index.php] activeSession: " . ($activeSession ? 'EXISTS' : 'NULL'));
+
     if (!$hasCompleted && $activeSession === null) {
         $isBrandNew = true;
         $_SESSION['auto_start_tutorial'] = true;
+        error_log("[index.php] Player {$player->id} is BRAND NEW - setting auto_start_tutorial=true");
 
         // Show loading overlay for brand new players
         echo '<div id="tutorial-loading-overlay" style="
@@ -135,11 +159,34 @@ if (TutorialFeatureFlag::isEnabledForPlayer($player->id) && !TutorialHelper::isI
 
 // Check if player is invisible and not admin - they need to complete or skip tutorial
 // BUT don't show modal for brand new players (they'll auto-start tutorial)
+// OR if tutorial is being auto-started (from replay/resume)
 $isInvisible = $player->have_option('invisibleMode');
 $isAdmin = $player->have_option('isAdmin');
 $inTutorial = TutorialHelper::isInTutorial();
+$autoStarting = isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial'];
 
-if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew) {
+/* Extract reward values for use in modals and JS */
+$skipRewardXP = TUTORIAL_SKIP_REWARD['xp'];
+$skipRewardPI = TUTORIAL_SKIP_REWARD['pi'];
+$completionRewardXP = TUTORIAL_COMPLETION_REWARD['xp'];
+$completionRewardPI = TUTORIAL_COMPLETION_REWARD['pi'];
+
+/* Expose reward values and replay status to JavaScript for tutorial UI */
+/* IMPORTANT: Check main player (not tutorial player) to determine if this is a replay */
+$db = new Db();
+$sessionManager = new TutorialSessionManager($db);
+$mainPlayerId = $_SESSION['playerId']; /* Always use main player ID, not active player ID */
+$hasCompletedTutorialBefore = $sessionManager->hasCompletedBefore($mainPlayerId);
+
+echo '<script>
+    window.TUTORIAL_SKIP_REWARD_XP = ' . $skipRewardXP . ';
+    window.TUTORIAL_SKIP_REWARD_PI = ' . $skipRewardPI . ';
+    window.TUTORIAL_TOTAL_XP = ' . $totalTutorialXP . ';
+    window.TUTORIAL_TOTAL_PI = ' . $totalTutorialPI . ';
+    window.TUTORIAL_IS_REPLAY = ' . ($hasCompletedTutorialBefore ? 'true' : 'false') . ';
+</script>';
+
+if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting) {
     // Player is invisible (registered but didn't complete tutorial) - show modal
     echo '<div id="invisible-player-modal" style="
         position: fixed;
@@ -161,12 +208,24 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew) {
             text-align: center;
             color: #fff;
         ">
-            <h2>Tutoriel non terminé</h2>
-            <p>Tu dois compléter le tutoriel pour commencer l\'aventure.</p>
-            <p>Que souhaites-tu faire ?</p>
+            <h2>Bienvenue !</h2>
+            <p>Tu as commencé le tutoriel mais ne l\'as pas terminé.</p>
+            <div style="margin-top: 20px; margin-bottom: 20px;">
+                <p style="margin-bottom: 10px;"><strong>Que souhaites-tu faire ?</strong></p>
+                <div style="text-align: left; margin: 0 auto; display: inline-block; max-width: 400px;">
+                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(76, 175, 80, 0.2); border-radius: 5px;">
+                        <strong style="color: #4CAF50;">✓ Reprendre le tutoriel (recommandé)</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 14px;">Termine le tutoriel et gagne jusqu\'à <strong>' . $totalTutorialXP . ' XP/PI</strong></p>
+                    </div>
+                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(244, 67, 54, 0.2); border-radius: 5px;">
+                        <strong style="color: #f44336;">⊗ Passer le tutoriel</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 14px;">Commence le jeu immédiatement mais ne reçois que <strong>' . $skipRewardXP . ' XP/PI</strong> au lieu de ' . $totalTutorialXP . ' XP/PI</p>
+                    </div>
+                </div>
+            </div>
             <div style="margin-top: 20px;">
                 <button id="resume-tutorial-btn" style="
-                    padding: 10px 20px;
+                    padding: 12px 24px;
                     margin: 10px;
                     font-size: 16px;
                     cursor: pointer;
@@ -174,9 +233,10 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew) {
                     color: white;
                     border: none;
                     border-radius: 5px;
+                    font-weight: bold;
                 ">Reprendre le tutoriel</button>
                 <button id="skip-tutorial-btn" style="
-                    padding: 10px 20px;
+                    padding: 12px 24px;
                     margin: 10px;
                     font-size: 16px;
                     cursor: pointer;
@@ -195,9 +255,15 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew) {
             window.location.href = "index.php?replay_tutorial=1";
         });
 
-        // Skip tutorial button
+        /* Skip tutorial button */
         $("#skip-tutorial-btn").click(function() {
-            if (confirm("Es-tu sûr de vouloir passer le tutoriel ? Tu ne recevras pas les récompenses.")) {
+            var skipXP = <?php echo $skipRewardXP; ?>;
+            var totalXP = <?php echo $totalTutorialXP; ?>;
+            var message = "Es-tu sûr de vouloir passer le tutoriel ?\n\n" +
+                         "Tu recevras seulement " + skipXP + " XP/PI\n" +
+                         "au lieu de " + totalXP + " XP/PI du tutoriel complet.";
+
+            if (confirm(message)) {
                 $.post("api/tutorial/skip.php", {}, function(response) {
                     if (response.success) {
                         window.location.reload();
