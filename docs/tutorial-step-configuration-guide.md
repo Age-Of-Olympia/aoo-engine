@@ -298,7 +298,9 @@ The system uses smart defaults based on `step_type`:
 ```javascript
 prerequisites: {
   // Movement points required
-  mvt: 4,                    // Need at least 4 movements
+  mvt: 4,                    // Need at least 4 movements (fixed number)
+  mvt: -1,                   // SPECIAL: Use player's race max movement (race-adaptive)
+                             // -1 = 4 for Nain, 5 for Elfe, 6 for HS, etc.
 
   // Action points required
   actions: 2,                // Need at least 2 actions
@@ -313,19 +315,57 @@ prerequisites: {
 }
 ```
 
+### Race-Adaptive Movement (mvt: -1)
+
+**IMPORTANT**: Use `mvt: -1` instead of hardcoded numbers when you want the tutorial to adapt to different races.
+
+**Why use -1?**
+- Different races have different base movements (Nain: 4, Elfe: 5, HS: 6)
+- Using fixed numbers (e.g., `mvt: 4`) makes steps incorrect for non-Nain players
+- Using `-1` automatically calculates the player's race max movement
+
+**Example - Movement Depletion Step**:
+```javascript
+// ❌ BAD: Hardcoded to 4 (only correct for Nain)
+prerequisites: {
+  mvt: 4,
+  auto_restore: true
+}
+// Problem: Elfe player gets only 4 movements instead of their max 5
+
+// ✅ GOOD: Race-adaptive
+prerequisites: {
+  mvt: -1,              // Automatically uses race max
+  auto_restore: true
+}
+// Result: Nain gets 4, Elfe gets 5, HS gets 6
+```
+
+**When to use -1**:
+- ✅ Movement depletion steps ("use all your movements")
+- ✅ Steps that teach movement limits
+- ✅ Any step that references the player's max movement
+
+**When NOT to use -1**:
+- ❌ Steps that need a specific fixed amount (e.g., "move 2 times")
+- ❌ Steps where race differences don't matter
+
 ### Prepare Next Step
 
 After a step completes, you can prepare resources for the following step:
 
 ```javascript
 prepare_next_step: {
-  restore_mvt: 4,              // Give 4 movements
+  restore_mvt: 4,              // Give 4 movements (fixed)
+  restore_mvt: -1,             // OR: Give race max movements (race-adaptive)
   restore_actions: 2,          // Give 2 actions
   spawn_enemy: 'tutorial_dummy',   // Spawn enemy for next step
   spawn_item: 'baton_de_marche',   // Spawn item for next step
   remove_enemy: 'tutorial_dummy'   // Remove enemy after combat
 }
 ```
+
+**Note**: `restore_mvt` also supports `-1` for race-adaptive restoration. Use this when preparing movements for the next step.
 
 ---
 
@@ -459,7 +499,7 @@ If you don't provide `blocked_click_message`, the system uses:
 
     // === PREREQUISITES ===
     prerequisites: {
-      mvt: 1,
+      mvt: 1,                 // Fixed amount (or use -1 for race max)
       actions: 1,
       auto_restore: true,
       ensure_enemy: 'tutorial_dummy',
@@ -477,7 +517,7 @@ If you don't provide `blocked_click_message`, the system uses:
 
     // === PREPARE NEXT STEP (after completion) ===
     prepare_next_step: {
-      restore_mvt: 4,
+      restore_mvt: 4,         // Fixed amount (or use -1 for race max)
       restore_actions: 2,
       spawn_enemy: 'tutorial_dummy'
     }
@@ -487,6 +527,124 @@ If you don't provide `blocked_click_message`, the system uses:
   xp_reward: 10
 }
 ```
+
+---
+
+## Dynamic Placeholders
+
+**Version**: Added 2025-11-28
+
+### Overview
+
+Tutorial steps support **dynamic placeholders** that are replaced with actual values at runtime. This allows step text to adapt to different player races, stats, and context automatically.
+
+### Available Placeholders
+
+| Placeholder | Description | Example Value | Use Case |
+|------------|-------------|---------------|----------|
+| `{max_mvt}` | Player's maximum movement points (race-dependent) | `4` (Nain), `5` (Elfe), `6` (HS) | Movement tutorials |
+| `{max_pa}` | Player's maximum action points (race-dependent) | `2` (most races) | Action tutorials |
+| `{player_name}` | Tutorial player's name | `Apprenti_abc12345` | Personalized messages |
+| `{race}` | Player's race name (capitalized) | `Nain`, `Elfe`, `Olympien` | Race-specific tips |
+| `{race_lower}` | Player's race name (lowercase) | `nain`, `elfe`, `olympien` | Lowercase contexts |
+
+### Usage Examples
+
+#### Movement Step (Race-Adaptive)
+
+```javascript
+{
+  step_number: 7,
+  step_type: 'movement_limit',
+  title: 'Mouvements limités !',
+
+  config: {
+    text: '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. Chaque déplacement en consomme 1.',
+    // For Nain: "Vous avez 4 mouvements par tour"
+    // For Elfe: "Vous avez 5 mouvements par tour"
+    // For HS: "Vous avez 6 mouvements par tour"
+  }
+}
+```
+
+#### Action Step (Race-Adaptive)
+
+```javascript
+{
+  step_number: 10,
+  step_type: 'action',
+  title: 'Points d\'Action',
+
+  config: {
+    text: 'Vous disposez de {max_pa} points d\'action par tour. Utilisez-les pour effectuer des actions comme <strong>Fouiller</strong> ou <strong>Attaquer</strong>.',
+    // Most races: "Vous disposez de 2 points d'action par tour"
+  }
+}
+```
+
+#### Personalized Message
+
+```javascript
+{
+  step_number: 1,
+  step_type: 'welcome',
+  title: 'Bienvenue !',
+
+  config: {
+    text: 'Bienvenue {player_name} ! Vous êtes un {race}, prêt à découvrir les secrets d\'Olympia.',
+    // Example: "Bienvenue Apprenti_abc12345 ! Vous êtes un Nain, prêt à..."
+  }
+}
+```
+
+### Race Movement Values Reference
+
+For step designers, here are the base movement values per race:
+
+| Race | Movement (mvt) | Action (pa) |
+|------|----------------|-------------|
+| Nain (Dwarf) | 4 | 2 |
+| Elfe (Elf) | 5 | 2 |
+| Olympien | 5 | 2 |
+| Géant (Giant) | 5 | 2 |
+| HS (Homme-Sauvage) | 6 | 2 |
+
+### When to Use Placeholders
+
+✅ **DO use placeholders when**:
+- Mentioning specific numbers that vary by race (movement, action points)
+- Personalizing messages with player name or race
+- Creating race-adaptive tutorials
+
+❌ **DON'T use placeholders when**:
+- The value is always the same for all players (e.g., "18h" for DLA)
+- You're describing game mechanics generally (not specific to this player)
+
+### Adding New Placeholders
+
+To add a new placeholder (for developers):
+
+1. **Edit** `src/Tutorial/TutorialPlaceholderService.php`
+2. **Add a case** in the `getPlaceholderValue()` method:
+   ```php
+   'new_placeholder' => $this->getNewValue(),
+   ```
+3. **Add a getter method**:
+   ```php
+   private function getNewValue(): string {
+       // Your logic here
+       return 'value';
+   }
+   ```
+4. **Document it** in this guide (table above)
+5. **Update the class docblock** in `TutorialPlaceholderService.php`
+
+### Technical Details
+
+- **Processing**: Placeholders are replaced when steps are rendered via `TutorialManager::getCurrentStepForClient()`
+- **Caching**: Placeholder values are cached per request for performance
+- **Unknown placeholders**: If a placeholder is not recognized, it's left unchanged (e.g., `{unknown}` stays as `{unknown}`)
+- **Text fields processed**: `title`, `text`, `validation_hint`
 
 ---
 
