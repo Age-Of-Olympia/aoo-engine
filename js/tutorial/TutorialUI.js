@@ -63,7 +63,8 @@ class TutorialUI {
                     console.log('[TutorialUI] Reloading to tutorial map...');
                     // Set flag to auto-resume after reload
                     sessionStorage.setItem('tutorial_just_started', 'true');
-                    window.location.reload();
+                    // Reload to clean URL without query parameters to prevent loop
+                    window.location.href = 'index.php';
                     return true;
                 }
 
@@ -128,7 +129,14 @@ class TutorialUI {
             }
         } catch (error) {
             console.error('[TutorialUI] Resume error', error);
-            alert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
+
+            /* Don't show alert for authentication errors (401) - user is not logged in */
+            if (!error.message || !error.message.includes('401')) {
+                alert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
+            } else {
+                console.log('[TutorialUI] Not authenticated - silently failing resume');
+            }
+
             return false;
         }
     }
@@ -631,8 +639,8 @@ class TutorialUI {
 
             console.log('[TutorialUI] Click detected on:', target, 'classes:', target.className);
 
-            // Always allow clicks on tutorial UI elements
-            if ($(target).closest('#tutorial-controls, .tutorial-tooltip, #tutorial-next').length > 0 ||
+            // Always allow clicks on tutorial UI elements (including skip modal)
+            if ($(target).closest('#tutorial-controls, .tutorial-tooltip, #tutorial-next, #tutorial-skip-modal, .tutorial-modal-overlay').length > 0 ||
                 $(target).is('#tutorial-next')) {
                 console.log('[TutorialUI] ✅ Tutorial UI click allowed');
                 return; // Allow clicks on tutorial UI
@@ -1516,31 +1524,154 @@ class TutorialUI {
     }
 
     /**
-     * Skip/Cancel tutorial
+     * Skip/Cancel tutorial - shows modal with clear reward communication
      */
     async skip() {
-        if (confirm('Êtes-vous sûr de vouloir annuler le tutoriel? Votre progression sera perdue.')) {
+        console.log('[TutorialUI] Skip button clicked - showing modal');
+
+        /* Remove any existing modal first */
+        $('#tutorial-skip-modal').remove();
+
+        /* Get reward values and replay status from page constants (set by PHP) */
+        const skipXP = window.TUTORIAL_SKIP_REWARD_XP || 50;
+        const totalXP = window.TUTORIAL_TOTAL_XP || 240;
+        const isReplay = window.TUTORIAL_IS_REPLAY || false;
+
+        /* Show modal with different content for replay vs first time */
+        const $modal = isReplay ? $(`
+            <div id="tutorial-skip-modal" class="tutorial-modal-overlay">
+                <div class="tutorial-modal-content">
+                    <h2 style="margin-bottom: 10px;">Quitter le tutoriel ?</h2>
+                    <p style="margin-bottom: 20px;">Tu rejoues le tutoriel.</p>
+
+                    <div style="text-align: left; margin: 20px 0;">
+                        <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50;">
+                            <strong style="color: #4CAF50;">✓ Continuer le tutoriel</strong>
+                            <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                                Continue l'entraînement
+                            </p>
+                        </div>
+
+                        <div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+                            <strong style="color: #f44336;">⊗ Retour au jeu</strong>
+                            <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                                Quitte le tutoriel et retourne au jeu
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-modal-buttons">
+                        <button id="tutorial-skip-close" class="btn-tutorial-primary">
+                            <span class="btn-icon">↩</span>
+                            <span class="btn-text">Continuer le tutoriel</span>
+                        </button>
+                        <button id="tutorial-skip-cancel" class="btn-tutorial-secondary">
+                            <span class="btn-icon">⊗</span>
+                            <span class="btn-text">Retour au jeu</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `) : $(`
+            <div id="tutorial-skip-modal" class="tutorial-modal-overlay">
+                <div class="tutorial-modal-content">
+                    <h2 style="margin-bottom: 10px;">Quitter le tutoriel ?</h2>
+                    <p style="margin-bottom: 20px;">Tu n'as pas encore terminé le tutoriel.</p>
+
+                    <div style="text-align: left; margin: 20px 0;">
+                        <div style="background: rgba(76, 175, 80, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4CAF50;">
+                            <strong style="color: #4CAF50;">✓ Continuer le tutoriel (recommandé)</strong>
+                            <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                                Tu peux gagner jusqu'à <strong style="color: #4CAF50;">${totalXP} XP/PI</strong> en complétant toutes les étapes
+                            </p>
+                        </div>
+
+                        <div style="background: rgba(244, 67, 54, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #f44336;">
+                            <strong style="color: #f44336;">⊗ Passer le tutoriel</strong>
+                            <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                                Tu recevras seulement <strong style="color: #f44336;">${skipXP} XP/PI</strong> au lieu de ${totalXP} XP/PI
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="tutorial-modal-buttons">
+                        <button id="tutorial-skip-close" class="btn-tutorial-primary">
+                            <span class="btn-icon">↩</span>
+                            <span class="btn-text">Continuer le tutoriel</span>
+                        </button>
+                        <button id="tutorial-skip-cancel" class="btn-tutorial-secondary">
+                            <span class="btn-icon">⊗</span>
+                            <span class="btn-text">Passer (${skipXP} XP)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        $('body').append($modal);
+        $modal.fadeIn(300);
+
+        /* Cancel button - skip without completion, grant skip rewards */
+        $('#tutorial-skip-cancel').on('click', async () => {
+            console.log('[TutorialUI] User chose to skip tutorial');
+
+            /* Confirmation dialog - different message for replay vs first time */
+            const confirmMessage = isReplay
+                ? `Es-tu sûr de vouloir quitter le tutoriel ?\n\nTu retourneras au jeu normal.`
+                : `Es-tu sûr de vouloir passer le tutoriel ?\n\n` +
+                  `Tu recevras seulement ${skipXP} XP/PI\n` +
+                  `au lieu de ${totalXP} XP/PI du tutoriel complet.`;
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
             try {
                 const response = await this.apiCall('/api/tutorial/cancel.php', {
                     session_id: this.currentSession
                 }, 'POST');
 
                 if (response.success) {
+                    $modal.fadeOut(300, () => $modal.remove());
                     this.hideTutorialOverlay();
                     this.currentSession = null;
                     this.isActive = false;
-
-                    // Clear active flag and set cancel flag to prevent auto-check after reload
                     sessionStorage.removeItem('tutorial_active');
                     sessionStorage.setItem('tutorial_just_cancelled', 'true');
-
                     window.location.reload();
+                } else {
+                    alert('Erreur lors du passage du tutoriel: ' + (response.error || 'Erreur inconnue'));
                 }
             } catch (error) {
                 console.error('[TutorialUI] Cancel error', error);
-                alert(`Erreur lors de l'annulation du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVous pouvez fermer cette fenêtre et recharger la page.`);
+
+                /* Clear tutorial state even on error to prevent stuck state */
+                sessionStorage.removeItem('tutorial_active');
+                this.currentSession = null;
+                this.isActive = false;
+
+                /* Try to fetch the actual response to debug */
+                try {
+                    const debugResponse = await fetch('/api/tutorial/cancel.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({session_id: this.currentSession})
+                    });
+                    const responseText = await debugResponse.text();
+                    console.error('[TutorialUI] Raw API response:', responseText);
+                } catch (e) {
+                    console.error('[TutorialUI] Could not fetch debug response');
+                }
+
+                alert(`Erreur: ${error.message || 'Erreur inconnue'}`);
             }
-        }
+        });
+
+        /* Close button - return to tutorial */
+        $('#tutorial-skip-close').on('click', () => {
+            console.log('[TutorialUI] User chose to return to tutorial');
+            $modal.fadeOut(300, () => $modal.remove());
+        });
     }
 
     /**

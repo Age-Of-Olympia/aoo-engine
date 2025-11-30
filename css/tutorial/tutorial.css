@@ -51,12 +51,17 @@
     /* No visual effects - they cause issues with SVG rendering */
 }
 
-/* Tutorial controls must always be clickable */
+/* Tutorial controls and modals must always be clickable */
 #tutorial-controls,
 #tutorial-controls *,
 .tutorial-tooltip,
-.tutorial-tooltip * {
+.tutorial-tooltip *,
+#tutorial-skip-modal,
+#tutorial-skip-modal *,
+.tutorial-modal-overlay,
+.tutorial-modal-overlay * {
     pointer-events: auto !important;
+    z-index: 100000 !important;
 }
 
 /* Tutorial Controls - fixed at top */
@@ -1642,4 +1647,96 @@
 
 #inventory-panel .inventory-ajax-panel {
     color: #f0f0f0;
+}
+
+/* Tutorial Skip Modal - Parchment Design */
+#tutorial-skip-modal.tutorial-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    animation: fadeIn 0.3s ease;
+}
+
+#tutorial-skip-modal .tutorial-modal-content {
+    /* Aged parchment with rich texture */
+    background:
+        linear-gradient(to bottom, rgba(0,0,0,0.03) 0%, transparent 100%),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139,69,19,0.03) 2px, rgba(139,69,19,0.03) 4px),
+        linear-gradient(135deg, #F4E8D0 0%, #E8D7B8 50%, #D9C7A8 100%);
+    color: #3A2817;
+    padding: 40px 35px;
+    border-radius: 5px;
+    border: 4px solid #8B6F47;
+    border-top: 5px solid #A0886D;
+    border-left: 5px solid #A0886D;
+    text-align: center;
+    max-width: 450px;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        inset 0 0 120px rgba(139, 69, 19, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    animation: modal-appear 0.4s ease;
+}
+
+#tutorial-skip-modal h2 {
+    font-size: 28px;
+    margin: 0 0 20px 0;
+    color: #5D4E37;
+    text-shadow: 1px 1px 2px rgba(139, 69, 19, 0.2);
+    border-bottom: 3px double #8B6F47;
+    padding-bottom: 12px;
+}
+
+#tutorial-skip-modal p {
+    font-size: 16px;
+    margin: 15px 0 25px 0;
+    line-height: 1.6;
+    color: #3A2817;
+}
+
+#tutorial-skip-modal .tutorial-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#tutorial-skip-modal .tutorial-modal-buttons button {
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border: 2px solid transparent;
+}
+
+#tutorial-skip-modal .btn-tutorial-tertiary {
+    background: linear-gradient(135deg, #999, #AAA);
+    color: #F4E8D0;
+    border-color: #666;
+}
+
+#tutorial-skip-modal .btn-tutorial-tertiary:hover {
+    background: linear-gradient(135deg, #888, #999);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(153, 153, 153, 0.4);
+}
+
+@keyframes modal-appear {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
