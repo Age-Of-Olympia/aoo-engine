@@ -4,7 +4,7 @@ use Classes\Argument;
 use Classes\Forum;
 use Classes\Json;
 
-class AnnonceCmd extends AdminCommand
+class ForumCmd extends AdminCommand
 {
     public function __construct() {
         parent::__construct("forum",[new Argument('action',false),new Argument('startDate',false),new Argument('maxTopic',false)]);
