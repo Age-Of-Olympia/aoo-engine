@@ -4,7 +4,7 @@ use Classes\Db;
  * ce script delete les forums_keywords si le fichier json n'existe pas
  * */
 
-$sql = "SELECT id, postName FROM forums_keywords";
+$sql = "SELECT DISTINCT postName FROM forums_keywords";
 
 $db = new Db();
 
@@ -15,13 +15,13 @@ while($row = $res->fetch_object()){
 
     $postName = $row->postName;
 
-    $filePath = 'datas/private/forum/posts/'. $postName . '.json';
+    $filePath = __DIR__ .'/../../../datas/private/forum/posts/'. $postName . '.json';
 
     // Si le fichier correspondant n'existe pas, supprimer l'entrée
     if (!file_exists($filePath)) {
-        $deleteSql = "DELETE FROM forums_keywords WHERE id = ?";
-        $db->exe($deleteSql, [$row->id]);
-        echo "line deleted for postName: $postName <br />";
+        $deleteSql = "DELETE FROM forums_keywords WHERE postName = ?";
+        $db->exe($deleteSql, [$postName]);
+        echo "lines deleted for postName: $postName <br />";
     }
 }
 
