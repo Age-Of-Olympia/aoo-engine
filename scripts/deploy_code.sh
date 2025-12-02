@@ -10,4 +10,4 @@ export HOME="/home/$(whoami)" \
 && ~/bin/composer install \
 && ~/bin/composer dump-autoload -o \
 && echo -e "copie du reste des fichiers :\n " \
-&& cp -ra ~/aoo-engine/{*.html,*.php,admin,api,config,Classes,css,js,scripts,src} ~/public_html/
+&& cp -ra ~/aoo-engine/{scripts,*.html,*.php,admin,api,config,Classes,css,js,src} ~/public_html/
