@@ -4,6 +4,18 @@ CREATE TABLE players_reduction_passives (
     name VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE action_passives (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    traits LONGTEXT,
+    type VARCHAR(255),
+    carac VARCHAR(255),
+    value DECIMAL(3,2),
+    conditions LONGTEXT,
+    level INT NOT NULL,
+    race VARCHAR(255)
+);
+
 CREATE TABLE players_passives (
     player_id INT NOT NULL,
     passive_id INT NOT NULL,
@@ -15,18 +27,6 @@ CREATE TABLE players_passives (
         REFERENCES action_passives(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
-);
-
-CREATE TABLE action_passives (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    traits LONGTEXT,
-    type VARCHAR(255),
-    carac VARCHAR(255),
-    value DECIMAL(3,2),
-    conditions LONGTEXT,
-    level INT NOT NULL,
-    race VARCHAR(255)
 );
 
 ALTER TABLE actions 

@@ -7,7 +7,7 @@ use Classes\Json;
 class ForumCmd extends AdminCommand
 {
     public function __construct() {
-        parent::__construct("forum",[new Argument('action',false),new Argument('startDate',false),new Argument('maxTopic',false)]);
+        parent::__construct("forum",[new Argument('action',false),new Argument('startDate',true),new Argument('maxTopic',true)]);
         parent::setDescription(<<<EOT
 Gere l'indexation des forums pour le moteur de recherche interne.
 Exemple:
@@ -27,7 +27,7 @@ EOT);
         }
 
         if ($action === 'clearIndex') {
-            $this->db->exe("DELETE FROM `forums_keywords`");
+            $this->db->executeQuery("DELETE FROM `forums_keywords`");
             $this->result->Log("Forum search index cleared.");
         }
         if ($action === 'buildIndex') {
@@ -56,6 +56,7 @@ EOT);
                         if ($topics->name <= $startDate) {
                             continue;
                         }
+                        $topicsToProcess[] = $topics->name;
                     }
                 }
             }
@@ -68,7 +69,7 @@ EOT);
 
                     $postJson = json()->decode('forum/posts', $post->name);
                     if ($postJson !== false && !empty($postJson->text)) {
-                        Forum::put_keywords($postJson->text, $post->name);
+                        Forum::put_keywords($topicName, $post->name);
                     }
                 }
                 $lastTopicDate = $topicName;
