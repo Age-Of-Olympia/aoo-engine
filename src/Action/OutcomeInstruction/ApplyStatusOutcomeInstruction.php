@@ -26,12 +26,14 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
         }
         $player = $params['player'] ?? 'both';
         $valueParam = $params['value'] ?? 1;
-        if(is_array( $valueParam)){
+        if(is_array($valueParam)){
             switch ($valueParam[0]) {
                 case 'rollDivisor':
                     $value = max(0,floor((array_sum($rollsArray[0]) - array_sum($rollsArray[1]))/ $valueParam[1]));
+                    break;
                 case 'remaining':
                     $value = $actor->getRemaining($valueParam[1]);
+                    break;
                 default:
                     $value = $valueParam[array_rand( $valueParam)];
             } 

@@ -16,3 +16,4 @@ bin/
 tmp/
 daily.log
 phpunit-report.xml
+/var/proxies/
