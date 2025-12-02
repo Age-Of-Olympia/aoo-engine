@@ -536,7 +536,8 @@ class Forum{
         $content = strtolower($content);
         $content = preg_replace('/[^\p{L}\p{N}\s]/u', '', $content);
         $content = preg_replace('/[\r\n]+/', ' ', $content); // Remplacer les sauts de ligne par des espaces
-
+        //suprimer les balise bbcode
+        $content = preg_replace('/\[(\/?)(b|i|u|url|img|quote|code|size|color|list|\*|spoiler)(=[^\]]+)?\]/i', '', $content);
 
         // Séparer les mots et retirer les doublons
         $words = array_unique(explode(' ', $content));
