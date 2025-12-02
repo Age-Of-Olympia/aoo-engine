@@ -536,7 +536,7 @@ class Forum{
         $content = strtolower($content);
          //suprimer les balise bbcode avant la supression de la ponctiation (inclue les [ et ])
         $content = preg_replace('/\[(\/?)(b|i|u|url|img|quote|code|size|color|list|\*|spoiler)(=[^\]]+)?\]/i', '', $content);
-        $content = preg_replace('/[^\p{L}\p{N}\s]/u', '', $content);
+        $content = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $content);
         $content = preg_replace('/[\r\n]+/', ' ', $content); // Remplacer les sauts de ligne par des espaces
        
         // Séparer les mots et retirer les doublons
@@ -606,17 +606,12 @@ class Forum{
 
         $return = array();
 
-        $values = explode(' ', $keywords);
+        $values = self::extract_keywords($keywords);
 
-
-        foreach($values as $e){
-
-            if(strlen($e) < 2){
-
-                exit('Vos mot-clés doivent être formés d\'au moins 2 charactères.');
-            }
+        if(empty($values)){
+            exit('Aucun mot-clé valide fourni pour la recherche. Vos mot-clés doivent être formés d\'au moins 2 charactères.');
         }
-
+        
         $db = new Db();
 
         $sql = '
