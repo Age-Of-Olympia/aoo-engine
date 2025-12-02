@@ -69,7 +69,7 @@ EOT);
 
                     $postJson = json()->decode('forum/posts', $post->name);
                     if ($postJson !== false && !empty($postJson->text)) {
-                        Forum::put_keywords($topicName, $post->name);
+                        Forum::put_keywords($topicName, $postJson->text);
                     }
                 }
                 $lastTopicDate = $topicName;
