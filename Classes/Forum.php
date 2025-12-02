@@ -623,7 +623,7 @@ class Forum{
         name IN('. Db::print_in($values) .')
         GROUP BY
         postName
-        LIMIT 10
+        LIMIT 30
         ';
 
         $res = $db->exe($sql, $values);

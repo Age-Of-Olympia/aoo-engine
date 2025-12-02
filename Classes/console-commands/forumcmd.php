@@ -65,11 +65,15 @@ EOT);
             $lastTopicDate = 0;
             foreach ($topicsToProcess as $topicName) {
                 $topJson = json()->decode('forum/topics', $topicName);
+                if(!$topJson){
+                    $this->result->Warning("Topic not found: {$topicName}");
+                    continue;
+                }
                 foreach ($topJson->posts as $post) {
 
                     $postJson = json()->decode('forum/posts', $post->name);
                     if ($postJson !== false && !empty($postJson->text)) {
-                        Forum::put_keywords($topicName, $postJson->text);
+                        Forum::put_keywords($post->name, $postJson->text);
                     }
                 }
                 $lastTopicDate = $topicName;
