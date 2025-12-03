@@ -164,7 +164,7 @@ class ComputeCondition extends BaseCondition
             ) .
             (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
         $targetOtherTxt = ($bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : '';
-        $targetTxt = 'Test : ' . $tooltipOtherTxt . 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
+        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
 
         return array($targetRoll, $targetTotal, $targetTxt);
     }

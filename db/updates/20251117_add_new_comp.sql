@@ -604,19 +604,37 @@ VALUES
     'applystatus','{ "acuite_visuelle": true, "stackable": false, "value": ["remaining","a"], "player": "target", "duration": 1}',10,77
 ),
 (
+    'applystatus','{ "furtif": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',9,78
+),
+(
     'player','{"carac": "visible", "value" : "invisible", "player": "actor"}',10,78
+),
+(
+    'applystatus','{ "furtif": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',9,79
 ),
 (
     'player','{"carac": "visible", "value" : "olympien", "player": "actor"}',10,79
 ),
 (
+    'applystatus','{ "furtif": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',9,80
+),
+(
     'player','{"carac": "visible", "value" : "nain", "player": "actor"}',10,80
+),
+(
+    'applystatus','{ "furtif": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',9,81
 ),
 (
     'player','{"carac": "visible", "value" : "elfe", "player": "actor"}',10,81
 ),
 (
+    'applystatus','{ "furtif": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',9,82
+),
+(
     'player','{"carac": "visible", "value" : "geant", "player": "actor"}',10,82
+),
+(
+    'applystatus','{ "furtif": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',9,83
 ),
 (
     'player','{"carac": "visible", "value" : "hs", "player": "actor"}',10,83
