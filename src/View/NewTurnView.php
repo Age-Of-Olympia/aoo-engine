@@ -184,9 +184,17 @@ class NewTurnView
                         echo '<tr><td ' . getTooltip($k) . '>' . CARACS[$k] . '</td><td align="right">+' . $val . '</td></tr>';
                     }
 
-
                 // recover Ae, A, Mvt
-                $player->playerBonusService->recoverNewTurn($player->id);
+                    $sql = '
+                DELETE FROM
+                players_bonus
+                WHERE
+                player_id = ?
+                AND
+                name IN("ae","a","mvt")
+                ';
+
+                    $db->exe($sql, $player->id);
 
                 if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"ralentissement")){
                     $player->playerBonusService->setBonusByPlayerIdByName($player->id,"mvt",
