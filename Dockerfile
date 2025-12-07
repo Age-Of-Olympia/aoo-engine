@@ -48,7 +48,7 @@ RUN apt-get update -qq -y && \
     rm chromedriver-linux64.zip && \
     mv chromedriver /usr/local/bin/
 
-# Install Cypress dependencies for headless mode
+# Install Cypress dependencies for headless and GUI mode
 RUN apt-get install -y \
     libgtk-3-0 \
     libgbm1 \
@@ -56,7 +56,15 @@ RUN apt-get install -y \
     libxss1 \
     libxtst6 \
     xauth \
-    xvfb
+    xvfb \
+    libx11-xcb1 \
+    libxcb-dri3-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1
 
 # Install any extensions you need
 RUN docker-php-ext-configure gd --with-jpeg
@@ -78,5 +86,8 @@ COPY ../. .
 USER ${UID}:${GID}
 
 ENV HOME=/home/vscode
+
+# Install Node.js dependencies and Cypress binary
+RUN npm ci && npx cypress install
 
 ENTRYPOINT ["./entrypoint.sh"]
