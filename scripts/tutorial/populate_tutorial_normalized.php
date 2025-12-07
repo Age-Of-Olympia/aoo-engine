@@ -877,7 +877,11 @@ function getOrCreateCoords($db, $x, $y, $plan) {
     if ($row) return $row['id'];
 
     $db->exe("INSERT INTO coords (x, y, z, plan) VALUES (?, ?, 0, ?)", [$x, $y, $plan]);
-    return $db->conn->insert_id;
+
+    // Get the inserted ID by querying back
+    $result = $db->exe("SELECT id FROM coords WHERE x = ? AND y = ? AND plan = ?", [$x, $y, $plan]);
+    $row = $result->fetch_assoc();
+    return $row['id'];
 }
 
 // Add grass tiles for inner area (-3 to 3)

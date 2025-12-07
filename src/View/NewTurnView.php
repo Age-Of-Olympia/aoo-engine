@@ -16,7 +16,7 @@ class NewTurnView
             return;
         }
 
-        if ($_SESSION['playerId'] == $_SESSION['originalPlayerId']) {
+        if (isset($_SESSION['originalPlayerId']) && $_SESSION['playerId'] == $_SESSION['originalPlayerId']) {
             $_SESSION['nonewturn'] = false;
         }
 
