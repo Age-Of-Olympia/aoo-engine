@@ -44,6 +44,16 @@ Three default characters are created:
 
 Admin console: Press `²` key when logged in, or use the settings menu button.
 
+### Cypress E2E Testing
+
+For end-to-end testing with Cypress, see the comprehensive guide: **[docs/cypress-testing-guide.md](docs/cypress-testing-guide.md)**
+
+**Quick reference**:
+- **CRITICAL**: Always use a SINGLE `it()` block for authenticated flows (Cypress resets session between multiple `it()` blocks, causing blank screenshots)
+- Reset test database before each run: `/var/www/html/scripts/testing/reset_test_database.sh`
+- Test database: `aoo4_test` (4 pre-configured test characters)
+- Working example: `cypress/e2e/tutorial-simple-test.cy.js`
+
 ## Build, Test & Quality Commands
 
 All commands are centralized in the **Makefile** (used locally and in CI):
