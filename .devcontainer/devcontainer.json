@@ -48,6 +48,12 @@
 		"PATH": "${containerEnv:PATH}:${containerWorkspaceFolder}/bin"
 	},
 
+	"containerEnv": {
+    	"DISPLAY": "host.docker.internal:0",
+    	"LIBGL_ALWAYS_INDIRECT": "1",
+    	"QT_X11_NO_MITSHM": "1"
+  	}
+
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// Done in docker compose !!
 	// "forwardPorts": [80]
