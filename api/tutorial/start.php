@@ -86,11 +86,15 @@ try {
         // Get first step data using step_id
         $firstStepData = $manager->getCurrentStepForClientById($result['current_step'], $version);
 
+        // Calculate total steps from repository (not stored in DB)
+        $stepRepository = new \App\Tutorial\TutorialStepRepository();
+        $totalSteps = $stepRepository->getTotalSteps($version);
+
         echo json_encode([
             'success' => true,
             'session_id' => $result['session_id'],
             'tutorial_player_id' => $result['tutorial_player_id'],
-            'total_steps' => $result['total_steps'],
+            'total_steps' => $totalSteps,
             'current_step' => $result['current_step'],  // step_id (string)
             'current_step_position' => $firstStepData['step_position'] ?? 1,  // display position (int)
             'mode' => $result['mode'],

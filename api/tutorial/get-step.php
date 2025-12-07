@@ -69,11 +69,15 @@ try {
     $stepData = $manager->getCurrentStepForClient($currentStep, $version);
 
     if ($stepData) {
+        // Calculate total steps from repository (not stored in DB)
+        $stepRepository = new \App\Tutorial\TutorialStepRepository();
+        $totalSteps = $stepRepository->getTotalSteps($version);
+
         echo json_encode([
             'success' => true,
             'session_id' => $sessionId,
             'current_step' => $currentStep,
-            'total_steps' => $resumeResult['total_steps'],
+            'total_steps' => $totalSteps,
             'xp_earned' => $resumeResult['xp_earned'],
             'step_data' => $stepData
         ]);
