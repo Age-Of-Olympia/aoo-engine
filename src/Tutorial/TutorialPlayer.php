@@ -101,8 +101,7 @@ class TutorialPlayer
             'id' => $actualPlayerId,
             'player_type' => 'tutorial',  // ← DISCRIMINATOR: marks this as tutorial player
             'display_id' => $displayId,   // ← Sequential ID for display (Tutorial Player #1, #2, etc.)
-            'tutorial_session_id' => $tutorialSessionId,  // ← Link to tutorial session
-            'real_player_id_ref' => $realPlayerId,  // ← Link to real player account
+            // Note: tutorial_session_id and real_player_id links are in tutorial_players table (below)
             'name' => $name,
             'psw' => '', // No password for tutorial characters
             'mail' => '',
@@ -145,18 +144,12 @@ class TutorialPlayer
         $conn->insert('tutorial_players', [
             'real_player_id' => $realPlayerId,
             'tutorial_session_id' => $tutorialSessionId,
+            'player_id' => $actualPlayerId,  // Include player_id in initial INSERT
             'name' => $name,
             'is_active' => true
         ]);
 
         $tutorialPlayerId = (int) $conn->lastInsertId();
-
-        // Update tutorial_players to store the actual player ID
-        $conn->update('tutorial_players', [
-            'player_id' => $actualPlayerId
-        ], [
-            'id' => $tutorialPlayerId
-        ]);
 
         // Load and return
         $player = self::load($conn, $tutorialPlayerId);
