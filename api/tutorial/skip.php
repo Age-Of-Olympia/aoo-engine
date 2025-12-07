@@ -100,6 +100,12 @@ try {
     $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
     error_log("[Skip Tutorial] Player {$playerId} received skip reward: {$skipReward['xp']} XP/PI");
 
+    // If redirect parameter is set, redirect to index instead of returning JSON
+    if (isset($_GET['redirect']) || isset($_POST['redirect'])) {
+        header('Location: /index.php');
+        exit;
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Tutorial skipped, you can now play normally'

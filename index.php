@@ -207,7 +207,23 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
             max-width: 500px;
             text-align: center;
             color: #fff;
+            position: relative;
         ">
+            <!-- Emergency close button - skips tutorial and grants skip XP -->
+            <a href="api/tutorial/skip.php?redirect=1" style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                color: #999;
+                font-size: 24px;
+                text-decoration: none;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            " title="Fermer (passer le tutoriel)">&times;</a>
             <h2>Bienvenue !</h2>
             <p>Tu as commencé le tutoriel mais ne l\'as pas terminé.</p>
             <div style="margin-top: 20px; margin-bottom: 20px;">

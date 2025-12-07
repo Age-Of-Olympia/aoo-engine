@@ -56,9 +56,7 @@ echo '
             </tr>
             </table>
 
-            <button style="display: none" class="submit"></button>
-
-            <a href="index.php" action="submit" id="index-button-login" class="index-button">Login</a>
+            <button type="submit" action="submit" id="index-button-login" class="index-button">Login</button>
         </form>
     </div>
     ';

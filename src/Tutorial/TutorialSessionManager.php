@@ -50,14 +50,13 @@ class TutorialSessionManager
         try {
             // Insert into tutorial_progress table
             $sql = 'INSERT INTO tutorial_progress
-                    (player_id, tutorial_session_id, current_step, total_steps, tutorial_mode, tutorial_version, data)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)';
+                    (player_id, tutorial_session_id, current_step, tutorial_mode, tutorial_version, data)
+                    VALUES (?, ?, ?, ?, ?, ?)';
 
             $this->db->exe($sql, [
                 $playerId,
                 $sessionId,
                 $firstStepId,
-                $totalSteps,
                 $mode,
                 $version,
                 json_encode([]) // Empty context data initially
@@ -69,7 +68,6 @@ class TutorialSessionManager
                 'session_id' => $sessionId,
                 'player_id' => $playerId,
                 'current_step' => $firstStepId,
-                'total_steps' => $totalSteps,
                 'mode' => $mode,
                 'version' => $version,
                 'xp_earned' => 0,
@@ -115,12 +113,11 @@ class TutorialSessionManager
                 'player_id' => (int) $session['player_id'],
                 'tutorial_player_id' => isset($session['tutorial_player_id']) ? (int) $session['tutorial_player_id'] : null,
                 'current_step' => $session['current_step'],
-                'total_steps' => (int) $session['total_steps'],
                 'mode' => $session['tutorial_mode'],
                 'version' => $session['tutorial_version'],
                 'xp_earned' => (int) $session['xp_earned'],
                 'completed' => (bool) $session['completed'],
-                'started_at' => $session['started_at'],
+                'created_at' => $session['created_at'],
                 'completed_at' => $session['completed_at'],
                 'data' => json_decode($session['data'], true) ?? []
             ];
@@ -145,7 +142,7 @@ class TutorialSessionManager
     {
         $sql = 'SELECT tutorial_session_id FROM tutorial_progress
                 WHERE player_id = ? AND completed = 0
-                ORDER BY started_at DESC
+                ORDER BY created_at DESC
                 LIMIT 1';
 
         $result = $this->db->exe($sql, [$playerId]);

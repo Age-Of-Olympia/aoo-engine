@@ -9,7 +9,8 @@ class Db{
     private $db;
     private $doctrinedb;
     public function __construct(){
-        mysqli_report(MYSQLI_REPORT_ERROR);
+        // Enable strict mode to convert warnings into exceptions (proper error handling)
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $this->doctrinedb = db();
         $this->db = $this->doctrinedb->getNativeConnection();
     }
