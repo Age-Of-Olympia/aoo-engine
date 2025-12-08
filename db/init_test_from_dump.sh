@@ -38,6 +38,8 @@ mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" <<SQL
 INSERT IGNORE INTO races SELECT * FROM $SOURCE_DB.races;
 INSERT IGNORE INTO items SELECT * FROM $SOURCE_DB.items;
 INSERT IGNORE INTO actions SELECT * FROM $SOURCE_DB.actions;
+INSERT IGNORE INTO action_outcomes SELECT * FROM $SOURCE_DB.action_outcomes;
+INSERT IGNORE INTO action_conditions SELECT * FROM $SOURCE_DB.action_conditions;
 
 -- Copy tutorial configuration
 INSERT IGNORE INTO tutorial_steps SELECT * FROM $SOURCE_DB.tutorial_steps;
