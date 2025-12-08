@@ -283,18 +283,31 @@ describe('Tutorial System - Production Readiness Test', () => {
     /* Step 9: Deplete Movements (MOVEMENT, requires movements_depleted) */
     waitForStepRender('deplete_movements');
     screenshot('13-step-deplete-movements', 1000);
-    /* Perform the required action: use all MVT points (tutorial gives 4 movements) */
-    cy.log('👟 Depleting all 4 movement points');
+    /* Perform the required action: use all MVT points (tutorial gives 4 movements, make 5 to be safe) */
+    cy.log('👟 Depleting all movement points');
 
-    /* Make 4 moves - alternating between left and back to center */
-    for (let i = 0; i < 4; i++) {
-      cy.log(`Move ${i + 1}/4`);
-      const targetCoords = (i % 2 === 0) ? '-1,0' : '0,0';  /* Left then back */
-      cy.get(`.case[data-coords="${targetCoords}"]`).click();
-      cy.wait(500);
-      cy.get('#go-rect, #go-img').filter(':visible').first().click();
-      cy.wait(2000);  /* Wait for page reload after movement */
+    /* Make up to 10 moves to ensure all movements are depleted (tutorial gives ~4) */
+    for (let i = 0; i < 10; i++) {
+      cy.get('body').then(($body) => {
+        const goTiles = $body.find('.case.go');
+        if (goTiles.length > 0) {
+          cy.log(`Move ${i + 1}/10 - ${goTiles.length} movement tiles available`);
+          cy.get('.case.go').first().click();
+          cy.wait(600);
+          /* Try to click go indicator if visible */
+          const goIndicator = $body.find('#go-rect:visible, #go-img:visible');
+          if (goIndicator.length > 0) {
+            cy.get('#go-rect, #go-img').filter(':visible').first().click();
+            cy.wait(3500);
+          } else {
+            cy.log(`No go indicator visible, skipping move`);
+          }
+        } else {
+          cy.log(`✓ No movement tiles remaining after ${i} moves`);
+        }
+      });
     }
+    cy.wait(2000);  /* Extra wait for step to advance after movements depleted */
     screenshot('14-after-movements-depleted', 1000);
 
     /* Step 10: Movements Depleted Info (INFO, no validation → Next button) */
