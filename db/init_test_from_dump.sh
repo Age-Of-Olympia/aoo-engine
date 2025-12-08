@@ -61,6 +61,10 @@ fi
 # Schema fixes - ensure critical columns exist
 echo "🔧 Applying schema fixes..."
 mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" <<SCHEMA_FIXES
+-- Add icon column to actions table if missing (required by Action entity)
+ALTER TABLE actions
+ADD COLUMN IF NOT EXISTS icon VARCHAR(50) NOT NULL DEFAULT '' AFTER name;
+
 -- Add tooltip offset columns if missing (from migration Version20251127000000)
 ALTER TABLE tutorial_step_ui
 ADD COLUMN IF NOT EXISTS tooltip_offset_x INT DEFAULT 0 COMMENT 'X offset for tooltip' AFTER auto_close_card,
