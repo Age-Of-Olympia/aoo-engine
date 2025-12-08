@@ -150,12 +150,12 @@ VALUES (103, UUID(), '29.0', TRUE, 'first_time', '1.0.0', 500);
 DELETE FROM players_ips WHERE failed > 0;
 
 -- Populate tutorial template map (boundary walls, resources, NPCs)
--- Boundary walls (North, South, East, West borders of 9x9 grid: -4 to 4)
+-- Boundary walls (North, South, East, West borders of 7x7 grid: -3 to 3)
 INSERT IGNORE INTO map_walls (name, coords_id, damages)
 SELECT 'mur_pierre', c.id, 0
 FROM coords c
 WHERE c.plan = 'tutorial' AND c.z = 0
-  AND ((c.x = -4 OR c.x = 4) OR (c.y = -4 OR c.y = 4));
+  AND ((c.x = -3 OR c.x = 3) OR (c.y = -3 OR c.y = 3));
 
 -- Gatherable tree for resource tutorial at (0, 1)
 INSERT IGNORE INTO map_walls (name, coords_id, damages)

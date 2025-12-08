@@ -318,27 +318,31 @@ describe('Tutorial System - Production Readiness Test', () => {
     clickNext();
 
     /* Step 12: Click Yourself (UI_INTERACTION, requires ui_panel_opened) */
+    /* IMPORTANT: Requires TWO clicks - first opens panel with hint, second loads actions */
     waitForStepRender('click_yourself');
     screenshot('17-step-click-yourself', 1000);
-    cy.get('#current-player-avatar').click({force: true});
-    cy.wait(3000);  /* Wait for panel to open */
 
-    /* Check what step we're on after clicking */
+    /* First click: Opens panel with "Cliquez sur votre personnage" message */
+    cy.get('#current-player-avatar').click({force: true});
+    cy.wait(1500);  /* Wait for panel to open */
+    screenshot('17b-panel-opened-with-hint', 500);
+
+    /* Second click: Loads actual actions into the panel */
+    cy.get('#current-player-avatar').click({force: true});
+    cy.wait(3000);  /* Wait for actions to load */
+
+    /* Check if step advanced to actions_panel_info */
     cy.window().then((win) => {
-      cy.log(`Current step after avatar click: ${win.tutorialUI.currentStep}`);
+      cy.log(`Current step after double-click: ${win.tutorialUI.currentStep}`);
       const currentStep = win.tutorialUI.currentStep;
 
       if (currentStep === 'actions_panel_info') {
-        cy.log('📋 Advanced to actions_panel_info');
+        cy.log('✅ Advanced to actions_panel_info');
         screenshot('18-step-actions-panel', 1000);
         clickNext();
-      } else if (currentStep === 'click_yourself') {
-        cy.log('⚠️ Still on click_yourself - step did not advance');
-        /* Try clicking again or skip to next manually expected step */
-        screenshot('18-still-on-click-yourself', 1000);
       } else {
-        cy.log(`⏭️ On unexpected step: ${currentStep}`);
-        screenshot('18-unexpected-step', 1000);
+        cy.log(`⚠️ Still on: ${currentStep}`);
+        screenshot('18-current-step', 1000);
       }
     });
 
