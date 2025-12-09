@@ -19,7 +19,7 @@ describe('Tutorial System - Production Readiness Test', () => {
     name: `CypressTest${randomName}`,
     password: 'testpass123',
     email: `cypresstest${timestamp}@test.com`,
-    race: 'hs',
+    race: 'nf',  /* Nain (Dwarf) - has different MVT than hs */
     playerId: null  /* Will be set after registration */
   };
 
@@ -289,36 +289,46 @@ describe('Tutorial System - Production Readiness Test', () => {
     /* Perform the required action: use all MVT points (tutorial gives 4 movements, make 5 to be safe) */
     cy.log('👟 Depleting all movement points');
 
-    /* Make 6 moves to deplete all movements (tutorial gives 6 MVT) */
-    for (let i = 0; i < 6; i++) {
-      cy.log(`Move ${i + 1}/6`);
-
-      /* Wait for page to be ready and check if movement tiles exist */
-      cy.wait(1000);
+    /* Deplete all movements by clicking until no .case.go tiles remain */
+    /* Works for any race - continues until MVT is fully depleted */
+    function depleteOneMovement() {
+      cy.wait(1500);
       cy.get('body').then(($body) => {
-        if ($body.find('.case.go').length > 0) {
-          /* Click first available movement tile */
-          cy.get('.case.go').first().click({force: true});
-          cy.wait(1000);
+        const goTiles = $body.find('.case.go:visible');
+        if (goTiles.length > 0) {
+          cy.log(`Found ${goTiles.length} movement tiles`);
+          /* Click first movement tile */
+          cy.get('.case.go:visible').first().click({force: true});
+          cy.wait(1200);
 
-          /* Look for confirmation button - use a timeout that won't fail */
+          /* Click the confirmation rect/img on the SVG map */
           cy.get('body').then(($body2) => {
-            const confirmExists = $body2.find('#go-rect:visible, #go-img:visible').length > 0;
-            if (confirmExists) {
-              /* Confirmation button exists, click it */
-              cy.get('#go-rect, #go-img').filter(':visible').first().click({force: true});
-              cy.wait(3500);  /* Wait for page reload */
+            const rectVisible = $body2.find('#go-rect:visible').length > 0;
+            const imgVisible = $body2.find('#go-img:visible').length > 0;
+
+            if (rectVisible || imgVisible) {
+              /* Click the visible confirmation element */
+              const selector = rectVisible ? '#go-rect' : '#go-img';
+              cy.get(selector).click({force: true});
+              cy.log('Clicked confirmation, waiting for reload');
+              cy.wait(4500);  /* Wait for page reload */
+
+              /* Recursively continue depleting */
+              depleteOneMovement();
             } else {
-              /* No confirmation - maybe it auto-executed or page already reloaded */
-              cy.log('No confirmation found - assuming move executed');
-              cy.wait(1500);
+              cy.log('⚠️ No confirmation found, retrying');
+              cy.wait(2000);
+              /* Try again - maybe confirmation appeared */
+              depleteOneMovement();
             }
           });
         } else {
-          cy.log('No movement tiles available (MVT depleted)');
+          cy.log('✅ All movements depleted - no more .case.go tiles');
         }
       });
     }
+
+    depleteOneMovement();
     cy.wait(2000);  /* Extra wait for step to advance */
     screenshot('14-after-movements-depleted', 1000);
 
