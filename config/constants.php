@@ -560,3 +560,8 @@ define('CACHED_CLASSEMENTS', true); // si false, classemens.php n'est pas cached
 define('AUTO_BREAK', false); // si true, l'équipement casse (100% de chance)
 define('AUTO_FAIL', false); // si true, les attaques ratent forcément
 
+/*
+ * affichage map
+ */
+
+define('DIST_MAP_MAX', 15); // La race des cases au delà d'une distance de 15 apparaît en noir sur la map globale
