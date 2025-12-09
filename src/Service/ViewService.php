@@ -786,7 +786,7 @@ class ViewService {
                 $selectedRace = $player['visible'];
             }
 
-            $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > DIST_MAP_MAX || $this->playerZ != 0) ? $raceColors['default'] : ($raceColors[$selectedRace] ?? $raceColors['default']);
+            $raceColor = ($this->getPlayersDistance($this->playerX, $this->playerY, $player['x'], $player['y']) > DIST_MAP_MAX || $this->playerZ != 0 || $this->currentPlan != $this->worldPlan) ? $raceColors['default'] : ($raceColors[$selectedRace] ?? $raceColors['default']);
             
             // Convertit la couleur hexadécimale en RVB
             list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
