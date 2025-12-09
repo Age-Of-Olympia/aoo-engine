@@ -82,7 +82,7 @@ INSERT IGNORE INTO coords (id, x, y, z, plan) VALUES
 (2, 0, 1, 0, 'gaia'),
 (3, 1, 0, 0, 'gaia'),
 (4, 1, 1, 0, 'gaia'),
--- Tutorial plan coordinates (7x7 grid from -3 to 3)
+-- Tutorial plan coordinates (11x11 grid from -5 to 5 for walls, -4 to 4 playable)
 (51602, 0, 0, 0, 'tutorial'),
 (51603, 1, 0, 0, 'tutorial'), (51604, -1, 0, 0, 'tutorial'),
 (51605, 0, 1, 0, 'tutorial'), (51606, 0, -1, 0, 'tutorial'),
@@ -108,6 +108,43 @@ INSERT IGNORE INTO coords (id, x, y, z, plan) VALUES
 (51645, 2, -3, 0, 'tutorial'), (51646, -2, -3, 0, 'tutorial'),
 (51647, 3, 3, 0, 'tutorial'), (51648, -3, -3, 0, 'tutorial'),
 (51649, 3, -3, 0, 'tutorial'), (51650, -3, 3, 0, 'tutorial'),
+-- Add ±4 and ±5 coords for walls and extra space
+(51651, 4, 0, 0, 'tutorial'), (51652, -4, 0, 0, 'tutorial'),
+(51653, 0, 4, 0, 'tutorial'), (51654, 0, -4, 0, 'tutorial'),
+(51655, 5, 0, 0, 'tutorial'), (51656, -5, 0, 0, 'tutorial'),
+(51657, 0, 5, 0, 'tutorial'), (51658, 0, -5, 0, 'tutorial'),
+(51659, 4, 1, 0, 'tutorial'), (51660, -4, 1, 0, 'tutorial'),
+(51661, 4, -1, 0, 'tutorial'), (51662, -4, -1, 0, 'tutorial'),
+(51663, 1, 4, 0, 'tutorial'), (51664, -1, 4, 0, 'tutorial'),
+(51665, 1, -4, 0, 'tutorial'), (51666, -1, -4, 0, 'tutorial'),
+(51667, 5, 1, 0, 'tutorial'), (51668, -5, 1, 0, 'tutorial'),
+(51669, 5, -1, 0, 'tutorial'), (51670, -5, -1, 0, 'tutorial'),
+(51671, 1, 5, 0, 'tutorial'), (51672, -1, 5, 0, 'tutorial'),
+(51673, 1, -5, 0, 'tutorial'), (51674, -1, -5, 0, 'tutorial'),
+(51675, 2, 4, 0, 'tutorial'), (51676, -2, 4, 0, 'tutorial'),
+(51677, 2, -4, 0, 'tutorial'), (51678, -2, -4, 0, 'tutorial'),
+(51679, 4, 2, 0, 'tutorial'), (51680, -4, 2, 0, 'tutorial'),
+(51681, 4, -2, 0, 'tutorial'), (51682, -4, -2, 0, 'tutorial'),
+(51683, 2, 5, 0, 'tutorial'), (51684, -2, 5, 0, 'tutorial'),
+(51685, 2, -5, 0, 'tutorial'), (51686, -2, -5, 0, 'tutorial'),
+(51687, 5, 2, 0, 'tutorial'), (51688, -5, 2, 0, 'tutorial'),
+(51689, 5, -2, 0, 'tutorial'), (51690, -5, -2, 0, 'tutorial'),
+(51691, 3, 4, 0, 'tutorial'), (51692, -3, 4, 0, 'tutorial'),
+(51693, 3, -4, 0, 'tutorial'), (51694, -3, -4, 0, 'tutorial'),
+(51695, 4, 3, 0, 'tutorial'), (51696, -4, 3, 0, 'tutorial'),
+(51697, 4, -3, 0, 'tutorial'), (51698, -4, -3, 0, 'tutorial'),
+(51699, 3, 5, 0, 'tutorial'), (51700, -3, 5, 0, 'tutorial'),
+(51701, 3, -5, 0, 'tutorial'), (51702, -3, -5, 0, 'tutorial'),
+(51703, 5, 3, 0, 'tutorial'), (51704, -5, 3, 0, 'tutorial'),
+(51705, 5, -3, 0, 'tutorial'), (51706, -5, -3, 0, 'tutorial'),
+(51707, 4, 4, 0, 'tutorial'), (51708, -4, -4, 0, 'tutorial'),
+(51709, 4, -4, 0, 'tutorial'), (51710, -4, 4, 0, 'tutorial'),
+(51711, 5, 4, 0, 'tutorial'), (51712, -5, 4, 0, 'tutorial'),
+(51713, 5, -4, 0, 'tutorial'), (51714, -5, -4, 0, 'tutorial'),
+(51715, 4, 5, 0, 'tutorial'), (51716, -4, 5, 0, 'tutorial'),
+(51717, 4, -5, 0, 'tutorial'), (51718, -4, -5, 0, 'tutorial'),
+(51719, 5, 5, 0, 'tutorial'), (51720, -5, -5, 0, 'tutorial'),
+(51721, 5, -5, 0, 'tutorial'), (51722, -5, 5, 0, 'tutorial'),
 -- Waiting room coordinates for new tutorial system
 (60000, 0, 0, 0, 'waiting_room'),
 (60001, 1, 0, 0, 'waiting_room'),
@@ -150,12 +187,12 @@ VALUES (103, UUID(), '29.0', TRUE, 'first_time', '1.0.0', 500);
 DELETE FROM players_ips WHERE failed > 0;
 
 -- Populate tutorial template map (boundary walls, resources, NPCs)
--- Boundary walls (North, South, East, West borders of 7x7 grid: -3 to 3)
+-- Boundary walls (North, South, East, West borders of 11x11 grid: -5 to 5)
 INSERT IGNORE INTO map_walls (name, coords_id, damages)
 SELECT 'mur_pierre', c.id, 0
 FROM coords c
 WHERE c.plan = 'tutorial' AND c.z = 0
-  AND ((c.x = -3 OR c.x = 3) OR (c.y = -3 OR c.y = 3));
+  AND ((c.x = -5 OR c.x = 5) OR (c.y = -5 OR c.y = 5));
 
 -- Gatherable tree for resource tutorial at (0, 1)
 INSERT IGNORE INTO map_walls (name, coords_id, damages)
