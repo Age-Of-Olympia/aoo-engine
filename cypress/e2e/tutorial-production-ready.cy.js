@@ -19,7 +19,7 @@ describe('Tutorial System - Production Readiness Test', () => {
     name: `CypressTest${randomName}`,
     password: 'testpass123',
     email: `cypresstest${timestamp}@test.com`,
-    race: 'nf',  /* Nain (Dwarf) - has different MVT than hs */
+    race: 'nain',  /* Nain (Dwarf) - has different MVT than hs */
     playerId: null  /* Will be set after registration */
   };
 
@@ -291,12 +291,21 @@ describe('Tutorial System - Production Readiness Test', () => {
 
     /* Deplete all movements by clicking until no .case.go tiles remain */
     /* Works for any race - continues until MVT is fully depleted */
+    let movementAttempts = 0;
+    const MAX_MOVEMENT_ATTEMPTS = 15;  /* Safety limit */
+
     function depleteOneMovement() {
+      movementAttempts++;
+      if (movementAttempts > MAX_MOVEMENT_ATTEMPTS) {
+        cy.log(`⚠️ Reached max attempts (${MAX_MOVEMENT_ATTEMPTS}), stopping`);
+        return;
+      }
+
       cy.wait(1500);
       cy.get('body').then(($body) => {
         const goTiles = $body.find('.case.go:visible');
         if (goTiles.length > 0) {
-          cy.log(`Found ${goTiles.length} movement tiles`);
+          cy.log(`Attempt ${movementAttempts}: Found ${goTiles.length} movement tiles`);
           /* Click first movement tile */
           cy.get('.case.go:visible').first().click({force: true});
           cy.wait(1200);
@@ -310,20 +319,20 @@ describe('Tutorial System - Production Readiness Test', () => {
               /* Click the visible confirmation element */
               const selector = rectVisible ? '#go-rect' : '#go-img';
               cy.get(selector).click({force: true});
-              cy.log('Clicked confirmation, waiting for reload');
+              cy.log('✓ Confirmation clicked, waiting for reload');
               cy.wait(4500);  /* Wait for page reload */
 
-              /* Recursively continue depleting */
+              /* Continue depleting */
               depleteOneMovement();
             } else {
-              cy.log('⚠️ No confirmation found, retrying');
-              cy.wait(2000);
-              /* Try again - maybe confirmation appeared */
+              cy.log('⚠️ No confirmation found - maybe already moved');
+              cy.wait(1500);
+              /* Try next movement */
               depleteOneMovement();
             }
           });
         } else {
-          cy.log('✅ All movements depleted - no more .case.go tiles');
+          cy.log(`✅ All movements depleted after ${movementAttempts} attempts`);
         }
       });
     }
