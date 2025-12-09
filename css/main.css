@@ -1199,7 +1199,7 @@ article.pnj {
 }
 .tr-forum td {
     min-height: 1px;/*fix height hack*/
-    height: 1px;/*fix height hack*/
+    height: auto;/*fix height hack*/
 }
 .tr-forum td a {
     color: black;
