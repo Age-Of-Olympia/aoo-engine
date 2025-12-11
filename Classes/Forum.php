@@ -25,18 +25,19 @@ class Forum{
 
             $topJson->views = (object)array();
         }
-
+        $playerId = $_SESSION['playerId'];
         if(is_array($topJson->views) && array_is_list($topJson->views)){ //migrate
             $oldViews = $topJson->views;
             $topJson->views = (object)array();
             foreach($oldViews as $playerIdMigrate){
                 $topJson->views->{$playerIdMigrate} = $topJson->last->time;
             }
+        }else{
+            if(isset($topJson->views->$playerId) && $topJson->views->$playerId >= $lastRenderedPost){
+                return false;
+            }
         }
-        $playerId = $_SESSION['playerId'];
-        if(isset($topJson->views->$playerId) && $topJson->views->$playerId >= $lastRenderedPost){
-            return false;
-        }
+       
            
         $topJson->views->{$playerId} = $lastRenderedPost;
 
