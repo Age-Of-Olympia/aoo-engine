@@ -24,14 +24,9 @@ $(document).ready(function(){
 
         if(action == 'drop' || action == "store" || action == "newAsk" || action == "newBid"){
 
-            n = prompt('Combien?', window.n);
+            n = parseInt(prompt('Combien?', window.n));
 
-            if(n == null){
-
-                return false;
-            }
-            if(n == '' || n < 1 || n > window.n){
-
+            if(isNaN(n) || n < 1 || n > window.n){
                 alert('Nombre invalide!');
                 return false;
             }

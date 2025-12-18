@@ -2,8 +2,10 @@
 use Classes\Db;
 use Classes\Item;
 
+// get cases where there is only one item on the ground
 $sql = '
 SELECT
+SUM(map_items.n) as total,
 map_items.id AS id,
 map_items.item_id,
 map_items.coords_id,
@@ -14,8 +16,9 @@ INNER JOIN
 coords
 ON
 coords_id = coords.id
-WHERE
-n = 1
+WHERE n=1
+GROUP BY map_items.coords_id
+HAVING total =1
 ';
 
 $db = new Db();

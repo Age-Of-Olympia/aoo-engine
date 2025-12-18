@@ -18,11 +18,15 @@ class InventoryService
             echo '<div id="data">Objet Maudit!</div>';
             exit();
         }
+        if (!is_numeric($_POST['n']) || (int)$_POST['n'] < 1) {
+            echo '<div id="data">Mauvais nombre</div>';
+            exit();
+        }
+        $countToDrop=(int)$_POST['n'];
+        $player->drop($item, $countToDrop);
 
-        $player->drop($item, $_POST['n']);
 
-
-        $text = $player->data->name . ' a déposé ' . $item->data->name . ' x' . $_POST['n'] . '.';
+        $text = $player->data->name . ' a déposé ' . $item->data->name . ' x' . $countToDrop . '.';
 
         Log::put($player, $player, $text, type: 'use');
     }

@@ -105,7 +105,7 @@ ORDER BY id DESC
 ';
 
 $res = $db->exe($sql, array($coordsId, $coordsId));
-
+$db->beginTransaction();
 if($res->num_rows){
 
 
@@ -310,5 +310,5 @@ if(!$player->have_option('incognitoMode'))
     }
     Element::put($footstep, $player->data->coords_id, $footstepDuration);
 }
-
+$db->commit();
 $player->go($goCoords);
