@@ -36,8 +36,16 @@
         window.tutorialUI.init();
 
         // Set up next button handler (delegated event)
-        $(document).on('click', '#tutorial-next', function() {
-            console.log('[Tutorial] Next button clicked');
+        $(document).on('click', '#tutorial-next', function(e) {
+            if (!window.tutorialUI) {
+                console.error('[Tutorial] tutorialUI not initialized');
+                return;
+            }
+            if (!window.tutorialUI.currentSession) {
+                console.error('[Tutorial] No active session');
+                return;
+            }
+
             // Pass element_clicked for ui_interaction validation
             // Pass true for showFeedbackOnFailure to show hint when validation fails
             window.tutorialUI.next({ element_clicked: 'tutorial_next' }, false, true);
