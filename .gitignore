@@ -27,3 +27,6 @@ db/migrations/
 
 # Datas symlink or directory
 datas
+
+# Claude Code local settings
+.claude/
