@@ -81,13 +81,13 @@ COPY --chown=${UID}:${GID} config/docker-php-ext-gd.ini /usr/local/etc/php/conf.
 # Set the working directory to /var/www/html
 WORKDIR /var/www/html
 
-COPY ../. .
+#COPY ../. .
+
+# Install Node.js dependencies and Cypress binary
+RUN npx cypress install
 
 USER ${UID}:${GID}
 
 ENV HOME=/home/vscode
-
-# Install Node.js dependencies and Cypress binary
-RUN npm ci && npx cypress install
 
 ENTRYPOINT ["./entrypoint.sh"]
