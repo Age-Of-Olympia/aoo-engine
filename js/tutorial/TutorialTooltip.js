@@ -63,13 +63,28 @@ class TutorialTooltip {
                     // Show button if it exists, or create it if it doesn't
                     if ($nextButton.length > 0) {
                         $nextButton.show();
+                        // Re-attach click handler in case it was lost
+                        $nextButton.off('click').on('click', function(e) {
+                            e.stopPropagation();
+                            if (window.tutorialUI && window.tutorialUI.currentSession) {
+                                window.tutorialUI.next({ element_clicked: 'tutorial_next' }, false, true);
+                            }
+                        });
                     } else {
                         // Button doesn't exist, create it
-                        this.$tooltip.find('.tooltip-content').append(`
+                        const $newButton = $(`
                             <button id="tutorial-next" class="btn-tutorial-primary">
                                 Suivant →
                             </button>
                         `);
+                        // Add direct click handler (backup for delegated handler)
+                        $newButton.on('click', function(e) {
+                            e.stopPropagation();
+                            if (window.tutorialUI && window.tutorialUI.currentSession) {
+                                window.tutorialUI.next({ element_clicked: 'tutorial_next' }, false, true);
+                            }
+                        });
+                        this.$tooltip.find('.tooltip-content').append($newButton);
                     }
                 }
 
@@ -166,6 +181,14 @@ class TutorialTooltip {
             `);
 
             $('body').append(this.$tooltip);
+
+            // Add direct click handler to the Next button (backup for delegated handler)
+            this.$tooltip.find('#tutorial-next').on('click', function(e) {
+                e.stopPropagation();
+                if (window.tutorialUI && window.tutorialUI.currentSession) {
+                    window.tutorialUI.next({ element_clicked: 'tutorial_next' }, false, true);
+                }
+            });
 
             // Store current target and position for repositioning
             this.currentTargetSelector = targetSelector;
