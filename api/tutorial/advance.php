@@ -88,14 +88,14 @@ try {
                 'pi_earned' => $result['pi_earned'] ?? 0,
                 'final_level' => $result['final_level'] ?? 1,
                 'is_replay' => $result['is_replay'] ?? false,
-                'step_data' => $result['final_step_data'] ?? null  // Include final step config for redirect_delay
+                'step_data' => $result['final_step_data'] ?? null
             ]);
         } else {
             // Return next step data
             echo json_encode([
                 'success' => true,
-                'current_step' => $result['current_step'],  // step_id (string)
-                'current_step_position' => $result['current_step_position'] ?? 1,  // display position (int)
+                'current_step' => $result['current_step'],
+                'current_step_position' => $result['current_step_position'] ?? 1,
                 'total_steps' => $result['total_steps'],
                 'xp_earned' => $result['xp_earned'],
                 'level' => $result['level'],
@@ -115,11 +115,9 @@ try {
 
 } catch (Exception $e) {
     error_log("Tutorial advance error: " . $e->getMessage());
-    error_log("Tutorial advance stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Internal server error',
-        'debug' => $e->getMessage()
+        'error' => 'Internal server error'
     ]);
 }
