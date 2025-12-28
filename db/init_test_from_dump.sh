@@ -39,7 +39,9 @@ INSERT IGNORE INTO races SELECT * FROM $SOURCE_DB.races;
 INSERT IGNORE INTO items SELECT * FROM $SOURCE_DB.items;
 INSERT IGNORE INTO actions SELECT * FROM $SOURCE_DB.actions;
 INSERT IGNORE INTO action_outcomes SELECT * FROM $SOURCE_DB.action_outcomes;
+INSERT IGNORE INTO outcome_instructions SELECT * FROM $SOURCE_DB.outcome_instructions;
 INSERT IGNORE INTO action_conditions SELECT * FROM $SOURCE_DB.action_conditions;
+INSERT IGNORE INTO race_actions SELECT * FROM $SOURCE_DB.race_actions;
 
 -- Copy tutorial configuration
 INSERT IGNORE INTO tutorial_steps SELECT * FROM $SOURCE_DB.tutorial_steps;
@@ -156,25 +158,27 @@ INSERT IGNORE INTO coords (id, x, y, z, plan) VALUES
 (60007, -1, 1, 0, 'waiting_room'),
 (60008, -1, -1, 0, 'waiting_room');
 
--- Password hashes:
--- "test" = \$2y\$10\$ov5dVltdvc5avtBVC8GJFuUWv9le0kbPCiyjTNNnmd86VHjuXWvwu
--- "testpass" = \$2y\$10\$WZnuZBJr8H5rxFasPScpGe93yFmbbD4NJS9QATVxPs2JBS4Hcwjz6
--- Complex password for workflow test = \$2y\$10\$kw/kfYX8diry1vsFDjJvtelh7Fxl4rQ09q.FDNHBN/qcQtXCdGEqS
+-- Password hashes (regenerate with: php -r "echo password_hash('test', PASSWORD_DEFAULT);")
+-- "test" = password_hash('test', PASSWORD_DEFAULT) - used for TestAdmin
+-- "testpass" = password_hash('testpass', PASSWORD_DEFAULT) - used for other test players
+-- Complex password for workflow test (legacy)
 
 -- Create test characters for Cypress tests
-INSERT IGNORE INTO players (id, name, race, psw, mail, plain_mail, nextTurnTime, coords_id, faction, avatar, portrait, player_type, display_id) VALUES
+-- Valid races: nain, geant, olympien, hs, elfe, lutin, humain, dieu, ame
+INSERT INTO players (id, name, race, psw, mail, plain_mail, nextTurnTime, coords_id, faction, avatar, portrait, player_type, display_id) VALUES
 -- Workflow test player (ID 7, password: D0Oy7GF6ixBEo#>1RE{rG%9/5rk\\d*wk]**z\`\$pI)
-(7, 'TestWorkflowPlayer', 'hs', '\$2y\$10\$kw/kfYX8diry1vsFDjJvtelh7Fxl4rQ09q.FDNHBN/qcQtXCdGEqS', 'workflow@test.com', 'workflow@test.com', UNIX_TIMESTAMP(), 1, 'hs', 'hs-avatar.png', 'hs-portrait.png', 'real', 1),
+(7, 'TestWorkflowPlayer', 'humain', '\$2y\$10\$kw/kfYX8diry1vsFDjJvtelh7Fxl4rQ09q.FDNHBN/qcQtXCdGEqS', 'workflow@test.com', 'workflow@test.com', UNIX_TIMESTAMP(), 1, 'zeus', 'img/avatars/humain/1.png', 'img/portraits/humain/1.jpeg', 'real', 1),
 -- Admin account (password: test)
-(100, 'TestAdmin', 'nf', '\$2y\$10\$ov5dVltdvc5avtBVC8GJFuUWv9le0kbPCiyjTNNnmd86VHjuXWvwu', 'admin@test.com', 'admin@test.com', UNIX_TIMESTAMP(), 1, 'nf', 'nf-avatar.png', 'nf-portrait.png', 'real', 2),
+(100, 'TestAdmin', 'nain', '\$2y\$10\$N3yzGhEWxAilNdXIA42dKOwqk1CHgSlAhV/DGQJVaVv4RAo1xKfnO', 'admin@test.com', 'admin@test.com', UNIX_TIMESTAMP(), 1, 'hephaestos', 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'real', 2),
 -- Fresh player for tutorial tests (password: testpass)
-(101, 'TestFreshPlayer', 'em', '\$2y\$10\$WZnuZBJr8H5rxFasPScpGe93yFmbbD4NJS9QATVxPs2JBS4Hcwjz6', 'fresh@test.com', 'fresh@test.com', UNIX_TIMESTAMP(), 1, 'em', 'em-avatar.png', 'em-portrait.png', 'real', 3),
+(101, 'TestFreshPlayer', 'elfe', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'fresh@test.com', 'fresh@test.com', UNIX_TIMESTAMP(), 1, 'artemis', 'img/avatars/elfe/1.png', 'img/portraits/elfe/1.jpeg', 'real', 3),
 -- Tutorial started player (password: testpass)
-(102, 'TestTutorialStarted', 'hs', '\$2y\$10\$WZnuZBJr8H5rxFasPScpGe93yFmbbD4NJS9QATVxPs2JBS4Hcwjz6', 'started@test.com', 'started@test.com', UNIX_TIMESTAMP(), 51602, 'hs', 'hs-avatar.png', 'hs-portrait.png', 'real', 4),
+(102, 'TestTutorialStarted', 'humain', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'started@test.com', 'started@test.com', UNIX_TIMESTAMP(), 51602, 'zeus', 'img/avatars/humain/1.png', 'img/portraits/humain/1.jpeg', 'real', 4),
 -- Tutorial completed player (password: testpass)
-(103, 'TestTutorialCompleted', 'nf', '\$2y\$10\$WZnuZBJr8H5rxFasPScpGe93yFmbbD4NJS9QATVxPs2JBS4Hcwjz6', 'completed@test.com', 'completed@test.com', UNIX_TIMESTAMP(), 1, 'nf', 'nf-avatar.png', 'nf-portrait.png', 'real', 5),
+(103, 'TestTutorialCompleted', 'nain', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'completed@test.com', 'completed@test.com', UNIX_TIMESTAMP(), 1, 'hephaestos', 'img/avatars/nain/1.png', 'img/portraits/nain/1.jpeg', 'real', 5),
 -- Tutorial skipped player (password: testpass)
-(104, 'TestTutorialSkipped', 'em', '\$2y\$10\$WZnuZBJr8H5rxFasPScpGe93yFmbbD4NJS9QATVxPs2JBS4Hcwjz6', 'skipped@test.com', 'skipped@test.com', UNIX_TIMESTAMP(), 1, 'em', 'em-avatar.png', 'em-portrait.png', 'real', 6);
+(104, 'TestTutorialSkipped', 'elfe', '\$2y\$10\$LJiJdZasGC56wvjiHyIl7./pqnAaoPQcFqRM6PYXGJ745wQX33jN2', 'skipped@test.com', 'skipped@test.com', UNIX_TIMESTAMP(), 1, 'artemis', 'img/avatars/elfe/1.png', 'img/portraits/elfe/1.jpeg', 'real', 6)
+ON DUPLICATE KEY UPDATE psw = VALUES(psw), race = VALUES(race);
 
 -- Set admin option for TestAdmin
 INSERT IGNORE INTO players_options (player_id, name) VALUES (100, 'isAdmin');
