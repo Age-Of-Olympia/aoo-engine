@@ -28,10 +28,16 @@ class ResourceOutcomeInstruction extends OutcomeInstruction
         $res = ResourceService::findResourcesAround($actor);
         while($row = $res->fetch_object()){
 
-            if(array_key_exists($biomes[$row->name], $ressources))
-                $ressources[$biomes[$row->name]] += $row->max;
+            /* Skip if this wall type has no resource defined in biomes */
+            if(!isset($biomes[$row->name])){
+                continue;
+            }
+
+            $resourceName = $biomes[$row->name];
+            if(array_key_exists($resourceName, $ressources))
+                $ressources[$resourceName] += $row->max;
             else
-                $ressources[$biomes[$row->name]] = $row->max;
+                $ressources[$resourceName] = $row->max;
 
         }
 
