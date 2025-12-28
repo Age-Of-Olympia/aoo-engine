@@ -17,6 +17,11 @@ if(!isset($_POST['coords'])){
 
 $coords = explode(',', $_POST['coords']);
 
+// Validate coords array has both x and y
+if(count($coords) < 2){
+    exit('error coords format');
+}
+
 // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
 $playerId = TutorialHelper::getActivePlayerId();
 

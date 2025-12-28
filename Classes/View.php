@@ -393,6 +393,7 @@ class View{
                                 height="50"
 
                                 data-table="'. $row->whichTable .'"
+                                data-coords="'. $coords->x .','. $coords->y .'"
 
                                 x="'. floor($x) .'"
                                 y="'. floor($y) .'"
@@ -438,6 +439,9 @@ class View{
                             width="50"
                             height="50"
 
+                            data-table="'. $row->whichTable .'"
+                            data-coords="'. $coords->x .','. $coords->y .'"
+
                             x="'. floor($x) .'"
                             y="'. floor($y) .'"
 
@@ -458,6 +462,7 @@ class View{
                         height="50"
 
                         data-table="'. $row->whichTable .'"
+                        data-coords="'. $coords->x .','. $coords->y .'"
 
                         x="'. floor($x) .'"
                         y="'. floor($y) .'"
