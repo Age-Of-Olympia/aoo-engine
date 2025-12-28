@@ -206,7 +206,7 @@ WHERE c.plan = 'tutorial' AND c.x = 0 AND c.y = 1 AND c.z = 0;
 
 -- Add Gaïa NPC (tutorial guide) at (1, 0)
 INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, xp, pi, energie, psw, mail, plain_mail, avatar, portrait, text)
-SELECT -3, 'npc', 100, 'Gaïa', c.id, 'nf', 1000, 0, 100, '', '', '', 'img/avatars/nf/default.webp', 'img/portraits/nf/1.jpeg', 'Guide du tutoriel'
+SELECT -999999, 'npc', 999999, 'Gaïa', c.id, 'dieu', 0, 0, 100, '', '', '', 'img/avatars/dieu/25.png', 'img/portraits/dieu/25.jpeg', 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.'
 FROM coords c
 WHERE c.plan = 'tutorial' AND c.x = 1 AND c.y = 0 AND c.z = 0;
 TESTDATA
