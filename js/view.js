@@ -112,6 +112,14 @@ $(document).ready(function(){
 
         var coords = $(this).data('coords');
 
+        /* Validate coords before sending */
+        if (!coords || typeof coords !== 'string' || !coords.includes(',')) {
+            console.error('Invalid coords for movement:', coords);
+            alert('Erreur: coordonnées invalides');
+            document.location.reload();
+            return false;
+        }
+
         $('#go-rect').off('click');
         $('#go-img').attr('href', 'img/ui/view/gear.webp');
         // $('#view').css({'filter':'grayscale(1)', 'transition':'filter 0.5s'});
