@@ -16,7 +16,7 @@ class ActionMetadataListener {
     }
 
     private function updateDiscriminatorMap(ClassMetadata $metadata) {
-        $directory = 'src/Action'; // Chemin vers le répertoire des actions
+        $directory = __DIR__ . '/../Action'; // Absolute path to Action directory
         foreach (glob("$directory/*Action.php") as $file) {
             $className = basename($file, '.php');
             $fullClassName = "App\\Action\\$className";
