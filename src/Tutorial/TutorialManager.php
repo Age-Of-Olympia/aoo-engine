@@ -409,6 +409,18 @@ class TutorialManager
                 'success' => false,
                 'error' => $e->getMessage()
             ];
+        } catch (\Exception $e) {
+            error_log("[TutorialManager] Exception: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Internal error: ' . $e->getMessage()
+            ];
+        } catch (\Error $e) {
+            error_log("[TutorialManager] PHP Error: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'PHP error: ' . $e->getMessage()
+            ];
         }
     }
 
@@ -446,15 +458,20 @@ class TutorialManager
             $realPlayer->end_option('invisibleMode');
 
             // Initialize player with race actions
-            $realPlayer->get_data();
-            $raceJson = json()->decode('races', $realPlayer->data->race);
+            try {
+                $realPlayer->get_data();
+                $raceJson = json()->decode('races', $realPlayer->data->race);
 
-            // Add all race-specific actions (keep tuto/attaquer for legacy compatibility)
-            if ($raceJson && !empty($raceJson->actions)) {
-                foreach($raceJson->actions as $actionName) {
-                    $realPlayer->add_action($actionName);
+                // Add all race-specific actions (keep tuto/attaquer for legacy compatibility)
+                if ($raceJson && !empty($raceJson->actions)) {
+                    foreach($raceJson->actions as $actionName) {
+                        $realPlayer->add_action($actionName);
+                    }
+                    error_log("[Tutorial Complete] Player {$realPlayerId} initialized with " . count($raceJson->actions) . " actions for race {$realPlayer->data->race}");
                 }
-                error_log("[Tutorial Complete] Player {$realPlayerId} initialized with " . count($raceJson->actions) . " actions for race {$realPlayer->data->race}");
+            } catch (\Exception $e) {
+                // Log but don't fail tutorial completion if action initialization has issues
+                error_log("[Tutorial Complete] Warning: Failed to initialize race actions for player {$realPlayerId}: " . $e->getMessage());
             }
         }
 
