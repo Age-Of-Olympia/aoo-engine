@@ -16,7 +16,7 @@ class OutcomeInstructionMetadataListener {
     }
 
     private function updateDiscriminatorMap(ClassMetadata $metadata) {
-        $directory = 'src/Action/OutcomeInstruction'; // Chemin vers le répertoire des OutcomeInstructions
+        $directory = __DIR__ . '/../Action/OutcomeInstruction'; // Absolute path to OutcomeInstruction directory
         foreach (glob("$directory/*OutcomeInstruction.php") as $file) {
             $className = basename($file, '.php');
             $fullClassName = "App\\Action\\OutcomeInstruction\\$className";
