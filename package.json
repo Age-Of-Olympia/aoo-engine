@@ -4,6 +4,7 @@
     "puppeteer": "^24.30.0"
   },
   "devDependencies": {
-    "cypress": "^15.7.0"
+    "cypress": "^15.7.0",
+    "mysql2": "^3.15.3"
   }
 }
