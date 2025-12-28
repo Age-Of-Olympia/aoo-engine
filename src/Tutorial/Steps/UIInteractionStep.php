@@ -20,6 +20,7 @@ class UIInteractionStep extends AbstractStep
      * - ui_button_clicked: Check if a specific button was clicked
      * - ui_setting_changed: Check if a setting was toggled
      * - ui_element_hidden: Check if an element was hidden/removed
+     * - ui_element_visible: Check if an element became visible
      * - ui_interaction: Check if a specific element was clicked (generic)
      */
     public function validate(array $data): bool
@@ -71,6 +72,16 @@ class UIInteractionStep extends AbstractStep
 
                 return $requiredElement && $element === $requiredElement && $isHidden === true;
 
+            case 'ui_element_visible':
+                // Check that an element became visible
+                $requiredElement = $this->config['validation_params']['element'] ?? null;
+                $element = $data['element'] ?? null;
+                $isVisible = $data['is_visible'] ?? false;
+
+                error_log("[UIInteractionStep] Validating ui_element_visible: required={$requiredElement}, element={$element}, is_visible=" . ($isVisible ? 'true' : 'false'));
+
+                return $requiredElement && $element === $requiredElement && $isVisible === true;
+
             case 'ui_interaction':
                 // Generic UI interaction - check if a specific element was clicked
                 $requiredElement = $this->config['validation_params']['element_clicked'] ?? null;
@@ -104,6 +115,10 @@ class UIInteractionStep extends AbstractStep
             case 'ui_setting_changed':
                 $setting = $this->config['validation_params']['setting'] ?? 'le paramètre';
                 return "Modifiez {$setting} pour continuer.";
+
+            case 'ui_element_visible':
+                // Use the validation_hint from config if available
+                return $this->config['validation_hint'] ?? "Attendez que l'élément apparaisse.";
 
             case 'ui_interaction':
                 // Use the validation_hint from config if available
