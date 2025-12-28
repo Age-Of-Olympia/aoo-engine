@@ -15,8 +15,8 @@ const baseUrl = process.env.CYPRESS_BASE_URL || (isInsideContainer ? 'http://loc
 module.exports = defineConfig({
   e2e: {
     baseUrl: baseUrl,
-    viewportWidth: 1920,
-    viewportHeight: 1080,
+    viewportWidth: 1280,
+    viewportHeight: 800,
     video: true,
     screenshotOnRunFailure: true,
     screenshotsFolder: `data_tests/cypress/screenshots/${timestamp}`,
@@ -24,7 +24,31 @@ module.exports = defineConfig({
     defaultCommandTimeout: 10000,
     pageLoadTimeout: 30000,
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      const mysql = require('mysql2/promise');
+
+      /* Database query task for validation */
+      on('task', {
+        async queryDatabase({ query, params = [] }) {
+          const connection = await mysql.createConnection({
+            host: 'mariadb-aoo4',
+            user: 'root',
+            password: 'passwordRoot',
+            database: 'aoo4_test',
+            charset: 'utf8mb4'
+          });
+
+          try {
+            const [rows] = await connection.execute(query, params);
+            await connection.end();
+            return rows;
+          } catch (error) {
+            await connection.end();
+            throw error;
+          }
+        }
+      });
+
+      return config;
     },
   },
 });
