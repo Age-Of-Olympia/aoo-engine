@@ -234,12 +234,7 @@ class TutorialUI {
      */
     async next(validationData = {}, skipUIUpdate = false, showFeedbackOnFailure = false) {
         try {
-            console.log('[TutorialUI] Advancing to next step...', {
-                validationData,
-                currentSession: this.currentSession,
-                skipUIUpdate: skipUIUpdate,
-                showFeedbackOnFailure: showFeedbackOnFailure
-            });
+            console.log('[TutorialUI] Advancing from step:', this.currentStep);
 
             if (!this.currentSession) {
                 console.error('[TutorialUI] ERROR: No current session! Cannot advance.');
@@ -261,6 +256,13 @@ class TutorialUI {
 
             if (response.success) {
                 console.log('[TutorialUI] ✅ ADVANCE SUCCESSFUL! New step:', response.current_step);
+
+                /* Check if the COMPLETED step requires page reload for next step (e.g., MVT restoration) */
+                if (this.stepData?.config?.prepare_next_step?.reload === 'true' || this.stepData?.config?.prepare_next_step?.reload === true) {
+                    console.log('[TutorialUI] Completed step requires reload for next step - reloading page...');
+                    window.location.reload();
+                    return true;
+                }
 
                 // Check if the COMPLETED step wanted to auto-close the card
                 if (this.stepData?.config?.auto_close_card && !skipUIUpdate) {
@@ -830,8 +832,8 @@ class TutorialUI {
 
         const validationType = stepData.config?.validation_type;
 
-        // Only setup observers for UI-related validation types
-        const uiValidationTypes = ['ui_panel_opened', 'ui_element_hidden', 'ui_interaction', 'ui_button_clicked'];
+        /* Only setup observers for UI-related validation types */
+        const uiValidationTypes = ['ui_panel_opened', 'ui_element_hidden', 'ui_element_visible', 'ui_interaction', 'ui_button_clicked'];
         if (!uiValidationTypes.includes(validationType)) {
             return;
         }
@@ -850,6 +852,12 @@ class TutorialUI {
             const element = stepData.config?.validation_params?.element;
             if (element) {
                 this.setupElementHiddenObserver(element);
+            }
+        } else if (validationType === 'ui_element_visible') {
+            /* Watch for a specific element to become visible */
+            const selector = stepData.config?.validation_params?.element;
+            if (selector) {
+                this.setupElementVisibleObserver(selector);
             }
         }
     }
@@ -1021,7 +1029,7 @@ class TutorialUI {
             attributeFilter: ['style', 'class']
         });
 
-        // Also observe if element is removed from DOM
+        /* Also observe if element is removed from DOM */
         if (targetElement.parentNode) {
             this.panelObserver.observe(targetElement.parentNode, {
                 childList: true,
@@ -1032,6 +1040,67 @@ class TutorialUI {
     }
 
     /**
+     * Setup observer to watch for a specific element to become visible
+     * Used for ui_element_visible validation type
+     */
+    setupElementVisibleObserver(elementSelector) {
+        console.log('[TutorialUI] Setting up element visible observer for:', elementSelector);
+
+        /* Check immediately if element is already visible */
+        const existingElement = document.querySelector(elementSelector);
+        if (existingElement && $(elementSelector).is(':visible') && this.isActive) {
+            console.log('[TutorialUI] Element already visible, sending validation immediately');
+            window.notifyTutorial('ui_interaction', {
+                element: elementSelector,
+                is_visible: true,
+                timestamp: Date.now()
+            });
+            return;
+        }
+
+        /* Watch for the element to appear and become visible */
+        /* Observe the entire document since the element might be added dynamically */
+        this.elementVisibleObserver = new MutationObserver((mutations) => {
+            const element = document.querySelector(elementSelector);
+            const isVisible = element && $(elementSelector).is(':visible');
+
+            if (isVisible && this.isActive) {
+                console.log('[TutorialUI] Element became visible:', elementSelector);
+
+                /* Send validation */
+                window.notifyTutorial('ui_interaction', {
+                    element: elementSelector,
+                    is_visible: true,
+                    timestamp: Date.now()
+                });
+
+                /* Disconnect observer */
+                if (this.elementVisibleObserver) {
+                    this.elementVisibleObserver.disconnect();
+                    this.elementVisibleObserver = null;
+                }
+            }
+        });
+
+        /* Observe the #ui-card area where action panels are loaded */
+        const uiCard = document.querySelector('#ui-card');
+        if (uiCard) {
+            this.elementVisibleObserver.observe(uiCard, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+        }
+
+        /* Also observe body as fallback */
+        this.elementVisibleObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
+    /**
      * Cleanup all observers
      */
     cleanupObservers() {
@@ -1039,6 +1108,11 @@ class TutorialUI {
             console.log('[TutorialUI] Cleaning up panel observer');
             this.panelObserver.disconnect();
             this.panelObserver = null;
+        }
+        if (this.elementVisibleObserver) {
+            console.log('[TutorialUI] Cleaning up element visible observer');
+            this.elementVisibleObserver.disconnect();
+            this.elementVisibleObserver = null;
         }
     }
 
