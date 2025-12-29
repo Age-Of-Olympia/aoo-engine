@@ -496,7 +496,7 @@ class TutorialUI {
             <div id="tutorial-controls">
                 <div id="tutorial-progress">
                     <div class="progress-header">
-                        <span class="progress-icon">📜</span>
+                        <span class="progress-icon"><i class="ra ra-scroll-unfurled"></i></span>
                         <span class="progress-title">Tutoriel</span>
                     </div>
                     <div class="progress-steps">
@@ -510,13 +510,13 @@ class TutorialUI {
                 </div>
                 <div id="tutorial-xp-bar">
                     <div class="xp-info">
-                        <span class="xp-icon">⚡</span>
+                        <span class="xp-icon"><i class="ra ra-lightning-bolt"></i></span>
                         <span class="xp-text">XP: <span class="xp-value">${this.xpEarned}</span></span>
                     </div>
                 </div>
                 <div class="tutorial-controls-buttons">
                     <button id="tutorial-skip" class="btn-tutorial-secondary">
-                        <span class="btn-icon">❌</span>
+                        <span class="btn-icon"><i class="ra ra-cancel"></i></span>
                         <span class="btn-text">Passer</span>
                     </button>
                 </div>
@@ -1770,24 +1770,24 @@ class TutorialUI {
             <div id="tutorial-complete-modal" class="tutorial-celebration">
                 <div class="modal-content celebration-content">
                     <div class="celebration-header">
-                        <h2>🎉 Tutoriel terminé! 🎉</h2>
-                        <div class="celebration-stars">✨ ⭐ ✨</div>
+                        <h2><i class="ra ra-trophy"></i> Tutoriel terminé! <i class="ra ra-trophy"></i></h2>
+                        <div class="celebration-stars"><i class="ra ra-crown"></i></div>
                     </div>
                     <p class="celebration-message">${response.message || 'Félicitations ! Vous êtes prêt pour l\'aventure !'}</p>
                     <div class="rewards-display">
                         <div class="reward-item">
-                            <span class="reward-icon">⚡</span>
+                            <span class="reward-icon"><i class="ra ra-lightning-bolt"></i></span>
                             <span class="reward-label">XP gagnés</span>
                             <span class="reward-value">${response.xp_earned || 0}</span>
                         </div>
                         <div class="reward-item">
-                            <span class="reward-icon">💎</span>
+                            <span class="reward-icon"><i class="ra ra-gem"></i></span>
                             <span class="reward-label">PI gagnés</span>
                             <span class="reward-value">${response.pi_earned || 0}</span>
                         </div>
                     </div>
                     <button id="tutorial-complete-continue" class="btn-tutorial-primary celebration-btn">
-                        🎮 Commencer l'aventure!
+                        <i class="ra ra-sword"></i> Commencer l'aventure!
                     </button>
                     <p class="auto-redirect-text" id="auto-redirect-text">
                         Redirection automatique dans <span id="redirect-countdown">${redirectDelaySec}</span>s...
