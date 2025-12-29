@@ -73,11 +73,20 @@ ADD COLUMN IF NOT EXISTS icon VARCHAR(50) NOT NULL DEFAULT '' AFTER name;
 ALTER TABLE tutorial_step_ui
 ADD COLUMN IF NOT EXISTS tooltip_offset_x INT DEFAULT 0 COMMENT 'X offset for tooltip' AFTER auto_close_card,
 ADD COLUMN IF NOT EXISTS tooltip_offset_y INT DEFAULT 0 COMMENT 'Y offset for tooltip' AFTER tooltip_offset_x;
+
+-- Fix missing/invalid action icons (restore original values from init_noupdates.sql)
+UPDATE actions SET icon = 'ra-crossed-swords' WHERE name = 'melee';
+UPDATE actions SET icon = 'ra-arrow-cluster' WHERE name = 'distance';
+UPDATE actions SET icon = 'ra-boot-stomp' WHERE name = 'courir';
+UPDATE actions SET icon = 'ra-crowned-heart' WHERE name = 'prier';
+UPDATE actions SET icon = 'ra-nuclear' WHERE name = 'vol_a_la_tire';
+UPDATE actions SET icon = 'ra-bear-trap' WHERE name = 'esquive/cle_de_bras';
+UPDATE actions SET icon = 'ra-archery-target' WHERE name = 'entrainement';
 SCHEMA_FIXES
 
 # Add test data
 echo "👥 Creating test characters..."
-mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" <<TESTDATA
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" --default-character-set=utf8mb4 <<TESTDATA
 -- Create test coordinates
 INSERT IGNORE INTO coords (id, x, y, z, plan) VALUES
 (1, 0, 0, 0, 'gaia'),
@@ -206,7 +215,7 @@ WHERE c.plan = 'tutorial' AND c.x = 0 AND c.y = 1 AND c.z = 0;
 
 -- Add Gaïa NPC (tutorial guide) at (1, 0)
 INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, xp, pi, energie, psw, mail, plain_mail, avatar, portrait, text)
-SELECT -999999, 'npc', 999999, 'Gaïa', c.id, 'dieu', 0, 0, 100, '', '', '', 'img/avatars/dieu/25.png', 'img/portraits/dieu/25.jpeg', 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.'
+SELECT -999999, 'npc', 999999, 'Gaïa', c.id, 'dieu', 0, 0, 100, '', '', '', 'img/avatars/dieu/1.png', 'img/portraits/dieu/1.jpeg', 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.'
 FROM coords c
 WHERE c.plan = 'tutorial' AND c.x = 1 AND c.y = 0 AND c.z = 0;
 TESTDATA
