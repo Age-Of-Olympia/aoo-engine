@@ -405,8 +405,8 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 '' as psw,
                 '' as mail,
                 '' as plain_mail,
-                'img/avatars/dieu/25.png' as avatar,
-                'img/portraits/dieu/25.jpeg' as portrait,
+                'img/avatars/dieu/1.png' as avatar,
+                'img/portraits/dieu/1.jpeg' as portrait,
                 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.' as text
             FROM coords c
             WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 1 AND c.y = 0
