@@ -24,10 +24,11 @@ describe('Tutorial System - Production Readiness Test', () => {
   };
 
   /* Screenshot helper with proper timing */
-  const screenshot = (name, extraWait = 1000) => {
+  const screenshot = (name, extraWait = 1500) => {
     cy.wait(extraWait);
     cy.get('body').should('be.visible');
-    cy.wait(500);
+    /* Wait for any tooltip animations to complete */
+    cy.wait(800);
     cy.screenshot(name, { capture: 'fullPage', overwrite: true });
   };
 
@@ -540,8 +541,33 @@ describe('Tutorial System - Production Readiness Test', () => {
 
     screenshot('21-adjacent-to-tree', 1000);
 
-    /* Steps 16-17 (observe_tree, tree_info) may auto-advance if panel is already open */
-    /* Wait for use_fouiller step which requires actual user action */
+    /* Steps 16-17: Observe Tree and Tree Info
+     * These steps may auto-advance or need manual interaction
+     * Click on tree to open its panel regardless of current step */
+    cy.wait(2000);  /* Wait for walk_to_tree validation to complete */
+
+    /* Click on tree tile to open its panel and see "récoltable" status */
+    cy.log('🌳 Clicking on tree to open panel');
+    cy.get('.case[data-coords="0,1"]').should('be.visible').click();
+    cy.wait(2500);
+    screenshot('22-tree-panel-recoltable', 1000);
+
+    /* Check current step and handle accordingly */
+    cy.window().then((win) => {
+      const currentStep = win.tutorialUI?.currentStep;
+      cy.log(`📍 Current step after tree click: ${currentStep}`);
+
+      if (currentStep === 'tree_info') {
+        screenshot('23-step-tree-info', 500);
+        clickNext();
+      } else if (currentStep === 'observe_tree') {
+        /* Panel should satisfy observe_tree, wait for auto-advance */
+        cy.wait(2000);
+        screenshot('23-step-tree-info-auto', 500);
+        tryClickNext();
+      }
+    });
+
     /* Step 18: Use Fouiller (ACTION, requires action_used) */
     waitForStepRender('use_fouiller');
     cy.wait(1000); /* Wait for observe.js to attach handlers */
@@ -609,26 +635,31 @@ describe('Tutorial System - Production Readiness Test', () => {
     waitForStepRender('walk_to_enemy');
     screenshot('32-step-walk-to-enemy', 1000);
 
-    /* Move toward enemy at (2,1) - same pattern as walking to tree */
-    cy.log('👟 Moving toward enemy at (2,1) using smart pathfinding');
+    /* Move toward enemy at (2,1) - stop when step advances */
+    cy.log('👟 Moving toward enemy at (2,1)');
 
-    /* Movement 1 toward enemy */
+    /* Movement 1 */
     findAvailableMovementTile(2, 1).click({force: true});
     cy.wait(500);
     cy.get('#go-rect, #go-img').first().click({force: true});
     cy.wait(3500);
 
-    /* Movement 2 toward enemy */
-    findAvailableMovementTile(2, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
+    /* Check if step advanced before making another move */
+    cy.window().then((win) => {
+      const currentStep = win.tutorialUI?.currentStep;
+      cy.log(`📍 Current step after move 1: ${currentStep}`);
 
-    /* Movement 3 toward enemy (if needed) */
-    findAvailableMovementTile(2, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
+      if (currentStep === 'walk_to_enemy') {
+        /* Still on walk_to_enemy - need another move */
+        cy.log('👟 Making movement 2');
+        findAvailableMovementTile(2, 1).click({force: true});
+        cy.wait(500);
+        cy.get('#go-rect, #go-img').first().click({force: true});
+        cy.wait(3500);
+      } else {
+        cy.log('✓ Step already advanced - skipping movement 2');
+      }
+    });
 
     screenshot('33-adjacent-to-enemy', 1000);
 
