@@ -14,6 +14,16 @@ use App\Service\CsrfProtectionService;
 $database = new Db();
 $csrf = new CsrfProtectionService();
 
+// Get selected version filter
+$selectedVersion = isset($_GET['version']) ? trim($_GET['version']) : '';
+
+// Fetch available versions from catalog
+$versionsResult = $database->exe("SELECT version, name FROM tutorial_catalog ORDER BY display_order, name");
+$availableVersions = [];
+while ($row = $versionsResult->fetch_assoc()) {
+    $availableVersions[] = $row;
+}
+
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Protection
@@ -54,19 +64,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf->regenerateToken();
 }
 
-// Fetch statistics
+// Fetch statistics (filtered by version if selected)
 $stats = [];
+$versionFilter = $selectedVersion ? " WHERE version = ?" : "";
+$versionParam = $selectedVersion ? [$selectedVersion] : [];
 
 // Total steps
-$result = $database->exe("SELECT COUNT(*) as total FROM tutorial_steps");
+$result = $database->exe("SELECT COUNT(*) as total FROM tutorial_steps" . $versionFilter, $versionParam);
 $stats['total'] = $result->fetch_assoc()['total'];
 
 // Active steps
-$result = $database->exe("SELECT COUNT(*) as active FROM tutorial_steps WHERE is_active = 1");
+$activeFilter = $selectedVersion ? " WHERE is_active = 1 AND version = ?" : " WHERE is_active = 1";
+$result = $database->exe("SELECT COUNT(*) as active FROM tutorial_steps" . $activeFilter, $versionParam);
 $stats['active'] = $result->fetch_assoc()['active'];
 
 // Steps by type
-$result = $database->exe("SELECT step_type, COUNT(*) as count FROM tutorial_steps GROUP BY step_type ORDER BY count DESC");
+$typeFilter = $selectedVersion ? " WHERE version = ?" : "";
+$result = $database->exe("SELECT step_type, COUNT(*) as count FROM tutorial_steps" . $typeFilter . " GROUP BY step_type ORDER BY count DESC", $versionParam);
 $stats['by_type'] = [];
 while ($row = $result->fetch_assoc()) {
     $stats['by_type'][$row['step_type']] = $row['count'];
@@ -82,9 +96,9 @@ $result = $database->exe("
 ");
 $stats['sessions'] = $result->fetch_assoc();
 
-// Fetch all steps
+// Fetch steps (filtered by version if selected)
 $steps = [];
-$result = $database->exe("
+$stepsQuery = "
     SELECT
         ts.id,
         ts.version,
@@ -103,8 +117,13 @@ $result = $database->exe("
     FROM tutorial_steps ts
     LEFT JOIN tutorial_step_ui ui ON ts.id = ui.step_id
     LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
-    ORDER BY ts.step_number
-");
+";
+if ($selectedVersion) {
+    $stepsQuery .= " WHERE ts.version = ?";
+}
+$stepsQuery .= " ORDER BY ts.version, ts.step_number";
+
+$result = $database->exe($stepsQuery, $versionParam);
 
 while ($row = $result->fetch_assoc()) {
     $steps[] = $row;
@@ -265,10 +284,30 @@ ob_start();
         <!-- Steps Panel (Main Content) -->
         <div class="tab-pane fade show active" id="steps-panel" role="tabpanel">
 
+    <!-- Version Filter -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="GET" class="d-flex align-items-center" style="gap: 10px;">
+                <label for="version" style="margin: 0; white-space: nowrap;"><strong>Filtrer par tutoriel:</strong></label>
+                <select name="version" id="version" class="form-control" style="max-width: 300px;" onchange="this.form.submit()">
+                    <option value="">-- Tous les tutoriels --</option>
+                    <?php foreach ($availableVersions as $v): ?>
+                    <option value="<?= htmlspecialchars($v['version']) ?>" <?= $selectedVersion === $v['version'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($v['name']) ?> (<?= htmlspecialchars($v['version']) ?>)
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($selectedVersion): ?>
+                <a href="?" class="btn btn-outline-secondary btn-sm">Effacer filtre</a>
+                <?php endif; ?>
+            </form>
+        </div>
+    </div>
+
     <!-- Steps Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>Tutorial Steps</h2>
+            <h2>Tutorial Steps <?= $selectedVersion ? '(' . htmlspecialchars($selectedVersion) . ')' : '' ?></h2>
             <div class="btn-group">
                 <button type="button" class="btn btn-outline-secondary" id="btn-export-all" title="Export all steps as JSON">
                     <i class="fas fa-upload"></i> Export All
@@ -277,7 +316,7 @@ ob_start();
                     <i class="fas fa-download"></i> Import All
                 </button>
                 <input type="file" id="import-all-file-input" accept=".json" style="display: none;">
-                <a href="tutorial-step-editor.php" class="btn btn-success">
+                <a href="tutorial-step-editor.php<?= $selectedVersion ? '?version=' . urlencode($selectedVersion) : '' ?>" class="btn btn-success">
                     <i class="fas fa-plus"></i> Add New Step
                 </a>
             </div>
@@ -288,6 +327,7 @@ ob_start();
                     <thead>
                         <tr>
                             <th>#</th>
+                            <?php if (!$selectedVersion): ?><th>Version</th><?php endif; ?>
                             <th>Step ID</th>
                             <th>Next Step</th>
                             <th>Title</th>
@@ -304,6 +344,9 @@ ob_start();
                         <?php foreach ($steps as $step): ?>
                             <tr class="<?= $step['is_active'] ? '' : 'table-secondary' ?>">
                                 <td><?=$step['step_number']?></td>
+                                <?php if (!$selectedVersion): ?>
+                                <td><code><?= htmlspecialchars($step['version']) ?></code></td>
+                                <?php endif; ?>
                                 <td>
                                     <code><?=$step['step_id'] ?? '-'?></code>
                                 </td>
