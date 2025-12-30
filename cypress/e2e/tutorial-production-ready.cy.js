@@ -15,11 +15,9 @@ describe('Tutorial System - Production Readiness Test', () => {
   const uniqueNames = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
   const randomName = uniqueNames[Math.floor(Math.random() * uniqueNames.length)];
   const timestamp = Date.now();
-  /* Race-specific max movements (from race JSON files) */
-  const RACE_MAX_MVT = {
-    nain: 4,
-    elfe: 5,
-  };
+
+  /* Race data fetched from API (populated in before hook) */
+  let raceData = { mvt: 4 }; /* Default fallback */
 
   const TEST_ACCOUNT = {
     name: `CypressTest${randomName}`,
@@ -29,8 +27,18 @@ describe('Tutorial System - Production Readiness Test', () => {
     playerId: null  /* Will be set after registration */
   };
 
-  /* Get max movements for the selected race */
-  const getMaxMvt = () => RACE_MAX_MVT[TEST_ACCOUNT.race] || 4;
+  /* Get max movements for the selected race (from API data) */
+  const getMaxMvt = () => raceData.mvt;
+
+  /* Fetch race data from API before tests run */
+  before(() => {
+    cy.request(`/api/races/get.php?name=${TEST_ACCOUNT.race}`).then((response) => {
+      expect(response.status).to.eq(200);
+      expect(response.body.success).to.be.true;
+      raceData = response.body.race;
+      cy.log(`🎭 Race: ${raceData.name}, Max MVT: ${raceData.mvt}`);
+    });
+  });
 
   /* Screenshot helper with proper timing */
   const screenshot = (name, extraWait = 1500) => {
