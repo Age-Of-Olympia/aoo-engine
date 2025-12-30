@@ -48,11 +48,27 @@ Admin console: Press `²` key when logged in, or use the settings menu button.
 
 For end-to-end testing with Cypress, see the comprehensive guide: **[docs/cypress-testing-guide.md](docs/cypress-testing-guide.md)**
 
-**Quick reference**:
-- **CRITICAL**: Always use a SINGLE `it()` block for authenticated flows (Cypress resets session between multiple `it()` blocks, causing blank screenshots)
+**Quick Start** (from inside devcontainer):
+```bash
+# Reset database and run tutorial test
+/var/www/html/scripts/testing/reset_test_database.sh && \
+CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
+  --spec "cypress/e2e/tutorial-production-ready.cy.js" \
+  --browser electron
+
+# Test with different race (nain=4 MVT, elfe=5 MVT, hs=6 MVT)
+CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
+  --spec "cypress/e2e/tutorial-production-ready.cy.js" \
+  --env race=elfe \
+  --browser electron
+```
+
+**Key points**:
+- **CRITICAL**: Always use a SINGLE `it()` block for authenticated flows (Cypress resets session between blocks)
 - Reset test database before each run: `/var/www/html/scripts/testing/reset_test_database.sh`
-- Test database: `aoo4_test` (4 pre-configured test characters)
-- Working example: `cypress/e2e/tutorial-simple-test.cy.js`
+- Test database: `aoo4_test` (5 pre-configured test characters)
+- Full test: `cypress/e2e/tutorial-production-ready.cy.js`
+- Simple example: `cypress/e2e/tutorial-simple-test.cy.js`
 
 ## Build, Test & Quality Commands
 
@@ -812,6 +828,24 @@ $player = new Player($activePlayerId);
 4. Ensure walls exist in `map_walls` with `damages: -1` (récoltable)
 5. Validate with `adjacent_to_position` instead of exact position
 6. Use multi-step flow: move → inspect → gather → check inventory
+
+**Race-Adaptive Features**:
+
+The tutorial adapts to the player's race for movement points:
+
+| Race | Max MVT |
+|------|---------|
+| Nain | 4 |
+| Elfe | 5 |
+| Homme-Sauvage | 6 |
+
+- **`{max_mvt}` placeholder**: Use in step text to display race-specific movement count
+  - Example: `"Vous avez {max_mvt} mouvements"` → "Vous avez 4 mouvements" (for Nain)
+- **`-1` for race max**: In `tutorial_step_prerequisites.mvt_required`, use `-1` to mean "use race max"
+- **RaceService**: Use `$raceService->getRaceMaxMvt($raceName)` to get race MVT
+- **Race API**: `GET /api/races/get.php?name=nain` returns race stats (mvt, pv, pa, bgColor)
+
+**Tutorial Documentation**: See [docs/tutorial-system-overview.md](docs/tutorial-system-overview.md) for comprehensive documentation.
 
 ### Important Database Tables
 
