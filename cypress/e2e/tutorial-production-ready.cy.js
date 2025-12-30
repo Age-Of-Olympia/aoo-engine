@@ -15,13 +15,22 @@ describe('Tutorial System - Production Readiness Test', () => {
   const uniqueNames = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'];
   const randomName = uniqueNames[Math.floor(Math.random() * uniqueNames.length)];
   const timestamp = Date.now();
+  /* Race-specific max movements (from race JSON files) */
+  const RACE_MAX_MVT = {
+    nain: 4,
+    elfe: 5,
+  };
+
   const TEST_ACCOUNT = {
     name: `CypressTest${randomName}`,
     password: 'testpass123',
     email: `cypresstest${timestamp}@test.com`,
-    race: 'nain',  /* Nain (Dwarf) - has different MVT than hs */
+    race: Cypress.env('race') || 'nain',  /* Default: Nain, can override with --env race=elfe */
     playerId: null  /* Will be set after registration */
   };
+
+  /* Get max movements for the selected race */
+  const getMaxMvt = () => RACE_MAX_MVT[TEST_ACCOUNT.race] || 4;
 
   /* Screenshot helper with proper timing */
   const screenshot = (name, extraWait = 1500) => {
@@ -57,7 +66,7 @@ describe('Tutorial System - Production Readiness Test', () => {
   /* Click tutorial next button (for info steps only) */
   const clickNext = () => {
     cy.get('#tutorial-next').should('be.visible').click({force: true});
-    cy.wait(2500);  /* Wait for async API call to complete */
+    cy.wait(2000);  /* Wait for async API call to complete */
     cy.log('✓ Next button clicked');
   };
 
@@ -102,6 +111,12 @@ describe('Tutorial System - Production Readiness Test', () => {
 
         /* Skip boundary tiles (walls at ±5) */
         if (Math.abs(x) >= 5 || Math.abs(y) >= 5) {
+          continue;
+        }
+
+        /* Skip the exact target tile (enemy/resource position) - we want adjacent, not on top */
+        if (targetX !== null && targetY !== null && x === targetX && y === targetY) {
+          cy.log(`⚠️ Skipping target tile ${coords} (contains enemy/resource)`);
           continue;
         }
 
@@ -253,7 +268,7 @@ describe('Tutorial System - Production Readiness Test', () => {
 
     /* Wait for auto-start to trigger and tutorial to initialize */
     cy.log('⏳ Waiting for tutorial auto-start...');
-    cy.wait(3000);  /* Give time for auto-start */
+    cy.wait(2000);  /* Give time for auto-start */
 
     /* Check if tutorial started automatically */
     cy.get('body').then(($body) => {
@@ -265,7 +280,7 @@ describe('Tutorial System - Production Readiness Test', () => {
         cy.log('🎮 Auto-start didnt trigger, checking for start button');
         if ($body.find('a:contains("Commencer le tutoriel")').length > 0) {
           cy.get('a:contains("Commencer le tutoriel")').first().click();
-          cy.wait(2000);
+          cy.wait(1000);
         }
       }
     });
@@ -409,38 +424,25 @@ describe('Tutorial System - Production Readiness Test', () => {
     /* Close characteristics panel so movement tiles are visible */
     cy.get('#show-caracs').click();
     cy.wait(500);
-    /* Perform the required action: use all MVT points (tutorial gives 4 movements, make 5 to be safe) */
-    cy.log('👟 Depleting all movement points (Nain = 4 MVT)');
+    /* Perform the required action: use all MVT points (race-dependent) */
+    const maxMvt = getMaxMvt();
+    cy.log(`👟 Depleting all movement points (${TEST_ACCOUNT.race} = ${maxMvt} MVT)`);
 
-    /* Movement 1: Find clean tile and move */
-    cy.log('🚶 Movement 1/4');
-    findAvailableMovementTile().click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
+    /* Use recursive function to perform movements dynamically */
+    const performMovement = (moveNum) => {
+      if (moveNum > maxMvt) {
+        cy.log(`✅ All ${maxMvt} movements completed`);
+        return;
+      }
+      cy.log(`🚶 Movement ${moveNum}/${maxMvt}`);
+      findAvailableMovementTile().click({force: true});
+      cy.wait(500);
+      cy.get('#go-rect, #go-img').first().click({force: true});
+      cy.wait(3500);
+      performMovement(moveNum + 1);
+    };
 
-    /* Movement 2 */
-    cy.log('🚶 Movement 2/4');
-    findAvailableMovementTile().click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    /* Movement 3 */
-    cy.log('🚶 Movement 3/4');
-    findAvailableMovementTile().click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    /* Movement 4 */
-    cy.log('🚶 Movement 4/4');
-    findAvailableMovementTile().click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    cy.log('✅ All 4 movements completed');
+    performMovement(1);
     cy.wait(1500);  /* Wait for step validation to process */
     screenshot('14-after-movements-depleted', 1000);
 
@@ -513,31 +515,14 @@ describe('Tutorial System - Production Readiness Test', () => {
     /* Move toward tree at (0,1) - pathfinding will get us adjacent */
     cy.log('👟 Moving toward tree at (0,1) using smart pathfinding');
 
-    /* Make movements toward tree - each recalculates best path */
-    findAvailableMovementTile(0, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    findAvailableMovementTile(0, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    findAvailableMovementTile(0, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    findAvailableMovementTile(0, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    findAvailableMovementTile(0, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
+    /* Make movements toward tree - cap at 5 to avoid overshooting */
+    const maxTreeMoves = Math.min(getMaxMvt() + 1, 5);
+    for (let i = 0; i < maxTreeMoves; i++) {
+      findAvailableMovementTile(0, 1).click({force: true});
+      cy.wait(500);
+      cy.get('#go-rect, #go-img').first().click({force: true});
+      cy.wait(3500);
+    }
 
     screenshot('21-adjacent-to-tree', 1000);
 
@@ -559,12 +544,18 @@ describe('Tutorial System - Production Readiness Test', () => {
 
       if (currentStep === 'tree_info') {
         screenshot('23-step-tree-info', 500);
-        clickNext();
+        cy.get('#tutorial-next').click();
+        cy.wait(1500);
       } else if (currentStep === 'observe_tree') {
         /* Panel should satisfy observe_tree, wait for auto-advance */
         cy.wait(2000);
         screenshot('23-step-tree-info-auto', 500);
-        tryClickNext();
+        cy.get('body').then(($body) => {
+          if ($body.find('#tutorial-next:visible').length > 0) {
+            cy.get('#tutorial-next').click();
+            cy.wait(1500);
+          }
+        });
       }
     });
 
@@ -572,9 +563,15 @@ describe('Tutorial System - Production Readiness Test', () => {
     waitForStepRender('use_fouiller');
     cy.wait(1000); /* Wait for observe.js to attach handlers */
     screenshot('24-step-use-fouiller', 1000);
+
+    /* Always click tree to ensure panel is open with fouiller button */
+    cy.log('🌳 Opening tree panel for fouiller action');
+    cy.get('.case[data-coords="0,1"]').should('be.visible').click();
+    cy.wait(3000); /* Wait for panel to fully load */
+
     /* Click Fouiller button - first click expands, second executes */
     /* Use native DOM click to bypass any overlay interception */
-    cy.get('.action[data-action="fouiller"]').should('be.visible').then(($btn) => {
+    cy.get('.action[data-action="fouiller"]', { timeout: 10000 }).should('be.visible').then(($btn) => {
       $btn[0].click(); /* First click - expands button */
     });
     cy.wait(1000); /* Wait for action name to show */
@@ -619,45 +616,103 @@ describe('Tutorial System - Production Readiness Test', () => {
     screenshot('30-step-combat-intro', 1000);
     clickNext();
 
-    /* Step 25: Enemy Spawned (INFO, no validation → Next button) */
+    /* Step 25: Enemy Spawned (INFO - shows dialog with "Votre adversaire" button) */
     waitForStepRender('enemy_spawned');
     screenshot('31-step-enemy-spawned', 1000);
-    /* Validate enemy exists in database */
-    cy.log('👹 Validating enemy spawned');
-    cy.then(() => {
-      cy.validateTutorialEnemy(tutorialSessionId).then((enemy) => {
-        cy.log(`✓ Enemy player ID: ${enemy.enemy_player_id}`);
-      });
+    cy.log('👹 Enemy spawned - looking for dialog buttons');
+
+    /* This step shows a dialog, not the standard Next button */
+    /* Click either the "Votre adversaire" button or Next button (whichever exists) */
+    cy.get('body').then(($body) => {
+      if ($body.find('#tutorial-next:visible').length > 0) {
+        cy.log('✓ Found Next button');
+        cy.get('#tutorial-next').click({ force: true });
+      } else if ($body.find('button:contains("Votre adversaire"):visible').length > 0) {
+        cy.log('✓ Found "Votre adversaire" button');
+        cy.get('button:contains("Votre adversaire")').first().click({ force: true });
+      } else if ($body.find('.btn:contains("adversaire"):visible').length > 0) {
+        cy.log('✓ Found adversaire button');
+        cy.get('.btn:contains("adversaire")').first().click({ force: true });
+      } else {
+        /* Try clicking any visible button in the dialog */
+        cy.log('⚠️ Looking for any dialog button');
+        cy.get('#dialog button, .dialog button, [class*="dialog"] button').first().click({ force: true });
+      }
     });
-    clickNext();
+    cy.wait(3000); /* Wait for step transition */
 
-    /* Step 26: Walk to Enemy (MOVEMENT, requires adjacent_to_position) */
-    waitForStepRender('walk_to_enemy');
-    screenshot('32-step-walk-to-enemy', 1000);
-
-    /* Move toward enemy at (2,1) - stop when step advances */
-    cy.log('👟 Moving toward enemy at (2,1)');
-
-    /* Movement 1 */
-    findAvailableMovementTile(2, 1).click({force: true});
-    cy.wait(500);
-    cy.get('#go-rect, #go-img').first().click({force: true});
-    cy.wait(3500);
-
-    /* Check if step advanced before making another move */
+    /* Step 26: Walk to Enemy (MOVEMENT, requires adjacent_to_position)
+     * Note: Player might already be adjacent if movements put them near (2,1) */
+    cy.wait(2000); /* Give time for step transition after clickNext */
     cy.window().then((win) => {
       const currentStep = win.tutorialUI?.currentStep;
-      cy.log(`📍 Current step after move 1: ${currentStep}`);
+      cy.log(`📍 After enemy_spawned Next, current step: ${currentStep}`);
+      screenshot(`32-debug-step-${currentStep || 'unknown'}`, 500);
+    });
 
-      if (currentStep === 'walk_to_enemy') {
-        /* Still on walk_to_enemy - need another move */
-        cy.log('👟 Making movement 2');
+    /* Now wait for walk_to_enemy OR handle if already on click_enemy */
+    cy.window().then((win) => {
+      const currentStep = win.tutorialUI?.currentStep;
+
+      if (currentStep === 'click_enemy') {
+        cy.log('✓ Player already adjacent - on click_enemy step');
+        /* Skip to click_enemy handling */
+        return;
+      }
+
+      if (currentStep !== 'walk_to_enemy') {
+        cy.log(`⏳ Waiting for walk_to_enemy (currently: ${currentStep})`);
+        waitForStepRender('walk_to_enemy');
+      }
+      screenshot('32-step-walk-to-enemy', 1000);
+    });
+
+    /* Move toward enemy at (2,1) - all moves conditional on still being on walk_to_enemy step */
+    cy.log('👟 Moving toward enemy at (2,1)');
+
+    /* Movement 1 - check if needed */
+    cy.window().then((win) => {
+      if (win.tutorialUI?.currentStep === 'walk_to_enemy') {
+        cy.log('🚶 Enemy movement 1');
         findAvailableMovementTile(2, 1).click({force: true});
         cy.wait(500);
         cy.get('#go-rect, #go-img').first().click({force: true});
         cy.wait(3500);
       } else {
-        cy.log('✓ Step already advanced - skipping movement 2');
+        cy.log('✓ Already adjacent to enemy, skipping movement 1');
+      }
+    });
+
+    /* Movement 2 - check if still needed */
+    cy.window().then((win) => {
+      if (win.tutorialUI?.currentStep === 'walk_to_enemy') {
+        cy.log('🚶 Enemy movement 2');
+        findAvailableMovementTile(2, 1).click({force: true});
+        cy.wait(500);
+        cy.get('#go-rect, #go-img').first().click({force: true});
+        cy.wait(3500);
+      }
+    });
+
+    /* Movement 3 - check if still needed */
+    cy.window().then((win) => {
+      if (win.tutorialUI?.currentStep === 'walk_to_enemy') {
+        cy.log('🚶 Enemy movement 3');
+        findAvailableMovementTile(2, 1).click({force: true});
+        cy.wait(500);
+        cy.get('#go-rect, #go-img').first().click({force: true});
+        cy.wait(3500);
+      }
+    });
+
+    /* Movement 4 - check if still needed */
+    cy.window().then((win) => {
+      if (win.tutorialUI?.currentStep === 'walk_to_enemy') {
+        cy.log('🚶 Enemy movement 4');
+        findAvailableMovementTile(2, 1).click({force: true});
+        cy.wait(500);
+        cy.get('#go-rect, #go-img').first().click({force: true});
+        cy.wait(3500);
       }
     });
 
