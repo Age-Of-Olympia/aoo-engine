@@ -163,6 +163,28 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             COMMENT='Tutorial system feature flags and configuration'
         ");
 
+        // Tutorial catalog - manages multiple tutorials
+        $this->addSql("
+            CREATE TABLE IF NOT EXISTS tutorial_catalog (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                version VARCHAR(20) NOT NULL UNIQUE,
+                name VARCHAR(100) NOT NULL,
+                description TEXT,
+                icon VARCHAR(50) DEFAULT 'ra-book',
+                difficulty ENUM('beginner', 'intermediate', 'advanced') DEFAULT 'beginner',
+                estimated_minutes INT DEFAULT 10,
+                prerequisites JSON,
+                plan VARCHAR(50) DEFAULT 'tutorial',
+                spawn_x INT DEFAULT 0,
+                spawn_y INT DEFAULT 0,
+                is_active BOOLEAN DEFAULT TRUE,
+                display_order INT DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            COMMENT='Tutorial catalog for managing multiple tutorials'
+        ");
+
         /* ================================================================
          * NORMALIZED TUTORIAL STEPS SCHEMA
          * ================================================================ */
@@ -423,6 +445,16 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             ('whitelisted_players', '1,2,3', 'Comma-separated list of player IDs who can access tutorial'),
             ('auto_show_new_players', '1', 'Automatically show tutorial to new players')
             ON DUPLICATE KEY UPDATE setting_key=setting_key
+        ");
+
+        /* ================================================================
+         * STEP 2b: Insert tutorial catalog entries
+         * ================================================================ */
+
+        $this->addSql("
+            INSERT INTO tutorial_catalog (version, name, description, icon, difficulty, estimated_minutes, prerequisites, plan, spawn_x, spawn_y, is_active, display_order) VALUES
+            ('1.0.0', 'Tutoriel de base', 'Apprenez les bases du jeu : déplacement, récolte de ressources et combat.', 'ra-player', 'beginner', 15, NULL, 'tutorial', 0, 0, TRUE, 1)
+            ON DUPLICATE KEY UPDATE name=VALUES(name)
         ");
 
         /* ================================================================

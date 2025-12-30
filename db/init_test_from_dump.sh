@@ -55,6 +55,35 @@ INSERT IGNORE INTO tutorial_step_context_changes SELECT * FROM $SOURCE_DB.tutori
 INSERT IGNORE INTO tutorial_step_next_preparation SELECT * FROM $SOURCE_DB.tutorial_step_next_preparation;
 INSERT IGNORE INTO tutorial_dialogs SELECT * FROM $SOURCE_DB.tutorial_dialogs;
 
+-- Create and copy tutorial catalog if it exists
+CREATE TABLE IF NOT EXISTS tutorial_catalog (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    version VARCHAR(20) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT 'ra-book',
+    difficulty ENUM('beginner', 'intermediate', 'advanced') DEFAULT 'beginner',
+    estimated_minutes INT DEFAULT 10,
+    prerequisites JSON,
+    plan VARCHAR(50) DEFAULT 'tutorial',
+    spawn_x INT DEFAULT 0,
+    spawn_y INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+SQL
+
+# Copy tutorial catalog only if source table exists
+if mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1 FROM $SOURCE_DB.tutorial_catalog LIMIT 1" 2>/dev/null; then
+    mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" -e "INSERT IGNORE INTO tutorial_catalog SELECT * FROM $SOURCE_DB.tutorial_catalog;"
+fi
+
+cat << 'SQL' | mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB"
+-- Placeholder for additional SQL if needed
+SELECT 1;
 SQL
 
 # Copy tutorial settings only if source table exists
