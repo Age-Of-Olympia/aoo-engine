@@ -102,13 +102,11 @@ abstract class AbstractStep
             $movementHint = $this->getValidationHint();
         }
 
-        // Get race-based max MVT from JSON (not player data which may be modified)
+        // Get race-based max MVT from RaceService (not player data which may be modified)
         $raceMaxMvt = 4; // Default fallback
         if ($player->data && $player->data->race) {
-            $raceJson = (new \Classes\Json())->decode('races', $player->data->race);
-            if ($raceJson && isset($raceJson->mvt)) {
-                $raceMaxMvt = (int)$raceJson->mvt;
-            }
+            $raceService = new \App\Service\RaceService();
+            $raceMaxMvt = $raceService->getRaceMaxMvt($player->data->race);
         }
 
         $replacements = [
