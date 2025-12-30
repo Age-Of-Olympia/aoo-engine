@@ -21,7 +21,8 @@ function admin_layout($title, $content) {
 
     $navigation =
         $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .
-        $navLink('tutorial.php', 'Tutorial Config', '/admin/tutorial.php') . "\n                " .
+        $navLink('tutorial-catalog.php', 'Tutorial Catalog', '/admin/tutorial-catalog.php') . "\n                " .
+        $navLink('tutorial.php', 'Tutorial Steps', '/admin/tutorial.php') . "\n                " .
         $navLink('tutorial-settings.php', 'Tutorial Flags', '/admin/tutorial-settings.php') . "\n                " .
         $navLink('upload_image.php', 'Upload Images', '/admin/upload_image.php') . "\n                " .
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
