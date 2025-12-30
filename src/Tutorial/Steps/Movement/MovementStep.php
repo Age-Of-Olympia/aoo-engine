@@ -117,8 +117,9 @@ class MovementStep extends AbstractStep
 
         switch ($validationType) {
             case 'movements_depleted':
-                // Get live movement count from database
-                $player = TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: false);
+                // Get live movement count from context player
+                $player = $this->context->getPlayer();
+                $player->get_caracs();
                 $mvtRemaining = $player->getRemaining('mvt');
                 return "Il vous reste encore {$mvtRemaining} mouvement(s). Continuez à vous déplacer!";
 

@@ -90,15 +90,25 @@ abstract class AbstractStep
      */
     protected function replacePlaceholders(string $text): string
     {
-        // Use TutorialHelper to get the correct player (tutorial player, not main player)
-        $playerId = \App\Tutorial\TutorialHelper::getActivePlayerId();
-        $player = new \Classes\Player($playerId);
-        $player->get_data();
+        // Use context's player directly (already loaded with correct data)
+        $player = $this->context->getPlayer();
+        if (!$player->data) {
+            $player->get_data();
+        }
 
         // Get dynamic validation hint if this step has one
         $movementHint = '';
         if (method_exists($this, 'getValidationHint')) {
             $movementHint = $this->getValidationHint();
+        }
+
+        // Get race-based max MVT from JSON (not player data which may be modified)
+        $raceMaxMvt = 4; // Default fallback
+        if ($player->data && $player->data->race) {
+            $raceJson = (new \Classes\Json())->decode('races', $player->data->race);
+            if ($raceJson && isset($raceJson->mvt)) {
+                $raceMaxMvt = (int)$raceJson->mvt;
+            }
         }
 
         $replacements = [
@@ -107,7 +117,8 @@ abstract class AbstractStep
             '{CURRENT_LEVEL}' => (string)$this->context->getTutorialLevel(),
             '{CURRENT_PI}' => (string)$this->context->getTutorialPI(),
             '{CURRENT_MVT}' => (string)($player->data->mvt ?? 0),
-            '{MAX_MVT}' => (string)($player->data->mvt ?? 4),
+            '{MAX_MVT}' => (string)$raceMaxMvt,
+            '{max_mvt}' => (string)$raceMaxMvt, // lowercase variant for database placeholders
             '{MOVEMENT_HINT}' => $movementHint,
         ];
 

@@ -64,7 +64,7 @@ fi
 
 # Schema fixes - ensure critical columns exist
 echo "🔧 Applying schema fixes..."
-mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" <<SCHEMA_FIXES
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" --default-character-set=utf8mb4 <<SCHEMA_FIXES
 -- Add icon column to actions table if missing (required by Action entity)
 ALTER TABLE actions
 ADD COLUMN IF NOT EXISTS icon VARCHAR(50) NOT NULL DEFAULT '' AFTER name;
@@ -82,6 +82,22 @@ UPDATE actions SET icon = 'ra-crowned-heart' WHERE name = 'prier';
 UPDATE actions SET icon = 'ra-nuclear' WHERE name = 'vol_a_la_tire';
 UPDATE actions SET icon = 'ra-bear-trap' WHERE name = 'esquive/cle_de_bras';
 UPDATE actions SET icon = 'ra-archery-target' WHERE name = 'entrainement';
+
+-- Fix tutorial step text to use {max_mvt} placeholder for race-adaptive movement count
+UPDATE tutorial_steps SET
+    text = '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. Chaque déplacement en consomme 1.'
+WHERE step_id = 'movement_limit_warning';
+
+UPDATE tutorial_steps SET
+    text = 'Maintenant, <strong>déplacez-vous jusqu''à épuiser vos {max_mvt} mouvements</strong>. Regardez le compteur diminuer !'
+WHERE step_id = 'deplete_movements';
+
+-- Use -1 for mvt_required to indicate "use race max" instead of hardcoded value
+UPDATE tutorial_step_prerequisites p
+JOIN tutorial_steps s ON s.id = p.step_id
+SET p.mvt_required = -1
+WHERE s.step_id IN ('deplete_movements', 'actions_intro', 'walk_to_tree', 'walk_to_enemy')
+AND p.mvt_required = 4;
 SCHEMA_FIXES
 
 # Add test data
