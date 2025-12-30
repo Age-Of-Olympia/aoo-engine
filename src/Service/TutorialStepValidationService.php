@@ -235,6 +235,38 @@ class TutorialStepValidationService
     }
 
     /**
+     * Validate movement/PA required (allows -1 for race-adaptive max)
+     *
+     * @param mixed $value User input
+     * @param int $max Maximum allowed value
+     * @return int|null Validated integer or null
+     * @throws InvalidArgumentException If invalid
+     */
+    public function validateResourceRequired($value, int $max = 999): ?int
+    {
+        if (empty($value) && $value !== 0 && $value !== '0' && $value !== -1 && $value !== '-1') {
+            return null;
+        }
+
+        $int = (int)$value;
+
+        // Allow -1 for race-adaptive max
+        if ($int === -1) {
+            return -1;
+        }
+
+        if ($int < 0) {
+            throw new InvalidArgumentException('Value must be -1 (race max) or a positive number');
+        }
+
+        if ($int > $max) {
+            throw new InvalidArgumentException("Value cannot exceed {$max}");
+        }
+
+        return $int;
+    }
+
+    /**
      * Validate positive integer (or null if empty)
      *
      * @param mixed $value User input

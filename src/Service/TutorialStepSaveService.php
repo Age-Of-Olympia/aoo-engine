@@ -174,8 +174,8 @@ class TutorialStepSaveService
     {
         $this->db->exe("DELETE FROM tutorial_step_prerequisites WHERE step_id = ?", [$stepId]);
 
-        $mvtRequired = $this->validator->validatePositiveInt($data['mvt_required'] ?? null);
-        $paRequired = $this->validator->validatePositiveInt($data['pa_required'] ?? null);
+        $mvtRequired = $this->validator->validateResourceRequired($data['mvt_required'] ?? null);
+        $paRequired = $this->validator->validateResourceRequired($data['pa_required'] ?? null);
         $autoRestore = $this->validator->validateCheckbox($data['auto_restore'] ?? false);
         $consumeMovements = $this->validator->validateCheckbox($data['consume_movements'] ?? false);
         $unlimitedMvt = $this->validator->validateCheckbox($data['unlimited_mvt'] ?? false);
