@@ -480,9 +480,9 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             ('1.0.0', 'close_card', 'movement_intro', 4.0, 'ui_interaction', 'Fermer la fiche', 'Vous pouvez <strong>fermer la fiche</strong> en cliquant sur le bouton X, sur une case vide, ou ailleurs sur le damier.', 5, 1),
             ('1.0.0', 'movement_intro', 'first_move', 5.0, 'info', 'Se déplacer', 'Regardez les <strong>cases</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer si elles sont vides.', 5, 1),
             ('1.0.0', 'first_move', 'movement_limit_warning', 6.0, 'movement', 'Premier pas', 'Cliquez sur une <strong>case mise en valeur</strong> pour vous déplacer !', 10, 1),
-            ('1.0.0', 'movement_limit_warning', 'show_characteristics', 7.0, 'info', 'Mouvements limités !', '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez 4 mouvements par tour. Chaque déplacement en consomme 1.', 5, 1),
+            ('1.0.0', 'movement_limit_warning', 'show_characteristics', 7.0, 'info', 'Mouvements limités !', '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. Chaque déplacement en consomme 1.', 5, 1),
             ('1.0.0', 'show_characteristics', 'deplete_movements', 8.0, 'ui_interaction', 'Vos caractéristiques', 'Cliquez sur <strong>\"Caractéristiques\"</strong> pour voir vos stats, dont vos mouvements restants.', 5, 1),
-            ('1.0.0', 'deplete_movements', 'movements_depleted_info', 9.0, 'movement', 'Épuisez vos mouvements', 'Maintenant, <strong>déplacez-vous jusqu''à épuiser vos 4 mouvements</strong>. Regardez le compteur diminuer !', 15, 1),
+            ('1.0.0', 'deplete_movements', 'movements_depleted_info', 9.0, 'movement', 'Épuisez vos mouvements', 'Maintenant, <strong>déplacez-vous jusqu''à épuiser vos {max_mvt} mouvements</strong>. Regardez le compteur diminuer !', 15, 1),
             ('1.0.0', 'movements_depleted_info', 'actions_intro', 10.0, 'info', 'Plus de mouvements !', 'Vous n''avez plus de mouvements ! En jeu réel, ils se régénèrent à chaque tour (toutes les 18h). Pour le tutoriel, on vous les restaure.', 5, 1),
             ('1.0.0', 'actions_intro', 'click_yourself', 11.0, 'info', 'Les Actions', 'En plus des mouvements, vous avez des <strong>Points d''Action (PA)</strong>. Ils permettent de fouiller, attaquer, récolter...', 5, 1),
             ('1.0.0', 'click_yourself', 'actions_panel_info', 12.0, 'ui_interaction', 'Vos actions', '<strong>Cliquez sur votre personnage</strong> pour voir les actions disponibles.', 5, 1),
@@ -589,16 +589,16 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             SELECT id, 1, NULL, 1, 0, 1, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'first_move' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'movement_limit_warning' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'show_characteristics' UNION ALL
-            SELECT id, 4, NULL, 1, 1, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'deplete_movements' UNION ALL
-            SELECT id, 4, 2, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'actions_intro' UNION ALL
+            SELECT id, -1, NULL, 1, 1, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'deplete_movements' UNION ALL
+            SELECT id, -1, 2, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'actions_intro' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'click_yourself' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'close_card_for_tree' UNION ALL
-            SELECT id, 4, NULL, 1, 0, 0, 0, NULL, 0, 1 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
+            SELECT id, -1, NULL, 1, 0, 0, 0, NULL, 0, 1 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
             SELECT id, NULL, 1, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'use_fouiller' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'combat_intro' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, 'tutorial_dummy', NULL, NULL FROM tutorial_steps WHERE step_id = 'enemy_spawned' UNION ALL
-            SELECT id, 4, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'walk_to_enemy' UNION ALL
+            SELECT id, -1, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'walk_to_enemy' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'click_enemy' UNION ALL
             SELECT id, NULL, 1, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'attack_enemy' UNION ALL
             SELECT id, NULL, NULL, 1, 0, 0, 0, NULL, NULL, NULL FROM tutorial_steps WHERE step_id = 'attack_result'
