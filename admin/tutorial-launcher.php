@@ -9,22 +9,13 @@
 require_once __DIR__ . '/../config.php';
 
 use App\Tutorial\TutorialManager;
-use App\Tutorial\TutorialContext;
 use App\Tutorial\TutorialHelper;
-use App\Tutorial\TutorialMapInstance;
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Check admin access
+// Check if logged in (no admin required - tutorials are for everyone)
 if (empty($_SESSION['playerId'])) {
     echo json_encode(['success' => false, 'error' => 'Non connecté']);
-    exit;
-}
-
-$player = new \Classes\Player($_SESSION['playerId']);
-$player->get_options();
-if (empty($player->options->isAdmin)) {
-    echo json_encode(['success' => false, 'error' => 'Accès admin requis']);
     exit;
 }
 
@@ -51,7 +42,7 @@ if ($stepCount['cnt'] == 0) {
 
 try {
     // Cancel any existing tutorial first
-    if (TutorialHelper::isTutorialActive()) {
+    if (TutorialHelper::isInTutorial()) {
         TutorialHelper::exitTutorialMode();
     }
 
@@ -63,9 +54,10 @@ try {
     $spawnY = $catalog['spawn_y'] ?? 0;
     $plan = $catalog['plan'] ?? 'tutorial';
 
-    // Create tutorial context
-    $context = new TutorialContext($_SESSION['playerId']);
-    $manager = new TutorialManager($context);
+    // Load player and create tutorial manager
+    $player = new \Classes\Player($_SESSION['playerId']);
+    $player->get_data();
+    $manager = new TutorialManager($player);
 
     // Start the tutorial with specific version
     $result = $manager->startTutorial($version);

@@ -7,9 +7,9 @@
 
 require_once __DIR__ . '/layout.php';
 
-use Classes\Db;
+use App\Tutorial\TutorialCatalogService;
 
-$db = new Db();
+$catalogService = new TutorialCatalogService();
 
 // Handle form submissions
 $message = '';
@@ -20,52 +20,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'create' || $action === 'update') {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
-        $version = trim($_POST['version'] ?? '');
-        $name = trim($_POST['name'] ?? '');
-        $description = trim($_POST['description'] ?? '');
-        $icon = trim($_POST['icon'] ?? 'ra-book');
-        $difficulty = $_POST['difficulty'] ?? 'beginner';
-        $estimatedMinutes = (int)($_POST['estimated_minutes'] ?? 10);
-        $prerequisites = !empty($_POST['prerequisites']) ? $_POST['prerequisites'] : null;
-        $plan = trim($_POST['plan'] ?? 'tutorial');
-        $spawnX = (int)($_POST['spawn_x'] ?? 0);
-        $spawnY = (int)($_POST['spawn_y'] ?? 0);
-        $isActive = isset($_POST['is_active']) ? 1 : 0;
-        $displayOrder = (int)($_POST['display_order'] ?? 0);
 
-        if (empty($version) || empty($name)) {
-            $message = 'Version et nom sont requis.';
-            $messageType = 'danger';
-        } else {
-            try {
-                if ($action === 'create') {
-                    $db->exe("INSERT INTO tutorial_catalog
-                        (version, name, description, icon, difficulty, estimated_minutes, prerequisites, plan, spawn_x, spawn_y, is_active, display_order)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        [$version, $name, $description, $icon, $difficulty, $estimatedMinutes, $prerequisites, $plan, $spawnX, $spawnY, $isActive, $displayOrder]
-                    );
-                    $message = "Tutoriel '$name' créé avec succès.";
-                    $messageType = 'success';
-                } else {
-                    $db->exe("UPDATE tutorial_catalog SET
-                        version = ?, name = ?, description = ?, icon = ?, difficulty = ?,
-                        estimated_minutes = ?, prerequisites = ?, plan = ?, spawn_x = ?, spawn_y = ?,
-                        is_active = ?, display_order = ?
-                        WHERE id = ?",
-                        [$version, $name, $description, $icon, $difficulty, $estimatedMinutes, $prerequisites, $plan, $spawnX, $spawnY, $isActive, $displayOrder, $id]
-                    );
-                    $message = "Tutoriel '$name' mis à jour.";
-                    $messageType = 'success';
-                }
-            } catch (Exception $e) {
-                $message = 'Erreur: ' . $e->getMessage();
-                $messageType = 'danger';
+        $data = [
+            'version' => trim($_POST['version'] ?? ''),
+            'name' => trim($_POST['name'] ?? ''),
+            'description' => trim($_POST['description'] ?? ''),
+            'icon' => trim($_POST['icon'] ?? 'ra-book'),
+            'difficulty' => $_POST['difficulty'] ?? 'beginner',
+            'estimated_minutes' => (int)($_POST['estimated_minutes'] ?? 10),
+            'prerequisites' => !empty($_POST['prerequisites']) ? $_POST['prerequisites'] : null,
+            'plan' => trim($_POST['plan'] ?? 'tutorial'),
+            'spawn_x' => (int)($_POST['spawn_x'] ?? 0),
+            'spawn_y' => (int)($_POST['spawn_y'] ?? 0),
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
+            'display_order' => (int)($_POST['display_order'] ?? 0)
+        ];
+
+        try {
+            if ($action === 'create') {
+                $catalogService->create($data);
+                $message = "Tutoriel '{$data['name']}' créé avec succès.";
+                $messageType = 'success';
+            } else {
+                $catalogService->update($id, $data);
+                $message = "Tutoriel '{$data['name']}' mis à jour.";
+                $messageType = 'success';
             }
+        } catch (InvalidArgumentException $e) {
+            $message = $e->getMessage();
+            $messageType = 'danger';
+        } catch (Exception $e) {
+            $message = 'Erreur: ' . $e->getMessage();
+            $messageType = 'danger';
         }
     } elseif ($action === 'delete') {
         $id = (int)$_POST['id'];
         try {
-            $db->exe("DELETE FROM tutorial_catalog WHERE id = ?", [$id]);
+            $catalogService->delete($id);
             $message = 'Tutoriel supprimé.';
             $messageType = 'success';
         } catch (Exception $e) {
@@ -75,22 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch all tutorials
-$result = $db->exe("SELECT * FROM tutorial_catalog ORDER BY display_order, name");
-$tutorials = [];
-while ($row = $result->fetch_assoc()) {
-    // Count steps for this version
-    $stepCount = $db->exe("SELECT COUNT(*) as cnt FROM tutorial_steps WHERE version = ? AND is_active = 1", [$row['version']])->fetch_assoc();
-    $row['step_count'] = $stepCount['cnt'] ?? 0;
-    $tutorials[] = $row;
-}
+// Fetch all tutorials with step counts
+$tutorials = $catalogService->getAllTutorials();
 
 // Fetch for edit if requested
 $editTutorial = null;
 if (isset($_GET['edit'])) {
-    $editId = (int)$_GET['edit'];
-    $editResult = $db->exe("SELECT * FROM tutorial_catalog WHERE id = ?", [$editId]);
-    $editTutorial = $editResult->fetch_assoc();
+    $editTutorial = $catalogService->getById((int)$_GET['edit']);
 }
 
 ob_start();

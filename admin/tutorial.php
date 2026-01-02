@@ -10,19 +10,19 @@ require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
 use App\Service\CsrfProtectionService;
+use App\Tutorial\TutorialCatalogService;
+use App\Tutorial\TutorialStepRepository;
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
+$catalogService = new TutorialCatalogService();
+$stepRepository = new TutorialStepRepository();
 
 // Get selected version filter
 $selectedVersion = isset($_GET['version']) ? trim($_GET['version']) : '';
 
 // Fetch available versions from catalog
-$versionsResult = $database->exe("SELECT version, name FROM tutorial_catalog ORDER BY display_order, name");
-$availableVersions = [];
-while ($row = $versionsResult->fetch_assoc()) {
-    $availableVersions[] = $row;
-}
+$availableVersions = $catalogService->getVersionsForSelect();
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,10 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['toggle_step'])) {
         $stepId = (int)$_POST['step_id'];
-        $isActive = (int)$_POST['is_active'];
+        $isActive = (bool)$_POST['is_active'];
 
         try {
-            $database->exe("UPDATE tutorial_steps SET is_active = ? WHERE id = ?", [$isActive, $stepId]);
+            $stepRepository->setStepActive($stepId, $isActive);
             setFlash('success', 'Step ' . ($isActive ? 'enabled' : 'disabled') . ' successfully');
         } catch (Exception $e) {
             error_log("[TutorialAdmin] Toggle error: " . $e->getMessage());
@@ -51,8 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stepId = (int)$_POST['step_id'];
 
         try {
-            // Delete cascades to all related tables
-            $database->exe("DELETE FROM tutorial_steps WHERE id = ?", [$stepId]);
+            $stepRepository->deleteStep($stepId);
             setFlash('success', 'Step deleted successfully');
         } catch (Exception $e) {
             error_log("[TutorialAdmin] Delete error: " . $e->getMessage());
@@ -65,26 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch statistics (filtered by version if selected)
-$stats = [];
-$versionFilter = $selectedVersion ? " WHERE version = ?" : "";
-$versionParam = $selectedVersion ? [$selectedVersion] : [];
-
-// Total steps
-$result = $database->exe("SELECT COUNT(*) as total FROM tutorial_steps" . $versionFilter, $versionParam);
-$stats['total'] = $result->fetch_assoc()['total'];
-
-// Active steps
-$activeFilter = $selectedVersion ? " WHERE is_active = 1 AND version = ?" : " WHERE is_active = 1";
-$result = $database->exe("SELECT COUNT(*) as active FROM tutorial_steps" . $activeFilter, $versionParam);
-$stats['active'] = $result->fetch_assoc()['active'];
-
-// Steps by type
-$typeFilter = $selectedVersion ? " WHERE version = ?" : "";
-$result = $database->exe("SELECT step_type, COUNT(*) as count FROM tutorial_steps" . $typeFilter . " GROUP BY step_type ORDER BY count DESC", $versionParam);
-$stats['by_type'] = [];
-while ($row = $result->fetch_assoc()) {
-    $stats['by_type'][$row['step_type']] = $row['count'];
-}
+$versionParam = $selectedVersion ?: null;
+$stats = $stepRepository->getStepStatistics($versionParam);
 
 // Tutorial sessions stats
 $result = $database->exe("
@@ -97,37 +78,7 @@ $result = $database->exe("
 $stats['sessions'] = $result->fetch_assoc();
 
 // Fetch steps (filtered by version if selected)
-$steps = [];
-$stepsQuery = "
-    SELECT
-        ts.id,
-        ts.version,
-        ts.step_number,
-        ts.step_id,
-        ts.next_step,
-        ts.step_type,
-        ts.title,
-        ts.xp_reward,
-        ts.is_active,
-        ui.interaction_mode,
-        ui.target_selector,
-        v.requires_validation,
-        v.validation_type,
-        (SELECT COUNT(*) FROM tutorial_step_interactions tsi WHERE tsi.step_id = ts.id) as interactions_count
-    FROM tutorial_steps ts
-    LEFT JOIN tutorial_step_ui ui ON ts.id = ui.step_id
-    LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
-";
-if ($selectedVersion) {
-    $stepsQuery .= " WHERE ts.version = ?";
-}
-$stepsQuery .= " ORDER BY ts.version, ts.step_number";
-
-$result = $database->exe($stepsQuery, $versionParam);
-
-while ($row = $result->fetch_assoc()) {
-    $steps[] = $row;
-}
+$steps = $stepRepository->getStepsForAdmin($versionParam);
 
 ob_start();
 ?>
@@ -254,8 +205,8 @@ ob_start();
                 <div class="col-md-3">
                     <div class="card">
                         <div class="card-body text-center">
-                            <h5 class="card-title text-muted">Versions</h5>
-                            <p class="card-text display-4">1</p>
+                            <h5 class="card-title text-muted">Tutorials</h5>
+                            <p class="card-text display-4"><?= count($availableVersions) ?></p>
                         </div>
                     </div>
                 </div>
