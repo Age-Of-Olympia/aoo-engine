@@ -39,14 +39,16 @@ class TutorialUI {
 
     /**
      * Start new tutorial
+     * @param {string} mode - Tutorial mode (first_time, replay, practice)
+     * @param {string} version - Tutorial version (e.g., '1.0.0', '2.0.0-craft')
      */
-    async start(mode = 'first_time') {
+    async start(mode = 'first_time', version = '1.0.0') {
         try {
-            console.log('[TutorialUI] Starting tutorial...', { mode });
+            console.log('[TutorialUI] Starting tutorial...', { mode, version });
 
             const response = await this.apiCall('/api/tutorial/start.php', {
                 mode: mode,
-                version: '1.0.0'
+                version: version
             });
 
             if (response.success) {
@@ -210,7 +212,7 @@ class TutorialUI {
             return;
         }
 
-        const requiresValidation = this.stepData.requires_validation;
+        const requiresValidation = this.stepData.config?.requires_validation;
         const allowManualAdvance = this.stepData.config?.allow_manual_advance;
 
         // If step has manual advance enabled and doesn't require validation,
@@ -253,6 +255,8 @@ class TutorialUI {
                 session_id: this.currentSession,
                 validation_data: validationData
             });
+
+            console.log('[TutorialUI] API response:', JSON.stringify(response, null, 2));
 
             if (response.success) {
                 console.log('[TutorialUI] ✅ ADVANCE SUCCESSFUL! New step:', response.current_step);
@@ -373,7 +377,7 @@ class TutorialUI {
 
         // Auto-check validation for steps that can complete without user action
         // (e.g., movement_depleted when player loads page with 0 movements)
-        if (stepData.requires_validation) {
+        if (stepData.config?.requires_validation) {
             setTimeout(() => {
                 this.checkAutoValidation(stepData);
             }, 1000); // Wait 1s for page to fully load
@@ -397,7 +401,7 @@ class TutorialUI {
         if (stepData.target_selector && this.highlighter) {
             console.log('[TutorialUI] Creating highlight for step:', stepData.step_id, 'selector:', stepData.target_selector);
             this.highlighter.highlight(stepData.target_selector, {
-                pulsate: stepData.requires_validation
+                pulsate: stepData.config?.requires_validation
             });
         }
 
@@ -450,11 +454,11 @@ class TutorialUI {
         // - Show if no validation required OR if it's a manual-advance step (clicking button IS the validation)
         const isManualAdvance = stepData.config?.validation_type === 'ui_interaction' &&
                                stepData.config?.validation_params?.element_clicked === 'tutorial_next';
-        const hideNextButton = Boolean(stepData.requires_validation) && !isManualAdvance;
+        const hideNextButton = Boolean(stepData.config?.requires_validation) && !isManualAdvance;
 
         console.log('[TutorialUI] showStepTooltip', {
             step_id: stepData.step_id,
-            requires_validation_raw: stepData.requires_validation,
+            requires_validation_raw: stepData.config?.requires_validation,
             isManualAdvance: isManualAdvance,
             hideNextButton: hideNextButton
         });
@@ -826,7 +830,7 @@ class TutorialUI {
      */
     setupUIObservers(stepData) {
         // Setup observers for ANY step that requires validation with UI-related validation types
-        if (!stepData.requires_validation) {
+        if (!stepData.config?.requires_validation) {
             return;
         }
 
@@ -1712,7 +1716,8 @@ class TutorialUI {
                     this.isActive = false;
                     sessionStorage.removeItem('tutorial_active');
                     sessionStorage.setItem('tutorial_just_cancelled', 'true');
-                    window.location.reload();
+                    /* Redirect to main game screen instead of reloading current page */
+                    window.location.href = 'index.php';
                 } else {
                     alert('Erreur lors du passage du tutoriel: ' + (response.error || 'Erreur inconnue'));
                 }
