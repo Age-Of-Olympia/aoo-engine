@@ -366,7 +366,7 @@ class CraftView
 
                 echo '
                 <td valign="top">
-                    <input type="button" value="Créer" itemId="' . $artId . '" style="width: 100%; height: 50px;" />
+                    <input type="button" value="Créer" itemId="' . $artId . '" data-item-name="' . $artName . '" style="width: 100%; height: 50px;" />
                 </td>
                 ';
             } else {
@@ -402,6 +402,11 @@ class CraftView
                 var artId = $(this).attr('itemId');
 
                 $(this).attr('disabled', true);
+
+                /* Notify tutorial of craft action before page reload */
+                if (typeof window.notifyTutorial === 'function') {
+                    window.notifyTutorial('craft', { item_id: artId }, true);
+                }
 
                 $.ajax({
                     type: "POST",
