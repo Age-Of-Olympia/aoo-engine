@@ -274,6 +274,111 @@ class TutorialStepRepository
     }
 
     /**
+     * Get steps list for admin panel (simplified view with UI/validation summary)
+     *
+     * @param string|null $version Filter by version (null = all versions)
+     * @return array List of steps with admin-relevant fields
+     */
+    public function getStepsForAdmin(?string $version = null): array
+    {
+        $sql = "
+            SELECT
+                ts.id,
+                ts.version,
+                ts.step_number,
+                ts.step_id,
+                ts.next_step,
+                ts.step_type,
+                ts.title,
+                ts.xp_reward,
+                ts.is_active,
+                ui.interaction_mode,
+                ui.target_selector,
+                v.requires_validation,
+                v.validation_type,
+                (SELECT COUNT(*) FROM tutorial_step_interactions tsi WHERE tsi.step_id = ts.id) as interactions_count
+            FROM tutorial_steps ts
+            LEFT JOIN tutorial_step_ui ui ON ts.id = ui.step_id
+            LEFT JOIN tutorial_step_validation v ON ts.id = v.step_id
+        ";
+
+        $params = [];
+        if ($version !== null) {
+            $sql .= " WHERE ts.version = ?";
+            $params[] = $version;
+        }
+
+        $sql .= " ORDER BY ts.version, ts.step_number";
+
+        $result = $this->db->exe($sql, $params);
+
+        $steps = [];
+        while ($row = $result->fetch_assoc()) {
+            $steps[] = $row;
+        }
+        return $steps;
+    }
+
+    /**
+     * Get step statistics, optionally filtered by version
+     *
+     * @param string|null $version Filter by version (null = all versions)
+     * @return array Statistics array with 'total', 'active', 'by_type'
+     */
+    public function getStepStatistics(?string $version = null): array
+    {
+        $params = $version ? [$version] : [];
+        $versionFilter = $version ? " WHERE version = ?" : "";
+        $activeFilter = $version ? " WHERE is_active = 1 AND version = ?" : " WHERE is_active = 1";
+
+        // Total steps
+        $result = $this->db->exe("SELECT COUNT(*) as total FROM tutorial_steps" . $versionFilter, $params);
+        $total = (int)$result->fetch_assoc()['total'];
+
+        // Active steps
+        $result = $this->db->exe("SELECT COUNT(*) as active FROM tutorial_steps" . $activeFilter, $params);
+        $active = (int)$result->fetch_assoc()['active'];
+
+        // Steps by type
+        $typeFilter = $version ? " WHERE version = ?" : "";
+        $result = $this->db->exe(
+            "SELECT step_type, COUNT(*) as count FROM tutorial_steps" . $typeFilter . " GROUP BY step_type ORDER BY count DESC",
+            $params
+        );
+        $byType = [];
+        while ($row = $result->fetch_assoc()) {
+            $byType[$row['step_type']] = (int)$row['count'];
+        }
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'by_type' => $byType
+        ];
+    }
+
+    /**
+     * Toggle step active status
+     *
+     * @param int $stepId Step database ID
+     * @param bool $isActive New active status
+     */
+    public function setStepActive(int $stepId, bool $isActive): void
+    {
+        $this->db->exe("UPDATE tutorial_steps SET is_active = ? WHERE id = ?", [$isActive ? 1 : 0, $stepId]);
+    }
+
+    /**
+     * Delete a step and all related data (cascades via FK)
+     *
+     * @param int $stepId Step database ID
+     */
+    public function deleteStep(int $stepId): void
+    {
+        $this->db->exe("DELETE FROM tutorial_steps WHERE id = ?", [$stepId]);
+    }
+
+    /**
      * Convert database row to step data array with config matching old JSON format
      *
      * This ensures backward compatibility with existing AbstractStep code
