@@ -5,6 +5,7 @@ use Classes\View;
 use Classes\Log;
 use Classes\Item;
 use Classes\Element;
+use App\Tutorial\TutorialHelper;
 require_once('config.php');
 
 
@@ -16,7 +17,15 @@ if(!isset($_POST['coords'])){
 
 $coords = explode(',', $_POST['coords']);
 
-$player = new Player($_SESSION['playerId']);
+// Validate coords array has both x and y
+if(count($coords) < 2){
+    exit('error coords format');
+}
+
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
+
+$player = new Player($playerId);
 
 if($player->getRemaining('mvt') < 1){
 
@@ -61,15 +70,22 @@ $inPlayerSql = '';
 $values = $coordsId;
 
 if($planJson = json()->decode('plans', $player->coords->plan)){
+    // Only block occupied coordinates if player_visibility is not explicitly disabled
+    // This allows tutorial players to move freely without seeing each other
+    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
-    $inPlayerSql = '
-    OR
-    id IN(
-        SELECT coords_id FROM players WHERE coords_id = ?
-        )
-    ';
+    if ($playerVisibilityEnabled) {
+        $inPlayerSql = '
+        OR
+        id IN(
+            SELECT coords_id FROM players
+            LEFT JOIN players_options AS po ON po.player_id = players.id AND po.name = "invisibleMode"
+            WHERE coords_id = ? AND po.player_id IS NULL
+            )
+        ';
 
-    $values = array($coordsId, $coordsId);
+        $values = array($coordsId, $coordsId);
+    }
 }
 
 
@@ -280,15 +296,40 @@ if($res->num_rows){
 
 
 
-if($planJson){
+// Tutorial mode: Check if movements should be consumed for current step
+$consumeMovement = false;
+// Check if player is on a tutorial plan (either 'tutorial' or plans starting with 'tut_')
+$isTutorial = ($player->coords->plan === 'tutorial' || strpos($player->coords->plan, 'tut_') === 0);
+if ($isTutorial) {
+    // Check tutorial context to see if movements should be limited
+    if (!empty($_SESSION['in_tutorial']) && !empty($_SESSION['tutorial_session_id'])) {
+        // Tutorial can disable movement consumption for certain steps (unlimited movement)
+        // By default, tutorial does NOT consume movements (legacy behavior)
+        // Steps can enable consumption via context_changes['consume_movements'] = true
+        $consumeMovement = !empty($_SESSION['tutorial_consume_movements']);
+        error_log("[go.php] Tutorial mode: player={$player->id}, plan={$player->coords->plan}, consume_movements=" . ($consumeMovement ? 'true' : 'false'));
+    }
+}
 
-
+// Consume movement if:
+// - Plan has JSON config (non-tutorial plans with resources) OR
+// - Tutorial explicitly requests movement consumption
+// Note: Tutorial plan JSON existence doesn't trigger consumption (only $consumeMovement flag does)
+if(($planJson && !$isTutorial) || $consumeMovement){
     // cost (neg bonus)
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);
+
+    // CRITICAL: Regenerate JSON cache after consuming movement
+    // This ensures load_caracs.php shows correct movement count
+    $player->get_caracs();
+
+    if ($consumeMovement) {
+        error_log("[go.php] Consumed movement for tutorial player {$player->id}, regenerated cache");
+    }
 }
 
-if(!$player->have_option('incognitoMode'))
+if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode'))
 {
     $footstep='trace_pas_';
     if($originalGooCoords->y>$player->coords->y){

@@ -46,4 +46,32 @@ class RaceService
 
         return '#FFFFFF';
     }
+
+    /**
+     * Returns the max movement points for a race from JSON data.
+     *
+     * @param string $raceName Race name (e.g., 'nain', 'elfe')
+     * @return int Max movement points (default 4 if not found)
+     */
+    public function getRaceMaxMvt(string $raceName): int {
+        $raceName = strtolower($raceName);
+        $raceData = json()->decode('races', $raceName);
+
+        if ($raceData && isset($raceData->mvt)) {
+            return (int)$raceData->mvt;
+        }
+
+        return 4; // Default fallback
+    }
+
+    /**
+     * Returns full race data from JSON.
+     *
+     * @param string $raceName Race name (e.g., 'nain', 'elfe')
+     * @return object|null Race data object or null if not found
+     */
+    public function getRaceData(string $raceName): ?object {
+        $raceName = strtolower($raceName);
+        return json()->decode('races', $raceName) ?: null;
+    }
 }

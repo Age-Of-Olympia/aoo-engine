@@ -9,7 +9,8 @@ class Db{
     private $db;
     private $doctrinedb;
     public function __construct(){
-        mysqli_report(MYSQLI_REPORT_ERROR);
+        // Enable strict mode to convert warnings into exceptions (proper error handling)
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $this->doctrinedb = db();
         $this->db = $this->doctrinedb->getNativeConnection();
     }
@@ -41,7 +42,11 @@ class Db{
         if(count($values)) {
             // params type
             foreach($values as $key => $value) {
-                if(is_numeric($value)) {
+                if(is_int($value)) {
+                    $params .= 'i';
+                } elseif(is_float($value) || (is_numeric($value) && strpos($value, '.') !== false)) {
+                    $params .= 'd';  // 'd' for double/float
+                } elseif(is_numeric($value)) {
                     $params .= 'i';
                 } else {
                     $params .= 's';
@@ -60,6 +65,10 @@ class Db{
         $stmt->execute();
 
         if ($stmt->errno > 0) {
+            // Log detailed error information for debugging
+            error_log("[Db::exe] SQL Error #{$stmt->errno}: {$stmt->error}");
+            error_log("[Db::exe] Query: " . ($query ? substr($query, 0, 200) : 'N/A'));
+            error_log("[Db::exe] Params: " . print_r($values, true));
             exit('error stmt: '.$stmt->error);
         }
 

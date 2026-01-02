@@ -31,6 +31,11 @@ final class EntityManagerFactory
             $orm_db_config->setAutoGenerateProxyClasses(true);
             
             $connection = DriverManager::getConnection(DB_CONSTANTS, $orm_db_config);
+
+            // CRITICAL: Force UTF-8mb4 charset for migrations
+            // This fixes "Data truncated" errors when inserting French characters
+            $connection->executeStatement('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
+
             self::$em = new EntityManager($connection, $orm_db_config);
         }
         $eventManager = self::$em->getEventManager();

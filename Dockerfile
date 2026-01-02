@@ -16,6 +16,10 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure zip \
     && docker-php-ext-install zip
 
+# Install Node.js 20.x
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
 # Utils
 RUN apt-get install -y \
     vim \
@@ -23,8 +27,7 @@ RUN apt-get install -y \
     rsync \
     make \
     python3 \
-    npm \
-    nodejs
+    default-mysql-client
 
 # Install chrome and chromedriver
 RUN apt-get update -qq -y && \
@@ -45,6 +48,24 @@ RUN apt-get update -qq -y && \
     rm chromedriver-linux64.zip && \
     mv chromedriver /usr/local/bin/
 
+# Install Cypress dependencies for headless and GUI mode
+RUN apt-get install -y \
+    libgtk-3-0 \
+    libgbm1 \
+    libnotify4 \
+    libxss1 \
+    libxtst6 \
+    xauth \
+    xvfb \
+    libx11-xcb1 \
+    libxcb-dri3-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1
+
 # Install any extensions you need
 RUN docker-php-ext-configure gd --with-jpeg
 RUN docker-php-ext-install mysqli pdo pdo_mysql zip gd
@@ -60,7 +81,10 @@ COPY --chown=${UID}:${GID} config/docker-php-ext-gd.ini /usr/local/etc/php/conf.
 # Set the working directory to /var/www/html
 WORKDIR /var/www/html
 
-COPY ../. .
+#COPY ../. .
+
+# Install Node.js dependencies and Cypress binary
+RUN npx cypress install
 
 USER ${UID}:${GID}
 

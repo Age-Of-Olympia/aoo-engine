@@ -96,7 +96,7 @@ class ForumView
                 {
                     $lastPostCompat=-1; // we can detect migration case
                 }
-               
+
                 $topicsViewsTbl[$row->name] = (object)array($player->id=>$lastPostCompat);
                 
             }

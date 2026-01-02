@@ -4,6 +4,7 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
@@ -33,7 +34,10 @@ if(!is_numeric($x) || !is_numeric($y)){
 }
 
 
-$player = new Player($_SESSION['playerId']);
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
+
+$player = new Player($playerId);
 
 $player->get_data();
 
@@ -117,28 +121,74 @@ $planJson = json()->decode('plans', $player->coords->plan);
 
 
 if($planJson){
+    // Check if player_visibility is disabled (tutorial mode)
+    $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
-    $sql = '
-    SELECT
-    p.id AS id,
-    name
-    FROM
-    players AS p
-    INNER JOIN
-    coords AS c
-    ON
-    p.coords_id = c.id
-    WHERE
-    c.x = ?
-    AND
-    c.y = ?
-    AND
-    c.z = ?
-    AND
-    c.plan = ?
-    ';
+    if ($playerVisibilityEnabled) {
+        // Show all players at this location (except invisible ones)
+        $sql = '
+        SELECT
+        p.id AS id,
+        p.name
+        FROM
+        players AS p
+        INNER JOIN
+        coords AS c
+        ON
+        p.coords_id = c.id
+        LEFT JOIN
+        players_options AS po
+        ON
+        po.player_id = p.id AND po.name = "invisibleMode"
+        WHERE
+        c.x = ?
+        AND
+        c.y = ?
+        AND
+        c.z = ?
+        AND
+        c.plan = ?
+        AND
+        (p.id = ? OR po.player_id IS NULL)
+        ';
 
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
+    } else {
+        // Player visibility disabled - only show current player and NPCs (except invisible ones)
+        $sql = '
+        SELECT
+        p.id AS id,
+        p.name
+        FROM
+        players AS p
+        INNER JOIN
+        coords AS c
+        ON
+        p.coords_id = c.id
+        LEFT JOIN
+        players_options AS po
+        ON
+        po.player_id = p.id AND po.name = "invisibleMode"
+        WHERE
+        c.x = ?
+        AND
+        c.y = ?
+        AND
+        c.z = ?
+        AND
+        c.plan = ?
+        AND
+        (
+            p.id = ?
+            OR
+            p.id < 0
+        )
+        AND
+        (p.id = ? OR po.player_id IS NULL)
+        ';
+
+        $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id, $player->id));
+    }
 }
 
 elseif(!$planJson){
@@ -146,13 +196,17 @@ elseif(!$planJson){
     $sql = '
     SELECT
     p.id AS id,
-    name
+    p.name
     FROM
     players AS p
     INNER JOIN
     coords AS c
     ON
     p.coords_id = c.id
+    LEFT JOIN
+    players_options AS po
+    ON
+    po.player_id = p.id AND po.name = "invisibleMode"
     WHERE
     c.x = ?
     AND
@@ -167,9 +221,11 @@ elseif(!$planJson){
         OR
         p.id < 0
     )
+    AND
+    (p.id = ? OR po.player_id IS NULL)
     ';
 
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id));
+    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan, $player->id, $player->id));
 }
 
 
@@ -287,17 +343,27 @@ if($res->num_rows){
 
         $pnjText = $target->id<0 ? ' - PNJ' : '';
 
-        $dataType = $raceJson->name . $pnjText;
+        // Handle missing race data
+        if (!$raceJson || !is_object($raceJson)) {
+            $dataType = ucfirst($target->data->race ?? 'inconnu') . $pnjText;
+        } else {
+            $dataType = $raceJson->name . $pnjText;
+        }
 
         $text = $target->data->text;
 
 
-        $pvPct = floor($target->getRemaining('pv') / $target->caracs->pv * 100);
+        $pvPct = ($target->caracs->pv > 0)
+            ? floor($target->getRemaining('pv') / $target->caracs->pv * 100)
+            : 100;
 
 
         $factionJson = json()->decode('factions', $target->data->faction);
 
-        $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
+        $faction = '';
+        if ($factionJson && isset($factionJson->raFont)) {
+            $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
+        }
 
         if(
             $target->data->secretFaction != ''
@@ -387,10 +453,10 @@ else{
 
                     // Affichage si la ressource est épuisée ou non
                     if($row->damages == -1){
-                        echo '<br /><span style="color:green;"><b>Récoltable.</b></span> <br />';
+                        echo '<br /><span class="resource-status resource-harvestable" style="color:green;"><b>Récoltable.</b></span> <br />';
                     }
                     if($row->damages == -2){
-                        echo '<br /><span style="color:red;"><b>Épuisée.</b></span> <br />';
+                        echo '<br /><span class="resource-status resource-exhausted" style="color:red;"><b>Épuisée.</b></span> <br />';
                     }
 
                     // altar

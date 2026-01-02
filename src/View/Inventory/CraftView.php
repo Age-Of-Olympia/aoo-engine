@@ -2,6 +2,7 @@
 
 namespace App\View\Inventory;
 
+use App\Tutorial\TutorialHelper;
 use Classes\Player;
 use Classes\Item;
 use Classes\Craft;
@@ -14,8 +15,9 @@ class CraftView
     public static function renderCraft(): void
     {
 
-        // player
-        $player = new Player($_SESSION['playerId']);
+        // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+        $activePlayerId = TutorialHelper::getActivePlayerId();
+        $player = new Player($activePlayerId);
         $player->get_data();
 
         ob_start();
@@ -364,7 +366,7 @@ class CraftView
 
                 echo '
                 <td valign="top">
-                    <input type="button" value="Créer" itemId="' . $artId . '" style="width: 100%; height: 50px;" />
+                    <input type="button" value="Créer" itemId="' . $artId . '" data-item-name="' . $artName . '" style="width: 100%; height: 50px;" />
                 </td>
                 ';
             } else {
@@ -400,6 +402,11 @@ class CraftView
                 var artId = $(this).attr('itemId');
 
                 $(this).attr('disabled', true);
+
+                /* Notify tutorial of craft action before page reload */
+                if (typeof window.notifyTutorial === 'function') {
+                    window.notifyTutorial('craft', { item_id: artId }, true);
+                }
 
                 $.ajax({
                     type: "POST",

@@ -6,7 +6,9 @@ use Classes\Item;
 use Classes\Db;
 use Classes\File;
 use Classes\Ui;
+use Classes\View;
 use App\Service\MissiveService;
+use App\Tutorial\TutorialFeatureFlag;
 
 define('NO_LOGIN', true);
 
@@ -98,6 +100,38 @@ if(!empty($_POST['race'])){
 
         $player->get_data();
 
+        // Check if new tutorial system is enabled for this player
+        $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);
+
+        if ($useNewTutorial) {
+            // New tutorial system: remove old tutorial action and spawn in waiting room
+            $player->end_action('tuto/attaquer');
+
+            // Spawn on waiting_room plan until player makes tutorial decision
+            $spawnPlan = "waiting_room";
+
+            $goCoords = (object) array(
+                'x' => 0,
+                'y' => 0,
+                'z' => 0,
+                'plan' => $spawnPlan
+            );
+
+            $coordsId = View::get_free_coords_id_arround($goCoords);
+
+            // Update player's coordinates to waiting_room
+            $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
+            $db->exe($sql, array($coordsId, $player->id));
+
+            // Reload player data with new coordinates
+            $player->get_data();
+
+            // Enable invisibleMode so new players are invisible until they complete tutorial
+            $player->add_option('invisibleMode');
+
+            error_log("[Register] New player {$player->id} spawned on waiting_room plan with invisibleMode");
+        }
+
         $plainMail = strtolower($_POST['mail']);
 
         // hash
@@ -130,27 +164,40 @@ if(!empty($_POST['race'])){
         Player::refresh_list();
 
 
-        // welcome missive
+        // welcome missive (copy from player 1 if exists)
         $sql = 'SELECT name FROM players_forum_missives WHERE player_id = 1 ORDER BY name LIMIT 1';
         $res = $db->exe($sql);
-        $row = $res->fetch_object();
-        $values = array('player_id'=>$player->id, 'name'=>$row->name);
-        $db->insert('players_forum_missives', $values);
+        if ($res && $row = $res->fetch_object()) {
+            $values = array('player_id'=>$player->id, 'name'=>$row->name);
+            $db->insert('players_forum_missives', $values);
+        }
 
         $raceJson = json()->decode('races', $player->data->race);
         $newPlayerName = $player->data->name;
-        $missiveService = new MissiveService();
-        $text = <<<EOT
-Bonjour, 
+
+        // Send welcome missive to faction animateur (NPC) if configured and exists
+        if (!empty($raceJson->animateur) && $raceJson->animateur != 0) {
+            // Check if animateur player exists
+            $db = new Db();
+            $checkSql = 'SELECT id FROM players WHERE id = ?';
+            $result = $db->exe($checkSql, [$raceJson->animateur]);
+
+            if ($result && $result->num_rows > 0) {
+                $missiveService = new MissiveService();
+                $text = <<<EOT
+Bonjour,
 Un nouveau joueur vient d'arriver dans la faction : $newPlayerName (mat $player->id)
 On compte sur toi pour l'accueillir comme il se doit.
 EOT;
-        $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
+                $missiveService->sendNewMissive($raceJson->animateur,[$raceJson->animateur],'Nouveau joueur dans la faction', $text);
+            }
+        }
 
-        // landing welcome msg
-        $data = file_get_contents('datas/private/welcome.msg.html');
-
-        File::write('datas/private/players/'. $player->id .'.msg.html', $data);
+        // landing welcome msg (only for old tutorial system)
+        if (!$useNewTutorial) {
+            $data = file_get_contents('datas/private/welcome.msg.html');
+            File::write('datas/private/players/'. $player->id .'.msg.html', $data);
+        }
 
 
         echo 'Personnage '. $player->data->name .' (matricule '. $player->id .') créé avec succès!<br />';

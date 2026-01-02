@@ -21,7 +21,7 @@ class MainView
             }
 
 
-            $msgUrl = 'datas/private/players/' . $_SESSION['playerId'] . '.msg.html';
+            $msgUrl = 'datas/private/players/' . $player->id . '.msg.html';
 
             if (file_exists($msgUrl)) {
 
@@ -31,7 +31,7 @@ class MainView
             }
 
 
-            $svgUrl = 'datas/private/players/' . $_SESSION['playerId'] . '.svg';
+            $svgUrl = 'datas/private/players/' . $player->id . '.svg';
 
             if (!file_exists($svgUrl)) {
 
@@ -53,7 +53,7 @@ class MainView
 
                 $playerOptions = $player->get_options();
 
-                $view = new View($coords, $p, tiled: false, options: $playerOptions);
+                $view = new View($coords, $p, tiled: false, options: $playerOptions, playerId: $player->id);
 
                 $data = $view->get_view();
 
@@ -61,17 +61,18 @@ class MainView
                 fwrite($myfile, $data);
                 fclose($myfile);
 
-                echo $data;
+                echo '<div id="game-map" data-map-hash="' . md5($data) . '">' . $data . '</div>';
             } else {
 
-                echo file_get_contents($svgUrl);
+                $svgContent = file_get_contents($svgUrl);
+                echo '<div id="game-map" data-map-hash="' . md5($svgContent) . '">' . $svgContent . '</div>';
             }
 
             echo '<div id="ajax-data"></div>';
 
 
 ?>
-            <script src="js/view.js?v=20252004"></script>
+            <script src="js/view.js?v=20251126"></script>
 <?php
         }
     }

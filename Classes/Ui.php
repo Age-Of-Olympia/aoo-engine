@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20250516"></script>
                 <script src="js/console.js?v=20250516"></script>
-                <link href="css/main.min.css?v=20251020" rel="stylesheet">
+                <link href="css/main.min.css?v=20251128" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){
@@ -45,6 +45,23 @@ class Ui{
                 <link rel="stylesheet" href="css/jquery-ui.min.css" />
                 ';
         }
+
+        // Tutorial System (feature-flagged for specific players)
+        $tutorialVersion = '20260102o';
+        echo '
+                <!-- Modal System -->
+                <link href="css/modal.css?v=20251112" rel="stylesheet">
+                <script src="js/modal.js?v=20251112"></script>
+
+                <!-- Tutorial System -->
+                <link href="css/tutorial/tutorial.css?v=' . $tutorialVersion . '" rel="stylesheet">
+                <script src="js/tutorial/TutorialPositionManager.js?v=' . $tutorialVersion . '"></script>
+                <script src="js/tutorial/TutorialUI.js?v=' . $tutorialVersion . '"></script>
+                <script src="js/tutorial/TutorialTooltip.js?v=' . $tutorialVersion . '"></script>
+                <script src="js/tutorial/TutorialHighlighter.js?v=' . $tutorialVersion . '"></script>
+                <script src="js/tutorial/TutorialGameIntegration.js?v=' . $tutorialVersion . '"></script>
+                <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
+        ';
 
         echo '    </head>
             <body>

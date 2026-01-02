@@ -17,3 +17,14 @@ tmp/
 daily.log
 phpunit-report.xml
 /var/proxies/
+*.settings.local
+
+# Test data and outputs
+data_tests/
+node_modules/
+
+# Database migrations (generated)
+db/migrations/
+
+# Claude Code local settings
+.claude/

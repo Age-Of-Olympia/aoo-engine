@@ -21,9 +21,13 @@ services:
       MYSQL_DATABASE: ${DB_NAME:-aoo4}
       MYSQL_USER: run
       MYSQL_PASSWORD: password
-    volumes: 
+    volumes:
       - mariadb_data:/var/lib/mysql
       - ./db/init_noupdates.sql:/docker-entrypoint-initdb.d/1-init-data.sql
+      - ./db/add_player_type_and_display_id.sql:/docker-entrypoint-initdb.d/1.5-add-player-columns.sql
+      - ./db/updates/20250609.update_energie.sql:/docker-entrypoint-initdb.d/1.6-rename-fatigue-to-energie.sql
+      - ./db/updates/20251207.add_tooltip_offset_columns.sql:/docker-entrypoint-initdb.d/1.7-add-tooltip-offset.sql
+      - ./db/init_test_complete.sql:/docker-entrypoint-initdb.d/2-init-test-complete.sql
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
