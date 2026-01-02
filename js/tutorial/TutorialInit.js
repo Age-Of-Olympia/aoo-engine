@@ -56,13 +56,15 @@
 
     /**
      * Start new tutorial
+     * @param {string} mode - Tutorial mode (first_time, replay, practice)
+     * @param {string} version - Tutorial version (e.g., '1.0.0', '2.0.0-craft')
      */
-    window.startTutorial = function(mode = 'first_time') {
+    window.startTutorial = function(mode = 'first_time', version = '1.0.0') {
         if (!window.tutorialUI) {
             window.initTutorial();
         }
 
-        return window.tutorialUI.start(mode);
+        return window.tutorialUI.start(mode, version);
     };
 
     /**
