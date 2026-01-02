@@ -1,14 +1,17 @@
 <?php
 use Classes\Player;
 use Classes\Str;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
 
 ob_start();
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 
 $player->get_data();
 
@@ -71,7 +74,15 @@ echo '
                 $left = $turnJson->$k .'/';
             }
 
-            echo '<td>'. $left . $caracsJson->$k .'</td>';
+            // Add IDs for tutorial targeting
+            $idAttr = '';
+            if ($k === 'mvt') {
+                $idAttr = ' id="mvt-counter"';
+            } elseif ($k === 'a') {
+                $idAttr = ' id="action-counter"';
+            }
+
+            echo '<td' . $idAttr . '>'. $left . $caracsJson->$k .'</td>';
         }
 
         echo '<td>'. $player->data->pf .'</td>';

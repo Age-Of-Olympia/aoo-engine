@@ -4,6 +4,7 @@ use Classes\Item;
 use Classes\Ui;
 use Classes\View;
 use Classes\Str;
+use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
@@ -13,8 +14,10 @@ if(!isset($_GET['targetId']) || !is_numeric($_GET['targetId'])){
     exit('error target id');
 }
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
 
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 $player->get_data();
 
 

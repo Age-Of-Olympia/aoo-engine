@@ -88,38 +88,6 @@ test_job:
   rules:
     - !reference [.default_rules, rules]
 
-sqlmap_security_test:
-  stage: security
-  image: docker
-  services:
-    - name: docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: "tcp://docker:2375"
-    FF_NETWORK_PER_BUILD: "true"
-    DOCKER_BUILDKIT: 1
-    COMPOSE_DOCKER_CLI_BUILD: 1
-    UID: "1000"
-    GID: "1000"
-    DB_NAME: "aoo4"
-  before_script:
-    - apk add --no-cache docker-compose make
-  script:
-    - make setup-ci-env
-    - docker-compose up -d webserver mariadb-aoo4
-    - docker-compose exec -T webserver make sqlmap-login
-    - docker-compose exec -T webserver make sqlmap-register
-    - docker cp PHP-AOO4-Local:/var/www/html/tmp/security ./tmp/ 2>/dev/null || true
-  after_script:
-    - docker-compose down -v || true
-  artifacts:
-    when: always
-    paths:
-      - tmp/security/
-    expire_in: 1 week
-  rules:
-    - when: never
-
 prepare_job:
   stage: prepare
   image: alpine:latest

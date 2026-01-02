@@ -6,6 +6,7 @@ use App\Action\ActionFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
+use App\Tutorial\TutorialHelper;
 use App\View\ActionResultsView;
 use App\View\OnHideReloadView;
 use Classes\Log;
@@ -23,8 +24,11 @@ if(!isset($_POST['action'])){
     exit('error action');
 }
 
+// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+$playerId = TutorialHelper::getActivePlayerId();
+
 // player
-$player = new Player($_SESSION['playerId']);
+$player = new Player($playerId);
 $player->get_data();
 $player->get_caracs();
 
@@ -162,7 +166,13 @@ if($targetPvBefore != $targetPvAfter){
     }
 
     // update pv red filter
-    $pvPct = floor($targetPvAfter / $target->caracs->pv * 100);
+    $maxPv = $target->caracs->pv ?? 0;
+    if ($maxPv > 0) {
+        $pvPct = floor($targetPvAfter / $maxPv * 100);
+    } else {
+        // If max PV is 0, target is dead or invalid
+        $pvPct = 0;
+    }
     $height = floor((100 - $pvPct) * 225 / 100);
     $height = min($height, 225);
 

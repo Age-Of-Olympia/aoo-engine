@@ -2,6 +2,7 @@
 
 namespace App\View\Inventory;
 
+use App\Tutorial\TutorialHelper;
 use Classes\Item;
 use Classes\Market;
 use Classes\Player;
@@ -10,7 +11,9 @@ class BankView
 {
     public static function renderBank(?Market $market=null, ?Player $target=null): void
     {
-        $player = new Player($_SESSION['playerId']);
+        // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
+        $activePlayerId = TutorialHelper::getActivePlayerId();
+        $player = new Player($activePlayerId);
 
         if (!empty($_POST['action']) && !empty($_POST['itemId']) && !empty($_POST['n'])) {
 

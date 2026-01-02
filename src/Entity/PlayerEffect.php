@@ -56,7 +56,7 @@ class PlayerEffect
         return $this->value;
     }
 
-    public function setValue(string $value): void
+    public function setValue(?int $value): void
     {
         $this->value = $value;
     }

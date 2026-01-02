@@ -12,9 +12,10 @@ class View{
     private $inSightId; // id de ces coordonnées
     private $useTbl; // array qui permettra d'augmenter le z-level des images
     private $options; // player->get_options()
+    private $playerId; // ID du joueur pour qui la vue est générée
 
 
-    function __construct($coords, $p, $tiled=false, $options=array()){
+    function __construct($coords, $p, $tiled=false, $options=array(), $playerId=null){
 
 
         $this->coords = $coords;
@@ -27,6 +28,9 @@ class View{
 
         $this->useTbl = array();
         $this->options = $options;
+
+        // Use provided playerId or fall back to session
+        $this->playerId = $playerId ?? ($_SESSION['playerId'] ?? null);
     }
    
     //outCoords && $outCoordsId are passed by reference initialized is resposability of caller
@@ -79,6 +83,15 @@ class View{
 
         $planJson = json()->decode('plans', $this->coords->plan);
 
+        // Load invisible players to filter them from view
+        $invisiblePlayers = array();
+        $db = new Db();
+        $invisibleSQL = "SELECT player_id FROM `players_options` WHERE name='invisibleMode'";
+        $resInvisible = $db->exe($invisibleSQL);
+        while($row = $resInvisible->fetch_object()){
+            $invisiblePlayers[$row->player_id] = true;
+        }
+
         $tile = (!empty($planJson->bg)) ? $planJson->bg : 'img/tiles/'. $this->coords->plan .'.webp';
 
         if(!file_exists($tile)){
@@ -119,6 +132,14 @@ class View{
 
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
+
+            // Safety check: if no coords in sight, skip the query
+            if (empty($this->inSightId)) {
+                error_log("[View] No coords found in sight for current position - skipping map elements query");
+                echo '</svg>';
+                return;
+            }
+
             if($this->tiled){
 
                 // only for tiled
@@ -278,13 +299,18 @@ class View{
                     $player = new Player($row->id);
                     $player->get_data();
 
+                    // Skip invisible players (except when viewing your own character)
+                    if ($row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
+                        continue;
+                    }
+
                     // Les joueurs normaux sont soumis aux règles de visibilité
-                    if ($_SESSION['playerId'] > 0) {
+                    if ($this->playerId > 0) {
                         // Masquer les autres joueurs si :
                         // 1. Le JSON du plan n'existe pas OU
                         // 2. Le JSON du plan existe et player_visibility est explicitement défini sur false
                         if ((!$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false))
-                            && $row->id > 0 && $row->id != $_SESSION['playerId']) {
+                            && $row->id > 0 && $row->id != $this->playerId) {
                             continue;
                         }
                     }
@@ -367,6 +393,7 @@ class View{
                                 height="50"
 
                                 data-table="'. $row->whichTable .'"
+                                data-coords="'. $coords->x .','. $coords->y .'"
 
                                 x="'. floor($x) .'"
                                 y="'. floor($y) .'"
@@ -392,21 +419,35 @@ class View{
 
                     if($row->whichTable == 'players'){
 
+                        // Add "current-player" class and ID for tutorial targeting
+                        $playerClass = 'avatar-shadow';
+                        $currentPlayerId = '';
+                        if ($row->id == $this->playerId) {
+                            $playerClass .= ' current-player';
+                            $currentPlayerId = 'current-player-avatar'; // Additional ID for reliable targeting
+                        }
+                        // Add tutorial-enemy class for tutorial enemy targeting
+                        if ($row->id < 0 && $player->data->name === "Mannequin d'entraînement") {
+                            $playerClass .= ' tutorial-enemy';
+                        }
 
                         echo '
                         <image
 
-                            id="'. $id .'"
+                            id="'. ($currentPlayerId ?: $id) .'"
 
                             width="50"
                             height="50"
+
+                            data-table="'. $row->whichTable .'"
+                            data-coords="'. $coords->x .','. $coords->y .'"
 
                             x="'. floor($x) .'"
                             y="'. floor($y) .'"
 
                             href="'. $img .'"
 
-                            class="avatar-shadow"
+                            class="'. $playerClass .'"
                             />
                         ';
                     }
@@ -421,6 +462,7 @@ class View{
                         height="50"
 
                         data-table="'. $row->whichTable .'"
+                        data-coords="'. $coords->x .','. $coords->y .'"
 
                         x="'. floor($x) .'"
                         y="'. floor($y) .'"
@@ -739,6 +781,13 @@ class View{
 
         $db = new Db();
 
+        // Validate input
+        if (!isset($goCoords->x, $goCoords->y, $goCoords->z, $goCoords->plan)) {
+            error_log("[View::get_coords_id] ERROR: Missing required coordinate fields");
+            error_log("[View::get_coords_id] Coords object: " . print_r($goCoords, true));
+            return null;
+        }
+
         $sql = '
         SELECT id FROM coords WHERE x = ? AND y = ? AND z = ? AND plan = ?
         ';
@@ -748,10 +797,24 @@ class View{
 
         if(!$res->num_rows){
 
+            // Create coordinates with only the required fields
+            $coordsData = [
+                'x' => (int)$goCoords->x,
+                'y' => (int)$goCoords->y,
+                'z' => (int)$goCoords->z,
+                'plan' => (string)$goCoords->plan
+            ];
 
-            $db->insert('coords', (array) $goCoords);
+            try {
+                $db->insert('coords', $coordsData);
+                $coordsId = $db->get_last_id('coords');
 
-            $coordsId = $db->get_last_id('coords');
+                error_log("[View::get_coords_id] Created new coords: id={$coordsId}, x={$coordsData['x']}, y={$coordsData['y']}, z={$coordsData['z']}, plan={$coordsData['plan']}");
+            } catch (\Exception $e) {
+                error_log("[View::get_coords_id] ERROR creating coords: " . $e->getMessage());
+                error_log("[View::get_coords_id] Coords data: " . print_r($coordsData, true));
+                return null;
+            }
         }
 
         else{

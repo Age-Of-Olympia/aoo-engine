@@ -4,13 +4,25 @@ define('DOMAIN', 'http://localhost/www/aoo4/');
 
 
 /*
+ * Entity ID Ranges
+ * Separate ID ranges for different entity types to ensure real players have sequential IDs
+ */
+define('ENTITY_ID_RANGES', [
+    'real' => ['start' => 1, 'end' => 9999999],
+    'tutorial' => ['start' => 10000000, 'end' => 19999999],
+    'building' => ['start' => 20000000, 'end' => 29999999],
+    'npc' => ['start' => PHP_INT_MIN, 'end' => -1],
+]);
+
+
+/*
  * races
  */
 
 
 define('RACES', array('nain','geant','olympien','hs','elfe'));
 
-define('RACES_EXT', array('nain','geant','olympien','hs','elfe','lutin','humain','dieu'));
+define('RACES_EXT', array('nain','geant','olympien','hs','elfe','lutin','humain','dieu','ame'));
 
 
 /*
@@ -565,3 +577,57 @@ define('AUTO_FAIL', false); // si true, les attaques ratent forcément
  */
 
 define('DIST_MAP_MAX', 15); // La race des cases au delà d'une distance de 15 apparaît en noir sur la map globale
+
+/*
+ * Tutorial System
+ */
+// Tutorial whitelist is now managed via the admin panel at /admin/tutorial-settings.php
+// No config override needed - use the database for easy editing
+
+/* Tutorial rewards - loaded from database (tutorial_settings table)
+ * Editable via /admin/tutorial-settings.php
+ * Use getTutorialRewards() function to access values (lazy-loaded)
+ */
+
+/**
+ * Get tutorial rewards from database
+ * Lazy-loaded to avoid class loading issues in constants.php
+ *
+ * @return array Returns array with 'skip' and 'completion' keys, each containing 'xp' and 'pi'
+ */
+function getTutorialRewards(): array {
+    static $rewards = null;
+
+    if ($rewards !== null) {
+        return $rewards;
+    }
+
+    /* Default values as fallback */
+    $rewards = [
+        'skip' => ['xp' => 50, 'pi' => 50],
+        'completion' => ['xp' => 390, 'pi' => 390]
+    ];
+
+    /* Try to load from database if TutorialFeatureFlag class is available */
+    if (class_exists('\App\Tutorial\TutorialFeatureFlag')) {
+        try {
+            $settings = \App\Tutorial\TutorialFeatureFlag::getSettings();
+            $rewards['skip']['xp'] = (int)($settings['skip_reward_xp'] ?? 50);
+            $rewards['skip']['pi'] = (int)($settings['skip_reward_pi'] ?? 50);
+            $rewards['completion']['xp'] = (int)($settings['completion_reward_xp'] ?? 390);
+            $rewards['completion']['pi'] = (int)($settings['completion_reward_pi'] ?? 390);
+        } catch (\Exception $e) {
+            /* If database load fails, use defaults */
+            error_log('[Tutorial Rewards] Failed to load from database: ' . $e->getMessage());
+        }
+    }
+
+    return $rewards;
+}
+
+/* Define constants using lazy-loaded values */
+if (!defined('TUTORIAL_SKIP_REWARD')) {
+    $rewards = getTutorialRewards();
+    define('TUTORIAL_SKIP_REWARD', $rewards['skip']);
+    define('TUTORIAL_COMPLETION_REWARD', $rewards['completion']);
+}

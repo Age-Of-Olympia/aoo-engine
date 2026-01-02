@@ -52,6 +52,80 @@ class Player implements ActorInterface {
         return $this->id;
     }
 
+    /**
+     * Check if this is a real player (not tutorial, not NPC)
+     * Uses player_type discriminator column
+     */
+    public function isRealPlayer(): bool {
+        // NPCs always have negative IDs
+        if ($this->id < 0) {
+            return false;
+        }
+
+        // Load player data if not already loaded
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        // Check player_type discriminator (defaults to 'real' if not set)
+        return ($this->data->player_type ?? 'real') === 'real';
+    }
+
+    /**
+     * Check if this is a tutorial player (temporary character)
+     */
+    public function isTutorialPlayer(): bool {
+        // Tutorial players have positive IDs but player_type='tutorial'
+        if ($this->id < 0) {
+            return false;
+        }
+
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        return ($this->data->player_type ?? 'real') === 'tutorial';
+    }
+
+    /**
+     * Check if this is an NPC (non-player character)
+     */
+    public function isNPC(): bool {
+        // NPCs traditionally have negative IDs
+        if ($this->id < 0) {
+            return true;
+        }
+
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        return ($this->data->player_type ?? 'real') === 'npc';
+    }
+
+    /**
+     * Check if this player should appear in public lists (rankings, leaderboards)
+     * Only real players appear in public lists
+     */
+    public function isPubliclyVisible(): bool {
+        return $this->isRealPlayer();
+    }
+
+    /**
+     * Get player type ('real', 'tutorial', 'npc')
+     */
+    public function getPlayerType(): string {
+        if ($this->id < 0) {
+            return 'npc';
+        }
+
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+
+        return $this->data->player_type ?? 'real';
+    }
+
 
     public function get_row(){
 
@@ -91,11 +165,34 @@ class Player implements ActorInterface {
 
         $this->raceData = $raceJson;
 
+        // Initialize caracs object if not exists
+        if (!isset($this->caracs) || !is_object($this->caracs)) {
+            $this->caracs = new \stdClass();
+        }
+
+        // Initialize raceData if decode failed
+        if (!$this->raceData || !is_object($this->raceData)) {
+            error_log("[Player] WARNING: Race data not found for race '{$this->data->race}' (player {$this->id}). Using defaults.");
+            $this->raceData = new \stdClass();
+            // Initialize default race stats to 0
+            foreach(CARACS as $k=>$e){
+                $this->raceData->$k = 0;
+            }
+        }
+
         $this->get_upgrades();
 
-        foreach(CARACS as $k=>$e){
+        // Double-check all objects are initialized (defensive programming)
+        if (!is_object($this->caracs)) $this->caracs = new \stdClass();
+        if (!is_object($this->raceData)) $this->raceData = new \stdClass();
+        if (!is_object($this->upgrades)) $this->upgrades = new \stdClass();
 
-            $this->caracs->$k = $this->raceData->$k + $this->upgrades->$k;
+        foreach(CARACS as $k=>$e){
+            // Ensure properties exist before adding
+            $raceValue = isset($this->raceData->$k) ? $this->raceData->$k : 0;
+            $upgradeValue = isset($this->upgrades->$k) ? $this->upgrades->$k : 0;
+
+            $this->caracs->$k = $raceValue + $upgradeValue;
         }
 
 
@@ -187,7 +284,14 @@ class Player implements ActorInterface {
         $this->turn = (object) array();
 
         while($row = $res->fetch_object()){
-            $this->turn->{$row->name} = $this->caracs->{$row->name} + $row->n;
+            // Some bonuses (pi, xp) are not in caracs, they're in data
+            $baseValue = 0;
+            if (isset($this->caracs->{$row->name})) {
+                $baseValue = $this->caracs->{$row->name};
+            } elseif (isset($this->data->{$row->name})) {
+                $baseValue = $this->data->{$row->name};
+            }
+            $this->turn->{$row->name} = $baseValue + $row->n;
         }
 
 
@@ -262,6 +366,10 @@ class Player implements ActorInterface {
 
     public function get_upgrades(){
 
+        // Initialize upgrades object if not exists
+        if (!isset($this->upgrades) || !is_object($this->upgrades)) {
+            $this->upgrades = new \stdClass();
+        }
 
         foreach(CARACS as $k=>$e){
 
@@ -2057,7 +2165,7 @@ class Player implements ActorInterface {
      */
 
 
-    public static function put_player($name, $race, $pnj=false) : int{
+    public static function put_player($name, $race, $pnj=false, $type='real') : int{
 
 
         $db = new Db();
@@ -2073,18 +2181,13 @@ class Player implements ActorInterface {
         $coordsId = View::get_coords_id($goCoords);
 
 
-        $id = null;
-
-        if($pnj){
-
-
-            $id = $db->get_first_id('players') - 1;
-
-            if(!$id){
-
-                $id = -1;
-            }
+        // Determine player type and generate IDs
+        if ($pnj) {
+            $type = 'npc';
         }
+
+        $id = getNextEntityId($type);
+        $displayId = getNextDisplayId($type);
 
 
         $raceJson = json()->decode('races', $race);
@@ -2095,6 +2198,8 @@ class Player implements ActorInterface {
 
         $values = array(
             'id'=>$id,
+            'player_type'=>$type,
+            'display_id'=>$displayId,
             'name'=>$name,
             'race'=>$race,
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
@@ -2111,10 +2216,8 @@ class Player implements ActorInterface {
             exit('error inserting player');
         }
 
-        //we allready have the id for pnj and it's negatif 
-        $lastId = is_null($id) ? $db->get_last_id('players') : $id;
-
-        $player = new Player($lastId);
+        // ID is already assigned via getNextEntityId()
+        $player = new Player($id);
 
         // first init data
         $player->get_data();
@@ -2136,16 +2239,19 @@ class Player implements ActorInterface {
         }
 
 
-        // first id
-        if($lastId == 1){
+        // first real player gets admin
+        if($type == 'real' && $displayId == 1){
 
             $player->add_option('isAdmin');
         }
-        
+
+        // Enable action details by default for all new players
+        $player->add_option('showActionDetails');
+
         Dialog::refresh_register_dialog();
 
 
-        return $lastId;
+        return $id;
     }
 
     public static function get_player_by_name($name){
@@ -2153,8 +2259,10 @@ class Player implements ActorInterface {
 
         $db = new Db();
 
+        // Filter by player_type='real' to prevent looking up tutorial players or NPCs
+        // Used in exchanges, missives, and console commands
         $sql = '
-        SELECT id FROM players WHERE name = ?
+        SELECT id FROM players WHERE name = ? AND player_type = "real"
         ';
 
         $res = $db->exe($sql, $name);
@@ -2221,7 +2329,9 @@ class Player implements ActorInterface {
     public static function refresh_list(){
 
 
-        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players ORDER BY name';
+        // CRITICAL: Filter by player_type to exclude tutorial players and NPCs from public lists
+        // Only real players (player_type='real') should appear in rankings and leaderboards
+        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players WHERE player_type = "real" ORDER BY name';
 
         $db = new Db();
 

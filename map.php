@@ -12,6 +12,10 @@ $player->getCoords();
 $isInHell = (isset($player->coords->plan) && $player->coords->plan === 'enfers');
 
 $planJson = json()->decode('plans', $player->coords->plan);
+if (!$planJson) {
+    $planJson = new stdClass();
+    $planJson->name = $player->coords->plan ?? 'Inconnu';
+}
 $planJson->id = $player->coords->plan;
 $planJson->fromCoords = $player->coords;
 $zLevelName = '';

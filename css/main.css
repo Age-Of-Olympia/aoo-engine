@@ -925,6 +925,10 @@ article.pnj {
         background: url('../img/ui/cards/dark_green.webp');
     }
 
+    #ui-card .ame{
+        background: url('../img/ui/cards/blue_stars.jpeg');
+    }
+
     #ui-card .card-name{
 
         text-align: left;
@@ -987,7 +991,6 @@ article.pnj {
         position: absolute;
         top: 30px;
         right: -5px;
-        max-height: 100px;
         text-align: right;
         z-index: 1;
     }
