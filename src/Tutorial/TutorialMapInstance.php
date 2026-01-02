@@ -32,29 +32,30 @@ class TutorialMapInstance
     /**
      * Create a new tutorial map instance for a session
      *
-     * Copies the template tutorial map (plan='tutorial') to a session-specific instance.
+     * Copies the template tutorial map to a session-specific instance.
      * Returns the coords_id of the starting position (0,0) on the new instance.
      *
      * @param string $sessionId Tutorial session UUID
+     * @param string $templatePlan Template plan to copy (defaults to 'tutorial')
      * @return array ['plan_name' => string, 'starting_coords_id' => int]
      * @throws \RuntimeException if template map doesn't exist or copy fails
      */
-    public function createInstance(string $sessionId): array
+    public function createInstance(string $sessionId, string $templatePlan = 'tutorial'): array
     {
         // Shorten plan name to fit coords_computed (varchar(35))
         // Format: tut_XXXXXXXXXX (max 14 chars to leave room for coords like "-10_-10_0_")
         $instancePlanName = 'tut_' . substr($sessionId, 0, 10);
 
-        error_log("[TutorialMapInstance] Creating map instance for session {$sessionId}: {$instancePlanName}");
+        error_log("[TutorialMapInstance] Creating map instance for session {$sessionId}: {$instancePlanName} from template {$templatePlan}");
 
         // Step 1: Verify template map exists
-        $templateCheck = $this->conn->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', ['tutorial']);
+        $templateCheck = $this->conn->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [$templatePlan]);
         if ($templateCheck == 0) {
-            throw new \RuntimeException("Template tutorial map (plan='tutorial') not found. Run scripts/create_tutorial_map.php first.");
+            throw new \RuntimeException("Template tutorial map (plan='{$templatePlan}') not found.");
         }
 
         // Step 1.5: Copy plan JSON file for resource definitions
-        $templateJsonPath = __DIR__ . '/../../datas/private/plans/tutorial.json';
+        $templateJsonPath = __DIR__ . '/../../datas/private/plans/' . $templatePlan . '.json';
         $instanceJsonPath = __DIR__ . '/../../datas/private/plans/' . $instancePlanName . '.json';
 
         if (!file_exists($templateJsonPath)) {
@@ -75,9 +76,9 @@ class TutorialMapInstance
             INSERT INTO coords (x, y, z, plan)
             SELECT x, y, z, ? as plan
             FROM coords
-            WHERE plan = 'tutorial'
+            WHERE plan = ?
         ";
-        $coordsCopied = $this->conn->executeStatement($sql, [$instancePlanName]);
+        $coordsCopied = $this->conn->executeStatement($sql, [$instancePlanName, $templatePlan]);
         error_log("[TutorialMapInstance] Copied {$coordsCopied} coords from template");
 
         // Step 3: Create mapping of old coords_id to new coords_id
@@ -85,8 +86,8 @@ class TutorialMapInstance
         $coordsMapping = [];
 
         $templateCoords = $this->conn->fetchAllAssociative("
-            SELECT id, x, y, z FROM coords WHERE plan = 'tutorial'
-        ");
+            SELECT id, x, y, z FROM coords WHERE plan = ?
+        ", [$templatePlan]);
 
         $instanceCoords = $this->conn->fetchAllAssociative("
             SELECT id, x, y, z FROM coords WHERE plan = ?
@@ -107,23 +108,23 @@ class TutorialMapInstance
         error_log("[TutorialMapInstance] Created mapping for " . count($coordsMapping) . " coords");
 
         // Step 4: Copy map_walls (resources like trees/stones)
-        $this->copyMapElements('walls', $coordsMapping, ['name', 'player_id', 'damages']);
+        $this->copyMapElements('walls', $coordsMapping, ['name', 'player_id', 'damages'], $templatePlan);
 
         // Step 5: Copy NPCs (negative player IDs) to instance
-        $this->copyNPCs($coordsMapping, $instancePlanName);
+        $this->copyNPCs($coordsMapping, $instancePlanName, $templatePlan);
 
-        // Step 6: Copy other map elements if they exist on tutorial map
+        // Step 6: Copy other map elements if they exist on template map
         $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
 
         foreach ($mapElementTypes as $type) {
             $count = $this->conn->fetchOne("
                 SELECT COUNT(*) FROM map_{$type} mw
                 INNER JOIN coords c ON mw.coords_id = c.id
-                WHERE c.plan = 'tutorial'
-            ");
+                WHERE c.plan = ?
+            ", [$templatePlan]);
 
             if ($count > 0) {
-                $this->copyMapElements($type, $coordsMapping, ['name', 'params']);
+                $this->copyMapElements($type, $coordsMapping, ['name', 'params'], $templatePlan);
             }
         }
 
@@ -153,15 +154,16 @@ class TutorialMapInstance
      *
      * @param array $coordsMapping Old coords_id => new coords_id mapping
      * @param string $instancePlanName Instance plan name
+     * @param string $templatePlan Template plan name
      */
-    private function copyNPCs(array $coordsMapping, string $instancePlanName): void
+    private function copyNPCs(array $coordsMapping, string $instancePlanName, string $templatePlan = 'tutorial'): void
     {
         // Get all NPCs from template map
         $npcs = $this->conn->fetchAllAssociative("
             SELECT p.* FROM players p
             INNER JOIN coords c ON p.coords_id = c.id
-            WHERE c.plan = 'tutorial' AND p.id < 0
-        ");
+            WHERE c.plan = ? AND p.id < 0
+        ", [$templatePlan]);
 
         if (empty($npcs)) {
             error_log("[TutorialMapInstance] No NPCs found on template map");
@@ -213,15 +215,16 @@ class TutorialMapInstance
      * @param string $elementType Map element type (walls, tiles, etc.)
      * @param array $coordsMapping Old coords_id => new coords_id mapping
      * @param array $columnsToCopy Additional columns to copy beyond coords_id
+     * @param string $templatePlan Template plan name
      */
-    private function copyMapElements(string $elementType, array $coordsMapping, array $columnsToCopy): void
+    private function copyMapElements(string $elementType, array $coordsMapping, array $columnsToCopy, string $templatePlan = 'tutorial'): void
     {
         // Get all elements from template map
         $templateElements = $this->conn->fetchAllAssociative("
             SELECT me.* FROM map_{$elementType} me
             INNER JOIN coords c ON me.coords_id = c.id
-            WHERE c.plan = 'tutorial'
-        ");
+            WHERE c.plan = ?
+        ", [$templatePlan]);
 
         $copiedCount = 0;
         foreach ($templateElements as $element) {

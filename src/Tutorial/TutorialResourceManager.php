@@ -39,13 +39,15 @@ class TutorialResourceManager
      * @param int $realPlayerId Real player's ID
      * @param string $sessionId Tutorial session UUID
      * @param string|null $race Character race (defaults to real player's race)
+     * @param string $templatePlan Template plan to copy (defaults to 'tutorial')
      * @return TutorialPlayer Created tutorial player
      * @throws TutorialException If creation fails
      */
     public function createTutorialPlayer(
         int $realPlayerId,
         string $sessionId,
-        ?string $race = null
+        ?string $race = null,
+        string $templatePlan = 'tutorial'
     ): TutorialPlayer {
         try {
             // Create tutorial player (which creates map instance internally)
@@ -54,7 +56,8 @@ class TutorialResourceManager
                 $realPlayerId,
                 $sessionId,
                 null, // startingCoordsId auto-generated from instance
-                $race
+                $race,
+                $templatePlan
             );
 
             // Spawn tutorial enemy
