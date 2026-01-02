@@ -116,8 +116,8 @@ class TutorialStepValidationService
             return '1.0.0';
         }
 
-        if (!preg_match('/^\d+\.\d+\.\d+$/', $version)) {
-            throw new InvalidArgumentException('Version must be in format X.Y.Z (e.g., 1.0.0)');
+        if (!preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$/', $version)) {
+            throw new InvalidArgumentException('Version must be in format X.Y.Z or X.Y.Z-suffix (e.g., 1.0.0 or 2.0.0-craft)');
         }
 
         return $version;
