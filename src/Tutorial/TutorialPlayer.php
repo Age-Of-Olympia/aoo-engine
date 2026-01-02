@@ -44,6 +44,7 @@ class TutorialPlayer
      * @param string $tutorialSessionId Tutorial session UUID
      * @param int|null $startingCoordsId Starting position (deprecated - will be auto-generated from instance)
      * @param string|null $race Character race (defaults to real player's race)
+     * @param string $templatePlan Template plan to copy (defaults to 'tutorial')
      * @return self
      */
     public static function create(
@@ -51,12 +52,13 @@ class TutorialPlayer
         int $realPlayerId,
         string $tutorialSessionId,
         ?int $startingCoordsId = null,
-        ?string $race = null
+        ?string $race = null,
+        string $templatePlan = 'tutorial'
     ): self {
         // Step 1: Create isolated map instance for this tutorial session
-        error_log("[TutorialPlayer] Creating map instance for session {$tutorialSessionId}");
+        error_log("[TutorialPlayer] Creating map instance for session {$tutorialSessionId} from template {$templatePlan}");
         $mapInstance = new TutorialMapInstance($conn);
-        $instanceData = $mapInstance->createInstance($tutorialSessionId);
+        $instanceData = $mapInstance->createInstance($tutorialSessionId, $templatePlan);
 
         $instancePlanName = $instanceData['plan_name'];
         $startingCoordsId = $instanceData['starting_coords_id'];

@@ -64,6 +64,13 @@ class TutorialManager
         $firstStepId = $this->stepRepository->getFirstStepId($version) ?? 'gaia_welcome';
         $totalSteps = $this->stepRepository->getTotalSteps($version);
 
+        // Get catalog entry for this version to determine the map template
+        $catalog = $this->db->exe(
+            "SELECT plan FROM tutorial_catalog WHERE version = ?",
+            [$version]
+        )->fetch_assoc();
+        $templatePlan = $catalog['plan'] ?? 'tutorial';
+
         // Create session
         $session = $this->sessionManager->createSession(
             $player->id,
@@ -80,7 +87,8 @@ class TutorialManager
         $this->tutorialPlayer = $this->resourceManager->createTutorialPlayer(
             $player->id,
             $this->sessionId,
-            $player->data->race ?? null
+            $player->data->race ?? null,
+            $templatePlan
         );
 
         // Update context to use tutorial player (for placeholder replacement)
