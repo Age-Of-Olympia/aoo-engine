@@ -453,7 +453,8 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
 
         $this->addSql("
             INSERT INTO tutorial_catalog (version, name, description, icon, difficulty, estimated_minutes, prerequisites, plan, spawn_x, spawn_y, is_active, display_order) VALUES
-            ('1.0.0', 'Tutoriel de base', 'Apprenez les bases du jeu : déplacement, récolte de ressources et combat.', 'ra-player', 'beginner', 15, NULL, 'tutorial', 0, 0, TRUE, 1)
+            ('1.0.0', 'Tutoriel de base', 'Apprenez les bases du jeu : déplacement, récolte de ressources et combat.', 'ra-player', 'beginner', 15, NULL, 'tutorial', 0, 0, TRUE, 1),
+            ('2.0.0-craft', 'Tutoriel Artisanat', 'Apprenez à utiliser le système d''artisanat pour créer des objets à partir de ressources.', 'ra-forging', 'intermediate', 5, '[\"1.0.0\"]', 'tutorial', 0, 0, TRUE, 2)
             ON DUPLICATE KEY UPDATE name=VALUES(name)
         ");
 
@@ -497,6 +498,9 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
         $this->insertTutorialInteractions();
         $this->insertTutorialContextChanges();
         $this->insertTutorialNextPreparation();
+
+        // Crafting tutorial (2.0.0-craft)
+        $this->insertCraftingTutorial();
     }
 
     private function insertTutorialSteps(): void
@@ -734,6 +738,54 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
         ");
     }
 
+    /**
+     * Insert crafting tutorial (version 2.0.0-craft)
+     * A shorter tutorial focused on the crafting system
+     */
+    private function insertCraftingTutorial(): void
+    {
+        $this->addSql("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+        // Insert steps
+        $this->addSql("
+            INSERT INTO tutorial_steps (version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active) VALUES
+            ('2.0.0-craft', 'craft_welcome', 'craft_open_menu', 1.0, 'info', 'Bienvenue dans l''Artisanat !', 'Ce tutoriel va vous apprendre à utiliser le système d''artisanat pour créer des objets à partir de ressources récoltées.', 5, 1),
+            ('2.0.0-craft', 'craft_open_menu', 'craft_click_inventory', 2.0, 'ui_interaction', 'Ouvrir le menu', 'Cliquez sur le bouton <strong>Menu</strong> pour accéder aux différentes sections du jeu.', 5, 1),
+            ('2.0.0-craft', 'craft_click_inventory', 'craft_click_artisanat', 3.0, 'ui_interaction', 'Inventaire', 'Cliquez sur <strong>Inventaire</strong> pour voir vos ressources et accéder à l''artisanat.', 5, 1),
+            ('2.0.0-craft', 'craft_click_artisanat', 'craft_explain_interface', 4.0, 'ui_interaction', 'Onglet Artisanat', 'Cliquez sur l''onglet <strong>Artisanat</strong> pour voir les recettes disponibles.', 5, 1),
+            ('2.0.0-craft', 'craft_explain_interface', 'craft_complete', 5.0, 'info', 'Interface d''artisanat', 'Voici l''interface d''artisanat ! Vous voyez les recettes disponibles et les ressources nécessaires. Les recettes en vert sont réalisables avec vos ressources actuelles.', 10, 1),
+            ('2.0.0-craft', 'craft_complete', NULL, 6.0, 'info', 'Tutoriel terminé !', '<strong>Félicitations !</strong> Vous connaissez maintenant les bases de l''artisanat. Récoltez des ressources et créez vos premiers objets !', 20, 1)
+        ");
+
+        // Insert UI config
+        $this->addSql("
+            INSERT INTO tutorial_step_ui (step_id, target_selector, tooltip_position, interaction_mode, show_delay, allow_manual_advance)
+            SELECT id, NULL, 'center', 'blocking', 0, 1 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_welcome' UNION ALL
+            SELECT id, '#show-menu', 'bottom', 'semi-blocking', 0, 0 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_open_menu' UNION ALL
+            SELECT id, '.menu-inventaire', 'right', 'semi-blocking', 300, 0 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_click_inventory' UNION ALL
+            SELECT id, '.inventory-tab-craft', 'bottom', 'semi-blocking', 300, 0 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_click_artisanat' UNION ALL
+            SELECT id, '.craft-recipes', 'right', 'blocking', 500, 1 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_explain_interface' UNION ALL
+            SELECT id, NULL, 'center', 'blocking', 0, 1 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_complete'
+        ");
+
+        // Insert validation config
+        $this->addSql("
+            INSERT INTO tutorial_step_validation (step_id, requires_validation, validation_type, element_clicked)
+            SELECT id, 0, NULL, NULL FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_welcome' UNION ALL
+            SELECT id, 1, 'ui_interaction', '#show-menu' FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_open_menu' UNION ALL
+            SELECT id, 1, 'ui_interaction', '.menu-inventaire' FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_click_inventory' UNION ALL
+            SELECT id, 1, 'ui_interaction', '.inventory-tab-craft' FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_click_artisanat' UNION ALL
+            SELECT id, 0, NULL, NULL FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_explain_interface' UNION ALL
+            SELECT id, 0, NULL, NULL FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_complete'
+        ");
+
+        // Insert features (celebration on complete)
+        $this->addSql("
+            INSERT INTO tutorial_step_features (step_id, celebration, show_rewards)
+            SELECT id, 1, 1 FROM tutorial_steps WHERE version = '2.0.0-craft' AND step_id = 'craft_complete'
+        ");
+    }
+
     public function down(Schema $schema): void
     {
         // Drop all tutorial tables in reverse order (respecting foreign keys)
@@ -746,6 +798,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
         $this->addSql('DROP TABLE IF EXISTS tutorial_step_validation');
         $this->addSql('DROP TABLE IF EXISTS tutorial_step_ui');
         $this->addSql('DROP TABLE IF EXISTS tutorial_steps');
+        $this->addSql('DROP TABLE IF EXISTS tutorial_catalog');
         $this->addSql('DROP TABLE IF EXISTS tutorial_settings');
         $this->addSql('DROP TABLE IF EXISTS tutorial_map_instances');
         $this->addSql('DROP TABLE IF EXISTS tutorial_enemies');
