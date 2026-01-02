@@ -35,8 +35,8 @@ class TutorialTooltip {
     async show(title, text, targetSelector = null, position = 'center', requiresValidation = false) {
         // Update existing tooltip if present, otherwise create new
         if (this.$tooltip && this.$tooltip.length > 0) {
-            // Hide existing tooltip briefly for smooth transition
-            this.$tooltip.fadeOut(150, async () => {
+            // Define the update function
+            const updateTooltip = async () => {
                 // Update content while hidden
                 this.$tooltip.find('.tooltip-title').text(title);
                 this.$tooltip.find('.tooltip-text').html(text);
@@ -155,9 +155,25 @@ class TutorialTooltip {
                 if (this.$tooltip) {
                     this.$tooltip.fadeIn(300);
                 }
-            });
+            };
 
-            return; // Exit early - rest is handled in fadeOut callback
+            // Check if tooltip is currently visible
+            if (this.$tooltip.is(':visible')) {
+                // Tooltip is visible - fade out first, then update
+                console.log('[TutorialTooltip] Tooltip visible, fading out first');
+                await new Promise(resolve => {
+                    // Stop any pending animations (fixes queue conflicts with hide() method)
+                    this.$tooltip.stop(true, false).fadeOut(150, resolve);
+                });
+                console.log('[TutorialTooltip] Fade out complete, now updating');
+            } else {
+                console.log('[TutorialTooltip] Tooltip was hidden, updating directly');
+            }
+
+            // Now update the tooltip (it's hidden at this point)
+            await updateTooltip();
+
+            return; // Exit early - rest is handled above
         } else {
             // Create new tooltip
             // Only create arrow if NOT centered (center tooltips don't need arrows)
