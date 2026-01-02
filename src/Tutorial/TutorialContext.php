@@ -328,8 +328,10 @@ class TutorialContext
 
             if ($current < $required) {
                 if ($autoRestore) {
-                    $player->data->a = $required;
-                    error_log("[TutorialContext] Restored actions: {$current} → {$required}");
+                    // Persist PA restoration to database using putBonus (like movement restoration does)
+                    $bonusNeeded = $required - $current;
+                    $player->putBonus(['a' => $bonusNeeded]);
+                    error_log("[TutorialContext] Restored actions: {$current} → {$required} (bonus: {$bonusNeeded})");
                 } else {
                     error_log("[TutorialContext] ERROR: Insufficient actions (need {$required}, have {$current})");
                     return false;
