@@ -548,8 +548,8 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script src="js/admin-tools.js?v=20260218"></script>
-<script src="js/tiled.js?v=20260218"></script>
+<script src="js/admin-tools.js?v=20260220"></script>
+<script src="js/tiled.js?v=20260220"></script>
 
 
 

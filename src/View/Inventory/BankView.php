@@ -38,6 +38,11 @@ class BankView
 
                 // script called from inventory.php
 
+                //todo add check is_bankable
+                if(!$item->is_bankable()){
+                    exit('Cet objet est refusé en banque.');
+                }
+
 
                 if (!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player)) {
 

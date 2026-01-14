@@ -20,7 +20,9 @@ $(document).ready(function(){
         window.price = $item.data("price");
         let infos = $item.data("infos");
         let img =   $item.data("img");
+        let bankable = $item.data("bankable") ;
 
+        $('.action[data-action="store"]').prop('disabled', !bankable);
 
         if($('.emplacement[data-id="'+ window.id +'"]')[0] != null){
 
@@ -68,7 +70,6 @@ $(document).ready(function(){
                 .prop('disabled', true);
             }
         }
-
 
         $(".preview-n").text('x'+ n);
         $(".preview-text").text(text);

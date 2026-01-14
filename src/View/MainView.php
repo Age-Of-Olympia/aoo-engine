@@ -75,8 +75,8 @@ class MainView
             echo '<script>window.isAdmin = ' . $isAdmin . ';</script>';
 
 ?>
-            <script src="js/admin-tools.js?v=20260218"></script>
-            <script src="js/view.js?v=20260218"></script>
+            <script src="js/admin-tools.js?v=20260220"></script>
+            <script src="js/view.js?v=20260220"></script>
 <?php
         }
     }

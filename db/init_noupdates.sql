@@ -1828,7 +1828,9 @@ CREATE TABLE `items` (
   `cursed` int(1) NOT NULL DEFAULT 0,
   `element` varchar(255) NOT NULL DEFAULT '',
   `blessed_by_id` int(11) DEFAULT NULL,
-  `spell` varchar(255) DEFAULT NULL
+  `spell` varchar(255) DEFAULT NULL,
+  `is_deprecated` BOOLEAN NOT NULL DEFAULT FALSE,
+  `is_bankable` BOOLEAN NOT NULL DEFAULT TRUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

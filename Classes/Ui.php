@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20250516"></script>
                 <script src="js/console.js?v=20250516"></script>
-                <link href="css/main.min.css?v=20260218" rel="stylesheet">
+                <link href="css/main.min.css?v=20260220" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){
@@ -260,6 +260,7 @@ class Ui{
                 data-emplacement="'. $emp .'"
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
+                data-bankable="'. $item->row->is_bankable .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
