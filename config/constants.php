@@ -501,7 +501,9 @@ define('LOOT_CHANCE', array(
     'rubis'=>100,
     'plume_doree'=>100,
 	'plume_irisee'=>100,
-	'plume_ebenne'=>100
+	'plume_ebenne'=>100,
+    'morceau_de_carte'=>100,
+    'carte_recomposee'=>100
 ));
 
 /*
