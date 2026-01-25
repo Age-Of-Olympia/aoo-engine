@@ -36,13 +36,12 @@ final class Version20260102000000_AddCraftingTutorial extends AbstractMigration
     {
         // ===== STEP 1: Add tutorial catalog entry =====
         $this->addSql("
-            INSERT INTO tutorial_catalog (version, title, description, plan, total_steps, difficulty, is_active, created_at)
+            INSERT INTO tutorial_catalog (version, name, description, plan, difficulty, is_active, created_at)
             VALUES (
                 '2.0.0-craft',
                 'Crafting Tutorial',
                 'Learn to gather resources and craft your first pioche',
                 'tutorial',
-                23,
                 'beginner',
                 1,
                 NOW()
