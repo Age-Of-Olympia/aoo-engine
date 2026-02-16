@@ -175,15 +175,60 @@ elseif(!$planJson){
 
 if($res->num_rows){
 
-    function custom_compare($a, $b) {
+    /**
+     * Trie les actions par catégorie pour regrouper soins et offensives.
+     * Ordre: bases -> offensives (melee, distance, spell, technique) -> soins (heal) -> utilitaires
+     */
+    function sortActionsByCategory(array $actions, ActionService $actionService): array {
+        $basics = array(
+            "attaquer",
+            "courir",
+            "entrainement",
+            "fouiller",
+            "prier",
+            "repos",
+            "vol_a_la_tire"
+        );
+        $offensiveTypes = array('melee', 'distance', 'spell', 'technique');
+        $healType = 'heal';
 
-        global $basics;
+        $byCategory = array(
+            'basics' => array(),
+            'offensive' => array(),
+            'heal' => array(),
+            'utility' => array()
+        );
 
-        if (in_array($a, $basics)) {
-            return -1;
+        foreach ($actions as $actionName) {
+            if (in_array($actionName, $basics)) {
+                $byCategory['basics'][$actionName] = array_search($actionName, $basics);
+                continue;
+            }
+            $actionData = $actionService->getActionByName($actionName);
+            if ($actionData === null) {
+                $byCategory['utility'][] = $actionName;
+                continue;
+            }
+            $ormType = $actionData->getOrmType();
+            if ($ormType === $healType) {
+                $byCategory['heal'][] = $actionName;
+            } elseif (in_array($ormType, $offensiveTypes)) {
+                $byCategory['offensive'][] = $actionName;
+            } else {
+                $byCategory['utility'][] = $actionName;
+            }
         }
 
-        return 1; // Si l'élément $b n'est pas dans l'ordre, il est considéré plus petit
+        $result = array();
+        foreach ($basics as $b) {
+            if (isset($byCategory['basics'][$b])) {
+                $result[] = $b;
+            }
+        }
+        sort($byCategory['offensive']);
+        sort($byCategory['heal']);
+        sort($byCategory['utility']);
+        return array_merge($result, $byCategory['offensive'], $byCategory['heal'], $byCategory['utility']);
     }
 
     $card="";
@@ -232,20 +277,9 @@ if($res->num_rows){
 
 
         $actions = $player->get_actions();
-
-        $basics = array(
-            "attaquer",
-            "courir",
-            "entrainement",
-            "fouiller",
-            "prier",
-            "repos",
-            "vol_a_la_tire"
-        );
-
-        // Trier le tableau en utilisant la fonction de comparaison personnalisée
-        usort($actions, 'custom_compare');
         $actionService = new ActionService();
+        $actions = sortActionsByCategory($actions, $actionService);
+
         foreach($actions as $actionName){
             $entityManager = EntityManagerFactory::getEntityManager();
             if ($actionName == "attaquer") {
