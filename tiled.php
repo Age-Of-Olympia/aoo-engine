@@ -67,6 +67,7 @@ if(!empty($_POST['coords']) && !empty($_POST['type']) && !empty($_POST['src'])){
 
 
     if($_POST['type'] == 'tp'){
+        
         $coords->coordsId = $coordsId;
         $player->go($coords);
         exit('tp');
@@ -547,8 +548,8 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script src="js/admin-tools.js?v=20251111i"></script>
-<script src="js/tiled.js?v=20251111i"></script>
+<script src="js/admin-tools.js?v=20260218"></script>
+<script src="js/tiled.js?v=20260218"></script>
 
 
 
