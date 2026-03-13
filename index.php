@@ -6,6 +6,8 @@ use App\View\MainView;
 use App\View\MenuView;
 use App\View\NewTurnView;
 use Classes\Player;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 if(isset($_GET['logout'])){
 
@@ -19,6 +21,41 @@ define('NO_LOGIN', true);
 require_once('config.php');
 
 
+$request = Laminas\Diactoros\ServerRequestFactory::fromGlobals(
+    $_SERVER, $_GET, $_POST, $_COOKIE, $_FILES
+);
+
+$router   = (new League\Route\Router);
+$responseFactory = new Laminas\Diactoros\ResponseFactory();
+$jsonStrategy = new League\Route\Strategy\JsonStrategy($responseFactory);
+$router->group('/admin2', function (\League\Route\RouteGroup $route) {
+    $route->map('GET', '/', function (ServerRequestInterface $request): ResponseInterface {
+    $response = new Laminas\Diactoros\Response;
+    $response->getBody()->write('<h1>Hello, World!</h1>');
+    return $response;
+});
+    // $route->map('GET', '/acme/route1', 'AcmeController::actionOne');
+    // $route->map('GET', '/acme/route2', 'AcmeController::actionTwo');
+    // $route->map('GET', '/acme/route3', 'AcmeController::actionThree');
+});
+$router->group('/api', function (\League\Route\RouteGroup $route) {
+    $route->map('GET', '/', 
+    function (ServerRequestInterface $request): ResponseInterface {
+    $response = new Laminas\Diactoros\Response;
+    $response->getBody()->write('<h1>Hello, World!</h1>');
+    return $response;
+}); 
+    //$route->map('GET', '/acme/route1', 'AcmeController::actionOne');
+    // $route->map('GET', '/acme/route2', 'AcmeController::actionTwo');
+    // $route->map('GET', '/acme/route3', 'AcmeController::actionThree');
+});//->setStrategy( $jsonStrategy);
+
+$response = $router->dispatch($request);
+
+// send the response to the browser
+(new Laminas\HttpHandlerRunner\Emitter\SapiEmitter)->emit($response);
+
+exit();
 $ui = new Ui($title="Index");
 
 
