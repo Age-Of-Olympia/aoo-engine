@@ -19,5 +19,11 @@ RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1$ [NC]
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+
+RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+# Redirect all requests to index.php
+RewriteRule ^ index.php [QSA,L]
+
 # Configurer le chemin de sauvegarde des sessions PHP
 # php_value session.save_path "/home/leo/Documents/Prog/www/aoo4/sessions"
