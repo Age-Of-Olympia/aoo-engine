@@ -451,6 +451,25 @@ class Player implements ActorInterface {
         return $return;
     }
 
+    public function get_detailed($table){
+
+
+        $return = array();
+
+        $db = new Db();
+
+        $res = $db->get_single_player_id('players_'. $table, $this->id);
+
+        while($row = $res->fetch_object()){
+
+            $return[] = $row;
+        }
+
+        sort($return);
+
+        return $return;
+    }
+
 
     // options shortcuts
     public function add_option($name){ $this->add('options', $name); }
@@ -730,6 +749,16 @@ class Player implements ActorInterface {
        // delete empty coords will be cron managed for easier debugging
     }
 
+    public static function CapPI($playerXp,$xpGained,$xpCap): int{
+
+        // Ajout d'un cap temporaire des PIs pour la fin de la saison
+        if($xpGained>0){
+            return min(max(0,($xpCap - $playerXp)),$xpGained);
+        }
+        else{
+            return max(min(0,$xpCap - $playerXp-$xpGained) ,$xpGained);
+        }
+    }
 
     public function put_xp($xp){
 
@@ -739,14 +768,8 @@ class Player implements ActorInterface {
             $this->get_data();
         }
 
-        // Ajout d'un cap temporaire des PIs pour la fin de la saison 1
-        $xpCap = SEASON_XP;
-        if($xp>0){
-            $pi = min(max(0,($xpCap - $this->data->xp)),$xp);
-        }
-        else{
-            $pi = max(min(0,$xpCap-$this->data->xp-$xp) ,$xp);
-        }
+        $pi = Player::CapPI(playerXp:$this->data->xp,xpGained:$xp,xpCap:SEASON_XP);
+
         $this->data->xp += $xp;
         $this->data->pi += $pi;
 
@@ -2163,6 +2186,26 @@ class Player implements ActorInterface {
         ';
 
         $res = $db->exe($sql, $name);
+
+        if(!$res->num_rows){
+
+            return false;
+        }
+
+        $row = $res->fetch_object();
+
+        return new Player($row->id);
+    }
+    public static function get_player_by_id($id){
+
+
+        $db = new Db();
+
+        $sql = '
+        SELECT id FROM players WHERE id = ?
+        ';
+
+        $res = $db->exe($sql, $id);
 
         if(!$res->num_rows){
 

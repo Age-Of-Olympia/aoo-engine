@@ -41,7 +41,11 @@ EOT);
         }
 
         $player=parent::getPlayer($argumentValues[1]);
-
+        if(!$player)
+        {
+            $this->result->Warning('Player '. $argumentValues[1] .' not found');
+            return "";
+        }
         $player->get_data();
 
         if($action == 'unequip'){
@@ -66,6 +70,10 @@ EOT);
             return add_xp($argumentValues, $player);
         }
 
+        if($action == 'checkpi'){
+            return $this->check_pi($argumentValues, $player);
+        }
+
         if($action == 'addupgrade'){
             return add_upgrade($argumentValues,$player);
         }
@@ -87,6 +95,47 @@ EOT);
         }
 
         return '<font color="orange">Action : '.$action.' unknown</font>';
+    }
+
+    function check_pi($argumentValues,Player $player)
+    {
+        $alsoFixPi = false;
+        if(isset($argumentValues[2]) && $argumentValues[2] == 'fixpi'){
+
+            $alsoFixPi = true;
+        }
+
+        $playerUpgradesCost = 0;
+        $playerUpgrades=$player->get_detailed('upgrades');
+        foreach($playerUpgrades as $e){
+                $playerUpgradesCost+= $e->cost;
+        }
+        $playerPiFromXp = min($player->data->xp, SEASON_XP);
+        $offsetPi=$playerPiFromXp - $player->data->pi - $playerUpgradesCost;
+
+        if($offsetPi==0){
+          $this->result->log( $player->data->name .' ok');
+        }
+        else
+        {
+            $this->result->Warning( $player->data->name .' diff '. $offsetPi .'pi');
+        }
+        
+
+
+        if($alsoFixPi && $offsetPi!=0){
+            $sql = 'UPDATE players SET pi = pi + ? WHERE id = ?';
+
+            $stm=$this->db->prepare($sql);
+            $stm->bindValue(1,$offsetPi);
+            $stm->bindValue(2, $player->id);
+            $stm->executeQuery();
+            $this->result->log( $player->data->name .' adding '. $offsetPi .'pi');
+            $player->refresh_data();
+        }
+    
+
+        return "";
     }
 }
 
@@ -343,6 +392,8 @@ function add_xp($argumentValues, $player)
 
     return $argumentValues[2] .'Xp et Pi ajoutés à '. $player->data->name;
 }
+
+
 
 function add_upgrade($argumentValues, $player)
 {
