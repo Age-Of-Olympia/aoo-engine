@@ -70,7 +70,7 @@ abstract class Command
 
     public function getPlayer( $playerIdOrName) {
         if(is_numeric($playerIdOrName)){
-            $player = new Player($playerIdOrName);
+            $player = Player::get_player_by_id($playerIdOrName);
         }
         else{
             $player = Player::get_player_by_name($playerIdOrName);
@@ -103,7 +103,7 @@ abstract class Command
         $didAnArray=false;
         $arrayVarToProcess= array();
         //dirty hack no replace in savescript command
-        if (stripos($commandLine, "savescript") !=0) {
+        if (!stripos($commandLine, "savescript")) {
             foreach ($GLOBALS[consoleEnvKey] as $key => $value) {
                 $needle = '{' . $key . '}';
                 if (strpos($commandLine, $needle) !== false) {
@@ -148,5 +148,18 @@ abstract class Command
 
     public function executeIfAuthorized( array $argumentValues ): string {
         return $this->execute($argumentValues);
+    }
+
+    public static function ParseInput(string $input)
+    {
+        $result = $input;
+        //parse arrays in the form [1,_ ,10] to range(1,10) and [1,2,3] to [1,2,3]
+        if(str_starts_with($input, '[') && str_ends_with($input, ']')){
+           $result = json_decode($input);
+            if(count($result)==3 && is_int($result[0]) && $result[1]=="_" && is_int($result[2])){
+            $result = range($result[0],$result[2],1);
+            }
+        }
+        return $result;
     }
 }
