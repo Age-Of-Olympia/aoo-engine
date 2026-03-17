@@ -4,8 +4,8 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ORM\Table(name: "players_passives")]
-class PlayerPassive
+#[ORM\Table(name: "players_actions")]
+class PlayerAction
 {
     #[ORM\Id]
     #[ORM\Column(type: "integer", name: "player_id")]

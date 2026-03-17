@@ -13,15 +13,14 @@ class PlayerPassiveService
 
     public function __construct()
     {
-        // Fetch the entity manager from your custom factory
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 
     public function getPassivesByPlayerId(int $playerId): array
     {
         $repo = $this->entityManager->getRepository(PlayerPassive::class);
-        $results = $repo->findBy(['player_id' => $playerId]);
-    
+        $results = $repo->findBy(['playerId' => $playerId]);
+
         $passiveArray = [];
         foreach ($results as $playerPassive) {
             $actionPassive = $playerPassive->getPassive();
@@ -94,6 +93,24 @@ class PlayerPassiveService
             return false;
         }
         return true;
+    }
+
+    public function addPassiveByPlayerId(int $playerId, int $passiveId): void
+    {
+        $em = $this->entityManager;
+
+        $passive = $em->getRepository(ActionPassive::class)->find($passiveId);
+
+        if (!$passive) {
+            throw new \InvalidArgumentException('Passive introuvable');
+        }
+
+        $playerPassive = new PlayerPassive();
+        $playerPassive->setPlayerId($playerId);
+        $playerPassive->setPassive($passive);
+
+        $em->persist($playerPassive);
+        $em->flush();
     }
 
 }

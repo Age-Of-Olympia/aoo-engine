@@ -127,7 +127,7 @@ class ComputeCondition extends BaseCondition
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
         $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal : '';
-        $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
+        $actorTxt = 'Jet '. $actor->data->name .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
 
         return array($actorRoll, $actorTotal, $actorTxt);
     }

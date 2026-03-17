@@ -369,7 +369,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function add($table, $name, $charges=false){
+    public function add($table, $name){
 
 
         $db = new Db();
@@ -378,13 +378,6 @@ class Player implements ActorInterface {
             'player_id'=>$this->id,
             'name'=>$name
         );
-
-
-        if(!empty($charges)){
-
-            $values['charges'] = $charges;
-        }
-
 
         if($table == 'actions'){
 
@@ -478,7 +471,7 @@ class Player implements ActorInterface {
     public function get_options(){ return $this->get('options'); }
 
     // actions shortcuts
-    public function add_action($name, $charges=false){ $this->add('actions', $name, $charges); }
+    public function add_action($name){ $this->add('actions', $name); }
     public function have_action($name){ return $this->have('actions', $name); }
     public function end_action($name){ $this->end('actions', $name); }
     public function get_actions(){ return $this->get('actions'); }

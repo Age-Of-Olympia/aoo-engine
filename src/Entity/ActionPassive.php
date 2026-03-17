@@ -36,6 +36,15 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 255)]
     private string $race;
 
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $category = null;
+
+    #[ORM\Column(type: "string", length: 50, name: "display_name")]
+    protected string $displayName;
+
+    #[ORM\Column(type: "string", length: 150)]
+    protected string $text;
+
     public function getId(): int
     {
         return $this->id;
@@ -126,5 +135,35 @@ class ActionPassive
     public function setRace(string $race): void
     {
         $this->race = $race;
+    }
+
+    public function getCategory(): string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(string $category): void
+    {
+        $this->category = $category;
+    }
+
+    public function getDisplayName(): string
+    {
+        return $this->displayName;
+    }
+
+    public function setDisplayName(string $displayName): void
+    {
+        $this->displayName = $displayName;
+    }
+
+    public function getText(): string
+    {
+        return $this->text;
+    }
+
+    public function setText(string $text): void
+    {
+        $this->text = $text;
     }
 }

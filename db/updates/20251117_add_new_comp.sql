@@ -328,6 +328,9 @@ VALUES
     'DistancePureCompute','{"actorRollType":"ct", "targetRollType": "cc/agi"}',53,7,0
 ),
 (
+    'RequiresAmmo','{}',53,4,1
+),
+(
     'RequiresDistance','{"min":2}',54,0,1
 ),
 (
@@ -338,6 +341,9 @@ VALUES
 ),
 (
     'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi", "actorRollBonus" : 4}',54,7,0
+),
+(
+    'RequiresAmmo','{}',54,4,1
 ),
 (
     'RequiresDistance','{"min":2}',55,0,1
@@ -352,6 +358,9 @@ VALUES
     'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi", "actorRollBonus" : -6}',55,7,0
 ),
 (
+    'RequiresAmmo','{}',55,4,1
+),
+(
     'RequiresDistance','{"min":2}',56,0,1
 ),
 (
@@ -362,6 +371,9 @@ VALUES
 ),
 (
     'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi"}',56,7,0
+),
+(
+    'RequiresAmmo','{}',56,4,1
 ),
 (
     'RequiresDistance','{"min":2}',57,0,1
@@ -376,6 +388,9 @@ VALUES
     'DistancePureCompute','{"actorRollType":"ct", "targetRollType": "cc/agi"}',57,7,0
 ),
 (
+    'RequiresAmmo','{}',57,4,1
+),
+(
     'RequiresDistance','{"min":2}',58,0,1
 ),
 (
@@ -386,6 +401,9 @@ VALUES
 ),
 (
     'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi"}',58,7,0
+),
+(
+    'RequiresAmmo','{}',58,4,1
 ),
 (
     'RequiresDistance','{"min":2}',59,0,1
@@ -556,7 +574,7 @@ VALUES
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": ["rollDivisor",3], "player": "target", "duration": 86400}',10,65
 ),
 (
-    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait": ["m",3]}',10,66
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait": ["m",3], "distance":true}',10,66
 ),
 (
     'malus','{ "rollDivisor": 3}',10,67

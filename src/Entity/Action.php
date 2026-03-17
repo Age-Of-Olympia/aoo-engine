@@ -6,12 +6,16 @@ use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Classes\Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "actions")]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
+#[ORM\DiscriminatorMap([
+    'technique' => \App\Action\TechniqueAction::class,
+    'buff' => \App\Action\BuffAction::class,
+    'spell' => \App\Action\SpellAction::class
+])]
 abstract class Action implements ActionInterface
 {
     #[ORM\Id]
@@ -36,6 +40,9 @@ abstract class Action implements ActionInterface
 
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $race = null;
+
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $category = null;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -147,6 +154,26 @@ abstract class Action implements ActionInterface
     public function setLevel(int $level): void
     {
         $this->level = $level;
+    }
+
+    public function getRace(): string
+    {
+        return $this->race;
+    }
+
+    public function setRace(string $race): void
+    {
+        $this->race = $race;
+    }
+
+    public function getCategory(): string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(string $category): void
+    {
+        $this->category = $category;
     }
 
     /**

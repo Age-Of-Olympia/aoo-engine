@@ -3,11 +3,9 @@
 namespace App\Service;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\Action;
 use App\Interface\ActionInterface;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\Query\ResultSetMapping;
-use Exception;
 
 class ActionService
 {
@@ -92,9 +90,8 @@ class ActionService
         return $costArray;
     }
 
-    public function getPrice($name) : int
-    {
-        $level = $this->getActionByName($name)->getLevel();
+    public function getPrice($level) : int
+        {
 
         switch ($level) {
             case 1:
@@ -105,9 +102,23 @@ class ActionService
                 return 200;
             case 4:
                 return 300;
+            case 5:
+                return 300;
             default:
                 return 50;
         }
+    }
+
+    public function getActionsByCategory(string $category): array
+    {
+        $query = $this->entityManager->createQuery(
+        'SELECT a FROM App\Entity\Action a 
+         WHERE a.category LIKE :cat 
+         ORDER BY a.level ASC, a.name ASC'
+        )
+        ->setParameter('cat', $category . '%');
+
+        return $query->getResult();
     }
 
 }

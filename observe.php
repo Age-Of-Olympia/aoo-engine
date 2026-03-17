@@ -4,6 +4,7 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Action\BuffAction;
 use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
@@ -298,6 +299,11 @@ if($res->num_rows){
                 continue;
             }
 
+            if ($actionData instanceof BuffAction) {
+                $dataImg .= buildActionToDisplay($target, $actionData);
+                continue;
+            }
+
             $actionOutcomes = $actionData->getOutcomes();
             foreach ($actionOutcomes as $actionOutcome) {
                 if ($actionOutcome->getApplyToSelf() && $player->id == $target->id) {
@@ -314,6 +320,11 @@ if($res->num_rows){
         if($target->have_option('isMerchant')){
 
             $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
+        }
+
+        if($target->have_option('isTrainer')){
+
+            $dataImg .= '<a href="warschool.php?targetId='. $target->id .'"><button><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
         }
 
 
