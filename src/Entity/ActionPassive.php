@@ -45,6 +45,9 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 150)]
     protected string $text;
 
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $prerequisites = null;
+
     public function getId(): int
     {
         return $this->id;
@@ -165,5 +168,15 @@ class ActionPassive
     public function setText(string $text): void
     {
         $this->text = $text;
+    }
+
+    public function getPrerequisites(): string
+    {
+        return $this->prerequisites;
+    }
+
+    public function setPrerequisites(string $prerequisites): void
+    {
+        $this->prerequisites = $prerequisites;
     }
 }

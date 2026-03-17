@@ -44,6 +44,12 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 50, nullable: true)]
     protected ?string $category = null;
 
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $cost = null;
+
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $prerequisites = null;
+
     #[ORM\OneToMany(
         mappedBy: "action",
         targetEntity: ActionCondition::class,
@@ -174,6 +180,26 @@ abstract class Action implements ActionInterface
     public function setCategory(string $category): void
     {
         $this->category = $category;
+    }
+
+    public function getCost(): string
+    {
+        return $this->cost;
+    }
+
+    public function setCost(string $cost): void
+    {
+        $this->cost = $cost;
+    }
+
+    public function getPrerequisites(): string
+    {
+        return $this->prerequisites;
+    }
+
+    public function setPrerequisites(string $prerequisites): void
+    {
+        $this->prerequisites = $prerequisites;
     }
 
     /**

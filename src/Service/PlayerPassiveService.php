@@ -6,6 +6,7 @@ use App\Entity\EntityManagerFactory;
 use App\Entity\PlayerPassive;
 use App\Entity\ActionPassive;
 use Classes\Player;
+use Classes\Db;
 
 class PlayerPassiveService
 {
@@ -97,20 +98,30 @@ class PlayerPassiveService
 
     public function addPassiveByPlayerId(int $playerId, int $passiveId): void
     {
-        $em = $this->entityManager;
+        $db = new Db();
+        $sql = "INSERT INTO players_passives (player_id, passive_id) VALUES (?, ?)";
+    
+        // On capture le résultat de l'exécution
+        $res = $db->exe($sql, [$playerId, $passiveId]);
 
-        $passive = $em->getRepository(ActionPassive::class)->find($passiveId);
-
-        if (!$passive) {
-            throw new \InvalidArgumentException('Passive introuvable');
+        // Si le résultat est faux ou nul, on arrête tout pour afficher l'erreur
+        if (!$res) {
+            exit('<div id="data">Erreur SQL : L\'insertion a échoué. Vérifiez les types de colonnes. (ID Joueur: '.$playerId.', ID Passif: '.$passiveId.')</div>');
         }
+    }
 
-        $playerPassive = new PlayerPassive();
-        $playerPassive->setPlayerId($playerId);
-        $playerPassive->setPassive($passive);
+    public function hasPassiveByPlayerId(int $playerId, int $passiveId): bool
+    {
+        $repo = $this->entityManager->getRepository(PlayerPassive::class);
+    
+        $passive = $this->entityManager->getReference(ActionPassive::class, $passiveId);
 
-        $em->persist($playerPassive);
-        $em->flush();
+        $result = $repo->findOneBy([
+            'playerId' => $playerId,
+            'passive'  => $passive
+        ]);
+
+        return $result !== null;
     }
 
 }

@@ -4,6 +4,7 @@ namespace Classes;
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Service\ActionPassiveService;
 use App\Service\PlayerService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
@@ -31,6 +32,7 @@ class Player implements ActorInterface {
     public $playerPassiveService;
     public $playerEffectService;
     public $playerBonusService;
+    public $actionPassiveService;
     
     function __construct($playerId){
 
@@ -44,6 +46,7 @@ class Player implements ActorInterface {
         $this->playerPassiveService = new PlayerPassiveService();
         $this->playerEffectService = new PlayerEffectService();
         $this->playerBonusService = new PlayerBonusService();
+        $this->actionPassiveService = new ActionPassiveService();
 
         $this->playerPassiveService->setEsquivePlayer($this);
     }
@@ -476,6 +479,10 @@ class Player implements ActorInterface {
     public function end_action($name){ $this->end('actions', $name); }
     public function get_actions(){ return $this->get('actions'); }
 
+    // passive actions shortcuts
+    public function add_action_passive($name){ $this->playerPassiveService->addPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
+    public function have_action_passive($name){ return $this->playerPassiveService->hasPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
+
     // spells shortcuts
     public function add_spell($name){ $this->add_action($name); }
     public function have_spell($name){ return $this->have_action($name); }
@@ -498,6 +505,18 @@ class Player implements ActorInterface {
 
         return $return;
     }
+    public function get_spells_count() {
+    $sql = 'SELECT COUNT(*) as total FROM players_actions WHERE player_id = ? AND type = "sort"';
+    
+    $db = new Db();
+    $res = $db->exe($sql, $this->id);
+    
+    if ($row = $res->fetch_object()) {
+        return (int) $row->total;
+    }
+    
+    return 0;
+}
 
 
     // effects

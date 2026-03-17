@@ -541,6 +541,8 @@ define('BANK_PCT', 1);          // % gain par jour en banque sans adré
 define('MIN_GOLD_STOLEN', 5);
 define('MAX_XP_FOR_STEALING', 3);
 
+define('NUMBER_MAX_COMP', 15);
+
 /*
  * errors
  */
