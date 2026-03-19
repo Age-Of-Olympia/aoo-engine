@@ -10,8 +10,8 @@ class ConsoleTest extends TestCase
     #[Group('console-parsing')]
     public function testParseEnvVariable(): void
     {
-        $result = Command::ParseInput('[1,_,10]');
+        $result = Command::ParseInput('[1,"_",10]');
         $this->assertCount(10, $result);
-        $this->assertEquals(3, $result[4]);
+        $this->assertEquals(5, $result[4]);
     }
 }

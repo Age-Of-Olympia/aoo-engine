@@ -756,7 +756,7 @@ class Player implements ActorInterface {
             return min(max(0,($xpCap - $playerXp)),$xpGained);
         }
         else{
-            return max(min(0,$xpCap - $playerXp-$xpGained) ,$xpGained);
+            return max(min(0,$playerXp-$xpCap+$xpGained) ,$xpGained);
         }
     }
 
