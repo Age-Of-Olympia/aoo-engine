@@ -27,6 +27,8 @@ Exemple:
 > player addupgrade Shaolan A 12
 > player removeupgrade Orcrist A 
 > player removeupgrade Leyrion Agi 2
+> player checkpi Orcrist
+> player checkpi Orcrist fixpi
 EOT);
     }
 
