@@ -30,21 +30,14 @@ class RequiresTraitValueCondition extends BaseCondition
                     }
                 }
             } 
-            else if($key == "repos"){
-                if (!$actor->have_effects_to_purge()) {
-                    array_push($details, "Vous n'avez aucun effet à purger !");
-                    $costIsAffordable = false;
-                    continue;
-                }
-            }    
-            else if($key == "furtif"){
-                $furtifValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"furtif") + 1;
-                if($actor->getRemaining("pm") < (floor($value[0]*$furtifValue))){
+            else if($key == "imposture"){
+                $impostureValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"imposture") + 1;
+                if($actor->getRemaining("pm") < (floor($value[0]*$impostureValue))){
                     array_push($details, "Pas assez de PM");
                     $costIsAffordable = false;
                     break;
                 }
-                if($actor->getRemaining("mvt") < (floor($value[1]*$furtifValue))){
+                if($actor->getRemaining("mvt") < (floor($value[1]*$impostureValue))){
                     array_push($details, "Pas assez de Mvt");
                     $costIsAffordable = false;
                     break;
@@ -56,6 +49,9 @@ class RequiresTraitValueCondition extends BaseCondition
                     $costIsAffordable = false;
                     break;
                 }
+            }    
+            else if($key == "remainingNullable"){
+                    break;
             }   
             else if(is_array($value)){
                 $passives = $actor->getPassives($actor->getId());
@@ -103,10 +99,10 @@ class RequiresTraitValueCondition extends BaseCondition
             if ($key == "energie") {
                 continue;
             }
-            if ($key == "furtif") {
-                $furtifValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"furtif") + 1;
-                $pmCost = floor($value[0]*$furtifValue);
-                $mvtCost = floor($value[1]*$furtifValue);
+            if ($key == "imposture") {
+                $impostureValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"imposture") + 1;
+                $pmCost = floor($value[0]*$impostureValue);
+                $mvtCost = floor($value[1]*$impostureValue);
                 $actor->putBonus(["pm" => -$pmCost]);
                 $text1 = "Vous avez dépensé " . $pmCost . " PM.";
                 array_push($result, $text1);
@@ -115,7 +111,7 @@ class RequiresTraitValueCondition extends BaseCondition
                 array_push($result, $text1);
                 break;
             }
-            if ($key == "remaining") {
+            if ($key == "remaining" || $key == "remainingNullable") {
                 $nb = $actor->getRemaining($value);
                 $actor->putBonus([$value => -$nb]);
                 $text = "Vous avez dépensé " . $nb . " " . CARACS[$value] . ".";

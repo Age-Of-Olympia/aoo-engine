@@ -28,8 +28,8 @@ if(isset($_GET['forget'])){
     $maxColSpan++;
 }
 
-$numberOfSpellsAvailable = $player->get_spells_available($spellsN);
-$maxSpells = $player->get_max_spells();
+$numberOfSpellsAvailable = NUMBER_MAX_COMP - $spellsN;
+$maxSpells = NUMBER_MAX_COMP;
 
 if($numberOfSpellsAvailable < 0){
     echo '<tr><th colspan="'.$maxColSpan.'"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $maxSpells .')</font></th>';
@@ -63,7 +63,7 @@ foreach($spellList as $e){
 
     $img = (file_exists('img/spells/'.$e.'.jpeg') ? 'img/spells/'. $e .'.jpeg' : 'img/spells/todo.jpeg');
 
-    $costArray = $actionService->getCostsArray(null, $spell);
+    $cost = $spell->getCost();
 
     $outcomes = $spell->getOnSuccessOutcomes();
 
@@ -74,7 +74,12 @@ foreach($spellList as $e){
 
     $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
     if (isset($instructionLifeLoss)) {
+        $instructionParameters = [];
+        if (is_object($instructionLifeLoss)) {
         $instructionParameters = $instructionLifeLoss->getParameters();
+        } elseif (is_array($instructionLifeLoss)) {
+            $instructionParameters =  $instructionLifeLoss;
+        }
         if (isset($instructionParameters['bonusDamagesTrait'])) {
             $bonusDamages = $instructionParameters['bonusDamagesTrait'];
         }
@@ -82,7 +87,13 @@ foreach($spellList as $e){
 
     $instructionHealing = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("HealingOutcomeInstruction", $outcomes[0]->getId());
     if (isset($instructionHealing)) {
-        $instructionParameters = $instructionHealing->getParameters();
+        $instructionParameters = [];
+    
+        if (is_object($instructionHealing)) {
+            $instructionParameters = $instructionHealing->getParameters();
+        } elseif (is_array($instructionHealing)) {
+            $instructionParameters = $instructionHealing;
+        }
         if (isset($instructionParameters['bonusHealingTrait'])) {
             $bonusHeal = $instructionParameters['bonusHealingTrait'];
         }
@@ -105,7 +116,7 @@ foreach($spellList as $e){
             <span class="ra '. $spell->getIcon() .'"></span>
         </td>
         <td>
-            '. implode(', ', $costArray) .'
+            ' . $cost . '
         </td>
         ';
 
@@ -173,6 +184,31 @@ if(!isset($_GET['forget'])){
 echo '
 </table>
 ';
+
+echo '<div style="margin-top: 20px;"></div>';
+
+$passives = $player->getPassives($player->id);
+
+if (!empty($passives)) {
+    echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
+    echo '<tr><th colspan="6" style="background-color: rgba(0,0,139,0.1);"><font color="blue">Compétences Passives Possédées</font></th></tr>';
+    echo '<tr><th colspan="2">Passif</th><th>Description</th><th>Catégorie</th><th>Niveau</th></tr>';
+
+    foreach($passives as $passive) {
+
+        $imgP = (file_exists('img/passives/'.$passive->getName().'.jpeg') ? 'img/passives/'.$passive->getName().'.jpeg' : 'img/spells/todo.jpeg');
+        
+        echo '
+        <tr>
+            <td width="50"><img src="'. $imgP .'" width="50" /></td>
+            <td align="left"><b>'. $passive->getDisplayName() .'</b></td>
+            <td align="center">'. $passive->getText() .'</td>
+            <td align="center"><strong>'. $passive->getCategoryRender() .'</strong></td>
+            <td align="center" style="font-size: 0.9em; max-width: 300px;">'. $passive->getLevel() .'</td>
+        </tr>';
+    }
+    echo '</table>';
+}
 
 ?>
 <script src="js/forget_spells.js"></script>

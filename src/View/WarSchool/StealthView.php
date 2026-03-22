@@ -23,8 +23,10 @@ class StealthView
 
         if (!empty($_POST['buySkillId']) || !empty($_POST['buyPassiveId'])) {
             if (ob_get_length()) ob_clean();
-            echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
-            exit;
+            if ($nb_comp >= NUMBER_MAX_COMP) {
+                echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
+                exit;
+            }
 
             $type = !empty($_POST['buyPassiveId']) ? 'passive' : 'active';
             $skillName = $_POST['buyPassiveId'] ?? $_POST['buySkillId'];
@@ -76,6 +78,10 @@ class StealthView
                 echo '<h3 style="margin: 0; display: inline; font-size: 1.17em;">Plus d\'informations sur les Compétences</h3>';
             echo '</summary>';
             echo '<h3 style="margin: 5px 0;">Les compétences de Furtivité prennent en compte le fait de l\'utiliser ou de s\'en prémunir</h3>';
+            echo '<h3 style="margin: 5px 0;">Certaines compétences ont leurs coûts basés sur l\'<strong style="color: red;">Imposture</strong><i class="ra ra-player-teleport" style="color: red;"></i>.</h3>';
+            echo '<h3 style="margin: 5px 0;">L\'<strong style="color: red;">Imposture</strong> représente la difficulté d\'un personnage à rester furtif dans le temps.</h3>';
+            echo '<h3 style="margin: 5px 0;">Plus elle sera haute, plus les coûts des compétences furtives seront chères.</h3>';
+            echo '<h3 style="margin: 5px 0;">L\'Effet <strong style="color: blue;">Furtivité</strong><i class="ra ra-player" style="color: blue;"></i> affecte également le personnage le temps de la compétence de Furtivité.</h3>';
             echo '<h3 style="margin: 5px 0;">Les compétences <strong style="color: #c0392b;">offensives</strong> sont en rouge et les stats de dégâts ou de touche dépendent du style de combat associé</h3>';
             echo '<h3 style="margin: 5px 0;">Les compétences <strong style="color: #2980b9;">personnelles</strong> sont en bleu et appliquent un bonus personnel</h3>';
             echo '<h3 style="margin: 5px 0;">Les différents Effets sont décrits sur la <a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets" target="_blank" style="text-decoration: underline; color: #2980b9;">page correspondante</a> du Wiki</h3>';
@@ -105,7 +111,7 @@ class StealthView
                 $raceColor = WarSchoolUtils::getRaceColor($action->getRace());
                 $alreadyLearned = (bool)$player->have_action($action->getName());
                 $actionRace = $action->getRace();
-                $isRaceLearnable = (bool)$player->data->race == $actionRace;
+                $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
@@ -138,9 +144,9 @@ class StealthView
                     echo '<button class="create" disabled>
                             Déjà apprise
                         </button>';
-                } elseif ($isRaceLearnable) {
+                } elseif (!$isRaceLearnable) {
                     echo '<button class="create" disabled>
-                            Mauvaise race
+                            Impossible à apprendre
                         </button>';
                 } else {
                     $disabled = (($playerGold < $price) || $isFull) ? 'disabled' : '';
@@ -180,7 +186,7 @@ class StealthView
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = WarSchoolUtils::getRaceColor($passive->getRace());
                 $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
-                $isRaceLearnable = (bool)$player->data->race == $passive->getRace();
+                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passive->getRace());
 
                 $pRace = $passive->getRace();
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';
@@ -212,7 +218,7 @@ class StealthView
                     echo '<button class="create" disabled>
                             Déjà apprise
                         </button>';
-                } elseif ($isRaceLearnable) {
+                } elseif (!$isRaceLearnable) {
                     echo '<button class="create" disabled>
                             Impossible à apprendre
                         </button>';

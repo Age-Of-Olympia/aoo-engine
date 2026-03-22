@@ -179,4 +179,22 @@ class ActionPassive
     {
         $this->prerequisites = $prerequisites;
     }
+
+    public function getCategoryRender(): string
+    {
+        switch ($this->category) {
+            case 'melee':
+                return "Mêlée";
+            case 'distance':
+                return "Distance";
+            case 'magic':
+                return "Magie";
+            case 'stealth':
+                return "Furtivité";
+            case 'survival':
+                return "Survie";
+            default:
+                return "Inconnue";
+        }
+    }
 }

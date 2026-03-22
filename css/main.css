@@ -1555,6 +1555,30 @@ blockquote{
     color: #66d9ff;
 }
 
+/* discretion - leger */
+.ra-player{
+
+    color: grey;
+}
+
+/* imposture */
+.ra-player-teleport{
+
+    color: red;
+}
+
+/* brulure */
+.ra-fire{
+
+    color: red;
+}
+
+/* encaisse */
+.ra-muscle-fat{
+
+    color: green;
+}
+
 /* sorts de soins */
 .ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{
 

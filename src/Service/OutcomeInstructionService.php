@@ -22,20 +22,14 @@ class OutcomeInstructionService
     /**
      * Returns a OutcomeInstruction entity that matches the given type, or null if not found.
      */
-    public function getOutcomeInstructionByTypeByOutcome(string $type, int $outcomeId): ?OutcomeInstructionInterface
+    public function getOutcomeInstructionByTypeByOutcome(string $type, int $outcomeId): array
     {
         //$query = $this->entityManager->createQuery('SELECT OutcomeInstruction FROM App\\Entity\\OutcomeInstruction OutcomeInstruction WHERE OutcomeInstruction INSTANCE OF App\\OutcomeInstruction\\'.$type.'OutcomeInstruction');
                                                     //'SELECT action FROM App\\Action\\'.$type.'Action action'
         $query = $this->entityManager->createQuery('SELECT outcome_instructions FROM App\\Action\\OutcomeInstruction\\'.$type.' outcome_instructions WHERE outcome_instructions.outcome = :id ORDER BY outcome_instructions.orderIndex ASC');
         $query->setParameter("id",$outcomeId);
-        $log = $query->getSQL();
-        $OutcomeInstruction = null;
-        try {
-            $OutcomeInstruction = $query->getSingleResult();
-        } catch (NoResultException) {
-            return null;
-        }
-        return $OutcomeInstruction;
+        
+        return $query->getResult();
     }
 
     public function getOutcomeInstructionsByOutcome(int $outcomeId): array
@@ -43,10 +37,10 @@ class OutcomeInstructionService
         $instructionTypes = OutcomeInstructionFactory::initialize("src/Action/OutcomeInstruction");
 
         $outcomeInstructions = array();
-        foreach ($instructionTypes as $instruction) {
-            $outcomeInstruction = $this->getOutcomeInstructionByTypeByOutcome($instruction, $outcomeId);
-            if ($outcomeInstruction != null) {
-                array_push($outcomeInstructions, $outcomeInstruction);
+        foreach ($instructionTypes as $type) {
+            $instructionsByType = $this->getOutcomeInstructionByTypeByOutcome($type, $outcomeId);
+            foreach ($instructionsByType as $instruction) {
+                $outcomeInstructions[] = $instruction;
             }
         }
         

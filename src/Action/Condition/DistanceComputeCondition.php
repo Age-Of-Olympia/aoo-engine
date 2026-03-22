@@ -1,8 +1,6 @@
 <?php
 namespace App\Action\Condition;
 
-use Classes\View;
-
 class DistanceComputeCondition extends ComputeCondition
 {
     public function __construct()
@@ -15,12 +13,24 @@ class DistanceComputeCondition extends ComputeCondition
         return floor(($this->distance) * 2.5);
     }
 
-    protected function computeTarget($target, $dice, $targetRollBonus)
+    protected function computeTarget($target, $dice, $conditionObject)
     {
         $trait1 = $target->caracs->cc;
         $trait2 = $target->caracs->agi;
         $targetRollTraitValue = floor(max(3/4 * $trait1 + 1/4 * $trait2, 1/4 * $trait1 + 3/4 * $trait2));
         $targetRoll = $dice->roll($targetRollTraitValue);
+        if($conditionObject->getTargetAdvantage() === true && $conditionObject->getTargetDisadvantage() === true){
+            // Do nothing if advantage and disadvantage
+        }
+        elseif($conditionObject->getTargetAdvantage() === true || $conditionObject->getTargetDisadvantage() === true){
+            $targetRoll2 = $dice->roll($targetRollTraitValue);
+            if($conditionObject->getTargetAdvantage() === true){
+                $targetRoll = max($targetRoll,$targetRoll2);
+            }   
+            else{
+                $targetRoll = min($targetRoll,$targetRoll2);
+            }
+        }
         $targetTotal = array_sum($targetRoll) - $target->data->malus;
         $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';

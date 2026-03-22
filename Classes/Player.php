@@ -42,7 +42,6 @@ class Player implements ActorInterface {
         $this->upgrades = (object) array();
         $this->emplacements = (object) array();
         $this->playerService = new PlayerService($playerId);
-        $this->playerReductionPassiveService = new PlayerReductionPassiveService();
         $this->playerPassiveService = new PlayerPassiveService();
         $this->playerEffectService = new PlayerEffectService();
         $this->playerBonusService = new PlayerBonusService();
@@ -505,19 +504,38 @@ class Player implements ActorInterface {
 
         return $return;
     }
-    public function get_spells_count() {
-    $sql = 'SELECT COUNT(*) as total FROM players_actions WHERE player_id = ? AND type = "sort"';
-    
-    $db = new Db();
-    $res = $db->exe($sql, $this->id);
-    
-    if ($row = $res->fetch_object()) {
-        return (int) $row->total;
-    }
-    
-    return 0;
-}
 
+    public function get_spells_count() {
+        $sql = 'SELECT COUNT(*) as total FROM players_actions WHERE player_id = ? AND type = "sort"';
+        
+        $db = new Db();
+        $res = $db->exe($sql, $this->id);
+        
+        if ($row = $res->fetch_object()) {
+            return (int) $row->total;
+        }
+        
+        return 0;
+    }
+
+    public function get_passives(){
+
+
+        $return = array();
+
+        $sql = 'SELECT name FROM players_passives WHERE player_id = ?';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $this->id);
+
+        while($row = $res->fetch_object()){
+
+            $return[] = $row->passive_id;
+        }
+
+        return $return;
+    }
 
     // effects
     public function haveEffect(string $name): int{
@@ -2354,10 +2372,37 @@ class Player implements ActorInterface {
     }
 
     public function getPassives(int $playerId): array{
-        return $this->playerReductionPassiveService->getPassivesByPlayerId($playerId);
+        return $this->playerPassiveService->getPassivesByPlayerId($playerId);
     }
 
     public function getEquipedItems(): array {
         return Item::get_equiped_list($this);
+    }
+
+    public function getLastAttacker(): ?object {
+        $db = new Db();
+        
+        // On cherche dans la table des logs l'entrée la plus récente
+        // où ce joueur est la cible et le type est une attaque
+        $sql = '
+            SELECT player_id, time 
+            FROM players_logs 
+            WHERE target_id = ? 
+            AND player_id != ? 
+            AND type IN ("action_other_player") 
+            ORDER BY time DESC 
+            LIMIT 1
+        ';
+
+        $res = $db->exe($sql, array($this->id, $this->id));
+
+        if ($res->num_rows) {
+            $row = $res->fetch_object();
+            $attacker = $this->playerService->GetPlayer($row->player_id);
+            $attacker->get_data(false);
+            return $attacker;
+        }
+
+        return null;
     }
 }

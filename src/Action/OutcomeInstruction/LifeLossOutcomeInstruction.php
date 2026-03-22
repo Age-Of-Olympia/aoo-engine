@@ -26,6 +26,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         $actorIgnore = $this->getParameters()['actorIgnore'] ?? false;
         $autoCrit = $this->getParameters()['autoCrit'] ?? false;
         $outcomeSuccessMessages = array();
+        $encaisse = false;
 
         if ($targetIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
@@ -42,8 +43,15 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
-            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive)) {
-                $othersDefense += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId());
+            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive)) {
+                if($targetPassive->getName() === "encaisser"){
+                    if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){
+                        $encaisse = true;
+                    }
+                }
+                else{
+                    $othersDefense += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId());
+                }
             }
         }
 
@@ -83,7 +91,14 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
     
             //TANK ?
+            if($target->getEffectValue("encaisse") > 0){
+                $encaisse = true;
+            }
 
+            if($encaisse){
+                $totalDamages = max(1,floor($totalDamages*0.75));
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name. ' encaisse et réduit une partie des dégâts.';
+            }
             $target->putBonus(array('pv'=>-$totalDamages));
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
             $bonusDamagesText = '';
@@ -132,7 +147,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
             $target->put_malus($malus-$recoverMalus);
             $malusText = ($malus - $recoverMalus > 0) ? 'subit ' : ' récupère ';
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus) . ' <span style="text-decoration: underline;" title="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . '">malus</span>.';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . '">malus</span>.';
 
             // put assist
             $actor->put_assist($target, $totalDamages);

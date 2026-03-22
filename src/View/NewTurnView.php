@@ -24,8 +24,18 @@ class NewTurnView
 
 
             if ($player->data->nextTurnTime <= $time) {
+                
+                if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"brulure")){
+                    $brulure = $player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id,"brulure");
+                    $player->putBonus(["pv" => -$brulure]);
+                    $player->endEffect("brulure");
 
-
+                    $player->get_caracs();
+                    if($player->getRemaining('pv') < 1){
+                        $player->playerService->ProcessTargetDeath($player->getLastAttacker(), $player);
+                    }
+                }
+                
                 $player->getCoords();
 
                 // prevent new turn if dead
@@ -97,7 +107,7 @@ class NewTurnView
                         return 'flow="right" tooltip="' . CARACS_TXT[$key] . '"';
                     }
                     echo '
-            <table border="1" align="center" class="marbre">';
+                    <table border="1" align="center" class="marbre">';
 
 
                     // gain xp
@@ -184,38 +194,38 @@ class NewTurnView
                         echo '<tr><td ' . getTooltip($k) . '>' . CARACS[$k] . '</td><td align="right">+' . $val . '</td></tr>';
                     }
 
-                // recover Ae, A, Mvt
+                    // recover Ae, A, Mvt
                     $sql = '
-                DELETE FROM
-                players_bonus
-                WHERE
-                player_id = ?
-                AND
-                name IN("ae","a","mvt")
-                ';
+                    DELETE FROM
+                    players_bonus
+                    WHERE
+                    player_id = ?
+                    AND
+                    name IN("ae","a","mvt")
+                    ';
 
-                    $db->exe($sql, $player->id);
+                        $db->exe($sql, $player->id);
 
-                if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"ralentissement")){
-                    $player->playerBonusService->setBonusByPlayerIdByName($player->id,"mvt",
-                    -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id,"ralentissement"));
-                }
+                    if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"ralentissement")){
+                        $player->playerBonusService->setBonusByPlayerIdByName($player->id,"mvt",
+                        -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id,"ralentissement"));
+                    }
                 
-                // Retire les effets de camouflage
-                $player->playerService->playerUpdateVisible(NULL);
+                    // Retire les effets de camouflage
+                    $player->playerService->playerUpdateVisible(NULL);
 
 
-                    // end effects
-                    $sql = '
-                SELECT COUNT(*) AS n
-                FROM players_effects
-                WHERE
-                endTime <= ?
-                AND
-                endTime != 0
-                AND
-                player_id = ?
-                ';
+                        // end effects
+                        $sql = '
+                    SELECT COUNT(*) AS n
+                    FROM players_effects
+                    WHERE
+                    endTime <= ?
+                    AND
+                    endTime != 0
+                    AND
+                    player_id = ?
+                    ';
 
 
                     $res = $db->exe($sql, array($time, $player->id));
@@ -244,17 +254,17 @@ class NewTurnView
 
                     // update
                     $sql = '
-            UPDATE
-            players
-            SET
-            nextTurnTime = ?,
-            lastActionTime = 0,
-            antiBerserkTime = ?,
-            malus = malus - ?,
-            energie = ?
-            WHERE
-            id = ?
-            ';
+                    UPDATE
+                    players
+                    SET
+                    nextTurnTime = ?,
+                    lastActionTime = 0,
+                    antiBerserkTime = ?,
+                    malus = malus - ?,
+                    energie = ?
+                    WHERE
+                    id = ?
+                    ';
 
                     $values = array(
                         $nextTurnTime,
@@ -272,7 +282,6 @@ class NewTurnView
                     $player->refresh_data();
                     $player->refresh_caracs();
                     $player->refresh_invent(); // for Ae
-
 
                     exit();
                 }

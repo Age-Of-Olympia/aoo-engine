@@ -14,7 +14,8 @@ use Doctrine\Common\Collections\Collection;
 #[ORM\DiscriminatorMap([
     'technique' => \App\Action\TechniqueAction::class,
     'buff' => \App\Action\BuffAction::class,
-    'spell' => \App\Action\SpellAction::class
+    'spell' => \App\Action\SpellAction::class,
+    'heal' => \App\Action\HealAction::class,
 ])]
 abstract class Action implements ActionInterface
 {
@@ -44,7 +45,7 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 50, nullable: true)]
     protected ?string $category = null;
 
-    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $cost = null;
 
     #[ORM\Column(type: "string", length: 50, nullable: true)]

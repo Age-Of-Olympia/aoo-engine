@@ -23,8 +23,10 @@ class MeleeView
 
         if (!empty($_POST['buySkillId']) || !empty($_POST['buyPassiveId'])) {
             if (ob_get_length()) ob_clean();
-            echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
-            exit;
+            if ($nb_comp >= NUMBER_MAX_COMP) {
+                echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
+                exit;
+            }
 
             $type = !empty($_POST['buyPassiveId']) ? 'passive' : 'active';
             $skillName = $_POST['buyPassiveId'] ?? $_POST['buySkillId'];
@@ -106,7 +108,7 @@ class MeleeView
                 $raceColor = WarSchoolUtils::getRaceColor($action->getRace());
                 $alreadyLearned = (bool)$player->have_action($action->getName());
                 $actionRace = $action->getRace();
-                $isRaceLearnable = (bool)$player->data->race == $actionRace;
+                $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
@@ -139,9 +141,9 @@ class MeleeView
                     echo '<button class="create" disabled>
                             Déjà apprise
                         </button>';
-                } elseif ($isRaceLearnable) {
+                } elseif (!$isRaceLearnable) {
                     echo '<button class="create" disabled>
-                            Mauvaise race
+                            Impossible à apprendre
                         </button>';
                 } else {
                     $disabled = (($playerGold < $price) || $isFull) ? 'disabled' : '';
@@ -181,7 +183,8 @@ class MeleeView
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = WarSchoolUtils::getRaceColor($passive->getRace());
                 $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
-                $isRaceLearnable = (bool)$player->data->race == $passive->getRace();
+                $passiveRace = $passive->getRace();
+                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passive->getRace());
 
                 $pRace = $passive->getRace();
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';
@@ -213,7 +216,7 @@ class MeleeView
                     echo '<button class="create" disabled>
                             Déjà apprise
                         </button>';
-                } elseif ($isRaceLearnable) {
+                } elseif (!$isRaceLearnable) {
                     echo '<button class="create" disabled>
                             Impossible à apprendre
                         </button>';

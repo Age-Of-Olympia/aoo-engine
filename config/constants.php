@@ -178,7 +178,11 @@ define('EFFECTS_RA_FONT', array(
     'aveuglement' => 'ra-bleeding-eye',
     'acuite_visuelle' => 'ra-eyeball',
     'ralentissement' => 'ra-snail',
-    'furtif' => 'ra-player',
+    'discretion' => 'ra-player',
+    'leger' => 'ra-player',
+    'imposture' => 'ra-player-teleport',
+    'brulure' => 'ra-fire',
+    'encaisse' => 'ra-muscle-fat',
 
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',

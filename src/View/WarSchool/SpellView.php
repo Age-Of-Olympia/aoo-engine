@@ -6,7 +6,6 @@ use Classes\Player;
 use Classes\Str;
 use Classes\Item;
 use App\Service\ActionService;
-use App\Service\ActionPassiveService;
 
 class SpellView
 {
@@ -19,6 +18,10 @@ class SpellView
 
         if (!empty($_POST['buySkillId'])) {
             if (ob_get_length()) ob_clean();
+            if ($player->get_spells_count() >= NUMBER_MAX_COMP) {
+                echo '<div id="data">Limite de compétences atteinte (max ' . NUMBER_MAX_COMP . ') !</div>';
+                exit;
+            }
 
             $skillName = $_POST['buySkillId'];
 
@@ -90,7 +93,7 @@ class SpellView
                 $raceColor = WarSchoolUtils::getRaceColor($action->getRace());
                 $alreadyLearned = (bool)$player->have_action($action->getName());
                 $actionRace = $action->getRace();
-                $isRaceLearnable = (bool)$player->data->race == $actionRace;
+                $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
@@ -122,9 +125,9 @@ class SpellView
                     echo '<button class="create" disabled>
                             Déjà apprise
                         </button>';
-                } elseif ($isRaceLearnable) {
+                } elseif (!$isRaceLearnable) {
                     echo '<button class="create" disabled>
-                            Mauvaise race
+                            Impossible à apprendre
                         </button>';
                 } else {
                     $disabled = ($playerGold < $price) ? 'disabled' : '';

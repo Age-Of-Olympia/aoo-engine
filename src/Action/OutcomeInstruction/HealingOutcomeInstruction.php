@@ -5,7 +5,6 @@ namespace App\Action\OutcomeInstruction;
 use App\Entity\OutcomeInstruction;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
-use Classes\View;
 
 #[ORM\Entity]
 class HealingOutcomeInstruction extends OutcomeInstruction
@@ -14,20 +13,29 @@ class HealingOutcomeInstruction extends OutcomeInstruction
 
         // e.g. { "actorHealingTrait": "agi" }, { "actorHealingTrait": "agi", "bonusHealingTrait" : "3" }
         $actorTraitHealing = $this->getParameters()['actorHealingTrait'] ?? 0;
+        $targetTraitHealing =  $this->getParameters()['targetHealingTrait'] ?? 0;
         $bonusTraitHealing = $this->getParameters()['bonusHealingTrait'] ?? 0;
         $actorTraitPMHealing = $this->getParameters()['actorPMHealingTrait'] ?? 0;
         $bonusTraitPMHealing = $this->getParameters()['bonusPMHealingTrait'] ?? 0;
+        $divisor =  $this->getParameters()['divisor'] ?? 1;
+
         $outcomeSuccessMessages = array();
-        if(!empty($actorTraitHealing)){
-            $baseHeal = is_numeric($actorTraitHealing) ? $actorTraitHealing : $actor->caracs->{$actorTraitHealing};
-            $bonusHeal = is_numeric($bonusTraitHealing) ? $bonusTraitHealing : $actor->caracs->{$bonusTraitHealing};
-            $healing = $baseHeal + $bonusHeal;
-            $target->putBonus(array('pv'=>$healing));
-            $outcomeSuccessMessages[0] = 'Vous soignez '. $healing .' points de vie à '. $target->data->name.'.';
-            $outcomeSuccessMessages[1] = is_numeric($actorTraitHealing) ? "Valeur fixe à " . $actorTraitHealing . '.' : CARACS[$actorTraitHealing] .' = '. $baseHeal;
-            if ($bonusHeal > 0) {
-                $outcomeSuccessMessages[1] .= ' + '. $bonusHeal;
+        $healing = 0;
+
+        if(!empty($actorTraitHealing) || !empty($targetTraitHealing)){
+            if(!empty($actorTraitHealing)){
+                $baseHeal = is_numeric($actorTraitHealing) ? $actorTraitHealing : $actor->caracs->{$actorTraitHealing};
             }
+            else {
+                $baseHeal = is_numeric($targetTraitHealing) ? $targetTraitHealing : $target->caracs->{$targetTraitHealing};
+            }
+            
+            $bonusHeal = is_numeric($bonusTraitHealing) ? $bonusTraitHealing : ($actor->caracs->$bonusTraitHealing ?? 0);
+            $healing = floor($baseHeal/$divisor) + $bonusHeal;
+
+            $target->putBonus(array('pv'=>$healing));
+
+            $outcomeSuccessMessages[0] = 'Vous soignez '. $healing .' points de vie à '. $target->data->name.'.';
         
         } 
         

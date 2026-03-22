@@ -43,7 +43,12 @@ foreach(RACES as $race){
 
         $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
         if (isset($instructionLifeLoss)) {
+            $instructionParameters = [];
+            if (is_object($instructionLifeLoss)) {
             $instructionParameters = $instructionLifeLoss->getParameters();
+        } elseif (is_array($instructionLifeLoss)) {
+            $instructionParameters =  $instructionLifeLoss;
+        }
             if (isset($instructionParameters['bonusDamagesTrait'])) {
                 $bonusDamages = $instructionParameters['bonusDamagesTrait'];
             }
@@ -51,7 +56,13 @@ foreach(RACES as $race){
 
         $instructionHealing = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("HealingOutcomeInstruction", $outcomes[0]->getId());
         if (isset($instructionHealing)) {
-            $instructionParameters = $instructionHealing->getParameters();
+            $instructionParameters = [];
+    
+            if (is_object($instructionHealing)) {
+                $instructionParameters = $instructionHealing->getParameters();
+            } elseif (is_array($instructionHealing)) {
+                $instructionParameters = $instructionHealing;
+            }
             if (isset($instructionParameters['bonusHealingTrait'])) {
                 $bonusHeal = $instructionParameters['bonusHealingTrait'];
             }

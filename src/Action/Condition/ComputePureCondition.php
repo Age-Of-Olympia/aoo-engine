@@ -13,8 +13,6 @@ class ComputePureCondition extends BaseCondition
     protected string $throwName = "Le tir";
     protected string $actorRollTrait;
     protected string $targetRollTrait;
-    protected int $actorRollBonus;
-    protected int $targetRollBonus;
 
 
     public function __construct() {
@@ -29,22 +27,23 @@ class ComputePureCondition extends BaseCondition
             return $preConditionResult;
         }
 
+        $conditionObject = new ConditionObject();
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $this->targetRollTrait = $params['targetRollType'] ?? null;
-        $this->actorRollBonus = $params['actorRollBonus'] ?? 0;
-        $this->targetRollBonus = $params['targetRollBonus'] ?? 0;
+        $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
+        $conditionObject->setTargetRollBonus($params['targetRollBonus'] ?? 0);
         $target->playerPassiveService->getPassivesByPlayerId($target->getId());
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                $this->actorRollBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+                $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                $this->targetRollBonus += $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName());
+                $conditionObject->addActorRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName()));
             }
         }
 
@@ -55,7 +54,7 @@ class ComputePureCondition extends BaseCondition
 
         $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
 
-        $result = $this->computeAttack($actor, $target, $this->actorRollBonus, $this->targetRollBonus);
+        $result = $this->computeAttack($actor, $target, $conditionObject);
 
         if (!$result->isSuccess()) {
             $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
@@ -64,15 +63,15 @@ class ComputePureCondition extends BaseCondition
         return $result;
     }
 
-    private function computeAttack(ActorInterface $actor, ?ActorInterface $target, int $actorRollBonus, int $targetRollBonus): ConditionResult 
+    private function computeAttack(ActorInterface $actor, ?ActorInterface $target, ConditionObject $conditionObject): ConditionResult 
     {
         $success = false;
         $dice = new Dice(3);
 
-        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $actorRollBonus);
+        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
         $conditionDetailsSuccess[0] = $actorTxt;
 
-        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $targetRollBonus);
+        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $conditionObject);
         $conditionDetailsSuccess[1] = $targetTxt;
        
         $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
@@ -94,15 +93,28 @@ class ComputePureCondition extends BaseCondition
         return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
     }
 
-    protected function computeActor($actor, $dice, $actorRollBonus)
+    protected function computeActor($actor, $dice, $conditionObject)
     {
+        $actorRollBonus = $conditionObject->getActorRollBonus();
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
-        $bonus = !empty($actorRollBonus) ? $actorRollBonus : 0;
+        if($conditionObject->getActorAdvantage() === true && $conditionObject->getActorDisadvantage() === true){
+            // Do nothing if advantage and disadvantage
+        }
+        elseif($conditionObject->getActorAdvantage() === true || $conditionObject->getActorDisadvantage() === true){
+            $actorRoll2 = $dice->roll($actorRollTraitValue);
+            if($conditionObject->getActorAdvantage() === true){
+                $actorRoll = max($actorRoll,$actorRoll2);
+            }   
+            else{
+                $actorRoll = min($actorRoll,$actorRoll2);
+            }
+        }
+        $bonus = $conditionObject->getActorRollBonus();
         $totalOther = $bonus;
         $tooltipOtherTxt = !empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '';
         $actorTotal = array_sum($actorRoll) + $totalOther;
-        $actorOtherTxt = ($totalOther != 0) ? (($totalOther > 0) ? ' + '. $totalOther .' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)' : ' - '. abs($totalOther) .' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt . '">Autre</span>)') : '';
+        $actorOtherTxt = ($totalOther != 0) ? (($totalOther > 0) ? ' + '. $totalOther .' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : ' - '. abs($totalOther) .' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)') : '';
         $distanceMalus = $this->getDistanceMalus();
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
@@ -112,7 +124,7 @@ class ComputePureCondition extends BaseCondition
         return array($actorRoll, $actorTotal, $actorTxt);
     }
 
-    protected function computeTarget($target, $dice, $targetRollBonus)
+    protected function computeTarget($target, $dice, $conditionObject)
     {
         $traitsArray = explode('/', $this->targetRollTrait);
         if (sizeof($traitsArray) == 1) {
@@ -126,10 +138,22 @@ class ComputePureCondition extends BaseCondition
         }
         
         $targetRoll = $dice->roll($targetRollTraitValue);
-        $bonus = isset($targetRollBonus) ? $targetRollBonus : 0;
+        if($conditionObject->getTargetAdvantage() === true && $conditionObject->getTargetDisadvantage() === true){
+            // Do nothing if advantage and disadvantage
+        }
+        elseif($conditionObject->getTargetAdvantage() === true || $conditionObject->getTargetDisadvantage() === true){
+            $targetRoll2 = $dice->roll($targetRollTraitValue);
+            if($conditionObject->getTargetAdvantage() === true){
+                $targetRoll = max($targetRoll,$targetRoll2);
+            }   
+            else{
+                $targetRoll = min($targetRoll,$targetRoll2);
+            }
+        }
+        $bonus = $conditionObject->getTargetRollBonus();
         $targetTotal = array_sum($targetRoll) + $bonus;
-        $tooltipOtherTxt = !empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '';
-        $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" title="' . $tooltipOtherTxt+$bonus . '">Autre</span>) = ' . array_sum($targetRoll)+$bonus . ' (Jet pur)' : ' (Jet pur)';
+        $tooltipOtherTxt = !empty($bonus) ? 'Bonus de compétence : ' . $conditionObject->getTargetRollBonus() . ' ' : '';
+        $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt+$bonus . '">Autre</span>) = ' . array_sum($targetRoll)+$bonus . ' (Jet pur)' : ' (Jet pur)';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt;
 
         return array($targetRoll, $targetTotal, $targetTxt);
