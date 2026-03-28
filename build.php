@@ -3,6 +3,7 @@ use Classes\Player;
 use Classes\Item;
 use Classes\View;
 use Classes\Ui;
+use Classes\Log;
 
 require_once('config.php');
 
@@ -77,6 +78,7 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
     $item->add_item($player, -1);
 
+    Log::put($player, $player, $player->data->name." a construit ".$item->data->name. " en ".$coordsTbl[0].",".$coordsTbl[1].",".$player->coords->z, "action", '',  time());
 
     $player->putBonus(['a'=>-1]);
 
