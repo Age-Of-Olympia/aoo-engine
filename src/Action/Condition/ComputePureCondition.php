@@ -4,6 +4,7 @@ namespace App\Action\Condition;
 use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
+use App\Action\Condition\ConditionObject;
 use Classes\Dice;
 use Classes\View;
 
@@ -20,14 +21,13 @@ class ComputePureCondition extends BaseCondition
         array_push($this->preConditions, new NoBerserkCondition());
     }
 
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition);
+        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
         if (!$preConditionResult->isSuccess()) {
             return $preConditionResult;
         }
 
-        $conditionObject = new ConditionObject();
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $this->targetRollTrait = $params['targetRollType'] ?? null;
@@ -90,7 +90,7 @@ class ComputePureCondition extends BaseCondition
             }
         }
 
-        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, $targetRoll, $actorTotal, $targetTotal);
+        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure);
     }
 
     protected function computeActor($actor, $dice, $conditionObject)
@@ -120,6 +120,8 @@ class ComputePureCondition extends BaseCondition
         $actorTotal = $actorTotal - $distanceMalus;
         $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal . ' (Jet pur)' : ' (Jet pur)';
         $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
+
+        $conditionObject->setActorRoll($actorTotal);
 
         return array($actorRoll, $actorTotal, $actorTxt);
     }
@@ -155,6 +157,8 @@ class ComputePureCondition extends BaseCondition
         $tooltipOtherTxt = !empty($bonus) ? 'Bonus de compétence : ' . $conditionObject->getTargetRollBonus() . ' ' : '';
         $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt+$bonus . '">Autre</span>) = ' . array_sum($targetRoll)+$bonus . ' (Jet pur)' : ' (Jet pur)';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt;
+
+        $conditionObject->setTargetRoll($targetTotal);
 
         return array($targetRoll, $targetTotal, $targetTxt);
     }

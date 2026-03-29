@@ -4,6 +4,8 @@ namespace App\Action\Condition;
 // Object that will contain anything that can be useful to compute conditions
 class ConditionObject 
 {
+    protected ?int $actorRoll = null;
+    protected ?int $targetRoll = null;
     protected ?int $actorRollBonus = null;
     protected ?int $targetRollBonus = null;
     protected ?bool $actorAdvantage = null;
@@ -26,6 +28,17 @@ class ConditionObject
         return $this;
     }
 
+    public function getActorRoll(): ?int
+    {
+        return $this->actorRoll;
+    }
+
+    public function setActorRoll(int $actorRoll): self
+    {
+        $this->actorRoll = $actorRoll;
+        return $this;
+    }
+
     public function addActorRollBonus(int $actorBonus): self
     {
         $this->actorRollBonus = ($this->actorRollBonus ?? 0) + $actorBonus;
@@ -40,6 +53,17 @@ class ConditionObject
     public function setTargetRollBonus(int $targetRollBonus): self
     {
         $this->targetRollBonus = $targetRollBonus;
+        return $this;
+    }
+
+    public function getTargetRoll(): ?int
+    {
+        return $this->targetRoll;
+    }
+
+    public function setTargetRoll(int $targetRoll): self
+    {
+        $this->targetRoll = $targetRoll;
         return $this;
     }
 

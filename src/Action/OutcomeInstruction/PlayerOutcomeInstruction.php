@@ -3,14 +3,14 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
-use Classes\Str;
 
 #[ORM\Entity]
 class PlayerOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $params =$this->getParameters();
         // e.g. {"carac": "energie", "value" : 4, "player": "actor"}
         // {"carac": "mvt", "value" : 1, "player": "actor"}

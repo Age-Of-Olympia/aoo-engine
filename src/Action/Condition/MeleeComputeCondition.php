@@ -43,6 +43,17 @@ class MeleeComputeCondition extends ComputeCondition
         $targetOtherTxt = ($targetEsq != 0 || $bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : '';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
 
+        $conditionObject->setTargetRoll($targetTotal);
+        
         return array($targetRoll, $targetTotal, $targetTxt);
+    }
+
+    protected function getDistanceMalus(): int {
+        $distanceMalus = 0;
+        $cellCount = $this->distance - 1;
+        if($cellCount > 2){
+            $distanceMalus = ($cellCount - 2) * 3;
+        }
+        return $distanceMalus;
     }
 }

@@ -3,21 +3,20 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
-use Classes\Item;
 use Classes\Player;
-use Classes\View;
 
 #[ORM\Entity]
 class MalusOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         
         $malus = random_int(1,3);
         $params = $this->getParameters();
 
         if(!empty($this->getParameters()['rollDivisor'])){
-            $difference = max(0,floor((array_sum($rollsArray[0]) - array_sum($rollsArray[1]))/$params['rollDivisor']));
+            $difference = max(0,floor(($conditionObject->getActorRoll() - $conditionObject->getTargetRoll())/$params['rollDivisor']));
             $malusText = $malus . ' + ' . $difference . ' (Jet)';
         }
 

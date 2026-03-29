@@ -170,19 +170,25 @@ define('EFFECTS_RA_FONT', array(
 
     'vol'=>'ra-feather-wing',
 
-    //nouveaux effets
-    'maladresse' => 'ra-cut-palm',
-    'dexterite' => 'ra-plain-dagger',
-    'vulnerabilite' => 'ra-broken-shield',
-    'protection' => 'ra-shield',
-    'aveuglement' => 'ra-bleeding-eye',
+    //nouveaux effets buffs
     'acuite_visuelle' => 'ra-eyeball',
-    'ralentissement' => 'ra-snail',
+    'agressivite' => 'ra-dinosaur',
+    'armure' => 'ra-vest',
+    'dexterite' => 'ra-plain-dagger',
     'discretion' => 'ra-player',
-    'leger' => 'ra-player',
-    'imposture' => 'ra-player-teleport',
-    'brulure' => 'ra-fire',
     'encaisse' => 'ra-muscle-fat',
+    'leger' => 'ra-player',
+    'protection' => 'ra-shield',
+
+    //nouveaux effets buffs
+    'aveuglement' => 'ra-bleeding-eye',
+    'brulure' => 'ra-fire',
+    'faiblesse' => 'ra-player-pain',
+    'fragilite' => 'ra-broken-bottle',
+    'imposture' => 'ra-player-teleport',
+    'maladresse' => 'ra-cut-palm',
+    'ralentissement' => 'ra-snail',
+    'vulnerabilite' => 'ra-broken-shield',
 
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',

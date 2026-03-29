@@ -3,13 +3,14 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
 class RestOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         
         $recupPV = floor($actor->getRemaining("a")*$actor->caracs->r/4);
         $recupPM = floor($actor->getRemaining("a")*$actor->caracs->rm/4);

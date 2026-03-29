@@ -36,6 +36,8 @@ class DistanceComputeCondition extends ComputeCondition
         $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $malusTxt . $targetTotalTxt;
 
+        $conditionObject->setTargetRoll($targetTotal);
+        
         return array($targetRoll, $targetTotal, $targetTxt);
     }
 

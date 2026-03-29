@@ -2,6 +2,7 @@
 
 namespace App\Action\OutcomeInstruction;
 
+use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
@@ -11,12 +12,14 @@ use Classes\View;
 #[ORM\Entity]
 class LifeLossOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
         $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
         $bonusTraitDamagesParameters = $this->getParameters()['bonusDamagesTrait'] ?? 0;
+        $isDrain = $this->getParameters()["drain"] ?? false;
+        $isSiphon = $this->getParameters()["siphon"] ?? false;
         $bonusTraitDamages = (is_array($bonusTraitDamagesParameters) ? floor($actor->caracs->{$bonusTraitDamagesParameters[0]}/$bonusTraitDamagesParameters[1]) : $bonusTraitDamagesParameters) ?? 0;
         $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
         $othersDamages = 0;
@@ -27,6 +30,10 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         $autoCrit = $this->getParameters()['autoCrit'] ?? false;
         $outcomeSuccessMessages = array();
         $encaisse = false;
+        $actorEffetFaiblesse = $actor->getEffectValue("faiblesse");
+        $actorEffetAgressivite = $actor->getEffectValue("agressivite");
+        $targetEffetFragilite = $target->getEffectValue("fragilite");
+        $targetEffetArmure = $target->getEffectValue("armure");
 
         if ($targetIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
@@ -44,7 +51,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive)) {
-                if($targetPassive->getName() === "encaisser"){
+                if($targetPassive->getName() === "encaisse"){
                     if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){
                         $encaisse = true;
                     }
@@ -63,7 +70,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             
             $baseDamages = $actorDamages - $targetDefense;
         
-            $additionalDamages = ($bonusDamages + $othersDamages) - ($bonusDefense + $othersDefense);
+            $additionalDamages = ($bonusDamages + $othersDamages + $actorEffetAgressivite - $actorEffetFaiblesse) - ($bonusDefense + $othersDefense + $targetEffetArmure - $targetEffetFragilite);
 
             //minimum damages seulement si l'adversaire à une defense bonus
             if($bonusDefense > 0){
@@ -96,13 +103,16 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
 
             if($encaisse){
+                $beforeEncaisseDmg = $totalDamages ?? 0;
                 $totalDamages = max(1,floor($totalDamages*0.75));
-                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name. ' encaisse et réduit une partie des dégâts.';
             }
             $target->putBonus(array('pv'=>-$totalDamages));
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez '. $totalDamages .' dégâts à '. $target->data->name.'.';
             $bonusDamagesText = '';
             $othersDamagesText = '';
+            $agresssiviteDamagesText = '';
+            $faiblesseDamagesText = '';
+            $fragiliteDamagesText = '';
+            $armureDamagesText = '';
             if ($bonusDamages > 0) {
                 $bonusText = '';
                 if (!is_numeric($bonusTraitDamages)) {
@@ -126,21 +136,33 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 if (!is_numeric($bonusTraitDefense)) {
                     $bonusText = ' '.CARACS[$bonusTraitDefense];
                 }
-                $bonusDefenseText = ' + ' . $bonusDefense. ' (Bonus défense'.$bonusText.')';
+                $bonusDefenseText = ' - ' . $bonusDefense. ' (Bonus défense'.$bonusText.')';
             }
             if ($bonusDefense < 0) {
                 $bonusText = '';
                 if (!is_numeric($bonusTraitDefense)) {
                     $bonusText = ' '.CARACS[$bonusTraitDefense];
                 }
-                $bonusDefenseText = ' - ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
+                $bonusDefenseText = ' + ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
+            }
+            if($actorEffetAgressivite > 0){
+                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agresssivité)';
+            }
+            if($actorEffetFaiblesse > 0){
+                $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (Faiblesse)';
+            }
+            if($targetEffetFragilite > 0){
+                $fragiliteDamagesText = ' + ' . $targetEffetFragilite . ' (Fragilité)';
+            }
+            if($targetEffetArmure > 0){
+                $armureDamagesText = ' - ' . $targetEffetArmure . ' (Armure)';
             }
             $distanceText = "";
             if ($distanceInfluence) {
                 $distanceText = ' - '. $cellCount. ' (Distance)';
             }
 
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = CARACS[$actorTraitDamages] .' - '. CARACS[$targetTraitDamagesTaken] .' = '. $actorDamages . $bonusDamagesText. $othersDamagesText . ' - '. $targetDefense. $bonusDefenseText . $distanceText. ' = '. $totalDamages .' dégâts';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
             
             $malus = random_int(1,3);
             $recoverMalus = floor($totalDamages/2);
@@ -148,6 +170,18 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             $target->put_malus($malus-$recoverMalus);
             $malusText = ($malus - $recoverMalus > 0) ? 'subit ' : ' récupère ';
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . '">malus</span>.';
+
+            if($isDrain){
+                $drain = floor($totalDamages/3);
+                $actor->putBonus(array('pv'=>$drain));
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $actor->data->name . ' draine ' . $drain . ' PV.';
+            }
+
+            if($isSiphon){
+                $siphon = floor($totalDamages/2);
+                $actor->putBonus(array('pm'=>$siphon));
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $actor->data->name . ' siphone ' . $siphon . ' PM.';
+            }
 
             // put assist
             $actor->put_assist($target, $totalDamages);

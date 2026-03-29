@@ -5,6 +5,7 @@ use Classes\Player;
 use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
+use App\Action\Condition\ConditionObject;
 use App\Entity\Action;
 use App\Entity\OutcomeInstruction;
 use Exception;
@@ -24,8 +25,7 @@ class ActionExecutorService
     private int $initialTargetPv;
     private int $finalTargetPv;
     private bool $blocked = false;
-    private array $actorRoll = array();
-    private array $targetRoll = array();
+    private ConditionObject $conditionObject;
     
     public function __construct(Action $action, Player $actor, Player $target){
         $this->conditionRegistry = new ConditionRegistry();
@@ -37,6 +37,7 @@ class ActionExecutorService
         $this->action = $action;
         $this->playerService = new PlayerService($actor->id);
         $this->initialTargetPv = $target->getRemaining('pv');
+        $this->conditionObject = new ConditionObject();
     }
 
     public function executeAction(): ActionResults
@@ -123,9 +124,7 @@ class ActionExecutorService
                 return false;
             }
         
-            $conditionResult = $condition->check($this->actor, $this->target, $condEntity);
-            $this->actorRoll = $conditionResult->getActorRoll() ?? ['actor1','actor2'];
-            $this->targetRoll = $conditionResult->getTargetRoll() ?? ['target1','target2'];
+            $conditionResult = $condition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
             $globalConditionsResult = $globalConditionsResult && $conditionResult->isSuccess();
             array_push($this->conditionResultsArray, $conditionResult);
         
@@ -156,7 +155,7 @@ class ActionExecutorService
 
     private function applyActionOutcomeInstruction(OutcomeInstruction $outcomeInstruction): void
     {
-        $result = $outcomeInstruction->execute($this->actor, $this->target, array($this->actorRoll,$this->targetRoll));
+        $result = $outcomeInstruction->execute($this->actor, $this->target, $this->conditionObject);
         array_push($this->outcomeResultsArray, $result);
     }
 

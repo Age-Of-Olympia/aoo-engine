@@ -1579,6 +1579,30 @@ blockquote{
     color: green;
 }
 
+/* armure */
+.ra-vest{
+
+    color: green;
+}
+
+/* agressivite */
+.ra-dinosaur{
+
+    color: green;
+}
+
+/* faiblesse */
+.ra-player-pain{
+
+    color: red;
+}
+
+/* fragilite */
+.ra-broken-bottle{
+
+    color: red;
+}
+
 /* sorts de soins */
 .ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{
 
@@ -1612,27 +1636,6 @@ blockquote{
 
     color: red;
     text-shadow: 1px 1px yellow;
-}
-
-/* sorts d'enchantement */
-.ra-heavy-shield, .ra-vest, .ra-helmet, .ra-spear-head, .ra-croc-sword, .ra-supersonic-arrow, .ra-pine-tree{
-
-    color: gold;
-    text-shadow: 1px 1px black;
-}
-
-/* sorts de corruption */
-.ra-biohazard{
-
-    color: lime;
-    text-shadow: 1px 1px pink;
-}
-
-/* sorts de tank */
-.ra-sunbeams, .ra-monster-skull, .ra-diamond, .ra-aware, .ra-player-shot{
-
-    color: red;
-    text-shadow: 1px 1px white;
 }
 
 /* forge sacrée */

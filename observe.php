@@ -299,7 +299,7 @@ if($res->num_rows){
                 continue;
             }
 
-            if ($actionData instanceof BuffAction) {
+            if ($actionData instanceof BuffAction && $player->id == $target->id) {
                 $dataImg .= buildActionToDisplay($target, $actionData);
                 continue;
             }

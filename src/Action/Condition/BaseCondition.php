@@ -4,6 +4,7 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Interface\ConditionInterface;
+use App\Action\Condition\ConditionObject;
 
 abstract class BaseCondition implements ConditionInterface
 {
@@ -14,9 +15,9 @@ abstract class BaseCondition implements ConditionInterface
         return false;
     }
 
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = $this->checkPreconditions($actor, $target, $condition);
+        $preConditionResult = $this->checkPreconditions($actor, $target, $condition, $conditionObject);
         return $preConditionResult;
     }
 
@@ -35,7 +36,7 @@ abstract class BaseCondition implements ConditionInterface
         return $this->shouldRefresh;
     }
 
-    public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         array_unshift($this->preConditions, new PlanCondition());
 
@@ -43,7 +44,7 @@ abstract class BaseCondition implements ConditionInterface
         $successMessages = array();
         $failureMessages = array();
         foreach ($this->preConditions as $preCondition) {
-            $resultCondition = $preCondition->check($actor,$target,$condition);
+            $resultCondition = $preCondition->check($actor,$target,$condition,$conditionObject);
             if ($resultCondition->isSuccess()) {
                 $successMessages = array_merge($successMessages, $resultCondition->getConditionSuccessMessages());
             } else {

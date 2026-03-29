@@ -3,6 +3,7 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
+use App\Action\Condition\ConditionObject;
 use Classes\Dice;
 
 class BuffComputeCondition extends ComputeCondition
@@ -15,9 +16,9 @@ class BuffComputeCondition extends ComputeCondition
         array_push($this->preConditions, new AntiSpellCondition());
     }
 
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        $preConditionResult = parent::check($actor, $target, $condition);
+        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
         if (!$preConditionResult->isSuccess()) {
             return $preConditionResult;
         }
@@ -26,7 +27,6 @@ class BuffComputeCondition extends ComputeCondition
             return new ConditionResult(false, ["Aucune cible spécifiée."], []);
         }
 
-        $conditionObject = new ConditionObject();
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
@@ -54,7 +54,7 @@ class BuffComputeCondition extends ComputeCondition
         $success = false;
         $dice = new Dice(3);
 
-        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject->getActorRollBonus());
+        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
         $conditionDetailsSuccess = [$actorTxt];
 
         $threshold = $this->getLevelTreshold($condition);
@@ -76,7 +76,7 @@ class BuffComputeCondition extends ComputeCondition
             }
         }
 
-        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure,$actorRoll, null, $actorTotal, null);
+        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure);
     }
 
     protected function computeTarget($target, $dice, $targetRollBonus)

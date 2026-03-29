@@ -36,6 +36,8 @@ class DistancePureComputeCondition extends ComputePureCondition
         $targetTotal = array_sum($targetRoll);
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . ' (Jet pur)';
 
+        $conditionObject->setTargetRoll($targetTotal);
+        
         return array($targetRoll, $targetTotal, $targetTxt);
     }
 
