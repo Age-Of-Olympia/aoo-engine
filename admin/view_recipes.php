@@ -24,7 +24,7 @@ function PrintRecipe($recipe)
         echo 'Ingredient: ' . $ingredient->GetItem()->GetName() . ' (' . $ingredient->GetItem()->GetId() . ') x' . $ingredient->GetCount() . '<br>';
     }
     foreach ($recipe->GetRecipeResults() as $result) {
-        echo 'Result: '. $ingredient->GetItem()->GetName() . ' (' . $ingredient->GetItem()->GetId() . ') x' . $result->GetCount() . '<br><br><br><br>';
+        echo 'Result: '. $result->GetItem()->GetName() . ' (' . $result->GetItem()->GetId() . ') x' . $result->GetCount() . '<br><br><br><br>';
     }
     echo '<hr>';
 }

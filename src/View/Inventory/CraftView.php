@@ -160,7 +160,7 @@ class CraftView
         $itemList = Item::get_item_list($player->id);
 
         foreach ($itemList as $playerItem) {
-            $playerItemN[strtolower($playerItem->name)] = $playerItem->n;
+            $playerItemN[$playerItem->item_id] = $playerItem->n;
         }
 
         $recipeList = $recipeService->getRecipes($player, fromItemId: $item->id);
@@ -210,15 +210,15 @@ class CraftView
             // recipe
             foreach ($recipe->GetRecipeIngredients() as $ingredient) {
 
-
-                $ingredientItem = get_json_item($ingredient->GetItem());
-                $ingredentName = strtolower($ingredientItem->data->name);
+                $ingredientItemEntity = $ingredient->GetItem();
+                $ingredientItem = get_json_item($ingredientItemEntity);
+                $ingredentItemId = $ingredientItemEntity->getId();
 
                 // color
-                if (!isset($playerItemN[$ingredentName])) {
+                if (!isset($playerItemN[$ingredentItemId])) {
                     $color = 'red';
                     $hasAllIngredients = false;
-                } elseif ($playerItemN[$ingredentName] >= $ingredient->getCount()) {
+                } elseif ($playerItemN[$ingredentItemId] >= $ingredient->getCount()) {
                     $color = 'green';
                 } else {
                     $color = 'orange';
