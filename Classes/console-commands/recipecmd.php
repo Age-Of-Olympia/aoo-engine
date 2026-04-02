@@ -91,39 +91,79 @@ EOT);
             $raceService = new RaceService();
             $em = EntityManagerFactory::getEntityManager();
             $itemRepo = $em->getRepository(App\Entity\Item::class);
+            $recipesRepo = $em->getRepository(App\Entity\Recipe::class);
             foreach ($recipes as $race => $recette) {
                 if($race=="ressource")continue;
                 $race = $raceService->getRaceByName($race);
                 foreach ($recette as $recetteData) {
-                    $recipe = new App\Entity\Recipe();
+                    $recipe = $recipesRepo->findOneBy(['name'=>$recetteData['name']]);
+                    if($recipe){
+                        foreach($recipe->getRaces() as $raceToRemove){
+                            $recipe->removeRace($raceToRemove);
+                       }
+                    } else { 
+                        $recipe = new App\Entity\Recipe();
+                    }
                     $recipe->setName($recetteData['name']);
                     if($race)
                         $recipe->addRace($race);
-                   
-                    foreach ($recetteData['recette'] as $ingredient) {
-                        $ingredientObj = new App\Entity\RecipeIngredient();
-                        $item = new Item($ingredient['id']);
-                        $item->get_data();
-                        if($item->row->name!= $ingredient['name']){
-                            $this->result->Error("Item name mismatch recipe '{$recetteData['name']}' use '{$item->row->name} but say it use {$ingredient['name']}'");
+                    {
+                        $usedIngredientsItemIds = [];
+                        foreach ($recetteData['recette'] as $ingredient) {
+                            $ingredientObj = $recipe->getRecipeIngredientByItemId($ingredient['id']);
+                            if(!$ingredientObj){
+                                $ingredientObj = new App\Entity\RecipeIngredient();
+                            }
+                            $item = new Item($ingredient['id']);
+                            if(!isset($item->row)){
+                                $this->result->Error("Item id does not exist in DB {$ingredient['id']} for recipe '{$recetteData['name']}'");
+                            }
+                            $item->get_data();
+                            if($item->row->name!= $ingredient['name']){
+                                $this->result->Error("Item name mismatch recipe '{$recetteData['name']}' use '{$item->row->name} but say it use {$ingredient['name']}'");
+                            }
+                            $itemEntity = $itemRepo->find($ingredient['id']);
+                            $ingredientObj->setItem( $itemEntity);
+                            $ingredientObj->setCount($ingredient['n']);
+                            $recipe->addRecipeIngredient($ingredientObj);
+                            $usedIngredientsItemIds[] = $ingredient['id'];
                         }
-                        $itemEntity = $itemRepo->find($ingredient['id']);
-                        $ingredientObj->setItem( $itemEntity);
-                        $ingredientObj->setCount($ingredient['n']);
-                        $recipe->addRecipeIngredient($ingredientObj);
+                        foreach($recipe->getRecipeIngredients() as $ingredientToRemove){
+                            if(!in_array($ingredientToRemove->getItem()->getId(), $usedIngredientsItemIds)){
+                                $recipe->removeRecipeIngredient($ingredientToRemove, $em);
+                            }
+                        }
                     }
-                    $resultObj = new App\Entity\RecipeResult();
-                    $itemEntity = $itemRepo->find($recetteData['id']);
-                    $resultObj->setItem($itemEntity);
-                    
-                    $item = new Item($recetteData['id']);
-                    $item->get_data();
-                    if($item->row->name!= $recetteData['name']){
-                        $this->result->Log("Item name mismatch recipe '{$recetteData['name']}' create '{$item->row->name}'");
+
+                    {
+                        $usedResultItemIds = [];
+                        $resultObj = $recipe->getRecipeResultByItemId($recetteData['id']);
+                        if(!$resultObj){
+                            $resultObj = new App\Entity\RecipeResult();
+                        }
+                        $item = new Item($recetteData['id']);
+                        if(!isset($item->row)){
+                                $this->result->Error("Item id does not exist in DB {$recetteData['id']} for recipe '{$recetteData['name']}'");
+                        }
+                        $item->get_data();
+
+                        $itemEntity = $itemRepo->find($recetteData['id']);
+                        $resultObj->setItem($itemEntity);
+                        
+                        
+                        if($item->row->name!= $recetteData['name']){
+                            $this->result->Log("Item name mismatch recipe '{$recetteData['name']}' create '{$item->row->name}'");
+                        }
+                        $craftedByN = isset($item->data->craftedByN) ? $item->data->craftedByN : 1;
+                        $resultObj->setCount($craftedByN);
+                        $recipe->addRecipeResult($resultObj);
+                        $usedResultItemIds[] = $recetteData['id'];
+                        foreach($recipe->getRecipeResults() as $resultToRemove){
+                            if(!in_array($resultToRemove->getItem()->getId(), $usedResultItemIds)){
+                                $recipe->removeRecipeResult($resultToRemove, $em);
+                            }
+                        }
                     }
-                    $craftedByN = isset($item->data->craftedByN) ? $item->data->craftedByN : 1;
-                    $resultObj->setCount($craftedByN);
-                    $recipe->addRecipeResult($resultObj);
                     $em->persist($recipe);
                     $em->flush();//
                     $count++;

@@ -4,6 +4,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\EntityManager;
 
 #[ORM\Entity]
 #[ORM\Table(name: "craft_recipes")]
@@ -94,7 +95,22 @@ class Recipe
         }
     }
 
+    public function removeRecipeIngredient(RecipeIngredient $recipeIngredient,EntityManager $em): void
+    {
+        if ($this->recipeIngredients->removeElement($recipeIngredient)) {
+                $em->remove($recipeIngredient);
+        }
+    }
 
+    public function getRecipeIngredientByItemId(int $itemId): ?RecipeIngredient
+    {
+        foreach ($this->recipeIngredients as $ingredient) {
+            if ($ingredient->getItem()->getId() === $itemId) {
+                return $ingredient;
+            }
+        }
+        return null; // not found
+    }
     public function getRecipeIngredients(): Collection
     {
         return $this->recipeIngredients;
@@ -103,12 +119,28 @@ class Recipe
     {
         return $this->recipeResults;
     }
-
+    
+    public function getRecipeResultByItemId(int $itemId): ?RecipeResult
+    {
+        foreach ($this->recipeResults as $result) {
+            if ($result->getItem()->getId() === $itemId) {
+                return $result;
+            }
+        }
+        return null; // not found
+    }
     public function addRecipeResult(RecipeResult $recipeResult): void
     {
         if (!$this->recipeResults->contains($recipeResult)) {
             $this->recipeResults[] = $recipeResult;
             $recipeResult->setRecipe($this);
+        }
+    }
+
+    public function removeRecipeResult(RecipeResult $recipeResult, EntityManager $em): void
+    {
+        if ($this->recipeResults->removeElement($recipeResult)) {
+                $em->remove($recipeResult);
         }
     }
 
