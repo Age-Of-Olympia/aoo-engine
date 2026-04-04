@@ -15,7 +15,7 @@ class RemoveMalusOutcomeInstruction extends OutcomeInstruction
         $malus = 0;
         $params = $this->getParameters();
         $actorCarac = $params['actorCarac'] ?? 0;
-        $divisor =  $params['divisor'] ?? 1;
+        $divisor =  $params['caracDivisor'] ?? 1;
 
         $to = $param["to"] ?? "target";
 
