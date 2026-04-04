@@ -25,7 +25,7 @@ class NewTurnView
 
             if ($player->data->nextTurnTime <= $time) {
                 
-                if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"brulure")){
+                /*if($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id,"brulure")){
                     $brulure = $player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id,"brulure");
                     $player->putBonus(["pv" => -$brulure]);
                     $player->endEffect("brulure");
@@ -34,7 +34,7 @@ class NewTurnView
                     if($player->getRemaining('pv') < 1){
                         $player->playerService->ProcessTargetDeath($player->getLastAttacker(), $player);
                     }
-                }
+                }*/
                 
                 $player->getCoords();
 

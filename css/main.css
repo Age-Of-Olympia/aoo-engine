@@ -1603,6 +1603,24 @@ blockquote{
     color: red;
 }
 
+/* stabilite */
+.ra-boot-stomp{
+
+    color: green;
+}
+
+/* instabilite */
+.ra-falling{
+
+    color: red;
+}
+
+/* renforcement */
+.ra-lion{
+
+    color: green;
+}
+
 /* sorts de soins */
 .ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{
 

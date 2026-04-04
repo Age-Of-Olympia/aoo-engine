@@ -1,20 +1,37 @@
 <?php
 namespace App\Action\Condition;
 
+use App\Entity\Action;
+
 // Object that will contain anything that can be useful to compute conditions
 class ConditionObject 
 {
+    protected ?Action $action = null;
     protected ?int $actorRoll = null;
     protected ?int $targetRoll = null;
+    protected ?string $actorRollTrait = null;
+    protected ?string $targetRollTrait = null;
     protected ?int $actorRollBonus = null;
     protected ?int $targetRollBonus = null;
     protected ?bool $actorAdvantage = null;
     protected ?bool $targetAdvantage = null;
     protected ?bool $actorDisadvantage = null;
     protected ?bool $targetDisadvantage = null;
+    protected ?int $lifeloss = null;
 
 
     public function __construct() {
+    }
+
+    public function getAction(): ?Action
+    {
+        return $this->action;
+    }
+
+    public function setAction(Action $action): self
+    {
+        $this->action = $action;
+        return $this;
     }
 
     public function getActorRollBonus(): ?int
@@ -25,6 +42,28 @@ class ConditionObject
     public function setActorRollBonus(int $actorRollBonus): self
     {
         $this->actorRollBonus = $actorRollBonus;
+        return $this;
+    }
+
+    public function getActorRollTrait(): ?string
+    {
+        return $this->actorRollTrait;
+    }
+
+    public function setActorRollTrait(string $actorRollTrait): self
+    {
+        $this->actorRollTrait = $actorRollTrait;
+        return $this;
+    }
+
+    public function getTargetRollTrait(): ?string
+    {
+        return $this->targetRollTrait;
+    }
+
+    public function setTargetRollTrait(string $targetRollTrait): self
+    {
+        $this->targetRollTrait = $targetRollTrait;
         return $this;
     }
 
@@ -114,6 +153,17 @@ class ConditionObject
     public function setTargetDisadvantage(bool $targetDisadvantage): self
     {
         $this->targetDisadvantage = $targetDisadvantage;
+        return $this;
+    }
+
+    public function getLifeloss(): ?int
+    {
+        return $this->lifeloss;
+    }
+
+    public function setLifeloss(int $lifeloss): self
+    {
+        $this->lifeloss = $lifeloss;
         return $this;
     }
 

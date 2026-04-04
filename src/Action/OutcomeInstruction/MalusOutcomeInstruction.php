@@ -25,8 +25,14 @@ class MalusOutcomeInstruction extends OutcomeInstruction
         $to = $param["to"] ?? "target";
 
         if ($to == "target") {
+            if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
+                $malusTot--;
+            }
             $target->put_malus($malusTot);
         } else if ($to == "actor") {
+            if($actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(),"inepuisable")){
+                $malusTot--;
+            }
             $actor->put_malus($malusTot);
         }
 

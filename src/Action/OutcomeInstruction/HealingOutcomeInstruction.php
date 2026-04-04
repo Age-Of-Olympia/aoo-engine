@@ -12,13 +12,15 @@ class HealingOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
+        $params = $this->getParameters();
+
         // e.g. { "actorHealingTrait": "agi" }, { "actorHealingTrait": "agi", "bonusHealingTrait" : "3" }
-        $actorTraitHealing = $this->getParameters()['actorHealingTrait'] ?? 0;
-        $targetTraitHealing =  $this->getParameters()['targetHealingTrait'] ?? 0;
-        $bonusTraitHealing = $this->getParameters()['bonusHealingTrait'] ?? 0;
-        $actorTraitPMHealing = $this->getParameters()['actorPMHealingTrait'] ?? 0;
-        $bonusTraitPMHealing = $this->getParameters()['bonusPMHealingTrait'] ?? 0;
-        $divisor =  $this->getParameters()['divisor'] ?? 1;
+        $actorTraitHealing = $params['actorHealingTrait'] ?? 0;
+        $targetTraitHealing =  $params['targetHealingTrait'] ?? 0;
+        $bonusTraitHealing = $params['bonusHealingTrait'] ?? 0;
+        $actorTraitPMHealing = $params['actorPMHealingTrait'] ?? 0;
+        $bonusTraitPMHealing = $params['bonusPMHealingTrait'] ?? 0;
+        $divisor =  $params['divisor'] ?? 1;
 
         $outcomeSuccessMessages = array();
         $healing = 0;

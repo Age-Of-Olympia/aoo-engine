@@ -4,7 +4,6 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
@@ -15,6 +14,7 @@ class ManaLossOutcomeInstruction extends OutcomeInstruction
 
         // e.g. { "lossType": "carac", "value":"m", "typeDivisor":2 }
         // e.g. { "lossType": "fixed", "value":5 }
+        // e.g. { "lossType": "lifeloss" }
         // e.g. { "lossType": "difference" }
         $lossType = $this->getParameters()['lossType'] ?? '';
         $value = $this->getParameters()['value'] ?? 0;
@@ -29,6 +29,9 @@ class ManaLossOutcomeInstruction extends OutcomeInstruction
                 break;
             case "fixed":
                 $manaloss = $value;
+                break;
+            case "lifeloss":
+                $manaloss = floor($conditionObject->getLifeloss() / $typeDivisor);
                 break;
             case "difference":
                 $manaloss = $conditionObject->getActorRoll() - $conditionObject->getTargetRoll();

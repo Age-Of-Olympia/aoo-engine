@@ -51,8 +51,8 @@ class MeleeComputeCondition extends ComputeCondition
     protected function getDistanceMalus(): int {
         $distanceMalus = 0;
         $cellCount = $this->distance - 1;
-        if($cellCount > 2){
-            $distanceMalus = ($cellCount - 2) * 3;
+        if($cellCount > 1){
+            $distanceMalus = ($cellCount - 1) * 4;
         }
         return $distanceMalus;
     }

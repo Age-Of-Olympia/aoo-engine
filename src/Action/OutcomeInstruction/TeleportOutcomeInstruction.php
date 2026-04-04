@@ -30,6 +30,23 @@ class TeleportOutcomeInstruction extends OutcomeInstruction
                 $target->go($coordsId);
                 $outcomeSuccessMessages[0] = $target->data->name . ' est projeté !';
                 break;
+            case 'opposite':
+                $goCoords = (object) array(
+                            'x' => $target->coords->x+($target->coords->x-$actor->coords->x),
+                            'y' => $target->coords->y+($target->coords->y-$actor->coords->y),
+                            'z' => $target->coords->z+($target->coords->z-$actor->coords->z),
+                            'plan' => $target->coords->plan);
+                if(View::is_free($goCoords)){
+                    if($actor->getPush($target)){
+                        $target->go($goCoords);
+                        $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
+                    }
+                    else{
+                        $outcomeSuccessMessages[0] = $target->data->name . ' reste stable.';
+                    }
+                }
+                
+                break;
             default:
                 $explodedCoord = explode(',', $coords);
                 $coordX = $explodedCoord[0] == "x"?$actor->coords->x:$explodedCoord[0];

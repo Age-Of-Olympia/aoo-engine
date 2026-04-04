@@ -2379,30 +2379,13 @@ class Player implements ActorInterface {
         return Item::get_equiped_list($this);
     }
 
-    public function getLastAttacker(): ?object {
-        $db = new Db();
-        
-        // On cherche dans la table des logs l'entrée la plus récente
-        // où ce joueur est la cible et le type est une attaque
-        $sql = '
-            SELECT player_id, time 
-            FROM players_logs 
-            WHERE target_id = ? 
-            AND player_id != ? 
-            AND type IN ("action_other_player") 
-            ORDER BY time DESC 
-            LIMIT 1
-        ';
-
-        $res = $db->exe($sql, array($this->id, $this->id));
-
-        if ($res->num_rows) {
-            $row = $res->fetch_object();
-            $attacker = $this->playerService->GetPlayer($row->player_id);
-            $attacker->get_data(false);
-            return $attacker;
-        }
-
-        return null;
+    public function getPush(Player $target): bool {
+        $att = $this->caracs->f;
+        $def = max($target->caracs->e + 4,$target->caracs->agi);
+        $pv = floor($target->getRemaining('pv')/10);
+        $renforcement = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($this->getId(),"renforcement");
+        $stabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"stabilite");
+        $instabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"instabilite");
+        return $att + $renforcement >= $def + $pv + $stabilite - $instabilite;
     }
 }

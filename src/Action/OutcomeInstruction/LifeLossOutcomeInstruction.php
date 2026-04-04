@@ -5,6 +5,7 @@ namespace App\Action\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
+use App\Service\ActionPassiveService;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 use Classes\View;
@@ -25,6 +26,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         $othersDamages = 0;
         $othersDefense = 0;
         $distanceInfluence = $this->getParameters()['distance'] ?? false;
+        $sautInfluence = $this->getParameters()['saut'] ?? false;
         $targetIgnore = $this->getParameters()['targetIgnore'] ?? false;
         $actorIgnore = $this->getParameters()['actorIgnore'] ?? false;
         $autoCrit = $this->getParameters()['autoCrit'] ?? false;
@@ -34,6 +36,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         $actorEffetAgressivite = $actor->getEffectValue("agressivite");
         $targetEffetFragilite = $target->getEffectValue("fragilite");
         $targetEffetArmure = $target->getEffectValue("armure");
+        $actionPassiveService = new ActionPassiveService();
 
         if ($targetIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
@@ -44,13 +47,13 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         }
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
-            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive)) {
+            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)) {
                 $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
-            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive)) {
+            if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)) {
                 if($targetPassive->getName() === "encaisse"){
                     if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){
                         $encaisse = true;
@@ -85,6 +88,11 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 $distance = View::get_distance($actor->getCoords(), $target->getCoords());
                 $cellCount = $distance - 1;
                 $totalDamages = $totalDamages - $cellCount;
+            }
+            if ($sautInfluence) {
+                $distance = View::get_distance($actor->getCoords(), $target->getCoords());
+                $cellCount = $distance - 1;
+                $totalDamages = $totalDamages + floor(0.5 * $cellCount);
             }
             if($totalDamages < 1){
                 $totalDamages = 1;
@@ -161,15 +169,33 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             if ($distanceInfluence) {
                 $distanceText = ' - '. $cellCount. ' (Distance)';
             }
+            if ($sautInfluence) {
+                $distanceText = ' + '. floor(0.5 * $cellCount) . ' (Distance)';
+            }
 
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
             
             $malus = random_int(1,3);
+            $malusBonus = 0;
+            if($actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(),"maitre_bretteur") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actionPassiveService->getActionPassiveByName("maitre_bretteur"),$conditionObject)){
+                $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+            if($actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(),"escarmoucheur") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actionPassiveService->getActionPassiveByName("escarmoucheur"),$conditionObject)){
+                $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)) {
+                $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+            if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
+                $malusBonus--;
+            }
             $recoverMalus = floor($totalDamages/2);
 
-            $target->put_malus($malus-$recoverMalus);
-            $malusText = ($malus - $recoverMalus > 0) ? 'subit ' : ' récupère ';
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . '">malus</span>.';
+            $target->put_malus($malus-$recoverMalus+$malusBonus);
+            $malusText = ($malus - $recoverMalus + $malusBonus> 0) ? 'subit ' : ' récupère ';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus+$malusBonus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . ', Bonus : ' . $malusBonus . '">malus</span>.';
+
+            $conditionObject->setLifeloss($totalDamages);
 
             if($isDrain){
                 $drain = floor($totalDamages/3);
@@ -185,7 +211,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
             // put assist
             $actor->put_assist($target, $totalDamages);
-            
+
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$totalDamages);

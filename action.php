@@ -63,12 +63,12 @@ if (($_POST['coordsX'] != $target->getCoords()->x)
 $distance = View::get_distance($player->getCoords(), $target->getCoords());
 
 $playerService = new PlayerService($player->id);
-$numberOfSpellAvailable = $playerService->getNumberOfSpellAvailable();
+//$numberOfSpellAvailable = $playerService->getNumberOfSpellAvailable();
 
 // ToDo : should a condition
-if ($numberOfSpellAvailable < 0) {
-    exit('<font color="red">Vous ne pouvez pas utiliser vos sorts <a href="upgrades.php?spells">(max.'. $maxSpells .')</a>.</font></th>');
-}
+//if ($numberOfSpellAvailable < 0) {
+//    exit('<font color="red">Vous ne pouvez pas utiliser vos sorts <a href="upgrades.php?spells">(max.'. $maxSpells .')</a>.</font></th>');
+//}
 
 /*
  * action details

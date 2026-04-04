@@ -120,10 +120,15 @@ if(!empty($_POST['race'])){
 
 
         // add bonus gold
-        if( strpos( $raceNTblFormat[$player->data->race], '+20Po' ) !== false) {
+        if( strpos( $raceNTblFormat[$player->data->race], '+200Po' ) !== false) {
 
             $gold = new Item(1);
-            $gold->add_item($player, 20);
+            $gold->add_item($player, 200);
+        }
+        if( strpos( $raceNTblFormat[$player->data->race], '+100Po' ) !== false) {
+
+            $gold = new Item(1);
+            $gold->add_item($player, 100);
         }
 
 
@@ -320,6 +325,7 @@ echo '<h1>Inscription</h1>';
 
 echo '<div>L\'inscription est gratuite et immédiate!<br /><sup>Le multi-compte est interdit.</sup></div>';
 
+Dialog::refresh_register_dialog();
 
 $player = new Player(1);
 

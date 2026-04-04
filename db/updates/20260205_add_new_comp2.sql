@@ -158,7 +158,7 @@ VALUES
 (
     'coup_ajuste','ra-bowie-knife','technique','Coup ajusté',
     'Avantage',1, null,'melee-off',
-    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>',null
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>',null
 ),
 (
     'coup_epaule','ra-shovel','technique','Coup d''épaule',
@@ -197,7 +197,7 @@ VALUES
 ),
 (
     'regeneration_acceleree','ra-medical-pack','heal','Régénération accélérée',
-    'Soin(X2) où X est la R de la cible',3, null,'spell-support',
+    'Soin(X) où X est la R de la cible',3, null,'spell-support',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">10 PM</span>',null
 ),
 (
@@ -278,42 +278,42 @@ VALUES
 ),
 (
     'colere_nature','ra-player-thunder-struck','spell','Colère de la nature',
-    'Maladresse(x2), Vulnérabilité(x2)',4, null,'spell-curse',
+    'Maladresse(x2), Vulnérabilité(x2)',2, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">8 PM</span>',null
 ),
 (
     'fatigue','ra-broken-shield','spell','Fatigue',
-    'Vulnérabilité(x4)',4, null,'spell-curse',
+    'Vulnérabilité(x4)',3, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">12 PM</span>',null
 ),
 (
     'malchance','ra-cut-palm','spell','Malchance',
-    'Maladresse(x4)',4, null,'spell-curse',
+    'Maladresse(x4)',3, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">8 PM</span>',null
 ),
 (
     'puissance_lutin','ra-player-thunder-struck','spell','Puissance du Lutin capricieux',
-    'Maladresse(x4), Vulnérabilité(x4)',4, null,'spell-curse',
+    'Maladresse(x4), Vulnérabilité(x4)',5, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">20 PM</span>',null
 ),
 (
     'extenuation','ra-broken-shield','spell','Exténuation',
-    'Vulnérabilité(x8)',4, null,'spell-curse',
+    'Vulnérabilité(x8)',5, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">25 PM</span>',null
 ),
 (
     'guigne','ra-broken-shield','spell','Guigne',
-    'Maladresse(x8)',4, null,'spell-curse',
+    'Maladresse(x8)',5, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">20 PM</span>',null
 ),
 (
     'attaque_drainante','ra-knife-fork','technique','Attaque drainante',
-    'Une attaque avec Drain',3, null,'melee-off',
+    'Drain',3, null,'melee-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>',null
 ),
 (
     'attaque_siphonnante','ra-knife-fork','technique','Attaque siphonnante',
-    'Une attaque avec Siphon',3, null,'melee-off',
+    'Siphon',3, null,'melee-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #c0392b;">2 PV</span>',null
 ),
 (
@@ -323,8 +323,63 @@ VALUES
 ),
 (
     'arme_impro','ra-wrench','technique','Arme improvisée',
-    'Permet d''effectuer une attaque à distance à -4 pour toucher et -2 Dmg sans le matériel adéquat',1, null,'melee-off',
+    'Permet d''effectuer une attaque à distance à -4 pour toucher et -2 Dmg sans le matériel adéquat',1, null,'distance-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>',null
+),
+(
+    'bout_portant','ra-supersonic-arrow','technique','Bout portant',
+    'Une attaque avec une arme de Jet au contact à -8 pour toucher',1, null,'distance-off',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>',null
+),
+(
+    'tir_ajuste','ra-supersonic-arrow','technique','Tir ajusté',
+    'Avantage',1, null,'distance-off',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>',null
+),
+(
+    'jet_sable','ra-splash','technique','Jet de sable',
+    'Un jet de sable au contact sans dégâts et sans besoin d''arme. Aveuglement(x2)',2, null,'distance-curse',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>, <span style="color: #27ae60;">1 Mvt</span>',null
+),
+(
+    'arcanes_ajustees','ra-fairy-wand','technique','Arcanes ajustées',
+    'Avantage',1, null,'spell-off',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
+),
+(
+    'dard','ra-fairy-wand','technique','Dard',
+    'Bonus +1',1, null,'spell-off',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">3 PM</span>',null
+),
+(
+    'drain','ra-knife-fork','technique','Drain',
+    'Bonus +1, Drain',2, null,'spell-off',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
+),
+(
+    'siphon','ra-knife-fork','technique','Siphon',
+    'Bonus +1, Siphon',2, null,'spell-off',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #c0392b;">5 PV</span>, <span style="color: #27ae60;">2 Mvt</span>',null
+),
+(
+    'stabilisation','ra-boot-stomp','buff','Stabilisation',
+    'Stabilité(+6)',2, null,'spell-support',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>, <span style="color: #27ae60;">1 Mvt</span>',null
+),
+(
+    'renforcement','ra-lion','buff','Renforcement',
+    'Renforcement(x6)',2, null,'spell-support',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
+),
+(
+    'instabilite','ra-falling','buff','Instabilité',
+    'Instabilité(x6)',2, null,'spell-curse',
+    '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
+),
+(
+    'bousculade','ra-falling','technique','Bousculade',
+    'Touche automatiquement. Repousse la cible d''une case si le Repoussement fonctionne.',2, null,'melee-curse',
+    '<span style="color: #8e44ad;">1 A</span>,<span style="color: #27ae60;">1 Mvt</span>',null
 );
 
 INSERT INTO action_outcomes (id,apply_to_self, name, on_success, action_id)
@@ -430,6 +485,39 @@ VALUES
 ),
 (
     120,0,'dtechnique_arme_impro',1,110
+),
+(
+    121,0,'dtechnique_bout_portant',1,111
+),
+(
+    122,0,'dtechnique_tir_ajuste',1,112
+),
+(
+    123,0,'dtechnique_jet_sable',1,113
+),
+(
+    124,0,'spell_arcanes_ajustees',1,114
+),
+(
+    125,0,'spell_dard',1,115
+),
+(
+    126,0,'spell_drain',1,116
+),
+(
+    127,0,'spell_siphon',1,117
+),
+(
+    128,0,'bene_stabilisation',1,118
+),
+(
+    129,0,'bene_renforcement',1,119
+),
+(
+    130,0,'spell_instabilite',1,120
+),
+(
+    131,0,'mtechnique_bousculade',1,121
 );
 
 INSERT INTO action_passives (name, traits, type, carac, value, conditions, level, race)
@@ -445,6 +533,54 @@ VALUES
 (
     'encaisser','["e","m"]','def','fixed',25.00,null, 2,"",
     "survival","Encaisser","Bénéficie des effets d'Encaisse à 25 PV ou moins"
+),
+(
+    'duelliste','["cc"]','att','advantage',0.00,null, 4,"",
+    "melee","Duelliste","Gagne Avantage sur les attaques et techniques basées sur la CC"
+),
+(
+    'lanceur','["ct"]','att','advantage',0.00,{"weapon":["pierre","lance","javelot_lourd","pilum","hache_jet","pierre_noire"]}, 4,"",
+    "distance","Lanceur","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme de jet"
+),
+(
+    'tireur-elite','["ct"]','att','advantage',0.00,{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}, 4,"",
+    "distance","Tireur d'élite","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme à munitions"
+),
+(
+    'anguille','["cc/agi"]','def','advantage',0.00,null, 4,"",
+    "survival","Anguille","Gagne Avantage sur les esquives"
+),
+(
+    'volonte-fer','["fm"]','def','advantage',0.00,null, 4,"",
+    "survival","Volonté de Fer","Gagne Avantage en résistant à la magie"
+),
+(
+    'couverture','["cc"]','esquive_tir','',0.00,null, 4,"",
+    "melee","Couverture","Esquive les Tirs à 9/10 CC et 1/10 Agi si il est équipé d'un Bouclier"
+),
+(
+    'reflexes_fulgurants','["agi"]','esquive_tir','',0.00,null, 4,"",
+    "distance","Réflexes fulgurants","Esquiver les Tirs se fait à 6/7 Agi et 1/7 CC"
+),
+(
+    'inepuisable','["malus"]','malus','',1.00,null, 4,"",
+    "survival","Inépuisables","Les Malus appliqués par des actions adverses sont réduits de 1"
+),
+(
+    'maitre_bretteur','["cc"]','malus','fixed',2.00,null, 4,"",
+    "melee","Maître bretteur","Les Malus appliqués par les actions de contact sont augmentées de 2"
+),
+(
+    'escarmoucheur','["ct"]','malus','fixed',2.00,{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}, 4,"",
+    "distance","Escarmoucheur","Les Malus appliqués par les actions de tir avec des armes à munitions sont augmentées de 2"
+),
+(
+    'berserker','["cc"]','att','lostPV',0.10,null, 2,"geant",
+    "melee","Berserker","Gagne +1 en CC en attaque tous les 10PV perdus"
+),
+(
+    'mage_sacre','["fm"]','buff','effects',2.00,{"category":["spell-support"]}, 2,"olympien",
+    "spell","Berserker","Gagne +2 en FM pour lancer des sorts de soutien par Effet sur lui"
 );
 
 
@@ -452,15 +588,15 @@ INSERT INTO action_conditions (conditionType, parameters, action_id, execution_o
 VALUES 
 /* coup_precis */
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',63,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',63,10,0
 ),
 /* peau_de_granit */
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',64,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',64,10,0
 ),
 /* restauration_mineure */
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',64,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',64,10,0
 ),
 /* repos */
 (
@@ -480,7 +616,7 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":2}',77,5,1
 ),
 (
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "actorAdvantage":true}',77,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "actorAdvantage":true}',77,10,0
 ),
 /* coup_epaule */
 (
@@ -493,7 +629,7 @@ VALUES
     'RequiresTraitValue','{"mvt":5}',78,5,1
 ),
 (
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "actorRollBonus" : -4}',78,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "actorRollBonus" : -4}',78,10,0
 ),
 /* saut_attaque */
 (
@@ -503,7 +639,7 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":10, "mvt":1}',79,5,1
 ),
 (
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',79,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',79,10,0
 ),
 /* recuperation */
 (
@@ -513,7 +649,7 @@ VALUES
     'RequiresTraitValue','{ "a":1, "pm":4 }',80,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',80,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',80,10,0
 ),
 /* recuperation_superieure */
 (
@@ -523,7 +659,7 @@ VALUES
     'RequiresTraitValue','{ "a":1, "pm":10 }',81,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',81,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',81,10,0
 ),
 /* restauration */
 (
@@ -533,7 +669,7 @@ VALUES
     'RequiresTraitValue','{ "a":1, "pm":6 }',82,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',82,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',82,10,0
 ),
 /* restauration_majeure*/
 (
@@ -543,7 +679,7 @@ VALUES
     'RequiresTraitValue','{ "a":1, "pm":12 }',83,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',83,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',83,10,0
 ),
 /* regeneration */
 (
@@ -553,7 +689,7 @@ VALUES
     'RequiresTraitValue','{ "a":1, "pm":4 }',84,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',84,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',84,10,0
 ),
 /* regeneration_acceleree */
 (
@@ -563,7 +699,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":10 }',85,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',85,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',85,10,0
 ),
 /* puissance_nature */
 (
@@ -573,7 +709,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',86,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',86,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',86,10,0
 ),
 /* aide */
 (
@@ -583,7 +719,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',87,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',87,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',87,10,0
 ),
 /* reflexes_accruse */
 (
@@ -593,7 +729,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',88,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',88,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',88,10,0
 ),
 /* reflexes_accruse */
 (
@@ -603,7 +739,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',89,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',89,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',89,10,0
 ),
 /* benediction */
 (
@@ -613,7 +749,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":15 }',90,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',90,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',90,10,0
 ),
 /* sauvegarde */
 (
@@ -623,7 +759,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":20 }',91,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',91,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',91,10,0
 ),
 /* virtuose */
 (
@@ -633,7 +769,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":20 }',92,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',92,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',92,10,0
 ),
 /* armure */
 (
@@ -643,7 +779,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',93,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',93,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',93,10,0
 ),
 /* agressivite */
 (
@@ -653,7 +789,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":6 }',94,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',94,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',94,10,0
 ),
 /* cuirasse */
 (
@@ -663,7 +799,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":15 }',95,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',95,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',95,10,0
 ),
 /* ferocite */
 (
@@ -673,7 +809,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":12 }',96,3,1
 ),
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',96,7,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',96,10,0
 ),
 /* faiblesse */
 (
@@ -683,7 +819,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":6 }',97,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',97,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',97,10,0
 ),
 /* fragilite */
 (
@@ -693,7 +829,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":10 }',98,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',98,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',98,10,0
 ),
 /* friabilite */
 (
@@ -703,7 +839,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":20 }',99,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',99,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',99,10,0
 ),
 /* anemie */
 (
@@ -713,7 +849,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":12 }',100,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',100,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',100,10,0
 ),
 /* colere_nature */
 (
@@ -723,7 +859,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',101,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',101,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',101,10,0
 ),
 /* fatigue */
 (
@@ -733,7 +869,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":12 }',102,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',102,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',102,10,0
 ),
 /* malchance */
 (
@@ -743,7 +879,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":8 }',103,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',103,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',103,10,0
 ),
 /* puissance_lutin */
 (
@@ -753,7 +889,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":20 }',104,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',104,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',104,10,0
 ),
 /* extenuation */
 (
@@ -763,7 +899,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":25 }',105,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',105,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',105,10,0
 ),
 /* guigne */
 (
@@ -773,7 +909,7 @@ VALUES
     'RequiresTraitValue','{ "a": 1, "pm":20 }',106,3,1
 ),
 (
-    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',106,7,0
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',106,10,0
 ),
 /* attaque_drainante */
 (
@@ -786,7 +922,7 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":4}',107,5,1
 ),
 (
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "drain":true}',107,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',107,10,0
 ),
 /* attaque_siphonnante */
 (
@@ -799,7 +935,7 @@ VALUES
     'RequiresTraitValue','{"a":1, "pv":2}',108,5,1
 ),
 (
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "siphon":true}',108,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',108,10,0
 ),
 /* frappe_tempe */
 (
@@ -812,7 +948,7 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":4}',109,5,1
 ),
 (
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',109,7,0
+    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',109,10,0
 ),
 /* arme_impro */
 (
@@ -822,26 +958,323 @@ VALUES
     'RequiresTraitValue','{"a":1, "pm":2}',110,5,1
 ),
 (
-    'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi", "actorRollBonus" : -4}',110,7,0
+    'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi", "actorRollBonus" : -4}',110,10,0
+),
+/* bout_portant */
+(
+    'RequiresDistance','{"max":1}',111,0,1
+),
+(
+    'RequiresWeaponType','{"type": ["jet"]}',111,1,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":2}',111,5,1
+),
+(
+    'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi", "actorRollBonus" : -8}',111,10,0
+),
+/* tir_ajuste */
+(
+    'RequiresDistance','{"min":2}',112,0,1
+),
+(
+    'RequiresWeaponType','{"type": ["tir","jet"]}',112,1,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":2}',112,5,1
+),
+(
+    'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi", "actorAdvantage":true}',112,10,0
+),
+/* jet_sable */
+(
+    'RequiresDistance','{"max":1}',113,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":4, "mvt":1}',113,5,1
+),
+(
+    'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi"}',113,10,0
+),
+/* arcanes_ajuste */
+(
+    'RequiresDistance','{"min":2}',114,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":6}',114,5,1
+),
+(
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm", "actorAdvantage":true}',114,10,0
+),
+/* dard */
+(
+    'RequiresDistance','{"min":2}',115,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":3}',115,5,1
+),
+(
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',115,10,0
+),
+/* drain */
+(
+    'RequiresDistance','{"min":2}',116,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":6}',116,5,1
+),
+(
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',116,10,0
+),
+/* siphon */
+(
+    'RequiresDistance','{"min":2}',117,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pv":5, "mvt":2}',117,5,1
+),
+(
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',117,10,0
+),
+/* stabilisation */
+(
+    'RequiresDistance','{"max":1}',118,0,1
+),
+(
+    'RequiresTraitValue','{ "a": 1, "pm":2, "mvt":1 }',118,3,1
+),
+(
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',118,10,0
+),
+/* renforcement */
+(
+    'RequiresDistance','{"max":1}',119,0,1
+),
+(
+    'RequiresTraitValue','{ "a": 1, "pm":2, "mvt":1 }',119,3,1
+),
+(
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',119,10,0
+),
+/* instabilite */
+(
+    'RequiresDistance','{"min":2}',120,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "pm":6}',120,5,1
+),
+(
+    'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',120,10,0
+),
+/* bousculade */
+(
+    'RequiresDistance','{"max":1}',121,0,1
+),
+(
+    'RequiresTraitValue','{"a":1, "mvt":1}',121,5,1
 );
 
 INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
 VALUES 
+/* coup_ajuste */
 (
     'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e" }',1,87
 ),
+/* coup_epaule */
 (
     'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait": -3 }',1,88
 ),
+/* attaque_sautee */
 (
     'teleport','{ "coords": "target" }',2,89
 ),
 (
     'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "distance": true}',1,89
 ),
+/* recuperation */
+(
+    'healing','{ "bonusHealingTrait": "r", "divisor": 2 }',2,90
+),
+/* recuperation_superieure */
+(
+    'healing','{ "bonusHealingTrait": "r"}',2,91
+),
+/* restauration */
+(
+    'removemalus','{ "actorCarac": "r","caracDivisor": 2}',2,92
+),
+/* restauration_majeure */
+(
+    'removemalus','{ "actorCarac": "r"}',2,93
+),
+/* regeneration */
+(
+    'healing','{ "targetHealingTrait": "r", "divisor": 2 }',2,94
+),
+/* regeneration_acceleree */
+(
+    'healing','{ "targetHealingTrait": "r" }',2,95
+),
+/* pas_leger */
 (
     'applystatus','{ "imposture": true, "stackable": true, "value": 1, "player": "target", "duration": 172800}',10,96
 ),
 (
     'applystatus','{ "leger": true, "stackable": false, "value": 1, "player": "target", "duration": 1}',9,96
+),
+/* puissance_nature */
+(
+    'applystatus','{ "dexterite": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,97
+),
+(
+    'applystatus','{ "protection": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',9,97
+),
+/* aide */
+(
+    'applystatus','{ "dexterite": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,98
+),
+/* reflexes_accrus */
+(
+    'applystatus','{ "protection": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,99
+),
+/* benediction */
+(
+    'applystatus','{ "dexterite": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,100
+),
+(
+    'applystatus','{ "protection": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',9,100
+),
+/* sauvegarde */
+(
+    'applystatus','{ "dexterite": true, "stackable": false, "value": 8, "player": "target", "duration": 86400}',10,101
+),
+/* virtuose */
+(
+    'applystatus','{ "protection": true, "stackable": false, "value": 8, "player": "target", "duration": 86400}',10,102
+),
+/* armure */
+(
+    'applystatus','{ "armure": true, "stackable": false, "value": 1, "player": "target", "duration": 64800}',10,103
+),
+/* agressivite */
+(
+    'applystatus','{ "agressivite": true, "stackable": false, "value": 1, "player": "target", "duration": 64800}',10,104
+),
+/* cuirasse */
+(
+    'applystatus','{ "armure": true, "stackable": false, "value": 2, "player": "target", "duration": 64800}',10,105
+),
+/* ferocite */
+(
+    'applystatus','{ "agressivite": true, "stackable": false, "value": 2, "player": "target", "duration": 64800}',10,106
+),
+/* fragilite */
+(
+    'applystatus','{ "fragilite": true, "stackable": false, "value": 1, "player": "target", "duration": 64800}',10,107
+),
+/* friabilite */
+(
+    'applystatus','{ "fragilite": true, "stackable": false, "value": 2, "player": "target", "duration": 64800}',10,108
+),
+/* faiblesse */
+(
+    'applystatus','{ "faiblesse": true, "stackable": false, "value": 1, "player": "target", "duration": 64800}',10,109
+),
+/* anemie */
+(
+    'applystatus','{ "faiblesse": true, "stackable": false, "value": 2, "player": "target", "duration": 64800}',10,110
+),
+/* colere_nature */
+(
+    'applystatus','{ "maladresse": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,111
+),
+(
+    'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',9,111
+),
+/* fatigue */
+(
+    'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,112
+),
+/* malchance */
+(
+    'applystatus','{ "maladresse": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,113
+),
+/* puissance_lutin */
+(
+    'applystatus','{ "maladresse": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,114
+),
+(
+    'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',9,114
+),
+/* extenuation */
+(
+    'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 8, "player": "target", "duration": 86400}',10,115
+),
+/* guigne */
+(
+    'applystatus','{ "maladresse": true, "stackable": false, "value": 8, "player": "target", "duration": 86400}',10,116
+),
+/* attaque_drainante */
+(
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "drain":true }',1,117
+),
+/* attaque_siphonnante */
+(
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "siphon":true }',1,118
+),
+/* frappe_tempe */
+(
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e"}',1,119
+),
+(
+    'manaloss','{ "lossType": "lifeloss" }',2,119
+),
+/* arme_impro */
+(
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait": -2}',1,120
+),
+/* bout_portant */
+(
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e"}',1,121
+),
+/* tir_ajuste */
+(
+    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e"}',1,122
+),
+/* jet_sable */
+(
+    'applystatus','{ "aveuglement": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,123
+),
+/* arcanes_ajustees */
+(
+    'lifeloss','{ "actorDamagesTrait": "m", "targetDamagesTrait": "m", "bonusDamagesTrait": 3}',1,124
+),
+/* dard */
+(
+    'lifeloss','{ "actorDamagesTrait": "m", "targetDamagesTrait": "m", "bonusDamagesTrait": 1}',1,125
+),
+/* drain */
+(
+    'lifeloss','{ "actorDamagesTrait": "m", "targetDamagesTrait": "m", "bonusDamagesTrait": 1, "drain":true }',1,126
+),
+/* siphon */
+(
+    'lifeloss','{ "actorDamagesTrait": "m", "targetDamagesTrait": "m", "bonusDamagesTrait": 1, "drain":true }',1,127
+),
+/* stabilisation */
+(
+    'applystatus','{ "stabilite": true, "stackable": true, "value": 6, "player": "target", "duration": 1}',10,128
+),
+/* renforcement */
+(
+    'applystatus','{ "renforcement": true, "stackable": false, "value": 6, "player": "target", "duration": 1}',10,129
+),
+/* instabilite */
+(
+    'applystatus','{ "instabilite": true, "stackable": false, "value": 6, "player": "target", "duration": 1}',10,130
+),
+/* bousculade */
+(
+    'teleport','{ "coords": "opposite" }',2,131
 );
+

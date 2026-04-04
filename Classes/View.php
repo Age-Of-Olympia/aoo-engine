@@ -1140,4 +1140,31 @@ class View{
 
         self::refresh_players_svg($player->coords);
     }
+
+    public static function is_free($coords): bool {
+    $db = new Db();
+    
+    $sql = '
+    SELECT (
+        SELECT COUNT(*) FROM players WHERE coords_id = c.id
+    ) + (
+        SELECT COUNT(*) FROM map_walls WHERE coords_id = c.id
+    ) + (
+        SELECT COUNT(*) FROM map_triggers WHERE coords_id = c.id
+    ) AS total
+    FROM coords AS c
+    WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
+    ';
+
+    $res = $db->exe($sql, [$coords->x, $coords->y, $coords->z, $coords->plan]);
+    
+    if (!$res || $res->num_rows === 0) {
+        return true;
+    }
+
+    $row = $res->fetch_object();
+    
+    // Si total == 0, c'est que la case est vide
+    return (int)$row->total === 0;
+}
 }

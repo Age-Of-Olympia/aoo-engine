@@ -30,12 +30,15 @@ class BuffComputeCondition extends ComputeCondition
         $params = $condition->getParameters(); // e.g. { "max": 1 }
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
+        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
         $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
         $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
-            if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "buff" || $actorPassive->getType() == "mixte" )) {
-                $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+            if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "buff")) {
+                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                    $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                }
             }
         }
 

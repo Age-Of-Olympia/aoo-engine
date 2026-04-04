@@ -33,17 +33,37 @@ class ComputePureCondition extends BaseCondition
         $this->targetRollTrait = $params['targetRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
         $conditionObject->setTargetRollBonus($params['targetRollBonus'] ?? 0);
+        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
+        $conditionObject->setTargetRollTrait($params['targetRollType'] ?? 0);
+        $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
+        $conditionObject->setTargetAdvantage($params['targetAdvantage'] ?? false);
+        $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
+        $conditionObject->setTargetDisadvantage($params['targetDisadvantage'] ?? false);
         $target->playerPassiveService->getPassivesByPlayerId($target->getId());
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                    if($actorPassive->getCarac() == "advantage"){
+                        $conditionObject->setActorAdvantage(true);
+                    }
+                    else{
+                        $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                    }
+                }
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                $conditionObject->addActorRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName()));
+                if($target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)){
+                    if($targetPassive->getCarac() == "advantage"){
+                        $conditionObject->setTargetAdvantage(true);
+                    }
+                    else{
+                     $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName()));
+                    }
+                }
             }
         }
 
@@ -98,12 +118,12 @@ class ComputePureCondition extends BaseCondition
         $actorRollBonus = $conditionObject->getActorRollBonus();
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
-        if($conditionObject->getActorAdvantage() === true && $conditionObject->getActorDisadvantage() === true){
+        if($conditionObject->getActorAdvantage() && $conditionObject->getActorDisadvantage()){
             // Do nothing if advantage and disadvantage
         }
-        elseif($conditionObject->getActorAdvantage() === true || $conditionObject->getActorDisadvantage() === true){
+        elseif($conditionObject->getActorAdvantage() || $conditionObject->getActorDisadvantage()){
             $actorRoll2 = $dice->roll($actorRollTraitValue);
-            if($conditionObject->getActorAdvantage() === true){
+            if($conditionObject->getActorAdvantage()){
                 $actorRoll = max($actorRoll,$actorRoll2);
             }   
             else{
@@ -111,15 +131,12 @@ class ComputePureCondition extends BaseCondition
             }
         }
         $bonus = $conditionObject->getActorRollBonus();
-        $totalOther = $bonus;
         $tooltipOtherTxt = !empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '';
-        $actorTotal = array_sum($actorRoll) + $totalOther;
-        $actorOtherTxt = ($totalOther != 0) ? (($totalOther > 0) ? ' + '. $totalOther .' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : ' - '. abs($totalOther) .' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)') : '';
+        $actorTotal = array_sum($actorRoll) + $bonus;
         $distanceMalus = $this->getDistanceMalus();
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
-        $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal . ' (Jet pur)' : ' (Jet pur)';
-        $actorTxt = 'Jet '. $actor->data->name .' = '. implode(' + ', $actorRoll) .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
+        $actorTxt = 'Jet '. $actor->data->name .' = ' . '<span style="text-decoration: underline;" flow="up" tooltip="' . $distanceMalusTxt . (($distanceMalusTxt) ? ', ' . $tooltipOtherTxt : $tooltipOtherTxt) . '">' . $actorTotal . '</span> (Jet pur)';
 
         $conditionObject->setActorRoll($actorTotal);
 
@@ -140,12 +157,12 @@ class ComputePureCondition extends BaseCondition
         }
         
         $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() === true && $conditionObject->getTargetDisadvantage() === true){
+        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
             // Do nothing if advantage and disadvantage
         }
-        elseif($conditionObject->getTargetAdvantage() === true || $conditionObject->getTargetDisadvantage() === true){
+        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
             $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage() === true){
+            if($conditionObject->getTargetAdvantage()){
                 $targetRoll = max($targetRoll,$targetRoll2);
             }   
             else{

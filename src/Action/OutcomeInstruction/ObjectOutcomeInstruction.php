@@ -7,7 +7,6 @@ use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
-use Classes\View;
 
 #[ORM\Entity]
 class ObjectOutcomeInstruction extends OutcomeInstruction

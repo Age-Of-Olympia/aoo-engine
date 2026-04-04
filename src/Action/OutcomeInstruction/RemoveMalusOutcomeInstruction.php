@@ -14,11 +14,17 @@ class RemoveMalusOutcomeInstruction extends OutcomeInstruction
         
         $malus = 0;
         $params = $this->getParameters();
+        $actorCarac = $params['actorCarac'] ?? 0;
+        $divisor =  $params['divisor'] ?? 1;
 
         $to = $param["to"] ?? "target";
 
         if (isset($params['fixedMalus']) && $params['fixedMalus']) {
             $malus = $params['fixedMalus'];
+        }
+
+        if(!empty($actorCarac) || !empty($actorCarac)){
+            $malus = floor($actor->caracs->{$actorCarac}/$divisor);
         }
 
         if ($to == "target") {

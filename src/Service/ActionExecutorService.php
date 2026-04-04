@@ -38,6 +38,7 @@ class ActionExecutorService
         $this->playerService = new PlayerService($actor->id);
         $this->initialTargetPv = $target->getRemaining('pv');
         $this->conditionObject = new ConditionObject();
+        $this->conditionObject->setAction($this->action);
     }
 
     public function executeAction(): ActionResults

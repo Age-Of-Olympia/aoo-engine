@@ -46,6 +46,8 @@ class ComputeCondition extends BaseCondition
         $this->targetRollTrait = $params['targetRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
         $conditionObject->setTargetRollBonus($params['targetRollBonus'] ?? 0);
+        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
+        $conditionObject->setTargetRollTrait($params['targetRollType'] ?? 0);
         $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
         $conditionObject->setTargetAdvantage($params['targetAdvantage'] ?? false);
         $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
@@ -54,13 +56,27 @@ class ComputeCondition extends BaseCondition
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                    if($actorPassive->getCarac() == "advantage"){
+                        $conditionObject->setActorAdvantage(true);
+                    }
+                    else{
+                    $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
+                    }
+                }
             }
         }
 
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                $conditionObject->addActorRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId()));
+                if($target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)){
+                    if($targetPassive->getCarac() == "advantage"){
+                        $conditionObject->setTargetAdvantage(true);
+                    }
+                    else{
+                        $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName()));
+                    }
+                }
             }
         }
 
@@ -141,12 +157,10 @@ class ComputeCondition extends BaseCondition
             ) .
             (!empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '');
         $actorTotal = array_sum($actorRoll) + $totalOther;
-        $actorOtherTxt = ($totalOther != 0) ? (($totalOther > 0) ? ' + '. $totalOther .' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : ' - '. abs($totalOther) .' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)') : '';
         $distanceMalus = $this->getDistanceMalus();
         $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
         $actorTotal = $actorTotal - $distanceMalus;
-        $actorTotalTxt = ($distanceMalus || $actorOtherTxt) ? ' = '. $actorTotal : '';
-        $actorTxt = 'Jet '. $actor->data->name .' = ' . array_sum($actorRoll) . $distanceMalusTxt . $actorOtherTxt . $actorTotalTxt;
+        $actorTxt = 'Jet ' . $actor->data->name .' = ' . '<span style="text-decoration: underline;" flow="up" tooltip="' . $distanceMalusTxt . (($distanceMalusTxt) ? ', ' . $tooltipOtherTxt : $tooltipOtherTxt) . '">' . $actorTotal . '</span>';
 
         $conditionObject->setActorRoll($actorTotal);
 

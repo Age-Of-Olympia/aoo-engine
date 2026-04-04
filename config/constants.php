@@ -179,6 +179,8 @@ define('EFFECTS_RA_FONT', array(
     'encaisse' => 'ra-muscle-fat',
     'leger' => 'ra-player',
     'protection' => 'ra-shield',
+    'stabilite' => 'ra-boot-stomp',
+    'renforcement' => 'ra-lion',
 
     //nouveaux effets buffs
     'aveuglement' => 'ra-bleeding-eye',
@@ -189,6 +191,7 @@ define('EFFECTS_RA_FONT', array(
     'maladresse' => 'ra-cut-palm',
     'ralentissement' => 'ra-snail',
     'vulnerabilite' => 'ra-broken-shield',
+    'instabilite' => 'ra-falling',
 
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',

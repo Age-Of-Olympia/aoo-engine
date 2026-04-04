@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Action\Condition\ConditionObject;
 use App\Entity\EntityManagerFactory;
 use App\Entity\PlayerPassive;
 use App\Entity\ActionPassive;
@@ -46,6 +47,15 @@ class PlayerPassiveService
         }
 
         $player = new Player($playerId);
+
+        if($result->getCarac() == "lostPV"){
+            return floor(($player->caracs->pv - $player->getRemaining("pv")) * $result->getValue());
+        }
+        
+        if($result->getCarac() == "effects"){
+            return floor(count($player->playerEffectService->getEffectsByPlayerId($player->getId())) * $result->getValue());
+        }
+
         $player->get_caracs();
         return floor($player->caracs->{$result->getCarac()} * $result->getValue());
     }
@@ -70,12 +80,13 @@ class PlayerPassiveService
         $player->caracs->esquive = $esquive;
     }
 
-    public function checkPassiveConditionsByPlayerById(Player $player, ActionPassive $passive): bool
+    public function checkPassiveConditionsByPlayerById(Player $player, ActionPassive $passive, ConditionObject $conditionObject): bool
     {
         $conditions = $passive->getConditions();
         if(is_null($conditions)){
             return true;
         }
+        // ex : {"weapon":["arc","arbalete"]}
         if(isset($conditions["weapon"])){
             $equipedItems = $player->getEquipedItems();
             $emptyHandCondition = in_array("poing", $conditions["weapon"]);
@@ -92,6 +103,10 @@ class PlayerPassiveService
                 return $emptyHands;
             }
             return false;
+        }
+        // ex : {"category":["melee-curse","melee-off"]}
+        if(isset($conditions["category"])){
+            return in_array($conditionObject->getAction()->getCategory(),$conditions["category"]);
         }
         return true;
     }
@@ -115,6 +130,25 @@ class PlayerPassiveService
         $repo = $this->entityManager->getRepository(PlayerPassive::class);
     
         $passive = $this->entityManager->getReference(ActionPassive::class, $passiveId);
+
+        $result = $repo->findOneBy([
+            'playerId' => $playerId,
+            'passive'  => $passive
+        ]);
+
+        return $result !== null;
+    }
+
+    public function hasPassiveByPlayerIdByName(int $playerId, string $name): bool
+    {
+        $repo = $this->entityManager->getRepository(PlayerPassive::class);
+    
+        $actionPassiveRepo = $this->entityManager->getRepository(ActionPassive::class);
+        $passive = $actionPassiveRepo->findOneBy(['name' => $name]);
+
+        if (!$passive) {
+            return false;
+        }
 
         $result = $repo->findOneBy([
             'playerId' => $playerId,
