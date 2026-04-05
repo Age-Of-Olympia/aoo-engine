@@ -45,9 +45,18 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         if ($actorIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($actorIgnore, $actor);
         }
+            
+        $malus = random_int(1,3);
+        $malusBonus = 0;
 
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
-            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)) {
+            if($actorPassive->getName() == "maitre_bretteur" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+            else if($actorPassive->getName() == "escarmoucheur" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
+                $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
+            }
+            else if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)) {
                 $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
             }
         }
@@ -174,22 +183,12 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
 
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
-            
-            $malus = random_int(1,3);
-            $malusBonus = 0;
-            if($actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(),"maitre_bretteur") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actionPassiveService->getActionPassiveByName("maitre_bretteur"),$conditionObject)){
-                $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
-            }
-            if($actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(),"escarmoucheur") && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actionPassiveService->getActionPassiveByName("escarmoucheur"),$conditionObject)){
-                $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
-            }
-            if (in_array($actorTraitDamages, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" ) && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)) {
-                $othersDamages += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
-            }
+
+            $recoverMalus = floor($totalDamages/2);
+
             if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
                 $malusBonus--;
             }
-            $recoverMalus = floor($totalDamages/2);
 
             $target->put_malus($malus-$recoverMalus+$malusBonus);
             $malusText = ($malus - $recoverMalus + $malusBonus> 0) ? 'subit ' : ' récupère ';

@@ -95,15 +95,15 @@ SET text = CASE
     WHEN name = 'tir_handicapant' THEN 'Jet pur. Vulnérabilité(X/3)  où X est la différence des jets de dé'
     WHEN name = 'jet_infuse' THEN 'Nécessite une arme de jet. +M/3 Dmg'
     WHEN name = 'epuisement_arcaniques' THEN 'Jet pur. Essoufflement(X/3) où X est la différence des jets de dé'
-    WHEN name = 'arcane_precise' THEN '+4 pour toucher, -3 Dmg'
-    WHEN name = 'arcane_violente' THEN '-6 pour toucher, +2 Dmg'
+    WHEN name = 'arcane_precise' THEN 'Bonus +0, +4 pour toucher'
+    WHEN name = 'arcane_violente' THEN 'Bonus +5, -6 pour toucher'
     WHEN name = 'aveuglement' THEN 'Aveuglement(x1)'
     WHEN name = 'coup_precis' THEN 'Dextérité(x2)'
     WHEN name = 'peau_de_granit' THEN 'Protection(x2)'
     WHEN name = 'maladresse' THEN 'Maladresse(x2)'
     WHEN name = 'vulnerabilite' THEN 'Vulnérabilité(x2)'
     WHEN name = 'restauration_mineure' THEN 'Restauration(5)'
-    WHEN name = 'enchevetrement' THEN 'Ralentissement (x1D2)'
+    WHEN name = 'enchevetrement' THEN 'Bonus +1, Ralentissement (x1D2)'
     WHEN name = 'exploration' THEN 'Acuité visuelle(X) où X est le nombre d''A utilisées'
     WHEN name = 'discretion' THEN 'Imposture(+1). Le personnage n''apparaît plus sur la carte générale jusqu''à son prochain tour'
     WHEN name = 'camouflage-olympien' THEN 'Apparaît en Olympien sur la carte générale jusqu''à son prochain tour'
@@ -169,7 +169,7 @@ VALUES
 ),
 (
     'saut_attaque','ra-overhead','technique','Saut d''attaque',
-    'Saute sur la cible et l''attaque au contact. Subit les même malus de distance qu''un tir.',3, null,'melee-off',
+    'Saute sur la cible et l''attaque au contact.',3, null,'melee-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">10 PM</span>,<span style="color: #27ae60;">1 Mvt</span>',null
 ),
 (
@@ -344,8 +344,8 @@ VALUES
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>, <span style="color: #27ae60;">1 Mvt</span>',null
 ),
 (
-    'arcanes_ajustees','ra-fairy-wand','technique','Arcanes ajustées',
-    'Avantage',1, null,'spell-off',
+    'arcane_ajustee','ra-fairy-wand','technique','Arcane ajustée',
+    'Bonus +3, Avantage',1, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
 (
@@ -498,7 +498,7 @@ VALUES
     123,0,'dtechnique_jet_sable',1,113
 ),
 (
-    124,0,'spell_arcanes_ajustees',1,114
+    124,0,'spell_arcane_ajustee',1,114
 ),
 (
     125,0,'spell_dard',1,115
@@ -998,7 +998,7 @@ VALUES
 (
     'DistanceCompute','{"actorRollType":"ct", "targetRollType": "cc/agi"}',113,10,0
 ),
-/* arcanes_ajuste */
+/* arcane_ajustee */
 (
     'RequiresDistance','{"min":2}',114,0,1
 ),
@@ -1247,7 +1247,7 @@ VALUES
 (
     'applystatus','{ "aveuglement": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,123
 ),
-/* arcanes_ajustees */
+/* arcane_ajustee */
 (
     'lifeloss','{ "actorDamagesTrait": "m", "targetDamagesTrait": "m", "bonusDamagesTrait": 3}',1,124
 ),
