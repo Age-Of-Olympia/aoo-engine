@@ -12,6 +12,14 @@ use Doctrine\Common\Collections\Collection;
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
 #[ORM\DiscriminatorMap([
+    'melee' => \App\Action\MeleeAction::class,
+    'distance' => \App\Action\DistanceAction::class,
+    'steal' => \App\Action\StealAction::class,
+    'rest' => \App\Action\RestAction::class,
+    'run' => \App\Action\RunAction::class,
+    'pray' => \App\Action\PrayAction::class,
+    'search' => \App\Action\SearchAction::class,
+    'train' => \App\Action\TrainAction::class,
     'technique' => \App\Action\TechniqueAction::class,
     'buff' => \App\Action\BuffAction::class,
     'spell' => \App\Action\SpellAction::class,
