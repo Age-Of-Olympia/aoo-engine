@@ -1,11 +1,13 @@
 ALTER TABLE actions
-ADD COLUMN category VARCHAR(50) DEFAULT NULL;
-ADD COLUMN cost VARCHAR(255);
+ADD COLUMN category VARCHAR(50) DEFAULT NULL,
+ADD COLUMN cost VARCHAR(255),
 ADD COLUMN prerequisites VARCHAR(50) DEFAULT NULL;
 
 ALTER TABLE action_passives
-ADD COLUMN category VARCHAR(50) DEFAULT NULL;
-ADD COLUMN prerequisites VARCHAR(50) DEFAULT NULL;
+ADD COLUMN category VARCHAR(50) DEFAULT NULL,
+ADD COLUMN prerequisites VARCHAR(50) DEFAULT NULL,
+ADD COLUMN display_name VARCHAR(255) DEFAULT NULL, 
+ADD COLUMN text TEXT DEFAULT NULL;
 
 ALTER TABLE players_actions
 DROP COLUMN charges;
@@ -24,7 +26,7 @@ SET cost = CASE
     WHEN name = 'tir_a_la_cheville' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>'
     WHEN name = 'tir_handicapant' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>'
     WHEN name = 'jet_infuse' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">10 PM</span>'
-    WHEN name = 'epuisement_arcaniques' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>'
+    WHEN name = 'epuisement_arcanique' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>'
     WHEN name = 'arcane_precise' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>'
     WHEN name = 'arcane_violente' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>'
     WHEN name = 'aveuglement' THEN '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>'
@@ -58,7 +60,7 @@ SET category = CASE
     WHEN name = 'tir_a_la_cheville' THEN 'distance-off'
     WHEN name = 'tir_handicapant' THEN 'distance-curse'
     WHEN name = 'jet_infuse' THEN 'distance-off'
-    WHEN name = 'epuisement_arcaniques' THEN 'spell-curse'
+    WHEN name = 'epuisement_arcanique' THEN 'spell-curse'
     WHEN name = 'arcane_precise' THEN 'spell-off'
     WHEN name = 'arcane_violente' THEN 'spell-off'
     WHEN name = 'aveuglement' THEN 'spell-curse'
@@ -75,25 +77,25 @@ SET category = CASE
     WHEN name = 'camouflage-elfe' THEN 'stealth-buff'
     WHEN name = 'camouflage-geant' THEN 'stealth-buff'
     WHEN name = 'camouflage-hs' THEN 'stealth-buff'
-    ELSE cost
+    ELSE category
 END;
 
 UPDATE actions 
 SET text = CASE 
     WHEN name = 'epuisement' THEN 'Jet pur. Essoufflement(X/2) où X est la différence des jets de dé'
-    WHEN name = 'attaque_precise' THEN '+4 pour toucher. -3 Dmg'
+    WHEN name = 'attaque_precise' THEN '+4 pour toucher, -3 Dmg'
     WHEN name = 'attaque_violente' THEN '-6 pour toucher, +2 Dmg'
     WHEN name = 'croc-en-jambe' THEN 'Ralentissement(x2D2)'
     WHEN name = 'manchette' THEN 'Jet pur. Maladresse(X/2)  où X est la différence des jets de dé'
     WHEN name = 'arme_infusee' THEN '+M/3 Dmg'
     WHEN name = 'tir_epuisant' THEN 'Jet pur. Essoufflement(X/3) où X est la différence des jets de dé'
-    WHEN name = 'tir_precis' THEN '+4 pour toucher. -3 Dmg'
+    WHEN name = 'tir_precis' THEN '+4 pour toucher, -3 Dmg'
     WHEN name = 'tir_violent' THEN '-6 pour toucher, +2 Dmg'
     WHEN name = 'tir_a_la_cheville' THEN 'Nécessite une arme à munitions. Ralentissement(x1D2)'
     WHEN name = 'tir_handicapant' THEN 'Jet pur. Vulnérabilité(X/3)  où X est la différence des jets de dé'
     WHEN name = 'jet_infuse' THEN 'Nécessite une arme de jet. +M/3 Dmg'
     WHEN name = 'epuisement_arcaniques' THEN 'Jet pur. Essoufflement(X/3) où X est la différence des jets de dé'
-    WHEN name = 'arcane_precise' THEN '+4 pour toucher. -3 Dmg'
+    WHEN name = 'arcane_precise' THEN '+4 pour toucher, -3 Dmg'
     WHEN name = 'arcane_violente' THEN '-6 pour toucher, +2 Dmg'
     WHEN name = 'aveuglement' THEN 'Aveuglement(x1)'
     WHEN name = 'coup_precis' THEN 'Dextérité(x2)'
@@ -424,7 +426,7 @@ VALUES
     99,0,'bene_reflex_acc',1,89
 ),
 (
-    100,0'bene_bene',1,90
+    100,0,'bene_bene',1,90
 ),
 (
     101,0,'bene_sauvegarde',1,91
@@ -520,7 +522,7 @@ VALUES
     131,0,'mtechnique_bousculade',1,121
 );
 
-INSERT INTO action_passives (name, traits, type, carac, value, conditions, level, race)
+INSERT INTO action_passives (name, traits, type, carac, value, conditions, level, race,category,display_name,text)
 VALUES 
 (
     'griffes','["f"]','att','fixed',3.00,'{"weapon":["poing","ceste"]}', 2,"hs",
@@ -539,11 +541,11 @@ VALUES
     "melee","Duelliste","Gagne Avantage sur les attaques et techniques basées sur la CC"
 ),
 (
-    'lanceur','["ct"]','att','advantage',0.00,{"weapon":["pierre","lance","javelot_lourd","pilum","hache_jet","pierre_noire"]}, 4,"",
+    'lanceur','["ct"]','att','advantage',0.00,'{"weapon":["pierre","lance","javelot_lourd","pilum","hache_jet","pierre_noire"]}', 4,"",
     "distance","Lanceur","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme de jet"
 ),
 (
-    'tireur-elite','["ct"]','att','advantage',0.00,{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}, 4,"",
+    'tireur-elite','["ct"]','att','advantage',0.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
     "distance","Tireur d'élite","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme à munitions"
 ),
 (
@@ -571,7 +573,7 @@ VALUES
     "melee","Maître bretteur","Les Malus appliqués par les actions de contact sont augmentées de 2"
 ),
 (
-    'escarmoucheur','["ct"]','malus','fixed',2.00,{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}, 4,"",
+    'escarmoucheur','["ct"]','malus','fixed',2.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
     "distance","Escarmoucheur","Les Malus appliqués par les actions de tir avec des armes à munitions sont augmentées de 2"
 ),
 (
@@ -579,8 +581,8 @@ VALUES
     "melee","Berserker","Gagne +1 en CC en attaque tous les 10PV perdus"
 ),
 (
-    'mage_sacre','["fm"]','buff','effects',2.00,{"category":["spell-support"]}, 2,"olympien",
-    "spell","Berserker","Gagne +2 en FM pour lancer des sorts de soutien par Effet sur lui"
+    'mage_sacre','["fm"]','buff','effects',2.00,'{"category":["spell-support"]}', 2,"olympien",
+    "spell","Mage sacré","Gagne +2 en FM pour lancer des sorts de soutien par Effet sur lui"
 );
 
 
@@ -596,7 +598,7 @@ VALUES
 ),
 /* restauration_mineure */
 (
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',64,10,0
+    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',67,10,0
 ),
 /* repos */
 (
