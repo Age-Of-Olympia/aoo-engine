@@ -16,22 +16,32 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
-        $actorTraitDamages = $this->getParameters()['actorDamagesTrait'] ?? 0;
-        $targetTraitDamagesTaken = $this->getParameters()['targetDamagesTrait'] ?? 0;
-        $bonusTraitDamagesParameters = $this->getParameters()['bonusDamagesTrait'] ?? 0;
-        $isDrain = $this->getParameters()["drain"] ?? false;
-        $isSiphon = $this->getParameters()["siphon"] ?? false;
-        $bonusTraitDamages = (is_array($bonusTraitDamagesParameters) ? floor($actor->caracs->{$bonusTraitDamagesParameters[0]}/$bonusTraitDamagesParameters[1]) : $bonusTraitDamagesParameters) ?? 0;
-        $bonusTraitDefense = $this->getParameters()['bonusDefenseTrait'] ?? 0;
+        
+        // Initialisation des paramètres
+        $totalDamages = 0;
         $othersDamages = 0;
         $othersDefense = 0;
-        $distanceInfluence = $this->getParameters()['distance'] ?? false;
-        $sautInfluence = $this->getParameters()['saut'] ?? false;
-        $targetIgnore = $this->getParameters()['targetIgnore'] ?? false;
-        $actorIgnore = $this->getParameters()['actorIgnore'] ?? false;
-        $autoCrit = $this->getParameters()['autoCrit'] ?? false;
-        $outcomeSuccessMessages = array();
+        $malusBonus = 0;
         $encaisse = false;
+        $malus = random_int(1,3);
+        $outcomeSuccessMessages = array();
+        
+        // Récupération des paramètres
+        $params = $this->getParameters();
+        $actorTraitDamages = $params['actorDamagesTrait'] ?? 0;
+        $targetTraitDamagesTaken = $params['targetDamagesTrait'] ?? 0;
+        $bonusTraitDamagesParameters = $params['bonusDamagesTrait'] ?? 0;
+        $isDrain = $params["drain"] ?? false;
+        $isSiphon = $params["siphon"] ?? false;
+        $bonusTraitDamages = (is_array($bonusTraitDamagesParameters) ? floor($actor->caracs->{$bonusTraitDamagesParameters[0]}/$bonusTraitDamagesParameters[1]) : $bonusTraitDamagesParameters) ?? 0;
+        $bonusTraitDefense = $params['bonusDefenseTrait'] ?? 0;
+        $distanceInfluence = $params['distance'] ?? false;
+        $sautInfluence = $params['saut'] ?? false;
+        $targetIgnore = $params['targetIgnore'] ?? false;
+        $actorIgnore = $params['actorIgnore'] ?? false;
+        $autoCrit = $params['autoCrit'] ?? false;
+
+        // Récupération des Effets
         $actorEffetFaiblesse = $actor->getEffectValue("faiblesse");
         $actorEffetAgressivite = $actor->getEffectValue("agressivite");
         $targetEffetFragilite = $target->getEffectValue("fragilite");
@@ -46,9 +56,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             $this->updatePlayerCaracsWithIgnores($actorIgnore, $actor);
         }
             
-        $malus = random_int(1,3);
-        $malusBonus = 0;
-
+        // Loop actor
         foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
             if($actorPassive->getName() == "maitre_bretteur" && $actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
                 $malusBonus += $actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId());
@@ -61,6 +69,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
         }
 
+        // Loop target
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)) {
                 if($targetPassive->getName() === "encaisse"){
@@ -74,6 +83,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
         }
 
+        // Calcul des dégâts
         if(!empty($actorTraitDamages) && !empty($targetTraitDamagesTaken)){
             $actorDamages = (is_numeric($actorTraitDamages)) ? $actorTraitDamages : $actor->caracs->{$actorTraitDamages};
             $targetDefense = (is_numeric($targetTraitDamagesTaken)) ? $targetTraitDamagesTaken : $target->caracs->{$targetTraitDamagesTaken};
@@ -124,12 +134,15 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 $totalDamages = max(1,floor($totalDamages*0.75));
             }
             $target->putBonus(array('pv'=>-$totalDamages));
+
+            // Gestion des logs
             $bonusDamagesText = '';
             $othersDamagesText = '';
             $agresssiviteDamagesText = '';
             $faiblesseDamagesText = '';
             $fragiliteDamagesText = '';
             $armureDamagesText = '';
+            
             if ($bonusDamages > 0) {
                 $bonusText = '';
                 if (!is_numeric($bonusTraitDamages)) {

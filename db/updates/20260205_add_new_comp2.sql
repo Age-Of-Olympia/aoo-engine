@@ -374,7 +374,7 @@ VALUES
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
 (
-    'instabilite','ra-falling','buff','Instabilité',
+    'instabilite','ra-falling','spell','Instabilité',
     'Instabilité(x6)',2, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
@@ -562,7 +562,7 @@ VALUES
 ),
 (
     'reflexes_fulgurants','["agi"]','esquive_tir','',0.00,null, 4,"",
-    "distance","Réflexes fulgurants","Esquiver les Tirs se fait à 6/7 Agi et 1/7 CC"
+    "survival","Réflexes fulgurants","Esquiver les Tirs se fait à 6/7 Agi et 1/7 CC"
 ),
 (
     'inepuisable','["malus"]','malus','',1.00,null, 4,"",
