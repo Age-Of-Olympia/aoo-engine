@@ -163,7 +163,7 @@ abstract class Action implements ActionInterface
         $this->level = $level;
     }
 
-    public function getRace(): string
+    public function getRace(): ?string
     {
         return $this->race;
     }
@@ -183,7 +183,7 @@ abstract class Action implements ActionInterface
         $this->category = $category;
     }
 
-    public function getCost(): string
+    public function getCost(): ?string
     {
         return $this->cost;
     }
