@@ -140,7 +140,7 @@ class ActionPassive
         $this->race = $race;
     }
 
-    public function getCategory(): string
+    public function getCategory(): ?string
     {
         return $this->category;
     }
@@ -160,7 +160,7 @@ class ActionPassive
         $this->displayName = $displayName;
     }
 
-    public function getText(): string
+    public function getText(): ?string
     {
         return $this->text;
     }
@@ -170,7 +170,7 @@ class ActionPassive
         $this->text = $text;
     }
 
-    public function getPrerequisites(): string
+    public function getPrerequisites(): ?string
     {
         return $this->prerequisites;
     }
