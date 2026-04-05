@@ -89,7 +89,7 @@ class WarSchoolUtils
     echo Str::minify(ob_get_clean());
     }
 
-    public static function getColor(String $category): string {
+    public static function getColor(string $category): string {
 
         $parts = explode('-', $category);
         $subCategory = $parts[1] ?? '';
@@ -107,7 +107,7 @@ class WarSchoolUtils
         }
     }
 
-    public static function getRaceColor(String $race): string {
+    public static function getRaceColor(string $race): string {
 
         switch ($race) {
         case 'nain':
