@@ -97,7 +97,6 @@ class SpellView
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
-                $disabled = ($playerGold < $price) ? 'disabled' : '';
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
                 $imageSrc = file_exists($imagePath) ? $actionName : 'todo';

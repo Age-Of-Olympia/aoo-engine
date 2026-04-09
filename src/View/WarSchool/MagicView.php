@@ -98,6 +98,8 @@ class MagicView
                   </thead>';
             echo '<tbody>';
 
+            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
+
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
@@ -108,7 +110,6 @@ class MagicView
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
-                $isFull = ($nb_comp >= NUMBER_MAX_COMP);
                 $disabled = ($playerGold < $price) ? 'disabled' : '';
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
@@ -216,7 +217,9 @@ class MagicView
                             Impossible à apprendre
                         </button>';
                 } else {
-                    echo '<button class="create buy-skill-btn" data-id="' . $passiveName . '" data-type="passive" ' . $disabled . '>Acheter : ' . $price . ' Po</button>';
+                    $disabled = (($playerGold < $price) || $isFull) ? 'disabled' : '';
+                    $btnText = $isFull ? 'Max atteint' : 'Acheter : ' . $price . ' Po';
+                    echo '<button class="create buy-skill-btn" data-id="' . $passiveName . '" data-type="passive" ' . $disabled . '>' . $btnText . '</button>';
                 }
                 echo '</td>';
 

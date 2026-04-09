@@ -176,7 +176,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 $bonusDefenseText = ' + ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
             }
             if($actorEffetAgressivite > 0){
-                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agresssivité)';
+                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agressivité)';
             }
             if($actorEffetFaiblesse > 0){
                 $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (Faiblesse)';
