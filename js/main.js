@@ -32,7 +32,7 @@ function aooFetch(url,  payload = null, method = null,autoProcess = true) {
         method: method?method:payload ? 'POST' : 'GET',
         headers: {
             ...headers,
-            //todo: add token
+            csrf_token: $('#token').val(),
         },
     }
     if (payload) {

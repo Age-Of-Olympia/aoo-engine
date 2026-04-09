@@ -67,7 +67,8 @@ $(document).ready(function(){
             type: "POST",
             url: 'account.php',
             data: {
-                'option': $box.data('option')
+                'option': $box.data('option'),
+                'csrf_token': $('#token').val(),
             }, // serializes the form's elements.
             success: function(data)
             {
@@ -102,7 +103,7 @@ $(document).ready(function(){
                     $.ajax({
                         type: "POST",
                         url: 'scripts/account/change_mail.php',
-                        data: {'changeMail': mail},
+                        data: {'changeMail': mail, 'csrf_token': $('#token').val(),},
                         success: function(data) {
                             var htmlContent = $(data).filter('#data').html();
                             alert(htmlContent);

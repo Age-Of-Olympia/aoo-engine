@@ -48,6 +48,7 @@ class Ui{
 
         echo '    </head>
             <body>
+                <input type="hidden" id="token" name="csrf_token" value="'. $_SESSION['csrf_token'] .'" />
                 ';
 
         return Str::minify(ob_get_clean());

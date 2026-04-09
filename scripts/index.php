@@ -59,6 +59,7 @@ echo '
             <button style="display: none" class="submit"></button>
 
             <a href="index.php" action="submit" id="index-button-login" class="index-button">Login</a>
+            <input type="hidden" name="csrf_token" value="'. $_SESSION['csrf_token'] .'" />
         </form>
     </div>
     ';

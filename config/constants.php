@@ -114,6 +114,8 @@ define('PR_PER_COOKIE', 3);
 define('PR_PER_COOKIE_SAME_FACTION', 1);
 //active les cookie dans les missives
 define('ENABLE_NO_PR_COOKIES_IN_MISSIVES', TRUE);
+// csrf token
+define('ENABLE_CSRF_TOKEN', false); // set it to true to break the game
 
 
 // Coefficient de division en base pour affichage
