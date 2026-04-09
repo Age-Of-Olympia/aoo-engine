@@ -4768,6 +4768,71 @@ CREATE TABLE `race_actions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 --
+-- Structure de la table `routes` 
+--
+
+CREATE TABLE routes (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    coord_id INT,
+    player_id INT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+--
+-- Structure des tables autour des crafts
+--
+
+CREATE TABLE craft_recipes (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) CHARACTER SET utf8mb3 NOT NULL COLLATE `utf8mb3_uca1400_ai_ci`, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb3 COLLATE `utf8mb3_uca1400_ai_ci` ENGINE = InnoDB COMMENT = '';
+CREATE TABLE craft_recipes_ingredients (id INT AUTO_INCREMENT NOT NULL, count INT DEFAULT 1 NOT NULL, recipe_id INT NOT NULL, item_id INT NOT NULL, INDEX IDX_3A88044F59D8A214 (recipe_id), INDEX IDX_3A88044F126F525E (item_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb3 COLLATE `utf8mb3_uca1400_ai_ci` ENGINE = InnoDB COMMENT = '' ;
+ALTER TABLE craft_recipes_ingredients ADD CONSTRAINT FK_3A88044F59D8A214 FOREIGN KEY (recipe_id) REFERENCES craft_recipes (id);
+ALTER TABLE craft_recipes_ingredients ADD CONSTRAINT FK_3A88044F126F525E FOREIGN KEY (item_id) REFERENCES items (id);
+CREATE TABLE craft_recipes_results (id INT AUTO_INCREMENT NOT NULL, count INT DEFAULT 1 NOT NULL, recipe_id INT NOT NULL, item_id INT NOT NULL, INDEX IDX_7684F80159D8A214 (recipe_id), INDEX IDX_7684F801126F525E (item_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb3 COLLATE `utf8mb3_uca1400_ai_ci` ENGINE = InnoDB COMMENT = '' ;
+ALTER TABLE craft_recipes_results ADD CONSTRAINT FK_7684F801126F525E FOREIGN KEY (item_id) REFERENCES items (id);
+ALTER TABLE craft_recipes_results ADD CONSTRAINT FK_7684F80159D8A214 FOREIGN KEY (recipe_id) REFERENCES craft_recipes (id);
+CREATE TABLE race_recipes (race_id INT NOT NULL, recipe_id INT NOT NULL, INDEX IDX_BCD937C56E59D40D (race_id), INDEX IDX_BCD937C559D8A214 (recipe_id), PRIMARY KEY(race_id, recipe_id)) DEFAULT CHARACTER SET utf8;
+ALTER TABLE race_recipes ADD CONSTRAINT FK_BCD937C56E59D40D FOREIGN KEY (race_id) REFERENCES races (id) ON DELETE CASCADE;
+ALTER TABLE race_recipes ADD CONSTRAINT FK_BCD937C559D8A214 FOREIGN KEY (recipe_id) REFERENCES craft_recipes (id) ON DELETE CASCADE;
+
+--
+-- Structure de la table `forum_cookie`
+--
+
+CREATE TABLE forums_cookie (
+    post_name VARCHAR(20) NOT NULL,
+    player_id INT DEFAULT NULL,
+    PRIMARY KEY (post_name,player_id)
+);
+
+--
+-- Structure des tables `action_passives` et `players_passives`
+--
+
+CREATE TABLE action_passives (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    traits LONGTEXT,
+    type VARCHAR(255),
+    carac VARCHAR(255),
+    value DECIMAL(3,2),
+    conditions LONGTEXT,
+    level INT NOT NULL,
+    race VARCHAR(255)
+);
+
+CREATE TABLE players_passives (
+    player_id INT NOT NULL,
+    passive_id INT NOT NULL,
+    
+    PRIMARY KEY (player_id, passive_id),
+
+    CONSTRAINT fk_players_passives_passive
+        FOREIGN KEY (passive_id)
+        REFERENCES action_passives(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+--
 -- Index pour les tables déchargées
 --
 
@@ -5549,6 +5614,43 @@ ALTER TABLE `race_actions`
   ADD CONSTRAINT `FK_1AF8249F6E59D40D` FOREIGN KEY (`race_id`) REFERENCES `races` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `FK_1AF8249F9D32F035` FOREIGN KEY (`action_id`) REFERENCES `actions` (`id`) ON DELETE CASCADE;
 COMMIT;
+
+--
+-- Ajoute une nouvelle colonne pour la table `players_effects`
+--
+
+ALTER TABLE `players_effects` ADD `value` INT(11);
+
+--
+-- Update de la table `players`
+--
+
+UPDATE `players` set pr = pr*10;
+
+--
+-- Update de la table `players_forum_missives`
+--
+
+ALTER TABLE `players_forum_missives` ADD `last_post` BIGINT NOT NULL DEFAULT 0 AFTER `viewed`;
+
+--
+-- Update de la table `actions` et `actions`
+--
+
+ALTER TABLE actions 
+ADD COLUMN level INT NOT NULL DEFAULT 1,
+ADD COLUMN race VARCHAR(255);
+
+ALTER TABLE players ADD COLUMN visible VARCHAR(255);
+
+--
+-- Alter de la table `items`
+--
+
+ALTER TABLE `items` DROP FOREIGN KEY items_ibfk_1;
+ALTER TABLE `items` DROP INDEX `blessed_by_id`;
+ALTER TABLE `items` DROP `blessed_by_id`;
+ALTER TABLE `items` ADD `exotique` varchar(20) DEFAULT NULL AFTER `is_bankable`;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
