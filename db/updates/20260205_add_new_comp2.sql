@@ -558,7 +558,7 @@ VALUES
 ),
 (
     'couverture','["cc"]','esquive_tir','',0.00,null, 4,"",
-    "melee","Couverture","Esquive les Tirs à 9/10 CC et 1/10 Agi si il est équipé d'un Bouclier"
+    "survival","Couverture","Esquive les Tirs à 9/10 CC et 1/10 Agi si il est équipé d'un Bouclier"
 ),
 (
     'reflexes_fulgurants','["agi"]','esquive_tir','',0.00,null, 4,"",
@@ -569,12 +569,12 @@ VALUES
     "survival","Inépuisables","Les Malus appliqués par des actions adverses sont réduits de 1"
 ),
 (
-    'maitre_bretteur','["cc"]','malus','fixed',2.00,null, 4,"",
-    "melee","Maître bretteur","Les Malus appliqués par les actions de contact sont augmentées de 2"
+    'maitre_bretteur','["cc"]','malus','fixed',1.00,null, 4,"",
+    "melee","Maître bretteur","Les Malus appliqués par les actions de contact sont augmentées de 1"
 ),
 (
-    'escarmoucheur','["ct"]','malus','fixed',2.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
-    "distance","Escarmoucheur","Les Malus appliqués par les actions de tir avec des armes à munitions sont augmentées de 2"
+    'escarmoucheur','["ct"]','malus','fixed',1.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
+    "distance","Escarmoucheur","Les Malus appliqués par les actions de tir avec des armes à munitions sont augmentées de 1"
 ),
 (
     'berserker','["cc"]','att','lostPV',0.10,null, 2,"geant",
@@ -703,17 +703,14 @@ VALUES
 (
     'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',85,10,0
 ),
+/* pas_leger */
+(
+    'RequiresDistance','{"max":0}',86,0,1
+),
+(
+    'RequiresTraitValue','{ "a": 1, "imposture": [2,1] }',86,5,1
+),
 /* puissance_nature */
-(
-    'RequiresDistance','{"max":1}',86,0,1
-),
-(
-    'RequiresTraitValue','{ "a": 1, "pm":8 }',86,3,1
-),
-(
-    'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',86,10,0
-),
-/* aide */
 (
     'RequiresDistance','{"max":1}',87,0,1
 ),
@@ -723,7 +720,7 @@ VALUES
 (
     'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',87,10,0
 ),
-/* reflexes_accruse */
+/* aide */
 (
     'RequiresDistance','{"max":1}',88,0,1
 ),
@@ -733,7 +730,7 @@ VALUES
 (
     'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',88,10,0
 ),
-/* reflexes_accruse */
+/* reflexes_accrus */
 (
     'RequiresDistance','{"max":1}',89,0,1
 ),
@@ -813,32 +810,32 @@ VALUES
 (
     'BuffCompute','{"actorRollType":"fm", "targetRollType": "fm"}',96,10,0
 ),
-/* faiblesse */
+/* fragilite */
 (
     'RequiresDistance','{"min":2}',97,0,1
 ),
 (
-    'RequiresTraitValue','{ "a": 1, "pm":6 }',97,3,1
+    'RequiresTraitValue','{ "a": 1, "pm":10 }',97,3,1
 ),
 (
     'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',97,10,0
 ),
-/* fragilite */
+/* friabilite */
 (
     'RequiresDistance','{"min":2}',98,0,1
 ),
 (
-    'RequiresTraitValue','{ "a": 1, "pm":10 }',98,3,1
+    'RequiresTraitValue','{ "a": 1, "pm":20 }',98,3,1
 ),
 (
     'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',98,10,0
 ),
-/* friabilite */
+/* faiblesse */
 (
     'RequiresDistance','{"min":2}',99,0,1
 ),
 (
-    'RequiresTraitValue','{ "a": 1, "pm":20 }',99,3,1
+    'RequiresTraitValue','{ "a": 1, "pm":6 }',99,3,1
 ),
 (
     'SpellCompute','{"actorRollType":"fm", "targetRollType": "fm"}',99,10,0
@@ -1245,6 +1242,9 @@ VALUES
 ),
 /* jet_sable */
 (
+    'malus','{}',9,123
+),
+(
     'applystatus','{ "aveuglement": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',10,123
 ),
 /* arcane_ajustee */
@@ -1278,5 +1278,8 @@ VALUES
 /* bousculade */
 (
     'teleport','{ "coords": "opposite" }',2,131
+),
+(
+    'applystatus','{ "stabilite": true, "stackable": true, "value": 4, "player": "target", "duration": 1}',10,131
 );
 
