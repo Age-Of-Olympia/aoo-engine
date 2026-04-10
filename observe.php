@@ -334,6 +334,10 @@ if($res->num_rows){
 
         $dataType = $raceJson->name . $pnjText;
 
+        if ($target->id > 0 && !empty($target->data->isInactive)) {
+            $dataType .= ' (inactif)';
+        }
+
         $text = $target->data->text;
 
 
