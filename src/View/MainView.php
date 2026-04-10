@@ -76,7 +76,7 @@ class MainView
 
 ?>
             <script src="js/admin-tools.js?v=20260220"></script>
-            <script src="js/view.js?v=20260220"></script>
+            <script src="js/view.js?v=20260410"></script>
 <?php
         }
     }
