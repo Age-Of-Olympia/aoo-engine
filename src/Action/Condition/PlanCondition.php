@@ -11,14 +11,21 @@ class PlanCondition extends BaseCondition
     {
         $result = new ConditionResult(true, array(), array());
 
-        $params = $condition->getParameters();
-        $plan = $params["plan"]??"enfers";
+        $allowedInEnfers = ['prier'];
 
-        if($actor->coords->plan == $plan){
-            if ($plan == 'enfers') {
+        $params = $condition->getParameters();
+        $plan = $params["plan"] ?? "enfers";
+
+        $actionName = $condition->getAction()?->getName();
+
+        if ($actor->coords->plan == $plan) {
+            if ($plan === 'enfers' && in_array($actionName, $allowedInEnfers, true)) {
+                return $result;
+            }
+            if ($plan === 'enfers') {
                 $errorMessage[0] = 'Impossible d\'agir aux Enfers.';
             } else {
-                $errorMessage[0] = 'Impossible d\'agir sur ce plan : ' + $plan;
+                $errorMessage[0] = 'Impossible d\'agir sur ce plan : ' . $plan;
             }
             
             $condition->setBlocking(true);
