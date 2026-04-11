@@ -6,6 +6,7 @@ Player::refresh_list();
 @unlink(__DIR__ .'/../../../datas/public/classements/bourrins.html');
 @unlink(__DIR__ .'/../../../datas/public/classements/reputation.html');
 @unlink(__DIR__ .'/../../../datas/public/classements/fortunes.html');
+@unlink(__DIR__ .'/../../../datas/public/classements/foi.html');
 
 
 echo 'done';
