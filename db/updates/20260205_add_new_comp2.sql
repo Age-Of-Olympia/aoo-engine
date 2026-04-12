@@ -130,8 +130,10 @@ WHERE type = 'applystatus'
 AND parameters LIKE '%"furtif"%';
 
 UPDATE outcome_instructions
-SET parameters = REPLACE(parameters, '{ "repos": "effets" }', '{}')
-WHERE type = 'rest';
+SET type = 'rest', 
+    parameters = '{}'
+WHERE type = 'applystatus' 
+AND parameters = '{ "finished": true, "player": "actor" }';
 
 INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
 VALUES 
@@ -148,12 +150,6 @@ AND action_id=8;
 
 DELETE FROM action_conditions 
 WHERE parameters = '{ "repos": "effets" }';
-
-DELETE FROM outcome_instructions
-WHERE parameters = '{"carac":"malus", "player": "actor"}';
-
-DELETE FROM outcome_instructions
-WHERE parameters = '{ "finished": true, "player": "actor" }';
 
 INSERT INTO actions (name, icon, type, display_name, text, level, race, category, cost, prerequisites)
 VALUES 
@@ -344,22 +340,22 @@ VALUES
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>, <span style="color: #27ae60;">1 Mvt</span>',null
 ),
 (
-    'arcane_ajustee','ra-fairy-wand','technique','Arcane ajustée',
+    'arcane_ajustee','ra-fairy-wand','spell','Arcane ajustée',
     'Bonus +3, Avantage',1, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
 (
-    'dard','ra-fairy-wand','technique','Dard',
+    'dard','ra-fairy-wand','spell','Dard',
     'Bonus +1',1, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">3 PM</span>',null
 ),
 (
-    'drain','ra-knife-fork','technique','Drain',
+    'drain','ra-knife-fork','spell','Drain',
     'Bonus +1, Drain',2, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
 (
-    'siphon','ra-knife-fork','technique','Siphon',
+    'siphon','ra-knife-fork','spell','Siphon',
     'Bonus +1, Siphon',2, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #c0392b;">5 PV</span>, <span style="color: #27ae60;">2 Mvt</span>',null
 ),
@@ -545,7 +541,7 @@ VALUES
     "distance","Lanceur","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme de jet"
 ),
 (
-    'tireur-elite','["ct"]','att','advantage',0.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
+    'tireur_elite','["ct"]','att','advantage',0.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
     "distance","Tireur d'élite","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme à munitions"
 ),
 (
@@ -553,7 +549,7 @@ VALUES
     "survival","Anguille","Gagne Avantage sur les esquives"
 ),
 (
-    'volonte-fer','["fm"]','def','advantage',0.00,null, 4,"",
+    'volonte_fer','["fm"]','def','advantage',0.00,null, 4,"",
     "survival","Volonté de Fer","Gagne Avantage en résistant à la magie"
 ),
 (
@@ -605,7 +601,7 @@ VALUES
     'RequiresTraitValue','{ "remainingNullable": "a" }',8,2,1
 ),
 (
-    'RequiresTraitValue','{ "remainingNullable": "mvt" }',8,2,1
+    'RequiresTraitValue','{ "remainingNullable": "mvt" }',8,3,1
 ),
 /* coup_ajuste */
 (
