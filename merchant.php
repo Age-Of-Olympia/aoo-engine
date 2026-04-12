@@ -63,9 +63,6 @@ elseif(isset($_GET['bank'])){
 
     BankView::renderBank($market,$target);
 }
-elseif(isset($_GET['spells'])){
-    SpellsView::renderSpells($player,$target);
-}
 elseif(isset($_GET['inventory'])){
 
 

@@ -1558,6 +1558,72 @@ blockquote{
     color: #66d9ff;
 }
 
+/* discretion - leger */
+.ra-player{
+
+    color: grey;
+}
+
+/* imposture */
+.ra-player-teleport{
+
+    color: red;
+}
+
+/* brulure */
+.ra-fire{
+
+    color: red;
+}
+
+/* encaisse */
+.ra-muscle-fat{
+
+    color: green;
+}
+
+/* armure */
+.ra-vest{
+
+    color: green;
+}
+
+/* agressivite */
+.ra-dinosaur{
+
+    color: green;
+}
+
+/* faiblesse */
+.ra-player-pain{
+
+    color: red;
+}
+
+/* fragilite */
+.ra-broken-bottle{
+
+    color: red;
+}
+
+/* stabilite */
+.ra-boot-stomp{
+
+    color: green;
+}
+
+/* instabilite */
+.ra-falling{
+
+    color: red;
+}
+
+/* renforcement */
+.ra-lion{
+
+    color: green;
+}
+
 /* sorts de soins */
 .ra-hand-emblem, .ra-cut-palm, .ra-level-two, .ra-level-two-advanced, .ra-cycle{
 
@@ -1591,27 +1657,6 @@ blockquote{
 
     color: red;
     text-shadow: 1px 1px yellow;
-}
-
-/* sorts d'enchantement */
-.ra-heavy-shield, .ra-vest, .ra-helmet, .ra-spear-head, .ra-croc-sword, .ra-supersonic-arrow, .ra-pine-tree{
-
-    color: gold;
-    text-shadow: 1px 1px black;
-}
-
-/* sorts de corruption */
-.ra-biohazard{
-
-    color: lime;
-    text-shadow: 1px 1px pink;
-}
-
-/* sorts de tank */
-.ra-sunbeams, .ra-monster-skull, .ra-diamond, .ra-aware, .ra-player-shot{
-
-    color: red;
-    text-shadow: 1px 1px white;
 }
 
 /* forge sacrée */
@@ -1829,9 +1874,46 @@ blockquote{
         margin: 0;
         padding: 0;
     }
-    
+
     ul.compact-list li {
         padding: 5px 0;
         margin: 0;
         font-size: 14px;
     }
+
+/* Admin coordinate tool - separate container */
+#admin-coords {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    padding-top: 25px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+#admin-coords:empty {
+    display: none;
+}
+
+#admin-coords-close {
+    position: absolute;
+    top: 2px;
+    right: 5px;
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    line-height: 1;
+    color: #333;
+}
+
+#admin-coords-close:hover {
+    color: red;
+}

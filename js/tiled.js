@@ -115,6 +115,12 @@ function displayInfo(infosJson){
 
 //Delete button on "info" modal
 $(document).on("click", ".delete-btn", function () {
+  // Remember current selection
+  var $selected = $('.map.selected');
+  var selectedToolName = $selected.data('name');
+  var selectedToolSrc = $selected.attr('src');
+  var selectedParams = $selected.data('params') ? $('#' + $selected.data('type') + '-params').val() : '';
+
   $.ajax({
     type: "POST",
     url: 'tiled.php',
@@ -122,38 +128,49 @@ $(document).on("click", ".delete-btn", function () {
       'delete':1,
       'coord-id':$(this).data("coord-id"),
       'type': $(this).data("type")
-    }, 
+    },
     success: function()
     {
-      document.location='tiled.php';
+      // Reload only the map view
+      $.ajax({
+        type: "GET",
+        url: 'tiled.php',
+        data: {'view_only': 1},
+        success: function(viewHtml) {
+          $('#map-view-container').html(viewHtml);
+          // Close the modal
+          const infoModal = document.getElementById('tile-info');
+          if(infoModal) {
+            infoModal.style.display = 'none';
+          }
+
+          // Reselect tool if there was one
+          if(selectedToolName) {
+            $('.map').filter(function() {
+              return $(this).data('name') === selectedToolName;
+            }).each(function() {
+              $(this).addClass('selected').css('border', '1px solid red');
+              var $customCursor = $('.custom-cursor');
+              $customCursor.attr('src', selectedToolSrc).show();
+
+              // Rebind mousemove handler for cursor tracking
+              $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
+                $customCursor.css({
+                  left: e.pageX - 25 +'px',
+                  top: e.pageY - 25+'px'
+                });
+              });
+
+              if(selectedParams) {
+                $('#' + $(this).data('type') + '-params').val(selectedParams);
+              }
+            });
+          }
+        }
+      });
     }
   });
 });
-
-function teleport(coords){
-  
-  if(!confirm('TP?')){
-      return false;
-  }
-
-  $.ajax({
-      type: "POST",
-      url: 'tiled.php',
-      data: {
-          'coords':coords,
-          'type':'tp',
-          'src':1
-      }, // serializes the form's elements.
-      success: function(data)
-      {
-          // alert(data);
-        document.location='tiled.php';
-      }
-  });
-
-
-}
-
 
 $(document).ready(function(){
 
@@ -173,7 +190,8 @@ $(document).ready(function(){
   selectPreviousTool($customCursor);
 
 
-$('.case').on('contextmenu', function(e) {
+  // Use event delegation so it works with dynamically loaded map content
+  $(document).on('contextmenu', '.case', function(e) {
     e.preventDefault();
 
     var coords = $(this).data('coords');
@@ -182,17 +200,23 @@ $('.case').on('contextmenu', function(e) {
 
     let [x, y] = coords.split(',');
 
-    // show coords button
-    $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button><br>' +
-        '<button OnClick="copyToClipboard(this);">'+coordsFull+'</button><br>'+
+    // show coords button in separate admin container
+    $('#admin-coords').html('<button id="admin-coords-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">'+coordsFull+'</button><br>'+
         '<button onclick="teleport(\'' +coords + '\')">TP</button><br>'+
         '<button OnClick="setZoneBeginCoords('+x+','+y+');" title="Debut de zone"><span class="ra ra-overhead"/></button>' +
         '<button OnClick="setZoneEndCoords('+x+','+y+');" title="Fin de zone"><span class="ra ra-underhand"/></button></div>');
 
+    // Rebind close button
+    $('#admin-coords-close').off('click').on('click', function(e) {
+        e.stopPropagation();
+        $('#admin-coords').html('');
+    });
+
 
   });
 
-  $('.case').click(function(e){
+  // Use event delegation so it works with dynamically loaded map content
+  $(document).on('click', '.case', function(e){
 
       // Block clicks if tutorial overlay is in blocking mode
       if ($('#tutorial-overlay').hasClass('blocking')) {
@@ -231,6 +255,10 @@ $('.case').on('contextmenu', function(e) {
       }
 
 
+      // Store current selection before AJAX
+      var selectedToolName = $selected.data('name');
+      var selectedToolSrc = $selected.attr('src');
+
       $.ajax({
           type: "POST",
           url: 'tiled.php',
@@ -242,8 +270,44 @@ $('.case').on('contextmenu', function(e) {
           }, // serializes the form's elements.
           success: function(data)
           {
-            // alert(data);
-            document.location='tiled.php?selectedTool='+$selected.data('name')+'&selectedParams='+params;
+            // Reload only the map view instead of the entire page
+            $.ajax({
+              type: "GET",
+              url: 'tiled.php',
+              data: {
+                'view_only': 1,
+                'selectedTool': selectedToolName,
+                'selectedParams': params
+              },
+              success: function(viewHtml) {
+                $('#map-view-container').html(viewHtml);
+
+                // Reselect the tool after map reload
+                $('.map').filter(function() {
+                  return $(this).data('name') === selectedToolName;
+                }).each(function() {
+                  $(this).addClass('selected').css('border', '1px solid red');
+
+                  // Update cursor and rebind mousemove
+                  var $customCursor = $('.custom-cursor');
+                  $customCursor.attr('src', selectedToolSrc).show();
+
+                  // Rebind mousemove handler for cursor tracking
+                  $('body').off('mousemove.customcursor').on('mousemove.customcursor', function(e) {
+                    $customCursor.css({
+                      left: e.pageX - 25 +'px',
+                      top: e.pageY - 25+'px'
+                    });
+                  });
+
+                  // Restore params if any
+                  var $paramsField = $('#' + $(this).data('type') + '-params');
+                  if($paramsField.length && params) {
+                    $paramsField.val(params);
+                  }
+                });
+              }
+            });
           }
       });
   });
@@ -257,15 +321,21 @@ $('.case').on('contextmenu', function(e) {
 
           let params = $(this).data('params');
 
-          // if($paramsField.val() == ''){
-
+          // Only set default params if field is empty - preserve user input
+          if($paramsField.val() == ''){
               $paramsField.val(params);
-          // }
+          }
 
-          $paramsField.focus().select();
+          // Only focus on desktop to avoid unwanted scrolling on mobile
+          if (window.innerWidth > 768) {
+            $paramsField.focus().select();
+          }
         }
         else{
-          $paramsField.val('');
+          // Only clear field if it's empty - preserve user input for tools without default params
+          if($paramsField.val() == ''){
+            $paramsField.val('');
+          }
         }
 
         $('.map').removeClass('selected').css('border', '0px');

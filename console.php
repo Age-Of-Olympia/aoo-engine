@@ -116,7 +116,7 @@ if (isset($_POST['cmdLine']) && !isset($_POST['completion'])) {
             'result'=>$resultTxt
         );
         // Convertir $result en ligne CSV et l'écrire dans le fichier
-        fputcsv($fileHandle, $log);
+        fputcsv($fileHandle, $log,escape:'\\');
     }
   
 

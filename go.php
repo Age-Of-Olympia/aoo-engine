@@ -349,7 +349,10 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
     if ($player->haveEffect("boue")) {
         $footstepDuration = 32 * ONE_HOUR;
     }
-    Element::put($footstep, $player->data->coords_id, $footstepDuration);
+    if(!$player->haveEffect("leger")){
+        Element::put($footstep, $player->data->coords_id, $footstepDuration);
+    }
+    
 }
 $db->commit();
 $player->go($goCoords);

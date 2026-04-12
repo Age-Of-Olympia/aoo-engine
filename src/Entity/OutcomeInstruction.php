@@ -1,6 +1,7 @@
 <?php
 namespace App\Entity;
 
+use App\Action\Condition\ConditionObject;
 use App\Action\OutcomeInstruction\OutcomeResult;
 use App\Interface\OutcomeInstructionInterface;
 use Doctrine\ORM\Mapping as ORM;
@@ -75,5 +76,5 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
         return $this;
     }
 
-    abstract public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult;
+    abstract public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult;
 }

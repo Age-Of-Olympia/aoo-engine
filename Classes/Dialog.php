@@ -221,6 +221,7 @@ class Dialog{
         id > 0
         AND
         lastLoginTime > ?
+        AND xp > 500
         GROUP BY
         race
         ';
@@ -257,15 +258,20 @@ class Dialog{
             $raceNTblFormat[$k] = '('. $e .' âmes)';
         }
 
-        $raceNTblCopy = $raceNTbl;
+        $values = array_values($raceNTbl);
+        asort($values);
+        $values = array_values(array_unique($values));
 
-        sort($raceNTbl);
-
-        $raceTbl = array();
-        foreach($raceNTblCopy as $k=>$e){
-            if($e == $raceNTbl[0]){
+        $min1 = $values[0] ?? -1;
+        $min2 = $values[1] ?? -1;
+        foreach($raceNTbl as $k=>$e){
+            if($e == $min1){
                 $raceTbl[] = $k;
-                $raceNTblFormat[$k] .= " <font color='gold'>+20Po en bonus!</font>";
+                $raceNTblFormat[$k] .= ' <span style="color: gold;">+200Po en bonus !</span>';
+            }
+            else if($e == $min2 && $min2 > $min1){
+                $raceTbl[] = $k;
+                $raceNTblFormat[$k] .= ' <span style="color: gold;">+100Po en bonus !</span>';
             }
         }
 

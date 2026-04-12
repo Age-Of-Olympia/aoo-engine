@@ -3,6 +3,7 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 use Classes\Str;
@@ -10,7 +11,7 @@ use Classes\Str;
 #[ORM\Entity]
 class ApplyStatusOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }
         // e.g. { "adrenaline": true, "player": "actor" , "duration": 86400 }
@@ -29,7 +30,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
         if(is_array($valueParam)){
             switch ($valueParam[0]) {
                 case 'rollDivisor':
-                    $value = max(0,floor((array_sum($rollsArray[0]) - array_sum($rollsArray[1]))/ $valueParam[1]));
+                    $value = max(0,floor(($conditionObject->getActorRoll() - $conditionObject->getTargetRoll())/ $valueParam[1]));
                     break;
                 case 'remaining':
                     $value = $actor->getRemaining($valueParam[1]);

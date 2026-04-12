@@ -6,12 +6,25 @@ use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Classes\Player;
 
 #[ORM\Entity]
 #[ORM\Table(name: "actions")]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'string')]
+#[ORM\DiscriminatorMap([
+    'melee' => \App\Action\MeleeAction::class,
+    'distance' => \App\Action\DistanceAction::class,
+    'steal' => \App\Action\StealAction::class,
+    'rest' => \App\Action\RestAction::class,
+    'run' => \App\Action\RunAction::class,
+    'pray' => \App\Action\PrayAction::class,
+    'search' => \App\Action\SearchAction::class,
+    'train' => \App\Action\TrainAction::class,
+    'technique' => \App\Action\TechniqueAction::class,
+    'buff' => \App\Action\BuffAction::class,
+    'spell' => \App\Action\SpellAction::class,
+    'heal' => \App\Action\HealAction::class,
+])]
 abstract class Action implements ActionInterface
 {
     #[ORM\Id]
@@ -36,6 +49,15 @@ abstract class Action implements ActionInterface
 
     #[ORM\Column(type: "string", length: 255, nullable: true)]
     protected ?string $race = null;
+
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $category = null;
+
+    #[ORM\Column(type: "string", length: 255, nullable: true)]
+    protected ?string $cost = null;
+
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
+    protected ?string $prerequisites = null;
 
     #[ORM\OneToMany(
         mappedBy: "action",
@@ -147,6 +169,46 @@ abstract class Action implements ActionInterface
     public function setLevel(int $level): void
     {
         $this->level = $level;
+    }
+
+    public function getRace(): ?string
+    {
+        return $this->race;
+    }
+
+    public function setRace(string $race): void
+    {
+        $this->race = $race;
+    }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(string $category): void
+    {
+        $this->category = $category;
+    }
+
+    public function getCost(): ?string
+    {
+        return $this->cost;
+    }
+
+    public function setCost(string $cost): void
+    {
+        $this->cost = $cost;
+    }
+
+    public function getPrerequisites(): ?string
+    {
+        return $this->prerequisites;
+    }
+
+    public function setPrerequisites(string $prerequisites): void
+    {
+        $this->prerequisites = $prerequisites;
     }
 
     /**

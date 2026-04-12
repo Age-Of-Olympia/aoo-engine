@@ -3,6 +3,7 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
@@ -11,7 +12,7 @@ use Classes\Str;
 #[ORM\Entity]
 class DropWeaponOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $outcomeSuccessMessages = array();
         $outcomeFailureMessages = array();
         $params =$this->getParameters();

@@ -28,7 +28,8 @@ function admin_layout($title, $content) {
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
         $navLink('world_map.php', 'Manage World Map', '/admin/world_map.php') . "\n                " .
         $navLink('local_maps.php', 'Manage Local Maps', '/admin/local_maps.php') . "\n                " .
-        $navLink('screenshots.php', 'Manage Screenshots', '/admin/screenshots.php');
+        $navLink('screenshots.php', 'Manage Screenshots', '/admin/screenshots.php') . "\n                " .
+        $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 
     return <<<HTML
 <!DOCTYPE html>

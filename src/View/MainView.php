@@ -69,10 +69,15 @@ class MainView
             }
 
             echo '<div id="ajax-data"></div>';
+            echo '<div id="admin-coords"></div>';
 
+            // Pass admin status to JavaScript for coordinate tool
+            $isAdmin = $player->have_option('isAdmin') ? 'true' : 'false';
+            echo '<script>window.isAdmin = ' . $isAdmin . ';</script>';
 
 ?>
-            <script src="js/view.js?v=20251126"></script>
+            <script src="js/admin-tools.js?v=20260413"></script>
+            <script src="js/view.js?v=20260413"></script>
 <?php
         }
     }

@@ -12,7 +12,7 @@ class RestAction extends Action
 {
     public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
     {
-        $actorXp = 1;
+        $actorXp = 0;
         $targetXp = 0;
         $xpResultsArray["actor"] = $actorXp;
         $xpResultsArray["target"] = $targetXp;

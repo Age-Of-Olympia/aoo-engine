@@ -182,15 +182,28 @@ define('EFFECTS_RA_FONT', array(
 
     'vol'=>'ra-feather-wing',
 
-    //nouveaux effets
-    'maladresse' => 'ra-cut-palm',
-    'dexterite' => 'ra-plain-dagger',
-    'vulnerabilite' => 'ra-broken-shield',
-    'protection' => 'ra-shield',
-    'aveuglement' => 'ra-bleeding-eye',
+    //nouveaux effets buffs
     'acuite_visuelle' => 'ra-eyeball',
+    'agressivite' => 'ra-dinosaur',
+    'armure' => 'ra-vest',
+    'dexterite' => 'ra-plain-dagger',
+    'discretion' => 'ra-player',
+    'encaisse' => 'ra-muscle-fat',
+    'leger' => 'ra-player',
+    'protection' => 'ra-shield',
+    'stabilite' => 'ra-boot-stomp',
+    'renforcement' => 'ra-lion',
+
+    //nouveaux effets buffs
+    'aveuglement' => 'ra-bleeding-eye',
+    'brulure' => 'ra-fire',
+    'faiblesse' => 'ra-player-pain',
+    'fragilite' => 'ra-broken-bottle',
+    'imposture' => 'ra-player-teleport',
+    'maladresse' => 'ra-cut-palm',
     'ralentissement' => 'ra-snail',
-    'furtif' => 'ra-player',
+    'vulnerabilite' => 'ra-broken-shield',
+    'instabilite' => 'ra-falling',
 
     //non utilisé mais necceesaire
     'trace_pas'=> 'ra-footprint',
@@ -513,7 +526,9 @@ define('LOOT_CHANCE', array(
     'rubis'=>100,
     'plume_doree'=>100,
 	'plume_irisee'=>100,
-	'plume_ebenne'=>100
+	'plume_ebenne'=>100,
+    'morceau_de_carte'=>100,
+    'carte_recomposee'=>100
 ));
 
 /*
@@ -550,6 +565,8 @@ define('BANK_PCT', 1);          // % gain par jour en banque sans adré
 
 define('MIN_GOLD_STOLEN', 5);
 define('MAX_XP_FOR_STEALING', 3);
+
+define('NUMBER_MAX_COMP', 15);
 
 /*
  * errors

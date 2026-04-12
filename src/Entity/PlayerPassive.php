@@ -8,22 +8,23 @@ use Doctrine\ORM\Mapping as ORM;
 class PlayerPassive
 {
     #[ORM\Id]
-    #[ORM\Column(type: "integer")]
-    private int $player_id;
+    #[ORM\Column(type: "integer", name: "player_id")]
+    private int $playerId;
 
     #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: ActionPassive::class)]
-    #[ORM\JoinColumn(name: "passive_id", referencedColumnName: "id")]
+    #[ORM\JoinColumn(name: "passive_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
     private ActionPassive $passive;
 
     public function getPlayerId(): int
     {
-        return $this->player_id;
+        return $this->playerId;
     }
 
-    public function setPlayerId(int $player_id)
+    public function setPlayerId(int $playerId): self
     {
-        $this->player_id = $player_id;
+        $this->playerId = $playerId;
+        return $this;
     }
 
     public function getPassive(): ActionPassive
@@ -31,8 +32,9 @@ class PlayerPassive
         return $this->passive;
     }
 
-    public function setPassive(ActionPassive $passive)
+    public function setPassive(ActionPassive $passive): self
     {
         $this->passive = $passive;
+        return $this;
     }
 }

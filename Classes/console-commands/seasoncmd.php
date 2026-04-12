@@ -105,9 +105,9 @@ function refund_deprecated_objects(bool $bank)
         $this->db->beginTransaction();
         try {
 
-            $reciep = $item->get_recipe(true);
-            if (sizeof($reciep) > 0) { // skip intentionelle des objets sans recette, ceux ci doient etre traités par convertions
-                foreach ($reciep as $k => $e) {
+            $recipe = $item->get_recipe(true);
+            if (sizeof($recipe) > 0) { // skip intentionelle des objets sans recette, ceux ci doient etre traités par convertions
+                foreach ($recipe as $k => $e) {
                     $craftedWithItem = Item::get_item_by_name($k);
                     $craftedWithItem->add_item($player, $e * $row['n']);
                     $ingredientsCount += $e * $row['n'];

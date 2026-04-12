@@ -20,6 +20,12 @@
         <testsuite name="Logs">
             <directory suffix="Test.php">./tests/Logs</directory>
         </testsuite>
+         <testsuite name="Various">
+            <directory suffix="Test.php">./tests/Various</directory>
+        </testsuite>
+         <testsuite name="Tools">
+            <directory suffix="Test.php">./tests/Tools</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
