@@ -3,6 +3,7 @@
 use App\View\Classement\BourrinsView;
 use App\View\Classement\FortunesView;
 use App\View\Classement\ReputationsView;
+use App\View\Classement\FoiView;
 use Classes\Player;
 use Classes\Ui;
 use Classes\Str;
@@ -89,7 +90,7 @@ foreach($playerList as $k=>$e){
 $ui = new Ui('Classements des joueurs');
 
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="classements.php"><button>Général</button></a><a href="classements.php?bourrins"><button>Bourrins</button></a><a href="classements.php?fortunes"><button>Fortunes</button></a><a href="classements.php?reputation"><button>Réputation</button></a></div>';
+echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="classements.php"><button>Général</button></a><a href="classements.php?bourrins"><button>Bourrins</button></a><a href="classements.php?fortunes"><button>Fortunes</button></a><a href="classements.php?reputation"><button>Réputation</button></a><a href="classements.php?foi"><button>Foi</button></a></div>';
 
 
 if(isset($_GET['bourrins'])){
@@ -104,6 +105,11 @@ if(isset($_GET['fortunes'])){
 
 if(isset($_GET['reputation'])){
     ReputationsView::renderReputations($playerList);
+    exit();
+}
+
+if(isset($_GET['foi'])){
+    FoiView::renderFoi();
     exit();
 }
 

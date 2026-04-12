@@ -3,6 +3,7 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\ConditionObject;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 use Classes\View;
@@ -10,7 +11,7 @@ use Classes\View;
 #[ORM\Entity]
 class TeleportOutcomeInstruction extends OutcomeInstruction
 {
-    public function execute(Player $actor, Player $target, array $rollsArray): OutcomeResult {
+    public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "coords": "target" }
 
@@ -28,6 +29,23 @@ class TeleportOutcomeInstruction extends OutcomeInstruction
                 $coordsId = View::get_free_coords_id_arround($goCoords);
                 $target->go($coordsId);
                 $outcomeSuccessMessages[0] = $target->data->name . ' est projeté !';
+                break;
+            case 'opposite':
+                $goCoords = (object) array(
+                            'x' => $target->coords->x+($target->coords->x-$actor->coords->x),
+                            'y' => $target->coords->y+($target->coords->y-$actor->coords->y),
+                            'z' => $target->coords->z+($target->coords->z-$actor->coords->z),
+                            'plan' => $target->coords->plan);
+                if(View::is_free($goCoords)){
+                    if($actor->getPush($target)){
+                        $target->go($goCoords);
+                        $outcomeSuccessMessages[0] = $target->data->name . ' est repoussé !';
+                    }
+                    else{
+                        $outcomeSuccessMessages[0] = $target->data->name . ' reste stable.';
+                    }
+                }
+                
                 break;
             default:
                 $explodedCoord = explode(',', $coords);

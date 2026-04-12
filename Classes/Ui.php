@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20250516"></script>
                 <script src="js/console.js?v=20250516"></script>
-                <link href="css/main.min.css?v=20251128" rel="stylesheet">
+                <link href="css/main.min.css?v=20260413" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){
@@ -277,6 +277,7 @@ class Ui{
                 data-emplacement="'. $emp .'"
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
+                data-bankable="'. $item->row->is_bankable .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
@@ -325,7 +326,7 @@ class Ui{
         window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20250625"></script>
+        <script src="js/inventUi.js?v=20260220"></script>
         <?php
 
         return Str::minify(ob_get_clean());

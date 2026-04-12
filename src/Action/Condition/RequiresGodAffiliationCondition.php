@@ -3,12 +3,13 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
+use App\Action\Condition\ConditionObject;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
 class RequiresGodAffiliationCondition extends BaseCondition
 {
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
 
         $result = new ConditionResult(true, array(), array());

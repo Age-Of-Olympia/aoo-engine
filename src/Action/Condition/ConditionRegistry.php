@@ -31,6 +31,7 @@ class ConditionRegistry
             'DistanceCompute' => new DistanceComputeCondition(), 
             'DistancePureCompute' => new DistancePureComputeCondition(),
             'SpellCompute' => new SpellComputeCondition(),
+            'BuffCompute' => new BuffComputeCondition(),
             'SpellPureCompute' => new SpellPureComputeCondition(),
             'TechniqueCompute' => new TechniqueComputeCondition(),
             'TechniquePureCompute' => new TechniquePureComputeCondition(),

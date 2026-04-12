@@ -1,15 +1,15 @@
 <?php
 namespace App\Action\Condition;
 
-use Classes\Player;
 use Classes\View;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
+use App\Action\Condition\ConditionObject;
 
 class RequiresDistanceCondition extends BaseCondition
 {
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
         if (!$target) {
@@ -17,7 +17,7 @@ class RequiresDistanceCondition extends BaseCondition
             return new ConditionResult(false, array(), $errorMessage);
         }
 
-        $preConditionResult = parent::check($actor, $target, $condition);
+        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
         if (!$preConditionResult->isSuccess()) {
             $condition->setBlocking(true);
             return $preConditionResult;

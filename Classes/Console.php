@@ -59,10 +59,15 @@ class Console
         } else {
             if (count($commandLineSplit) >= $command->getRequiredArgumentsCount()) {
                 try {
-                    $command->result->Log('command found ' . $command->getName() . '. Executing...');
+                    if(Command::getEnvVariable("verbose", '0')=='1')
+                    {
+                        $command->result->Log('command found ' . $command->getName() . '. Executing...');
+                    }
                     $resultstr = $command->executeIfAuthorized($commandLineSplit);
-                    if (!empty($resultstr)) {
-                        if (startsWithIgnoreCase($resultstr, "error")) {
+                    if (!empty($resultstr)) 
+                    {
+                        if (startsWithIgnoreCase($resultstr, "error")) 
+                        {
                             $command->result->Error($resultstr);
                         } else {
                             $command->result->Log($resultstr);

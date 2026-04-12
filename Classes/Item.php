@@ -243,6 +243,10 @@ class Item{
     }
 
 
+    public function is_bankable(){
+        return $this->row->is_bankable;
+    }
+
     public function get_version($options){
 
 
@@ -429,7 +433,7 @@ class Item{
         // or
         if(!isset($return[1]) && !$equiped){
 
-            $return[1] = (object) array('id'=>1,'name'=>'or','price'=>1,'n'=>0, 'equiped'=>'');
+            $return[1] = (object) array('id'=>1,'name'=>'or','price'=>1,'n'=>0, 'equiped'=>'', 'is_bankable'=>1);
 
             foreach(ITEMS_OPT as $k=>$e){
 

@@ -1,5 +1,5 @@
 <?php
-
+define('DEV_MODE', true);
 // DB CONSTANT
 // We have redundant data because we are switching to Doctrine
 // Note: utf8mb4 charset is enforced in EntityManagerFactory::getEntityManager()

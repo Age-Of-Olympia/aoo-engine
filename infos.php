@@ -132,8 +132,9 @@ echo '
             $raceJson = json()->decode('races', $target->data->race);
 
             $pnjText = $target->id<0 ? ' - PNJ' : '';
+            $inactifText = ($target->id > 0 && !empty($target->data->isInactive)) ? ' (inactif)' : '';
 
-            echo '<div>'. $raceJson->name . $pnjText .' - <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput(floor($target->data->pr/COEFFICIENT_PR)) .'</a> Rang '. $target->data->rank .'</div>';
+            echo '<div>'. $raceJson->name . $pnjText . $inactifText .' - <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput(floor($target->data->pr/COEFFICIENT_PR)) .'</a> Rang '. $target->data->rank .'</div>';
 
 
             $factionJson = json()->decode('factions', $target->data->faction);

@@ -5,8 +5,7 @@ namespace App\View\Inventory;
 use App\Tutorial\TutorialHelper;
 use Classes\Player;
 use Classes\Item;
-use Classes\Craft;
-use Classes\Json;
+use App\Service\RecipeService;
 use Classes\Ui;
 use Classes\Str;
 
@@ -19,39 +18,24 @@ class CraftView
         $activePlayerId = TutorialHelper::getActivePlayerId();
         $player = new Player($activePlayerId);
         $player->get_data();
-
+        $recipeService = new RecipeService();
         ob_start();
 
-        // recette json
-        $json = new Json();
-        $recipesJson = $json->decode('', 'crafts');
 
-        // common recipes
-        $recipeList = $recipesJson->common;
-
-        // add race recipes
-        $playerRace = $player->data->race;
-
-        // merge with racial recipes
-        if (!empty($recipesJson->$playerRace)) {
-
-            $recipeList = array_merge($recipeList, $recipesJson->$playerRace);
-        }
-
-
-        $ingredientList = array();
-
-        foreach ($recipeList as $e) {
-
-            foreach ($e->recette as $i) {
-
-                $ingredientList[$i->id] = true;
-            }
-        }
 
 
         if (!isset($_GET['itemId'])) {
 
+            $recipeList = $recipeService->getRecipes($player);
+            $ingredientList = array();
+
+            foreach ($recipeList as $e) {
+
+                foreach ($e->GetRecipeIngredients() as $i) {
+
+                    $ingredientList[$i->GetItem()->GetId()] = true;
+                }
+            }
 
             $itemList = Item::get_item_list($player->id);
 
@@ -104,14 +88,14 @@ class CraftView
         function get_json_item($item)
         {
 
-            $return = (object) array('data');
-            if (!$return->data = json()->decode('items', $item->name)) {
+            $return = (object) array('data', 'id');
+            if (!$return->data = json()->decode('items', $item->getName())) {
 
-                echo 'error ' . $item->name;
+                echo 'error ' . $item->getName();
             }
 
-            $return->data->mini = 'img/items/' . $item->name . '_mini.webp';
-
+            $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
+            $return->id = $item->getId();
             return $return;
         }
 
@@ -136,32 +120,28 @@ class CraftView
         if (!isset($item->data->occurence) || $item->data->occurence == 'co' || $item->data->race == $player->data->race) {
 
 
-            // craft
-            $craft = new Craft($item->data->name);
+            $recipeList = $recipeService->getRecipes($player, fromItemId: null, forItemId: $item->id);
+
 
             // recette exists
-            if (count($craft->itemRecipe)) {
+            if (count($recipeList)) {
                 echo '
         <div id="item-recipe">
             ';
 
-                foreach ($craft->itemRecipe as $ingredientItem => $n) {
+                foreach ($recipeList[0]->getRecipeIngredients() as $ingredientItem) {
 
-                    // $ingredient = new Item($craft-> $ingredientItem->id);
-                    //
-                    // $ingredient->get_data();
-
-                    $ingredient = get_json_item((object) array('name' => $ingredientItem));
+                    $ingredient = get_json_item($ingredientItem->GetItem());
 
                     echo '
-                <img src="' . $ingredient->data->mini . '" /> x' . $n . '
+                <img src="' . $ingredient->data->mini . '" /> x' . $ingredientItem->getCount() . '
                 ';
                 }
 
                 echo '<br />';
 
-                if ($craft->cost)
-                    echo 'Coût des matériaux ~' . $craft->cost . 'Po<br />';
+
+                echo 'Coût des matériaux ~' . $recipeList[0]->get_cost() . 'Po<br />';
 
                 echo 'Revendu ~' . floor($item->data->price * 2 / 3) . 'Po<br />';
                 echo 'Acheté ~' . $item->data->price . 'Po';
@@ -183,13 +163,10 @@ class CraftView
         $itemList = Item::get_item_list($player->id);
 
         foreach ($itemList as $playerItem) {
-            $playerItemN[$playerItem->name] = $playerItem->n;
+            $playerItemN[$playerItem->item_id] = $playerItem->n;
         }
 
-
-        // list of craft
-        $craftList = array();
-
+        $recipeList = $recipeService->getRecipes($player, fromItemId: $item->id);
 
         echo '
 <table border="1" class="marbre">
@@ -202,48 +179,24 @@ class CraftView
     ';
 
 
-        // at least one art
-        $atLeastOne = false;
+
 
         foreach ($recipeList as $recipe) {
 
-            // artShow
-            $artShow = false;
-
             // artComplete
-            $artComplete = true;
+            $hasAllIngredients = true;
 
-
-
-            $recipeIngredients = $recipe->recette;
-
-            // search for item in recipe
-            foreach ($recipeIngredients as $ee) {
-                if ($ee->id != strtolower($item->data->id)) {
-                    continue;
-                }
-
-                $artShow = true;
-                $atLeastOne = true;
-            }
-
-
-            // art have NOT item in recipe
-            if (!$artShow) {
-                continue;
-            }
-
-            $artItem = get_json_item($recipe);
-
-            $artName = $recipe->name;
-
-            $artId = $recipe->id;
+            $recipeName = $recipe->GetName();
+            $recipeId = $recipe->getId();
+            $artItem = get_json_item($recipe->getRecipeResults()[0]->GetItem());
 
             // print
             echo '
         <tr>
             <td width="50">
-                <a href="item.php?itemId=' . $artId . '"><img src="' . $artItem->data->mini . '" /></a>
+
+              <a href="item.php?itemId=' . $artItem->id . '"><img src="' . $artItem->data->mini . '" /></a>
+
             </td>
             <td>
                 ' . $artItem->data->name . '<br />
@@ -258,115 +211,38 @@ class CraftView
                 ';
 
             // recipe
-            foreach ($recipeIngredients as $ingredient) {
+            foreach ($recipe->GetRecipeIngredients() as $ingredient) {
 
-
-                $ingredientItem = get_json_item($ingredient);
-
+                $ingredientItemEntity = $ingredient->GetItem();
+                $ingredientItem = get_json_item($ingredientItemEntity);
+                $ingredentItemId = $ingredientItemEntity->getId();
 
                 // color
-                if (!isset($playerItemN[$ingredient->name])) {
+                if (!isset($playerItemN[$ingredentItemId])) {
                     $color = 'red';
-                    $artComplete = false;
-                } elseif ($playerItemN[$ingredient->name] >= $ingredient->n) {
+                    $hasAllIngredients = false;
+                } elseif ($playerItemN[$ingredentItemId] >= $ingredient->getCount()) {
                     $color = 'green';
                 } else {
                     $color = 'orange';
-                    $artComplete = false;
+                    $hasAllIngredients = false;
                 }
 
                 echo '
-                    <a href="item.php?itemId=' . $ingredient->id . '"><img src="' . $ingredientItem->data->mini . '" /></a>
-                    <font color="' . $color . '">x' . $ingredient->n . '</font>
+                    <a href="item.php?itemId=' . $ingredientItem->id . '"><img src="' . $ingredientItem->data->mini . '" /></a>
+                    <font color="' . $color . '">x' . $ingredient->getCount() . '</font>
                     ';
-
-                // crafting
-                if (!empty($_POST['create'])) {
-
-
-                    ob_start();
-
-                    // this item
-                    if ($_POST['create'] == $artId) {
-
-                        // create art if complete
-                        if ($artComplete) {
-
-
-                            echo 1;
-
-
-                            // artJson
-                            $artJson = $json->decode('items', $artName);
-
-
-                            // crafted by n
-                            $craftedByN = (!empty($artJson->craftedByN)) ? $artJson->craftedByN : 1;
-
-                            // craft
-                            foreach ($recipeIngredients as $ee) {
-
-
-                                // needed item
-                                $neededJson = $json->decode('items', $ee->name);
-
-
-                                // add when crafted item
-                                if (!empty($neededJson->whenCrafted)) {
-
-                                    foreach ($neededJson->whenCrafted as $eee) {
-
-                                        // Inventory::add_item($player, $eee->name, $eee->n);
-
-                                        $whenCraftItem = Item::get_item_by_name($eee->name);
-                                        $whenCraftItem->add_item($player, $eee->n);
-                                    }
-                                }
-
-
-                                // remove item recipe
-                                // Inventory::add_item($player, $ee->name, -$ee->n);
-
-                                $itemRecipe = new Item($ee->id);
-                                $itemRecipe->add_item($player, -$ee->n);
-                            }
-
-                            // add craft item
-                            // Inventory::add_item($player, $artName, $craftedByN);
-
-                            $itemCrafted = Item::get_item_by_name($artName);
-                            $itemCrafted->add_item($player, $craftedByN);
-
-
-                            // CRAFT COST (A)
-
-
-                            // log
-
-                            echo ob_get_clean();
-
-                            exit();
-                        }
-
-                        break;
-                    }
-
-
-                    echo ob_get_clean();
-
-                    continue;
-                }
             }
 
             echo '
             </td>
             ';
 
-            if ($artComplete) {
+            if ($hasAllIngredients) {
 
                 echo '
                 <td valign="top">
-                    <input type="button" value="Créer" itemId="' . $artId . '" data-item-name="' . $artName . '" style="width: 100%; height: 50px;" />
+                    <input type="button" value="Créer" itemId="' . $recipeId . '" data-item-name="' . $recipeName . '" style="width: 100%; height: 50px;" />
                 </td>
                 ';
             } else {
@@ -382,7 +258,7 @@ class CraftView
 
 
         // no recipies
-        if (!$atLeastOne) {
+        if (!count($recipeList)) {
             echo '<tr><td colspan="4" align="center">Vous ne connaissez aucun artisanat en lien avec cet objet.</td></tr>';
         }
 
@@ -408,19 +284,11 @@ class CraftView
                     window.notifyTutorial('craft', { item_id: artId }, true);
                 }
 
-                $.ajax({
-                    type: "POST",
-                    url: 'inventory.php?craft&itemId=<?php echo $_GET['itemId'] ?>',
-                    data: {
-                        'create': artId
-                    },
-                    success: function(data) {
-
-                        alert('Artisanat effectué.');
-                        // alert(data);
-                        location.reload();
-                    }
-                });
+                aooFetch('api/player/craft_item.php', {
+                        'craft_id': artId
+                    }, null)
+                    .then(autoModal)
+                    .catch(autoError());
             });
         </script>
 <?php

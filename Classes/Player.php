@@ -4,6 +4,7 @@ namespace Classes;
 use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Service\ActionPassiveService;
 use App\Service\PlayerService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
@@ -31,6 +32,7 @@ class Player implements ActorInterface {
     public $playerPassiveService;
     public $playerEffectService;
     public $playerBonusService;
+    public $actionPassiveService;
     
     function __construct($playerId){
 
@@ -40,10 +42,10 @@ class Player implements ActorInterface {
         $this->upgrades = (object) array();
         $this->emplacements = (object) array();
         $this->playerService = new PlayerService($playerId);
-        $this->playerReductionPassiveService = new PlayerReductionPassiveService();
         $this->playerPassiveService = new PlayerPassiveService();
         $this->playerEffectService = new PlayerEffectService();
         $this->playerBonusService = new PlayerBonusService();
+        $this->actionPassiveService = new ActionPassiveService();
 
         $this->playerPassiveService->setEsquivePlayer($this);
     }
@@ -477,7 +479,7 @@ class Player implements ActorInterface {
     }
 
 
-    public function add($table, $name, $charges=false){
+    public function add($table, $name){
 
 
         $db = new Db();
@@ -486,13 +488,6 @@ class Player implements ActorInterface {
             'player_id'=>$this->id,
             'name'=>$name
         );
-
-
-        if(!empty($charges)){
-
-            $values['charges'] = $charges;
-        }
-
 
         if($table == 'actions'){
 
@@ -559,6 +554,25 @@ class Player implements ActorInterface {
         return $return;
     }
 
+    public function get_detailed($table){
+
+
+        $return = array();
+
+        $db = new Db();
+
+        $res = $db->get_single_player_id('players_'. $table, $this->id);
+
+        while($row = $res->fetch_object()){
+
+            $return[] = $row;
+        }
+
+        sort($return);
+
+        return $return;
+    }
+
 
     // options shortcuts
     public function add_option($name){ $this->add('options', $name); }
@@ -567,10 +581,14 @@ class Player implements ActorInterface {
     public function get_options(){ return $this->get('options'); }
 
     // actions shortcuts
-    public function add_action($name, $charges=false){ $this->add('actions', $name, $charges); }
+    public function add_action($name){ $this->add('actions', $name); }
     public function have_action($name){ return $this->have('actions', $name); }
     public function end_action($name){ $this->end('actions', $name); }
     public function get_actions(){ return $this->get('actions'); }
+
+    // passive actions shortcuts
+    public function add_action_passive($name){ $this->playerPassiveService->addPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
+    public function have_action_passive($name){ return $this->playerPassiveService->hasPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
 
     // spells shortcuts
     public function add_spell($name){ $this->add_action($name); }
@@ -595,6 +613,37 @@ class Player implements ActorInterface {
         return $return;
     }
 
+    public function get_spells_count() {
+        $sql = 'SELECT COUNT(*) as total FROM players_actions WHERE player_id = ? AND type = "sort"';
+        
+        $db = new Db();
+        $res = $db->exe($sql, $this->id);
+        
+        if ($row = $res->fetch_object()) {
+            return (int) $row->total;
+        }
+        
+        return 0;
+    }
+
+    public function get_passives(){
+
+
+        $return = array();
+
+        $sql = 'SELECT name FROM players_passives WHERE player_id = ?';
+
+        $db = new Db();
+
+        $res = $db->exe($sql, $this->id);
+
+        while($row = $res->fetch_object()){
+
+            $return[] = $row->passive_id;
+        }
+
+        return $return;
+    }
 
     // effects
     public function haveEffect(string $name): int{
@@ -838,6 +887,16 @@ class Player implements ActorInterface {
        // delete empty coords will be cron managed for easier debugging
     }
 
+    public static function CapPI($playerXp,$xpGained,$xpCap): int{
+
+        // Ajout d'un cap temporaire des PIs pour la fin de la saison
+        if($xpGained>0){
+            return min(max(0,($xpCap - $playerXp)),$xpGained);
+        }
+        else{
+            return max(min(0,$playerXp-$xpCap+$xpGained) ,$xpGained);
+        }
+    }
 
     public function put_xp($xp){
 
@@ -847,9 +906,8 @@ class Player implements ActorInterface {
             $this->get_data();
         }
 
-        // Ajout d'un cap temporaire des PIs pour la fin de la saison 1
-        $xpCap = SEASON_XP;
-        $pi = min(max(0,($xpCap - $this->data->xp)),$xp);
+        $pi = Player::CapPI(playerXp:$this->data->xp,xpGained:$xp,xpCap:SEASON_XP);
+
         $this->data->xp += $xp;
         $this->data->pi += $pi;
 
@@ -1782,6 +1840,11 @@ class Player implements ActorInterface {
             }
         }
     }
+    public function getRace(): string
+    {
+        $this->get_data(false);
+        return $this->data->race;
+    }
 
     public function get_max_spells() : int{
         if(!isset($this->data)){
@@ -1824,6 +1887,7 @@ class Player implements ActorInterface {
 
         return null;
     }
+
 
 
     public function death(){
@@ -2276,6 +2340,26 @@ class Player implements ActorInterface {
 
         return new Player($row->id);
     }
+    public static function get_player_by_id($id){
+
+
+        $db = new Db();
+
+        $sql = '
+        SELECT id FROM players WHERE id = ?
+        ';
+
+        $res = $db->exe($sql, $id);
+
+        if(!$res->num_rows){
+
+            return false;
+        }
+
+        $row = $res->fetch_object();
+
+        return new Player($row->id);
+    }
 
     public function get_data(bool $forceRefresh=true){
 
@@ -2398,10 +2482,20 @@ class Player implements ActorInterface {
     }
 
     public function getPassives(int $playerId): array{
-        return $this->playerReductionPassiveService->getPassivesByPlayerId($playerId);
+        return $this->playerPassiveService->getPassivesByPlayerId($playerId);
     }
 
     public function getEquipedItems(): array {
         return Item::get_equiped_list($this);
+    }
+
+    public function getPush(Player $target): bool {
+        $att = $this->caracs->f;
+        $def = max($target->caracs->e + 4,$target->caracs->agi);
+        $pv = floor($target->getRemaining('pv')/10);
+        $renforcement = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($this->getId(),"renforcement");
+        $stabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"stabilite");
+        $instabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"instabilite");
+        return $att + $renforcement >= $def + $pv + $stabilite - $instabilite;
     }
 }

@@ -22,6 +22,10 @@ class ActionPassive extends \App\Entity\ActionPassive implements \Doctrine\ORM\P
     
 
     private const LAZY_OBJECT_PROPERTY_SCOPES = [
+        "\0".'*'."\0".'category' => [parent::class, 'category', null],
+        "\0".'*'."\0".'displayName' => [parent::class, 'displayName', null],
+        "\0".'*'."\0".'prerequisites' => [parent::class, 'prerequisites', null],
+        "\0".'*'."\0".'text' => [parent::class, 'text', null],
         "\0".parent::class."\0".'carac' => [parent::class, 'carac', null],
         "\0".parent::class."\0".'conditions' => [parent::class, 'conditions', null],
         "\0".parent::class."\0".'id' => [parent::class, 'id', null],
@@ -32,11 +36,15 @@ class ActionPassive extends \App\Entity\ActionPassive implements \Doctrine\ORM\P
         "\0".parent::class."\0".'type' => [parent::class, 'type', null],
         "\0".parent::class."\0".'value' => [parent::class, 'value', null],
         'carac' => [parent::class, 'carac', null],
+        'category' => [parent::class, 'category', null],
         'conditions' => [parent::class, 'conditions', null],
+        'displayName' => [parent::class, 'displayName', null],
         'id' => [parent::class, 'id', null],
         'level' => [parent::class, 'level', null],
         'name' => [parent::class, 'name', null],
+        'prerequisites' => [parent::class, 'prerequisites', null],
         'race' => [parent::class, 'race', null],
+        'text' => [parent::class, 'text', null],
         'traits' => [parent::class, 'traits', null],
         'type' => [parent::class, 'type', null],
         'value' => [parent::class, 'value', null],

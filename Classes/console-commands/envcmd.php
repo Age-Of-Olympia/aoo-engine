@@ -16,11 +16,12 @@ EOT);
 
     public function execute(  array $argumentValues ) : string
     {
-        if(str_starts_with($argumentValues[1], '[') && str_ends_with($argumentValues[1], ']')){
-            $argumentValues[1] = json_decode($argumentValues[1]);
-        }
+       $argumentValues[1] = Command::ParseInput($argumentValues[1]);
+        
         Command::SetEnvVariable($argumentValues[0],$argumentValues[1]);
 
         return 'Variable d\'environnement '.$argumentValues[0].' définie à '.json_encode($argumentValues[1]);
     }
+
+
 }

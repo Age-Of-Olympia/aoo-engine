@@ -1,7 +1,7 @@
 <?php
 
 
-echo '<h3>Outils</h3>';
+echo '<h3 style="text-align: center; margin: 0 0 5px 0;">Outils</h3>';
 
 echo '
 <div>

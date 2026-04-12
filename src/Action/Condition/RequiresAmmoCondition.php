@@ -3,6 +3,7 @@ namespace App\Action\Condition;
 
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
+use App\Action\Condition\ConditionObject;
 use Classes\Db;
 use Classes\Item;
 use Classes\View;
@@ -11,7 +12,7 @@ class RequiresAmmoCondition extends BaseCondition
 {
     public bool $toRemove;
 
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition): ConditionResult
+    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
         $details = array();
