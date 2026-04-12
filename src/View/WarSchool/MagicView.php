@@ -99,8 +99,6 @@ class MagicView
                   </thead>';
             echo '<tbody>';
 
-            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
-
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
