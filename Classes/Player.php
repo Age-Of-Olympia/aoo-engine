@@ -481,6 +481,7 @@ class Player implements ActorInterface {
     // passive actions shortcuts
     public function add_action_passive($name){ $this->playerPassiveService->addPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
     public function have_action_passive($name){ return $this->playerPassiveService->hasPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
+    public function end_action_passive($name){ return $this->playerPassiveService->removePassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
 
     // spells shortcuts
     public function add_spell($name){ $this->add_action($name); }
