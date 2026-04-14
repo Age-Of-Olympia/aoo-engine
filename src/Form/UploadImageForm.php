@@ -50,7 +50,7 @@ class UploadImageForm
         <html>
 
         <head>
-            <title>Upload Portrait or Avatar</title>
+            <title>Upload portrait ou avatar</title>
             <link rel="stylesheet" href="/css/modal.css" />
             <script src="/js/modal.js"></script>
 
@@ -75,7 +75,7 @@ class UploadImageForm
                     const data = await response.json();
 
                     if (data.error) {
-                        alert("Error: " + data.error);
+                        alert("Erreur : " + data.error);
                         return;
                     }
 
@@ -123,7 +123,7 @@ class UploadImageForm
                     <!-- <p>Type: <?= htmlspecialchars($selectedType) ?></p> -->
                 <?php else: ?>
                     <!-- Otherwise, show the type dropdown -->
-                    <label for="type">Select type:</label>
+                    <label for="type">Type :</label>
                     <select name="type" id="type" required>
                         <option value="portrait">Portrait</option>
                         <option value="avatar">Avatar</option>
