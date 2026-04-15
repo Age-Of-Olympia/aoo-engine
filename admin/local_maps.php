@@ -203,9 +203,19 @@ ob_start();
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <?php if ($selectedZLevel !== null && $selectedZLevel !== ''): ?>
-                                <div class="mt-3 d-flex justify-content-end">
-                                    <button type="submit" name="generate_local" class="btn btn-primary btn-sm">
+                            <?php if ($selectedZLevel !== null && $selectedZLevel !== ''):
+                                $rawZ = json()->decode('plans', $selectedPlan);
+                                $zEntry = null;
+                                foreach (($rawZ->z_levels ?? []) as $zl) {
+                                    if ($zl->z == $selectedZLevel) { $zEntry = $zl; break; }
+                                }
+                                $mapUnavailable = !empty($zEntry->MapUnavailable);
+                            ?>
+                                <div class="mt-3 d-flex justify-content-end align-items-center gap-2">
+                                    <?php if ($mapUnavailable): ?>
+                                        <small class="text-muted fst-italic">Pas de map pour ce niveau (MapUnavailable)</small>
+                                    <?php endif; ?>
+                                    <button type="submit" name="generate_local" class="btn btn-primary btn-sm" <?= $mapUnavailable ? 'disabled' : '' ?>>
                                         <i class="fas fa-sync"></i> Regénérer
                                     </button>
                                 </div>

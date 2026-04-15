@@ -96,6 +96,7 @@ function admin_layout($title, $content) {
                 <a href="/admin/world_map.php" class="nav-link">Gestion carte monde</a>
                 <a href="/admin/local_maps.php" class="nav-link">Gestion cartes locales</a>
                 <a href="/admin/screenshots.php" class="nav-link">Gestion captures d'écran</a>
+                <a href="/admin/view_recipes.php" class="nav-link">Recettes de craft</a>
             </nav>
         </div>
         
