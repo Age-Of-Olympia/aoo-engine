@@ -36,8 +36,8 @@ class Ui{
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20250516"></script>
-                <script src="js/console.js?v=20250516"></script>
-                <link href="css/main.min.css?v=20260220" rel="stylesheet">
+                <script src="js/console.js?v=20260416"></script>
+                <link href="css/main.min.css?v=20260416" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         if($loadJQueryUi){

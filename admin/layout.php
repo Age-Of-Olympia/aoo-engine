@@ -14,7 +14,7 @@ function admin_layout($title, $content) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$title - Admin of Olympia</title>
-    <link href="css/main.min.css?v=20251020" rel="stylesheet">
+    <link href="css/main.min.css?v=20260416" rel="stylesheet">
     <style>
         .admin-layout {
             display: flex;
