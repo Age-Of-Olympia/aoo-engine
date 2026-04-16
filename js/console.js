@@ -39,10 +39,19 @@ function bind_console_keys(body){
         let consoleTextArea = $('#console-wrapper');
          switch (e.code) {
              case 'Backquote':
-                 if($('#console-wrapper').is(':visible')){
-                    $('#console-wrapper').hide();
-                    document.location.reload();
-                    return false;
+                 if(consoleTextArea.is(':visible')){
+                    if(consoleTextArea.hasClass( "bigConsole" ))
+                    {
+                        consoleTextArea.hide();
+                        document.location.reload();
+                        return false;
+                    }
+                    else
+                    {
+                        consoleTextArea.addClass("bigConsole");
+                        e.preventDefault();
+                        return false;
+                    }
                  }
                  open_console();
                  e.preventDefault();

@@ -20,7 +20,11 @@ EOT);
 
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
-
+        $valid_options = ['isSuperAdmin', 'isAdmin', 'isMerchant', 'isTrainer','showActionDetails','alreadyFished','incognitoMode','doubleUpload','alreadyChanged','dlag'];
+        if( !in_array( $argumentValues[1], $valid_options)){
+            $this->result->Warning('Option non reconnue. Options valides: '. implode(', ', $valid_options));
+            return '';
+        }
         if ( $argumentValues[1] == 'isSuperAdmin'){
            AdminAuthorizationService::DoSuperAdminCheck();
         }
