@@ -90,7 +90,7 @@ foreach($playerList as $k=>$e){
 $ui = new Ui('Classements des joueurs');
 
 
-echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="classements.php"><button>Général</button></a><a href="classements.php?bourrins"><button>Bourrins</button></a><a href="classements.php?fortunes"><button>Fortunes</button></a><a href="classements.php?reputation"><button>Réputation</button></a><a href="classements.php?foi"><button>Foi</button></a></div>';
+echo '<div style="display:flex; flex-wrap:wrap; gap:4px;"><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="classements.php"><button>Général</button></a><a href="classements.php?bourrins"><button>Bourrins</button></a><a href="classements.php?fortunes"><button>Fortunes</button></a><a href="classements.php?reputation"><button>Réputation</button></a><a href="classements.php?foi"><button>Foi</button></a></div>';
 
 
 if(isset($_GET['bourrins'])){
