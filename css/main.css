@@ -1710,6 +1710,12 @@ blockquote{
     height: 165px;
     overflow-y: auto;
 }
+.bigConsole#console-wrapper {
+    height: 400px;
+}
+.bigConsole #console {
+    height: 365px;
+}
 
 #console-content {
     display: flex;
