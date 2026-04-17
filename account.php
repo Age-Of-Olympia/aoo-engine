@@ -259,7 +259,7 @@ echo '
 
 ?>
 <script>
-    window.alreadyChanged = <?php if($player->have_option('alreayChanged')) echo 1; else echo 0; ?>;
+    window.alreadyChanged = <?php if($player->have_option('alreadyChanged')) echo 1; else echo 0; ?>;
     window.oldName = "<?php echo $player->data->name ?>";
 </script>
 <script src="js/account.js"></script>
