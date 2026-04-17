@@ -78,7 +78,7 @@ define('OPTIONS', array(
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'showTuto'=>"Rejouer le tutoriel",
     'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
-    'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Invisible dans les destinataires d'échanges ou de missives</sup>",
+    'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Non trouvable dans les recherches de destinataires</sup>",
 
 ));
 
