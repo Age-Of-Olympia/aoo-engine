@@ -26,7 +26,7 @@ class DistanceComputeCondition extends ComputeCondition
             $equipedItems = $target->getEquipedItems();
             foreach($equipedItems as $item){
                 if(in_array($item->name, ["bouclier_parma","bouclier_clipeus","bouclier_ancile","targe","bouclier_lianes","targe_renforcee"] )){
-                    $targetRollTraitValue = floor(9/10 * $trait1 + 1/10 * $trait2);
+                    $targetRollTraitValue = floor(6/7 * $trait1 + 1/7 * $trait2);
                 }
             }
         }
