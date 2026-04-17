@@ -216,7 +216,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
 
             if($isSiphon){
-                $siphon = floor($totalDamages/2);
+                $siphon = floor($totalDamages/3);
                 $actor->putBonus(array('pm'=>$siphon));
                 $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $actor->data->name . ' siphone ' . $siphon . ' PM.';
             }
