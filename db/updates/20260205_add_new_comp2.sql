@@ -95,15 +95,15 @@ SET text = CASE
     WHEN name = 'tir_handicapant' THEN 'Jet pur. Vulnérabilité(X/3)  où X est la différence des jets de dé'
     WHEN name = 'jet_infuse' THEN 'Nécessite une arme de jet. +M/3 Dmg'
     WHEN name = 'epuisement_arcaniques' THEN 'Jet pur. Essoufflement(X/3) où X est la différence des jets de dé'
-    WHEN name = 'arcane_precise' THEN 'Bonus +0, +4 pour toucher'
-    WHEN name = 'arcane_violente' THEN 'Bonus +5, -6 pour toucher'
+    WHEN name = 'arcane_precise' THEN '+4 pour toucher'
+    WHEN name = 'arcane_violente' THEN '-6 pour toucher, +5 Dmg'
     WHEN name = 'aveuglement' THEN 'Aveuglement(x1)'
     WHEN name = 'coup_precis' THEN 'Dextérité(x2)'
     WHEN name = 'peau_de_granit' THEN 'Protection(x2)'
     WHEN name = 'maladresse' THEN 'Maladresse(x2)'
     WHEN name = 'vulnerabilite' THEN 'Vulnérabilité(x2)'
     WHEN name = 'restauration_mineure' THEN 'Restauration(5)'
-    WHEN name = 'enchevetrement' THEN 'Bonus +1, Ralentissement (x1D2)'
+    WHEN name = 'enchevetrement' THEN 'Ralentissement (x1D2), +1 Dmg'
     WHEN name = 'exploration' THEN 'Acuité visuelle(X) où X est le nombre d''A utilisées'
     WHEN name = 'discretion' THEN 'Imposture(+1). Le personnage n''apparaît plus sur la carte générale jusqu''à son prochain tour'
     WHEN name = 'camouflage-olympien' THEN 'Apparaît en Olympien sur la carte générale jusqu''à son prochain tour'
@@ -165,7 +165,7 @@ VALUES
 ),
 (
     'saut_attaque','ra-overhead','technique','Saut d''attaque',
-    'Saute sur la cible et l''attaque au contact.',3, null,'melee-off',
+    'Saute sur la cible et l''attaque au contact.',3, null,'todo',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">10 PM</span>,<span style="color: #27ae60;">1 Mvt</span>',null
 ),
 (
@@ -291,7 +291,7 @@ VALUES
 ),
 (
     'puissance_lutin','ra-player-thunder-struck','spell','Puissance du Lutin capricieux',
-    'Maladresse(x4), Vulnérabilité(x4)',5, null,'spell-curse',
+    'Maladresse(x4), Vulnérabilité(x4)',4, null,'spell-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">20 PM</span>',null
 ),
 (
@@ -316,17 +316,17 @@ VALUES
 ),
 (
     'frappe_tempe','ra-decapitation','technique','Frappe à la tempe',
-    'Dommages Mentaux(X/2) où X est le nombre de dégâts infligés',3, null,'melee-off',
+    'Dommages Mentaux(6)',3, null,'melee-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>',null
 ),
 (
     'arme_impro','ra-wrench','technique','Arme improvisée',
-    'Permet d''effectuer une attaque à distance à -4 pour toucher et -2 Dmg sans le matériel adéquat',1, null,'distance-off',
+    'Tir sans arme à distance équipée. -4 pour toucher, -2 Dmg',1, null,'distance-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>',null
 ),
 (
     'bout_portant','ra-supersonic-arrow','technique','Bout portant',
-    'Une attaque avec une arme de Jet au contact à -8 pour toucher',1, null,'distance-off',
+    'Tir avec arme de jet au contact. -8 pour toucher',1, null,'distance-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">2 PM</span>',null
 ),
 (
@@ -336,27 +336,27 @@ VALUES
 ),
 (
     'jet_sable','ra-splash','technique','Jet de sable',
-    'Un jet de sable au contact sans dégâts et sans besoin d''arme. Aveuglement(x2)',2, null,'distance-curse',
+    'Attaque au contact avec jet de CT sans dégâts et sans arme. Aveuglement (x2)',2, null,'distance-curse',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">4 PM</span>, <span style="color: #27ae60;">1 Mvt</span>',null
 ),
 (
     'arcane_ajustee','ra-fairy-wand','spell','Arcane ajustée',
-    'Bonus +3, Avantage',1, null,'spell-off',
+    '+3 Dmg, Avantage',1, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
 (
     'dard','ra-fairy-wand','spell','Dard',
-    'Bonus +1',1, null,'spell-off',
+    '+1 Dmg',1, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">3 PM</span>',null
 ),
 (
     'drain','ra-knife-fork','spell','Drain',
-    'Bonus +1, Drain',2, null,'spell-off',
+    '+1 Dmg, Drain',2, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #2980b9;">6 PM</span>',null
 ),
 (
     'siphon','ra-knife-fork','spell','Siphon',
-    'Bonus +1, Siphon',2, null,'spell-off',
+    '+1 Dmg, Siphon',2, null,'spell-off',
     '<span style="color: #8e44ad;">1 A</span>, <span style="color: #c0392b;">5 PV</span>, <span style="color: #27ae60;">2 Mvt</span>',null
 ),
 (
@@ -376,7 +376,7 @@ VALUES
 ),
 (
     'bousculade','ra-falling','technique','Bousculade',
-    'Touche automatiquement. Repousse la cible d''une case si le Repoussement fonctionne.',2, null,'melee-curse',
+    'Touche automatique sans dégâts. Poussée sur la case opposée.',2, null,'melee-curse',
     '<span style="color: #8e44ad;">1 A</span>,<span style="color: #27ae60;">1 Mvt</span>',null
 );
 
@@ -526,7 +526,7 @@ VALUES
 ),
 (
     'fulgurance','["cc","esquive"]','att','mvt',0.20,null, 2,"elfe",
-    "melee","Fulgurance","+1 pour toucher au CàC et +1 Esquive tous les 5 Mvt max"
+    "melee","Fulgurance","Gagne +1 pour toucher à la CC et +1 Esquive tous les 5 Mvt max"
 ),
 (
     'encaisser','["e","m"]','def','fixed',25.00,null, 2,"",
@@ -534,19 +534,19 @@ VALUES
 ),
 (
     'duelliste','["cc"]','att','advantage',0.00,null, 4,"",
-    "melee","Duelliste","Gagne Avantage sur les attaques et techniques basées sur la CC"
+    "melee","Duelliste","Gagne Avantage sur la CC"
 ),
 (
     'lanceur','["ct"]','att','advantage',0.00,'{"weapon":["pierre","lance","javelot_lourd","pilum","hache_jet","pierre_noire"]}', 4,"",
-    "distance","Lanceur","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme de jet"
+    "distance","Lanceur","Gagne Avantage sur la CT avec les armes de jet"
 ),
 (
     'tireur_elite','["ct"]','att','advantage',0.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
-    "distance","Tireur d'élite","Gagne Avantage sur les attaques et techniques basées sur la CT avec une arme à munitions"
+    "distance","Tireur d'élite","Gagne Avantage sur la CT avec les armes à munitions"
 ),
 (
     'anguille','["cc/agi"]','def','advantage',0.00,null, 4,"",
-    "survival","Anguille","Gagne Avantage sur les esquives"
+    "survival","Anguille","Gagne Avantage sur l'Esquive"
 ),
 (
     'volonte_fer','["fm"]','def','advantage',0.00,null, 4,"",
@@ -554,11 +554,11 @@ VALUES
 ),
 (
     'couverture','["cc"]','esquive_tir','',0.00,null, 4,"",
-    "survival","Couverture","Esquive les Tirs à 9/10 CC et 1/10 Agi si il est équipé d'un Bouclier"
+    "survival","Couverture","Esquive les Tirs à 85% CC et 15% Agi si équipé d'un Bouclier"
 ),
 (
     'reflexes_fulgurants','["agi"]','esquive_tir','',0.00,null, 4,"",
-    "survival","Réflexes fulgurants","Esquiver les Tirs se fait à 6/7 Agi et 1/7 CC"
+    "survival","Réflexes fulgurants","Esquive les Tirs à 85% Agi et 15% CC"
 ),
 (
     'inepuisable','["malus"]','malus','',1.00,null, 4,"",
@@ -566,19 +566,19 @@ VALUES
 ),
 (
     'maitre_bretteur','["cc"]','malus','fixed',1.00,null, 4,"",
-    "melee","Maître bretteur","Les Malus appliqués par les actions de contact sont augmentées de 1"
+    "melee","Maître bretteur","Les Malus appliqués par les actions à la CC sont augmentés de 1"
 ),
 (
     'escarmoucheur','["ct"]','malus','fixed',1.00,'{"weapon":["arc","fustibale","arc_long","arc_elfique","arc_ensorcele","sarbacane"]}', 4,"",
-    "distance","Escarmoucheur","Les Malus appliqués par les actions de tir avec des armes à munitions sont augmentées de 1"
+    "distance","Escarmoucheur","Les Malus appliqués par les actions à la CT avec arme à munition sont augmentés de 1"
 ),
 (
     'berserker','["cc"]','att','lostPV',0.10,null, 2,"geant",
-    "melee","Berserker","Gagne +1 en CC en attaque tous les 10PV perdus"
+    "melee","Berserker","Gagne +1 pour toucher à la CC tous les 10PV perdus"
 ),
 (
     'mage_sacre','["fm"]','buff','effects',2.00,'{"category":["spell-support"]}', 2,"olympien",
-    "spell","Mage sacré","Gagne +2 en FM pour lancer des sorts de soutien par Effet sur lui"
+    "spell","Mage sacré","Gagne +2 pour lancer des sorts de soutien par Effet sur le lanceur"
 );
 
 
@@ -628,16 +628,6 @@ VALUES
 ),
 (
     'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi", "actorRollBonus" : -4}',78,10,0
-),
-/* saut_attaque */
-(
-    'RequiresWeaponType','{"type": ["melee"]}',79,1,1
-),
-(
-    'RequiresTraitValue','{"a":1, "pm":10, "mvt":1}',79,5,1
-),
-(
-    'MeleeCompute','{"actorRollType":"cc", "targetRollType": "cc/agi"}',79,10,0
 ),
 /* recuperation */
 (
@@ -1079,13 +1069,6 @@ VALUES
 (
     'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait": -3 }',1,88
 ),
-/* attaque_sautee */
-(
-    'teleport','{ "coords": "target" }',2,89
-),
-(
-    'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e", "distance": true}',1,89
-),
 /* recuperation */
 (
     'healing','{ "bonusHealingTrait": "r", "divisor": 2 }',2,90
@@ -1222,7 +1205,7 @@ VALUES
     'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e"}',1,119
 ),
 (
-    'manaloss','{ "lossType": "lifeloss" }',2,119
+    'manaloss','{ "lossType": "fixed", "value": 6 }',2,119
 ),
 /* arme_impro */
 (
