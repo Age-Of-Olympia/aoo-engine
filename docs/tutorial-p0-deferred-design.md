@@ -164,3 +164,26 @@ workstream over several sprints, not a single MR.
 
 These four items are NOT addressed by MRs #329-#338 (the rapid-fix series).
 Surfacing them here ensures they remain visible after this branch ships.
+
+## Test-debt baseline (already-merged P0 fixes without coverage)
+
+The TDD + KISS methodology was added to the dismantling roadmap AFTER
+MRs #329-#333 were already merged (those MRs landed during the rapid-fix
+phase, when the methodology had not yet been written down). Under the
+new rule, each of those fixes should have shipped with a unit test. They
+did not. Listed here as **retroactive test-debt** so they can be picked
+up during D4 Phase A (the foundational PHPUnit scaffolding):
+
+| MR | Fix | Test that should now exist |
+|---|---|---|
+| #329 | admin auth on launcher + sessions-api | `tests/Various/TutorialAdminAuthzTest.php`: assert non-admin `$_SESSION['playerId']` triggers `DoAdminCheck` exit on both endpoints |
+| #330 | undefined `getActiveTutorialSession` call | `tests/Various/JumpToStepContractTest.php`: assert `TutorialSessionManager::getActiveSession(int)` exists with correct signature (same pattern as `CleanupOrphansScriptTest`) |
+| #331 | ActionStep debug log file write removed | `tests/Various/ActionStepValidateTest.php`: assert `validate()` returns true/false correctly without side-effects to `tmp/action_debug.log` |
+| #332 | skip/complete XP replay guard | `tests/Various/TutorialReplayRewardTest.php`: stub `hasCompletedBefore` true → assert `put_xp` not called; false → assert called once with reward amount |
+| #333 | TutorialUI.next() debounce | Cypress: rapid double-click on `#tutorial-next` advances by exactly one step (covered by tutorial-production-ready spec implicitly, would benefit from explicit assertion) |
+
+These are NOT urgent — the merged fixes themselves are correct. The
+debt becomes acute the next time one of the touched files is modified
+(refactoring without a test net is exactly what the methodology was
+written to prevent). Roll into D4 Phase B unless one becomes
+load-bearing for an unrelated change.
