@@ -33,6 +33,14 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install PHP extensions the project depends on at runtime.
+#  - mysqli: Classes\Db (legacy raw SQL layer) + Doctrine when configured
+#    with `driver=mysqli` (the canonical setting in db_constants.php).
+#    Without this, doctrine-migrations errors with "Class mysqli not found".
+#  - pdo_mysql: Doctrine fallback when `driver=pdo_mysql`. Cheap to install
+#    alongside; keeps the image flexible for both driver choices.
+RUN docker-php-ext-install mysqli pdo_mysql
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
