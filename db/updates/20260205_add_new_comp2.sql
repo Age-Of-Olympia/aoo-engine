@@ -1061,6 +1061,10 @@ VALUES
 
 INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
 VALUES 
+/*aveuglement_old*/
+(
+    'refreshscreen','{}',11,70
+),
 /* coup_ajuste */
 (
     'lifeloss','{ "actorDamagesTrait": "f", "targetDamagesTrait": "e" }',1,87
@@ -1154,13 +1158,22 @@ VALUES
 (
     'applystatus','{ "fragilite": true, "stackable": false, "value": 2, "player": "target", "duration": 64800}',10,108
 ),
+(
+    'malus','{}',7,108
+),
 /* faiblesse */
 (
     'applystatus','{ "faiblesse": true, "stackable": false, "value": 1, "player": "target", "duration": 64800}',10,109
 ),
+(
+    'malus','{}',7,109
+),
 /* anemie */
 (
     'applystatus','{ "faiblesse": true, "stackable": false, "value": 2, "player": "target", "duration": 64800}',10,110
+),
+(
+    'malus','{}',7,110
 ),
 /* colere_nature */
 (
@@ -1169,13 +1182,22 @@ VALUES
 (
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 2, "player": "target", "duration": 86400}',9,111
 ),
+(
+    'malus','{}',7,111
+),
 /* fatigue */
 (
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,112
 ),
+(
+    'malus','{}',7,112
+),
 /* malchance */
 (
     'applystatus','{ "maladresse": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',10,113
+),
+(
+    'malus','{}',7,113
 ),
 /* puissance_lutin */
 (
@@ -1184,13 +1206,22 @@ VALUES
 (
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 4, "player": "target", "duration": 86400}',9,114
 ),
+(
+    'malus','{}',7,114
+),
 /* extenuation */
 (
     'applystatus','{ "vulnerabilite": true, "stackable": false, "value": 8, "player": "target", "duration": 86400}',10,115
 ),
+(
+    'malus','{}',7,115
+),
 /* guigne */
 (
     'applystatus','{ "maladresse": true, "stackable": false, "value": 8, "player": "target", "duration": 86400}',10,116
+),
+(
+    'malus','{}',7,116
 ),
 /* attaque_drainante */
 (
@@ -1253,6 +1284,9 @@ VALUES
 /* instabilite */
 (
     'applystatus','{ "instabilite": true, "stackable": false, "value": 6, "player": "target", "duration": 1}',10,130
+),
+(
+    'malus','{}',7,130
 ),
 /* bousculade */
 (
