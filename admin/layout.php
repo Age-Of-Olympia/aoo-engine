@@ -14,8 +14,15 @@ function admin_layout($title, $content) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$title - Admin of Olympia</title>
-    <link href="css/main.min.css?v=20251020" rel="stylesheet">
+    <link href="/css/main.min.css?v=20251020" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
+        body {
+            max-width: 100% !important;
+            text-align: left;
+        }
+
         .admin-layout {
             display: flex;
             min-height: 100vh;
@@ -84,12 +91,12 @@ function admin_layout($title, $content) {
         <div class="admin-sidebar">
             <h1 class="main-title">Admin of Olympia</h1>
             <nav class="vertical-nav">
-                <a href="/admin/upload_image.php" class="nav-link">Upload Images</a>
+                <a href="/admin/upload_image.php" class="nav-link">Upload d'images</a>
                 <!-- <a href="/admin/players.php" class="nav-link">Manage Players</a> -->
-                <a href="/admin/world_map.php" class="nav-link">Manage World Map</a>
-                <a href="/admin/local_maps.php" class="nav-link">Manage Local Maps</a>
-                <a href="/admin/screenshots.php" class="nav-link">Manage Screenshots</a>
-                <a href="/admin/view_recipes.php" class="nav-link">view Recipes</a>
+                <a href="/admin/world_map.php" class="nav-link">Gestion carte monde</a>
+                <a href="/admin/local_maps.php" class="nav-link">Gestion cartes locales</a>
+                <a href="/admin/screenshots.php" class="nav-link">Gestion captures d'écran</a>
+                <a href="/admin/view_recipes.php" class="nav-link">Recettes de craft</a>
             </nav>
         </div>
         

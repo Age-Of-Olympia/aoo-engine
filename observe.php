@@ -334,6 +334,10 @@ if($res->num_rows){
 
         $dataType = $raceJson->name . $pnjText;
 
+        if ($target->id > 0 && !empty($target->data->isInactive)) {
+            $dataType .= ' (inactif)';
+        }
+
         $text = $target->data->text;
 
 
@@ -573,6 +577,23 @@ else{
             echo '<div class="view-dialog">'. Ui::get_dialog($player, $options) .'</div>';
         }
     }
+}
+
+
+// forbidden trigger
+$sql = '
+SELECT map_triggers.id
+FROM map_triggers
+INNER JOIN coords AS c ON map_triggers.coords_id = c.id
+WHERE c.x = ?
+AND c.y = ?
+AND c.z = ?
+AND c.plan = ?
+AND map_triggers.name = "forbidden"
+';
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+if($res->num_rows){
+    echo '<div class="case-infos"><div class="text">⛔ Case non praticable.</div></div>';
 }
 
 

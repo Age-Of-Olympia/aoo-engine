@@ -139,7 +139,7 @@ INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
 VALUES 
 (
     'applystatus','{ "discretion": true, "stackable": false, "value": 1, "player": "target", "duration": 1}',8,78
-)
+);
 
 DELETE FROM actions 
 WHERE name = 'griffes';
