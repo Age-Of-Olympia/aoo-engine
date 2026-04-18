@@ -808,7 +808,17 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
 
     public function isTransactional(): bool
     {
-        // Run in transaction for safety
-        return true;
+        // MUST be false for this migration. It creates 15 DDL tables.
+        // MariaDB/MySQL implicitly commits the active transaction at every
+        // DDL statement, which destroys the savepoint Doctrine creates per
+        // migration. Returning true here makes `doctrine-migrations migrate`
+        // fail with "SAVEPOINT DOCTRINE_2 does not exist" at the second
+        // CREATE TABLE.
+        //
+        // The "safety" the previous comment hoped for does not exist on
+        // MySQL with DDL anyway: there is no atomic rollback across CREATE
+        // TABLE statements. Atomicity must be achieved by making each
+        // CREATE TABLE idempotent (we use IF NOT EXISTS throughout).
+        return false;
     }
 }
