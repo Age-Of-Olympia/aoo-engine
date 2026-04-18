@@ -1,0 +1,23 @@
+{
+    "name": "Tutoriel",
+    "shortName": "Tuto",
+    "x": 0,
+    "y": 0,
+    "player_visibility": false,
+    "biomes": [
+        {"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20},
+        {"wall": "arbre2", "ressource": "bois", "exhaust": 75, "regrow": 20},
+        {"wall": "pierre1", "ressource": "pierre", "exhaust": 75, "regrow": 20},
+        {"wall": "pierre2", "ressource": "pierre", "exhaust": 75, "regrow": 20}
+    ],
+    "exits": {
+        "n":  [],
+        "s":  [],
+        "e":  [],
+        "w":  [],
+        "ne": [],
+        "se": [],
+        "nw": [],
+        "sw": []
+    }
+}
