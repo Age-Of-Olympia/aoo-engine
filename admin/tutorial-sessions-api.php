@@ -9,7 +9,10 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
+use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
+
+AdminAuthorizationService::DoAdminCheck();
 
 header('Content-Type: application/json; charset=utf-8');
 
