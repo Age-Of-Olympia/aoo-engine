@@ -91,6 +91,12 @@ test_job:
 # Cypress tutorial E2E test. Manual trigger initially: confirm Dockerfile.test
 # has node + npx + xvfb + the electron browser before flipping to automatic.
 # Once green for ~3 runs, drop `when: manual` and `allow_failure: true`.
+#
+# Rules: only attach the job to the long-lived branches where we'd actually
+# trigger it (tutorial-refactoring, staging, saison-3, main). Including
+# `- when: manual` as a fallback would make the job appear on every feature
+# branch's pipeline as a manual-only job, which produces a "skipped"
+# pipeline status that the project's merge policy then refuses to accept.
 cypress_tutorial_job:
   <<: *php-job-template
   stage: test
@@ -107,8 +113,16 @@ cypress_tutorial_job:
       - cypress/videos/
     expire_in: 1 week
   rules:
-    - !reference [.default_rules, rules]
-    - when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
+      when: manual
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      when: manual
+    - if: $CI_COMMIT_REF_NAME == "saison-3"
+      when: manual
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: manual
   allow_failure: true
 
 prepare_job:
