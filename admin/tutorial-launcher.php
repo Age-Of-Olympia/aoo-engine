@@ -8,16 +8,15 @@
 
 require_once __DIR__ . '/../config.php';
 
+use App\Service\AdminAuthorizationService;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialHelper;
 
-header('Content-Type: application/json; charset=utf-8');
+// Launching arbitrary tutorial versions is an admin-only test tool;
+// players use the regular start flow via api/tutorial/start.php.
+AdminAuthorizationService::DoAdminCheck();
 
-// Check if logged in (no admin required - tutorials are for everyone)
-if (empty($_SESSION['playerId'])) {
-    echo json_encode(['success' => false, 'error' => 'Non connecté']);
-    exit;
-}
+header('Content-Type: application/json; charset=utf-8');
 
 $version = $_GET['version'] ?? $_POST['version'] ?? '1.0.0';
 $db = new \Classes\Db();
