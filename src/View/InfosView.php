@@ -59,7 +59,7 @@ class InfosView
         <tr>
 
             <td align="left" class="player-info">
-                <a href="infos.php?targetId=' . $player->id . '">' . $player->data->name . '</a> (mat.' . $player->id . ')<br />
+                <a href="infos.php?targetId=' . $player->id . '">' . $player->data->name . '</a> (mat.' . $player->getDisplayId() . ')<br />
                 <!--sup>' . $raceJson->name . ' Rang ' . $player->data->rank . '</sup-->
                 <sup>Prochain tour à <a href="#" id="next-turn-timer" title="dans ' . $timeToNextTurn . '">' . date('H:i', $player->data->nextTurnTime) . "</a>" . $adminInfos . '</sup>
             </td>

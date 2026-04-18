@@ -298,7 +298,7 @@ if($res->num_rows){
 
         $target->get_caracs();
         if(!empty($card)){
-            echo ' <div class="case-infos">  <div class="text"> autre joueur:  <a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a> ['.$target->id.']</div> </div>';
+            echo ' <div class="case-infos">  <div class="text"> autre joueur:  <a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a> ['.$target->getDisplayId().']</div> </div>';
            continue;
         }
 

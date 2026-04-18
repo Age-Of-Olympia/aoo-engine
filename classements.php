@@ -52,7 +52,7 @@ function print_players($list){
         <tr style="color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">
             <td align="center">'. $n .'</td>
             <td style="white-space: nowrap;">'. $player->name .'</td>
-            <td align="center"><a href="infos.php?targetId='. $player->id .'">mat.'. $player->id .'</a></td>
+            <td align="center"><a href="infos.php?targetId='. $player->id .'">mat.'. ($player->display_id ?? $player->id) .'</a></td>
             <td><a href="infos.php?targetId='. $player->id .'&reputation">'. $reput .'</a></td>
             <td align="center">'. $player->xp .'</td>
             <td align="center">'. $player->rank .'</td>

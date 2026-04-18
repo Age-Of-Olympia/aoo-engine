@@ -43,7 +43,7 @@ class ExchangesView
                     $fromPlayer = new Player($exchange->playerId);
                     $fromPlayer->get_data();
                     echo '<section style="background-color: #f0f8ff5e; margin-top:10px;">';
-                    echo 'Echange reçu de <a href="infos.php?targetId=' . $fromPlayer->id . '">' . $fromPlayer->data->name . '(' . $fromPlayer->id . ')</a> le ' . date('d/m/Y H:i', $exchange->updateTime) . '. 
+                    echo 'Echange reçu de <a href="infos.php?targetId=' . $fromPlayer->id . '">' . $fromPlayer->data->name . '(' . $fromPlayer->getDisplayId() . ')</a> le ' . date('d/m/Y H:i', $exchange->updateTime) . '.
               <br> L\'échange sera validé quand les deux joueurs auront accepté.<br>';
                     if ($exchange->playerOk == 1) {
                         echo $fromPlayer->data->name . ' a accepté<br>';
@@ -69,7 +69,7 @@ class ExchangesView
                     echo '<section style="background-color: #f0f8ff5e; margin-top:10px;">';
                     $targetPlayer = new Player($exchange->targetId);
                     $targetPlayer->get_data();
-                    echo 'Echange proposé à <a href="infos.php?targetId=' . $targetPlayer->id . '">' . $targetPlayer->data->name . '(' . $targetPlayer->id . ')</a> le ' . date('d/m/Y H:i', $exchange->updateTime) . '.
+                    echo 'Echange proposé à <a href="infos.php?targetId=' . $targetPlayer->id . '">' . $targetPlayer->data->name . '(' . $targetPlayer->getDisplayId() . ')</a> le ' . date('d/m/Y H:i', $exchange->updateTime) . '.
                 <br> L\'échange sera validé quand les deux joueurs auront accepté.<br>';
 
                     if ($exchange->targetOk == 1) {

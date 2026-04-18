@@ -55,6 +55,19 @@ class Player implements ActorInterface {
     }
 
     /**
+     * Short, per-type sequential identifier shown to users (e.g. "mat.42").
+     * Falls back to the raw id if display_id is unset on legacy rows or when
+     * data hasn't been loaded yet.
+     */
+    public function getDisplayId(): int {
+        if (!isset($this->data)) {
+            $this->get_data();
+        }
+        $displayId = $this->data->display_id ?? 0;
+        return $displayId > 0 ? (int) $displayId : (int) $this->id;
+    }
+
+    /**
      * Check if this is a real player (not tutorial, not NPC)
      * Uses player_type discriminator column
      */
@@ -2416,7 +2429,7 @@ class Player implements ActorInterface {
 
         // CRITICAL: Filter by player_type to exclude tutorial players and NPCs from public lists
         // Only real players (player_type='real') should appear in rankings and leaderboards
-        $sql = 'SELECT id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players WHERE player_type = "real" ORDER BY name';
+        $sql = 'SELECT id,display_id,name,race,xp,rank,pr,faction,secretFaction,lastLoginTime FROM players WHERE player_type = "real" ORDER BY name';
 
         $db = new Db();
 
