@@ -50,7 +50,7 @@ class Ui{
         $tutorialVersion = '20260418a';
         echo '
                 <!-- Modal System -->
-                <link href="css/modal.css?v=20251112" rel="stylesheet">
+                <link href="css/modal.css?v=20260418" rel="stylesheet">
                 <script src="js/modal.js?v=20251112"></script>
 
                 <!-- Tutorial System -->
