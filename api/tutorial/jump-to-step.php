@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../config.php';
 
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialSessionManager;
 use Classes\Player;
 
 try {
@@ -52,7 +53,8 @@ try {
     }
 
     // Get current tutorial session
-    $session = TutorialHelper::getActiveTutorialSession($player->id);
+    $sessionManager = new TutorialSessionManager();
+    $session = $sessionManager->getActiveSession($player->id);
 
     if (!$session) {
         http_response_code(400);
