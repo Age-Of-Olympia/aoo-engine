@@ -57,13 +57,13 @@ build_image:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
         paths:
-          - gitlab-ci/Dockerfile.test
+          - Dockerfile.test
           - .gitlab-ci.yml
       variables:
         FORCE_REBUILD: "true"
       when: always
     - exists:
-        - gitlab-ci/Dockerfile.test
+        - Dockerfile.test
 
 stan_job:
   <<: *php-job-template
