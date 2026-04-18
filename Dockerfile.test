@@ -1,11 +1,36 @@
 FROM php:8.3
 
 # Install dependencies
+#
+# Three groups, kept apart for review:
+#  - PHP toolchain (git, zip, unzip, make) — required by Composer + the
+#    project Makefile;
+#  - mysql client + curl — required by scripts/testing/reset_test_database.sh
+#    and by db/init_test_from_dump.sh which the Cypress job calls before
+#    running its spec;
+#  - nodejs + xvfb + Cypress browser libs — required by the
+#    cypress_tutorial_job in .gitlab-ci.yml. Cypress downloads its own
+#    Electron binary on first run; these are the system libs Electron
+#    links against on Debian (canonical list from Cypress docs).
 RUN apt-get update && apt-get install -y \
     git \
     zip \
     unzip \
     make \
+    curl \
+    default-mysql-client \
+    nodejs \
+    npm \
+    xvfb \
+    xauth \
+    libgtk2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    libnotify-dev \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
