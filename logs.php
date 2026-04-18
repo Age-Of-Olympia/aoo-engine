@@ -137,7 +137,7 @@ echo '
                 </td>
             <td class="log-td" style="background-color: '. $playerRaceJson->bgColor .'; color: '. $playerRaceJson->color .';">
                 '. $player->data->name .'<br />
-                (<a style="color: '. $playerRaceJson->color .';" href="infos.php?targetId='. $player->id .'">mat.'. $player->id .'</a>)
+                (<a style="color: '. $playerRaceJson->color .';" href="infos.php?targetId='. $player->id .'">mat.'. $player->getDisplayId() .'</a>)
             </td>
             ';
 
@@ -146,7 +146,7 @@ echo '
                 echo '
                 <td  class="log-td" style="background-color: '. $targetRaceJson->bgColor .'; color: '. $targetRaceJson->color .';">
                     '. $target->data->name .'<br />
-                    (<a style="color: '. $targetRaceJson->color .';" href="infos.php?targetId='. $target->id .'">mat.'. $target->id .'</a>)
+                    (<a style="color: '. $targetRaceJson->color .';" href="infos.php?targetId='. $target->id .'">mat.'. $target->getDisplayId() .'</a>)
                 </td>
                 ';
             }
