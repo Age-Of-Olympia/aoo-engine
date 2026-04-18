@@ -88,6 +88,29 @@ test_job:
   rules:
     - !reference [.default_rules, rules]
 
+# Cypress tutorial E2E test. Manual trigger initially: confirm Dockerfile.test
+# has node + npx + xvfb + the electron browser before flipping to automatic.
+# Once green for ~3 runs, drop `when: manual` and `allow_failure: true`.
+cypress_tutorial_job:
+  <<: *php-job-template
+  stage: test
+  script:
+    - apache2ctl start || apache2-foreground &
+    - sleep 2
+    - make cypress-tutorial-ci
+  artifacts:
+    when: always
+    reports:
+      junit: cypress-report.xml
+    paths:
+      - cypress/screenshots/
+      - cypress/videos/
+    expire_in: 1 week
+  rules:
+    - !reference [.default_rules, rules]
+    - when: manual
+  allow_failure: true
+
 prepare_job:
   stage: prepare
   image: alpine:latest
