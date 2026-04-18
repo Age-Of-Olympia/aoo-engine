@@ -146,7 +146,7 @@ class BourrinsView
                 <td>
                     ' . $e->data->name . '
                 </td>
-                <td align="center" valign="top"><a href="infos.php?targetId=' . $e->id . '">mat.' . $e->id . '</a></td>
+                <td align="center" valign="top"><a href="infos.php?targetId=' . $e->id . '">mat.' . $e->getDisplayId() . '</a></td>
                 <td align="center" valign="top">' . Str::get_reput(floor($e->data->pr/COEFFICIENT_PR)) . '</td>
                 <td align="center" valign="top">' . $e->data->xp . '</td>
                 <td align="center" valign="top">' . $e->data->rank . '</td>

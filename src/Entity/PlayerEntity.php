@@ -34,6 +34,9 @@ abstract class PlayerEntity
     #[ORM\Column(type: "integer")]
     protected ?int $id = null;
 
+    #[ORM\Column(type: "integer", name: "display_id")]
+    protected int $displayId = 0;
+
     #[ORM\Column(type: "string", length: 255)]
     protected string $name = '';
 
@@ -132,6 +135,17 @@ abstract class PlayerEntity
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getDisplayId(): int
+    {
+        return $this->displayId > 0 ? $this->displayId : (int) $this->id;
+    }
+
+    public function setDisplayId(int $displayId): self
+    {
+        $this->displayId = $displayId;
+        return $this;
     }
 
     public function getName(): string
