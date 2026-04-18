@@ -1,17 +1,61 @@
-FROM php:8.3
+# Pin to a digest so `FROM` always hits the local layer cache instead of
+# revalidating against Docker Hub on every build_image run. Bump the
+# digest deliberately when upgrading PHP — that single change invalidates
+# every layer below it, by design.
+#
+# Current pin: php:8.4 (CLI, bookworm) as of 2026-04. To bump:
+#   curl -sIH "Authorization: Bearer $(curl -s 'https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/php:pull' | python3 -c 'import sys,json; print(json.load(sys.stdin)[\"token\"])')" \
+#     https://registry-1.docker.io/v2/library/php/manifests/8.4 | grep -i docker-content-digest
+FROM php:8.4@sha256:40b6ca1bbf6a4e3cc5204fbb7093d89d943bf4bca462834532114021066dbc75
 
-# Install dependencies
+# Layers ordered most-stable-first → most-volatile-last so a churn in
+# any one layer invalidates as few cached layers below as possible.
+# When adding new layers, insert them as low as their churn rate
+# justifies (a step that changes monthly goes near the top; a step
+# that changes per-MR goes near the bottom).
+
+# Layer 1 (most stable): system packages.
+#   PHP toolchain  — required by Composer + the Makefile.
+#   mysql client + curl — required by scripts/testing/reset_test_database.sh
+#                         and by db/init_test_from_dump.sh.
+#   node + xvfb + Cypress browser libs — required by cypress_tutorial_job
+#                         (canonical list from the Cypress on-Debian docs).
 RUN apt-get update && apt-get install -y \
     git \
     zip \
     unzip \
     make \
+    curl \
+    default-mysql-client \
+    nodejs \
+    npm \
+    xvfb \
+    xauth \
+    libgtk2.0-0 \
+    libgtk-3-0 \
+    libgbm-dev \
+    libnotify-dev \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
-
-# Install and configure Xdebug
+# Layer 2 (stable): xdebug — slow PECL compile (~22s); rarely changes.
+# Placed BEFORE docker-php-ext-install so adding/removing PHP exts in the
+# layer below does not invalidate this expensive compile.
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug \
     && echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
+# Layer 3 (semi-volatile): PHP extensions — likely to grow over time as
+# the project adopts more Doctrine drivers / extensions.
+#   mysqli:   Classes\Db (legacy raw SQL) + Doctrine driver=mysqli
+#             (canonical setting in db_constants.php).
+#   pdo_mysql: Doctrine fallback when driver=pdo_mysql.
+RUN docker-php-ext-install mysqli pdo_mysql
+
+# Layer 4 (volatile): Composer. The composer:latest tag is rolling so
+# this layer effectively rebuilds on every cache miss; keep it last so
+# its volatility doesn't cascade upward.
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer

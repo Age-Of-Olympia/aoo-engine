@@ -4,8 +4,11 @@
   top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(0,0,0,0.5);
   display: none; /* Hidden by default */
-  align-items: center; 
+  align-items: center;
   justify-content: center;
+  /* Above tutorial overlay (#tutorial-overlay = z-index 9998) so the
+     resume / cancel modal is reachable when shown during a tutorial. */
+  z-index: 10010;
 }
 .modal {
   background: #fff;

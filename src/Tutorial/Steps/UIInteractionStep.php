@@ -78,16 +78,12 @@ class UIInteractionStep extends AbstractStep
                 $element = $data['element'] ?? null;
                 $isVisible = $data['is_visible'] ?? false;
 
-                error_log("[UIInteractionStep] Validating ui_element_visible: required={$requiredElement}, element={$element}, is_visible=" . ($isVisible ? 'true' : 'false'));
-
                 return $requiredElement && $element === $requiredElement && $isVisible === true;
 
             case 'ui_interaction':
                 // Generic UI interaction - check if a specific element was clicked
                 $requiredElement = $this->config['validation_params']['element_clicked'] ?? null;
                 $clickedElement = $data['element_clicked'] ?? null;
-
-                error_log("[UIInteractionStep] Validating ui_interaction: required={$requiredElement}, clicked={$clickedElement}");
 
                 return $requiredElement && $clickedElement === $requiredElement;
 

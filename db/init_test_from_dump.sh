@@ -1,14 +1,21 @@
 #!/bin/bash
 # Initialize test database by cloning structure from aoo4
 # This ensures test database always matches main database schema
+#
+# Environment overrides (defaults match the devcontainer):
+#   DB_HOST    — MariaDB host        (default: mariadb-aoo4)
+#   DB_USER    — MariaDB user        (default: root)
+#   DB_PASS    — MariaDB password    (default: passwordRoot)
+#   SOURCE_DB  — Source database     (default: aoo4)
+#   TEST_DB    — Destination DB      (default: aoo4_test)
 
 set -e
 
-DB_HOST="mariadb-aoo4"
-DB_USER="root"
-DB_PASS="passwordRoot"
-SOURCE_DB="aoo4"
-TEST_DB="aoo4_test"
+DB_HOST="${DB_HOST:-mariadb-aoo4}"
+DB_USER="${DB_USER:-root}"
+DB_PASS="${DB_PASS:-passwordRoot}"
+SOURCE_DB="${SOURCE_DB:-aoo4}"
+TEST_DB="${TEST_DB:-aoo4_test}"
 
 echo "🔄 Initializing test database from main database structure..."
 

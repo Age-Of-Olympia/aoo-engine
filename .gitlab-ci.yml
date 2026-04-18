@@ -36,19 +36,33 @@ build_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
     IMAGE_TAG: "test:latest"
+    # Enable BuildKit so --build-arg BUILDKIT_INLINE_CACHE works and
+    # --cache-from picks up unchanged layers from the previous image.
+    DOCKER_BUILDKIT: "1"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - export DOCKER_IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_TAG"
+    # Pull the previous image (if any) so its layers are available as
+    # build cache. The "|| true" handles the bootstrap case where the
+    # registry has nothing yet.
+    - docker pull $DOCKER_IMAGE 2>/dev/null || true
     - |
+      build_with_cache() {
+        docker build \
+          --cache-from $DOCKER_IMAGE \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t $DOCKER_IMAGE \
+          -f Dockerfile.test \
+          .
+        docker push $DOCKER_IMAGE
+      }
       if ! docker manifest inspect $DOCKER_IMAGE >/dev/null 2>&1; then
-        echo "Image does not exist, building..."
-        docker build -t $DOCKER_IMAGE -f Dockerfile.test .
-        docker push $DOCKER_IMAGE
+        echo "Image does not exist, building (no cache available)..."
+        build_with_cache
       elif [ "$FORCE_REBUILD" = "true" ]; then
-        echo "Changes detected. Forcing image rebuild..."
-        docker build -t $DOCKER_IMAGE -f Dockerfile.test .
-        docker push $DOCKER_IMAGE
+        echo "Changes detected. Rebuilding (with --cache-from $DOCKER_IMAGE)..."
+        build_with_cache
       else
         echo "Image $DOCKER_IMAGE already exists, skipping build."
       fi
@@ -57,13 +71,13 @@ build_image:
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
         paths:
-          - gitlab-ci/Dockerfile.test
+          - Dockerfile.test
           - .gitlab-ci.yml
       variables:
         FORCE_REBUILD: "true"
       when: always
     - exists:
-        - gitlab-ci/Dockerfile.test
+        - Dockerfile.test
 
 stan_job:
   <<: *php-job-template
@@ -87,6 +101,111 @@ test_job:
         path: tmp/coverage/cobertura.xml
   rules:
     - !reference [.default_rules, rules]
+
+# Cypress tutorial E2E test. Manual trigger initially: confirm Dockerfile.test
+# has node + npx + xvfb + the electron browser before flipping to automatic.
+# Once green for ~3 runs, drop `when: manual` and `allow_failure: true`.
+#
+# Rules: only attach the job to the long-lived branches where we'd actually
+# trigger it (tutorial-refactoring, staging, saison-3, main). Including
+# `- when: manual` as a fallback would make the job appear on every feature
+# branch's pipeline as a manual-only job, which produces a "skipped"
+# pipeline status that the project's merge policy then refuses to accept.
+cypress_tutorial_job:
+  <<: *php-job-template
+  stage: test
+  services:
+    - name: mariadb:11
+      alias: mariadb
+      variables:
+        MARIADB_ROOT_PASSWORD: passwordRoot
+        MARIADB_DATABASE: aoo4
+  variables:
+    DB_HOST: mariadb
+    DB_USER: root
+    DB_PASS: passwordRoot
+    CYPRESS_CONTAINER: "true"
+  before_script:
+    # Stage the data + image fixtures the app expects, plus an example
+    # config that we then overwrite to point at the mariadb service alias.
+    - make setup-ci-env
+    - |
+      cat > config/db_constants.php <<'PHPEOF'
+      <?php
+      define('DEV_MODE', true);
+      define('DB_CONSTANTS', array(
+          'host'     => 'mariadb',
+          'user'     => 'root',
+          'psw'      => 'passwordRoot',
+          'db'       => 'aoo4',
+          'password' => 'passwordRoot',
+          'dbname'   => 'aoo4',
+          'driver'   => 'mysqli',
+          'charset'  => 'utf8mb4',
+      ));
+      PHPEOF
+    - composer install --no-progress --no-interaction
+    - npm ci --no-audit --no-fund
+  script:
+    # Wait for the mariadb service to accept connections (cold-start can
+    # take a few seconds before the daemon listens).
+    - until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" >/dev/null 2>&1; do echo "waiting for mariadb..."; sleep 2; done
+    # Seed the source database. Two layers:
+    #  1. db/init_noupdates.sql — base schema + reference data;
+    #  2. Doctrine migrations — adds the tutorial_* tables (Version2025-
+    #     1127000000_CreateCompleteTutorialSystem and the crafting tutorial
+    #     follow-up). Without this, init_test_from_dump.sh's INSERTs into
+    #     tutorial_steps fail with ERROR 1146.
+    - mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 < db/init_noupdates.sql
+    # init_noupdates.sql contains the schema that the pre-snapshot
+    # Doctrine migrations produced (race_actions, etc.) but does NOT
+    # seed the doctrine_migration_versions table that records which
+    # migrations are applied. Without these INSERTs, the migrate step
+    # below tries to re-create existing tables and fails with
+    # "Table 'race_actions' already exists". Add one INSERT IGNORE per
+    # migration whose effect is already in init_noupdates.sql.
+    - |
+      mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 -e "
+        INSERT IGNORE INTO doctrine_migration_versions (version, executed_at, execution_time)
+        VALUES ('App\\\\Migrations\\\\Version20250427223731', NOW(), 0);
+      "
+    - vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration --no-all-or-nothing
+    # Sanity probe the data fixtures the Cypress spec depends on. If
+    # `make setup-ci-env` failed silently this surfaces it before the
+    # spec hits the API.
+    - ls datas/public/races/ | head -5
+    # Serve the app to Cypress in the background. The base image is the
+    # PHP CLI (no Apache); php -S is the simplest way to expose the app
+    # at http://localhost which is what cypress.config.js targets when
+    # CYPRESS_CONTAINER=true.
+    - php -S 0.0.0.0:80 -t . > /tmp/php-server.log 2>&1 &
+    - sleep 2
+    - make cypress-tutorial-ci
+  after_script:
+    # Surface the PHP server log alongside Cypress output even on failure.
+    - cat /tmp/php-server.log 2>/dev/null || true
+  artifacts:
+    when: always
+    reports:
+      junit: cypress-report.xml
+    paths:
+      - cypress/screenshots/
+      - cypress/videos/
+      - data_tests/cypress/screenshots/
+      - data_tests/cypress/videos/
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
+      when: manual
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      when: manual
+    - if: $CI_COMMIT_REF_NAME == "saison-3"
+      when: manual
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: manual
+  allow_failure: true
 
 prepare_job:
   stage: prepare
