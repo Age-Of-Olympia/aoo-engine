@@ -47,6 +47,11 @@ try {
         exit;
     }
 
+    // Capture first-time status BEFORE marking the session completed —
+    // otherwise the current session would itself count as "completed before"
+    // and the guard would always skip the reward.
+    $hasCompletedBefore = $sessionManager->hasCompletedBefore($playerId);
+
     // Exit tutorial mode (switch back to main player)
     TutorialHelper::exitTutorialMode();
 
@@ -57,10 +62,20 @@ try {
     $sessionManager->markCompleted($sessionId);
     error_log("[Complete] Player {$playerId} manually completed tutorial via 'Compléter' button");
 
-    // Award full completion rewards (they chose to complete, not skip)
+    // Award full completion rewards ONLY on first time (not a replay).
+    // Also makes the endpoint idempotent: a second POST with the same
+    // session_id finds hasCompletedBefore=true and grants nothing.
     $completionReward = TUTORIAL_COMPLETION_REWARD;
-    $mainPlayer->put_xp($completionReward['xp']); /* This adds both XP and PI */
-    error_log("[Complete] Player {$playerId} received completion reward: {$completionReward['xp']} XP/PI");
+    $xpEarned = 0;
+    $piEarned = 0;
+    if (!$hasCompletedBefore) {
+        $mainPlayer->put_xp($completionReward['xp']); /* This adds both XP and PI */
+        $xpEarned = $completionReward['xp'];
+        $piEarned = $completionReward['pi'];
+        error_log("[Complete] Player {$playerId} received completion reward (first time): {$completionReward['xp']} XP/PI");
+    } else {
+        error_log("[Complete] Player {$playerId} is replaying tutorial - no completion reward granted");
+    }
 
     // Remove invisibleMode from main player
     if ($mainPlayer->have_option('invisibleMode')) {
@@ -120,8 +135,8 @@ try {
     echo json_encode([
         'success' => true,
         'message' => 'Tutorial marked as completed, you can now play!',
-        'xp_earned' => $completionReward['xp'],
-        'pi_earned' => $completionReward['pi']
+        'xp_earned' => $xpEarned,
+        'pi_earned' => $piEarned
     ]);
 
 } catch (Exception $e) {
