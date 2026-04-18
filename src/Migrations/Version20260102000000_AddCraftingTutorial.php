@@ -88,13 +88,13 @@ final class Version20260102000000_AddCraftingTutorial extends AbstractMigration
 
         foreach ($steps as $step) {
             [$stepId, $nextStep, $stepNumber, $stepType, $title, $text, $xpReward] = $step;
-            $nextStepSql = $nextStep ? "'{$nextStep}'" : 'NULL';
 
-            $this->addSql("
-                INSERT INTO tutorial_steps (version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active)
-                VALUES ('2.0.0-craft', '{$stepId}', {$nextStepSql}, {$stepNumber}, '{$stepType}', '{$title}', '{$text}', {$xpReward}, 1)
-                ON DUPLICATE KEY UPDATE next_step = VALUES(next_step), title = VALUES(title), text = VALUES(text)
-            ");
+            $this->addSql(
+                "INSERT INTO tutorial_steps (version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active)
+                 VALUES ('2.0.0-craft', ?, ?, ?, ?, ?, ?, ?, 1)
+                 ON DUPLICATE KEY UPDATE next_step = VALUES(next_step), title = VALUES(title), text = VALUES(text)",
+                [$stepId, $nextStep, $stepNumber, $stepType, $title, $text, $xpReward]
+            );
         }
 
         // Note: Tutorial step UI, validation, and prerequisite configurations
