@@ -235,6 +235,17 @@ class TutorialUI {
      * @param {boolean} showFeedbackOnFailure - If true, show hint and shake when validation fails (for manual button clicks)
      */
     async next(validationData = {}, skipUIUpdate = false, showFeedbackOnFailure = false) {
+        /* Re-entrancy guard: rapid double-clicks on "Suivant" or two
+         * notifyAction() events firing in the same frame would otherwise
+         * launch parallel POSTs to /api/tutorial/advance.php, awarding
+         * duplicate step XP and racing the step pointer past the next step.
+         */
+        if (this.isAdvancing) {
+            console.log('[TutorialUI] next() already in progress; ignoring duplicate call');
+            return false;
+        }
+        this.isAdvancing = true;
+
         try {
             console.log('[TutorialUI] Advancing from step:', this.currentStep);
 
@@ -335,6 +346,8 @@ class TutorialUI {
             console.error('[TutorialUI] Advance error', error);
             alert(`Erreur lors de l'avancement du tutoriel: ${error.message || 'Erreur inconnue'}\n\nSi le problème persiste, essayez de quitter et reprendre le tutoriel.`);
             return false;
+        } finally {
+            this.isAdvancing = false;
         }
     }
 
