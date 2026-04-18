@@ -136,9 +136,18 @@ cypress_tutorial_job:
     # Wait for the mariadb service to accept connections (cold-start can
     # take a few seconds before the daemon listens).
     - until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" >/dev/null 2>&1; do echo "waiting for mariadb..."; sleep 2; done
-    # Seed the source database — init_test_from_dump.sh clones from `aoo4`
-    # into `aoo4_test`, so the schema + data must exist first.
+    # Seed the source database. Two layers:
+    #  1. db/init_noupdates.sql — base schema + reference data;
+    #  2. Doctrine migrations — adds the tutorial_* tables (Version2025-
+    #     1127000000_CreateCompleteTutorialSystem and the crafting tutorial
+    #     follow-up). Without this, init_test_from_dump.sh's INSERTs into
+    #     tutorial_steps fail with ERROR 1146.
     - mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 < db/init_noupdates.sql
+    - vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration
+    # Sanity probe the data fixtures the Cypress spec depends on. If
+    # `make setup-ci-env` failed silently this surfaces it before the
+    # spec hits the API.
+    - ls datas/public/races/ | head -5
     # Serve the app to Cypress in the background. The base image is the
     # PHP CLI (no Apache); php -S is the simplest way to expose the app
     # at http://localhost which is what cypress.config.js targets when
