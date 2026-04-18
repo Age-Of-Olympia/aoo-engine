@@ -263,63 +263,137 @@
 
 ## Rollback Plan
 
-### If Critical Issues Detected:
+### When to Rollback (Triggers)
 
-**Immediate Rollback:**
-- [ ] Disable tutorial feature flag:
-  ```php
-  const TUTORIAL_ENABLED = false;
-  ```
+Rollback is justified when **any** of these thresholds is sustained for ≥1 hour
+after deploy:
 
-**Full Rollback:**
-- [ ] Revert code deployment:
+| Metric | Threshold | Source |
+|---|---|---|
+| Tutorial API error rate | > 5% of requests to `/api/tutorial/*` | apache logs / monitoring dashboard |
+| Tutorial completion rate | < 20% of started sessions | `tutorial_progress` query (see Monitoring Queries below) |
+| Fatal `error_log` rate | > 10/hour with `[Tutorial...]` prefix | apache error log |
+| Player-reported regression | ≥ 3 reports of stuck/broken tutorial | support channel |
+
+If less severe (slow but working), prefer to debug in place rather than roll back.
+
+### Immediate Rollback (Disable, do not redeploy)
+
+Most issues can be contained by disabling the new tutorial without touching code:
+
+1. **Toggle feature flag OFF.** Edit `config.php`:
+   ```php
+   const TUTORIAL_V2_ENABLED = false;
+   ```
+   New players fall back to the legacy tutorial path immediately. No deploy needed
+   (PHP picks up the constant change on next request).
+
+2. **Drain in-flight sessions** (sessions started before the flag flip will keep
+   running until the player completes/cancels — usually within minutes). Two
+   options:
+   - **Soft drain (recommended)**: leave running, let players finish naturally.
+     New players use legacy tutorial. The two systems coexist by design.
+   - **Hard drain (only if the bug is data-corrupting)**: force-complete all
+     active sessions:
+     ```sql
+     UPDATE tutorial_progress
+     SET completed = 1, completed_at = NOW(), tutorial_mode = 'practice'
+     WHERE completed = 0;
+     ```
+     Then run the cleanup cron immediately:
+     ```bash
+     php /var/www/html/scripts/tutorial/cleanup_orphans.php --hours=0
+     php /var/www/html/scripts/tutorial/cleanup_orphaned_instances.php
+     ```
+
+3. **Verify legacy tutorial still works** — register a fresh test account; the
+   legacy "Commencer le tutoriel" flow should engage. If it does not, the
+   feature-flag fallback is broken — escalate before further deploys.
+
+### Full Code Rollback (Last Resort)
+
+Only when the above does not contain the issue (e.g., the migration itself is
+corrupting data):
+
+- [ ] `git checkout <previous-stable-tag>` and redeploy.
+- [ ] **DO NOT** drop tutorial tables — preserves data for post-mortem.
+- [ ] Down-migrate only if schema is incompatible:
   ```bash
-  git checkout v4.1.0-previous-stable
-  # Redeploy
+  vendor/bin/doctrine-migrations migrate prev --no-interaction
   ```
+- [ ] Run cleanup script as in step 2 above.
 
-- [ ] **DO NOT** drop tutorial tables (preserves data for debugging)
+## Monitoring Queries
 
-- [ ] **DO** clean up orphaned data:
-  ```sql
-  UPDATE tutorial_players SET is_active = 0, deleted_at = NOW() WHERE is_active = 1;
-  UPDATE tutorial_progress SET completed = 1, completed_at = NOW() WHERE completed = 0;
-  -- Run enemy cleanup via admin dashboard
-  ```
+Run these against the production DB (read-only) to feed a dashboard or
+on-demand health check.
+
+**Sessions in last 24h, by outcome:**
+```sql
+SELECT
+    CASE
+        WHEN completed = 1 THEN 'completed'
+        WHEN created_at < NOW() - INTERVAL 24 HOUR THEN 'abandoned'
+        ELSE 'in_progress'
+    END AS status,
+    COUNT(*) AS n
+FROM tutorial_progress
+WHERE created_at > NOW() - INTERVAL 24 HOUR
+GROUP BY status;
+```
+
+**Drop-off funnel by step (last 7 days):**
+```sql
+SELECT current_step, COUNT(*) AS stuck_at
+FROM tutorial_progress
+WHERE completed = 0
+  AND created_at > NOW() - INTERVAL 7 DAY
+GROUP BY current_step
+ORDER BY stuck_at DESC;
+```
+
+**Average completion time (completed sessions only, last 7 days):**
+```sql
+SELECT
+    tutorial_version,
+    COUNT(*) AS completed,
+    AVG(TIMESTAMPDIFF(MINUTE, created_at, completed_at)) AS avg_minutes
+FROM tutorial_progress
+WHERE completed = 1
+  AND completed_at > NOW() - INTERVAL 7 DAY
+GROUP BY tutorial_version;
+```
+
+**Active orphan accumulation (table-growth canary):**
+```sql
+SELECT COUNT(*) AS orphans_over_24h
+FROM tutorial_progress
+WHERE completed = 0
+  AND created_at < NOW() - INTERVAL 24 HOUR;
+```
+A non-trivial value indicates the cleanup cron is not running — investigate.
 
 ## Maintenance Tasks
 
-### Weekly Cleanup (Automated via Cron)
+### Daily Cleanup (Automated via Cron)
 
-```bash
-# Add to crontab (runs every Monday at 3am)
-0 3 * * 1 php /var/www/html/scripts/tutorial/cleanup_orphans.php
+The two cleanup scripts are complementary — schedule both:
+
+```cron
+# 3:00 — clean up abandoned sessions (tutorial_progress + tutorial_players + tutorial_enemies)
+0 3 * * * /usr/bin/php /var/www/html/scripts/tutorial/cleanup_orphans.php
+
+# 3:05 — clean up orphaned map instances (tut_<uuid> plans + their coords)
+5 3 * * * /usr/bin/php /var/www/html/scripts/tutorial/cleanup_orphaned_instances.php
 ```
 
-Create `/var/www/html/scripts/tutorial/cleanup_orphans.php`:
-```php
-<?php
-require_once(__DIR__ . '/../../config.php');
+`cleanup_orphans.php` accepts `--hours=N` (default 24, threshold for considering
+a session abandoned), `--dry-run`, and `--quiet`. Both scripts emit one JSON
+summary line to stdout suitable for log scraping; check exit code (0 = ok,
+1 = partial failure).
 
-$db = new Classes\Db();
-$em = App\EntityManagerFactory::getEntityManager();
-$conn = $em->getConnection();
-
-// Clean up completed sessions older than 7 days
-$sql = 'DELETE FROM tutorial_enemies
-        WHERE tutorial_session_id IN (
-            SELECT tutorial_session_id FROM tutorial_progress
-            WHERE completed = 1 AND completed_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
-        )';
-$db->exe($sql);
-
-// Clean up abandoned sessions (inactive > 24 hours)
-$sql2 = 'UPDATE tutorial_progress SET completed = 1, completed_at = NOW()
-         WHERE completed = 0 AND started_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)';
-$db->exe($sql2);
-
-echo "Cleanup completed\n";
-```
+To verify the cron is doing its job, run the "Active orphan accumulation"
+monitoring query above — it should stay near 0.
 
 ### Monthly Review
 
