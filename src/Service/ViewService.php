@@ -43,6 +43,7 @@ class ViewService {
     private $localOffsetY = 0;
     private $localCenterX = 0;
     private $localCenterY = 0;
+    private $localBoundsAvailable = false;
 
     public function __construct($db, $playerX = null, $playerY = null, $playerZ = null, $playerId = null, $plan = 'olympia') {
         $this->db = $db;
@@ -75,13 +76,21 @@ class ViewService {
                 // Local map
                 $planData = $this->getPlanData($this->currentPlan);
                 if (!$planData) {
-                    throw new Exception("Plan data not found for: " . $this->currentPlan);
+                    error_log("Map bounds: plan data not found for: " . $this->currentPlan);
+                    return; // Pas de carte locale disponible, mais la carte monde reste fonctionnelle
                 }
                 if (!isset($planData->z_levels[$this->playerZ])) {
-                    throw new Exception("Z-level {$this->playerZ} not found in plan: " . $this->currentPlan);
+                    error_log("Map bounds: z-level {$this->playerZ} not found in plan: " . $this->currentPlan . " (carte locale non configurée pour ce niveau)");
+                    return; // Ce niveau Z n'a pas de carte configurée, la carte monde reste fonctionnelle
                 }
 
                 $zLevel = $planData->z_levels[$this->playerZ];
+
+                if (!empty($zLevel->MapUnavailable)) {
+                    error_log("Map bounds: z-level {$this->playerZ} explicitement sans carte (MapUnavailable) dans le plan: " . $this->currentPlan);
+                    return; // Carte volontairement absente pour ce niveau
+                }
+
                 $this->localMinX = $zLevel->visibleBoundsMinX;
                 $this->localMaxX = $zLevel->visibleBoundsMaxX;
                 $this->localMinY = $zLevel->visibleBoundsMinY;
@@ -90,7 +99,7 @@ class ViewService {
                 // Scale calculations
                 $rangeX = (float)($this->localMaxX - $this->localMinX);
                 $rangeY = (float)($this->localMaxY - $this->localMinY);
-                
+
                 // Fixed width for local map
                 $this->localMapWidth = $this->localWidth;
 
@@ -105,11 +114,18 @@ class ViewService {
                 // Offset to center the map
                 $this->localOffsetX = ($this->localMapWidth / 2) - (($this->localCenterX - $this->localMinX) * $this->localScaleX);
                 $this->localOffsetY = ($this->localMapHeight / 2) - (($this->localCenterY - $this->localMinY) * $this->localScaleY);
+
+                $this->localBoundsAvailable = true;
             }
         } catch (Exception $e) {
             error_log("Map bounds error: " . $e->getMessage());
             throw new Exception("Erreur dans la génération de la map, merci de faire remonter le bug à l'équipe de dev");
         }
+    }
+
+    public function isLocalMapAvailable(): bool
+    {
+        return $this->localBoundsAvailable;
     }
     
     private function transformX($x, $mapType = "global") {
@@ -669,6 +685,9 @@ class ViewService {
     }
 
     public function generateLocalPlayersLayer() {
+        if (!$this->localBoundsAvailable) {
+            return null; // Pas de carte configurée pour ce niveau Z
+        }
         $layer = $this->createLayer($this->localMapWidth, $this->localMapHeight);
         $zCondition = $this->currentPlan === $this->worldPlan 
             ? "AND c.z = 0" 
@@ -811,6 +830,9 @@ class ViewService {
     }
 
     public function generateLocalPlayerLayer() {
+        if (!$this->localBoundsAvailable) {
+            return null; // Pas de carte configurée pour ce niveau Z
+        }
         $bounds = $this->calculateLocalPlayerLayerBounds();
         $mapType = "local";
 
@@ -904,10 +926,12 @@ class ViewService {
         $planData = $this->getPlanData($this->currentPlan);
         if ($planData && isset($planData->z_levels[$this->playerZ])) {
             $zLevel = $planData->z_levels[$this->playerZ];
-            $this->localMinX = $zLevel->visibleBoundsMinX;
-            $this->localMaxX = $zLevel->visibleBoundsMaxX;
-            $this->localMinY = $zLevel->visibleBoundsMinY;
-            $this->localMaxY = $zLevel->visibleBoundsMaxY;
+            if (empty($zLevel->MapUnavailable)) {
+                $this->localMinX = $zLevel->visibleBoundsMinX;
+                $this->localMaxX = $zLevel->visibleBoundsMaxX;
+                $this->localMinY = $zLevel->visibleBoundsMinY;
+                $this->localMaxY = $zLevel->visibleBoundsMaxY;
+            }
         }
     
         // The player layer must have the same dimensions as the other local map layers
@@ -1005,13 +1029,18 @@ class ViewService {
         if (isset($planData->z_levels)) {
             $zLevels = [];
             foreach ($planData->z_levels as $zLevel) {
-                $zLevels[$zLevel->z] = (object)[
-                    'name' => $zLevel->{'z-name'} ?? "Niveau " . $zLevel->z,
-                    'visibleBoundsMinX' => $zLevel->visibleBoundsMinX,
-                    'visibleBoundsMaxX' => $zLevel->visibleBoundsMaxX,
-                    'visibleBoundsMinY' => $zLevel->visibleBoundsMinY,
-                    'visibleBoundsMaxY' => $zLevel->visibleBoundsMaxY
-                ];
+                $entry = ['name' => $zLevel->{'z-name'} ?? "Niveau " . $zLevel->z];
+
+                if (!empty($zLevel->MapUnavailable)) {
+                    $entry['MapUnavailable'] = true;
+                } else {
+                    $entry['visibleBoundsMinX'] = $zLevel->visibleBoundsMinX;
+                    $entry['visibleBoundsMaxX'] = $zLevel->visibleBoundsMaxX;
+                    $entry['visibleBoundsMinY'] = $zLevel->visibleBoundsMinY;
+                    $entry['visibleBoundsMaxY'] = $zLevel->visibleBoundsMaxY;
+                }
+
+                $zLevels[$zLevel->z] = (object)$entry;
             }
             
             return (object)[

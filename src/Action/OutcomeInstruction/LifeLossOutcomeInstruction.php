@@ -176,7 +176,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
                 $bonusDefenseText = ' + ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
             }
             if($actorEffetAgressivite > 0){
-                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agresssivité)';
+                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agressivité)';
             }
             if($actorEffetFaiblesse > 0){
                 $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (Faiblesse)';
@@ -216,7 +216,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             }
 
             if($isSiphon){
-                $siphon = floor($totalDamages/2);
+                $siphon = floor($totalDamages/3);
                 $actor->putBonus(array('pm'=>$siphon));
                 $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $actor->data->name . ' siphone ' . $siphon . ' PM.';
             }

@@ -5,15 +5,21 @@ use App\Service\OutcomeInstructionService;
 use Classes\Str;
 
 if (isset($_GET['forget']) && !empty($_POST['spell'])) {
-
-    if (!$player->have_spell($_POST['spell'])) {
-        exit('error have spell');
+    if ($player->have_spell($_POST['spell'])) {
+        $player->end_spell($_POST['spell']);
+        
+        ob_clean(); 
+        exit('success');
     }
-    $player->end_spell($_POST['spell']);
+}
 
-    echo Str::minify(ob_get_clean());
-
-    exit();
+if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
+    if ($player->have_action_passive($_POST['passive'])) {
+        $player->end_action_passive($_POST['passive']);
+        
+        ob_clean(); 
+        exit('success');
+    }
 }
 
 echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
@@ -26,6 +32,11 @@ $buttonStyle = '';
 $maxColSpan = 7;
 if(isset($_GET['forget'])){
     $maxColSpan++;
+}
+
+$maxColSpanP = 7;
+if(isset($_GET['forget_p'])){
+    $maxColSpanP++;
 }
 
 $numberOfSpellsAvailable = NUMBER_MAX_COMP - $spellsN;
@@ -192,7 +203,12 @@ $passives = $player->getPassives($player->id);
 if (!empty($passives)) {
     echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
     echo '<tr><th colspan="6" style="background-color: rgba(0,0,139,0.1);"><font color="blue">Compétences Passives Possédées</font></th></tr>';
-    echo '<tr><th colspan="2">Passif</th><th>Description</th><th>Catégorie</th><th>Niveau</th></tr>';
+    echo '<tr><th colspan="2">Passif</th><th>Description</th><th>Catégorie</th><th>Niveau</th>';
+    
+    if(isset($_GET['forget_p'])){
+        echo '<th>Action</th>';
+    }
+    echo '</tr>';
 
     foreach($passives as $passive) {
 
@@ -204,9 +220,39 @@ if (!empty($passives)) {
             <td align="left"><b>'. $passive->getDisplayName() .'</b></td>
             <td align="center">'. $passive->getText() .'</td>
             <td align="center"><strong>'. $passive->getCategoryRender() .'</strong></td>
-            <td align="center" style="font-size: 0.9em; max-width: 300px;">'. $passive->getLevel() .'</td>
-        </tr>';
+            <td align="center" style="font-size: 0.9em; max-width: 300px;">'. $passive->getLevel() .'</td>';
+        
+        if(isset($_GET['forget_p'])){
+
+            echo '
+            <td valign="top">
+                <input
+                    type="button"
+                    class="forget"
+                    data-passive="'. $passive->getName() .'"
+                    data-name="'. $passive->getDisplayName() .'"
+                    value="Oublier"
+                    style="height: 50px;"
+                    />
+            </td>
+            ';
+        }
+
+        echo '</tr>';
     }
+
+    if(!isset($_GET['forget_p'])){
+
+    echo '
+    <tr>
+        <td colspan="'.$maxColSpanP.'" align="right">
+
+            <a href="upgrades.php?spells&forget_p"><button '. $buttonStyle .'>Oublier un passif</button></a>
+        </td>
+    </tr>
+    ';
+    }
+
     echo '</table>';
 }
 

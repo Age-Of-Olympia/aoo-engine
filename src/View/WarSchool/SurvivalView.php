@@ -99,6 +99,8 @@ class SurvivalView
                   </thead>';
             echo '<tbody>';
 
+            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
+
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
@@ -109,8 +111,6 @@ class SurvivalView
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
-                $isFull = ($nb_comp >= NUMBER_MAX_COMP);
-                $disabled = ($playerGold < $price) ? 'disabled' : '';
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
                 $imageSrc = file_exists($imagePath) ? $actionName : 'todo';
@@ -186,7 +186,6 @@ class SurvivalView
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';
                 
                 $price = $actionPassiveService->getPrice($passive->getLevel());
-                $disabled = ($playerGold < $price) ? 'disabled' : '';
 
                 $imagePath = 'img/spells/' . $passiveName . '.jpeg';
                 $imageSrc = file_exists($imagePath) ? $passiveName : 'todo';
@@ -217,7 +216,9 @@ class SurvivalView
                             Impossible à apprendre
                         </button>';
                 } else {
-                    echo '<button class="create buy-skill-btn" data-id="' . $passiveName . '" data-type="passive" ' . $disabled . '>Acheter : ' . $price . ' Po</button>';
+                    $disabled = (($playerGold < $price) || $isFull) ? 'disabled' : '';
+                    $btnText = $isFull ? 'Max atteint' : 'Acheter : ' . $price . ' Po';
+                    echo '<button class="create buy-skill-btn" data-id="' . $passiveName . '" data-type="passive" ' . $disabled . '>' . $btnText . '</button>';
                 }
                 echo '</td>';
 

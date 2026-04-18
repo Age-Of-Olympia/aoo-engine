@@ -42,18 +42,14 @@ if (empty($_GET)) {
 $ui = new Ui('Carte du Monde');
 ob_start();
  function generateLayerCheckbox($name, $value) {
-        echo '<label><input type="checkbox" name="layers[]" value="' . $value . '" ' . 
-               ((!isset($_GET['layers']) || in_array('tiles', $_GET['layers'] ?? [])) ? 'checked' : '') . '> ' . $name . '</label>';
+        $checked = (!isset($_GET['layers']) || in_array($value, $_GET['layers'] ?? [])) ? 'checked' : '';
+        echo '<label><input type="checkbox" name="layers[]" value="' . $value . '" ' . $checked . ' onchange="this.form.submit()"> ' . $name . '</label>';
     }
     function printHell()
     {
         echo '<div class="hell-message" style="text-align: center; margin: 20px 0; padding: 15px; background-color: #330000; border: 1px solid #660000; color: #ff6666;">';
         echo '<h2>Vous êtes aux Enfers</h2>';
-        echo '<p>On va pas vous faire un dessin, vous êtes bien dans le royaume des morts.<br>';
-        echo 'La sortie est en 0,0<br>';
-        echo 'La boutique souvenirs est en 1,1<br>';
-        echo 'L\'amphithéâtre de Perséphone en -10,1<br>';
-        echo 'Et la paillote de Her\'eal en -2,10</p>';
+        echo '<p><em>On ne va pas vous faire un dessin, vous êtes bien dans le royaume des morts.<br>Les cartographes ne s\'aventurent pas ici. Vous devrez trouver votre chemin seul.<br>On sait quand même que la sortie est en 0,0. Une prière ne serait peut-être pas de trop.</em></p>';
         echo '</div>';
     }
 //  Carte globale
@@ -96,8 +92,7 @@ if (!isset($_GET['local'])) {
     generateLayerCheckbox('Tous les joueurs', 'players');
     generateLayerCheckbox('Ma position', 'player');
             
-          echo '<button type="submit">Actualiser la carte</button>
-        </form>
+        echo '</form>
     </div>';
 
     // Récupère les couches sélectionnées ou utilise les valeurs par défaut
@@ -208,23 +203,6 @@ if(isset($_GET['local'])){
             </div>';
         }
         echo '<h1>'. $planJson->name .'</h1>';
-        // Formulaire de sélection des couches
-        echo '<div class="layer-controls" style="margin-bottom: 15px;">
-            <form method="GET" action="map.php" style="display: inline-block;">
-                <input type="hidden" name="local" value="1">
-                <input type="hidden" name="layers[]" value="tiles">
-                <label><input type="checkbox" name="layers[]" value="tiles" checked disabled> Terrain</label>';
-                
-                generateLayerCheckbox('Éléments', 'elements');
-                generateLayerCheckbox('Décor', 'foregrounds');
-                generateLayerCheckbox('Murs', 'walls');
-                generateLayerCheckbox('Routes', 'routes');
-                generateLayerCheckbox('Tous les joueurs', 'players');
-                generateLayerCheckbox('Ma position', 'player');
-               
-                echo '<button type="submit">Actualiser la carte</button>
-            </form>
-        </div>';
 
         // Récupère les couches sélectionnées ou utilise les valeurs par défaut
         $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
@@ -254,6 +232,23 @@ if(isset($_GET['local'])){
                     break;
                 }
             }
+        }
+
+        if ($hasValidLayers) {
+            // Formulaire de sélection des couches
+            echo '<div class="layer-controls" style="margin-bottom: 15px;">
+                <form method="GET" action="map.php" style="display: inline-block;">
+                    <input type="hidden" name="local" value="1">
+                    <input type="hidden" name="layers[]" value="tiles">
+                    <label><input type="checkbox" name="layers[]" value="tiles" checked disabled> Terrain</label>';
+                    generateLayerCheckbox('Éléments', 'elements');
+                    generateLayerCheckbox('Décor', 'foregrounds');
+                    generateLayerCheckbox('Murs', 'walls');
+                    generateLayerCheckbox('Routes', 'routes');
+                    generateLayerCheckbox('Tous les joueurs', 'players');
+                    generateLayerCheckbox('Ma position', 'player');
+                    echo '</form>
+            </div>';
         }
 
         if ($hasValidLayers) {
@@ -325,7 +320,11 @@ if(isset($_GET['local'])){
                     echo '</div>';
                 }
         } else {
-            echo '<p>La carte n\'est pas encore générée.</p>';
+            if (!$viewService->isLocalMapAvailable()) {
+                echo '<div style="padding: 15px; margin: 15px; border: 1px solid #ccc; background: white;"><em>Ces lieux n\'ont pas été cartographiés. Avancez à l\'aveugle... ou faites demi-tour.</em></div>';
+            } else {
+                echo '<p>La carte n\'est pas encore générée.</p>';
+            }
         }
 
         echo Str::minify(ob_get_clean());

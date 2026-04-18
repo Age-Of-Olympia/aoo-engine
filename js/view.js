@@ -76,66 +76,50 @@ $(document).ready(function(){
 
         var $case = $('[x="'+ i +'"][y="'+ j +'"]');
 
-        if($case.not('.case, [data-table="tiles"], [data-table="foregrounds"], [data-table="plants"], [data-table="items"], [data-table="elements"], [data-table="routes"], #go-img, #go-rect, #destroy-img, #destroy-rec')[0]){
-
-
-            if($('.clicked-cases-reseter[data-coords="'+ coords +'"]')[0] != null){
-
-                $('.clicked-cases-reseter[data-coords="'+ coords +'"]').remove();
-                var remove = true;
-            }
-
-
-            if(window.clickedCases[coords] && !remove){
-
-
-                let data = window.clickedCases[coords];
-
-                $('#ajax-data').html(data);
-
-                return false;
-            }
-
-
-            $.ajax({
-                type: "POST",
-                url: 'observe.php',
-                data: {'coords':coords}, // serializes the form's elements.
-                success: function(data)
-                {
-                    // alert(data);
-
-                    console.log('db query');
-
-                    $('#ajax-data').html(data);
-
-                    window.clickedCases[coords] = data;
-                }
-            });
-
-            return false;
-        }
-
-
         let [x, y] = coords.split(',');
 
 
-        // show coords button
-        $('#ajax-data').html('<div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button></div>');
-
-
+        // show go button if applicable
         if($case.hasClass('go')){
-
 
             $('#go-rect')
                 .show()
                 .attr({'x': i, 'y': j})
                 .data('coords', x +','+ y);
 
-            var imgY = j - 20 ;
+            var imgY = j - 20;
 
             $('#go-img').show().attr({'x': i, 'y': imgY});
         }
+
+
+        if($('.clicked-cases-reseter[data-coords="'+ coords +'"]')[0] != null){
+
+            $('.clicked-cases-reseter[data-coords="'+ coords +'"]').remove();
+
+        } else if(window.clickedCases[coords]){
+
+            let data = window.clickedCases[coords];
+
+            $('#ajax-data').html(data);
+
+            return false;
+        }
+
+
+        $.ajax({
+            type: "POST",
+            url: 'observe.php',
+            data: {'coords':coords},
+            success: function(data)
+            {
+                $('#ajax-data').html(data);
+
+                window.clickedCases[coords] = data;
+            }
+        });
+
+        return false;
     });
 
 
