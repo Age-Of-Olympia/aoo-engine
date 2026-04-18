@@ -26,6 +26,9 @@
          <testsuite name="Tools">
             <directory suffix="Test.php">./tests/Tools</directory>
         </testsuite>
+         <testsuite name="Tutorial">
+            <directory suffix="Test.php">./tests/Tutorial</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
