@@ -6,13 +6,18 @@ use Classes\Player;
 use Classes\Str;
 use Classes\Item;
 use App\Service\ActionService;
+use App\Service\ActionPassiveService;
 
 class SpellView
 {
     public static function render(Player $player, Player $target): void
     {
         $actionService = new ActionService();
+        $actionPassiveService = new ActionPassiveService();
         $actions = $actionService->getActionsByCategory('spell');
+
+        // TODO : retirer cette ligne quand la limite sort par les passifs sera ajoutée
+        $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
 
         $playerGold = $player->get_gold();
 
@@ -87,6 +92,9 @@ class SpellView
                   </thead>';
             echo '<tbody>';
 
+            // TODO : retirer cette ligne quand la limite sort par les passifs sera ajoutée
+            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
+
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
@@ -97,7 +105,6 @@ class SpellView
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
-                $disabled = ($playerGold < $price) ? 'disabled' : '';
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
                 $imageSrc = file_exists($imagePath) ? $actionName : 'todo';
@@ -130,8 +137,8 @@ class SpellView
                             Impossible à apprendre
                         </button>';
                 } else {
-                    $disabled = ($playerGold < $price) ? 'disabled' : '';
-                    $btnText = 'Acheter : ' . $price . ' Po';
+                    $disabled = ($playerGold < $price || $isFull) ? 'disabled' : '';
+                    $btnText = $isFull ? 'Max atteint' : 'Acheter : ' . $price . ' Po';
                     echo '<button class="create buy-skill-btn" data-id="' . $actionName . '" data-type="active" ' . $disabled . '>' . $btnText . '</button>';
                 }
                 echo '</td>';

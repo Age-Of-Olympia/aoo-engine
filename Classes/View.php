@@ -399,6 +399,7 @@ class View{
                                 y="'. floor($y) .'"
 
                                 style="opacity: '. $e .';"
+                                pointer-events="none"
 
                                 href="'. $img .'"
                                 />

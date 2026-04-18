@@ -21,13 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $results = $viewService->generateGlobalMap($layers);
             
             if (!empty($results)) {
-                $_SESSION['flash'] = ['type' => 'success', 'message' => 'World map layers generated successfully'];
+                $_SESSION['flash'] = ['type' => 'success', 'message' => 'Couches de la carte monde générées avec succès'];
                 $_SESSION['generated_layers'] = $results;
             } else {
-                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Failed to generate world map layers'];
+                $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Échec de la génération des couches'];
             }
         } catch (Exception $e) {
-            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Error generating world map: ' . $e->getMessage()];
+            $_SESSION['flash'] = ['type' => 'danger', 'message' => 'Erreur lors de la génération : ' . $e->getMessage()];
         }
     }
     
@@ -65,9 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Format detailed message
-        $message = "<strong>Cleanup Report:</strong><br>";
-        $message .= "<strong>Deleted:</strong> " . (count($report['deleted']) ? implode(', ', $report['deleted']) : 'none') . "<br>";
-        $message .= "<strong>Kept:</strong> " . implode(', ', $report['kept']);
+        $message = "<strong>Rapport de nettoyage :</strong><br>";
+        $message .= "<strong>Supprimés :</strong> " . (count($report['deleted']) ? implode(', ', $report['deleted']) : 'aucun') . "<br>";
+        $message .= "<strong>Conservés :</strong> " . implode(', ', $report['kept']);
         
         $_SESSION['flash'] = ['type' => 'success', 'message' => $message, 'html' => true];
     }
@@ -109,40 +109,46 @@ ob_start();
 ?>
 
 <div class="container">
-    <h1>Map Management</h1>
-    
+    <h3>Gestion de la carte monde</h3>
+
     <?php if (isset($_SESSION['flash'])): ?>
         <div class="alert alert-<?=$_SESSION['flash']['type']?>" role="alert">
             <?= $_SESSION['flash']['html'] ?? false ? $_SESSION['flash']['message'] : htmlspecialchars($_SESSION['flash']['message']) ?>
         </div>
         <?php unset($_SESSION['flash']); ?>
     <?php endif; ?>
-    
-    <div class="card mt-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2>World Map Layers</h2>
-            <form method="post" class="d-inline">
-                <button type="submit" name="cleanup_maps" class="btn btn-warning">
-                    <i class="fas fa-broom"></i> Cleanup Old Maps
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Nettoyer les anciennes cartes</h5>
+            <form method="post" class="d-flex align-items-center gap-3">
+                <button type="submit" name="cleanup_maps" class="btn btn-warning btn-sm">
+                    <i class="fas fa-broom"></i> Nettoyer
                 </button>
+                <small class="text-muted">Supprime les anciennes versions des couches PNG, en conservant uniquement la plus récente pour chaque couche.</small>
             </form>
         </div>
+    </div>
+
+    <div class="card mt-3">
         <div class="card-body">
-            <form method="post" class="mb-3">
-                <button type="submit" name="show_latest" class="btn btn-info">
-                    <i class="fas fa-eye"></i> Show Latest World Map
-                </button>
-            </form>
-            
-            <form method="post">
-                <button type="submit" name="generate_global" class="btn btn-primary">
-                    <i class="fas fa-sync"></i> Generate All World Map Layers
-                </button>
-            </form>
-            
+            <h5 class="card-title">Générer la carte monde</h5>
+            <div class="d-flex gap-2">
+                <form method="post">
+                    <button type="submit" name="generate_global" class="btn btn-primary btn-sm">
+                        <i class="fas fa-sync"></i> Générer toutes les couches
+                    </button>
+                </form>
+                <form method="post">
+                    <button type="submit" name="show_latest" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-eye"></i> Afficher la dernière version
+                    </button>
+                </form>
+            </div>
+
             <?php if (isset($_SESSION['generated_layers'])): ?>
                 <div class="mt-4">
-                    <h4>Generated Layers:</h4>
+                    <h6 class="text-muted">Couches générées :</h6>
                     <div class="row">
                         <?php foreach ($_SESSION['generated_layers'] as $layer => $data): ?>
                             <div class="col-md-4 mb-3">
@@ -151,7 +157,7 @@ ob_start();
                                     <div class="card-body">
                                         <h5 class="card-title text-capitalize"><?=$layer?></h5>
                                         <p class="text-muted small">
-                                            Generated: <?=date('Y-m-d H:i:s', strtotime($data['timestamp']))?>
+                                            Généré le : <?=date('Y-m-d H:i:s', strtotime($data['timestamp']))?>
                                         </p>
                                     </div>
                                 </div>
@@ -166,5 +172,5 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Map Management', $content);
+echo admin_layout('Gestion carte monde', $content);
 ?>

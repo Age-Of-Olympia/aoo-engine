@@ -43,6 +43,7 @@ class FoiView
             WHERE map_triggers.params = g.id AND map_triggers.name = "altar"
         )
         GROUP BY g.id, top.id, top.name
+        HAVING nb_fideles > 0 AND total_foi > 0
         ORDER BY total_foi DESC
         ';
 

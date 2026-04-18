@@ -158,4 +158,28 @@ class PlayerPassiveService
         return $result !== null;
     }
 
+    public function removePassiveByPlayerId(int $playerId, int $passiveId): bool
+    {
+        $repo = $this->entityManager->getRepository(PlayerPassive::class);
+    
+        $passive = $this->entityManager->getReference(ActionPassive::class, $passiveId);
+
+        $playerPassive = $repo->findOneBy([
+            'playerId' => $playerId,
+            'passive'  => $passive
+        ]);
+
+        if ($playerPassive !== null) {
+            try {
+                $this->entityManager->remove($playerPassive);
+                $this->entityManager->flush();
+                return true; 
+            } catch (\Exception $e) {
+                return false; 
+            }
+        }
+        
+            return false; 
+    }
+
 }

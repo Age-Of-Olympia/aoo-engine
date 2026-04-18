@@ -39,7 +39,7 @@ function admin_layout($title, $content) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$title - Admin of Olympia</title>
     <link href="/css/main.min.css?v=20251128" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         /* Reset body constraints from main.min.css */
         body {
@@ -401,7 +401,9 @@ function admin_layout($title, $content) {
         .mb-2 { margin-bottom: 0.5rem; }
         .mb-3 { margin-bottom: 1rem; }
         .mb-4 { margin-bottom: 1.5rem; }
+        .mt-3 { margin-top: 1rem; }
         .mt-4 { margin-top: 1.5rem; }
+        .img-fluid { max-width: 100%; height: auto; }
 
         @media (max-width: 768px) {
             .col-md-3, .col-md-4, .col-md-6 { flex: 0 0 100%; }

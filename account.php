@@ -80,7 +80,7 @@ $options = array(
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
-    'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Invisible dans les destinataires d'échanges ou de missives</sup>",
+    'anonymeMode'=>"Mode Incognito/Anonyme (PNJ)<br /><sup>Non trouvable dans les recherches de destinataires</sup>",
 );
 
 // Conditionally add tutorial replay option
@@ -282,7 +282,7 @@ echo '
 
 ?>
 <script>
-    window.alreadyChanged = <?php if($player->have_option('alreayChanged')) echo 1; else echo 0; ?>;
+    window.alreadyChanged = <?php if($player->have_option('alreadyChanged')) echo 1; else echo 0; ?>;
     window.oldName = "<?php echo $player->data->name ?>";
 </script>
 <script src="js/account.js"></script>

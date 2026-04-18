@@ -165,9 +165,9 @@ if(!empty($_POST['race'])){
             $gold->add_item($player, 100);
         }
 
-
+        // refresh general classement
         Player::refresh_list();
-
+        @unlink('datas/public/classements/general.html');
 
         // welcome missive (copy from player 1 if exists)
         $sql = 'SELECT name FROM players_forum_missives WHERE player_id = 1 ORDER BY name LIMIT 1';

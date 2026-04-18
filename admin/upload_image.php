@@ -8,4 +8,4 @@ ob_start();
 UploadImageForm::renderForm();
 
 $content = ob_get_clean();
-echo admin_layout('Image Upload ', $content);
+echo admin_layout('Upload d\'images', $content);
