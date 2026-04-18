@@ -1,4 +1,4 @@
-.PHONY: all phpstan test test-ci coverage testf setup-ci-env
+.PHONY: all phpstan test test-ci coverage testf setup-ci-env coverage-report migration-status migration-check new-sql stale-branches release-check cypress-tutorial-ci
 
 PHPUNIT = XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox
 
@@ -35,6 +35,32 @@ phpstan-ci:
 coverage:
 	mkdir -p tmp/coverage
 	XDEBUG_MODE=coverage ./vendor/bin/phpunit --coverage-html tmp/coverage --testdox
+
+coverage-report:
+	bash scripts/tools/test-coverage-report.sh
+
+migration-status:
+	bash scripts/tools/migration-helper.sh status
+
+migration-check:
+	bash scripts/tools/migration-helper.sh check
+
+new-sql:
+	bash scripts/tools/migration-helper.sh new-sql $(word 2,$(MAKECMDGOALS))
+
+stale-branches:
+	bash scripts/tools/stale-branches.sh
+
+release-check:
+	bash scripts/tools/release-checklist.sh
+
+cypress-tutorial-ci:
+	bash scripts/testing/reset_test_database.sh
+	CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
+		--spec "cypress/e2e/tutorial-production-ready.cy.js" \
+		--browser electron \
+		--reporter junit \
+		--reporter-options "mochaFile=cypress-report.xml,toConsole=true"
 
 sqlmap-login:
 	python3 gitlab-ci/sqlmap-dev/sqlmap.py -u "http://localhost:80/login.php" \
