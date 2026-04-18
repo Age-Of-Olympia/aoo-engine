@@ -33,13 +33,44 @@ class TutorialHelper
                 return $tutorialPlayerId;
             }
 
-            // Tutorial player was deleted/cleaned up - clear stale session
-            error_log("[TutorialHelper] Tutorial player {$tutorialPlayerId} no longer exists - clearing stale session");
+            // Stale session detected: the tutorial_player_id in $_SESSION
+            // points at a row that no longer exists in `players`. This is
+            // the TOCTOU signal D1 in docs/tutorial-p0-deferred-design.md
+            // wants to quantify before deciding on a locking strategy.
+            // Emit one structured line per occurrence so the divergence
+            // rate can be estimated by grepping production logs:
+            //   grep '"event":"tutorial_session_stale"' apache_error.log | wc -l
+            self::logTelemetry('tutorial_session_stale', [
+                'tutorial_player_id'  => $tutorialPlayerId,
+                'main_player_id'      => (int) ($_SESSION['playerId'] ?? 0),
+                'tutorial_session_id' => $_SESSION['tutorial_session_id'] ?? null,
+            ]);
             self::exitTutorialMode();
         }
 
         // Otherwise use main player ID
         return (int) ($_SESSION['playerId'] ?? 0);
+    }
+
+    /**
+     * Emit a single JSON line of structured telemetry to error_log.
+     *
+     * Format: `{"event":"...","ts":"...","...":...}` — one line, no trailing
+     * newline (error_log adds it). Designed to be grep-friendly:
+     *   grep '"event":"<name>"' apache_error.log
+     *
+     * @param string               $event   Discriminator key for log scrapers
+     * @param array<string, mixed> $context Additional fields to include
+     */
+    private static function logTelemetry(string $event, array $context): void
+    {
+        $line = json_encode(array_merge(
+            ['event' => $event, 'ts' => date('c')],
+            $context
+        ));
+        if ($line !== false) {
+            error_log($line);
+        }
     }
 
     /**
