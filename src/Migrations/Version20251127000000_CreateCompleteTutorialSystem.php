@@ -464,6 +464,16 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
          * and ensures they cannot earn XP/PI by doing the tutorial
          * ================================================================ */
 
+        // The four "_at" columns on tutorial_progress are TIMESTAMPs.
+        // players.registerTime is an int(11) Unix epoch and MySQL strict
+        // mode rejects integer-as-string for TIMESTAMP columns
+        // ("Incorrect datetime value: '1736117307'"). The semantic intent
+        // here is just "mark existing players as having completed the
+        // tutorial so they don't see the button" — the historical
+        // registration date is irrelevant for that marker, so NOW() is
+        // the right placeholder. Avoids FROM_UNIXTIME() edge cases for
+        // registerTime=0 rows (TIMESTAMP cannot represent 1970-01-01
+        // 00:00:00 in some configurations).
         $this->addSql("
             INSERT INTO tutorial_progress (player_id, tutorial_session_id, current_step, total_steps, completed, started_at, completed_at, tutorial_mode, tutorial_version, xp_earned, data, created_at, updated_at)
             SELECT
@@ -472,14 +482,14 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 '30.0' as current_step,
                 29 as total_steps,
                 TRUE as completed,
-                registerTime as started_at,
-                registerTime as completed_at,
+                NOW() as started_at,
+                NOW() as completed_at,
                 'first_time' as tutorial_mode,
                 '1.0.0' as tutorial_version,
                 0 as xp_earned,
                 '{}' as data,
-                registerTime as created_at,
-                registerTime as updated_at
+                NOW() as created_at,
+                NOW() as updated_at
             FROM players
             WHERE id > 0
             ON DUPLICATE KEY UPDATE player_id=player_id
@@ -808,7 +818,17 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
 
     public function isTransactional(): bool
     {
-        // Run in transaction for safety
-        return true;
+        // MUST be false for this migration. It creates 15 DDL tables.
+        // MariaDB/MySQL implicitly commits the active transaction at every
+        // DDL statement, which destroys the savepoint Doctrine creates per
+        // migration. Returning true here makes `doctrine-migrations migrate`
+        // fail with "SAVEPOINT DOCTRINE_2 does not exist" at the second
+        // CREATE TABLE.
+        //
+        // The "safety" the previous comment hoped for does not exist on
+        // MySQL with DDL anyway: there is no atomic rollback across CREATE
+        // TABLE statements. Atomicity must be achieved by making each
+        // CREATE TABLE idempotent (we use IF NOT EXISTS throughout).
+        return false;
     }
 }
