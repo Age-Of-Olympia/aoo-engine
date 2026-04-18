@@ -1,0 +1,117 @@
+# `Classes\Player` Dismantling Roadmap
+
+Phased plan to gradually move responsibilities OUT of the legacy
+`Classes\Player` god class and INTO the modern entity hierarchy
+(`PlayerEntity` + `RealPlayer` / `TutorialPlayerEntity` / `NPCEntity`) plus
+dedicated services.
+
+**Authored**: 2026-04 (during `tutorial-refactoring` branch work).
+
+## Reality check
+
+- `Classes/Player.php` is **2,501 LOC** (≈110 KB), all raw SQL — no Doctrine. Still a god class by any reasonable measure: ~80 public methods, ~110 raw SQL call sites internally.
+- Constructor is **lazy**: stores `$id`, instantiates 5 collaborator services (`PlayerService`, `PlayerPassiveService`, `PlayerEffectService`, `PlayerBonusService`, `ActionPassiveService`), does NOT load row data. Row data is loaded on first `get_data()` / `get_caracs()` / `getCoords()` call.
+- 87 files reference `Classes\Player`; ~50+ use `new Player(...)`. Patterns: root controllers, `src/View/**`, `src/Service/**`, console commands, Tutorial code.
+- The entity hierarchy `PlayerEntity` / `RealPlayer` / `TutorialPlayerEntity` / `NPCEntity` is fully **dormant** in production code. Only `tests/Player/PlayerIdSystemTest.php` references it. `TutorialManager` itself uses `Classes\Player`, NOT `TutorialPlayerEntity`.
+- Major method clusters in `Player`: data load (`get_row`, `get_data`, `get_caracs`, `get_upgrades`), coords/movement (`getCoords`, `move_player`, `go`, `move_followers`), generic key-value tables (`have/add/end/get` over `players_options|effects|actions`), inventory/equip (`equip`, `applyEquip…Bonus`, `getEquipedItems`, `getMunition`, `drop`), combat (`death`, `getPush`, `put_kill`, `put_assist`, `distribute_xp`), progression (`put_xp`, `put_pr`, `put_pf`, `putBonus`, `put_upgrade`, `change_god`, `add_quest`), social (`add_follower`, `delete_follower`, `move_followers`, `get_new_mails`, `check_missive_permission`, `check_share_factions`), refresh hooks (`refresh_view/data/invent/kills/caracs`), static helpers (`refresh_list`, `get_player_list`, `clean_players_assists`).
+- Caller usage is **property-heavy**: `$player->id`, `$player->data->X`, `$player->caracs->X`, `$player->coords->X`. Any future wrapper MUST preserve these public properties (or the call site must be rewritten first).
+
+## Phase 0: `PlayerFactory` (DELIVERED)
+
+**Location**: `src/Factory/PlayerFactory.php`.
+
+**API** (all static, matches existing `EntityManagerFactory` style — avoids DI plumbing in legacy controllers):
+
+```php
+PlayerFactory::legacy(int $id): \Classes\Player    // drop-in for `new Player($id)`
+PlayerFactory::active(): \Classes\Player           // tutorial-aware
+PlayerFactory::activeId(): int
+PlayerFactory::entity(int $id): ?PlayerEntity     // Doctrine read-only path
+PlayerFactory::activeEntity(): ?PlayerEntity
+```
+
+**Design rules**:
+
+- **No wrapper object** mixing legacy + entity. Coexistence = two parallel objects sharing the same row, never wrapping each other. A wrapping object would tempt people to add behavior to it, and we'd grow a *third* god class.
+- **Lazy `legacy()`** — same semantics as `new Player($id)`. Callers still call `get_data()` / `get_caracs()` themselves. Preserves drop-in equivalence.
+- **`entity()` is READ-ONLY** for now. Used to start migrating cold reads (rankings, profile pages). Returns `null` on miss instead of `exit()` — kills the legacy `exit('error player id...')` antipattern at the boundary.
+- **Old constructor stays callable.** 50+ call sites; we migrate gradually over many phases. Factory is purely additive in Phase 0. We do NOT mark `Classes\Player::__construct` deprecated yet (would create phpstan/IDE noise without payoff).
+
+**Tests**: `tests/Various/PlayerFactoryTest.php` — DB-free smoke tests for `activeId()` session resolution + reflective contract check.
+
+**Diff size**: ~120 LOC factory + ~80 LOC tests + this doc. **No callers migrated yet** — that starts in Phase 1.
+
+## Phase 1: Mechanical migration of root controllers + view classes
+
+**Goal**: Replace `new Player($playerId)` in the ~12 root controllers and ~10 `src/View/**` classes with `PlayerFactory::legacy()` / `::active()`.
+
+**Deliverable**: Pure search-and-replace PR. Two patterns:
+- `$pid = TutorialHelper::getActivePlayerId(); $player = new Player($pid);` → `$player = PlayerFactory::active();`
+- `new Player($x)` → `PlayerFactory::legacy($x)`
+
+Behaviour identical.
+
+**Risk**: **Low** — same object returned, same methods, same properties. PHPStan catches typos, `make test` covers regressions in tested paths. Manual smoke test on tutorial start, login, observe, go.
+
+**LOC**: ~80 lines changed across ~25 files.
+
+## Phase 2: Extract `PlayerOptionsService` (lowest-hanging fruit)
+
+**Goal**: Kill the `Player::have/add/end/get($table, $name)` god-method (lines 455–574 today) — it's a thin SQL wrapper with no business logic.
+
+**Deliverable**: A `PlayerOptionsService` (and possibly `PlayerActionsService` if cleanly separable — they share table prefix but the `actions` branch has business logic about `ortType`/spell typing). Legacy `Player::have_option()` / `add_option()` / etc. become 1-line shims that delegate. Modern code can call the service directly. Add `PlayerEntity::hasOption(string $name): bool` so the entity becomes minimally useful for callers like `AdminAuthorizationService` (which today does `(new Player($id))->have_option('isAdmin')` just to check a flag).
+
+**Risk**: **Low** — service is mechanical SQL extraction, unit-testable, legacy shims preserve every call site.
+
+**LOC**: ~150 LOC service + ~80 LOC tests + ~30 LOC shim modifications.
+
+## Phase 3: Read-path migration to entity layer for cold/safe surfaces
+
+**Goal**: For pure-read use cases (rankings, profile display, admin listings), call `PlayerFactory::entity()` and use `RealPlayer` getters instead of `new Player($id)->data->X`.
+
+**Deliverable**: Migrate `src/View/Classement/BourrinsView.php`, parts of `infos.php`, `ResetPasswordView.php` (lookup paths only, NOT the password mutation), and `ScreenshotService::buildContext`. Add the missing column getters to `PlayerEntity` as needed (e.g. anything currently absent). Add domain methods like `RealPlayer::canTrade()`, `NPCEntity::canBeAttacked()` on demand — driven by what callers currently do with `if ($player->id < 0)` type checks.
+
+**Risk**: **Medium** — Doctrine hydration on legacy data may surface schema mismatches (the entity declares ~32 columns; the `players` table has more). Each migrated read needs the corresponding entity field mapped first. **Schema audit required as preamble.**
+
+**LOC**: ~200 LOC entity additions + ~150 LOC migrated callers + ~100 LOC tests.
+
+## Phase 4: Tutorial subsystem cut-over
+
+**Goal**: Make `TutorialManager` and tutorial code operate on `TutorialPlayerEntity` instead of `Classes\Player`. Tutorial is the best pilot subsystem — relatively isolated, already has its own session/lifecycle, and the entity already exposes `transferRewardsToRealPlayer()` and `deleteWithRelatedData()`.
+
+**Deliverable**: `TutorialManager::startTutorial` / `completeTutorial` / `cleanup` construct and persist via Doctrine. Tutorial step validators continue to use `PlayerFactory::legacy()` (they hit too many legacy methods to migrate at once — that's a Phase 5+ concern). Replace the raw SQL inside `TutorialPlayerEntity::deleteWithRelatedData()` with proper repository deletes only after this phase proves stable.
+
+**Risk**: **Medium-high** — tutorial is user-facing, fragile, and the dual-write window (legacy reads + entity writes for the same row) needs careful flushing. Mitigation: feature-flag behind `TutorialFeatureFlag` for one release.
+
+**LOC**: ~250 LOC changed in `src/Tutorial/**` + ~150 LOC tests.
+
+## Phase 5: Inventory & combat (placeholder — needs sub-roadmaps)
+
+**Goal**: NOT a single phase — a meta-phase placeholder. Inventory (`equip`, `applyEquip*Bonus`, `getEquipedItems`, `getMunition`, `drop`) is intertwined with `Classes\Item` (also a god class) and could become an `InventoryService` taking a `PlayerEntity`. Combat (`death`, `put_kill`, `put_assist`, `distribute_xp`, `getPush`) requires its own design doc — too entangled with `ActorInterface`, `ActionExecutorService`, and game-balance constants to plan now.
+
+**Deliverable**: One design doc per cluster BEFORE any code. Each cluster becomes its own 3–5 phase mini-roadmap.
+
+**Risk**: **High** — touches game balance, player perception, write paths, and concurrent state.
+
+**LOC**: N/A — design first.
+
+## Top 3 risks across the roadmap
+
+1. **Property-access leakage** — callers depend on `$player->data->X`, `->caracs->X`, `->coords->X`. Any "modern wrapper" that doesn't replicate these breaks dozens of files silently (PHPStan won't catch dynamic property access on `object`/`stdClass`). **Mitigation**: never replace `Classes\Player` with a wrapper — only ever replace it with the entity at the call site, AFTER that call site is rewritten to use getters.
+2. **Dual-write incoherence** — once Phase 3+ writes through Doctrine while reads still go through legacy raw SQL (and vice versa), the in-process `$this->data` cache on `Classes\Player` and Doctrine's identity map can disagree. **Mitigation**: explicit cache invalidation hook in `Classes\Player::refresh_data()` that also calls `EntityManager::refresh()` if an entity is loaded for that ID.
+3. **Tutorial regression in Phase 4** — rewrites the most fragile, least-tested user flow. A bug here is immediately user-visible. **Mitigation**: feature flag, parallel-run the old code path for one release, log divergence.
+
+## Explicit non-goals
+
+- We will **NOT** touch combat resolution (`death`, `put_kill`, `put_assist`, `distribute_xp`, `getPush`) in any phase here. Separate roadmap.
+- We will **NOT** delete `Classes\Player` even at the end of Phase 4. Estimated lifespan: 12+ months minimum.
+- We will **NOT** introduce a DI container (Symfony container, PHP-DI, etc.) as part of this work. Static factory is the pragmatic match for the existing `EntityManagerFactory` / `TutorialHelper` style.
+- We will **NOT** migrate `Classes\Item`, `Classes\Forum`, `Classes\Log`, `Classes\View` — they are separate god classes deserving their own roadmaps.
+- We will **NOT** change the database schema (`players` table). All work is at the application layer.
+- We will **NOT** refactor `TutorialHelper::getActivePlayerId()` itself, even though it does a DB query inside what looks like a getter. Phase 0 just consumes it via `PlayerFactory::activeId()`.
+
+## Coordination with `TutorialHelper`
+
+`TutorialHelper` already exposes `loadActivePlayer()` and `loadPlayer()` — these are EAGER (call `get_data()` immediately) variants of what `PlayerFactory::active()` / `legacy()` do lazily. They predate the factory.
+
+**Decision**: leave them in place for now. Phase 1 may opt to refactor them into `PlayerFactory::activeLoaded()` / `loaded()` — but only after the bulk migration validates the API is the right shape. Prematurely consolidating risks API churn.
