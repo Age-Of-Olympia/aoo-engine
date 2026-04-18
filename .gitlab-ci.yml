@@ -100,10 +100,55 @@ test_job:
 cypress_tutorial_job:
   <<: *php-job-template
   stage: test
+  services:
+    - name: mariadb:11
+      alias: mariadb
+      variables:
+        MARIADB_ROOT_PASSWORD: passwordRoot
+        MARIADB_DATABASE: aoo4
+  variables:
+    DB_HOST: mariadb
+    DB_USER: root
+    DB_PASS: passwordRoot
+    CYPRESS_CONTAINER: "true"
+  before_script:
+    # Stage the data + image fixtures the app expects, plus an example
+    # config that we then overwrite to point at the mariadb service alias.
+    - make setup-ci-env
+    - |
+      cat > config/db_constants.php <<'PHPEOF'
+      <?php
+      define('DEV_MODE', true);
+      define('DB_CONSTANTS', array(
+          'host'     => 'mariadb',
+          'user'     => 'root',
+          'psw'      => 'passwordRoot',
+          'db'       => 'aoo4',
+          'password' => 'passwordRoot',
+          'dbname'   => 'aoo4',
+          'driver'   => 'mysqli',
+          'charset'  => 'utf8mb4',
+      ));
+      PHPEOF
+    - composer install --no-progress --no-interaction
+    - npm ci --no-audit --no-fund
   script:
-    - apache2ctl start || apache2-foreground &
+    # Wait for the mariadb service to accept connections (cold-start can
+    # take a few seconds before the daemon listens).
+    - until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" >/dev/null 2>&1; do echo "waiting for mariadb..."; sleep 2; done
+    # Seed the source database — init_test_from_dump.sh clones from `aoo4`
+    # into `aoo4_test`, so the schema + data must exist first.
+    - mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 < db/init_noupdates.sql
+    # Serve the app to Cypress in the background. The base image is the
+    # PHP CLI (no Apache); php -S is the simplest way to expose the app
+    # at http://localhost which is what cypress.config.js targets when
+    # CYPRESS_CONTAINER=true.
+    - php -S 0.0.0.0:80 -t . > /tmp/php-server.log 2>&1 &
     - sleep 2
     - make cypress-tutorial-ci
+  after_script:
+    # Surface the PHP server log alongside Cypress output even on failure.
+    - cat /tmp/php-server.log 2>/dev/null || true
   artifacts:
     when: always
     reports:
@@ -111,6 +156,8 @@ cypress_tutorial_job:
     paths:
       - cypress/screenshots/
       - cypress/videos/
+      - data_tests/cypress/screenshots/
+      - data_tests/cypress/videos/
     expire_in: 1 week
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
