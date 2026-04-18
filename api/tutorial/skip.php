@@ -8,6 +8,8 @@
  */
 
 use Classes\Player;
+use Classes\Db;
+use App\Tutorial\TutorialSessionManager;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
@@ -95,10 +97,20 @@ try {
         error_log("[Skip Tutorial] Player {$playerId} moved from waiting_room to {$respawnPlan}");
     }
 
-    // Grant skip rewards as consolation for not completing tutorial
-    $skipReward = TUTORIAL_SKIP_REWARD;
-    $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
-    error_log("[Skip Tutorial] Player {$playerId} received skip reward: {$skipReward['xp']} XP/PI");
+    // Grant skip rewards ONLY on first time (not a replay).
+    // Mirrors the pattern in api/tutorial/cancel.php so re-entering the
+    // tutorial via "Rejouer le tutoriel" cannot be exploited to claim XP
+    // repeatedly.
+    $sessionManager = new TutorialSessionManager(new Db());
+    $hasCompletedBefore = $sessionManager->hasCompletedBefore($playerId);
+
+    if (!$hasCompletedBefore) {
+        $skipReward = TUTORIAL_SKIP_REWARD;
+        $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
+        error_log("[Skip Tutorial] Player {$playerId} received skip reward (first time): {$skipReward['xp']} XP/PI");
+    } else {
+        error_log("[Skip Tutorial] Player {$playerId} is replaying tutorial - no skip reward granted");
+    }
 
     // If redirect parameter is set, redirect to index instead of returning JSON
     if (isset($_GET['redirect']) || isset($_POST['redirect'])) {
