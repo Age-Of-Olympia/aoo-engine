@@ -16,6 +16,36 @@ dedicated services.
 - Major method clusters in `Player`: data load (`get_row`, `get_data`, `get_caracs`, `get_upgrades`), coords/movement (`getCoords`, `move_player`, `go`, `move_followers`), generic key-value tables (`have/add/end/get` over `players_options|effects|actions`), inventory/equip (`equip`, `applyEquip…Bonus`, `getEquipedItems`, `getMunition`, `drop`), combat (`death`, `getPush`, `put_kill`, `put_assist`, `distribute_xp`), progression (`put_xp`, `put_pr`, `put_pf`, `putBonus`, `put_upgrade`, `change_god`, `add_quest`), social (`add_follower`, `delete_follower`, `move_followers`, `get_new_mails`, `check_missive_permission`, `check_share_factions`), refresh hooks (`refresh_view/data/invent/kills/caracs`), static helpers (`refresh_list`, `get_player_list`, `clean_players_assists`).
 - Caller usage is **property-heavy**: `$player->id`, `$player->data->X`, `$player->caracs->X`, `$player->coords->X`. Any future wrapper MUST preserve these public properties (or the call site must be rewritten first).
 
+## Methodology: TDD + KISS, characterization tests gate every phase
+
+The legacy class has zero test coverage today. Every extraction is therefore
+behaviour-blind: reviewers cannot tell from the diff alone whether the new
+service preserves what the old method actually did. To protect against
+silent regressions:
+
+1. **Characterization tests are a phase prerequisite.** Each phase that
+   moves a responsibility OUT of `Classes\Player` (or any god class)
+   starts with — or is preceded by — an MR that adds tests covering the
+   CURRENT behaviour of the slice being extracted. The tests pass against
+   the legacy code as-is. Then the extraction MR moves the code; the
+   same tests still pass against the extracted service. Behaviour
+   preservation is mechanical, not visual.
+
+2. **TDD for net-new code** (factories, services, helpers). Failing test
+   first (red), simplest implementation (green), refactor. The factory
+   delivered in Phase 0 follows this template: `tests/Various/PlayerFactoryTest.php`
+   was written alongside `src/Factory/PlayerFactory.php`.
+
+3. **KISS per phase.** Smallest viable change per MR. No bundling
+   multiple responsibility extractions; no premature abstractions
+   ("we'll need this for Phase 6 so let's add the hook now"); no
+   future-proofing unmentioned in the roadmap. Three similar lines
+   beat a premature framework.
+
+4. **The `aoo-legacy-modern-bridge` agent enforces all three rules** at
+   review time. An MR without characterization tests for an extracted
+   slice gets flagged.
+
 ## Phase 0: `PlayerFactory` (DELIVERED)
 
 **Location**: `src/Factory/PlayerFactory.php`.
@@ -43,6 +73,8 @@ PlayerFactory::activeEntity(): ?PlayerEntity
 
 ## Phase 1: Mechanical migration of root controllers + view classes
 
+**Pre-flight (separate small MR)**: a smoke test that constructs `new Player($id)` and `PlayerFactory::legacy($id)` for the same id and asserts the returned objects expose identical public state for a representative sample of the property-heavy callers (`->id`, `->data->X`, `->caracs->X`, `->coords->X`). One short PHPUnit file, no schema changes — pins the equivalence the migration relies on.
+
 **Goal**: Replace `new Player($playerId)` in the ~12 root controllers and ~10 `src/View/**` classes with `PlayerFactory::legacy()` / `::active()`.
 
 **Deliverable**: Pure search-and-replace PR. Two patterns:
@@ -57,6 +89,8 @@ Behaviour identical.
 
 ## Phase 2: Extract `PlayerOptionsService` (lowest-hanging fruit)
 
+**Pre-flight (separate small MR)**: characterization tests for `Player::have_option`, `add_option`, `end_option` — each call combination (option exists, option missing, duplicate add, end on absent) against a `Tests\Player\Mock\TestDatabase` fixture. The tests pass against the current legacy methods. After the extraction lands, the same tests are re-pointed at the new `PlayerOptionsService` and must still pass.
+
 **Goal**: Kill the `Player::have/add/end/get($table, $name)` god-method (lines 455–574 today) — it's a thin SQL wrapper with no business logic.
 
 **Deliverable**: A `PlayerOptionsService` (and possibly `PlayerActionsService` if cleanly separable — they share table prefix but the `actions` branch has business logic about `ortType`/spell typing). Legacy `Player::have_option()` / `add_option()` / etc. become 1-line shims that delegate. Modern code can call the service directly. Add `PlayerEntity::hasOption(string $name): bool` so the entity becomes minimally useful for callers like `AdminAuthorizationService` (which today does `(new Player($id))->have_option('isAdmin')` just to check a flag).
@@ -66,6 +100,8 @@ Behaviour identical.
 **LOC**: ~150 LOC service + ~80 LOC tests + ~30 LOC shim modifications.
 
 ## Phase 3: Read-path migration to entity layer for cold/safe surfaces
+
+**Pre-flight (separate small MR)**: snapshot tests for each surface to be migrated (rankings, profile display, admin listings). Capture the rendered HTML / JSON output for a fixed test player against the LEGACY code path. After migration, the same snapshot must match exactly. Catches column-mapping drift between the entity and the table that PHPStan can't see.
 
 **Goal**: For pure-read use cases (rankings, profile display, admin listings), call `PlayerFactory::entity()` and use `RealPlayer` getters instead of `new Player($id)->data->X`.
 
@@ -77,6 +113,8 @@ Behaviour identical.
 
 ## Phase 4: Tutorial subsystem cut-over
 
+**Pre-flight (multiple MRs, this is a workstream)**: the tutorial subsystem has zero PHPUnit coverage today (see `docs/tutorial-p0-deferred-design.md` D4). Phases A/B/C of that workstream MUST land before this phase begins, otherwise the cut-over is uninspectable. Each tutorial cleanup path (`TutorialPlayerCleanup`, `TutorialEnemyCleanup`, `TutorialResourceManager::cleanupPrevious`) needs an integration test against `aoo4_test`.
+
 **Goal**: Make `TutorialManager` and tutorial code operate on `TutorialPlayerEntity` instead of `Classes\Player`. Tutorial is the best pilot subsystem — relatively isolated, already has its own session/lifecycle, and the entity already exposes `transferRewardsToRealPlayer()` and `deleteWithRelatedData()`.
 
 **Deliverable**: `TutorialManager::startTutorial` / `completeTutorial` / `cleanup` construct and persist via Doctrine. Tutorial step validators continue to use `PlayerFactory::legacy()` (they hit too many legacy methods to migrate at once — that's a Phase 5+ concern). Replace the raw SQL inside `TutorialPlayerEntity::deleteWithRelatedData()` with proper repository deletes only after this phase proves stable.
@@ -86,6 +124,9 @@ Behaviour identical.
 **LOC**: ~250 LOC changed in `src/Tutorial/**` + ~150 LOC tests.
 
 ## Phase 5: Inventory & combat (placeholder — needs sub-roadmaps)
+
+**Pre-flight**: characterization-test workstream is the dominant cost here, not the extraction itself. Combat in particular has emergent behaviour (chained outcomes, status stacking, reduction passives) that no current test covers. The sub-roadmap design doc must enumerate the test scenarios before any code change is approved.
+
 
 **Goal**: NOT a single phase — a meta-phase placeholder. Inventory (`equip`, `applyEquip*Bonus`, `getEquipedItems`, `getMunition`, `drop`) is intertwined with `Classes\Item` (also a god class) and could become an `InventoryService` taking a `PlayerEntity`. Combat (`death`, `put_kill`, `put_assist`, `distribute_xp`, `getPush`) requires its own design doc — too entangled with `ActorInterface`, `ActionExecutorService`, and game-balance constants to plan now.
 
