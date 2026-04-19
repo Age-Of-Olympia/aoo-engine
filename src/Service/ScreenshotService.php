@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Entity\EntityManagerFactory;
+use App\Factory\PlayerFactory;
 use Classes\Player;
 use Classes\View;
 use Exception;
@@ -113,7 +115,21 @@ class ScreenshotService
      */
     public function generateAutomaticScreenshot(Player $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
     {
-        $coords = $actor->getCoords();
+        // Internal upgrade to entity for read-only lookups (Phase 4.3c).
+        // Callers still pass legacy Player (ActorInterface), but the
+        // read paths inside this method use the entity layer. The
+        // screenshot-PNJ mutation paths below (move_player, get_caracs)
+        // stay on legacy — they need it.
+        $actorEntity = PlayerFactory::entity((int) $actor->id);
+        if ($actorEntity === null) {
+            return ['success' => false, 'error' => 'Actor entity hydration failed'];
+        }
+
+        $conn = EntityManagerFactory::getEntityManager()->getConnection();
+        $coords = $actorEntity->getCoords($conn);
+        if ($coords === null) {
+            return ['success' => false, 'error' => 'Actor coords missing'];
+        }
         if ($coords->plan !== 'arene_s2') {
             return ['success' => false, 'error' => 'Action not on arene_s2 map'];
         }
@@ -123,17 +139,17 @@ class ScreenshotService
         $microtime = microtime(true);
         $timestamp = date('Y-m-d_H-i-s', (int)$microtime) . '_' . sprintf('%03d', ($microtime - floor($microtime)) * 1000);
         $filename = "auto_screenshot_arene_s2_{$timestamp}";
-        
+
         $coordsArray = ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'arene_s2'];
-        
+
         $outputDir = $_SERVER['DOCUMENT_ROOT'] . '/img/arene/';
-        
+
         $result = $this->generateScreenshot($coordsArray, self::DEFAULT_RANGE, $filename, $outputDir);
-        
+
         if ($result['success']) {
-            error_log("Automatic screenshot saved: {$result['filename']} for action {$actionName} by player {$actor->data->name}");
+            error_log("Automatic screenshot saved: {$result['filename']} for action {$actionName} by player {$actorEntity->getName()}");
         }
-        
+
         return $result;
     }
 
