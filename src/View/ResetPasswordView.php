@@ -4,7 +4,6 @@ namespace App\View;
 
 use App\Factory\PlayerFactory;
 use Classes\Db;
-use Classes\Player;
 use Classes\Str;
 use App\Service\FirewallService;
 
@@ -38,40 +37,27 @@ class ResetPasswordView
         
 
 
-        // mat
+        // Phase 3.3 — entity-layer lookup. entity()/entityByName() both
+        // return ?RealPlayer so caller branches meet at the same null
+        // check, no need for get_row() / ->row->mail afterwards.
         if (is_numeric($_POST['name'])) {
-            $player = PlayerFactory::legacy($_POST['name']);
+            $player = PlayerFactory::entity((int) $_POST['name']);
+        } else {
+            $player = PlayerFactory::entityByName($_POST['name']);
         }
-
-        // name
-        else {
-
-
-            $listPlayerJson = Player::get_player_list()->list;
-
-            foreach ($listPlayerJson as $e) {
-
-                if ($e->name == $_POST['name']) {
-                    $player = PlayerFactory::legacy($e->id);
-                }
-            }
-        }
-
 
         // error player
-        if (!isset($player)) {
+        if ($player === null) {
             exit('Erreur: aucun personnage associé à cet identifiant.');
         }
 
-
-        $player->get_row();
-
+        $storedMail = $player->getMail();
 
         // error mail
-        if (!password_verify(strtolower($_POST['mail']), $player->row->mail)) {
+        if (!password_verify(strtolower($_POST['mail']), $storedMail)) {
 
             // on vérifie si l'user n'avait pas mis une maj à la première lettre de son mail avant le patch
-            if (!password_verify(ucfirst(strtolower($_POST['mail'])), $player->row->mail)) {
+            if (!password_verify(ucfirst(strtolower($_POST['mail'])), $storedMail)) {
 
                 exit('Erreur: l\'adresse mail n\'est pas la bonne.');
             }
@@ -79,7 +65,7 @@ class ResetPasswordView
 
 
         // check reset psw time
-        $result = $db->get_single_player_id('players_psw', $player->id);
+        $result = $db->get_single_player_id('players_psw', $player->getId());
 
         // mail already sent
         if ($result->num_rows) {
@@ -121,7 +107,7 @@ class ResetPasswordView
 
         // insert values
         $values = array(
-            'player_id' => $player->id,
+            'player_id' => $player->getId(),
             'uniqid' => $uniqid,
             'sentTime' => time()
         );

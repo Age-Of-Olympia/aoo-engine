@@ -156,15 +156,38 @@ can be purely mechanical:
 
 One DB-gated test per domain method.
 
-### Phase 3.3 — Read-path SAR
+### Phase 3.3 — Read-path SAR (narrowed scope)
 
-Migrate the four target files. Mechanical change per caller — follows
-the same cadence as Phase 1's SAR (!368).
+**Delivered**: `src/View/ResetPasswordView::renderSendUniqueCode` —
+fully on the entity layer. Both the id-lookup and name-lookup branches
+use `PlayerFactory::entity()` / new `PlayerFactory::entityByName()`.
+`$player->row->mail` replaced with `$player->getMail()`.
+`$player->id` replaced with `$player->getId()`.
 
-**Pre-flight test**: snapshot tests per target file. Capture rendered
-HTML/JSON for a fixed test player against the LEGACY path; migrated
-code must match byte-for-byte. Catches any getter-vs-`->data->`
-divergence PHPStan cannot see.
+**Deferred to later mini-phases** (each needs domain-method
+additions beyond what Phase 3.2 ships):
+
+- **BourrinsView** — needs an entity-side equivalent of `->caracs`
+  (racial stats + upgrades aggregation). Caracs computation today
+  lives across `Player::get_caracs()`, `Player::get_upgrades()`, and
+  the `CARACS` constant loop. Porting it cleanly is a larger design
+  decision than one SAR MR can carry.
+- **infos.php** — needs a full coords object (accesses `$target->coords->plan`,
+  `$target->coords->x/y` via `View::get_distance`). Phase 3.2 ports
+  only `getCoordsPlan()`; full coords hydration via a `Coords` entity
+  is a separate mini-phase.
+- **ScreenshotService::generateAutomaticScreenshot** — same coords
+  dependency as infos.php, plus `get_options()` (`->have_option` is
+  covered by `hasOption()` from Phase 3.2).
+
+Each deferred target stays on `PlayerFactory::legacy()` / `::active()`
+until those domain pieces land.
+
+**Test gate**: no full snapshot tests were needed for this narrow
+scope — the `PlayerFactoryTest` suite gained three tests for the new
+`entityByName()` method (signature + hit + miss), and the hydration
+smoke test (Phase 3.1) guards getter correctness against schema drift.
+Broader snapshot testing returns when the deferred files are ready.
 
 ## Reuse from existing codebase
 
