@@ -82,6 +82,26 @@ final class PlayerFactory
     }
 
     /**
+     * Modern Doctrine entity looked up by name (player_type='real'
+     * only), or null if no such row exists.
+     *
+     * Parallels `legacyByName()` for the entity path. Querying
+     * `RealPlayer::class` (instead of the abstract base) scopes the
+     * lookup via STI discriminator to `player_type='real'`, matching
+     * `Player::get_player_by_name()`'s WHERE clause.
+     *
+     * Use for read-only name-lookup flows (password reset, missive
+     * recipient checks, admin search-by-name) after Phase 3.x
+     * migration.
+     */
+    public static function entityByName(string $name): ?\App\Entity\RealPlayer
+    {
+        return EntityManagerFactory::getEntityManager()
+            ->getRepository(\App\Entity\RealPlayer::class)
+            ->findOneBy(['name' => $name]);
+    }
+
+    /**
      * Modern entity for the active player (tutorial-aware).
      */
     public static function activeEntity(): ?PlayerEntity

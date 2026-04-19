@@ -60,7 +60,7 @@ class PlayerFactoryTest extends TestCase
 
         $this->assertTrue($class->isFinal(), 'PlayerFactory should be final');
 
-        foreach (['legacy', 'legacyByName', 'active', 'activeId', 'entity', 'activeEntity'] as $method) {
+        foreach (['legacy', 'legacyByName', 'active', 'activeId', 'entity', 'entityByName', 'activeEntity'] as $method) {
             $this->assertTrue($class->hasMethod($method), "Missing method: {$method}");
             $this->assertTrue($class->getMethod($method)->isStatic(), "{$method} should be static");
             $this->assertTrue($class->getMethod($method)->isPublic(), "{$method} should be public");
@@ -95,6 +95,48 @@ class PlayerFactoryTest extends TestCase
 
         $this->assertInstanceOf(Player::class, $player);
         $this->assertSame((int) $row['id'], $player->id);
+    }
+
+    #[Group('player-factory')]
+    public function testEntityByNameReturnsNullWhenNameNotFound(): void
+    {
+        $this->bootstrapOrSkip();
+
+        $miss = 'phaseEBNMiss_' . bin2hex(random_bytes(6));
+
+        $this->assertNull(PlayerFactory::entityByName($miss));
+    }
+
+    #[Group('player-factory')]
+    public function testEntityByNameReturnsRealPlayerWithMatchingIdWhenFound(): void
+    {
+        $link = $this->bootstrapOrSkip();
+
+        $row = $link->fetchAssociative(
+            "SELECT id, name FROM players WHERE id > 0 AND player_type = 'real' ORDER BY id ASC LIMIT 1"
+        );
+        if (empty($row['name'])) {
+            $this->markTestSkipped('No real player available for lookup test.');
+        }
+
+        $entity = PlayerFactory::entityByName((string) $row['name']);
+
+        $this->assertInstanceOf(\App\Entity\RealPlayer::class, $entity);
+        $this->assertSame((int) $row['id'], $entity->getId());
+    }
+
+    #[Group('player-factory')]
+    public function testEntityByNameSignatureReturnsNullableRealPlayer(): void
+    {
+        $method = new \ReflectionMethod(PlayerFactory::class, 'entityByName');
+
+        $params = $method->getParameters();
+        $this->assertCount(1, $params, 'entityByName must take exactly one argument');
+        $this->assertSame('string', (string) $params[0]->getType());
+
+        $returnType = $method->getReturnType();
+        $this->assertNotNull($returnType);
+        $this->assertSame('?App\\Entity\\RealPlayer', (string) $returnType);
     }
 
     #[Group('player-factory')]
