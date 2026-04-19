@@ -1,4 +1,5 @@
 <?php
+use App\Factory\PlayerFactory;
 use Classes\Exchange;
 use Classes\Market;
 use Classes\Player;
@@ -21,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ExitError($marketAccessError);
   }
   
-  $recipient = Player::get_player_by_name($_POST['recipient']);
+  $recipient = PlayerFactory::legacyByName($_POST['recipient']);
   if($player->id == $recipient->id){
     ExitError('Vous ne pouvez pas vous échanger des objets à vous même');
   }
