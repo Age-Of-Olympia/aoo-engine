@@ -7,10 +7,9 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../config.php';
 
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialManager;
-use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialSessionManager;
-use Classes\Player;
 
 try {
     // Check authentication
@@ -20,9 +19,8 @@ try {
         exit;
     }
 
-    // Get active player (might be tutorial player)
-    $activePlayerId = TutorialHelper::getActivePlayerId();
-    $player = new Player($activePlayerId);
+    // Get active player (tutorial player if in tutorial mode, otherwise main player)
+    $player = PlayerFactory::active();
 
     // Get request data
     $data = json_decode(file_get_contents('php://input'), true);

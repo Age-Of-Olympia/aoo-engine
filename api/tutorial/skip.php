@@ -7,7 +7,7 @@
  * Removes invisibleMode so they can play normally
  */
 
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Db;
 use App\Tutorial\TutorialSessionManager;
 
@@ -25,7 +25,7 @@ if (!isset($_SESSION['playerId'])) {
 
 try {
     $playerId = $_SESSION['playerId'];
-    $player = new Player($playerId);
+    $player = PlayerFactory::legacy($playerId);
 
     // Check if player has invisibleMode
     if (!$player->have_option('invisibleMode')) {

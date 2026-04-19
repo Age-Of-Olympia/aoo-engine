@@ -6,10 +6,9 @@
  * Advances to the next tutorial step after validating current step
  */
 
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialManager;
-use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialSessionManager;
-use Classes\Player;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
@@ -52,11 +51,8 @@ if (!TutorialSessionManager::validateSessionIdFormat($sessionId)) {
 }
 
 try {
-    // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-    $activePlayerId = TutorialHelper::getActivePlayerId();
-
-    // Load player
-    $player = new Player($activePlayerId);
+    // Load active player (tutorial player if in tutorial mode, otherwise main player)
+    $player = PlayerFactory::active();
     $player->get_data();
 
     // Create tutorial manager
