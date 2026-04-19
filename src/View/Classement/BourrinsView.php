@@ -2,7 +2,9 @@
 
 namespace App\View\Classement;
 
+use App\Entity\PlayerEntity;
 use App\Factory\PlayerFactory;
+use App\Service\PlayerCaracsService;
 use Classes\Str;
 
 class BourrinsView
@@ -43,16 +45,17 @@ class BourrinsView
 
 
             $bestCarac = array();
+            $caracsService = new PlayerCaracsService();
 
 
             foreach ($playerList as $player) {
 
+                $entity = PlayerFactory::entity((int) $player->id);
+                if ($entity === null) {
+                    continue;
+                }
 
-                $player = PlayerFactory::legacy($player->id);
-
-                $player->get_data();
-
-                $player->get_caracs(nude: true);
+                $caracs = $entity->getNudeCaracs($caracsService);
 
 
                 foreach (CARACS as $k => $e) {
@@ -62,7 +65,7 @@ class BourrinsView
 
 
                         $bestCarac[$k] = array(
-                            $player->caracs->$k => array($player)
+                            $caracs->$k => array($entity)
                         );
 
                         continue;
@@ -70,7 +73,7 @@ class BourrinsView
 
 
                     // add entry
-                    $bestCarac[$k][$player->caracs->$k][] = $player;
+                    $bestCarac[$k][$caracs->$k][] = $entity;
                 }
             }
 
@@ -135,8 +138,8 @@ class BourrinsView
 
             foreach ($playerTbl as $e) {
 
-
-                $raceJson = json()->decode('races', $e->data->race);
+                /** @var PlayerEntity $e */
+                $raceJson = json()->decode('races', $e->getRace());
 
 
 
@@ -144,12 +147,12 @@ class BourrinsView
             <tr style="background: ' . $raceJson->bgColor . '; color: ' . $raceJson->color . '">
                 <td>' . $n . '</td>
                 <td>
-                    ' . $e->data->name . '
+                    ' . $e->getName() . '
                 </td>
-                <td align="center" valign="top"><a href="infos.php?targetId=' . $e->id . '">mat.' . $e->getDisplayId() . '</a></td>
-                <td align="center" valign="top">' . Str::get_reput(floor($e->data->pr/COEFFICIENT_PR)) . '</td>
-                <td align="center" valign="top">' . $e->data->xp . '</td>
-                <td align="center" valign="top">' . $e->data->rank . '</td>
+                <td align="center" valign="top"><a href="infos.php?targetId=' . $e->getId() . '">mat.' . $e->getDisplayId() . '</a></td>
+                <td align="center" valign="top">' . Str::get_reput(floor($e->getPr()/COEFFICIENT_PR)) . '</td>
+                <td align="center" valign="top">' . $e->getXp() . '</td>
+                <td align="center" valign="top">' . $e->getRank() . '</td>
             </tr>
             ';
 
