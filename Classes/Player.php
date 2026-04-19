@@ -5,6 +5,7 @@ use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
 use App\Service\ActionPassiveService;
+use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
@@ -587,11 +588,19 @@ class Player implements ActorInterface {
     }
 
 
-    // options shortcuts
-    public function add_option($name){ $this->add('options', $name); }
-    public function have_option($name): int{ return $this->have('options', $name); }
-    public function end_option($name){ $this->end('options', $name); }
-    public function get_options(){ return $this->get('options'); }
+    // options shortcuts — delegate to PlayerOptionsService (Phase 2).
+    // The isMerchant → marchand follower hook stays here because the
+    // follower methods live on Player; the service owns table access only.
+    public function add_option($name){
+        if($name == 'isMerchant'){ $this->add_follower('marchand', params:'on'); }
+        (new PlayerOptionsService())->addOption($this->id, $name);
+    }
+    public function have_option($name): int{ return (new PlayerOptionsService())->hasOption($this->id, $name); }
+    public function end_option($name){
+        (new PlayerOptionsService())->endOption($this->id, $name);
+        if($name == 'isMerchant'){ $this->delete_follower('marchand'); }
+    }
+    public function get_options(){ return (new PlayerOptionsService())->getOptions($this->id); }
 
     // actions shortcuts
     public function add_action($name){ $this->add('actions', $name); }
