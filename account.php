@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Ui;
 use Classes\Str;
 use Classes\File;
@@ -10,7 +10,7 @@ use App\Tutorial\TutorialSessionManager;
 require_once('config.php');
 
 
-$player = new Player($_SESSION['playerId']);
+$player = PlayerFactory::legacy($_SESSION['playerId']);
 
 $player->get_data();
 

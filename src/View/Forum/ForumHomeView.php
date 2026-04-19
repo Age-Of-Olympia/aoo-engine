@@ -2,7 +2,7 @@
 
 namespace App\View\Forum;
 
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Str;
 use Classes\Ui;
 use App\View\InfosView;
@@ -13,7 +13,7 @@ class ForumHomeView
     public static function renderHomeView(): void
     {
         $ui = new Ui('Forum');
-        $player = new Player($_SESSION['playerId']);
+        $player = PlayerFactory::legacy($_SESSION['playerId']);
         $player->get_data(false);
         InfosView::renderInfos($player);
         MenuView::renderMenu();

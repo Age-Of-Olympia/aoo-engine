@@ -1,16 +1,12 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Db;
 use Classes\View;
 use Classes\Log;
-use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 
 
 if(!isset($_POST['wallId'])){

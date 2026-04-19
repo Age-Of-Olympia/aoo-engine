@@ -1,11 +1,11 @@
 <?php
+use App\Factory\PlayerFactory;
 use Classes\Ui;
 use Classes\View;
-use Classes\Player;
 use App\Service\AdminAuthorizationService;
 require_once('config.php');
 
-$player = new Player($_SESSION['playerId']);
+$player = PlayerFactory::legacy($_SESSION['playerId']);
 $player->getCoords();
 
 AdminAuthorizationService::DoAdminCheck();

@@ -1,8 +1,8 @@
 <?php
 
+use App\Factory\PlayerFactory;
 use App\View\FactionView;
 use Classes\Ui;
-use Classes\Player;
 use Classes\Db;
 
 require_once('config.php');
@@ -29,7 +29,7 @@ if(!empty($_GET['faction'])){
     echo '<div style="font-size: 5em;"><span class="ra '. $facJson->raFont .'"></span></div>';
 
 
-    $player = new Player($_SESSION['playerId']);
+    $player = PlayerFactory::legacy($_SESSION['playerId']);
     $player->get_data();
 
 

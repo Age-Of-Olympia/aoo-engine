@@ -1,17 +1,13 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Str;
-use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
 
 ob_start();
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 
 $player->get_data();
 

@@ -1,10 +1,9 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Item;
 use Classes\Ui;
 use Classes\View;
 use Classes\Str;
-use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
@@ -14,14 +13,11 @@ if(!isset($_GET['targetId']) || !is_numeric($_GET['targetId'])){
     exit('error target id');
 }
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 $player->get_data();
 
 
-$target = new Player($_GET['targetId']);
+$target = PlayerFactory::legacy($_GET['targetId']);
 $target->get_data();
 
 

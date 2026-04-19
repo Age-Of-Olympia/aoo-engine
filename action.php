@@ -3,14 +3,13 @@
 require_once('config.php');
 
 use App\Action\ActionFactory;
+use App\Factory\PlayerFactory;
 use App\Service\ActionExecutorService;
 use App\Service\ActionService;
 use App\Service\PlayerService;
-use App\Tutorial\TutorialHelper;
 use App\View\ActionResultsView;
 use App\View\OnHideReloadView;
 use Classes\Log;
-use Classes\Player;
 use Classes\View;
 
 ob_start();
@@ -24,11 +23,8 @@ if(!isset($_POST['action'])){
     exit('error action');
 }
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
 // player
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 $player->get_data();
 $player->get_caracs();
 
@@ -38,7 +34,7 @@ if(!isset($_POST['targetId'])){
     exit('error targetId');
 }
 
-$target = new Player($_POST['targetId']);
+$target = PlayerFactory::legacy($_POST['targetId']);
 $target->get_data();
 $target->get_caracs();
 

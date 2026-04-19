@@ -1,24 +1,20 @@
 <?php
 use Classes\Ui;
-use Classes\Player;
 use Classes\Market;
+use App\Factory\PlayerFactory;
 use App\View\Inventory\InventoryView;
 use App\View\Inventory\BankView;
 use App\View\Merchant\AsksView;
 use App\View\Merchant\BidsView;
 use App\View\Merchant\ExchangesView;
 use App\View\Merchant\SpellsView;
-use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
 
 $ui = new Ui('Marchander', true);
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 
 $player->get_data();
 
@@ -30,7 +26,7 @@ if(!isset($_GET['targetId'])){
 }
 
 
-$target = new Player($_GET['targetId']);
+$target = PlayerFactory::legacy($_GET['targetId']);
 
 $marketAccessError = Market::CheckMarketAccess($player, $target);
 if($marketAccessError !=null){

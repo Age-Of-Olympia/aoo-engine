@@ -2,8 +2,8 @@
 
 namespace App\View\Forum;
 
+use App\Factory\PlayerFactory;
 use App\Service\PlayerService;
-use Classes\Player;
 use Classes\Forum;
 use Classes\Ui;
 
@@ -14,7 +14,7 @@ class SearchView
 
         $ui = new Ui('Forum - Recherche');
 
-        $player = new Player($_SESSION['playerId']);
+        $player = PlayerFactory::legacy($_SESSION['playerId']);
         $player->get_data(false);
 
 

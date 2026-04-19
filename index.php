@@ -5,10 +5,10 @@ use App\View\InfosView;
 use App\View\MainView;
 use App\View\MenuView;
 use App\View\NewTurnView;
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialSessionManager;
-use Classes\Player;
 use Classes\Db;
 
 if(isset($_GET['logout'])){
@@ -82,7 +82,7 @@ if ($_SESSION['playerId'] == 7) {
 $playerId = TutorialHelper::getActivePlayerId();
 error_log("  USING PLAYER: $playerId (tutorial mode: " . (TutorialHelper::isInTutorial() ? 'YES' : 'NO') . ")");
 
-$player = new Player($playerId);
+$player = PlayerFactory::legacy($playerId);
 $player->get_data(false);
 
 // Check if player is brand new (should auto-start tutorial instead of showing modal)
