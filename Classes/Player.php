@@ -469,7 +469,7 @@ class Player implements ActorInterface {
     public function have($table, $name): int{
 
 
-        if(!in_array($table, array('effects','options','actions'))){
+        if(!in_array($table, array('effects','actions'))){
 
             exit('error have table');
         }
@@ -517,17 +517,6 @@ class Player implements ActorInterface {
         }
 
 
-        if($table == 'options'){
-
-
-            if($name == 'isMerchant'){
-
-
-                $this->add_follower('marchand', params:'on');
-            }
-        }
-
-
         $db->insert('players_'. $table, $values);
     }
 
@@ -541,12 +530,6 @@ class Player implements ActorInterface {
         $db = new Db();
 
         $db->delete('players_'. $table, $values);
-
-
-        if($name == 'isMerchant'){
-
-            $this->delete_follower('marchand');
-        }
     }
 
     public function get($table){

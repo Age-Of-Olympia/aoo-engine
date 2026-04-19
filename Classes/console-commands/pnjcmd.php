@@ -27,7 +27,7 @@ EOT);
         $target->get_data();
 
         //Si le pnj ajouté ou retiré a l'option isSuperAdmin, seul un superAdmin lui même peut le retirer ou l'ajouté
-        if($target->have('options','isSuperAdmin') ){ 
+        if($target->have_option('isSuperAdmin') ){
             AdminAuthorizationService::DoSuperAdminCheck();
         }
 
