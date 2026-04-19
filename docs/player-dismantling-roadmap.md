@@ -117,15 +117,24 @@ Behaviour identical.
 
 ## Phase 4: Tutorial subsystem cut-over
 
-**Pre-flight (multiple MRs, this is a workstream)**: the tutorial subsystem has zero PHPUnit coverage today (see `docs/tutorial-p0-deferred-design.md` D4). Phases A/B/C of that workstream MUST land before this phase begins, otherwise the cut-over is uninspectable. Each tutorial cleanup path (`TutorialPlayerCleanup`, `TutorialEnemyCleanup`, `TutorialResourceManager::cleanupPrevious`) needs an integration test against `aoo4_test`.
+**Audit (delivered as Phase 4.0)**: see `docs/phase-4-tutorial-cutover-audit.md`. Maps the gap between `App\Tutorial\TutorialPlayer` (the service-class persistence layer) and `App\Entity\TutorialPlayerEntity` (the Doctrine entity), identifies two APIs with the same name but incompatible semantics, and splits Phase 4 into four sub-phases. **Read this before any Phase 4 code MR.**
 
-**Goal**: Make `TutorialManager` and tutorial code operate on `TutorialPlayerEntity` instead of `Classes\Player`. Tutorial is the best pilot subsystem — relatively isolated, already has its own session/lifecycle, and the entity already exposes `transferRewardsToRealPlayer()` and `deleteWithRelatedData()`.
+**Pre-flight (landed)**: the D4 tutorial test workstream delivered earlier (Phase A + Phase C — MRs !376 and !377). `TutorialPlayerCleanup`, `MovementStep` DB branches, and `TutorialManagerCompletionFlowTest` are all covered.
 
-**Deliverable**: `TutorialManager::startTutorial` / `completeTutorial` / `cleanup` construct and persist via Doctrine. Tutorial step validators continue to use `PlayerFactory::legacy()` (they hit too many legacy methods to migrate at once — that's a Phase 5+ concern). Replace the raw SQL inside `TutorialPlayerEntity::deleteWithRelatedData()` with proper repository deletes only after this phase proves stable.
+**Goal**: Make `TutorialManager` and tutorial code operate on `TutorialPlayerEntity` instead of the service-class `App\Tutorial\TutorialPlayer`. Tutorial is the best pilot subsystem — relatively isolated, already has its own session/lifecycle, and the entity already hydrates cleanly post-!383.
 
-**Risk**: **Medium-high** — tutorial is user-facing, fragile, and the dual-write window (legacy reads + entity writes for the same row) needs careful flushing. Mitigation: feature-flag behind `TutorialFeatureFlag` for one release.
+**Sub-phase plan** (per `docs/phase-4-tutorial-cutover-audit.md`):
+- **4.0** — audit doc (delivered)
+- **4.1** — reconcile `TutorialPlayerEntity::transferRewardsToRealPlayer` signature with service-class counterpart (current entity signature is dead code, wrong semantics)
+- **4.2** — migrate `TutorialManager::completeTutorial` to entity, feature-flagged
+- **4.3** — migrate `startTutorial` / `resumeTutorial` (re-homes map-instance and enemy-spawn)
+- **4.4** — retire `App\Tutorial\TutorialPlayer` service class after one release baked
 
-**LOC**: ~250 LOC changed in `src/Tutorial/**` + ~150 LOC tests.
+Tutorial step validators continue to use `PlayerFactory::legacy()` (Phase 5+ concern — they hit too many legacy methods).
+
+**Risk**: **Medium-high** — tutorial is user-facing, fragile, and the dual-write window (legacy reads + entity writes for the same row) needs careful flushing. Mitigation: feature-flag behind `TutorialFeatureFlag` for one release; monitor prod logs for divergence before retiring the service class.
+
+**LOC**: audit estimated ~250 LOC code + ~150 LOC tests across 4.1+4.2+4.3.
 
 ## Phase 5: Inventory & combat (placeholder — needs sub-roadmaps)
 
