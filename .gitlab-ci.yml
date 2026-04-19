@@ -143,7 +143,7 @@ cypress_tutorial_job:
     #     follow-up). Without this, init_test_from_dump.sh's INSERTs into
     #     tutorial_steps fail with ERROR 1146.
     - mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 < db/init_noupdates.sql
-    - vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration
+    - vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration --no-all-or-nothing
     # Sanity probe the data fixtures the Cypress spec depends on. If
     # `make setup-ci-env` failed silently this surfaces it before the
     # spec hits the API.
