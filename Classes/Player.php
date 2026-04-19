@@ -470,7 +470,7 @@ class Player implements ActorInterface {
     public function have($table, $name): int{
 
 
-        if(!in_array($table, array('effects','actions'))){
+        if(!in_array($table, array('effects'))){
 
             exit('error have table');
         }
@@ -503,20 +503,6 @@ class Player implements ActorInterface {
             'player_id'=>$this->id,
             'name'=>$name
         );
-
-        if($table == 'actions'){
-
-            if ($name != 'attaquer') {
-                $actionService = new ActionService();
-                $action = $actionService->getActionByName($name);
-                if ($action != null) {
-                    if ($action->getOrmType() == 'spell' || $action->getOrmType() == 'technique') {
-                        $values['type'] = 'sort';
-                    }
-                }
-            }
-        }
-
 
         $db->insert('players_'. $table, $values);
     }
