@@ -6,6 +6,7 @@ use Classes\Item;
 use Classes\Player;
 use Classes\Log;
 use Classes\File;
+use App\Factory\PlayerFactory;
 use App\Service\AdminAuthorizationService;
 class PlayerCmd extends Command
 {
@@ -480,7 +481,7 @@ function add_log($argumentValues, $player){
     }
     else{
 
-        $target = Player::get_player_by_name($argumentValues[2]);
+        $target = PlayerFactory::legacyByName($argumentValues[2]);
     }
 
 

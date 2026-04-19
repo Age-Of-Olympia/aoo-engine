@@ -2,6 +2,7 @@
 use Classes\Command;
 use Classes\Argument;
 use Classes\Player;
+use App\Factory\PlayerFactory;
 use App\Service\AdminAuthorizationService;
 class SessionCmd extends Command
 {
@@ -27,7 +28,7 @@ EOT);
             if(!is_numeric($login)){
 
 
-                $player = Player::get_player_by_name($login);
+                $player = PlayerFactory::legacyByName($login);
             }
             else{
 

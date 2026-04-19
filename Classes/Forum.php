@@ -1,6 +1,7 @@
 <?php
 namespace Classes;
 
+use App\Factory\PlayerFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -433,7 +434,7 @@ class Forum{
         if(is_numeric($dest)){
             $dest = new Player($dest);
         }else if(is_string($dest)){
-            $dest = Player::get_player_by_name($dest);
+            $dest = PlayerFactory::legacyByName($dest);
         }
         
         $dest->get_data(false);
