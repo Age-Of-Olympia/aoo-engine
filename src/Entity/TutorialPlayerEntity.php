@@ -88,12 +88,23 @@ class TutorialPlayerEntity extends PlayerEntity
     }
 
     /**
-     * Transfer rewards (XP, PI) to the real player account
+     * Transfer earned XP and PI from the tutorial session to the
+     * real player account.
      *
-     * @param \Doctrine\DBAL\Connection $conn
+     * Signature matches `App\Tutorial\TutorialPlayer::transferRewardsToRealPlayer`
+     * so Phase 4.2 can swap this entity method in at
+     * `TutorialManager::completeTutorial` without changing the call
+     * shape. The tutorial player's own `xp` / `pi` columns are NOT
+     * used: progression is tracked in `TutorialContext::$tutorialXP`,
+     * not persisted to the tutorial player's row (those fields stay
+     * at 0 for the session's lifetime). The caller passes the earned
+     * deltas.
      */
-    public function transferRewardsToRealPlayer(\Doctrine\DBAL\Connection $conn): void
-    {
+    public function transferRewardsToRealPlayer(
+        \Doctrine\DBAL\Connection $conn,
+        int $xpEarned,
+        int $piEarned
+    ): void {
         if (!$this->realPlayerIdRef) {
             throw new \RuntimeException("Cannot transfer rewards: real_player_id_ref is null");
         }
@@ -102,13 +113,13 @@ class TutorialPlayerEntity extends PlayerEntity
             UPDATE players
             SET xp = xp + ?, pi = pi + ?
             WHERE id = ? AND player_type = "real"
-        ', [$this->xp, $this->pi, $this->realPlayerIdRef]);
+        ', [$xpEarned, $piEarned, $this->realPlayerIdRef]);
 
         error_log(sprintf(
             "Tutorial rewards transferred: Player %d received %d XP and %d PI from tutorial player %d",
             $this->realPlayerIdRef,
-            $this->xp,
-            $this->pi,
+            $xpEarned,
+            $piEarned,
             $this->id
         ));
     }
