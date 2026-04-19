@@ -5,6 +5,7 @@ use App\Enum\EquipResult;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
 use App\Service\ActionPassiveService;
+use App\Service\PlayerActionsService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
 use App\Service\PlayerReductionPassiveService;
@@ -469,7 +470,7 @@ class Player implements ActorInterface {
     public function have($table, $name): int{
 
 
-        if(!in_array($table, array('effects','actions'))){
+        if(!in_array($table, array('effects'))){
 
             exit('error have table');
         }
@@ -502,20 +503,6 @@ class Player implements ActorInterface {
             'player_id'=>$this->id,
             'name'=>$name
         );
-
-        if($table == 'actions'){
-
-            if ($name != 'attaquer') {
-                $actionService = new ActionService();
-                $action = $actionService->getActionByName($name);
-                if ($action != null) {
-                    if ($action->getOrmType() == 'spell' || $action->getOrmType() == 'technique') {
-                        $values['type'] = 'sort';
-                    }
-                }
-            }
-        }
-
 
         $db->insert('players_'. $table, $values);
     }
@@ -585,11 +572,13 @@ class Player implements ActorInterface {
     }
     public function get_options(){ return (new PlayerOptionsService())->getOptions($this->id); }
 
-    // actions shortcuts
-    public function add_action($name){ $this->add('actions', $name); }
-    public function have_action($name){ return $this->have('actions', $name); }
-    public function end_action($name){ $this->end('actions', $name); }
-    public function get_actions(){ return $this->get('actions'); }
+    // actions shortcuts — delegate to PlayerActionsService (Phase 2b).
+    // The spell/technique → type='sort' branch and the 'attaquer'
+    // short-circuit live inside the service; see addAction().
+    public function add_action($name){ (new PlayerActionsService())->addAction($this->id, $name); }
+    public function have_action($name){ return (new PlayerActionsService())->hasAction($this->id, $name); }
+    public function end_action($name){ (new PlayerActionsService())->endAction($this->id, $name); }
+    public function get_actions(){ return (new PlayerActionsService())->getActions($this->id); }
 
     // passive actions shortcuts
     public function add_action_passive($name){ $this->playerPassiveService->addPassiveByPlayerId($this->id,$this->actionPassiveService->getIdByName($name)); }
