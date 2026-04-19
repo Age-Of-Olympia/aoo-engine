@@ -29,93 +29,11 @@ class TutorialResourceManager
         $this->conn = $em->getConnection();
     }
 
-    /**
-     * Create tutorial player with isolated map instance
-     *
-     * Creates a complete tutorial environment:
-     * 1. Isolated map instance (copy of template)
-     * 2. Tutorial player character
-     * 3. Tutorial enemy NPC
-     *
-     * @param int $realPlayerId Real player's ID
-     * @param string $sessionId Tutorial session UUID
-     * @param string|null $race Character race (defaults to real player's race)
-     * @param string $templatePlan Template plan to copy (defaults to 'tutorial')
-     * @return TutorialPlayer Created tutorial player
-     * @throws TutorialException If creation fails
-     */
-    public function createTutorialPlayer(
-        int $realPlayerId,
-        string $sessionId,
-        ?string $race = null,
-        string $templatePlan = 'tutorial'
-    ): TutorialPlayer {
-        try {
-            // Create tutorial player (which creates map instance internally)
-            $tutorialPlayer = TutorialPlayer::create(
-                $this->conn,
-                $realPlayerId,
-                $sessionId,
-                null, // startingCoordsId auto-generated from instance
-                $race,
-                $templatePlan
-            );
-
-            // Spawn tutorial enemy
-            $this->spawnTutorialEnemy($sessionId);
-
-            error_log("[TutorialResourceManager] Created tutorial player {$tutorialPlayer->playerId} for session {$sessionId}");
-
-            return $tutorialPlayer;
-
-        } catch (\Exception $e) {
-            // Cleanup partial creation if it fails
-            try {
-                $this->cleanupPrevious($realPlayerId);
-            } catch (\Exception $cleanupError) {
-                error_log("[TutorialResourceManager] Cleanup after failed creation also failed: " . $cleanupError->getMessage());
-            }
-
-            throw new TutorialException(
-                "Failed to create tutorial player for player {$realPlayerId}",
-                ['real_player_id' => $realPlayerId, 'session_id' => $sessionId],
-                0,
-                $e
-            );
-        }
-    }
-
-    /**
-     * Delete tutorial player and all associated resources
-     *
-     * @param TutorialPlayer $tutorialPlayer Tutorial player to delete
-     * @param string $sessionId Session ID for cleanup
-     * @throws TutorialException If deletion fails
-     */
-    public function deleteTutorialPlayer(TutorialPlayer $tutorialPlayer, string $sessionId): void
-    {
-        try {
-            // Step 1: Delete tutorial enemy (no foreign key dependencies)
-            $this->removeTutorialEnemy($sessionId);
-
-            // Step 2: Delete tutorial player (references coords via foreign key)
-            $tutorialPlayer->delete();
-            error_log("[TutorialResourceManager] Deleted tutorial player for session {$sessionId}");
-
-            // Step 3: Delete map instance (deletes coords - must be AFTER player deletion)
-            $mapInstance = new TutorialMapInstance($this->conn);
-            $mapInstance->deleteInstance($sessionId);
-            error_log("[TutorialResourceManager] Deleted map instance for session {$sessionId}");
-
-        } catch (\Exception $e) {
-            throw new TutorialException(
-                "Failed to delete tutorial player for session {$sessionId}",
-                ['session_id' => $sessionId],
-                0,
-                $e
-            );
-        }
-    }
+    // Note: Phase 4.4 retired the legacy service-class methods
+    // (createTutorialPlayer, getTutorialPlayer, deleteTutorialPlayer
+    // that took/returned App\Tutorial\TutorialPlayer). The *AsEntity
+    // methods below are the only public surface now — they operate
+    // directly on TutorialPlayerEntity.
 
     /**
      * Spawn tutorial enemy for combat training
@@ -369,21 +287,13 @@ class TutorialResourceManager
     }
 
     /**
-     * Get tutorial player for a session
+     * Create the tutorial player for a session and return the hydrated
+     * TutorialPlayerEntity. Creates the isolated map instance, seeds
+     * the players + players_actions + players_options + tutorial_players
+     * rows via TutorialPlayerEntityFactory, then spawns the enemy NPC.
      *
-     * @param string $sessionId Tutorial session UUID
-     * @return TutorialPlayer|null Tutorial player or null if not found
-     */
-    /**
-     * Phase 4.3 — entity-returning wrapper around createTutorialPlayer.
-     *
-     * Creates the tutorial player via the legacy service-class path
-     * (which does map-instance + players row + tutorial_players row +
-     * enemy spawn), then hydrates the matching TutorialPlayerEntity
-     * via Doctrine and returns that. The service class IS still
-     * created internally — a future Phase 4.4 will re-home the
-     * creation workflow natively onto the entity, at which point this
-     * adapter can drop.
+     * Failure path: cleanup any partial creation via cleanupPrevious
+     * and wrap the error in a TutorialException.
      */
     public function createTutorialPlayerAsEntity(
         int $realPlayerId,
@@ -391,24 +301,39 @@ class TutorialResourceManager
         ?string $race = null,
         string $templatePlan = 'tutorial'
     ): TutorialPlayerEntity {
-        $service = $this->createTutorialPlayer($realPlayerId, $sessionId, $race, $templatePlan);
+        try {
+            $entity = TutorialPlayerEntityFactory::create(
+                $this->conn,
+                $realPlayerId,
+                $sessionId,
+                $race,
+                $templatePlan
+            );
 
-        $entity = EntityManagerFactory::getEntityManager()
-            ->find(TutorialPlayerEntity::class, $service->actualPlayerId);
+            $this->spawnTutorialEnemy($sessionId);
 
-        if ($entity === null) {
+            error_log("[TutorialResourceManager] Created tutorial player {$entity->getId()} for session {$sessionId}");
+
+            return $entity;
+        } catch (\Exception $e) {
+            try {
+                $this->cleanupPrevious($realPlayerId);
+            } catch (\Exception $cleanupError) {
+                error_log("[TutorialResourceManager] Cleanup after failed creation also failed: " . $cleanupError->getMessage());
+            }
+
             throw new TutorialException(
-                "TutorialPlayerEntity missing after create for player {$service->actualPlayerId}",
-                ['real_player_id' => $realPlayerId, 'session_id' => $sessionId]
+                "Failed to create tutorial player for player {$realPlayerId}",
+                ['real_player_id' => $realPlayerId, 'session_id' => $sessionId],
+                0,
+                $e
             );
         }
-
-        return $entity;
     }
 
     /**
-     * Phase 4.3 — entity-returning counterpart to getTutorialPlayer.
-     * Direct Doctrine lookup by tutorial_session_id on TutorialPlayerEntity.
+     * Return the active TutorialPlayerEntity for a session, or null.
+     * Direct Doctrine lookup via the tutorialSessionId field.
      */
     public function getTutorialPlayerAsEntity(string $sessionId): ?TutorialPlayerEntity
     {
@@ -418,48 +343,54 @@ class TutorialResourceManager
     }
 
     /**
-     * Phase 4.3 — entity-taking counterpart to deleteTutorialPlayer.
-     * Converts the entity back to its service-class representation
-     * (one query) so the existing delete pipeline runs unchanged —
-     * the pipeline already delegates to TutorialPlayerCleanup for the
-     * FK cascade, so the conversion is a thin adapter, not
-     * duplicated logic.
+     * Delete the tutorial player for a session and all associated
+     * resources: enemy NPC, players + tutorial_players rows + FK
+     * cascade, and map instance (coords).
+     *
+     * Phase 4.4 inlined path — no more service-class round-trip.
+     * FK cascade still delegates to TutorialPlayerCleanup (unchanged,
+     * covered by TutorialPlayerCleanupIntegrationTest from !376).
      */
     public function deleteTutorialPlayerAsEntity(
         TutorialPlayerEntity $entity,
         string $sessionId
     ): void {
-        $service = $this->getTutorialPlayer($sessionId);
-        if ($service === null) {
-            throw new TutorialException(
-                "Cannot delete: no tutorial_players row for session {$sessionId}",
-                ['session_id' => $sessionId, 'entity_id' => $entity->getId()]
-            );
-        }
-
-        $this->deleteTutorialPlayer($service, $sessionId);
-    }
-
-    public function getTutorialPlayer(string $sessionId): ?TutorialPlayer
-    {
         try {
-            $sql = 'SELECT id FROM tutorial_players
-                    WHERE tutorial_session_id = ? AND is_active = 1
-                    LIMIT 1';
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindValue(1, $sessionId);
-            $result = $stmt->executeQuery();
-            $row = $result->fetchAssociative();
+            // Step 1: enemy NPC (no FK dependencies).
+            $this->removeTutorialEnemy($sessionId);
 
-            if (!$row) {
-                return null;
+            // Step 2: tutorial_players row + players row + FK cascade.
+            // TutorialPlayerCleanup::deleteTutorialPlayer takes
+            // (tutorial_players.id, players.id). The entity's getId()
+            // is the players.id; tutorial_players.id requires one
+            // lookup by session.
+            $row = $this->conn->fetchAssociative(
+                'SELECT id FROM tutorial_players WHERE tutorial_session_id = ? LIMIT 1',
+                [$sessionId]
+            );
+
+            if ($row !== false) {
+                $cleanup = new TutorialPlayerCleanup($this->conn, new NullLogger());
+                $cleanup->deleteTutorialPlayer(
+                    (int) $row['id'],
+                    (int) $entity->getId()
+                );
+                error_log("[TutorialResourceManager] Deleted tutorial player {$entity->getId()} for session {$sessionId}");
+            } else {
+                error_log("[TutorialResourceManager] No tutorial_players row for session {$sessionId} (already deleted?)");
             }
 
-            return TutorialPlayer::load($this->conn, (int) $row['id']);
-
+            // Step 3: map instance + its coords (must be AFTER player delete).
+            $mapInstance = new TutorialMapInstance($this->conn);
+            $mapInstance->deleteInstance($sessionId);
+            error_log("[TutorialResourceManager] Deleted map instance for session {$sessionId}");
         } catch (\Exception $e) {
-            error_log("[TutorialResourceManager] Error loading tutorial player: " . $e->getMessage());
-            return null;
+            throw new TutorialException(
+                "Failed to delete tutorial player for session {$sessionId}",
+                ['session_id' => $sessionId, 'entity_id' => $entity->getId()],
+                0,
+                $e
+            );
         }
     }
 }
