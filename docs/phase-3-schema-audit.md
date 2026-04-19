@@ -43,6 +43,8 @@ hydration today. Must fix before any caller migration.
 |---|---|---|---|---|
 | A1 | **`bonus_points` column declared on entity but missing from table** | L61–62: `#[ORM\Column(type: "integer", name: "bonus_points")] protected int $bonusPoints = 0;` | No `bonus_points` column in `CREATE TABLE players` | **Add the column via a Doctrine migration.** The entity's intent is load-bearing: `bonus_points` is reserved for storing "over-the-limit" XP earned on season change (future season-carry-over feature). Keep the entity as-is; bring the table forward with `ALTER TABLE players ADD COLUMN bonus_points INT(11) NOT NULL DEFAULT 0`. Also add the same to `db/init_noupdates.sql` so fresh devcontainer setups include it. |
 | A2 | **`emailBonus` property maps to camelCase column; table has `email_bonus`** | L130–131: `#[ORM\Column(type: "boolean", nullable: true)] protected ?bool $emailBonus = false;` — no explicit `name:`, so Doctrine's `DefaultNamingStrategy` uses the property name `emailBonus` as the column name | Column is `email_bonus` | **Add `name: 'email_bonus'`** to the `ORM\Column` attribute. One-line fix. |
+| A3 | **`tutorialSessionId` on `TutorialPlayerEntity` maps to camelCase; table has `tutorial_session_id`** | `src/Entity/TutorialPlayerEntity.php:22–23`: `#[ORM\Column(type: "string", length: 36, nullable: true)] protected ?string $tutorialSessionId = null;` — no explicit `name:` | Column is `tutorial_session_id` | **Add `name: 'tutorial_session_id'`**. Under STI, this column appears in every `SELECT` against `players` — hydrating even a `RealPlayer` fails if this is wrong. Found while running the Phase 3.1 hydration test — the audit missed it initially. |
+| A4 | **`realPlayerIdRef` on `TutorialPlayerEntity` maps to camelCase; table has `real_player_id_ref`** | `src/Entity/TutorialPlayerEntity.php:25–26`: same pattern as A3 | Column is `real_player_id_ref` | **Add `name: 'real_player_id_ref'`**. Same STI-visibility reasoning as A3. |
 
 Doctrine's `ORMSetup::createAttributeMetadataConfiguration()` uses
 `DefaultNamingStrategy` (confirmed in
@@ -97,7 +99,7 @@ camelCase columns to match) — out of scope for this audit.
 
 ## Required fixes to unblock Phase 3
 
-Three edits, three files:
+Four edits across four files:
 
 1. **New Doctrine migration**
    (`src/Migrations/VersionYYYYMMDDHHMMSS_AddBonusPointsToPlayers.php`)
@@ -106,10 +108,15 @@ Three edits, three files:
    `CREATE TABLE players` statement so fresh devcontainer/CI setups
    don't require the migration to be applied before tests can run.
 3. **Edit `src/Entity/PlayerEntity.php`**: add `name: 'email_bonus'` to
-   `$emailBonus`'s `#[ORM\Column(...)]` attribute.
+   `$emailBonus`'s `#[ORM\Column(...)]` attribute (A2).
+4. **Edit `src/Entity/TutorialPlayerEntity.php`**: add
+   `name: 'tutorial_session_id'` to `$tutorialSessionId` and
+   `name: 'real_player_id_ref'` to `$realPlayerIdRef` (A3, A4). Under
+   STI, both columns appear in every SELECT against `players`, so
+   hydrating even a `RealPlayer` fails if they're missing.
 
-With those three fixes, `PlayerFactory::entity($id)` hydrates cleanly
-against the current schema.
+With those four fixes, Doctrine hydration of every `PlayerEntity`
+subclass succeeds against the live schema.
 
 ## Phase 3 execution plan
 
