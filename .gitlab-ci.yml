@@ -211,19 +211,20 @@ cypress_tutorial_job:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    # tutorial-refactoring: auto-trigger now that the layers stabilized
-    # (2 consecutive 391s greens on the same SHA, MRs !361/!362/!363/!364
-    # peeled the env, schema, feature-flag and spec layers respectively).
-    # Keep `allow_failure: true` as a temporary safety net for the next
-    # 1-2 organic runs; drop it in a follow-up once they all pass cleanly.
+    # tutorial-refactoring: auto-trigger and treat reds as real signal
+    # (3 consecutive greens at ~390s, MRs !361/!362/!363/!364 peeled the
+    # env, schema, feature-flag and spec layers respectively, !365 flipped
+    # the manual gate). A red here now means a real regression.
     - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
+    # staging/saison-3/main: still manual until cypress is independently
+    # validated on each — when a human clicks it there, a red should also
+    # be a real signal.
     - if: $CI_COMMIT_REF_NAME == "staging"
       when: manual
     - if: $CI_COMMIT_REF_NAME == "saison-3"
       when: manual
     - if: $CI_COMMIT_REF_NAME == "main"
       when: manual
-  allow_failure: true
 
 prepare_job:
   stage: prepare
