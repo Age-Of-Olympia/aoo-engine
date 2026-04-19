@@ -36,19 +36,33 @@ build_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
     IMAGE_TAG: "test:latest"
+    # Enable BuildKit so --build-arg BUILDKIT_INLINE_CACHE works and
+    # --cache-from picks up unchanged layers from the previous image.
+    DOCKER_BUILDKIT: "1"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - export DOCKER_IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_TAG"
+    # Pull the previous image (if any) so its layers are available as
+    # build cache. The "|| true" handles the bootstrap case where the
+    # registry has nothing yet.
+    - docker pull $DOCKER_IMAGE 2>/dev/null || true
     - |
+      build_with_cache() {
+        docker build \
+          --cache-from $DOCKER_IMAGE \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t $DOCKER_IMAGE \
+          -f Dockerfile.test \
+          .
+        docker push $DOCKER_IMAGE
+      }
       if ! docker manifest inspect $DOCKER_IMAGE >/dev/null 2>&1; then
-        echo "Image does not exist, building..."
-        docker build -t $DOCKER_IMAGE -f Dockerfile.test .
-        docker push $DOCKER_IMAGE
+        echo "Image does not exist, building (no cache available)..."
+        build_with_cache
       elif [ "$FORCE_REBUILD" = "true" ]; then
-        echo "Changes detected. Forcing image rebuild..."
-        docker build -t $DOCKER_IMAGE -f Dockerfile.test .
-        docker push $DOCKER_IMAGE
+        echo "Changes detected. Rebuilding (with --cache-from $DOCKER_IMAGE)..."
+        build_with_cache
       else
         echo "Image $DOCKER_IMAGE already exists, skipping build."
       fi
