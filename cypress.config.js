@@ -26,15 +26,23 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       const mysql = require('mysql2/promise');
 
-      /* Database query task for validation */
+      /* Database query task for validation.
+       *
+       * Defaults match the devcontainer (mariadb-aoo4 / root / passwordRoot /
+       * aoo4_test). CI overrides via TEST_DB_HOST / TEST_DB_USER /
+       * TEST_DB_PASS / TEST_DB_NAME — same env-var contract as
+       * scripts/testing/reset_test_database.sh and db/init_test_from_dump.sh
+       * (added in #342). The CI service alias is `mariadb`, not the
+       * devcontainer's `mariadb-aoo4`.
+       */
       on('task', {
         async queryDatabase({ query, params = [] }) {
           const connection = await mysql.createConnection({
-            host: 'mariadb-aoo4',
-            user: 'root',
-            password: 'passwordRoot',
-            database: 'aoo4_test',
-            charset: 'utf8mb4'
+            host:     process.env.TEST_DB_HOST || 'mariadb-aoo4',
+            user:     process.env.TEST_DB_USER || 'root',
+            password: process.env.TEST_DB_PASS || 'passwordRoot',
+            database: process.env.TEST_DB_NAME || 'aoo4_test',
+            charset:  'utf8mb4'
           });
 
           try {
