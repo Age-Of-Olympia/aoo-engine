@@ -227,9 +227,13 @@ class TutorialResourceManager
     public function cleanupPrevious(int $realPlayerId): int
     {
         try {
-            // Find all active tutorial players with their session IDs
-            $sql = 'SELECT id, player_id, tutorial_session_id FROM tutorial_players
-                    WHERE real_player_id = ? AND is_active = 1 AND deleted_at IS NULL';
+            // Find all active tutorial players with their session IDs.
+            // Phase 4.5: link is on players.real_player_id_ref; tutorial_players
+            // keeps only id/session/activity bookkeeping.
+            $sql = 'SELECT tp.id, tp.player_id, tp.tutorial_session_id
+                    FROM tutorial_players tp
+                    JOIN players p ON p.id = tp.player_id
+                    WHERE p.real_player_id_ref = ? AND tp.is_active = 1 AND tp.deleted_at IS NULL';
             $stmt = $this->conn->prepare($sql);
             $stmt->bindValue(1, $realPlayerId);
             $result = $stmt->executeQuery();

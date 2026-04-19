@@ -86,14 +86,10 @@ class TutorialPlayerFactory
         //
         // `tutorial_session_id` and `real_player_id_ref` on the
         // `players` row are what TutorialPlayer maps to via its
-        // STI-subclass ORM\Column attributes. The original
-        // service-class factory left these NULL and tracked the link
-        // only through the `tutorial_players` table — fine for the
-        // service-class path, broken for the entity path (Phase 4.3's
-        // TutorialManager::completeTutorial reads
-        // getRealPlayerIdRef() to find the real player). Populate
-        // both columns here; tutorial_players keeps its parallel
-        // link for the id-level bookkeeping.
+        // STI-subclass ORM\Column attributes. Phase 4.5 made
+        // `players.real_player_id_ref` the sole real↔tutorial link
+        // (collapsing the parallel `tutorial_players.real_player_id`
+        // column that predated the entity layer).
         $conn->insert('players', [
             'id'                  => $actualPlayerId,
             'player_type'         => 'tutorial',
@@ -136,9 +132,11 @@ class TutorialPlayerFactory
             'name'      => 'showActionDetails',
         ]);
 
-        // Step 10: Tutorial tracking entry
+        // Step 10: Tutorial tracking entry.
+        // Phase 4.5 collapsed the real-player link onto players.real_player_id_ref
+        // (written on the players row above); this table keeps only session
+        // and activity bookkeeping.
         $conn->insert('tutorial_players', [
-            'real_player_id'      => $realPlayerId,
             'tutorial_session_id' => $tutorialSessionId,
             'player_id'           => $actualPlayerId,
             'name'                => $name,

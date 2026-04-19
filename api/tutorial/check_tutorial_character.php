@@ -34,12 +34,15 @@ try {
         'driver' => 'pdo_mysql',
     ]);
 
-    // Check if this player_id is a tutorial character (active or not)
-    // We check without is_active filter because users can get stuck even after tutorial ends
+    // Check if this player_id is a tutorial character (active or not).
+    // We check without is_active filter because users can get stuck even after tutorial ends.
+    // Phase 4.5: resolve real player via players.real_player_id_ref on the tutorial row itself.
     $result = $conn->fetchAssociative(
-        "SELECT tp.real_player_id, p.name as real_player_name
+        "SELECT tp_player.real_player_id_ref AS real_player_id,
+                real_player.name AS real_player_name
          FROM tutorial_players tp
-         LEFT JOIN players p ON p.id = tp.real_player_id
+         JOIN players tp_player ON tp_player.id = tp.player_id
+         LEFT JOIN players real_player ON real_player.id = tp_player.real_player_id_ref
          WHERE tp.player_id = ?",
         [$playerId]
     );

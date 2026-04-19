@@ -33,16 +33,24 @@ try {
         'driver' => 'pdo_mysql',
     ]);
 
-    // Get the real player ID using tutorial_session_id (preferred) or player_id (fallback)
+    // Get the real player ID using tutorial_session_id (preferred) or player_id (fallback).
+    // Phase 4.5: link lives on the tutorial player's own row (players.real_player_id_ref);
+    // tutorial_players keeps only session bookkeeping.
     if ($tutorialSessionId) {
         $result = $conn->fetchAssociative(
-            "SELECT real_player_id FROM tutorial_players WHERE tutorial_session_id = ? AND is_active = 1",
+            "SELECT p.real_player_id_ref AS real_player_id
+             FROM tutorial_players tp
+             JOIN players p ON p.id = tp.player_id
+             WHERE tp.tutorial_session_id = ? AND tp.is_active = 1",
             [$tutorialSessionId]
         );
     } else {
         // Fallback: try to find by player_id (in case session var is missing)
         $result = $conn->fetchAssociative(
-            "SELECT real_player_id FROM tutorial_players WHERE player_id = ? AND is_active = 1",
+            "SELECT p.real_player_id_ref AS real_player_id
+             FROM tutorial_players tp
+             JOIN players p ON p.id = tp.player_id
+             WHERE tp.player_id = ? AND tp.is_active = 1",
             [$playerId]
         );
     }

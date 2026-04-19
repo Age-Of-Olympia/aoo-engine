@@ -163,16 +163,18 @@ class TutorialPlayerCleanupIntegrationTest extends TutorialIntegrationTestCase
      */
     private function seedTutorialPlayer(int $realPlayerId, string $sessionId): array
     {
+        // Phase 4.5: real↔tutorial link lives on players.real_player_id_ref
+        // (tutorial_players.real_player_id was dropped).
         $this->conn->insert('players', [
-            'name'        => 'PhaseCTut_' . bin2hex(random_bytes(4)),
-            'race'        => 'Humain',
-            'player_type' => 'tutorial',
-            'coords_id'   => $this->anyCoordsId(),
+            'name'               => 'PhaseCTut_' . bin2hex(random_bytes(4)),
+            'race'               => 'Humain',
+            'player_type'        => 'tutorial',
+            'coords_id'          => $this->anyCoordsId(),
+            'real_player_id_ref' => $realPlayerId,
         ]);
         $tutPlayerId = (int) $this->conn->lastInsertId();
 
         $this->conn->insert('tutorial_players', [
-            'real_player_id'      => $realPlayerId,
             'tutorial_session_id' => $sessionId . '_' . bin2hex(random_bytes(4)),
             'player_id'           => $tutPlayerId,
             'name'                => 'PhaseCTutName',

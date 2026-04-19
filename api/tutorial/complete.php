@@ -125,12 +125,16 @@ try {
         error_log("[Complete] Player {$playerId} initialized with {$addedCount} new actions for race {$mainPlayer->data->race}");
     }
 
-    // Deactivate any tutorial players
+    // Deactivate any tutorial players.
+    // Phase 4.5: link is on players.real_player_id_ref; UPDATE via JOIN.
     $result = $db->exe(
-        'UPDATE tutorial_players SET is_active = 0 WHERE real_player_id = ?',
+        'UPDATE tutorial_players tp
+         JOIN players p ON p.id = tp.player_id
+         SET tp.is_active = 0
+         WHERE p.real_player_id_ref = ?',
         $playerId
     );
-    error_log("[Complete] Deactivated tutorial players for real_player_id={$playerId}");
+    error_log("[Complete] Deactivated tutorial players for real_player_id_ref={$playerId}");
 
     echo json_encode([
         'success' => true,

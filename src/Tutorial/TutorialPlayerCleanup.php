@@ -227,9 +227,13 @@ class TutorialPlayerCleanup
     public function cleanupOrphanedTutorialPlayers(int $realPlayerId): int
     {
         try {
-            // Find all active tutorial players for this real player
-            $sql = 'SELECT id, player_id FROM tutorial_players
-                    WHERE real_player_id = ? AND is_active = 1 AND deleted_at IS NULL';
+            // Find all active tutorial players for this real player.
+            // Phase 4.5: link is on players.real_player_id_ref; the old
+            // tutorial_players.real_player_id column has been dropped.
+            $sql = 'SELECT tp.id, tp.player_id
+                    FROM tutorial_players tp
+                    JOIN players p ON p.id = tp.player_id
+                    WHERE p.real_player_id_ref = ? AND tp.is_active = 1 AND tp.deleted_at IS NULL';
             $stmt = $this->conn->prepare($sql);
             $stmt->bindValue(1, $realPlayerId);
             $result = $stmt->executeQuery();
