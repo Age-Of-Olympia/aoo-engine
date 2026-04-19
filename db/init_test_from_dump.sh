@@ -136,6 +136,33 @@ WHERE s.step_id IN ('deplete_movements', 'actions_intro', 'walk_to_tree', 'walk_
 AND p.mvt_required = 4;
 SCHEMA_FIXES
 
+# Phase 4.6 FK — add the self-referential FK on players.real_player_id_ref
+# if the source DB doesn't already carry it. Idempotent; no-op if present.
+# Prepared-statement guard because MariaDB doesn't accept IF NOT EXISTS
+# on constraints.
+mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" --default-character-set=utf8mb4 <<'REAL_PLAYER_FK'
+-- First scrub any dangling refs that would trip the FK validation.
+UPDATE players p
+LEFT JOIN players target ON target.id = p.real_player_id_ref
+SET p.real_player_id_ref = NULL
+WHERE p.real_player_id_ref IS NOT NULL
+  AND target.id IS NULL;
+
+SET @fk_exists := (
+    SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'players'
+      AND CONSTRAINT_NAME = 'fk_players_real_player_id_ref'
+);
+SET @sql := IF(@fk_exists = 0,
+    'ALTER TABLE players ADD CONSTRAINT fk_players_real_player_id_ref FOREIGN KEY (real_player_id_ref) REFERENCES players(id) ON DELETE SET NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+REAL_PLAYER_FK
+
 # Add test data
 echo "👥 Creating test characters..."
 mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$TEST_DB" --default-character-set=utf8mb4 <<TESTDATA

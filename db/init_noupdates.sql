@@ -4609,7 +4609,9 @@ CREATE TABLE `players` (
   KEY `idx_type_display` (`player_type`,`display_id`),
   KEY `idx_player_type` (`player_type`),
   KEY `idx_tutorial_session` (`tutorial_session_id`),
-  CONSTRAINT `players_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`)
+  KEY `idx_real_player_id_ref` (`real_player_id_ref`),
+  CONSTRAINT `players_ibfk_1` FOREIGN KEY (`coords_id`) REFERENCES `coords` (`id`),
+  CONSTRAINT `fk_players_real_player_id_ref` FOREIGN KEY (`real_player_id_ref`) REFERENCES `players` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
