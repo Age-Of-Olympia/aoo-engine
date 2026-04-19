@@ -25,7 +25,7 @@ EOT);
            AdminAuthorizationService::DoSuperAdminCheck();
         }
 
-        if($player->have('options', $argumentValues[1])){
+        if($player->have_option($argumentValues[1])){
 
 
             $player->end_option($argumentValues[1]);

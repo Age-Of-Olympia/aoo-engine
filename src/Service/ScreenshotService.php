@@ -149,7 +149,7 @@ class ScreenshotService
             ];
         }
 
-        if (!$player->have('options', 'incognitoMode')) {
+        if (!$player->have_option('incognitoMode')) {
             return [
                 'valid' => false,
                 'error' => 'Screenshot player must have incognito mode enabled'
