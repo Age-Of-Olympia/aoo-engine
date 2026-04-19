@@ -175,6 +175,27 @@ Two more methods on `PlayerEntity` to unblock the remaining targets:
 - `getOptions(PlayerOptionsService): array` — delegates to the Phase 2
   service's `getOptions`.
 
+### Phase 3.4b — PlayerCaracsService + BourrinsView migration
+
+New `App\Service\PlayerCaracsService` with
+`computeNudeCaracs(int $playerId, string $race): object` that mirrors
+the race-base + upgrade-count aggregation from legacy
+`Player::get_caracs(nude: true)`. Entity-side domain method
+`PlayerEntity::getNudeCaracs(PlayerCaracsService): object` delegates
+to it.
+
+BourrinsView migrated off legacy `PlayerFactory::legacy()` +
+`get_caracs(nude: true)` onto the entity path. Every `$player->data->X`
+replaced with the matching entity getter.
+
+Characterization test proves the service output is identical to the
+legacy nude caracs on a real seeded player.
+
+**Out of scope** (still deferred): items / effects / turn bonuses.
+Those remain on legacy `Player::get_caracs()` because they touch
+`Item::get_equiped_list`, `ELE_BUFFS/DEBUFFS`, and filesystem JSON
+caches — each needs its own design decision.
+
 ### Phase 3.4b+ — blocked by external dependencies
 
 The remaining three audit targets (BourrinsView, infos.php,
