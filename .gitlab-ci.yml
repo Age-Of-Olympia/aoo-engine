@@ -124,6 +124,14 @@ cypress_tutorial_job:
     DB_HOST: mariadb
     DB_USER: root
     DB_PASS: passwordRoot
+    # cypress.config.js reads TEST_DB_* (same contract as
+    # scripts/testing/reset_test_database.sh). Without these aliases the
+    # cy.task('queryDatabase') defaults kick in and try to reach the
+    # devcontainer host `mariadb-aoo4`, which doesn't exist in CI.
+    TEST_DB_HOST: mariadb
+    TEST_DB_USER: root
+    TEST_DB_PASS: passwordRoot
+    TEST_DB_NAME: aoo4
     CYPRESS_CONTAINER: "true"
   before_script:
     # Stage the data + image fixtures the app expects, plus an example
