@@ -4,6 +4,7 @@ namespace App\Tutorial;
 
 use App\Entity\EntityManagerFactory;
 use App\Entity\TutorialPlayer;
+use App\Factory\PlayerFactory;
 use Classes\Player;
 use Classes\Db;
 
@@ -105,7 +106,7 @@ class TutorialManager
         // hydrating one from the entity's id is a minor cost that
         // preserves the existing downstream contract (step validators
         // etc. use legacy Player).
-        $tutorialPlayerInstance = new \Classes\Player((int) $this->tutorialPlayer->getId());
+        $tutorialPlayerInstance = PlayerFactory::legacy((int) $this->tutorialPlayer->getId());
         $tutorialPlayerInstance->get_data();
         $this->context->setPlayer($tutorialPlayerInstance);
 
@@ -155,7 +156,7 @@ class TutorialManager
         // CRITICAL: Switch context to use tutorial player instead of main player
         // This ensures movement checks, validation hints, etc. use tutorial player's data
         if ($this->tutorialPlayer) {
-            $tutorialPlayerObj = new Player((int) $this->tutorialPlayer->getId());
+            $tutorialPlayerObj = PlayerFactory::legacy((int) $this->tutorialPlayer->getId());
             $tutorialPlayerObj->get_data();
             $this->context->setPlayer($tutorialPlayerObj);
             error_log("[TutorialManager] Switched context to tutorial player {$this->tutorialPlayer->getId()}");
@@ -315,7 +316,7 @@ class TutorialManager
     {
         // Get the tutorial player to access their race and stats
         $tutorialPlayerId = $this->context->getPlayer()->id;
-        $tutorialPlayer = new Player($tutorialPlayerId);
+        $tutorialPlayer = PlayerFactory::legacy($tutorialPlayerId);
 
         // Create placeholder service
         $placeholderService = new TutorialPlaceholderService($tutorialPlayer);
@@ -484,7 +485,7 @@ class TutorialManager
             $actualPiAwarded = $piEarned;
 
             // Remove invisibleMode from real player now that they completed tutorial
-            $realPlayer = new \Classes\Player($realPlayerId);
+            $realPlayer = PlayerFactory::legacy($realPlayerId);
             $realPlayer->end_option('invisibleMode');
 
             // Initialize player with race actions

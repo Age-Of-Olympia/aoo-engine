@@ -6,12 +6,12 @@
  * Starts a new tutorial session for the logged-in player
  */
 
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialHelper;
 use App\Tutorial\TutorialMapInstance;
 use App\Entity\EntityManagerFactory;
-use Classes\Player;
 
 // No login check - we'll handle it ourselves
 define('NO_LOGIN', true);
@@ -63,7 +63,7 @@ try {
     // No need for manual cleanup here
 
     // Load player
-    $player = new Player($playerId);
+    $player = PlayerFactory::legacy($playerId);
     $player->get_data();
 
     // Create tutorial manager

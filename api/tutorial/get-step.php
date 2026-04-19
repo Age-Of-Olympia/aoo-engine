@@ -6,8 +6,8 @@
  * Gets the current step data for a tutorial session
  */
 
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialManager;
-use Classes\Player;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
@@ -45,7 +45,7 @@ if (!$sessionId) {
 
 try {
     // Load player
-    $player = new Player($playerId);
+    $player = PlayerFactory::legacy($playerId);
     $player->get_data();
 
     // Create tutorial manager
