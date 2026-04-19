@@ -37,7 +37,7 @@ EOT);
 
             $player->get_data();
 
-            if($player->have('options','isSuperAdmin') && $player->id != $_SESSION['originalPlayerId'] ){
+            if($player->have_option('isSuperAdmin') && $player->id != $_SESSION['originalPlayerId'] ){
                AdminAuthorizationService::DoSuperAdminCheck();
             }
 
