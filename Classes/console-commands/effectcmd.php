@@ -20,7 +20,7 @@ EOT);
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
 
-        if($player->have('effects', $argumentValues[1])){
+        if($player->haveEffect($argumentValues[1])){
 
 
             $player->endEffect($argumentValues[1]);

@@ -466,59 +466,15 @@ class Player implements ActorInterface {
     }
 
 
-    // have/add/end/get main functions
-    public function have($table, $name): int{
-
-
-        if(!in_array($table, array('effects'))){
-
-            exit('error have table');
-        }
-
-
-        $sql = '
-        SELECT COUNT(*) AS n
-        FROM
-        players_'. $table .'
-        WHERE
-        player_id = '. $this->id .'
-        AND
-        name = "'. $name .'"
-        ';
-
-        $db = new Db();
-
-        $count = $db->get_count($sql);
-
-        return $count;
-    }
-
-
-    public function add($table, $name){
-
-
-        $db = new Db();
-
-        $values = array(
-            'player_id'=>$this->id,
-            'name'=>$name
-        );
-
-        $db->insert('players_'. $table, $values);
-    }
-
-    public function end($table, $name){
-
-        $values = array(
-            'player_id'=>$this->id,
-            'name'=>$name
-        );
-
-        $db = new Db();
-
-        $db->delete('players_'. $table, $values);
-    }
-
+    /**
+     * Last remnant of the old have/add/end/get god-method — kept only
+     * because get_upgrades() above still calls $this->get('upgrades').
+     * Options went to PlayerOptionsService (!371), actions to
+     * PlayerActionsService (!374), effects always had their own
+     * haveEffect()/addEffect()/endEffect() shims backed by
+     * PlayerEffectService. A future MR can inline the SELECT in
+     * get_upgrades() and drop this too.
+     */
     public function get($table){
 
 
@@ -531,25 +487,6 @@ class Player implements ActorInterface {
         while($row = $res->fetch_object()){
 
             $return[] = $row->name;
-        }
-
-        sort($return);
-
-        return $return;
-    }
-
-    public function get_detailed($table){
-
-
-        $return = array();
-
-        $db = new Db();
-
-        $res = $db->get_single_player_id('players_'. $table, $this->id);
-
-        while($row = $res->fetch_object()){
-
-            $return[] = $row;
         }
 
         sort($return);
