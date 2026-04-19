@@ -594,4 +594,17 @@ abstract class PlayerEntity
     {
         return $options->getOptions((int) $this->id);
     }
+
+    /**
+     * Return a stdClass with every CARACS key populated as race base
+     * stat + upgrade count. Matches the shape of `$player->caracs`
+     * after legacy `$player->get_caracs(nude: true)`.
+     *
+     * Phase 3.4b unblocks BourrinsView (which only ever uses the nude
+     * path). Items / effects / turn bonuses stay on the legacy pipeline.
+     */
+    public function getNudeCaracs(\App\Service\PlayerCaracsService $caracs): object
+    {
+        return $caracs->computeNudeCaracs((int) $this->id, $this->race);
+    }
 }
