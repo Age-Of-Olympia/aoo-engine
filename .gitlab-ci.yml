@@ -211,11 +211,13 @@ cypress_tutorial_job:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    # tutorial-refactoring: auto-trigger and treat reds as real signal
-    # (3 consecutive greens at ~390s, MRs !361/!362/!363/!364 peeled the
-    # env, schema, feature-flag and spec layers respectively, !365 flipped
-    # the manual gate). A red here now means a real regression.
+    # tutorial-refactoring: manual trigger to conserve CI minutes.
+    # Auto-trigger was enabled in !365/!366 after 3 consecutive greens at
+    # ~390s, but the ~7min Cypress run on every push burns through the
+    # free-tier CI quota too quickly. Reds are still a real signal when
+    # the job is triggered manually.
     - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
+      when: manual
     # staging/saison-3/main: still manual until cypress is independently
     # validated on each — when a human clicks it there, a red should also
     # be a real signal.
