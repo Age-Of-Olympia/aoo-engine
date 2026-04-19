@@ -30,10 +30,10 @@ class TutorialView
 
 ?>
         <script>
-            /* Tutorial data - scripts already loaded by Ui.php */
             window.playerId = <?php echo $_SESSION['playerId'] ?>;
             window.dataCoords = "<?php echo $coordX + 1 ?>,<?php echo $coordY ?>";
         </script>
+        <script src="js/tutorial.js?v=20260419"></script>
 <?php
     }
 }
