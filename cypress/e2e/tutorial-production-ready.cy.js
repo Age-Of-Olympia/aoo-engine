@@ -539,6 +539,18 @@ describe('Tutorial System - Production Readiness Test', () => {
      * Click on tree to open its panel regardless of current step */
     cy.wait(2000);  /* Wait for walk_to_tree validation to complete */
 
+    /* When the player walks adjacent to the tree, the tutorial automatically
+     * shows the "Ressource récoltable" info card on top of the tree tile.
+     * Dismiss it (if present) before clicking the tile, otherwise cypress's
+     * actionability check fails with "covered by another element". */
+    cy.get('body').then(($body) => {
+      if ($body.find('#tutorial-next:visible').length > 0) {
+        cy.log('🪧 Dismissing observe_tree info card before tree click');
+        cy.get('#tutorial-next').click();
+        cy.wait(1500);
+      }
+    });
+
     /* Click on tree tile to open its panel and see "récoltable" status */
     cy.log('🌳 Clicking on tree to open panel');
     cy.get('.case[data-coords="0,1"]').should('be.visible').click();
