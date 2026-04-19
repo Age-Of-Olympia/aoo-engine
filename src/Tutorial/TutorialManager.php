@@ -2,6 +2,8 @@
 
 namespace App\Tutorial;
 
+use App\Entity\EntityManagerFactory;
+use App\Entity\TutorialPlayerEntity;
 use Classes\Player;
 use Classes\Db;
 
@@ -457,7 +459,20 @@ class TutorialManager
         $actualPiAwarded = 0;
 
         if (!$isReplay && $this->tutorialPlayer) {
-            $this->tutorialPlayer->transferRewardsToRealPlayer($xpEarned, $piEarned);
+            // Phase 4.2: reward transfer now goes through
+            // TutorialPlayerEntity (the Doctrine entity) instead of
+            // the App\Tutorial\TutorialPlayer service class. Semantics
+            // are identical — the entity method was reconciled in
+            // Phase 4.1 (!391) and the entity's UPDATE even adds a
+            // defensive `player_type = "real"` clause the service
+            // class lacked. The legacy call remains as a safety net
+            // in case the entity misses (shouldn't happen: the id
+            // comes from a row we just persisted).
+            $this->transferRewardsViaEntity(
+                (int) $this->tutorialPlayer->actualPlayerId,
+                $xpEarned,
+                $piEarned
+            );
             $actualXpAwarded = $xpEarned;
             $actualPiAwarded = $piEarned;
 
@@ -507,6 +522,45 @@ class TutorialManager
             'is_replay' => $isReplay,
             'message' => $message
         ];
+    }
+
+    /**
+     * Phase 4.2 — reward transfer via TutorialPlayerEntity.
+     *
+     * Hydrates the tutorial player's Doctrine entity and delegates
+     * the SQL UPDATE to its reconciled `transferRewardsToRealPlayer`
+     * (Phase 4.1, !391). Semantics are identical to the legacy
+     * `App\Tutorial\TutorialPlayer::transferRewardsToRealPlayer`
+     * service-class method, with an added defensive
+     * `player_type = "real"` clause in the UPDATE.
+     *
+     * If the entity is unexpectedly missing at lookup time (should
+     * never happen — the id was just persisted), fall back to the
+     * legacy service-class call. That preserves reward payout even
+     * in the edge case.
+     */
+    private function transferRewardsViaEntity(
+        int $tutorialPlayerId,
+        int $xpEarned,
+        int $piEarned
+    ): void {
+        $em = EntityManagerFactory::getEntityManager();
+        $entity = $em->find(TutorialPlayerEntity::class, $tutorialPlayerId);
+
+        if ($entity === null) {
+            error_log(sprintf(
+                "[TutorialManager] TutorialPlayerEntity missing for id %d — falling back to service-class reward transfer",
+                $tutorialPlayerId
+            ));
+            $this->tutorialPlayer->transferRewardsToRealPlayer($xpEarned, $piEarned);
+            return;
+        }
+
+        $entity->transferRewardsToRealPlayer(
+            $em->getConnection(),
+            $xpEarned,
+            $piEarned
+        );
     }
 
     /**
