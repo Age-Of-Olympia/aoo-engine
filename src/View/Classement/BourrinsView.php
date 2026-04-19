@@ -2,7 +2,7 @@
 
 namespace App\View\Classement;
 
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Str;
 
 class BourrinsView
@@ -48,7 +48,7 @@ class BourrinsView
             foreach ($playerList as $player) {
 
 
-                $player = new Player($player->id);
+                $player = PlayerFactory::legacy($player->id);
 
                 $player->get_data();
 

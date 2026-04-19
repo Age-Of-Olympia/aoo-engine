@@ -2,9 +2,9 @@
 
 namespace App\View\Inventory;
 
+use App\Factory\PlayerFactory;
 use App\Service\InventoryService;
 use App\Tutorial\TutorialHelper;
-use Classes\Player;
 use Classes\Item;
 use Classes\Ui;
 
@@ -15,9 +15,7 @@ class InventoryView
 
         if (!empty($_POST['action'])) {
 
-            // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-            $activePlayerId = TutorialHelper::getActivePlayerId();
-            $player = new Player($activePlayerId);
+            $player = PlayerFactory::active();
 
             $itemList = Item::get_item_list($player->id);
 
@@ -49,12 +47,11 @@ class InventoryView
         }
 
 
-        // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
         $activePlayerId = TutorialHelper::getActivePlayerId();
 
         $path = 'datas/private/players/' . $activePlayerId . '.invent.html';
 
-        $player = new Player($activePlayerId);
+        $player = PlayerFactory::legacy($activePlayerId);
 
         $itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
         $data = Ui::print_inventory($itemList);

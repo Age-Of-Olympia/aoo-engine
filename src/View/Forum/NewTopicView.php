@@ -2,9 +2,9 @@
 
 namespace App\View\Forum;
 
+use App\Factory\PlayerFactory;
 use App\Service\PlayerService;
 use Classes\Forum;
-use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
@@ -25,7 +25,7 @@ class NewTopicView
             ExitError('error forum');
         }
 
-        $player = new Player($_SESSION['playerId']);
+        $player = PlayerFactory::legacy($_SESSION['playerId']);
         $player->get_data();
 
         if (!empty($_POST['text']) && !empty($_POST['name'])) {
@@ -58,7 +58,7 @@ class NewTopicView
                 if (!empty($_POST['destId'])) {
 
                     $destTbl = Forum::get_top_dest($topJson);
-                    $desti = new Player($_POST['destId']);
+                    $desti = PlayerFactory::legacy($_POST['destId']);
                     $desti->get_data();
                     if ($player->check_missive_permission($desti)) {
 
@@ -118,7 +118,7 @@ class NewTopicView
             if (!empty($_GET['targetId'])) {
 
 
-                $target = new Player($_GET['targetId']);
+                $target = PlayerFactory::legacy($_GET['targetId']);
 
                 if ($player->check_missive_permission($target)) {
 

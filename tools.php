@@ -1,10 +1,10 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\File;
 use App\Service\AdminAuthorizationService;
 require_once('config.php');
 
-$player = new Player($_SESSION['playerId']);
+$player = PlayerFactory::legacy($_SESSION['playerId']);
 
 AdminAuthorizationService::DoSuperAdminCheck();
 

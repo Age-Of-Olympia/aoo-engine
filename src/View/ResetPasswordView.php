@@ -2,6 +2,7 @@
 
 namespace App\View;
 
+use App\Factory\PlayerFactory;
 use Classes\Db;
 use Classes\Player;
 use Classes\Str;
@@ -39,7 +40,7 @@ class ResetPasswordView
 
         // mat
         if (is_numeric($_POST['name'])) {
-            $player = new Player($_POST['name']);
+            $player = PlayerFactory::legacy($_POST['name']);
         }
 
         // name
@@ -51,7 +52,7 @@ class ResetPasswordView
             foreach ($listPlayerJson as $e) {
 
                 if ($e->name == $_POST['name']) {
-                    $player = new Player($e->id);
+                    $player = PlayerFactory::legacy($e->id);
                 }
             }
         }

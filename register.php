@@ -1,4 +1,5 @@
 <?php
+use App\Factory\PlayerFactory;
 use Classes\Player;
 use Classes\Str;
 use Classes\Dialog;
@@ -96,7 +97,7 @@ if(!empty($_POST['race'])){
 
         $playerId = Player::put_player($_POST['name'], $_POST['race']);
 
-        $player = new Player($playerId);
+        $player = PlayerFactory::legacy($playerId);
 
         $player->get_data();
 
@@ -374,7 +375,7 @@ echo '<div>L\'inscription est gratuite et immédiate!<br /><sup>Le multi-compte 
 
 Dialog::refresh_register_dialog();
 
-$player = new Player(1);
+$player = PlayerFactory::legacy(1);
 
 
 $options = array(

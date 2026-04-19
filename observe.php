@@ -4,9 +4,8 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
-use App\Tutorial\TutorialHelper;
 use App\Action\BuffAction;
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Str;
 use Classes\Ui;
 use Classes\Db;
@@ -35,10 +34,7 @@ if(!is_numeric($x) || !is_numeric($y)){
 }
 
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 
 $player->get_data();
 
@@ -292,7 +288,7 @@ if($res->num_rows){
     while($row = $res->fetch_object()){
 
 
-        $target = new Player($row->id);
+        $target = PlayerFactory::legacy($row->id);
 
         $target->get_data();
 
@@ -518,7 +514,7 @@ else{
 
                         $row = $res->fetch_object();
 
-                        $god = new Player($row->params);
+                        $god = PlayerFactory::legacy($row->params);
 
                         $god->get_data();
 

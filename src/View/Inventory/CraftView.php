@@ -2,8 +2,7 @@
 
 namespace App\View\Inventory;
 
-use App\Tutorial\TutorialHelper;
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Item;
 use App\Service\RecipeService;
 use Classes\Ui;
@@ -14,9 +13,7 @@ class CraftView
     public static function renderCraft(): void
     {
 
-        // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-        $activePlayerId = TutorialHelper::getActivePlayerId();
-        $player = new Player($activePlayerId);
+        $player = PlayerFactory::active();
         $player->get_data();
         $recipeService = new RecipeService();
         ob_start();

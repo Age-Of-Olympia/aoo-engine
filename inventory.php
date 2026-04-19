@@ -5,8 +5,7 @@ use App\View\Inventory\InventoryView;
 use App\View\Inventory\BankView;
 use App\View\Inventory\CraftView;
 use App\View\TutorialView;
-use App\Tutorial\TutorialHelper;
-use Classes\Player;
+use App\Factory\PlayerFactory;
 
 require_once('config.php');
 
@@ -19,9 +18,7 @@ if(!empty($_POST['action']) && $_POST['action'] == 'store'){
 
 $ui = new Ui('Inventaire');
 
-// Load tutorial system if tutorial is active
-$playerId = TutorialHelper::getActivePlayerId();
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 $player->get_data();
 TutorialView::renderTutorial($player);
 
