@@ -12,7 +12,7 @@ use Classes\Player;
  *
  * Returns either:
  *  - the legacy `Classes\Player` (drop-in for `new \Classes\Player($id)`),
- *  - a modern `PlayerEntity` (`RealPlayer` / `TutorialPlayerEntity` / `NPCEntity`)
+ *  - a modern `PlayerEntity` (`RealPlayer` / `TutorialPlayer` / `NonPlayerCharacter`)
  *    for read-only paths.
  *
  * Coexistence model: legacy and modern objects are PARALLEL representations of

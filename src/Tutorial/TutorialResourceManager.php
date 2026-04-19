@@ -3,7 +3,7 @@
 namespace App\Tutorial;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\TutorialPlayerEntity;
+use App\Entity\TutorialPlayer;
 use App\Tutorial\Exceptions\TutorialException;
 use Psr\Log\NullLogger;
 
@@ -33,7 +33,7 @@ class TutorialResourceManager
     // (createTutorialPlayer, getTutorialPlayer, deleteTutorialPlayer
     // that took/returned App\Tutorial\TutorialPlayer). The *AsEntity
     // methods below are the only public surface now — they operate
-    // directly on TutorialPlayerEntity.
+    // directly on TutorialPlayer.
 
     /**
      * Spawn tutorial enemy for combat training
@@ -288,9 +288,9 @@ class TutorialResourceManager
 
     /**
      * Create the tutorial player for a session and return the hydrated
-     * TutorialPlayerEntity. Creates the isolated map instance, seeds
+     * TutorialPlayer. Creates the isolated map instance, seeds
      * the players + players_actions + players_options + tutorial_players
-     * rows via TutorialPlayerEntityFactory, then spawns the enemy NPC.
+     * rows via TutorialPlayerFactory, then spawns the enemy NPC.
      *
      * Failure path: cleanup any partial creation via cleanupPrevious
      * and wrap the error in a TutorialException.
@@ -300,9 +300,9 @@ class TutorialResourceManager
         string $sessionId,
         ?string $race = null,
         string $templatePlan = 'tutorial'
-    ): TutorialPlayerEntity {
+    ): TutorialPlayer {
         try {
-            $entity = TutorialPlayerEntityFactory::create(
+            $entity = TutorialPlayerFactory::create(
                 $this->conn,
                 $realPlayerId,
                 $sessionId,
@@ -332,13 +332,13 @@ class TutorialResourceManager
     }
 
     /**
-     * Return the active TutorialPlayerEntity for a session, or null.
+     * Return the active TutorialPlayer for a session, or null.
      * Direct Doctrine lookup via the tutorialSessionId field.
      */
-    public function getTutorialPlayerAsEntity(string $sessionId): ?TutorialPlayerEntity
+    public function getTutorialPlayerAsEntity(string $sessionId): ?TutorialPlayer
     {
         return EntityManagerFactory::getEntityManager()
-            ->getRepository(TutorialPlayerEntity::class)
+            ->getRepository(TutorialPlayer::class)
             ->findOneBy(['tutorialSessionId' => $sessionId]);
     }
 
@@ -352,7 +352,7 @@ class TutorialResourceManager
      * covered by TutorialPlayerCleanupIntegrationTest from !376).
      */
     public function deleteTutorialPlayerAsEntity(
-        TutorialPlayerEntity $entity,
+        TutorialPlayer $entity,
         string $sessionId
     ): void {
         try {

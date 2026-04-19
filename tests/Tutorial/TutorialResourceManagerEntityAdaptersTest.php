@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Entity\TutorialPlayerEntity;
+use App\Entity\TutorialPlayer;
 use App\Tutorial\TutorialResourceManager;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -45,9 +45,9 @@ class TutorialResourceManagerEntityAdaptersTest extends TestCase
         $this->assertSame('string', $this->typeName($params[3]));
 
         $this->assertSame(
-            TutorialPlayerEntity::class,
+            TutorialPlayer::class,
             $this->typeName($method->getReturnType()),
-            'createTutorialPlayerAsEntity must return TutorialPlayerEntity (non-nullable)'
+            'createTutorialPlayerAsEntity must return TutorialPlayer (non-nullable)'
         );
     }
 
@@ -65,9 +65,9 @@ class TutorialResourceManagerEntityAdaptersTest extends TestCase
         $this->assertSame('string', $this->typeName($params[0]));
 
         $this->assertSame(
-            '?' . TutorialPlayerEntity::class,
+            '?' . TutorialPlayer::class,
             $this->typeName($method->getReturnType()),
-            'getTutorialPlayerAsEntity must return ?TutorialPlayerEntity'
+            'getTutorialPlayerAsEntity must return ?TutorialPlayer'
         );
     }
 
@@ -82,7 +82,7 @@ class TutorialResourceManagerEntityAdaptersTest extends TestCase
 
         $params = $method->getParameters();
         $this->assertCount(2, $params);
-        $this->assertSame(TutorialPlayerEntity::class, $this->typeName($params[0]));
+        $this->assertSame(TutorialPlayer::class, $this->typeName($params[0]));
         $this->assertSame('string', $this->typeName($params[1]));
 
         $this->assertSame('void', $this->typeName($method->getReturnType()));

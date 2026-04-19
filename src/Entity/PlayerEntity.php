@@ -24,8 +24,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\DiscriminatorColumn(name: 'player_type', type: 'string')]
 #[ORM\DiscriminatorMap([
     'real' => RealPlayer::class,
-    'tutorial' => TutorialPlayerEntity::class,
-    'npc' => NPCEntity::class
+    'tutorial' => TutorialPlayer::class,
+    'npc' => NonPlayerCharacter::class
 ])]
 abstract class PlayerEntity
 {

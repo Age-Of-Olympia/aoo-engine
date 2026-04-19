@@ -5,7 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * NPCEntity - Non-Player Characters (enemies, allies, quest givers)
+ * NonPlayerCharacter — NPCs (enemies, allies, quest givers).
  *
  * NPCs are characterized by:
  * - Negative IDs (traditionally -1 to -99,999)
@@ -14,13 +14,13 @@ use Doctrine\ORM\Mapping as ORM;
  * - Don't appear in player lists/rankings
  * - May have special behaviors and loot tables
  *
- * Discriminator: player_type = 'npc'
+ * Discriminator: player_type = 'npc'.
  *
  * Note: Tutorial enemies also use this entity type but have IDs
  * in the -100,000+ range and are tracked separately.
  */
 #[ORM\Entity]
-class NPCEntity extends PlayerEntity
+class NonPlayerCharacter extends PlayerEntity
 {
     /**
      * NPCs are not players

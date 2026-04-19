@@ -12,13 +12,13 @@ use Doctrine\Migrations\AbstractMigration;
  * `real_player_id_ref` columns to `players` on any DB that predates
  * them.
  *
- * Both columns are declared on `TutorialPlayerEntity` (Phase 3.1
+ * Both columns are declared on `TutorialPlayer` (Phase 3.1
  * !383 fixed their `name:` attributes to match snake_case), and they
  * ARE in `db/init_noupdates.sql` — fresh CI setups don't need this
  * migration. But dev DBs that pre-date the tutorial-system work
  * never had them applied, and Phase 4.3 (!393) introduced the first
  * hot-path caller (`TutorialResourceManager::createTutorialPlayerAsEntity`
- * via `$em->find(TutorialPlayerEntity::class, ...)`) that triggers
+ * via `$em->find(TutorialPlayer::class, ...)`) that triggers
  * STI-wide hydration and fails on any DB missing them:
  *
  *   Unknown column 't0.tutorial_session_id' in 'SELECT'
@@ -38,7 +38,7 @@ final class Version20260419180000_AddTutorialColumnsToPlayers extends AbstractMi
 {
     public function getDescription(): string
     {
-        return 'Phase 4.3 hotfix — idempotently add tutorial_session_id + real_player_id_ref to players (STI-required for TutorialPlayerEntity hydration)';
+        return 'Phase 4.3 hotfix — idempotently add tutorial_session_id + real_player_id_ref to players (STI-required for TutorialPlayer hydration)';
     }
 
     public function up(Schema $schema): void
