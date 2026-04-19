@@ -5328,7 +5328,6 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tutorial_players` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `real_player_id` int(11) NOT NULL COMMENT 'Link to actual player account',
   `tutorial_session_id` varchar(36) NOT NULL COMMENT 'Link to tutorial_progress session',
   `player_id` int(11) DEFAULT NULL COMMENT 'Tutorial player ID in players table (set after INSERT)',
   `name` varchar(255) NOT NULL COMMENT 'Character name',
@@ -5337,12 +5336,10 @@ CREATE TABLE `tutorial_players` (
   `deleted_at` timestamp NULL DEFAULT NULL COMMENT 'Soft delete when tutorial completes',
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_session_char` (`tutorial_session_id`),
-  KEY `idx_real_player` (`real_player_id`),
   KEY `idx_session` (`tutorial_session_id`),
   KEY `idx_tutorial_player` (`player_id`),
-  KEY `idx_active` (`is_active`),
-  CONSTRAINT `tutorial_players_ibfk_1` FOREIGN KEY (`real_player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Temporary characters created for each tutorial instance';
+  KEY `idx_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Temporary characters created for each tutorial instance (Phase 4.5: real-player link lives on players.real_player_id_ref)';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
