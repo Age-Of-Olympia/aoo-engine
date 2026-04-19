@@ -127,7 +127,7 @@ abstract class PlayerEntity
     #[ORM\Column(type: "integer")]
     protected int $lastTravelTime = 0;
 
-    #[ORM\Column(type: "boolean", nullable: true)]
+    #[ORM\Column(type: "boolean", name: "email_bonus", nullable: true)]
     protected ?bool $emailBonus = false;
 
     // Getters and Setters
