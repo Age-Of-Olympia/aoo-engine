@@ -3,6 +3,7 @@
 namespace App\Tutorial;
 
 use App\Entity\EntityManagerFactory;
+use App\Entity\TutorialPlayerEntity;
 use App\Tutorial\Exceptions\TutorialException;
 use Psr\Log\NullLogger;
 
@@ -373,6 +374,72 @@ class TutorialResourceManager
      * @param string $sessionId Tutorial session UUID
      * @return TutorialPlayer|null Tutorial player or null if not found
      */
+    /**
+     * Phase 4.3 — entity-returning wrapper around createTutorialPlayer.
+     *
+     * Creates the tutorial player via the legacy service-class path
+     * (which does map-instance + players row + tutorial_players row +
+     * enemy spawn), then hydrates the matching TutorialPlayerEntity
+     * via Doctrine and returns that. The service class IS still
+     * created internally — a future Phase 4.4 will re-home the
+     * creation workflow natively onto the entity, at which point this
+     * adapter can drop.
+     */
+    public function createTutorialPlayerAsEntity(
+        int $realPlayerId,
+        string $sessionId,
+        ?string $race = null,
+        string $templatePlan = 'tutorial'
+    ): TutorialPlayerEntity {
+        $service = $this->createTutorialPlayer($realPlayerId, $sessionId, $race, $templatePlan);
+
+        $entity = EntityManagerFactory::getEntityManager()
+            ->find(TutorialPlayerEntity::class, $service->actualPlayerId);
+
+        if ($entity === null) {
+            throw new TutorialException(
+                "TutorialPlayerEntity missing after create for player {$service->actualPlayerId}",
+                ['real_player_id' => $realPlayerId, 'session_id' => $sessionId]
+            );
+        }
+
+        return $entity;
+    }
+
+    /**
+     * Phase 4.3 — entity-returning counterpart to getTutorialPlayer.
+     * Direct Doctrine lookup by tutorial_session_id on TutorialPlayerEntity.
+     */
+    public function getTutorialPlayerAsEntity(string $sessionId): ?TutorialPlayerEntity
+    {
+        return EntityManagerFactory::getEntityManager()
+            ->getRepository(TutorialPlayerEntity::class)
+            ->findOneBy(['tutorialSessionId' => $sessionId]);
+    }
+
+    /**
+     * Phase 4.3 — entity-taking counterpart to deleteTutorialPlayer.
+     * Converts the entity back to its service-class representation
+     * (one query) so the existing delete pipeline runs unchanged —
+     * the pipeline already delegates to TutorialPlayerCleanup for the
+     * FK cascade, so the conversion is a thin adapter, not
+     * duplicated logic.
+     */
+    public function deleteTutorialPlayerAsEntity(
+        TutorialPlayerEntity $entity,
+        string $sessionId
+    ): void {
+        $service = $this->getTutorialPlayer($sessionId);
+        if ($service === null) {
+            throw new TutorialException(
+                "Cannot delete: no tutorial_players row for session {$sessionId}",
+                ['session_id' => $sessionId, 'entity_id' => $entity->getId()]
+            );
+        }
+
+        $this->deleteTutorialPlayer($service, $sessionId);
+    }
+
     public function getTutorialPlayer(string $sessionId): ?TutorialPlayer
     {
         try {
