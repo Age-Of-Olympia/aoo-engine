@@ -82,24 +82,37 @@ class TutorialPlayerEntityFactory
         $displayId = getNextDisplayId('tutorial');      // 1, 2, 3...
         $name = "Apprenti_" . substr($tutorialSessionId, 0, 8);
 
-        // Step 6: Insert players row (tutorial discriminator)
+        // Step 6: Insert players row (tutorial discriminator).
+        //
+        // `tutorial_session_id` and `real_player_id_ref` on the
+        // `players` row are what TutorialPlayerEntity maps to via its
+        // STI-subclass ORM\Column attributes. The original
+        // service-class factory left these NULL and tracked the link
+        // only through the `tutorial_players` table — fine for the
+        // service-class path, broken for the entity path (Phase 4.3's
+        // TutorialManager::completeTutorial reads
+        // getRealPlayerIdRef() to find the real player). Populate
+        // both columns here; tutorial_players keeps its parallel
+        // link for the id-level bookkeeping.
         $conn->insert('players', [
-            'id'           => $actualPlayerId,
-            'player_type'  => 'tutorial',
-            'display_id'   => $displayId,
-            'name'         => $name,
-            'psw'          => '',
-            'mail'         => '',
-            'plain_mail'   => '',
-            'coords_id'    => $startingCoordsId,
-            'race'         => $race,
-            'xp'           => 0,
-            'pi'           => 0,
-            'energie'      => 100,
-            'avatar'       => $defaultAvatar,
-            'portrait'     => $defaultPortrait,
-            'text'         => 'Personnage de tutoriel',
-            'nextTurnTime' => time() + 86400, // 24h future to skip NewTurn page
+            'id'                  => $actualPlayerId,
+            'player_type'         => 'tutorial',
+            'display_id'          => $displayId,
+            'name'                => $name,
+            'psw'                 => '',
+            'mail'                => '',
+            'plain_mail'          => '',
+            'coords_id'           => $startingCoordsId,
+            'race'                => $race,
+            'xp'                  => 0,
+            'pi'                  => 0,
+            'energie'             => 100,
+            'avatar'              => $defaultAvatar,
+            'portrait'            => $defaultPortrait,
+            'text'                => 'Personnage de tutoriel',
+            'nextTurnTime'        => time() + 86400, // 24h future to skip NewTurn page
+            'tutorial_session_id' => $tutorialSessionId,
+            'real_player_id_ref'  => $realPlayerId,
         ]);
 
         // Step 7: Remove any stale JSON cache file
