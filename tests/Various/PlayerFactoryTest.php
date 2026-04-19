@@ -3,6 +3,8 @@
 namespace Tests\Various;
 
 use App\Factory\PlayerFactory;
+use Classes\Player;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -58,10 +60,87 @@ class PlayerFactoryTest extends TestCase
 
         $this->assertTrue($class->isFinal(), 'PlayerFactory should be final');
 
-        foreach (['legacy', 'active', 'activeId', 'entity', 'activeEntity'] as $method) {
+        foreach (['legacy', 'legacyByName', 'active', 'activeId', 'entity', 'activeEntity'] as $method) {
             $this->assertTrue($class->hasMethod($method), "Missing method: {$method}");
             $this->assertTrue($class->getMethod($method)->isStatic(), "{$method} should be static");
             $this->assertTrue($class->getMethod($method)->isPublic(), "{$method} should be public");
         }
+    }
+
+    #[Group('player-factory')]
+    public function testLegacyByNameReturnsNullWhenNameNotFound(): void
+    {
+        $this->bootstrapOrSkip();
+
+        // Opaque name that cannot collide with any seeded player — the
+        // factory must normalise the legacy `false` miss to `null`.
+        $miss = 'phaseLBNMiss_' . bin2hex(random_bytes(6));
+
+        $this->assertNull(PlayerFactory::legacyByName($miss));
+    }
+
+    #[Group('player-factory')]
+    public function testLegacyByNameReturnsPlayerWithMatchingIdWhenFound(): void
+    {
+        $link = $this->bootstrapOrSkip();
+
+        $row = $link->fetchAssociative(
+            "SELECT id, name FROM players WHERE id > 0 AND (player_type IS NULL OR player_type = 'real') ORDER BY id ASC LIMIT 1"
+        );
+        if (empty($row['name'])) {
+            $this->markTestSkipped('No real player available for lookup test.');
+        }
+
+        $player = PlayerFactory::legacyByName((string) $row['name']);
+
+        $this->assertInstanceOf(Player::class, $player);
+        $this->assertSame((int) $row['id'], $player->id);
+    }
+
+    #[Group('player-factory')]
+    public function testLegacyByNameSignatureReturnsNullablePlayer(): void
+    {
+        // Pin the nullable-Player contract that justifies this method's
+        // existence: the factory normalises Player::get_player_by_name's
+        // legacy Player|false return to ?Player, so callers can use ?->
+        // and static analysis catches miss-handling bugs.
+        $method = new \ReflectionMethod(PlayerFactory::class, 'legacyByName');
+
+        $params = $method->getParameters();
+        $this->assertCount(1, $params, 'legacyByName must take exactly one argument');
+        $this->assertSame('string', (string) $params[0]->getType());
+
+        $returnType = $method->getReturnType();
+        $this->assertNotNull($returnType);
+        $this->assertSame('?Classes\\Player', (string) $returnType);
+    }
+
+    /**
+     * Bootstrap the legacy environment so Player::get_player_by_name
+     * (which legacyByName wraps) can hit the DB. Skips cleanly when the
+     * DB is unreachable — phpunit stage stays green.
+     */
+    private function bootstrapOrSkip(): Connection
+    {
+        try {
+            require_once __DIR__ . '/../../config/bootstrap.php';
+            require_once __DIR__ . '/../../config/functions.php';
+            require_once __DIR__ . '/../../config/constants.php';
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Legacy bootstrap failed: ' . $e->getMessage());
+        }
+
+        global $link;
+        if (!isset($link) || !$link instanceof Connection) {
+            $this->markTestSkipped('Global $link not populated by bootstrap.');
+        }
+
+        try {
+            $link->executeQuery('SELECT 1');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Legacy DB unreachable: ' . $e->getMessage());
+        }
+
+        return $link;
     }
 }

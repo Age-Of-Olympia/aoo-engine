@@ -2,6 +2,7 @@
 
 namespace App\View\Forum;
 
+use App\Factory\PlayerFactory;
 use App\Service\PlayerService;
 use Classes\Db;
 use Classes\Forum;
@@ -42,7 +43,7 @@ class MissiveView
                 if (is_numeric($_POST['addDest'])) {
                     $desti = $playerService->GetPlayer($_POST['addDest']);
                 } else {
-                    $desti = Player::get_player_by_name($_POST['addDest']);
+                    $desti = PlayerFactory::legacyByName($_POST['addDest']);
                 }
                 $desti->get_data(false);
                 Forum::add_dest($player, $desti, $topJson, $destTbl);
