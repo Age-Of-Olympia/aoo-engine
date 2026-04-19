@@ -1,8 +1,8 @@
 <?php
 
 namespace App\View\Forum;
+use App\Factory\PlayerFactory;
 use App\Service\ForumCookieService;
-use Classes\Player;
 
 
 class CookieView
@@ -17,7 +17,7 @@ class CookieView
         if (!empty($allPostCookies)){
             $tooltip  = "Cookies donnés par ";
             foreach($allPostCookies as $postCookie){
-                $cookieGiver = new Player($postCookie->getPlayerId());
+                $cookieGiver = PlayerFactory::legacy($postCookie->getPlayerId());
                 $cookieGiver->get_data();
                 $tooltip.=' '. $cookieGiver->data->name. ' - ';
                 $nbCookie ++;

@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Ui;
 use Classes\Str;
 
@@ -48,7 +48,7 @@ function return_cost( $progress, $upgraded ){
 }
 
 
-$player = new Player($_SESSION['playerId']);
+$player = PlayerFactory::legacy($_SESSION['playerId']);
 
 $player->get_data();
 

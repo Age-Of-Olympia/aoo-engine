@@ -1,11 +1,10 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Db;
 use Classes\View;
 use Classes\Log;
 use Classes\Item;
 use Classes\Element;
-use App\Tutorial\TutorialHelper;
 require_once('config.php');
 
 
@@ -22,10 +21,7 @@ if(count($coords) < 2){
     exit('error coords format');
 }
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 
 if($player->getRemaining('mvt') < 1){
 

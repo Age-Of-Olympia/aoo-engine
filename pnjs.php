@@ -1,5 +1,5 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Ui;
 use Classes\Db;
 use Classes\Str;
@@ -14,7 +14,7 @@ Use App\Service\PlayerPnjService;
 $playerPnjService = new PlayerPnjService();
 
 
-$main = new Player($_SESSION['mainPlayerId']);
+$main = PlayerFactory::legacy($_SESSION['mainPlayerId']);
 
 
 $playersTbl = array(
@@ -26,9 +26,9 @@ $hiddenPnjs = array();
 $playerPnjs = $playerPnjService->getByPlayerId($main->id);
 foreach($playerPnjs as $playerPnj ){
     if($playerPnj->isDisplayed()){
-        $playersTbl[$playerPnj->getPnjId()] = new Player($playerPnj->getPnjId());
+        $playersTbl[$playerPnj->getPnjId()] = PlayerFactory::legacy($playerPnj->getPnjId());
     }else{
-        $hiddenPnjs[$playerPnj->getPnjId()] = new Player($playerPnj->getPnjId());
+        $hiddenPnjs[$playerPnj->getPnjId()] = PlayerFactory::legacy($playerPnj->getPnjId());
     }
 }
 

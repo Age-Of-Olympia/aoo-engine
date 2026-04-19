@@ -1,8 +1,7 @@
 <?php
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\View;
 use Classes\Db;
-use App\Tutorial\TutorialHelper;
 
 require_once('config.php');
 
@@ -28,17 +27,14 @@ if(!$res->num_rows){echo $_POST['targetId'];
 
 $row = $res->fetch_object();
 
-$god = new Player($row->params);
+$god = PlayerFactory::legacy($row->params);
 
 $god->get_data();
 
 
 $coords = View::get_coords('triggers', $row->id);
 
-// Get active player ID (tutorial player if in tutorial mode, otherwise main player)
-$playerId = TutorialHelper::getActivePlayerId();
-
-$player = new Player($playerId);
+$player = PlayerFactory::active();
 
 $player->get_data();
 

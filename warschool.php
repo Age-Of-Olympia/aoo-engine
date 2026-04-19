@@ -1,6 +1,6 @@
 <?php
+use App\Factory\PlayerFactory;
 use Classes\Ui;
-use Classes\Player;
 use Classes\WarSchool;
 
 use App\View\WarSchool\MeleeView;
@@ -14,14 +14,14 @@ require_once('config.php');
 
 $ui = new Ui('École de guerre', true);
 
-$player = new Player($_SESSION['playerId']);
+$player = PlayerFactory::legacy($_SESSION['playerId']);
 $player->get_data();
 
 if (!isset($_GET['targetId'])) {
     exit('error no trainer');
 }
 
-$trainer = new Player($_GET['targetId']);
+$trainer = PlayerFactory::legacy($_GET['targetId']);
 
 // check access
 $accessError = WarSchool::checkAccess($player, $trainer);
