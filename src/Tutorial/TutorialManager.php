@@ -3,7 +3,7 @@
 namespace App\Tutorial;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\TutorialPlayerEntity;
+use App\Entity\TutorialPlayer;
 use Classes\Player;
 use Classes\Db;
 
@@ -29,7 +29,7 @@ class TutorialManager
      * coordination (map instance + enemy spawn), but TutorialManager
      * only sees the entity.
      */
-    private ?TutorialPlayerEntity $tutorialPlayer = null;
+    private ?TutorialPlayer $tutorialPlayer = null;
     private TutorialStepRepository $stepRepository;
 
     // Phase 4: Service layer for separation of concerns
@@ -180,7 +180,7 @@ class TutorialManager
     /**
      * Get tutorial player for this session (Phase 4.3 — entity).
      */
-    public function getTutorialPlayer(): ?TutorialPlayerEntity
+    public function getTutorialPlayer(): ?TutorialPlayer
     {
         return $this->tutorialPlayer;
     }

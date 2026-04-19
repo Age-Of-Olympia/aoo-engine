@@ -2,7 +2,7 @@
 
 namespace Tests\Tutorial;
 
-use App\Entity\TutorialPlayerEntity;
+use App\Entity\TutorialPlayer;
 use PHPUnit\Framework\Attributes\Group;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -10,7 +10,7 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
 
 /**
  * Phase 4.1 — contract test for the reconciled
- * `TutorialPlayerEntity::transferRewardsToRealPlayer` signature.
+ * `TutorialPlayer::transferRewardsToRealPlayer` signature.
  *
  * Pins the shape that Phase 4.2's swap at
  * `TutorialManager::completeTutorial:460` will depend on:
@@ -28,7 +28,7 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * (!376): skips cleanly when aoo4_test is unreachable, wraps each
  * test in a transaction rolled back in tearDown.
  */
-class TutorialPlayerEntityRewardTransferTest extends TutorialIntegrationTestCase
+class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
 {
     private ?string $previousErrorLog = null;
 
@@ -74,7 +74,7 @@ class TutorialPlayerEntityRewardTransferTest extends TutorialIntegrationTestCase
         // Build the entity by hand — we're not testing Doctrine
         // hydration here (Phase 3.1 covers that), we're testing the
         // method's SQL contract.
-        $entity = new TutorialPlayerEntity();
+        $entity = new TutorialPlayer();
         $this->setProtectedProperty($entity, 'id', $tutPlayerId);
         $entity->setRealPlayerIdRef($realPlayerId);
 
@@ -101,7 +101,7 @@ class TutorialPlayerEntityRewardTransferTest extends TutorialIntegrationTestCase
     #[Group('phase-4-1')]
     public function testThrowsWhenRealPlayerIdRefIsNull(): void
     {
-        $entity = new TutorialPlayerEntity();
+        $entity = new TutorialPlayer();
         // realPlayerIdRef deliberately left null.
 
         $this->expectException(\RuntimeException::class);
@@ -118,7 +118,7 @@ class TutorialPlayerEntityRewardTransferTest extends TutorialIntegrationTestCase
         // signature (or int→string drift on the reward args) would
         // break the Phase 4.2 swap silently. Catch it here.
         $method = new ReflectionMethod(
-            TutorialPlayerEntity::class,
+            TutorialPlayer::class,
             'transferRewardsToRealPlayer'
         );
 
