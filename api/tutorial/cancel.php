@@ -75,12 +75,14 @@ try {
             $conn->beginTransaction();
 
             try {
-                // Get tutorial player for this session
-                $tutorialPlayer = $resourceManager->getTutorialPlayer($sessionId);
+                // Phase 4.3b — entity-aware adapters. Matches the path
+                // TutorialManager uses since !393; keeps cancel + complete
+                // on the same abstraction.
+                $tutorialPlayer = $resourceManager->getTutorialPlayerAsEntity($sessionId);
 
                 if ($tutorialPlayer) {
                     // Delete all resources in correct order (enemies → players → coords)
-                    $resourceManager->deleteTutorialPlayer($tutorialPlayer, $sessionId);
+                    $resourceManager->deleteTutorialPlayerAsEntity($tutorialPlayer, $sessionId);
                 }
 
                 // Mark session as cancelled
