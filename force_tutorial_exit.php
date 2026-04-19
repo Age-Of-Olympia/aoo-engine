@@ -28,9 +28,13 @@ echo "<p>Current session player ID: " . ($_SESSION['playerId'] ?? 'NOT SET') . "
 $currentPlayerId = $_SESSION['playerId'] ?? null;
 
 if ($currentPlayerId) {
-    // Check if current player is a tutorial character
+    // Check if current player is a tutorial character.
+    // Phase 4.5: link is on players.real_player_id_ref.
     $result = $conn->fetchAssociative(
-        "SELECT real_player_id FROM tutorial_players WHERE player_id = ?",
+        "SELECT p.real_player_id_ref AS real_player_id
+         FROM tutorial_players tp
+         JOIN players p ON p.id = tp.player_id
+         WHERE tp.player_id = ?",
         [$currentPlayerId]
     );
 
@@ -45,7 +49,11 @@ if ($currentPlayerId) {
         echo "<p>Showing all tutorial players for debugging:</p>";
 
         $allTutorialPlayers = $conn->fetchAllAssociative(
-            "SELECT player_id, real_player_id FROM tutorial_players WHERE real_player_id = ? ORDER BY id DESC LIMIT 10",
+            "SELECT tp.player_id, p.real_player_id_ref AS real_player_id
+             FROM tutorial_players tp
+             JOIN players p ON p.id = tp.player_id
+             WHERE p.real_player_id_ref = ?
+             ORDER BY tp.id DESC LIMIT 10",
             [$currentPlayerId]
         );
 

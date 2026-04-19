@@ -190,22 +190,21 @@ $tables = [
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ",
 
-    // Tutorial players (temporary characters)
+    // Tutorial players (temporary characters).
+    // Phase 4.5: link to real player lives on players.real_player_id_ref;
+    // this table keeps only session/activity bookkeeping.
     'tutorial_players' => "
         CREATE TABLE IF NOT EXISTS tutorial_players (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            real_player_id INT NOT NULL,
             tutorial_session_id VARCHAR(36) NOT NULL,
             player_id INT NOT NULL COMMENT 'ID in players table',
             name VARCHAR(255) NOT NULL,
             is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted_at TIMESTAMP NULL,
-            INDEX idx_real_player (real_player_id),
             INDEX idx_session (tutorial_session_id),
             INDEX idx_player (player_id),
-            INDEX idx_active (is_active),
-            FOREIGN KEY (real_player_id) REFERENCES players(id) ON DELETE CASCADE
+            INDEX idx_active (is_active)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ",
 

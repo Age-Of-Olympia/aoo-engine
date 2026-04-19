@@ -28,8 +28,12 @@ $conn = DriverManager::getConnection([
 // Get the real player ID for this tutorial player
 $tutorialPlayerId = $_SESSION['playerId'] ?? null;
 if ($tutorialPlayerId) {
+    // Phase 4.5: link is on players.real_player_id_ref.
     $result = $conn->fetchAssociative(
-        "SELECT real_player_id FROM tutorial_players WHERE player_id = ?",
+        "SELECT p.real_player_id_ref AS real_player_id
+         FROM tutorial_players tp
+         JOIN players p ON p.id = tp.player_id
+         WHERE tp.player_id = ?",
         [$tutorialPlayerId]
     );
 
