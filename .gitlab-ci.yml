@@ -141,6 +141,12 @@ cypress_tutorial_job:
       cat > config/db_constants.php <<'PHPEOF'
       <?php
       define('DEV_MODE', true);
+      // Force-enable the new tutorial system so cypress-registered players
+      // (which get fresh auto-incremented IDs, not the dev whitelist
+      // 1/2/3) hit the tutorial overlay path. Without this,
+      // TutorialFeatureFlag falls back to the [1,2,3] default whitelist
+      // and index.php logs "Tutorial enabled: NO".
+      define('TUTORIAL_V2_ENABLED', true);
       define('DB_CONSTANTS', array(
           'host'     => 'mariadb',
           'user'     => 'root',
