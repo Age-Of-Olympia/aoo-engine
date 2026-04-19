@@ -19,10 +19,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class TutorialPlayerEntity extends PlayerEntity
 {
-    #[ORM\Column(type: "string", length: 36, nullable: true)]
+    #[ORM\Column(type: "string", length: 36, name: "tutorial_session_id", nullable: true)]
     protected ?string $tutorialSessionId = null;
 
-    #[ORM\Column(type: "integer", nullable: true)]
+    #[ORM\Column(type: "integer", name: "real_player_id_ref", nullable: true)]
     protected ?int $realPlayerIdRef = null;
 
     /**
