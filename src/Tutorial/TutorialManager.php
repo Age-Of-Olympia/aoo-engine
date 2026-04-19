@@ -22,7 +22,14 @@ class TutorialManager
     private TutorialContext $context;
     private string $sessionId;
     private Db $db;
-    private ?TutorialPlayer $tutorialPlayer = null;
+    /**
+     * Phase 4.3 — the tutorial player is now represented as a
+     * Doctrine entity. The App\Tutorial\TutorialPlayer service class
+     * is still used INSIDE TutorialResourceManager for creation-time
+     * coordination (map instance + enemy spawn), but TutorialManager
+     * only sees the entity.
+     */
+    private ?TutorialPlayerEntity $tutorialPlayer = null;
     private TutorialStepRepository $stepRepository;
 
     // Phase 4: Service layer for separation of concerns
@@ -85,16 +92,20 @@ class TutorialManager
         // Update local session ID to match created session
         $this->sessionId = $session['session_id'];
 
-        // Create tutorial player and resources
-        $this->tutorialPlayer = $this->resourceManager->createTutorialPlayer(
+        // Create tutorial player and resources (Phase 4.3 — entity).
+        $this->tutorialPlayer = $this->resourceManager->createTutorialPlayerAsEntity(
             $player->id,
             $this->sessionId,
             $player->data->race ?? null,
             $templatePlan
         );
 
-        // Update context to use tutorial player (for placeholder replacement)
-        $tutorialPlayerInstance = new \Classes\Player($this->tutorialPlayer->actualPlayerId);
+        // Update context to use tutorial player (for placeholder replacement).
+        // TutorialContext::setPlayer still takes a Classes\Player —
+        // hydrating one from the entity's id is a minor cost that
+        // preserves the existing downstream contract (step validators
+        // etc. use legacy Player).
+        $tutorialPlayerInstance = new \Classes\Player((int) $this->tutorialPlayer->getId());
         $tutorialPlayerInstance->get_data();
         $this->context->setPlayer($tutorialPlayerInstance);
 
@@ -107,7 +118,7 @@ class TutorialManager
 
         return array_merge($session, [
             'success' => true,
-            'tutorial_player_id' => $this->tutorialPlayer->actualPlayerId,
+            'tutorial_player_id' => (int) $this->tutorialPlayer->getId(),
             'step_data' => $stepData
         ]);
     }
@@ -138,16 +149,16 @@ class TutorialManager
         // Restore context state
         $this->context->restoreState($session['data']);
 
-        // Load tutorial player
-        $this->tutorialPlayer = $this->resourceManager->getTutorialPlayer($sessionId);
+        // Load tutorial player (Phase 4.3 — entity).
+        $this->tutorialPlayer = $this->resourceManager->getTutorialPlayerAsEntity($sessionId);
 
         // CRITICAL: Switch context to use tutorial player instead of main player
         // This ensures movement checks, validation hints, etc. use tutorial player's data
         if ($this->tutorialPlayer) {
-            $tutorialPlayerObj = new Player($this->tutorialPlayer->actualPlayerId);
+            $tutorialPlayerObj = new Player((int) $this->tutorialPlayer->getId());
             $tutorialPlayerObj->get_data();
             $this->context->setPlayer($tutorialPlayerObj);
-            error_log("[TutorialManager] Switched context to tutorial player {$this->tutorialPlayer->actualPlayerId}");
+            error_log("[TutorialManager] Switched context to tutorial player {$this->tutorialPlayer->getId()}");
         }
 
         // Get current step data WITHOUT applying prerequisites
@@ -161,15 +172,15 @@ class TutorialManager
 
         return array_merge($session, [
             'success' => true,
-            'tutorial_player_id' => $this->tutorialPlayer ? $this->tutorialPlayer->actualPlayerId : null,
+            'tutorial_player_id' => $this->tutorialPlayer ? (int) $this->tutorialPlayer->getId() : null,
             'step_data' => $stepData
         ]);
     }
 
     /**
-     * Get tutorial player for this session
+     * Get tutorial player for this session (Phase 4.3 — entity).
      */
-    public function getTutorialPlayer(): ?TutorialPlayer
+    public function getTutorialPlayer(): ?TutorialPlayerEntity
     {
         return $this->tutorialPlayer;
     }
@@ -451,7 +462,9 @@ class TutorialManager
         $piEarned = $xpEarned;
 
         // Check if this is a replay (player already completed tutorial before)
-        $realPlayerId = $this->tutorialPlayer ? $this->tutorialPlayer->realPlayerId : $this->context->getPlayer()->id;
+        $realPlayerId = $this->tutorialPlayer
+            ? (int) $this->tutorialPlayer->getRealPlayerIdRef()
+            : $this->context->getPlayer()->id;
         $isReplay = $this->sessionManager->hasCompletedBefore($realPlayerId);
 
         // Only transfer rewards on first completion
@@ -459,17 +472,11 @@ class TutorialManager
         $actualPiAwarded = 0;
 
         if (!$isReplay && $this->tutorialPlayer) {
-            // Phase 4.2: reward transfer now goes through
-            // TutorialPlayerEntity (the Doctrine entity) instead of
-            // the App\Tutorial\TutorialPlayer service class. Semantics
-            // are identical — the entity method was reconciled in
-            // Phase 4.1 (!391) and the entity's UPDATE even adds a
-            // defensive `player_type = "real"` clause the service
-            // class lacked. The legacy call remains as a safety net
-            // in case the entity misses (shouldn't happen: the id
-            // comes from a row we just persisted).
-            $this->transferRewardsViaEntity(
-                (int) $this->tutorialPlayer->actualPlayerId,
+            // Phase 4.3 — entity is already in hand, call
+            // transferRewardsToRealPlayer directly. No re-hydration,
+            // no legacy fallback needed.
+            $this->tutorialPlayer->transferRewardsToRealPlayer(
+                EntityManagerFactory::getEntityManager()->getConnection(),
                 $xpEarned,
                 $piEarned
             );
@@ -498,9 +505,9 @@ class TutorialManager
             }
         }
 
-        // Delete tutorial resources
+        // Delete tutorial resources (Phase 4.3 — entity path).
         if ($this->tutorialPlayer) {
-            $this->resourceManager->deleteTutorialPlayer($this->tutorialPlayer, $this->sessionId);
+            $this->resourceManager->deleteTutorialPlayerAsEntity($this->tutorialPlayer, $this->sessionId);
         }
 
         // Complete session in database
@@ -522,45 +529,6 @@ class TutorialManager
             'is_replay' => $isReplay,
             'message' => $message
         ];
-    }
-
-    /**
-     * Phase 4.2 — reward transfer via TutorialPlayerEntity.
-     *
-     * Hydrates the tutorial player's Doctrine entity and delegates
-     * the SQL UPDATE to its reconciled `transferRewardsToRealPlayer`
-     * (Phase 4.1, !391). Semantics are identical to the legacy
-     * `App\Tutorial\TutorialPlayer::transferRewardsToRealPlayer`
-     * service-class method, with an added defensive
-     * `player_type = "real"` clause in the UPDATE.
-     *
-     * If the entity is unexpectedly missing at lookup time (should
-     * never happen — the id was just persisted), fall back to the
-     * legacy service-class call. That preserves reward payout even
-     * in the edge case.
-     */
-    private function transferRewardsViaEntity(
-        int $tutorialPlayerId,
-        int $xpEarned,
-        int $piEarned
-    ): void {
-        $em = EntityManagerFactory::getEntityManager();
-        $entity = $em->find(TutorialPlayerEntity::class, $tutorialPlayerId);
-
-        if ($entity === null) {
-            error_log(sprintf(
-                "[TutorialManager] TutorialPlayerEntity missing for id %d — falling back to service-class reward transfer",
-                $tutorialPlayerId
-            ));
-            $this->tutorialPlayer->transferRewardsToRealPlayer($xpEarned, $piEarned);
-            return;
-        }
-
-        $entity->transferRewardsToRealPlayer(
-            $em->getConnection(),
-            $xpEarned,
-            $piEarned
-        );
     }
 
     /**
