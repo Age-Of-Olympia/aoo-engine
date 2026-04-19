@@ -94,7 +94,7 @@ EOT);
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
 
-        if($player->have('actions', $argumentValues[1])){
+        if($player->have_action($argumentValues[1])){
 
 
             $player->end_action($argumentValues[1]);
