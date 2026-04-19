@@ -2161,6 +2161,16 @@ class Player implements ActorInterface {
      */
 
 
+    /**
+     * Create a `real` or `npc` row in the `players` table.
+     *
+     * NOTE: this path does NOT populate the tutorial FK columns
+     * (`tutorial_session_id`, `real_player_id_ref`). Tutorial player
+     * creation must go through `App\Tutorial\TutorialPlayerFactory::create()`,
+     * which is the only writer that sets `player_type='tutorial'` and both
+     * FK columns atomically. Calling `put_player()` for a tutorial row would
+     * leave it orphaned from its owning real player (Phase 4.6 FK guardrail).
+     */
     public static function put_player($name, $race, $pnj=false, $type='real') : int{
 
 

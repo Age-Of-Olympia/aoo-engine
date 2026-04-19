@@ -7,7 +7,7 @@
  * Used when player clicks "Compléter et jouer" button
  */
 
-use Classes\Player;
+use App\Factory\PlayerFactory;
 use Classes\Db;
 use App\Tutorial\TutorialSessionManager;
 use App\Tutorial\TutorialHelper;
@@ -56,7 +56,7 @@ try {
     TutorialHelper::exitTutorialMode();
 
     // Get main player
-    $mainPlayer = new Player($playerId);
+    $mainPlayer = PlayerFactory::legacy($playerId);
 
     // Mark tutorial as completed
     $sessionManager->markCompleted($sessionId);

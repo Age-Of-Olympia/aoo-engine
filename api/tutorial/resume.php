@@ -6,9 +6,9 @@
  * Checks if player has an active tutorial session and returns it
  */
 
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialHelper;
-use Classes\Player;
 use Classes\Db;
 
 define('NO_LOGIN', true);
@@ -49,7 +49,7 @@ try {
                                  $_SESSION['tutorial_session_id'] === $session['tutorial_session_id'];
 
         // Load player
-        $player = new Player($playerId);
+        $player = PlayerFactory::legacy($playerId);
         $player->get_data();
 
         // Create tutorial manager and get current step
@@ -82,7 +82,7 @@ try {
             );
 
             // Get tutorial player's data for level/pi
-            $tutorialPlayer = new Player($session['tutorial_player_id'] ?? $playerId);
+            $tutorialPlayer = PlayerFactory::legacy($session['tutorial_player_id'] ?? $playerId);
             $tutorialPlayer->get_data();
             $tutorialPlayer->getCoords();
 
