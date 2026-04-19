@@ -143,6 +143,18 @@ cypress_tutorial_job:
     #     follow-up). Without this, init_test_from_dump.sh's INSERTs into
     #     tutorial_steps fail with ERROR 1146.
     - mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 < db/init_noupdates.sql
+    # init_noupdates.sql contains the schema that the pre-snapshot
+    # Doctrine migrations produced (race_actions, etc.) but does NOT
+    # seed the doctrine_migration_versions table that records which
+    # migrations are applied. Without these INSERTs, the migrate step
+    # below tries to re-create existing tables and fails with
+    # "Table 'race_actions' already exists". Add one INSERT IGNORE per
+    # migration whose effect is already in init_noupdates.sql.
+    - |
+      mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 -e "
+        INSERT IGNORE INTO doctrine_migration_versions (version, executed_at, execution_time)
+        VALUES ('App\\\\Migrations\\\\Version20250427223731', NOW(), 0);
+      "
     - vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration --no-all-or-nothing
     # Sanity probe the data fixtures the Cypress spec depends on. If
     # `make setup-ci-env` failed silently this surfaces it before the
