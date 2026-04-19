@@ -55,6 +55,24 @@ final class PlayerFactory
     }
 
     /**
+     * Legacy `Classes\Player` looked up by name (player_type='real' only),
+     * or null if no such row exists.
+     *
+     * Thin wrapper over `Player::get_player_by_name()` that normalises the
+     * legacy `Player|false` return to `?Player` — matches the shape of
+     * `entity()` and lets callers use `?->` safely.
+     *
+     * Use when the caller has untrusted user input (missive recipients,
+     * merchant exchanges, password resets) and needs to discover whether
+     * the player exists before acting.
+     */
+    public static function legacyByName(string $name): ?Player
+    {
+        $player = Player::get_player_by_name($name);
+        return $player === false ? null : $player;
+    }
+
+    /**
      * Modern Doctrine entity for a given id, or null if the row doesn't exist.
      * Use for READ-ONLY paths (rankings, profile pages, admin lists).
      */
