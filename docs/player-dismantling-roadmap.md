@@ -101,15 +101,19 @@ Behaviour identical.
 
 ## Phase 3: Read-path migration to entity layer for cold/safe surfaces
 
-**Pre-flight (separate small MR)**: snapshot tests for each surface to be migrated (rankings, profile display, admin listings). Capture the rendered HTML / JSON output for a fixed test player against the LEGACY code path. After migration, the same snapshot must match exactly. Catches column-mapping drift between the entity and the table that PHPStan can't see.
+**Schema audit (delivered as Phase 3.0)**: see `docs/phase-3-schema-audit.md`. Enumerates the column gap between `PlayerEntity` and the live `players` table, identifies two blocking hydration defects (`bonus_points` missing from table; `emailBonus` vs `email_bonus` column-name drift), and defines the minimum fix set that unblocks caller migration. **Read this before starting any Phase 3 code MR.**
 
 **Goal**: For pure-read use cases (rankings, profile display, admin listings), call `PlayerFactory::entity()` and use `RealPlayer` getters instead of `new Player($id)->data->X`.
 
-**Deliverable**: Migrate `src/View/Classement/BourrinsView.php`, parts of `infos.php`, `ResetPasswordView.php` (lookup paths only, NOT the password mutation), and `ScreenshotService::buildContext`. Add the missing column getters to `PlayerEntity` as needed (e.g. anything currently absent). Add domain methods like `RealPlayer::canTrade()`, `NPCEntity::canBeAttacked()` on demand — driven by what callers currently do with `if ($player->id < 0)` type checks.
+**Sub-phase plan** (per `docs/phase-3-schema-audit.md` §"Phase 3 execution plan"):
+- **3.0** — schema audit doc (delivered)
+- **3.1** — schema alignment: add `bonus_points` migration, fix `emailBonus` `name:` attribute, add a DB-gated hydration smoke test
+- **3.2** — domain methods for non-column dependencies (`isInactive`, `hasOption`, `getCoordsPlan`) so Phase 3.3's SAR can be mechanical
+- **3.3** — read-path SAR across `BourrinsView`, `infos.php`, `ResetPasswordView::renderSendUniqueCode`, and `ScreenshotService::generateAutomaticScreenshot`, gated by snapshot tests
 
-**Risk**: **Medium** — Doctrine hydration on legacy data may surface schema mismatches (the entity declares ~32 columns; the `players` table has more). Each migrated read needs the corresponding entity field mapped first. **Schema audit required as preamble.**
+**Risk**: **Medium** — the audit identified the known hydration defects; Phase 3.1 clears them before any caller migrates. Each migrated read needs a matching getter (mostly already present per audit §C).
 
-**LOC**: ~200 LOC entity additions + ~150 LOC migrated callers + ~100 LOC tests.
+**LOC**: ~250 LOC entity + migration + domain methods, ~150 LOC migrated callers, ~400 LOC tests (hydration smoke + domain tests + snapshot tests).
 
 ## Phase 4: Tutorial subsystem cut-over
 
