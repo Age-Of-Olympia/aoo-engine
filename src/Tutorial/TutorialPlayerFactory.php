@@ -3,12 +3,12 @@
 namespace App\Tutorial;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\TutorialPlayerEntity;
+use App\Entity\TutorialPlayer;
 use Doctrine\DBAL\Connection;
 
 /**
- * TutorialPlayerEntityFactory — creates a fresh tutorial character
- * for a session and returns it as a Doctrine TutorialPlayerEntity.
+ * TutorialPlayerFactory — creates a fresh tutorial character
+ * for a session and returns it as a Doctrine TutorialPlayer.
  *
  * Phase 4.4 replacement for `App\Tutorial\TutorialPlayer::create()`.
  * The original service-class static factory is retired; its logic
@@ -35,7 +35,7 @@ use Doctrine\DBAL\Connection;
  * Doctrine persistence if a stable entity surface is needed, but
  * that's out of scope for 4.4.
  */
-class TutorialPlayerEntityFactory
+class TutorialPlayerFactory
 {
     /**
      * Create a new tutorial character and return it as a Doctrine
@@ -47,14 +47,14 @@ class TutorialPlayerEntityFactory
         string $tutorialSessionId,
         ?string $race = null,
         string $templatePlan = 'tutorial'
-    ): TutorialPlayerEntity {
+    ): TutorialPlayer {
         // Step 1: Create isolated map instance for this tutorial session
-        error_log("[TutorialPlayerEntityFactory] Creating map instance for session {$tutorialSessionId} from template {$templatePlan}");
+        error_log("[TutorialPlayerFactory] Creating map instance for session {$tutorialSessionId} from template {$templatePlan}");
         $mapInstance = new TutorialMapInstance($conn);
         $instanceData = $mapInstance->createInstance($tutorialSessionId, $templatePlan);
         $startingCoordsId = $instanceData['starting_coords_id'];
 
-        error_log("[TutorialPlayerEntityFactory] Map instance created: {$instanceData['plan_name']}, starting at coords_id {$startingCoordsId}");
+        error_log("[TutorialPlayerFactory] Map instance created: {$instanceData['plan_name']}, starting at coords_id {$startingCoordsId}");
 
         // Step 2: Resolve race (default to real player's race)
         if ($race === null) {
@@ -85,7 +85,7 @@ class TutorialPlayerEntityFactory
         // Step 6: Insert players row (tutorial discriminator).
         //
         // `tutorial_session_id` and `real_player_id_ref` on the
-        // `players` row are what TutorialPlayerEntity maps to via its
+        // `players` row are what TutorialPlayer maps to via its
         // STI-subclass ORM\Column attributes. The original
         // service-class factory left these NULL and tracked the link
         // only through the `tutorial_players` table — fine for the
@@ -119,7 +119,7 @@ class TutorialPlayerEntityFactory
         $cacheFile = $_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $actualPlayerId . '.json';
         if (file_exists($cacheFile)) {
             unlink($cacheFile);
-            error_log("[TutorialPlayerEntityFactory] Deleted stale cache file for player {$actualPlayerId}");
+            error_log("[TutorialPlayerFactory] Deleted stale cache file for player {$actualPlayerId}");
         }
 
         // Step 8: Grant basic actions
@@ -149,15 +149,15 @@ class TutorialPlayerEntityFactory
         // Clear the EntityManager first so the find() hits the DB
         // rather than the identity map — the row we just inserted
         // via raw SQL isn't in the map yet, but any OTHER stale
-        // TutorialPlayerEntity (e.g. from a prior failed session)
+        // TutorialPlayer (e.g. from a prior failed session)
         // could misdirect the hydrate.
         $em = EntityManagerFactory::getEntityManager();
-        $em->clear(TutorialPlayerEntity::class);
-        $entity = $em->find(TutorialPlayerEntity::class, $actualPlayerId);
+        $em->clear(TutorialPlayer::class);
+        $entity = $em->find(TutorialPlayer::class, $actualPlayerId);
 
         if ($entity === null) {
             throw new \RuntimeException(
-                "TutorialPlayerEntity missing after create for player {$actualPlayerId} — row may have been rolled back"
+                "TutorialPlayer missing after create for player {$actualPlayerId} — row may have been rolled back"
             );
         }
 

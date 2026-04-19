@@ -5,7 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * TutorialPlayerEntity - Temporary character for tutorial sessions
+ * TutorialPlayer - Temporary character for tutorial sessions.
  *
  * These are temporary characters that:
  * - Exist only during tutorial sessions
@@ -14,10 +14,15 @@ use Doctrine\ORM\Mapping as ORM;
  * - Get deleted when tutorial completes
  * - Transfer rewards (XP, PI) to real player on completion
  *
- * Discriminator: player_type = 'tutorial'
+ * Discriminator: player_type = 'tutorial'.
+ *
+ * This Doctrine entity replaces the pre-Phase-4.4 service-class
+ * `App\Tutorial\TutorialPlayer`, which was retired in !398. The name
+ * is reused (and the `Entity` suffix dropped) now that the old class
+ * is gone.
  */
 #[ORM\Entity]
-class TutorialPlayerEntity extends PlayerEntity
+class TutorialPlayer extends PlayerEntity
 {
     #[ORM\Column(type: "string", length: 36, name: "tutorial_session_id", nullable: true)]
     protected ?string $tutorialSessionId = null;
@@ -163,6 +168,6 @@ class TutorialPlayerEntity extends PlayerEntity
             [$this->id]
         );
 
-        error_log("[TutorialPlayerEntity] Deleted tutorial player {$this->id} and related data");
+        error_log("[TutorialPlayer] Deleted tutorial player {$this->id} and related data");
     }
 }

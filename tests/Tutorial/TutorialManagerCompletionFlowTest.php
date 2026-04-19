@@ -12,7 +12,7 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  *
  * `TutorialManager::completeTutorial()` is private and orchestrates:
  *   - reward capture from TutorialContext
- *   - reward transfer via TutorialPlayerEntity
+ *   - reward transfer via TutorialPlayer
  *   - resource cleanup via TutorialResourceManager
  *   - session completion via TutorialSessionManager
  *   - replay-aware message building
