@@ -35,7 +35,16 @@ if(isset($_GET['rewards'])){
 }
 
 
-$ui = new Ui($target->data->name);
+// Phase 4.3d — hydrate an entity alongside the legacy $target for
+// read paths. The legacy object stays for anything downstream code
+// or the included sub-scripts still rely on (->coords, ->get_caracs,
+// Item::get_equiped_list). The entity powers every pure data read.
+$targetEntity = PlayerFactory::entity((int) $target->id);
+if ($targetEntity === null) {
+    exit('error target id');
+}
+
+$ui = new Ui($targetEntity->getName());
 Use App\Service\PlayerEffectService;
 $playerEffectService = new PlayerEffectService();
 
@@ -54,19 +63,23 @@ echo '
         $caracsJson = $player->get_caracsJson();
 
         $player->getCoords();
-        $target->getCoords();
 
-        $distance = View::get_distance($player->coords, $target->coords);
+        // Target coords via entity (Phase 4.3d). Shape-compatible with
+        // View::get_distance which only reads ->x / ->y / ->plan.
+        $conn = \App\Entity\EntityManagerFactory::getEntityManager()->getConnection();
+        $targetCoords = $targetEntity->getCoords($conn);
+
+        $distance = View::get_distance($player->coords, $targetCoords);
 
         if(
-            $player->id == $target->id
+            $player->id == $targetEntity->getId()
             ||
             $distance <= $caracsJson->p
         ){
 
             echo '<div class="infos-effects">';
 
-                $playerEffects = $playerEffectService->getEffectsByPlayerId($target->id);
+                $playerEffects = $playerEffectService->getEffectsByPlayerId($targetEntity->getId());
 
                 foreach ($playerEffects as $effect){
 
@@ -76,11 +89,11 @@ echo '
                     }
 
                     if(
-                        $target->id == $player->id
+                        $targetEntity->getId() == $player->id
                         ||
-                        $target->data->faction == $player->data->faction
+                        $targetEntity->getFaction() == $player->data->faction
                         ||
-                        $target->data->secretFaction == $player->data->secretFaction
+                        $targetEntity->getSecretFaction() == $player->data->secretFaction
                     ){
 
                         $endTime = '(reposez-vous)';
@@ -108,7 +121,7 @@ echo '
         }
 
 
-        echo '<img src="'. $target->data->portrait .'" height="330" />';
+        echo '<img src="'. $targetEntity->getPortrait() .'" height="330" />';
 
 
         echo '
@@ -122,33 +135,38 @@ echo '
             ';
 
 
-            echo '<h1>'. $target->data->name .'</h1>';
+            echo '<h1>'. $targetEntity->getName() .'</h1>';
 
 
-            $raceJson = json()->decode('races', $target->data->race);
+            $raceJson = json()->decode('races', $targetEntity->getRace());
 
-            $pnjText = $target->id<0 ? ' - PNJ' : '';
-            $inactifText = ($target->id > 0 && !empty($target->data->isInactive)) ? ' (inactif)' : '';
+            $pnjText = $targetEntity->getId() < 0 ? ' - PNJ' : '';
+            // isInactive is runtime-computed (RealPlayer domain method from !384).
+            // Only meaningful for real players.
+            $isInactive = ($targetEntity instanceof \App\Entity\RealPlayer)
+                && $targetEntity->isInactive(new \App\Service\PlayerService($targetEntity->getId()));
+            $inactifText = ($targetEntity->getId() > 0 && $isInactive) ? ' (inactif)' : '';
 
-            echo '<div>'. $raceJson->name . $pnjText . $inactifText .' - <a href="infos.php?targetId='. $target->id .'&reputation">'. Str::get_reput(floor($target->data->pr/COEFFICIENT_PR)) .'</a> Rang '. $target->data->rank .'</div>';
+            echo '<div>'. $raceJson->name . $pnjText . $inactifText .' - <a href="infos.php?targetId='. $targetEntity->getId() .'&reputation">'. Str::get_reput(floor($targetEntity->getPr()/COEFFICIENT_PR)) .'</a> Rang '. $targetEntity->getRank() .'</div>';
 
 
-            $factionJson = json()->decode('factions', $target->data->faction);
+            $factionJson = json()->decode('factions', $targetEntity->getFaction());
 
-            echo '<div><a href="faction.php?faction='. $target->data->faction .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$target->data->factionRole]->name.'</i>) </div>';
+            echo '<div><a href="faction.php?faction='. $targetEntity->getFaction() .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$targetEntity->getFactionRole()]->name.'</i>) </div>';
 
-            if (isset($target->data->secretFaction) && !empty($target->data->secretFaction) && ($player->data->secretFaction == $target->data->secretFaction || $player->have_option('isAdmin'))) {
-                $secretFactionJson = json()->decode('factions', $target->data->secretFaction);
+            $targetSecretFaction = $targetEntity->getSecretFaction();
+            if (!empty($targetSecretFaction) && ($player->data->secretFaction == $targetSecretFaction || $player->have_option('isAdmin'))) {
+                $secretFactionJson = json()->decode('factions', $targetSecretFaction);
 
-                echo '<div class="secret-faction"><a href="faction.php?faction='. $target->data->secretFaction .'">'. $secretFactionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $secretFactionJson->raFont .'"></span> (<i>'.$secretFactionJson->role[$target->data->secretFactionRole]->name.'</i>) </div>';
+                echo '<div class="secret-faction"><a href="faction.php?faction='. $targetSecretFaction .'">'. $secretFactionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $secretFactionJson->raFont .'"></span> (<i>'.$secretFactionJson->role[$targetEntity->getSecretFactionRole()]->name.'</i>) </div>';
             }
-            
-            echo '<img src="'. $target->data->avatar .'" />';
+
+            echo '<img src="'. $targetEntity->getAvatar() .'" />';
 
 
-            $text = nl2br($target->data->text);
+            $text = nl2br($targetEntity->getText());
 
-            if($player->id != $target->id && $distance > $caracsJson->p){
+            if($player->id != $targetEntity->getId() && $distance > $caracsJson->p){
 
                 $text = '<i>Ce personnage est trop éloigné pour l\'entendre parler.</i>';
             }
@@ -179,7 +197,7 @@ echo '
 ';
 
 
-if($player->coords->plan == $target->coords->plan && $distance <= $caracsJson->p){
+if($player->coords->plan == $targetCoords->plan && $distance <= $caracsJson->p){
 
 
     echo '
@@ -192,7 +210,9 @@ if($player->coords->plan == $target->coords->plan && $distance <= $caracsJson->p
                 <tr>
                     ';
 
-                    $itemList = Item::get_equiped_list($target);
+                    // Item::get_item_list already accepts int id (legacy signature branches on is_numeric),
+                    // so pass the entity's id directly instead of the legacy object.
+                    $itemList = Item::get_equiped_list($targetEntity->getId());
 
                     foreach($itemList as $row){
 
@@ -237,7 +257,7 @@ echo '
 
         <h2>Histoire:</h2>
 
-        '. nl2br($target->data->story) .'
+        '. nl2br($targetEntity->getStory()) .'
     </td>
 </tr>
 </table>
