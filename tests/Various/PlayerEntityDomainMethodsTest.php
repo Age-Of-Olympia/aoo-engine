@@ -129,6 +129,83 @@ class PlayerEntityDomainMethodsTest extends TestCase
     }
 
     #[Group('player-entity-domain')]
+    #[Group('phase-3-4')]
+    public function testGetCoordsReturnsValueObjectMatchingDbRow(): void
+    {
+        $entity = $this->em->find(PlayerEntity::class, $this->playerId);
+        $this->assertInstanceOf(PlayerEntity::class, $entity);
+
+        $expected = $this->conn->fetchAssociative(
+            'SELECT x, y, z, plan FROM coords WHERE id = ?',
+            [$entity->getCoordsId()]
+        );
+        $this->assertIsArray($expected);
+
+        $coords = $entity->getCoords($this->conn);
+        $this->assertIsObject($coords);
+        $this->assertSame((int) $expected['x'], $coords->x);
+        $this->assertSame((int) $expected['y'], $coords->y);
+        $this->assertSame((int) $expected['z'], $coords->z);
+        $this->assertSame((string) $expected['plan'], $coords->plan);
+    }
+
+    #[Group('player-entity-domain')]
+    #[Group('phase-3-4')]
+    public function testGetCoordsReturnsNullForOrphanedCoordsId(): void
+    {
+        $entity = new RealPlayer();
+        $entity->setCoordsId(2_000_000_000);
+
+        $this->assertNull($entity->getCoords($this->conn));
+    }
+
+    #[Group('player-entity-domain')]
+    #[Group('phase-3-4')]
+    public function testGetOptionsReturnsSortedListDelegatingToService(): void
+    {
+        // Seed two options with non-sorted names; getOptions must return
+        // them alphabetically (contract inherited from the service).
+        $a = 'phase34a_' . bin2hex(random_bytes(3));
+        $b = 'phase34z_' . bin2hex(random_bytes(3));
+
+        $this->conn->insert('players_options', [
+            'player_id' => $this->playerId,
+            'name'      => $b,
+        ]);
+        $this->conn->insert('players_options', [
+            'player_id' => $this->playerId,
+            'name'      => $a,
+        ]);
+
+        try {
+            $entity = $this->em->find(PlayerEntity::class, $this->playerId);
+            $this->assertInstanceOf(PlayerEntity::class, $entity);
+
+            $options = new PlayerOptionsService();
+            $result = $entity->getOptions($options);
+
+            $aPos = array_search($a, $result, true);
+            $bPos = array_search($b, $result, true);
+            $this->assertNotFalse($aPos, "seeded option {$a} must be present");
+            $this->assertNotFalse($bPos, "seeded option {$b} must be present");
+            $this->assertLessThan(
+                $bPos,
+                $aPos,
+                'getOptions must preserve the service-level ascending sort'
+            );
+        } finally {
+            $this->conn->delete('players_options', [
+                'player_id' => $this->playerId,
+                'name'      => $a,
+            ]);
+            $this->conn->delete('players_options', [
+                'player_id' => $this->playerId,
+                'name'      => $b,
+            ]);
+        }
+    }
+
+    #[Group('player-entity-domain')]
     #[Group('phase-3-2')]
     public function testIsInactiveDelegatesToPlayerService(): void
     {
