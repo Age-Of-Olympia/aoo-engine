@@ -69,11 +69,14 @@ class TutorialP0BackfillTest extends TestCase
     #[Group('mr-330')]
     public function testGetActiveSessionContractMatchesJumpToStepCall(): void
     {
+        // Pin the shape jump-to-step.php actually depends on:
+        // one int parameter in, nullable array out. The parameter's
+        // variable name is internal to TutorialSessionManager — no
+        // caller uses named arguments today (grep confirmed).
         $method = new ReflectionMethod(TutorialSessionManager::class, 'getActiveSession');
         $params = $method->getParameters();
 
         $this->assertCount(1, $params, 'getActiveSession must take exactly one argument');
-        $this->assertSame('playerId', $params[0]->getName());
         $this->assertSame('int', (string) $params[0]->getType());
         $this->assertSame('?array', (string) $method->getReturnType());
     }
