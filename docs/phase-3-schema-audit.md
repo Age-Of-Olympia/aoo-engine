@@ -156,38 +156,49 @@ can be purely mechanical:
 
 One DB-gated test per domain method.
 
-### Phase 3.3 — Read-path SAR (narrowed scope)
+### Phase 3.3 — Read-path SAR (narrowed scope) — DELIVERED (!385)
 
-**Delivered**: `src/View/ResetPasswordView::renderSendUniqueCode` —
-fully on the entity layer. Both the id-lookup and name-lookup branches
-use `PlayerFactory::entity()` / new `PlayerFactory::entityByName()`.
-`$player->row->mail` replaced with `$player->getMail()`.
-`$player->id` replaced with `$player->getId()`.
+`src/View/ResetPasswordView::renderSendUniqueCode` — fully on the
+entity layer. Both the id-lookup and name-lookup branches use
+`PlayerFactory::entity()` / new `PlayerFactory::entityByName()`.
+`$player->row->mail` replaced with `$player->getMail()`;
+`$player->id` with `$player->getId()`.
 
-**Deferred to later mini-phases** (each needs domain-method
-additions beyond what Phase 3.2 ships):
+### Phase 3.4a — additional domain methods — DELIVERED (!386)
 
-- **BourrinsView** — needs an entity-side equivalent of `->caracs`
-  (racial stats + upgrades aggregation). Caracs computation today
-  lives across `Player::get_caracs()`, `Player::get_upgrades()`, and
-  the `CARACS` constant loop. Porting it cleanly is a larger design
-  decision than one SAR MR can carry.
-- **infos.php** — needs a full coords object (accesses `$target->coords->plan`,
-  `$target->coords->x/y` via `View::get_distance`). Phase 3.2 ports
-  only `getCoordsPlan()`; full coords hydration via a `Coords` entity
-  is a separate mini-phase.
-- **ScreenshotService::generateAutomaticScreenshot** — same coords
-  dependency as infos.php, plus `get_options()` (`->have_option` is
-  covered by `hasOption()` from Phase 3.2).
+Two more methods on `PlayerEntity` to unblock the remaining targets:
 
-Each deferred target stays on `PlayerFactory::legacy()` / `::active()`
-until those domain pieces land.
+- `getCoords(Connection): ?object` — returns a stdClass with
+  `x/y/z/plan` matching legacy `$player->coords`. Not a Doctrine
+  relationship (documented design choice: all Phase 3 callers are
+  read-only, a `Coords` entity is a larger mini-phase).
+- `getOptions(PlayerOptionsService): array` — delegates to the Phase 2
+  service's `getOptions`.
 
-**Test gate**: no full snapshot tests were needed for this narrow
-scope — the `PlayerFactoryTest` suite gained three tests for the new
-`entityByName()` method (signature + hit + miss), and the hydration
-smoke test (Phase 3.1) guards getter correctness against schema drift.
-Broader snapshot testing returns when the deferred files are ready.
+### Phase 3.4b+ — blocked by external dependencies
+
+The remaining three audit targets (BourrinsView, infos.php,
+ScreenshotService) cannot migrate cleanly without upstream changes
+outside the Phase 3 scope. Each blocker documented so the next
+mini-phase can address them deliberately:
+
+| Target | Blocker | Kind of work needed |
+|---|---|---|
+| **`src/View/Classement/BourrinsView.php`** | `$player->caracs->$k` — racial stats + upgrades aggregation across `Player::get_caracs()`, `Player::get_upgrades()`, `CARACS` loop | Full caracs computation ported to entity layer, OR a `PlayerCaracsService` that takes a `PlayerEntity`. Larger design MR (akin to Phase 2's service extraction but for the computed view). |
+| **`infos.php`** | (1) `$player->get_caracsJson()` / `$caracsJson->p` — perception stat needed for distance check. (2) `Item::get_equiped_list($target)` — untyped `$player` param that internally reads `$player->id` as a public property; entity's `$id` is protected. (3) `$target->id<0` — could be `$entity->isNPC()` but callers use raw `id` comparison. | A PlayerCaracsService (as above) + Item.php update to accept `PlayerEntity\|Player` (or access via `->getId()` only). Both are small-to-medium changes in separate MRs. |
+| **`src/Service/ScreenshotService.php`** | (1) `$actor` param typed as `Classes\Player` — ActionExecutorService and `Classes\Player` itself pass legacy. (2) `$screenshotPlayer->move_player()` and `get_caracs()` — pure mutation paths not on entity. | Actor-only migration possible once the type hint is widened to accept both types, but the screenshot-PNJ mutation path stays on legacy permanently (entity is read-only by design). Low ROI for Phase 3 — consider keeping on legacy. |
+
+**Recommendation**: before attempting Phase 3.4b, ship a
+`PlayerCaracsService` extraction mini-phase (unblocks BourrinsView
+and half of infos.php) and an `Item.php` type-hint relaxation (unblocks
+the rest of infos.php). ScreenshotService should probably stay on
+legacy — its mutation paths make it a poor entity-layer candidate.
+
+**Test gate**: no snapshot tests were needed for the narrow 3.3 scope
+— the `PlayerFactoryTest` suite gained three tests for `entityByName()`
+(signature + hit + miss), and the Phase 3.1 hydration smoke test
+guards getter correctness against schema drift. Broader snapshot
+testing returns when the deferred callers land.
 
 ## Reuse from existing codebase
 
