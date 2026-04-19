@@ -552,4 +552,46 @@ abstract class PlayerEntity
 
         return $plan === false ? null : (string) $plan;
     }
+
+    /**
+     * Full coords snapshot (x, y, z, plan) as a value object.
+     *
+     * Matches the shape of legacy `$player->coords`: a stdClass with
+     * int `x`, `y`, `z` and string `plan`. Phase 3.4 deliberately
+     * avoids introducing a Coords Doctrine entity — that's a larger
+     * design decision, and every Phase 3 caller that touches
+     * `->coords->X` is read-only. Returns null when `coords_id` points
+     * at a non-existent row.
+     */
+    public function getCoords(\Doctrine\DBAL\Connection $conn): ?object
+    {
+        $row = $conn->fetchAssociative(
+            'SELECT x, y, z, plan FROM coords WHERE id = ? LIMIT 1',
+            [$this->coordsId]
+        );
+
+        if ($row === false) {
+            return null;
+        }
+
+        return (object) [
+            'x'    => (int) $row['x'],
+            'y'    => (int) $row['y'],
+            'z'    => (int) $row['z'],
+            'plan' => (string) $row['plan'],
+        ];
+    }
+
+    /**
+     * Ascending-sorted list of option names for this player.
+     *
+     * Delegates to PlayerOptionsService (the Phase 2 extraction).
+     * Replaces legacy `$player->get_options()` on the entity side.
+     *
+     * @return array<int, string>
+     */
+    public function getOptions(\App\Service\PlayerOptionsService $options): array
+    {
+        return $options->getOptions((int) $this->id);
+    }
 }
