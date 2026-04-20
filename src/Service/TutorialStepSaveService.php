@@ -284,7 +284,7 @@ class TutorialStepSaveService
             $values = $data['context_values'] ?? [];
 
             for ($i = 0; $i < count($keys); $i++) {
-                $key = $this->validator->validateString($keys[$i] ?? '', 50);
+                $key = $this->validator->validateContextChangeKey($keys[$i] ?? '');
                 $value = $this->validator->validateText($values[$i] ?? '', 255);
 
                 if ($key !== null && !isset($autoContextChanges[$key])) {
@@ -310,7 +310,7 @@ class TutorialStepSaveService
             $values = $data['prep_values'] ?? [];
 
             for ($i = 0; $i < count($keys); $i++) {
-                $key = $this->validator->validateString($keys[$i] ?? '', 50);
+                $key = $this->validator->validatePreparationKey($keys[$i] ?? '');
                 $value = $this->validator->validateText($values[$i] ?? '', 255);
 
                 if ($key !== null) {

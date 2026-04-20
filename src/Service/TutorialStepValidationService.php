@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Tutorial\TutorialContextKeys;
 use App\Tutorial\TutorialOptions;
 use InvalidArgumentException;
 
@@ -358,5 +359,69 @@ class TutorialStepValidationService
     public function validateCheckbox($value): bool
     {
         return !empty($value);
+    }
+
+    /**
+     * Validate a context-change key.
+     *
+     * Only keys the runtime actually dispatches on are accepted — see
+     * {@see TutorialContextKeys::CONTEXT_CHANGES}. Empty values return null
+     * so the save service can skip blank rows without erroring.
+     *
+     * @param mixed $value User input
+     * @return string|null Validated key or null if empty
+     * @throws InvalidArgumentException If key is not whitelisted
+     */
+    public function validateContextChangeKey($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $key = trim((string)$value);
+        if ($key === '') {
+            return null;
+        }
+
+        $valid = TutorialContextKeys::contextChangeKeys();
+        if (!in_array($key, $valid, true)) {
+            throw new InvalidArgumentException(
+                'Invalid context key. Must be one of: ' . implode(', ', $valid)
+            );
+        }
+
+        return $key;
+    }
+
+    /**
+     * Validate a next-step-preparation key.
+     *
+     * Only keys the runtime actually dispatches on are accepted — see
+     * {@see TutorialContextKeys::NEXT_PREPARATIONS}. Empty values return null
+     * so the save service can skip blank rows without erroring.
+     *
+     * @param mixed $value User input
+     * @return string|null Validated key or null if empty
+     * @throws InvalidArgumentException If key is not whitelisted
+     */
+    public function validatePreparationKey($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $key = trim((string)$value);
+        if ($key === '') {
+            return null;
+        }
+
+        $valid = TutorialContextKeys::nextPreparationKeys();
+        if (!in_array($key, $valid, true)) {
+            throw new InvalidArgumentException(
+                'Invalid preparation key. Must be one of: ' . implode(', ', $valid)
+            );
+        }
+
+        return $key;
     }
 }

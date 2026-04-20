@@ -221,3 +221,27 @@ function renderSelectOptions(array $options, ?string $current = null, ?string $p
     }
     return $html;
 }
+
+/**
+ * Render a <datalist> element for autocomplete on <input list="...">.
+ *
+ * Each option shows the value plus the label in its description slot, so the
+ * browser's autocomplete dropdown surfaces what the key does, not just its
+ * name.
+ *
+ * @param string $id Datalist id (must match input list="...")
+ * @param array<string,string> $options [value => label]
+ */
+function renderDatalist(string $id, array $options): string
+{
+    $html = '<datalist id="' . e($id) . '">';
+    foreach ($options as $value => $label) {
+        $html .= sprintf(
+            '<option value="%s" label="%s"></option>',
+            e((string)$value),
+            e($label)
+        );
+    }
+    $html .= '</datalist>';
+    return $html;
+}

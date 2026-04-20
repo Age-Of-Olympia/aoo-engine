@@ -10,6 +10,7 @@ require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
 use App\Service\CsrfProtectionService;
+use App\Tutorial\TutorialContextKeys;
 use App\Tutorial\TutorialOptions;
 
 $database = new Db();
@@ -713,11 +714,14 @@ ob_start();
                         <h5>Context Changes</h5>
                         <p class="text-muted">State modifications during this step</p>
 
+                        <?= renderDatalist('tutorialContextKeys', TutorialContextKeys::CONTEXT_CHANGES) ?>
+
                         <div id="contextChangesList">
                             <?php foreach ($contextChanges as $index => $change): ?>
                                 <div class="row mb-2 context-row">
                                     <div class="col-md-5">
                                         <input type="text" class="form-control" name="context_keys[]"
+                                               list="tutorialContextKeys"
                                                value="<?= htmlspecialchars($change['context_key']) ?>"
                                                placeholder="Key (e.g., set_mvt_limit)">
                                     </div>
@@ -750,11 +754,14 @@ ob_start();
                             <small class="d-block mt-1">Example: <code>restore_mvt: -1</code> gives Nain 4, Elfe 5, HS 6 movements.</small>
                         </div>
 
+                        <?= renderDatalist('tutorialPrepKeys', TutorialContextKeys::NEXT_PREPARATIONS) ?>
+
                         <div id="nextPrepList">
                             <?php foreach ($nextPreparation as $index => $prep): ?>
                                 <div class="row mb-2 prep-row">
                                     <div class="col-md-5">
                                         <input type="text" class="form-control" name="prep_keys[]"
+                                               list="tutorialPrepKeys"
                                                value="<?= htmlspecialchars($prep['preparation_key']) ?>"
                                                placeholder="Key (e.g., restore_mvt)">
                                     </div>
@@ -903,7 +910,7 @@ document.getElementById('addContextChange').addEventListener('click', function()
     row.className = 'row mb-2 context-row';
     row.innerHTML = `
         <div class="col-md-5">
-            <input type="text" class="form-control" name="context_keys[]" placeholder="Key (e.g., set_mvt_limit)">
+            <input type="text" class="form-control" name="context_keys[]" list="tutorialContextKeys" placeholder="Key (e.g., set_mvt_limit)">
         </div>
         <div class="col-md-5">
             <input type="text" class="form-control" name="context_values[]" placeholder="Value">
@@ -924,7 +931,7 @@ document.getElementById('addNextPrep').addEventListener('click', function() {
     row.className = 'row mb-2 prep-row';
     row.innerHTML = `
         <div class="col-md-5">
-            <input type="text" class="form-control" name="prep_keys[]" placeholder="Key (e.g., restore_mvt)">
+            <input type="text" class="form-control" name="prep_keys[]" list="tutorialPrepKeys" placeholder="Key (e.g., restore_mvt)">
         </div>
         <div class="col-md-5">
             <input type="text" class="form-control" name="prep_values[]" placeholder="Value">
