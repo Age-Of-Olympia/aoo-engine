@@ -25,6 +25,8 @@ module.exports = defineConfig({
     pageLoadTimeout: 30000,
     setupNodeEvents(on, config) {
       const mysql = require('mysql2/promise');
+      const fs = require('fs');
+      const path = require('path');
 
       /* Database query task for validation.
        *
@@ -53,6 +55,49 @@ module.exports = defineConfig({
             await connection.end();
             throw error;
           }
+        },
+
+        /* Read a player's current turn state from disk.
+         *
+         * Turn data lives in JSON files, not the `players` table (the `turn`
+         * column from older CLAUDE.md docs does not exist). Classes/Player
+         * writes datas/private/players/<id>.turn.json after every get_caracs()
+         * call, containing the post-bonus remaining values.
+         *
+         * Returns { mvt, pa } with:
+         *   mvt = turn.mvt if set, else caracs.mvt (race max)
+         *   pa  = turn.a   if set, else caracs.a   (race max)
+         * This mirrors Player::getRemaining() semantics.
+         */
+        readPlayerTurn({ playerId }) {
+          const playersDir = path.join(__dirname, 'datas/private/players');
+          const turnPath = path.join(playersDir, `${playerId}.turn.json`);
+          const caracsPath = path.join(playersDir, `${playerId}.caracs.json`);
+
+          const readJson = (p) => {
+            if (!fs.existsSync(p)) return { __missing: true };
+            const raw = fs.readFileSync(p, 'utf8').trim();
+            if (!raw) return {};
+            try { return JSON.parse(raw); } catch { return {}; }
+          };
+
+          const turn = readJson(turnPath);
+          const caracs = readJson(caracsPath);
+
+          const pick = (key, fallbackKey = key) =>
+            turn[key] !== undefined ? turn[key]
+              : caracs[fallbackKey] !== undefined ? caracs[fallbackKey]
+              : 0;
+
+          const result = {
+            mvt: pick('mvt'),
+            pa: pick('a'),
+            turnMissing: turn.__missing === true,
+            caracsMissing: caracs.__missing === true
+          };
+          /* Log inputs/outputs so test output exposes player-id mismatches */
+          console.log(`[readPlayerTurn] playerId=${playerId} → ${JSON.stringify(result)}`);
+          return result;
         }
       });
 

@@ -312,23 +312,19 @@ class TutorialContext
         if (isset($prerequisites['actions'])) {
             $required = (int) $prerequisites['actions'];
 
-            // Ensure player data is loaded
-            if (!$player->data || $player->data === false) {
-                error_log("[TutorialContext] ERROR: Player data not loaded for player {$player->id}, attempting to load...");
-                $player->get_data();
+            // Read current PA from the turn system, just like the MVT path above.
+            // Using $player->data->a is wrong — there is no `a` column on the players
+            // table, so it always resolved to 0, and every call silently added a fresh
+            // +pa_required bonus on top of the player's existing caracs.a. That produced
+            // the "4/2" inflation visible in the UI after deplete_movements auto_restore.
+            $player->get_caracs();
+            $current = $player->getRemaining('a');
 
-                // Verify data was loaded successfully
-                if (!$player->data || $player->data === false) {
-                    error_log("[TutorialContext] CRITICAL: Failed to load player data for player {$player->id}");
-                    return false;
-                }
-            }
-
-            $current = $player->data->a ?? 0;
+            error_log("[TutorialContext] Prerequisites actions check: required={$required}, current={$current}, auto_restore=" . var_export($autoRestore, true));
 
             if ($current < $required) {
                 if ($autoRestore) {
-                    // Persist PA restoration to database using putBonus (like movement restoration does)
+                    // Persist PA restoration to database using putBonus (same pattern as movement restoration)
                     $bonusNeeded = $required - $current;
                     $player->putBonus(['a' => $bonusNeeded]);
                     error_log("[TutorialContext] Restored actions: {$current} → {$required} (bonus: {$bonusNeeded})");
@@ -336,6 +332,8 @@ class TutorialContext
                     error_log("[TutorialContext] ERROR: Insufficient actions (need {$required}, have {$current})");
                     return false;
                 }
+            } else {
+                error_log("[TutorialContext] Actions OK: have {$current}, need {$required} - no restoration needed");
             }
         }
 

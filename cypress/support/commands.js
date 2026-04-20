@@ -24,10 +24,20 @@ Cypress.Commands.add('register', (name, race, password, email) => {
     },
     failOnStatusCode: false
   }).then((response) => {
-    /* Check for errors in response */
-    if (response.body.includes('error') || response.body.includes('déjà pris')) {
-      cy.log('Registration failed: ' + response.body);
-      throw new Error('Registration failed: ' + response.body);
+    /* Known registration failure strings. We don't substring-match "error"
+     * because xdebug deprecation warnings render with class="xdebug-error"
+     * and unrelated env-level noise would otherwise bail the test. */
+    const body = response.body || '';
+    const knownFailures = [
+      'Ce nom de personnage est déjà pris',
+      'Ce courriel est déjà utilisé',
+      'Erreur lors de l\'inscription',
+      'mot de passe',  /* psw validation */
+    ];
+    const failure = knownFailures.find((msg) => body.includes(msg));
+    if (failure) {
+      cy.log('Registration failed: ' + failure);
+      throw new Error('Registration failed (' + failure + '): ' + body.slice(0, 500));
     }
     cy.log('Registration successful for: ' + name);
   });
@@ -281,20 +291,14 @@ Cypress.Commands.add('validateTutorialEnemy', (sessionId) => {
 });
 
 /**
- * Get player's current PA and MVT
+ * Get the player's current remaining PA and MVT, matching Player::getRemaining().
+ *
+ * Turn data lives in datas/private/players/<id>.turn.json (rewritten every time
+ * get_caracs() runs), not in a DB column. The `readPlayerTurn` Node task reads
+ * both turn.json and caracs.json and returns the same value getRemaining() would.
  */
 Cypress.Commands.add('getPlayerResources', (playerId) => {
-  return cy.task('queryDatabase', {
-    query: `SELECT turn FROM players WHERE id = ?`,
-    params: [playerId]
-  }).then((rows) => {
-    if (rows.length === 0) {
-      throw new Error(`Player ${playerId} not found`);
-    }
-    const turn = JSON.parse(rows[0].turn);
-    return {
-      pa: turn.pa || 0,
-      mvt: turn.mvt || 0
-    };
+  return cy.task('readPlayerTurn', { playerId }).then((res) => {
+    return { pa: res.pa, mvt: res.mvt };
   });
 });
