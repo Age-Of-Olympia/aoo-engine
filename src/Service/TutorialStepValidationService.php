@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Tutorial\TutorialContextKeys;
+use App\Tutorial\TutorialOptions;
 use InvalidArgumentException;
 
 /**
@@ -10,28 +12,12 @@ use InvalidArgumentException;
  * Validates user input for tutorial step creation/editing.
  * Provides defense-in-depth security by validating all inputs
  * before they reach the database layer.
+ *
+ * Accepted option values are sourced from {@see TutorialOptions}, which is
+ * also consumed by the admin editor dropdowns — single source of truth.
  */
 class TutorialStepValidationService
 {
-    private const VALID_STEP_TYPES = [
-        'info', 'welcome', 'dialog', 'movement', 'movement_limit',
-        'action', 'action_intro', 'ui_interaction', 'combat',
-        'combat_intro', 'exploration'
-    ];
-
-    private const VALID_VALIDATION_TYPES = [
-        'any_movement', 'movements_depleted', 'position',
-        'adjacent_to_position', 'action_used', 'ui_panel_opened',
-        'ui_element_hidden', 'ui_interaction', 'specific_count'
-    ];
-
-    private const VALID_INTERACTION_MODES = [
-        'blocking', 'semi-blocking', 'open'
-    ];
-
-    private const VALID_TOOLTIP_POSITIONS = [
-        'top', 'bottom', 'left', 'right', 'center', 'center-top', 'center-bottom'
-    ];
 
     /**
      * Validate step number
@@ -91,10 +77,11 @@ class TutorialStepValidationService
     public function validateStepType($value): string
     {
         $stepType = (string)$value;
+        $valid = TutorialOptions::stepTypeKeys();
 
-        if (!in_array($stepType, self::VALID_STEP_TYPES, true)) {
+        if (!in_array($stepType, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid step type. Must be one of: ' . implode(', ', self::VALID_STEP_TYPES)
+                'Invalid step type. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -184,10 +171,11 @@ class TutorialStepValidationService
         }
 
         $validationType = (string)$value;
+        $valid = TutorialOptions::validationTypeKeys();
 
-        if (!in_array($validationType, self::VALID_VALIDATION_TYPES, true)) {
+        if (!in_array($validationType, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid validation type. Must be one of: ' . implode(', ', self::VALID_VALIDATION_TYPES)
+                'Invalid validation type. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -204,10 +192,11 @@ class TutorialStepValidationService
     public function validateInteractionMode($value): string
     {
         $mode = (string)($value ?? 'blocking');
+        $valid = TutorialOptions::interactionModeKeys();
 
-        if (!in_array($mode, self::VALID_INTERACTION_MODES, true)) {
+        if (!in_array($mode, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid interaction mode. Must be one of: ' . implode(', ', self::VALID_INTERACTION_MODES)
+                'Invalid interaction mode. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -224,10 +213,11 @@ class TutorialStepValidationService
     public function validateTooltipPosition($value): string
     {
         $position = (string)($value ?? 'bottom');
+        $valid = TutorialOptions::tooltipPositionKeys();
 
-        if (!in_array($position, self::VALID_TOOLTIP_POSITIONS, true)) {
+        if (!in_array($position, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid tooltip position. Must be one of: ' . implode(', ', self::VALID_TOOLTIP_POSITIONS)
+                'Invalid tooltip position. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -372,22 +362,66 @@ class TutorialStepValidationService
     }
 
     /**
-     * Get list of valid step types
+     * Validate a context-change key.
      *
-     * @return array
+     * Only keys the runtime actually dispatches on are accepted — see
+     * {@see TutorialContextKeys::CONTEXT_CHANGES}. Empty values return null
+     * so the save service can skip blank rows without erroring.
+     *
+     * @param mixed $value User input
+     * @return string|null Validated key or null if empty
+     * @throws InvalidArgumentException If key is not whitelisted
      */
-    public function getValidStepTypes(): array
+    public function validateContextChangeKey($value): ?string
     {
-        return self::VALID_STEP_TYPES;
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $key = trim((string)$value);
+        if ($key === '') {
+            return null;
+        }
+
+        $valid = TutorialContextKeys::contextChangeKeys();
+        if (!in_array($key, $valid, true)) {
+            throw new InvalidArgumentException(
+                'Invalid context key. Must be one of: ' . implode(', ', $valid)
+            );
+        }
+
+        return $key;
     }
 
     /**
-     * Get list of valid validation types
+     * Validate a next-step-preparation key.
      *
-     * @return array
+     * Only keys the runtime actually dispatches on are accepted — see
+     * {@see TutorialContextKeys::NEXT_PREPARATIONS}. Empty values return null
+     * so the save service can skip blank rows without erroring.
+     *
+     * @param mixed $value User input
+     * @return string|null Validated key or null if empty
+     * @throws InvalidArgumentException If key is not whitelisted
      */
-    public function getValidValidationTypes(): array
+    public function validatePreparationKey($value): ?string
     {
-        return self::VALID_VALIDATION_TYPES;
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $key = trim((string)$value);
+        if ($key === '') {
+            return null;
+        }
+
+        $valid = TutorialContextKeys::nextPreparationKeys();
+        if (!in_array($key, $valid, true)) {
+            throw new InvalidArgumentException(
+                'Invalid preparation key. Must be one of: ' . implode(', ', $valid)
+            );
+        }
+
+        return $key;
     }
 }
