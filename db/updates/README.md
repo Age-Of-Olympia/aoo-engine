@@ -47,6 +47,7 @@ Starting from the previous `init_noupdates.sql` (a phpMyAdmin dump from
    depended on).
 2. The post-snapshot raw SQL files in this directory, in chronological
    order:
+   - `20251024_add_last_post_missive_views.sql` — missives `last_post`
    - `20251025_players_passives_tables.sql` — passive tables
    - `20251117_add_new_comp.sql` — new actions / outcomes (partial,
      known FK off-by-one issues — see git history for context)
