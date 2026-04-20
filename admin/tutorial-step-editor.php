@@ -12,6 +12,7 @@ use Classes\Db;
 use App\Service\CsrfProtectionService;
 use App\Tutorial\TutorialContextKeys;
 use App\Tutorial\TutorialOptions;
+use App\Tutorial\TutorialTemplates;
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
@@ -235,13 +236,11 @@ ob_start();
                                         <i class="fas fa-magic help-icon" title="Load pre-configured settings for common step patterns"></i>
                                     </label>
                                     <select class="form-control" id="template_selector">
-                                        <option value="">-- Choose a template --</option>
-                                        <option value="info_manual_advance">📝 Info Step (Manual Advance)</option>
-                                        <option value="movement_basic">🚶 Movement Step</option>
-                                        <option value="movement_position">🎯 Move to Position</option>
-                                        <option value="action_use">⚡ Use Action</option>
-                                        <option value="ui_open_panel">🖼️ Open UI Panel</option>
-                                        <option value="combat_basic">⚔️ Combat Step</option>
+                                        <?= renderSelectOptions(
+                                            TutorialTemplates::dropdownOptions(),
+                                            null,
+                                            '-- Choose a template --'
+                                        ) ?>
                                     </select>
                                     <small class="form-text text-muted">
                                         Load pre-configured settings for common step patterns
@@ -871,78 +870,79 @@ document.getElementById('btnManualAdvance').addEventListener('click', function()
     }
 });
 
-// Add/Remove Interaction
-document.getElementById('addInteraction').addEventListener('click', function() {
-    const list = document.getElementById('interactionsList');
+/* Add a row to one of the four sub-tables (interactions, highlights,
+ * context changes, next-step preparation). Single helper + one config per
+ * button so a schema tweak (new field, new datalist, new layout) happens in
+ * one place instead of four. */
+function appendSubRow(cfg) {
+    const list = document.getElementById(cfg.listId);
+    if (!list) return;
     const row = document.createElement('div');
-    row.className = 'input-group mb-2 interaction-row';
-    row.innerHTML = `
-        <input type="text" class="form-control font-monospace" name="interactions[]" placeholder=".selector or #id">
-        <div class="input-group-append">
-            <button type="button" class="btn btn-danger remove-row">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    list.appendChild(row);
-});
+    row.className = cfg.rowClass;
 
-// Add/Remove Highlight
-document.getElementById('addHighlight').addEventListener('click', function() {
-    const list = document.getElementById('highlightsList');
-    const row = document.createElement('div');
-    row.className = 'input-group mb-2 highlight-row';
-    row.innerHTML = `
-        <input type="text" class="form-control font-monospace" name="highlights[]" placeholder=".selector or #id">
-        <div class="input-group-append">
-            <button type="button" class="btn btn-danger remove-row">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    list.appendChild(row);
-});
+    const inputHtml = f =>
+        `<input type="text" class="form-control${f.monospace ? ' font-monospace' : ''}"`
+        + ` name="${f.name}"${f.list ? ` list="${f.list}"` : ''}`
+        + ` placeholder="${f.placeholder}">`;
 
-// Add/Remove Context Change
-document.getElementById('addContextChange').addEventListener('click', function() {
-    const list = document.getElementById('contextChangesList');
-    const row = document.createElement('div');
-    row.className = 'row mb-2 context-row';
-    row.innerHTML = `
-        <div class="col-md-5">
-            <input type="text" class="form-control" name="context_keys[]" list="tutorialContextKeys" placeholder="Key (e.g., set_mvt_limit)">
-        </div>
-        <div class="col-md-5">
-            <input type="text" class="form-control" name="context_values[]" placeholder="Value">
-        </div>
-        <div class="col-md-2">
-            <button type="button" class="btn btn-danger remove-row w-100">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    list.appendChild(row);
-});
+    if (cfg.layout === 'row-cols') {
+        row.innerHTML =
+            cfg.fields.map(f => `<div class="col-md-5">${inputHtml(f)}</div>`).join('') +
+            `<div class="col-md-2">
+                <button type="button" class="btn btn-danger remove-row w-100">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+    } else {
+        /* input-group layout: single input + append-slot delete button */
+        row.innerHTML =
+            inputHtml(cfg.fields[0]) +
+            `<div class="input-group-append">
+                <button type="button" class="btn btn-danger remove-row">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+    }
 
-// Add/Remove Next Prep
-document.getElementById('addNextPrep').addEventListener('click', function() {
-    const list = document.getElementById('nextPrepList');
-    const row = document.createElement('div');
-    row.className = 'row mb-2 prep-row';
-    row.innerHTML = `
-        <div class="col-md-5">
-            <input type="text" class="form-control" name="prep_keys[]" list="tutorialPrepKeys" placeholder="Key (e.g., restore_mvt)">
-        </div>
-        <div class="col-md-5">
-            <input type="text" class="form-control" name="prep_values[]" placeholder="Value">
-        </div>
-        <div class="col-md-2">
-            <button type="button" class="btn btn-danger remove-row w-100">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
     list.appendChild(row);
+}
+
+const SUB_ROW_CONFIGS = {
+    addInteraction: {
+        listId: 'interactionsList',
+        rowClass: 'input-group mb-2 interaction-row',
+        layout: 'input-group',
+        fields: [{ name: 'interactions[]', placeholder: '.selector or #id', monospace: true }],
+    },
+    addHighlight: {
+        listId: 'highlightsList',
+        rowClass: 'input-group mb-2 highlight-row',
+        layout: 'input-group',
+        fields: [{ name: 'highlights[]', placeholder: '.selector or #id', monospace: true }],
+    },
+    addContextChange: {
+        listId: 'contextChangesList',
+        rowClass: 'row mb-2 context-row',
+        layout: 'row-cols',
+        fields: [
+            { name: 'context_keys[]', list: 'tutorialContextKeys', placeholder: 'Key (e.g., set_mvt_limit)' },
+            { name: 'context_values[]', placeholder: 'Value' },
+        ],
+    },
+    addNextPrep: {
+        listId: 'nextPrepList',
+        rowClass: 'row mb-2 prep-row',
+        layout: 'row-cols',
+        fields: [
+            { name: 'prep_keys[]', list: 'tutorialPrepKeys', placeholder: 'Key (e.g., restore_mvt)' },
+            { name: 'prep_values[]', placeholder: 'Value' },
+        ],
+    },
+};
+
+Object.entries(SUB_ROW_CONFIGS).forEach(([btnId, cfg]) => {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.addEventListener('click', () => appendSubRow(cfg));
 });
 
 // Remove row (using event delegation)
@@ -956,11 +956,14 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// =========================================
-// ENHANCED FEATURES - Phase 1 & 2
-// =========================================
+/* =========================================
+ * ENHANCED FEATURES - Phase 1 & 2
+ * ========================================= */
 
-// Template System
+/* Template System — bootstrapped from App\Tutorial\TutorialTemplates so the
+ * editor dropdown and the handler below are driven by the same PHP array. */
+const TUTORIAL_TEMPLATES = <?= json_encode(TutorialTemplates::ALL, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
 document.getElementById('template_selector').addEventListener('change', function() {
     const templateId = this.value;
     if (!templateId) return;
