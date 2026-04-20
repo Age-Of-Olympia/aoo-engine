@@ -12,6 +12,7 @@ use Classes\Db;
 use App\Service\CsrfProtectionService;
 use App\Tutorial\TutorialContextKeys;
 use App\Tutorial\TutorialOptions;
+use App\Tutorial\TutorialTemplates;
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
@@ -235,13 +236,11 @@ ob_start();
                                         <i class="fas fa-magic help-icon" title="Load pre-configured settings for common step patterns"></i>
                                     </label>
                                     <select class="form-control" id="template_selector">
-                                        <option value="">-- Choose a template --</option>
-                                        <option value="info_manual_advance">📝 Info Step (Manual Advance)</option>
-                                        <option value="movement_basic">🚶 Movement Step</option>
-                                        <option value="movement_position">🎯 Move to Position</option>
-                                        <option value="action_use">⚡ Use Action</option>
-                                        <option value="ui_open_panel">🖼️ Open UI Panel</option>
-                                        <option value="combat_basic">⚔️ Combat Step</option>
+                                        <?= renderSelectOptions(
+                                            TutorialTemplates::dropdownOptions(),
+                                            null,
+                                            '-- Choose a template --'
+                                        ) ?>
                                     </select>
                                     <small class="form-text text-muted">
                                         Load pre-configured settings for common step patterns
@@ -956,11 +955,14 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// =========================================
-// ENHANCED FEATURES - Phase 1 & 2
-// =========================================
+/* =========================================
+ * ENHANCED FEATURES - Phase 1 & 2
+ * ========================================= */
 
-// Template System
+/* Template System — bootstrapped from App\Tutorial\TutorialTemplates so the
+ * editor dropdown and the handler below are driven by the same PHP array. */
+const TUTORIAL_TEMPLATES = <?= json_encode(TutorialTemplates::ALL, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
 document.getElementById('template_selector').addEventListener('change', function() {
     const templateId = this.value;
     if (!templateId) return;
