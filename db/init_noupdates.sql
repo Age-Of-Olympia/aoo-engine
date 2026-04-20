@@ -4812,12 +4812,12 @@ CREATE TABLE `players_forum_missives` (
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `players_forum_missives` DISABLE KEYS */;
-INSERT INTO `players_forum_missives` VALUES (1,1724908803,1);
-INSERT INTO `players_forum_missives` VALUES (2,1724908803,1);
-INSERT INTO `players_forum_missives` VALUES (3,1724908803,1);
-INSERT INTO `players_forum_missives` VALUES (4,1724908803,0);
-INSERT INTO `players_forum_missives` VALUES (5,1724908803,0);
-INSERT INTO `players_forum_missives` VALUES (6,1724908803,1);
+INSERT INTO `players_forum_missives` (`player_id`,`name`,`viewed`,`last_post`) VALUES (1,1724908803,1,0);
+INSERT INTO `players_forum_missives` (`player_id`,`name`,`viewed`,`last_post`) VALUES (2,1724908803,1,0);
+INSERT INTO `players_forum_missives` (`player_id`,`name`,`viewed`,`last_post`) VALUES (3,1724908803,1,0);
+INSERT INTO `players_forum_missives` (`player_id`,`name`,`viewed`,`last_post`) VALUES (4,1724908803,0,0);
+INSERT INTO `players_forum_missives` (`player_id`,`name`,`viewed`,`last_post`) VALUES (5,1724908803,0,0);
+INSERT INTO `players_forum_missives` (`player_id`,`name`,`viewed`,`last_post`) VALUES (6,1724908803,1,0);
 /*!40000 ALTER TABLE `players_forum_missives` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
