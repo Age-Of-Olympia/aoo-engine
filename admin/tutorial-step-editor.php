@@ -10,6 +10,7 @@ require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
 use App\Service\CsrfProtectionService;
+use App\Tutorial\TutorialOptions;
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
@@ -215,18 +216,11 @@ ob_start();
                                         <i class="fas fa-question-circle help-icon" title="The type determines which validation and UI options are relevant"></i>
                                     </label>
                                     <select class="form-control" id="step_type" name="step_type" required>
-                                        <option value="">-- Select Type --</option>
-                                        <option value="info" <?= $isEdit && $step['step_type'] === 'info' ? 'selected' : '' ?>>Info</option>
-                                        <option value="welcome" <?= $isEdit && $step['step_type'] === 'welcome' ? 'selected' : '' ?>>Welcome</option>
-                                        <option value="dialog" <?= $isEdit && $step['step_type'] === 'dialog' ? 'selected' : '' ?>>Dialog</option>
-                                        <option value="movement" <?= $isEdit && $step['step_type'] === 'movement' ? 'selected' : '' ?>>Movement</option>
-                                        <option value="movement_limit" <?= $isEdit && $step['step_type'] === 'movement_limit' ? 'selected' : '' ?>>Movement Limit</option>
-                                        <option value="action" <?= $isEdit && $step['step_type'] === 'action' ? 'selected' : '' ?>>Action</option>
-                                        <option value="action_intro" <?= $isEdit && $step['step_type'] === 'action_intro' ? 'selected' : '' ?>>Action Intro</option>
-                                        <option value="ui_interaction" <?= $isEdit && $step['step_type'] === 'ui_interaction' ? 'selected' : '' ?>>UI Interaction</option>
-                                        <option value="combat" <?= $isEdit && $step['step_type'] === 'combat' ? 'selected' : '' ?>>Combat</option>
-                                        <option value="combat_intro" <?= $isEdit && $step['step_type'] === 'combat_intro' ? 'selected' : '' ?>>Combat Intro</option>
-                                        <option value="exploration" <?= $isEdit && $step['step_type'] === 'exploration' ? 'selected' : '' ?>>Exploration</option>
+                                        <?= renderSelectOptions(
+                                            TutorialOptions::STEP_TYPES,
+                                            $isEdit ? (string)($step['step_type'] ?? '') : null,
+                                            '-- Select Type --'
+                                        ) ?>
                                     </select>
                                     <small class="form-text text-muted">
                                         Use <strong>ui_interaction</strong> for info steps with "Suivant" button
@@ -326,22 +320,20 @@ ob_start();
                         <div class="form-group">
                             <label for="tooltip_position">Tooltip Position</label>
                             <select class="form-control" id="tooltip_position" name="tooltip_position">
-                                <option value="top" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'top' ? 'selected' : '' ?>>Top</option>
-                                <option value="bottom" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'bottom' ? 'selected' : 'selected' ?>>Bottom</option>
-                                <option value="left" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'left' ? 'selected' : '' ?>>Left</option>
-                                <option value="right" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'right' ? 'selected' : '' ?>>Right</option>
-                                <option value="center" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center' ? 'selected' : '' ?>>Center (Middle)</option>
-                                <option value="center-top" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center-top' ? 'selected' : '' ?>>Center (Top)</option>
-                                <option value="center-bottom" <?= $isEdit && $stepUi && $stepUi['tooltip_position'] === 'center-bottom' ? 'selected' : '' ?>>Center (Bottom)</option>
+                                <?= renderSelectOptions(
+                                    TutorialOptions::TOOLTIP_POSITIONS,
+                                    (string)($stepUi['tooltip_position'] ?? 'bottom')
+                                ) ?>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label for="interaction_mode">Interaction Mode</label>
                             <select class="form-control" id="interaction_mode" name="interaction_mode">
-                                <option value="blocking" <?= $isEdit && $stepUi && $stepUi['interaction_mode'] === 'blocking' ? 'selected' : 'selected' ?>>Blocking (full overlay)</option>
-                                <option value="semi-blocking" <?= $isEdit && $stepUi && $stepUi['interaction_mode'] === 'semi-blocking' ? 'selected' : '' ?>>Semi-blocking (allow specific elements)</option>
-                                <option value="open" <?= $isEdit && $stepUi && $stepUi['interaction_mode'] === 'open' ? 'selected' : '' ?>>Open (no overlay)</option>
+                                <?= renderSelectOptions(
+                                    TutorialOptions::INTERACTION_MODES,
+                                    (string)($stepUi['interaction_mode'] ?? 'blocking')
+                                ) ?>
                             </select>
                             <small class="form-text text-muted">Blocking = only "Next" button works. Semi-blocking = some elements clickable. Open = everything clickable.</small>
                         </div>
@@ -408,15 +400,11 @@ ob_start();
                             <div class="form-group">
                                 <label for="validation_type">Validation Type</label>
                                 <select class="form-control" id="validation_type" name="validation_type">
-                                    <option value="">-- Select Type --</option>
-                                    <option value="any_movement" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'any_movement' ? 'selected' : '' ?>>Any Movement</option>
-                                    <option value="movements_depleted" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'movements_depleted' ? 'selected' : '' ?>>Movements Depleted</option>
-                                    <option value="position" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'position' ? 'selected' : '' ?>>Position (exact X, Y)</option>
-                                    <option value="adjacent_to_position" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'adjacent_to_position' ? 'selected' : '' ?>>Adjacent to Position</option>
-                                    <option value="action_used" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'action_used' ? 'selected' : '' ?>>Action Used</option>
-                                    <option value="ui_panel_opened" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'ui_panel_opened' ? 'selected' : '' ?>>UI Panel Opened</option>
-                                    <option value="ui_element_hidden" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'ui_element_hidden' ? 'selected' : '' ?>>UI Element Hidden</option>
-                                    <option value="ui_interaction" <?= $isEdit && $stepValidation && $stepValidation['validation_type'] === 'ui_interaction' ? 'selected' : '' ?>>UI Interaction (element clicked)</option>
+                                    <?= renderSelectOptions(
+                                        TutorialOptions::VALIDATION_TYPES,
+                                        $stepValidation['validation_type'] ?? null,
+                                        '-- Select Type --'
+                                    ) ?>
                                 </select>
                             </div>
 

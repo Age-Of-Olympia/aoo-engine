@@ -192,3 +192,32 @@ function selected(bool $condition): string
 {
     return $condition ? 'selected' : '';
 }
+
+/**
+ * Render <option> tags from a [value => label] map.
+ *
+ * Pass $placeholder to prepend a disabled "-- Choose --" style option with
+ * an empty value. $current is matched against keys (strict string compare).
+ *
+ * @param array<string,string> $options [value => label]
+ * @param string|null $current Currently selected value (null = none)
+ * @param string|null $placeholder Optional placeholder label (null = omit)
+ */
+function renderSelectOptions(array $options, ?string $current = null, ?string $placeholder = null): string
+{
+    $html = '';
+    if ($placeholder !== null) {
+        $html .= '<option value="">' . e($placeholder) . '</option>';
+    }
+    foreach ($options as $value => $label) {
+        $value = (string)$value;
+        $isSelected = $current !== null && $current === $value;
+        $html .= sprintf(
+            '<option value="%s"%s>%s</option>',
+            e($value),
+            $isSelected ? ' selected' : '',
+            e($label)
+        );
+    }
+    return $html;
+}

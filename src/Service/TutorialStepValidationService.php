@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Tutorial\TutorialOptions;
 use InvalidArgumentException;
 
 /**
@@ -10,28 +11,12 @@ use InvalidArgumentException;
  * Validates user input for tutorial step creation/editing.
  * Provides defense-in-depth security by validating all inputs
  * before they reach the database layer.
+ *
+ * Accepted option values are sourced from {@see TutorialOptions}, which is
+ * also consumed by the admin editor dropdowns — single source of truth.
  */
 class TutorialStepValidationService
 {
-    private const VALID_STEP_TYPES = [
-        'info', 'welcome', 'dialog', 'movement', 'movement_limit',
-        'action', 'action_intro', 'ui_interaction', 'combat',
-        'combat_intro', 'exploration'
-    ];
-
-    private const VALID_VALIDATION_TYPES = [
-        'any_movement', 'movements_depleted', 'position',
-        'adjacent_to_position', 'action_used', 'ui_panel_opened',
-        'ui_element_hidden', 'ui_interaction', 'specific_count'
-    ];
-
-    private const VALID_INTERACTION_MODES = [
-        'blocking', 'semi-blocking', 'open'
-    ];
-
-    private const VALID_TOOLTIP_POSITIONS = [
-        'top', 'bottom', 'left', 'right', 'center', 'center-top', 'center-bottom'
-    ];
 
     /**
      * Validate step number
@@ -91,10 +76,11 @@ class TutorialStepValidationService
     public function validateStepType($value): string
     {
         $stepType = (string)$value;
+        $valid = TutorialOptions::stepTypeKeys();
 
-        if (!in_array($stepType, self::VALID_STEP_TYPES, true)) {
+        if (!in_array($stepType, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid step type. Must be one of: ' . implode(', ', self::VALID_STEP_TYPES)
+                'Invalid step type. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -184,10 +170,11 @@ class TutorialStepValidationService
         }
 
         $validationType = (string)$value;
+        $valid = TutorialOptions::validationTypeKeys();
 
-        if (!in_array($validationType, self::VALID_VALIDATION_TYPES, true)) {
+        if (!in_array($validationType, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid validation type. Must be one of: ' . implode(', ', self::VALID_VALIDATION_TYPES)
+                'Invalid validation type. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -204,10 +191,11 @@ class TutorialStepValidationService
     public function validateInteractionMode($value): string
     {
         $mode = (string)($value ?? 'blocking');
+        $valid = TutorialOptions::interactionModeKeys();
 
-        if (!in_array($mode, self::VALID_INTERACTION_MODES, true)) {
+        if (!in_array($mode, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid interaction mode. Must be one of: ' . implode(', ', self::VALID_INTERACTION_MODES)
+                'Invalid interaction mode. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -224,10 +212,11 @@ class TutorialStepValidationService
     public function validateTooltipPosition($value): string
     {
         $position = (string)($value ?? 'bottom');
+        $valid = TutorialOptions::tooltipPositionKeys();
 
-        if (!in_array($position, self::VALID_TOOLTIP_POSITIONS, true)) {
+        if (!in_array($position, $valid, true)) {
             throw new InvalidArgumentException(
-                'Invalid tooltip position. Must be one of: ' . implode(', ', self::VALID_TOOLTIP_POSITIONS)
+                'Invalid tooltip position. Must be one of: ' . implode(', ', $valid)
             );
         }
 
@@ -369,25 +358,5 @@ class TutorialStepValidationService
     public function validateCheckbox($value): bool
     {
         return !empty($value);
-    }
-
-    /**
-     * Get list of valid step types
-     *
-     * @return array
-     */
-    public function getValidStepTypes(): array
-    {
-        return self::VALID_STEP_TYPES;
-    }
-
-    /**
-     * Get list of valid validation types
-     *
-     * @return array
-     */
-    public function getValidValidationTypes(): array
-    {
-        return self::VALID_VALIDATION_TYPES;
     }
 }
