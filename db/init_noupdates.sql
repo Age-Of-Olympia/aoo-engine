@@ -4804,6 +4804,7 @@ CREATE TABLE `players_forum_missives` (
   `player_id` int(11) NOT NULL,
   `name` bigint(20) NOT NULL,
   `viewed` int(1) NOT NULL DEFAULT 0,
+  `last_post` bigint(20) NOT NULL DEFAULT 0,
   KEY `player_id` (`player_id`),
   CONSTRAINT `players_forum_missives_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
