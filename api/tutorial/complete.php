@@ -39,8 +39,8 @@ try {
     $db = new Db();
     $sessionManager = new TutorialSessionManager($db);
 
-    // Get session details
-    $session = $sessionManager->getSession($sessionId);
+    // Get session details (loadSession is the public API; getSession was a rename that broke this endpoint)
+    $session = $sessionManager->loadSession($sessionId);
     if (!$session || $session['player_id'] != $playerId) {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'Tutorial session not found']);
@@ -58,9 +58,11 @@ try {
     // Get main player
     $mainPlayer = PlayerFactory::legacy($playerId);
 
-    // Mark tutorial as completed
-    $sessionManager->markCompleted($sessionId);
-    error_log("[Complete] Player {$playerId} manually completed tutorial via 'Compléter' button");
+    // Mark tutorial as completed (idempotent; advance.php already did this when the
+    // final step advanced, but we re-assert to keep this endpoint self-contained).
+    $finalXp = (int) ($session['xp_earned'] ?? 0);
+    $sessionManager->completeSession($sessionId, $finalXp);
+    error_log("[Complete] Player {$playerId} completed tutorial via complete.php (xp_earned={$finalXp})");
 
     // Award full completion rewards ONLY on first time (not a replay).
     // Also makes the endpoint idempotent: a second POST with the same

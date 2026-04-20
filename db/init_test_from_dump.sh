@@ -121,7 +121,7 @@ UPDATE actions SET icon = 'ra-archery-target' WHERE name = 'entrainement';
 
 -- Fix tutorial step text to use {max_mvt} placeholder for race-adaptive movement count
 UPDATE tutorial_steps SET
-    text = '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. Chaque déplacement en consomme 1.'
+    text = '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. <strong>À partir de maintenant, chaque déplacement consommera 1 mouvement.</strong>'
 WHERE step_id = 'movement_limit_warning';
 
 UPDATE tutorial_steps SET
