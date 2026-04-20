@@ -410,6 +410,30 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 0 AND c.y = 1
         ");
 
+        // Decorative trees + rocks in interior corners (not on any movement path)
+        foreach ([
+            ['arbre2', -2, 2],
+            ['arbre2',  2, 2],
+            ['pierre1', -2, -2],
+            ['pierre1',  2, -2],
+        ] as [$wallName, $x, $y]) {
+            $this->addSql(
+                "INSERT IGNORE INTO map_walls (name, coords_id, damages)
+                 SELECT ?, c.id, 0 FROM coords c
+                 WHERE c.plan='tutorial' AND c.z=0 AND c.x=? AND c.y=?",
+                [$wallName, $x, $y]
+            );
+        }
+
+        // Grass carpet on every interior walkable tile (|x|<=3 AND |y|<=3, no wall on it).
+        // `eryn_dolen` is the closest to a plain grass texture in img/tiles/.
+        $this->addSql("
+            INSERT IGNORE INTO map_tiles (name, coords_id, foreground)
+            SELECT 'eryn_dolen', c.id, 0
+            FROM coords c
+            WHERE c.plan='tutorial' AND c.z=0 AND ABS(c.x)<=3 AND ABS(c.y)<=3
+        ");
+
         // Add Gaïa NPC (tutorial guide) at (1,0)
         // She will be copied to each tutorial instance when TutorialMapInstance creates the map
         $this->addSql("
@@ -427,8 +451,8 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 '' as psw,
                 '' as mail,
                 '' as plain_mail,
-                'img/avatars/dieu/1.png' as avatar,
-                'img/portraits/dieu/1.jpeg' as portrait,
+                'img/avatars/ame/dieu.webp' as avatar,
+                'img/portraits/ame/1.jpeg' as portrait,
                 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.' as text
             FROM coords c
             WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 1 AND c.y = 0
@@ -526,7 +550,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             ('1.0.0', 'close_card', 'movement_intro', 4.0, 'ui_interaction', 'Fermer la fiche', 'Vous pouvez <strong>fermer la fiche</strong> en cliquant sur le bouton X, sur une case vide, ou ailleurs sur le damier.', 5, 1),
             ('1.0.0', 'movement_intro', 'first_move', 5.0, 'info', 'Se déplacer', 'Regardez les <strong>cases</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer si elles sont vides.', 5, 1),
             ('1.0.0', 'first_move', 'movement_limit_warning', 6.0, 'movement', 'Premier pas', 'Cliquez sur une <strong>case mise en valeur</strong> pour vous déplacer !', 10, 1),
-            ('1.0.0', 'movement_limit_warning', 'show_characteristics', 7.0, 'info', 'Mouvements limités !', '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. Chaque déplacement en consomme 1.', 5, 1),
+            ('1.0.0', 'movement_limit_warning', 'show_characteristics', 7.0, 'info', 'Mouvements limités !', '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. <strong>À partir de maintenant, chaque déplacement consommera 1 mouvement.</strong>', 5, 1),
             ('1.0.0', 'show_characteristics', 'deplete_movements', 8.0, 'ui_interaction', 'Vos caractéristiques', 'Cliquez sur <strong>\"Caractéristiques\"</strong> pour voir vos stats, dont vos mouvements restants.', 5, 1),
             ('1.0.0', 'deplete_movements', 'movements_depleted_info', 9.0, 'movement', 'Épuisez vos mouvements', 'Maintenant, <strong>déplacez-vous jusqu''à épuiser vos {max_mvt} mouvements</strong>. Regardez le compteur diminuer !', 15, 1),
             ('1.0.0', 'movements_depleted_info', 'actions_intro', 10.0, 'info', 'Plus de mouvements !', 'Vous n''avez plus de mouvements ! En jeu réel, ils se régénèrent à chaque tour (toutes les 18h). Pour le tutoriel, on vous les restaure.', 5, 1),
@@ -572,7 +596,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             SELECT id, '.card-actions', 'right', 'blocking', 300, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'actions_panel_info' UNION ALL
             SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 0, 1, 1, 0, 0 FROM tutorial_steps WHERE step_id = 'close_card_for_tree' UNION ALL
             SELECT id, '.case[data-coords=\"0,1\"]', 'center-bottom', 'semi-blocking', 0, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
-            SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
+            SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 0, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
             SELECT id, '.resource-status', 'left', 'blocking', 300, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'tree_info' UNION ALL
             SELECT id, '.action[data-action=\"fouiller\"]', 'right', 'semi-blocking', 300, 1, 1, 0, 0 FROM tutorial_steps WHERE step_id = 'use_fouiller' UNION ALL
             SELECT id, '#action-counter', 'right', 'blocking', 700, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'action_consumed' UNION ALL

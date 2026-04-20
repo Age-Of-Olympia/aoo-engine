@@ -34,7 +34,7 @@ try {
         SELECT id, '.card-actions', 'right', 'blocking', 300, 1, 0 FROM tutorial_steps WHERE step_id = 'actions_panel_info' UNION ALL
         SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 0, 1, 1 FROM tutorial_steps WHERE step_id = 'close_card_for_tree' UNION ALL
         SELECT id, '.case[data-coords=\"0,1\"]', 'center-bottom', 'semi-blocking', 0, 1, 0 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
-        SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 1, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
+        SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 0, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
         SELECT id, '.resource-status', 'left', 'blocking', 300, 1, 0 FROM tutorial_steps WHERE step_id = 'tree_info' UNION ALL
         SELECT id, '.action[data-action=\"fouiller\"]', 'right', 'semi-blocking', 300, 1, 1 FROM tutorial_steps WHERE step_id = 'use_fouiller' UNION ALL
         SELECT id, '#action-counter', 'right', 'blocking', 700, 1, 0 FROM tutorial_steps WHERE step_id = 'action_consumed' UNION ALL

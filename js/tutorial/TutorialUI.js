@@ -945,24 +945,28 @@ class TutorialUI {
 
         console.log('[TutorialUI] Setting up actions panel observer');
 
-        this.panelObserver = new MutationObserver((mutations) => {
-            // Check if #ajax-data contains any card content (actions, case-infos, or ui-card)
+        /* Note: we deliberately do NOT use "any children in #ajax-data" as a
+         * trigger. When a step like close_card_for_tree completes, #ui-card is
+         * hidden via display:none but its DOM stays in #ajax-data. A subsequent
+         * step with ui_panel_opened on "actions" would see those stale children
+         * and auto-validate without any user action (observed bug: observe_tree
+         * getting skipped after close_card_for_tree). The tutorial step must
+         * actually open a fresh card to validate. */
+        const isActionsPanelOpen = () => {
             const hasActions = $('#ajax-data .action, #ajax-data button.action').length > 0;
             const hasCaseInfos = $('#ajax-data .case-infos').length > 0;
-            const hasUiCard = $('#ui-card').length > 0 && $('#ui-card').is(':visible');
-            const hasAnyContent = $('#ajax-data').children().length > 0;
+            const hasUiCardVisible = $('#ui-card').length > 0 && $('#ui-card').is(':visible');
+            return hasActions || hasCaseInfos || hasUiCardVisible;
+        };
 
-            if ((hasActions || hasCaseInfos || hasUiCard || hasAnyContent) && this.isActive) {
-                console.log('[TutorialUI] Actions panel opened, sending validation (hasActions:', hasActions, 'hasCaseInfos:', hasCaseInfos, 'hasUiCard:', hasUiCard, ')');
-
-                // Send validation
+        this.panelObserver = new MutationObserver(() => {
+            if (isActionsPanelOpen() && this.isActive) {
+                console.log('[TutorialUI] Actions panel opened, sending validation');
                 window.notifyTutorial('ui_interaction', {
                     panel: 'actions',
                     panel_visible: true,
                     timestamp: Date.now()
                 });
-
-                // Disconnect observer - we only need to detect this once
                 if (this.panelObserver) {
                     this.panelObserver.disconnect();
                     this.panelObserver = null;
@@ -970,18 +974,19 @@ class TutorialUI {
             }
         });
 
-        // Observe content changes in #ajax-data
         this.panelObserver.observe(ajaxData, {
             childList: true,
-            subtree: true
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
         });
 
-        // Also check immediately in case panel is already open
-        const hasActionsNow = $('#ajax-data .action, #ajax-data button.action').length > 0;
-        const hasCaseInfosNow = $('#ajax-data .case-infos').length > 0;
-        const hasUiCardNow = $('#ui-card').length > 0 && $('#ui-card').is(':visible');
-        const hasAnyContentNow = $('#ajax-data').children().length > 0;
-        if ((hasActionsNow || hasCaseInfosNow || hasUiCardNow || hasAnyContentNow) && this.isActive) {
+        /* Also check immediately in case the panel is ALREADY open when this
+         * step started (e.g. click_yourself following actions_panel_info,
+         * where the actions panel is legitimately pre-open). We require one
+         * of the strict signals (actions/case-infos/visible ui-card), not
+         * merely "#ajax-data has children". */
+        if (isActionsPanelOpen() && this.isActive) {
             console.log('[TutorialUI] Actions panel already visible on setup');
             window.notifyTutorial('ui_interaction', {
                 panel: 'actions',
@@ -1846,19 +1851,38 @@ class TutorialUI {
     }
 
     /**
-     * Complete tutorial and redirect to main game
+     * Complete tutorial and redirect to main game.
+     *
+     * Calls /api/tutorial/complete.php so the server-side completion work runs:
+     *   - award first-time completion reward (XP/PI)
+     *   - remove invisibleMode option
+     *   - move player from waiting_room to faction's respawnPlan
+     *   - add race actions
+     *
+     * Without this API call, tutorial_progress.completed gets set by advance.php
+     * but the player stays stuck on waiting_room with invisibleMode on, which
+     * contradicts the tutorial's "Bonne chance dans Olympia !" finale.
      */
-    completeTutorialAndRedirect() {
+    async completeTutorialAndRedirect() {
         const $modal = $('#tutorial-complete-modal');
+        const sessionId = this.currentSession;
+
+        try {
+            await this.apiCall('/api/tutorial/complete.php', { session_id: sessionId }, 'POST');
+            console.log('[TutorialUI] Server-side completion succeeded');
+        } catch (error) {
+            /* Don't block the redirect on a failure — log + continue so the
+             * user isn't trapped in the modal. The hard cypress assertion on
+             * leaving waiting_room will surface any regression. */
+            console.error('[TutorialUI] complete.php failed, redirecting anyway', error);
+        }
+
         $modal.fadeOut(400, () => {
             $modal.remove();
             this.hideTutorialOverlay();
-            // Clear tutorial state
             sessionStorage.removeItem('tutorial_active');
             sessionStorage.removeItem('tutorial_session_id');
-            // Set flag to auto-open character panel after reload
             sessionStorage.setItem('tutorial_just_completed', 'true');
-            // Reload to main game (without tutorial mode)
             window.location.href = 'index.php';
         });
     }
