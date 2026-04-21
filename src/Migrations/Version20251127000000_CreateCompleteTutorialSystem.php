@@ -369,37 +369,17 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             ) as ys
         ");
 
-        // Add walls around the perimeter (border walls to enclose the tutorial area)
-        // North wall (y = -4)
+        // Perimeter walls — single-statement ring seed; NOT EXISTS
+        // dedup avoids the corner double-insert.
         $this->addSql("
-            INSERT IGNORE INTO map_walls (name, coords_id, damages)
+            INSERT INTO map_walls (name, coords_id, damages)
             SELECT 'mur_pierre', c.id, 0
             FROM coords c
-            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.y = -4
-        ");
-
-        // South wall (y = 4)
-        $this->addSql("
-            INSERT IGNORE INTO map_walls (name, coords_id, damages)
-            SELECT 'mur_pierre', c.id, 0
-            FROM coords c
-            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.y = 4
-        ");
-
-        // West wall (x = -4)
-        $this->addSql("
-            INSERT IGNORE INTO map_walls (name, coords_id, damages)
-            SELECT 'mur_pierre', c.id, 0
-            FROM coords c
-            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = -4
-        ");
-
-        // East wall (x = 4)
-        $this->addSql("
-            INSERT IGNORE INTO map_walls (name, coords_id, damages)
-            SELECT 'mur_pierre', c.id, 0
-            FROM coords c
-            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 4
+            WHERE c.plan = 'tutorial' AND c.z = 0
+              AND (ABS(c.x) = 4 OR ABS(c.y) = 4)
+              AND NOT EXISTS (
+                  SELECT 1 FROM map_walls mw WHERE mw.coords_id = c.id
+              )
         ");
 
         // Add a gatherable tree at (0,1) for resource gathering tutorial
