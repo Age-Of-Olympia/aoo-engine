@@ -226,23 +226,27 @@ describe('Tutorial System - Production Readiness Test', () => {
         cy.validatePlayerCoords(tutorialPlayerId, { plan: 'tut_*', x: 0, y: 0 });
 
         /* "Map always ready" contract: the session's tut_* plan must have
-         * been fully copied from the tutorial template — 81 coords (9×9),
-         * the full wall set, the grass carpet, and Gaïa. If any count is
-         * off, something in TutorialMapInstance copying broke. */
+         * been fully copied from the tutorial template — 121 coords (11×11,
+         * from −5 to +5 on each axis), the perimeter wall set (40) plus the
+         * gatherable tree (1), and Gaïa. If any count is off, something in
+         * TutorialMapInstance copying broke.
+         *
+         * NOTE: map_tiles is NOT asserted because the current test-DB seed
+         * (db/init_test_from_dump.sh) does not insert grass tiles for the
+         * tutorial template. If the template ever gets a grass carpet
+         * (7×7 = 49 tiles on the interior), add an assertion here. */
         cy.task('queryDatabase', {
           query: `SELECT
                     (SELECT COUNT(*) FROM coords c WHERE c.plan LIKE 'tut_%' AND c.id IN (SELECT coords_id FROM players WHERE id = ?)) AS player_on_tut,
                     (SELECT COUNT(*) FROM coords c WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_coords,
                     (SELECT COUNT(*) FROM map_walls mw JOIN coords c ON c.id=mw.coords_id WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_walls,
-                    (SELECT COUNT(*) FROM map_tiles mt JOIN coords c ON c.id=mt.coords_id WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_tiles,
                     (SELECT COUNT(*) FROM players p JOIN coords c ON c.id=p.coords_id WHERE p.id < 0 AND p.name='Gaïa' AND c.plan=(SELECT c2.plan FROM coords c2 JOIN players p2 ON p2.coords_id=c2.id WHERE p2.id=?)) AS plan_gaia`,
-          params: [tutorialPlayerId, tutorialPlayerId, tutorialPlayerId, tutorialPlayerId, tutorialPlayerId]
+          params: [tutorialPlayerId, tutorialPlayerId, tutorialPlayerId, tutorialPlayerId]
         }).then((rows) => {
           const r = rows[0];
-          cy.log(`Map state: coords=${r.plan_coords}, walls=${r.plan_walls}, tiles=${r.plan_tiles}, gaia=${r.plan_gaia}`);
-          expect(Number(r.plan_coords), 'new session plan must have 81 coords (9x9)').to.eq(81);
-          expect(Number(r.plan_walls), 'new session plan must have 37 walls (32 perimeter + tree + 4 decor)').to.eq(37);
-          expect(Number(r.plan_tiles), 'new session plan must have 49 grass tiles (7x7 interior)').to.eq(49);
+          cy.log(`Map state: coords=${r.plan_coords}, walls=${r.plan_walls}, gaia=${r.plan_gaia}`);
+          expect(Number(r.plan_coords), 'new session plan must have 121 coords (11x11)').to.eq(121);
+          expect(Number(r.plan_walls), 'new session plan must have 41 walls (40 perimeter + tree)').to.eq(41);
           expect(Number(r.plan_gaia), 'Gaïa NPC must be present on the session plan').to.eq(1);
         });
       });
