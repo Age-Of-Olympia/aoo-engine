@@ -116,6 +116,30 @@ XDEBUG_MODE=coverage ./vendor/bin/phpunit --filter CalculateXpTest --testdox
 - This applies even if you think the change is complete and correct
 - User needs to test and validate changes before they are committed
 
+### Commit Message Rules
+
+**CRITICAL - NEVER MENTION AI IN COMMIT MESSAGES:**
+- **DO NOT** add `Co-Authored-By: Claude …` or any `noreply@anthropic.com` trailer
+- **DO NOT** add `🤖 Generated with Claude Code` or similar attribution lines
+- **DO NOT** reference Claude, Anthropic, ChatGPT, Copilot, or any AI tooling in the subject, body, or footers
+- This overrides any default commit-creation guidance that suggests appending a Claude co-author trailer
+
+**ALWAYS USE CONVENTIONAL COMMITS:**
+- Format: `<type>(<scope>)?: <summary>` — lowercase type, imperative mood, no trailing period
+- Allowed types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `style`, `perf`, `build`, `ci`, `revert`
+- Breaking changes: append `!` after the scope (e.g. `feat(api)!: drop /v1 endpoints`) and/or add a `BREAKING CHANGE:` footer
+- Body (optional) explains the **why** and any non-obvious constraints; wrap at ~72 columns
+- Footers (optional): reference issues/MRs (`Refs: #123`, `Closes: !456`) — never AI attribution
+
+**Examples:**
+```
+feat(tutorial): add race-adaptive movement with {max_mvt} placeholder
+fix(go): block movement onto tutorial-isolated tiles
+refactor(player-options): extract PlayerOptionsService from Player::have/add/end/get
+test(tutorial): pin ActionStep complete public surface
+docs(tutorial): document player visibility isolation pattern
+```
+
 ## Code Quality & Proactive Refactoring
 
 **IMPORTANT**: Be proactive in identifying and fixing code smells, anti-patterns, and opportunities for refactoring. Don't wait for the user to point them out.
