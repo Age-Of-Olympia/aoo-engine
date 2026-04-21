@@ -7,6 +7,7 @@
  */
 
 use App\Factory\PlayerFactory;
+use App\Tutorial\TutorialCatalogService;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialHelper;
@@ -49,11 +50,40 @@ if (!TutorialFeatureFlag::isEnabledForPlayer($playerId)) {
 $input = json_decode(file_get_contents('php://input'), true);
 $mode = $input['mode'] ?? 'first_time'; // first_time, replay, practice
 $version = $input['version'] ?? '1.0.0';
+// Optional race override — null means "use the real player's race" (default).
+$raceOverride = isset($input['race']) && $input['race'] !== '' ? (string) $input['race'] : null;
 
 // Validate mode
 if (!in_array($mode, ['first_time', 'replay', 'practice'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Invalid mode']);
+    exit;
+}
+
+// Validate race override up front so we fail with 400 rather than leaking
+// TutorialPlayerFactory's InvalidArgumentException as a 500.
+if ($raceOverride !== null && !in_array(strtolower($raceOverride), RACES_EXT, true)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error'   => "Invalid race '{$raceOverride}'",
+        'valid'   => array_values(RACES_EXT),
+    ]);
+    exit;
+}
+
+// Validate catalog entry (existence + active). Player-facing start never
+// launches an unknown or disabled scenario — only admin/tutorial-launcher.php
+// can bypass this.
+$catalog = (new TutorialCatalogService())->getByVersion($version);
+if (!$catalog) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'error' => "Unknown tutorial version '{$version}'"]);
+    exit;
+}
+if (!(int) ($catalog['is_active'] ?? 0)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Tutorial not available']);
     exit;
 }
 
@@ -69,8 +99,8 @@ try {
     // Create tutorial manager
     $manager = new TutorialManager($player, $mode);
 
-    // Start tutorial
-    $result = $manager->startTutorial($version);
+    // Start tutorial (race override is null by default → uses real player's race)
+    $result = $manager->startTutorial($version, $raceOverride);
 
     if ($result['success']) {
         // Store tutorial session in PHP session

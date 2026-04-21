@@ -66,7 +66,6 @@ try {
 } catch (\Exception $e) {
     // Unexpected errors - log technical details, show generic message
     error_log("[TutorialStepSave] Unexpected error: " . $e->getMessage());
-    error_log($e->getTraceAsString());
 
     setFlash('danger', 'An unexpected error occurred while saving. Please try again or contact support if the problem persists.');
 

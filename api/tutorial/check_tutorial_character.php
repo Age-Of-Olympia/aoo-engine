@@ -19,7 +19,6 @@ try {
     // IMPORTANT: Use getActivePlayerId() to get tutorial player when in tutorial mode
     $playerId = TutorialHelper::getActivePlayerId();
 
-    error_log("[check_tutorial_character] Active player ID: " . ($playerId ?? 'NULL'));
 
     if (!$playerId) {
         echo json_encode(['is_tutorial_character' => false, 'debug' => 'No player ID in session']);
@@ -47,7 +46,6 @@ try {
         [$playerId]
     );
 
-    error_log("[check_tutorial_character] Query result: " . json_encode($result));
 
     if ($result) {
         echo json_encode([

@@ -66,13 +66,11 @@ try {
                 error_log("[Skip Tutorial] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
             }
         }
-        error_log("[Skip Tutorial] Player {$playerId} initialized with {$addedCount} new actions for race {$player->data->race}");
     }
 
     // Remove invisibleMode
     $player->end_option('invisibleMode');
 
-    error_log("[Skip Tutorial] Player {$playerId} skipped tutorial, invisibleMode removed");
 
     // Move player from waiting_room to faction's respawn plan
     $player->getCoords();
@@ -94,7 +92,6 @@ try {
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
         $db->exe($sql, array($coordsId, $playerId));
 
-        error_log("[Skip Tutorial] Player {$playerId} moved from waiting_room to {$respawnPlan}");
     }
 
     // Grant skip rewards ONLY on first time (not a replay).
@@ -107,9 +104,7 @@ try {
     if (!$hasCompletedBefore) {
         $skipReward = TUTORIAL_SKIP_REWARD;
         $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
-        error_log("[Skip Tutorial] Player {$playerId} received skip reward (first time): {$skipReward['xp']} XP/PI");
     } else {
-        error_log("[Skip Tutorial] Player {$playerId} is replaying tutorial - no skip reward granted");
     }
 
     // If redirect parameter is set, redirect to index instead of returning JSON
@@ -125,7 +120,6 @@ try {
 
 } catch (Exception $e) {
     error_log("[Skip Tutorial] Error: " . $e->getMessage());
-    error_log("[Skip Tutorial] Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'success' => false,
