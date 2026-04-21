@@ -82,6 +82,27 @@ final class PlayerFactory
     }
 
     /**
+     * STI-narrowed id lookup: returns `?RealPlayer` only.
+     *
+     * Parallels `entityByName()` for the id flavour. Querying the
+     * `RealPlayer` repository scopes the lookup via STI discriminator
+     * to `player_type='real'`, so an id belonging to a TutorialPlayer
+     * or NonPlayerCharacter returns null instead of hydrating the
+     * wrong subclass.
+     *
+     * Use when the caller accepts a caller-supplied id that must
+     * unambiguously refer to a real game player (password reset,
+     * admin search-by-id, etc.). `entity()` stays available for
+     * genuinely polymorphic read paths.
+     */
+    public static function realPlayerById(int $playerId): ?\App\Entity\RealPlayer
+    {
+        return EntityManagerFactory::getEntityManager()
+            ->getRepository(\App\Entity\RealPlayer::class)
+            ->find($playerId);
+    }
+
+    /**
      * Modern Doctrine entity looked up by name (player_type='real'
      * only), or null if no such row exists.
      *
