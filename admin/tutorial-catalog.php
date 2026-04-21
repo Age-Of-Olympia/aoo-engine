@@ -180,6 +180,7 @@ ob_start();
                                         <button type="button" class="btn btn-launch btn-sm btn-launch-tutorial"
                                                 data-version="<?= htmlspecialchars($tut['version']) ?>"
                                                 data-name="<?= htmlspecialchars($tut['name']) ?>"
+                                                data-csrf-token="<?= htmlspecialchars($csrf->generateToken()) ?>"
                                                 title="Lancer ce tutoriel">
                                             Lancer
                                         </button>
@@ -344,6 +345,7 @@ document.querySelectorAll('.btn-launch-tutorial').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var version = this.getAttribute('data-version');
         var name = this.getAttribute('data-name');
+        var csrfToken = this.getAttribute('data-csrf-token');
 
         if (!confirm('Lancer le tutoriel "' + name + '" (v' + version + ') ?\n\nVous serez redirigé vers le jeu.')) {
             return;
@@ -352,7 +354,15 @@ document.querySelectorAll('.btn-launch-tutorial').forEach(function(btn) {
         this.disabled = true;
         this.textContent = '...';
 
-        fetch('/admin/tutorial-launcher.php?version=' + encodeURIComponent(version))
+        var body = new URLSearchParams();
+        body.append('version', version);
+        body.append('csrf_token', csrfToken);
+
+        fetch('/admin/tutorial-launcher.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body
+        })
             .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data.success) {
