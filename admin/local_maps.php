@@ -1,7 +1,9 @@
 <?php
 // admin/local_maps.php
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/helpers.php';
 use Classes\Db;
+use App\Service\CsrfProtectionService;
 use App\Service\ViewService;
 use App\Service\PlanJsonValidator;
 
@@ -11,12 +13,24 @@ if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['genera
 }
 
 $database = new Db();
+$csrf = new CsrfProtectionService();
 $viewService = new ViewService($database, 0, 0, 0, 0, $selectedPlan ?? 'olympia');
 
 // Get all available plans (local maps)
 $allPlans = $viewService->getAllPlans('all');
-$selectedPlan = $_POST['selected_plan'] ?? null;
-$selectedZLevel = $_POST['selected_z_level'] ?? null;
+$selectedPlan   = optionalString('selected_plan');
+$selectedZLevel = optionalString('selected_z_level');
+
+$isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
+    && (isset($_POST['cleanup_local']) || isset($_POST['generate_local']));
+if ($isStateChangingPost) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+    } catch (RuntimeException $e) {
+        setFlash('danger', $e->getMessage());
+        redirectTo('local_maps.php');
+    }
+}
 
 usort($allPlans, function($a, $b) {
     $nameA = str_replace('_s2', '', $a->id);
@@ -118,6 +132,7 @@ ob_start();
         <div class="card-body">
             <h5 class="card-title">Nettoyer les anciennes cartes</h5>
             <form method="post" class="d-flex align-items-center gap-3">
+                <?= $csrf->renderTokenField() ?>
                 <button type="submit" name="cleanup_local" class="btn btn-warning btn-sm">
                     <i class="fas fa-broom"></i> Nettoyer
                 </button>
@@ -131,15 +146,14 @@ ob_start();
             <h5 class="card-title">Générer une carte locale</h5>
             
             <form method="post" id="planForm">
+                <?= $csrf->renderTokenField() ?>
                 <div class="form-group">
                     <label for="planSelect">Choisir un plan :</label>
                     <select class="form-control" id="planSelect" name="selected_plan" onchange="this.form.submit()">
                         <option value="">-- Sélectionner un plan --</option>
-                        <?php foreach ($allPlans as $plan):
-                            $seasonBadge = $plan->isS2 ? ' <span class="badge bg-success">S2</span>' : ' <span class="badge bg-secondary">S1</span>';
-                        ?>
-                            <option value="<?= $plan->id ?>" <?= ($selectedPlan === $plan->id) ? 'selected' : '' ?>>
-                                <?= $plan->name ?> (<?= $plan->id ?>)
+                        <?php foreach ($allPlans as $plan): ?>
+                            <option value="<?= e($plan->id) ?>" <?= selected($selectedPlan === $plan->id) ?>>
+                                <?= e($plan->name) ?> (<?= e($plan->id) ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -155,7 +169,7 @@ ob_start();
                     ?>
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <div>
-                            <strong>Plan sélectionné : <?= $plan->name ?> (<?= $plan->id ?>)<?= $seasonBadge ?></strong>
+                            <strong>Plan sélectionné : <?= e($plan->name) ?> (<?= e($plan->id) ?>)<?= $seasonBadge ?></strong>
                             <?php if ($plan->hasZLevels ?? false): ?>
                                 <small class="text-muted ms-2">— <?= count($plan->fullData->z_levels ?? []) ?> niveau(x) Z</small>
                             <?php endif; ?>
@@ -174,13 +188,13 @@ ob_start();
                             echo '<div class="mt-3">';
 
                             foreach ($validation['errors'] as $err) {
-                                echo '<div class="alert alert-danger py-1 my-1"><i class="fas fa-times-circle"></i> ' . $err . '</div>';
+                                echo '<div class="alert alert-danger py-1 my-1"><i class="fas fa-times-circle"></i> ' . e($err) . '</div>';
                             }
                             foreach ($validation['warnings'] as $warn) {
-                                echo '<div class="alert alert-warning py-1 my-1"><i class="fas fa-exclamation-triangle"></i> ' . $warn . '</div>';
+                                echo '<div class="alert alert-warning py-1 my-1"><i class="fas fa-exclamation-triangle"></i> ' . e($warn) . '</div>';
                             }
                             foreach ($validation['ok'] as $msg) {
-                                echo '<div class="alert alert-success py-1 my-1"><i class="fas fa-check-circle"></i> ' . $msg . '</div>';
+                                echo '<div class="alert alert-success py-1 my-1"><i class="fas fa-check-circle"></i> ' . e($msg) . '</div>';
                             }
 
                             echo '</div>';
@@ -191,14 +205,15 @@ ob_start();
                     <?php if ($plan->hasZLevels ?? false): ?>
                         
                         <form method="post" class="mt-3">
-                            <input type="hidden" name="selected_plan" value="<?=$selectedPlan?>">
+                            <?= $csrf->renderTokenField() ?>
+                            <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
                             <div class="form-group">
                                 <label for="zLevelSelect">Sélectionner un niveau Z :</label>
                                 <select class="form-control" id="zLevelSelect" name="selected_z_level" onchange="this.form.submit()">
-                                    <option value="" <?=empty($selectedZLevel) ? 'selected' : ''?>>-- Tous les niveaux --</option>
+                                    <option value="" <?= selected(empty($selectedZLevel)) ?>>-- Tous les niveaux --</option>
                                     <?php foreach ($plan->fullData->z_levels as $z => $levelData): ?>
-                                        <option value="<?=$z?>" <?=($selectedZLevel == $z) ? 'selected' : ''?>>
-                                            <?=$levelData->name?>
+                                        <option value="<?= e($z) ?>" <?= selected((string)$selectedZLevel === (string)$z) ?>>
+                                            <?= e($levelData->name) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

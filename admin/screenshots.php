@@ -2,41 +2,49 @@
 // admin/screenshots.php
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/helpers.php';
 
 use Classes\Db;
+use App\Service\CsrfProtectionService;
 use App\Service\ViewService;
 use App\Service\ScreenshotService;
 
 $database = new Db();
 $screenshotService = new ScreenshotService();
+$csrf = new CsrfProtectionService();
 
 $viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
 $allPlans = $viewService->getAllPlans('all');
 
-$selectedPlanId = $_POST['plan_id'] ?? '';
-$selectedX = $_POST['x'] ?? '0';
-$selectedY = $_POST['y'] ?? '0';
-$selectedZ = $_POST['z'] ?? '0';
-$selectedRange = $_POST['range'] ?? '5';
+$selectedPlanId = stringWithDefault('plan_id', '');
+$selectedX      = intWithDefault('x', 0);
+$selectedY      = intWithDefault('y', 0);
+$selectedZ      = intWithDefault('z', 0);
+$selectedRange  = intWithDefault('range', 5);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_screenshot'])) {
-    $coords = [
-        'x' => (int)$selectedX,
-        'y' => (int)$selectedY,
-        'z' => (int)$selectedZ,
-        'plan' => $selectedPlanId
-    ];
-    $range = (int)$selectedRange;
-    $timestamp = date('Y-m-d_H-i-s');
-    $filename = "screenshot_{$selectedPlanId}_{$selectedX}_{$selectedY}_{$selectedZ}_{$timestamp}";
-    $result = $screenshotService->generateScreenshot($coords, $range, $filename);
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
-    if ($result['success']) {
-        $success = "Capture d'écran générée avec succès : " . basename($result['filepath']);
-        $imageUrl = str_replace($_SERVER['DOCUMENT_ROOT'], '', $result['filepath']);
-        $showPreview = true;
-    } else {
-        $error = "Erreur lors de la génération : " . $result['error'];
+        $coords = [
+            'x'    => $selectedX,
+            'y'    => $selectedY,
+            'z'    => $selectedZ,
+            'plan' => $selectedPlanId,
+        ];
+        $timestamp = date('Y-m-d_H-i-s');
+        $filename  = "screenshot_{$selectedPlanId}_{$selectedX}_{$selectedY}_{$selectedZ}_{$timestamp}";
+        $result    = $screenshotService->generateScreenshot($coords, $selectedRange, $filename);
+
+        if ($result['success']) {
+            $success     = "Capture d'écran générée avec succès : " . basename($result['filepath']);
+            $imageUrl    = str_replace($_SERVER['DOCUMENT_ROOT'], '', $result['filepath']);
+            $showPreview = true;
+        } else {
+            $error = "Erreur lors de la génération : " . $result['error'];
+        }
+    } catch (RuntimeException $e) {
+        $error = $e->getMessage();
     }
 }
 
@@ -47,60 +55,59 @@ ob_start();
     <h1>Générateur de captures d'écran</h1>
     
     <?php if (isset($success)): ?>
-        <div class="alert alert-success"><?= $success ?></div>
+        <div class="alert alert-success"><?= e($success) ?></div>
     <?php endif; ?>
-    
+
     <?php if (isset($error)): ?>
-        <div class="alert alert-danger"><?= $error ?></div>
+        <div class="alert alert-danger"><?= e($error) ?></div>
     <?php endif; ?>
-    
+
     <div class="card">
         <div class="card-body">
             <form method="post">
+                <?= $csrf->renderTokenField() ?>
                 <div class="form-group">
                     <label for="plan_id">Plan :</label>
                     <select class="form-control" id="plan_id" name="plan_id" required>
-                    <?php foreach ($allPlans as $plan): 
-                        $isSelected = ($selectedPlanId == $plan->id) ? 'selected' : '';
-                    ?>
-                        <option value="<?= htmlspecialchars($plan->id) ?>" <?= $isSelected ?>>
-                            <?= htmlspecialchars($plan->name) ?> (<?= htmlspecialchars($plan->id) ?>)
+                    <?php foreach ($allPlans as $plan): ?>
+                        <option value="<?= e($plan->id) ?>" <?= selected($selectedPlanId === (string)$plan->id) ?>>
+                            <?= e($plan->name) ?> (<?= e($plan->id) ?>)
                         </option>
                     <?php endforeach; ?>
                     </select>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="x">X :</label>
-                            <input type="number" class="form-control" id="x" name="x" 
-                                value="<?= htmlspecialchars($selectedX) ?>" required>
+                            <input type="number" class="form-control" id="x" name="x"
+                                value="<?= e($selectedX) ?>" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="y">Y :</label>
-                            <input type="number" class="form-control" id="y" name="y" 
-                                value="<?= htmlspecialchars($selectedY) ?>" required>
+                            <input type="number" class="form-control" id="y" name="y"
+                                value="<?= e($selectedY) ?>" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="z">Z :</label>
-                            <input type="number" class="form-control" id="z" name="z" 
-                                value="<?= htmlspecialchars($selectedZ) ?>" required>
+                            <input type="number" class="form-control" id="z" name="z"
+                                value="<?= e($selectedZ) ?>" required>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="range">Portée :</label>
-                            <input type="number" class="form-control" id="range" name="range" 
-                                value="<?= htmlspecialchars($selectedRange) ?>" min="1" max="30" required>
+                            <input type="number" class="form-control" id="range" name="range"
+                                value="<?= e($selectedRange) ?>" min="1" max="30" required>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="mt-3">
                     <button type="submit" name="generate_screenshot" class="btn btn-primary">
                         <i class="fas fa-camera"></i> Générer la capture
@@ -117,10 +124,10 @@ ob_start();
         </div>
         <div class="card-body text-center">
             <div style="max-width: 100%; overflow: auto;">
-                <img src="<?= $imageUrl ?>" alt="Capture d'écran" class="img-fluid">
+                <img src="<?= e($imageUrl) ?>" alt="Capture d'écran" class="img-fluid">
             </div>
             <div class="mt-3">
-                <a href="<?= $imageUrl ?>" class="btn btn-primary" download>
+                <a href="<?= e($imageUrl) ?>" class="btn btn-primary" download>
                     <i class="fas fa-download"></i> Télécharger l'image
                 </a>
             </div>
