@@ -104,7 +104,6 @@ try {
     if (!$hasCompletedBefore) {
         $skipReward = TUTORIAL_SKIP_REWARD;
         $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
-    } else {
     }
 
     // If redirect parameter is set, redirect to index instead of returning JSON
