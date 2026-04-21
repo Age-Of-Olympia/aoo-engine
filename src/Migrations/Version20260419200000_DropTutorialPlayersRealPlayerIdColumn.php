@@ -8,46 +8,21 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Phase 4.5 — collapse the dual real↔tutorial link columns.
+ * Drop `tutorial_players.real_player_id`; the canonical link is now
+ * `players.real_player_id_ref`. Deploy after the reader/writer rewrites ship.
  *
- * Before this migration, the tutorial→real-player relationship was
- * stored twice:
- *   - `tutorial_players.real_player_id` (NOT NULL, indexed, FK-cascade
- *     to `players.id`) — the original link, predates the entity layer.
- *   - `players.real_player_id_ref` (nullable) — added in Phase 3.1 so
- *     the Doctrine `TutorialPlayer` entity could map it. Phase 4.4's
- *     factory hotfix started populating it alongside the old column.
- *
- * Every reader now resolves through `players.real_player_id_ref`
- * (Phase 4.5 reader rewrites); the factory stopped writing the old
- * column in the same MR. This migration drops the FK, index, and
- * column. Run AFTER the code-only changes deploy.
- *
- * Pre-migration audit (run on target DB, expect zero rows):
- *   SELECT COUNT(*)
- *   FROM tutorial_players tp
- *   LEFT JOIN players p ON p.id = tp.player_id
+ * Pre-migration audit (must return 0 on the target DB):
+ *   SELECT COUNT(*) FROM tutorial_players tp
+ *   JOIN players p ON p.id = tp.player_id
  *   WHERE p.player_type = 'tutorial'
- *     AND (p.real_player_id_ref IS NULL
- *          OR p.real_player_id_ref <> tp.real_player_id);
- *
- * If the audit returns rows, run this backfill first:
- *   UPDATE players p
- *   JOIN tutorial_players tp ON tp.player_id = p.id
- *   SET p.real_player_id_ref = tp.real_player_id
- *   WHERE p.player_type = 'tutorial' AND p.real_player_id_ref IS NULL;
- *
- * `down()` restores the column, rebuilds the values from
- * `players.real_player_id_ref`, and re-adds the index/FK. A rollback
- * is destructive only if any code running against the old schema
- * wrote to the old column AFTER this migration ran — which can't
- * happen given the writer is gone.
+ *     AND (p.real_player_id_ref IS NULL OR p.real_player_id_ref <> tp.real_player_id);
+ * If it isn't 0, backfill `real_player_id_ref` from the old column first.
  */
 final class Version20260419200000_DropTutorialPlayersRealPlayerIdColumn extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Phase 4.5 — drop tutorial_players.real_player_id (collapsed into players.real_player_id_ref)';
+        return 'Drop tutorial_players.real_player_id (canonical link is players.real_player_id_ref)';
     }
 
     public function isTransactional(): bool
