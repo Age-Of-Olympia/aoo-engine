@@ -6,16 +6,35 @@
  */
 
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/helpers.php';
 
+use App\Service\CsrfProtectionService;
 use App\Tutorial\TutorialCatalogService;
 
 $catalogService = new TutorialCatalogService();
+$csrf = new CsrfProtectionService();
 
 // Handle form submissions
 $message = '';
 $messageType = '';
 
+$csrfValid = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF gate: validate before touching the TutorialCatalogService.
+    // Sibling admin pages (tutorial.php, tutorial-settings.php,
+    // local_maps.php, world_map.php, screenshots.php) all enforce
+    // this; without it, an attacker's auto-submitting form can
+    // create/update/delete catalog entries in the admin's session.
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+        $csrfValid = true;
+    } catch (RuntimeException $e) {
+        $message = $e->getMessage();
+        $messageType = 'danger';
+    }
+}
+
+if ($csrfValid) {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'create' || $action === 'update') {
@@ -172,6 +191,7 @@ ob_start();
                                         </a>
                                         <?php if ($tut['version'] !== '1.0.0'): ?>
                                         <form method="POST" style="display:inline" onsubmit="return confirm('Supprimer ce tutoriel ?');">
+                                            <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="id" value="<?= $tut['id'] ?>">
                                             <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
@@ -201,6 +221,7 @@ ob_start();
             </div>
             <div class="card-body">
                 <form method="POST">
+                    <?= $csrf->renderTokenField() ?>
                     <input type="hidden" name="action" value="<?= $editTutorial ? 'update' : 'create' ?>">
                     <?php if ($editTutorial): ?>
                     <input type="hidden" name="id" value="<?= $editTutorial['id'] ?>">
