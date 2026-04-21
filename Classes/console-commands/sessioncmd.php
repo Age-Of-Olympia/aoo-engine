@@ -29,6 +29,9 @@ EOT);
 
 
                 $player = PlayerFactory::legacyByName($login);
+                if($player === null){
+                    return 'Player '. $login .' not found';
+                }
             }
             else{
 

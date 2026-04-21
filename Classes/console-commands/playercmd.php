@@ -482,6 +482,9 @@ function add_log($argumentValues, $player){
     else{
 
         $target = PlayerFactory::legacyByName($argumentValues[2]);
+        if($target === null){
+            return '<font color="red">error target '. $argumentValues[2] .' not found</font>';
+        }
     }
 
 

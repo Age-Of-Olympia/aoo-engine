@@ -44,6 +44,9 @@ class MissiveView
                     $desti = $playerService->GetPlayer($_POST['addDest']);
                 } else {
                     $desti = PlayerFactory::legacyByName($_POST['addDest']);
+                    if ($desti === null) {
+                        exit('<div id="error">Destinataire inconnu.</div>');
+                    }
                 }
                 $desti->get_data(false);
                 Forum::add_dest($player, $desti, $topJson, $destTbl);
