@@ -5,21 +5,9 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * TutorialPlayer - Temporary character for tutorial sessions.
- *
- * These are temporary characters that:
- * - Exist only during tutorial sessions
- * - Are isolated from real players (don't appear in lists)
- * - Have their own isolated map instance
- * - Get deleted when tutorial completes
- * - Transfer rewards (XP, PI) to real player on completion
- *
- * Discriminator: player_type = 'tutorial'.
- *
- * This Doctrine entity replaces the pre-Phase-4.4 service-class
- * `App\Tutorial\TutorialPlayer`, which was retired in !398. The name
- * is reused (and the `Entity` suffix dropped) now that the old class
- * is gone.
+ * Temporary character used for a single tutorial run. Isolated from real
+ * players, lives on its own map instance, and transfers its earned XP/PI
+ * to the real player on completion. Discriminator: `player_type = 'tutorial'`.
  */
 #[ORM\Entity]
 class TutorialPlayer extends PlayerEntity
@@ -30,9 +18,6 @@ class TutorialPlayer extends PlayerEntity
     #[ORM\Column(type: "integer", name: "real_player_id_ref", nullable: true)]
     protected ?int $realPlayerIdRef = null;
 
-    /**
-     * Tutorial players are temporary characters
-     */
     public function isRealPlayer(): bool
     {
         return false;
@@ -48,17 +33,11 @@ class TutorialPlayer extends PlayerEntity
         return false;
     }
 
-    /**
-     * Tutorial players never appear in public lists
-     */
     public function isPubliclyVisible(): bool
     {
         return false;
     }
 
-    /**
-     * Get the tutorial session ID for this character
-     */
     public function getTutorialSessionId(): ?string
     {
         return $this->tutorialSessionId;
@@ -70,9 +49,6 @@ class TutorialPlayer extends PlayerEntity
         return $this;
     }
 
-    /**
-     * Get the real player account this tutorial character belongs to
-     */
     public function getRealPlayerIdRef(): ?int
     {
         return $this->realPlayerIdRef;
@@ -84,26 +60,15 @@ class TutorialPlayer extends PlayerEntity
         return $this;
     }
 
-    /**
-     * Check if this tutorial character is temporary (always true)
-     */
     public function isTemporary(): bool
     {
         return true;
     }
 
     /**
-     * Transfer earned XP and PI from the tutorial session to the
-     * real player account.
-     *
-     * Signature matches `App\Tutorial\TutorialPlayer::transferRewardsToRealPlayer`
-     * so Phase 4.2 can swap this entity method in at
-     * `TutorialManager::completeTutorial` without changing the call
-     * shape. The tutorial player's own `xp` / `pi` columns are NOT
-     * used: progression is tracked in `TutorialContext::$tutorialXP`,
-     * not persisted to the tutorial player's row (those fields stay
-     * at 0 for the session's lifetime). The caller passes the earned
-     * deltas.
+     * Progression is tracked on `TutorialContext::$tutorialXP`, not on this row,
+     * so the caller passes the earned deltas explicitly instead of reading
+     * `$this->xp` / `$this->pi`.
      */
     public function transferRewardsToRealPlayer(
         \Doctrine\DBAL\Connection $conn,
@@ -119,28 +84,14 @@ class TutorialPlayer extends PlayerEntity
             SET xp = xp + ?, pi = pi + ?
             WHERE id = ? AND player_type = "real"
         ', [$xpEarned, $piEarned, $this->realPlayerIdRef]);
-
-        error_log(sprintf(
-            "Tutorial rewards transferred: Player %d received %d XP and %d PI from tutorial player %d",
-            $this->realPlayerIdRef,
-            $xpEarned,
-            $piEarned,
-            $this->id
-        ));
     }
 
-    /**
-     * Delete this tutorial character and all related data
-     *
-     * @param \Doctrine\DBAL\Connection $conn
-     */
     public function deleteWithRelatedData(\Doctrine\DBAL\Connection $conn): void
     {
         if (!$this->id) {
             return;
         }
 
-        // Delete all foreign key references
         $tables = [
             'players_logs' => ['player_id', 'target_id'],
             'players_actions' => ['player_id'],
@@ -162,12 +113,9 @@ class TutorialPlayer extends PlayerEntity
             }
         }
 
-        // Delete the player record
         $conn->executeStatement(
             'DELETE FROM players WHERE id = ? AND player_type = "tutorial"',
             [$this->id]
         );
-
-        error_log("[TutorialPlayer] Deleted tutorial player {$this->id} and related data");
     }
 }

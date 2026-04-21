@@ -9,31 +9,17 @@ use Classes\Player;
 use Classes\Db;
 
 /**
- * Tutorial Manager (Phase 0 - Skeleton)
- *
- * Main orchestrator for tutorial system that:
- * - Manages tutorial sessions
- * - Tracks progress in database
- * - Loads tutorial steps from database
- * - Coordinates with TutorialContext for state management
- * - Creates temporary tutorial characters for each session
+ * Main orchestrator for tutorial sessions, progress tracking, step loading,
+ * and temporary tutorial character lifecycle.
  */
 class TutorialManager
 {
     private TutorialContext $context;
     private string $sessionId;
     private Db $db;
-    /**
-     * Phase 4.3 — the tutorial player is now represented as a
-     * Doctrine entity. The App\Tutorial\TutorialPlayer service class
-     * is still used INSIDE TutorialResourceManager for creation-time
-     * coordination (map instance + enemy spawn), but TutorialManager
-     * only sees the entity.
-     */
     private ?TutorialPlayer $tutorialPlayer = null;
     private TutorialStepRepository $stepRepository;
 
-    // Phase 4: Service layer for separation of concerns
     private TutorialSessionManager $sessionManager;
     private TutorialProgressManager $progressManager;
     private TutorialResourceManager $resourceManager;
@@ -56,32 +42,27 @@ class TutorialManager
     }
 
     /**
-     * Start a new tutorial session
+     * Start a tutorial session.
      *
-     * Phase 4: Refactored to use service layer (60 lines → 35 lines, -42%)
-     *
-     * @param string $version Tutorial version to use
-     * @return array Session data
+     * @param string $version Catalog version (scenario identifier).
+     * @param string|null $raceOverride Run the tutorial as this race instead of the
+     *                                  real player's. Must be in RACES_EXT. Null
+     *                                  (default) keeps the real player's race.
      */
-    public function startTutorial(string $version = '1.0.0'): array
+    public function startTutorial(string $version = '1.0.0', ?string $raceOverride = null): array
     {
         $player = $this->context->getPlayer();
 
-        // Cleanup previous sessions
         $this->resourceManager->cleanupPrevious($player->id);
 
-        // Get first step
         $firstStepId = $this->stepRepository->getFirstStepId($version) ?? 'gaia_welcome';
         $totalSteps = $this->stepRepository->getTotalSteps($version);
 
-        // Get catalog entry for this version to determine the map template
-        $catalog = $this->db->exe(
-            "SELECT plan FROM tutorial_catalog WHERE version = ?",
-            [$version]
-        )->fetch_assoc();
-        $templatePlan = $catalog['plan'] ?? 'tutorial';
+        $catalog = (new TutorialCatalogService($this->db))->getByVersion($version);
+        $templatePlan = $catalog['plan']   ?? 'tutorial';
+        $spawnX       = (int) ($catalog['spawn_x'] ?? 0);
+        $spawnY       = (int) ($catalog['spawn_y'] ?? 0);
 
-        // Create session
         $session = $this->sessionManager->createSession(
             $player->id,
             $this->context->getMode(),
@@ -90,31 +71,32 @@ class TutorialManager
             $firstStepId
         );
 
-        // Update local session ID to match created session
         $this->sessionId = $session['session_id'];
 
-        // Create tutorial player and resources (Phase 4.3 — entity).
+        // Null $raceOverride falls through to TutorialPlayerFactory's own
+        // "read race from the real player" default — avoid resolving it here
+        // so we don't duplicate the lookup.
+        $race = $raceOverride ?? ($player->data->race ?? null);
+
         $this->tutorialPlayer = $this->resourceManager->createTutorialPlayerAsEntity(
             $player->id,
             $this->sessionId,
-            $player->data->race ?? null,
-            $templatePlan
+            $race,
+            $templatePlan,
+            $spawnX,
+            $spawnY
         );
 
-        // Update context to use tutorial player (for placeholder replacement).
-        // TutorialContext::setPlayer still takes a Classes\Player —
-        // hydrating one from the entity's id is a minor cost that
-        // preserves the existing downstream contract (step validators
-        // etc. use legacy Player).
+        // Downstream step validators still consume a Classes\Player, so we hydrate
+        // a legacy instance from the entity id and hand it to the context.
         $tutorialPlayerInstance = PlayerFactory::legacy((int) $this->tutorialPlayer->getId());
         $tutorialPlayerInstance->get_data();
         $this->context->setPlayer($tutorialPlayerInstance);
 
-        // Get first step data with prerequisites applied
         $stepData = $this->progressManager->getCurrentStepForClient(
             $firstStepId,
             $version,
-            true // apply prerequisites
+            true
         );
 
         return array_merge($session, [
@@ -125,19 +107,10 @@ class TutorialManager
     }
 
 
-    /**
-     * Resume existing tutorial session
-     *
-     * Phase 4: Refactored to use service layer (50 lines → 25 lines, -50%)
-     *
-     * @param string $sessionId
-     * @return array Session data
-     */
     public function resumeTutorial(string $sessionId): array
     {
         $this->sessionId = $sessionId;
 
-        // Load session
         $session = $this->sessionManager->loadSession($sessionId);
 
         if (!$session) {
@@ -147,28 +120,24 @@ class TutorialManager
             ];
         }
 
-        // Restore context state
         $this->context->restoreState($session['data']);
 
-        // Load tutorial player (Phase 4.3 — entity).
         $this->tutorialPlayer = $this->resourceManager->getTutorialPlayerAsEntity($sessionId);
 
-        // CRITICAL: Switch context to use tutorial player instead of main player
-        // This ensures movement checks, validation hints, etc. use tutorial player's data
+        // Movement checks and validation hints must run against the tutorial
+        // player, not the main player.
         if ($this->tutorialPlayer) {
             $tutorialPlayerObj = PlayerFactory::legacy((int) $this->tutorialPlayer->getId());
             $tutorialPlayerObj->get_data();
             $this->context->setPlayer($tutorialPlayerObj);
-            error_log("[TutorialManager] Switched context to tutorial player {$this->tutorialPlayer->getId()}");
         }
 
-        // Get current step data WITHOUT applying prerequisites
-        // Prerequisites should only be applied when ADVANCING TO a step, not when resuming
-        // Otherwise resources get restored on every validation check
+        // Prerequisites only apply on advance; re-applying here would reset
+        // resources on every resume / validation check.
         $stepData = $this->progressManager->getCurrentStepForClient(
             $session['current_step'],
             $session['version'],
-            false // DO NOT apply prerequisites on resume
+            false
         );
 
         return array_merge($session, [
@@ -178,9 +147,6 @@ class TutorialManager
         ]);
     }
 
-    /**
-     * Get tutorial player for this session (Phase 4.3 — entity).
-     */
     public function getTutorialPlayer(): ?TutorialPlayer
     {
         return $this->tutorialPlayer;
@@ -263,22 +229,14 @@ class TutorialManager
         }
 
         $stepData = $step->getData();
-
-        // Process dynamic placeholders in step text (e.g., {max_mvt})
         $stepData = $this->processPlaceholders($stepData);
-
-        // Calculate actual step position (1st, 2nd, 3rd...) for progression display
-        // This counts how many steps come before this one (ordered by step_number)
         $stepData['step_position'] = $this->calculateStepPosition($stepId, $version);
 
-        // Apply prerequisites ONLY when explicitly requested (e.g., on resume)
-        // NOT during normal rendering to avoid resetting resources on every render
+        // Prerequisites only apply on advance / resume entry, not on every render.
         if ($applyPrerequisites && isset($stepData['config']['prerequisites'])) {
             $this->context->ensurePrerequisites($stepData['config']['prerequisites']);
         }
 
-        // Generate dynamic validation hint (e.g., for movement steps showing remaining movements)
-        // This ensures tooltips show current state, not static text
         if ($step->requiresValidation() && method_exists($step, 'getValidationHint')) {
             $dynamicHint = $step->getValidationHint();
             if ($dynamicHint) {
@@ -291,40 +249,18 @@ class TutorialManager
         ]);
     }
 
-    /**
-     * Calculate the actual position of a step in the sequence (1-indexed)
-     *
-     * @param string $stepId
-     * @param string $version
-     * @return int Position in sequence (1 for first step, 2 for second, etc.)
-     */
     private function calculateStepPosition(string $stepId, string $version = '1.0.0'): int
     {
         return $this->stepRepository->calculateStepPosition($stepId, $version);
     }
 
-    /**
-     * Process dynamic placeholders in step data
-     *
-     * Replaces placeholders like {max_mvt} with actual values from the tutorial player.
-     * This allows step text to adapt to different races and player stats.
-     *
-     * @param array $stepData Step data from AbstractStep::getData()
-     * @return array Step data with placeholders replaced
-     */
     private function processPlaceholders(array $stepData): array
     {
-        // Get the tutorial player to access their race and stats
         $tutorialPlayerId = $this->context->getPlayer()->id;
         $tutorialPlayer = PlayerFactory::legacy($tutorialPlayerId);
-
-        // Create placeholder service
         $placeholderService = new TutorialPlaceholderService($tutorialPlayer);
 
-        // Process text fields that may contain placeholders
-        $textFields = ['title', 'text', 'validation_hint'];
-
-        foreach ($textFields as $field) {
+        foreach (['title', 'text', 'validation_hint'] as $field) {
             if (isset($stepData[$field]) && is_string($stepData[$field])) {
                 $stepData[$field] = $placeholderService->replacePlaceholders($stepData[$field]);
             }
@@ -333,14 +269,6 @@ class TutorialManager
         return $stepData;
     }
 
-    /**
-     * Get current step with full data for client
-     *
-     * @param int $stepNumber
-     * @param string $version
-     * @param bool $applyPrerequisites - Whether to apply prerequisites (true for resume, false for normal rendering)
-     * @return array|null
-     */
     public function getCurrentStepForClient(int $stepNumber, string $version = '1.0.0', bool $applyPrerequisites = false): ?array
     {
         $step = $this->getStep($stepNumber, $version);
@@ -350,18 +278,12 @@ class TutorialManager
         }
 
         $stepData = $step->getData();
-
-        // Process dynamic placeholders in step text (e.g., {max_mvt})
         $stepData = $this->processPlaceholders($stepData);
 
-        // Apply prerequisites ONLY when explicitly requested (e.g., on resume)
-        // NOT during normal rendering to avoid resetting resources on every render
         if ($applyPrerequisites && isset($stepData['config']['prerequisites'])) {
             $this->context->ensurePrerequisites($stepData['config']['prerequisites']);
         }
 
-        // Generate dynamic validation hint (e.g., for movement steps showing remaining movements)
-        // This ensures tooltips show current state, not static text
         if ($step->requiresValidation() && method_exists($step, 'getValidationHint')) {
             $dynamicHint = $step->getValidationHint();
             if ($dynamicHint) {
@@ -374,19 +296,8 @@ class TutorialManager
         ]);
     }
 
-    /**
-     * Advance to next step
-     *
-     * Phase 4: Refactored to use service layer (110 lines → 35 lines, -68%)
-     *
-     * @param array $validationData Data from client for validation
-     * @return array Result
-     */
     public function advanceStep(array $validationData = []): array
     {
-        error_log("[TutorialManager] advanceStep() called with validationData: " . json_encode($validationData));
-
-        // Load session
         $session = $this->sessionManager->loadSession($this->sessionId);
 
         if (!$session) {
@@ -396,7 +307,6 @@ class TutorialManager
             ];
         }
 
-        // Delegate to ProgressManager
         try {
             $result = $this->progressManager->advanceStep(
                 $this->sessionId,
@@ -405,11 +315,9 @@ class TutorialManager
                 $validationData
             );
 
-            // If tutorial completed, handle completion
             if ($result['completed'] ?? false) {
                 $completionResult = $this->completeTutorial();
 
-                // Include final step data for client-side config (e.g., redirect_delay)
                 if (isset($result['final_step_data'])) {
                     $completionResult['final_step_data'] = $result['final_step_data'];
                 }
@@ -426,19 +334,16 @@ class TutorialManager
                 'hint' => $e->getHint() ?? 'Veuillez compléter l\'étape correctement.'
             ];
         } catch (Exceptions\TutorialException $e) {
-            error_log("[TutorialManager] Error advancing step: " . $e->getMessage());
             return [
                 'success' => false,
                 'error' => $e->getMessage()
             ];
         } catch (\Exception $e) {
-            error_log("[TutorialManager] Exception: " . $e->getMessage());
             return [
                 'success' => false,
                 'error' => 'Internal error: ' . $e->getMessage()
             ];
         } catch (\Error $e) {
-            error_log("[TutorialManager] PHP Error: " . $e->getMessage());
             return [
                 'success' => false,
                 'error' => 'PHP error: ' . $e->getMessage()
@@ -447,35 +352,23 @@ class TutorialManager
     }
 
     /**
-     * Complete tutorial
-     *
-     * Phase 4: Refactored to use service layer (50 lines → 22 lines, -56%)
-     *
-     * Rewards (XP/PI) are only given on first completion.
-     * Replays show a message indicating no rewards.
+     * Rewards (XP/PI) are only given on first completion. Replays acknowledge
+     * success but award nothing.
      */
     private function completeTutorial(): array
     {
-        // Capture rewards from TutorialContext (source of truth for progression)
         $xpEarned = $this->context->getTutorialXP();
-
-        // PI is awarded 1:1 with XP
         $piEarned = $xpEarned;
 
-        // Check if this is a replay (player already completed tutorial before)
         $realPlayerId = $this->tutorialPlayer
             ? (int) $this->tutorialPlayer->getRealPlayerIdRef()
             : $this->context->getPlayer()->id;
         $isReplay = $this->sessionManager->hasCompletedBefore($realPlayerId);
 
-        // Only transfer rewards on first completion
         $actualXpAwarded = 0;
         $actualPiAwarded = 0;
 
         if (!$isReplay && $this->tutorialPlayer) {
-            // Phase 4.3 — entity is already in hand, call
-            // transferRewardsToRealPlayer directly. No re-hydration,
-            // no legacy fallback needed.
             $this->tutorialPlayer->transferRewardsToRealPlayer(
                 EntityManagerFactory::getEntityManager()->getConnection(),
                 $xpEarned,
@@ -484,34 +377,28 @@ class TutorialManager
             $actualXpAwarded = $xpEarned;
             $actualPiAwarded = $piEarned;
 
-            // Remove invisibleMode from real player now that they completed tutorial
             $realPlayer = PlayerFactory::legacy($realPlayerId);
             $realPlayer->end_option('invisibleMode');
 
-            // Initialize player with race actions
             try {
                 $realPlayer->get_data();
                 $raceJson = json()->decode('races', $realPlayer->data->race);
 
-                // Add all race-specific actions (keep tuto/attaquer for legacy compatibility)
                 if ($raceJson && !empty($raceJson->actions)) {
                     foreach($raceJson->actions as $actionName) {
                         $realPlayer->add_action($actionName);
                     }
-                    error_log("[Tutorial Complete] Player {$realPlayerId} initialized with " . count($raceJson->actions) . " actions for race {$realPlayer->data->race}");
                 }
             } catch (\Exception $e) {
-                // Log but don't fail tutorial completion if action initialization has issues
-                error_log("[Tutorial Complete] Warning: Failed to initialize race actions for player {$realPlayerId}: " . $e->getMessage());
+                // Race-action seeding is best-effort; tutorial completion must
+                // not block on it.
             }
         }
 
-        // Delete tutorial resources (Phase 4.3 — entity path).
         if ($this->tutorialPlayer) {
             $this->resourceManager->deleteTutorialPlayerAsEntity($this->tutorialPlayer, $this->sessionId);
         }
 
-        // Complete session in database
         $this->sessionManager->completeSession($this->sessionId, $xpEarned);
 
         // Build completion message based on whether rewards were given
@@ -532,92 +419,48 @@ class TutorialManager
         ];
     }
 
-    /**
-     * Check if player has completed tutorial
-     *
-     * Phase 4: Refactored to use service layer
-     *
-     * @param int $playerId
-     * @return bool
-     */
     public static function hasCompletedTutorial(int $playerId): bool
     {
         $sessionManager = new TutorialSessionManager();
         return $sessionManager->hasCompletedBefore($playerId);
     }
 
-    /**
-     * Get context
-     */
     public function getContext(): TutorialContext
     {
         return $this->context;
     }
 
-    /**
-     * Get session ID
-     */
     public function getSessionId(): string
     {
         return $this->sessionId;
     }
 
-
-    /**
-     * Jump to a specific step (for debugging/testing)
-     *
-     * @param string $sessionId Tutorial session ID
-     * @param int $targetStepNumber Step number to jump to
-     * @return bool Success
-     */
     public function jumpToStep(string $sessionId, int $targetStepNumber): bool
     {
-        // Load session to get version
         $session = $this->sessionManager->loadSession($sessionId);
 
         if (!$session) {
-            error_log("[TutorialManager] Tutorial session not found: $sessionId");
             return false;
         }
 
         $version = $session['version'] ?? '1.0.0';
 
-        // Convert step number to step ID using repository
         $stepData = $this->stepRepository->getStepByNumber((float)$targetStepNumber, $version);
 
         if (!$stepData) {
-            error_log("[TutorialManager] Step number $targetStepNumber not found for version $version");
             return false;
         }
 
-        $targetStepId = $stepData['step_id'];
-
         try {
-            // Delegate to ProgressManager which handles prerequisites and session updates
-            $success = $this->progressManager->jumpToStep($sessionId, $targetStepId, $version);
-
-            if ($success) {
-                error_log("[TutorialManager] Successfully jumped to step $targetStepNumber ($targetStepId) for session $sessionId");
-            }
-
-            return $success;
-
+            return $this->progressManager->jumpToStep($sessionId, $stepData['step_id'], $version);
         } catch (Exceptions\TutorialStepException $e) {
-            error_log("[TutorialManager] Failed to jump to step: " . $e->getMessage());
             return false;
         } catch (\Exception $e) {
-            error_log("[TutorialManager] Unexpected error jumping to step: " . $e->getMessage());
             return false;
         }
     }
 
-
-    /**
-     * Generate unique session ID (temporary, replaced by SessionManager UUID)
-     *
-     * Phase 4: This is only used for initialization. The actual session ID
-     * is generated by TutorialSessionManager and replaces this in startTutorial().
-     */
+    // Placeholder until startTutorial() overwrites it with the SessionManager-issued UUID.
     private function generateSessionId(): string
     {
         return sprintf(

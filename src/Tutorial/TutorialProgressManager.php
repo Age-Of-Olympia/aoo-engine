@@ -204,7 +204,6 @@ class TutorialProgressManager
                 $this->context->serializeState()
             );
 
-            error_log("[TutorialProgressManager] Jumped to step {$targetStepId} for session {$sessionId}");
 
             return true;
 
@@ -248,7 +247,6 @@ class TutorialProgressManager
         // Ensure prerequisites are met (if any)
         if ($prerequisites) {
             $this->context->ensurePrerequisites($prerequisites);
-            error_log("[TutorialProgressManager] Applied prerequisites for step {$step->getStepId()}: " . json_encode($prerequisites));
         }
 
         // Set consume_movements flag in session
@@ -258,10 +256,8 @@ class TutorialProgressManager
 
         if (isset($config['context_changes']['consume_movements'])) {
             $consumeMovements = $config['context_changes']['consume_movements'];
-            error_log("[TutorialProgressManager] Got consume_movements from context_changes: " . var_export($consumeMovements, true));
         } elseif (isset($prerequisites['consume_movements'])) {
             $consumeMovements = $prerequisites['consume_movements'];
-            error_log("[TutorialProgressManager] Got consume_movements from prerequisites: " . var_export($consumeMovements, true));
         }
 
         if ($consumeMovements !== null) {
@@ -271,11 +267,9 @@ class TutorialProgressManager
                 : (bool)$consumeMovements;
 
             $_SESSION['tutorial_consume_movements'] = $consumeBool;
-            error_log("[TutorialProgressManager] SET SESSION tutorial_consume_movements = " . ($consumeBool ? 'true' : 'false'));
         } else {
             // Default: tutorial does NOT consume movements (legacy behavior)
             $_SESSION['tutorial_consume_movements'] = false;
-            error_log("[TutorialProgressManager] consume_movements is NULL for step " . $step->getStepId() . ", defaulting to false");
         }
     }
 

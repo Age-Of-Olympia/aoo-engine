@@ -62,7 +62,6 @@ class DialogService
             if (json_last_error() === JSON_ERROR_NONE) {
                 return $dialogData;
             } else {
-                error_log("Dialog JSON decode error for {$dialogId}: " . json_last_error_msg());
             }
         }
 
@@ -101,7 +100,6 @@ class DialogService
 
         $decoded = json_decode($content);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log("Dialog JSON error in {$path}: " . json_last_error_msg());
             return null;
         }
 

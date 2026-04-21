@@ -75,7 +75,6 @@ class TutorialStepSaveService
         $isActive = $this->validator->validateCheckbox($data['is_active'] ?? false);
 
         if ($stepId !== null) {
-            // Update existing step
             $this->db->exe("
                 UPDATE tutorial_steps SET
                     version = ?, step_id = ?, next_step = ?, step_number = ?, step_type = ?,
@@ -86,7 +85,6 @@ class TutorialStepSaveService
                 $title, $text, $xpReward, $isActive ? 1 : 0, $stepId
             ]);
         } else {
-            // Insert new step
             $this->db->exe("
                 INSERT INTO tutorial_steps (version, step_id, next_step, step_number, step_type, title, text, xp_reward, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -95,7 +93,6 @@ class TutorialStepSaveService
                 $title, $text, $xpReward, $isActive ? 1 : 0
             ]);
 
-            // Get the new step ID
             $result = $this->db->exe("SELECT LAST_INSERT_ID() as id");
             $row = $result->fetch_assoc();
             $stepId = (int)$row['id'];
@@ -249,28 +246,22 @@ class TutorialStepSaveService
     {
         $this->db->exe("DELETE FROM tutorial_step_context_changes WHERE step_id = ?", [$stepId]);
 
-        // Auto-add checkbox values to context changes
         $autoContextChanges = [];
 
-        // Add unlimited_mvt if checked
         if (!empty($data['unlimited_mvt'])) {
             $autoContextChanges['unlimited_mvt'] = 'true';
         }
 
-        // Add unlimited_pa if checked
         if (!empty($data['unlimited_pa'])) {
             $autoContextChanges['unlimited_actions'] = 'true';
         }
 
-        // Add consume_movements if checked (or false if unlimited_mvt is checked)
         if (!empty($data['consume_movements'])) {
             $autoContextChanges['consume_movements'] = 'true';
         } elseif (!empty($data['unlimited_mvt'])) {
-            // If unlimited movements, explicitly disable consumption
             $autoContextChanges['consume_movements'] = 'false';
         }
 
-        // Save auto-added context changes first
         foreach ($autoContextChanges as $key => $value) {
             $this->db->exe(
                 "INSERT INTO tutorial_step_context_changes (step_id, context_key, context_value) VALUES (?, ?, ?)",
@@ -278,7 +269,6 @@ class TutorialStepSaveService
             );
         }
 
-        // Then save manual context changes
         if (!empty($data['context_keys']) && is_array($data['context_keys'])) {
             $keys = $data['context_keys'];
             $values = $data['context_values'] ?? [];
@@ -288,7 +278,6 @@ class TutorialStepSaveService
                 $value = $this->validator->validateText($values[$i] ?? '', 255);
 
                 if ($key !== null && !isset($autoContextChanges[$key])) {
-                    // Don't duplicate auto-added keys
                     $this->db->exe(
                         "INSERT INTO tutorial_step_context_changes (step_id, context_key, context_value) VALUES (?, ?, ?)",
                         [$stepId, $key, $value ?? '']

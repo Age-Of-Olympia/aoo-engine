@@ -569,7 +569,6 @@ class TutorialStepRepository
         $decoded = json_decode($json, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log("[TutorialStepRepository] JSON decode error for array: " . json_last_error_msg() . " | JSON: " . substr($json, 0, 100));
             return [];
         }
 
@@ -591,7 +590,6 @@ class TutorialStepRepository
         $decoded = json_decode($json, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log("[TutorialStepRepository] JSON decode error for object: " . json_last_error_msg() . " | JSON: " . substr($json, 0, 100));
             return [];
         }
 

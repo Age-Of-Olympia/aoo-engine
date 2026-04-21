@@ -58,7 +58,6 @@ class MovementStep extends AbstractStep
                 $requiredY = $this->config['validation_params']['y'] ?? null;
 
                 if ($requiredX === null || $requiredY === null) {
-                    error_log("[MovementStep] Position validation missing x or y parameters");
                     return false;
                 }
 
@@ -68,7 +67,6 @@ class MovementStep extends AbstractStep
                 // Use strict comparison for coordinates
                 $isAtPosition = ($currentX === $requiredX && $currentY === $requiredY);
 
-                error_log("[MovementStep] Position validation: player at ({$currentX},{$currentY}), required ({$requiredX},{$requiredY}), result: " . ($isAtPosition ? 'TRUE' : 'FALSE'));
 
                 return $isAtPosition;
 
@@ -81,7 +79,6 @@ class MovementStep extends AbstractStep
                 $targetY = $this->config['validation_params']['target_y'] ?? null;
 
                 if ($targetX === null || $targetY === null) {
-                    error_log("[MovementStep] Adjacent position validation missing target_x or target_y parameters");
                     return false;
                 }
 
@@ -90,7 +87,6 @@ class MovementStep extends AbstractStep
 
                 // Validate coordinates are numeric
                 if (!is_numeric($currentX) || !is_numeric($currentY) || !is_numeric($targetX) || !is_numeric($targetY)) {
-                    error_log("[MovementStep] Invalid coordinate types for adjacent validation");
                     return false;
                 }
 
@@ -99,7 +95,6 @@ class MovementStep extends AbstractStep
                 $deltaY = abs((int)$currentY - (int)$targetY);
                 $isAdjacent = ($deltaX <= 1 && $deltaY <= 1 && ($deltaX + $deltaY > 0));
 
-                error_log("[MovementStep] Adjacent validation: player at ({$currentX},{$currentY}), target ({$targetX},{$targetY}), deltaX={$deltaX}, deltaY={$deltaY}, result: " . ($isAdjacent ? 'TRUE' : 'FALSE'));
 
                 return $isAdjacent;
 
