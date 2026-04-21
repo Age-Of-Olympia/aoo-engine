@@ -59,10 +59,8 @@ class TutorialSessionManager
                 $firstStepId,
                 $mode,
                 $version,
-                json_encode([]) // Empty context data initially
+                json_encode([])
             ]);
-
-            error_log("[TutorialSessionManager] Created session {$sessionId} for player {$playerId} (mode: {$mode}, version: {$version})");
 
             return [
                 'session_id' => $sessionId,
@@ -189,8 +187,6 @@ class TutorialSessionManager
                 $sessionId
             ]);
 
-            error_log("[TutorialSessionManager] Updated session {$sessionId} progress to step {$newStepId} (XP: {$xpEarned})");
-
         } catch (\Exception $e) {
             throw new TutorialSessionException(
                 "Failed to update session progress for {$sessionId}",
@@ -218,8 +214,6 @@ class TutorialSessionManager
                     WHERE tutorial_session_id = ?';
 
             $this->db->exe($sql, [$finalXP, $sessionId]);
-
-            error_log("[TutorialSessionManager] Completed session {$sessionId} with {$finalXP} XP");
 
         } catch (\Exception $e) {
             throw new TutorialSessionException(
@@ -249,8 +243,6 @@ class TutorialSessionManager
                     WHERE tutorial_session_id = ?';
 
             $this->db->exe($sql, [$sessionId]);
-
-            error_log("[TutorialSessionManager] Cancelled session {$sessionId}");
 
         } catch (\Exception $e) {
             throw new TutorialSessionException(

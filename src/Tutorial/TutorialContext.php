@@ -5,13 +5,8 @@ namespace App\Tutorial;
 use Classes\Player;
 
 /**
- * Isolated game context for tutorial (Phase 0 - Skeleton)
- *
- * Provides isolated state management for tutorial mode to:
- * - Track tutorial-specific state (unlimited resources, etc.)
- * - Manage XP/PI progression during tutorial
- * - Store step-specific data
- * - Keep tutorial isolated from main game state
+ * Isolated state container for a tutorial run: tutorial-only XP/PI progression,
+ * step-local flags, and resource prerequisites — kept off the real player.
  */
 class TutorialContext
 {
@@ -232,15 +227,10 @@ class TutorialContext
     }
 
     /**
-     * Restore state from database
-     *
-     * Phase 4: Now accepts both string (JSON) and array formats for compatibility
-     *
-     * @param string|array $serializedState State data (JSON string or already-decoded array)
+     * @param string|array $serializedState JSON string or already-decoded array.
      */
     public function restoreState(string|array $serializedState): void
     {
-        // Handle both JSON string and already-decoded array
         if (is_string($serializedState)) {
             $data = json_decode($serializedState, true);
         } else {
@@ -271,86 +261,56 @@ class TutorialContext
 
         $autoRestore = $prerequisites['auto_restore'] ?? false;
 
-        // CRITICAL: Use TutorialHelper to load the correct player with validation
         $player = \App\Tutorial\TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: false);
 
-        // Check and restore movement points
         if (isset($prerequisites['mvt'])) {
             $required = (int) $prerequisites['mvt'];
 
-            // Special value -1 means "use race's max movement"
+            // Sentinel: -1 means "use this race's max movement".
             if ($required === -1) {
                 $required = $this->getPlayerMaxMovement($player);
-                error_log("[TutorialContext] Using race-specific max movement: {$required}");
             }
 
-            // Get actual movement from turn system
             $player->get_caracs();
             $current = $player->getRemaining('mvt');
 
-            // Get caller context for debugging
-            $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
-            $caller = isset($backtrace[1]) ? $backtrace[1]['function'] : 'unknown';
-
-            error_log("[TutorialContext] Prerequisites mvt check: required={$required}, current={$current}, auto_restore={$autoRestore}, caller={$caller}");
-
             if ($current < $required) {
                 if ($autoRestore) {
-                    // SET movement to exact amount (not add)
                     $this->setPlayerMovements($required);
-                    error_log("[TutorialContext] Restored movement: {$current} → {$required}");
                 } else {
-                    error_log("[TutorialContext] ERROR: Insufficient movement (need {$required}, have {$current})");
                     return false;
                 }
-            } else {
-                error_log("[TutorialContext] Movement OK: have {$current}, need {$required} - no restoration needed");
             }
         }
 
-        // Check and restore action points
         if (isset($prerequisites['actions'])) {
             $required = (int) $prerequisites['actions'];
 
-            // Read current PA from the turn system, just like the MVT path above.
-            // Using $player->data->a is wrong — there is no `a` column on the players
-            // table, so it always resolved to 0, and every call silently added a fresh
-            // +pa_required bonus on top of the player's existing caracs.a. That produced
-            // the "4/2" inflation visible in the UI after deplete_movements auto_restore.
+            // Read PA from the turn system — $player->data->a is not a column on
+            // players and resolves to 0, which silently inflates every subsequent
+            // +pa_required bonus.
             $player->get_caracs();
             $current = $player->getRemaining('a');
 
-            error_log("[TutorialContext] Prerequisites actions check: required={$required}, current={$current}, auto_restore=" . var_export($autoRestore, true));
-
             if ($current < $required) {
                 if ($autoRestore) {
-                    // Persist PA restoration to database using putBonus (same pattern as movement restoration)
-                    $bonusNeeded = $required - $current;
-                    $player->putBonus(['a' => $bonusNeeded]);
-                    error_log("[TutorialContext] Restored actions: {$current} → {$required} (bonus: {$bonusNeeded})");
+                    $player->putBonus(['a' => $required - $current]);
                 } else {
-                    error_log("[TutorialContext] ERROR: Insufficient actions (need {$required}, have {$current})");
                     return false;
                 }
-            } else {
-                error_log("[TutorialContext] Actions OK: have {$current}, need {$required} - no restoration needed");
             }
         }
 
-        // Mark entities to spawn (actual spawning handled by game logic)
         if (isset($prerequisites['ensure_enemy'])) {
             $this->setState('ensure_enemy', $prerequisites['ensure_enemy']);
-            error_log("[TutorialContext] Marking enemy to spawn: {$prerequisites['ensure_enemy']}");
         }
 
         if (isset($prerequisites['ensure_item'])) {
             $this->setState('ensure_item', $prerequisites['ensure_item']);
-            error_log("[TutorialContext] Marking item to spawn: {$prerequisites['ensure_item']}");
         }
 
         if (isset($prerequisites['ensure_npc'])) {
             $this->setState('ensure_npc', $prerequisites['ensure_npc']);
-            error_log("[TutorialContext] Marking NPC to ensure: {$prerequisites['ensure_npc']}");
         }
 
         return true;
@@ -371,47 +331,32 @@ class TutorialContext
 
         $player = $this->getPlayer();
 
-        // Restore movement points
         if (isset($preparation['restore_mvt'])) {
-            $amount = (int) $preparation['restore_mvt'];
-            $this->setPlayerMovements($amount);
-            error_log("[TutorialContext] Prepared movement for next step: {$amount}");
+            $this->setPlayerMovements((int) $preparation['restore_mvt']);
         }
 
-        // Restore action points
         if (isset($preparation['restore_actions'])) {
-            $amount = (int) $preparation['restore_actions'];
-
-            // Ensure player data is loaded
             if (!$player->data || $player->data === false) {
-                error_log("[TutorialContext] ERROR: Player data not loaded for player {$player->id}");
                 $player->get_data();
             }
 
-            $player->data->a = $amount;
-            error_log("[TutorialContext] Prepared actions for next step: {$amount}");
+            $player->data->a = (int) $preparation['restore_actions'];
         }
 
-        // Mark entities to spawn for next step
         if (isset($preparation['spawn_enemy'])) {
             $this->setState('spawn_enemy_next', $preparation['spawn_enemy']);
-            error_log("[TutorialContext] Will spawn enemy for next step: {$preparation['spawn_enemy']}");
         }
 
         if (isset($preparation['spawn_item'])) {
             $this->setState('spawn_item_next', $preparation['spawn_item']);
-            error_log("[TutorialContext] Will spawn item for next step: {$preparation['spawn_item']}");
         }
 
-        // Mark entities to remove
         if (isset($preparation['remove_enemy'])) {
             $this->setState('remove_enemy', $preparation['remove_enemy']);
-            error_log("[TutorialContext] Will remove enemy: {$preparation['remove_enemy']}");
         }
 
         if (isset($preparation['remove_item'])) {
             $this->setState('remove_item', $preparation['remove_item']);
-            error_log("[TutorialContext] Will remove item: {$preparation['remove_item']}");
         }
     }
 
@@ -420,13 +365,9 @@ class TutorialContext
      */
     public function getCurrentMovement(): int
     {
-        // Ensure player data is loaded
         if (!$this->player->data || $this->player->data === false) {
             $this->player->get_data();
-
-            // Return 0 if data still not loaded
             if (!$this->player->data || $this->player->data === false) {
-                error_log("[TutorialContext] CRITICAL: Failed to load player data in getCurrentMovement()");
                 return 0;
             }
         }
@@ -434,18 +375,11 @@ class TutorialContext
         return $this->player->data->mvt ?? 0;
     }
 
-    /**
-     * Get current action points
-     */
     public function getCurrentActions(): int
     {
-        // Ensure player data is loaded
         if (!$this->player->data || $this->player->data === false) {
             $this->player->get_data();
-
-            // Return 0 if data still not loaded
             if (!$this->player->data || $this->player->data === false) {
-                error_log("[TutorialContext] CRITICAL: Failed to load player data in getCurrentActions()");
                 return 0;
             }
         }
@@ -500,31 +434,26 @@ class TutorialContext
      */
     private function setPlayerMovements(int $targetAmount): void
     {
-        // Get the actual tutorial player instance (not context's cached player)
         $player = \App\Tutorial\TutorialHelper::loadActivePlayer(loadCaracs: true, throwOnFailure: true);
 
-        // Clear existing movement bonuses
         $this->clearMovementBonuses($player->id);
 
-        // Calculate bonus needed to reach target
         $player->get_caracs();
         $baseMovement = $player->caracs->mvt ?? 4;
         $bonusNeeded = $targetAmount - $baseMovement;
 
-        // Apply bonus if needed
         if ($bonusNeeded !== 0) {
             $player->putBonus(['mvt' => $bonusNeeded]);
         }
 
-        // Refresh caracs to regenerate JSON cache files
+        // Refresh caracs to regenerate JSON cache files.
         $player->get_caracs();
         $finalRemaining = $player->getRemaining('mvt');
 
-        // Verify result matches target
         if ($finalRemaining !== $targetAmount) {
-            $errorMsg = "Movement mismatch! Expected {$targetAmount}, got {$finalRemaining} (player {$player->id})";
-            error_log("[TutorialContext] ERROR: {$errorMsg}");
-            throw new \RuntimeException($errorMsg);
+            throw new \RuntimeException(
+                "Movement mismatch! Expected {$targetAmount}, got {$finalRemaining} (player {$player->id})"
+            );
         }
     }
 
@@ -540,23 +469,15 @@ class TutorialContext
     }
 
     /**
-     * Get player's maximum movement points from race base stats
-     *
-     * This allows tutorial steps to dynamically adapt to race-specific movement values.
-     * Different races have different base movements:
-     * - Nain: 4, Elfe: 5, Olympien: 5, Géant: 5, HS: 6
-     *
-     * @param \Classes\Player $player Player instance
-     * @return int Maximum movement points for this player's race
+     * Max movement points from the player's race JSON (Nain 4, Elfe/Olympien/Géant 5, HS 6).
+     * Falls back to Nain base if the race file can't be read.
      */
     private function getPlayerMaxMovement(\Classes\Player $player): int
     {
-        // Ensure player data is loaded
         if (!isset($player->data)) {
             $player->get_data();
         }
 
-        // Get race data from JSON
         $race = $player->data->race ?? 'nain';
         $raceJson = (new \Classes\Json())->decode('races', $race);
 
@@ -564,8 +485,6 @@ class TutorialContext
             return (int) $raceJson->mvt;
         }
 
-        // Fallback to default (Nain base movement)
-        error_log("[TutorialContext] WARNING: Could not find mvt for race '{$race}', using default 4");
         return 4;
     }
 }

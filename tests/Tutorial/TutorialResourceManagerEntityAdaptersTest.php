@@ -38,11 +38,15 @@ class TutorialResourceManagerEntityAdaptersTest extends TestCase
         );
 
         $params = $method->getParameters();
-        $this->assertCount(4, $params);
-        $this->assertSame('int',    $this->typeName($params[0]));
-        $this->assertSame('string', $this->typeName($params[1]));
-        $this->assertSame('?string', $this->typeName($params[2]));
-        $this->assertSame('string', $this->typeName($params[3]));
+        // Phase 4.6: +spawnX / +spawnY so the adapter can honor
+        // tutorial_catalog.spawn_x / spawn_y per scenario.
+        $this->assertCount(6, $params);
+        $this->assertSame('int',     $this->typeName($params[0])); // realPlayerId
+        $this->assertSame('string',  $this->typeName($params[1])); // sessionId
+        $this->assertSame('?string', $this->typeName($params[2])); // race
+        $this->assertSame('string',  $this->typeName($params[3])); // templatePlan
+        $this->assertSame('int',     $this->typeName($params[4])); // spawnX
+        $this->assertSame('int',     $this->typeName($params[5])); // spawnY
 
         $this->assertSame(
             TutorialPlayer::class,

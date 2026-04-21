@@ -110,7 +110,6 @@ class TutorialPlaceholderService
         }
 
         // Fallback to default (should not happen with valid race)
-        error_log("[TutorialPlaceholderService] Could not find mvt for race '{$race}', using default 4");
         return '4';
     }
 
@@ -135,7 +134,6 @@ class TutorialPlaceholderService
         }
 
         // Fallback to default
-        error_log("[TutorialPlaceholderService] Could not find 'a' for race '{$race}', using default 2");
         return '2';
     }
 

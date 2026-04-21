@@ -69,7 +69,6 @@ class TutorialHelper
             $context
         ));
         if ($line !== false) {
-            error_log($line);
         }
     }
 
@@ -186,7 +185,6 @@ class TutorialHelper
         // Validate data loaded successfully
         if (!$player->data || $player->data === false) {
             $errorMsg = "Failed to load player data for player {$activePlayerId}";
-            error_log("[TutorialHelper] {$errorMsg}");
 
             if ($throwOnFailure) {
                 throw new \RuntimeException($errorMsg);
@@ -220,7 +218,6 @@ class TutorialHelper
         // Validate data loaded successfully
         if (!$player->data || $player->data === false) {
             $errorMsg = "Failed to load player data for player {$playerId}";
-            error_log("[TutorialHelper] {$errorMsg}");
 
             if ($throwOnFailure) {
                 throw new \RuntimeException($errorMsg);

@@ -30,23 +30,32 @@ class TutorialMapInstance
     }
 
     /**
-     * Create a new tutorial map instance for a session
+     * Create a new tutorial map instance for a session.
      *
-     * Copies the template tutorial map to a session-specific instance.
-     * Returns the coords_id of the starting position (0,0) on the new instance.
+     * Copies the template tutorial map to a session-specific instance and
+     * returns the coords_id of the scenario's spawn tile on the new instance.
+     *
+     * The spawn tile must exist on the template plan — it's picked up by the
+     * copy and looked up by (x,y,0). If the catalog points at a tile the
+     * template doesn't include, this throws.
      *
      * @param string $sessionId Tutorial session UUID
      * @param string $templatePlan Template plan to copy (defaults to 'tutorial')
+     * @param int $spawnX Spawn X coordinate on the template (defaults to 0)
+     * @param int $spawnY Spawn Y coordinate on the template (defaults to 0)
      * @return array ['plan_name' => string, 'starting_coords_id' => int]
-     * @throws \RuntimeException if template map doesn't exist or copy fails
+     * @throws \RuntimeException if template map doesn't exist, copy fails, or the spawn tile is absent
      */
-    public function createInstance(string $sessionId, string $templatePlan = 'tutorial'): array
-    {
+    public function createInstance(
+        string $sessionId,
+        string $templatePlan = 'tutorial',
+        int $spawnX = 0,
+        int $spawnY = 0
+    ): array {
         // Shorten plan name to fit coords_computed (varchar(35))
         // Format: tut_XXXXXXXXXX (max 14 chars to leave room for coords like "-10_-10_0_")
         $instancePlanName = 'tut_' . substr($sessionId, 0, 10);
 
-        error_log("[TutorialMapInstance] Creating map instance for session {$sessionId}: {$instancePlanName} from template {$templatePlan}");
 
         // Step 1: Verify template map exists
         $templateCheck = $this->conn->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [$templatePlan]);
@@ -69,7 +78,6 @@ class TutorialMapInstance
 
         // Write instance JSON
         file_put_contents($instanceJsonPath, json_encode($templateJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        error_log("[TutorialMapInstance] Created plan JSON: {$instanceJsonPath}");
 
         // Step 2: Copy coords from template
         $sql = "
@@ -79,7 +87,6 @@ class TutorialMapInstance
             WHERE plan = ?
         ";
         $coordsCopied = $this->conn->executeStatement($sql, [$instancePlanName, $templatePlan]);
-        error_log("[TutorialMapInstance] Copied {$coordsCopied} coords from template");
 
         // Step 3: Create mapping of old coords_id to new coords_id
         // We'll use a temp table for efficient mapping
@@ -105,7 +112,6 @@ class TutorialMapInstance
             }
         }
 
-        error_log("[TutorialMapInstance] Created mapping for " . count($coordsMapping) . " coords");
 
         // Step 4: Copy map_walls (resources like trees/stones)
         $this->copyMapElements('walls', $coordsMapping, ['name', 'player_id', 'damages'], $templatePlan);
@@ -128,17 +134,18 @@ class TutorialMapInstance
             }
         }
 
-        // Step 6: Get starting position (0,0) coords_id
+        // Step 6: Get starting position coords_id from the catalog spawn.
         $startingCoordsId = $this->conn->fetchOne("
             SELECT id FROM coords
-            WHERE plan = ? AND x = 0 AND y = 0 AND z = 0
-        ", [$instancePlanName]);
+            WHERE plan = ? AND x = ? AND y = ? AND z = 0
+        ", [$instancePlanName, $spawnX, $spawnY]);
 
         if (!$startingCoordsId) {
-            throw new \RuntimeException("Failed to find starting position (0,0) on instance map");
+            throw new \RuntimeException(
+                "Failed to find spawn position ({$spawnX},{$spawnY}) on instance of template '{$templatePlan}'"
+            );
         }
 
-        error_log("[TutorialMapInstance] Instance created successfully. Starting coords_id: {$startingCoordsId}");
 
         return [
             'plan_name' => $instancePlanName,
@@ -166,7 +173,6 @@ class TutorialMapInstance
         ", [$templatePlan]);
 
         if (empty($npcs)) {
-            error_log("[TutorialMapInstance] No NPCs found on template map");
             return;
         }
 
@@ -175,7 +181,6 @@ class TutorialMapInstance
             $oldCoordsId = $npc['coords_id'];
 
             if (!isset($coordsMapping[$oldCoordsId])) {
-                error_log("[TutorialMapInstance] Warning: No mapping found for NPC coords_id {$oldCoordsId}");
                 continue;
             }
 
@@ -206,7 +211,6 @@ class TutorialMapInstance
             $copiedCount++;
         }
 
-        error_log("[TutorialMapInstance] Copied {$copiedCount} NPCs to instance");
     }
 
     /**
@@ -231,7 +235,6 @@ class TutorialMapInstance
             $oldCoordsId = $element['coords_id'];
 
             if (!isset($coordsMapping[$oldCoordsId])) {
-                error_log("[TutorialMapInstance] Warning: No mapping found for coords_id {$oldCoordsId}");
                 continue;
             }
 
@@ -252,7 +255,6 @@ class TutorialMapInstance
         }
 
         if ($copiedCount > 0) {
-            error_log("[TutorialMapInstance] Copied {$copiedCount} {$elementType} from template");
         }
     }
 
@@ -268,7 +270,6 @@ class TutorialMapInstance
     {
         $instancePlanName = 'tut_' . substr($sessionId, 0, 10);
 
-        error_log("[TutorialMapInstance] Deleting map instance: {$instancePlanName}");
 
         // Get all coords IDs for this instance
         $coordsIds = $this->conn->fetchFirstColumn("
@@ -276,7 +277,6 @@ class TutorialMapInstance
         ", [$instancePlanName]);
 
         if (empty($coordsIds)) {
-            error_log("[TutorialMapInstance] No coords found for instance {$instancePlanName}");
             return;
         }
 
@@ -305,7 +305,6 @@ class TutorialMapInstance
             ");
 
             if ($npcsDeleted > 0) {
-                error_log("[TutorialMapInstance] Deleted {$npcsDeleted} NPCs from instance");
             }
         }
 
@@ -318,7 +317,6 @@ class TutorialMapInstance
             ");
 
             if ($deleted > 0) {
-                error_log("[TutorialMapInstance] Deleted {$deleted} {$type} from instance");
             }
         }
 
@@ -331,10 +329,8 @@ class TutorialMapInstance
         $instanceJsonPath = __DIR__ . '/../../datas/private/plans/' . $instancePlanName . '.json';
         if (file_exists($instanceJsonPath)) {
             unlink($instanceJsonPath);
-            error_log("[TutorialMapInstance] Deleted plan JSON: {$instanceJsonPath}");
         }
 
-        error_log("[TutorialMapInstance] Deleted {$deleted} coords. Instance cleanup complete.");
     }
 
     /**
@@ -344,7 +340,6 @@ class TutorialMapInstance
      */
     public function deleteInstanceByPlan(string $planName): void
     {
-        error_log("[TutorialMapInstance] Deleting map instance by plan name: {$planName}");
 
         // Get all coords IDs for this instance
         $coordsIds = $this->conn->fetchFirstColumn("
@@ -352,7 +347,6 @@ class TutorialMapInstance
         ", [$planName]);
 
         if (empty($coordsIds)) {
-            error_log("[TutorialMapInstance] No coords found for plan {$planName}");
             return;
         }
 
@@ -364,7 +358,6 @@ class TutorialMapInstance
         ");
 
         if ($npcsDeleted > 0) {
-            error_log("[TutorialMapInstance] Deleted {$npcsDeleted} NPCs");
         }
 
         // Delete all map elements
@@ -376,7 +369,6 @@ class TutorialMapInstance
             ");
 
             if ($deleted > 0) {
-                error_log("[TutorialMapInstance] Deleted {$deleted} {$type}");
             }
         }
 
@@ -389,10 +381,8 @@ class TutorialMapInstance
         $instanceJsonPath = __DIR__ . '/../../datas/private/plans/' . $planName . '.json';
         if (file_exists($instanceJsonPath)) {
             unlink($instanceJsonPath);
-            error_log("[TutorialMapInstance] Deleted plan JSON: {$instanceJsonPath}");
         }
 
-        error_log("[TutorialMapInstance] Deleted {$deleted} coords. Cleanup complete.");
     }
 
     /**

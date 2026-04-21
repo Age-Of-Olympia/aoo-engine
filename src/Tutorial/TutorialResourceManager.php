@@ -83,11 +83,9 @@ class TutorialResourceManager
 
             if ($coords) {
                 $enemyCoordsId = $coords['id'];
-                error_log("[TutorialResourceManager] Found existing coords {$enemyCoordsId} for enemy at ({$enemyX}, {$enemyY})");
             } else {
                 // Coords should exist from map instance creation
                 // If they don't, something went wrong - log and create them
-                error_log("[TutorialResourceManager] WARNING: Coords ({$enemyX}, {$enemyY}) not found on plan {$plan}. Creating now.");
 
                 $this->conn->insert('coords', [
                     'x' => $enemyX,
@@ -102,7 +100,6 @@ class TutorialResourceManager
                     throw new \RuntimeException("Failed to create coords for enemy at ({$enemyX}, {$enemyY}) on plan {$plan}");
                 }
 
-                error_log("[TutorialResourceManager] Created new coords {$enemyCoordsId} for enemy");
             }
 
             // CRITICAL: Verify coords_id actually exists in database before using it
@@ -140,7 +137,6 @@ class TutorialResourceManager
             $enemyPlayer = new \Classes\Player($enemyId);
             $enemyPlayer->get_caracs(); // Generate caracs from race base stats
 
-            error_log("[TutorialResourceManager] Initialized enemy {$enemyId} with 'ame' race base stats");
 
             // Track enemy in tutorial_enemies table
             $this->conn->insert('tutorial_enemies', [
@@ -149,7 +145,6 @@ class TutorialResourceManager
                 'enemy_coords_id' => $enemyCoordsId
             ]);
 
-            error_log("[TutorialResourceManager] Spawned tutorial enemy {$enemyId} at ({$enemyX}, {$enemyY}) for session {$sessionId}");
 
             // Invalidate cached SVG for tutorial player
             $this->invalidateTutorialPlayerCache($sessionId);
@@ -192,7 +187,6 @@ class TutorialResourceManager
             $svgPath = dirname(__FILE__) . '/../../datas/private/players/' . $tutorialPlayerId . '.svg';
             if (file_exists($svgPath)) {
                 unlink($svgPath);
-                error_log("[TutorialResourceManager] Invalidated SVG cache for tutorial player {$tutorialPlayerId}");
             }
 
         } catch (\Exception $e) {
@@ -280,7 +274,6 @@ class TutorialResourceManager
                 }
             }
 
-            error_log("[TutorialResourceManager] Cleaned up {$cleanedCount} orphaned tutorial player(s) for real player {$realPlayerId}");
 
             return $cleanedCount;
 
@@ -303,7 +296,9 @@ class TutorialResourceManager
         int $realPlayerId,
         string $sessionId,
         ?string $race = null,
-        string $templatePlan = 'tutorial'
+        string $templatePlan = 'tutorial',
+        int $spawnX = 0,
+        int $spawnY = 0
     ): TutorialPlayer {
         try {
             $entity = TutorialPlayerFactory::create(
@@ -311,12 +306,13 @@ class TutorialResourceManager
                 $realPlayerId,
                 $sessionId,
                 $race,
-                $templatePlan
+                $templatePlan,
+                $spawnX,
+                $spawnY
             );
 
             $this->spawnTutorialEnemy($sessionId);
 
-            error_log("[TutorialResourceManager] Created tutorial player {$entity->getId()} for session {$sessionId}");
 
             return $entity;
         } catch (\Exception $e) {
@@ -379,15 +375,12 @@ class TutorialResourceManager
                     (int) $row['id'],
                     (int) $entity->getId()
                 );
-                error_log("[TutorialResourceManager] Deleted tutorial player {$entity->getId()} for session {$sessionId}");
             } else {
-                error_log("[TutorialResourceManager] No tutorial_players row for session {$sessionId} (already deleted?)");
             }
 
             // Step 3: map instance + its coords (must be AFTER player delete).
             $mapInstance = new TutorialMapInstance($this->conn);
             $mapInstance->deleteInstance($sessionId);
-            error_log("[TutorialResourceManager] Deleted map instance for session {$sessionId}");
         } catch (\Exception $e) {
             throw new TutorialException(
                 "Failed to delete tutorial player for session {$sessionId}",

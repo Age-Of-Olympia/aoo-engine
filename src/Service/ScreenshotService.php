@@ -82,7 +82,6 @@ class ScreenshotService
             $endTime = microtime(true);
             $duration = round(($endTime - $startTime) * 1000, 2);
             
-            error_log("Screenshot generation completed in {$duration}ms" . ($filename ? " (saved as: {$filename})" : " (preview mode)"));
 
             $result['success'] = true;
             $result['filename'] = $saveResult['filename'];
@@ -147,7 +146,6 @@ class ScreenshotService
         $result = $this->generateScreenshot($coordsArray, self::DEFAULT_RANGE, $filename, $outputDir);
 
         if ($result['success']) {
-            error_log("Automatic screenshot saved: {$result['filename']} for action {$actionName} by player {$actorEntity->getName()}");
         }
 
         return $result;
@@ -277,7 +275,6 @@ class ScreenshotService
     private function imageToBase64(string $imagePath): ?string
     {
         if (!file_exists($imagePath)) {
-            error_log("Image not found: $imagePath");
             return null;
         }
 
@@ -288,7 +285,6 @@ class ScreenshotService
 
         $imageData = file_get_contents($imagePath);
         if ($imageData === false) {
-            error_log("Failed to read image: $imagePath");
             return null;
         }
 
@@ -335,9 +331,7 @@ class ScreenshotService
         
         if ($originalLength !== $newLength) {
             $coordsInfo = ($pnjX !== null && $pnjY !== null) ? " at coordinates ({$pnjX},{$pnjY})" : "";
-            error_log("Screenshot PNJ removal: Successfully removed PNJ elements (player ID: {$playerId}){$coordsInfo}, removed " . ($originalLength - $newLength) . " characters");
         } else {
-            error_log("Screenshot PNJ removal: No PNJ elements found to remove (player ID: {$playerId})");
         }
         
         return $svgData;
