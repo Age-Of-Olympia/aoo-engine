@@ -21,7 +21,7 @@ describe('Tutorial System - Resume & Persistence Test', () => {
     name: `ResumeTest${randomName}`,
     password: 'testpass123',
     email: `resumetest${timestamp}@test.com`,
-    race: 'em',
+    race: 'nain',
     playerId: null  /* Will be set after registration */
   };
 
