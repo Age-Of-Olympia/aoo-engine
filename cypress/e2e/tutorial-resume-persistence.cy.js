@@ -13,12 +13,17 @@
  */
 
 describe('Tutorial System - Resume & Persistence Test', () => {
-  /* Generate unique account name for fresh test (letters only - no numbers allowed) */
+  /* Generate unique account name for fresh test (letters only - no numbers allowed).
+     8-letter Greek-letter pick alone collides ~12.5% against a non-reset DB;
+     suffix with a timestamp-derived token so parallel/repeated runs stay unique. */
   const uniqueNames = ['Iota', 'Kappa', 'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi'];
   const randomName = uniqueNames[Math.floor(Math.random() * uniqueNames.length)];
   const timestamp = Date.now();
+  /* base36-encode + last 6 chars = ~36^6 uniqueness, letters only
+     (no digits to clash with register.php's isValidName regex). */
+  const timestampSuffix = timestamp.toString(36).replace(/[0-9]/g, '').slice(-6).padEnd(4, 'x');
   const TEST_ACCOUNT = {
-    name: `ResumeTest${randomName}`,
+    name: `ResumeTest${randomName}${timestampSuffix}`,
     password: 'testpass123',
     email: `resumetest${timestamp}@test.com`,
     race: 'nain',
