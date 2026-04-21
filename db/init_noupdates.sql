@@ -5300,7 +5300,11 @@ CREATE TABLE `tutorial_enemies` (
   `enemy_coords_id` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `idx_session` (`tutorial_session_id`)
+  KEY `idx_session` (`tutorial_session_id`),
+  KEY `fk_tutorial_enemies_player` (`enemy_player_id`),
+  KEY `fk_tutorial_enemies_coords` (`enemy_coords_id`),
+  CONSTRAINT `fk_tutorial_enemies_player` FOREIGN KEY (`enemy_player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_tutorial_enemies_coords` FOREIGN KEY (`enemy_coords_id`) REFERENCES `coords` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Enemies spawned for combat training in tutorial';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
