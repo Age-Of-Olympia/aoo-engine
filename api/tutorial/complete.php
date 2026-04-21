@@ -86,7 +86,7 @@ try {
     if ($mainPlayer->coords->plan === 'waiting_room') {
         $mainPlayer->get_data();
         $factionJson = json()->decode('factions', $mainPlayer->data->faction);
-        $respawnPlan = $factionJson->respawnPlan ?? "olympia";
+        $respawnPlan = $factionJson?->respawnPlan ?? "olympia";
 
         $goCoords = (object) array(
             'x' => 0,

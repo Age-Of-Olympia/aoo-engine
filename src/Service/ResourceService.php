@@ -16,6 +16,9 @@ class ResourceService
         $coords = $player->getCoords();
         $planJson = json()->decode('plans', $coords->plan);
 
+        if (!$planJson) {
+            $planJson = (object) ['biomes' => []];
+        }
         if(!empty($planJson->biomes)){
             foreach($planJson->biomes as $e){
                 $biomes[$e->wall] = $e->ressource;
@@ -55,6 +58,9 @@ class ResourceService
         $coords = $player->getCoords();
         $planJson = json()->decode('plans', $coords->plan);
 
+        if (!$planJson) {
+            $planJson = (object) ['biomes' => []];
+        }
         if(!empty($planJson->biomes)){
             foreach($planJson->biomes as $e){
                 $biomes[$e->wall] = $e->ressource;
@@ -120,6 +126,9 @@ class ResourceService
 
     public static function createExhaustArray(&$planJson, array &$resourcesIdArray, &$row): void
     {
+        if (!isset($planJson->biomes)) {
+            return;
+        }
 
         foreach($planJson->biomes as $e){
                 if($e->wall == $row->name){

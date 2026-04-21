@@ -30,12 +30,18 @@ class ForumService
 
 
             $catJson = json()->decode('forum', 'categories/' . $cat);
+            if (!$catJson || empty($catJson->forums)) {
+                continue;
+            }
 
 
             foreach ($catJson->forums as $forum) {
 
 
                 $forJson = json()->decode('forum', 'forums/' . $forum->name);
+                if (!$forJson) {
+                    continue;
+                }
 
 
                 if ($catJson->name == 'Privés') {
@@ -52,10 +58,16 @@ class ForumService
                 }
 
 
+                if (empty($forJson->topics)) {
+                    continue;
+                }
                 foreach ($forJson->topics as $topics) {
 
 
                     $topJson = json()->decode('forum/topics', $topics->name);
+                    if (!$topJson || !isset($topJson->last)) {
+                        continue;
+                    }
 
                     // hide topics created previously to the register
                     if (timestampNormalization($topJson->last->time) < $registerTime) {
@@ -74,7 +86,7 @@ class ForumService
                     }
                     $result[] = ["topicJson"=>$topJson, "forumJson" =>$forJson];
                 }
-            
+
             }
         }
 

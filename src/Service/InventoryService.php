@@ -72,7 +72,7 @@ class InventoryService
 
             $charges = false;
 
-            if (!in_array($item->row->spell, $raceJson->spells)) {
+            if (!$raceJson || empty($raceJson->spells) || !in_array($item->row->spell, $raceJson->spells)) {
 
                 $charges = 1;
             }
