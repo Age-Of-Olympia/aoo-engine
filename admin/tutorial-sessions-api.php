@@ -11,6 +11,8 @@ require_once __DIR__ . '/helpers.php';
 use Classes\Db;
 use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
+use App\Service\TutorialStepSaveService;
+use App\Service\TutorialStepValidationService;
 
 AdminAuthorizationService::DoAdminCheck();
 
@@ -18,6 +20,63 @@ header('Content-Type: application/json; charset=utf-8');
 
 $database = new Db();
 $csrf = new CsrfProtectionService();
+$saveService = new TutorialStepSaveService($database, new TutorialStepValidationService());
+
+/**
+ * Flatten an exported step JSON into the form-shape that
+ * TutorialStepSaveService::saveStep expects ($_POST style: nested
+ * sub-objects merged into top-level, list-of-objects collapsed to
+ * parallel key/value arrays).
+ *
+ * @param array<string, mixed> $stepData Exported step (nested shape).
+ * @return array<string, mixed>          Flattened form-shape.
+ */
+function flattenImportStep(array $stepData): array
+{
+    $data = [
+        'version'     => $stepData['version']     ?? '1.0.0',
+        'step_id'     => $stepData['step_id']     ?? null,
+        'next_step'   => $stepData['next_step']   ?? null,
+        'step_number' => $stepData['step_number'] ?? 0,
+        'step_type'   => $stepData['step_type']   ?? 'info',
+        'title'       => $stepData['title']       ?? '',
+        'text'        => $stepData['text']        ?? '',
+        'xp_reward'   => $stepData['xp_reward']   ?? 0,
+        'is_active'   => $stepData['is_active']   ?? 1,
+    ];
+
+    foreach (['ui', 'validation', 'prerequisites', 'features'] as $section) {
+        if (!empty($stepData[$section]) && is_array($stepData[$section])) {
+            $data = array_merge($data, $stepData[$section]);
+        }
+    }
+
+    if (isset($stepData['interactions']) && is_array($stepData['interactions'])) {
+        $data['interactions'] = array_map(
+            fn($i) => is_array($i) ? ($i['selector'] ?? '') : (string)$i,
+            $stepData['interactions']
+        );
+    }
+
+    if (isset($stepData['highlights']) && is_array($stepData['highlights'])) {
+        $data['highlights'] = array_map(
+            fn($h) => is_array($h) ? ($h['selector'] ?? '') : (string)$h,
+            $stepData['highlights']
+        );
+    }
+
+    if (isset($stepData['context_changes']) && is_array($stepData['context_changes'])) {
+        $data['context_keys']   = array_column($stepData['context_changes'], 'context_key');
+        $data['context_values'] = array_column($stepData['context_changes'], 'context_value');
+    }
+
+    if (isset($stepData['next_preparation']) && is_array($stepData['next_preparation'])) {
+        $data['prep_keys']   = array_column($stepData['next_preparation'], 'preparation_key');
+        $data['prep_values'] = array_column($stepData['next_preparation'], 'preparation_value');
+    }
+
+    return $data;
+}
 
 $action = $_GET['action'] ?? 'list';
 
@@ -281,179 +340,22 @@ try {
             $updated = 0;
 
             foreach ($steps as $stepData) {
-                $stepId = $stepData['step_id'] ?? null;
+                $stepIdStr = $stepData['step_id'] ?? null;
                 $version = $stepData['version'] ?? '1.0.0';
 
-                // Check if step exists
                 $existingResult = $database->exe(
                     "SELECT id FROM tutorial_steps WHERE step_id = ? AND version = ?",
-                    [$stepId, $version]
+                    [$stepIdStr, $version]
                 );
                 $existing = $existingResult->fetch_assoc();
+                $dbStepId = $existing['id'] ?? null;
 
-                if ($existing) {
-                    // Update existing step
-                    $dbStepId = $existing['id'];
-                    $database->exe("
-                        UPDATE tutorial_steps SET
-                            step_number = ?,
-                            next_step = ?,
-                            step_type = ?,
-                            title = ?,
-                            text = ?,
-                            xp_reward = ?,
-                            is_active = ?
-                        WHERE id = ?
-                    ", [
-                        $stepData['step_number'] ?? 0,
-                        $stepData['next_step'] ?? null,
-                        $stepData['step_type'] ?? 'info',
-                        $stepData['title'] ?? '',
-                        $stepData['text'] ?? '',
-                        $stepData['xp_reward'] ?? 0,
-                        $stepData['is_active'] ?? 1,
-                        $dbStepId
-                    ]);
-                    $updated++;
-                } else {
-                    // Insert new step
-                    $database->exe("
-                        INSERT INTO tutorial_steps (version, step_number, step_id, next_step, step_type, title, text, xp_reward, is_active)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ", [
-                        $version,
-                        $stepData['step_number'] ?? 0,
-                        $stepId,
-                        $stepData['next_step'] ?? null,
-                        $stepData['step_type'] ?? 'info',
-                        $stepData['title'] ?? '',
-                        $stepData['text'] ?? '',
-                        $stepData['xp_reward'] ?? 0,
-                        $stepData['is_active'] ?? 1
-                    ]);
-                    $dbStepId = $database->lastInsertId();
+                $saveService->saveStep(flattenImportStep($stepData), $dbStepId);
+
+                if ($dbStepId === null) {
                     $created++;
-                }
-
-                // Update/insert related tables (UI, Validation, Prerequisites, Features)
-                if (isset($stepData['ui']) && $stepData['ui']) {
-                    $ui = $stepData['ui'];
-                    $database->exe("DELETE FROM tutorial_step_ui WHERE step_id = ?", [$dbStepId]);
-                    $database->exe("
-                        INSERT INTO tutorial_step_ui (step_id, target_selector, target_description, highlight_selector, tooltip_position, interaction_mode, blocked_click_message, show_delay, auto_advance_delay, allow_manual_advance, auto_close_card)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ", [
-                        $dbStepId,
-                        $ui['target_selector'] ?? null,
-                        $ui['target_description'] ?? null,
-                        $ui['highlight_selector'] ?? null,
-                        $ui['tooltip_position'] ?? 'bottom',
-                        $ui['interaction_mode'] ?? 'blocking',
-                        $ui['blocked_click_message'] ?? null,
-                        $ui['show_delay'] ?? 0,
-                        $ui['auto_advance_delay'] ?? null,
-                        $ui['allow_manual_advance'] ?? 1,
-                        $ui['auto_close_card'] ?? 0
-                    ]);
-                }
-
-                if (isset($stepData['validation']) && $stepData['validation']) {
-                    $val = $stepData['validation'];
-                    $database->exe("DELETE FROM tutorial_step_validation WHERE step_id = ?", [$dbStepId]);
-                    $database->exe("
-                        INSERT INTO tutorial_step_validation (step_id, requires_validation, validation_type, validation_hint, target_x, target_y, movement_count, action_name, action_charges_required, combat_required, panel_id, element_selector, element_clicked, dialog_id)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ", [
-                        $dbStepId,
-                        $val['requires_validation'] ?? 0,
-                        $val['validation_type'] ?? null,
-                        $val['validation_hint'] ?? null,
-                        $val['target_x'] ?? null,
-                        $val['target_y'] ?? null,
-                        $val['movement_count'] ?? null,
-                        $val['action_name'] ?? null,
-                        $val['action_charges_required'] ?? 1,
-                        $val['combat_required'] ?? 0,
-                        $val['panel_id'] ?? null,
-                        $val['element_selector'] ?? null,
-                        $val['element_clicked'] ?? null,
-                        $val['dialog_id'] ?? null
-                    ]);
-                }
-
-                if (isset($stepData['prerequisites']) && $stepData['prerequisites']) {
-                    $prereq = $stepData['prerequisites'];
-                    $database->exe("DELETE FROM tutorial_step_prerequisites WHERE step_id = ?", [$dbStepId]);
-                    $database->exe("
-                        INSERT INTO tutorial_step_prerequisites (step_id, mvt_required, pa_required, auto_restore, consume_movements, unlimited_mvt, unlimited_pa, spawn_enemy, ensure_harvestable_tree_x, ensure_harvestable_tree_y)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ", [
-                        $dbStepId,
-                        $prereq['mvt_required'] ?? null,
-                        $prereq['pa_required'] ?? null,
-                        $prereq['auto_restore'] ?? 1,
-                        $prereq['consume_movements'] ?? 0,
-                        $prereq['unlimited_mvt'] ?? 0,
-                        $prereq['unlimited_pa'] ?? 0,
-                        $prereq['spawn_enemy'] ?? null,
-                        $prereq['ensure_harvestable_tree_x'] ?? null,
-                        $prereq['ensure_harvestable_tree_y'] ?? null
-                    ]);
-                }
-
-                if (isset($stepData['features']) && $stepData['features']) {
-                    $feat = $stepData['features'];
-                    $database->exe("DELETE FROM tutorial_step_features WHERE step_id = ?", [$dbStepId]);
-                    $database->exe("
-                        INSERT INTO tutorial_step_features (step_id, celebration, show_rewards, redirect_delay)
-                        VALUES (?, ?, ?, ?)
-                    ", [
-                        $dbStepId,
-                        $feat['celebration'] ?? 0,
-                        $feat['show_rewards'] ?? 0,
-                        $feat['redirect_delay'] ?? null
-                    ]);
-                }
-
-                // Handle arrays: interactions, highlights, context_changes, next_preparation
-                if (isset($stepData['interactions']) && is_array($stepData['interactions'])) {
-                    $database->exe("DELETE FROM tutorial_step_interactions WHERE step_id = ?", [$dbStepId]);
-                    foreach ($stepData['interactions'] as $int) {
-                        $database->exe(
-                            "INSERT INTO tutorial_step_interactions (step_id, selector, description) VALUES (?, ?, ?)",
-                            [$dbStepId, $int['selector'] ?? $int, $int['description'] ?? null]
-                        );
-                    }
-                }
-
-                if (isset($stepData['highlights']) && is_array($stepData['highlights'])) {
-                    $database->exe("DELETE FROM tutorial_step_highlights WHERE step_id = ?", [$dbStepId]);
-                    foreach ($stepData['highlights'] as $hl) {
-                        $database->exe(
-                            "INSERT INTO tutorial_step_highlights (step_id, selector) VALUES (?, ?)",
-                            [$dbStepId, is_string($hl) ? $hl : $hl['selector']]
-                        );
-                    }
-                }
-
-                if (isset($stepData['context_changes']) && is_array($stepData['context_changes'])) {
-                    $database->exe("DELETE FROM tutorial_step_context_changes WHERE step_id = ?", [$dbStepId]);
-                    foreach ($stepData['context_changes'] as $ctx) {
-                        $database->exe(
-                            "INSERT INTO tutorial_step_context_changes (step_id, context_key, context_value) VALUES (?, ?, ?)",
-                            [$dbStepId, $ctx['context_key'], $ctx['context_value']]
-                        );
-                    }
-                }
-
-                if (isset($stepData['next_preparation']) && is_array($stepData['next_preparation'])) {
-                    $database->exe("DELETE FROM tutorial_step_next_preparation WHERE step_id = ?", [$dbStepId]);
-                    foreach ($stepData['next_preparation'] as $prep) {
-                        $database->exe(
-                            "INSERT INTO tutorial_step_next_preparation (step_id, preparation_key, preparation_value) VALUES (?, ?, ?)",
-                            [$dbStepId, $prep['preparation_key'], $prep['preparation_value']]
-                        );
-                    }
+                } else {
+                    $updated++;
                 }
             }
 
