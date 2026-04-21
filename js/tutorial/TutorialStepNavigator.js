@@ -25,7 +25,6 @@ class TutorialStepNavigator {
             }
         });
 
-        console.log('[StepNavigator] Initialized - Press ` or ² to toggle');
     }
 
     createUI() {
@@ -134,7 +133,6 @@ class TutorialStepNavigator {
     }
 
     async jumpTo(stepNumber) {
-        console.log(`[StepNavigator] Jumping to step ${stepNumber}`);
 
         try {
             const response = await fetch('/api/tutorial/jump-to-step.php', {
@@ -146,7 +144,6 @@ class TutorialStepNavigator {
             const data = await response.json();
 
             if (data.success) {
-                console.log('[StepNavigator] Jump successful, reloading page...');
                 // Reload to apply new step
                 window.location.reload();
             } else {
@@ -172,7 +169,6 @@ class TutorialStepNavigator {
             this.toggleButton.classList.remove('hidden');
         }
 
-        console.log('[StepNavigator]', this.isVisible ? 'Shown' : 'Hidden');
     }
 
     show() {

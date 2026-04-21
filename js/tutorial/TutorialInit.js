@@ -13,7 +13,6 @@
      * Initialize tutorial system
      */
     window.initTutorial = function() {
-        console.log('[Tutorial] Initializing...');
 
         // Create components
         window.tutorialUI = new TutorialUI();
@@ -25,7 +24,6 @@
             window.tutorialStepNavigator = new TutorialStepNavigator(window.tutorialUI);
             window.tutorialUI.navigator = window.tutorialStepNavigator;
         } else {
-            console.log('[Tutorial] Step navigator not available (optional feature)');
         }
 
         // Wire up components
@@ -51,7 +49,6 @@
             window.tutorialUI.next({ element_clicked: 'tutorial_next' }, false, true);
         });
 
-        console.log('[Tutorial] Initialized successfully');
     };
 
     /**
@@ -105,12 +102,10 @@
         const tutorialParam = urlParams.get('tutorial');
 
         if (tutorialParam === 'start') {
-            console.log('[Tutorial] Auto-starting from URL parameter');
             setTimeout(() => {
                 window.startTutorial('first_time');
             }, 500);
         } else if (tutorialParam === 'resume') {
-            console.log('[Tutorial] Auto-resuming from URL parameter');
             setTimeout(() => {
                 window.resumeTutorial();
             }, 500);
@@ -126,14 +121,12 @@
     async function checkForActiveTutorial() {
         // Don't check if we just cancelled (prevents loop)
         if (sessionStorage.getItem('tutorial_just_cancelled') === 'true') {
-            console.log('[Tutorial] Skipping check after cancel');
             sessionStorage.removeItem('tutorial_just_cancelled');
             return;
         }
 
         // Auto-resume if we just started (after reload)
         if (sessionStorage.getItem('tutorial_just_started') === 'true') {
-            console.log('[Tutorial] Auto-resuming after start...');
             sessionStorage.removeItem('tutorial_just_started');
             setTimeout(() => {
                 window.resumeTutorial();
@@ -143,12 +136,9 @@
 
         // Auto-resume if tutorial is actively running (after page reload during tutorial)
         const tutorialActive = sessionStorage.getItem('tutorial_active');
-        console.log('[Tutorial] Checking auto-resume - tutorial_active:', tutorialActive);
 
         if (tutorialActive === 'true') {
-            console.log('[Tutorial] Auto-resuming active tutorial...');
             setTimeout(async () => {
-                console.log('[Tutorial] Calling window.resumeTutorial()...');
                 try {
                     await window.resumeTutorial();
                 } catch (error) {
@@ -159,7 +149,6 @@
             }, 500);
             return;
         } else {
-            console.log('[Tutorial] NOT auto-resuming - tutorial_active is not "true"');
         }
 
         try {
@@ -167,20 +156,16 @@
             const response = await fetch('/api/tutorial/resume.php?check_only=1');
 
             if (!response.ok) {
-                console.log('[Tutorial] Resume API returned', response.status);
                 return;
             }
 
             const data = await response.json();
-            console.log('[Tutorial] Resume check:', data);
 
             if (data.success && data.has_active_tutorial) {
                 // Show modal to resume (don't auto-resume to avoid loop)
-                console.log('[Tutorial] Found active tutorial, showing resume modal');
                 showResumeTutorialModal();
             }
         } catch (error) {
-            console.log('[Tutorial] Resume check error:', error.message);
         }
     }
 
@@ -283,5 +268,4 @@
 
     // Emergency exit button removed - use "Passer" button in tutorial controls instead
 
-    console.log('[Tutorial] Init script loaded');
 })();

@@ -20,9 +20,7 @@ class TutorialHighlighter {
      * @param {object} options { pulsate: boolean, color: string }
      */
     highlight(selector, options = {}) {
-        console.log('[TutorialHighlighter] highlight() called with selector:', selector);
         const $elements = $(selector);
-        console.log('[TutorialHighlighter] jQuery found', $elements.length, 'elements');
 
         if ($elements.length === 0) {
             console.warn('[TutorialHighlighter] No elements found for selector:', selector);
@@ -58,41 +56,30 @@ class TutorialHighlighter {
             return;
         }
 
-        console.log('[TutorialHighlighter] Highlighting', selector, $elements.length, 'elements');
 
         // Log element details for debugging
         $elements.each((idx, el) => {
             const rect = el.getBoundingClientRect();
-            console.log(`[TutorialHighlighter] Element ${idx}:`, {
-                tag: el.tagName,
-                visible: rect.width > 0 && rect.height > 0,
-                position: { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
-            });
         });
 
         $elements.each((index, element) => {
             const $element = $(element);
 
-            console.log(`[TutorialHighlighter] Processing element ${index}...`);
 
             // Create highlight box
             const $highlight = $('<div class="tutorial-highlight"></div>');
-            console.log('[TutorialHighlighter] Created highlight div');
 
             // Add pulsate class if needed
             if (options.pulsate) {
                 $highlight.addClass('pulsate');
-                console.log('[TutorialHighlighter] Added pulsate class');
             }
 
             // Custom color
             if (options.color) {
                 $highlight.css('border-color', options.color);
-                console.log('[TutorialHighlighter] Set custom color:', options.color);
             }
 
             // Position highlight box
-            console.log('[TutorialHighlighter] Positioning highlight...');
             this.positionHighlight($highlight, $element);
 
             // Log the actual position after setting
@@ -104,11 +91,9 @@ class TutorialHighlighter {
                 display: $highlight.css('display'),
                 visibility: $highlight.css('visibility')
             };
-            console.log('[TutorialHighlighter] Highlight positioned at:', computedPos);
 
             // Add to DOM
             $('body').append($highlight);
-            console.log('[TutorialHighlighter] Appended to body. Highlight in DOM:', $highlight.length, 'visible in body:', $('body .tutorial-highlight').length);
 
             // Generate unique ID for tracking
             const trackingId = `highlight_${Date.now()}_${index}`;
@@ -141,9 +126,7 @@ class TutorialHighlighter {
             this.highlights[this.highlights.length - 1].elementObserver = elementObserver;
 
             // Fade in
-            console.log('[TutorialHighlighter] Calling fadeIn(200)...');
             $highlight.fadeIn(200, () => {
-                console.log('[TutorialHighlighter] ✅ Fade-in complete! Display:', $highlight.css('display'), 'Opacity:', $highlight.css('opacity'));
             });
         });
 
@@ -158,7 +141,6 @@ class TutorialHighlighter {
         // Use shared position manager for accurate positioning
         const pos = TutorialPositionManager.getElementPosition($element);
 
-        console.log('[TutorialHighlighter] Position data from TutorialPositionManager:', pos);
 
         // Validate position has dimensions
         if (pos.width === 0 || pos.height === 0) {
@@ -176,12 +158,6 @@ class TutorialHighlighter {
             height: `${pos.height + 10}px`
         });
 
-        console.log('[TutorialHighlighter] Applied CSS:', {
-            top: $highlight.css('top'),
-            left: $highlight.css('left'),
-            width: $highlight.css('width'),
-            height: $highlight.css('height')
-        });
     }
 
     /**
@@ -218,7 +194,6 @@ class TutorialHighlighter {
         // Hide the spotlight overlay
         this.hideSpotlightOverlay();
 
-        console.log('[TutorialHighlighter] Cleared all highlights');
 
         // Return promise that resolves when all fadeOuts complete
         return Promise.all(fadePromises);

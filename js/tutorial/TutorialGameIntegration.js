@@ -11,11 +11,9 @@
     // Only initialize if tutorial is active
     function initTutorialGameIntegration() {
         if (!window.tutorialUI) {
-            console.log('[TutorialGameIntegration] Tutorial UI not available, skipping integration');
             return;
         }
 
-        console.log('[TutorialGameIntegration] Initializing game integration...');
 
         // ====================================================================
         // INTERCEPT ACTION BUTTON CLICKS
@@ -27,21 +25,11 @@
             const $button = $(this);
             const actionName = $button.data('action') || $button.attr('data-action');
 
-            console.log('[TutorialGameIntegration] Button clicked - Element:', this);
-            console.log('[TutorialGameIntegration] Button classes:', this.className);
-            console.log('[TutorialGameIntegration] data-action attr:', $button.attr('data-action'));
-            console.log('[TutorialGameIntegration] .data("action"):', $button.data('action'));
-            console.log('[TutorialGameIntegration] Final actionName:', actionName);
 
             if (actionName) {
-                console.log('[TutorialGameIntegration] Action button clicked:', actionName);
 
                 // Notify tutorial system
                 if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
-                    console.log('[TutorialGameIntegration] Calling notifyAction with:', {
-                        action_name: actionName,
-                        button: $button.text().trim()
-                    });
                     window.tutorialUI.notifyAction('action_used', {
                         action_name: actionName,
                         button: $button.text().trim()
@@ -62,7 +50,6 @@
         $(document).on('click', '.case.go', function(e) {
             const coords = $(this).data('coords');
             if (coords) {
-                console.log('[TutorialGameIntegration] Movement tile clicked:', coords);
 
                 // Extract x,y from coords string
                 const [x, y] = coords.split(',').map(n => parseInt(n));
@@ -85,7 +72,6 @@
 
         // Intercept characteristics button
         $(document).on('click', '#show-caracs', function(e) {
-            console.log('[TutorialGameIntegration] Characteristics button clicked');
 
             setTimeout(() => {
                 if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
@@ -100,7 +86,6 @@
 
         // Intercept inventory button (#show-inventory)
         $(document).on('click', '#show-inventory', function(e) {
-            console.log('[TutorialGameIntegration] Inventory button (#show-inventory) clicked');
 
             if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
                 window.tutorialUI.notifyAction('ui_interaction', {
@@ -113,7 +98,6 @@
 
         // Intercept inventory link
         $(document).on('click', 'a[href="inventory.php"]', function(e) {
-            console.log('[TutorialGameIntegration] Inventory link clicked');
 
             if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
                 window.tutorialUI.notifyAction('ui_interaction', {
@@ -126,7 +110,6 @@
 
         // Intercept return to map link (from inventory)
         $(document).on('click', 'a[href="index.php"]', function(e) {
-            console.log('[TutorialGameIntegration] Return to map clicked');
 
             if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
                 window.tutorialUI.notifyAction('ui_interaction', {
@@ -135,7 +118,6 @@
             }
         });
 
-        console.log('[TutorialGameIntegration] Integration complete');
     }
 
     // Initialize when document is ready AND when tutorialUI becomes available
@@ -152,7 +134,6 @@
             setTimeout(checkAndInit, 100);
         } else {
             // Give up after max attempts
-            console.log('[TutorialGameIntegration] TutorialUI not available after 5 seconds, skipping integration');
         }
     }
 
