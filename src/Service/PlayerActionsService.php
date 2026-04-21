@@ -8,8 +8,8 @@ use Classes\Db;
  * SQL access for the `players_actions` table.
  *
  * Extracted from the generic Classes\Player::have/add/end/get god-method
- * in Phase 2b of the Classes\Player dismantling roadmap
- * (docs/player-dismantling-roadmap.md). Sibling to PlayerOptionsService.
+ * in Phase 2b of the Classes\Player dismantling. Sibling to
+ * PlayerOptionsService.
  *
  * The legacy Classes\Player shims (have_action / add_action /
  * end_action / get_actions) remain as thin delegations so the existing

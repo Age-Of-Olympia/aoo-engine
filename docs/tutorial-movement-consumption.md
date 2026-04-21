@@ -159,5 +159,4 @@ If updating an existing tutorial:
 ## Related Documentation
 
 - [Tutorial Step Configuration Guide](tutorial-step-configuration-guide.md)
-- [Tutorial XP & PI Integration](tutorial-xp-pi-integration.md)
-- [Tutorial Testing Guide](tutorial-testing-guide.md)
+- [Cypress Testing Guide](cypress-testing-guide.md)

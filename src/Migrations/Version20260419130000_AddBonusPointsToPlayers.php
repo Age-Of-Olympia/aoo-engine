@@ -26,8 +26,6 @@ use Doctrine\Migrations\AbstractMigration;
  * Idempotent: MariaDB 10.2+ supports ADD COLUMN IF NOT EXISTS. Fresh
  * devcontainer/CI setups that already have the column (via the
  * updated db/init_noupdates.sql) run this as a no-op.
- *
- * See: docs/phase-3-schema-audit.md §A1.
  */
 final class Version20260419130000_AddBonusPointsToPlayers extends AbstractMigration
 {

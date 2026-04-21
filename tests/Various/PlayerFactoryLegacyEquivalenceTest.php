@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * Characterization smoke test pinning the Phase 1 migration invariant.
  *
- * The Classes\Player dismantling roadmap (docs/player-dismantling-roadmap.md)
- * mechanically migrates ~50 call sites of `new Player($id)` to
+ * The Classes\Player dismantling mechanically migrates ~50 call sites
+ * of `new Player($id)` to
  * `PlayerFactory::legacy($id)` / `::active()` in Phase 1. This test pins
  * the invariant the search-and-replace relies on: both construction paths
  * must produce objects indistinguishable on the property-heavy public

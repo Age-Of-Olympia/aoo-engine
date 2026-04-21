@@ -935,6 +935,4 @@ The tutorial adapts to the player's race for movement points:
 
 ## Additional Documentation
 
-- Architecture diagram: `docs/images/Logique-Aoo.png`
-- Unit test documentation: `docs/unit-test-logs.md`
-- Architecture doc: `docs/architecture.md`
+- Architecture diagram: `docs/images/Logique-Aoo.png` (FreeMind source: `docs/Logique-Aoo.mm`)

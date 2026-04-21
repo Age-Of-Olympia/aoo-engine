@@ -249,7 +249,7 @@ class PlayerEntityDomainMethodsTest extends TestCase
 
     /**
      * Same bootstrap pattern as PlayerEntityHydrationTest — standalone
-     * EntityManager targeting aoo4_test. See docs/phase-3-schema-audit.md.
+     * EntityManager targeting aoo4_test.
      *
      * @return array{0: EntityManager, 1: Connection, 2: int}
      */

@@ -9,7 +9,7 @@ use Classes\Db;
  *
  * Extracted from the generic Classes\Player::have/add/end/get god-method
  * (Classes/Player.php:467-568) in Phase 2 of the Classes\Player
- * dismantling roadmap (docs/player-dismantling-roadmap.md).
+ * dismantling.
  *
  * The legacy Classes\Player shims (have_option / add_option / end_option
  * / get_options) remain as thin delegations so the ~71 existing call

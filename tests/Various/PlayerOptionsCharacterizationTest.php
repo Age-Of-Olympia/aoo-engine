@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Characterization test pinning Player::have_option / add_option / end_option
  * / get_options behaviour ahead of the Phase 2 PlayerOptionsService
- * extraction (docs/player-dismantling-roadmap.md §Phase 2).
+ * extraction.
  *
  * Locks the observable behaviour of the generic
  * Player::have/add/end/get($table, $name) god-method

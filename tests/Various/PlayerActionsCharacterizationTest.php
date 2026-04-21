@@ -10,8 +10,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Characterization test pinning Player::have_action / add_action /
  * end_action / get_actions behaviour ahead of the Phase 2 sibling
- * PlayerActionsService extraction (docs/player-dismantling-roadmap.md
- * §Phase 2).
+ * PlayerActionsService extraction.
  *
  * The actions branch has two traits options didn't:
  *

@@ -34,11 +34,9 @@ class TutorialHelper
             }
 
             // Stale session detected: the tutorial_player_id in $_SESSION
-            // points at a row that no longer exists in `players`. This is
-            // the TOCTOU signal D1 in docs/tutorial-p0-deferred-design.md
-            // wants to quantify before deciding on a locking strategy.
-            // Emit one structured line per occurrence so the divergence
-            // rate can be estimated by grepping production logs:
+            // points at a row that no longer exists in `players`. Emit
+            // one structured line per occurrence so the divergence rate
+            // can be estimated by grepping production logs:
             //   grep '"event":"tutorial_session_stale"' apache_error.log | wc -l
             self::logTelemetry('tutorial_session_stale', [
                 'tutorial_player_id'  => $tutorialPlayerId,

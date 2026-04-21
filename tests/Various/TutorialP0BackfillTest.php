@@ -14,8 +14,8 @@ use ReflectionProperty;
  * D4 Phase A — retroactive test-debt backfill for MRs !329–!333.
  *
  * Those MRs landed production-ready P0 fixes during the rapid-fix
- * phase, BEFORE the TDD+KISS rule in docs/player-dismantling-roadmap.md
- * was written down. They would not pass that rule today. This file
+ * phase, BEFORE the TDD+KISS rule was written down. They would not
+ * pass that rule today. This file
  * pins each fix as a contract so the regression that originally
  * required the P0 surfaces loudly the next time somebody touches the
  * affected file.
@@ -25,9 +25,8 @@ use ReflectionProperty;
  * exit behaviour, real XP mutations) lives in Cypress
  * tutorial-production-ready.
  *
- * Baseline documented in docs/tutorial-p0-deferred-design.md
- * §"Test-debt baseline". #333 (TutorialUI.next debounce) is JavaScript
- * and stays with Cypress; not re-tested here.
+ * #333 (TutorialUI.next debounce) is JavaScript and stays with
+ * Cypress; not re-tested here.
  */
 class TutorialP0BackfillTest extends TestCase
 {

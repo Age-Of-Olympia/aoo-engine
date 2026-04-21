@@ -314,6 +314,4 @@ When adding new game features:
 
 ## Related Documentation
 
-- [Tutorial Helper API](tutorial-helper-api.md)
-- [Tutorial Testing Guide](tutorial-testing-guide.md)
-- [Tutorial XP & PI Integration](tutorial-xp-pi-integration.md)
+- [Cypress Testing Guide](cypress-testing-guide.md)

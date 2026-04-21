@@ -15,9 +15,8 @@ use PHPUnit\Framework\TestCase;
  * Phase 3.1 smoke test — ensures Doctrine can actually hydrate a
  * PlayerEntity against the live `players` schema.
  *
- * Rationale: the Phase 3 schema audit (docs/phase-3-schema-audit.md)
- * found two blocking mismatches that would have silently failed on
- * first use:
+ * Rationale: the Phase 3 schema audit found two blocking mismatches
+ * that would have silently failed on first use:
  *
  *   A1  `bonus_points` column declared on entity, missing from table
  *   A2  `emailBonus` mapped as camelCase, table has `email_bonus`
