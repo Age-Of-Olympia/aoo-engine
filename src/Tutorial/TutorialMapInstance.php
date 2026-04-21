@@ -30,18 +30,28 @@ class TutorialMapInstance
     }
 
     /**
-     * Create a new tutorial map instance for a session
+     * Create a new tutorial map instance for a session.
      *
-     * Copies the template tutorial map to a session-specific instance.
-     * Returns the coords_id of the starting position (0,0) on the new instance.
+     * Copies the template tutorial map to a session-specific instance and
+     * returns the coords_id of the scenario's spawn tile on the new instance.
+     *
+     * The spawn tile must exist on the template plan — it's picked up by the
+     * copy and looked up by (x,y,0). If the catalog points at a tile the
+     * template doesn't include, this throws.
      *
      * @param string $sessionId Tutorial session UUID
      * @param string $templatePlan Template plan to copy (defaults to 'tutorial')
+     * @param int $spawnX Spawn X coordinate on the template (defaults to 0)
+     * @param int $spawnY Spawn Y coordinate on the template (defaults to 0)
      * @return array ['plan_name' => string, 'starting_coords_id' => int]
-     * @throws \RuntimeException if template map doesn't exist or copy fails
+     * @throws \RuntimeException if template map doesn't exist, copy fails, or the spawn tile is absent
      */
-    public function createInstance(string $sessionId, string $templatePlan = 'tutorial'): array
-    {
+    public function createInstance(
+        string $sessionId,
+        string $templatePlan = 'tutorial',
+        int $spawnX = 0,
+        int $spawnY = 0
+    ): array {
         // Shorten plan name to fit coords_computed (varchar(35))
         // Format: tut_XXXXXXXXXX (max 14 chars to leave room for coords like "-10_-10_0_")
         $instancePlanName = 'tut_' . substr($sessionId, 0, 10);
@@ -128,14 +138,16 @@ class TutorialMapInstance
             }
         }
 
-        // Step 6: Get starting position (0,0) coords_id
+        // Step 6: Get starting position coords_id from the catalog spawn.
         $startingCoordsId = $this->conn->fetchOne("
             SELECT id FROM coords
-            WHERE plan = ? AND x = 0 AND y = 0 AND z = 0
-        ", [$instancePlanName]);
+            WHERE plan = ? AND x = ? AND y = ? AND z = 0
+        ", [$instancePlanName, $spawnX, $spawnY]);
 
         if (!$startingCoordsId) {
-            throw new \RuntimeException("Failed to find starting position (0,0) on instance map");
+            throw new \RuntimeException(
+                "Failed to find spawn position ({$spawnX},{$spawnY}) on instance of template '{$templatePlan}'"
+            );
         }
 
         error_log("[TutorialMapInstance] Instance created successfully. Starting coords_id: {$startingCoordsId}");

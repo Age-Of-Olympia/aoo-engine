@@ -56,14 +56,14 @@ class TutorialManager
     }
 
     /**
-     * Start a new tutorial session
+     * Start a tutorial session.
      *
-     * Phase 4: Refactored to use service layer (60 lines → 35 lines, -42%)
-     *
-     * @param string $version Tutorial version to use
-     * @return array Session data
+     * @param string $version Catalog version (scenario identifier).
+     * @param string|null $raceOverride Run the tutorial as this race instead of the
+     *                                  real player's. Must be in RACES_EXT. Null
+     *                                  (default) keeps the real player's race.
      */
-    public function startTutorial(string $version = '1.0.0'): array
+    public function startTutorial(string $version = '1.0.0', ?string $raceOverride = null): array
     {
         $player = $this->context->getPlayer();
 
@@ -74,12 +74,12 @@ class TutorialManager
         $firstStepId = $this->stepRepository->getFirstStepId($version) ?? 'gaia_welcome';
         $totalSteps = $this->stepRepository->getTotalSteps($version);
 
-        // Get catalog entry for this version to determine the map template
-        $catalog = $this->db->exe(
-            "SELECT plan FROM tutorial_catalog WHERE version = ?",
-            [$version]
-        )->fetch_assoc();
-        $templatePlan = $catalog['plan'] ?? 'tutorial';
+        // Resolve catalog entry (plan + spawn coords) via the service —
+        // single source of truth instead of an ad-hoc SELECT here.
+        $catalog = (new TutorialCatalogService($this->db))->getByVersion($version);
+        $templatePlan = $catalog['plan']   ?? 'tutorial';
+        $spawnX       = (int) ($catalog['spawn_x'] ?? 0);
+        $spawnY       = (int) ($catalog['spawn_y'] ?? 0);
 
         // Create session
         $session = $this->sessionManager->createSession(
@@ -93,12 +93,19 @@ class TutorialManager
         // Update local session ID to match created session
         $this->sessionId = $session['session_id'];
 
+        // Null $raceOverride falls through to TutorialPlayerFactory's own
+        // "read race from the real player" default — avoid resolving it here
+        // so we don't duplicate the lookup.
+        $race = $raceOverride ?? ($player->data->race ?? null);
+
         // Create tutorial player and resources (Phase 4.3 — entity).
         $this->tutorialPlayer = $this->resourceManager->createTutorialPlayerAsEntity(
             $player->id,
             $this->sessionId,
-            $player->data->race ?? null,
-            $templatePlan
+            $race,
+            $templatePlan,
+            $spawnX,
+            $spawnY
         );
 
         // Update context to use tutorial player (for placeholder replacement).

@@ -46,12 +46,14 @@ class TutorialPlayerFactory
         int $realPlayerId,
         string $tutorialSessionId,
         ?string $race = null,
-        string $templatePlan = 'tutorial'
+        string $templatePlan = 'tutorial',
+        int $spawnX = 0,
+        int $spawnY = 0
     ): TutorialPlayer {
         // Step 1: Create isolated map instance for this tutorial session
         error_log("[TutorialPlayerFactory] Creating map instance for session {$tutorialSessionId} from template {$templatePlan}");
         $mapInstance = new TutorialMapInstance($conn);
-        $instanceData = $mapInstance->createInstance($tutorialSessionId, $templatePlan);
+        $instanceData = $mapInstance->createInstance($tutorialSessionId, $templatePlan, $spawnX, $spawnY);
         $startingCoordsId = $instanceData['starting_coords_id'];
 
         error_log("[TutorialPlayerFactory] Map instance created: {$instanceData['plan_name']}, starting at coords_id {$startingCoordsId}");

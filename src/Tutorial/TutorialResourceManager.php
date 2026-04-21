@@ -303,7 +303,9 @@ class TutorialResourceManager
         int $realPlayerId,
         string $sessionId,
         ?string $race = null,
-        string $templatePlan = 'tutorial'
+        string $templatePlan = 'tutorial',
+        int $spawnX = 0,
+        int $spawnY = 0
     ): TutorialPlayer {
         try {
             $entity = TutorialPlayerFactory::create(
@@ -311,7 +313,9 @@ class TutorialResourceManager
                 $realPlayerId,
                 $sessionId,
                 $race,
-                $templatePlan
+                $templatePlan,
+                $spawnX,
+                $spawnY
             );
 
             $this->spawnTutorialEnemy($sessionId);
