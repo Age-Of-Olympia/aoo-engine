@@ -58,7 +58,9 @@ class MissiveView
                         ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))
                 ) {
                     $raceJson = json()->decode('races', $desti->data->race);
-                    Forum::add_dest($player, $raceJson->animateur, $topJson, $destTbl);
+                    if ($raceJson !== null && !empty($raceJson->animateur)) {
+                        Forum::add_dest($player, $raceJson->animateur, $topJson, $destTbl);
+                    }
                 }
             }
 
@@ -93,7 +95,7 @@ class MissiveView
             <span
                 data-id="' . $dest->id . '"
                 class="cartouche dest"
-                style="background: ' . $raceJson->bgColor . '; color: ' . $raceJson->color . ';"
+                style="background: ' . ($raceJson?->bgColor ?? 'transparent') . '; color: ' . ($raceJson?->color ?? 'inherit') . ';"
                 >
                 ' . $dest->data->name . '
             </span>
@@ -140,14 +142,14 @@ class MissiveView
 
         $factionJson = json()->decode('factions', $player->data->faction);
 
-        echo '<option value="all_faction_' . $player->data->faction . '">' . $factionJson->name . ' (tous les membres)</option>';
+        echo '<option value="all_faction_' . $player->data->faction . '">' . ($factionJson?->name ?? $player->data->faction) . ' (tous les membres)</option>';
 
         foreach ($faction as $e) {
 
 
             $raceJson = json()->decode('races', $e->race);
 
-            echo '<option value="' . $e->id . '">- ' . $e->name . ' (' . $raceJson->name . ')</option>';
+            echo '<option value="' . $e->id . '">- ' . $e->name . ' (' . ($raceJson?->name ?? '???') . ')</option>';
         }
 
 
@@ -156,14 +158,14 @@ class MissiveView
 
             $secretJson = json()->decode('factions', $player->data->secretFaction);
 
-            echo '<option value="all_faction_' . $player->data->secretFaction . '">' . $secretJson->name . ' (tous les membres)</option>';
+            echo '<option value="all_faction_' . $player->data->secretFaction . '">' . ($secretJson?->name ?? $player->data->secretFaction) . ' (tous les membres)</option>';
 
             foreach ($secretFaction as $e) {
 
 
                 $raceJson = json()->decode('races', $e->race);
 
-                echo '<option value="' . $e->id . '">- ' . $e->name . ' (' . $raceJson->name . ')</option>';
+                echo '<option value="' . $e->id . '">- ' . $e->name . ' (' . ($raceJson?->name ?? '???') . ')</option>';
             }
         }
 
@@ -175,7 +177,10 @@ class MissiveView
 
             $raceJson = json()->decode('races', $e);
 
-            echo '<option value="' . $raceJson->animateur . '">- Animateur: ' . $raceJson->name . '</option>';
+            if ($raceJson === null || empty($raceJson->animateur)) {
+                continue;
+            }
+            echo '<option value="' . $raceJson->animateur . '">- Animateur: ' . ($raceJson?->name ?? $e) . '</option>';
         }
 
 

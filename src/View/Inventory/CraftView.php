@@ -86,13 +86,18 @@ class CraftView
         {
 
             $return = (object) array('data', 'id');
-            if (!$return->data = json()->decode('items', $item->getName())) {
+            $return->data = json()->decode('items', $item->getName());
+            $return->id = $item->getId();
 
+            // Unknown item — the JSON file for this item name does not
+            // exist. Return early with a null data payload; the caller
+            // renders a fallback row.
+            if (!$return->data) {
                 echo 'error ' . $item->getName();
+                return $return;
             }
 
             $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
-            $return->id = $item->getId();
             return $return;
         }
 

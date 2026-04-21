@@ -70,7 +70,7 @@ class SpellsView
         echo '<table border="1" align="center" class="marbre">';
 
 
-        if (!isset($raceJson->spells)) {
+        if (!$raceJson || !isset($raceJson->spells)) {
 
             exit('<p>Ce personnage ne vend pas de sorts.</p>');
         }

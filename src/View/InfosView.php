@@ -19,9 +19,10 @@ class InfosView
         $lastPostJson = json()->decode('forum', 'lastPosts');
 
 
-
-        $lastPostTime = $lastPostJson->general->time;
-        $lastPost = $lastPostJson->general->text;
+        // Degenerate shape — no cached forum summary yet, or a bad JSON
+        // file. Fall back to empty values so the profile still renders.
+        $lastPostTime = $lastPostJson?->general?->time ?? 0;
+        $lastPost     = $lastPostJson?->general?->text ?? '';
 
         if (!empty($lastPostJson->{$player->data->faction})) {
 
