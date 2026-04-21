@@ -13,12 +13,13 @@
  */
 
 describe('Tutorial System - Resume & Persistence Test', () => {
-  /* Generate unique account name for fresh test (letters only - no numbers allowed) */
+  /* Letters only — register.php's isValidName regex rejects digits. */
   const uniqueNames = ['Iota', 'Kappa', 'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi'];
   const randomName = uniqueNames[Math.floor(Math.random() * uniqueNames.length)];
   const timestamp = Date.now();
+  const timestampSuffix = timestamp.toString(36).replace(/[0-9]/g, '').slice(-6).padEnd(4, 'x');
   const TEST_ACCOUNT = {
-    name: `ResumeTest${randomName}`,
+    name: `ResumeTest${randomName}${timestampSuffix}`,
     password: 'testpass123',
     email: `resumetest${timestamp}@test.com`,
     race: 'nain',
