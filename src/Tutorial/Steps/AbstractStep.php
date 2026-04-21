@@ -102,12 +102,11 @@ abstract class AbstractStep
             $movementHint = $this->getValidationHint();
         }
 
-        // Get race-based max MVT from RaceService (not player data which may be modified)
-        $raceMaxMvt = 4; // Default fallback
-        if ($player->data && $player->data->race) {
-            $raceService = new \App\Service\RaceService();
-            $raceMaxMvt = $raceService->getRaceMaxMvt($player->data->race);
-        }
+        // Get race-based max MVT from RaceService (not player data which may be modified).
+        // RaceService already applies its own default for unknown/missing races;
+        // delegate entirely so the fallback lives in one place.
+        $raceService = new \App\Service\RaceService();
+        $raceMaxMvt = $raceService->getRaceMaxMvt($player->data?->race ?? '');
 
         $replacements = [
             '{PLAYER_NAME}' => $player->data->name ?? 'Aventurier',

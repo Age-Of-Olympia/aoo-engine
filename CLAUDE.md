@@ -667,7 +667,7 @@ Age of Olympia is a **turn-based survival RPG** where players:
 **Tutorial Database Tables**:
 - **Session & Player Tracking**:
   - `tutorial_progress`: Active tutorial sessions (player_id, tutorial_session_id, current_step, xp_earned, completed, tutorial_mode, tutorial_version)
-  - `tutorial_players`: Temporary player characters (id, real_player_id, tutorial_session_id, player_id, name, is_active)
+  - `tutorial_players`: Temporary player characters (id, tutorial_session_id, player_id, name, is_active) — link to real player lives on `players.real_player_id_ref`
   - `tutorial_enemies`: Spawned enemies for combat training (tutorial_session_id, enemy_player_id, enemy_coords_id)
 
 - **Step Configuration (Normalized Schema)**:
@@ -891,7 +891,7 @@ The tutorial adapts to the player's race for movement points:
 - `tutorial_step_ui`, `tutorial_step_validation`, `tutorial_step_prerequisites`, `tutorial_step_features`: 1:1 step configuration tables
 - `tutorial_step_highlights`, `tutorial_step_interactions`, `tutorial_step_context_changes`, `tutorial_step_next_preparation`: 1:N step configuration tables
 - `tutorial_progress`: Session tracking (tutorial_session_id, player_id, current_step, completed, tutorial_mode, tutorial_version, xp_earned)
-- `tutorial_players`: Tutorial characters (id, real_player_id, tutorial_session_id, player_id, name, is_active)
+- `tutorial_players`: Tutorial characters (id, tutorial_session_id, player_id, name, is_active) — link to real player lives on `players.real_player_id_ref`
 - `tutorial_enemies`: Combat training enemies (tutorial_session_id, enemy_player_id, enemy_coords_id)
 - `tutorial_dialogs`: Dialog configurations (dialog_id, npc_name, dialog_data JSON)
 
