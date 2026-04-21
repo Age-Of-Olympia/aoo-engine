@@ -62,7 +62,6 @@ try {
     // final step advanced, but we re-assert to keep this endpoint self-contained).
     $finalXp = (int) ($session['xp_earned'] ?? 0);
     $sessionManager->completeSession($sessionId, $finalXp);
-    error_log("[Complete] Player {$playerId} completed tutorial via complete.php (xp_earned={$finalXp})");
 
     // Award full completion rewards ONLY on first time (not a replay).
     // Also makes the endpoint idempotent: a second POST with the same
@@ -74,15 +73,12 @@ try {
         $mainPlayer->put_xp($completionReward['xp']); /* This adds both XP and PI */
         $xpEarned = $completionReward['xp'];
         $piEarned = $completionReward['pi'];
-        error_log("[Complete] Player {$playerId} received completion reward (first time): {$completionReward['xp']} XP/PI");
     } else {
-        error_log("[Complete] Player {$playerId} is replaying tutorial - no completion reward granted");
     }
 
     // Remove invisibleMode from main player
     if ($mainPlayer->have_option('invisibleMode')) {
         $mainPlayer->end_option('invisibleMode');
-        error_log("[Complete] Removed invisibleMode from player {$playerId}");
     }
 
     // Move player from waiting_room to faction's respawn plan if they're still there
@@ -105,7 +101,6 @@ try {
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
         $db->exe($sql, array($coordsId, $playerId));
 
-        error_log("[Complete] Player {$playerId} moved from waiting_room to {$respawnPlan}");
     }
 
     // Initialize player with race actions if not already added
@@ -124,7 +119,6 @@ try {
                 error_log("[Complete] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
             }
         }
-        error_log("[Complete] Player {$playerId} initialized with {$addedCount} new actions for race {$mainPlayer->data->race}");
     }
 
     // Deactivate any tutorial players.
@@ -136,7 +130,6 @@ try {
          WHERE p.real_player_id_ref = ?',
         $playerId
     );
-    error_log("[Complete] Deactivated tutorial players for real_player_id_ref={$playerId}");
 
     echo json_encode([
         'success' => true,
@@ -147,7 +140,6 @@ try {
 
 } catch (Exception $e) {
     error_log("[Complete] Error: " . $e->getMessage());
-    error_log("[Complete] Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         'success' => false,

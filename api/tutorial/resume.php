@@ -65,7 +65,6 @@ try {
                     $session['tutorial_player_id']
                 );
 
-                error_log("[Resume] Set tutorial session vars: session_id={$session['tutorial_session_id']}, tutorial_player_id={$session['tutorial_player_id']}, main_player={$playerId}");
 
                 // Force session write to persist across requests
                 session_write_close();

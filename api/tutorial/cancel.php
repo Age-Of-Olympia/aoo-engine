@@ -55,11 +55,9 @@ try {
     // IMPORTANT: Check if player has completed tutorial BEFORE marking current session as completed
     // This determines if they should receive rewards (first time) or not (replay)
     $hasCompletedBefore = $sessionManager->hasCompletedBefore($playerId);
-    error_log("[Cancel] Player {$playerId} hasCompletedBefore check (BEFORE marking current session): " . ($hasCompletedBefore ? 'YES (replay)' : 'NO (first time)'));
 
     // Clear tutorial session from PHP session (do this BEFORE creating Player object)
     TutorialHelper::exitTutorialMode();
-    error_log("[Cancel] Cleared tutorial session vars for player {$playerId}");
 
     // Force session write to persist the cleared vars
     session_write_close();
@@ -91,7 +89,6 @@ try {
                 // Commit transaction
                 $conn->commit();
 
-                error_log("[Cancel] Cancelled tutorial session {$sessionId}");
             } catch (\Exception $e) {
                 // Rollback on error
                 $conn->rollBack();
@@ -121,7 +118,6 @@ try {
                 // Commit transaction
                 $conn->commit();
 
-                error_log("[Cancel] Cancelled {$cleanedCount} active tutorial(s) for player {$playerId}");
             } catch (\Exception $e) {
                 // Rollback on error
                 $conn->rollBack();
@@ -139,7 +135,6 @@ try {
     // Remove invisibleMode so player can interact normally
     if ($mainPlayer->have_option('invisibleMode')) {
         $mainPlayer->end_option('invisibleMode');
-        error_log("[Cancel] Removed invisibleMode from player {$playerId}");
     }
 
     // Move player from waiting_room to faction's respawn plan if they're still there
@@ -168,7 +163,6 @@ try {
             $result = $coordsDb->exe('SELECT LAST_INSERT_ID() as id');
             $row = $result->fetch_assoc();
             $coordsId = $row['id'];
-            error_log("[Cancel] Created/found coords entry {$coordsId} for {$respawnPlan}");
         }
 
         // Update player's coordinates
@@ -176,7 +170,6 @@ try {
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
         $db->exe($sql, array($coordsId, $playerId));
 
-        error_log("[Cancel] Player {$playerId} moved from waiting_room to {$respawnPlan} (coords_id: {$coordsId})");
     }
 
     // Add race actions if not already present
@@ -195,7 +188,6 @@ try {
                 error_log("[Cancel] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
             }
         }
-        error_log("[Cancel] Player {$playerId} initialized with {$addedCount} new actions for race {$mainPlayer->data->race}");
     }
 
     // Grant skip rewards ONLY if this is their first time (not a replay)
@@ -203,22 +195,18 @@ try {
     if (!$hasCompletedBefore) {
         $skipReward = TUTORIAL_SKIP_REWARD;
         $mainPlayer->put_xp($skipReward['xp']); /* This adds both XP and PI */
-        error_log("[Cancel] Player {$playerId} received skip reward (first time): {$skipReward['xp']} XP/PI");
     } else {
-        error_log("[Cancel] Player {$playerId} is replaying tutorial - no rewards granted");
     }
 
     // Refresh player data and view cache (so new coords/stats are shown after reload)
     $mainPlayer->refresh_data(); /* Clear JSON cache */
     $mainPlayer->refresh_view(); /* Clear view HTML cache */
     $mainPlayer->getCoords(); /* Reload coordinates */
-    error_log("[Cancel] Player data and view refreshed - player at ({$mainPlayer->coords->x},{$mainPlayer->coords->y}) on plan {$mainPlayer->coords->plan}");
 
     // Clean output buffer (discard any PHP warnings/errors/output)
     if (ob_get_length()) {
         $buffered = ob_get_clean();
         if (!empty($buffered)) {
-            error_log("[Cancel] WARNING: Discarded buffered output: " . substr($buffered, 0, 200));
         }
         ob_start(); /* Restart buffer for clean JSON output */
     }

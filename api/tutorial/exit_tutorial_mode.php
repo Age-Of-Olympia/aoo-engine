@@ -72,7 +72,6 @@ try {
     unset($_SESSION['tutorial_session_id']);
     unset($_SESSION['tutorial_player_id']);
 
-    error_log("[exit_tutorial_mode] Switched from tutorial player $playerId to real player $realPlayerId");
 
     echo json_encode([
         'success' => true,
