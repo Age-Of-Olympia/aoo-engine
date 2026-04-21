@@ -79,6 +79,48 @@ class TutorialApiAuthGateInvariantTest extends TestCase
             'api/tutorial/check_session.php was an unauthenticated debug endpoint — '
             . 'it must not reappear. Use scripts/ for debug utilities.'
         );
+        $this->assertFileDoesNotExist(
+            self::API_DIR . '/exit_tutorial_mode.php',
+            'api/tutorial/exit_tutorial_mode.php was an orphan, bootstrap-'
+            . 'bypassing session-rewrite endpoint. It must not reappear — '
+            . 'use TutorialHelper::exitTutorialMode() from an authenticated '
+            . 'endpoint instead.'
+        );
+        $this->assertFileDoesNotExist(
+            self::API_DIR . '/check_tutorial_character.php',
+            'api/tutorial/check_tutorial_character.php was an orphan '
+            . 'bootstrap-bypassing endpoint. It must not reappear — if a '
+            . 'future UI needs this check, expose it from an authenticated '
+            . 'endpoint that loads config.php.'
+        );
+    }
+
+    #[Group('tutorial-api-auth-gate')]
+    public function testEveryApiFileRequiresSharedBootstrap(): void
+    {
+        // Defence in depth: the NO_LOGIN gate above only covers
+        // endpoints that declare NO_LOGIN. A file that skips
+        // config.php entirely (hand-rolling its own session_start()
+        // + bootstrap) dodges the whole config stack — auth,
+        // constants, error handlers, CSRF session keys, etc. Require
+        // every api/tutorial/*.php to include config.php so the
+        // invariant cannot be sidestepped that way.
+        $offenders = [];
+        foreach (glob(self::API_DIR . '/*.php') ?: [] as $path) {
+            $source = (string) file_get_contents($path);
+            if (!str_contains($source, '/../../config.php')) {
+                $offenders[] = basename($path);
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $offenders,
+            'api/tutorial/ files must require_once the shared config.php '
+            . '(optionally with NO_LOGIN beforehand) instead of hand-rolling '
+            . 'their own session_start + bootstrap. Offenders: '
+            . implode(', ', $offenders)
+        );
     }
 
     /**

@@ -19,11 +19,6 @@ use Tests\Tutorial\Mock\TutorialIntegrationTestCase;
  * Pins the behaviour of:
  *   - TutorialPlayerCleanup::cleanupOrphanedTutorialPlayers
  *   - TutorialResourceManager::cleanupPrevious (delegates to cleanup)
- *
- * The two API-endpoint readers (`api/tutorial/exit_tutorial_mode.php`
- * and `api/tutorial/check_tutorial_character.php`) are HTTP entry
- * points; we test their SQL shape indirectly via the same seed pattern
- * to confirm the JOIN finds the seeded real player id.
  */
 class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
 {
@@ -82,52 +77,6 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
         );
     }
 
-    #[Group('phase-4-5')]
-    #[Group('tutorial-link-collapse')]
-    public function testExitTutorialModeSqlShapeResolvesRealPlayerViaPlayersRow(): void
-    {
-        // Mirrors the JOIN shape api/tutorial/exit_tutorial_mode.php uses
-        // post-collapse: look up the tutorial session, resolve the real
-        // player via players.real_player_id_ref.
-        $realPlayerId = $this->seedRealPlayer();
-        $sessionId = 'coll-exit-' . bin2hex(random_bytes(4));
-        [$tutPlayerId, ] = $this->seedTutorialPlayer($realPlayerId, $sessionId);
-
-        // Fetch the same shape the endpoint returns.
-        $row = $this->conn->fetchAssociative(
-            'SELECT p.real_player_id_ref AS real_player_id
-             FROM tutorial_players tp
-             JOIN players p ON p.id = tp.player_id
-             WHERE tp.tutorial_session_id = ? AND tp.is_active = 1',
-            [$this->sessionIdForPlayer($tutPlayerId)]
-        );
-
-        $this->assertNotFalse($row, 'JOIN must find a row for the seeded session');
-        $this->assertSame($realPlayerId, (int) $row['real_player_id']);
-    }
-
-    #[Group('phase-4-5')]
-    #[Group('tutorial-link-collapse')]
-    public function testCheckTutorialCharacterSqlShapeResolvesRealPlayerViaPlayersRow(): void
-    {
-        // Mirrors api/tutorial/check_tutorial_character.php post-collapse.
-        $realPlayerId = $this->seedRealPlayer();
-        [$tutPlayerId, ] = $this->seedTutorialPlayer($realPlayerId, 'coll-check');
-
-        $row = $this->conn->fetchAssociative(
-            'SELECT p.real_player_id_ref, real_player.name AS real_player_name
-             FROM tutorial_players tp
-             JOIN players p ON p.id = tp.player_id
-             LEFT JOIN players real_player ON real_player.id = p.real_player_id_ref
-             WHERE tp.player_id = ?',
-            [$tutPlayerId]
-        );
-
-        $this->assertNotFalse($row);
-        $this->assertSame($realPlayerId, (int) $row['real_player_id_ref']);
-        $this->assertNotEmpty($row['real_player_name']);
-    }
-
     /*
      * ----------------- seed helpers -----------------
      * Populate `players.real_player_id_ref` only — the old
@@ -175,13 +124,5 @@ class TutorialLinkColumnCollapseTest extends TutorialIntegrationTestCase
     private function anyCoordsId(): int
     {
         return (int) $this->conn->fetchOne('SELECT id FROM coords ORDER BY id ASC LIMIT 1');
-    }
-
-    private function sessionIdForPlayer(int $tutPlayerId): string
-    {
-        return (string) $this->conn->fetchOne(
-            'SELECT tutorial_session_id FROM players WHERE id = ?',
-            [$tutPlayerId]
-        );
     }
 }
