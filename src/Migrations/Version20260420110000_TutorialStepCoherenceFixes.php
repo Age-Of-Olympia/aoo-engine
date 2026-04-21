@@ -8,31 +8,15 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Tutorial step coherence fixes for already-seeded environments.
- *
- * The initial seed (Version20251127000000_CreateCompleteTutorialSystem) was
- * edited in this session to correct two values, but editing the seed migration
- * only helps fresh installs — it has no effect on environments where that
- * migration (or the equivalent `db/init_noupdates.sql` snapshot) has already
- * been applied. This migration issues UPDATE statements that bring those
- * already-seeded rows in line with the corrected seed.
- *
- *   1. tutorial_steps.text for `movement_limit_warning` — previous wording
- *      "Chaque déplacement en consomme 1." was factually at odds with the
- *      preceding step `first_move` which has `unlimited_mvt=1`. Replaced by
- *      "À partir de maintenant, chaque déplacement consommera 1 mouvement."
- *      so the promise matches reality: consumption only starts at
+ * Realigns two already-seeded tutorial values with the corrected seed:
+ *   1. `movement_limit_warning.text` — drops the "Chaque déplacement en
+ *      consomme 1." clause that contradicted the preceding `first_move` step
+ *      (which runs with `unlimited_mvt=1`); consumption only starts at
  *      `deplete_movements`.
- *
- *   2. tutorial_step_ui.allow_manual_advance for `observe_tree` — the step's
- *      validation_type is `ui_panel_opened`, so the player must open the
- *      tree's panel (click the tree) to advance. With allow_manual_advance=1
- *      the step also rendered a Next button that bypassed the click entirely,
- *      letting the player skip the "look at the tree" teaching moment. Flipped
- *      to 0 so the tree click is the only way forward.
- *
- * Idempotent — every UPDATE scopes to the pre-fix value, so re-running is
- * a no-op.
+ *   2. `observe_tree.allow_manual_advance` — forced to 0 so the step's
+ *      `ui_panel_opened` validation is the only way forward (the Next button
+ *      previously let the player skip the teaching click).
+ * Idempotent: every UPDATE scopes to the pre-fix value.
  */
 final class Version20260420110000_TutorialStepCoherenceFixes extends AbstractMigration
 {
