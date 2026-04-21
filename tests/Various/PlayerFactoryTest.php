@@ -60,7 +60,7 @@ class PlayerFactoryTest extends TestCase
 
         $this->assertTrue($class->isFinal(), 'PlayerFactory should be final');
 
-        foreach (['legacy', 'legacyByName', 'active', 'activeId', 'entity', 'entityByName', 'activeEntity'] as $method) {
+        foreach (['legacy', 'legacyByName', 'active', 'activeId', 'entity', 'entityByName', 'realPlayerById', 'activeEntity'] as $method) {
             $this->assertTrue($class->hasMethod($method), "Missing method: {$method}");
             $this->assertTrue($class->getMethod($method)->isStatic(), "{$method} should be static");
             $this->assertTrue($class->getMethod($method)->isPublic(), "{$method} should be public");
@@ -133,6 +133,93 @@ class PlayerFactoryTest extends TestCase
         $params = $method->getParameters();
         $this->assertCount(1, $params, 'entityByName must take exactly one argument');
         $this->assertSame('string', (string) $params[0]->getType());
+
+        $returnType = $method->getReturnType();
+        $this->assertNotNull($returnType);
+        $this->assertSame('?App\\Entity\\RealPlayer', (string) $returnType);
+    }
+
+    #[Group('player-factory')]
+    public function testRealPlayerByIdReturnsNullWhenIdDoesNotExist(): void
+    {
+        $this->bootstrapOrSkip();
+
+        // An id high enough to never collide with seeded rows. The
+        // STI-narrow lookup must produce null, just like find() on the
+        // parent PlayerEntity would, not throw.
+        $this->assertNull(PlayerFactory::realPlayerById(999999999));
+    }
+
+    #[Group('player-factory')]
+    public function testRealPlayerByIdReturnsRealPlayerForRealPlayerId(): void
+    {
+        $link = $this->bootstrapOrSkip();
+
+        $row = $link->fetchAssociative(
+            "SELECT id FROM players WHERE id > 0 AND player_type = 'real' ORDER BY id ASC LIMIT 1"
+        );
+        if (empty($row['id'])) {
+            $this->markTestSkipped('No real player available for lookup test.');
+        }
+
+        $entity = PlayerFactory::realPlayerById((int) $row['id']);
+
+        $this->assertInstanceOf(\App\Entity\RealPlayer::class, $entity);
+        $this->assertSame((int) $row['id'], $entity->getId());
+    }
+
+    #[Group('player-factory')]
+    public function testRealPlayerByIdRejectsNpcId(): void
+    {
+        // STI narrowing: passing an NPC id (player_type='npc',
+        // negative id) must return null rather than hydrating the
+        // NonPlayerCharacter subclass. This is the guard that keeps
+        // ResetPasswordView from password-resetting an NPC "account".
+        $link = $this->bootstrapOrSkip();
+
+        $row = $link->fetchAssociative(
+            "SELECT id FROM players WHERE player_type = 'npc' ORDER BY id ASC LIMIT 1"
+        );
+        if (empty($row['id'])) {
+            $this->markTestSkipped('No NPC row available for STI-narrowing test.');
+        }
+
+        $this->assertNull(
+            PlayerFactory::realPlayerById((int) $row['id']),
+            'realPlayerById must not return NonPlayerCharacter rows'
+        );
+    }
+
+    #[Group('player-factory')]
+    public function testRealPlayerByIdRejectsTutorialPlayerId(): void
+    {
+        $link = $this->bootstrapOrSkip();
+
+        $row = $link->fetchAssociative(
+            "SELECT id FROM players WHERE player_type = 'tutorial' AND id > 0 ORDER BY id ASC LIMIT 1"
+        );
+        if (empty($row['id'])) {
+            $this->markTestSkipped('No tutorial player row available for STI-narrowing test.');
+        }
+
+        $this->assertNull(
+            PlayerFactory::realPlayerById((int) $row['id']),
+            'realPlayerById must not return TutorialPlayer rows'
+        );
+    }
+
+    #[Group('player-factory')]
+    public function testRealPlayerByIdSignatureReturnsNullableRealPlayer(): void
+    {
+        // Mirror of testEntityByNameSignatureReturnsNullableRealPlayer
+        // for the id-lookup flavour. Pins the ?RealPlayer contract so
+        // callers (ResetPasswordView, admin tooling) can rely on
+        // static analysis to catch miss-handling.
+        $method = new \ReflectionMethod(PlayerFactory::class, 'realPlayerById');
+
+        $params = $method->getParameters();
+        $this->assertCount(1, $params, 'realPlayerById must take exactly one argument');
+        $this->assertSame('int', (string) $params[0]->getType());
 
         $returnType = $method->getReturnType();
         $this->assertNotNull($returnType);

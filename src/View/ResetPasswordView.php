@@ -37,11 +37,12 @@ class ResetPasswordView
         
 
 
-        // Phase 3.3 — entity-layer lookup. entity()/entityByName() both
-        // return ?RealPlayer so caller branches meet at the same null
-        // check, no need for get_row() / ->row->mail afterwards.
+        // Phase 3.3 — entity-layer lookup. Both branches must resolve
+        // to ?RealPlayer so caller branches meet at the same null
+        // check (and NPC/TutorialPlayer ids cannot silently hydrate
+        // and reach the rest of the reset flow).
         if (is_numeric($_POST['name'])) {
-            $player = PlayerFactory::entity((int) $_POST['name']);
+            $player = PlayerFactory::realPlayerById((int) $_POST['name']);
         } else {
             $player = PlayerFactory::entityByName($_POST['name']);
         }
