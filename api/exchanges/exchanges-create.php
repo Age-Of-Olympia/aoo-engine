@@ -22,7 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ExitError($marketAccessError);
   }
   
-  $recipient = PlayerFactory::legacyByName($_POST['recipient']);
+  $recipient = PlayerFactory::legacyByName($_POST['recipient'] ?? '');
+  if($recipient === null){
+    ExitError('Destinataire inconnu');
+  }
   if($player->id == $recipient->id){
     ExitError('Vous ne pouvez pas vous échanger des objets à vous même');
   }

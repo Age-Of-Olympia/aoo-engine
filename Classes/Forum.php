@@ -435,8 +435,11 @@ class Forum{
             $dest = new Player($dest);
         }else if(is_string($dest)){
             $dest = PlayerFactory::legacyByName($dest);
+            if($dest === null){
+                return 'error dest unknown';
+            }
         }
-        
+
         $dest->get_data(false);
 
         if(!$destTbl){
