@@ -9,6 +9,7 @@
 require_once __DIR__ . '/../config.php';
 
 use App\Service\AdminAuthorizationService;
+use App\Service\CsrfProtectionService;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialHelper;
 
@@ -18,7 +19,28 @@ AdminAuthorizationService::DoAdminCheck();
 
 header('Content-Type: application/json; charset=utf-8');
 
-$version = $_GET['version'] ?? $_POST['version'] ?? '1.0.0';
+// State-changing endpoint: clears the admin's active tutorial and
+// starts a new one. Reject non-POST so an `<img src="…?version=…">`
+// embedded in any page the admin loads cannot silently fire this.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
+
+// CSRF gate: pair with the token rendered by tutorial-catalog.php on
+// the "Lancer" button. Validation fires BEFORE the UPDATE that wipes
+// the admin's prior tutorial_progress row.
+$csrf = new CsrfProtectionService();
+try {
+    $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+} catch (RuntimeException $e) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    exit;
+}
+
+$version = $_POST['version'] ?? '1.0.0';
 $db = new \Classes\Db();
 
 // Check if tutorial version exists in catalog
