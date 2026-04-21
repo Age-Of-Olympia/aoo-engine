@@ -120,6 +120,15 @@ class BourrinsView
         </tr>
         ';
 
+        // No entries for this carac (no hydratable players in the
+        // ranking, or every player rolled the same min value and the
+        // aggregator skipped the slot). Render the empty table shell
+        // and bail — the page header is already echoed above us.
+        if (empty($bestCarac[$carac])) {
+            echo '</table>';
+            return;
+        }
+
         $tbl = $bestCarac[$carac];
 
         krsort($tbl);
