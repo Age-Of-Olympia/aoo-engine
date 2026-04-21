@@ -52,6 +52,17 @@ try {
     $resourceManager = new \App\Tutorial\TutorialResourceManager();
     $sessionManager = new \App\Tutorial\TutorialSessionManager();
 
+    // IDOR guard: when a specific session_id is supplied, it is
+    // caller-controlled. Reject cross-player attempts before doing any
+    // cleanup. The $sessionId=null branch below is scoped to the
+    // caller's own playerId via WHERE player_id = ?, which is safe.
+    // See tests/Tutorial/TutorialSessionOwnershipTest.
+    if ($sessionId && !$sessionManager->playerOwnsSession($sessionId, (int) $playerId)) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Tutorial session not found']);
+        exit;
+    }
+
     // IMPORTANT: Check if player has completed tutorial BEFORE marking current session as completed
     // This determines if they should receive rewards (first time) or not (replay)
     $hasCompletedBefore = $sessionManager->hasCompletedBefore($playerId);
