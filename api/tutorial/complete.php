@@ -11,6 +11,7 @@ use App\Factory\PlayerFactory;
 use Classes\Db;
 use App\Tutorial\TutorialSessionManager;
 use App\Tutorial\TutorialHelper;
+use App\Tutorial\TutorialResourceManager;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
@@ -121,15 +122,25 @@ try {
         }
     }
 
-    // Deactivate any tutorial players.
-    // Phase 4.5: link is on players.real_player_id_ref; UPDATE via JOIN.
-    $result = $db->exe(
-        'UPDATE tutorial_players tp
-         JOIN players p ON p.id = tp.player_id
-         SET tp.is_active = 0
-         WHERE p.real_player_id_ref = ?',
-        $playerId
-    );
+    // Full resource cleanup — parity with cancel.php. The bare
+    // UPDATE tutorial_players SET is_active=0 that used to live here
+    // left behind:
+    //   - the tutorial enemy NPC (players row with negative id)
+    //   - that enemy's coords row
+    //   - the tutorial `players` row itself (positive-id tutorial avatar)
+    //   - the tutorial_map_instances entry and its coords
+    // One completion per player per replay accumulated three to five
+    // orphan rows with no cleanup job to reclaim them.
+    //
+    // Routing through TutorialResourceManager::deleteTutorialPlayerAsEntity
+    // removes all of the above in the correct FK-safe order, soft-deletes
+    // the tutorial_players row (preserving the audit trail), and matches
+    // the cancel.php flow one-to-one.
+    $resourceManager = new TutorialResourceManager();
+    $tutorialPlayer = $resourceManager->getTutorialPlayerAsEntity($sessionId);
+    if ($tutorialPlayer !== null) {
+        $resourceManager->deleteTutorialPlayerAsEntity($tutorialPlayer, $sessionId);
+    }
 
     echo json_encode([
         'success' => true,
