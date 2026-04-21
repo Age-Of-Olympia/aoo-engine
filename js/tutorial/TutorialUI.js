@@ -34,7 +34,6 @@ class TutorialUI {
      */
     init() {
         // Will be initialized with tooltip, highlighter, navigator
-        console.log('[TutorialUI] Initialized');
     }
 
     /**
@@ -44,7 +43,6 @@ class TutorialUI {
      */
     async start(mode = 'first_time', version = '1.0.0') {
         try {
-            console.log('[TutorialUI] Starting tutorial...', { mode, version });
 
             const response = await this.apiCall('/api/tutorial/start.php', {
                 mode: mode,
@@ -58,11 +56,9 @@ class TutorialUI {
                 this.totalSteps = response.total_steps;
                 this.isActive = true;
 
-                console.log('[TutorialUI] Tutorial started', response);
 
                 // Reload page to switch to tutorial character view
                 if (response.reload_required) {
-                    console.log('[TutorialUI] Reloading to tutorial map...');
                     // Set flag to auto-resume after reload
                     sessionStorage.setItem('tutorial_just_started', 'true');
                     // Reload to clean URL without query parameters to prevent loop
@@ -92,10 +88,8 @@ class TutorialUI {
      */
     async resume() {
         try {
-            console.log('[TutorialUI] Checking for resume...');
 
             const response = await this.apiCall('/api/tutorial/resume.php', {}, 'GET');
-            console.log('[TutorialUI] Resume API response:', response);
 
             if (response.success && response.has_active_tutorial) {
                 this.currentSession = response.session_id;
@@ -107,11 +101,9 @@ class TutorialUI {
                 this.pi = response.pi || 0;
                 this.isActive = true;
 
-                console.log('[TutorialUI] Resuming tutorial - current_step:', this.currentStep, 'step_id:', response.step_data?.step_id);
 
                 // Check if we need to reload to switch to tutorial map
                 if (response.reload_required) {
-                    console.log('[TutorialUI] Reloading to switch to tutorial map...');
                     // Set flag to auto-resume after reload
                     sessionStorage.setItem('tutorial_just_started', 'true');
                     window.location.reload();
@@ -126,7 +118,6 @@ class TutorialUI {
 
                 return true;
             } else {
-                console.log('[TutorialUI] No active tutorial to resume - response:', response);
                 return false;
             }
         } catch (error) {
@@ -136,7 +127,6 @@ class TutorialUI {
             if (!error.message || !error.message.includes('401')) {
                 alert(`Erreur lors de la reprise du tutoriel: ${error.message || 'Erreur inconnue'}\n\nVeuillez recharger la page.`);
             } else {
-                console.log('[TutorialUI] Not authenticated - silently failing resume');
             }
 
             return false;
@@ -177,21 +167,18 @@ class TutorialUI {
         const caracsPanel = document.querySelector('#caracs-panel');
         if (caracsPanel && caracsPanel.style.display !== 'none') {
             $('#caracs-panel').hide();
-            console.log('[TutorialUI] Closed characteristics panel');
         }
 
         // Close inventory panel if open
         const inventoryPanel = document.querySelector('#inventory-panel');
         if (inventoryPanel && inventoryPanel.style.display !== 'none') {
             $('#inventory-panel').hide();
-            console.log('[TutorialUI] Closed inventory panel');
         }
 
         // Close any open UI card
         const uiCard = document.querySelector('#ui-card');
         if (uiCard) {
             $('#ui-card').hide();
-            console.log('[TutorialUI] Closed UI card');
         }
     }
 
@@ -205,10 +192,8 @@ class TutorialUI {
      * @param {boolean} skipUIUpdate - If true, save progress but don't update UI (for pre-reload)
      */
     notifyAction(actionType, actionData = {}, skipUIUpdate = false) {
-        console.log('[TutorialUI] Action notification:', actionType, actionData, 'skipUI:', skipUIUpdate);
 
         if (!this.stepData) {
-            console.log('[TutorialUI] No current step data, ignoring action notification');
             return;
         }
 
@@ -218,7 +203,6 @@ class TutorialUI {
         // If step has manual advance enabled and doesn't require validation,
         // it should ONLY advance via the manual Next button, not via notifyAction
         if (allowManualAdvance && !requiresValidation) {
-            console.log('[TutorialUI] Step has manual advance and no validation, ignoring notifyAction (use Next button instead)');
             return;
         }
 
@@ -241,13 +225,11 @@ class TutorialUI {
          * duplicate step XP and racing the step pointer past the next step.
          */
         if (this.isAdvancing) {
-            console.log('[TutorialUI] next() already in progress; ignoring duplicate call');
             return false;
         }
         this.isAdvancing = true;
 
         try {
-            console.log('[TutorialUI] Advancing from step:', this.currentStep);
 
             if (!this.currentSession) {
                 console.error('[TutorialUI] ERROR: No current session! Cannot advance.');
@@ -267,34 +249,27 @@ class TutorialUI {
                 validation_data: validationData
             });
 
-            console.log('[TutorialUI] API response:', JSON.stringify(response, null, 2));
 
             if (response.success) {
-                console.log('[TutorialUI] ✅ ADVANCE SUCCESSFUL! New step:', response.current_step);
 
                 /* Check if the COMPLETED step requires page reload for next step (e.g., MVT restoration) */
                 if (this.stepData?.config?.prepare_next_step?.reload === 'true' || this.stepData?.config?.prepare_next_step?.reload === true) {
-                    console.log('[TutorialUI] Completed step requires reload for next step - reloading page...');
                     window.location.reload();
                     return true;
                 }
 
                 // Check if the COMPLETED step wanted to auto-close the card
                 if (this.stepData?.config?.auto_close_card && !skipUIUpdate) {
-                    console.log('[TutorialUI] Completed step requested auto-close card, closing...');
                     const closeBtn = document.querySelector('.close-card, #ui-card .close');
                     if (closeBtn) {
                         closeBtn.click();
-                        console.log('[TutorialUI] Card closed via button click');
                     } else {
                         $('#ui-card').hide();
-                        console.log('[TutorialUI] Card hidden via jQuery');
                     }
                 }
 
                 if (response.completed) {
                     // Tutorial complete!
-                    console.log('[TutorialUI] ✅ TUTORIAL COMPLETED! Response:', response);
                     if (!skipUIUpdate) {
                         this.onTutorialComplete(response);
                     } else {
@@ -302,14 +277,11 @@ class TutorialUI {
                     }
                 } else {
                     // Update state
-                    console.log('[TutorialUI] Previous step was:', this.currentStep);
                     this.currentStep = response.current_step;  // step_id (string)
                     this.currentStepPosition = response.current_step_position || this.currentStepPosition + 1;  // position (number)
                     this.xpEarned = response.xp_earned;
                     this.level = response.level;
                     this.pi = response.pi;
-                    console.log('[TutorialUI] Updated to step:', this.currentStep, 'position:', this.currentStepPosition);
-                    console.log('[TutorialUI] sessionStorage.tutorial_active is:', sessionStorage.getItem('tutorial_active'));
 
                     // Only update UI if not skipping (e.g., before page reload)
                     if (!skipUIUpdate) {
@@ -318,21 +290,17 @@ class TutorialUI {
 
                         // Render next step
                         if (response.step_data) {
-                            console.log('[TutorialUI] ✅ Advance SUCCESS - rendering new step:', response.step_data.step_id);
                             this.renderStep(response.step_data);
                         } else {
                             console.error('[TutorialUI] ⚠️ Advance SUCCESS but no step_data in response!', response);
                         }
                     } else {
-                        console.log('[TutorialUI] Skipping UI update - page will reload. sessionStorage.tutorial_active:', sessionStorage.getItem('tutorial_active'));
-                        console.log('[TutorialUI] Next step that should load on new page:', response.current_step);
                     }
                 }
 
                 return true;
             } else {
                 // Validation not met yet
-                console.log('[TutorialUI] Validation not met yet:', response.hint || response.error);
 
                 // Only show feedback if this was a manual button click
                 if (showFeedbackOnFailure) {
@@ -355,8 +323,6 @@ class TutorialUI {
      * Render tutorial step
      */
     async renderStep(stepData) {
-        console.log('[TutorialUI] Rendering step', stepData);
-        console.log('[TutorialUI] renderStep() called from:', new Error().stack);
 
         // Store stepData for external access (e.g., E2E tests)
         this.stepData = stepData;
@@ -403,7 +369,6 @@ class TutorialUI {
         const showDelay = stepData.config?.show_delay || 0;
 
         if (showDelay > 0) {
-            console.log(`[TutorialUI] Delaying tooltip/highlight by ${showDelay}ms`);
             await new Promise(resolve => setTimeout(resolve, showDelay));
         }
 
@@ -412,7 +377,6 @@ class TutorialUI {
 
         // Highlight target element if specified (now after panel is ready)
         if (stepData.target_selector && this.highlighter) {
-            console.log('[TutorialUI] Creating highlight for step:', stepData.step_id, 'selector:', stepData.target_selector);
             this.highlighter.highlight(stepData.target_selector, {
                 pulsate: stepData.config?.requires_validation
             });
@@ -422,11 +386,9 @@ class TutorialUI {
         if (stepData.config?.additional_highlights && this.highlighter) {
             const additionalHighlights = stepData.config.additional_highlights;
             if (Array.isArray(additionalHighlights)) {
-                console.log('[TutorialUI] Creating additional highlights for step:', stepData.step_id, 'count:', additionalHighlights.length);
                 additionalHighlights.forEach(selector => {
                     // Don't re-highlight the main target
                     if (selector !== stepData.target_selector) {
-                        console.log('[TutorialUI] Additional highlight:', selector);
                         this.highlighter.highlight(selector, { pulsate: false });
                     }
                 });
@@ -436,10 +398,8 @@ class TutorialUI {
         // Check for auto-advance flag
         if (stepData.config?.auto_advance_delay) {
             const delay = parseInt(stepData.config.auto_advance_delay);
-            console.log(`[TutorialUI] Step will auto-advance in ${delay}ms`);
 
             setTimeout(() => {
-                console.log('[TutorialUI] Auto-advancing step...');
                 this.next({}, false);
             }, delay);
         }
@@ -469,19 +429,11 @@ class TutorialUI {
                                stepData.config?.validation_params?.element_clicked === 'tutorial_next';
         const hideNextButton = Boolean(stepData.config?.requires_validation) && !isManualAdvance;
 
-        console.log('[TutorialUI] showStepTooltip', {
-            step_id: stepData.step_id,
-            requires_validation_raw: stepData.config?.requires_validation,
-            isManualAdvance: isManualAdvance,
-            hideNextButton: hideNextButton
-        });
 
         if (this.tooltip) {
             this.tooltip.show(title, text, targetSelector, position, hideNextButton);
         } else {
-            // Fallback: simple display
-            console.log('[TutorialUI] Tooltip not initialized, showing alert');
-            console.log(`${title}: ${text}`);
+            console.warn('[TutorialUI] Tooltip not initialized; cannot display step text');
         }
     }
 
@@ -543,11 +495,9 @@ class TutorialUI {
 
         // Bind skip button - use event delegation for reliability
         $(document).off('click', '#tutorial-skip').on('click', '#tutorial-skip', () => {
-            console.log('[TutorialUI] Skip button handler fired');
             this.skip();
         });
 
-        console.log('[TutorialUI] Overlay shown');
     }
 
     /**
@@ -565,7 +515,6 @@ class TutorialUI {
 
         // Remove previous event blocker (from semi-blocking mode)
         if (this.eventBlocker) {
-            console.log('[TutorialUI] Removing previous event blocker');
             document.removeEventListener('click', this.eventBlocker, true);
             this.eventBlocker = null;
         }
@@ -576,7 +525,6 @@ class TutorialUI {
             this.domObserver = null;
         }
 
-        console.log('[TutorialUI] Applying interaction mode:', mode);
 
         if (mode === 'blocking') {
             // Full blocking - show overlay, disable all game interactions
@@ -647,7 +595,6 @@ class TutorialUI {
      * Intercepts clicks in capture phase, allows clicks on allowed elements only
      */
     setupSemiBlockingEventHandler(stepData) {
-        console.log('[TutorialUI] Setting up semi-blocking event handler');
 
         const allowedSelectors = stepData.config?.allowed_interactions || [];
         const validationType = stepData.config?.validation_type;
@@ -656,12 +603,10 @@ class TutorialUI {
         this.eventBlocker = (e) => {
             const target = e.target;
 
-            console.log('[TutorialUI] Click detected on:', target, 'classes:', target.className);
 
             // Always allow clicks on tutorial UI elements (including skip modal)
             if ($(target).closest('#tutorial-controls, .tutorial-tooltip, #tutorial-next, #tutorial-skip-modal, .tutorial-modal-overlay').length > 0 ||
                 $(target).is('#tutorial-next')) {
-                console.log('[TutorialUI] ✅ Tutorial UI click allowed');
                 return; // Allow clicks on tutorial UI
             }
 
@@ -671,10 +616,8 @@ class TutorialUI {
                 const matches = $(target).is(selector);
                 const hasParent = $(target).closest(selector).length > 0;
 
-                console.log(`[TutorialUI] Checking selector "${selector}": matches=${matches}, hasParent=${hasParent}`);
 
                 if (matches || hasParent) {
-                    console.log('[TutorialUI] ✅ Click allowed on:', selector, target);
 
                     // Track click for UI interaction validation
                     if (validationType === 'ui_interaction') {
@@ -693,7 +636,6 @@ class TutorialUI {
                         if ($target.length > 0) {
                             const actionName = $target.data('action') || $target.attr('data-action');
                             if (actionName) {
-                                console.log('[TutorialUI] Action button clicked during tutorial:', actionName);
 
                                 // Don't notify immediately - wait for action to actually execute
                                 // Actions require 2 clicks: 1st expands button, 2nd executes
@@ -708,7 +650,6 @@ class TutorialUI {
             }
 
             // Block all other clicks
-            console.log('[TutorialUI] ❌ Click blocked - no matching selector found');
             e.stopPropagation();
             e.preventDefault();
 
@@ -759,7 +700,6 @@ class TutorialUI {
      * Sends validation data to advance the tutorial when the expected element is clicked
      */
     trackElementClick(selector, targetElement, stepData) {
-        console.log('[TutorialUI] Tracking click for validation:', selector);
 
         // Check if this is a navigation link - if so, we need to wait for validation
         const $link = $(targetElement).closest('a[href]');
@@ -767,14 +707,12 @@ class TutorialUI {
 
         if (isNavigationLink) {
             const href = $link.attr('href');
-            console.log('[TutorialUI] Navigation link clicked, advancing step before navigation to:', href);
 
             // Send validation and wait for it before navigating
             this.next({
                 element_clicked: selector,
                 target_selector: stepData.config?.target_selector
             }, true).then(() => {  // skipUIUpdate=true since we're navigating anyway
-                console.log('[TutorialUI] Step advanced, now navigating to:', href);
                 window.location.href = href;
             }).catch(err => {
                 console.error('[TutorialUI] Failed to advance step, navigating anyway:', err);
@@ -797,7 +735,6 @@ class TutorialUI {
      * Allow specific interactions (semi-blocking mode)
      */
     allowSpecificInteractions(selectors) {
-        console.log('[TutorialUI] Allowing interactions:', selectors);
 
         // Store selectors for re-application
         this.allowedSelectors = selectors;
@@ -806,12 +743,10 @@ class TutorialUI {
         const applyAllowedClasses = () => {
             selectors.forEach(selector => {
                 const $elements = $(selector);
-                console.log(`[TutorialUI] Found ${$elements.length} elements for selector: ${selector}`);
                 $elements.addClass('tutorial-allowed-element');
             });
 
             const totalAllowed = $('.tutorial-allowed-element').length;
-            console.log(`[TutorialUI] Total allowed elements: ${totalAllowed}`);
         };
 
         // Apply initially
@@ -823,7 +758,6 @@ class TutorialUI {
         }
 
         this.domObserver = new MutationObserver(() => {
-            console.log('[TutorialUI] DOM changed, re-applying allowed classes');
             applyAllowedClasses();
         });
 
@@ -854,7 +788,6 @@ class TutorialUI {
         if (!uiValidationTypes.includes(validationType)) {
             return;
         }
-        console.log('[TutorialUI] Setting up UI observer for:', validationType);
 
         if (validationType === 'ui_panel_opened') {
             const panel = stepData.config?.validation_params?.panel;
@@ -890,14 +823,12 @@ class TutorialUI {
             return;
         }
 
-        console.log('[TutorialUI] Setting up panel visibility observer for:', panelSelector);
 
         this.panelObserver = new MutationObserver((mutations) => {
             // Check if panel is now visible
             const isVisible = $(panelSelector).is(':visible');
 
             if (isVisible && this.isActive) {
-                console.log('[TutorialUI] Panel became visible, sending validation');
 
                 // Send validation
                 window.notifyTutorial('ui_interaction', {
@@ -923,7 +854,6 @@ class TutorialUI {
         // Also check immediately in case panel is already visible
         const isVisible = $(panelSelector).is(':visible');
         if (isVisible && this.isActive) {
-            console.log('[TutorialUI] Panel already visible on setup');
             window.notifyTutorial('ui_interaction', {
                 panel: panelType,
                 panel_visible: true,
@@ -943,7 +873,6 @@ class TutorialUI {
             return;
         }
 
-        console.log('[TutorialUI] Setting up actions panel observer');
 
         /* Note: we deliberately do NOT use "any children in #ajax-data" as a
          * trigger. When a step like close_card_for_tree completes, #ui-card is
@@ -961,7 +890,6 @@ class TutorialUI {
 
         this.panelObserver = new MutationObserver(() => {
             if (isActionsPanelOpen() && this.isActive) {
-                console.log('[TutorialUI] Actions panel opened, sending validation');
                 window.notifyTutorial('ui_interaction', {
                     panel: 'actions',
                     panel_visible: true,
@@ -987,7 +915,6 @@ class TutorialUI {
          * of the strict signals (actions/case-infos/visible ui-card), not
          * merely "#ajax-data has children". */
         if (isActionsPanelOpen() && this.isActive) {
-            console.log('[TutorialUI] Actions panel already visible on setup');
             window.notifyTutorial('ui_interaction', {
                 panel: 'actions',
                 panel_visible: true,
@@ -1006,7 +933,6 @@ class TutorialUI {
         // Check immediately if element is already hidden/doesn't exist
         const isAlreadyHidden = !targetElement || !$(elementSelector).is(':visible');
         if (isAlreadyHidden && this.isActive) {
-            console.log('[TutorialUI] Element already hidden/not found, auto-advancing');
             window.notifyTutorial('ui_interaction', {
                 element: elementSelector,
                 is_hidden: true,
@@ -1020,7 +946,6 @@ class TutorialUI {
             return;
         }
 
-        console.log('[TutorialUI] Setting up element hidden observer for:', elementSelector);
 
         this.panelObserver = new MutationObserver((mutations) => {
             // Check if element is now hidden
@@ -1028,7 +953,6 @@ class TutorialUI {
             const isHidden = !element || !$(elementSelector).is(':visible');
 
             if (isHidden && this.isActive) {
-                console.log('[TutorialUI] Element hidden, sending validation');
 
                 // Send validation
                 window.notifyTutorial('ui_interaction', {
@@ -1066,12 +990,10 @@ class TutorialUI {
      * Used for ui_element_visible validation type
      */
     setupElementVisibleObserver(elementSelector) {
-        console.log('[TutorialUI] Setting up element visible observer for:', elementSelector);
 
         /* Check immediately if element is already visible */
         const existingElement = document.querySelector(elementSelector);
         if (existingElement && $(elementSelector).is(':visible') && this.isActive) {
-            console.log('[TutorialUI] Element already visible, sending validation immediately');
             window.notifyTutorial('ui_interaction', {
                 element: elementSelector,
                 is_visible: true,
@@ -1087,7 +1009,6 @@ class TutorialUI {
             const isVisible = element && $(elementSelector).is(':visible');
 
             if (isVisible && this.isActive) {
-                console.log('[TutorialUI] Element became visible:', elementSelector);
 
                 /* Send validation */
                 window.notifyTutorial('ui_interaction', {
@@ -1127,12 +1048,10 @@ class TutorialUI {
      */
     cleanupObservers() {
         if (this.panelObserver) {
-            console.log('[TutorialUI] Cleaning up panel observer');
             this.panelObserver.disconnect();
             this.panelObserver = null;
         }
         if (this.elementVisibleObserver) {
-            console.log('[TutorialUI] Cleaning up element visible observer');
             this.elementVisibleObserver.disconnect();
             this.elementVisibleObserver = null;
         }
@@ -1148,29 +1067,24 @@ class TutorialUI {
             return; // No prerequisites
         }
 
-        console.log('[TutorialUI] Checking prerequisites:', prereqs);
 
         // Note: Actual resource restoration happens server-side in TutorialContext
         // This is just for client-side display/validation
 
         if (prereqs.mvt !== undefined) {
-            console.log(`[TutorialUI] Step requires ${prereqs.mvt} movement(s)`);
             // Refresh characteristics panel if it's open (to show updated movement count)
             this.refreshCaracsPanel();
         }
 
         if (prereqs.actions !== undefined) {
-            console.log(`[TutorialUI] Step requires ${prereqs.actions} action point(s)`);
             // Refresh characteristics panel if it's open
             this.refreshCaracsPanel();
         }
 
         if (prereqs.ensure_enemy) {
-            console.log(`[TutorialUI] Step requires enemy: ${prereqs.ensure_enemy}`);
         }
 
         if (prereqs.ensure_item) {
-            console.log(`[TutorialUI] Step requires item: ${prereqs.ensure_item}`);
         }
     }
 
@@ -1181,16 +1095,13 @@ class TutorialUI {
         // Use target_selector from stepData directly, not from config
         const targetSelector = stepData.target_selector;
 
-        console.log('[TutorialUI] ensurePanelVisibility called with targetSelector:', targetSelector);
 
         if (!targetSelector) {
-            console.log('[TutorialUI] No target selector, skipping panel visibility');
             return Promise.resolve(); // Return resolved promise if nothing to do
         }
 
         // If step targets an action button, ensure correct actions panel is open
         if (targetSelector.includes('.action[data-action=')) {
-            console.log('[TutorialUI] Detected action button target, checking panel...');
             const $actionsPanel = $('#ui-card');
 
             // Check if this is a combat step targeting enemy actions
@@ -1199,7 +1110,6 @@ class TutorialUI {
                                  stepData.action_name === 'attaque_double';
 
             if (!$actionsPanel.is(':visible')) {
-                console.log('[TutorialUI] Opening actions panel for step (combat:', isCombatStep, ')');
 
                 // Return a promise that resolves when panel is ready
                 return new Promise((resolve) => {
@@ -1208,32 +1118,27 @@ class TutorialUI {
 
                     if (isCombatStep) {
                         // Combat step - open enemy panel
-                        console.log('[TutorialUI] Combat step detected, opening enemy panel');
                         this.openEnemyCard();
                     } else {
                         // Non-combat action - open player panel
-                        console.log('[TutorialUI] Non-combat step, opening player panel');
 
                         // Get player coords from window (set in TutorialView.php)
                         let playerCoords = window.dataCoords;
 
                         // Fallback: if dataCoords not available yet, wait briefly for it
                         if (!playerCoords) {
-                            console.log('[TutorialUI] window.dataCoords not ready, waiting briefly...');
 
                             let coordsRetries = 0;
                             const maxCoordsRetries = 3; // Max 300ms - if not ready quickly, use avatar method
 
                             const waitForCoords = () => {
                                 if (window.dataCoords) {
-                                    console.log('[TutorialUI] window.dataCoords now available:', window.dataCoords);
                                     playerCoords = window.dataCoords;
                                     this.openPlayerCardDirect(playerCoords);
                                 } else if (coordsRetries < maxCoordsRetries) {
                                     coordsRetries++;
                                     setTimeout(waitForCoords, 100);
                                 } else {
-                                    console.log('[TutorialUI] window.dataCoords not available after 300ms, using avatar fallback');
                                     this.openPlayerCardViaAvatar();
                                 }
                             };
@@ -1246,7 +1151,6 @@ class TutorialUI {
                     }
                 });
             } else {
-                console.log('[TutorialUI] Actions panel already visible');
                 return Promise.resolve(); // Panel already visible
             }
         }
@@ -1261,7 +1165,6 @@ class TutorialUI {
             const $caracsPanel = $('#load-caracs');
 
             if (!$caracsPanel.is(':visible')) {
-                console.log('[TutorialUI] Opening characteristics panel for step');
 
                 // Return a promise that resolves when panel is ready
                 return new Promise((resolve) => {
@@ -1275,7 +1178,6 @@ class TutorialUI {
 
                     const checkPanelVisible = async () => {
                         if ($('#load-caracs').is(':visible')) {
-                            console.log('[TutorialUI] Panel now visible, refreshing...');
                             await this.refreshCaracsPanel(); // Wait for panel to be fully refreshed
                             resolve(); // Panel ready
                         } else if (retries < maxRetries) {
@@ -1305,14 +1207,12 @@ class TutorialUI {
      * Open player card directly by making AJAX call to observe.php
      */
     openPlayerCardDirect(coords) {
-        console.log('[TutorialUI] Opening player card via direct AJAX call with coords:', coords);
 
         $.ajax({
             type: "POST",
             url: 'observe.php',
             data: {'coords': coords},
             success: (data) => {
-                console.log('[TutorialUI] observe.php returned, loading card into #ajax-data');
                 $('#ajax-data').html(data);
 
                 // Cache the result like view.js does
@@ -1332,20 +1232,17 @@ class TutorialUI {
      * Open enemy card for combat steps
      */
     openEnemyCard() {
-        console.log('[TutorialUI] Opening enemy card...');
 
         // Find the enemy image element (marked with .tutorial-enemy class)
         const $enemyImage = $('.tutorial-enemy, .enemy');
 
         if ($enemyImage.length > 0) {
-            console.log('[TutorialUI] Found enemy image element');
 
             // The enemy image is in SVG layer, not inside .case
             // Get x,y attributes from the image element
             const enemyX = $enemyImage.attr('x');
             const enemyY = $enemyImage.attr('y');
 
-            console.log('[TutorialUI] Enemy position - x:', enemyX, 'y:', enemyY);
 
             if (enemyX !== undefined && enemyY !== undefined) {
                 // Find the .case tile at this position
@@ -1353,7 +1250,6 @@ class TutorialUI {
 
                 if ($tile.length > 0) {
                     const coords = $tile.data('coords');
-                    console.log('[TutorialUI] Found tile at enemy position with coords:', coords);
 
                     if (coords) {
                         // Open the enemy's observation panel
@@ -1362,7 +1258,6 @@ class TutorialUI {
                             url: 'observe.php',
                             data: {'coords': coords},
                             success: (data) => {
-                                console.log('[TutorialUI] observe.php returned enemy data, loading into #ajax-data');
                                 $('#ajax-data').html(data);
 
                                 // Cache the result
@@ -1419,7 +1314,6 @@ class TutorialUI {
      * Open player card by finding coords from avatar element (fallback method)
      */
     openPlayerCardViaAvatar() {
-        console.log('[TutorialUI] Trying to get coords from avatar element...');
 
         const $avatar = $('#current-player-avatar');
         if ($avatar.length > 0) {
@@ -1427,14 +1321,12 @@ class TutorialUI {
             const avatarX = $avatar.attr('x');
             const avatarY = $avatar.attr('y');
 
-            console.log('[TutorialUI] Avatar at position x:', avatarX, 'y:', avatarY);
 
             // Find the .case element at this position
             const $case = $(`.case[x="${avatarX}"][y="${avatarY}"]`);
 
             if ($case.length > 0) {
                 const coords = $case.data('coords');
-                console.log('[TutorialUI] Found case at avatar position with coords:', coords);
 
                 if (coords) {
                     this.openPlayerCardDirect(coords);
@@ -1457,11 +1349,9 @@ class TutorialUI {
         const maxRetries = 50; // Max 5 seconds
         const checkPanelVisible = () => {
             if ($('#ui-card').is(':visible')) {
-                console.log('[TutorialUI] Actions panel now visible');
 
                 // Resolve the promise if callback exists
                 if (this.panelReadyCallback) {
-                    console.log('[TutorialUI] Calling panelReadyCallback - tooltip can now be shown');
                     this.panelReadyCallback();
                     this.panelReadyCallback = null;
                 }
@@ -1473,7 +1363,6 @@ class TutorialUI {
 
                 // Resolve anyway to prevent hanging
                 if (this.panelReadyCallback) {
-                    console.log('[TutorialUI] Timeout - resolving anyway to prevent hang');
                     this.panelReadyCallback();
                     this.panelReadyCallback = null;
                 }
@@ -1488,14 +1377,12 @@ class TutorialUI {
     refreshCaracsPanel() {
         // Only refresh if panel is visible
         if ($('#load-caracs').is(':visible')) {
-            console.log('[TutorialUI] Refreshing characteristics panel...');
             return new Promise((resolve, reject) => {
                 $.ajax({
                     type: "POST",
                     url: "load_caracs.php",
                     success: function(data) {
                         $("#load-caracs").html(data);
-                        console.log('[TutorialUI] Characteristics panel refreshed');
                         // Wait a bit more for DOM to settle and elements to be fully positioned
                         setTimeout(() => resolve(), 100);
                     },
@@ -1517,11 +1404,9 @@ class TutorialUI {
      * Watch for action result to appear in DOM (after action executes)
      */
     watchForActionResult(actionName) {
-        console.log('[TutorialUI] Watching for action result:', actionName);
 
         // Check if already watching
         if (this.actionResultObserver) {
-            console.log('[TutorialUI] Already watching for action result, skipping');
             return;
         }
 
@@ -1535,12 +1420,8 @@ class TutorialUI {
         this.actionResultObserver = new MutationObserver((mutations) => {
             // Check if action result text appeared (not just "Lancé de dés...")
             const content = cardText.textContent;
-            console.log('[TutorialUI] Card text changed. Content:', content.substring(0, 100));
-            console.log('[TutorialUI] Contains dice?', content.includes('Lancé de dés'));
-            console.log('[TutorialUI] Content length:', content.trim().length);
 
             if (content && !content.includes('Lancé de dés') && content.trim().length > 10) {
-                console.log('[TutorialUI] ✅ Action result detected! Notifying with actionName:', actionName);
 
                 // Disconnect observer
                 if (this.actionResultObserver) {
@@ -1563,7 +1444,6 @@ class TutorialUI {
             characterData: true
         });
 
-        console.log('[TutorialUI] Action result observer started for:', actionName);
     }
 
     hideTutorialOverlay() {
@@ -1598,7 +1478,6 @@ class TutorialUI {
         }
 
         this.isActive = false;
-        console.log('[TutorialUI] Overlay hidden');
     }
 
     /**
@@ -1623,7 +1502,6 @@ class TutorialUI {
      * Skip/Cancel tutorial - shows modal with clear reward communication
      */
     async skip() {
-        console.log('[TutorialUI] Skip button clicked - showing modal');
 
         /* Remove any existing modal first */
         $('#tutorial-skip-modal').remove();
@@ -1709,7 +1587,6 @@ class TutorialUI {
 
         /* Cancel button - skip without completion, grant skip rewards */
         $('#tutorial-skip-cancel').on('click', async () => {
-            console.log('[TutorialUI] User chose to skip tutorial');
 
             /* Confirmation dialog - different message for replay vs first time */
             const confirmMessage = isReplay
@@ -1766,7 +1643,6 @@ class TutorialUI {
 
         /* Close button - return to tutorial */
         $('#tutorial-skip-close').on('click', () => {
-            console.log('[TutorialUI] User chose to return to tutorial');
             $modal.fadeOut(300, () => $modal.remove());
         });
     }
@@ -1775,15 +1651,10 @@ class TutorialUI {
      * Tutorial complete
      */
     onTutorialComplete(response) {
-        console.log('[TutorialUI] ========================================');
-        console.log('[TutorialUI] 🎉 onTutorialComplete() called');
-        console.log('[TutorialUI] Response:', JSON.stringify(response, null, 2));
-        console.log('[TutorialUI] ========================================');
 
         // Get redirect delay from step config (in milliseconds, default 5000ms = 5s)
         const redirectDelayMs = response.step_data?.config?.redirect_delay ?? 5000;
         const redirectDelaySec = Math.ceil(redirectDelayMs / 1000);
-        console.log('[TutorialUI] Redirect delay:', redirectDelayMs, 'ms (', redirectDelaySec, 'seconds)');
 
         // Remove any existing modal first
         $('#tutorial-complete-modal').remove();
@@ -1846,7 +1717,6 @@ class TutorialUI {
             $('#auto-redirect-text').fadeOut(300, function() {
                 $(this).html('<em style="opacity: 0.7;">Redirection automatique annulée</em>').fadeIn(300);
             });
-            console.log('[TutorialUI] Auto-redirect cancelled by user');
         });
     }
 
@@ -1869,7 +1739,6 @@ class TutorialUI {
 
         try {
             await this.apiCall('/api/tutorial/complete.php', { session_id: sessionId }, 'POST');
-            console.log('[TutorialUI] Server-side completion succeeded');
         } catch (error) {
             /* Don't block the redirect on a failure — log + continue so the
              * user isn't trapped in the modal. The hard cypress assertion on
@@ -1943,7 +1812,6 @@ class TutorialUI {
             // Try to parse error response
             try {
                 const errorBody = await response.json();
-                console.log('[TutorialUI] Validation response:', errorBody);
                 return errorBody; // Return the error response instead of throwing
             } catch (e) {
                 // If we can't parse it, throw
@@ -1992,7 +1860,6 @@ class TutorialUI {
             return; // This step type doesn't support auto-validation
         }
 
-        console.log('[TutorialUI] Checking auto-validation for step', stepData.step_number);
 
         // Try to validate automatically (e.g., movements_depleted)
         // Use notifyAction which calls this.next() internally

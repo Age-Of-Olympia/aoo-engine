@@ -104,9 +104,7 @@ class TutorialTooltip {
 
                 // Wait for target element to be ready if specified
                 if (targetSelector) {
-                    console.log(`[TutorialTooltip] Waiting for element: ${targetSelector}`);
                     await this.waitForElementReady(targetSelector);
-                    console.log(`[TutorialTooltip] Element ready, positioning...`);
                 }
 
                 // Clear all positioning CSS from previous step (especially transforms!)
@@ -134,7 +132,6 @@ class TutorialTooltip {
                     if ($target.length > 0) {
                         const targetRect = $target[0].getBoundingClientRect();
                         const tooltipRect = this.$tooltip[0].getBoundingClientRect();
-                        console.log(`[TutorialTooltip] Positioned - Target: (${targetRect.left}, ${targetRect.top}) ${targetRect.width}x${targetRect.height}, Tooltip: (${tooltipRect.left}, ${tooltipRect.top}) ${tooltipRect.width}x${tooltipRect.height}`);
                     }
                 }
 
@@ -160,14 +157,11 @@ class TutorialTooltip {
             // Check if tooltip is currently visible
             if (this.$tooltip.is(':visible')) {
                 // Tooltip is visible - fade out first, then update
-                console.log('[TutorialTooltip] Tooltip visible, fading out first');
                 await new Promise(resolve => {
                     // Stop any pending animations (fixes queue conflicts with hide() method)
                     this.$tooltip.stop(true, false).fadeOut(150, resolve);
                 });
-                console.log('[TutorialTooltip] Fade out complete, now updating');
             } else {
-                console.log('[TutorialTooltip] Tooltip was hidden, updating directly');
             }
 
             // Now update the tooltip (it's hidden at this point)
@@ -212,9 +206,7 @@ class TutorialTooltip {
 
             // Wait for target element to be ready if specified
             if (targetSelector) {
-                console.log(`[TutorialTooltip] Waiting for element: ${targetSelector}`);
                 await this.waitForElementReady(targetSelector);
-                console.log(`[TutorialTooltip] Element ready, positioning...`);
             }
 
             // Make tooltip visible but invisible (for dimension calculation)
@@ -237,7 +229,6 @@ class TutorialTooltip {
                 if ($target.length > 0) {
                     const targetRect = $target[0].getBoundingClientRect();
                     const tooltipRect = this.$tooltip[0].getBoundingClientRect();
-                    console.log(`[TutorialTooltip] Positioned - Target: (${targetRect.left}, ${targetRect.top}) ${targetRect.width}x${targetRect.height}, Tooltip: (${tooltipRect.left}, ${tooltipRect.top}) ${tooltipRect.width}x${tooltipRect.height}`);
 
                     // Monitor if target position changes after we positioned the tooltip
                     setTimeout(() => {
@@ -268,7 +259,6 @@ class TutorialTooltip {
             }
         }
 
-        console.log('[TutorialTooltip] Shown', { title, targetSelector, position, requiresValidation });
     }
 
     /**
@@ -329,14 +319,12 @@ class TutorialTooltip {
                     stableCount++;
                     // Wait for N consecutive stable frames to ensure everything is settled
                     if (stableCount >= requiredStableFrames) {
-                        console.log(`[TutorialTooltip] Element ${selector} ready - size: ${width}x${height}, pos: (${left}, ${top})`);
                         resolve($element);
                         return;
                     }
                 } else {
                     // Reset counter if anything changed
                     if (stableCount > 0) {
-                        console.log(`[TutorialTooltip] Element ${selector} still settling - size: ${width}x${height}, pos: (${left}, ${top})`);
                     }
                     stableCount = 0;
                     lastWidth = width;
@@ -500,7 +488,6 @@ class TutorialTooltip {
             e.preventDefault(); // Prevent text selection
         });
 
-        console.log('[TutorialTooltip] Drag enabled', { isDesktop, isCentered });
     }
 
     /**
@@ -532,7 +519,6 @@ class TutorialTooltip {
             }, 5000);
         }
 
-        console.log('[TutorialTooltip] Error shown', { error, hint });
     }
 
     /**
@@ -648,12 +634,6 @@ class TutorialTooltip {
 
         // Debug: log if position changed due to boundary detection
         if (top !== originalTop || left !== originalLeft) {
-            console.log('[TutorialTooltip] Boundary adjusted', {
-                original: { top: originalTop, left: originalLeft },
-                adjusted: { top, left },
-                window: { width: windowWidth, height: windowHeight },
-                tooltip: { width: tooltipWidth, height: tooltipHeight }
-            });
         }
 
         // Apply position - clear all position properties to avoid conflicts

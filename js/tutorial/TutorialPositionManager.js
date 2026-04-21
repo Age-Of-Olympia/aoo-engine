@@ -92,7 +92,6 @@ class TutorialPositionManager {
         // Store tracking info
         this.trackedElements.set(id, tracking);
 
-        console.log('[TutorialPositionManager] Now tracking:', id);
     }
 
     /**
@@ -115,7 +114,6 @@ class TutorialPositionManager {
         // Remove from map
         this.trackedElements.delete(id);
 
-        console.log('[TutorialPositionManager] Stopped tracking:', id);
     }
 
     /**
