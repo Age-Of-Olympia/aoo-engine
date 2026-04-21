@@ -1,12 +1,15 @@
 <?php
 // admin/maps.php
 require_once __DIR__ . '/layout.php';
+require_once __DIR__ . '/helpers.php';
 
+use App\Service\CsrfProtectionService;
 use App\Service\ViewService;
 use Classes\Db;
 
 $database = new Db();
 $viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
+$csrf = new CsrfProtectionService();
 
 // Clear any local map layers when loading world maps
 if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['generated_layers']), 'world_') !== false) {
@@ -15,6 +18,13 @@ if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['genera
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+    } catch (RuntimeException $e) {
+        setFlash('danger', $e->getMessage());
+        redirectTo('world_map.php');
+    }
+
     if (isset($_POST['generate_global'])) {
         try {
             $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes'];
@@ -122,6 +132,7 @@ ob_start();
         <div class="card-body">
             <h5 class="card-title">Nettoyer les anciennes cartes</h5>
             <form method="post" class="d-flex align-items-center gap-3">
+                <?= $csrf->renderTokenField() ?>
                 <button type="submit" name="cleanup_maps" class="btn btn-warning btn-sm">
                     <i class="fas fa-broom"></i> Nettoyer
                 </button>
@@ -135,11 +146,13 @@ ob_start();
             <h5 class="card-title">Générer la carte monde</h5>
             <div class="d-flex gap-2">
                 <form method="post">
+                    <?= $csrf->renderTokenField() ?>
                     <button type="submit" name="generate_global" class="btn btn-primary btn-sm">
                         <i class="fas fa-sync"></i> Générer toutes les couches
                     </button>
                 </form>
                 <form method="post">
+                    <?= $csrf->renderTokenField() ?>
                     <button type="submit" name="show_latest" class="btn btn-secondary btn-sm">
                         <i class="fas fa-eye"></i> Afficher la dernière version
                     </button>
@@ -153,11 +166,11 @@ ob_start();
                         <?php foreach ($_SESSION['generated_layers'] as $layer => $data): ?>
                             <div class="col-md-4 mb-3">
                                 <div class="card">
-                                    <img src="<?php echo $data['imagePath']; ?>" class="card-img-top">
+                                    <img src="<?= e($data['imagePath']) ?>" class="card-img-top">
                                     <div class="card-body">
-                                        <h5 class="card-title text-capitalize"><?=$layer?></h5>
+                                        <h5 class="card-title text-capitalize"><?= e($layer) ?></h5>
                                         <p class="text-muted small">
-                                            Généré le : <?=date('Y-m-d H:i:s', strtotime($data['timestamp']))?>
+                                            Généré le : <?= e(date('Y-m-d H:i:s', strtotime($data['timestamp']))) ?>
                                         </p>
                                     </div>
                                 </div>
