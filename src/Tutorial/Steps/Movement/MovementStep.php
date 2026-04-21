@@ -50,12 +50,22 @@ class MovementStep extends AbstractStep
                 return $moveCount >= $requiredMoves;
 
             case 'position':
-                // Check that player is at a specific position
+                // Check that player is at a specific position.
+                //
+                // TutorialStepRepository::convertRowToStepData emits
+                // `target_x` / `target_y` from tutorial_step_validation
+                // (same keys used by `adjacent_to_position`). Earlier
+                // drafts of this branch read `x` / `y`, which silently
+                // returned false for every DB-configured step. We keep
+                // a `x` / `y` fallback so hand-built fixtures and any
+                // legacy admin JSON that still uses the short keys keep
+                // working.
                 $player = TutorialHelper::loadActivePlayer(loadCaracs: false, throwOnFailure: false);
                 $player->getCoords();
 
-                $requiredX = $this->config['validation_params']['x'] ?? null;
-                $requiredY = $this->config['validation_params']['y'] ?? null;
+                $params = $this->config['validation_params'] ?? [];
+                $requiredX = $params['target_x'] ?? $params['x'] ?? null;
+                $requiredY = $params['target_y'] ?? $params['y'] ?? null;
 
                 if ($requiredX === null || $requiredY === null) {
                     return false;
@@ -123,8 +133,9 @@ class MovementStep extends AbstractStep
                 return "Déplacez-vous {$requiredMoves} fois pour continuer.";
 
             case 'position':
-                $requiredX = $this->config['validation_params']['x'] ?? '?';
-                $requiredY = $this->config['validation_params']['y'] ?? '?';
+                $params = $this->config['validation_params'] ?? [];
+                $requiredX = $params['target_x'] ?? $params['x'] ?? '?';
+                $requiredY = $params['target_y'] ?? $params['y'] ?? '?';
                 return "Déplacez-vous sur la case ({$requiredX},{$requiredY}) marquée en jaune.";
 
             case 'adjacent_to_position':

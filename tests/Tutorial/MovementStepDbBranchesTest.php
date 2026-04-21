@@ -129,6 +129,48 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         $this->assertFalse($step->validate([]));
     }
 
+    /**
+     * Regression guard: `position` validation MUST read the same keys
+     * TutorialStepRepository emits.
+     *
+     * The repo (TutorialStepRepository::convertRowToStepData) maps
+     * `tutorial_step_validation.target_x` → `validation_params['target_x']`
+     * — same shape used by `adjacent_to_position`. If MovementStep reads
+     * `validation_params['x']` / `['y']` instead (as an earlier draft
+     * did), every admin-configured `position` step silently returns
+     * false and the tutorial UX stalls with no error. Pin the repo
+     * shape explicitly.
+     */
+    #[Group('movement-step-db')]
+    #[Group('d4-phase-c')]
+    public function testPositionBranchAcceptsRepoShapeCoords(): void
+    {
+        $step = $this->makeStepWithConfig([
+            'validation_type'   => 'position',
+            'validation_params' => [
+                'target_x' => $this->coordX,
+                'target_y' => $this->coordY,
+            ],
+        ]);
+
+        $this->assertTrue($step->validate([]));
+    }
+
+    #[Group('movement-step-db')]
+    #[Group('d4-phase-c')]
+    public function testPositionBranchRejectsNonMatchingRepoShapeCoords(): void
+    {
+        $step = $this->makeStepWithConfig([
+            'validation_type'   => 'position',
+            'validation_params' => [
+                'target_x' => $this->coordX + 42,
+                'target_y' => $this->coordY + 42,
+            ],
+        ]);
+
+        $this->assertFalse($step->validate([]));
+    }
+
     #[Group('movement-step-db')]
     #[Group('d4-phase-c')]
     public function testAdjacentToPositionAcceptsOrthogonalNeighbour(): void

@@ -8,6 +8,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../config.php';
 
 use App\Factory\PlayerFactory;
+use App\Service\AdminAuthorizationService;
 use App\Tutorial\TutorialManager;
 use App\Tutorial\TutorialSessionManager;
 
@@ -18,6 +19,12 @@ try {
         echo json_encode(['success' => false, 'error' => 'Not authenticated']);
         exit;
     }
+
+    // Debug endpoint — arbitrary step jumps skip every validated step,
+    // which is also the shortest path to the tutorial-completion reward.
+    // Restrict to admins. DoAdminCheck exit()s on failure; wrapping keeps
+    // the response JSON instead of the default plaintext.
+    AdminAuthorizationService::DoAdminCheck();
 
     // Get active player (tutorial player if in tutorial mode, otherwise main player)
     $player = PlayerFactory::active();

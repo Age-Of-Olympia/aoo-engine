@@ -51,6 +51,16 @@ if (!TutorialSessionManager::validateSessionIdFormat($sessionId)) {
 }
 
 try {
+    // IDOR guard: the session_id is caller-supplied. Verify the
+    // authenticated real player owns the session before doing any work.
+    // See tests/Tutorial/TutorialSessionOwnershipTest.
+    $sessionManager = new TutorialSessionManager();
+    if (!$sessionManager->playerOwnsSession($sessionId, (int) $_SESSION['playerId'])) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Tutorial session not found']);
+        exit;
+    }
+
     // Load active player (tutorial player if in tutorial mode, otherwise main player)
     $player = PlayerFactory::active();
     $player->get_data();

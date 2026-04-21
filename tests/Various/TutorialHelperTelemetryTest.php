@@ -5,6 +5,7 @@ namespace Tests\Various;
 use App\Tutorial\TutorialHelper;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * Characterization tests for getActivePlayerId session-resolution paths
@@ -84,5 +85,41 @@ class TutorialHelperTelemetryTest extends TestCase
 
         $this->assertSame(99, TutorialHelper::getActivePlayerId());
         $this->assertSame('', (string) file_get_contents($this->logFile));
+    }
+
+    /**
+     * Regression guard: logTelemetry() must actually emit to error_log.
+     *
+     * During the debug-cleanup sweep (commits 6c492b4 / 553072e) the
+     * error_log call was stripped from logTelemetry's if-body, leaving
+     * an empty block that silently dropped every stale-session event —
+     * the very metric the docblock advertises as the D1 observability
+     * signal. Pin the contract: a well-formed JSON line containing the
+     * event discriminator must land in the configured error_log.
+     */
+    #[Group('tutorial-helper-telemetry')]
+    public function testLogTelemetryEmitsJsonLineToErrorLog(): void
+    {
+        // Re-assert the ini inside the test body: PHPUnit can reset
+        // some ini entries between setUp and the test method when it
+        // installs its own error handler, which silently swallows the
+        // error_log() write even though the path is still set.
+        ini_set('error_log', $this->logFile);
+        ini_set('log_errors', '1');
+
+        $method = new ReflectionMethod(TutorialHelper::class, 'logTelemetry');
+        $method->setAccessible(true);
+        $method->invoke(null, 'tutorial_session_stale', [
+            'tutorial_player_id' => 42,
+            'main_player_id'     => 7,
+        ]);
+
+        $log = (string) file_get_contents($this->logFile);
+
+        $this->assertNotSame('', $log, 'logTelemetry must write to error_log');
+        $this->assertStringContainsString('"event":"tutorial_session_stale"', $log);
+        $this->assertStringContainsString('"tutorial_player_id":42', $log);
+        $this->assertStringContainsString('"main_player_id":7', $log);
+        $this->assertStringContainsString('"ts":', $log);
     }
 }

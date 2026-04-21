@@ -272,6 +272,29 @@ class TutorialSessionManager
     }
 
     /**
+     * Ownership probe used by api/tutorial/{advance,cancel,jump-to-step}.
+     *
+     * Returns true only when a row in tutorial_progress exists with the
+     * given session_id AND its player_id matches the caller. Callers
+     * receive the session_id over the wire, so every endpoint that
+     * operates on a session MUST gate on this method before invoking
+     * TutorialManager::resumeTutorial / cancelSession / jumpToStep.
+     *
+     * Without this probe, any authenticated user who observes another
+     * player's session_id can advance, cancel, or jump that player's
+     * tutorial — trivial IDOR.
+     */
+    public function playerOwnsSession(string $sessionId, int $playerId): bool
+    {
+        $sql = 'SELECT 1 FROM tutorial_progress
+                WHERE tutorial_session_id = ? AND player_id = ?
+                LIMIT 1';
+        $result = $this->db->exe($sql, [$sessionId, $playerId]);
+
+        return $result && $result->num_rows > 0;
+    }
+
+    /**
      * Validate session exists and is active
      *
      * @param string $sessionId Tutorial session UUID

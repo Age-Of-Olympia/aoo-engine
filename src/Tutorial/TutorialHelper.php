@@ -69,6 +69,7 @@ class TutorialHelper
             $context
         ));
         if ($line !== false) {
+            error_log($line);
         }
     }
 
