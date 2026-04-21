@@ -34,8 +34,11 @@ class ReputationsView
             usort($playerList, self::compareByPr(...));
 
 
-            // just as a marker
-            $playerList[0]->showReput = 1;
+            // just as a marker — guard against the entire ranking
+            // having been filtered out (every player a PNJ/inactive)
+            if (!empty($playerList)) {
+                $playerList[0]->showReput = 1;
+            }
 
 
             print_players($playerList);

@@ -150,21 +150,23 @@ else{
     echo $data;
 
 
-    foreach($playerList as $e){
+    if (!empty($playerList)) {
+        foreach($playerList as $e){
 
-        $first = $e;
-        break;
+            $first = $e;
+            break;
+        }
+
+
+        $data = '
+        ~'. count($playerList) .' joueurs actifs<br />
+        <a href="infos.php?targetId='. $first->id .'">'. $first->name .'</a> domine le <a href="classements.php">classement</a>!
+        ';
+
+        $path = 'datas/public/classements/stats.html';
+
+        $myfile = fopen($path, "w") or die("Unable to open file!");
+        fwrite($myfile, $data);
+        fclose($myfile);
     }
-
-
-    $data = '
-    ~'. count($playerList) .' joueurs actifs<br />
-    <a href="infos.php?targetId='. $first->id .'">'. $first->name .'</a> domine le <a href="classements.php">classement</a>!
-    ';
-
-    $path = 'datas/public/classements/stats.html';
-
-    $myfile = fopen($path, "w") or die("Unable to open file!");
-    fwrite($myfile, $data);
-    fclose($myfile);
 }
