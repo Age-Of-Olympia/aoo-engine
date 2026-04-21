@@ -48,7 +48,7 @@ class FactionView
                 <a href="infos.php?targetId=' . $row->id . '">' . $row->name . '</a>
             </td>
             <td>
-                ' . $raceJson->name . '
+                ' . ($raceJson?->name ?? '???') . '
             </td>
             <td>
                 ' . $row->xp . '

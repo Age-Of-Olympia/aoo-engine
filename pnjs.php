@@ -112,7 +112,7 @@ foreach($playersTbl as $pnj){
             <div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div>
             <img class="portrait" src="'. $pnj->data->portrait .'" /><br />
             '. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />
-            '. $raceJson->name .'<br />Rang '. $pnj->data->rank .'</span>
+            '. ($raceJson?->name ?? '???') .'<br />Rang '. $pnj->data->rank .'</span>
         </div>';
     if($pnj->id!=$_SESSION['originalPlayerId']){  
         echo '<div class="masquer-pnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $pnj->id .'" ><span class="ra ra-fall-down "/> masquer</div>';
@@ -142,7 +142,7 @@ foreach($hiddenPnjs as $hiddenPnj){
         $mails = '';
     }
     echo '<div data-player-id="'. $_SESSION['playerId'] .'" data-id="'. $hiddenPnj->id .'" >'. $hiddenPnj->data->name .' - <span style="font-size: 88%;">mat.'. $hiddenPnj->id .' - 
-            '. $raceJson->name .' - Rang '. $hiddenPnj->data->rank .' '.$mails.'
+            '. ($raceJson?->name ?? '???') .' - Rang '. $hiddenPnj->data->rank .' '.$mails.'
             <button class="showPnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $hiddenPnj->id .'">Afficher</button>
             <button class="impersonate" data-id="'. $hiddenPnj->id .'">Jouer</button>
             </div>';

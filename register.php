@@ -182,7 +182,7 @@ if(!empty($_POST['race'])){
         $newPlayerName = $player->data->name;
 
         // Send welcome missive to faction animateur (NPC) if configured and exists
-        if (!empty($raceJson->animateur) && $raceJson->animateur != 0) {
+        if ($raceJson && !empty($raceJson->animateur) && $raceJson->animateur != 0) {
             // Check if animateur player exists
             $db = new Db();
             $checkSql = 'SELECT id FROM players WHERE id = ?';
