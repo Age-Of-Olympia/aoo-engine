@@ -44,7 +44,13 @@ class ForumCookieService
     public function giveCookie(int $playerId, String $postName ) : void
     {
         $postJson = json()->decode('forum', 'posts/'. $postName);
+        if (!$postJson) {
+            return;
+        }
         $topJson = json()->decode('forum', 'topics/' .$postJson->top_id);
+        if (!$topJson) {
+            return;
+        }
 
         if ($topJson->forum_id == 'Missives' ) {
             if(!ENABLE_NO_PR_COOKIES_IN_MISSIVES)
