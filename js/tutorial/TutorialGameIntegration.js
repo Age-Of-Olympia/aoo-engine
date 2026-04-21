@@ -91,7 +91,8 @@
                 if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
                     window.tutorialUI.notifyAction('ui_interaction', {
                         element_clicked: '#show-caracs',
-                        panel: 'characteristics'
+                        panel: 'characteristics',
+                        panel_visible: true
                     });
                 }
             }, 100);
@@ -104,7 +105,8 @@
             if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
                 window.tutorialUI.notifyAction('ui_interaction', {
                     element_clicked: 'show-inventory',
-                    panel: 'inventory'
+                    panel: 'inventory',
+                    panel_visible: true
                 }, true); // skipUIUpdate = true because page will reload
             }
         });
@@ -116,7 +118,8 @@
             if (window.tutorialUI && typeof window.tutorialUI.notifyAction === 'function') {
                 window.tutorialUI.notifyAction('ui_interaction', {
                     element_clicked: 'a[href="inventory.php"]',
-                    panel: 'inventory'
+                    panel: 'inventory',
+                    panel_visible: true
                 }, true); // skipUIUpdate = true because page will reload
             }
         });
