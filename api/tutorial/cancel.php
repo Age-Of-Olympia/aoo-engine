@@ -206,7 +206,6 @@ try {
     if (!$hasCompletedBefore) {
         $skipReward = TUTORIAL_SKIP_REWARD;
         $mainPlayer->put_xp($skipReward['xp']); /* This adds both XP and PI */
-    } else {
     }
 
     // Refresh player data and view cache (so new coords/stats are shown after reload)
@@ -216,9 +215,7 @@ try {
 
     // Clean output buffer (discard any PHP warnings/errors/output)
     if (ob_get_length()) {
-        $buffered = ob_get_clean();
-        if (!empty($buffered)) {
-        }
+        ob_get_clean();
         ob_start(); /* Restart buffer for clean JSON output */
     }
 

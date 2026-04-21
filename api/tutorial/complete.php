@@ -74,7 +74,6 @@ try {
         $mainPlayer->put_xp($completionReward['xp']); /* This adds both XP and PI */
         $xpEarned = $completionReward['xp'];
         $piEarned = $completionReward['pi'];
-    } else {
     }
 
     // Remove invisibleMode from main player

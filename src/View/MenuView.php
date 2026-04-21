@@ -127,13 +127,8 @@ class MenuView
                 $sessionManager = new TutorialSessionManager($db);
                 $hasCompleted = $sessionManager->hasCompletedBefore($_SESSION['playerId']);
 
-                // DEBUG
-                error_log("[MenuView] Player {$_SESSION['playerId']}: hasCompleted=" . ($hasCompleted ? 'true' : 'false') . ", auto_start=" . (isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial'] ? 'true' : 'false'));
-
                 // Only render JavaScript if button is visible OR if auto-start is triggered
                 $shouldRenderJS = !$hasCompleted || (isset($_SESSION['auto_start_tutorial']) && $_SESSION['auto_start_tutorial']);
-
-                error_log("[MenuView] shouldRenderJS=" . ($shouldRenderJS ? 'true' : 'false'));
 
                 if ($shouldRenderJS) {
                     echo '<!-- TUTORIAL_JS_START -->

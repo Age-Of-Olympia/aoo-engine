@@ -217,10 +217,7 @@ abstract class AbstractStep
 
         // Apply context changes if specified
         if (isset($this->config['context_changes'])) {
-            error_log("[AbstractStep] Applying context changes for step {$this->stepId}: " . json_encode($this->config['context_changes']));
             $this->applyContextChanges($context, $this->config['context_changes']);
-        } else {
-            error_log("[AbstractStep] No context changes for step {$this->stepId}");
         }
 
         // Apply prerequisites for NEXT step if specified
@@ -250,7 +247,6 @@ abstract class AbstractStep
             $consumeMovements = $this->toBool($changes['consume_movements']);
             $context->setState('consume_movements', $consumeMovements);
             $_SESSION['tutorial_consume_movements'] = $consumeMovements;
-            error_log("[AbstractStep] Set consume_movements: " . ($consumeMovements ? 'true' : 'false'));
         }
 
         if (isset($changes['set_mvt_limit'])) {

@@ -16,7 +16,7 @@ use Classes\Db;
  *
  * Architecture:
  * - Template map: plan='tutorial' (source, never modified)
- * - Instance maps: plan='tutorial_session_{uuid}' (one per session, deleted on completion)
+ * - Instance maps: plan='tut_{first-10-of-uuid}' (per session, deleted on completion)
  */
 class TutorialMapInstance
 {
@@ -385,20 +385,4 @@ class TutorialMapInstance
 
     }
 
-    /**
-     * Check if a map instance exists
-     *
-     * @param string $sessionId Tutorial session UUID
-     * @return bool
-     */
-    public function instanceExists(string $sessionId): bool
-    {
-        $instancePlanName = 'tutorial_session_' . substr($sessionId, 0, 13);
-
-        $count = $this->conn->fetchOne("
-            SELECT COUNT(*) FROM coords WHERE plan = ?
-        ", [$instancePlanName]);
-
-        return $count > 0;
-    }
 }
