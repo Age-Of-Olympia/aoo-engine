@@ -85,7 +85,9 @@ stan_job:
   script:
     - make phpstan-ci
   rules:
-    - !reference [.default_rules, rules]
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_BRANCH
 
 test_job:
   <<: *php-job-template
@@ -100,7 +102,9 @@ test_job:
         coverage_format: cobertura
         path: tmp/coverage/cobertura.xml
   rules:
-    - !reference [.default_rules, rules]
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_BRANCH
 
 # Cypress tutorial E2E test. Manual trigger initially: confirm Dockerfile.test
 # has node + npx + xvfb + the electron browser before flipping to automatic.
