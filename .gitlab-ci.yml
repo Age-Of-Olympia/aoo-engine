@@ -211,17 +211,14 @@ cypress_tutorial_job:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    # tutorial-refactoring: manual trigger to conserve CI minutes.
-    # Auto-trigger was enabled in !365/!366 after 3 consecutive greens at
-    # ~390s, but the ~7min Cypress run on every push burns through the
-    # free-tier CI quota too quickly. Reds are still a real signal when
-    # the job is triggered manually.
-    - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
-      when: manual
-    # staging/saison-3/main: still manual until cypress is independently
-    # validated on each — when a human clicks it there, a red should also
-    # be a real signal.
+    # staging: auto-trigger on every push. The integration branch
+    # has to be green end-to-end before flowing onward; Cypress is
+    # the only check that catches tutorial-flow regressions.
     - if: $CI_COMMIT_REF_NAME == "staging"
+    # tutorial-refactoring / saison-3 / main: manual trigger to
+    # conserve CI minutes. Reds when a human triggers are still a
+    # real signal.
+    - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
       when: manual
     - if: $CI_COMMIT_REF_NAME == "saison-3"
       when: manual

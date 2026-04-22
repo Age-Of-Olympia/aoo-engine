@@ -57,7 +57,7 @@ release-check:
 cypress-tutorial-ci:
 	bash scripts/testing/reset_test_database.sh
 	CYPRESS_CONTAINER=true xvfb-run --auto-servernum npx cypress run \
-		--spec "cypress/e2e/tutorial-production-ready.cy.js" \
+		--spec "cypress/e2e/tutorial-production-ready.cy.js,cypress/e2e/tutorial-resume-persistence.cy.js" \
 		--browser electron \
 		--reporter junit \
 		--reporter-options "mochaFile=cypress-report.xml,toConsole=true"
