@@ -3,4 +3,5 @@ parameters:
     paths:
       - tests
       - config/constants.php
+      - config/functions.php
       # - src

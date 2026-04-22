@@ -147,7 +147,7 @@ class TestDatabase
         return (int) $this->pdo->lastInsertId();
     }
 
-    public function getPlayerCount(string $type = null): int
+    public function getPlayerCount(?string $type = null): int
     {
         if ($type === null) {
             $stmt = $this->pdo->query("SELECT COUNT(*) FROM players");

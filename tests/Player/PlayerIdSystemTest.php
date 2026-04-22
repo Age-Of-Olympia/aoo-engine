@@ -17,7 +17,6 @@ use PHPUnit\Framework\Attributes\Group;
 class PlayerIdSystemTest extends TestCase
 {
     private TestDatabase $testDb;
-    private $originalDbFunction;
 
     protected function setUp(): void
     {
