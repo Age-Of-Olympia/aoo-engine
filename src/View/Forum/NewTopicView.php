@@ -25,7 +25,7 @@ class NewTopicView
             ExitError('error forum');
         }
 
-        $player = PlayerFactory::legacy($_SESSION['playerId']);
+        $player = PlayerFactory::active();
         $player->get_data();
 
         if (!empty($_POST['text']) && !empty($_POST['name'])) {

@@ -13,7 +13,7 @@ class ForumHomeView
     public static function renderHomeView(): void
     {
         $ui = new Ui('Forum');
-        $player = PlayerFactory::legacy($_SESSION['playerId']);
+        $player = PlayerFactory::active();
         $player->get_data(false);
         InfosView::renderInfos($player);
         MenuView::renderMenu();

@@ -28,7 +28,7 @@ class PostReplyView
 
         $forumJson = json()->decode('forum', 'forums/' . $topJson->forum_id);
 
-        $player = PlayerFactory::legacy($_SESSION['playerId']);
+        $player = PlayerFactory::active();
 
         $player->get_data();
 

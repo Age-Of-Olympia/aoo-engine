@@ -14,7 +14,7 @@ class SearchView
 
         $ui = new Ui('Forum - Recherche');
 
-        $player = PlayerFactory::legacy($_SESSION['playerId']);
+        $player = PlayerFactory::active();
         $player->get_data(false);
 
 
