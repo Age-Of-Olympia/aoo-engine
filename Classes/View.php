@@ -2,6 +2,7 @@
 namespace Classes;
 
 use App\Enum\CoordType;
+use App\Factory\PlayerFactory;
 
 class View{
 
@@ -296,7 +297,7 @@ class View{
                 }
 
                 elseif($row->whichTable == 'players'){
-                    $player = new Player($row->id);
+                    $player = PlayerFactory::legacy((int) $row->id);
                     $player->get_data();
 
                     // Skip invisible players (except when viewing your own character)
