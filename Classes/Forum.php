@@ -68,7 +68,7 @@ class Forum{
         }
 
 
-        $target = new Player($postJson->author);
+        $target = PlayerFactory::legacy((int) $postJson->author);
 
         $target->put_pr($reward->pr*COEFFICIENT_PR);
 
@@ -130,7 +130,7 @@ class Forum{
 
         $postJson = json()->decode('forum', 'posts/'. end($topJson->posts)->name);
 
-        $author = new Player($postJson->author);
+        $author = PlayerFactory::legacy((int) $postJson->author);
         $author->get_data();
 
         $pageN = self::get_pages(count($topJson->posts));
@@ -486,7 +486,7 @@ class Forum{
         if(in_array($dest, $destTbl)){
 
 
-            $dest = new Player($dest);
+            $dest = PlayerFactory::legacy((int) $dest);
 
             $db = new Db();
 
