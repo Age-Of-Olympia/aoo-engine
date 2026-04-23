@@ -432,7 +432,7 @@ class Forum{
 
 
         if(is_numeric($dest)){
-            $dest = new Player($dest);
+            $dest = PlayerFactory::legacy((int) $dest);
         }else if(is_string($dest)){
             $dest = PlayerFactory::legacyByName($dest);
             if($dest === null){
