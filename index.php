@@ -29,7 +29,6 @@ if (isset($_GET['replay_tutorial']) && $_GET['replay_tutorial'] == '1' && !empty
     if (TutorialFeatureFlag::isEnabledForPlayer($_SESSION['playerId'])) {
         // Player wants to replay tutorial - set flag to auto-start
         $_SESSION['auto_start_tutorial'] = true;
-        error_log("[index.php] Replay tutorial requested for player {$_SESSION['playerId']}, redirecting to clean URL");
 
         // Redirect to clean URL (without the parameter) to prevent loop
         header('Location: index.php');
@@ -78,9 +77,6 @@ $player->get_data(false);
 
 // Check if player is brand new (should auto-start tutorial instead of showing modal)
 $isBrandNew = false;
-error_log("[index.php] Checking if player {$player->id} is brand new for tutorial");
-error_log("[index.php] Tutorial enabled: " . (TutorialFeatureFlag::isEnabledForPlayer($player->id) ? 'YES' : 'NO'));
-error_log("[index.php] In tutorial: " . (TutorialHelper::isInTutorial() ? 'YES' : 'NO'));
 
 // Calculate total tutorial XP/PI dynamically from database
 // Note: XP and PI are the same - when you earn XP, you also earn PI
@@ -104,13 +100,9 @@ if (TutorialFeatureFlag::isEnabledForPlayer($player->id) && !TutorialHelper::isI
     $hasCompleted = $sessionManager->hasCompletedBefore($player->id);
     $activeSession = $sessionManager->getActiveSession($player->id);
 
-    error_log("[index.php] hasCompleted: " . ($hasCompleted ? 'YES' : 'NO'));
-    error_log("[index.php] activeSession: " . ($activeSession ? 'EXISTS' : 'NULL'));
-
     if (!$hasCompleted && $activeSession === null) {
         $isBrandNew = true;
         $_SESSION['auto_start_tutorial'] = true;
-        error_log("[index.php] Player {$player->id} is BRAND NEW - setting auto_start_tutorial=true");
 
         // Show loading overlay for brand new players
         echo '<div id="tutorial-loading-overlay" style="
