@@ -2260,6 +2260,11 @@ class Player implements ActorInterface {
         return $id;
     }
 
+    /**
+     * @deprecated Use PlayerFactory::legacyByName() — returns ?Player
+     * instead of Player|false. This method remains as the implementation
+     * backing the factory; new callers should go through the factory.
+     */
     public static function get_player_by_name($name){
 
 

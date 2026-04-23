@@ -1,6 +1,7 @@
 <?php
 namespace Classes;
 
+use App\Factory\PlayerFactory;
 use Exception;
 
 abstract class Command
@@ -73,7 +74,7 @@ abstract class Command
             $player = Player::get_player_by_id($playerIdOrName);
         }
         else{
-            $player = Player::get_player_by_name($playerIdOrName);
+            $player = PlayerFactory::legacyByName($playerIdOrName);
         }
         return $player;
     }
