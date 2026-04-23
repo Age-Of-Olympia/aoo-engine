@@ -47,7 +47,7 @@ $res = $db->exe($sql, array($player->coords->z, $player->coords->plan));
 
 //this way allow single sql querry, the count of incognito should be small enough to not be a problem
 $incognitos = array();
-$incognitosSQL="SELECT player_id FROM `players_options` WHERE name='incognitoMode'";
+$incognitosSQL="SELECT player_id FROM `players_options` WHERE name IN ('incognitoMode', 'invisibleMode')";
 $resIncognito = $db->exe($incognitosSQL);
 while($row = $resIncognito->fetch_object()){
     $incognitos[$row->player_id] = true ;
@@ -129,7 +129,7 @@ SELECT
 FROM `players_options`
 INNER JOIN players_options as po
 ON po.player_id = p.id
-WHERE `players_options`.`name`="incognitoMode"
+WHERE `players_options`.`name` IN ("incognitoMode", "invisibleMode")
 )
 GROUP BY faction
 ';
