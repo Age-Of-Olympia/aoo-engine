@@ -29,16 +29,16 @@ class ObjectEffectOutcomeInstruction extends OutcomeInstruction
                     }
                     switch ($e->on) {
                         case 'actor':
-                            $actor->addEffect($e->name, $e->duration);
+                            $actor->add_effect($e->name, $e->duration);
                             $outcomeSuccessMessages[0] = 'L\'effet '.$e->name.' <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span> est appliqué '. $timeMessage.' à ' . $actor->data->name;
                             break;
                         case 'target':
-                            $target->addEffect($e->name, $e->duration);
+                            $target->add_effect($e->name, $e->duration);
                             $outcomeSuccessMessages[0] = 'L\'effet '.$e->name.' <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span> est appliqué '. $timeMessage.' à ' . $target->data->name;
                             break;
                         
                         default:
-                            $actor->addEffect($e->name, $e->duration);
+                            $actor->add_effect($e->name, $e->duration);
                             break;
                     }
                 }

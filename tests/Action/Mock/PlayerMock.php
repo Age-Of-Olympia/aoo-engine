@@ -35,17 +35,17 @@ class PlayerMock implements ActorInterface
   }
 
   // Méthodes requises par ActorInterface
-  public function haveEffect(string $name): int
+  public function have_effect(string $name): int
   {
     return 0;
   }
 
-  public function addEffect($name, $duration = 0): void
+  public function add_effect($name, $duration = 0): void
   {
     // Implémentation vide pour le mock
   }
 
-  public function endEffect(string $name): void
+  public function end_effect(string $name): void
   {
     // Implémentation vide pour le mock
   }

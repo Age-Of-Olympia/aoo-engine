@@ -20,10 +20,10 @@ EOT);
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
 
-        if($player->haveEffect($argumentValues[1])){
+        if($player->have_effect($argumentValues[1])){
 
 
-            $player->endEffect($argumentValues[1]);
+            $player->end_effect($argumentValues[1]);
 
             return 'Effet '. $argumentValues[1] .' enlevé à '. $player->data->name .'';
         }
@@ -34,7 +34,7 @@ EOT);
             } else {
                 $duration = 0; // Default duration if not specified
             }
-            $player->addEffect($argumentValues[1],$duration);
+            $player->add_effect($argumentValues[1],$duration);
 
             return 'Effet '. $argumentValues[1] .' ajouté à '. $player->data->name .'';
         }

@@ -44,11 +44,11 @@ class WarSchool
         }
 
         // états incompatibles
-        if ($player->haveEffect('adrenaline')) {
+        if ($player->have_effect('adrenaline')) {
             return 'Vous ne pouvez pas vous apprendre de nouvelles techniques sous l’adrénaline du combat.';
         }
 
-        if ($potentialTrainer->haveEffect('adrenaline')) {
+        if ($potentialTrainer->have_effect('adrenaline')) {
             return 'Cet entraîneur n’est pas en état d’enseigner.';
         }
 

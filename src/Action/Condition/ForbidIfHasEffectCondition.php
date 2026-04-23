@@ -47,7 +47,7 @@ class ForbidIfHasEffectCondition extends BaseCondition
 
     private function checkEffect(ActorInterface $player, string $effectName)
     {
-        if ($player && $player->haveEffect($effectName)) {
+        if ($player && $player->have_effect($effectName)) {
             $this->errorMessage[sizeof($this->errorMessage)] = 'Un effet empêche l\'action : ' .$effectName. ' <span class="ra '. EFFECTS_RA_FONT[$effectName] .'"></span>' ;
         }
     }

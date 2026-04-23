@@ -77,9 +77,9 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){
         if ($apply) {
-            $player->addEffect($effectName, $duration, $value, $stackable);
+            $player->add_effect($effectName, $duration, $value, $stackable);
         } else {
-            $player->endEffect($effectName);
+            $player->end_effect($effectName);
         } 
     }
 }

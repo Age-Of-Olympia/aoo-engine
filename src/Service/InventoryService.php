@@ -129,16 +129,16 @@ class InventoryService
                             //supression d'un effet
                             if (str_starts_with($effet, '-')) {
 
-                                $player->endEffect(str_replace("-", "", $effet));
+                                $player->end_effect(str_replace("-", "", $effet));
                             }
                             //ajout d'un effet
                             else {
                                 if (in_array($effet, EFFECTS_HIDDEN) || $effet == "poison" || $effet == "poison_magique") {
 
-                                    $player->addEffect($effet, 0);
+                                    $player->add_effect($effet, 0);
                                 } else {
 
-                                    $player->addEffect($effet, ONE_DAY);
+                                    $player->add_effect($effet, ONE_DAY);
                                 }
                             }
                         }

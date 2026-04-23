@@ -8,9 +8,9 @@ use Classes\Item;
 interface ActorInterface
 {
   public function getId(): int;
-  public function haveEffect(string $name): int;
-  public function addEffect($name, $duration=0): void;
-  public function endEffect(string $name): void;
+  public function have_effect(string $name): int;
+  public function add_effect($name, $duration=0): void;
+  public function end_effect(string $name): void;
   public function have_option(string $name): int;
   public function have_effects_to_purge(): bool;
   public function get_caracs(bool $nude=false): bool;

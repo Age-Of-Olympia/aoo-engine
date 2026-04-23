@@ -348,12 +348,12 @@ class Market
         }
 
         // adré
-        if ($player->haveEffect('adrenaline')) {
+        if ($player->have_effect('adrenaline')) {
 
             return 'Vous ne pouvez pas marchander en ayant l\'Adrénaline du combat.';
         }
 
-        if ($potentialMerchant->haveEffect('adrenaline')) {
+        if ($potentialMerchant->have_effect('adrenaline')) {
 
             return 'Vous ne pouvez pas marchander avec un Marchand ayant l\'Adrénaline du combat.';
         }

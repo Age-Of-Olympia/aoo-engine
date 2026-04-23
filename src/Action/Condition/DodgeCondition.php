@@ -23,7 +23,7 @@ class DodgeCondition extends BaseCondition
         $errorMessages = array();
         $successMessages = array();
 
-        if($target->haveEffect('parade')){
+        if($target->have_effect('parade')){
             $targetEffectName = 'parade';
             if(
                 (
@@ -35,52 +35,52 @@ class DodgeCondition extends BaseCondition
                 && isset($actor->emplacements->main1)
                 && $actor->emplacements->main1->data->subtype == 'melee'
             ){
-                $target->endEffect($targetEffectName);
+                $target->end_effect($targetEffectName);
                 $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à sa technique ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
         
-        if($target->haveEffect('leurre')){
+        if($target->have_effect('leurre')){
             if(
                 $type == 'sort'
             ){
                 $targetEffectName = 'leurre';
-                $target->endEffect($targetEffectName);
+                $target->end_effect($targetEffectName);
                 $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à un sort ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
         
-        if($target->haveEffect('dedoublement')){
+        if($target->have_effect('dedoublement')){
             $targetEffectName = 'dedoublement';
-            $target->endEffect($targetEffectName);
+            $target->end_effect($targetEffectName);
             View::delete_double($target);
             $errorMessages[sizeof($errorMessages)] = 'Vous avez attaqué un double de '. $target->data->name .'! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .')"></span>' ;
             $result = new ConditionResult(false, $successMessages, $errorMessages);
             $this->shouldRefresh = true;
         }
         
-        if($target->haveEffect('cle_de_bras')){
+        if($target->have_effect('cle_de_bras')){
             $targetEffectName = 'cle_de_bras';
             if(
                 $actor->emplacements->main1->data->subtype == 'melee'
                 &&
                 $target->emplacements->main1->data->name == 'Poing'
             ){
-                $target->endEffect($targetEffectName);
+                $target->end_effect($targetEffectName);
                 $actor->putBonus(array('mvt'=>-$actor->getRemaining('mvt')));
                 $errorMessages[sizeof($errorMessages)] = $target->data->name .' vous fait une clé de bras et vous immobilise ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
         
-        if($target->haveEffect('pas_de_cote')){
+        if($target->have_effect('pas_de_cote')){
             if(
                 ( $type != 'sort' )
             ){
                 $targetEffectName = 'pas_de_cote';
-                $target->endEffect($targetEffectName);
+                $target->end_effect($targetEffectName);
                 $goCoords = $target->coords;
                 $coordsId = View::get_free_coords_id_arround($target->coords);
                 $goCoords->id = $coordsId;

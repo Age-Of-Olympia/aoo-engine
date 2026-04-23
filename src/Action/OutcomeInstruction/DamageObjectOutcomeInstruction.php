@@ -63,7 +63,7 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
                     $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
                 
                     foreach($corruptions as $k=>$e){
-                        if($player->haveEffect($k)){
+                        if($player->have_effect($k)){
                             if($player->emplacements->main1->is_crafted_with($e)){
                                 $breakChance = $corruptBreakChance[$k];
                                 break;
@@ -104,7 +104,7 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
         $corrupted = null;
         $corruptions = ITEM_CORRUPTIONS;
         foreach($corruptions as $k=>$e){
-            if($player->haveEffect($k)){
+            if($player->have_effect($k)){
                 if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
                     $corrupted = $e;
                     break;
@@ -121,7 +121,7 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
         $corruptions = ITEM_CORRUPTIONS;
         $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
         foreach($corruptions as $k => $e){
-            if($player->haveEffect($k)){
+            if($player->have_effect($k)){
                 if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
                     $breakChance = $corruptBreakChance[$k];
                     break;
@@ -155,7 +155,7 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
         $corruptions = ITEM_CORRUPTIONS;
     
         foreach($corruptions as $k=>$e){
-            if($actor->haveEffect($k)){
+            if($actor->have_effect($k)){
                 if($actor->emplacements->main1->is_crafted_with($e)){
                     array_push($corrupted, $e);
                     break;

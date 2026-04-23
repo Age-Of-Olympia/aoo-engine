@@ -241,7 +241,7 @@ elseif($goCoords->z > 0){
 
     $row = $res->fetch_object();
 
-    if(!$row->n && !$player->haveEffect('vol')){
+    if(!$row->n && !$player->have_effect('vol')){
 
         echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu."); document.location.reload();</script>';
 
@@ -342,10 +342,10 @@ if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMod
     }
 
     $footstepDuration = 16 * ONE_HOUR;
-    if ($player->haveEffect("boue")) {
+    if ($player->have_effect("boue")) {
         $footstepDuration = 32 * ONE_HOUR;
     }
-    if(!$player->haveEffect("leger")){
+    if(!$player->have_effect("leger")){
         Element::put($footstep, $player->data->coords_id, $footstepDuration);
     }
     

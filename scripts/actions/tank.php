@@ -1,6 +1,6 @@
 <?php
 
-if($target->haveEffect('martyr')){
+if($target->have_effect('martyr')){
 
 
     echo '<div><font color="red">'. $target->data->name .' réduit d\'un tiers les dégâts de votre attaque grâce au sort Martyr.</font></div>';
