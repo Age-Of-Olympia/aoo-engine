@@ -70,17 +70,8 @@ elseif(isset($_GET['logout'])){
 
 ob_start();
 
-// DEBUG: Show session state (remove this later)
-if ($_SESSION['playerId'] == 7) {
-    error_log("INDEX.PHP SESSION DEBUG:");
-    error_log("  playerId: " . ($_SESSION['playerId'] ?? 'NOT SET'));
-    error_log("  in_tutorial: " . ($_SESSION['in_tutorial'] ?? 'NOT SET'));
-    error_log("  tutorial_player_id: " . ($_SESSION['tutorial_player_id'] ?? 'NOT SET'));
-}
-
 // Get active player ID (tutorial player if in tutorial mode, otherwise main player)
 $playerId = TutorialHelper::getActivePlayerId();
-error_log("  USING PLAYER: $playerId (tutorial mode: " . (TutorialHelper::isInTutorial() ? 'YES' : 'NO') . ")");
 
 $player = PlayerFactory::legacy($playerId);
 $player->get_data(false);
