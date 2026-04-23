@@ -47,6 +47,6 @@ class OnHideReloadView
             });
         </script>
 <?php
-        echo '<script src="js/view.js?v=' . time() . '"></script>';
+        echo '<script src="js/view.js?v=20260423"></script>';
     }
 }
