@@ -138,8 +138,21 @@ if($planJson){
     AND
     c.plan = ?
     ';
+    $params = array($x, $y, $coords->z, $coords->plan);
 
-    $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+    if (isset($planJson->player_visibility) && $planJson->player_visibility === false) {
+        $sql .= '
+        AND
+        (
+            p.id = ?
+            OR
+            p.id < 0
+        )
+        ';
+        $params[] = $player->id;
+    }
+
+    $res = $db->exe($sql, $params);
 }
 
 elseif(!$planJson){
