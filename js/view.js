@@ -55,8 +55,10 @@ $(document).ready(function(){
         let [x, y] = coords.split(',');
 
 
-        // show go button if applicable
-        if($case.hasClass('go')){
+        // show go button if applicable (no player standing on the case)
+        var hasPlayer = $('image[data-table="players"][x="'+ i +'"][y="'+ j +'"]').length > 0;
+
+        if($case.hasClass('go') && !hasPlayer){
 
             $('#go-rect')
                 .show()
