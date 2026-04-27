@@ -91,7 +91,9 @@ $hasCompletedTutorial = $sessionManager->hasCompletedBefore($player->id);
 
 // Always show replay option if player has completed tutorial
 // The feature flag will determine which tutorial system to use (new vs old)
-if ($hasCompletedTutorial || !TutorialFeatureFlag::isEnabledForPlayer($player->id)) {
+// NPCs (negative ids) never get the option — it's not meaningful for them
+// and the legacy fallback would otherwise activate via the !isEnabled branch.
+if ($player->id >= 0 && ($hasCompletedTutorial || !TutorialFeatureFlag::isEnabledForPlayer($player->id))) {
     $options['showTuto'] = "Rejouer le tutoriel";
 }
 
