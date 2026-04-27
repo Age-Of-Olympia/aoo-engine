@@ -359,7 +359,9 @@ if($res->num_rows){
 
         $factionJson = json()->decode('factions', $target->data->faction);
 
-        $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
+        $faction = $factionJson
+            ? '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>'
+            : '';
 
         if(
             $target->data->secretFaction != ''
@@ -369,7 +371,9 @@ if($res->num_rows){
 
             $secretJson = json()->decode('factions', $target->data->secretFaction);
 
-            $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';
+            if ($secretJson) {
+                $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';
+            }
         }
 
         $data = (object) array(
