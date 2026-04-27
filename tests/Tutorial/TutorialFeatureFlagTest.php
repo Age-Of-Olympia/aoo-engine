@@ -146,6 +146,20 @@ class TutorialFeatureFlagTest extends TestCase
     }
 
     #[Group('tutorial-feature-flag')]
+    public function testIsEnabledForPlayerRejectsNpcs(): void
+    {
+        // NPCs use negative IDs — globally enabled OR whitelisted, they
+        // must never reach the tutorial flow.
+        $this->primeCache([
+            'global_enabled'      => 'true',
+            'whitelisted_players' => '-1,-1000023',
+        ]);
+
+        $this->assertFalse(TutorialFeatureFlag::isEnabledForPlayer(-1));
+        $this->assertFalse(TutorialFeatureFlag::isEnabledForPlayer(-1000023));
+    }
+
+    #[Group('tutorial-feature-flag')]
     public function testClearCacheResetsState(): void
     {
         $this->primeCache(['global_enabled' => 'true']);
