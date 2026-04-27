@@ -102,7 +102,7 @@ $row = $res->fetch_object();
 if($row->n){
 
 
-    echo '<script>alert("Coordonnées invalides");document.location.reload();</script>';
+    echo '<script>alert("Quelque chose obstrue ton chemin.");document.location.reload();</script>';
 
     exit();
 }

@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Roadmap AoO — Passé & avenir</title>
+<style>
+  :root {
+    /* Aligned with admin/layout.php palette */
+    --bg: #ecf0f1;
+    --paper: #fff;
+    --ink: #2c3e50;
+    --ink-soft: #495057;
+    --muted: #7f8c8d;
+    --line: #dee2e6;
+    --line-strong: #ced4da;
+    --thead-bg: #f8f9fa;
+    --sidebar-bg: #2c3e50;
+    --primary: #3498db;
+    --primary-strong: #2471a3;
+    --shipped: #27ae60;
+    --shipped-bg: #d4edda;
+    --shipped-border: #c3e6cb;
+    --progress: #f39c12;
+    --progress-bg: #fff3cd;
+    --progress-border: #ffeaa7;
+    --planned: #3498db;
+    --planned-bg: #d1ecf1;
+    --planned-border: #bee5eb;
+    --longterm: #8e44ad;
+    --longterm-bg: #ebdef0;
+    --longterm-border: #d7bde2;
+    --highlight: #e74c3c;
+    --now: #e74c3c;
+    --shadow-card: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.15);
+    --axis-w: 120px;
+    --header-h: 46px;
+    --lane-min: 110px;
+    --lane-min-player: 150px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    box-shadow: var(--shadow-card);
+  }
+  h1 {
+    font-size: 1.8em;
+    margin: 0 0 6px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .notice {
+    background: var(--progress-bg);
+    border: 1px solid var(--progress-border);
+    border-left: 4px solid var(--progress);
+    color: #856404;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    max-width: 1000px;
+  }
+  .notice strong { color: #6c4a00; }
+  .controls { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  /* Buttons follow admin .btn convention */
+  .view-toggle {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .view-toggle button {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary-strong);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .view-toggle button:hover { background: var(--primary); color: white; }
+  .view-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+
+  .legend { display: flex; gap: 14px; align-items: center; font-size: 12px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1); }
+  .filter { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+  .filter button {
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    padding: 4px 12px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .filter button:hover { background: var(--thead-bg); }
+  .filter button.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  main { padding: 16px 24px 40px; }
+
+  .timeline-wrap {
+    overflow: auto;
+    background: var(--paper);
+    border-radius: 6px;
+    box-shadow: var(--shadow-card);
+  }
+  .timeline {
+    position: relative;
+  }
+
+  /* Header row — sticky top, holds category labels */
+  .header-row {
+    display: flex;
+    position: sticky; top: 0;
+    z-index: 5;
+    background: var(--thead-bg);
+    border-bottom: 1px solid var(--line);
+    height: var(--header-h);
+  }
+  .axis-corner {
+    flex: 0 0 var(--axis-w);
+    position: sticky; left: 0;
+    z-index: 6;
+    background: var(--thead-bg);
+    border-right: 1px solid var(--line);
+  }
+  .lane-header {
+    flex: 1 1 0;
+    min-width: var(--lane-min);
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    border-right: 1px solid var(--line);
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .lane-header .lane-icon { width: 14px; height: 14px; border-radius: 3px; flex: none; }
+
+  /* Body row — flex of (time axis | lanes) */
+  .body-row {
+    display: flex;
+    position: relative;
+  }
+  .time-axis {
+    flex: 0 0 var(--axis-w);
+    position: sticky; left: 0;
+    z-index: 3;
+    background: var(--thead-bg);
+    border-right: 1px solid var(--line);
+    /* Block layout (not flex) so child ticks with explicit % heights
+       align reliably with the stripes drawn at the same percentages. */
+  }
+  .tick {
+    /* height set inline in JS based on QUARTER_WEIGHTS */
+    padding: 8px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .tick-q { font-weight: 600; }
+  .tick-m {
+    font-size: 10px;
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.75;
+  }
+  .tick:last-child { border-bottom: none; }
+  .tick.now {
+    color: var(--now);
+    font-weight: 600;
+    background: rgba(231,76,60,0.06);
+  }
+
+  .lanes {
+    flex: 1 1 auto;
+    display: flex;
+    position: relative;
+  }
+  .lane {
+    flex: 1 1 0;
+    min-width: var(--lane-min);
+    position: relative;
+    border-right: 1px solid var(--line);
+  }
+  .lane:nth-child(even)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.012);
+    pointer-events: none;
+  }
+
+  /* Horizontal quarter-boundary guides across all lanes. */
+  .lane-stripe {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--line);
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .now-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: var(--now);
+    z-index: 4;
+    pointer-events: none;
+  }
+  .now-line::before {
+    content: "Aujourd'hui";
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    background: var(--now);
+    color: white;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .card {
+    position: absolute;
+    left: 6px; right: 6px;
+    padding: 8px 11px 9px;
+    background: var(--shipped-bg);
+    border: 1px solid var(--shipped-border);
+    border-left: 3px solid var(--shipped);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s, opacity .15s;
+    font-size: 12px;
+    line-height: 1.35;
+    z-index: 2;
+    box-shadow: var(--shadow-card);
+  }
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-card-hover);
+    z-index: 7;
+  }
+  .card.progress { background: var(--progress-bg); border-color: var(--progress-border); border-left-color: var(--progress); }
+  .card.planned { background: var(--planned-bg); border-color: var(--planned-border); border-left-color: var(--planned); }
+  .card.longterm {
+    background: var(--longterm-bg);
+    border-color: var(--longterm-border);
+    border-left-color: var(--longterm);
+    border-style: dashed;
+  }
+  .card.dimmed { opacity: 0.25; }
+  .card.highlight { box-shadow: 0 0 0 2px var(--highlight), 0 4px 14px rgba(231,76,60,0.25); z-index: 8; }
+  .card.related-up { box-shadow: 0 0 0 2px var(--shipped); }
+  .card.related-down { box-shadow: 0 0 0 2px var(--planned); }
+
+  .card .card-title { font-weight: 600; color: var(--ink); }
+  .card .card-enables { margin-top: 4px; font-size: 10px; color: var(--muted); font-style: italic; }
+
+  /* Player view — bigger cards, less noise */
+  body.view-player .lane,
+  body.view-player .lane-header {
+    min-width: var(--lane-min-player);
+  }
+  body.view-player .card {
+    padding: 10px 12px 11px;
+    font-size: 13.5px;
+    border-radius: 6px;
+    border-left-width: 4px;
+  }
+  body.view-player .card .card-title { font-size: 14.5px; line-height: 1.3; }
+  body.view-player .lane-header { font-size: 14px; }
+  body.view-player .tick { font-size: 12px; }
+
+  /* SVG dependency overlay */
+  .svg-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .arrow {
+    fill: none;
+    stroke: #95a5a6;
+    stroke-width: 1.3;
+    opacity: 0.35;
+    transition: opacity .15s;
+  }
+  .arrow.active {
+    stroke: var(--highlight);
+    stroke-width: 2.2;
+    opacity: 1;
+  }
+  body.view-player .arrow { opacity: 0.5; stroke-width: 1.6; stroke: #7f8c8d; }
+  body.view-player .arrow.active { opacity: 1; stroke-width: 2.4; stroke: var(--highlight); }
+
+  /* Detail panel — slides down from top */
+  .detail-panel {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+    transform: translateY(-105%);
+    transition: transform .28s ease-out;
+    overflow-y: auto;
+    z-index: 50;
+    max-height: 70vh;
+  }
+  .detail-panel.open { transform: translateY(0); }
+  .detail-panel .panel-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px 32px 26px;
+    position: relative;
+  }
+  .detail-panel .close {
+    position: absolute;
+    top: 16px; right: 24px;
+    border: none;
+    background: transparent;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--muted);
+    line-height: 1;
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: background .15s;
+  }
+  .detail-panel .close:hover { background: var(--thead-bg); color: var(--ink); }
+  .detail-panel h2 { margin: 0 0 8px; font-size: 1.5em; padding-right: 30px; color: var(--ink); }
+  .detail-panel .badges { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .detail-panel .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 32px;
+    margin-top: 6px;
+  }
+  @media (max-width: 720px) {
+    .detail-panel .grid { grid-template-columns: 1fr; }
+  }
+  .detail-panel .badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    color: white;
+  }
+  .badge.status-shipped { background: var(--shipped); }
+  .badge.status-progress { background: var(--progress); }
+  .badge.status-planned { background: var(--planned); }
+  .badge.status-longterm { background: var(--longterm); }
+  .badge.cat { background: var(--thead-bg); color: var(--ink-soft); border: 1px solid var(--line); font-weight: 500; }
+  .detail-panel .section { margin: 0; padding: 0; border: none; }
+  .detail-panel .section h3 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .detail-panel .section p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+  .detail-panel ul { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-soft); }
+  .detail-panel ul li { margin: 4px 0; }
+  .detail-panel ul li a { color: var(--primary-strong); text-decoration: none; cursor: pointer; }
+  .detail-panel ul li a:hover { text-decoration: underline; color: var(--primary); }
+  .empty-state { padding: 50px; text-align: center; color: var(--muted); font-style: italic; }
+
+  @media (max-width: 900px) {
+    header { padding: 14px 16px 10px; }
+    main { padding: 12px 12px 30px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Age of Olympia — Roadmap technique</h1>
+  <div class="subtitle">Le temps descend (passé en haut, futur en bas). Chaque colonne = une famille de fonctionnalités. Cliquez sur une carte pour les détails.</div>
+  <div class="notice">
+    <strong>⚠️ Les dates futures sont très approximatives.</strong>
+    L'équipe est bénévole et travaille quand elle le peut : les ordres et dépendances sont fiables, les calendriers le sont beaucoup moins.
+  </div>
+  <div class="controls">
+    <div class="view-toggle" id="viewToggle">
+      <button data-view="player" class="active">Vue joueur</button>
+      <button data-view="tech">Vue technique</button>
+    </div>
+    <div class="legend">
+      <span class="chip"><span class="swatch" style="background:var(--shipped-bg);border-color:var(--shipped)"></span>Livré</span>
+      <span class="chip"><span class="swatch" style="background:var(--progress-bg);border-color:var(--progress)"></span>En cours</span>
+      <span class="chip"><span class="swatch" style="background:var(--planned-bg);border-color:var(--planned)"></span>Planifié</span>
+      <span class="chip"><span class="swatch" style="background:var(--longterm-bg);border-color:var(--longterm);border-style:dashed"></span>Long terme</span>
+      <span class="chip" title="Étoile sur une carte = jalon pivot (débloque beaucoup de choses)">⭐&nbsp;Jalon pivot</span>
+    </div>
+    <div class="filter" id="filter">
+      <button data-status="all" class="active">Tout</button>
+      <button data-status="future">À venir uniquement</button>
+      <button data-status="shipped">Livré uniquement</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="timeline-wrap" id="timelineWrap">
+    <div class="timeline" id="timeline">
+      <div class="header-row" id="headerRow"></div>
+      <div class="body-row" id="bodyRow">
+        <div class="time-axis" id="timeAxis"></div>
+        <div class="lanes" id="lanes">
+          <div class="now-line" id="nowLine"></div>
+        </div>
+      </div>
+      <svg class="svg-overlay" id="svgOverlay"></svg>
+    </div>
+  </div>
+</main>
+
+<aside class="detail-panel" id="detail">
+  <div class="panel-inner">
+    <button class="close" id="detailClose" aria-label="Fermer">×</button>
+    <div id="detailContent"><div class="empty-state">Sélectionnez une carte.</div></div>
+  </div>
+</aside>
+
+<script>
+/* ============================================================
+ * Roadmap data — single source of truth.
+ * Edit / reorder / add freely; the page rebuilds from this array.
+ * ============================================================ */
+const QUARTERS = [
+  '2025-Q1','2025-Q2','2025-Q3','2025-Q4',
+  '2026-Q1','2026-Q2','2026-Q3','2026-Q4',
+  '2027-Q1','2027-Q2','Long terme'
+];
+const NOW_INDEX = 5.4; /* mid 2026-Q2 (May 2026) */
+const N_COLS = QUARTERS.length;
+const QUARTER_PX = 210; /* vertical pixels per unit-weight quarter */
+
+/* Per-quarter vertical weight. Long terme gets more room because it's
+   the densest bucket. */
+const QUARTER_WEIGHTS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4];
+const TOTAL_WEIGHT = QUARTER_WEIGHTS.reduce((sum, w) => sum + w, 0);
+
+/* Cumulative weight up to quarter i, used for non-uniform vertical mapping. */
+const CUM_WEIGHT = QUARTER_WEIGHTS.reduce((acc, w, i) => {
+  acc.push((acc[i - 1] || 0) + w);
+  return acc;
+}, []);
+
+/* Maps a (possibly fractional) quarter index to a top% on the timeline. */
+function quarterToPercent(q) {
+  const i = Math.floor(q);
+  const frac = q - i;
+  const before = i > 0 ? CUM_WEIGHT[i - 1] : 0;
+  const here   = QUARTER_WEIGHTS[i] || 0;
+  return ((before + frac * here) / TOTAL_WEIGHT) * 100;
+}
+
+const CATEGORIES = [
+  { id:'action-system',  techLabel:"Système d'actions",      playerLabel:"Moteur des actions",       color:'#b3553f' },
+  { id:'tutorial',       techLabel:"Tutoriel",                playerLabel:"Découverte du jeu",        color:'#6ba368' },
+  { id:'admin',          techLabel:"Outils d'admin",          playerLabel:"Outils des animateurs",    color:'#8c6e9a' },
+  { id:'dialogue',       techLabel:"Dialogues",               playerLabel:"Dialogues & PNJs",         color:'#d9a441' },
+  { id:'map-tiles',      techLabel:"Carte & plans",           playerLabel:"Monde & carte",            color:'#4a78b8' },
+  { id:'inventory',      techLabel:"Inventaire & objets",     playerLabel:"Objets & craft",           color:'#7d7363' },
+  { id:'combat',         techLabel:"Combat & compétences",    playerLabel:"Combat & compétences",     color:'#c8442e' },
+  { id:'faction-race',   techLabel:"Factions & races",        playerLabel:"Factions & races",         color:'#9a7a3a' },
+  { id:'player-account', techLabel:"Compte & personnage",     playerLabel:"Compte & personnage",      color:'#586f8a' },
+  { id:'forum',          techLabel:"Forum & messagerie",      playerLabel:"Forums & messages",        color:'#3a8b8b' },
+  { id:'ui-ux',          techLabel:"UI / UX front",           playerLabel:"Interface du jeu",         color:'#aa6c6c' },
+  { id:'tech-debt',      techLabel:"Architecture & dette",    playerLabel:"Sous le capot",            color:'#666',   playerHidden:true },
+  { id:'build-ci',       techLabel:"CI / déploiement",        playerLabel:"Outils des devs",          color:'#777',   playerHidden:true }
+];
+
+/* status: shipped | progress | planned | longterm
+ * quarter: 0..10 from QUARTERS (float for mid-quarter)
+ * enables: ids of features this one unlocks (drawn as arrows)
+ */
+const FEATURES = [
+  /* ─────────────────────────── PAST (shipped) ─────────────────────────── */
+  { id:'race-entity', title:"Entité Race + admin avatars", category:'faction-race', status:'shipped', playerHidden:true,
+    quarter:0.1, version:'4.1.1', date:'Jan 2025',
+    tech:"Première entité Doctrine (Race) et RaceService — sort la race du JSON et la met en BDD. Formulaire admin pour uploader portraits/avatars.",
+    player:"Les races du jeu (Nain, Elfe, Homme-Sauvage…) passent d'un stockage technique à la base de données du jeu. Première brique d'une longue migration vers du contenu modifiable sans toucher au code.",
+    enables:['action-doctrine','tutorial-race-aware','faction-race-split'] },
+
+  { id:'echanges', title:"Échanges entre joueurs", category:'inventory', status:'shipped',
+    quarter:0.1, version:'4.1.1', date:'Jan 2025',
+    tech:"REST endpoints créer / accepter / annuler échanges, helper aoofetch front.",
+    player:"Possibilité d'échanger formellement des objets entre personnages, avec validation des deux côtés.",
+    enables:[] },
+
+  { id:'admin-backoffice', title:"Backoffice admin (v1)", category:'admin', status:'shipped',
+    quarter:0.3, version:'4.1.4', date:'Fév 2025',
+    tech:"Dossier admin/ avec header/footer/index, page players, page notifications, CSS dédié. Remplace les manipulations SQL directes pour les ops courantes.",
+    player:"Première vraie interface pour les animateurs : plus besoin de bidouiller directement dans la base de données pour les opérations courantes.",
+    enables:['tiled-modern','tutorial-admin','admin-actions','admin-dialogues','admin-items'] },
+
+  { id:'super-admin', title:"Rôle Super-Admin + mur noir", category:'admin', status:'shipped', playerHidden:true,
+    quarter:0.4, version:'4.1.2', date:'Fév 2025',
+    tech:"Vérifications Super Admin durcies sur scripts sensibles. Nouveau type de mur permanent en BDD.",
+    player:"Les permissions admin sont graduées : tout n'est plus 'tout ou rien'.",
+    enables:[] },
+
+  { id:'deploy-auto', title:"Déploiement automatique", category:'build-ci', status:'shipped',
+    quarter:0.5, version:'4.1.7', date:'Fév 2025',
+    tech:"Pipeline GitLab CI auto-deploy staging + lune1, release notes auto sur tags.",
+    player:"Les corrections arrivent en jeu beaucoup plus vite (plus de rsync manuel).",
+    enables:[] },
+
+  { id:'player-visibility', title:"Drapeau player_visibility sur plans", category:'map-tiles', status:'shipped', playerHidden:true,
+    quarter:0.7, version:'4.1.12', date:'Mar 2025',
+    tech:"Flag dans le JSON d'un plan qui masque les autres joueurs : non-rendu, non-bloquants, absents du panneau d'observation.",
+    player:"Brique fondatrice : un plan peut désormais isoler complètement un joueur des autres.",
+    enables:['tutorial-system'] },
+
+  { id:'content-actions-2025-04', title:"Vague d'actions (avant refonte)", category:'combat', status:'shipped',
+    quarter:1.0, version:'aoo-game-data', date:'Avr 2025',
+    tech:"~18 nouvelles actions ajoutées en JSON sur quelques jours (mi-avril 2025) : leurre, tai_otoshi, désarmement, météore, esquive/parade, soumission, régénération, arme vivante, lame volante, flux vital, lien de vie, lame bénie, trait béni, souffle cime, etc. Dernière grosse vague de contenu sur l'ancien système JSON — l'effort fourni a directement motivé la refonte Doctrine du mois suivant.",
+    player:"Grosse vague de compétences et de sorts livrés en quelques jours (esquive, parade, désarmement, météore, soumission, régénération, lien de vie…). C'est en partie cet effort qui a convaincu l'équipe technique de refondre le moteur derrière les actions juste après.",
+    enables:[] },
+
+  { id:'phpunit-baseline', title:"PHPUnit + PHPStan en CI", category:'build-ci', status:'shipped',
+    quarter:1.2, version:'4.2.1-pré', date:'Avr 2025',
+    tech:"Configuration PHPUnit/PHPStan + premier test. Première barrière CI.",
+    player:"Sécurité supplémentaire avant chaque déploiement : le code est testé automatiquement.",
+    enables:['action-doctrine','action-tests','cypress-e2e'] },
+
+  { id:'action-doctrine', title:"⭐ Système d'actions refondu en base", category:'action-system', status:'shipped',
+    quarter:1.5, version:'4.2.5–4.2.6', date:'Mai 2025',
+    tech:"Les fichiers JSON d'actions sont remplacés par des entités Doctrine (Action, ActionCondition, ActionOutcome, OutcomeInstruction). Conditions et effets deviennent composables.",
+    player:"Point pivot du jeu. Avant : chaque nouvelle action coûtait des heures à un dev. Après : on les compose à partir de briques réutilisables. C'est ce qui rend possible toute la suite (nouveaux sorts, nouvelles compétences).",
+    enables:['pas-de-cote','assomoir','action-tests','actor-interface','warschool','action-v2','admin-actions','content-comp-2025-12','malus-system'] },
+
+  { id:'doctrine-em', title:"Bootstrap Doctrine + EntityManager unifié", category:'tech-debt', status:'shipped',
+    quarter:1.8, version:'4.2.8–4.2.10', date:'Mai–Juin 2025',
+    tech:"EntityManagerFactory, bootstrap unifié, console Doctrine. Code legacy et moderne partagent la même connexion.",
+    player:"Le moteur du jeu unifie ses accès base de données : moins de bugs liés à deux moteurs qui ne se parlent pas.",
+    enables:['psr4','craft-doctrine','item-entity'] },
+
+  { id:'psr4', title:"PSR-4 + namespaces", category:'tech-debt', status:'shipped',
+    quarter:1.9, version:'4.2.10', date:'Juin 2025',
+    tech:"Renommage Classes/ en PSR-4 strict, autoload moderne, namespace Classes\\ formalisé.",
+    player:"Le code peut être organisé proprement, ce qui accélère tout le reste.",
+    enables:['console-scripts','psr12'] },
+
+  { id:'console-scripts', title:"Console Symfony + scripts admin", category:'admin', status:'shipped', playerHidden:true,
+    quarter:1.9, version:'4.2.10', date:'Juin 2025',
+    tech:"Amélioration de console.php (Symfony Console) ouvre la voie à des commandes admin scriptables : forumcmd, rgpd, plant respawn, tp list-plans, etc.",
+    player:"Les animateurs et l'équipe ops ont une vraie ligne de commande pour les tâches techniques.",
+    enables:['admin-actions','admin-dialogues'] },
+
+  { id:'resource-walls', title:"Ressources récoltables (bois, pierre)", category:'map-tiles', status:'shipped',
+    quarter:2.0, version:'4.2.10–4.2.11', date:'Juin 2025',
+    tech:"Murs avec damages=-1 (récoltable) / -2 (épuisé). Service de récolte + cron de regrowth.",
+    player:"Les arbres et rochers deviennent des ressources finies-mais-renouvelables. La boucle 'récolter' apparaît vraiment.",
+    enables:['plants-service','tutorial-system'] },
+
+  { id:'pas-de-cote', title:"Pas de côté & enchantements", category:'combat', status:'shipped',
+    quarter:1.6, version:'4.2.7–4.2.8', date:'Mai 2025',
+    tech:"Nouvelles actions composées sur le nouveau système : pas de côté (esquive), framework d'enchantements, drop d'armes en combat.",
+    player:"Premières compétences livrées grâce au système d'actions refondu. Esquive, équipement qui tombe en combat, etc.",
+    enables:[] },
+
+  { id:'action-tests', title:"Tests unitaires sur les actions", category:'action-system', status:'shipped', playerHidden:true,
+    quarter:2.3, version:'4.2.16', date:'Juil 2025',
+    tech:"ActorInterface remplace Player dans les actions ; tests d'actions ajoutés en CI.",
+    player:"Le moteur de combat est isolé du géant Player.php (51 000 lignes). On peut le tester sans casser le reste.",
+    enables:['warschool'] },
+
+  { id:'actor-interface', title:"ActorInterface en production", category:'tech-debt', status:'shipped',
+    quarter:2.2, version:'4.2.16', date:'Juil 2025',
+    tech:"Les actions ne dépendent plus de la classe Player concrète. Interface étroite (ActorInterface) injectée à la place.",
+    player:"Le code de combat devient enfin remplaçable, testable.",
+    enables:['account-character-split'] },
+
+  { id:'assomoir', title:"Compétence Assomoir + malus", category:'combat', status:'shipped',
+    quarter:2.0, version:'4.2.13–4.2.14', date:'Juin–Juil 2025',
+    tech:"Première compétence brand new construite intégralement sur le système d'actions Doctrine, avec framework de malus (maladresse).",
+    player:"Preuve par l'exemple : la refonte du système d'actions tient ses promesses.",
+    enables:[] },
+
+  { id:'craft-doctrine', title:"Craft refondu en base", category:'inventory', status:'shipped',
+    quarter:2.6, version:'4.2.19', date:'Août 2025',
+    tech:"Suppression de l'ancienne classe Craft ; recette et item deviennent des entités Doctrine. Même bascule JSON → BDD que pour les actions.",
+    player:"L'artisanat passe sur la même architecture moderne que les actions.",
+    enables:['item-entity','admin-items'] },
+
+  { id:'item-entity', title:"Item passé en entité", category:'inventory', status:'shipped', playerHidden:true,
+    quarter:2.7, version:'4.2.19', date:'Août 2025',
+    tech:"Item devient une entité Doctrine (sortie progressive des JSON d'objets) ; vérif race ajoutée ; logs de debug allégés.",
+    player:"Étape vers la possibilité de gérer tous les objets depuis l'admin, sans toucher au code.",
+    enables:['admin-items','items-individual'] },
+
+  { id:'main-view-refresh', title:"Tooltips caracs + ménage des includes", category:'ui-ux', status:'shipped', playerHidden:true,
+    quarter:2.9, version:'4.2.20', date:'Août–Sep 2025',
+    tech:"Tooltips CSS sur les caractéristiques. Nettoyage des includes spaghettis (forum, asks, bids, spells, death, quest).",
+    player:"Survoler une stat l'explique. L'interface est plus légère et plus rapide.",
+    enables:[] },
+
+  { id:'plants-service', title:"Service de regrowth des plantes", category:'map-tiles', status:'shipped',
+    quarter:3.0, version:'4.2.22', date:'Sep 2025',
+    tech:"PlantsService extrait, cron de respawn, statuts nettoyés à la sortie des Enfers.",
+    player:"Les ressources repoussent dans le temps. Le monde n'est plus 'sec' après quelques jours.",
+    enables:[] },
+
+  { id:'pr-cookie-overhaul', title:"Refonte cookies & 1PR", category:'forum', status:'shipped',
+    quarter:3.3, version:'4.2.23–4.2.24', date:'Oct 2025',
+    tech:"Retrait du 1PR auto par post HRP, cookies redistribués via PR_PER_COOKIE, tooltip sur les compteurs.",
+    player:"Les récompenses forum sont rééquilibrées : on ne gagne plus de progression simplement en postant en HRP.",
+    enables:[] },
+
+  { id:'world-map-players', title:"Couche joueurs sur la mappemonde", category:'map-tiles', status:'shipped', playerHidden:true,
+    quarter:3.4, version:'4.2.24', date:'Oct 2025',
+    tech:"Layer joueurs ajouté sur la carte globale.",
+    player:"La carte du monde montre où sont les gens.",
+    enables:[] },
+
+  { id:'tiled-modern', title:"Modernisation de l'outil Tiled", category:'admin', status:'shipped',
+    quarter:3.5, version:'4.2.25-pré', date:'Nov 2025',
+    tech:"AJAX partial renders, lazy-load images, sidebar responsive, sections foreground repliables, outil clic-droit pour coords.",
+    player:"L'éditeur de carte (utilisé tous les jours par les animateurs) devient utilisable sans rechargement complet.",
+    enables:[] },
+
+  { id:'tutorial-system', title:"⭐ Système de tutoriel intégré", category:'tutorial', status:'progress',
+    quarter:5.5, version:'4.2.25 (staging)', date:'Dev Nov 2025 · prod après PlayerFactory',
+    tech:"src/Tutorial/ (TutorialManager, TutorialPlayer, StepFactory, DialogService), js/tutorial/ (UI, Tooltip, Highlighter), tables tutorial_*, plan isolé 'tutorial' qui réutilise player_visibility.",
+    player:"Les nouveaux joueurs ont enfin un parcours guidé pour découvrir le jeu : dialogues, info-bulles, surlignage des éléments à cliquer. Énorme levier pour qu'ils restent.",
+    enables:['tutorial-admin','tutorial-race-aware','tutorial-reload','tutorial-extra','dialogue-refonte'] },
+
+  { id:'sti-players', title:"STI + display IDs sur les joueurs", category:'tech-debt', status:'shipped',
+    quarter:3.7, version:'4.2.25', date:'Nov 2025',
+    tech:"Single Table Inheritance avec discriminateur player_type. Système de display IDs (l'UI montre un joli ID, la BDD garde l'int brut).",
+    player:"Vrais joueurs, PNJs et avatars de tutoriel partagent enfin la même table avec un type propre. Fin du hack 'ID négatif = PNJ'.",
+    enables:['account-character-split','player-factory'] },
+
+  { id:'tutorial-admin', title:"Dashboard admin du tutoriel", category:'admin', status:'progress',
+    quarter:5.6, version:'4.2.25 (staging)', date:'Dev Nov 2025 · prod après PlayerFactory',
+    tech:"Page admin pour éditer les étapes, feature flags, gestion de sessions, quick actions.",
+    player:"Les animateurs peuvent ajuster le tuto sans toucher au code.",
+    enables:[] },
+
+  { id:'tutorial-race-aware', title:"Tutoriel adaptatif (race, replay)", category:'tutorial', status:'progress',
+    quarter:5.7, version:'4.2.25 (staging)', date:'Dev Nov 2025 · prod après PlayerFactory',
+    tech:"Placeholder {max_mvt}, mvt_required=-1 (race max), spotlight overlay, replay-via-URL, invisibleMode pour nouveaux joueurs.",
+    player:"Le tuto s'adapte à votre race (un Nain a 4 MVT, un HS en a 6) et peut être rejoué.",
+    enables:[] },
+
+  { id:'cypress-e2e', title:"Cypress E2E sur le tutoriel", category:'build-ci', status:'shipped',
+    quarter:3.9, version:'4.2.25', date:'Nov 2025',
+    tech:"Suite Cypress qui rejoue le tuto de bout en bout, par race, dans le conteneur.",
+    player:"On peut détecter automatiquement si le tuto se casse avant le déploiement.",
+    enables:['cypress-staging-auto'] },
+
+  { id:'content-comp-2025-12', title:"⭐ 1ère MàJ des compétences", category:'combat', status:'shipped',
+    quarter:4.0, version:'aoo-game-data', date:'Déc 2025',
+    tech:"Premier grand drop de contenu post-refonte du système d'actions : ~20 nouveaux sorts/compétences ajoutés en JSON pour les 5 races (Elfe, Géant, HS, Nain, Olympien) + Lutins. Inclut attaque/tir precis, attaque/tir violent, manchette, épuisement (+arcanique), arme/jet infusé, tir handicapant/épuisant, tir à la cheville, etc. Tout porté par le moteur Doctrine refondu en mai.",
+    player:"Énorme vague de nouvelles compétences disponibles dans toutes les races : attaques précises/violentes, tirs spécialisés, magies arcaniques, manchette, épuisement, etc. Concrétisation visible de ce que la refonte du système d'actions permet.",
+    enables:[] },
+
+  { id:'tutorial-reload', title:"Tuto résilient au reload + nouveaux validators", category:'tutorial', status:'progress', playerHidden:true,
+    quarter:5.8, version:'4.2.28 (staging)', date:'Dev Déc 2025 · prod après PlayerFactory',
+    tech:"Reload-survivor, validation ui_element_visible, catalogue d'étapes en admin.",
+    player:"Recharger la page pendant le tuto ne le casse plus. Les étapes valident vraiment ce qu'on regarde.",
+    enables:[] },
+
+  { id:'warschool', title:"WarSchool (entraînement combat)", category:'combat', status:'shipped',
+    quarter:5.0, version:'4.2.30–4.2.31', date:'Mar–Avr 2026',
+    tech:"Page dédiée + WarSchoolUtils, corrections actions passives.",
+    player:"Lieu d'entraînement où s'exercer aux compétences de combat contre des cibles scriptées.",
+    enables:[] },
+
+  { id:'php84', title:"PHP 8.4 + ménage dépréciations", category:'tech-debt', status:'shipped',
+    quarter:5.1, version:'4.2.31', date:'Avr 2026',
+    tech:"Passage PHP 8.4 ; correctifs PI loss, cache classement, prier en Enfer, marqueurs d'inactivité sur carte.",
+    player:"Le moteur tourne sur la version récente de PHP. Plusieurs petits déséquilibres corrigés en passant.",
+    enables:[] },
+
+  { id:'player-factory', title:"PlayerFactory + NonPlayerCharacter", category:'tech-debt', status:'progress',
+    quarter:5.4, version:'tutorial-refactoring-rebased', date:'Avr–Mai 2026',
+    tech:"PlayerEntity, TutorialPlayerEntity consolidés. real_player_id_ref comme garde-fou FK. Drop du suffixe Entity → NonPlayerCharacter. IDOR guards sur endpoints tuto. Backfill player_type='npc'. Pose le pattern d'héritage (STI/discriminator) qui sera réutilisé pour les bâtiments, les objets individuels et les ennemis autonomes.",
+    player:"En cours sur la branche tutorial-refactoring-rebased. Finalise la séparation entre vrais joueurs et PNJs, et établit le moule technique pour distinguer plus tard les types de bâtiments, d'objets individuels et de PNJs autonomes.",
+    enables:['account-character-split','admin-actions','dialogue-refonte','items-individual','autonomous-enemies','tutorial-system'] },
+
+  { id:'cypress-staging-auto', title:"Cypress auto-déclenché en CI", category:'build-ci', status:'progress',
+    quarter:5.3, version:'tutorial-refactoring-rebased', date:'Avr–Mai 2026',
+    tech:"Le pipeline CI déclenche Cypress automatiquement sur staging.",
+    player:"Le tuto est testé sur staging à chaque déploiement, sans intervention humaine.",
+    enables:[] },
+
+  /* ─────────────────────────── PLANNED (next 6-12 months) ─────────────────────────── */
+  { id:'action-v2', title:"Système d'actions v2 (correctifs)", category:'action-system', status:'planned',
+    quarter:6.0, date:'2026-Q3',
+    tech:"Deuxième couche sur les actions corrigeant les défauts de la v1 (retour détaillé de Gremlo après usage intensif).",
+    player:"Après un an d'usage par les animateurs, on lisse les angles morts du système : composabilité, lisibilité, prévisibilité.",
+    enables:['admin-actions','pf-aoe'] },
+
+  { id:'no-js-confirms', title:"Suppression des alert/confirm JS", category:'ui-ux', status:'planned',
+    quarter:6.2, date:'2026-Q3',
+    tech:"Remplacement de tous les window.alert/confirm/prompt par un système de modales/toasts custom.",
+    player:"Plus de popups système moches qui bloquent tout. Confirmations cohérentes avec le reste du jeu.",
+    enables:['ajaxify-blocks'] },
+
+  { id:'admin-actions', title:"Interface d'admin pour les actions", category:'admin', status:'planned',
+    quarter:6.4, date:'2026-Q3',
+    tech:"UI admin pour créer / voir / comprendre les actions. Le système v2 est conçu pour être exposable.",
+    player:"L'équipe peut créer de nouvelles actions sans demander à un dev. Énorme accélérateur de contenu.",
+    enables:['admin-team-autonomy'] },
+
+  { id:'dialogue-refonte', title:"Refonte du système de dialogues + admin", category:'dialogue', status:'planned',
+    quarter:6.5, date:'2026-Q4',
+    tech:"Sujet court et facile. Nouveau modèle de dialogues + UI admin. Permet des conversations vraiment poussées.",
+    player:"Les PNJs deviennent capables de conversations à branches, conditions, réactions au contexte du joueur.",
+    enables:['tutorial-extra','admin-team-autonomy'] },
+
+  { id:'items-individual', title:"Bâtiments + objets individuels", category:'inventory', status:'planned',
+    quarter:6.8, date:'2026-Q4',
+    tech:"Bâtiments deviennent une entité ; objets passent en 'individuels' (chaque instance a un id propre). Réutilise le pattern d'héritage (STI/discriminator) posé par PlayerFactory. Suppression définitive des JSON objets.",
+    player:"Les bâtiments rentrent dans le moteur. Chaque épée a son histoire (provenance, usure, propriétaire passé). Brique nécessaire pour l'usure des objets et pour les avant-postes.",
+    enables:['admin-items','item-durability','outposts'] },
+
+  { id:'admin-items', title:"Admin pour objets & bâtiments", category:'admin', status:'planned',
+    quarter:7.0, date:'2027-Q1',
+    tech:"UI admin pour gérer objets, recettes, bâtiments — sans toucher au code.",
+    player:"Les animateurs créent et ajustent les objets/bâtiments depuis une interface.",
+    enables:['admin-team-autonomy'] },
+
+  { id:'faction-race-split', title:"Séparation factions / races", category:'faction-race', status:'planned',
+    quarter:7.2, date:'2027-Q1',
+    tech:"Séparation définitive des deux concepts ; race et faction deviennent des entités indépendantes en BDD. Suppression des derniers JSON.",
+    player:"Un Nain peut changer de faction sans changer de race. Bases d'un modèle politique plus riche.",
+    enables:[] },
+
+  { id:'plans-no-json', title:"Plans & cartes éditables en admin", category:'map-tiles', status:'planned',
+    quarter:7.4, date:'2027-Q1',
+    tech:"Suppression des JSON de plans. Configuration des plans (player_visibility, biomes, etc.) déplacée en BDD.",
+    player:"Les animateurs peuvent créer/modifier des plans entiers depuis l'admin.",
+    enables:['admin-team-autonomy'] },
+
+  { id:'ajaxify-blocks', title:"Mise à jour des blocs sans recharger", category:'ui-ux', status:'planned',
+    quarter:7.5, date:'2027-Q1',
+    tech:"Chaque bloc (inventaire, actions, caractéristiques, carte) se rafraîchit en AJAX au lieu d'un reload page.",
+    player:"L'interface devient snappy. Plus de rechargement complet entre chaque action.",
+    enables:[] },
+
+  /* ─────────────────────────── PLANNED (game-side, in parallel) ─────────────────────────── */
+  { id:'tutorial-extra', title:"Tutoriels supplémentaires en jeu", category:'tutorial', status:'planned',
+    quarter:7.6, date:'2027-Q1',
+    tech:"Au-delà du tuto initial : tutos contextuels (premier combat, premier craft, première récolte avancée…).",
+    player:"Apprentissage progressif réparti dans le temps, sans tout déverser au démarrage.",
+    enables:[] },
+
+  { id:'usability-pass', title:"Pass d'usabilité général", category:'ui-ux', status:'planned',
+    quarter:7.7, date:'2027-Q1',
+    tech:"Revue UX complète post-ajaxification. Cohérence des feedbacks, accessibilité, mobile.",
+    player:"Le jeu devient moderne et fluide partout, plus seulement sur les pages refondues récemment.",
+    enables:[] },
+
+  { id:'pf-aoe', title:"Actions de PF (Points de Foi, AoE)", category:'combat', status:'planned',
+    quarter:7.8, date:'2027-Q2',
+    tech:"Petit dev sur le système d'actions v2 pour ajouter des actions consommant les Points de Foi (PF), avec effets de zone (AoE) modélisés correctement.",
+    player:"Les compétences alimentées par les Points de Foi (PF) gagnent des actions à effets de zone.",
+    enables:[] },
+
+  { id:'admin-team-autonomy', title:"Équipe admin autonome", category:'admin', status:'planned',
+    quarter:8.0, date:'2027-Q2',
+    tech:"Une fois actions/dialogues/objets/plans tous gérables en admin, l'équipe créative agit sans devs au quotidien.",
+    player:"Plus de contenu, plus vite. Les animateurs ne sont plus bloqués par la disponibilité des devs.",
+    enables:[] },
+
+  { id:'item-durability', title:"Système d'usure des objets", category:'inventory', status:'planned',
+    quarter:7.9, date:'2027-Q2',
+    tech:"Modélisation de la durabilité sur les objets : décrément périodique via un système d'événements/triggers générique. Requiert les objets individuels (chaque instance a son propre état d'usure).",
+    player:"Les armes et armures s'usent. Repose sur les objets individuels (sans eux, on ne pourrait pas différencier l'usure d'une épée à l'autre).",
+    enables:[] },
+
+  /* ─────────────────────────── PAST — ajouts ultérieurs ─────────────────────────── */
+  { id:'worldmap-s2', title:"Nouvelle carte du monde (S2)", category:'map-tiles', status:'shipped',
+    quarter:0.9, version:'pré-4.2.1', date:'Mar–Avr 2025',
+    tech:"Refonte complète du système de cartes pour la saison 2 : maps découpées, load transactionné et batché, gestion des niveaux Z, layer joueurs sur la carte globale, admin panel pour régénérer les maps. Une trentaine de commits feat(map)/feat(worldmap) en mars–avril 2025.",
+    player:"La carte du monde est repensée pour la saison 2 : nouveau découpage, vue globale claire, navigation entre niveaux. Brique fondamentale qui supporte tout le reste de la saison.",
+    enables:['minimap-s2'] },
+
+  { id:'equipment-refonte', title:"Refonte des équipements (S2)", category:'inventory', status:'shipped',
+    quarter:1.3, version:'4.2.1–4.2.7', date:'Avr–Mai 2025',
+    tech:"Refonte du modèle d'équipement à l'aube de la S2 : types d'armes passés sous forme de tableau, séparation deuxmains/main1, restrictions sur les objets exotiques, framework d'enchantements appliqué aux armures, corrections diverses (affichage des équipements d'autres personnages, etc.).",
+    player:"Le système d'équipement est repensé pour la saison 2 : nouveaux emplacements, objets exotiques, enchantements sur les armures.",
+    enables:[] },
+
+  { id:'minimap-s2', title:"Mini-map (S2, livrée)", category:'map-tiles', status:'shipped',
+    quarter:1.7, version:'4.2.x', date:'Avr–Mai 2025',
+    tech:"Première tentative début avril 2025 (revertée juste après pour problèmes de stabilité), puis re-livrée sur 4.2.x. Vivante au plus tard fin mai (option 'mode invisible' pour masquer les PNJs patchée le 28/05).",
+    player:"Mini-carte intégrée au jeu pour se repérer en un coup d'œil. Lancée tôt en saison 2.",
+    enables:[] },
+
+  { id:'malus-system', title:"Refonte du système de malus", category:'combat', status:'shipped',
+    quarter:2.0, version:'4.2.13–4.2.16', date:'Juin–Juil 2025',
+    tech:"Nouveau modèle de malus appliqués aux actions : premier jet en juin (Premier jet update malus), test fin juin (Push pour un premier test), finalisation début juillet (Fin du premier jet). Permet de composer des effets riches comme la maladresse, le malus à distance, etc.",
+    player:"Le moteur de malus est refait pour permettre des effets riches sur les compétences (maladresse, désavantages, etc.). Donne du grain aux échecs et aux conditions adverses.",
+    enables:[] },
+
+  { id:'consumables', title:"Arrivée des consommables", category:'inventory', status:'shipped',
+    quarter:2.3, version:'aoo-game-data', date:'Juil 2025',
+    tech:"Nouveau type d'objet : consommables (à usage limité, disparaissent après utilisation). Ajout des crafts + items + images correspondantes (game-data 2025-07-03).",
+    player:"Nouveau type d'objet : les consommables. Potions, savons, etc., qui se consomment à l'usage.",
+    enables:[] },
+
+  { id:'walls-decos-content', title:"Murs & décorations : gros drop de contenu", category:'map-tiles', status:'shipped',
+    quarter:3.5, version:'aoo-game-data', date:'Nov 2025',
+    tech:"~21 nouveaux items + ~275 lignes de crafts ajoutés en quelques jours (13–15 nov 2025) : barricade, mur crépusculaire, mur de fer, mur végétal, muret, lanterne géante, monolithe flamboyant, piliers (dont nain), statues (colosses, garde, noble, servant, forestière), tombe, tonneau, torche, totems (crâne, magique, sauvage), trône. Plus images et SQL.",
+    player:"Vague massive de nouveaux éléments pour habiller les cartes : murs variés, statues, mobilier (torches, tonneaux, trônes, totems, etc.). Donne aux animateurs une palette étendue pour le décor.",
+    enables:[] },
+
+  /* ─────────────────────────── PLANNED — ajouts ultérieurs ─────────────────────────── */
+
+  /* ─────────────────────────── LONG-TERM ─────────────────────────── */
+  { id:'tile-composition', title:"⭐ Refonte case / tuile (état de base + diff joueur)", category:'map-tiles', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Chaque case a un état de base posé en tiled (par les animateurs) + un diff des modifications joueurs (route, creusage, mur, sang, traces…). Comme git pour les cases : on sait ce qui a changé et on peut revenir en arrière. Refonte autonome — n'a pas de prérequis dur.",
+    player:"Le moteur distingue enfin 'ce qu'une case devrait être' de 'ce que les joueurs en ont fait'. Plus de cartes irrémédiablement déformées : on peut nettoyer les ajouts joueur sans toucher au décor d'origine. Au passage, fin de bugs comme 'fouillable=-1 oublié sur une case'.",
+    enables:['route-wear','cave-collapse','map-reset','autonomous-enemies','elements-refonte'] },
+
+  { id:'route-wear', title:"Usure périodique des routes", category:'map-tiles', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Les routes posées par les joueurs ont une durabilité décroissante via le système d'événements (cron quotidien). Les routes posées par les animateurs en tiled font partie de l'état de base et restent permanentes. Optionnel : décrément additionnel au passage d'un joueur.",
+    player:"Les routes tracées par les joueurs s'effacent dans le temps si elles ne sont pas entretenues. Les animateurs choisissent quelles routes sont permanentes.",
+    enables:[] },
+
+  { id:'cave-collapse', title:"Effondrement des galeries creusées", category:'map-tiles', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Même mécanique que l'usure des routes appliquée aux cases de caverne creusées par les joueurs. Une galerie non entretenue revient à son état de base (mur).",
+    player:"Les tunnels creusés s'effondrent dans le temps. Pas d'infrastructure souterraine permanente sans entretien.",
+    enables:[] },
+
+  { id:'map-reset', title:"Coup de balai (reset de carte)", category:'admin', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Bouton admin qui réinitialise une carte à son état de base, en supprimant les diffs joueur (sang, traces, routes joueur…) tout en préservant les éléments posés volontairement par les animateurs.",
+    player:"Utile entre deux tours de tournoi en arène, par exemple : nettoyer les traces de combat sans toucher au décor. Une vraie remise à neuf en un clic.",
+    enables:[] },
+
+  { id:'autonomous-enemies', title:"Ennemis autonomes", category:'combat', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"PNJs capables d'agir d'eux-mêmes. Repose sur le système de perception (carte propre), sur le nouveau modèle de cases pour exprimer 'champ de vision' et 'événements perçus', et sur le pattern d'héritage de PlayerFactory pour modéliser les différents types de PNJs autonomes.",
+    player:"Des PNJs qui patrouillent, réagissent à votre présence, fuient, prennent l'initiative — plus seulement des cibles statiques.",
+    enables:[] },
+
+  { id:'perception-system', title:"Système de perception", category:'combat', status:'longterm',
+    quarter:9.6, date:'Long terme',
+    tech:"Brique fondamentale : détecter ce qui entre dans le champ d'une unité (joueur, PNJ, avant-poste). Permet à des entités passives ou actives de réagir à leur environnement spatial.",
+    player:"Le moteur sait quand quelque chose entre dans le champ de vision d'un PNJ ou d'un avant-poste. Pré-requis pour que le monde réagisse au joueur.",
+    enables:['autonomous-enemies','outposts'] },
+
+  { id:'outposts', title:"Système d'avant-postes (contrôle de territoire)", category:'faction-race', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Avant-postes capturables : chaque avant-poste appartient à une faction et applique des bonus/malus aux joueurs présents dans sa zone d'influence. Repose sur les bâtiments (items-individuels) et sur la détection d'entrée dans la perception.",
+    player:"Des avant-postes parsemés sur la carte donnent des bonus aux factions qui les contrôlent (et des malus aux autres). Première vraie mécanique de territoire.",
+    enables:[] },
+
+  { id:'elements-refonte', title:"Refonte des éléments (effets + coût de déplacement)", category:'map-tiles', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Nouveaux effets pour les éléments (feu, eau, etc.). Surtout : coût de déplacement variable selon le type de case (eau ralentit, feu blesse au passage, etc.). Repose sur la refonte case/tuile (états composables).",
+    player:"Les éléments du terrain deviennent vraiment significatifs : traverser l'eau coûte plus de mouvement, marcher dans le feu blesse, etc. Le terrain devient un acteur du jeu.",
+    enables:[] },
+
+  { id:'magic-split', title:"Séparation de la Magie + correction des carac races", category:'combat', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Séparation du stat Magie (M) en deux dimensions distinctes. Au passage, rééquilibrage des caractéristiques de base des races.",
+    player:"La Magie n'est plus une seule stat globale : elle se décompose en deux pour permettre des combinaisons plus riches. Les races sont rééquilibrées en même temps.",
+    enables:[] },
+
+  { id:'account-character-split', title:"Séparation compte / personnage", category:'player-account', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Un compte peut posséder plusieurs personnages distincts. Refonte de l'authentification et des liens.",
+    player:"Une vraie distinction entre 'qui je suis dans la vraie vie' et 'qui je joue'. Multi-perso propre.",
+    enables:[] },
+
+  { id:'api-router', title:"Système de routeur API", category:'tech-debt', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Vrai routeur pour /api (remplacement du système actuel de fichiers PHP par endpoint).",
+    player:"Bases d'une API publique stable, applications tierces possibles, mobile natif envisageable.",
+    enables:[] }
+];
+
+/* ============================================================
+ * Rendering — vertical layout (time flows top→bottom).
+ * Cards positioned absolutely within lanes by quarter %; overlap
+ * resolved by bumping later cards downward.
+ * ============================================================ */
+
+/* ----- Constants ----- */
+const STATUS_LABELS = { shipped:'Livré', progress:'En cours', planned:'Planifié', longterm:'Long terme' };
+const MONTHS_BY_QUARTER = ['jan–mar', 'avr–juin', 'juil–sep', 'oct–déc'];
+const COLLISION_BUMP_RATIO = 1.3;
+const MIN_ARROW_OFFSET = 24;
+const VERTICAL_DOMINANCE = 0.5;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/* ----- Tiny helpers ----- */
+const $ = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+function el(tag, className, parent) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+/* ----- Cached element refs ----- */
+const elHeaderRow = $('headerRow');
+const elTimeAxis  = $('timeAxis');
+const elLanes     = $('lanes');
+const elNowLine   = $('nowLine');
+const elSvg       = $('svgOverlay');
+const elTimeline  = $('timeline');
+const elDetail    = $('detail');
+const elDetailContent = $('detailContent');
+
+/* ----- Mutable state ----- */
+let currentView = 'player';
+let currentFilter = 'all';
+let selectedId = null;
+
+/* ----- Data accessors ----- */
+function featureById(id) { return FEATURES.find(f => f.id === id); }
+function blockersOf(id)  { return FEATURES.filter(f => (f.enables || []).includes(id)); }
+function visibleCategories() {
+  return CATEGORIES.filter(c => !(currentView === 'player' && c.playerHidden));
+}
+function featuresOf(categoryId) {
+  return FEATURES
+    .filter(f => f.category === categoryId)
+    .filter(f => !(currentView === 'player' && f.playerHidden))
+    .sort((a, b) => a.quarter - b.quarter);
+}
+function passesFilter(f) {
+  if (currentFilter === 'future')  return f.status !== 'shipped';
+  if (currentFilter === 'shipped') return f.status === 'shipped';
+  return true;
+}
+
+/* ----- URL state (#view=tech&filter=all&id=action-doctrine) ----- */
+function readUrlState() {
+  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const v = params.get('view'), f = params.get('filter'), id = params.get('id');
+  if (v === 'tech' || v === 'player')                   currentView = v;
+  if (f === 'all' || f === 'future' || f === 'shipped') currentFilter = f;
+  if (id) selectedId = id;
+}
+function writeUrlState() {
+  const params = new URLSearchParams();
+  params.set('view', currentView);
+  params.set('filter', currentFilter);
+  if (selectedId) params.set('id', selectedId);
+  history.replaceState(null, '', '#' + params.toString());
+}
+function syncControlsFromState() {
+  $$('#viewToggle button').forEach(b => b.classList.toggle('active', b.dataset.view === currentView));
+  $$('#filter button').forEach(b => b.classList.toggle('active', b.dataset.status === currentFilter));
+}
+
+/* ----- Main render pipeline ----- */
+function build() {
+  document.body.classList.toggle('view-player', currentView === 'player');
+  const minH = TOTAL_WEIGHT * QUARTER_PX;
+  /* Fixed height (not just min-height) — child percentage heights need
+     a definite parent height to resolve. */
+  elTimeAxis.style.height = elLanes.style.height = minH + 'px';
+
+  const cats = visibleCategories();
+  renderHeader(cats);
+  renderTimeAxis();
+  renderLanes(cats, minH);
+  positionNowLine();
+  applyFilter();
+  requestAnimationFrame(drawArrows);
+}
+
+function renderHeader(cats) {
+  elHeaderRow.innerHTML = '';
+  el('div', 'axis-corner', elHeaderRow);
+  cats.forEach(cat => {
+    const lh = el('div', 'lane-header', elHeaderRow);
+    lh.dataset.category = cat.id;
+    el('span', 'lane-icon', lh).style.background = cat.color;
+    el('span', null, lh).textContent = currentView === 'player' ? cat.playerLabel : cat.techLabel;
+  });
+}
+
+function renderTimeAxis() {
+  elTimeAxis.innerHTML = '';
+  QUARTERS.forEach((q, i) => {
+    const isNow = Math.floor(NOW_INDEX) === i;
+    const tick = el('div', 'tick' + (isNow ? ' now' : ''), elTimeAxis);
+    tick.style.height = (QUARTER_WEIGHTS[i] / TOTAL_WEIGHT * 100) + '%';
+    el('div', 'tick-q', tick).textContent = q;
+    if (q !== 'Long terme') el('div', 'tick-m', tick).textContent = MONTHS_BY_QUARTER[i % 4];
+  });
+}
+
+function renderLanes(cats, minH) {
+  /* Wipe lane children but keep the now-line element for reuse. */
+  Array.from(elLanes.children).filter(c => c !== elNowLine).forEach(c => c.remove());
+
+  /* Two-pass: append all cards first (overlapping at top:0), measure their
+     real rendered heights, then position with collision detection. Needed
+     because long titles wrap to several lines and a fixed estimate misses
+     the mark. Reads then writes to avoid layout thrash. */
+  const laneCards = cats.map(cat => {
+    const lane = el('div', 'lane', elLanes);
+    lane.dataset.category = cat.id;
+    const feats = featuresOf(cat.id);
+    const cards = feats.map(f => {
+      const card = renderCard(f);
+      lane.appendChild(card);
+      return card;
+    });
+    return { feats, cards };
+  });
+
+  /* Read phase — synchronous layout, all measurements collected upfront. */
+  const allHeights = laneCards.map(({ cards }) => cards.map(c => c.offsetHeight));
+
+  /* Write phase — position cards using the measured heights. */
+  laneCards.forEach(({ feats, cards }, laneIdx) => {
+    const tops = layoutFeatures(feats, minH, allHeights[laneIdx]);
+    cards.forEach((card, i) => card.style.top = tops[i] + '%');
+  });
+
+  /* Quarter-boundary stripes appended AFTER lanes so .lane:nth-child(even)
+     keeps matching the right lanes. Stripes are absolute → no flex impact. */
+  for (let i = 0; i < N_COLS - 1; i++) {
+    const stripe = el('div', 'lane-stripe', elLanes);
+    stripe.style.top = (CUM_WEIGHT[i] / TOTAL_WEIGHT * 100) + '%';
+  }
+
+  /* Now-line last so it stacks above stripes and lane backgrounds. */
+  elLanes.appendChild(elNowLine);
+}
+
+/* For a sorted feature list with per-card measured heights, return one top%
+   per feature. Later cards bump down whenever they would overlap an earlier
+   one. */
+function layoutFeatures(feats, minH, heightsPx) {
+  const taken = [];
+  return feats.map((f, i) => {
+    const cardHpct = (heightsPx[i] / minH) * 100;
+    const step = cardHpct * COLLISION_BUMP_RATIO;
+    let top = quarterToPercent(f.quarter);
+    while (taken.some(t => top < t.bottom && top + cardHpct > t.top)) top += step;
+    taken.push({ top, bottom: top + cardHpct });
+    return top;
+  });
+}
+
+function renderCard(f) {
+  const card = el('div', 'card ' + f.status);
+  card.dataset.id = f.id;
+  el('div', 'card-title', card).textContent = f.title;
+  if (currentView === 'tech' && f.enables && f.enables.length) {
+    el('div', 'card-enables', card).textContent = '→ débloque ' + f.enables.length;
+  }
+  card.addEventListener('click',      () => selectFeature(f.id));
+  card.addEventListener('mouseenter', () => hoverFeature(f.id));
+  card.addEventListener('mouseleave', () => hoverFeature(null));
+  return card;
+}
+
+function positionNowLine() {
+  elNowLine.style.top = quarterToPercent(NOW_INDEX) + '%';
+}
+
+function applyFilter() {
+  $$('.card').forEach(c => {
+    c.style.display = passesFilter(featureById(c.dataset.id)) ? '' : 'none';
+  });
+}
+
+/* ----- Dependency arrows ----- */
+function drawArrows() {
+  elSvg.innerHTML = '';
+  sizeSvgToTimeline();
+  appendArrowMarkers();
+  FEATURES.forEach(src => (src.enables || []).forEach(tgtId => drawArrow(src.id, tgtId)));
+}
+
+function sizeSvgToTimeline() {
+  const w = elTimeline.scrollWidth, h = elTimeline.scrollHeight;
+  elSvg.setAttribute('width', w);
+  elSvg.setAttribute('height', h);
+  elSvg.style.width  = w + 'px';
+  elSvg.style.height = h + 'px';
+}
+
+function appendArrowMarkers() {
+  const defs = document.createElementNS(SVG_NS, 'defs');
+  defs.innerHTML = `
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#95a5a6" opacity="0.65"/>
+    </marker>
+    <marker id="arr-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#e74c3c"/>
+    </marker>`;
+  elSvg.appendChild(defs);
+}
+
+function drawArrow(srcId, tgtId) {
+  const src = visibleCardEl(srcId);
+  const tgt = visibleCardEl(tgtId);
+  if (!src || !tgt) return;
+  const g = arrowGeometry(src.getBoundingClientRect(), tgt.getBoundingClientRect());
+  const path = document.createElementNS(SVG_NS, 'path');
+  path.setAttribute('d', `M${g.x1},${g.y1} C${g.c1x},${g.c1y} ${g.c2x},${g.c2y} ${g.x2},${g.y2}`);
+  path.setAttribute('class', 'arrow');
+  path.setAttribute('marker-end', 'url(#arr)');
+  path.dataset.src = srcId;
+  path.dataset.tgt = tgtId;
+  elSvg.appendChild(path);
+}
+
+function visibleCardEl(id) {
+  const node = document.querySelector(`.card[data-id="${id}"]`);
+  return node && node.style.display !== 'none' ? node : null;
+}
+
+/* Pick connection points based on the dominant axis between two cards. */
+function arrowGeometry(srcRect, tgtRect) {
+  const tlRect = elTimeline.getBoundingClientRect();
+  const sCx = srcRect.left + srcRect.width  / 2 - tlRect.left;
+  const sCy = srcRect.top  + srcRect.height / 2 - tlRect.top;
+  const tCx = tgtRect.left + tgtRect.width  / 2 - tlRect.left;
+  const tCy = tgtRect.top  + tgtRect.height / 2 - tlRect.top;
+  const isVertical = Math.abs(tCy - sCy) >= Math.abs(tCx - sCx) * VERTICAL_DOMINANCE;
+  return isVertical
+    ? verticalGeometry(srcRect, tgtRect, tlRect, sCx, tCx)
+    : horizontalGeometry(srcRect, tgtRect, tlRect, sCy, tCy);
+}
+
+function verticalGeometry(srcRect, tgtRect, tlRect, sCx, tCx) {
+  const x1 = sCx, y1 = srcRect.bottom - tlRect.top;
+  const x2 = tCx, y2 = tgtRect.top    - tlRect.top;
+  const dy = Math.max(MIN_ARROW_OFFSET, (y2 - y1) / 3);
+  return { x1, y1, x2, y2, c1x: x1, c1y: y1 + dy, c2x: x2, c2y: y2 - dy };
+}
+
+function horizontalGeometry(srcRect, tgtRect, tlRect, sCy, tCy) {
+  const goRight = tgtRect.left > srcRect.right;
+  const x1 = goRight ? srcRect.right - tlRect.left : srcRect.left  - tlRect.left;
+  const x2 = goRight ? tgtRect.left  - tlRect.left : tgtRect.right - tlRect.left;
+  const dx = Math.max(MIN_ARROW_OFFSET, Math.abs(x2 - x1) / 3) * Math.sign(x2 - x1 || 1);
+  return { x1, y1: sCy, x2, y2: tCy, c1x: x1 + dx, c1y: sCy, c2x: x2 - dx, c2y: tCy };
+}
+
+/* ----- Hover highlight ----- */
+function hoverFeature(id) {
+  clearHighlights();
+  if (!id) return;
+  highlightRelatedCards(id);
+  highlightRelatedArrows(id);
+}
+
+function clearHighlights() {
+  $$('.card').forEach(c => c.classList.remove('related-up', 'related-down'));
+  $$('.arrow').forEach(a => {
+    a.classList.remove('active');
+    a.setAttribute('marker-end', 'url(#arr)');
+  });
+}
+
+function highlightRelatedCards(id) {
+  if (!featureById(id)) return;
+  const upstream   = collectAncestors(id);
+  const downstream = collectDescendants(id);
+  $$('.card').forEach(c => {
+    if (downstream.has(c.dataset.id)) c.classList.add('related-down');
+    if (upstream.has(c.dataset.id))   c.classList.add('related-up');
+  });
+}
+
+function highlightRelatedArrows(id) {
+  const upstream   = collectAncestors(id);
+  const downstream = collectDescendants(id);
+  upstream.add(id);
+  downstream.add(id);
+  $$('.arrow').forEach(a => {
+    const inDown = downstream.has(a.dataset.src) && downstream.has(a.dataset.tgt);
+    const inUp   = upstream.has(a.dataset.src)   && upstream.has(a.dataset.tgt);
+    if (inDown || inUp) {
+      a.classList.add('active');
+      a.setAttribute('marker-end', 'url(#arr-active)');
+    }
+  });
+}
+
+/* Transitive walks across enables relationships. */
+function collectAncestors(id) {
+  const seen = new Set();
+  const stack = [id];
+  while (stack.length) {
+    const cur = stack.pop();
+    blockersOf(cur).forEach(b => {
+      if (!seen.has(b.id)) { seen.add(b.id); stack.push(b.id); }
+    });
+  }
+  return seen;
+}
+
+function collectDescendants(id) {
+  const seen = new Set();
+  const stack = [id];
+  while (stack.length) {
+    const f = featureById(stack.pop());
+    if (!f) continue;
+    (f.enables || []).forEach(eid => {
+      if (!seen.has(eid)) { seen.add(eid); stack.push(eid); }
+    });
+  }
+  return seen;
+}
+
+/* ----- Detail panel ----- */
+function selectFeature(id) {
+  selectedId = id;
+  writeUrlState();
+  const f = featureById(id);
+  if (!f) return;
+  elDetailContent.innerHTML = renderDetailPanel(f);
+  wireDetailJumps();
+  elDetail.classList.add('open');
+  highlightSelectedCard(id);
+}
+
+function renderDetailPanel(f) {
+  const cat = CATEGORIES.find(c => c.id === f.category);
+  const catLabel   = currentView === 'player' ? cat.playerLabel : cat.techLabel;
+  const desc       = currentView === 'player' ? f.player : f.tech;
+  const otherDesc  = currentView === 'player' ? f.tech   : f.player;
+  const descTitle  = currentView === 'player' ? 'Pour les joueurs' : 'Description technique';
+  const otherTitle = currentView === 'player' ? 'Détail technique' : 'Impact joueur';
+  return `
+    <h2>${f.title}</h2>
+    <div class="badges">
+      <span class="badge status-${f.status}">${STATUS_LABELS[f.status]}</span>
+      <span class="badge cat">${catLabel}</span>
+      <span class="badge cat">${f.date}${f.version ? ' · ' + f.version : ''}</span>
+    </div>
+    <div class="grid">
+      ${section(descTitle,  `<p>${desc}</p>`)}
+      ${section(otherTitle, `<p>${otherDesc}</p>`)}
+      ${enablesSection(f)}
+      ${blockersSection(f)}
+    </div>`;
+}
+
+function section(title, body) {
+  return `<div class="section"><h3>${title}</h3>${body}</div>`;
+}
+
+function enablesSection(f) {
+  if (!f.enables || !f.enables.length) return '<div></div>';
+  const items = f.enables
+    .map(featureById)
+    .filter(Boolean)
+    .map(ef => `<li><a data-jump="${ef.id}">${ef.title}</a></li>`)
+    .join('');
+  return section('Débloque', `<ul>${items}</ul>`);
+}
+
+function blockersSection(f) {
+  const blockers = blockersOf(f.id);
+  if (!blockers.length) return '<div></div>';
+  const items = blockers.map(b => `<li><a data-jump="${b.id}">${b.title}</a></li>`).join('');
+  return section('Repose sur', `<ul>${items}</ul>`);
+}
+
+function wireDetailJumps() {
+  elDetailContent.querySelectorAll('a[data-jump]').forEach(a => {
+    a.addEventListener('click', () => selectFeature(a.dataset.jump));
+  });
+}
+
+function highlightSelectedCard(id) {
+  $$('.card').forEach(c => c.classList.remove('highlight'));
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  if (!card) return;
+  card.classList.add('highlight');
+  /* nearest: scroll only if needed, avoids hiding card behind top panel. */
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+}
+
+function closeDetail() {
+  elDetail.classList.remove('open');
+  $$('.card').forEach(c => c.classList.remove('highlight'));
+  selectedId = null;
+  writeUrlState();
+}
+
+/* ----- Wire-up ----- */
+function setActive(containerSel, btn) {
+  $$(`${containerSel} button`).forEach(b => b.classList.toggle('active', b === btn));
+}
+
+function onViewToggleClick(e) {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  currentView = btn.dataset.view;
+  setActive('#viewToggle', btn);
+  writeUrlState();
+  build();
+  if (selectedId) selectFeature(selectedId);
+}
+
+function onFilterClick(e) {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  currentFilter = btn.dataset.status;
+  setActive('#filter', btn);
+  writeUrlState();
+  applyFilter();
+  requestAnimationFrame(drawArrows);
+}
+
+function onHashChange() {
+  const prev = selectedId;
+  readUrlState();
+  syncControlsFromState();
+  build();
+  if (selectedId && selectedId !== prev) selectFeature(selectedId);
+}
+
+function wireUp() {
+  $('viewToggle').addEventListener('click', onViewToggleClick);
+  $('filter').addEventListener('click', onFilterClick);
+  $('detailClose').addEventListener('click', closeDetail);
+  window.addEventListener('resize', () => requestAnimationFrame(drawArrows));
+  window.addEventListener('hashchange', onHashChange);
+}
+
+/* ----- Init ----- */
+readUrlState();
+syncControlsFromState();
+wireUp();
+build();
+if (selectedId) selectFeature(selectedId);
+</script>
+</body>
+</html>
