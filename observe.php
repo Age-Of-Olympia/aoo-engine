@@ -418,7 +418,9 @@ if($res->num_rows){
 
             $secretJson = json()->decode('factions', $target->data->secretFaction);
 
-            $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';
+            if ($secretJson) {
+                $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';
+            }
         }
 
         $data = (object) array(
@@ -668,7 +670,7 @@ if(!empty($card)){
     echo $card;
 
     ?>
-    <script src="js/observe.js?19"></script>
+    <script src="js/observe.js?20"></script>
     <?php
 }
 

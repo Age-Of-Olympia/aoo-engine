@@ -1,9 +1,5 @@
 $(document).ready(function(){
 
-    $('#go-rect').hide();
-    $('#go-img').hide();
-
-
     window.visible = false;
 
 
