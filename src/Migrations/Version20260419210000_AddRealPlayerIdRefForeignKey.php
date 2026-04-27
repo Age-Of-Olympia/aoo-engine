@@ -63,45 +63,32 @@ final class Version20260419210000_AddRealPlayerIdRefForeignKey extends AbstractM
               AND target.id IS NULL
         ');
 
-        // Skip if the constraint is already present (idempotency).
-        $this->addSql("
-            SET @fk_exists := (
-                SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
-                WHERE CONSTRAINT_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'players'
-                  AND CONSTRAINT_NAME = 'fk_players_real_player_id_ref'
-            )
-        ");
-        $this->addSql("
-            SET @sql := IF(@fk_exists = 0,
-                'ALTER TABLE `players` ADD CONSTRAINT `fk_players_real_player_id_ref` FOREIGN KEY (`real_player_id_ref`) REFERENCES `players` (`id`) ON DELETE SET NULL',
-                'SELECT 1'
-            )
-        ");
-        $this->addSql('PREPARE stmt FROM @sql');
-        $this->addSql('EXECUTE stmt');
-        $this->addSql('DEALLOCATE PREPARE stmt');
+        // Idempotent: skip if the constraint already exists.
+        if (!$this->fkExists('players', 'fk_players_real_player_id_ref')) {
+            $this->addSql(
+                'ALTER TABLE `players` ADD CONSTRAINT `fk_players_real_player_id_ref` '
+                . 'FOREIGN KEY (`real_player_id_ref`) REFERENCES `players` (`id`) ON DELETE SET NULL'
+            );
+        }
     }
 
     public function down(Schema $schema): void
     {
-        // Idempotent drop — guard in case the constraint is already gone.
-        $this->addSql("
-            SET @fk_exists := (
-                SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
-                WHERE CONSTRAINT_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'players'
-                  AND CONSTRAINT_NAME = 'fk_players_real_player_id_ref'
-            )
-        ");
-        $this->addSql("
-            SET @sql := IF(@fk_exists = 1,
-                'ALTER TABLE `players` DROP FOREIGN KEY `fk_players_real_player_id_ref`',
-                'SELECT 1'
-            )
-        ");
-        $this->addSql('PREPARE stmt FROM @sql');
-        $this->addSql('EXECUTE stmt');
-        $this->addSql('DEALLOCATE PREPARE stmt');
+        if ($this->fkExists('players', 'fk_players_real_player_id_ref')) {
+            $this->addSql('ALTER TABLE `players` DROP FOREIGN KEY `fk_players_real_player_id_ref`');
+        }
+    }
+
+    private function fkExists(string $table, string $constraintName): bool
+    {
+        $count = $this->connection->fetchOne(
+            'SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+             WHERE CONSTRAINT_SCHEMA = DATABASE()
+               AND TABLE_NAME = ?
+               AND CONSTRAINT_NAME = ?',
+            [$table, $constraintName]
+        );
+
+        return (int) $count > 0;
     }
 }

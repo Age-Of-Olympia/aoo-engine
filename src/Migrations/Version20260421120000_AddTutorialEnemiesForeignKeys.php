@@ -63,38 +63,28 @@ final class Version20260421120000_AddTutorialEnemiesForeignKeys extends Abstract
 
     private function addFkIfMissing(string $constraintName, string $alterSql): void
     {
-        $this->addSql("
-            SET @fk_exists := (
-                SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
-                WHERE CONSTRAINT_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'tutorial_enemies'
-                  AND CONSTRAINT_NAME = '{$constraintName}'
-            )
-        ");
-        $escapedAlter = str_replace("'", "''", $alterSql);
-        $this->addSql("SET @sql := IF(@fk_exists = 0, '{$escapedAlter}', 'SELECT 1')");
-        $this->addSql('PREPARE stmt FROM @sql');
-        $this->addSql('EXECUTE stmt');
-        $this->addSql('DEALLOCATE PREPARE stmt');
+        if (!$this->fkExists('tutorial_enemies', $constraintName)) {
+            $this->addSql($alterSql);
+        }
     }
 
     private function dropFkIfPresent(string $constraintName): void
     {
-        $this->addSql("
-            SET @fk_exists := (
-                SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
-                WHERE CONSTRAINT_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'tutorial_enemies'
-                  AND CONSTRAINT_NAME = '{$constraintName}'
-            )
-        ");
-        $this->addSql(
-            "SET @sql := IF(@fk_exists = 1, "
-            . "'ALTER TABLE `tutorial_enemies` DROP FOREIGN KEY `{$constraintName}`', "
-            . "'SELECT 1')"
+        if ($this->fkExists('tutorial_enemies', $constraintName)) {
+            $this->addSql("ALTER TABLE `tutorial_enemies` DROP FOREIGN KEY `{$constraintName}`");
+        }
+    }
+
+    private function fkExists(string $table, string $constraintName): bool
+    {
+        $count = $this->connection->fetchOne(
+            'SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+             WHERE CONSTRAINT_SCHEMA = DATABASE()
+               AND TABLE_NAME = ?
+               AND CONSTRAINT_NAME = ?',
+            [$table, $constraintName]
         );
-        $this->addSql('PREPARE stmt FROM @sql');
-        $this->addSql('EXECUTE stmt');
-        $this->addSql('DEALLOCATE PREPARE stmt');
+
+        return (int) $count > 0;
     }
 }
