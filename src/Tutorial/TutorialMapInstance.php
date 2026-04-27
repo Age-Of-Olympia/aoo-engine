@@ -190,9 +190,14 @@ class TutorialMapInstance
             // We'll generate a new negative ID based on timestamp to avoid conflicts
             $newNpcId = -(time() + $copiedCount);  // Negative ID for NPC
 
-            // Copy all NPC data except id and coords_id
+            // Copy all NPC data except id and coords_id.
+            // player_type must be 'npc' — without it the column default
+            // ('real') applies and the copy is misclassified, breaking
+            // every callsite that filters on player_type (rankings,
+            // get_player_by_name, STI hydration, admin filters).
             $npcData = [
                 'id' => $newNpcId,
+                'player_type' => 'npc',
                 'name' => $npc['name'],
                 'coords_id' => $newCoordsId,
                 'race' => $npc['race'],
