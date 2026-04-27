@@ -39,12 +39,12 @@ class PlayerEntityDisplayIdTest extends TestCase
     #[Group('player-display-id')]
     public function testGetterFallsBackToIdWhenDisplayIdIsZero(): void
     {
-        // Legacy row: display_id column was added after the row existed,
-        // so its default-after-add value is 0. View code must show
-        // something usable rather than "mat.0".
+        // Legacy/real-player row: display_id is NULL in DB (column is
+        // nullable; only tutorial/NPC rows get a sequential value).
+        // View code must show something usable rather than "mat.0".
         $player = new RealPlayer();
         $this->setEntityField($player, 'id', 7);
-        // displayId left at default 0
+        // displayId left at default null
 
         $this->assertSame(7, $player->getDisplayId());
     }
