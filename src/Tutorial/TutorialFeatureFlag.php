@@ -59,6 +59,12 @@ class TutorialFeatureFlag
      */
     public static function isEnabledForPlayer(int $playerId): bool
     {
+        // NPCs (negative IDs) never see the tutorial — they have no session,
+        // and unsupported races (e.g. animal) crash the spawn flow.
+        if ($playerId < 0) {
+            return false;
+        }
+
         // If globally enabled, everyone gets it
         if (self::isEnabled()) {
             return true;
