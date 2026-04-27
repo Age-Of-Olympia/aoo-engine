@@ -141,11 +141,22 @@ try {
     }
 
 } catch (Exception $e) {
-    error_log("Tutorial start error: " . $e->getMessage());
+    $chain = [];
+    for ($cur = $e; $cur !== null; $cur = $cur->getPrevious()) {
+        $chain[] = sprintf(
+            '%s: %s @ %s:%d',
+            get_class($cur),
+            $cur->getMessage(),
+            $cur->getFile(),
+            $cur->getLine()
+        );
+    }
+    error_log("Tutorial start error: " . implode(' | <- ', $chain));
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error' => 'Internal server error',
-        'debug' => $e->getMessage()
+        'debug' => $e->getMessage(),
+        'chain' => $chain,
     ]);
 }
