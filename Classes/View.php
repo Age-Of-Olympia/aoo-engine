@@ -419,14 +419,19 @@ class View{
                     // default
 
 
+                    $isCurrentPlayer = ($row->whichTable == 'players' && $row->id == $this->playerId);
+
                     if($row->whichTable == 'players'){
 
-                        // Add "current-player" class and ID for tutorial targeting
+                        // Shadow image (decorative). The .avatar-shadow CSS
+                        // shrinks this to 35x35 with a -5/14 offset; we
+                        // intentionally keep #current-player-avatar OFF the
+                        // shadow so tutorial highlights compute against the
+                        // full 50x50 avatar below, keeping their padding
+                        // symmetric to the player tile.
                         $playerClass = 'avatar-shadow';
-                        $currentPlayerId = '';
-                        if ($row->id == $this->playerId) {
+                        if ($isCurrentPlayer) {
                             $playerClass .= ' current-player';
-                            $currentPlayerId = 'current-player-avatar'; // Additional ID for reliable targeting
                         }
                         // Add tutorial-enemy class for tutorial enemy targeting
                         if ($row->id < 0 && $player->data->name === "Âme d'entraînement") {
@@ -436,7 +441,7 @@ class View{
                         echo '
                         <image
 
-                            id="'. ($currentPlayerId ?: $id) .'"
+                            id="'. $id .'-shadow"
 
                             width="50"
                             height="50"
@@ -455,10 +460,14 @@ class View{
                     }
 
 
+                    // Full-size avatar image. #current-player-avatar lives
+                    // here (not on the shadow) so tutorial highlight padding
+                    // computes against the actual 50x50 tile rect and stays
+                    // symmetric.
                     echo '
                     <image
 
-                        id="'. $id .'"
+                        id="'. ($isCurrentPlayer ? 'current-player-avatar' : $id) .'"
 
                         width="50"
                         height="50"

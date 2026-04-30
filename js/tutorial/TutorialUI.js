@@ -376,26 +376,32 @@ class TutorialUI {
         this.showStepTooltip(stepData);
 
         // Highlight target element if specified (now after panel is ready)
-        // highlight_padding extends the gold box AND the spotlight
-        // cut-out outward (e.g. 50 = one-tile ring around the target).
-        const highlightPadding = stepData.config?.highlight_padding || 0;
+        // highlight_padding on the step extends the main target's gold
+        // box AND its spotlight cut-out outward (e.g. 50 = one-tile
+        // ring). Per-additional-highlight padding lives on each entry
+        // in additional_highlights so a chunky ring around one element
+        // doesn't force a chunky ring around all of them.
+        const targetPadding = stepData.config?.highlight_padding || 0;
         if (stepData.target_selector && this.highlighter) {
             this.highlighter.highlight(stepData.target_selector, {
                 pulsate: stepData.config?.requires_validation,
-                padding: highlightPadding
+                padding: targetPadding
             });
         }
 
-        // Highlight additional elements (e.g., counter values)
+        // Highlight additional elements (e.g., counter values).
+        // additional_highlights is an array of {selector, padding}
+        // objects (server-side JSON_OBJECT aggregation).
         if (stepData.config?.additional_highlights && this.highlighter) {
             const additionalHighlights = stepData.config.additional_highlights;
             if (Array.isArray(additionalHighlights)) {
-                additionalHighlights.forEach(selector => {
-                    // Don't re-highlight the main target
-                    if (selector !== stepData.target_selector) {
+                additionalHighlights.forEach(entry => {
+                    const selector = entry?.selector ?? entry;
+                    const padding = entry?.padding || 0;
+                    if (selector && selector !== stepData.target_selector) {
                         this.highlighter.highlight(selector, {
                             pulsate: false,
-                            padding: highlightPadding
+                            padding: padding
                         });
                     }
                 });

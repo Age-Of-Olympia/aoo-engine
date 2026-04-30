@@ -5474,6 +5474,7 @@ CREATE TABLE `tutorial_step_highlights` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `step_id` int(11) NOT NULL,
   `selector` varchar(500) NOT NULL COMMENT 'CSS selector for additional highlight',
+  `padding` int(11) DEFAULT 0 COMMENT 'Extra px around this highlight (independent of the step-level target padding)',
   PRIMARY KEY (`id`),
   KEY `idx_step_id` (`step_id`),
   CONSTRAINT `tutorial_step_highlights_ibfk_1` FOREIGN KEY (`step_id`) REFERENCES `tutorial_steps` (`id`) ON DELETE CASCADE
@@ -5482,8 +5483,8 @@ CREATE TABLE `tutorial_step_highlights` (
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `tutorial_step_highlights` DISABLE KEYS */;
-INSERT INTO `tutorial_step_highlights` VALUES (1,5,'.case.go');
-INSERT INTO `tutorial_step_highlights` VALUES (2,15,'.case[data-coords=\"0,1\"]');
+INSERT INTO `tutorial_step_highlights` VALUES (1,5,'.case.go',0);
+INSERT INTO `tutorial_step_highlights` VALUES (2,15,'.case[data-coords=\"0,1\"]',0);
 /*!40000 ALTER TABLE `tutorial_step_highlights` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;

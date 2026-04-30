@@ -84,7 +84,7 @@ class TutorialStepRepository
                     (SELECT JSON_ARRAYAGG(selector)
                      FROM tutorial_step_interactions
                      WHERE step_id = ts.id) as interactions_json,
-                    (SELECT JSON_ARRAYAGG(selector)
+                    (SELECT JSON_ARRAYAGG(JSON_OBJECT('selector', selector, 'padding', COALESCE(padding, 0)))
                      FROM tutorial_step_highlights
                      WHERE step_id = ts.id) as highlights_json,
                     (SELECT JSON_OBJECTAGG(context_key, context_value)
@@ -177,7 +177,7 @@ class TutorialStepRepository
                     (SELECT JSON_ARRAYAGG(selector)
                      FROM tutorial_step_interactions
                      WHERE step_id = ts.id) as interactions_json,
-                    (SELECT JSON_ARRAYAGG(selector)
+                    (SELECT JSON_ARRAYAGG(JSON_OBJECT('selector', selector, 'padding', COALESCE(padding, 0)))
                      FROM tutorial_step_highlights
                      WHERE step_id = ts.id) as highlights_json,
                     (SELECT JSON_OBJECTAGG(context_key, context_value)

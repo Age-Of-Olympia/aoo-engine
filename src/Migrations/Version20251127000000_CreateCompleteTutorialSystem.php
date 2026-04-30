@@ -304,6 +304,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 step_id INT NOT NULL,
                 selector VARCHAR(500) NOT NULL COMMENT 'CSS selector for additional highlight',
+                padding INT DEFAULT 0 COMMENT 'Extra px around this highlight (independent of the step-level target padding)',
                 FOREIGN KEY (step_id) REFERENCES tutorial_steps(id) ON DELETE CASCADE,
                 KEY idx_step_id (step_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
