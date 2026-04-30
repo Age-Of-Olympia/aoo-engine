@@ -283,6 +283,23 @@ class TutorialUI {
                     this.level = response.level;
                     this.pi = response.pi;
 
+                    // A dynamic NPC was just spawned server-side for this
+                    // step (tutorial_npcs.spawn_at_step_id). The cached
+                    // SVG map in the browser doesn't know about the new
+                    // <image> element, so reload to pick it up. The
+                    // tutorial session resumes automatically on reload.
+                    //
+                    // Set a marker so TutorialInit knows to wait longer
+                    // before rendering the next step's panel — gives the
+                    // freshly-spawned NPC's avatar/portrait images time
+                    // to load so the panel doesn't appear before the
+                    // dummy is visible on the map.
+                    if (response.needs_map_refresh) {
+                        sessionStorage.setItem('tutorial_npc_just_spawned', 'true');
+                        document.location.reload();
+                        return true;
+                    }
+
                     // Only update UI if not skipping (e.g., before page reload)
                     if (!skipUIUpdate) {
                         // Update XP bar

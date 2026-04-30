@@ -4617,7 +4617,6 @@ CREATE TABLE `players` (
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `players` DISABLE KEYS */;
-INSERT INTO `players` VALUES (-999999,'npc',999999,'Gaïa','','','',51631,'dieu',0,0,0,0,100,0,0,1,'img/avatars/dieu/25.png','img/portraits/dieu/1.jpeg','Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.','Je préfère garder cela pour moi.','gaia','',0,'',0,0,0,0,0,0,0,0,0,NULL,NULL,NULL);
 INSERT INTO `players` VALUES (-1,'npc',1,'Lutin de test','$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe','','',15,'lutin',10,10,0,0,0,0,0,1,'img/avatars/ame/lutin.webp','img/portraits/ame/1.jpeg','Je suis nouveau, frappez-moi!','Je préfère garder cela pour moi.','gaia','saruta_et_freres',0,'',0,1744286400,0,0,0,16200,0,0,0,NULL,NULL,NULL);
 INSERT INTO `players` VALUES (1,'real',1,'Cradek','$2y$10$m35XbOC9buOw7ZH/gB2k.ubYl7vEDYYjgTmDyLcGUNt15Q9LaBILe','$2y$10$hkduB0wnA8nfn2C.ck6UA.b6jr56K9WeBDel33IokN/rtogNXQ8C2','',17009,'nain',5906,99,20,0,7,-1,2,5,'img/avatars/nain/5.png','img/portraits/nain/45.jpeg','Je suis nouveau, frappez-moi!','Je préfère garder cela pour moi.','gaia','forge_sacree',0,'',0,1744540273,1736117307,1744478783,1744536431,1744430285,1744414037,0,0,NULL,NULL,NULL);
 INSERT INTO `players` VALUES (2,'real',2,'Dorna','$2y$10$XJm1A0RZWGRbhvDlUyOP8e/O0hhDLLUwU.VJM00GbmWjydKqeoczy','$2y$10$pVJivan0Lhqg.x0OSWQzaulIWVr.BPJ.c3Q992jtWsy61FXH84wNS','',15318,'nain',77,77,0,34,0,0,0,1,'img/avatars/nain/73.png','img/portraits/nain/44.jpeg','Je suis nouveau, frappez-moi!','Je préfère garder cela pour moi.','gaia','forge_sacree',0,'',0,1744540949,1736118099,0,1744534215,16200,1744414042,0,0,NULL,NULL,NULL);
@@ -5466,6 +5465,40 @@ INSERT INTO `tutorial_step_features` VALUES (13,28,0,0,NULL);
 INSERT INTO `tutorial_step_features` VALUES (14,29,1,1,20000);
 INSERT INTO `tutorial_step_features` VALUES (16,35,1,1,NULL);
 /*!40000 ALTER TABLE `tutorial_step_features` ENABLE KEYS */;
+COMMIT;
+SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tutorial_npcs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `version` varchar(20) NOT NULL DEFAULT '1.0.0',
+  `role` varchar(50) NOT NULL COMMENT 'Free-text label: guide, enemy, …',
+  `spawn_mode` enum('template','dynamic') NOT NULL,
+  `x` int(11) NOT NULL DEFAULT 0 COMMENT 'Absolute X (template) or offset from player (dynamic)',
+  `y` int(11) NOT NULL DEFAULT 0 COMMENT 'Absolute Y (template) or offset from player (dynamic)',
+  `name` varchar(255) NOT NULL,
+  `race` varchar(50) NOT NULL,
+  `avatar` varchar(500) NOT NULL,
+  `portrait` varchar(500) NOT NULL,
+  `faction` varchar(50) DEFAULT '',
+  `text` text DEFAULT NULL,
+  `energie` int(11) NOT NULL DEFAULT 100,
+  `spawn_at_step_id` int(11) DEFAULT NULL COMMENT 'Dynamic NPCs only: step that triggers the spawn. NULL = at session start',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_version_active` (`version`,`is_active`),
+  KEY `idx_spawn_mode` (`spawn_mode`),
+  KEY `spawn_at_step_id` (`spawn_at_step_id`),
+  CONSTRAINT `tutorial_npcs_ibfk_1` FOREIGN KEY (`spawn_at_step_id`) REFERENCES `tutorial_steps` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tutorial NPC roster + placement (replaces hardcoded Gaïa + dummy)';
+
+SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
+/*!40000 ALTER TABLE `tutorial_npcs` DISABLE KEYS */;
+INSERT INTO `tutorial_npcs` VALUES (1,'1.0.0','guide','template',1,0,'Gaïa','dieu','img/avatars/dieu/25.png','img/portraits/dieu/1.jpeg','','Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.',100,NULL,1,'2026-04-30 21:00:00','2026-04-30 21:00:00');
+INSERT INTO `tutorial_npcs` VALUES (2,'1.0.0','enemy','dynamic',2,1,'Âme d\'entraînement','ame','img/avatars/ame/default.webp','img/portraits/ame/1.jpeg','','Âme d\'entraînement pour le tutoriel',100,NULL,1,'2026-04-30 21:00:00','2026-04-30 21:00:00');
+/*!40000 ALTER TABLE `tutorial_npcs` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

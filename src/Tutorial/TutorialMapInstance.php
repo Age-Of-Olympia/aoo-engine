@@ -116,8 +116,9 @@ class TutorialMapInstance
         // Step 4: Copy map_walls (resources like trees/stones)
         $this->copyMapElements('walls', $coordsMapping, ['name', 'player_id', 'damages'], $templatePlan);
 
-        // Step 5: Copy NPCs (negative player IDs) to instance
-        $this->copyNPCs($coordsMapping, $instancePlanName, $templatePlan);
+        // Step 5: Spawn template NPCs from tutorial_npcs config (replaces
+        // the legacy "copy any NPC sitting on plan='tutorial'" pass).
+        $this->spawnTemplateNpcs($instancePlanName);
 
         // Step 6: Copy other map elements if they exist on template map
         $mapElementTypes = ['tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
@@ -154,68 +155,63 @@ class TutorialMapInstance
     }
 
     /**
-     * Copy NPCs from template to instance
+     * Spawn template NPCs onto the per-session instance plan.
      *
-     * NPCs (negative player IDs) need to be duplicated for each instance.
-     * Creates new NPC copies with new negative IDs on instance coords.
+     * Replaces the legacy copyNPCs pass that read whatever id<0 row
+     * sat on the template plan. Source of truth is now tutorial_npcs
+     * (spawn_mode='template') — admins manage the roster via the
+     * admin UI, not by hand-editing players rows.
      *
-     * @param array $coordsMapping Old coords_id => new coords_id mapping
-     * @param string $instancePlanName Instance plan name
-     * @param string $templatePlan Template plan name
+     * Each template NPC config produces ONE new players row at the
+     * configured (x,y) on the instance plan, with a fresh negative id.
+     * coords are looked up / created for the instance plan as needed.
      */
-    private function copyNPCs(array $coordsMapping, string $instancePlanName, string $templatePlan = 'tutorial'): void
+    private function spawnTemplateNpcs(string $instancePlanName, string $version = '1.0.0'): void
     {
-        // Get all NPCs from template map
-        $npcs = $this->conn->fetchAllAssociative("
-            SELECT p.* FROM players p
-            INNER JOIN coords c ON p.coords_id = c.id
-            WHERE c.plan = ? AND p.id < 0
-        ", [$templatePlan]);
-
-        if (empty($npcs)) {
+        $repo = new TutorialNpcRepository($this->conn);
+        $templateNpcs = $repo->listActive($version, 'template');
+        if (empty($templateNpcs)) {
             return;
         }
 
-        $copiedCount = 0;
-        foreach ($npcs as $npc) {
-            $oldCoordsId = $npc['coords_id'];
-
-            if (!isset($coordsMapping[$oldCoordsId])) {
-                continue;
+        foreach ($templateNpcs as $i => $npc) {
+            // Resolve / create coords for (x,y) on the instance plan.
+            $coordsId = $this->conn->fetchOne(
+                "SELECT id FROM coords WHERE plan = ? AND x = ? AND y = ? AND z = 0",
+                [$instancePlanName, $npc['x'], $npc['y']]
+            );
+            if (!$coordsId) {
+                $this->conn->insert('coords', [
+                    'plan' => $instancePlanName,
+                    'x' => $npc['x'],
+                    'y' => $npc['y'],
+                    'z' => 0,
+                ]);
+                $coordsId = (int) $this->conn->lastInsertId();
             }
 
-            $newCoordsId = $coordsMapping[$oldCoordsId];
+            // Spread negative ids across the seconds-resolution clock
+            // so concurrent session creations don't collide on the same
+            // ts. (i offset within the loop too.)
+            $newNpcId = -(time() + $i);
 
-            // Create a copy of the NPC with a new negative ID
-            // We'll generate a new negative ID based on timestamp to avoid conflicts
-            $newNpcId = -(time() + $copiedCount);  // Negative ID for NPC
-
-            // Copy all NPC data except id and coords_id.
-            // player_type must be 'npc' — without it the column default
-            // ('real') applies and the copy is misclassified, breaking
-            // every callsite that filters on player_type (rankings,
-            // get_player_by_name, STI hydration, admin filters).
-            $npcData = [
+            $this->conn->insert('players', [
                 'id' => $newNpcId,
                 'player_type' => 'npc',
                 'name' => $npc['name'],
-                'coords_id' => $newCoordsId,
+                'coords_id' => (int) $coordsId,
                 'race' => $npc['race'],
-                'psw' => $npc['psw'] ?? '',
-                'mail' => $npc['mail'] ?? '',
-                'plain_mail' => $npc['plain_mail'] ?? '',
-                'xp' => $npc['xp'] ?? 0,
-                'pi' => $npc['pi'] ?? 0,
-                'energie' => $npc['energie'] ?? 100,
-                'avatar' => $npc['avatar'] ?? '',
-                'portrait' => $npc['portrait'] ?? '',
-                'text' => $npc['text'] ?? ''
-            ];
-
-            $this->conn->insert('players', $npcData);
-            $copiedCount++;
+                'psw' => '',
+                'mail' => '',
+                'plain_mail' => '',
+                'xp' => 0,
+                'pi' => 0,
+                'energie' => $npc['energie'],
+                'avatar' => $npc['avatar'],
+                'portrait' => $npc['portrait'],
+                'text' => $npc['text'] ?? '',
+            ]);
         }
-
     }
 
     /**
