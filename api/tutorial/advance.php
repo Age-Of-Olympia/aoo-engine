@@ -106,7 +106,11 @@ try {
                 'xp_earned' => $result['xp_earned'],
                 'level' => $result['level'],
                 'pi' => $result['pi'],
-                'step_data' => $result['next_step_data'] ?? null
+                'step_data' => $result['next_step_data'] ?? null,
+                // Set when applyStepPrerequisites just spawned a dynamic
+                // NPC for the new step — client must reload so the SVG
+                // map picks up the new <image> element.
+                'needs_map_refresh' => $result['needs_map_refresh'] ?? false,
             ]);
         }
     } else {
