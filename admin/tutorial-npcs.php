@@ -184,6 +184,7 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
   </div>
 </div>
 
+<script id="npc_steps_data" type="application/json">{$stepsJson}</script>
 <script>
 (function(){
     const stepsByVersion = JSON.parse(document.querySelector('script#npc_steps_data').textContent);
@@ -211,7 +212,6 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
     refreshModeUI();
 })();
 </script>
-<script id="npc_steps_data" type="application/json">{$stepsJson}</script>
 HTML;
 }
 
