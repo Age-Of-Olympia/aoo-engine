@@ -150,33 +150,37 @@ class TutorialHighlighter {
      * Position highlight box around element
      */
     positionHighlight($highlight, $element, padding = 0) {
-        // Use shared position manager for accurate positioning
-        const pos = TutorialPositionManager.getElementPosition($element);
-
-
-        // Validate position has dimensions
-        if (pos.width === 0 || pos.height === 0) {
+        // Compute the union in VIEWPORT coords so the parent rect and
+        // child rects (both via getBoundingClientRect) are in the same
+        // space. Scroll offset is added once, at the end, when writing
+        // the CSS top/left. The previous version mixed scroll-adjusted
+        // parent coords (TutorialPositionManager.getElementPosition)
+        // with raw child rects → on any scrolled page, the union check
+        // `r.bottom > maxY` always failed and the highlight box stayed
+        // clipped to the parent's max-height. Bit step 18 (use_fouiller)
+        // when the user had scrolled down to the action panel.
+        const r = $element[0].getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) {
             console.warn('[TutorialHighlighter] ⚠️ Element has zero dimensions!', {
-                width: pos.width,
-                height: pos.height,
+                width: r.width,
+                height: r.height,
                 element: $element[0]
             });
         }
 
-        // Expand to include any overflowing children. Some targets
-        // (e.g. #ui-card .card-actions has max-height:100px) clip
-        // their own bounding rect even though child buttons render
-        // below — the gold box would otherwise stop after the first
-        // few visible items.
+        const pos = { top: r.top, left: r.left, width: r.width, height: r.height };
         const bounds = TutorialHighlighter.unionWithVisibleChildren($element[0], pos);
+
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
 
         // 5px breathing room for the gold border + caller-supplied
         // padding to extend the highlight outward (e.g. cover the 8
         // tiles around the player avatar).
         const gap = 5 + padding;
         $highlight.css({
-            top: `${bounds.top - gap}px`,
-            left: `${bounds.left - gap}px`,
+            top: `${bounds.top + scrollTop - gap}px`,
+            left: `${bounds.left + scrollLeft - gap}px`,
             width: `${bounds.width + gap * 2}px`,
             height: `${bounds.height + gap * 2}px`
         });
