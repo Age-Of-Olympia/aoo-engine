@@ -344,6 +344,15 @@ class TutorialUI {
         // Clear previous observers
         this.cleanupObservers();
 
+        // Per-step caracs panel control: open/close before any tooltip
+        // or highlight computes positions. NULL/missing = leave as-is.
+        const caracsState = stepData.config?.caracs_panel_state;
+        if (caracsState === 'open' && typeof window.openCaracsPanel === 'function') {
+            window.openCaracsPanel();
+        } else if (caracsState === 'closed' && typeof window.closeCaracsPanel === 'function') {
+            window.closeCaracsPanel();
+        }
+
         // Ensure required panels are in correct state BEFORE applying interaction mode
         // Wait for panels to be ready before showing tooltip/highlight
         await this.ensurePanelVisibility(stepData);
@@ -376,20 +385,38 @@ class TutorialUI {
         this.showStepTooltip(stepData);
 
         // Highlight target element if specified (now after panel is ready)
+        // highlight_padding on the step extends the main target's gold
+        // box AND its spotlight cut-out outward (e.g. 50 = one-tile
+        // ring). Per-additional-highlight padding lives on each entry
+        // in additional_highlights so a chunky ring around one element
+        // doesn't force a chunky ring around all of them.
+        const targetPadding = stepData.config?.highlight_padding || 0;
         if (stepData.target_selector && this.highlighter) {
             this.highlighter.highlight(stepData.target_selector, {
-                pulsate: stepData.config?.requires_validation
+                pulsate: stepData.config?.requires_validation,
+                padding: targetPadding
             });
         }
 
-        // Highlight additional elements (e.g., counter values)
+        // Highlight additional elements (e.g., counter values, the
+        // player ring on a movement step). additional_highlights is an
+        // array of {selector, padding} objects.
+        // silent=true: only contributes to the spotlight cut-out (the
+        // un-dim) — no gold border, no glow. The main target keeps the
+        // yellow box so visual hierarchy stays clear: one "go here"
+        // pulse, rest just lit context.
         if (stepData.config?.additional_highlights && this.highlighter) {
             const additionalHighlights = stepData.config.additional_highlights;
             if (Array.isArray(additionalHighlights)) {
-                additionalHighlights.forEach(selector => {
-                    // Don't re-highlight the main target
-                    if (selector !== stepData.target_selector) {
-                        this.highlighter.highlight(selector, { pulsate: false });
+                additionalHighlights.forEach(entry => {
+                    const selector = entry?.selector ?? entry;
+                    const padding = entry?.padding || 0;
+                    if (selector && selector !== stepData.target_selector) {
+                        this.highlighter.highlight(selector, {
+                            pulsate: false,
+                            padding: padding,
+                            silent: true
+                        });
                     }
                 });
             }
@@ -506,6 +533,12 @@ class TutorialUI {
     applyInteractionMode(stepData) {
         const mode = stepData.interaction_mode || this.getDefaultInteractionMode(stepData.step_type);
         const $overlay = $('#tutorial-overlay');
+
+        // Drop the server-side pre-dim placeholder. By the time we
+        // pick a mode the proper overlay/spotlight is about to take
+        // over, and even on 'open' steps the pre-dim must be cleared
+        // (otherwise the page stays dimmed with no JS owning it).
+        $('#tutorial-pre-dim').remove();
 
         // Remove previous mode classes
         $overlay.removeClass('blocking semi-blocking open');

@@ -51,6 +51,8 @@ class TutorialStepRepository
                     ui.auto_close_card,
                     ui.tooltip_offset_x,
                     ui.tooltip_offset_y,
+                    ui.highlight_padding,
+                    ui.caracs_panel_state,
                     -- Validation config
                     v.requires_validation,
                     v.validation_type,
@@ -83,7 +85,7 @@ class TutorialStepRepository
                     (SELECT JSON_ARRAYAGG(selector)
                      FROM tutorial_step_interactions
                      WHERE step_id = ts.id) as interactions_json,
-                    (SELECT JSON_ARRAYAGG(selector)
+                    (SELECT JSON_ARRAYAGG(JSON_OBJECT(\'selector\', selector, \'padding\', COALESCE(padding, 0)))
                      FROM tutorial_step_highlights
                      WHERE step_id = ts.id) as highlights_json,
                     (SELECT JSON_OBJECTAGG(context_key, context_value)
@@ -143,6 +145,8 @@ class TutorialStepRepository
                     ui.auto_close_card,
                     ui.tooltip_offset_x,
                     ui.tooltip_offset_y,
+                    ui.highlight_padding,
+                    ui.caracs_panel_state,
                     -- Validation config
                     v.requires_validation,
                     v.validation_type,
@@ -175,7 +179,7 @@ class TutorialStepRepository
                     (SELECT JSON_ARRAYAGG(selector)
                      FROM tutorial_step_interactions
                      WHERE step_id = ts.id) as interactions_json,
-                    (SELECT JSON_ARRAYAGG(selector)
+                    (SELECT JSON_ARRAYAGG(JSON_OBJECT(\'selector\', selector, \'padding\', COALESCE(padding, 0)))
                      FROM tutorial_step_highlights
                      WHERE step_id = ts.id) as highlights_json,
                     (SELECT JSON_OBJECTAGG(context_key, context_value)
@@ -451,6 +455,21 @@ class TutorialStepRepository
                 'x' => (int)$row['tooltip_offset_x'],
                 'y' => (int)$row['tooltip_offset_y']
             ];
+        }
+
+        // Pixel padding around the highlighted target — extends both
+        // the gold-bordered box and the spotlight cut-out outward.
+        // Useful when the target is a small element (e.g. the player
+        // avatar) but the player should also see its surroundings
+        // (e.g. the 8 walkable tiles around them on a movement step).
+        if (isset($row['highlight_padding']) && (int)$row['highlight_padding'] !== 0) {
+            $config['highlight_padding'] = (int)$row['highlight_padding'];
+        }
+
+        // Force the caracs panel open/closed at step start. Null means
+        // "leave as-is" — the player's cookie-driven state stands.
+        if (!empty($row['caracs_panel_state'])) {
+            $config['caracs_panel_state'] = $row['caracs_panel_state'];
         }
 
         // Add validation params if present

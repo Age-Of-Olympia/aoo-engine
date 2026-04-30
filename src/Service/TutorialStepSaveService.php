@@ -118,16 +118,24 @@ class TutorialStepSaveService
         $autoAdvanceDelay = $this->validator->validatePositiveInt($data['auto_advance_delay'] ?? null, 60000);
         $allowManualAdvance = $this->validator->validateCheckbox($data['allow_manual_advance'] ?? false);
         $autoCloseCard = isset($data['auto_close_card']) ? 1 : null;
+        $highlightPadding = $this->validator->validatePositiveInt($data['highlight_padding'] ?? 0, 1000) ?? 0;
+
+        $caracsPanelState = $data['caracs_panel_state'] ?? null;
+        if ($caracsPanelState !== 'open' && $caracsPanelState !== 'closed') {
+            $caracsPanelState = null;
+        }
 
         $this->db->exe("
             INSERT INTO tutorial_step_ui (step_id, target_selector, target_description, highlight_selector,
                 tooltip_position, interaction_mode, blocked_click_message, show_delay, auto_advance_delay,
-                allow_manual_advance, auto_close_card, tooltip_offset_x, tooltip_offset_y)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                allow_manual_advance, auto_close_card, tooltip_offset_x, tooltip_offset_y, highlight_padding,
+                caracs_panel_state)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ", [
             $stepId, $targetSelector, $targetDescription, $highlightSelector,
             $tooltipPosition, $interactionMode, $blockedClickMessage, $showDelay, $autoAdvanceDelay,
-            $allowManualAdvance ? 1 : 0, $autoCloseCard, 0, 0
+            $allowManualAdvance ? 1 : 0, $autoCloseCard, 0, 0, $highlightPadding,
+            $caracsPanelState
         ]);
     }
 
