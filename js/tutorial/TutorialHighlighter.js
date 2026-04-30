@@ -222,102 +222,135 @@ class TutorialHighlighter {
     }
 
     /**
-     * Show the spotlight overlay (single dark layer).
+     * Show the spotlight overlay.
      *
-     * When a map is present (.case tiles), the dim is shaped to leave
-     * the playable map area un-darkened — players can see and reach
-     * the tile they need to click. Achieved with a transparent rect
-     * positioned over the map's bounding box plus a giant box-shadow
-     * that fills everything outside.
+     * Renders a fullscreen dim with one cut-out per "thing the player
+     * needs to see" — each highlighted target plus the open #ui-card
+     * — using an SVG mask. Each cut-out matches the actual element
+     * rectangle, so unrelated chrome stays dimmed without forcing a
+     * giant union bounding box (the previous bounding-box approach
+     * lit up huge empty regions between the map and the card).
      *
-     * On non-map pages (no .case elements), falls back to a fullscreen
-     * dim so info / dialog steps still get the focus effect.
+     * Falls back to a plain fullscreen dim when no element is on
+     * screen (info / dialog steps off the map page).
      */
     showSpotlightOverlay() {
-        if ($('#tutorial-spotlight-overlay').length === 0) {
-            $('body').append('<div id="tutorial-spotlight-overlay"></div>');
-        }
+        $('#tutorial-spotlight-overlay').remove();
 
-        const $overlay = $('#tutorial-spotlight-overlay');
-        const walkableRect = this.computeMapRect();
-
-        if (walkableRect) {
-            $overlay.css({
-                top: walkableRect.top + 'px',
-                left: walkableRect.left + 'px',
-                width: walkableRect.width + 'px',
-                height: walkableRect.height + 'px',
-                background: 'transparent',
-                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
-            });
-        } else {
-            $overlay.css({
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'rgba(0, 0, 0, 0.5)',
-                boxShadow: 'none'
-            });
-        }
+        const holes = this.computeSpotlightHoles();
+        const $overlay = $(this.buildSpotlightSvg(holes));
+        $('body').append($overlay);
 
         // Hide the regular tutorial overlay to avoid double darkening
         $('#tutorial-overlay').addClass('has-spotlight');
 
-        // Show spotlight overlay
         $overlay.fadeIn(200);
+
+        // Re-render on viewport changes so the holes track the elements.
+        this.bindSpotlightReposition();
     }
 
     /**
-     * Compute the screen-space bounding box of "what the player needs
-     * to see" during a tutorial step:
-     *   - all .case map tiles (the playable area)
-     *   - the open character card (#ui-card) if visible — players need
-     *     to read the card and click its action buttons (Attaquer, etc.)
-     *     without the spotlight greying them out.
-     *   - every currently-highlighted target element — the gold glow
-     *     punches through visually, but the element underneath was
-     *     still being dimmed; including it in the un-dimmed union
-     *     keeps the target itself fully readable.
+     * Build the SVG markup for the spotlight overlay.
      *
-     * Returns the union rect of those elements, or null when none are
-     * present (caller falls back to fullscreen dim).
+     * @param {Array<{top:number,left:number,width:number,height:number}>} holes
+     * @returns {string}
      */
-    computeMapRect() {
-        const $targets = $('.case').add('#ui-card:visible');
-        this.highlights.forEach(item => {
-            if (item.$element && item.$element.length) {
-                $targets.push(item.$element[0]);
+    buildSpotlightSvg(holes) {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const padding = 4; /* breathing room around each cut-out */
+        const radius = 6;  /* rounded corners on cut-outs */
+
+        const holeMarkup = holes.map(r => {
+            const x = Math.round(r.left - padding);
+            const y = Math.round(r.top - padding);
+            const rw = Math.round(r.width + padding * 2);
+            const rh = Math.round(r.height + padding * 2);
+            return `<rect x="${x}" y="${y}" width="${rw}" height="${rh}" rx="${radius}" ry="${radius}" fill="black"/>`;
+        }).join('');
+
+        return `
+            <svg id="tutorial-spotlight-overlay"
+                 width="${w}" height="${h}"
+                 viewBox="0 0 ${w} ${h}"
+                 preserveAspectRatio="none"
+                 style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9998; pointer-events:none;">
+                <defs>
+                    <mask id="tutorial-spotlight-mask" maskUnits="userSpaceOnUse">
+                        <rect width="${w}" height="${h}" fill="white"/>
+                        ${holeMarkup}
+                    </mask>
+                </defs>
+                <rect width="${w}" height="${h}"
+                      fill="black" fill-opacity="0.5"
+                      mask="url(#tutorial-spotlight-mask)"/>
+            </svg>`;
+    }
+
+    /**
+     * The set of screen-space rects to cut out of the dim:
+     *   - every currently-tracked highlight target
+     *   - the open #ui-card (read its text, click its action buttons)
+     *
+     * Caller treats an empty list as "fullscreen dim" — useful for
+     * info steps that have no on-screen target.
+     */
+    computeSpotlightHoles() {
+        const rects = [];
+
+        const push = ($el) => {
+            if (!$el || !$el.length) {
+                return;
             }
-        });
-
-        if ($targets.length === 0) {
-            return null;
-        }
-
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        let found = false;
-        $targets.each(function() {
-            const r = this.getBoundingClientRect();
+            const r = $el[0].getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
-                minX = Math.min(minX, r.left);
-                minY = Math.min(minY, r.top);
-                maxX = Math.max(maxX, r.right);
-                maxY = Math.max(maxY, r.bottom);
-                found = true;
+                rects.push({ top: r.top, left: r.left, width: r.width, height: r.height });
             }
-        });
-
-        if (!found) {
-            return null;
-        }
-
-        return {
-            top: minY,
-            left: minX,
-            width: maxX - minX,
-            height: maxY - minY
         };
+
+        this.highlights.forEach(item => push(item.$element));
+        push($('#ui-card:visible'));
+
+        return rects;
+    }
+
+    /**
+     * Re-render the spotlight on resize / scroll so the holes follow
+     * their elements. Idempotent — only binds once per highlighter
+     * instance.
+     */
+    bindSpotlightReposition() {
+        if (this.spotlightRepositionBound) {
+            return;
+        }
+        this.spotlightRepositionBound = true;
+
+        const reposition = () => {
+            if (!$('#tutorial-spotlight-overlay').length) {
+                return; /* nothing to redraw */
+            }
+            this.refreshSpotlight();
+        };
+
+        window.addEventListener('resize', reposition);
+        window.addEventListener('scroll', reposition, true);
+    }
+
+    /**
+     * Rebuild the spotlight markup in place (preserves visibility,
+     * skips fade-in) so resize/scroll updates feel instant.
+     */
+    refreshSpotlight() {
+        const wasVisible = $('#tutorial-spotlight-overlay').is(':visible');
+        $('#tutorial-spotlight-overlay').remove();
+
+        const holes = this.computeSpotlightHoles();
+        const $overlay = $(this.buildSpotlightSvg(holes));
+        if (wasVisible) {
+            $overlay.css('display', 'block');
+        }
+        $('body').append($overlay);
     }
 
     /**
