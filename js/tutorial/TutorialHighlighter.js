@@ -323,25 +323,12 @@ class TutorialHighlighter {
      * Idempotent — clears previous markers first.
      */
     refreshBlockedTileMarkers() {
-        $('.tutorial-blocked-tile').remove();
-
-        const playerCoords = $('#current-player-avatar').attr('data-coords');
-
-        // Pre-compute the set of "blocked" coordinates: any tile that
-        // carries a wall or a foreground (non-passable element) AND any
-        // tile occupied by another player. .go on a tile only means
-        // "adjacent to the player" — it's added for every neighbor
-        // regardless of walkability, so we can NOT use it as a signal.
-        const blockedCoords = new Set();
-        $('image[data-table="walls"], image[data-table="foregrounds"]').each(function() {
-            const c = this.getAttribute('data-coords');
-            if (c) blockedCoords.add(c);
-        });
-        $('image[data-table="players"]').each(function() {
-            const c = this.getAttribute('data-coords');
-            if (c && c !== playerCoords) blockedCoords.add(c);
-        });
-
+        // Collect the screen rects of every padded highlight zone —
+        // delegate the per-tile placement to the shared helper in
+        // blocked-tiles.js (also used by the regular-game display
+        // option `showBlockedTiles`). Empty zones array → no padded
+        // highlights → no markers.
+        const zones = [];
         this.highlights.forEach(item => {
             if (!item.padding || item.padding <= 0) {
                 return;
@@ -354,42 +341,22 @@ class TutorialHighlighter {
             if (r.width === 0 || r.height === 0) {
                 return;
             }
-            const zone = {
+            zones.push({
                 left: r.left - item.padding,
                 top: r.top - item.padding,
                 right: r.right + item.padding,
                 bottom: r.bottom + item.padding
-            };
-
-            $('.case').each(function() {
-                const $case = $(this);
-                const coords = $case.attr('data-coords');
-                if (!coords || coords === playerCoords) {
-                    return;
-                }
-                if (!blockedCoords.has(coords)) {
-                    return;
-                }
-                const cr = this.getBoundingClientRect();
-                if (cr.width === 0 || cr.height === 0) {
-                    return;
-                }
-                // Tile counts as inside the zone if its center lies in it.
-                const cx = cr.left + cr.width / 2;
-                const cy = cr.top + cr.height / 2;
-                if (cx < zone.left || cx > zone.right || cy < zone.top || cy > zone.bottom) {
-                    return;
-                }
-                const $marker = $('<div class="tutorial-blocked-tile">×</div>');
-                $marker.css({
-                    top: cr.top + 'px',
-                    left: cr.left + 'px',
-                    width: cr.width + 'px',
-                    height: cr.height + 'px'
-                });
-                $('body').append($marker);
             });
         });
+
+        if (typeof window.drawBlockedTileMarkers !== 'function') {
+            return;
+        }
+        if (zones.length === 0) {
+            window.clearBlockedTileMarkers('blocked-tile-marker');
+            return;
+        }
+        window.drawBlockedTileMarkers(zones, 'blocked-tile-marker');
     }
 
     /**
@@ -528,7 +495,7 @@ class TutorialHighlighter {
         $('#tutorial-spotlight-overlay').fadeOut(200, () => {
             $('#tutorial-spotlight-overlay').remove();
         });
-        $('.tutorial-blocked-tile').remove();
+        $('.blocked-tile-marker').remove();
 
         // Restore regular tutorial overlay
         $('#tutorial-overlay').removeClass('has-spotlight');

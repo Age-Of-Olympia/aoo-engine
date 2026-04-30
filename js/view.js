@@ -49,6 +49,20 @@ $(document).ready(function(){
         });
     };
 
+    // Player display option: red × on every blocked tile across the
+    // whole map. Driven by window.showBlockedTiles (set server-side
+    // in MainView from the showBlockedTiles player option, gated to
+    // false during a tutorial session so the tutorial's own scoped
+    // markers stay solo). Uses the shared helper from blocked-tiles.js.
+    if (window.showBlockedTiles && typeof window.drawBlockedTileMarkers === 'function') {
+        var redrawBlockedTiles = function() {
+            window.drawBlockedTileMarkers(null, 'blocked-tile-marker');
+        };
+        redrawBlockedTiles();
+        window.addEventListener('resize', redrawBlockedTiles);
+        window.addEventListener('scroll', redrawBlockedTiles, true);
+    }
+
     // Right-click coordinate tool (available for everyone, TP button only for admins)
     $(document).on('contextmenu', '.case', function(e) {
         e.preventDefault();

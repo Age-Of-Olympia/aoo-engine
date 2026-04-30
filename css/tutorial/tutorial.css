@@ -467,11 +467,16 @@
     pointer-events: none;
 }
 
-/* Red × placed by TutorialHighlighter on every non-walkable .case
- * inside a padded highlight zone — visual cue for "you cannot walk
- * here" within the lit area. Sits above the spotlight (9998) but
- * below tutorial-controls (10001), and is click-through. */
-.tutorial-blocked-tile {
+/* Red × on a blocked map tile. Drawn by:
+ *   - TutorialHighlighter, scoped to padded highlight zones during
+ *     the tutorial,
+ *   - the "showBlockedTiles" player display option in regular play.
+ * Server gates the regular option to false while in_tutorial so the
+ * two callers never stack — single class is enough.
+ *
+ * Sits above the spotlight (9998) but below tutorial-controls
+ * (10001). Click-through. */
+.blocked-tile-marker {
     position: fixed;
     z-index: 9999;
     pointer-events: none;
