@@ -38,7 +38,7 @@ function admin_layout($title, $content) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$title - Admin of Olympia</title>
-    <link href="/css/main.min.css?v=20251128" rel="stylesheet">
+    <link href="/css/main.min.css?v=20260430" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         /* Reset body constraints from main.min.css */
