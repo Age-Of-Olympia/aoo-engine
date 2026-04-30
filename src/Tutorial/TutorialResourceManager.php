@@ -117,7 +117,7 @@ class TutorialResourceManager
                 'id' => $enemyId,
                 'player_type' => 'npc',
                 'display_id' => $displayId,
-                'name' => 'Mannequin d\'entraînement',
+                'name' => 'Âme d\'entraînement',
                 'coords_id' => $enemyCoordsId,
                 'race' => 'ame',
                 'xp' => 0,
@@ -128,7 +128,7 @@ class TutorialResourceManager
                 'plain_mail' => '',
                 'avatar' => 'img/avatars/ame/default.webp',
                 'portrait' => 'img/portraits/ame/1.jpeg',
-                'text' => 'Mannequin d\'entrainement pour le tutoriel'
+                'text' => 'Âme d\'entraînement pour le tutoriel'
             ]);
 
             // Initialize enemy caracs (characteristics)

@@ -429,7 +429,7 @@ class View{
                             $currentPlayerId = 'current-player-avatar'; // Additional ID for reliable targeting
                         }
                         // Add tutorial-enemy class for tutorial enemy targeting
-                        if ($row->id < 0 && $player->data->name === "Mannequin d'entraînement") {
+                        if ($row->id < 0 && $player->data->name === "Âme d'entraînement") {
                             $playerClass .= ' tutorial-enemy';
                         }
 
