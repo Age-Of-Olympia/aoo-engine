@@ -299,6 +299,41 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             COMMENT='Special features and effects for tutorial steps'
         ");
 
+        // Tutorial NPCs config (replaces hardcoded Gaïa template seed
+        // and dummy spawn constants). Each row describes one NPC the
+        // tutorial spawns, in two modes:
+        //   - template: created on the per-session map at fixed (x,y).
+        //     Replaces the legacy "NPC sitting on plan='tutorial' that
+        //     copyNPCs copies per session".
+        //   - dynamic: created per session relative to the player
+        //     position (x/y treated as offsets from spawn). Used for
+        //     the training enemy.
+        $this->addSql("
+            CREATE TABLE IF NOT EXISTS tutorial_npcs (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                version VARCHAR(20) NOT NULL DEFAULT '1.0.0',
+                role VARCHAR(50) NOT NULL COMMENT 'Free-text label: guide, enemy, …',
+                spawn_mode ENUM('template', 'dynamic') NOT NULL,
+                x INT NOT NULL DEFAULT 0 COMMENT 'Absolute X (template) or offset from player (dynamic)',
+                y INT NOT NULL DEFAULT 0 COMMENT 'Absolute Y (template) or offset from player (dynamic)',
+                name VARCHAR(255) NOT NULL,
+                race VARCHAR(50) NOT NULL,
+                avatar VARCHAR(500) NOT NULL,
+                portrait VARCHAR(500) NOT NULL,
+                faction VARCHAR(50) DEFAULT '',
+                text TEXT,
+                energie INT NOT NULL DEFAULT 100,
+                spawn_at_step_id INT NULL COMMENT 'Dynamic NPCs only: step that triggers the spawn. NULL = at session start',
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY idx_version_active (version, is_active),
+                KEY idx_spawn_mode (spawn_mode),
+                FOREIGN KEY (spawn_at_step_id) REFERENCES tutorial_steps(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            COMMENT='Tutorial NPC roster + placement (replaces hardcoded Gaïa + dummy)'
+        ");
+
         // Additional highlights (1:N)
         $this->addSql("
             CREATE TABLE IF NOT EXISTS tutorial_step_highlights (
@@ -417,29 +452,28 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             WHERE c.plan='tutorial' AND c.z=0 AND ABS(c.x)<=3 AND ABS(c.y)<=3
         ");
 
-        // Add Gaïa NPC (tutorial guide) at (1,0)
-        // She will be copied to each tutorial instance when TutorialMapInstance creates the map
+        // Tutorial NPC roster — replaces the legacy hardcoded players
+        // row at id=-999999 (template Gaïa) and the spawnTutorialEnemy
+        // constants. Gaïa is a template NPC at (1,0); the training
+        // dummy is a dynamic NPC offset (2,1) from the player tile.
+        // TutorialMapInstance reads this table at session creation;
+        // TutorialResourceManager reads it for dynamic spawns.
         $this->addSql("
-            INSERT IGNORE INTO players (id, player_type, display_id, name, coords_id, race, xp, pi, energie, psw, mail, plain_mail, avatar, portrait, text)
-            SELECT
-                -999999 as id,
-                'npc' as player_type,
-                999999 as display_id,
-                'Gaïa' as name,
-                c.id as coords_id,
-                'dieu' as race,
-                0 as xp,
-                0 as pi,
-                100 as energie,
-                '' as psw,
-                '' as mail,
-                '' as plain_mail,
-                'img/avatars/dieu/25.png' as avatar,
-                'img/portraits/dieu/1.jpeg' as portrait,
-                'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.' as text
-            FROM coords c
-            WHERE c.plan = 'tutorial' AND c.z = 0 AND c.x = 1 AND c.y = 0
-            LIMIT 1
+            INSERT INTO tutorial_npcs
+                (version, role, spawn_mode, x, y, name, race, avatar, portrait, faction, text, energie, is_active)
+            VALUES
+                ('1.0.0', 'guide', 'template', 1, 0,
+                 'Gaïa', 'dieu',
+                 'img/avatars/dieu/25.png', 'img/portraits/dieu/1.jpeg',
+                 '',
+                 'Gaïa, déesse de la Terre, guide les nouveaux joueurs dans leur apprentissage.',
+                 100, 1),
+                ('1.0.0', 'enemy', 'dynamic', 2, 1,
+                 'Âme d''entraînement', 'ame',
+                 'img/avatars/ame/default.webp', 'img/portraits/ame/1.jpeg',
+                 '',
+                 'Âme d''entraînement pour le tutoriel',
+                 100, 1)
         ");
 
         /* ================================================================

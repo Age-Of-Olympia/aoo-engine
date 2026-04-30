@@ -138,6 +138,14 @@
         const tutorialActive = sessionStorage.getItem('tutorial_active');
 
         if (tutorialActive === 'true') {
+            // Longer delay when a dynamic NPC was just spawned so the
+            // SVG <image> for its avatar has time to load before the
+            // step panel appears (otherwise the panel introduces an
+            // NPC that isn't visible on the map yet).
+            const justSpawned = sessionStorage.getItem('tutorial_npc_just_spawned') === 'true';
+            sessionStorage.removeItem('tutorial_npc_just_spawned');
+            const resumeDelay = justSpawned ? 1500 : 500;
+
             setTimeout(async () => {
                 try {
                     await window.resumeTutorial();
@@ -146,7 +154,7 @@
                     /* Clear the flag if resume fails (e.g., not logged in) */
                     sessionStorage.removeItem('tutorial_active');
                 }
-            }, 500);
+            }, resumeDelay);
             return;
         } else {
         }
