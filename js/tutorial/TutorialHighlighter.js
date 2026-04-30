@@ -163,17 +163,58 @@ class TutorialHighlighter {
             });
         }
 
+        // Expand to include any overflowing children. Some targets
+        // (e.g. #ui-card .card-actions has max-height:100px) clip
+        // their own bounding rect even though child buttons render
+        // below — the gold box would otherwise stop after the first
+        // few visible items.
+        const bounds = TutorialHighlighter.unionWithVisibleChildren($element[0], pos);
+
         // 5px breathing room for the gold border + caller-supplied
         // padding to extend the highlight outward (e.g. cover the 8
         // tiles around the player avatar).
         const gap = 5 + padding;
         $highlight.css({
-            top: `${pos.top - gap}px`,
-            left: `${pos.left - gap}px`,
-            width: `${pos.width + gap * 2}px`,
-            height: `${pos.height + gap * 2}px`
+            top: `${bounds.top - gap}px`,
+            left: `${bounds.left - gap}px`,
+            width: `${bounds.width + gap * 2}px`,
+            height: `${bounds.height + gap * 2}px`
         });
 
+    }
+
+    /**
+     * Return a rect that contains both `pos` and any direct children of
+     * `el` whose own getBoundingClientRect overflows `pos`. Static so
+     * the spotlight code can reuse it without instantiating.
+     */
+    static unionWithVisibleChildren(el, pos) {
+        if (!el || !el.children || el.children.length === 0) {
+            return pos;
+        }
+
+        let minX = pos.left;
+        let minY = pos.top;
+        let maxX = pos.left + pos.width;
+        let maxY = pos.top + pos.height;
+
+        for (const child of el.children) {
+            const r = child.getBoundingClientRect();
+            if (r.width === 0 && r.height === 0) {
+                continue;
+            }
+            if (r.left < minX) minX = r.left;
+            if (r.top < minY) minY = r.top;
+            if (r.right > maxX) maxX = r.right;
+            if (r.bottom > maxY) maxY = r.bottom;
+        }
+
+        return {
+            top: minY,
+            left: minX,
+            width: maxX - minX,
+            height: maxY - minY
+        };
     }
 
     /**
@@ -321,15 +362,25 @@ class TutorialHighlighter {
             if (!$el || !$el.length) {
                 return;
             }
-            const r = $el[0].getBoundingClientRect();
-            if (r.width > 0 && r.height > 0) {
-                rects.push({
-                    top: r.top - pad,
-                    left: r.left - pad,
-                    width: r.width + pad * 2,
-                    height: r.height + pad * 2
-                });
+            const el = $el[0];
+            let r = el.getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) {
+                return;
             }
+            // Some targets clip their own bounding rect via max-height
+            // (e.g. .card-actions: max-height 100px) even though child
+            // buttons render below. Expand to include those children so
+            // the spotlight cut-out matches what the player actually
+            // sees and can click.
+            r = TutorialHighlighter.unionWithVisibleChildren(el, {
+                top: r.top, left: r.left, width: r.width, height: r.height
+            });
+            rects.push({
+                top: r.top - pad,
+                left: r.left - pad,
+                width: r.width + pad * 2,
+                height: r.height + pad * 2
+            });
         };
 
         // Each highlight may carry a padding so the cut-out stays in
