@@ -614,11 +614,11 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 0, 1, 1, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'close_card_for_tree' UNION ALL
             SELECT id, '.case[data-coords=\"0,1\"]', 'center-bottom', 'semi-blocking', 0, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
             SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 0, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
-            SELECT id, '.resource-status', 'left', 'blocking', 300, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'tree_info' UNION ALL
+            SELECT id, '.resource-status', 'top', 'blocking', 300, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'tree_info' UNION ALL
             SELECT id, '.action[data-action=\"fouiller\"]', 'right', 'semi-blocking', 300, 1, 1, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'use_fouiller' UNION ALL
             SELECT id, '#action-counter', 'right', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'action_consumed' UNION ALL
             SELECT id, '#show-inventory', 'bottom', 'semi-blocking', 300, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'open_inventory' UNION ALL
-            SELECT id, '.item-case[data-name=\"Bois\"]', 'left', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'inventory_wood' UNION ALL
+            SELECT id, '.item-case[data-name=\"Bois\"]', 'bottom', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'inventory_wood' UNION ALL
             SELECT id, '#back', 'bottom', 'semi-blocking', 200, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'close_inventory' UNION ALL
             SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'combat_intro' UNION ALL
             SELECT id, '.tutorial-enemy', 'bottom', 'blocking', 500, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'enemy_spawned' UNION ALL
