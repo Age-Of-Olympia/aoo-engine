@@ -6,13 +6,48 @@ $(document).ready(function(){
     // Caracs panel persistence: cookie so MenuView can inline the
     // panel server-side on the next page render. That eliminates the
     // post-reload pop-in / layout shift the previous AJAX restore had.
+    function setCaracsCookie(open) {
+        document.cookie = 'caracs_panel_open=' + (open ? '1' : '0') + '; path=/; SameSite=Lax';
+    }
+
     $(document).on('click', '#show-caracs', function() {
         // Wait for the MenuView click handler to toggle visibility.
         setTimeout(function() {
-            var isOpen = $('#load-caracs').is(':visible');
-            document.cookie = 'caracs_panel_open=' + (isOpen ? '1' : '0') + '; path=/; SameSite=Lax';
+            setCaracsCookie($('#load-caracs').is(':visible'));
         }, 100);
     });
+
+    /**
+     * Programmatic close: hide the panel and clear the cookie so it
+     * stays closed across reloads. Tutorial steps call this when they
+     * need the panel out of the way.
+     */
+    window.closeCaracsPanel = function() {
+        $('#load-caracs').hide();
+        setCaracsCookie(false);
+    };
+
+    /**
+     * Programmatic open: AJAX-load the panel content and show it,
+     * then mark the cookie so the server inlines it on the next
+     * reload. No fadeIn — this is for tutorial-driven setup, not
+     * user click feedback.
+     */
+    window.openCaracsPanel = function() {
+        var $panel = $('#load-caracs');
+        if ($panel.is(':visible') && $panel.children().length) {
+            setCaracsCookie(true);
+            return;
+        }
+        $.ajax({
+            type: 'POST',
+            url: 'load_caracs.php',
+            success: function(data) {
+                $panel.html(data).show();
+                setCaracsCookie(true);
+            }
+        });
+    };
 
     // Right-click coordinate tool (available for everyone, TP button only for admins)
     $(document).on('contextmenu', '.case', function(e) {

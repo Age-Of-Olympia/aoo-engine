@@ -46,7 +46,7 @@ class OnHideReloadView
 
             });
         </script>
-        <script src="js/view.js?v=20260430b"></script>
+        <script src="js/view.js?v=20260430c"></script>
 <?php
     }
 }

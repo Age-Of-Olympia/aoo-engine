@@ -52,6 +52,7 @@ class TutorialStepRepository
                     ui.tooltip_offset_x,
                     ui.tooltip_offset_y,
                     ui.highlight_padding,
+                    ui.caracs_panel_state,
                     -- Validation config
                     v.requires_validation,
                     v.validation_type,
@@ -145,6 +146,7 @@ class TutorialStepRepository
                     ui.tooltip_offset_x,
                     ui.tooltip_offset_y,
                     ui.highlight_padding,
+                    ui.caracs_panel_state,
                     -- Validation config
                     v.requires_validation,
                     v.validation_type,
@@ -462,6 +464,12 @@ class TutorialStepRepository
         // (e.g. the 8 walkable tiles around them on a movement step).
         if (isset($row['highlight_padding']) && (int)$row['highlight_padding'] !== 0) {
             $config['highlight_padding'] = (int)$row['highlight_padding'];
+        }
+
+        // Force the caracs panel open/closed at step start. Null means
+        // "leave as-is" — the player's cookie-driven state stands.
+        if (!empty($row['caracs_panel_state'])) {
+            $config['caracs_panel_state'] = $row['caracs_panel_state'];
         }
 
         // Add validation params if present

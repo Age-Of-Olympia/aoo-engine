@@ -389,6 +389,22 @@ ob_start();
                                 player avatar on a movement step). 0 = tight to the target.
                             </small>
                         </div>
+
+                        <?php $caracsState = $isEdit && $stepUi && isset($stepUi['caracs_panel_state']) ? $stepUi['caracs_panel_state'] : ''; ?>
+                        <div class="form-group">
+                            <label for="caracs_panel_state">Caractéristiques Panel</label>
+                            <select class="form-control" id="caracs_panel_state" name="caracs_panel_state">
+                                <option value="" <?= $caracsState === '' || $caracsState === null ? 'selected' : '' ?>>Leave as-is (default)</option>
+                                <option value="open" <?= $caracsState === 'open' ? 'selected' : '' ?>>Force open at step start</option>
+                                <option value="closed" <?= $caracsState === 'closed' ? 'selected' : '' ?>>Force closed at step start</option>
+                            </select>
+                            <small class="form-text text-muted">
+                                Controls the player's Caractéristiques panel when this step starts.
+                                Use "Force closed" on intro steps where the player should discover
+                                and open the panel themselves; "Force open" when the step references
+                                a value visible only inside the panel.
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>

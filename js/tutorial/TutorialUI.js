@@ -344,6 +344,15 @@ class TutorialUI {
         // Clear previous observers
         this.cleanupObservers();
 
+        // Per-step caracs panel control: open/close before any tooltip
+        // or highlight computes positions. NULL/missing = leave as-is.
+        const caracsState = stepData.config?.caracs_panel_state;
+        if (caracsState === 'open' && typeof window.openCaracsPanel === 'function') {
+            window.openCaracsPanel();
+        } else if (caracsState === 'closed' && typeof window.closeCaracsPanel === 'function') {
+            window.closeCaracsPanel();
+        }
+
         // Ensure required panels are in correct state BEFORE applying interaction mode
         // Wait for panels to be ready before showing tooltip/highlight
         await this.ensurePanelVisibility(stepData);
