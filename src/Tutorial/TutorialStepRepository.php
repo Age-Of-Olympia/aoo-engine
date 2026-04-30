@@ -51,6 +51,7 @@ class TutorialStepRepository
                     ui.auto_close_card,
                     ui.tooltip_offset_x,
                     ui.tooltip_offset_y,
+                    ui.highlight_padding,
                     -- Validation config
                     v.requires_validation,
                     v.validation_type,
@@ -143,6 +144,7 @@ class TutorialStepRepository
                     ui.auto_close_card,
                     ui.tooltip_offset_x,
                     ui.tooltip_offset_y,
+                    ui.highlight_padding,
                     -- Validation config
                     v.requires_validation,
                     v.validation_type,
@@ -451,6 +453,15 @@ class TutorialStepRepository
                 'x' => (int)$row['tooltip_offset_x'],
                 'y' => (int)$row['tooltip_offset_y']
             ];
+        }
+
+        // Pixel padding around the highlighted target — extends both
+        // the gold-bordered box and the spotlight cut-out outward.
+        // Useful when the target is a small element (e.g. the player
+        // avatar) but the player should also see its surroundings
+        // (e.g. the 8 walkable tiles around them on a movement step).
+        if (isset($row['highlight_padding']) && (int)$row['highlight_padding'] !== 0) {
+            $config['highlight_padding'] = (int)$row['highlight_padding'];
         }
 
         // Add validation params if present

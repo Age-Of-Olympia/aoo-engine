@@ -5626,6 +5626,7 @@ CREATE TABLE `tutorial_step_ui` (
   `auto_close_card` tinyint(1) DEFAULT NULL COMMENT 'Auto-close action card',
   `tooltip_offset_x` int(11) DEFAULT 0 COMMENT 'X offset for tooltip',
   `tooltip_offset_y` int(11) DEFAULT 0 COMMENT 'Y offset for tooltip',
+  `highlight_padding` int(11) DEFAULT 0 COMMENT 'Extra px around the highlight box and spotlight cut-out',
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_step` (`step_id`),
   KEY `idx_interaction_mode` (`interaction_mode`),
@@ -5635,41 +5636,41 @@ CREATE TABLE `tutorial_step_ui` (
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `tutorial_step_ui` DISABLE KEYS */;
-INSERT INTO `tutorial_step_ui` VALUES (1,1,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (2,2,'.case[data-coords=\"0,0\"]',NULL,NULL,'bottom','blocking',NULL,200,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (3,3,'.case[data-coords=\"1,0\"]',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (4,4,'#ui-card .close-card',NULL,NULL,'right','semi-blocking',NULL,300,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (5,5,'.case.go',NULL,NULL,'top','blocking',NULL,300,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (6,6,'.case.go',NULL,NULL,'top','semi-blocking',NULL,0,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (7,7,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (8,8,'#show-caracs',NULL,NULL,'bottom','semi-blocking',NULL,700,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (9,9,'#mvt-counter',NULL,NULL,'right','semi-blocking',NULL,700,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (10,10,'#mvt-counter',NULL,NULL,'right','blocking',NULL,700,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (11,11,'#action-counter',NULL,NULL,'right','blocking',NULL,700,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (12,12,'#current-player-avatar',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (13,13,'.card-actions',NULL,NULL,'right','blocking',NULL,300,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (14,14,'#ui-card .close-card',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,1,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (15,15,'.case[data-coords=\"0,1\"]',NULL,NULL,'center-bottom','semi-blocking',NULL,0,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (16,16,'.case[data-coords=\"0,1\"]',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,0,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (17,17,'.resource-status',NULL,NULL,'left','blocking',NULL,300,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (18,18,'.action[data-action=\"fouiller\"]',NULL,NULL,'right','semi-blocking',NULL,300,NULL,1,1,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (19,19,'#action-counter',NULL,NULL,'right','blocking',NULL,700,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (20,20,'#show-inventory',NULL,NULL,'bottom','semi-blocking',NULL,300,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (21,21,'.item-case[data-name=\"Bois\"]',NULL,NULL,'left','blocking',NULL,700,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (22,22,'#back',NULL,NULL,'bottom','semi-blocking',NULL,200,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (23,23,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (24,24,'.tutorial-enemy',NULL,NULL,'bottom','blocking',NULL,500,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (25,25,'.tutorial-enemy',NULL,NULL,'center-bottom','semi-blocking',NULL,0,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (26,26,'.tutorial-enemy',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (27,27,'.action[data-action=\"attaquer\"]',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (28,28,'#red-filter',NULL,NULL,'right','blocking',NULL,700,NULL,1,0,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (29,29,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (32,30,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (33,31,'#show-menu',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,0,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (34,32,'.menu-inventaire',NULL,NULL,'right','semi-blocking',NULL,300,NULL,0,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (35,33,'.inventory-tab-craft',NULL,NULL,'bottom','semi-blocking',NULL,300,NULL,0,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (36,34,'.craft-recipes',NULL,NULL,'right','blocking',NULL,500,NULL,1,NULL,0,0);
-INSERT INTO `tutorial_step_ui` VALUES (37,35,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,NULL,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (1,1,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (2,2,'.case[data-coords=\"0,0\"]',NULL,NULL,'bottom','blocking',NULL,200,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (3,3,'.case[data-coords=\"1,0\"]',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (4,4,'#ui-card .close-card',NULL,NULL,'right','semi-blocking',NULL,300,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (5,5,'.case.go',NULL,NULL,'top','blocking',NULL,300,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (6,6,'.case.go',NULL,NULL,'top','semi-blocking',NULL,0,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (7,7,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (8,8,'#show-caracs',NULL,NULL,'bottom','semi-blocking',NULL,700,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (9,9,'#mvt-counter',NULL,NULL,'right','semi-blocking',NULL,700,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (10,10,'#mvt-counter',NULL,NULL,'right','blocking',NULL,700,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (11,11,'#action-counter',NULL,NULL,'right','blocking',NULL,700,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (12,12,'#current-player-avatar',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (13,13,'.card-actions',NULL,NULL,'right','blocking',NULL,300,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (14,14,'#ui-card .close-card',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,1,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (15,15,'.case[data-coords=\"0,1\"]',NULL,NULL,'center-bottom','semi-blocking',NULL,0,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (16,16,'.case[data-coords=\"0,1\"]',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,0,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (17,17,'.resource-status',NULL,NULL,'left','blocking',NULL,300,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (18,18,'.action[data-action=\"fouiller\"]',NULL,NULL,'right','semi-blocking',NULL,300,NULL,1,1,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (19,19,'#action-counter',NULL,NULL,'right','blocking',NULL,700,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (20,20,'#show-inventory',NULL,NULL,'bottom','semi-blocking',NULL,300,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (21,21,'.item-case[data-name=\"Bois\"]',NULL,NULL,'left','blocking',NULL,700,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (22,22,'#back',NULL,NULL,'bottom','semi-blocking',NULL,200,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (23,23,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (24,24,'.tutorial-enemy',NULL,NULL,'bottom','blocking',NULL,500,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (25,25,'.tutorial-enemy',NULL,NULL,'center-bottom','semi-blocking',NULL,0,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (26,26,'.tutorial-enemy',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (27,27,'.action[data-action=\"attaquer\"]',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (28,28,'#red-filter',NULL,NULL,'right','blocking',NULL,700,NULL,1,0,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (29,29,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (32,30,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (33,31,'#show-menu',NULL,NULL,'bottom','semi-blocking',NULL,0,NULL,0,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (34,32,'.menu-inventaire',NULL,NULL,'right','semi-blocking',NULL,300,NULL,0,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (35,33,'.inventory-tab-craft',NULL,NULL,'bottom','semi-blocking',NULL,300,NULL,0,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (36,34,'.craft-recipes',NULL,NULL,'right','blocking',NULL,500,NULL,1,NULL,0,0,0);
+INSERT INTO `tutorial_step_ui` VALUES (37,35,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,NULL,0,0,0);
 /*!40000 ALTER TABLE `tutorial_step_ui` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;

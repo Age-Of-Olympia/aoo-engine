@@ -442,15 +442,29 @@
     color: #3A2817;
 }
 
-/* Spotlight Overlay — geometry is set inline by TutorialHighlighter:
- * either fullscreen (info / dialog steps with no map on screen) or a
- * transparent rect over the map area with a giant box-shadow filling
- * everything outside. Keeping only the position+layering here. */
+/* Spotlight Overlay — geometry is set inline by TutorialHighlighter
+ * as an <svg> with a <mask> carrying one cut-out per highlighted
+ * target. Keeping only position+layering here. */
 #tutorial-spotlight-overlay {
     position: fixed;
     z-index: 9998;
     pointer-events: none;
     display: none;
+}
+
+/* Pre-dim placeholder rendered server-side by Ui.php when the
+ * session is in tutorial mode. Sits just below the real spotlight
+ * overlay so the swap is invisible. JS removes it once the SVG mask
+ * is in place. */
+#tutorial-pre-dim {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9997;
+    pointer-events: none;
 }
 
 /* Element Highlighting - Spotlight Effect (Light in Darkness) */

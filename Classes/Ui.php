@@ -47,7 +47,7 @@ class Ui{
         }
 
         // Tutorial System (feature-flagged for specific players)
-        $tutorialVersion = '20260430d';
+        $tutorialVersion = '20260430e';
         echo '
                 <!-- Modal System -->
                 <link href="css/modal.css?v=20260418" rel="stylesheet">
@@ -66,6 +66,15 @@ class Ui{
         echo '    </head>
             <body>
                 ';
+
+        // Pre-dim placeholder so the page paints with the spotlight
+        // dim already on screen — TutorialHighlighter swaps it for the
+        // real SVG mask once it's positioned. Without this the page
+        // shows fully un-dimmed for ~200ms before the JS runs, which
+        // playtesters called out as a flash on every reload.
+        if (!empty($_SESSION['in_tutorial'])) {
+            echo '<div id="tutorial-pre-dim"></div>';
+        }
 
         return Str::minify(ob_get_clean());
     }

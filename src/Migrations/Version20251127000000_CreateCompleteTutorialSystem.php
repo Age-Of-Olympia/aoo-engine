@@ -231,6 +231,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 auto_close_card TINYINT(1) DEFAULT NULL COMMENT 'Auto-close action card',
                 tooltip_offset_x INT DEFAULT 0 COMMENT 'X offset for tooltip',
                 tooltip_offset_y INT DEFAULT 0 COMMENT 'Y offset for tooltip',
+                highlight_padding INT DEFAULT 0 COMMENT 'Extra px around the highlight box and spotlight cut-out',
                 UNIQUE KEY unique_step (step_id),
                 FOREIGN KEY (step_id) REFERENCES tutorial_steps(id) ON DELETE CASCADE,
                 KEY idx_interaction_mode (interaction_mode)

@@ -376,9 +376,13 @@ class TutorialUI {
         this.showStepTooltip(stepData);
 
         // Highlight target element if specified (now after panel is ready)
+        // highlight_padding extends the gold box AND the spotlight
+        // cut-out outward (e.g. 50 = one-tile ring around the target).
+        const highlightPadding = stepData.config?.highlight_padding || 0;
         if (stepData.target_selector && this.highlighter) {
             this.highlighter.highlight(stepData.target_selector, {
-                pulsate: stepData.config?.requires_validation
+                pulsate: stepData.config?.requires_validation,
+                padding: highlightPadding
             });
         }
 
@@ -389,7 +393,10 @@ class TutorialUI {
                 additionalHighlights.forEach(selector => {
                     // Don't re-highlight the main target
                     if (selector !== stepData.target_selector) {
-                        this.highlighter.highlight(selector, { pulsate: false });
+                        this.highlighter.highlight(selector, {
+                            pulsate: false,
+                            padding: highlightPadding
+                        });
                     }
                 });
             }
@@ -506,6 +513,12 @@ class TutorialUI {
     applyInteractionMode(stepData) {
         const mode = stepData.interaction_mode || this.getDefaultInteractionMode(stepData.step_type);
         const $overlay = $('#tutorial-overlay');
+
+        // Drop the server-side pre-dim placeholder. By the time we
+        // pick a mode the proper overlay/spotlight is about to take
+        // over, and even on 'open' steps the pre-dim must be cleared
+        // (otherwise the page stays dimmed with no JS owning it).
+        $('#tutorial-pre-dim').remove();
 
         // Remove previous mode classes
         $overlay.removeClass('blocking semi-blocking open');

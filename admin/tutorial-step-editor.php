@@ -378,6 +378,17 @@ ob_start();
                                 Auto-close action card on step complete
                             </label>
                         </div>
+
+                        <div class="form-group">
+                            <label for="highlight_padding">Highlight Padding (px)</label>
+                            <input type="number" class="form-control" id="highlight_padding" name="highlight_padding"
+                                   value="<?= $isEdit && $stepUi && isset($stepUi['highlight_padding']) ? (int)$stepUi['highlight_padding'] : 0 ?>">
+                            <small class="form-text text-muted">
+                                Extra pixels around the highlight + spotlight cut-out. Use 50 to extend
+                                the highlight by one tile (e.g. cover the 8 walkable tiles around the
+                                player avatar on a movement step). 0 = tight to the target.
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>

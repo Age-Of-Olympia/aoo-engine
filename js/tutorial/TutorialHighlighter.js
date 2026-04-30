@@ -62,6 +62,13 @@ class TutorialHighlighter {
             const rect = el.getBoundingClientRect();
         });
 
+        // Padding (px) extends both the gold-bordered highlight box AND
+        // the SVG mask cut-out outward from the element. Used to cover
+        // not just the element but the surrounding zone the player needs
+        // to interact with — e.g. highlight the player avatar with a
+        // 50px padding to reveal the 8 walkable tiles around them.
+        const padding = Number.isFinite(options.padding) ? options.padding : 0;
+
         $elements.each((index, element) => {
             const $element = $(element);
 
@@ -80,7 +87,7 @@ class TutorialHighlighter {
             }
 
             // Position highlight box
-            this.positionHighlight($highlight, $element);
+            this.positionHighlight($highlight, $element, padding);
 
             // Log the actual position after setting
             const computedPos = {
@@ -98,21 +105,23 @@ class TutorialHighlighter {
             // Generate unique ID for tracking
             const trackingId = `highlight_${Date.now()}_${index}`;
 
-            // Track for cleanup
+            // Track for cleanup. padding is needed for the SVG mask
+            // cut-out so it stays in sync with the visible box.
             this.highlights.push({
                 $highlight: $highlight,
                 $element: $element,
-                trackingId: trackingId
+                trackingId: trackingId,
+                padding: padding
             });
 
             // Use shared position manager for automatic repositioning
             this.positionManager.track(trackingId, $highlight, ($hl) => {
-                this.positionHighlight($hl, $element);
+                this.positionHighlight($hl, $element, padding);
             });
 
             // Watch for DOM changes on the element itself (e.g., when button expands)
             const elementObserver = new MutationObserver(() => {
-                this.positionHighlight($highlight, $element);
+                this.positionHighlight($highlight, $element, padding);
             });
 
             elementObserver.observe(element, {
@@ -137,7 +146,7 @@ class TutorialHighlighter {
     /**
      * Position highlight box around element
      */
-    positionHighlight($highlight, $element) {
+    positionHighlight($highlight, $element, padding = 0) {
         // Use shared position manager for accurate positioning
         const pos = TutorialPositionManager.getElementPosition($element);
 
@@ -151,11 +160,15 @@ class TutorialHighlighter {
             });
         }
 
+        // 5px breathing room for the gold border + caller-supplied
+        // padding to extend the highlight outward (e.g. cover the 8
+        // tiles around the player avatar).
+        const gap = 5 + padding;
         $highlight.css({
-            top: `${pos.top - 5}px`,
-            left: `${pos.left - 5}px`,
-            width: `${pos.width + 10}px`,
-            height: `${pos.height + 10}px`
+            top: `${pos.top - gap}px`,
+            left: `${pos.left - gap}px`,
+            width: `${pos.width + gap * 2}px`,
+            height: `${pos.height + gap * 2}px`
         });
 
     }
@@ -239,12 +252,14 @@ class TutorialHighlighter {
 
         const holes = this.computeSpotlightHoles();
         const $overlay = $(this.buildSpotlightSvg(holes));
+        // Show immediately so the handoff from #tutorial-pre-dim
+        // (server-rendered placeholder, dropped by TutorialUI on
+        // mode-apply) doesn't flash un-dimmed content on reload.
+        $overlay.css('display', 'block');
         $('body').append($overlay);
 
         // Hide the regular tutorial overlay to avoid double darkening
         $('#tutorial-overlay').addClass('has-spotlight');
-
-        $overlay.fadeIn(200);
 
         // Re-render on viewport changes so the holes track the elements.
         this.bindSpotlightReposition();
@@ -299,17 +314,24 @@ class TutorialHighlighter {
     computeSpotlightHoles() {
         const rects = [];
 
-        const push = ($el) => {
+        const push = ($el, pad = 0) => {
             if (!$el || !$el.length) {
                 return;
             }
             const r = $el[0].getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
-                rects.push({ top: r.top, left: r.left, width: r.width, height: r.height });
+                rects.push({
+                    top: r.top - pad,
+                    left: r.left - pad,
+                    width: r.width + pad * 2,
+                    height: r.height + pad * 2
+                });
             }
         };
 
-        this.highlights.forEach(item => push(item.$element));
+        // Each highlight may carry a padding so the cut-out stays in
+        // sync with the visible gold-bordered box.
+        this.highlights.forEach(item => push(item.$element, item.padding || 0));
         push($('#ui-card:visible'));
 
         return rects;
