@@ -57,11 +57,37 @@ class MainView
 
                 $data = $view->get_view();
 
-                $myfile = fopen($svgUrl, "w") or die("Unable to open file!");
-                fwrite($myfile, $data);
-                fclose($myfile);
+                /* Defensive cache guard: only persist the SVG when it
+                 * actually contains map cells. View::get_view() returns
+                 * null when its inSightId guard fires (e.g. transient
+                 * coords/state issue on a brand-new player's first
+                 * arrival), and writing that null payload caches a
+                 * permanently-gray map for the player until the
+                 * "Rafraichir la Vue" account option is used.
+                 *
+                 * Heuristic: the rendered SVG always contains
+                 * `class="case"` attributes when at least one tile is
+                 * in sight. Missing the substring → empty / degenerate
+                 * render → skip the cache write. The page still echoes
+                 * what we got; the next request retries the render. */
+                $svgIsRenderable = is_string($data) && strpos($data, 'class="case"') !== false;
 
-                echo '<div id="game-map" data-map-hash="' . md5($data) . '">' . $data . '</div>';
+                if ($svgIsRenderable) {
+                    $myfile = fopen($svgUrl, "w") or die("Unable to open file!");
+                    fwrite($myfile, $data);
+                    fclose($myfile);
+                } else {
+                    error_log(sprintf(
+                        '[MainView] Skipping empty SVG cache write for player %d at coords (%s,%s,%s) on plan %s',
+                        $player->id,
+                        $coords->x ?? '?',
+                        $coords->y ?? '?',
+                        $coords->z ?? '?',
+                        $coords->plan ?? '?'
+                    ));
+                }
+
+                echo '<div id="game-map" data-map-hash="' . md5((string) $data) . '">' . $data . '</div>';
             } else {
 
                 $svgContent = file_get_contents($svgUrl);
