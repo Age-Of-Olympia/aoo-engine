@@ -358,7 +358,13 @@ class TutorialTooltip {
         if (this.currentTargetSelector) {
             const $target = $(this.currentTargetSelector);
             if ($target.length > 0) {
-                this.positionNear($target, this.currentPosition);
+                // Smart-flip the configured position only when the
+                // default would land the tooltip directly on the
+                // player's side of the target — i.e. covering the
+                // path the player just walked or needs to click on.
+                // Falls through unchanged for everything else.
+                const effectivePos = this.smartFlipPosition(this.currentPosition, $target);
+                this.positionNear($target, effectivePos);
             } else {
                 // Target not found, center it with correct vertical alignment
                 this.applyCenterPosition(this.currentPosition);
@@ -367,6 +373,69 @@ class TutorialTooltip {
             // No target, use center position with correct vertical alignment
             this.applyCenterPosition(this.currentPosition);
         }
+    }
+
+    /**
+     * If the configured tooltip position would put the tooltip on the
+     * same side as the player avatar (and so cover the path/cell the
+     * player needs to interact with), return the opposite position.
+     * Otherwise return the input unchanged.
+     *
+     * Constraints — only flips when ALL of these hold:
+     *   - target is inside the map (#view): non-map UI elements have
+     *     no notion of "player side"
+     *   - player avatar (#current-player-avatar) is on screen
+     *   - target is NOT the player avatar itself
+     *   - the configured position has a clear side that maps to a
+     *     direction (top / bottom / left / right / center-top /
+     *     center-bottom). center / unrecognized values fall through.
+     */
+    smartFlipPosition(position, $target) {
+        if (!$target || !$target.length) {
+            return position;
+        }
+        const $view = $('#view');
+        if (!$view.length || !$.contains($view[0], $target[0])) {
+            return position;
+        }
+        const $player = $('#current-player-avatar');
+        if (!$player.length || $player[0] === $target[0]) {
+            return position;
+        }
+
+        const flips = {
+            'top':           'bottom',
+            'bottom':        'top',
+            'left':          'right',
+            'right':         'left',
+            'center-top':    'center-bottom',
+            'center-bottom': 'center-top'
+        };
+        const sideOf = {
+            'top':           'top',
+            'bottom':        'bottom',
+            'left':          'left',
+            'right':         'right',
+            'center-top':    'top',
+            'center-bottom': 'bottom'
+        };
+        if (!(position in flips)) {
+            return position;
+        }
+
+        const tr = $target[0].getBoundingClientRect();
+        const pr = $player[0].getBoundingClientRect();
+        const dx = (pr.left + pr.width / 2) - (tr.left + tr.width / 2);
+        const dy = (pr.top + pr.height / 2) - (tr.top + tr.height / 2);
+
+        let playerSide;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            playerSide = dx > 0 ? 'right' : 'left';
+        } else {
+            playerSide = dy > 0 ? 'bottom' : 'top';
+        }
+
+        return sideOf[position] === playerSide ? flips[position] : position;
     }
 
     /**
