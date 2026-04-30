@@ -332,7 +332,13 @@ class TutorialHighlighter {
         // Each highlight may carry a padding so the cut-out stays in
         // sync with the visible gold-bordered box.
         this.highlights.forEach(item => push(item.$element, item.padding || 0));
+
+        // The character card. Its action buttons sit in .card-actions
+        // which is position:absolute (out of normal flow), so #ui-card's
+        // own bounding rect cuts off any actions past the first ~3.
+        // Push both rects so every action button stays un-dimmed.
         push($('#ui-card:visible'));
+        push($('#ui-card:visible .card-actions'));
 
         return rects;
     }
