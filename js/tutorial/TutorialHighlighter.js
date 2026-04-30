@@ -269,19 +269,35 @@ class TutorialHighlighter {
     }
 
     /**
-     * Compute the screen-space bounding box of the map tile area
-     * (.case elements). Returns null when no map is on screen — caller
-     * falls back to a fullscreen dim in that case.
+     * Compute the screen-space bounding box of "what the player needs
+     * to see" during a tutorial step:
+     *   - all .case map tiles (the playable area)
+     *   - the open character card (#ui-card) if visible — players need
+     *     to read the card and click its action buttons (Attaquer, etc.)
+     *     without the spotlight greying them out.
+     *   - every currently-highlighted target element — the gold glow
+     *     punches through visually, but the element underneath was
+     *     still being dimmed; including it in the un-dimmed union
+     *     keeps the target itself fully readable.
+     *
+     * Returns the union rect of those elements, or null when none are
+     * present (caller falls back to fullscreen dim).
      */
     computeMapRect() {
-        const $cases = $('.case');
-        if ($cases.length === 0) {
+        const $targets = $('.case').add('#ui-card:visible');
+        this.highlights.forEach(item => {
+            if (item.$element && item.$element.length) {
+                $targets.push(item.$element[0]);
+            }
+        });
+
+        if ($targets.length === 0) {
             return null;
         }
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         let found = false;
-        $cases.each(function() {
+        $targets.each(function() {
             const r = this.getBoundingClientRect();
             if (r.width > 0 && r.height > 0) {
                 minX = Math.min(minX, r.left);
