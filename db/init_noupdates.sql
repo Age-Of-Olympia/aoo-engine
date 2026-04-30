@@ -5483,8 +5483,10 @@ CREATE TABLE `tutorial_step_highlights` (
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `tutorial_step_highlights` DISABLE KEYS */;
-INSERT INTO `tutorial_step_highlights` VALUES (1,5,'.case.go',0);
 INSERT INTO `tutorial_step_highlights` VALUES (2,15,'.case[data-coords=\"0,1\"]',0);
+INSERT INTO `tutorial_step_highlights` VALUES (3,9,'#current-player-avatar',50);
+INSERT INTO `tutorial_step_highlights` VALUES (4,15,'#current-player-avatar',50);
+INSERT INTO `tutorial_step_highlights` VALUES (5,25,'#current-player-avatar',50);
 /*!40000 ALTER TABLE `tutorial_step_highlights` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
@@ -5642,8 +5644,8 @@ INSERT INTO `tutorial_step_ui` VALUES (1,1,NULL,NULL,NULL,'center','blocking',NU
 INSERT INTO `tutorial_step_ui` VALUES (2,2,'.case[data-coords=\"0,0\"]',NULL,NULL,'bottom','blocking',NULL,200,NULL,1,NULL,0,0,0,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (3,3,'.case[data-coords=\"1,0\"]',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,0,0,0,0,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (4,4,'#ui-card .close-card',NULL,NULL,'right','semi-blocking',NULL,300,NULL,1,0,0,0,0,NULL);
-INSERT INTO `tutorial_step_ui` VALUES (5,5,'.case.go',NULL,NULL,'top','blocking',NULL,300,NULL,1,NULL,0,0,0,NULL);
-INSERT INTO `tutorial_step_ui` VALUES (6,6,'.case.go',NULL,NULL,'top','semi-blocking',NULL,0,NULL,1,NULL,0,0,0,NULL);
+INSERT INTO `tutorial_step_ui` VALUES (5,5,'#current-player-avatar',NULL,NULL,'top','blocking',NULL,300,NULL,1,NULL,0,0,50,NULL);
+INSERT INTO `tutorial_step_ui` VALUES (6,6,'#current-player-avatar',NULL,NULL,'top','semi-blocking',NULL,0,NULL,1,NULL,0,0,50,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (7,7,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0,0,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (8,8,'#show-caracs',NULL,NULL,'bottom','semi-blocking',NULL,700,NULL,1,0,0,0,0,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (9,9,'#mvt-counter',NULL,NULL,'right','semi-blocking',NULL,700,NULL,1,0,0,0,0,NULL);
