@@ -13,12 +13,20 @@ $(document).ready(function(){
         }, 100);
     });
 
-    // Auto-restore caracs panel if it was open before reload
+    // Auto-restore caracs panel if it was open before reload.
+    // Bypass the #show-caracs click handler so the fadeIn animation
+    // (meant as feedback for an explicit user click) does not replay
+    // on every page load — playtester feedback called it unpleasant.
     if (sessionStorage.getItem('caracs_panel_open') === 'true') {
-        console.log('[View] Restoring open caracs panel');
-        // Trigger click to open panel
+        console.log('[View] Restoring open caracs panel (no animation)');
         setTimeout(function() {
-            $('#show-caracs').click();
+            $.ajax({
+                type: 'POST',
+                url: 'load_caracs.php',
+                success: function(data) {
+                    $('#load-caracs').html(data).show();
+                }
+            });
         }, 500);
     }
 
