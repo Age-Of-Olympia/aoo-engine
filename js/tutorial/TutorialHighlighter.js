@@ -184,17 +184,22 @@ class TutorialHighlighter {
     }
 
     /**
-     * Return a rect that contains both `pos` and any direct children of
-     * `el` whose own getBoundingClientRect overflows `pos`. Static so
-     * the spotlight code can reuse it without instantiating.
+     * Return a rect that contains `pos` plus any direct children of
+     * `el` whose own getBoundingClientRect spills BELOW or to the
+     * RIGHT of `pos`. Children that extend above/left of `pos` are
+     * ignored — that direction was never the use case (max-height
+     * clipping always overflows downward) and including it picked up
+     * stray artifacts from inline children / <br> rects (action panel
+     * highlight reported a tall box extending above the visible
+     * buttons).
+     *
+     * Static so the spotlight code can reuse it without instantiating.
      */
     static unionWithVisibleChildren(el, pos) {
         if (!el || !el.children || el.children.length === 0) {
             return pos;
         }
 
-        let minX = pos.left;
-        let minY = pos.top;
         let maxX = pos.left + pos.width;
         let maxY = pos.top + pos.height;
 
@@ -203,17 +208,15 @@ class TutorialHighlighter {
             if (r.width === 0 && r.height === 0) {
                 continue;
             }
-            if (r.left < minX) minX = r.left;
-            if (r.top < minY) minY = r.top;
             if (r.right > maxX) maxX = r.right;
             if (r.bottom > maxY) maxY = r.bottom;
         }
 
         return {
-            top: minY,
-            left: minX,
-            width: maxX - minX,
-            height: maxY - minY
+            top: pos.top,
+            left: pos.left,
+            width: maxX - pos.left,
+            height: maxY - pos.top
         };
     }
 

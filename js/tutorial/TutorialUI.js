@@ -525,6 +525,76 @@ class TutorialUI {
             this.skip();
         });
 
+        // Make the controls panel draggable on desktop. Players reach
+        // for the panel when an interaction zone falls behind it; let
+        // them drag it out of the way without resorting to refresh.
+        // Drag from the progress section (header strip) so the Skip
+        // button stays clickable.
+        if ($(window).width() > 768) {
+            this.bindControlsDrag($controls);
+        }
+    }
+
+    /**
+     * Plain pointer-event drag for #tutorial-controls. Persisted in
+     * sessionStorage so the panel stays where the player parked it
+     * across reloads within the same session — but resets on a new
+     * tutorial run.
+     */
+    bindControlsDrag($controls) {
+        const STORAGE_KEY = 'tutorial_controls_position';
+
+        // Restore previous drag position if any.
+        try {
+            const saved = sessionStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const pos = JSON.parse(saved);
+                if (Number.isFinite(pos.left) && Number.isFinite(pos.top)) {
+                    $controls.css({
+                        position: 'fixed',
+                        top: pos.top + 'px',
+                        left: pos.left + 'px',
+                        right: 'auto'
+                    });
+                }
+            }
+        } catch (_) { /* corrupt storage — start fresh */ }
+
+        const $handle = $controls.find('#tutorial-progress');
+        $handle.css('cursor', 'move');
+
+        $handle.on('mousedown.controlsdrag', (e) => {
+            if ($(e.target).is('button') || $(e.target).closest('button').length > 0) {
+                return;
+            }
+            e.preventDefault();
+
+            const rect = $controls[0].getBoundingClientRect();
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
+            const onMove = (mv) => {
+                const left = Math.max(0, mv.clientX - offsetX);
+                const top = Math.max(0, mv.clientY - offsetY);
+                $controls.css({
+                    position: 'fixed',
+                    left: left + 'px',
+                    top: top + 'px',
+                    right: 'auto'
+                });
+            };
+
+            const onUp = () => {
+                $(document).off('mousemove.controlsdrag mouseup.controlsdrag');
+                const r = $controls[0].getBoundingClientRect();
+                try {
+                    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ left: r.left, top: r.top }));
+                } catch (_) { /* storage full — non-fatal */ }
+            };
+
+            $(document).on('mousemove.controlsdrag', onMove);
+            $(document).on('mouseup.controlsdrag', onUp);
+        });
     }
 
     /**

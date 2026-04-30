@@ -358,7 +358,21 @@ class TutorialTooltip {
         if (this.currentTargetSelector) {
             const $target = $(this.currentTargetSelector);
             if ($target.length > 0) {
-                this.positionNear($target, this.currentPosition);
+                // Smart-flip the configured position only when the
+                // default would land the tooltip directly on the
+                // player's side of the target — i.e. covering the
+                // path the player just walked or needs to click on.
+                // Falls through unchanged for everything else.
+                const effectivePos = this.smartFlipPosition(this.currentPosition, $target);
+                // Sync the position class on the tooltip so the arrow
+                // (CSS-driven by .top / .bottom / .left / .right /
+                // .center-top / .center-bottom) follows the flip.
+                if (effectivePos !== this.currentPosition) {
+                    this.$tooltip
+                        .removeClass('top bottom left right center center-top center-bottom')
+                        .addClass(effectivePos);
+                }
+                this.positionNear($target, effectivePos);
             } else {
                 // Target not found, center it with correct vertical alignment
                 this.applyCenterPosition(this.currentPosition);
@@ -367,6 +381,69 @@ class TutorialTooltip {
             // No target, use center position with correct vertical alignment
             this.applyCenterPosition(this.currentPosition);
         }
+    }
+
+    /**
+     * If the configured tooltip position would put the tooltip on the
+     * same side as the player avatar (and so cover the path/cell the
+     * player needs to interact with), return the opposite position.
+     * Otherwise return the input unchanged.
+     *
+     * Constraints — only flips when ALL of these hold:
+     *   - target is inside the map (#view): non-map UI elements have
+     *     no notion of "player side"
+     *   - player avatar (#current-player-avatar) is on screen
+     *   - target is NOT the player avatar itself
+     *   - the configured position has a clear side that maps to a
+     *     direction (top / bottom / left / right / center-top /
+     *     center-bottom). center / unrecognized values fall through.
+     */
+    smartFlipPosition(position, $target) {
+        if (!$target || !$target.length) {
+            return position;
+        }
+        const $view = $('#view');
+        if (!$view.length || !$.contains($view[0], $target[0])) {
+            return position;
+        }
+        const $player = $('#current-player-avatar');
+        if (!$player.length || $player[0] === $target[0]) {
+            return position;
+        }
+
+        const flips = {
+            'top':           'bottom',
+            'bottom':        'top',
+            'left':          'right',
+            'right':         'left',
+            'center-top':    'center-bottom',
+            'center-bottom': 'center-top'
+        };
+        const sideOf = {
+            'top':           'top',
+            'bottom':        'bottom',
+            'left':          'left',
+            'right':         'right',
+            'center-top':    'top',
+            'center-bottom': 'bottom'
+        };
+        if (!(position in flips)) {
+            return position;
+        }
+
+        const tr = $target[0].getBoundingClientRect();
+        const pr = $player[0].getBoundingClientRect();
+        const dx = (pr.left + pr.width / 2) - (tr.left + tr.width / 2);
+        const dy = (pr.top + pr.height / 2) - (tr.top + tr.height / 2);
+
+        let playerSide;
+        if (Math.abs(dx) > Math.abs(dy)) {
+            playerSide = dx > 0 ? 'right' : 'left';
+        } else {
+            playerSide = dy > 0 ? 'bottom' : 'top';
+        }
+
+        return sideOf[position] === playerSide ? flips[position] : position;
     }
 
     /**
@@ -409,20 +486,24 @@ class TutorialTooltip {
     }
 
     /**
-     * Setup dragging for center-positioned tooltips on desktop
+     * Make the tooltip draggable on desktop. Originally limited to
+     * center-positioned tooltips; widened to all positions because
+     * playtester reported anchored tooltips landing right on top of
+     * the path the player needed to click (e.g. arriving at a tree
+     * from the south found the tooltip parked on the south tile).
+     * Dragging now works for any tooltip; auto-repositioning still
+     * happens until the user starts dragging — once dragged, the
+     * stored position holds.
      */
     setupDragging() {
         if (!this.$tooltip) {
             return;
         }
 
-        // Only enable dragging for:
-        // 1. Center-positioned tooltips
-        // 2. Desktop view (viewport width > 768px)
+        // Touch devices don't get drag — same intent as before; tap
+        // targets are tight on mobile, hold-to-drag would steal taps.
         const isDesktop = $(window).width() > 768;
-        const isCentered = this.currentPosition === 'center';
-
-        if (!isDesktop || !isCentered) {
+        if (!isDesktop) {
             this.$tooltip.removeClass('draggable');
             return;
         }
@@ -558,6 +639,21 @@ class TutorialTooltip {
      * Position tooltip near target element
      */
     positionNear($target, position) {
+        // If user has dragged the tooltip out of the way, keep it
+        // there — auto-reposition would un-do the move and shove the
+        // tooltip back over whatever it was covering.
+        if (this.draggedPosition) {
+            this.$tooltip.css({
+                position: 'fixed',
+                left: `${this.draggedPosition.left}px`,
+                top: `${this.draggedPosition.top}px`,
+                transform: 'none',
+                bottom: 'auto',
+                right: 'auto'
+            });
+            return;
+        }
+
         // Get viewport-relative position for fixed positioning
         // Don't use TutorialPositionManager because it adds scroll offset for absolute positioning
         const rect = $target[0].getBoundingClientRect();
