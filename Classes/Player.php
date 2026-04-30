@@ -2245,9 +2245,18 @@ class Player implements ActorInterface {
         }
 
 
-        // first real player gets admin
-        if($type == 'real' && $displayId == 1){
-
+        // Bootstrap admin grant: only the very first row ever inserted
+        // into the players table — players.id === 1 with player_type
+        // 'real' — gets isAdmin. Anything else MUST NOT.
+        //
+        // Previous gate `$displayId == 1` matched whenever
+        // MAX(display_id) was NULL (any env that ran the tutorial
+        // migration without backfilling display_id on legacy rows),
+        // so the next real registration silently became admin. Pinning
+        // on the primary-key id removes that escalation surface
+        // entirely: in prod, id=1 already exists, and getNextEntityId
+        // never re-issues it.
+        if ($type === 'real' && $id === 1) {
             $player->add_option('isAdmin');
         }
 
