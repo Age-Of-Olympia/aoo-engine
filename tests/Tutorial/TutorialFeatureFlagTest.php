@@ -123,14 +123,15 @@ class TutorialFeatureFlagTest extends TestCase
     }
 
     #[Group('tutorial-feature-flag')]
-    public function testWhitelistFallsBackToHardcodedDevAccountsWhenEmpty(): void
+    public function testWhitelistDefaultsToEmptyWhenSettingMissing(): void
     {
-        // Empty cache + no constant defined → the [1, 2, 3] dev fallback.
-        // Documented in the source as "Default test players" — pinning it
-        // catches future refactors that drop the fallback.
+        // Empty cache + no constant defined → empty whitelist.
+        // The previous [1, 2, 3] dev fallback leaked tutorial access to
+        // the first three real player IDs in prod, so the default is
+        // now opt-in only.
         $this->primeCache([]);
 
-        $this->assertSame([1, 2, 3], TutorialFeatureFlag::getWhitelistedPlayers());
+        $this->assertSame([], TutorialFeatureFlag::getWhitelistedPlayers());
     }
 
     #[Group('tutorial-feature-flag')]

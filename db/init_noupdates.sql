@@ -5408,7 +5408,7 @@ CREATE TABLE `tutorial_settings` (
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `tutorial_settings` DISABLE KEYS */;
 INSERT INTO `tutorial_settings` VALUES (1,'global_enabled','0','Enable tutorial globally for all players','2026-04-19 08:23:30','2026-04-19 08:23:30');
-INSERT INTO `tutorial_settings` VALUES (2,'whitelisted_players','1,2,3','Comma-separated list of player IDs who can access tutorial','2026-04-19 08:23:30','2026-04-19 08:23:30');
+INSERT INTO `tutorial_settings` VALUES (2,'whitelisted_players','','Comma-separated list of player IDs who can access tutorial','2026-04-19 08:23:30','2026-04-19 08:23:30');
 INSERT INTO `tutorial_settings` VALUES (3,'auto_show_new_players','1','Automatically show tutorial to new players','2026-04-19 08:23:30','2026-04-19 08:23:30');
 /*!40000 ALTER TABLE `tutorial_settings` ENABLE KEYS */;
 COMMIT;
