@@ -409,20 +409,24 @@ class TutorialTooltip {
     }
 
     /**
-     * Setup dragging for center-positioned tooltips on desktop
+     * Make the tooltip draggable on desktop. Originally limited to
+     * center-positioned tooltips; widened to all positions because
+     * playtester reported anchored tooltips landing right on top of
+     * the path the player needed to click (e.g. arriving at a tree
+     * from the south found the tooltip parked on the south tile).
+     * Dragging now works for any tooltip; auto-repositioning still
+     * happens until the user starts dragging — once dragged, the
+     * stored position holds.
      */
     setupDragging() {
         if (!this.$tooltip) {
             return;
         }
 
-        // Only enable dragging for:
-        // 1. Center-positioned tooltips
-        // 2. Desktop view (viewport width > 768px)
+        // Touch devices don't get drag — same intent as before; tap
+        // targets are tight on mobile, hold-to-drag would steal taps.
         const isDesktop = $(window).width() > 768;
-        const isCentered = this.currentPosition === 'center';
-
-        if (!isDesktop || !isCentered) {
+        if (!isDesktop) {
             this.$tooltip.removeClass('draggable');
             return;
         }
@@ -558,6 +562,21 @@ class TutorialTooltip {
      * Position tooltip near target element
      */
     positionNear($target, position) {
+        // If user has dragged the tooltip out of the way, keep it
+        // there — auto-reposition would un-do the move and shove the
+        // tooltip back over whatever it was covering.
+        if (this.draggedPosition) {
+            this.$tooltip.css({
+                position: 'fixed',
+                left: `${this.draggedPosition.left}px`,
+                top: `${this.draggedPosition.top}px`,
+                transform: 'none',
+                bottom: 'auto',
+                right: 'auto'
+            });
+            return;
+        }
+
         // Get viewport-relative position for fixed positioning
         // Don't use TutorialPositionManager because it adds scroll offset for absolute positioning
         const rect = $target[0].getBoundingClientRect();
