@@ -78,8 +78,24 @@ try {
     $player->get_data();
     $manager = new TutorialManager($player);
 
-    // Start the tutorial with specific version
-    $result = $manager->startTutorial($version);
+    // Race override for admin testing.
+    //
+    // In prod, admins are NPC characters (id<0) often with race='animal'
+    // (or another non-playable race). TutorialPlayerFactory defaults the
+    // tutorial-character race to the launching player's race and then
+    // validates it against RACES_EXT — so an admin testing a tutorial
+    // would otherwise get an InvalidArgumentException ("Invalid race
+    // 'animal'..."), surfaced as the generic "failed to create tutorial".
+    //
+    // Override to a sane playable race when the launcher's own race
+    // isn't tutorial-compatible. Real players with playable races keep
+    // their own race (admin testing as a real test character still
+    // works as before).
+    $launcherRace = strtolower($player->data->race ?? '');
+    $raceOverride = in_array($launcherRace, RACES_EXT, true) ? null : 'nain';
+
+    // Start the tutorial with specific version (and race override if any)
+    $result = $manager->startTutorial($version, $raceOverride);
 
     if ($result['success']) {
         echo json_encode([
@@ -99,9 +115,31 @@ try {
     }
 
 } catch (Exception $e) {
+    error_log(sprintf(
+        '[tutorial-launcher] start failed for player %d (race=%s) on version %s: %s',
+        $_SESSION['playerId'] ?? 0,
+        $player->data->race ?? '?',
+        $version,
+        $e->getMessage()
+    ));
+
+    // Surface a clearer message when the underlying issue is the
+    // invalid-race path; everything else is reported verbatim. The
+    // raw message + trace stay in the JSON for debugging in the
+    // admin console.
+    $rawMessage = $e->getMessage();
+    if (stripos($rawMessage, 'Invalid race') !== false) {
+        $friendly = "Race '" . ($player->data->race ?? '?') . "' incompatible avec le tutoriel. "
+                  . "Le launcher tente normalement un override automatique vers 'nain' — "
+                  . "vérifiez que la chaîne d'override n'a pas été contournée.";
+    } else {
+        $friendly = $rawMessage;
+    }
+
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage(),
+        'error' => $friendly,
+        'raw_error' => $rawMessage,
         'trace' => $e->getTraceAsString()
     ]);
 }
