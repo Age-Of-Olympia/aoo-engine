@@ -510,6 +510,14 @@ class TutorialUI {
         // Remove previous mode classes
         $overlay.removeClass('blocking semi-blocking open');
 
+        // Reset inline pointer-events. Semi-blocking sets it to 'none'
+        // as an inline style, which then wins over the .blocking CSS
+        // rule on the next step transition — so a step that should be
+        // blocking would silently let clicks fall through to background
+        // menus (e.g. step 28 'Ennemi blessé' after the semi-blocking
+        // 'attack_enemy' step).
+        $overlay.css('pointer-events', '');
+
         // Remove ALL event handlers from overlay (from previous modes)
         $overlay.off('click');
 
