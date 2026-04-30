@@ -65,7 +65,10 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
         }
         $stepOptionsByVersion[$version] = $opts;
     }
-    $stepsJson = htmlspecialchars(json_encode($stepOptionsByVersion), ENT_QUOTES, 'UTF-8');
+    /* JSON inside a <script type="application/json"> block must NOT be
+     * htmlspecialchars'd — JSON.parse would choke on &quot;. JSON_HEX_TAG
+     * keeps `</script>` from breaking out of the tag. */
+    $stepsJson = json_encode($stepOptionsByVersion, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE);
 
     $versionOpts = '';
     $currentVersion = $val('version', '1.0.0');
