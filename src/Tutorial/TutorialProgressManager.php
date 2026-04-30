@@ -249,6 +249,21 @@ class TutorialProgressManager
             $this->context->ensurePrerequisites($prerequisites);
         }
 
+        // Spawn any dynamic NPC whose tutorial_npcs.spawn_at_step_id
+        // matches the step we're entering. NULL spawn_at_step_id NPCs
+        // were spawned at session start by TutorialResourceManager;
+        // this hook is for "spawn just-in-time" NPCs (e.g. the combat
+        // dummy appearing at the 'enemy_spawned' step).
+        $sessionId = $_SESSION['tutorial_session_id'] ?? null;
+        if ($sessionId) {
+            try {
+                $resources = new TutorialResourceManager();
+                $resources->spawnDynamicNpcsAtStep($sessionId, $step->getStepId());
+            } catch (\Throwable $e) {
+                error_log("[TutorialProgressManager] dynamic NPC spawn at step '{$step->getStepId()}' failed: " . $e->getMessage());
+            }
+        }
+
         // Set consume_movements flag in session
         // PRIORITY: context_changes table takes precedence over prerequisites table
         // This allows the step editor checkboxes to override old configurations

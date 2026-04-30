@@ -36,122 +36,135 @@ class TutorialResourceManager
     // directly on TutorialPlayer.
 
     /**
-     * Spawn tutorial enemy for combat training
+     * Spawn the dynamic NPCs configured for this tutorial version.
      *
-     * Creates a weak enemy NPC near the tutorial starting position.
+     * Replaces the old hardcoded "spawn the dummy at offset (2,1)"
+     * path. Reads tutorial_npcs (spawn_mode='dynamic',
+     * spawn_at_step_id IS NULL = at session start) — each row gets
+     * a fresh players row at (player.x + npc.x, player.y + npc.y).
      *
-     * @param string $sessionId Tutorial session UUID
-     * @throws TutorialException If spawn fails
+     * Each spawn is recorded in tutorial_enemies so the existing
+     * cleanup paths still find them on session end.
+     *
+     * Failures are swallowed (logged only) — a missing dynamic NPC
+     * shouldn't block tutorial start.
      */
     private function spawnTutorialEnemy(string $sessionId): void
     {
+        // Session-start dynamic NPCs: spawn_at_step_id IS NULL.
+        $repo = new TutorialNpcRepository($this->conn);
+        $this->spawnDynamicNpcs($sessionId, $repo->listActive('1.0.0', 'dynamic'));
+    }
+
+    /**
+     * Spawn the dynamic NPCs whose `spawn_at_step_id` matches the given
+     * step name (joined via tutorial_steps.step_id). Called by the
+     * progression manager when transitioning to a step. Public so other
+     * runtime paths can call it; safe to invoke even with no matching
+     * NPCs (no-op).
+     *
+     * @return int Number of NPCs spawned.
+     */
+    public function spawnDynamicNpcsAtStep(string $sessionId, string $stepName, string $version = '1.0.0'): int
+    {
+        $repo = new TutorialNpcRepository($this->conn);
+        $list = $repo->listForStepName($version, 'dynamic', $stepName);
+        if (empty($list)) {
+            return 0;
+        }
+        $this->spawnDynamicNpcs($sessionId, $list);
+        return count($list);
+    }
+
+    /**
+     * Insert a players row + tutorial_enemies bookkeeping row for each
+     * config in $npcs. Each NPC's (x,y) is treated as an OFFSET from
+     * the tutorial player's current tile.
+     *
+     * Failures swallow + log — a missing dynamic NPC shouldn't break
+     * tutorial progression.
+     */
+    private function spawnDynamicNpcs(string $sessionId, array $npcs): void
+    {
+        if (empty($npcs)) {
+            return;
+        }
         try {
-            // Get tutorial player's position
-            $stmt = $this->conn->prepare("
+            $playerData = $this->conn->fetchAssociative("
                 SELECT p.coords_id, c.x, c.y, c.plan
                 FROM tutorial_players tp
                 JOIN players p ON tp.player_id = p.id
                 JOIN coords c ON p.coords_id = c.id
                 WHERE tp.tutorial_session_id = ?
-            ");
-            $stmt->bindValue(1, $sessionId);
-            $result = $stmt->executeQuery();
-            $playerData = $result->fetchAssociative();
-
+            ", [$sessionId]);
             if (!$playerData) {
                 throw new \RuntimeException("Tutorial player not found for session {$sessionId}");
             }
-
             $playerX = (int) $playerData['x'];
             $playerY = (int) $playerData['y'];
             $plan = $playerData['plan'];
 
-            // Find nearby position for enemy (offset to avoid Gaïa at 1,0)
-            // Gaïa (NPC guide) is at (1,0), so spawn enemy with offset
-            $enemyX = $playerX + TutorialConstants::ENEMY_SPAWN_OFFSET_X;
-            $enemyY = $playerY + TutorialConstants::ENEMY_SPAWN_OFFSET_Y;
+            require_once dirname(__FILE__) . '/../../Classes/Player.php';
 
-            // Get or create coordinates for enemy
-            $coordsStmt = $this->conn->prepare("
-                SELECT id FROM coords WHERE x = ? AND y = ? AND plan = ?
-            ");
-            $coordsStmt->bindValue(1, $enemyX);
-            $coordsStmt->bindValue(2, $enemyY);
-            $coordsStmt->bindValue(3, $plan);
-            $coordsResult = $coordsStmt->executeQuery();
-            $coords = $coordsResult->fetchAssociative();
+            foreach ($npcs as $npc) {
+                $enemyX = $playerX + $npc['x'];
+                $enemyY = $playerY + $npc['y'];
 
-            if ($coords) {
-                $enemyCoordsId = $coords['id'];
-            } else {
-                // Coords should exist from map instance creation
-                // If they don't, something went wrong - log and create them
-
-                $this->conn->insert('coords', [
-                    'x' => $enemyX,
-                    'y' => $enemyY,
-                    'z' => 0,
-                    'plan' => $plan
-                ]);
-                $enemyCoordsId = (int) $this->conn->lastInsertId();
-
-                // Validate that the insert worked
-                if (!$enemyCoordsId || $enemyCoordsId <= 0) {
-                    throw new \RuntimeException("Failed to create coords for enemy at ({$enemyX}, {$enemyY}) on plan {$plan}");
+                $coords = $this->conn->fetchAssociative(
+                    "SELECT id FROM coords WHERE x = ? AND y = ? AND plan = ?",
+                    [$enemyX, $enemyY, $plan]
+                );
+                if ($coords) {
+                    $enemyCoordsId = (int) $coords['id'];
+                } else {
+                    $this->conn->insert('coords', [
+                        'x' => $enemyX,
+                        'y' => $enemyY,
+                        'z' => 0,
+                        'plan' => $plan,
+                    ]);
+                    $enemyCoordsId = (int) $this->conn->lastInsertId();
+                    if ($enemyCoordsId <= 0) {
+                        throw new \RuntimeException(
+                            "Failed to create coords for npc role={$npc['role']} at ({$enemyX},{$enemyY}) on plan {$plan}"
+                        );
+                    }
                 }
 
+                $enemyId = getNextEntityId('npc');
+                $displayId = getNextDisplayId('npc');
+
+                $this->conn->insert('players', [
+                    'id'          => $enemyId,
+                    'player_type' => 'npc',
+                    'display_id'  => $displayId,
+                    'name'        => $npc['name'],
+                    'coords_id'   => $enemyCoordsId,
+                    'race'        => $npc['race'],
+                    'xp'          => 0,
+                    'pi'          => 0,
+                    'energie'     => $npc['energie'],
+                    'psw'         => '',
+                    'mail'        => '',
+                    'plain_mail'  => '',
+                    'avatar'      => $npc['avatar'],
+                    'portrait'    => $npc['portrait'],
+                    'text'        => $npc['text'] ?? '',
+                ]);
+
+                $enemyPlayer = new \Classes\Player($enemyId);
+                $enemyPlayer->get_caracs();
+
+                $this->conn->insert('tutorial_enemies', [
+                    'tutorial_session_id' => $sessionId,
+                    'enemy_player_id'     => $enemyId,
+                    'enemy_coords_id'     => $enemyCoordsId,
+                ]);
             }
 
-            // CRITICAL: Verify coords_id actually exists in database before using it
-            $verifyCoords = $this->conn->fetchOne("SELECT id FROM coords WHERE id = ?", [$enemyCoordsId]);
-            if (!$verifyCoords) {
-                throw new \RuntimeException("Coords validation failed! coords_id {$enemyCoordsId} does not exist in database for enemy spawn at ({$enemyX}, {$enemyY}) on plan {$plan}");
-            }
-
-            // Generate unique enemy ID using new ID system (NPCs use negative IDs)
-            $enemyId = getNextEntityId('npc');
-            $displayId = getNextDisplayId('npc');
-
-            // Create enemy NPC (using 'ame' race - weak tutorial dummy)
-            $this->conn->insert('players', [
-                'id' => $enemyId,
-                'player_type' => 'npc',
-                'display_id' => $displayId,
-                'name' => 'Âme d\'entraînement',
-                'coords_id' => $enemyCoordsId,
-                'race' => 'ame',
-                'xp' => 0,
-                'pi' => 0,
-                'energie' => 100, // Enough HP to survive tutorial attacks
-                'psw' => '',
-                'mail' => '',
-                'plain_mail' => '',
-                'avatar' => 'img/avatars/ame/default.webp',
-                'portrait' => 'img/portraits/ame/1.jpeg',
-                'text' => 'Âme d\'entraînement pour le tutoriel'
-            ]);
-
-            // Initialize enemy caracs (characteristics)
-            // The 'ame' race has proper base stats (PV: 100, F: 1, E: 1)
-            require_once dirname(__FILE__) . '/../../Classes/Player.php';
-            $enemyPlayer = new \Classes\Player($enemyId);
-            $enemyPlayer->get_caracs(); // Generate caracs from race base stats
-
-
-            // Track enemy in tutorial_enemies table
-            $this->conn->insert('tutorial_enemies', [
-                'tutorial_session_id' => $sessionId,
-                'enemy_player_id' => $enemyId,
-                'enemy_coords_id' => $enemyCoordsId
-            ]);
-
-
-            // Invalidate cached SVG for tutorial player
             $this->invalidateTutorialPlayerCache($sessionId);
-
         } catch (\Exception $e) {
-            // Don't fail tutorial start if enemy spawn fails
-            error_log("[TutorialResourceManager] Error spawning tutorial enemy: " . $e->getMessage());
+            error_log("[TutorialResourceManager] Error spawning dynamic tutorial NPCs: " . $e->getMessage());
         }
     }
 
