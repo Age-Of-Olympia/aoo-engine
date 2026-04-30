@@ -420,24 +420,16 @@ class View{
 
 
                     $isCurrentPlayer = ($row->whichTable == 'players' && $row->id == $this->playerId);
+                    $isTutorialEnemy = ($row->whichTable == 'players' && $row->id < 0 && $player->data->name === "Âme d'entraînement");
 
                     if($row->whichTable == 'players'){
 
-                        // Shadow image (decorative). The .avatar-shadow CSS
-                        // shrinks this to 35x35 with a -5/14 offset; we
-                        // intentionally keep #current-player-avatar OFF the
-                        // shadow so tutorial highlights compute against the
-                        // full 50x50 avatar below, keeping their padding
-                        // symmetric to the player tile.
-                        $playerClass = 'avatar-shadow';
-                        if ($isCurrentPlayer) {
-                            $playerClass .= ' current-player';
-                        }
-                        // Add tutorial-enemy class for tutorial enemy targeting
-                        if ($row->id < 0 && $player->data->name === "Âme d'entraînement") {
-                            $playerClass .= ' tutorial-enemy';
-                        }
-
+                        // Shadow image — decorative only. .avatar-shadow CSS
+                        // shrinks this to 35x35 with a -5/14 offset. Tutorial
+                        // markers (#current-player-avatar, .tutorial-enemy,
+                        // .current-player) live on the FULL-size avatar
+                        // below so highlight padding computes against the
+                        // actual 50x50 tile rect and stays symmetric.
                         echo '
                         <image
 
@@ -454,16 +446,23 @@ class View{
 
                             href="'. $img .'"
 
-                            class="'. $playerClass .'"
+                            class="avatar-shadow"
                             />
                         ';
                     }
 
 
-                    // Full-size avatar image. #current-player-avatar lives
-                    // here (not on the shadow) so tutorial highlight padding
-                    // computes against the actual 50x50 tile rect and stays
-                    // symmetric.
+                    // Full-size avatar (50x50, no offsets). All tutorial
+                    // selectors target this so highlights stay aligned.
+                    $avatarClasses = [];
+                    if ($isCurrentPlayer) {
+                        $avatarClasses[] = 'current-player';
+                    }
+                    if ($isTutorialEnemy) {
+                        $avatarClasses[] = 'tutorial-enemy';
+                    }
+                    $avatarClassAttr = $avatarClasses ? ' class="'. implode(' ', $avatarClasses) .'"' : '';
+
                     echo '
                     <image
 
@@ -479,6 +478,7 @@ class View{
                         y="'. floor($y) .'"
 
                         href="'. $img .'"
+                        '. $avatarClassAttr .'
                         />
                     ';
                 }
