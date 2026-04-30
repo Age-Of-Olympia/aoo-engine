@@ -326,25 +326,32 @@ class TutorialHighlighter {
         $('.tutorial-blocked-tile').remove();
 
         const playerCoords = $('#current-player-avatar').attr('data-coords');
-        const paddedHighlights = this.highlights.filter(h => h.padding > 0);
-        console.log('[TutorialHighlighter] refreshBlockedTileMarkers — highlights:', this.highlights.length,
-                    '| with padding:', paddedHighlights.length,
-                    '| playerCoords:', playerCoords,
-                    '| .case in DOM:', $('.case').length);
 
-        this.highlights.forEach((item, idx) => {
+        // Pre-compute the set of "blocked" coordinates: any tile that
+        // carries a wall or a foreground (non-passable element) AND any
+        // tile occupied by another player. .go on a tile only means
+        // "adjacent to the player" — it's added for every neighbor
+        // regardless of walkability, so we can NOT use it as a signal.
+        const blockedCoords = new Set();
+        $('image[data-table="walls"], image[data-table="foregrounds"]').each(function() {
+            const c = this.getAttribute('data-coords');
+            if (c) blockedCoords.add(c);
+        });
+        $('image[data-table="players"]').each(function() {
+            const c = this.getAttribute('data-coords');
+            if (c && c !== playerCoords) blockedCoords.add(c);
+        });
+
+        this.highlights.forEach(item => {
             if (!item.padding || item.padding <= 0) {
                 return;
             }
             const $el = item.$element;
             if (!$el || !$el.length) {
-                console.warn('[TutorialHighlighter] highlight', idx, 'has no $element');
                 return;
             }
             const r = $el[0].getBoundingClientRect();
-            console.log('[TutorialHighlighter] highlight', idx, 'rect:', r, 'padding:', item.padding);
             if (r.width === 0 || r.height === 0) {
-                console.warn('[TutorialHighlighter] highlight', idx, 'has zero dimensions');
                 return;
             }
             const zone = {
@@ -354,15 +361,13 @@ class TutorialHighlighter {
                 bottom: r.bottom + item.padding
             };
 
-            let placed = 0;
-            let scanned = 0;
             $('.case').each(function() {
                 const $case = $(this);
-                scanned++;
-                if ($case.hasClass('go')) {
+                const coords = $case.attr('data-coords');
+                if (!coords || coords === playerCoords) {
                     return;
                 }
-                if (playerCoords && $case.attr('data-coords') === playerCoords) {
+                if (!blockedCoords.has(coords)) {
                     return;
                 }
                 const cr = this.getBoundingClientRect();
@@ -383,9 +388,7 @@ class TutorialHighlighter {
                     height: cr.height + 'px'
                 });
                 $('body').append($marker);
-                placed++;
             });
-            console.log('[TutorialHighlighter] highlight', idx, '— scanned', scanned, '.case, placed', placed, 'markers in zone', zone);
         });
     }
 
