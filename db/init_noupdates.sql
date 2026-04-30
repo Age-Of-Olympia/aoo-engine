@@ -5638,7 +5638,7 @@ CREATE TABLE `tutorial_step_ui` (
 
 SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 /*!40000 ALTER TABLE `tutorial_step_ui` DISABLE KEYS */;
-INSERT INTO `tutorial_step_ui` VALUES (1,1,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0,0,NULL);
+INSERT INTO `tutorial_step_ui` VALUES (1,1,NULL,NULL,NULL,'center','blocking',NULL,0,NULL,1,0,0,0,0,'closed');
 INSERT INTO `tutorial_step_ui` VALUES (2,2,'.case[data-coords=\"0,0\"]',NULL,NULL,'bottom','blocking',NULL,200,NULL,1,NULL,0,0,0,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (3,3,'.case[data-coords=\"1,0\"]',NULL,NULL,'right','semi-blocking',NULL,0,NULL,1,0,0,0,0,NULL);
 INSERT INTO `tutorial_step_ui` VALUES (4,4,'#ui-card .close-card',NULL,NULL,'right','semi-blocking',NULL,300,NULL,1,0,0,0,0,NULL);
