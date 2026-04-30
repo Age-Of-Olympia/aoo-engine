@@ -326,17 +326,25 @@ class TutorialHighlighter {
         $('.tutorial-blocked-tile').remove();
 
         const playerCoords = $('#current-player-avatar').attr('data-coords');
+        const paddedHighlights = this.highlights.filter(h => h.padding > 0);
+        console.log('[TutorialHighlighter] refreshBlockedTileMarkers — highlights:', this.highlights.length,
+                    '| with padding:', paddedHighlights.length,
+                    '| playerCoords:', playerCoords,
+                    '| .case in DOM:', $('.case').length);
 
-        this.highlights.forEach(item => {
+        this.highlights.forEach((item, idx) => {
             if (!item.padding || item.padding <= 0) {
                 return;
             }
             const $el = item.$element;
             if (!$el || !$el.length) {
+                console.warn('[TutorialHighlighter] highlight', idx, 'has no $element');
                 return;
             }
             const r = $el[0].getBoundingClientRect();
+            console.log('[TutorialHighlighter] highlight', idx, 'rect:', r, 'padding:', item.padding);
             if (r.width === 0 || r.height === 0) {
+                console.warn('[TutorialHighlighter] highlight', idx, 'has zero dimensions');
                 return;
             }
             const zone = {
@@ -346,8 +354,11 @@ class TutorialHighlighter {
                 bottom: r.bottom + item.padding
             };
 
+            let placed = 0;
+            let scanned = 0;
             $('.case').each(function() {
                 const $case = $(this);
+                scanned++;
                 if ($case.hasClass('go')) {
                     return;
                 }
@@ -372,7 +383,9 @@ class TutorialHighlighter {
                     height: cr.height + 'px'
                 });
                 $('body').append($marker);
+                placed++;
             });
+            console.log('[TutorialHighlighter] highlight', idx, '— scanned', scanned, '.case, placed', placed, 'markers in zone', zone);
         });
     }
 
