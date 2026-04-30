@@ -442,15 +442,13 @@
     color: #3A2817;
 }
 
-/* Spotlight Overlay - Single dark layer for all highlights */
+/* Spotlight Overlay — geometry is set inline by TutorialHighlighter:
+ * either fullscreen (info / dialog steps with no map on screen) or a
+ * transparent rect over the map area with a giant box-shadow filling
+ * everything outside. Keeping only the position+layering here. */
 #tutorial-spotlight-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Match regular overlay darkness */
-    z-index: 9998; /* Same as tutorial-overlay, but applied when highlights exist */
+    z-index: 9998;
     pointer-events: none;
     display: none;
 }

@@ -222,19 +222,86 @@ class TutorialHighlighter {
     }
 
     /**
-     * Show the spotlight overlay (single dark layer)
+     * Show the spotlight overlay (single dark layer).
+     *
+     * When a map is present (.case tiles), the dim is shaped to leave
+     * the playable map area un-darkened — players can see and reach
+     * the tile they need to click. Achieved with a transparent rect
+     * positioned over the map's bounding box plus a giant box-shadow
+     * that fills everything outside.
+     *
+     * On non-map pages (no .case elements), falls back to a fullscreen
+     * dim so info / dialog steps still get the focus effect.
      */
     showSpotlightOverlay() {
-        // Create overlay if it doesn't exist
         if ($('#tutorial-spotlight-overlay').length === 0) {
             $('body').append('<div id="tutorial-spotlight-overlay"></div>');
+        }
+
+        const $overlay = $('#tutorial-spotlight-overlay');
+        const walkableRect = this.computeMapRect();
+
+        if (walkableRect) {
+            $overlay.css({
+                top: walkableRect.top + 'px',
+                left: walkableRect.left + 'px',
+                width: walkableRect.width + 'px',
+                height: walkableRect.height + 'px',
+                background: 'transparent',
+                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+            });
+        } else {
+            $overlay.css({
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(0, 0, 0, 0.5)',
+                boxShadow: 'none'
+            });
         }
 
         // Hide the regular tutorial overlay to avoid double darkening
         $('#tutorial-overlay').addClass('has-spotlight');
 
         // Show spotlight overlay
-        $('#tutorial-spotlight-overlay').fadeIn(200);
+        $overlay.fadeIn(200);
+    }
+
+    /**
+     * Compute the screen-space bounding box of the map tile area
+     * (.case elements). Returns null when no map is on screen — caller
+     * falls back to a fullscreen dim in that case.
+     */
+    computeMapRect() {
+        const $cases = $('.case');
+        if ($cases.length === 0) {
+            return null;
+        }
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let found = false;
+        $cases.each(function() {
+            const r = this.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) {
+                minX = Math.min(minX, r.left);
+                minY = Math.min(minY, r.top);
+                maxX = Math.max(maxX, r.right);
+                maxY = Math.max(maxY, r.bottom);
+                found = true;
+            }
+        });
+
+        if (!found) {
+            return null;
+        }
+
+        return {
+            top: minY,
+            left: minX,
+            width: maxX - minX,
+            height: maxY - minY
+        };
     }
 
     /**
