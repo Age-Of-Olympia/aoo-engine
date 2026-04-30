@@ -92,8 +92,9 @@ class TutorialFeatureFlag
             return array_filter($ids, fn($id) => $id > 0);
         }
 
-        // Default test players (the 3 dev accounts)
-        return [1, 2, 3];
+        // No default whitelist: opt-in only. Empty avoids leaking
+        // tutorial access to the first three real player IDs in prod.
+        return [];
     }
 
     /**

@@ -446,7 +446,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
         $this->addSql("
             INSERT INTO tutorial_settings (setting_key, setting_value, description) VALUES
             ('global_enabled', '0', 'Enable tutorial globally for all players'),
-            ('whitelisted_players', '1,2,3', 'Comma-separated list of player IDs who can access tutorial'),
+            ('whitelisted_players', '', 'Comma-separated list of player IDs who can access tutorial'),
             ('auto_show_new_players', '1', 'Automatically show tutorial to new players')
             ON DUPLICATE KEY UPDATE setting_key=setting_key
         ");
