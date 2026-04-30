@@ -467,6 +467,26 @@
     pointer-events: none;
 }
 
+/* Red × placed by TutorialHighlighter on every non-walkable .case
+ * inside a padded highlight zone — visual cue for "you cannot walk
+ * here" within the lit area. Sits above the spotlight (9998) but
+ * below tutorial-controls (10001), and is click-through. */
+.tutorial-blocked-tile {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    color: rgba(220, 30, 30, 0.85);
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow:
+        0 0 6px rgba(0, 0, 0, 0.7),
+        0 0 2px rgba(0, 0, 0, 1);
+}
+
 /* Element Highlighting - Spotlight Effect (Light in Darkness) */
 .tutorial-highlight {
     position: absolute;

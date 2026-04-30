@@ -307,6 +307,73 @@ class TutorialHighlighter {
 
         // Re-render on viewport changes so the holes track the elements.
         this.bindSpotlightReposition();
+
+        // Mark non-walkable tiles inside any padded highlight zone
+        // with an X so the player can tell at a glance which tiles
+        // they cannot walk on (walls, occupied cells).
+        this.refreshBlockedTileMarkers();
+    }
+
+    /**
+     * Drop a red × on every .case inside a padded highlight zone that
+     * is NOT walkable (no .go class) and is NOT the player's own tile.
+     * Visual cue for the user: "you can walk in this lit area, but not
+     * on tiles marked with ×".
+     *
+     * Idempotent — clears previous markers first.
+     */
+    refreshBlockedTileMarkers() {
+        $('.tutorial-blocked-tile').remove();
+
+        const playerCoords = $('#current-player-avatar').attr('data-coords');
+
+        this.highlights.forEach(item => {
+            if (!item.padding || item.padding <= 0) {
+                return;
+            }
+            const $el = item.$element;
+            if (!$el || !$el.length) {
+                return;
+            }
+            const r = $el[0].getBoundingClientRect();
+            if (r.width === 0 || r.height === 0) {
+                return;
+            }
+            const zone = {
+                left: r.left - item.padding,
+                top: r.top - item.padding,
+                right: r.right + item.padding,
+                bottom: r.bottom + item.padding
+            };
+
+            $('.case').each(function() {
+                const $case = $(this);
+                if ($case.hasClass('go')) {
+                    return;
+                }
+                if (playerCoords && $case.attr('data-coords') === playerCoords) {
+                    return;
+                }
+                const cr = this.getBoundingClientRect();
+                if (cr.width === 0 || cr.height === 0) {
+                    return;
+                }
+                // Tile counts as inside the zone if its center lies in it.
+                const cx = cr.left + cr.width / 2;
+                const cy = cr.top + cr.height / 2;
+                if (cx < zone.left || cx > zone.right || cy < zone.top || cy > zone.bottom) {
+                    return;
+                }
+                const $marker = $('<div class="tutorial-blocked-tile">×</div>');
+                $marker.css({
+                    top: cr.top + 'px',
+                    left: cr.left + 'px',
+                    width: cr.width + 'px',
+                    height: cr.height + 'px'
+                });
+                $('body').append($marker);
+            });
+        });
     }
 
     /**
@@ -433,6 +500,9 @@ class TutorialHighlighter {
             $overlay.css('display', 'block');
         }
         $('body').append($overlay);
+
+        // Re-place the blocked-tile markers so they track resize/scroll.
+        this.refreshBlockedTileMarkers();
     }
 
     /**
@@ -442,6 +512,7 @@ class TutorialHighlighter {
         $('#tutorial-spotlight-overlay').fadeOut(200, () => {
             $('#tutorial-spotlight-overlay').remove();
         });
+        $('.tutorial-blocked-tile').remove();
 
         // Restore regular tutorial overlay
         $('#tutorial-overlay').removeClass('has-spotlight');

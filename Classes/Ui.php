@@ -47,7 +47,7 @@ class Ui{
         }
 
         // Tutorial System (feature-flagged for specific players)
-        $tutorialVersion = '20260430k';
+        $tutorialVersion = '20260430l';
         echo '
                 <!-- Modal System -->
                 <link href="css/modal.css?v=20260418" rel="stylesheet">
