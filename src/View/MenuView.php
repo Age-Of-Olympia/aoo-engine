@@ -4,8 +4,10 @@ namespace App\View;
 
 use Classes\Str;
 use Classes\Db;
+use App\Factory\PlayerFactory;
 use App\Tutorial\TutorialFeatureFlag;
 use App\Tutorial\TutorialSessionManager;
+use App\View\CaracsPanelRenderer;
 
 class MenuView
 {
@@ -29,7 +31,17 @@ class MenuView
                 }
             }
 
-            echo '<div id="load-caracs"></div>';
+            // Inline the caracs panel when the user had it open before
+            // the last navigation (cookie set by view.js on click). This
+            // avoids the AJAX-driven layout shift on page reload.
+            $caracsOpen = isset($_COOKIE['caracs_panel_open']) && $_COOKIE['caracs_panel_open'] === '1';
+            if ($caracsOpen) {
+                echo '<div id="load-caracs" style="display:block;">';
+                echo CaracsPanelRenderer::render(PlayerFactory::active());
+                echo '</div>';
+            } else {
+                echo '<div id="load-caracs"></div>';
+            }
 
             // Output minified HTML
             echo Str::minify(ob_get_clean());

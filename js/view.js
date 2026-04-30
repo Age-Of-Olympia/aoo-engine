@@ -3,24 +3,16 @@ $(document).ready(function(){
 
     window.clickedCases = [];
 
-    // Caracs panel persistence (save/restore state across reloads)
+    // Caracs panel persistence: cookie so MenuView can inline the
+    // panel server-side on the next page render. That eliminates the
+    // post-reload pop-in / layout shift the previous AJAX restore had.
     $(document).on('click', '#show-caracs', function() {
-        // Wait for panel to toggle, then save state
+        // Wait for the MenuView click handler to toggle visibility.
         setTimeout(function() {
             var isOpen = $('#load-caracs').is(':visible');
-            sessionStorage.setItem('caracs_panel_open', isOpen ? 'true' : 'false');
-            console.log('[View] Saved caracs panel state:', isOpen);
+            document.cookie = 'caracs_panel_open=' + (isOpen ? '1' : '0') + '; path=/; SameSite=Lax';
         }, 100);
     });
-
-    // Auto-restore caracs panel if it was open before reload
-    if (sessionStorage.getItem('caracs_panel_open') === 'true') {
-        console.log('[View] Restoring open caracs panel');
-        // Trigger click to open panel
-        setTimeout(function() {
-            $('#show-caracs').click();
-        }, 500);
-    }
 
     // Right-click coordinate tool (available for everyone, TP button only for admins)
     $(document).on('contextmenu', '.case', function(e) {
