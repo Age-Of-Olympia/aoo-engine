@@ -304,10 +304,17 @@ class TutorialHighlighter {
         const holes = this.computeSpotlightHoles();
         const $overlay = $(this.buildSpotlightSvg(holes));
         // Show immediately so the handoff from #tutorial-pre-dim
-        // (server-rendered placeholder, dropped by TutorialUI on
-        // mode-apply) doesn't flash un-dimmed content on reload.
+        // (server-rendered placeholder) doesn't flash un-dimmed
+        // content on reload.
         $overlay.css('display', 'block');
         $('body').append($overlay);
+
+        // Now that the SVG spotlight is in place, retire the pre-dim
+        // placeholder. TutorialUI defers the drop for semi-blocking
+        // + highlight steps so the page stays continuously dim
+        // through ensurePanelVisibility, show_delay, and tooltip
+        // setup; this is the handoff point.
+        $('#tutorial-pre-dim').remove();
 
         // Hide the regular tutorial overlay to avoid double darkening
         $('#tutorial-overlay').addClass('has-spotlight');

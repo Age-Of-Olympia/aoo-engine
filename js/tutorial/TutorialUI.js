@@ -621,11 +621,23 @@ class TutorialUI {
         const mode = stepData.interaction_mode || this.getDefaultInteractionMode(stepData.step_type);
         const $overlay = $('#tutorial-overlay');
 
-        // Drop the server-side pre-dim placeholder. By the time we
-        // pick a mode the proper overlay/spotlight is about to take
-        // over, and even on 'open' steps the pre-dim must be cleared
-        // (otherwise the page stays dimmed with no JS owning it).
-        $('#tutorial-pre-dim').remove();
+        // Drop the server-side pre-dim placeholder when its
+        // replacement is on screen this same paint:
+        //   - 'blocking' covers with #tutorial-overlay.blocking (opaque dim)
+        //   - 'open' wants no dim at all
+        // For semi-blocking + highlight (movement steps, etc.),
+        // the SVG spotlight appears later — after ensurePanelVisibility,
+        // show_delay, and showStepTooltip — so dropping pre-dim here
+        // would leave the page un-dimmed for 300ms+ between the two.
+        // showSpotlightOverlay() drops it once the mask is appended.
+        // Semi-blocking with no highlight has no spotlight coming, so
+        // we still drop here.
+        const hasHighlight = !!(stepData.target_selector
+            || (Array.isArray(stepData.config?.additional_highlights)
+                && stepData.config.additional_highlights.length > 0));
+        if (mode !== 'semi-blocking' || !hasHighlight) {
+            $('#tutorial-pre-dim').remove();
+        }
 
         // Remove previous mode classes
         $overlay.removeClass('blocking semi-blocking open');
