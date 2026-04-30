@@ -224,7 +224,7 @@ if ($flash) {
     $content .= "<div class=\"alert alert-{$alertType}\">{$msg}</div>";
 }
 
-$csrfToken = $csrf->getToken();
+$csrfToken = $csrf->generateToken();
 
 if ($action === 'new') {
     $content .= renderNpcForm(null, $versions, $stepsByVersion, $races, $csrfToken);
