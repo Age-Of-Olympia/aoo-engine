@@ -130,6 +130,11 @@ class TutorialProgressManager
 
         // Return next step data for client
         // Note: current_step contains step_id (string), current_step_position contains display position (int)
+        $needsRefresh = !empty($_SESSION['tutorial_pending_map_refresh']);
+        if ($needsRefresh) {
+            unset($_SESSION['tutorial_pending_map_refresh']);
+        }
+
         return [
             'success' => true,
             'completed' => false,
@@ -139,7 +144,8 @@ class TutorialProgressManager
             'xp_earned' => $this->context->getTutorialXP(),
             'level' => $this->context->getTutorialLevel(),
             'pi' => $this->context->getTutorialPI(),
-            'next_step_data' => $nextStepData
+            'next_step_data' => $nextStepData,
+            'needs_map_refresh' => $needsRefresh,  // dynamic NPC spawn happened — client must reload to see it
         ];
     }
 
@@ -254,11 +260,19 @@ class TutorialProgressManager
         // were spawned at session start by TutorialResourceManager;
         // this hook is for "spawn just-in-time" NPCs (e.g. the combat
         // dummy appearing at the 'enemy_spawned' step).
+        //
+        // When at least one NPC is spawned, set a session flag so the
+        // step-transition response can tell the client to reload — the
+        // SVG map is cached client-side and an AJAX-driven step change
+        // wouldn't otherwise pick up the new <image> element.
         $sessionId = $_SESSION['tutorial_session_id'] ?? null;
         if ($sessionId) {
             try {
                 $resources = new TutorialResourceManager();
-                $resources->spawnDynamicNpcsAtStep($sessionId, $step->getStepId());
+                $spawned = $resources->spawnDynamicNpcsAtStep($sessionId, $step->getStepId());
+                if ($spawned > 0) {
+                    $_SESSION['tutorial_pending_map_refresh'] = true;
+                }
             } catch (\Throwable $e) {
                 error_log("[TutorialProgressManager] dynamic NPC spawn at step '{$step->getStepId()}' failed: " . $e->getMessage());
             }
