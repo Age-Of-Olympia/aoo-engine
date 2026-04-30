@@ -19,16 +19,41 @@ function admin_layout($title, $content) {
         return "<a href=\"$href\" class=\"nav-link$activeClass\">$star$label</a>";
     };
 
+    /* "Tutorial" pages share a section heading + indented children so
+     * the sidebar stays tidy as the tutorial admin surface grows. */
+    $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
+                      'tutorial-npcs.php', 'tutorial-settings.php'];
+    $tutorialActive = in_array($currentPage, $tutorialPages, true);
+    $tutorialGroupClass = $tutorialActive ? ' nav-group-open' : '';
+
+    $tutorialSubLinks =
+        $navLink('tutorial-catalog.php', 'Catalog', '/admin/tutorial-catalog.php') . "\n                    " .
+        $navLink('tutorial.php', 'Steps', '/admin/tutorial.php') . "\n                    " .
+        $navLink('tutorial-npcs.php', 'NPCs', '/admin/tutorial-npcs.php') . "\n                    " .
+        $navLink('tutorial-settings.php', 'Flags', '/admin/tutorial-settings.php');
+
+    /* Map admin pages get their own group too. */
+    $mapsSubLinks =
+        $navLink('world_map.php', 'World Map', '/admin/world_map.php') . "\n                    " .
+        $navLink('local_maps.php', 'Local Maps', '/admin/local_maps.php') . "\n                    " .
+        $navLink('screenshots.php', 'Screenshots', '/admin/screenshots.php');
+
     $navigation =
         $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .
-        $navLink('tutorial-catalog.php', 'Tutorial Catalog', '/admin/tutorial-catalog.php') . "\n                " .
-        $navLink('tutorial.php', 'Tutorial Steps', '/admin/tutorial.php') . "\n                " .
-        $navLink('tutorial-settings.php', 'Tutorial Flags', '/admin/tutorial-settings.php') . "\n                " .
+        "<div class=\"nav-group{$tutorialGroupClass}\">\n                " .
+        "    <span class=\"nav-group-title\">Tutorial</span>\n                " .
+        "    <div class=\"nav-group-children\">\n                    " .
+        $tutorialSubLinks . "\n                " .
+        "    </div>\n                " .
+        "</div>\n                " .
+        "<div class=\"nav-group\">\n                " .
+        "    <span class=\"nav-group-title\">Maps</span>\n                " .
+        "    <div class=\"nav-group-children\">\n                    " .
+        $mapsSubLinks . "\n                " .
+        "    </div>\n                " .
+        "</div>\n                " .
         $navLink('upload_image.php', 'Upload Images', '/admin/upload_image.php') . "\n                " .
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
-        $navLink('world_map.php', 'Manage World Map', '/admin/world_map.php') . "\n                " .
-        $navLink('local_maps.php', 'Manage Local Maps', '/admin/local_maps.php') . "\n                " .
-        $navLink('screenshots.php', 'Manage Screenshots', '/admin/screenshots.php') . "\n                " .
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 
     return <<<HTML
@@ -105,6 +130,33 @@ function admin_layout($title, $content) {
             background: rgba(74, 144, 226, 0.2);
             color: #4a90e2;
             font-weight: 600;
+        }
+
+        .nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .nav-group-title {
+            display: block;
+            padding: 8px 12px 4px;
+            color: #7f8c9b;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .nav-group-children {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding-left: 8px;
+            border-left: 2px solid rgba(255,255,255,0.06);
+            margin-left: 8px;
+        }
+        .nav-group-children .nav-link {
+            padding: 6px 12px;
+            font-size: 12px;
         }
 
         .admin-main {
