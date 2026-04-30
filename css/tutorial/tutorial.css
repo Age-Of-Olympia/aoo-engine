@@ -442,17 +442,54 @@
     color: #3A2817;
 }
 
-/* Spotlight Overlay - Single dark layer for all highlights */
+/* Spotlight Overlay — geometry is set inline by TutorialHighlighter
+ * as an <svg> with a <mask> carrying one cut-out per highlighted
+ * target. Keeping only position+layering here. */
 #tutorial-spotlight-overlay {
+    position: fixed;
+    z-index: 9998;
+    pointer-events: none;
+    display: none;
+}
+
+/* Pre-dim placeholder rendered server-side by Ui.php when the
+ * session is in tutorial mode. Sits just below the real spotlight
+ * overlay so the swap is invisible. JS removes it once the SVG mask
+ * is in place. */
+#tutorial-pre-dim {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Match regular overlay darkness */
-    z-index: 9998; /* Same as tutorial-overlay, but applied when highlights exist */
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9997;
     pointer-events: none;
-    display: none;
+}
+
+/* Red × on a blocked map tile. Drawn by:
+ *   - TutorialHighlighter, scoped to padded highlight zones during
+ *     the tutorial,
+ *   - the "showBlockedTiles" player display option in regular play.
+ * Server gates the regular option to false while in_tutorial so the
+ * two callers never stack — single class is enough.
+ *
+ * Sits above the spotlight (9998) but below tutorial-controls
+ * (10001). Click-through. */
+.blocked-tile-marker {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    color: rgba(220, 30, 30, 0.85);
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow:
+        0 0 6px rgba(0, 0, 0, 0.7),
+        0 0 2px rgba(0, 0, 0, 1);
 }
 
 /* Element Highlighting - Spotlight Effect (Light in Darkness) */

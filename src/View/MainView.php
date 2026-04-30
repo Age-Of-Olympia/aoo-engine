@@ -75,9 +75,19 @@ class MainView
             $isAdmin = $player->have_option('isAdmin') ? 'true' : 'false';
             echo '<script>window.isAdmin = ' . $isAdmin . ';</script>';
 
+            // Player display option: red × on blocked tiles. Tutorial
+            // does its own scoped rendering, so suppress the global
+            // option while the tutorial session is active to avoid
+            // double-marking.
+            $showBlockedTiles = $player->have_option('showBlockedTiles')
+                && empty($_SESSION['in_tutorial'])
+                ? 'true' : 'false';
+            echo '<script>window.showBlockedTiles = ' . $showBlockedTiles . ';</script>';
+
 ?>
             <script src="js/admin-tools.js?v=20260413"></script>
-            <script src="js/view.js?v=20260430b"></script>
+            <script src="js/blocked-tiles.js?v=20260430a"></script>
+            <script src="js/view.js?v=20260430d"></script>
 <?php
         }
     }

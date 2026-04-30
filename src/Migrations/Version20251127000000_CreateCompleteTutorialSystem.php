@@ -231,6 +231,8 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 auto_close_card TINYINT(1) DEFAULT NULL COMMENT 'Auto-close action card',
                 tooltip_offset_x INT DEFAULT 0 COMMENT 'X offset for tooltip',
                 tooltip_offset_y INT DEFAULT 0 COMMENT 'Y offset for tooltip',
+                highlight_padding INT DEFAULT 0 COMMENT 'Extra px around the highlight box and spotlight cut-out',
+                caracs_panel_state ENUM('open', 'closed') NULL DEFAULT NULL COMMENT 'Force the caracs panel open/closed at step start; NULL = leave as-is',
                 UNIQUE KEY unique_step (step_id),
                 FOREIGN KEY (step_id) REFERENCES tutorial_steps(id) ON DELETE CASCADE,
                 KEY idx_interaction_mode (interaction_mode)
@@ -303,6 +305,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 step_id INT NOT NULL,
                 selector VARCHAR(500) NOT NULL COMMENT 'CSS selector for additional highlight',
+                padding INT DEFAULT 0 COMMENT 'Extra px around this highlight (independent of the step-level target padding)',
                 FOREIGN KEY (step_id) REFERENCES tutorial_steps(id) ON DELETE CASCADE,
                 KEY idx_step_id (step_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -528,7 +531,7 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
             ('1.0.0', 'your_character', 'meet_gaia', 2.0, 'info', 'Votre personnage', 'Voici <strong>votre personnage</strong> ! Il est représenté au centre du damier. C''est vous dans le monde d''Olympia.', 5, 1),
             ('1.0.0', 'meet_gaia', 'close_card', 3.0, 'info', 'Gaïa, votre guide', 'Voici <strong>Gaïa</strong>, la déesse de la Terre. Elle sera votre guide tout au long de ce tutoriel. Cliquez sur elle pour voir sa fiche.', 5, 1),
             ('1.0.0', 'close_card', 'movement_intro', 4.0, 'ui_interaction', 'Fermer la fiche', 'Vous pouvez <strong>fermer la fiche</strong> en cliquant sur le bouton X, sur une case vide, ou ailleurs sur le damier.', 5, 1),
-            ('1.0.0', 'movement_intro', 'first_move', 5.0, 'info', 'Se déplacer', 'Regardez les <strong>cases</strong> autour de vous ! Ce sont les cases où vous pouvez vous déplacer si elles sont vides.', 5, 1),
+            ('1.0.0', 'movement_intro', 'first_move', 5.0, 'info', 'Se déplacer', 'Regardez les <strong>cases</strong> autour de vous : ce sont les cases où vous pouvez vous déplacer. Pendant le tutoriel, les cases marquées d''une <strong style=\"color:#dc1e1e\">×</strong> rouge sont infranchissables — ce marqueur n''apparaît pas dans le jeu réel.', 5, 1),
             ('1.0.0', 'first_move', 'movement_limit_warning', 6.0, 'movement', 'Premier pas', 'Cliquez sur une <strong>case mise en valeur</strong> pour vous déplacer !', 10, 1),
             ('1.0.0', 'movement_limit_warning', 'show_characteristics', 7.0, 'info', 'Mouvements limités !', '<strong>Attention !</strong> En jeu réel, vos mouvements sont <strong>limités</strong>. Vous avez {max_mvt} mouvements par tour. <strong>À partir de maintenant, chaque déplacement consommera 1 mouvement.</strong>', 5, 1),
             ('1.0.0', 'show_characteristics', 'deplete_movements', 8.0, 'ui_interaction', 'Vos caractéristiques', 'Cliquez sur <strong>\"Caractéristiques\"</strong> pour voir vos stats, dont vos mouvements restants.', 5, 1),
@@ -560,36 +563,36 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
     {
         // Get step IDs dynamically using subqueries
         $this->addSql("
-            INSERT INTO tutorial_step_ui (step_id, target_selector, tooltip_position, interaction_mode, show_delay, allow_manual_advance, auto_close_card, tooltip_offset_x, tooltip_offset_y)
-            SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'welcome' UNION ALL
-            SELECT id, '.case[data-coords=\"0,0\"]', 'bottom', 'blocking', 200, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'your_character' UNION ALL
-            SELECT id, '.case[data-coords=\"1,0\"]', 'right', 'semi-blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'meet_gaia' UNION ALL
-            SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 300, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'close_card' UNION ALL
-            SELECT id, '.case.go', 'top', 'blocking', 300, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'movement_intro' UNION ALL
-            SELECT id, '.case.go', 'top', 'semi-blocking', 0, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'first_move' UNION ALL
-            SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'movement_limit_warning' UNION ALL
-            SELECT id, '#show-caracs', 'bottom', 'semi-blocking', 700, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'show_characteristics' UNION ALL
-            SELECT id, '#mvt-counter', 'right', 'semi-blocking', 700, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'deplete_movements' UNION ALL
-            SELECT id, '#mvt-counter', 'right', 'blocking', 700, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'movements_depleted_info' UNION ALL
-            SELECT id, '#action-counter', 'right', 'blocking', 700, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'actions_intro' UNION ALL
-            SELECT id, '#current-player-avatar', 'bottom', 'semi-blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'click_yourself' UNION ALL
-            SELECT id, '.card-actions', 'right', 'blocking', 300, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'actions_panel_info' UNION ALL
-            SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 0, 1, 1, 0, 0 FROM tutorial_steps WHERE step_id = 'close_card_for_tree' UNION ALL
-            SELECT id, '.case[data-coords=\"0,1\"]', 'center-bottom', 'semi-blocking', 0, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
-            SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 0, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
-            SELECT id, '.resource-status', 'left', 'blocking', 300, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'tree_info' UNION ALL
-            SELECT id, '.action[data-action=\"fouiller\"]', 'right', 'semi-blocking', 300, 1, 1, 0, 0 FROM tutorial_steps WHERE step_id = 'use_fouiller' UNION ALL
-            SELECT id, '#action-counter', 'right', 'blocking', 700, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'action_consumed' UNION ALL
-            SELECT id, '#show-inventory', 'bottom', 'semi-blocking', 300, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'open_inventory' UNION ALL
-            SELECT id, '.item-case[data-name=\"Bois\"]', 'left', 'blocking', 700, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'inventory_wood' UNION ALL
-            SELECT id, '#back', 'bottom', 'semi-blocking', 200, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'close_inventory' UNION ALL
-            SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'combat_intro' UNION ALL
-            SELECT id, '.tutorial-enemy', 'bottom', 'blocking', 500, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'enemy_spawned' UNION ALL
-            SELECT id, '.tutorial-enemy', 'center-bottom', 'semi-blocking', 0, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'walk_to_enemy' UNION ALL
-            SELECT id, '.tutorial-enemy', 'bottom', 'semi-blocking', 0, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'click_enemy' UNION ALL
-            SELECT id, '.action[data-action=\"attaquer\"]', 'right', 'semi-blocking', 0, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'attack_enemy' UNION ALL
-            SELECT id, '#red-filter', 'right', 'blocking', 700, 1, 0, 0, 0 FROM tutorial_steps WHERE step_id = 'attack_result' UNION ALL
-            SELECT id, NULL, 'center', 'blocking', 0, 1, NULL, 0, 0 FROM tutorial_steps WHERE step_id = 'tutorial_complete'
+            INSERT INTO tutorial_step_ui (step_id, target_selector, tooltip_position, interaction_mode, show_delay, allow_manual_advance, auto_close_card, tooltip_offset_x, tooltip_offset_y, caracs_panel_state, highlight_padding)
+            SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0, 'closed', 0 FROM tutorial_steps WHERE step_id = 'welcome' UNION ALL
+            SELECT id, '.case[data-coords=\"0,0\"]', 'bottom', 'blocking', 200, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'your_character' UNION ALL
+            SELECT id, '.case[data-coords=\"1,0\"]', 'right', 'semi-blocking', 0, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'meet_gaia' UNION ALL
+            SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 300, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'close_card' UNION ALL
+            SELECT id, '#current-player-avatar', 'top', 'blocking', 300, 1, NULL, 0, 0, NULL, 50 FROM tutorial_steps WHERE step_id = 'movement_intro' UNION ALL
+            SELECT id, '#current-player-avatar', 'top', 'semi-blocking', 0, 1, NULL, 0, 0, NULL, 50 FROM tutorial_steps WHERE step_id = 'first_move' UNION ALL
+            SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'movement_limit_warning' UNION ALL
+            SELECT id, '#show-caracs', 'bottom', 'semi-blocking', 700, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'show_characteristics' UNION ALL
+            SELECT id, '#mvt-counter', 'right', 'semi-blocking', 700, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'deplete_movements' UNION ALL
+            SELECT id, '#mvt-counter', 'right', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'movements_depleted_info' UNION ALL
+            SELECT id, '#action-counter', 'right', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'actions_intro' UNION ALL
+            SELECT id, '#current-player-avatar', 'bottom', 'semi-blocking', 0, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'click_yourself' UNION ALL
+            SELECT id, '.card-actions', 'right', 'blocking', 300, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'actions_panel_info' UNION ALL
+            SELECT id, '#ui-card .close-card', 'right', 'semi-blocking', 0, 1, 1, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'close_card_for_tree' UNION ALL
+            SELECT id, '.case[data-coords=\"0,1\"]', 'center-bottom', 'semi-blocking', 0, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
+            SELECT id, '.case[data-coords=\"0,1\"]', 'bottom', 'semi-blocking', 0, 0, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'observe_tree' UNION ALL
+            SELECT id, '.resource-status', 'left', 'blocking', 300, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'tree_info' UNION ALL
+            SELECT id, '.action[data-action=\"fouiller\"]', 'right', 'semi-blocking', 300, 1, 1, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'use_fouiller' UNION ALL
+            SELECT id, '#action-counter', 'right', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'action_consumed' UNION ALL
+            SELECT id, '#show-inventory', 'bottom', 'semi-blocking', 300, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'open_inventory' UNION ALL
+            SELECT id, '.item-case[data-name=\"Bois\"]', 'left', 'blocking', 700, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'inventory_wood' UNION ALL
+            SELECT id, '#back', 'bottom', 'semi-blocking', 200, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'close_inventory' UNION ALL
+            SELECT id, NULL, 'center', 'blocking', 0, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'combat_intro' UNION ALL
+            SELECT id, '.tutorial-enemy', 'bottom', 'blocking', 500, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'enemy_spawned' UNION ALL
+            SELECT id, '.tutorial-enemy', 'center-bottom', 'semi-blocking', 0, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'walk_to_enemy' UNION ALL
+            SELECT id, '.tutorial-enemy', 'bottom', 'semi-blocking', 0, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'click_enemy' UNION ALL
+            SELECT id, '.action[data-action=\"attaquer\"]', 'right', 'semi-blocking', 0, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'attack_enemy' UNION ALL
+            SELECT id, '#red-filter', 'right', 'blocking', 700, 1, 0, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'attack_result' UNION ALL
+            SELECT id, NULL, 'center', 'blocking', 0, 1, NULL, 0, 0, NULL, 0 FROM tutorial_steps WHERE step_id = 'tutorial_complete'
         ");
     }
 
@@ -679,9 +682,13 @@ final class Version20251127000000_CreateCompleteTutorialSystem extends AbstractM
     private function insertTutorialHighlights(): void
     {
         $this->addSql("
-            INSERT INTO tutorial_step_highlights (step_id, selector)
-            SELECT id, '.case.go' FROM tutorial_steps WHERE step_id = 'movement_intro' UNION ALL
-            SELECT id, '.case[data-coords=\"0,1\"]' FROM tutorial_steps WHERE step_id = 'walk_to_tree'
+            INSERT INTO tutorial_step_highlights (step_id, selector, padding)
+            SELECT id, '.case[data-coords=\"0,1\"]', 0 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
+            -- Player ring on every walk-related step: pad the player avatar
+            -- by 50px to highlight the 8 walkable tiles around them.
+            SELECT id, '#current-player-avatar', 50 FROM tutorial_steps WHERE step_id = 'deplete_movements' UNION ALL
+            SELECT id, '#current-player-avatar', 50 FROM tutorial_steps WHERE step_id = 'walk_to_tree' UNION ALL
+            SELECT id, '#current-player-avatar', 50 FROM tutorial_steps WHERE step_id = 'walk_to_enemy'
         ");
     }
 
