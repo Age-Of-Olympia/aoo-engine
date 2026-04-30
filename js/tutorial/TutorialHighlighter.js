@@ -69,38 +69,39 @@ class TutorialHighlighter {
         // 50px padding to reveal the 8 walkable tiles around them.
         const padding = Number.isFinite(options.padding) ? options.padding : 0;
 
+        // Silent highlights contribute only to the spotlight cut-out
+        // (un-dim the area) — no gold border, no glow. Used for
+        // additional context the player needs to see without crowding
+        // the visual hierarchy. The main target keeps the yellow box.
+        const silent = options.silent === true;
+
         $elements.each((index, element) => {
             const $element = $(element);
 
 
-            // Create highlight box
-            const $highlight = $('<div class="tutorial-highlight"></div>');
+            // Create highlight box (skipped in silent mode — the spotlight
+            // cut-out is the only visible cue then).
+            const $highlight = silent ? $() : $('<div class="tutorial-highlight"></div>');
 
-            // Add pulsate class if needed
-            if (options.pulsate) {
-                $highlight.addClass('pulsate');
+            if (!silent) {
+                // Add pulsate class if needed
+                if (options.pulsate) {
+                    $highlight.addClass('pulsate');
+                }
+
+                // Custom color
+                if (options.color) {
+                    $highlight.css('border-color', options.color);
+                }
+
+                // Position highlight box
+                this.positionHighlight($highlight, $element, padding);
             }
 
-            // Custom color
-            if (options.color) {
-                $highlight.css('border-color', options.color);
+            // Add to DOM (no-op for silent — $highlight is empty jQuery).
+            if (!silent) {
+                $('body').append($highlight);
             }
-
-            // Position highlight box
-            this.positionHighlight($highlight, $element, padding);
-
-            // Log the actual position after setting
-            const computedPos = {
-                top: $highlight.css('top'),
-                left: $highlight.css('left'),
-                width: $highlight.css('width'),
-                height: $highlight.css('height'),
-                display: $highlight.css('display'),
-                visibility: $highlight.css('visibility')
-            };
-
-            // Add to DOM
-            $('body').append($highlight);
 
             // Generate unique ID for tracking
             const trackingId = `highlight_${Date.now()}_${index}`;
@@ -114,25 +115,27 @@ class TutorialHighlighter {
                 padding: padding
             });
 
-            // Use shared position manager for automatic repositioning
-            this.positionManager.track(trackingId, $highlight, ($hl) => {
-                this.positionHighlight($hl, $element, padding);
-            });
+            if (!silent) {
+                // Use shared position manager for automatic repositioning
+                this.positionManager.track(trackingId, $highlight, ($hl) => {
+                    this.positionHighlight($hl, $element, padding);
+                });
 
-            // Watch for DOM changes on the element itself (e.g., when button expands)
-            const elementObserver = new MutationObserver(() => {
-                this.positionHighlight($highlight, $element, padding);
-            });
+                // Watch for DOM changes on the element itself (e.g., when button expands)
+                const elementObserver = new MutationObserver(() => {
+                    this.positionHighlight($highlight, $element, padding);
+                });
 
-            elementObserver.observe(element, {
-                attributes: true,    // Watch for attribute changes (class, style)
-                childList: true,     // Watch for child elements being added/removed
-                subtree: true,       // Watch descendants too
-                characterData: true  // Watch for text changes
-            });
+                elementObserver.observe(element, {
+                    attributes: true,    // Watch for attribute changes (class, style)
+                    childList: true,     // Watch for child elements being added/removed
+                    subtree: true,       // Watch descendants too
+                    characterData: true  // Watch for text changes
+                });
 
-            // Store observer for cleanup
-            this.highlights[this.highlights.length - 1].elementObserver = elementObserver;
+                // Store observer for cleanup
+                this.highlights[this.highlights.length - 1].elementObserver = elementObserver;
+            }
 
             // Fade in
             $highlight.fadeIn(200, () => {

@@ -389,9 +389,13 @@ class TutorialUI {
             });
         }
 
-        // Highlight additional elements (e.g., counter values).
-        // additional_highlights is an array of {selector, padding}
-        // objects (server-side JSON_OBJECT aggregation).
+        // Highlight additional elements (e.g., counter values, the
+        // player ring on a movement step). additional_highlights is an
+        // array of {selector, padding} objects.
+        // silent=true: only contributes to the spotlight cut-out (the
+        // un-dim) — no gold border, no glow. The main target keeps the
+        // yellow box so visual hierarchy stays clear: one "go here"
+        // pulse, rest just lit context.
         if (stepData.config?.additional_highlights && this.highlighter) {
             const additionalHighlights = stepData.config.additional_highlights;
             if (Array.isArray(additionalHighlights)) {
@@ -401,7 +405,8 @@ class TutorialUI {
                     if (selector && selector !== stepData.target_selector) {
                         this.highlighter.highlight(selector, {
                             pulsate: false,
-                            padding: padding
+                            padding: padding,
+                            silent: true
                         });
                     }
                 });
