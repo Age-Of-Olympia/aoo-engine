@@ -103,41 +103,46 @@ if (TutorialFeatureFlag::isEnabledForPlayer($player->id) && !TutorialHelper::isI
     if (!$hasCompleted && $activeSession === null) {
         $isBrandNew = true;
         $_SESSION['auto_start_tutorial'] = true;
-
-        // Show loading overlay for brand new players
-        echo '<div id="tutorial-loading-overlay" style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        ">
-            <div style="text-align: center; color: #fff;">
-                <h2 style="margin-bottom: 20px;">Chargement du tutoriel...</h2>
-                <div class="spinner" style="
-                    border: 4px solid rgba(255,255,255,0.3);
-                    border-top: 4px solid #fff;
-                    border-radius: 50%;
-                    width: 50px;
-                    height: 50px;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto;
-                "></div>
-            </div>
-        </div>
-        <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        </style>';
     }
+}
+
+// Show the loading overlay whenever the tutorial is about to auto-start
+// — both brand-new flow (set above) and replay (set earlier when the
+// ?replay_tutorial=1 redirect ran). Otherwise the player who clicked
+// "Rejouer le tutoriel" sees a long blank wait while the JS bootstraps.
+if (!empty($_SESSION['auto_start_tutorial'])) {
+    echo '<div id="tutorial-loading-overlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    ">
+        <div style="text-align: center; color: #fff;">
+            <h2 style="margin-bottom: 20px;">Chargement du tutoriel...</h2>
+            <div class="spinner" style="
+                border: 4px solid rgba(255,255,255,0.3);
+                border-top: 4px solid #fff;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto;
+            "></div>
+        </div>
+    </div>
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>';
 }
 
 // Check if player is invisible and not admin - they need to complete or skip tutorial
