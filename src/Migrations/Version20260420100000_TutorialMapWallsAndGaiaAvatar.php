@@ -35,11 +35,15 @@ final class Version20260420100000_TutorialMapWallsAndGaiaAvatar extends Abstract
 
     public function up(Schema $schema): void
     {
-        /* 1. Gaïa avatar fix — also catches already-copied instance Gaïas */
+        /* 1. Gaïa avatar fix — also catches already-copied instance Gaïas.
+         * Originally re-pointed at the placeholder ame/dieu silhouette;
+         * the proper goddess imagery (dieu/25 + dieu/1) is in prod assets,
+         * so we land directly there. Version20260430140000 follows up to
+         * scrub any environment that already absorbed the placeholder. */
         $this->addSql("
             UPDATE players
-            SET avatar = 'img/avatars/ame/dieu.webp',
-                portrait = 'img/portraits/ame/1.jpeg'
+            SET avatar = 'img/avatars/dieu/25.png',
+                portrait = 'img/portraits/dieu/1.jpeg'
             WHERE name = 'Gaïa' AND avatar = 'img/avatars/dieu/1.png'
         ");
 
@@ -106,7 +110,7 @@ final class Version20260420100000_TutorialMapWallsAndGaiaAvatar extends Abstract
         $this->addSql("
             UPDATE players
             SET avatar = 'img/avatars/dieu/1.png', portrait = 'img/portraits/dieu/1.jpeg'
-            WHERE name = 'Gaïa' AND avatar = 'img/avatars/ame/dieu.webp'
+            WHERE name = 'Gaïa' AND avatar = 'img/avatars/dieu/25.png'
         ");
 
         /* Remove grass carpet we added */
