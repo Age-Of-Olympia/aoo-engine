@@ -364,6 +364,14 @@ class TutorialTooltip {
                 // path the player just walked or needs to click on.
                 // Falls through unchanged for everything else.
                 const effectivePos = this.smartFlipPosition(this.currentPosition, $target);
+                // Sync the position class on the tooltip so the arrow
+                // (CSS-driven by .top / .bottom / .left / .right /
+                // .center-top / .center-bottom) follows the flip.
+                if (effectivePos !== this.currentPosition) {
+                    this.$tooltip
+                        .removeClass('top bottom left right center center-top center-bottom')
+                        .addClass(effectivePos);
+                }
                 this.positionNear($target, effectivePos);
             } else {
                 // Target not found, center it with correct vertical alignment
