@@ -112,13 +112,25 @@ function getNextEntityId(string $type): int {
     $connection = db();
 
     if ($type === 'npc') {
-        // Negative IDs: get MIN and decrement
+        // Pick the first unused negative id walking down from -1.
+        // The previous MIN(id)-1 algorithm let one stray insert push
+        // every later NPC down with it (we ended up creating NPCs at
+        // -1,000,023 in dev because a now-deleted row had once sat
+        // near -1,000,000). The anti-join finds the highest negative
+        // id whose predecessor is missing — i.e. the first available
+        // slot — so deleted-NPC gaps are reused.
+        //
+        // Anchored on -1 always being present in production (the
+        // permanent 'Lutin de test' seed); the -2 fallback only
+        // fires for empty test fixtures.
         $result = $connection->executeQuery(
-            "SELECT MIN(id) as min_id FROM players WHERE player_type = 'npc'"
+            "SELECT MAX(t.id) - 1 AS next_id
+             FROM players t
+             LEFT JOIN players p2 ON p2.id = t.id - 1
+             WHERE t.id < 0 AND p2.id IS NULL"
         );
         $row = $result->fetchAssociative();
-        $minId = $row['min_id'] ?? -1;
-        return $minId - 1;
+        return $row['next_id'] ?? -2;
     } else {
         // Positive ranges: get MAX in range and increment
         $result = $connection->executeQuery(
