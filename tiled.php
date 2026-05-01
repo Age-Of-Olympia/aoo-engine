@@ -146,8 +146,11 @@ echo '
         overflow: hidden;
     }
 
-    /* Map container - left side */
+    /* Map container - left side. position:relative so the
+       blocked-tile markers (position:absolute) anchor here and
+       scroll with the map natively. */
     #map-view-container {
+        position: relative;
         flex: 0 0 70%;
         overflow: auto;
         padding: 10px;
@@ -455,6 +458,7 @@ echo '
 <div class="top-toolbar">
     <div class="back-button">
         <a href="index.php"><button>← Retour</button></a>
+        <button id="toggle-blocked-tiles" type="button" title="Afficher les cases bloquantes (murs, joueurs, déclencheurs « interdit »)">⛔ Cases bloquantes</button>
     </div>
 
     <div id="tool-div">';
@@ -549,7 +553,54 @@ $modalView->displayModal('tile-info','info-display');
 </style>
 
 <script src="js/admin-tools.js?v=20260413"></script>
+<script src="js/blocked-tiles.js?v=20260501c"></script>
 <script src="js/tiled.js?v=20260421"></script>
+<script>
+/* Tiled editor: toggle the "blocked tiles" overlay so admins can
+   verify forbidden triggers / walls / players visually. Reuses
+   blocked-tiles.js with a dedicated class so it doesn't clash
+   with the player option or the tutorial markers. */
+document.addEventListener("DOMContentLoaded", function() {
+    var btn = document.getElementById("toggle-blocked-tiles");
+    if (!btn) return;
+    var $container = $("#map-view-container");
+    var on = false;
+    function redraw() {
+        if (on) window.drawBlockedTileMarkers(null, "tiled-blocked-marker", $container);
+    }
+    btn.addEventListener("click", function() {
+        on = !on;
+        btn.classList.toggle("active", on);
+        if (on) {
+            redraw();
+        } else {
+            window.clearBlockedTileMarkers("tiled-blocked-marker");
+        }
+    });
+    /* Markers live inside #map-view-container (position:absolute),
+       so scrolling the container moves them natively — no scroll
+       listener needed. Resize still requires a redraw because the
+       container dimensions change. */
+    window.addEventListener("resize", redraw);
+});
+</script>
+<style>
+.tiled-blocked-marker {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7), 0 0 2px rgba(0, 0, 0, 1);
+}
+#toggle-blocked-tiles.active {
+    background: #c0392b;
+    color: #fff;
+}
+</style>
 
 
 

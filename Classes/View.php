@@ -134,6 +134,27 @@ class View{
             $tiledSql = '';
             $inSightIdImploded = implode(',', $this->inSightId);
 
+            // Forbidden coords (server truth from go.php):
+            // 'forbidden' triggers stop movement via
+            // scripts/map/triggers/forbidden.php. Triggers are not
+            // emitted to the DOM in normal play, so blocked-tiles.js
+            // can't see them — we surface the cells here as a
+            // data-blocked="forbidden" attribute on the .case below.
+            $forbiddenCoordsXY = [];
+            if (!empty($this->inSightId)) {
+                $forbiddenSql = '
+                    SELECT c.x, c.y
+                    FROM map_triggers AS t
+                    INNER JOIN coords AS c ON c.id = t.coords_id
+                    WHERE t.coords_id IN ('. $inSightIdImploded .')
+                    AND t.name = "forbidden"
+                ';
+                $resForbidden = (new Db())->exe($forbiddenSql);
+                while ($rowF = $resForbidden->fetch_object()) {
+                    $forbiddenCoordsXY[$rowF->x .','. $rowF->y] = true;
+                }
+            }
+
             // Safety check: if no coords in sight, skip the query
             if (empty($this->inSightId)) {
                 error_log("[View] No coords found in sight for current position - skipping map elements query");
@@ -517,18 +538,22 @@ class View{
                         $goCase = 'go';
                     }
 
+                    $blockedAttr = isset($forbiddenCoordsXY[$coordX .','. $coordY])
+                        ? ' data-blocked="forbidden"'
+                        : '';
+
                     if(!in_array('hideGrid', $this->options)){
 
                         echo '
                         <image
                             class="case '. $goCase .'"
-                            data-coords="'. $coordX .','. $coordY .'"';
+                            data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
                             if($this->tiled){
                                 echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
                             }
 
-                           echo ' 
+                           echo '
                             x="' . $x . '"
                             y="' . $y . '"
 
@@ -543,7 +568,7 @@ class View{
                         <rect
                             class="case '. $goCase .'"
                             class="case"
-                            data-coords="'. $coordX .','. $coordY .'"';
+                            data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
                             if($this->tiled){
                                 echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
