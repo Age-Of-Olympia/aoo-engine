@@ -558,15 +558,16 @@ $modalView->displayModal('tile-info','info-display');
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can
    verify forbidden triggers / walls / players visually. Reuses
-   blocked-tiles.js with a dedicated class so it doesn't clash
-   with the player option or the tutorial markers. */
+   the same blocked-tile-marker class as in-game and the tutorial
+   so the visual is identical everywhere — tiled has no concurrent
+   tutorial or showBlockedTiles caller, so no marker collision. */
 document.addEventListener("DOMContentLoaded", function() {
     var btn = document.getElementById("toggle-blocked-tiles");
     if (!btn) return;
     var $container = $("#map-view-container");
     var on = false;
     function redraw() {
-        if (on) window.drawBlockedTileMarkers(null, "tiled-blocked-marker", $container);
+        if (on) window.drawBlockedTileMarkers(null, "blocked-tile-marker", $container);
     }
     btn.addEventListener("click", function() {
         on = !on;
@@ -574,7 +575,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (on) {
             redraw();
         } else {
-            window.clearBlockedTileMarkers("tiled-blocked-marker");
+            window.clearBlockedTileMarkers("blocked-tile-marker");
         }
     });
     /* Markers live inside #map-view-container (position:absolute),
@@ -585,17 +586,6 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 <style>
-.tiled-blocked-marker {
-    position: fixed;
-    z-index: 9999;
-    pointer-events: none;
-    font-size: 18px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7), 0 0 2px rgba(0, 0, 0, 1);
-}
 #toggle-blocked-tiles.active {
     background: #c0392b;
     color: #fff;

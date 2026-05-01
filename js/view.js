@@ -49,18 +49,22 @@ $(document).ready(function(){
         });
     };
 
-    // Player display option: red × on every blocked tile across the
+    // Player display option: ⛔ on every blocked tile across the
     // whole map. Driven by window.showBlockedTiles (set server-side
     // in MainView from the showBlockedTiles player option, gated to
     // false during a tutorial session so the tutorial's own scoped
     // markers stay solo). Uses the shared helper from blocked-tiles.js.
+    //
+    // Markers are appended inside #svg-container (which is already
+    // position:relative) so they ride along with the map when #view
+    // scrolls horizontally — no scroll listener / recompute needed.
     if (window.showBlockedTiles && typeof window.drawBlockedTileMarkers === 'function') {
+        var $svgContainer = $('#svg-container');
         var redrawBlockedTiles = function() {
-            window.drawBlockedTileMarkers(null, 'blocked-tile-marker');
+            window.drawBlockedTileMarkers(null, 'blocked-tile-marker', $svgContainer);
         };
         redrawBlockedTiles();
         window.addEventListener('resize', redrawBlockedTiles);
-        window.addEventListener('scroll', redrawBlockedTiles, true);
     }
 
     // Right-click coordinate tool (available for everyone, TP button only for admins)
