@@ -29,6 +29,9 @@
          <testsuite name="Tutorial">
             <directory suffix="Test.php">./tests/Tutorial</directory>
         </testsuite>
+         <testsuite name="Player">
+            <directory suffix="Test.php">./tests/Player</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreIndirectDeprecations="true" restrictNotices="true" restrictWarnings="true">
