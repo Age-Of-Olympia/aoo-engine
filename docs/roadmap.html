@@ -472,8 +472,8 @@ const FEATURES = [
   /* ─────────────────────────── PAST (shipped) ─────────────────────────── */
   { id:'race-entity', title:"Entité Race + admin avatars", category:'faction-race', status:'shipped', playerHidden:true,
     quarter:0.1, version:'4.1.1', date:'Jan 2025',
-    tech:"Première entité Doctrine (Race) et RaceService. Formulaire admin pour uploader portraits/avatars.",
-    player:"Les races du jeu (Nain, Elfe, Homme-Sauvage…) sortent des fichiers JSON et arrivent dans la base de données. Première brique d'une longue migration.",
+    tech:"Première entité Doctrine (Race) et RaceService — sort la race du JSON et la met en BDD. Formulaire admin pour uploader portraits/avatars.",
+    player:"Les races du jeu (Nain, Elfe, Homme-Sauvage…) passent d'un stockage technique à la base de données du jeu. Première brique d'une longue migration vers du contenu modifiable sans toucher au code.",
     enables:['action-doctrine','tutorial-race-aware','faction-race-split'] },
 
   { id:'echanges', title:"Échanges entre joueurs", category:'inventory', status:'shipped',
@@ -484,8 +484,8 @@ const FEATURES = [
 
   { id:'admin-backoffice', title:"Backoffice admin (v1)", category:'admin', status:'shipped',
     quarter:0.3, version:'4.1.4', date:'Fév 2025',
-    tech:"Dossier admin/ avec header/footer/index, page players, page notifications, CSS dédié.",
-    player:"Première vraie interface pour les animateurs : plus besoin de SQL brut pour les opérations courantes.",
+    tech:"Dossier admin/ avec header/footer/index, page players, page notifications, CSS dédié. Remplace les manipulations SQL directes pour les ops courantes.",
+    player:"Première vraie interface pour les animateurs : plus besoin de bidouiller directement dans la base de données pour les opérations courantes.",
     enables:['tiled-modern','tutorial-admin','admin-actions','admin-dialogues','admin-items'] },
 
   { id:'super-admin', title:"Rôle Super-Admin + mur noir", category:'admin', status:'shipped', playerHidden:true,
@@ -506,7 +506,7 @@ const FEATURES = [
     player:"Brique fondatrice : un plan peut désormais isoler complètement un joueur des autres.",
     enables:['tutorial-system'] },
 
-  { id:'content-actions-2025-04', title:"Vague d'actions JSON (avant refonte)", category:'combat', status:'shipped',
+  { id:'content-actions-2025-04', title:"Vague d'actions (avant refonte)", category:'combat', status:'shipped',
     quarter:1.0, version:'aoo-game-data', date:'Avr 2025',
     tech:"~18 nouvelles actions ajoutées en JSON sur quelques jours (mi-avril 2025) : leurre, tai_otoshi, désarmement, météore, esquive/parade, soumission, régénération, arme vivante, lame volante, flux vital, lien de vie, lame bénie, trait béni, souffle cime, etc. Dernière grosse vague de contenu sur l'ancien système JSON — l'effort fourni a directement motivé la refonte Doctrine du mois suivant.",
     player:"Grosse vague de compétences et de sorts livrés en quelques jours (esquive, parade, désarmement, météore, soumission, régénération, lien de vie…). C'est en partie cet effort qui a convaincu l'équipe technique de refondre le moteur derrière les actions juste après.",
@@ -518,11 +518,11 @@ const FEATURES = [
     player:"Sécurité supplémentaire avant chaque déploiement : le code est testé automatiquement.",
     enables:['action-doctrine','action-tests','cypress-e2e'] },
 
-  { id:'action-doctrine', title:"⭐ Système d'actions migré en Doctrine", category:'action-system', status:'shipped',
+  { id:'action-doctrine', title:"⭐ Système d'actions refondu en base", category:'action-system', status:'shipped',
     quarter:1.5, version:'4.2.5–4.2.6', date:'Mai 2025',
     tech:"Les fichiers JSON d'actions sont remplacés par des entités Doctrine (Action, ActionCondition, ActionOutcome, OutcomeInstruction). Conditions et effets deviennent composables.",
     player:"Point pivot du jeu. Avant : chaque nouvelle action coûtait des heures à un dev. Après : on les compose à partir de briques réutilisables. C'est ce qui rend possible toute la suite (nouveaux sorts, nouvelles compétences).",
-    enables:['pas-de-cote','assomoir','action-tests','actor-interface','warschool','action-v2','admin-actions','content-comp-2025-12'] },
+    enables:['pas-de-cote','assomoir','action-tests','actor-interface','warschool','action-v2','admin-actions','content-comp-2025-12','malus-system'] },
 
   { id:'doctrine-em', title:"Bootstrap Doctrine + EntityManager unifié", category:'tech-debt', status:'shipped',
     quarter:1.8, version:'4.2.8–4.2.10', date:'Mai–Juin 2025',
@@ -538,7 +538,7 @@ const FEATURES = [
 
   { id:'console-scripts', title:"Console Symfony + scripts admin", category:'admin', status:'shipped', playerHidden:true,
     quarter:1.9, version:'4.2.10', date:'Juin 2025',
-    tech:"console.php (Symfony Console) ouvre la voie à des commandes admin scriptables : forumcmd, rgpd, plant respawn, tp list-plans, etc.",
+    tech:"Amélioration de console.php (Symfony Console) ouvre la voie à des commandes admin scriptables : forumcmd, rgpd, plant respawn, tp list-plans, etc.",
     player:"Les animateurs et l'équipe ops ont une vraie ligne de commande pour les tâches techniques.",
     enables:['admin-actions','admin-dialogues'] },
 
@@ -563,7 +563,7 @@ const FEATURES = [
   { id:'actor-interface', title:"ActorInterface en production", category:'tech-debt', status:'shipped',
     quarter:2.2, version:'4.2.16', date:'Juil 2025',
     tech:"Les actions ne dépendent plus de la classe Player concrète. Interface étroite (ActorInterface) injectée à la place.",
-    player:"Le code de combat devient enfin remplaçable, testable, et le 'Dieu Player' commence à se réduire.",
+    player:"Le code de combat devient enfin remplaçable, testable.",
     enables:['account-character-split'] },
 
   { id:'assomoir', title:"Compétence Assomoir + malus", category:'combat', status:'shipped',
@@ -572,16 +572,16 @@ const FEATURES = [
     player:"Preuve par l'exemple : la refonte du système d'actions tient ses promesses.",
     enables:[] },
 
-  { id:'craft-doctrine', title:"Craft migré en Doctrine", category:'inventory', status:'shipped',
+  { id:'craft-doctrine', title:"Craft refondu en base", category:'inventory', status:'shipped',
     quarter:2.6, version:'4.2.19', date:'Août 2025',
-    tech:"Suppression de l'ancienne classe Craft, recette devient entité, item devient entité.",
+    tech:"Suppression de l'ancienne classe Craft ; recette et item deviennent des entités Doctrine. Même bascule JSON → BDD que pour les actions.",
     player:"L'artisanat passe sur la même architecture moderne que les actions.",
     enables:['item-entity','admin-items'] },
 
   { id:'item-entity', title:"Item passé en entité", category:'inventory', status:'shipped', playerHidden:true,
     quarter:2.7, version:'4.2.19', date:'Août 2025',
-    tech:"Item devient une entité Doctrine ; vérif race ajoutée ; logs de debug allégés.",
-    player:"Étape vers la suppression complète des JSON d'objets.",
+    tech:"Item devient une entité Doctrine (sortie progressive des JSON d'objets) ; vérif race ajoutée ; logs de debug allégés.",
+    player:"Étape vers la possibilité de gérer tous les objets depuis l'admin, sans toucher au code.",
     enables:['admin-items','items-individual'] },
 
   { id:'main-view-refresh', title:"Tooltips caracs + ménage des includes", category:'ui-ux', status:'shipped', playerHidden:true,
@@ -617,7 +617,7 @@ const FEATURES = [
   { id:'tutorial-system', title:"⭐ Système de tutoriel intégré", category:'tutorial', status:'progress',
     quarter:5.5, version:'4.2.25 (staging)', date:'Dev Nov 2025 · prod après PlayerFactory',
     tech:"src/Tutorial/ (TutorialManager, TutorialPlayer, StepFactory, DialogService), js/tutorial/ (UI, Tooltip, Highlighter), tables tutorial_*, plan isolé 'tutorial' qui réutilise player_visibility.",
-    player:"Les nouveaux joueurs ont enfin un onboarding guidé, avec dialogues, tooltips, surlignage des éléments à cliquer. Énorme levier de rétention.",
+    player:"Les nouveaux joueurs ont enfin un parcours guidé pour découvrir le jeu : dialogues, info-bulles, surlignage des éléments à cliquer. Énorme levier pour qu'ils restent.",
     enables:['tutorial-admin','tutorial-race-aware','tutorial-reload','tutorial-extra','dialogue-refonte'] },
 
   { id:'sti-players', title:"STI + display IDs sur les joueurs", category:'tech-debt', status:'shipped',
@@ -646,7 +646,7 @@ const FEATURES = [
 
   { id:'content-comp-2025-12', title:"⭐ 1ère MàJ des compétences", category:'combat', status:'shipped',
     quarter:4.0, version:'aoo-game-data', date:'Déc 2025',
-    tech:"Premier grand drop de contenu post-refonte du système d'actions : ~20 nouveaux sorts/compétences ajoutés en JSON pour les 5 races (Elfe, Géant, HS, Nain, Olympien) + Lutins (le lendemain). Inclut attaque/tir precis, attaque/tir violent, manchette, épuisement (+arcanique), arme/jet infusé, tir handicapant/épuisant, tir à la cheville, etc. Tout porté par le moteur Doctrine refondu en mai.",
+    tech:"Premier grand drop de contenu post-refonte du système d'actions : ~20 nouveaux sorts/compétences ajoutés en JSON pour les 5 races (Elfe, Géant, HS, Nain, Olympien) + Lutins. Inclut attaque/tir precis, attaque/tir violent, manchette, épuisement (+arcanique), arme/jet infusé, tir handicapant/épuisant, tir à la cheville, etc. Tout porté par le moteur Doctrine refondu en mai.",
     player:"Énorme vague de nouvelles compétences disponibles dans toutes les races : attaques précises/violentes, tirs spécialisés, magies arcaniques, manchette, épuisement, etc. Concrétisation visible de ce que la refonte du système d'actions permet.",
     enables:[] },
 
@@ -705,11 +705,11 @@ const FEATURES = [
     player:"Les PNJs deviennent capables de conversations à branches, conditions, réactions au contexte du joueur.",
     enables:['tutorial-extra','admin-team-autonomy'] },
 
-  { id:'items-individual', title:"Bâtiments + objets individuels (drop JSON)", category:'inventory', status:'planned',
+  { id:'items-individual', title:"Bâtiments + objets individuels", category:'inventory', status:'planned',
     quarter:6.8, date:'2026-Q4',
     tech:"Bâtiments deviennent une entité ; objets passent en 'individuels' (chaque instance a un id propre). Réutilise le pattern d'héritage (STI/discriminator) posé par PlayerFactory. Suppression définitive des JSON objets.",
-    player:"Les bâtiments rentrent dans le moteur. Chaque épée a son histoire (provenance, usure, propriétaire passé). Brique nécessaire pour l'usure des objets.",
-    enables:['admin-items','item-durability'] },
+    player:"Les bâtiments rentrent dans le moteur. Chaque épée a son histoire (provenance, usure, propriétaire passé). Brique nécessaire pour l'usure des objets et pour les avant-postes.",
+    enables:['admin-items','item-durability','outposts'] },
 
   { id:'admin-items', title:"Admin pour objets & bâtiments", category:'admin', status:'planned',
     quarter:7.0, date:'2027-Q1',
@@ -717,19 +717,19 @@ const FEATURES = [
     player:"Les animateurs créent et ajustent les objets/bâtiments depuis une interface.",
     enables:['admin-team-autonomy'] },
 
-  { id:'faction-race-split', title:"Séparation factions / races (drop JSON)", category:'faction-race', status:'planned',
+  { id:'faction-race-split', title:"Séparation factions / races", category:'faction-race', status:'planned',
     quarter:7.2, date:'2027-Q1',
     tech:"Séparation définitive des deux concepts ; race et faction deviennent des entités indépendantes en BDD. Suppression des derniers JSON.",
     player:"Un Nain peut changer de faction sans changer de race. Bases d'un modèle politique plus riche.",
     enables:[] },
 
-  { id:'plans-no-json', title:"Plans / cartes hors JSON", category:'map-tiles', status:'planned',
+  { id:'plans-no-json', title:"Plans & cartes éditables en admin", category:'map-tiles', status:'planned',
     quarter:7.4, date:'2027-Q1',
     tech:"Suppression des JSON de plans. Configuration des plans (player_visibility, biomes, etc.) déplacée en BDD.",
     player:"Les animateurs peuvent créer/modifier des plans entiers depuis l'admin.",
     enables:['admin-team-autonomy'] },
 
-  { id:'ajaxify-blocks', title:"Ajaxifier les blocs d'écran", category:'ui-ux', status:'planned',
+  { id:'ajaxify-blocks', title:"Mise à jour des blocs sans recharger", category:'ui-ux', status:'planned',
     quarter:7.5, date:'2027-Q1',
     tech:"Chaque bloc (inventaire, actions, caractéristiques, carte) se rafraîchit en AJAX au lieu d'un reload page.",
     player:"L'interface devient snappy. Plus de rechargement complet entre chaque action.",
@@ -745,13 +745,13 @@ const FEATURES = [
   { id:'usability-pass', title:"Pass d'usabilité général", category:'ui-ux', status:'planned',
     quarter:7.7, date:'2027-Q1',
     tech:"Revue UX complète post-ajaxification. Cohérence des feedbacks, accessibilité, mobile.",
-    player:"Le jeu se sent moderne et fluide partout, plus seulement sur les pages refondues récemment.",
+    player:"Le jeu devient moderne et fluide partout, plus seulement sur les pages refondues récemment.",
     enables:[] },
 
-  { id:'pf-aoe', title:"Actions de PF (zone / AoE)", category:'combat', status:'planned',
+  { id:'pf-aoe', title:"Actions de PF (Points de Foi, AoE)", category:'combat', status:'planned',
     quarter:7.8, date:'2027-Q2',
-    tech:"Petit dev sur le système d'actions v2 pour ajouter des effets correctement modélisés en zone.",
-    player:"Les Petites Frappes (PF) gagnent des actions de zone correctes.",
+    tech:"Petit dev sur le système d'actions v2 pour ajouter des actions consommant les Points de Foi (PF), avec effets de zone (AoE) modélisés correctement.",
+    player:"Les compétences alimentées par les Points de Foi (PF) gagnent des actions à effets de zone.",
     enables:[] },
 
   { id:'admin-team-autonomy', title:"Équipe admin autonome", category:'admin', status:'planned',
@@ -766,17 +766,56 @@ const FEATURES = [
     player:"Les armes et armures s'usent. Repose sur les objets individuels (sans eux, on ne pourrait pas différencier l'usure d'une épée à l'autre).",
     enables:[] },
 
+  /* ─────────────────────────── PAST — ajouts ultérieurs ─────────────────────────── */
+  { id:'worldmap-s2', title:"Nouvelle carte du monde (S2)", category:'map-tiles', status:'shipped',
+    quarter:0.9, version:'pré-4.2.1', date:'Mar–Avr 2025',
+    tech:"Refonte complète du système de cartes pour la saison 2 : maps découpées, load transactionné et batché, gestion des niveaux Z, layer joueurs sur la carte globale, admin panel pour régénérer les maps. Une trentaine de commits feat(map)/feat(worldmap) en mars–avril 2025.",
+    player:"La carte du monde est repensée pour la saison 2 : nouveau découpage, vue globale claire, navigation entre niveaux. Brique fondamentale qui supporte tout le reste de la saison.",
+    enables:['minimap-s2'] },
+
+  { id:'equipment-refonte', title:"Refonte des équipements (S2)", category:'inventory', status:'shipped',
+    quarter:1.3, version:'4.2.1–4.2.7', date:'Avr–Mai 2025',
+    tech:"Refonte du modèle d'équipement à l'aube de la S2 : types d'armes passés sous forme de tableau, séparation deuxmains/main1, restrictions sur les objets exotiques, framework d'enchantements appliqué aux armures, corrections diverses (affichage des équipements d'autres personnages, etc.).",
+    player:"Le système d'équipement est repensé pour la saison 2 : nouveaux emplacements, objets exotiques, enchantements sur les armures.",
+    enables:[] },
+
+  { id:'minimap-s2', title:"Mini-map (S2, livrée)", category:'map-tiles', status:'shipped',
+    quarter:1.7, version:'4.2.x', date:'Avr–Mai 2025',
+    tech:"Première tentative début avril 2025 (revertée juste après pour problèmes de stabilité), puis re-livrée sur 4.2.x. Vivante au plus tard fin mai (option 'mode invisible' pour masquer les PNJs patchée le 28/05).",
+    player:"Mini-carte intégrée au jeu pour se repérer en un coup d'œil. Lancée tôt en saison 2.",
+    enables:[] },
+
+  { id:'malus-system', title:"Refonte du système de malus", category:'combat', status:'shipped',
+    quarter:2.0, version:'4.2.13–4.2.16', date:'Juin–Juil 2025',
+    tech:"Nouveau modèle de malus appliqués aux actions : premier jet en juin (Premier jet update malus), test fin juin (Push pour un premier test), finalisation début juillet (Fin du premier jet). Permet de composer des effets riches comme la maladresse, le malus à distance, etc.",
+    player:"Le moteur de malus est refait pour permettre des effets riches sur les compétences (maladresse, désavantages, etc.). Donne du grain aux échecs et aux conditions adverses.",
+    enables:[] },
+
+  { id:'consumables', title:"Arrivée des consommables", category:'inventory', status:'shipped',
+    quarter:2.3, version:'aoo-game-data', date:'Juil 2025',
+    tech:"Nouveau type d'objet : consommables (à usage limité, disparaissent après utilisation). Ajout des crafts + items + images correspondantes (game-data 2025-07-03).",
+    player:"Nouveau type d'objet : les consommables. Potions, savons, etc., qui se consomment à l'usage.",
+    enables:[] },
+
+  { id:'walls-decos-content', title:"Murs & décorations : gros drop de contenu", category:'map-tiles', status:'shipped',
+    quarter:3.5, version:'aoo-game-data', date:'Nov 2025',
+    tech:"~21 nouveaux items + ~275 lignes de crafts ajoutés en quelques jours (13–15 nov 2025) : barricade, mur crépusculaire, mur de fer, mur végétal, muret, lanterne géante, monolithe flamboyant, piliers (dont nain), statues (colosses, garde, noble, servant, forestière), tombe, tonneau, torche, totems (crâne, magique, sauvage), trône. Plus images et SQL.",
+    player:"Vague massive de nouveaux éléments pour habiller les cartes : murs variés, statues, mobilier (torches, tonneaux, trônes, totems, etc.). Donne aux animateurs une palette étendue pour le décor.",
+    enables:[] },
+
+  /* ─────────────────────────── PLANNED — ajouts ultérieurs ─────────────────────────── */
+
   /* ─────────────────────────── LONG-TERM ─────────────────────────── */
   { id:'tile-composition', title:"⭐ Refonte case / tuile (état de base + diff joueur)", category:'map-tiles', status:'longterm',
     quarter:10, date:'Long terme',
     tech:"Chaque case a un état de base posé en tiled (par les animateurs) + un diff des modifications joueurs (route, creusage, mur, sang, traces…). Comme git pour les cases : on sait ce qui a changé et on peut revenir en arrière. Refonte autonome — n'a pas de prérequis dur.",
     player:"Le moteur distingue enfin 'ce qu'une case devrait être' de 'ce que les joueurs en ont fait'. Plus de cartes irrémédiablement déformées (cf. démarche Tulamors) : on peut nettoyer les ajouts joueur sans toucher au décor d'origine. Au passage, fin de bugs comme 'fouillable=-1 oublié sur une case'.",
-    enables:['route-wear','cave-collapse','map-reset','autonomous-enemies'] },
+    enables:['route-wear','cave-collapse','map-reset','autonomous-enemies','elements-refonte'] },
 
   { id:'route-wear', title:"Usure périodique des routes", category:'map-tiles', status:'longterm',
     quarter:10, date:'Long terme',
     tech:"Les routes posées par les joueurs ont une durabilité décroissante via le système d'événements (cron quotidien). Les routes posées par les animateurs en tiled font partie de l'état de base et restent permanentes. Optionnel : décrément additionnel au passage d'un joueur.",
-    player:"Suite à la démarche artistique des Tulamors : les routes tracées par les joueurs s'effacent dans le temps si elles ne sont pas entretenues. Les animateurs choisissent quelles routes sont permanentes.",
+    player:"Les routes tracées par les joueurs s'effacent dans le temps si elles ne sont pas entretenues. Les animateurs choisissent quelles routes sont permanentes.",
     enables:[] },
 
   { id:'cave-collapse', title:"Effondrement des galeries creusées", category:'map-tiles', status:'longterm',
@@ -791,10 +830,34 @@ const FEATURES = [
     player:"Utile entre deux tours de tournoi en arène, par exemple : nettoyer les traces de combat sans toucher au décor. Une vraie remise à neuf en un clic.",
     enables:[] },
 
-  { id:'autonomous-enemies', title:"Ennemis autonomes + perception", category:'combat', status:'longterm',
+  { id:'autonomous-enemies', title:"Ennemis autonomes", category:'combat', status:'longterm',
     quarter:10, date:'Long terme',
-    tech:"PNJs capables d'agir d'eux-mêmes. Requiert un système de perception (détecter ce qui entre dans le champ d'une unité) qui n'existe pas encore. Repose sur le nouveau modèle de cases pour exprimer 'champ de vision' et 'événements perçus', et sur le pattern d'héritage de PlayerFactory pour modéliser les différents types de PNJs autonomes.",
-    player:"Des PNJs qui patrouillent, réagissent à votre présence, prennent l'initiative — plus seulement des cibles statiques.",
+    tech:"PNJs capables d'agir d'eux-mêmes. Repose sur le système de perception (carte propre), sur le nouveau modèle de cases pour exprimer 'champ de vision' et 'événements perçus', et sur le pattern d'héritage de PlayerFactory pour modéliser les différents types de PNJs autonomes.",
+    player:"Des PNJs qui patrouillent, réagissent à votre présence, fuient, prennent l'initiative — plus seulement des cibles statiques.",
+    enables:[] },
+
+  { id:'perception-system', title:"Système de perception", category:'combat', status:'longterm',
+    quarter:9.6, date:'Long terme',
+    tech:"Brique fondamentale : détecter ce qui entre dans le champ d'une unité (joueur, PNJ, avant-poste). Permet à des entités passives ou actives de réagir à leur environnement spatial.",
+    player:"Le moteur sait quand quelque chose entre dans le champ de vision d'un PNJ ou d'un avant-poste. Pré-requis pour que le monde réagisse au joueur.",
+    enables:['autonomous-enemies','outposts'] },
+
+  { id:'outposts', title:"Système d'avant-postes (contrôle de territoire)", category:'faction-race', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Avant-postes capturables : chaque avant-poste appartient à une faction et applique des bonus/malus aux joueurs présents dans sa zone d'influence. Repose sur les bâtiments (items-individuels) et sur la détection d'entrée dans la perception.",
+    player:"Des avant-postes parsemés sur la carte donnent des bonus aux factions qui les contrôlent (et des malus aux autres). Première vraie mécanique de territoire.",
+    enables:[] },
+
+  { id:'elements-refonte', title:"Refonte des éléments (effets + coût de déplacement)", category:'map-tiles', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Nouveaux effets pour les éléments (feu, eau, etc.). Surtout : coût de déplacement variable selon le type de case (eau ralentit, feu blesse au passage, etc.). Repose sur la refonte case/tuile (états composables).",
+    player:"Les éléments du terrain deviennent vraiment significatifs : traverser l'eau coûte plus de mouvement, marcher dans le feu blesse, etc. Le terrain devient un acteur du jeu.",
+    enables:[] },
+
+  { id:'magic-split', title:"Séparation de la Magie + correction des carac races", category:'combat', status:'longterm',
+    quarter:10, date:'Long terme',
+    tech:"Séparation du stat Magie (M) en deux dimensions distinctes. Au passage, rééquilibrage des caractéristiques de base des races.",
+    player:"La Magie n'est plus une seule stat globale : elle se décompose en deux pour permettre des combinaisons plus riches. Les races sont rééquilibrées en même temps.",
     enables:[] },
 
   { id:'account-character-split', title:"Séparation compte / personnage", category:'player-account', status:'longterm',
