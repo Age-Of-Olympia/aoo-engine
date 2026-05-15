@@ -74,9 +74,43 @@ abstract class Command
             $player = Player::get_player_by_id($playerIdOrName);
         }
         else{
-            $player = PlayerFactory::legacyByName($playerIdOrName);
+            /* The id branch above already resolves any player_type (a NPC
+             * id like -3 hydrates fine). The name branch used to call
+             * PlayerFactory::legacyByName(), which is scoped to
+             * player_type='real' by Player::get_player_by_name() — so
+             * console flows that target a NPC by name (e.g. `pnj add
+             * <player> <npcName>`) crashed at the next ->get_data() with
+             * "Call to a member function get_data() on null". The console
+             * is admin-only and other console commands (effect, tp,
+             * player edit, etc.) already accept NPC ids; allow the same
+             * for names. Prefer a real player when one exists with that
+             * name so behaviour matches the historical default for
+             * commands that only deal with real players. */
+            $player = PlayerFactory::legacyByName($playerIdOrName)
+                ?? self::findAnyPlayerByName($playerIdOrName);
         }
         return $player;
+    }
+
+    /**
+     * Console-only fallback: look up a NPC (or any non-real player) by
+     * name. Distinct from Player::get_player_by_name() — that one is
+     * scoped to player_type='real' on purpose, since missives and
+     * exchanges must not match NPCs. The console has different rules.
+     * Real players win ties via ORDER BY so this never overrides them.
+     */
+    private static function findAnyPlayerByName(string $name): ?Player
+    {
+        $db = new Db();
+        $res = $db->exe(
+            'SELECT id FROM players WHERE name = ? ORDER BY (player_type = "real") DESC LIMIT 1',
+            $name
+        );
+        if(!$res || !$res->num_rows){
+            return null;
+        }
+        $row = $res->fetch_object();
+        return new Player($row->id);
     }
 
     public static function getCommandLineSplit($inputString){
