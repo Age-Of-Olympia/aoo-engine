@@ -59,7 +59,19 @@
     font-weight: 600;
     color: var(--ink);
   }
-  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .notice {
+    background: var(--progress-bg);
+    border: 1px solid var(--progress-border);
+    border-left: 4px solid var(--progress);
+    color: #856404;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    max-width: 1000px;
+  }
+  .notice strong { color: #6c4a00; }
   .controls { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
   /* Buttons follow admin .btn convention */
   .view-toggle {
@@ -150,11 +162,11 @@
     z-index: 3;
     background: var(--thead-bg);
     border-right: 1px solid var(--line);
-    display: flex;
-    flex-direction: column;
+    /* Block layout (not flex) so child ticks with explicit % heights
+       align reliably with the stripes drawn at the same percentages. */
   }
   .tick {
-    flex: 1 1 0;
+    /* height set inline in JS based on QUARTER_WEIGHTS */
     padding: 8px 10px;
     font-size: 11px;
     text-transform: uppercase;
@@ -199,20 +211,15 @@
     pointer-events: none;
   }
 
-  /* Quarter band guides on lanes (subtle horizontal stripes) */
-  .lanes::before {
-    content: "";
+  /* Horizontal quarter-boundary guides across all lanes. */
+  .lane-stripe {
     position: absolute;
-    inset: 0;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent calc((100% / 11) - 1px),
-      var(--line) calc((100% / 11) - 1px),
-      var(--line) calc(100% / 11)
-    );
-    pointer-events: none;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--line);
     opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
   }
 
   .now-line {
@@ -307,6 +314,7 @@
     opacity: 1;
   }
   body.view-player .arrow { opacity: 0.5; stroke-width: 1.6; stroke: #7f8c8d; }
+  body.view-player .arrow.active { opacity: 1; stroke-width: 2.4; stroke: var(--highlight); }
 
   /* Detail panel — slides down from top */
   .detail-panel {
@@ -392,6 +400,10 @@
 <header>
   <h1>Age of Olympia — Roadmap technique</h1>
   <div class="subtitle">Le temps descend (passé en haut, futur en bas). Chaque colonne = une famille de fonctionnalités. Cliquez sur une carte pour les détails.</div>
+  <div class="notice">
+    <strong>⚠️ Les dates futures sont très approximatives.</strong>
+    L'équipe est bénévole et travaille quand elle le peut : les ordres et dépendances sont fiables, les calendriers le sont beaucoup moins.
+  </div>
   <div class="controls">
     <div class="view-toggle" id="viewToggle">
       <button data-view="player" class="active">Vue joueur</button>
@@ -446,7 +458,27 @@ const QUARTERS = [
 ];
 const NOW_INDEX = 5.4; /* mid 2026-Q2 (May 2026) */
 const N_COLS = QUARTERS.length;
-const QUARTER_PX = 210; /* vertical pixels per quarter */
+const QUARTER_PX = 210; /* vertical pixels per unit-weight quarter */
+
+/* Per-quarter vertical weight. Long terme gets more room because it's
+   the densest bucket. */
+const QUARTER_WEIGHTS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4];
+const TOTAL_WEIGHT = QUARTER_WEIGHTS.reduce((sum, w) => sum + w, 0);
+
+/* Cumulative weight up to quarter i, used for non-uniform vertical mapping. */
+const CUM_WEIGHT = QUARTER_WEIGHTS.reduce((acc, w, i) => {
+  acc.push((acc[i - 1] || 0) + w);
+  return acc;
+}, []);
+
+/* Maps a (possibly fractional) quarter index to a top% on the timeline. */
+function quarterToPercent(q) {
+  const i = Math.floor(q);
+  const frac = q - i;
+  const before = i > 0 ? CUM_WEIGHT[i - 1] : 0;
+  const here   = QUARTER_WEIGHTS[i] || 0;
+  return ((before + frac * here) / TOTAL_WEIGHT) * 100;
+}
 
 const CATEGORIES = [
   { id:'action-system',  techLabel:"Système d'actions",      playerLabel:"Moteur des actions",       color:'#b3553f' },
@@ -809,7 +841,7 @@ const FEATURES = [
   { id:'tile-composition', title:"⭐ Refonte case / tuile (état de base + diff joueur)", category:'map-tiles', status:'longterm',
     quarter:10, date:'Long terme',
     tech:"Chaque case a un état de base posé en tiled (par les animateurs) + un diff des modifications joueurs (route, creusage, mur, sang, traces…). Comme git pour les cases : on sait ce qui a changé et on peut revenir en arrière. Refonte autonome — n'a pas de prérequis dur.",
-    player:"Le moteur distingue enfin 'ce qu'une case devrait être' de 'ce que les joueurs en ont fait'. Plus de cartes irrémédiablement déformées (cf. démarche Tulamors) : on peut nettoyer les ajouts joueur sans toucher au décor d'origine. Au passage, fin de bugs comme 'fouillable=-1 oublié sur une case'.",
+    player:"Le moteur distingue enfin 'ce qu'une case devrait être' de 'ce que les joueurs en ont fait'. Plus de cartes irrémédiablement déformées : on peut nettoyer les ajouts joueur sans toucher au décor d'origine. Au passage, fin de bugs comme 'fouillable=-1 oublié sur une case'.",
     enables:['route-wear','cave-collapse','map-reset','autonomous-enemies','elements-refonte'] },
 
   { id:'route-wear', title:"Usure périodique des routes", category:'map-tiles', status:'longterm',
@@ -882,8 +914,7 @@ const FEATURES = [
 /* ----- Constants ----- */
 const STATUS_LABELS = { shipped:'Livré', progress:'En cours', planned:'Planifié', longterm:'Long terme' };
 const MONTHS_BY_QUARTER = ['jan–mar', 'avr–juin', 'juil–sep', 'oct–déc'];
-const CARD_H_PX = { tech: 48, player: 60 };
-const COLLISION_BUMP_RATIO = 0.55;
+const COLLISION_BUMP_RATIO = 1.3;
 const MIN_ARROW_OFFSET = 24;
 const VERTICAL_DOMINANCE = 0.5;
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -954,8 +985,10 @@ function syncControlsFromState() {
 /* ----- Main render pipeline ----- */
 function build() {
   document.body.classList.toggle('view-player', currentView === 'player');
-  const minH = N_COLS * QUARTER_PX;
-  elTimeAxis.style.minHeight = elLanes.style.minHeight = minH + 'px';
+  const minH = TOTAL_WEIGHT * QUARTER_PX;
+  /* Fixed height (not just min-height) — child percentage heights need
+     a definite parent height to resolve. */
+  elTimeAxis.style.height = elLanes.style.height = minH + 'px';
 
   const cats = visibleCategories();
   renderHeader(cats);
@@ -982,6 +1015,7 @@ function renderTimeAxis() {
   QUARTERS.forEach((q, i) => {
     const isNow = Math.floor(NOW_INDEX) === i;
     const tick = el('div', 'tick' + (isNow ? ' now' : ''), elTimeAxis);
+    tick.style.height = (QUARTER_WEIGHTS[i] / TOTAL_WEIGHT * 100) + '%';
     el('div', 'tick-q', tick).textContent = q;
     if (q !== 'Long terme') el('div', 'tick-m', tick).textContent = MONTHS_BY_QUARTER[i % 4];
   });
@@ -991,31 +1025,51 @@ function renderLanes(cats, minH) {
   /* Wipe lane children but keep the now-line element for reuse. */
   Array.from(elLanes.children).filter(c => c !== elNowLine).forEach(c => c.remove());
 
-  const cardH = CARD_H_PX[currentView];
-  cats.forEach(cat => {
+  /* Two-pass: append all cards first (overlapping at top:0), measure their
+     real rendered heights, then position with collision detection. Needed
+     because long titles wrap to several lines and a fixed estimate misses
+     the mark. Reads then writes to avoid layout thrash. */
+  const laneCards = cats.map(cat => {
     const lane = el('div', 'lane', elLanes);
     lane.dataset.category = cat.id;
     const feats = featuresOf(cat.id);
-    const tops  = layoutFeatures(feats, minH, cardH);
-    feats.forEach((f, i) => {
+    const cards = feats.map(f => {
       const card = renderCard(f);
-      card.style.top = tops[i] + '%';
       lane.appendChild(card);
+      return card;
     });
+    return { feats, cards };
   });
 
-  /* Re-append now-line last so it stacks above lane stripes. */
+  /* Read phase — synchronous layout, all measurements collected upfront. */
+  const allHeights = laneCards.map(({ cards }) => cards.map(c => c.offsetHeight));
+
+  /* Write phase — position cards using the measured heights. */
+  laneCards.forEach(({ feats, cards }, laneIdx) => {
+    const tops = layoutFeatures(feats, minH, allHeights[laneIdx]);
+    cards.forEach((card, i) => card.style.top = tops[i] + '%');
+  });
+
+  /* Quarter-boundary stripes appended AFTER lanes so .lane:nth-child(even)
+     keeps matching the right lanes. Stripes are absolute → no flex impact. */
+  for (let i = 0; i < N_COLS - 1; i++) {
+    const stripe = el('div', 'lane-stripe', elLanes);
+    stripe.style.top = (CUM_WEIGHT[i] / TOTAL_WEIGHT * 100) + '%';
+  }
+
+  /* Now-line last so it stacks above stripes and lane backgrounds. */
   elLanes.appendChild(elNowLine);
 }
 
-/* For a sorted feature list, return one top% per feature, bumping later
-   cards downward whenever they would overlap an earlier one. */
-function layoutFeatures(feats, minH, cardHpx) {
-  const cardHpct = (cardHpx / minH) * 100;
-  const step = cardHpct * COLLISION_BUMP_RATIO;
+/* For a sorted feature list with per-card measured heights, return one top%
+   per feature. Later cards bump down whenever they would overlap an earlier
+   one. */
+function layoutFeatures(feats, minH, heightsPx) {
   const taken = [];
-  return feats.map(f => {
-    let top = (f.quarter / N_COLS) * 100;
+  return feats.map((f, i) => {
+    const cardHpct = (heightsPx[i] / minH) * 100;
+    const step = cardHpct * COLLISION_BUMP_RATIO;
+    let top = quarterToPercent(f.quarter);
     while (taken.some(t => top < t.bottom && top + cardHpct > t.top)) top += step;
     taken.push({ top, bottom: top + cardHpct });
     return top;
@@ -1036,7 +1090,7 @@ function renderCard(f) {
 }
 
 function positionNowLine() {
-  elNowLine.style.top = (NOW_INDEX / N_COLS * 100) + '%';
+  elNowLine.style.top = quarterToPercent(NOW_INDEX) + '%';
 }
 
 function applyFilter() {
@@ -1137,10 +1191,9 @@ function clearHighlights() {
 }
 
 function highlightRelatedCards(id) {
-  const f = featureById(id);
-  if (!f) return;
-  const downstream = new Set(f.enables || []);
-  const upstream   = new Set(blockersOf(id).map(b => b.id));
+  if (!featureById(id)) return;
+  const upstream   = collectAncestors(id);
+  const downstream = collectDescendants(id);
   $$('.card').forEach(c => {
     if (downstream.has(c.dataset.id)) c.classList.add('related-down');
     if (upstream.has(c.dataset.id))   c.classList.add('related-up');
@@ -1148,12 +1201,44 @@ function highlightRelatedCards(id) {
 }
 
 function highlightRelatedArrows(id) {
+  const upstream   = collectAncestors(id);
+  const downstream = collectDescendants(id);
+  upstream.add(id);
+  downstream.add(id);
   $$('.arrow').forEach(a => {
-    if (a.dataset.src === id || a.dataset.tgt === id) {
+    const inDown = downstream.has(a.dataset.src) && downstream.has(a.dataset.tgt);
+    const inUp   = upstream.has(a.dataset.src)   && upstream.has(a.dataset.tgt);
+    if (inDown || inUp) {
       a.classList.add('active');
       a.setAttribute('marker-end', 'url(#arr-active)');
     }
   });
+}
+
+/* Transitive walks across enables relationships. */
+function collectAncestors(id) {
+  const seen = new Set();
+  const stack = [id];
+  while (stack.length) {
+    const cur = stack.pop();
+    blockersOf(cur).forEach(b => {
+      if (!seen.has(b.id)) { seen.add(b.id); stack.push(b.id); }
+    });
+  }
+  return seen;
+}
+
+function collectDescendants(id) {
+  const seen = new Set();
+  const stack = [id];
+  while (stack.length) {
+    const f = featureById(stack.pop());
+    if (!f) continue;
+    (f.enables || []).forEach(eid => {
+      if (!seen.has(eid)) { seen.add(eid); stack.push(eid); }
+    });
+  }
+  return seen;
 }
 
 /* ----- Detail panel ----- */
