@@ -393,12 +393,21 @@ class TutorialHighlighter {
             return `<rect x="${x}" y="${y}" width="${rw}" height="${rh}" rx="${radius}" ry="${radius}" fill="black"/>`;
         }).join('');
 
+        // Display size matches viewBox in CSS pixels (not 100vw/100vh). On
+        // mobile, `100vh` often tracks the layout viewport (URL-bar-collapsed
+        // height) while `window.innerWidth/Height` track the visual viewport;
+        // the mismatch would stretch the viewBox content via
+        // preserveAspectRatio="none" and shift cut-outs away from their
+        // targets, even though getBoundingClientRect (used for both the holes
+        // and the gold-bordered .tutorial-highlight) stays accurate. The
+        // bordered box uses no SVG and is unaffected — only the spotlight
+        // drifted.
         return `
             <svg id="tutorial-spotlight-overlay"
                  width="${w}" height="${h}"
                  viewBox="0 0 ${w} ${h}"
                  preserveAspectRatio="none"
-                 style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9998; pointer-events:none;">
+                 style="display:none; position:fixed; top:0; left:0; width:${w}px; height:${h}px; z-index:9998; pointer-events:none;">
                 <defs>
                     <mask id="tutorial-spotlight-mask" maskUnits="userSpaceOnUse">
                         <rect width="${w}" height="${h}" fill="white"/>
