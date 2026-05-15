@@ -64,6 +64,12 @@
 	// Uncomment the next line if you want to keep your containers running after VS Code shuts down.
 	// "shutdownAction": "none",
 
+	// Runs on the host BEFORE docker-compose starts so the bind-mount
+	// target `./config/db_constants.php` exists as a regular file. If it
+	// doesn't, Docker auto-creates a root-owned empty directory at the
+	// path; PHP then can't require_once it and removing it needs sudo.
+	"initializeCommand": "sh -c '[ -e config/db_constants.php ] || cp config/db_constants.php.exemple config/db_constants.php'",
+
 	// Uncomment the next line to run commands after the container is created.
 	"postCreateCommand": "./.devcontainer/postCreateCommand.sh"
 
