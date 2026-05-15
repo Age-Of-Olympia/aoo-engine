@@ -105,9 +105,6 @@ if(!empty($_POST['race'])){
         $useNewTutorial = TutorialFeatureFlag::isEnabledForPlayer($player->id);
 
         if ($useNewTutorial) {
-            // New tutorial system: remove old tutorial action and spawn in waiting room
-            $player->end_action('tuto/attaquer');
-
             // Spawn on waiting_room plan until player makes tutorial decision
             $spawnPlan = "waiting_room";
 

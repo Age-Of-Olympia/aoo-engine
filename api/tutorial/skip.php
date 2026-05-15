@@ -49,9 +49,10 @@ try {
     $player->get_data();
     $raceJson = json()->decode('races', $player->data->race);
 
-    // Add all race-specific actions (keep tuto/attaquer for legacy compatibility)
-    // Use have_action() to check before adding to avoid duplicates
-    // Wrap in try-catch to handle Doctrine errors gracefully
+    // Add all race-specific actions, idempotently — have_action() guards
+    // against duplicates if the same player skips twice or hits this path
+    // after partial completion. Try/catch surfaces Doctrine hiccups in
+    // the log rather than aborting the whole grant.
     if ($raceJson && !empty($raceJson->actions)) {
         $addedCount = 0;
         foreach($raceJson->actions as $actionName) {
