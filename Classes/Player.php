@@ -2229,8 +2229,19 @@ class Player implements ActorInterface {
         $player->get_data();
 
 
-        // add tuto action
-        $player->add_action('tuto/attaquer');
+        // Grant the race's starter pack. Same loop as api/tutorial/
+        // {skip,cancel,complete}.php so the canonical list stays in one
+        // place: datas/[public|private]/races/<race>.json `actions`.
+        $raceJson = json()->decode('races', $race);
+        if ($raceJson && !empty($raceJson->actions)) {
+            foreach ($raceJson->actions as $actionName) {
+                try {
+                    $player->add_action($actionName);
+                } catch (\Throwable $e) {
+                    error_log("[put_player] could not add action '{$actionName}' to player {$id}: " . $e->getMessage());
+                }
+            }
+        }
 
 
         Player::refresh_list();
