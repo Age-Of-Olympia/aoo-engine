@@ -39,20 +39,15 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
-        // MovementStep and Classes\Player emit debug lines via error_log.
-        // PHPUnit's beStrictAboutOutputDuringTests flags any runtime
-        // output as risky. Disable error-log entirely for the duration
-        // of the test; behaviour of the code under test is unaffected.
-        // MovementStep emits runtime diagnostics via error_log which,
-        // in CLI with log_errors=1 and the default error_log target,
-        // lands on STDERR — and PHPUnit's beStrictAboutOutputDuringTests
-        // flags any test-time output as risky. Route it to a throwaway
-        // file so the output capture stays clean.
+        // Push our buffer BEFORE parent::setUp(): if the test DB is
+        // unreachable, parent skips via markTestSkipped() and tearDown
+        // still runs. If ob_start() hadn't fired, ob_end_clean() would
+        // pop PHPUnit's own strict-output buffer and trip failOnRisky.
         $this->previousErrorLog = ini_get('error_log') ?: '';
         ini_set('error_log', '/tmp/phpunit-movement-step.log');
         ob_start();
+
+        parent::setUp();
 
         // Legacy helpers (functions.php defines `db()` which returns
         // $GLOBALS['link']; constants.php populates CARACS etc. used

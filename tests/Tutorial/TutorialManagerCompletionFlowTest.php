@@ -41,6 +41,14 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
 
     protected function setUp(): void
     {
+        // Push our buffer BEFORE parent::setUp(): when the test DB is
+        // unreachable parent skips via markTestSkipped() and tearDown
+        // still runs. Without this ordering, ob_end_clean() would pop
+        // PHPUnit's own strict-output buffer and trip failOnRisky.
+        $this->previousErrorLog = ini_get('error_log') ?: '';
+        ini_set('error_log', '/tmp/phpunit-completion-flow.log');
+        ob_start();
+
         parent::setUp();
 
         // TutorialSessionManager instantiates Classes\Db which reads
@@ -51,13 +59,6 @@ class TutorialManagerCompletionFlowTest extends TutorialIntegrationTestCase
         require_once __DIR__ . '/../../config/db_constants.php';
         require_once __DIR__ . '/../../config/functions.php';
         $GLOBALS['link'] = $this->conn;
-
-        // TutorialSessionManager logs to error_log on completion, which
-        // PHPUnit's beStrictAboutOutputDuringTests flags as risky.
-        // Redirect to a throwaway file + wrap in an output buffer.
-        $this->previousErrorLog = ini_get('error_log') ?: '';
-        ini_set('error_log', '/tmp/phpunit-completion-flow.log');
-        ob_start();
 
         $this->realPlayerId = $this->seedRealPlayer();
     }

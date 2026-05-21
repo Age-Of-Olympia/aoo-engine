@@ -34,15 +34,15 @@ class TutorialPlayerRewardTransferTest extends TutorialIntegrationTestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
-        // The entity method emits a diagnostic via error_log on
-        // success. Route to a file and wrap in ob_start so PHPUnit's
-        // beStrictAboutOutputDuringTests doesn't flag the leak (same
-        // pattern MovementStepDbBranchesTest uses).
+        // Push our buffer BEFORE parent::setUp(): when the test DB is
+        // unreachable parent skips via markTestSkipped() and tearDown
+        // still runs. Without this ordering, ob_end_clean() would pop
+        // PHPUnit's own strict-output buffer and trip failOnRisky.
         $this->previousErrorLog = ini_get('error_log') ?: '';
         ini_set('error_log', '/tmp/phpunit-phase-4-1.log');
         ob_start();
+
+        parent::setUp();
     }
 
     protected function tearDown(): void
