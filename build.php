@@ -16,9 +16,15 @@ $player->get_caracs();
 
 $aLeft = $player->getRemaining('a');
 
+$pfLeft = 0;
+
 
 if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
+    if($item->id == 3){
+            $playerData = $player->get_data();
+            $pfLeft = $playerData->pf;
+        }
 
     if(!$aLeft){
 
@@ -81,6 +87,10 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
     Log::put($player, $player, $player->data->name." a construit ".$item->data->name. " en ".$coordsTbl[0].",".$coordsTbl[1].",".$player->coords->z, "action", '',  time());
 
     $player->putBonus(['a'=>-1]);
+    // Si l'objet est un Altar, on retire 50 PF
+    if($item->id == 3){
+        $player->put_pf(-50);
+    }
 
 
     exit();
@@ -115,6 +125,14 @@ $itemN = $item->get_n($player);
 
 $nText = (!$itemN) ? '<font color="red">x'. $itemN .'</font>' : 'x'. $itemN ;
 
+$altarText = '';
+
+$altarCostText = '';
+
+if($item->id == 3){
+    $altarText = '<br />PF : ' . $pfLeft; 
+    $altarCostText = '<br/><sup>Construire un Altar coûte 50 PF supplémentaires.</sup>';
+}
 
 echo '
 <table border="1" class="marbre" align="center">
@@ -123,7 +141,7 @@ echo '
 </tr>
 <tr>
     <td><img src="'. $item->data->mini .'" /></td>
-    <td align="left">'. $nText .'<br />Actions: '. $aLeft .'</td>
+    <td align="left">'. $nText .'<br />Actions: '. $aLeft . $altarText . '</td> 
 </tr>
 </table>
 <br />
@@ -134,6 +152,8 @@ echo $view->get_view();
 
 echo '<sup>Construire une structure coûte 1 Action.</sup>';
 
+echo $altarCostText;
+
 
 ?>
 <script>
@@ -142,6 +162,7 @@ $(document).ready(function(){
 
     window.aLeft = <?php echo $aLeft ?>;
 
+    window.pfLeft = <?php echo $pfLeft ?>;
 
     window.itemId = <?php echo $item->id ?>;
 
@@ -170,6 +191,13 @@ $(document).ready(function(){
         if(!window.aLeft){
 
             alert('Vous n\'avez plus d\'Actions disponibles ce tour-ci.');
+
+            return false;
+        }
+
+        if(window.pfLeft < 1 && window.itemId == 3){
+
+            alert('Vous n\'avez pas assez de PF.');
 
             return false;
         }
