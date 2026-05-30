@@ -719,6 +719,12 @@ const FEATURES = [
     player:"Après un an d'usage par les animateurs, on lisse les angles morts du système : composabilité, lisibilité, prévisibilité.",
     enables:['admin-actions','pf-aoe'] },
 
+  { id:'magic-split', title:"Séparation de la Magie + correction des carac races & objets", category:'combat', status:'progress',
+    quarter:6.1, date:'2026-Q3',
+    tech:"Séparation du stat Magie (M) en deux dimensions distinctes. Au passage, rééquilibrage des caractéristiques de base des races et de quelques objets.",
+    player:"La Magie n'est plus une seule stat globale : elle se décompose en deux pour permettre des combinaisons plus riches. Les races et quelques objets sont rééquilibrées en même temps.",
+    enables:[] },
+
   { id:'no-js-confirms', title:"Suppression des alert/confirm JS", category:'ui-ux', status:'planned',
     quarter:6.2, date:'2026-Q3',
     tech:"Remplacement de tous les window.alert/confirm/prompt par un système de modales/toasts custom.",
@@ -730,6 +736,12 @@ const FEATURES = [
     tech:"UI admin pour créer / voir / comprendre les actions. Le système v2 est conçu pour être exposable.",
     player:"L'équipe peut créer de nouvelles actions sans demander à un dev. Énorme accélérateur de contenu.",
     enables:['admin-team-autonomy'] },
+
+  { id:'new-comp-3', title:"Nouvelles compétences/sorts", category:'combat', status:'planned',
+    quarter:6.5, date:'2026-Q3',
+    tech:"Ajout de code pour de nouvelles compétences et de nouveaux Effets.",
+    player:"Continuité d'ajouts des compétences/passifs/sorts prévus. Ajout des conditions d'utilisations/achat des compétences pour former un arbre de compétences.",
+    enables:[] },
 
   { id:'dialogue-refonte', title:"Refonte du système de dialogues + admin", category:'dialogue', status:'planned',
     quarter:6.5, date:'2026-Q4',
@@ -836,6 +848,11 @@ const FEATURES = [
     enables:[] },
 
   /* ─────────────────────────── PLANNED — ajouts ultérieurs ─────────────────────────── */
+  { id:'influence-altar', title:"Influence des altar", category:'faction-race', status:'planned',
+    quarter:5.7, date:'2026-Q2',
+    tech:"Modif classement, modif poser un altar, modif coût altar",
+    player:"Poser des altars dans les plan pour augmenter l'influence d'un dieu.",
+    enables:[] },
 
   /* ─────────────────────────── LONG-TERM ─────────────────────────── */
   { id:'tile-composition', title:"⭐ Refonte case / tuile (état de base + diff joueur)", category:'map-tiles', status:'longterm',
@@ -884,12 +901,6 @@ const FEATURES = [
     quarter:10, date:'Long terme',
     tech:"Nouveaux effets pour les éléments (feu, eau, etc.). Surtout : coût de déplacement variable selon le type de case (eau ralentit, feu blesse au passage, etc.). Repose sur la refonte case/tuile (états composables).",
     player:"Les éléments du terrain deviennent vraiment significatifs : traverser l'eau coûte plus de mouvement, marcher dans le feu blesse, etc. Le terrain devient un acteur du jeu.",
-    enables:[] },
-
-  { id:'magic-split', title:"Séparation de la Magie + correction des carac races", category:'combat', status:'longterm',
-    quarter:10, date:'Long terme',
-    tech:"Séparation du stat Magie (M) en deux dimensions distinctes. Au passage, rééquilibrage des caractéristiques de base des races.",
-    player:"La Magie n'est plus une seule stat globale : elle se décompose en deux pour permettre des combinaisons plus riches. Les races sont rééquilibrées en même temps.",
     enables:[] },
 
   { id:'account-character-split', title:"Séparation compte / personnage", category:'player-account', status:'longterm',
