@@ -4,6 +4,7 @@ use Classes\Item;
 use Classes\View;
 use Classes\Ui;
 use Classes\Log;
+use Classes\Db;
 
 require_once('config.php');
 
@@ -16,15 +17,11 @@ $player->get_caracs();
 
 $aLeft = $player->getRemaining('a');
 
-$pfLeft = 0;
+$playerData = $player->get_data();
+$pfLeft = isset($playerData->pf) ? $playerData->pf : 0;
 
 
 if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
-
-    if($item->id == 3){
-            $playerData = $player->get_data();
-            $pfLeft = $playerData->pf;
-        }
 
     if(!$aLeft){
 
@@ -70,28 +67,39 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
         exit('error item n');
     }
 
+    if($item->id == 3 && $pfLeft < 50) {
+        exit('error pf');
+    }
 
     $table = 'walls';
 
     if(!empty($item->data->subtype)){
-
 
         $table = $item->data->subtype;
     }
 
     View::put($table, $item->row->name, $coords);
 
-
     $item->add_item($player, -1);
 
     Log::put($player, $player, $player->data->name." a construit ".$item->data->name. " en ".$coordsTbl[0].",".$coordsTbl[1].",".$player->coords->z, "action", '',  time());
 
     $player->putBonus(['a'=>-1]);
-    // Si l'objet est un Altar, on retire 50 PF
+
+    // Si l'objet est un Altar, on retire 50 PF et on ajoute le trigger
     if($item->id == 3){
         $player->put_pf(-50);
-    }
 
+        $db = new Db();
+
+        $values = array(
+            'name'=>'altar',
+            'coords_id'=>View::get_coords_id($coords),
+            'params'=>$playerData->godId
+        );
+
+        $db->insert('map_triggers', $values);
+    }
 
     exit();
 }
@@ -195,7 +203,7 @@ $(document).ready(function(){
             return false;
         }
 
-        if(window.pfLeft < 1 && window.itemId == 3){
+        if(window.pfLeft < 50 && window.itemId == 3){
 
             alert('Vous n\'avez pas assez de PF.');
 
