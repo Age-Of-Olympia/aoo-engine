@@ -85,7 +85,6 @@ $player->get_caracs();
 
 $main1 = $player->emplacements->main1;
 
-
 if($main1->data->name == 'poings'){
 
     exit('Impossible de détruire un objet avec les Poings.');
@@ -131,8 +130,12 @@ else
 
 if($row->damages + $damages >= $pvMax){
 
-
     $db->delete('map_walls', array('id'=>$row->id));
+
+    //Si le wall est un altar, on retire le trigger
+    if($row->name == 'altar'){
+        $db->delete('map_triggers', array('coords_id'=>$row->coords_id));
+    }
 
     $refresh = true;
 
