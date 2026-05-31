@@ -39,6 +39,7 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
     list($x, $y) = $coordsTbl;
 
     $player->getCoords();
+    $plan = $player->coords->plan;
 
     $coords = (object) array(
         'x'=>$x,
@@ -91,14 +92,23 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
         $player->put_pf(-50);
 
         $db = new Db();
-
+        $coords_id = View::get_coords_id($coords);
+        $godId = $playerData->godId;
+    
         $values = array(
             'name'=>'altar',
-            'coords_id'=>View::get_coords_id($coords),
-            'params'=>$playerData->godId
+            'coords_id'=>$coords_id,
+            'params'=>$godId
+        );
+
+        $values_altar = array(
+            'coords_id'=>$coords_id,
+            'godId'=>$godId,
+            'plan'=>$plan
         );
 
         $db->insert('map_triggers', $values);
+        $db->insert('altars', $values_altar);
     }
 
     exit();

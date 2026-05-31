@@ -135,6 +135,7 @@ if($row->damages + $damages >= $pvMax){
     //Si le wall est un altar, on retire le trigger
     if($row->name == 'altar'){
         $db->delete('map_triggers', array('coords_id'=>$row->coords_id));
+        $db->delete('altars', array('coords_id'=>$row->coords_id));
     }
 
     $refresh = true;
