@@ -19,7 +19,7 @@ $aLeft = $player->getRemaining('a');
 
 $playerData = $player->get_data();
 $pfLeft = isset($playerData->pf) ? $playerData->pf : 0;
-
+$godId = $playerData->godId;
 
 if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
@@ -72,6 +72,10 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
         exit('error pf');
     }
 
+    if($item->id == 3 && $godId === 0) {
+        exit('error no god');
+    }
+
     $table = 'walls';
 
     if(!empty($item->data->subtype)){
@@ -93,7 +97,6 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
         $db = new Db();
         $coords_id = View::get_coords_id($coords);
-        $godId = $playerData->godId;
     
         $values = array(
             'name'=>'altar',
@@ -182,6 +185,8 @@ $(document).ready(function(){
 
     window.pfLeft = <?php echo $pfLeft ?>;
 
+    window.godId = <?php echo $godId ?>;
+
     window.itemId = <?php echo $item->id ?>;
 
 
@@ -216,6 +221,13 @@ $(document).ready(function(){
         if(window.pfLeft < 50 && window.itemId == 3){
 
             alert('Vous n\'avez pas assez de PF.');
+
+            return false;
+        }
+
+        if(window.godId == 0 && window.itemId == 3){
+
+            alert('Vous ne priez aucune divinité.');
 
             return false;
         }
