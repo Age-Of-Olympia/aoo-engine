@@ -325,7 +325,7 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     }
 }
 
-if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode'))
+if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode') && !$player->have_effect('vol'))
 {
     $footstep='trace_pas_';
     if($originalGooCoords->y>$player->coords->y){
