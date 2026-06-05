@@ -335,6 +335,8 @@ define('WALLS_PV', array(
     //décos
     'altar'=>25,
     'altar_broken'=>25,
+
+    'unique_disque_solaire'=>800,
     
     'piedestal'=>15,
     'piedestal_broken'=>15,
