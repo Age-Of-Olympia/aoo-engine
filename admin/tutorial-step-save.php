@@ -53,12 +53,15 @@ try {
 } catch (\InvalidArgumentException $e) {
     // Validation errors - user-friendly messages
     setFlash('warning', $e->getMessage());
+    stashOldInput();
 
     // Redirect back to form with step ID if editing
     redirectTo('tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : ''));
 
 } catch (\RuntimeException $e) {
-    // Security errors (CSRF, etc.) - user-friendly messages
+    // Security errors (CSRF, etc.) - user-friendly messages.
+    // No stash: a CSRF-failed POST is untrusted and must not be
+    // replayed into the editor from the session.
     setFlash('danger', $e->getMessage());
 
     redirectTo('tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : ''));
@@ -68,6 +71,18 @@ try {
     error_log("[TutorialStepSave] Unexpected error: " . $e->getMessage());
 
     setFlash('danger', 'An unexpected error occurred while saving. Please try again or contact support if the problem persists.');
+    stashOldInput();
 
     redirectTo('tutorial-step-editor.php' . ($isEdit ? "?id={$dbStepId}" : ''));
+}
+
+/**
+ * Keep the submitted form for the editor to repopulate after the
+ * error redirect (PRG pattern).
+ */
+function stashOldInput(): void
+{
+    $input = $_POST;
+    unset($input['csrf_token']);
+    $_SESSION['tutorial_step_old_input'] = $input;
 }
