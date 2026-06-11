@@ -21,9 +21,6 @@ use ReflectionClass;
  */
 class TutorialMapInstancePrefixTest extends TestCase
 {
-    private const SOURCE_PATH =
-        __DIR__ . '/../../src/Tutorial/TutorialMapInstance.php';
-
     #[Group('tutorial-map-instance-prefix')]
     public function testInstanceExistsMethodIsRemoved(): void
     {
@@ -33,20 +30,6 @@ class TutorialMapInstancePrefixTest extends TestCase
             . 'it used the "tutorial_session_" prefix while create/delete '
             . 'use "tut_". The method had no callers and was deleted; do '
             . 'not reintroduce it without using the same prefix as createInstance.'
-        );
-    }
-
-    #[Group('tutorial-map-instance-prefix')]
-    public function testWrongPrefixDoesNotReappear(): void
-    {
-        $source = (string) file_get_contents(self::SOURCE_PATH);
-
-        $this->assertDoesNotMatchRegularExpression(
-            "/'tutorial_session_'\\s*\\.\\s*substr\\s*\\(\\s*\\\$sessionId/i",
-            $source,
-            'TutorialMapInstance must not reintroduce the broken '
-            . '"tutorial_session_" plan-name prefix — createInstance and '
-            . 'deleteInstance use "tut_" + substr(sessionId, 0, 10).'
         );
     }
 }

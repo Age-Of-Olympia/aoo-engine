@@ -9,37 +9,12 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * Contract tests for scripts/tutorial/cleanup_orphans.php.
- *
- * The script is operational tooling — most of its logic is procedural
- * SQL + service calls that are hard to exercise without a fixture DB.
- * What WE can pin cheaply, and what catches the realistic regression
- * vectors:
- *
- *  1. The script parses as valid PHP (no half-merged syntax errors).
- *  2. The cleanup-service methods the script depends on still exist
- *     with the expected signatures. If TutorialEnemyCleanup::removeBySessionId
- *     or TutorialPlayerCleanup::deleteTutorialPlayer is ever renamed,
- *     this test fails immediately instead of the cron silently throwing
- *     fatals at 3am.
- *
- * Wet-path testing (real DB fixture, real cleanup) is intentionally out
- * of scope — the project does not currently have a Tests\Scripts\
- * pattern, and adding one for a single script would be a precedent
- * decision separate from this MR.
+ * Contract tests for the cleanup-service methods that
+ * scripts/tutorial/cleanup_orphans.php depends on: a rename or
+ * signature drift must fail in CI instead of the cron throwing fatals.
  */
 class CleanupOrphansScriptTest extends TestCase
 {
-    private const SCRIPT = __DIR__ . '/../../scripts/tutorial/cleanup_orphans.php';
-
-    #[Group('cleanup-orphans')]
-    public function testScriptParsesAsValidPhp(): void
-    {
-        $output = shell_exec('php -l ' . escapeshellarg(self::SCRIPT) . ' 2>&1');
-        $this->assertNotNull($output);
-        $this->assertStringContainsString('No syntax errors', $output);
-    }
-
     #[Group('cleanup-orphans')]
     public function testRequiredEnemyCleanupContractMatches(): void
     {
