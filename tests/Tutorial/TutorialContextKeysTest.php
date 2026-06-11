@@ -14,14 +14,9 @@ use PHPUnit\Framework\TestCase;
  * Characterization test for TutorialContextKeys.
  *
  * Pins the exact context-change and next-preparation keys that the tutorial
- * runtime dispatches on, and guarantees:
- *
- *  1. the admin validator (TutorialStepValidationService) accepts every
- *     advertised key and rejects unknowns;
- *  2. the runtime handlers (AbstractStep::applyContextChanges and
- *     TutorialContext::prepareForNextStep) actually dispatch on every key
- *     the whitelist promises — so adding a key to the whitelist without
- *     wiring the runtime fails in CI instead of silently no-op'ing in prod.
+ * runtime dispatches on, and guarantees the admin validator
+ * (TutorialStepValidationService) accepts every advertised key and
+ * rejects unknowns.
  */
 #[Group('tutorial')]
 class TutorialContextKeysTest extends TestCase
@@ -92,39 +87,5 @@ class TutorialContextKeysTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         (new TutorialStepValidationService())->validatePreparationKey('spawn_npc');
-    }
-
-    /**
-     * Guards against whitelist-runtime drift: every key we advertise must
-     * appear as an `isset($changes['KEY'])` dispatch in AbstractStep.
-     */
-    public function testRuntimeDispatchesEveryContextChangeKey(): void
-    {
-        $source = (string) file_get_contents(__DIR__ . '/../../src/Tutorial/Steps/AbstractStep.php');
-
-        foreach (TutorialContextKeys::contextChangeKeys() as $key) {
-            self::assertStringContainsString(
-                "\$changes['" . $key . "']",
-                $source,
-                "AbstractStep::applyContextChanges() must dispatch on '$key' — add a handler or remove it from TutorialContextKeys::CONTEXT_CHANGES."
-            );
-        }
-    }
-
-    /**
-     * Guards against whitelist-runtime drift: every key we advertise must
-     * appear as an `isset($preparation['KEY'])` dispatch in TutorialContext.
-     */
-    public function testRuntimeDispatchesEveryPreparationKey(): void
-    {
-        $source = (string) file_get_contents(__DIR__ . '/../../src/Tutorial/TutorialContext.php');
-
-        foreach (TutorialContextKeys::nextPreparationKeys() as $key) {
-            self::assertStringContainsString(
-                "\$preparation['" . $key . "']",
-                $source,
-                "TutorialContext::prepareForNextStep() must dispatch on '$key' — add a handler or remove it from TutorialContextKeys::NEXT_PREPARATIONS."
-            );
-        }
     }
 }

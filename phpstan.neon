@@ -1,7 +1,13 @@
+includes:
+    - phpstan-baseline.neon
+
 parameters:
     level: 4
     paths:
       - tests
       - config/constants.php
       - config/functions.php
-      # - src
+      - src
+      - api/tutorial
+      - admin
+      - classements.php
