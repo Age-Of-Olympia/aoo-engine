@@ -20,6 +20,7 @@ class SurvivalView
         $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
 
         $playerGold = $player->get_gold();
+        $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
         if (!empty($_POST['buySkillId']) || !empty($_POST['buyPassiveId'])) {
             if (ob_get_length()) ob_clean();
@@ -98,8 +99,6 @@ class SurvivalView
                     </tr>
                   </thead>';
             echo '<tbody>';
-
-            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
             foreach ($actions as $action) {
                 $actionName = $action->getName();
@@ -180,9 +179,9 @@ class SurvivalView
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = WarSchoolUtils::getRaceColor($passive->getRace());
                 $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
-                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passive->getRace());
 
                 $pRace = $passive->getRace();
+                $isRaceLearnable = (empty($pRace) || $player->data->race == $pRace);
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';
                 
                 $price = $actionPassiveService->getPrice($passive->getLevel());
