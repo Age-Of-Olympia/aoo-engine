@@ -40,20 +40,7 @@ if ($csrfValid) {
     if ($action === 'create' || $action === 'update') {
         $id = !empty($_POST['id']) ? (int)$_POST['id'] : null;
 
-        $data = [
-            'version' => trim($_POST['version'] ?? ''),
-            'name' => trim($_POST['name'] ?? ''),
-            'description' => trim($_POST['description'] ?? ''),
-            'icon' => trim($_POST['icon'] ?? 'ra-book'),
-            'difficulty' => $_POST['difficulty'] ?? 'beginner',
-            'estimated_minutes' => (int)($_POST['estimated_minutes'] ?? 10),
-            'prerequisites' => !empty($_POST['prerequisites']) ? $_POST['prerequisites'] : null,
-            'plan' => trim($_POST['plan'] ?? 'tutorial'),
-            'spawn_x' => (int)($_POST['spawn_x'] ?? 0),
-            'spawn_y' => (int)($_POST['spawn_y'] ?? 0),
-            'is_active' => isset($_POST['is_active']) ? 1 : 0,
-            'display_order' => (int)($_POST['display_order'] ?? 0)
-        ];
+        $data = TutorialCatalogService::mapFormData($_POST);
 
         try {
             if ($action === 'create') {
@@ -92,6 +79,13 @@ $tutorials = $catalogService->getAllTutorials();
 $editTutorial = null;
 if (isset($_GET['edit'])) {
     $editTutorial = $catalogService->getById((int)$_GET['edit']);
+}
+
+// On a failed create/update, repopulate the form with the submitted
+// values instead of wiping them back to DB values / defaults.
+$formData = $editTutorial;
+if ($messageType === 'danger' && in_array($_POST['action'] ?? '', ['create', 'update'], true)) {
+    $formData = TutorialCatalogService::mapFormData($_POST);
 }
 
 ob_start();
@@ -232,7 +226,7 @@ ob_start();
                         <label>Version *</label>
                         <input type="text" name="version" class="form-control" required
                                placeholder="ex: 2.0.0-craft"
-                               value="<?= htmlspecialchars($editTutorial['version'] ?? '') ?>">
+                               value="<?= htmlspecialchars($formData['version'] ?? '') ?>">
                         <small class="form-text">Identifiant unique (sera utilisé dans tutorial_steps)</small>
                     </div>
 
@@ -240,13 +234,13 @@ ob_start();
                         <label>Nom *</label>
                         <input type="text" name="name" class="form-control" required
                                placeholder="ex: Tutoriel Artisanat"
-                               value="<?= htmlspecialchars($editTutorial['name'] ?? '') ?>">
+                               value="<?= htmlspecialchars($formData['name'] ?? '') ?>">
                     </div>
 
                     <div class="form-group">
                         <label>Description</label>
                         <textarea name="description" class="form-control" rows="2"
-                                  placeholder="Description courte du tutoriel"><?= htmlspecialchars($editTutorial['description'] ?? '') ?></textarea>
+                                  placeholder="Description courte du tutoriel"><?= htmlspecialchars($formData['description'] ?? '') ?></textarea>
                     </div>
 
                     <div class="row">
@@ -255,7 +249,7 @@ ob_start();
                                 <label>Icône</label>
                                 <input type="text" name="icon" class="form-control"
                                        placeholder="ra-anvil"
-                                       value="<?= htmlspecialchars($editTutorial['icon'] ?? 'ra-book') ?>">
+                                       value="<?= htmlspecialchars($formData['icon'] ?? 'ra-book') ?>">
                                 <small class="form-text"><a href="https://nagoshiashumern.github.io/Rpg-Awesome/" target="_blank">RPG Awesome</a></small>
                             </div>
                         </div>
@@ -263,9 +257,9 @@ ob_start();
                             <div class="form-group">
                                 <label>Difficulté</label>
                                 <select name="difficulty" class="form-control">
-                                    <option value="beginner" <?= ($editTutorial['difficulty'] ?? '') === 'beginner' ? 'selected' : '' ?>>Débutant</option>
-                                    <option value="intermediate" <?= ($editTutorial['difficulty'] ?? '') === 'intermediate' ? 'selected' : '' ?>>Intermédiaire</option>
-                                    <option value="advanced" <?= ($editTutorial['difficulty'] ?? '') === 'advanced' ? 'selected' : '' ?>>Avancé</option>
+                                    <option value="beginner" <?= ($formData['difficulty'] ?? '') === 'beginner' ? 'selected' : '' ?>>Débutant</option>
+                                    <option value="intermediate" <?= ($formData['difficulty'] ?? '') === 'intermediate' ? 'selected' : '' ?>>Intermédiaire</option>
+                                    <option value="advanced" <?= ($formData['difficulty'] ?? '') === 'advanced' ? 'selected' : '' ?>>Avancé</option>
                                 </select>
                             </div>
                         </div>
@@ -276,14 +270,14 @@ ob_start();
                             <div class="form-group">
                                 <label>Durée (min)</label>
                                 <input type="number" name="estimated_minutes" class="form-control"
-                                       value="<?= $editTutorial['estimated_minutes'] ?? 10 ?>">
+                                       value="<?= $formData['estimated_minutes'] ?? 10 ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Ordre d'affichage</label>
                                 <input type="number" name="display_order" class="form-control"
-                                       value="<?= $editTutorial['display_order'] ?? 0 ?>">
+                                       value="<?= $formData['display_order'] ?? 0 ?>">
                             </div>
                         </div>
                     </div>
@@ -292,7 +286,7 @@ ob_start();
                         <label>Plan (carte)</label>
                         <input type="text" name="plan" class="form-control"
                                placeholder="tutorial"
-                               value="<?= htmlspecialchars($editTutorial['plan'] ?? 'tutorial') ?>">
+                               value="<?= htmlspecialchars($formData['plan'] ?? 'tutorial') ?>">
                     </div>
 
                     <div class="row">
@@ -300,14 +294,14 @@ ob_start();
                             <div class="form-group">
                                 <label>Spawn X</label>
                                 <input type="number" name="spawn_x" class="form-control"
-                                       value="<?= $editTutorial['spawn_x'] ?? 0 ?>">
+                                       value="<?= $formData['spawn_x'] ?? 0 ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Spawn Y</label>
                                 <input type="number" name="spawn_y" class="form-control"
-                                       value="<?= $editTutorial['spawn_y'] ?? 0 ?>">
+                                       value="<?= $formData['spawn_y'] ?? 0 ?>">
                             </div>
                         </div>
                     </div>
@@ -316,13 +310,13 @@ ob_start();
                         <label>Prérequis (versions JSON)</label>
                         <input type="text" name="prerequisites" class="form-control"
                                placeholder='["1.0.0"]'
-                               value="<?= htmlspecialchars($editTutorial['prerequisites'] ?? '') ?>">
+                               value="<?= htmlspecialchars($formData['prerequisites'] ?? '') ?>">
                         <small class="form-text">Tutoriels à compléter avant (format JSON)</small>
                     </div>
 
                     <div class="form-group form-check">
                         <input type="checkbox" name="is_active" class="form-check-input" id="is_active"
-                               <?= ($editTutorial['is_active'] ?? true) ? 'checked' : '' ?>>
+                               <?= ($formData['is_active'] ?? true) ? 'checked' : '' ?>>
                         <label class="form-check-label" for="is_active">Tutoriel actif</label>
                     </div>
 

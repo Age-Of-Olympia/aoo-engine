@@ -117,6 +117,33 @@ class TutorialCatalogService
     }
 
     /**
+     * Map raw form input (e.g. $_POST) to a catalog data array.
+     *
+     * Shared by the admin save path and the error-repopulation path so a
+     * failed submission re-renders the form with the submitted values.
+     *
+     * @param array $post Raw form input
+     * @return array Catalog data
+     */
+    public static function mapFormData(array $post): array
+    {
+        return [
+            'version' => trim($post['version'] ?? ''),
+            'name' => trim($post['name'] ?? ''),
+            'description' => trim($post['description'] ?? ''),
+            'icon' => trim($post['icon'] ?? 'ra-book'),
+            'difficulty' => $post['difficulty'] ?? 'beginner',
+            'estimated_minutes' => (int)($post['estimated_minutes'] ?? 10),
+            'prerequisites' => !empty($post['prerequisites']) ? $post['prerequisites'] : null,
+            'plan' => trim($post['plan'] ?? 'tutorial'),
+            'spawn_x' => (int)($post['spawn_x'] ?? 0),
+            'spawn_y' => (int)($post['spawn_y'] ?? 0),
+            'is_active' => isset($post['is_active']) ? 1 : 0,
+            'display_order' => (int)($post['display_order'] ?? 0)
+        ];
+    }
+
+    /**
      * Create a new tutorial in the catalog
      *
      * @param array $data Tutorial data
