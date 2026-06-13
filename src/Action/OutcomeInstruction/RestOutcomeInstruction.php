@@ -16,7 +16,9 @@ class RestOutcomeInstruction extends OutcomeInstruction
         $recupPM = floor($actor->getRemaining("a")*$actor->caracs->rm/4);
         $recupMalus = floor($actor->getRemaining("mvt")/3);
 
-        $actor->put_malus(-$recupMalus/3);
+        $actor->putBonus(array('pv'=>$recupPV));
+        $actor->putBonus(array('pm'=>$recupPM));
+        $actor->put_malus(-$recupMalus);
 
         $outcomeMalusMessages = array();
         $outcomeMalusMessages[] = 'Votre repos vous retire '. $recupMalus .' malus.';
