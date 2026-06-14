@@ -456,13 +456,13 @@ const QUARTERS = [
   '2026-Q1','2026-Q2','2026-Q3','2026-Q4',
   '2027-Q1','2027-Q2','Long terme'
 ];
-const NOW_INDEX = 5.4; /* mid 2026-Q2 (May 2026) */
+const NOW_INDEX = 5.85; /* late 2026-Q2 (June 2026) */
 const N_COLS = QUARTERS.length;
 const QUARTER_PX = 210; /* vertical pixels per unit-weight quarter */
 
 /* Per-quarter vertical weight. Long terme gets more room because it's
    the densest bucket. */
-const QUARTER_WEIGHTS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4];
+const QUARTER_WEIGHTS = [1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 4]; /* 2026-Q2 widened: busiest period (prod deploy), needs room to avoid card overlap */
 const TOTAL_WEIGHT = QUARTER_WEIGHTS.reduce((sum, w) => sum + w, 0);
 
 /* Cumulative weight up to quarter i, used for non-uniform vertical mapping. */
@@ -647,7 +647,7 @@ const FEATURES = [
     enables:[] },
 
   { id:'tutorial-system', title:"⭐ Système de tutoriel intégré", category:'tutorial', status:'shipped',
-    quarter:5.5, version:'4.2.25', date:'Dev Nov 2025 · prod 4.2.33 · Juin 2026',
+    quarter:5.4, version:'4.2.25', date:'Dev Nov 2025 · prod 4.2.33 · Juin 2026',
     tech:"src/Tutorial/ (TutorialManager, TutorialPlayer, StepFactory, DialogService), js/tutorial/ (UI, Tooltip, Highlighter), tables tutorial_*, plan isolé 'tutorial' qui réutilise player_visibility.",
     player:"Les nouveaux joueurs ont enfin un parcours guidé pour découvrir le jeu : dialogues, info-bulles, surlignage des éléments à cliquer. Énorme levier pour qu'ils restent.",
     enables:['tutorial-admin','tutorial-race-aware','tutorial-reload','tutorial-extra','dialogue-refonte'] },
@@ -665,7 +665,7 @@ const FEATURES = [
     enables:[] },
 
   { id:'tutorial-race-aware', title:"Tutoriel adaptatif (race, replay)", category:'tutorial', status:'shipped',
-    quarter:5.7, version:'4.2.25', date:'Dev Nov 2025 · prod 4.2.33 · Juin 2026',
+    quarter:5.55, version:'4.2.25', date:'Dev Nov 2025 · prod 4.2.33 · Juin 2026',
     tech:"Placeholder {max_mvt}, mvt_required=-1 (race max), spotlight overlay, replay-via-URL, invisibleMode pour nouveaux joueurs.",
     player:"Le tuto s'adapte à votre race (un Nain a 4 MVT, un HS en a 6) et peut être rejoué.",
     enables:[] },
@@ -683,7 +683,7 @@ const FEATURES = [
     enables:[] },
 
   { id:'tutorial-reload', title:"Tuto résilient au reload + nouveaux validators", category:'tutorial', status:'shipped', playerHidden:true,
-    quarter:5.8, version:'4.2.28', date:'Dev Déc 2025 · prod 4.2.33 · Juin 2026',
+    quarter:5.7, version:'4.2.28', date:'Dev Déc 2025 · prod 4.2.33 · Juin 2026',
     tech:"Reload-survivor, validation ui_element_visible, catalogue d'étapes en admin.",
     player:"Recharger la page pendant le tuto ne le casse plus. Les étapes valident vraiment ce qu'on regarde.",
     enables:[] },
@@ -713,7 +713,7 @@ const FEATURES = [
     enables:[] },
 
   /* ─────────────────────────── PLANNED (next 6-12 months) ─────────────────────────── */
-  { id:'action-v2', title:"Système d'actions v2 (correctifs)", category:'action-system', status:'planned',
+  { id:'action-v2', title:"Système d'actions v2 (correctifs)", category:'action-system', status:'progress',
     quarter:6.0, date:'2026-Q3',
     tech:"Deuxième couche sur les actions corrigeant les défauts de la v1 (retour détaillé de Gremlo après usage intensif).",
     player:"Après un an d'usage par les animateurs, on lisse les angles morts du système : composabilité, lisibilité, prévisibilité.",
@@ -849,7 +849,7 @@ const FEATURES = [
 
   /* ─────────────────────────── PLANNED — ajouts ultérieurs ─────────────────────────── */
   { id:'influence-altar', title:"Influence des altar", category:'faction-race', status:'progress',
-    quarter:5.7, date:'2026-Q2',
+    quarter:5.9, date:'2026-Q2',
     tech:"Modif classement, modif poser un altar, modif coût altar",
     player:"Poser des altars dans les plans pour augmenter l'influence d'un dieu.",
     enables:[] },
