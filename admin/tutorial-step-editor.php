@@ -21,6 +21,9 @@ $csrf = new CsrfProtectionService();
 $stepId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $isEdit = $stepId !== null;
 
+// Pre-fill the version with the tutorial selected in the step list
+$defaultVersion = trim($_GET['version'] ?? '') ?: '1.0.0';
+
 // Load existing step if editing
 $step = null;
 $stepUi = null;
@@ -199,7 +202,7 @@ ob_start();
                         <div class="form-group">
                             <label for="version">Version *</label>
                             <input type="text" class="form-control" id="version" name="version"
-                                   value="<?= $hasFormData ? htmlspecialchars($step['version']) : '1.0.0' ?>" required>
+                                   value="<?= htmlspecialchars($hasFormData ? $step['version'] : $defaultVersion) ?>" required>
                             <small class="form-text text-muted">Tutorial version (e.g., 1.0.0, 1.1.0)</small>
                         </div>
 

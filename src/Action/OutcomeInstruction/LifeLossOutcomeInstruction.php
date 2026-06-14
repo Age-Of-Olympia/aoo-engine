@@ -72,7 +72,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         // Loop target
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)) {
-                if($targetPassive->getName() === "encaisse"){
+                if($targetPassive->getName() === "encaisser"){
                     if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){
                         $encaisse = true;
                     }
