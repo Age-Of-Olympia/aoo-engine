@@ -233,6 +233,12 @@ cypress_tutorial_job:
 prepare_job:
   stage: prepare
   image: alpine:latest
+  # Release notes diff the previous tag against the current one. The project's
+  # default shallow clone (git depth 20) does not reach a previous tag that is
+  # many commits back, so `git log <prev>...<last>` errors and the notes come
+  # out empty. Force a full clone (with tags) so the range always resolves.
+  variables:
+    GIT_DEPTH: 0
   rules:
   - if: '$CI_COMMIT_TAG =~ /^v?\d+\.\d+\.\d+$/'
   script:
