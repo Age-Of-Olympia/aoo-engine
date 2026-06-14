@@ -4594,6 +4594,7 @@ CREATE TABLE `players` (
   `antiBerserkTime` int(11) NOT NULL DEFAULT 0,
   `lastTravelTime` int(11) NOT NULL DEFAULT 0,
   `bonus_points` int(11) NOT NULL DEFAULT 0,
+  `deletion_asked` datetime DEFAULT NULL,
   `email_bonus` tinyint(1) DEFAULT 0,
   `visible` varchar(255) DEFAULT NULL,
   `tutorial_session_id` varchar(36) DEFAULT NULL COMMENT 'Tutorial session UUID (for tutorial players)',

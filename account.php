@@ -1,5 +1,6 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\Service\AccountDeletionService;
 use Classes\Ui;
 use Classes\Str;
 use Classes\File;
@@ -118,16 +119,37 @@ if(!empty($_POST['option'])){
 
     $player->refresh_view();
 
+    /* Capture toggle direction BEFORE mutating the option set. */
+    $wasEnabled = (bool) $player->have_option($_POST['option']);
 
-    if($player->have_option($_POST['option'])){
-
+    if($wasEnabled){
 
         $player->end_option($_POST['option']);
+    }
+    else{
 
-        exit();
+        $player->add_option($_POST['option']);
     }
 
-    $player->add_option($_POST['option']);
+    /* deleteAccount is more than a preference: stamp the request date and
+       alert the admin team so the 7-day deletion window can be honoured. */
+    if($_POST['option'] === 'deleteAccount'){
+
+        $deletionService = new AccountDeletionService();
+
+        if($wasEnabled){
+
+            $deletionService->cancelDeletion($player->id);
+        }
+        else{
+
+            $deletionService->requestDeletion(
+                $player->id,
+                $player->data->name,
+                $player->data->plain_mail ?? null
+            );
+        }
+    }
 
     exit();
 }
