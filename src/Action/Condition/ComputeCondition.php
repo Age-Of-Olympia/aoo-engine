@@ -23,9 +23,11 @@ class ComputeCondition extends BaseCondition
     protected string $throwName = "Le tir";
     protected string $actorRollTrait;
     protected string $targetRollTrait;
+    protected ?Dice $dice = null;
 
 
-    public function __construct() {
+    public function __construct(?Dice $dice = null) {
+        $this->dice = $dice;
         array_push($this->preConditions, new DodgeCondition());
         array_push($this->preConditions, new NoBerserkCondition());
     }
@@ -99,7 +101,7 @@ class ComputeCondition extends BaseCondition
     private function computeAttack(ActorInterface $actor, ?ActorInterface $target, ConditionObject $conditionObject): ConditionResult 
     {
         $success = false;
-        $dice = new Dice(3);
+        $dice = $this->dice ?? new Dice(3);
 
         list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
         $conditionDetailsSuccess[0] = $actorTxt;

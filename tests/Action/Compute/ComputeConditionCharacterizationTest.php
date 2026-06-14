@@ -4,6 +4,9 @@ namespace Tests\Action\Compute;
 
 use App\Action\Condition\ComputeCondition;
 use App\Action\Condition\ConditionObject;
+use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
+use App\Action\MeleeAction;
+use App\Entity\ActionCondition;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Tests\Action\Mock\PlayerMock;
@@ -41,6 +44,13 @@ class TestableComputeCondition extends ComputeCondition
 #[Group('action-combat')]
 class ComputeConditionCharacterizationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        if (!defined('AUTO_FAIL')) {
+            define('AUTO_FAIL', false);
+        }
+    }
+
     private function actor(): PlayerMock
     {
         $actor = new PlayerMock(1, 'Actor');
@@ -64,14 +74,26 @@ class ComputeConditionCharacterizationTest extends TestCase
         return $conditionObject;
     }
 
-    public function testActorTotalEqualsRollWhenNoBonusOrEffect(): void
+    private function meleeAttackCondition(): ActionCondition
     {
-        $condition = new TestableComputeCondition();
-        $condition->setActorRollTrait('force');
+        $action = new MeleeAction();
+        $action->setName('attaquer');
 
-        [, $total] = $condition->exposeComputeActor($this->actor(), new ScriptedDice([[12]]), $this->actorContext());
+        $condition = new ActionCondition();
+        $condition->setConditionType('Compute');
+        $condition->setParameters(['actorRollType' => 'force', 'targetRollType' => 'force']);
+        $condition->setAction($action);
 
-        $this->assertSame(12, $total);
+        return $condition;
+    }
+
+    private function checkAttack(ScriptedDice $dice, ActionCondition $condition)
+    {
+        $compute = new ComputeCondition($dice);
+        $conditionObject = new ConditionObject();
+        $conditionObject->setAction($condition->getAction());
+
+        return $compute->check($this->actor(), $this->target(), $condition, $conditionObject);
     }
 
     public function testActorAdvantageKeepsHigherOfTwoRolls(): void
@@ -132,5 +154,37 @@ class ComputeConditionCharacterizationTest extends TestCase
         [, $total] = $condition->exposeComputeTarget($target, new ScriptedDice([[10]]), $conditionObject);
 
         $this->assertSame(5, $total);
+    }
+
+    public function testCheckSucceedsWhenActorRollBeatsTarget(): void
+    {
+        $condition = $this->meleeAttackCondition();
+
+        $result = $this->checkAttack(new ScriptedDice([[10], [5]]), $condition);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertCount(0, $condition->getAction()->getAutomaticOutcomeInstructions());
+    }
+
+    public function testCheckSucceedsWhenRollsAreTied(): void
+    {
+        $condition = $this->meleeAttackCondition();
+
+        $result = $this->checkAttack(new ScriptedDice([[7], [7]]), $condition);
+
+        $this->assertTrue($result->isSuccess());
+    }
+
+    public function testCheckFailsAndSchedulesMalusWhenActorRollLoses(): void
+    {
+        $condition = $this->meleeAttackCondition();
+
+        $result = $this->checkAttack(new ScriptedDice([[5], [10]]), $condition);
+
+        $this->assertFalse($result->isSuccess());
+
+        $scheduled = $condition->getAction()->getAutomaticOutcomeInstructions();
+        $this->assertCount(1, $scheduled);
+        $this->assertInstanceOf(MalusOutcomeInstruction::class, $scheduled->first());
     }
 }
