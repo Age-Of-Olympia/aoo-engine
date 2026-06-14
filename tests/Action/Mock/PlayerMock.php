@@ -12,6 +12,9 @@ class PlayerMock implements ActorInterface
   public $data;
   public $caracs;
 
+  /** @var array<string, int> */
+  public array $effects = [];
+
   public function __construct(
     int $id = 1,
     string $name = 'MockPlayer',
@@ -26,8 +29,14 @@ class PlayerMock implements ActorInterface
       'faction' => $faction,
       'secretFaction' => $secretFaction,
       'isInactive' => $isInactive,
+      'malus' => 0,
     ];
     $this->caracs = (object) [];
+  }
+
+  public function getEffectValue(string $name): ?int
+  {
+    return $this->effects[$name] ?? null;
   }
 
   public function getId(): int {
