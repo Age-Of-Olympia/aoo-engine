@@ -11,12 +11,19 @@ use Classes\Db;
  * `deleteAccount` row in `players_options`, which nothing ever read — the
  * request was silently dropped. This service stamps `players.deletion_asked`
  * so the admin team has a queryable backlog, and notifies them by email
- * (reusing the same native mail() pattern as ResetPasswordView).
+ * (transport delegated to MailerService).
  */
 class AccountDeletionService
 {
-    /** Recipient + sender for deletion notifications. */
+    /** Recipient of deletion notifications. */
     public const ADMIN_EMAIL = 'admin@age-of-olympia.net';
+
+    private MailerService $mailer;
+
+    public function __construct(?MailerService $mailer = null)
+    {
+        $this->mailer = $mailer ?? new MailerService();
+    }
 
     /**
      * Record a deletion request and alert the admin team.
@@ -57,10 +64,7 @@ class AccountDeletionService
             . 'Nom: ' . $playerName . "\n"
             . 'Mail: ' . ($playerMail !== null && $playerMail !== '' ? $playerMail : 'inconnu') . "\n\n"
             . "Le compte doit être supprimé sous 7 jours.";
-        $headers = 'From: ' . self::ADMIN_EMAIL . "\r\n"
-            . 'Reply-To: ' . self::ADMIN_EMAIL . "\r\n"
-            . 'X-Mailer: PHP/' . phpversion();
 
-        mail(self::ADMIN_EMAIL, $subject, $message, $headers);
+        $this->mailer->send(self::ADMIN_EMAIL, $subject, $message);
     }
 }

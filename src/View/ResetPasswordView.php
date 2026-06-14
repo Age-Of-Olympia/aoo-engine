@@ -6,6 +6,7 @@ use App\Factory\PlayerFactory;
 use Classes\Db;
 use Classes\Str;
 use App\Service\FirewallService;
+use App\Service\MailerService;
 
 class ResetPasswordView
 {
@@ -120,11 +121,8 @@ class ResetPasswordView
         $to      = $_POST['mail'];
         $subject = 'Récupération de mot de passe';
         $message = 'Copiez-coller le lien suivant dans votre navigateur pour générer un nouveau mot de passe: https://age-of-olympia.net/index.php?resetPsw&psw=' . $uniqid . '';
-        $headers = 'From: admin@age-of-olympia.net'       . "\r\n" .
-            'Reply-To: admin@age-of-olympia.net' . "\r\n" .
-            'X-Mailer: PHP/' . phpversion();
 
-        mail($to, $subject, $message, $headers);
+        (new MailerService())->send($to, $subject, $message);
 
 
         //simulate failed login to avoid spamming
