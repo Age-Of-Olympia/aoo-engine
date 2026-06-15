@@ -723,7 +723,7 @@ class ViewService {
                 AND c.plan = '" . $this->currentPlan . "'
                 AND p.id != " . $this->playerId . "
                 AND po.player_id IS NULL
-                AND p.player_type = 'real'
+                AND p.player_type IN ('real', 'npc')
                 $zCondition
             ";
             
