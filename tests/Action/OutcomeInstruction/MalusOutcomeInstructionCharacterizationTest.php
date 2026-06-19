@@ -37,24 +37,31 @@ class MalusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction->execute($actor, $target, new ConditionObject());
     }
 
-    public function testRollDifferenceIsFlooredByDivisorInMessage(): void
+    public function testRollDifferenceIsFlooredByDivisor(): void
     {
         $instruction = new MalusOutcomeInstruction();
-        $instruction->setParameters(['rollDivisor' => 3]);
 
-        $passives = new PassiveServiceStub();
+        $this->assertSame(2, $instruction->computeRollDifference(10, 4, 3));
+    }
 
-        $conditionObject = new ConditionObject();
-        $conditionObject->setActorRoll(10);
-        $conditionObject->setTargetRoll(4);
+    public function testRollDifferenceNeverGoesNegative(): void
+    {
+        $instruction = new MalusOutcomeInstruction();
 
-        $result = $instruction->execute(
-            $this->player('Actor', $passives),
-            $this->player('Target', $passives),
-            $conditionObject
-        );
+        $this->assertSame(0, $instruction->computeRollDifference(2, 10, 3));
+    }
 
-        $messages = $result->getOutcomeSuccessMessages();
-        $this->assertStringContainsString('+ 2 (Jet)', $messages[0]);
+    public function testMalusTotalSumsBaseAndDifference(): void
+    {
+        $instruction = new MalusOutcomeInstruction();
+
+        $this->assertSame(4, $instruction->computeMalusTotal(2, 2, false));
+    }
+
+    public function testInepuisablePassiveReducesMalusByOne(): void
+    {
+        $instruction = new MalusOutcomeInstruction();
+
+        $this->assertSame(1, $instruction->computeMalusTotal(2, 0, true));
     }
 }
