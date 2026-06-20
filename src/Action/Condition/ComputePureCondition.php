@@ -5,6 +5,7 @@ use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Combat\CombatResolver;
 use Classes\Dice;
 use Classes\View;
 
@@ -14,9 +15,11 @@ class ComputePureCondition extends BaseCondition
     protected string $throwName = "Le tir";
     protected string $actorRollTrait;
     protected string $targetRollTrait;
+    protected ?Dice $dice = null;
 
 
-    public function __construct() {
+    public function __construct(?Dice $dice = null) {
+        $this->dice = $dice;
         array_push($this->preConditions, new DodgeCondition());
         array_push($this->preConditions, new NoBerserkCondition());
     }
@@ -86,7 +89,7 @@ class ComputePureCondition extends BaseCondition
     private function computeAttack(ActorInterface $actor, ?ActorInterface $target, ConditionObject $conditionObject): ConditionResult 
     {
         $success = false;
-        $dice = new Dice(3);
+        $dice = $this->dice ?? new Dice(3);
 
         list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
         $conditionDetailsSuccess[0] = $actorTxt;
@@ -117,19 +120,11 @@ class ComputePureCondition extends BaseCondition
     {
         $actorRollBonus = $conditionObject->getActorRollBonus();
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
-        $actorRoll = $dice->roll($actorRollTraitValue);
-        if($conditionObject->getActorAdvantage() && $conditionObject->getActorDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getActorAdvantage() || $conditionObject->getActorDisadvantage()){
-            $actorRoll2 = $dice->roll($actorRollTraitValue);
-            if($conditionObject->getActorAdvantage()){
-                $actorRoll = max($actorRoll,$actorRoll2);
-            }   
-            else{
-                $actorRoll = min($actorRoll,$actorRoll2);
-            }
-        }
+        $actorRoll = (new CombatResolver($dice))->roll(
+            (int) $actorRollTraitValue,
+            (bool) $conditionObject->getActorAdvantage(),
+            (bool) $conditionObject->getActorDisadvantage()
+        );
         $bonus = $conditionObject->getActorRollBonus();
         $tooltipOtherTxt = !empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '';
         $actorTotal = array_sum($actorRoll) + $bonus;
@@ -156,19 +151,11 @@ class ComputePureCondition extends BaseCondition
             return array(0, 0, "Impossible de calculer, erreur de paramétrage.");
         }
         
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
-            $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
-            }   
-            else{
-                $targetRoll = min($targetRoll,$targetRoll2);
-            }
-        }
+        $targetRoll = (new CombatResolver($dice))->roll(
+            (int) $targetRollTraitValue,
+            (bool) $conditionObject->getTargetAdvantage(),
+            (bool) $conditionObject->getTargetDisadvantage()
+        );
         $bonus = $conditionObject->getTargetRollBonus();
         $targetTotal = array_sum($targetRoll) + $bonus;
         $tooltipOtherTxt = !empty($bonus) ? 'Bonus de compétence : ' . $conditionObject->getTargetRollBonus() . ' ' : '';
