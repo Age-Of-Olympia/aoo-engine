@@ -22,6 +22,11 @@ $actions = $catalogService->listActions();
 $id = (int) ($_GET['id'] ?? ($_POST['id'] ?? 0));
 $action = $id ? $catalogService->getActionById($id) : ($actions[0] ?? null);
 
+// Active tab persists in the URL (?tab=) so a refresh stays put; a simulate POST opens on the results.
+$activeTab = in_array($_GET['tab'] ?? null, ['config', 'sim'], true)
+    ? $_GET['tab']
+    : ($_SERVER['REQUEST_METHOD'] === 'POST' ? 'sim' : 'config');
+
 $renderer = new ParameterFieldRenderer();
 $schemaCatalog = new ActionSchemaCatalog();
 $instructionService = new OutcomeInstructionService();
@@ -31,7 +36,7 @@ $csrf = new CsrfProtectionService();
 ob_start();
 foreach ($actions as $item) {
     $active = ($action && $item->getId() === $action->getId()) ? ' wb-item--active' : '';
-    echo '<a class="wb-item' . $active . '" href="/admin/action-workbench.php?id=' . (int) $item->getId() . '"'
+    echo '<a class="wb-item' . $active . '" href="/admin/action-workbench.php?id=' . (int) $item->getId() . '&tab=' . $activeTab . '"'
         . ' data-search="' . $esc(strtolower($item->getName() . ' ' . $item->getDisplayName() . ' ' . $typeOf($item) . ' ' . $item->getCategory())) . '">'
         . '<span class="wb-item-name">' . $esc($item->getDisplayName()) . '</span>'
         . '<span class="wb-item-meta">' . $esc($typeOf($item)) . ' · niv.' . $esc($item->getLevel())
@@ -135,7 +140,6 @@ if ($action === null) {
 $simHtml = ob_get_clean();
 
 /* ---------- Assemble the single-screen layout ---------- */
-$activeTab = ($_SERVER['REQUEST_METHOD'] === 'POST') ? 'sim' : 'config';
 ob_start();
 ?>
 <style>
@@ -266,6 +270,10 @@ ob_start();
             var tab = btn.getAttribute('data-tab');
             document.querySelectorAll('.wb-tab-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
             document.querySelectorAll('.wb-tab').forEach(function (p) { p.hidden = p.getAttribute('data-tab') !== tab; });
+            /* Keep the tab in the URL so a refresh stays on it. */
+            var url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
         });
     });
 </script>
