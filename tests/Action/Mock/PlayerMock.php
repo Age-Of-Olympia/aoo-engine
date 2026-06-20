@@ -11,6 +11,11 @@ class PlayerMock implements ActorInterface
   public $id;
   public $data;
   public $caracs;
+  public $coords;
+  public $playerPassiveService;
+
+  /** @var array<string, int> */
+  public array $effects = [];
 
   public function __construct(
     int $id = 1,
@@ -26,8 +31,17 @@ class PlayerMock implements ActorInterface
       'faction' => $faction,
       'secretFaction' => $secretFaction,
       'isInactive' => $isInactive,
+      'malus' => 0,
+      'antiBerserkTime' => 0,
     ];
     $this->caracs = (object) [];
+    $this->coords = (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'test_plan'];
+    $this->playerPassiveService = new PassiveServiceStub();
+  }
+
+  public function getEffectValue(string $name): ?int
+  {
+    return $this->effects[$name] ?? null;
   }
 
   public function getId(): int {
@@ -66,12 +80,7 @@ class PlayerMock implements ActorInterface
 
   public function getCoords(bool $refresh = true): object
   {
-    return (object) [
-      'x' => 0,
-      'y' => 0,
-      'z' => 0,
-      'plan' => 'test_plan'
-    ];
+    return $this->coords;
   }
 
   public function getRemaining(string $trait): int
