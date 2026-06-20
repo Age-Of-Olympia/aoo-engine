@@ -48,6 +48,10 @@ class PlayerMock implements ActorInterface
     return $this->id;
   }
 
+  public function isSimulated(): bool {
+    return false;
+  }
+
   // Méthodes requises par ActorInterface
   public function have_effect(string $name): int
   {

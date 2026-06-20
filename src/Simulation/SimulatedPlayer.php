@@ -57,6 +57,11 @@ class SimulatedPlayer extends Player
         $this->playerPassiveService = new SimulatedPassiveService($passives, $this);
     }
 
+    public function isSimulated(): bool
+    {
+        return true;
+    }
+
     /* --- reads overridden to use injected state instead of the DB --- */
 
     public function getCoords(bool $refresh = true): object

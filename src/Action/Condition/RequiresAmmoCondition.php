@@ -86,22 +86,26 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
             if($actor->emplacements->main1->data->subtype == 'jet'){
                 $distance = View::get_distance($actor->getCoords(), $target->getCoords());
                 if($distance > 2){
-                    $dropCoords = clone $target->coords;
-                    $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
-                    $values = array(
-                    'item_id'=>$actor->emplacements->main1->id,
-                    'coords_id'=>$coordsId,
-                    'n'=>1
-                    );
-        
-                    $db = new Db();
-                    $db->insert('map_items', $values);
-        
-                    $actor->emplacements->main1->add_item($actor, -1);
-            
+                    // A simulation must not drop the weapon onto the real map; still report the loss.
+                    if (!$actor->isSimulated()) {
+                        $dropCoords = clone $target->coords;
+                        $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
+                        $values = array(
+                        'item_id'=>$actor->emplacements->main1->id,
+                        'coords_id'=>$coordsId,
+                        'n'=>1
+                        );
+
+                        $db = new Db();
+                        $db->insert('map_items', $values);
+
+                        $actor->emplacements->main1->add_item($actor, -1);
+
+                        View::refresh_players_svg($dropCoords);
+                        $conditionToPay->getAction()->setRefreshScreen(true);
+                    }
+
                     $text = 'Vous perdez '. $actor->emplacements->main1->data->name .'.';
-                    View::refresh_players_svg($dropCoords);
-                    $conditionToPay->getAction()->setRefreshScreen(true);
                     array_push($result, $text);
                 } else {
                     $text = 'Vous gardez '. $actor->emplacements->main1->data->name .'.';

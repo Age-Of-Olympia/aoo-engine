@@ -64,9 +64,8 @@ class ActionExecutorService
                 $this->playerService->updateLastActionTime();
             }
 
-            // 3) apply costs — skipped in simulation: some costs persist world state
-            // (e.g. a thrown weapon dropping onto the map) which a preview must not do.
-            $costsResultsArray = $this->simulationMode ? array() : $this->applyCosts();
+            // 3) apply costs
+            $costsResultsArray = $this->applyCosts();
 
             // 4) calculate XP
             $xpResultsArray = $this->action->calculateXp($this->globalConditionsResult, $this->actor, $this->target);

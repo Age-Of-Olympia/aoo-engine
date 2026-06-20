@@ -17,6 +17,8 @@ use Throwable;
 
 class Player implements ActorInterface {
 
+    public function isSimulated(): bool { return false; }
+
     public $id;
     public object $data;
     public $caracs;

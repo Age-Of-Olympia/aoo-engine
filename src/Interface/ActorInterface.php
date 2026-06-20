@@ -8,6 +8,7 @@ use Classes\Item;
 interface ActorInterface
 {
   public function getId(): int;
+  public function isSimulated(): bool;
   public function have_effect(string $name): int;
   public function add_effect($name, $duration=0): void;
   public function end_effect(string $name): void;
