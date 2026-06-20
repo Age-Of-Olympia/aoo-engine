@@ -4,12 +4,24 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class MalusOutcomeInstruction extends OutcomeInstruction
+class MalusOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('rollDivisor', FieldType::INT, 'Diviseur du jet', default: 1),
+            new ParameterField('to', FieldType::ENUM, 'Appliquer à', default: 'target', options: ['actor' => 'Acteur', 'target' => 'Cible']),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         $baseRoll = random_int(1, 3);

@@ -4,12 +4,30 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class ManaLossOutcomeInstruction extends OutcomeInstruction
+class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('lossType', FieldType::ENUM, 'Type de perte', default: 'fixed', options: [
+                'carac' => 'Depuis un trait',
+                'fixed' => 'Montant fixe',
+                'lifeloss' => 'Depuis les dégâts',
+                'difference' => 'Différence de jet',
+            ]),
+            new ParameterField('value', FieldType::TRAIT_OR_INT, 'Valeur / trait', default: 0, help: 'Trait si lossType=carac, entier si fixed'),
+            new ParameterField('typeDivisor', FieldType::INT, 'Diviseur', default: 1),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         // e.g. { "lossType": "carac", "value":"m", "typeDivisor":2 }

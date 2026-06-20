@@ -26,4 +26,21 @@ class OutcomeInstructionFactory
         return self::$OutcomeInstructionClasses;
     }
 
+    /**
+     * Maps each STI discriminator key to its fully-qualified class, matching
+     * the derivation in OutcomeInstructionMetadataListener.
+     *
+     * @return array<string, class-string>
+     */
+    public static function typeMap(): array
+    {
+        $map = [];
+        foreach (glob(__DIR__ . '/*OutcomeInstruction.php') as $file) {
+            $className = basename($file, '.php');
+            $map[strtolower(substr($className, 0, -18))] = "App\\Action\\OutcomeInstruction\\$className";
+        }
+
+        return $map;
+    }
+
 }

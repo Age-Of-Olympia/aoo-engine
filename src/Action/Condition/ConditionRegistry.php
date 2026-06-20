@@ -48,4 +48,12 @@ class ConditionRegistry
     {
         return $this->conditions[$type] ?? null;
     }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getTypes(): array
+    {
+        return array_keys($this->conditions);
+    }
 }

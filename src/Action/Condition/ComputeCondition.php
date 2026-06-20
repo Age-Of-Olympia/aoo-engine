@@ -7,6 +7,10 @@ use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Classes\Dice;
 use Classes\View;
 
@@ -18,7 +22,7 @@ enum Roll: string
     case cc_agi = "cc_agi";
 }
 
-class ComputeCondition extends BaseCondition
+class ComputeCondition extends BaseCondition implements HasParameterSchema
 {
     protected int $distance;
     protected string $throwName = "Le tir";
@@ -31,6 +35,20 @@ class ComputeCondition extends BaseCondition
         $this->dice = $dice;
         array_push($this->preConditions, new DodgeCondition());
         array_push($this->preConditions, new NoBerserkCondition());
+    }
+
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('actorRollType', FieldType::TRAIT, "Trait du jet de l'acteur", required: true),
+            new ParameterField('targetRollType', FieldType::TRAIT_OR_INT, 'Trait du jet de la cible', required: true),
+            new ParameterField('actorRollBonus', FieldType::INT, 'Bonus au jet acteur', default: 0),
+            new ParameterField('targetRollBonus', FieldType::INT, 'Bonus au jet cible', default: 0),
+            new ParameterField('actorAdvantage', FieldType::BOOL, 'Avantage acteur', default: false),
+            new ParameterField('targetAdvantage', FieldType::BOOL, 'Avantage cible', default: false),
+            new ParameterField('actorDisadvantage', FieldType::BOOL, 'Désavantage acteur', default: false),
+            new ParameterField('targetDisadvantage', FieldType::BOOL, 'Désavantage cible', default: false),
+        );
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
