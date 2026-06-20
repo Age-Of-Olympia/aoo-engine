@@ -2,6 +2,8 @@
 
 namespace App\Action\OutcomeInstruction;
 
+use App\Action\Combat\DamageCalculator;
+use App\Action\Combat\DamageModifiers;
 use App\Action\Condition\ConditionObject;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
@@ -92,7 +94,16 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             
             $baseDamages = $actorDamages - $targetDefense;
         
-            $additionalDamages = ($bonusDamages + $othersDamages + $actorEffetAgressivite - $actorEffetFaiblesse) - ($bonusDefense + $othersDefense + $targetEffetArmure - $targetEffetFragilite);
+            $additionalDamages = (new DamageCalculator())->additionalDamages(new DamageModifiers(
+                bonusDamages: (int) $bonusDamages,
+                othersDamages: (int) $othersDamages,
+                agressivite: (int) $actorEffetAgressivite,
+                faiblesse: (int) $actorEffetFaiblesse,
+                bonusDefense: (int) $bonusDefense,
+                othersDefense: (int) $othersDefense,
+                armure: (int) $targetEffetArmure,
+                fragilite: (int) $targetEffetFragilite,
+            ));
 
             //minimum damages seulement si l'adversaire à une defense bonus
             if($bonusDefense > 0){
