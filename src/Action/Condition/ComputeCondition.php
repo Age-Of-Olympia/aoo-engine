@@ -6,6 +6,7 @@ use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Combat\CombatResolver;
 use Classes\Dice;
 use Classes\View;
 
@@ -131,19 +132,11 @@ class ComputeCondition extends BaseCondition
     {
         $actorRollBonus = $conditionObject->getActorRollBonus();
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
-        $actorRoll = $dice->roll($actorRollTraitValue);
-        if($conditionObject->getActorAdvantage() && $conditionObject->getActorDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getActorAdvantage() || $conditionObject->getActorDisadvantage()){
-            $actorRoll2 = $dice->roll($actorRollTraitValue);
-            if($conditionObject->getActorAdvantage()){
-                $actorRoll = max($actorRoll,$actorRoll2);
-            }   
-            else{
-                $actorRoll = min($actorRoll,$actorRoll2);
-            }
-        }
+        $actorRoll = (new CombatResolver($dice))->roll(
+            (int) $actorRollTraitValue,
+            (bool) $conditionObject->getActorAdvantage(),
+            (bool) $conditionObject->getActorDisadvantage()
+        );
         $actorEffetMaladresse = $actor->getEffectValue("maladresse");
         $actorEffetDexterite = $actor->getEffectValue("dexterite");
         $effetMaladresse = !empty($actorEffetMaladresse) ? $actorEffetMaladresse : 0;
@@ -183,19 +176,11 @@ class ComputeCondition extends BaseCondition
             return array(0, 0, "Impossible de calculer, erreur de paramétrage.");
         }
         
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
-            $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
-            }   
-            else{
-                $targetRoll = min($targetRoll,$targetRoll2);
-            }
-        }
+        $targetRoll = (new CombatResolver($dice))->roll(
+            (int) $targetRollTraitValue,
+            (bool) $conditionObject->getTargetAdvantage(),
+            (bool) $conditionObject->getTargetDisadvantage()
+        );
         $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
         $targetEffetProtection = $target->getEffectValue("protection");
         $effetVulnerabilite = !empty($targetEffetVulnerabilite) ? $targetEffetVulnerabilite : 0;
