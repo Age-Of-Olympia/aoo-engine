@@ -34,7 +34,7 @@ class OutcomeInstructionService
 
     public function getOutcomeInstructionsByOutcome(int $outcomeId): array
     {
-        $instructionTypes = OutcomeInstructionFactory::initialize("src/Action/OutcomeInstruction");
+        $instructionTypes = OutcomeInstructionFactory::initialize(__DIR__ . '/../Action/OutcomeInstruction');
 
         $outcomeInstructions = array();
         foreach ($instructionTypes as $type) {
