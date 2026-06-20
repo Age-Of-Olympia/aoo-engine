@@ -160,10 +160,16 @@ ob_start();
     .wb-section-title { text-transform: uppercase; letter-spacing: .05em; font-size: 11px; font-weight: 700; color: #8a97a3; margin: 14px 0 6px; }
     .wb-block { border: 1px solid #e7ebee; border-radius: 7px; margin-bottom: 8px; }
     .wb-block-head { background: #f7f9fb; padding: 7px 10px; border-bottom: 1px solid #e7ebee; font-weight: 600; font-size: 13px; border-radius: 7px 7px 0 0; }
-    .wb-block-body { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
-    .wb-block-body .form-group { margin-bottom: 0; }
-    .wb-block-body label { font-size: 12px; margin-bottom: 2px; color: #5d6d7e; }
-    .wb-block-body .form-control { padding: 5px 8px; font-size: 13px; }
+    .wb-block-body { padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
+
+    /* Compact single-line fields (label + control on one row) everywhere. */
+    .wb .form-group { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .wb .form-group > label { margin: 0; font-size: 12px; color: #5d6d7e; white-space: nowrap; flex: 0 0 auto; }
+    .wb .form-group > .form-control { flex: 1 1 auto; min-width: 0; padding: 3px 7px; font-size: 13px; height: 28px; }
+    .wb .form-group > input[type="number"] { flex: 0 0 72px; }
+    .wb .form-group > select.form-control { height: 28px; }
+    .wb select[multiple].form-control { height: 58px; flex: 1 1 auto; }
+    .wb .form-check { margin: 0 0 4px; }
     .wb-inst-name { grid-column: 1 / -1; font-weight: 600; font-size: 12px; color: #4a90e2; margin-top: 2px; }
     .wb-raw { grid-column: 1 / -1; font-size: 12px; color: #8a97a3; }
     .wb-raw code { word-break: break-all; }
@@ -172,11 +178,21 @@ ob_start();
 
     /* compact the embedded simulate form */
     .wb-col-sim form.card { max-width: none !important; box-shadow: none; border: 0; margin: 0; padding: 0; }
-    .wb-col-sim .card-header { background: transparent; border: 0; margin: 0 0 6px; padding: 0; }
-    .wb-col-sim h1 { font-size: 1.1em; margin: 0 0 8px; }
-    .wb-col-sim .form-group { margin-bottom: 7px; }
-    .wb-col-sim .form-control { padding: 5px 8px; font-size: 13px; }
-    .wb-col-sim .card.mt-3 { max-width: none !important; }
+    .wb-col-sim .card-header { background: transparent; border: 0; margin: 0 0 4px; padding: 0; }
+    .wb-col-sim h1 { font-size: 1.05em; margin: 0 0 4px; }
+    .wb-col-sim p.text-muted { font-size: 11px; margin: 0 0 6px; }
+    .wb-col-sim hr { margin: 7px 0; }
+    .wb-col-sim .card.mt-3 { max-width: none !important; margin-top: 8px; }
+    .wb-col-sim .effect-row { margin-bottom: 3px !important; }
+    /* Acteur / Cible groups side by side; shared (distance), runs and the button span full width. */
+    .wb-col-sim .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; align-items: start; }
+    .wb-col-sim .card-body > .form-group,
+    .wb-col-sim .card-body > button { grid-column: 1 / -1; }
+    .wb-col-sim .sim-group { grid-column: span 1; min-width: 0; border: 1px solid #e7ebee; border-radius: 6px; padding: 4px 8px 6px; margin: 0; }
+    .wb-col-sim .sim-group > legend { width: auto; border: 0; margin: 0; padding: 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8a97a3; }
+    .wb-col-sim .sim-fields { display: flex; flex-direction: column; gap: 2px; }
+    .wb-col-sim .sim-group > .form-group { margin-top: 4px; }
+    .wb-col-sim .sim-group > .form-group > label { font-size: 11px; }
 </style>
 
 <div class="wb">
