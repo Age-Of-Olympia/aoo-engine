@@ -15,10 +15,10 @@ class ForbidIfHasEffectCondition extends BaseCondition implements HasParameterSc
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('actorEffect', FieldType::STRING, "Effet interdit sur l'acteur"),
-            new ParameterField('targetEffect', FieldType::STRING, 'Effet interdit sur la cible'),
-            new ParameterField('actorEffects', FieldType::LIST, "Effets interdits (acteur)"),
-            new ParameterField('targetEffects', FieldType::LIST, 'Effets interdits (cible)'),
+            new ParameterField('actorEffect', FieldType::EFFECT, "Effet interdit sur l'acteur"),
+            new ParameterField('targetEffect', FieldType::EFFECT, 'Effet interdit sur la cible'),
+            new ParameterField('actorEffects', FieldType::EFFECT, "Effets interdits (acteur)", multiple: true),
+            new ParameterField('targetEffects', FieldType::EFFECT, 'Effets interdits (cible)', multiple: true),
         );
     }
 

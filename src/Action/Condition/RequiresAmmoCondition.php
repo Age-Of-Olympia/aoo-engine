@@ -4,12 +4,24 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Classes\Db;
 use Classes\Item;
 use Classes\View;
 
-class RequiresAmmoCondition extends BaseCondition
+class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('itemId', FieldType::INT, 'Identifiant de la munition', help: "Laisser vide pour utiliser la munition de l'arme équipée."),
+            new ParameterField('itemQuantity', FieldType::INT, 'Quantité consommée', default: 1),
+        );
+    }
+
     public bool $toRemove;
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

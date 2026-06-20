@@ -11,14 +11,23 @@ use App\Action\Schema\ParameterSchema;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema
+class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
 {
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('type', FieldType::LIST, "Types d'arme", help: 'ex: melee, tir, jet, bouclier'),
-            new ParameterField('location', FieldType::LIST, 'Emplacements', help: 'ex: main1'),
+            new ParameterField('type', FieldType::WEAPON_TYPE, "Types d'arme", multiple: true),
+            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true),
         );
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        $types = (array) ($params['type'] ?? []);
+        $label = 'Arme acteur' . ($types ? ' (' . implode('/', $types) . ')' : '');
+        $default = $types[0] ?? null;
+
+        return [new \App\Action\Schema\SimulationField('weapon', 'actor', 'weapon', $label, $default)];
     }
 
     private ?string $errorMessage = null;

@@ -4,9 +4,20 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 
-class OptionCondition extends BaseCondition
+class OptionCondition extends BaseCondition implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('option', FieldType::STRING, 'Option du personnage cible', help: "Option qui, si activée sur la cible, bloque l'action."),
+        );
+    }
+
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());

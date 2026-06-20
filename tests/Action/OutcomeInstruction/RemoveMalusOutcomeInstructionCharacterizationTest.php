@@ -41,10 +41,24 @@ class RemoveMalusOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertSame(0, $instruction->computeMalusToRemove(0, false, 0.0, 1));
     }
 
-    public function testRemovalAlwaysTargetsTargetEvenWhenConfiguredForActor(): void
+    public function testRemovalTargetsTheConfiguredSubject(): void
     {
         $instruction = new RemoveMalusOutcomeInstruction();
         $instruction->setParameters(['fixedMalus' => 3, 'to' => 'actor']);
+
+        $actor = $this->player('Actor');
+        $target = $this->player('Target');
+
+        $actor->expects($this->once())->method('put_malus')->with(-3);
+        $target->expects($this->never())->method('put_malus');
+
+        $instruction->execute($actor, $target, new ConditionObject());
+    }
+
+    public function testRemovalDefaultsToTheTarget(): void
+    {
+        $instruction = new RemoveMalusOutcomeInstruction();
+        $instruction->setParameters(['fixedMalus' => 3]);
 
         $actor = $this->player('Actor');
         $target = $this->player('Target');

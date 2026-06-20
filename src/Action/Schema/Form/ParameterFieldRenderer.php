@@ -3,13 +3,27 @@
 namespace App\Action\Schema\Form;
 
 use App\Action\Schema\FieldType;
+use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\ParameterField;
 
 final class ParameterFieldRenderer
 {
+    private OptionCatalog $catalog;
+
+    public function __construct(?OptionCatalog $catalog = null)
+    {
+        $this->catalog = $catalog ?? new OptionCatalog();
+    }
+
     public function render(ParameterField $field, string $name, mixed $value = null): string
     {
         $value ??= $field->default;
+
+        if ($field->type->isCatalog()) {
+            $control = $this->catalogSelect($name, $this->catalog->optionsFor($field->type), $value, $field->multiple);
+
+            return $this->wrap($field, $control);
+        }
 
         $control = match ($field->type) {
             FieldType::BOOL => $this->checkbox($name, (bool) $value),
@@ -19,9 +33,33 @@ final class ParameterFieldRenderer
             FieldType::TRAIT => $this->select($name, $this->traitOptions(), $value),
             FieldType::TRAIT_OR_INT => $this->input($name, 'text', $value, 'caracs-options'),
             FieldType::LIST => $this->listInput($name, $value),
+            default => $this->input($name, 'text', $value),
         };
 
         return $this->wrap($field, $control);
+    }
+
+    /**
+     * Select backed by an OptionCatalog. Multiple → a <select multiple> posting
+     * an array; single → a <select> with a blank first option.
+     *
+     * @param array<string, string> $options
+     */
+    private function catalogSelect(string $name, array $options, mixed $value, bool $multiple): string
+    {
+        if ($multiple) {
+            $selected = is_array($value) ? array_map('strval', $value) : [];
+            $html = '<select class="form-control" name="' . $this->escape($name) . '[]" multiple>';
+            foreach ($options as $optionValue => $optionLabel) {
+                $isSelected = in_array((string) $optionValue, $selected, true) ? ' selected' : '';
+                $html .= '<option value="' . $this->escape((string) $optionValue) . '"' . $isSelected . '>'
+                    . $this->escape($optionLabel) . '</option>';
+            }
+
+            return $html . '</select>';
+        }
+
+        return $this->select($name, ['' => '—'] + $options, $value);
     }
 
     /**

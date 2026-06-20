@@ -4,18 +4,34 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
-class DamageObjectOutcomeInstruction extends OutcomeInstruction
+class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('player', FieldType::ENUM, 'Casser l\'objet de', default: 'BOTH', options: [
+                'ACTOR' => 'Acteur',
+                'TARGET' => 'Cible',
+                'BOTH' => 'Les deux',
+            ]),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $result = new OutcomeResult(false);
         $outcomeSuccessMessages = array();
         $outcomeSuccessMessages[0] = null;
+        $params = $this->getParameters() ?? [];
         $player = $params['player'] ?? 'BOTH';
         switch ($player) {
             case 'ACTOR':

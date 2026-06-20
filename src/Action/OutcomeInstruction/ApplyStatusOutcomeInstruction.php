@@ -4,13 +4,31 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 use Classes\Str;
 
 #[ORM\Entity]
-class ApplyStatusOutcomeInstruction extends OutcomeInstruction
+class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('duration', FieldType::INT, 'Durée (secondes)', default: 1, help: '1 = jusqu\'au prochain tour'),
+            new ParameterField('player', FieldType::ENUM, 'Appliquer à', default: 'both', options: [
+                'actor' => 'Acteur',
+                'target' => 'Cible',
+                'both' => 'Les deux',
+            ]),
+            new ParameterField('value', FieldType::TRAIT_OR_INT, 'Valeur', default: 1),
+            new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $params =$this->getParameters();
         // e.g. { "adrenaline": true, "duration": 86400 }

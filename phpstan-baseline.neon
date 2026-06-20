@@ -337,12 +337,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
-			message: '#^Variable \$params on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$caracs\.$#'
 			identifier: property.notFound
 			count: 2
@@ -373,12 +367,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/ObjectOutcomeInstruction.php
 
 		-
-			message: '#^Variable \$param on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
-
-		-
 			message: '#^Variable \$rand might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
@@ -393,7 +381,7 @@ parameters:
 		-
 			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions in isset\(\) is not nullable nor uninitialized\.$#'
 			identifier: isset.initializedProperty
-			count: 2
+			count: 3
 			path: src/Entity/Action.php
 
 		-

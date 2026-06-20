@@ -83,7 +83,8 @@ class ActionSchemaCatalogTest extends TestCase
         $this->assertSame(FieldType::INT, $distance->field('max')->type);
 
         $weapon = $this->catalog->schemaForCondition('RequiresWeaponType');
-        $this->assertSame(FieldType::LIST, $weapon->field('type')->type);
+        $this->assertSame(FieldType::WEAPON_TYPE, $weapon->field('type')->type);
+        $this->assertTrue($weapon->field('type')->multiple);
 
         // ComputePure reuses the Compute schema
         $this->assertNotNull($this->catalog->schemaForCondition('ComputePure')->field('actorRollType'));
@@ -91,7 +92,8 @@ class ActionSchemaCatalogTest extends TestCase
 
     public function testTypesWithoutASchemaFallBackToEmpty(): void
     {
-        $this->assertTrue($this->catalog->schemaForCondition('Plan')->isEmpty());
+        // Parameterless types declare an empty schema; unknown types fall back to one.
+        $this->assertTrue($this->catalog->schemaForCondition('NoBerserk')->isEmpty());
         $this->assertTrue($this->catalog->schemaForOutcomeInstruction('resource')->isEmpty());
         $this->assertTrue($this->catalog->schemaForOutcomeInstruction('unknownType')->isEmpty());
     }

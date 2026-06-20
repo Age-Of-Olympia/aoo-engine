@@ -3,12 +3,20 @@
 namespace App\Service\Action;
 
 use App\Action\Schema\FieldType;
+use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use InvalidArgumentException;
 
 final class ActionParameterValidator
 {
+    private OptionCatalog $catalog;
+
+    public function __construct(?OptionCatalog $catalog = null)
+    {
+        $this->catalog = $catalog ?? new OptionCatalog();
+    }
+
     /**
      * Coerce and validate a posted parameter array against a schema, returning
      * a clean typed array (only declared keys, defaults applied).
@@ -32,6 +40,10 @@ final class ActionParameterValidator
             return (bool) $raw;
         }
 
+        if ($field->type->isCatalog()) {
+            return $this->catalogValue($field, $raw);
+        }
+
         if ($raw === null || $raw === '') {
             if ($field->required) {
                 throw new InvalidArgumentException("Le champ « {$field->label} » est requis.");
@@ -47,7 +59,48 @@ final class ActionParameterValidator
             FieldType::TRAIT => $this->traitValue($field, (string) $raw),
             FieldType::TRAIT_OR_INT => $this->traitOrIntValue($field, (string) $raw),
             FieldType::LIST => $this->listValue($raw),
+            default => (string) $raw,
         };
+    }
+
+    /**
+     * Validate a catalog-backed field's value(s) against the real option set.
+     * Multiple → a clean list of valid values; single → one valid value (or the
+     * default when blank).
+     *
+     * @return string|array<int, string>|null
+     */
+    private function catalogValue(ParameterField $field, mixed $raw): string|array|null
+    {
+        $options = $this->catalog->optionsFor($field->type);
+
+        if ($field->multiple) {
+            $values = $this->listValue($raw);
+            foreach ($values as $value) {
+                if (!array_key_exists($value, $options)) {
+                    throw new InvalidArgumentException("Valeur invalide pour « {$field->label} » : {$value}.");
+                }
+            }
+            if ($values === [] && $field->required) {
+                throw new InvalidArgumentException("Le champ « {$field->label} » est requis.");
+            }
+
+            return $values;
+        }
+
+        $value = is_array($raw) ? '' : trim((string) ($raw ?? ''));
+        if ($value === '') {
+            if ($field->required) {
+                throw new InvalidArgumentException("Le champ « {$field->label} » est requis.");
+            }
+
+            return $field->default;
+        }
+        if (!array_key_exists($value, $options)) {
+            throw new InvalidArgumentException("Valeur invalide pour « {$field->label} » : {$value}.");
+        }
+
+        return $value;
     }
 
     private function enumValue(ParameterField $field, string $value): string
