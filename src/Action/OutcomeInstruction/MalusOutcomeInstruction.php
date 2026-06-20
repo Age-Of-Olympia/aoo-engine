@@ -11,37 +11,47 @@ use Classes\Player;
 class MalusOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
-        
-        $malus = random_int(1,3);
+
+        $baseRoll = random_int(1, 3);
         $params = $this->getParameters();
 
-        if(!empty($this->getParameters()['rollDivisor'])){
-            $difference = max(0,floor(($conditionObject->getActorRoll() - $conditionObject->getTargetRoll())/$params['rollDivisor']));
-            $malusText = $malus . ' + ' . $difference . ' (Jet)';
+        $difference = 0;
+        $malusText = null;
+        if (!empty($params['rollDivisor'])) {
+            $difference = $this->computeRollDifference(
+                (int) $conditionObject->getActorRoll(),
+                (int) $conditionObject->getTargetRoll(),
+                (int) $params['rollDivisor']
+            );
+            $malusText = $baseRoll . ' + ' . $difference . ' (Jet)';
         }
-
-        $malusTot = (isset($difference)) ? $malus+$difference : $malus;
 
         $to = $param["to"] ?? "target";
 
-        if ($to == "target") {
-            if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
-                $malusTot--;
-            }
-            $target->put_malus($malusTot);
-        } else if ($to == "actor") {
-            if($actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(),"inepuisable")){
-                $malusTot--;
-            }
-            $actor->put_malus($malusTot);
+        $malusTot = $this->computeMalusTotal($baseRoll, $difference, false);
+        $subject = $this->resolveSubject($to, $actor, $target);
+        if ($subject !== null) {
+            $inepuisable = $subject->playerPassiveService->hasPassiveByPlayerIdByName($subject->getId(), "inepuisable");
+            $malusTot = $this->computeMalusTotal($baseRoll, $difference, $inepuisable);
+            $subject->put_malus($malusTot);
         }
 
-        $malusTotalTxt = isset($malusText) ? $malusText . ' = ' . $malusTot : $malus;
+        $malusTotalTxt = $malusText !== null ? $malusText . ' = ' . $malusTot : $baseRoll;
         $outcomeMalusMessages = array();
         $outcomeMalusMessages[0] = 'Votre action inflige '. $malusTotalTxt .' malus à ' . $target->data->name . '.';
 
         return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
     }
 
+    public function computeRollDifference(int $actorRoll, int $targetRoll, int $divisor): int
+    {
+        return max(0, (int) floor(($actorRoll - $targetRoll) / $divisor));
+    }
 
+    public function computeMalusTotal(int $baseRoll, int $difference, bool $inepuisable): int
+    {
+        $total = $baseRoll + $difference;
+
+        return $inepuisable ? $total - 1 : $total;
+    }
 }

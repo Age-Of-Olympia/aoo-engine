@@ -11,32 +11,37 @@ use Classes\Player;
 class RemoveMalusOutcomeInstruction extends OutcomeInstruction
 {
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
-        
-        $malus = 0;
+
         $params = $this->getParameters();
         $actorCarac = $params['actorCarac'] ?? 0;
-        $divisor =  $params['caracDivisor'] ?? 1;
+        $divisor = (int) ($params['caracDivisor'] ?? 1);
+        $hasCarac = !empty($actorCarac);
+
+        $caracValue = $hasCarac ? (float) $actor->caracs->{$actorCarac} : 0.0;
+        $malus = $this->computeMalusToRemove((int) ($params['fixedMalus'] ?? 0), $hasCarac, $caracValue, $divisor);
 
         $to = $param["to"] ?? "target";
 
-        if (isset($params['fixedMalus']) && $params['fixedMalus']) {
-            $malus = $params['fixedMalus'];
-        }
-
-        if(!empty($actorCarac) || !empty($actorCarac)){
-            $malus = floor($actor->caracs->{$actorCarac}/$divisor);
-        }
-
-        if ($to == "target") {
-            $target->put_malus(-$malus);
-        } else if ($to == "actor") {
-            $actor->put_malus(-$malus);
+        $subject = $this->resolveSubject($to, $actor, $target);
+        if ($subject !== null) {
+            $subject->put_malus(-$malus);
         }
 
         $outcomeMalusMessages = array();
         $outcomeMalusMessages[0] = 'Votre action retire '. $malus .' malus à ' . $target->data->name . '.';
 
         return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
+    }
+
+    public function computeMalusToRemove(int $fixedMalus, bool $hasCarac, float $caracValue, int $divisor): int
+    {
+        $malus = $fixedMalus;
+
+        if ($hasCarac) {
+            $malus = (int) floor($caracValue / $divisor);
+        }
+
+        return $malus;
     }
 
 }

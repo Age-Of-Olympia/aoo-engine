@@ -34,7 +34,7 @@ class HealingOutcomeInstruction extends OutcomeInstruction
             }
             
             $bonusHeal = is_numeric($bonusTraitHealing) ? $bonusTraitHealing : ($actor->caracs->$bonusTraitHealing ?? 0);
-            $healing = floor($baseHeal/$divisor) + $bonusHeal;
+            $healing = $this->computePvHeal((float) $baseHeal, (float) $bonusHeal, (int) $divisor);
 
             $target->putBonus(array('pv'=>$healing));
 
@@ -45,7 +45,7 @@ class HealingOutcomeInstruction extends OutcomeInstruction
         if(!empty($actorTraitPMHealing)){
             $baseHeal = is_numeric($actorTraitPMHealing) ? $actorTraitPMHealing : $actor->caracs->{$actorTraitPMHealing};
             $bonusHeal = is_numeric($bonusTraitPMHealing) ? $bonusTraitPMHealing : $actor->caracs->{$bonusTraitPMHealing};
-            $healing = $baseHeal + $bonusHeal;
+            $healing = $this->computePmHeal((float) $baseHeal, (float) $bonusHeal);
             $target->putBonus(array('pm'=>$healing));
             $outcomeSuccessMessages[0] = 'Vous rendez '. $healing .' points de mana à '. $target->data->name.'.';
             $outcomeSuccessMessages[1] = is_numeric($actorTraitPMHealing) ? "Valeur fixe à " . $actorTraitPMHealing . '.' : CARACS[$actorTraitPMHealing] .' = '. $baseHeal;
@@ -58,5 +58,15 @@ class HealingOutcomeInstruction extends OutcomeInstruction
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$healing);
+    }
+
+    public function computePvHeal(float $baseHeal, float $bonusHeal, int $divisor): int
+    {
+        return (int) (floor($baseHeal / $divisor) + $bonusHeal);
+    }
+
+    public function computePmHeal(float $baseHeal, float $bonusHeal): int
+    {
+        return (int) ($baseHeal + $bonusHeal);
     }
 }

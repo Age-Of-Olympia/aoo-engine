@@ -34,26 +34,30 @@ class ManaLossOutcomeInstruction extends OutcomeInstruction
                 $manaloss = floor($conditionObject->getLifeloss() / $typeDivisor);
                 break;
             case "difference":
-                $manaloss = $conditionObject->getActorRoll() - $conditionObject->getTargetRoll();
-                if($manaloss < 0){
-                    $backfire = true;
-                    $manaloss = abs($manaloss);
+                $difference = $this->computeManaLossDifference(
+                    (int) $conditionObject->getActorRoll(),
+                    (int) $conditionObject->getTargetRoll()
+                );
+                $manaloss = $difference['loss'];
+                $backfire = $difference['backfire'];
+                if($backfire){
                     $outcomeFailureMessages[sizeof($outcomeFailureMessages)] = 'Aïe... votre sort se retourne contre vous.';
                 }
                 break;
             default:
                 $manaloss = 0;
         }
-        
+
         $finalTarget = $backfire ? $actor : $target;
         $remainingPM = $finalTarget->getRemaining("pm");
         if($remainingPM < $manaloss){
-            $lifeloss = floor(($manaloss - $remainingPM)/2);
+            $spill = $this->computePmSpill((int) $manaloss, (int) $remainingPM);
+            $lifeloss = $spill['pv'];
             $finalTarget->putBonus(array('pm'=>-$remainingPM));
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous faites perdre ' . $remainingPM . ' PM à ' . $finalTarget->data->name . '.';
             $finalTarget->putBonus(array('pv'=>-$lifeloss));
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $finalTarget->data->name . ' ne supporte pas l\'invasion psychique et perd ' . $lifeloss . ' PV.';
-            $recoverMalus = floor($lifeloss/2);
+            $recoverMalus = $spill['malus'];
             $finalTarget->put_malus(-$recoverMalus);
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $finalTarget->data->name . ' récupère ' . $recoverMalus . ' Malus.';
 
@@ -72,6 +76,28 @@ class ManaLossOutcomeInstruction extends OutcomeInstruction
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages:$outcomeFailureMessages);
+    }
+
+    /**
+     * @return array{loss: int, backfire: bool}
+     */
+    public function computeManaLossDifference(int $actorRoll, int $targetRoll): array
+    {
+        $loss = $actorRoll - $targetRoll;
+
+        return $loss < 0
+            ? ['loss' => abs($loss), 'backfire' => true]
+            : ['loss' => $loss, 'backfire' => false];
+    }
+
+    /**
+     * @return array{pv: int, malus: int}
+     */
+    public function computePmSpill(int $manaloss, int $remainingPM): array
+    {
+        $pv = (int) floor(($manaloss - $remainingPM) / 2);
+
+        return ['pv' => $pv, 'malus' => (int) floor($pv / 2)];
     }
 
 }
