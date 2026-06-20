@@ -109,7 +109,8 @@ class SimulatedPlayer extends Player
 
     public function getMunition(Item $object, bool $equiped = false): ?Item
     {
-        return null;
+        // Assume the simulated character is supplied with ammunition.
+        return new SimulatedItem('munition', 'Munition');
     }
 
     /* --- mutations no-op'd so a simulation persists nothing --- */

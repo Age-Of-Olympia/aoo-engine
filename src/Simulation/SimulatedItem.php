@@ -2,36 +2,40 @@
 
 namespace App\Simulation;
 
+use Classes\Item;
+
 /**
  * DB-free stand-in for an equipped Classes\Item, backing a SimulatedPlayer's
- * emplacements. It carries the `data` (item json) and `row` (DB row) the combat
- * engine reads — including `row->enchanted`, which the object-break path checks —
- * and no-ops every mutation so a simulation breaks/consumes nothing.
+ * emplacements. It IS a Classes\Item (so it satisfies the Item typehints the
+ * combat code requires, e.g. Player::getMunition) but skips the DB constructor
+ * and no-ops every mutation, so a simulation breaks/consumes nothing.
  */
-final class SimulatedItem
+class SimulatedItem extends Item
 {
-    public object $data;
-    public object $row;
-
     public function __construct(string $subtype, string $name, bool $enchanted = false)
     {
+        // Deliberately NOT calling parent::__construct() — it loads the item from the DB.
+        $this->id = 0;
         $this->data = (object) ['subtype' => $subtype, 'name' => $name, 'addEffects' => []];
-        $this->row = (object) ['enchanted' => $enchanted];
+        $this->row = (object) ['name' => $name, 'enchanted' => $enchanted];
     }
 
-    public function is_crafted_with(string $material): bool
+    public function get_data()
+    {
+        return $this->data;
+    }
+
+    public function is_crafted_with($ingredients)
     {
         return false;
     }
 
-    public function add_item($player, int $quantity): void
+    public function add_item($player, int $n, bool $bank = false): bool
     {
+        return true;
     }
 
-    /**
-     * @return array<string, int>
-     */
-    public function get_recipe(): array
+    public function get_recipe(bool $deprecated = false): array
     {
         return [];
     }
