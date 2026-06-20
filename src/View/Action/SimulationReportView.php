@@ -17,17 +17,16 @@ final class SimulationReportView
 
     public function render(): string
     {
-        $html = '<div class="card mt-3" style="max-width:560px">'
-            . '<div class="card-header"><h3 class="card-title">Distribution (×' . $this->report->runs . ')</h3></div>'
-            . '<div class="card-body"><p>'
-            . 'Réussite : <strong>' . round($this->report->successRate() * 100) . '%</strong> &nbsp; '
-            . 'Touche : <strong>' . round($this->report->hitRate() * 100) . '%</strong> &nbsp; '
-            . 'Dégâts moyens (sur touche) : <strong>' . round($this->report->averageDamageOnHit, 1) . '</strong>'
-            . '</p></div></div>';
+        $html = '<div class="sim-distribution">'
+            . '<span class="sim-dist-runs">×' . $this->report->runs . '</span>'
+            . '<span>Réussite <strong>' . round($this->report->successRate() * 100) . '%</strong></span>'
+            . '<span>Touche <strong>' . round($this->report->hitRate() * 100) . '%</strong></span>'
+            . '<span>Dégâts moyens (sur touche) <strong>' . round($this->report->averageDamageOnHit, 1) . '</strong></span>'
+            . '</div>';
 
         if ($this->report->sample !== null) {
             $logs = $this->report->sample->getLogsArray();
-            $html .= '<div class="card mt-3" style="max-width:560px">'
+            $html .= '<div class="card mt-3 sim-sample">'
                 . '<div class="card-header"><h3 class="card-title">Exemple détaillé</h3></div>'
                 . '<div class="card-body">'
                 . (new ActionResultsView($this->report->sample))->getActionResults()
