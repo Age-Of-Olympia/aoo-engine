@@ -21,7 +21,7 @@ class SimulatedPlayer extends Player
      * @param array<string, int> $remaining pa/pv/pm/mvt => value
      * @param array<string, mixed> $data    name/malus/antiBerserkTime/rank/faction/energie overrides
      * @param array<string, int> $effects   effect name => value
-     * @param list<string> $passives        passive names
+     * @param list<\App\Entity\ActionPassive> $passives resolved passive configs
      */
     public function __construct(
         int $id,
@@ -52,7 +52,7 @@ class SimulatedPlayer extends Player
             $data,
         );
         $this->playerEffectService = new SimulatedEffectService($effects);
-        $this->playerPassiveService = new SimulatedPassiveService($passives);
+        $this->playerPassiveService = new SimulatedPassiveService($passives, $this);
     }
 
     /* --- reads overridden to use injected state instead of the DB --- */

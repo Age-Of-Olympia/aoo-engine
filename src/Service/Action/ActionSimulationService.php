@@ -4,7 +4,9 @@ namespace App\Service\Action;
 
 use App\Action\ActionResults;
 use App\Entity\Action;
+use App\Entity\ActionPassive;
 use App\Service\ActionExecutorService;
+use App\Service\ActionPassiveService;
 use App\Simulation\SimulatedItem;
 use App\Simulation\SimulatedPlayer;
 
@@ -16,6 +18,13 @@ use App\Simulation\SimulatedPlayer;
  */
 final class ActionSimulationService
 {
+    private ?ActionPassiveService $passiveService;
+
+    public function __construct(?ActionPassiveService $passiveService = null)
+    {
+        $this->passiveService = $passiveService;
+    }
+
     /**
      * One run → the real ActionResults the player would see.
      */
@@ -92,8 +101,33 @@ final class ActionSimulationService
             ['name' => $isTarget ? 'Cible' : 'Acteur'],
             $this->emplacements($weapon),
             $isTarget ? $input->targetEffects : $input->actorEffects,
-            $isTarget ? $input->targetPassives : $input->actorPassives,
+            $this->resolvePassives($isTarget ? $input->targetPassives : $input->actorPassives),
         );
+    }
+
+    /**
+     * Resolve passive names from the form to their real ActionPassive configs
+     * (skipping unknown names) so the simulated player computes real values.
+     *
+     * @param list<string> $names
+     * @return list<ActionPassive>
+     */
+    private function resolvePassives(array $names): array
+    {
+        if ($names === []) {
+            return [];
+        }
+
+        $service = $this->passiveService ??= new ActionPassiveService();
+        $resolved = [];
+        foreach ($names as $name) {
+            $passive = $service->getActionPassiveByName((string) $name);
+            if ($passive !== null) {
+                $resolved[] = $passive;
+            }
+        }
+
+        return $resolved;
     }
 
     private function emplacements(?string $weaponType): object

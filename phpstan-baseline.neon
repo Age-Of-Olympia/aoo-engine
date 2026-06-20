@@ -456,11 +456,6 @@ parameters:
 			count: 1
 			path: src/Service/PlantsService.php
 
-		-
-			message: '#^Method App\\Service\\PlayerPassiveService\:\:getComputedValueByPlayerIdById\(\) should return int but returns float\.$#'
-			identifier: return.type
-			count: 3
-			path: src/Service/PlayerPassiveService.php
 
 		-
 			message: '#^Method App\\Service\\ScreenshotService\:\:convertImagesToBase64\(\) is unused\.$#'

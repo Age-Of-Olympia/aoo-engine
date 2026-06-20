@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Action\Combat\PassiveValueCalculator;
 use App\Action\Condition\ConditionObject;
 use App\Entity\EntityManagerFactory;
 use App\Entity\PlayerPassive;
@@ -12,10 +13,12 @@ use Classes\Db;
 class PlayerPassiveService
 {
     private $entityManager;
+    private PassiveValueCalculator $passiveValueCalculator;
 
-    public function __construct()
+    public function __construct(?PassiveValueCalculator $passiveValueCalculator = null)
     {
         $this->entityManager = EntityManagerFactory::getEntityManager();
+        $this->passiveValueCalculator = $passiveValueCalculator ?? new PassiveValueCalculator();
     }
 
     public function getPassivesByPlayerId(int $playerId): array
@@ -41,23 +44,24 @@ class PlayerPassiveService
         $result = $repo->findOneBy([
             'id' => $id,
         ]);
-        
-        if($result->getCarac() == "fixed"){
-            return $result->getValue();
+
+        if ($result === null) {
+            return 0;
+        }
+
+        // "fixed" needs no player state — keep the early return so it doesn't load one.
+        if ($result->getCarac() === "fixed") {
+            return (int) $result->getValue();
         }
 
         $player = new Player($playerId);
 
-        if($result->getCarac() == "lostPV"){
-            return floor(($player->caracs->pv - $player->getRemaining("pv")) * $result->getValue());
-        }
-        
-        if($result->getCarac() == "effects"){
-            return floor(count($player->playerEffectService->getEffectsByPlayerId($player->getId())) * $result->getValue());
+        // The trait branch reads caracs; lostPV/effects read pv/effects directly.
+        if ($result->getCarac() !== "lostPV" && $result->getCarac() !== "effects") {
+            $player->get_caracs();
         }
 
-        $player->get_caracs();
-        return floor($player->caracs->{$result->getCarac()} * $result->getValue());
+        return $this->passiveValueCalculator->compute($result, $player);
     }
 
     public function setEsquivePlayer(Player $player): void

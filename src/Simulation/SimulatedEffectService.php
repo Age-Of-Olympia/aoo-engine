@@ -16,6 +16,14 @@ final class SimulatedEffectService
     {
     }
 
+    /**
+     * @return list<string> one entry per active effect (count is what callers use)
+     */
+    public function getEffectsByPlayerId(int $playerId): array
+    {
+        return array_keys($this->effects);
+    }
+
     public function getEffectValueByPlayerIdByEffectName(int $playerId, string $name): int
     {
         return $this->effects[$name] ?? 0;
