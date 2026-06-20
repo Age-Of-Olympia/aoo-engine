@@ -15,7 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $csrf = new CsrfProtectionService();
 $actionId = (int) ($_POST['action_id'] ?? 0);
-$editorUrl = '/admin/action-editor.php?id=' . $actionId;
+// Return to the caller (e.g. the workbench) when it asks; only same-site admin paths.
+$returnTo = (string) ($_POST['return_to'] ?? '');
+$editorUrl = (str_starts_with($returnTo, '/admin/') && !str_contains($returnTo, "\n"))
+    ? $returnTo
+    : '/admin/action-editor.php?id=' . $actionId;
 
 try {
     $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);

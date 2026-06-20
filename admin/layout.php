@@ -53,7 +53,7 @@ function admin_layout($title, $content) {
         "    </div>\n                " .
         "</div>\n                " .
         $navLink('upload_image.php', 'Upload Images', '/admin/upload_image.php') . "\n                " .
-        $navLink('actions.php', 'Actions', '/admin/actions.php') . "\n                " .
+        $navLink('action-workbench.php', 'Actions', '/admin/action-workbench.php') . "\n                " .
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 
