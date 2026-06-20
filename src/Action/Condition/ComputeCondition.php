@@ -111,10 +111,8 @@ class ComputeCondition extends BaseCondition
        
         $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
 
-        if(!AUTO_FAIL && $checkAboveDistance && ($actorTotal >= $targetTotal))
-        {
-            $success = true;
-        }
+        $rollResult = (new CombatResolver())->resolve($actorTotal, $targetTotal, $checkAboveDistance);
+        $success = !AUTO_FAIL && $rollResult->hit;
 
         $conditionDetailsFailure = array();
         if (!$success) {

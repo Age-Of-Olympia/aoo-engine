@@ -37,4 +37,31 @@ class CombatResolverTest extends TestCase
 
         $this->assertSame([7], $resolver->roll(2, advantage: true, disadvantage: true));
     }
+
+    public function testResolveHitsWhenActorBeatsTarget(): void
+    {
+        $result = (new CombatResolver())->resolve(12, 9);
+
+        $this->assertTrue($result->hit);
+        $this->assertSame(12, $result->actorTotal);
+        $this->assertSame(9, $result->targetTotal);
+    }
+
+    public function testResolveHitsOnTie(): void
+    {
+        $this->assertTrue((new CombatResolver())->resolve(7, 7)->hit);
+    }
+
+    public function testResolveMissesWhenActorLoses(): void
+    {
+        $this->assertFalse((new CombatResolver())->resolve(5, 10)->hit);
+    }
+
+    public function testResolveMissesWhenTargetIsOutOfReach(): void
+    {
+        $result = (new CombatResolver())->resolve(12, 9, reachedTarget: false);
+
+        $this->assertFalse($result->hit);
+        $this->assertFalse($result->reachedTarget);
+    }
 }

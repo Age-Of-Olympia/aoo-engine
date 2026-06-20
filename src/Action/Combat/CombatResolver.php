@@ -28,4 +28,11 @@ class CombatResolver
 
         return $roll;
     }
+
+    public function resolve(int $actorTotal, int $targetTotal, bool $reachedTarget = true): OpposedRollResult
+    {
+        $hit = $reachedTarget && $actorTotal >= $targetTotal;
+
+        return new OpposedRollResult($actorTotal, $targetTotal, $hit, $reachedTarget);
+    }
 }
