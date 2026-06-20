@@ -2,6 +2,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Service\Action\ActionCatalogService;
@@ -67,7 +68,7 @@ if ($action === null) {
                 <div class="card-body">
                     <?php foreach ($instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId()) as $instruction): ?>
                         <?php
-                        $instructionType = strtolower(substr((new ReflectionClass($instruction))->getShortName(), 0, -18));
+                        $instructionType = OutcomeInstructionFactory::typeOf($instruction);
                         $schema = $schemaCatalog->schemaForOutcomeInstruction($instructionType);
                         $params = $instruction->getParameters() ?? [];
                         ?>

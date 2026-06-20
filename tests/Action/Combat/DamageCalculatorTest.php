@@ -43,4 +43,41 @@ class DamageCalculatorTest extends TestCase
         // offense 0-3 = -3 ; defense 0-5 = -5 ; -3 - (-5) = 2
         $this->assertSame(2, (new DamageCalculator())->additionalDamages($modifiers));
     }
+
+    private function modifiers(int $bonusDamages = 0, int $bonusDefense = 0): DamageModifiers
+    {
+        return new DamageModifiers(
+            bonusDamages: $bonusDamages,
+            othersDamages: 0,
+            agressivite: 0,
+            faiblesse: 0,
+            bonusDefense: $bonusDefense,
+            othersDefense: 0,
+            armure: 0,
+            fragilite: 0,
+        );
+    }
+
+    public function testRawDamageIsBasePlusAdditionalWithoutTheMinimumFloor(): void
+    {
+        // base 1-10 = -9 ; additional 0 ; rawDamage stays -9 (no min-1 here)
+        $this->assertSame(-9, (new DamageCalculator())->rawDamage(1, 10, $this->modifiers()));
+    }
+
+    public function testTotalDamageIsBasePlusAdditional(): void
+    {
+        // base 10-4 = 6 ; additional bonusDamages 2 ; 8
+        $this->assertSame(8, (new DamageCalculator())->totalDamage(10, 4, $this->modifiers(bonusDamages: 2)));
+    }
+
+    public function testTotalDamageHasAMinimumOfOne(): void
+    {
+        $this->assertSame(1, (new DamageCalculator())->totalDamage(1, 10, $this->modifiers()));
+    }
+
+    public function testBaseDamageIsFlooredAtZeroWhenTargetHasADefenseBonus(): void
+    {
+        // base -8 floored to 0 ; additional 5 - 3 = 2 ; total 2 (without the floor it would be 1)
+        $this->assertSame(2, (new DamageCalculator())->totalDamage(2, 10, $this->modifiers(bonusDamages: 5, bonusDefense: 3)));
+    }
 }

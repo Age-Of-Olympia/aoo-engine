@@ -2,13 +2,13 @@
 
 namespace App\Service\Action;
 
+use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Entity\Action;
 use App\Entity\EntityManagerFactory;
 use App\Service\OutcomeInstructionService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
-use ReflectionClass;
 use Throwable;
 
 final class ActionSaveService
@@ -61,7 +61,7 @@ final class ActionSaveService
             foreach ($action->getOutcomes() as $outcome) {
                 foreach ($this->instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId()) as $instruction) {
                     $posted = $instructionParams[$instruction->getId()] ?? null;
-                    $schema = $this->catalog->schemaForOutcomeInstruction($this->instructionType($instruction));
+                    $schema = $this->catalog->schemaForOutcomeInstruction(OutcomeInstructionFactory::typeOf($instruction));
                     if ($posted === null || $schema->isEmpty()) {
                         continue;
                     }
@@ -78,10 +78,5 @@ final class ActionSaveService
             $this->entityManager->rollback();
             throw $exception;
         }
-    }
-
-    private function instructionType(object $instruction): string
-    {
-        return strtolower(substr((new ReflectionClass($instruction))->getShortName(), 0, -18));
     }
 }

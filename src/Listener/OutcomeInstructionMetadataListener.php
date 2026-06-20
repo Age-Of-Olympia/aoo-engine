@@ -23,7 +23,7 @@ class OutcomeInstructionMetadataListener {
             if (!class_exists($fullClassName)) {
                 require_once $file;
             }
-            $metadata->discriminatorMap[strtolower(substr($className, 0, -18))] = $fullClassName;
+            $metadata->discriminatorMap[\App\Action\OutcomeInstruction\OutcomeInstructionFactory::discriminatorKey($className)] = $fullClassName;
         }
     }
 }

@@ -111,9 +111,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             $bonusDamages = (is_numeric($bonusTraitDamages)) ? $bonusTraitDamages : $actor->caracs->{$bonusTraitDamages};
             $bonusDefense = (is_numeric($bonusTraitDefense)) ? $bonusTraitDefense : $target->caracs->{$bonusTraitDefense};
             
-            $baseDamages = $actorDamages - $targetDefense;
-        
-            $additionalDamages = (new DamageCalculator())->additionalDamages(new DamageModifiers(
+            $modifiers = new DamageModifiers(
                 bonusDamages: (int) $bonusDamages,
                 othersDamages: (int) $othersDamages,
                 agressivite: (int) $actorEffetAgressivite,
@@ -122,15 +120,14 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                 othersDefense: (int) $othersDefense,
                 armure: (int) $targetEffetArmure,
                 fragilite: (int) $targetEffetFragilite,
-            ));
+            );
 
-            //minimum damages seulement si l'adversaire à une defense bonus
+            //minimum damages seulement si l'adversaire à une defense bonus (clamp d'affichage du bonus)
             if($bonusDefense > 0){
                 $bonusDamages = max($bonusDamages, 0);
-                $baseDamages = max($baseDamages, 0);
             }
 
-            $totalDamages = $baseDamages + $additionalDamages;
+            $totalDamages = (new DamageCalculator())->rawDamage((int) $actorDamages, (int) $targetDefense, $modifiers);
 
             $cellCount = 0;
             if ($distanceInfluence) {
