@@ -61,6 +61,7 @@ if ($action === null) {
     if ($action->getConditions()->count() === 0) {
         echo '<p class="wb-muted">Aucune condition.</p>';
     }
+    echo '<div class="wb-grid">';
     foreach ($action->getConditions() as $condition) {
         $schema = $schemaCatalog->schemaForCondition($condition->getConditionType());
         $params = $condition->getParameters() ?? [];
@@ -77,11 +78,13 @@ if ($action === null) {
         }
         echo '</div></div>';
     }
+    echo '</div>';
 
     echo '<div class="wb-section-title">Outcomes</div>';
     if ($action->getOutcomes()->count() === 0) {
         echo '<p class="wb-muted">Aucun outcome.</p>';
     }
+    echo '<div class="wb-grid">';
     foreach ($action->getOutcomes() as $outcome) {
         echo '<div class="wb-block">';
         echo '<div class="wb-block-head">Outcome '
@@ -102,6 +105,7 @@ if ($action === null) {
         }
         echo '</div></div>';
     }
+    echo '</div>';
 
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
@@ -109,24 +113,27 @@ if ($action === null) {
 }
 $configHtml = ob_get_clean();
 
-/* ---------- Panel 3: simulate ---------- */
+/* ---------- Panel 3: simulate (form + results side by side) ---------- */
+$simResultHtml = '';
+if ($action !== null && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $mapper = new SimulationInputMapper();
+    try {
+        $report = (new ActionSimulationService())->distribution($action, $mapper->fromPost($_POST), $mapper->runs($_POST));
+        $simResultHtml = (new SimulationReportView($report))->render();
+    } catch (\Throwable $e) {
+        $simResultHtml = SimulationReportView::unavailable($e->getMessage());
+    }
+}
 ob_start();
 if ($action === null) {
     echo '<p class="wb-empty">—</p>';
 } else {
     $fields = (new SimulationFormBuilder())->fieldsFor($action);
-    echo (new SimulationFormView())->render($action, $fields, $_POST);
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $mapper = new SimulationInputMapper();
-        try {
-            $report = (new ActionSimulationService())->distribution($action, $mapper->fromPost($_POST), $mapper->runs($_POST));
-            echo (new SimulationReportView($report))->render();
-        } catch (\Throwable $e) {
-            echo SimulationReportView::unavailable($e->getMessage());
-        }
-    }
+    echo '<div class="wb-sim-form">' . (new SimulationFormView())->render($action, $fields, $_POST) . '</div>';
+    echo '<div class="wb-sim-result">' . $simResultHtml . '</div>';
 }
 $simHtml = ob_get_clean();
+$simSplit = $simResultHtml !== '';
 
 /* ---------- Assemble the single-screen layout ---------- */
 $activeTab = ($_SERVER['REQUEST_METHOD'] === 'POST') ? 'sim' : 'config';
@@ -156,10 +163,12 @@ ob_start();
     .wb-item-name { font-weight: 600; font-size: 13px; }
     .wb-item-meta { font-size: 11px; color: #8a97a3; }
 
-    .wb-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; }
+    .wb-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
     .wb-chip { background: #eef2f5; color: #5d6d7e; border-radius: 10px; padding: 2px 9px; font-size: 12px; }
-    .wb-section-title { text-transform: uppercase; letter-spacing: .05em; font-size: 11px; font-weight: 700; color: #8a97a3; margin: 14px 0 6px; }
-    .wb-block { border: 1px solid #e7ebee; border-radius: 7px; margin-bottom: 8px; }
+    .wb-section-title { text-transform: uppercase; letter-spacing: .05em; font-size: 11px; font-weight: 700; color: #8a97a3; margin: 10px 0 5px; }
+    /* Pack condition/outcome blocks into responsive columns so they sit side by side. */
+    .wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px 10px; align-items: start; }
+    .wb-block { border: 1px solid #e7ebee; border-radius: 7px; margin-bottom: 0; }
     .wb-block-head { background: #f7f9fb; padding: 7px 10px; border-bottom: 1px solid #e7ebee; font-weight: 600; font-size: 13px; border-radius: 7px 7px 0 0; }
     .wb-block-body { padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
 
@@ -202,6 +211,11 @@ ob_start();
     .wb-sim .form-group > label { font-size: 13px; }
     .wb-sim .form-group > .form-control { font-size: 13px; height: 30px; }
     .wb-sim select[multiple].form-control { height: 84px; }
+    /* After a run: form on the left, results on the right — both on screen. */
+    .wb-sim--split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+    .wb-sim--split .card-body { grid-template-columns: 1fr; max-width: none; }
+    .wb-sim--split .card.mt-3 { margin-top: 0; max-width: none !important; }
+    .wb-sim--split .wb-sim-result .card + .card { margin-top: 12px; }
 </style>
 
 <div class="wb">
@@ -223,7 +237,7 @@ ob_start();
         </div>
         <div class="wb-col-body">
             <div class="wb-tab" data-tab="config"<?= $activeTab === 'config' ? '' : ' hidden' ?>><?= renderFlashMessage() . $configHtml ?></div>
-            <div class="wb-tab wb-sim" data-tab="sim"<?= $activeTab === 'sim' ? '' : ' hidden' ?>><?= $simHtml ?></div>
+            <div class="wb-tab wb-sim<?= $simSplit ? ' wb-sim--split' : '' ?>" data-tab="sim"<?= $activeTab === 'sim' ? '' : ' hidden' ?>><?= $simHtml ?></div>
         </div>
     </div>
 </div>
