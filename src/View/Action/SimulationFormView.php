@@ -38,10 +38,10 @@ final class SimulationFormView
             $shared .= $this->fieldControl($field, $posted);
         }
 
-        $body = $shared
-            . $this->sideGroup('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)
+        $body = $this->sideGroup('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)
             . $this->sideGroup('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted)
             . '<div class="sim-run">'
+            . $shared
             . '<div class="form-group"><label>Tirages</label>'
             . '<input class="form-control" type="number" min="1" max="5000" name="runs" value="' . $this->esc($posted['runs'] ?? 1) . '"></div>'
             . '<button class="btn btn-primary" type="submit">Simuler</button>'

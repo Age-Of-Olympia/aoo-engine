@@ -210,11 +210,11 @@ ob_start();
     .wb-sim p.text-muted { font-size: 12px; margin: 0 0 10px; }
     .wb-sim .card.mt-3 { max-width: 720px !important; margin-top: 14px; }
     .wb-sim .effect-row { margin-bottom: 4px !important; }
-    .wb-sim .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; align-items: start; max-width: 1000px; }
-    .wb-sim .card-body > .form-group,
-    .wb-sim .card-body > .sim-run,
-    .wb-sim .card-body > button { grid-column: 1 / -1; }
-    .wb-sim .sim-run { display: flex; align-items: center; gap: 14px; }
+    .wb-sim-form .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; align-items: start; max-width: 1000px; }
+    .wb-sim-form .card-body > .form-group,
+    .wb-sim-form .card-body > .sim-run,
+    .wb-sim-form .card-body > button { grid-column: 1 / -1; }
+    .wb-sim .sim-run { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
     .wb-sim .sim-run .form-group { margin: 0; }
     .wb-sim .sim-group { grid-column: span 1; min-width: 0; border: 1px solid #e7ebee; border-radius: 8px; padding: 8px 12px 12px; margin: 0; }
     .wb-sim .sim-group > legend { width: auto; border: 0; margin: 0; padding: 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #4a90e2; }
