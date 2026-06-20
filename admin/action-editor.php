@@ -6,6 +6,7 @@ use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Service\Action\ActionCatalogService;
 use App\Service\CsrfProtectionService;
+use App\Service\OutcomeInstructionService;
 
 $id = (int) ($_GET['id'] ?? 0);
 $action = (new ActionCatalogService())->getActionById($id);
@@ -13,6 +14,7 @@ $action = (new ActionCatalogService())->getActionById($id);
 $schemaCatalog = new ActionSchemaCatalog();
 $renderer = new ParameterFieldRenderer();
 $csrf = new CsrfProtectionService();
+$instructionService = new OutcomeInstructionService();
 
 $esc = static fn($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $rawParams = static fn(?array $params): string => $esc((string) json_encode($params ?? []));
@@ -60,7 +62,7 @@ if ($action === null) {
                     <h3 class="card-title">Outcome <?= $outcome->isOnSuccess() ? '<span class="badge badge-success">succès</span>' : '<span class="badge badge-danger">échec</span>' ?></h3>
                 </div>
                 <div class="card-body">
-                    <?php foreach ($outcome->getInstructions() as $instruction): ?>
+                    <?php foreach ($instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId()) as $instruction): ?>
                         <?php
                         $instructionType = strtolower(substr((new ReflectionClass($instruction))->getShortName(), 0, -18));
                         $schema = $schemaCatalog->schemaForOutcomeInstruction($instructionType);

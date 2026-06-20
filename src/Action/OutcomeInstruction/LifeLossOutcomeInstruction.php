@@ -5,6 +5,10 @@ namespace App\Action\OutcomeInstruction;
 use App\Action\Combat\DamageCalculator;
 use App\Action\Combat\DamageModifiers;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use App\Service\ActionPassiveService;
@@ -13,8 +17,23 @@ use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
-class LifeLossOutcomeInstruction extends OutcomeInstruction
+class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('actorDamagesTrait', FieldType::TRAIT, "Trait d'attaque", required: true),
+            new ParameterField('targetDamagesTrait', FieldType::TRAIT, 'Trait de défense', required: true),
+            new ParameterField('bonusDamagesTrait', FieldType::TRAIT_OR_INT, 'Bonus de dégâts'),
+            new ParameterField('bonusDefenseTrait', FieldType::TRAIT_OR_INT, 'Bonus de défense'),
+            new ParameterField('distance', FieldType::BOOL, 'Influence de la distance', default: false),
+            new ParameterField('saut', FieldType::BOOL, 'Influence du saut', default: false),
+            new ParameterField('drain', FieldType::BOOL, 'Drain (PV)', default: false),
+            new ParameterField('siphon', FieldType::BOOL, 'Siphon (PM)', default: false),
+            new ParameterField('autoCrit', FieldType::BOOL, 'Critique automatique', default: false),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }

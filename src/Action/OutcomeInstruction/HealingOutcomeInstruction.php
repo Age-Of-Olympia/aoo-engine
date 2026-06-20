@@ -4,12 +4,28 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class HealingOutcomeInstruction extends OutcomeInstruction
+class HealingOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('actorHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PV depuis (acteur)'),
+            new ParameterField('targetHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PV depuis (cible)'),
+            new ParameterField('bonusHealingTrait', FieldType::TRAIT_OR_INT, 'Bonus soin PV'),
+            new ParameterField('actorPMHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PM depuis (acteur)'),
+            new ParameterField('bonusPMHealingTrait', FieldType::TRAIT_OR_INT, 'Bonus soin PM'),
+            new ParameterField('divisor', FieldType::INT, 'Diviseur', default: 1),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         $params = $this->getParameters();

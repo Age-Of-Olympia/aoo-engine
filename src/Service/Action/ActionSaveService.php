@@ -5,6 +5,7 @@ namespace App\Service\Action;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Entity\Action;
 use App\Entity\EntityManagerFactory;
+use App\Service\OutcomeInstructionService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
@@ -15,15 +16,18 @@ final class ActionSaveService
     private EntityManagerInterface $entityManager;
     private ActionSchemaCatalog $catalog;
     private ActionParameterValidator $validator;
+    private OutcomeInstructionService $instructionService;
 
     public function __construct(
         ?EntityManagerInterface $entityManager = null,
         ?ActionSchemaCatalog $catalog = null,
         ?ActionParameterValidator $validator = null,
+        ?OutcomeInstructionService $instructionService = null,
     ) {
         $this->entityManager = $entityManager ?? EntityManagerFactory::getEntityManager();
         $this->catalog = $catalog ?? new ActionSchemaCatalog();
         $this->validator = $validator ?? new ActionParameterValidator();
+        $this->instructionService = $instructionService ?? new OutcomeInstructionService();
     }
 
     /**
@@ -55,7 +59,7 @@ final class ActionSaveService
             }
 
             foreach ($action->getOutcomes() as $outcome) {
-                foreach ($outcome->getInstructions() as $instruction) {
+                foreach ($this->instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId()) as $instruction) {
                     $posted = $instructionParams[$instruction->getId()] ?? null;
                     $schema = $this->catalog->schemaForOutcomeInstruction($this->instructionType($instruction));
                     if ($posted === null || $schema->isEmpty()) {

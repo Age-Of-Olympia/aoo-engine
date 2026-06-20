@@ -79,7 +79,20 @@ class ActionSchemaCatalogTest extends TestCase
     public function testTypesWithoutASchemaFallBackToEmpty(): void
     {
         $this->assertTrue($this->catalog->schemaForCondition('Plan')->isEmpty());
-        $this->assertTrue($this->catalog->schemaForOutcomeInstruction('lifeloss')->isEmpty());
+        $this->assertTrue($this->catalog->schemaForOutcomeInstruction('resource')->isEmpty());
         $this->assertTrue($this->catalog->schemaForOutcomeInstruction('unknownType')->isEmpty());
+    }
+
+    public function testRolledOutOutcomeSchemas(): void
+    {
+        $lifeLoss = $this->catalog->schemaForOutcomeInstruction('lifeloss');
+        $this->assertSame(FieldType::TRAIT, $lifeLoss->field('actorDamagesTrait')->type);
+        $this->assertSame(FieldType::BOOL, $lifeLoss->field('drain')->type);
+
+        $healing = $this->catalog->schemaForOutcomeInstruction('healing');
+        $this->assertSame(FieldType::TRAIT_OR_INT, $healing->field('actorHealingTrait')->type);
+
+        $player = $this->catalog->schemaForOutcomeInstruction('player');
+        $this->assertSame(FieldType::ENUM, $player->field('player')->type);
     }
 }

@@ -4,12 +4,25 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class PlayerOutcomeInstruction extends OutcomeInstruction
+class PlayerOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('carac', FieldType::STRING, 'Caractéristique / effet', help: 'ex: foi, mvt, fatigue, visible, energie'),
+            new ParameterField('value', FieldType::INT, 'Valeur', default: 0),
+            new ParameterField('player', FieldType::ENUM, 'Cible', default: 'target', options: ['actor' => 'Acteur', 'target' => 'Cible']),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $params =$this->getParameters();
         // e.g. {"carac": "energie", "value" : 4, "player": "actor"}
