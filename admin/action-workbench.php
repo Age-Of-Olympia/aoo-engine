@@ -129,16 +129,17 @@ if ($action === null) {
 $simHtml = ob_get_clean();
 
 /* ---------- Assemble the single-screen layout ---------- */
+$activeTab = ($_SERVER['REQUEST_METHOD'] === 'POST') ? 'sim' : 'config';
 ob_start();
 ?>
 <style>
     .admin-main { padding: 0 !important; }
     .wb {
         display: grid;
-        grid-template-columns: 250px minmax(0, 1fr) 420px;
-        gap: 10px;
+        grid-template-columns: 250px minmax(0, 1fr);
+        gap: 12px;
         height: 100vh;
-        padding: 10px;
+        padding: 12px 14px 12px 20px;
         box-sizing: border-box;
         background: #ecf0f1;
     }
@@ -176,23 +177,31 @@ ob_start();
     .wb-form-actions { position: sticky; bottom: 0; background: #fff; padding-top: 10px; margin-top: 8px; border-top: 1px solid #e7ebee; }
     .wb-muted, .wb-empty { color: #8a97a3; font-size: 13px; }
 
-    /* compact the embedded simulate form */
-    .wb-col-sim form.card { max-width: none !important; box-shadow: none; border: 0; margin: 0; padding: 0; }
-    .wb-col-sim .card-header { background: transparent; border: 0; margin: 0 0 4px; padding: 0; }
-    .wb-col-sim h1 { font-size: 1.05em; margin: 0 0 4px; }
-    .wb-col-sim p.text-muted { font-size: 11px; margin: 0 0 6px; }
-    .wb-col-sim hr { margin: 7px 0; }
-    .wb-col-sim .card.mt-3 { max-width: none !important; margin-top: 8px; }
-    .wb-col-sim .effect-row { margin-bottom: 3px !important; }
-    /* Acteur / Cible groups side by side; shared (distance), runs and the button span full width. */
-    .wb-col-sim .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; align-items: start; }
-    .wb-col-sim .card-body > .form-group,
-    .wb-col-sim .card-body > button { grid-column: 1 / -1; }
-    .wb-col-sim .sim-group { grid-column: span 1; min-width: 0; border: 1px solid #e7ebee; border-radius: 6px; padding: 4px 8px 6px; margin: 0; }
-    .wb-col-sim .sim-group > legend { width: auto; border: 0; margin: 0; padding: 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8a97a3; }
-    .wb-col-sim .sim-fields { display: flex; flex-direction: column; gap: 2px; }
-    .wb-col-sim .sim-group > .form-group { margin-top: 4px; }
-    .wb-col-sim .sim-group > .form-group > label { font-size: 11px; }
+    /* Tabs in the main column */
+    .wb-tabs { padding: 0 6px; }
+    .wb-tabbtns { display: flex; gap: 2px; }
+    .wb-tab-btn { border: 0; background: transparent; padding: 11px 16px; font-size: 14px; font-weight: 600; color: #8a97a3; cursor: pointer; border-bottom: 2px solid transparent; }
+    .wb-tab-btn:hover { color: #2c3e50; }
+    .wb-tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; }
+    .wb-tab[hidden] { display: none; }
+
+    /* Simulate tab — full width, readable. */
+    .wb-sim form.card { max-width: none !important; box-shadow: none; border: 0; margin: 0; padding: 0; }
+    .wb-sim .card-header { background: transparent; border: 0; margin: 0 0 4px; padding: 0; }
+    .wb-sim h1 { font-size: 1.2em; margin: 0 0 4px; }
+    .wb-sim p.text-muted { font-size: 12px; margin: 0 0 10px; }
+    .wb-sim .card.mt-3 { max-width: 720px !important; margin-top: 14px; }
+    .wb-sim .effect-row { margin-bottom: 4px !important; }
+    .wb-sim .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; align-items: start; max-width: 1000px; }
+    .wb-sim .card-body > .form-group,
+    .wb-sim .card-body > button { grid-column: 1 / -1; }
+    .wb-sim .sim-group { grid-column: span 1; min-width: 0; border: 1px solid #e7ebee; border-radius: 8px; padding: 8px 12px 12px; margin: 0; }
+    .wb-sim .sim-group > legend { width: auto; border: 0; margin: 0; padding: 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #4a90e2; }
+    .wb-sim .sim-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 16px; }
+    .wb-sim .sim-group > .form-group { margin-top: 6px; }
+    .wb-sim .form-group > label { font-size: 13px; }
+    .wb-sim .form-group > .form-control { font-size: 13px; height: 30px; }
+    .wb-sim select[multiple].form-control { height: 84px; }
 </style>
 
 <div class="wb">
@@ -205,13 +214,17 @@ ob_start();
     </div>
 
     <div class="wb-col">
-        <div class="wb-col-head">Configurer <small><?= $action ? $esc($action->getDisplayName()) : '' ?></small></div>
-        <div class="wb-col-body"><?= renderFlashMessage() . $configHtml ?></div>
-    </div>
-
-    <div class="wb-col wb-col-sim">
-        <div class="wb-col-head">Simuler</div>
-        <div class="wb-col-body"><?= $simHtml ?></div>
+        <div class="wb-col-head wb-tabs">
+            <div class="wb-tabbtns">
+                <button type="button" class="wb-tab-btn<?= $activeTab === 'config' ? ' active' : '' ?>" data-tab="config">Configurer</button>
+                <button type="button" class="wb-tab-btn<?= $activeTab === 'sim' ? ' active' : '' ?>" data-tab="sim">Simuler</button>
+            </div>
+            <small><?= $action ? $esc($action->getDisplayName()) : '' ?></small>
+        </div>
+        <div class="wb-col-body">
+            <div class="wb-tab" data-tab="config"<?= $activeTab === 'config' ? '' : ' hidden' ?>><?= renderFlashMessage() . $configHtml ?></div>
+            <div class="wb-tab wb-sim" data-tab="sim"<?= $activeTab === 'sim' ? '' : ' hidden' ?>><?= $simHtml ?></div>
+        </div>
     </div>
 </div>
 
@@ -219,14 +232,23 @@ ob_start();
     /* Live client-side filter of the actions list. */
     (function () {
         var search = document.getElementById('wb-search');
-        if (!search) { return; }
-        search.addEventListener('input', function () {
-            var q = search.value.toLowerCase();
-            document.querySelectorAll('#wb-list .wb-item').forEach(function (el) {
-                el.style.display = el.getAttribute('data-search').indexOf(q) === -1 ? 'none' : '';
+        if (search) {
+            search.addEventListener('input', function () {
+                var q = search.value.toLowerCase();
+                document.querySelectorAll('#wb-list .wb-item').forEach(function (el) {
+                    el.style.display = el.getAttribute('data-search').indexOf(q) === -1 ? 'none' : '';
+                });
             });
-        });
+        }
     })();
+    /* Configurer / Simuler tab switching. */
+    document.querySelectorAll('.wb-tab-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var tab = btn.getAttribute('data-tab');
+            document.querySelectorAll('.wb-tab-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
+            document.querySelectorAll('.wb-tab').forEach(function (p) { p.hidden = p.getAttribute('data-tab') !== tab; });
+        });
+    });
 </script>
 <?php
 $content = ob_get_clean();
