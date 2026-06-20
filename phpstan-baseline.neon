@@ -150,17 +150,6 @@ parameters:
 			count: 1
 			path: src/Action/Condition/ComputePureCondition.php
 
-		-
-			message: '#^Undefined variable\: \$targetRollBonus$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/Condition/DistanceComputeCondition.php
-
-		-
-			message: '#^Variable \$targetRollBonus in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Action/Condition/DistanceComputeCondition.php
 
 		-
 			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:getDistanceTreshold\(\) should return int but returns float\.$#'
@@ -198,17 +187,6 @@ parameters:
 			count: 1
 			path: src/Action/Condition/ForbidOnEquipedObjectStatusCondition.php
 
-		-
-			message: '#^Undefined variable\: \$targetRollBonus$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/Condition/MeleeComputeCondition.php
-
-		-
-			message: '#^Variable \$targetRollBonus in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Action/Condition/MeleeComputeCondition.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'

@@ -2,6 +2,8 @@
 namespace App\Action\Condition;
 
 use App\Action\Combat\CombatResolver;
+use App\Action\Combat\RollDetail;
+use App\Action\Combat\RollDetailView;
 
 class MeleeComputeCondition extends ComputeCondition
 {
@@ -20,31 +22,27 @@ class MeleeComputeCondition extends ComputeCondition
             (bool) $conditionObject->getTargetAdvantage(),
             (bool) $conditionObject->getTargetDisadvantage()
         );
-        $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
-        $targetEffetProtection = $target->getEffectValue("protection");
-        $effetVulnerabilite = !empty($targetEffetVulnerabilite) ? $targetEffetVulnerabilite : 0;
-        $effetProtection = !empty($targetEffetProtection) ? $targetEffetProtection : 0;
-        $targetEsq = $target->caracs->esquive ?? 0;
-        $bonus = $conditionObject->getTargetRollBonus();
-        $totalOther = $bonus + $effetProtection - $effetVulnerabilite + $targetEsq;
-        $targetTotal = array_sum($targetRoll) - $target->data->malus + $totalOther;
-        $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-        $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
-        $tooltipOtherTxt = 
-            (!empty($targetEffetProtection) || !empty($targetEffetVulnerabilite)
-            ? 'Effets :' .
-            (!empty($targetEffetProtection) ? ' ' . $effetProtection : '') .
-            (!empty($targetEffetVulnerabilite) ? ' - ' . $effetVulnerabilite : '') . ' '
-            : ''
-            ) .
-            (($targetEsq != 0) ? 'Esquive : ' . ($targetEsq < 0 ? ' - ' . abs($targetEsq) : $targetEsq) . ' ' : '') .
-            (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
-        $targetOtherTxt = ($targetEsq != 0 || $bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
+        $bonus = (int) $conditionObject->getTargetRollBonus();
+        $protection = (int) ($target->getEffectValue("protection") ?: 0);
+        $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
+        $esquive = (int) ($target->caracs->esquive ?? 0);
+        $malus = (int) $target->data->malus;
+        $total = array_sum($targetRoll) - $malus + $bonus + $protection - $vulnerabilite + $esquive;
 
-        $conditionObject->setTargetRoll($targetTotal);
-        
-        return array($targetRoll, $targetTotal, $targetTxt);
+        $detail = new RollDetail(
+            name: $target->data->name,
+            rollSum: array_sum($targetRoll),
+            bonus: $bonus,
+            positiveEffect: $protection,
+            negativeEffect: $vulnerabilite,
+            malus: $malus,
+            esquive: $esquive,
+            total: $total,
+        );
+
+        $conditionObject->setTargetRoll($total);
+
+        return array($targetRoll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
     protected function getDistanceMalus(): int {
