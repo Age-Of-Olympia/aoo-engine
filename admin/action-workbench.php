@@ -212,7 +212,10 @@ ob_start();
     .wb-sim .effect-row { margin-bottom: 4px !important; }
     .wb-sim .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; align-items: start; max-width: 1000px; }
     .wb-sim .card-body > .form-group,
+    .wb-sim .card-body > .sim-run,
     .wb-sim .card-body > button { grid-column: 1 / -1; }
+    .wb-sim .sim-run { display: flex; align-items: center; gap: 14px; }
+    .wb-sim .sim-run .form-group { margin: 0; }
     .wb-sim .sim-group { grid-column: span 1; min-width: 0; border: 1px solid #e7ebee; border-radius: 8px; padding: 8px 12px 12px; margin: 0; }
     .wb-sim .sim-group > legend { width: auto; border: 0; margin: 0; padding: 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #4a90e2; }
     .wb-sim .sim-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 16px; }

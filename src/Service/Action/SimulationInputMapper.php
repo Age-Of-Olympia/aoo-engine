@@ -22,7 +22,7 @@ final class SimulationInputMapper
             targetCaracs: $this->intMap($post['target_trait'] ?? []),
             actorRemaining: array_merge(self::BASE_REMAINING, $this->intMap($post['actor_remaining'] ?? [])),
             targetRemaining: array_merge(self::BASE_REMAINING, $this->intMap($post['target_remaining'] ?? [])),
-            distance: max(1, (int) ($post['distance'] ?? 1)),
+            distance: max(0, (int) ($post['distance'] ?? 1)),
             actorWeapon: $this->weapon($post['actor_weapon'] ?? '', null),
             targetWeapon: $this->weapon($post['target_weapon'] ?? '', self::DEFAULT_TARGET_WEAPON),
             actorEffects: $this->effectRows($post, 'actor'),
