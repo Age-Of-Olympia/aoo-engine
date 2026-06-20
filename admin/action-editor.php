@@ -27,7 +27,10 @@ if ($action === null) {
 } else {
     ?>
     <h1><?= $esc($action->getDisplayName()) ?> <small class="text-muted">(<?= $esc($action->getName()) ?>)</small></h1>
-    <p><a href="/admin/actions.php" class="btn btn-sm btn-outline-secondary">&larr; Toutes les actions</a></p>
+    <p>
+        <a href="/admin/actions.php" class="btn btn-sm btn-outline-secondary">&larr; Toutes les actions</a>
+        <a href="/admin/action-simulate.php?id=<?= (int) $action->getId() ?>" class="btn btn-sm btn-outline-primary">Simuler</a>
+    </p>
 
     <form method="post" action="/admin/action-save.php">
         <?= $csrf->renderTokenField() ?>
