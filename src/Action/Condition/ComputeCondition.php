@@ -9,10 +9,12 @@ use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
+use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 use Classes\Dice;
 use Classes\View;
 
@@ -24,7 +26,7 @@ enum Roll: string
     case cc_agi = "cc_agi";
 }
 
-class ComputeCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
+class ComputeCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
     protected int $distance;
     protected string $throwName = "Le tir";
@@ -58,11 +60,11 @@ class ComputeCondition extends BaseCondition implements HasParameterSchema, \App
         $fields = [];
         foreach (explode('/', (string) ($params['actorRollType'] ?? '')) as $trait) {
             if ($trait !== '') {
-                $fields[] = new \App\Action\Schema\SimulationField('trait', 'actor', $trait, 'Acteur — ' . $trait);
+                $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_ACTOR, $trait, 'Acteur — ' . $trait);
             }
         }
         foreach (static::targetSimulationTraits($params) as $trait) {
-            $fields[] = new \App\Action\Schema\SimulationField('trait', 'target', $trait, 'Cible — ' . $trait);
+            $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_TARGET, $trait, 'Cible — ' . $trait);
         }
 
         return $fields;

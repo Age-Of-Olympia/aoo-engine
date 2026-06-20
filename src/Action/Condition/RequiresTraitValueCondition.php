@@ -5,10 +5,12 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 
-class RequiresTraitValueCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
+class RequiresTraitValueCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
     public static function parameterSchema(): ParameterSchema
     {
@@ -19,7 +21,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
     {
         $fields = [];
         foreach (array_keys($params) as $trait) {
-            $fields[] = new \App\Action\Schema\SimulationField('remaining', 'actor', (string) $trait, 'Acteur — ' . $trait . ' disponible');
+            $fields[] = new SimulationField(SimulationField::KIND_REMAINING, SimulationField::SIDE_ACTOR, (string) $trait, 'Acteur — ' . $trait . ' disponible');
         }
 
         return $fields;

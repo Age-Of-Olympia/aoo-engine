@@ -4,14 +4,16 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
+class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
     public static function parameterSchema(): ParameterSchema
     {
@@ -27,7 +29,7 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         $label = 'Arme acteur' . ($types ? ' (' . implode('/', $types) . ')' : '');
         $default = $types[0] ?? null;
 
-        return [new \App\Action\Schema\SimulationField('weapon', 'actor', 'weapon', $label, $default)];
+        return [new SimulationField(SimulationField::KIND_WEAPON, SimulationField::SIDE_ACTOR, 'weapon', $label, $default)];
     }
 
     private ?string $errorMessage = null;

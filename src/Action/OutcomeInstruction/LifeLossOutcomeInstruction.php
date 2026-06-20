@@ -5,10 +5,12 @@ namespace App\Action\OutcomeInstruction;
 use App\Action\Combat\DamageCalculator;
 use App\Action\Combat\DamageModifiers;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
@@ -16,7 +18,7 @@ use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
-class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
+class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema, DeclaresSimulationInputs
 {
     public static function simulationInputs(array $params): array
     {
@@ -24,7 +26,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $field = static function (string $param, string $side, string $label) use ($params, &$fields): void {
             $trait = $params[$param] ?? null;
             if (is_string($trait) && $trait !== '' && !is_numeric($trait)) {
-                $fields[] = new \App\Action\Schema\SimulationField('trait', $side, $trait, $label . ' — ' . $trait);
+                $fields[] = new SimulationField(SimulationField::KIND_TRAIT, $side, $trait, $label . ' — ' . $trait);
             }
         };
         $field('actorDamagesTrait', 'actor', 'Attaque');

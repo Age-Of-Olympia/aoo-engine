@@ -6,12 +6,14 @@ use Classes\View;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 
-class RequiresDistanceCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
+class RequiresDistanceCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
     public static function parameterSchema(): ParameterSchema
     {
@@ -23,7 +25,7 @@ class RequiresDistanceCondition extends BaseCondition implements HasParameterSch
 
     public static function simulationInputs(array $params): array
     {
-        return [new \App\Action\Schema\SimulationField('distance', 'shared', 'distance', 'Distance (cases)')];
+        return [new SimulationField(SimulationField::KIND_DISTANCE, SimulationField::SIDE_SHARED, 'distance', 'Distance (cases)')];
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

@@ -56,11 +56,11 @@ final class SimulationFormView
      */
     private function fieldControl(SimulationField $field, array $posted): string
     {
-        if ($field->kind === 'distance') {
+        if ($field->kind === SimulationField::KIND_DISTANCE) {
             return $this->group($field->label, '<input class="form-control" type="number" min="1" name="distance" value="' . $this->esc($posted['distance'] ?? 1) . '">');
         }
 
-        if ($field->kind === 'weapon') {
+        if ($field->kind === SimulationField::KIND_WEAPON) {
             $name = $field->side . '_weapon';
             $selected = (string) ($posted[$name] ?? $field->default ?? '');
 
