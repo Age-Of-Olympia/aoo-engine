@@ -133,7 +133,6 @@ if ($action === null) {
     echo '<div class="wb-sim-result">' . $simResultHtml . '</div>';
 }
 $simHtml = ob_get_clean();
-$simSplit = $simResultHtml !== '';
 
 /* ---------- Assemble the single-screen layout ---------- */
 $activeTab = ($_SERVER['REQUEST_METHOD'] === 'POST') ? 'sim' : 'config';
@@ -170,7 +169,7 @@ ob_start();
     .wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px 10px; align-items: start; }
     .wb-block { border: 1px solid #e7ebee; border-radius: 7px; margin-bottom: 0; }
     .wb-block-head { background: #f7f9fb; padding: 7px 10px; border-bottom: 1px solid #e7ebee; font-weight: 600; font-size: 13px; border-radius: 7px 7px 0 0; }
-    .wb-block-body { padding: 8px 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; }
+    .wb-block-body { padding: 8px 10px; display: grid; grid-template-columns: 1fr; gap: 4px; }
 
     /* Compact single-line fields (label + control on one row) everywhere. */
     .wb .form-group { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -183,6 +182,12 @@ ob_start();
     .wb-inst-name { grid-column: 1 / -1; font-weight: 600; font-size: 12px; color: #4a90e2; margin-top: 2px; }
     .wb-raw { grid-column: 1 / -1; font-size: 12px; color: #8a97a3; }
     .wb-raw code { word-break: break-all; }
+    /* Configurer labels can be long — let them wrap instead of spilling out of the box. */
+    .wb-config .form-group { align-items: flex-start; }
+    .wb-config .form-group > label { white-space: normal; flex: 0 1 48%; line-height: 1.25; }
+    .wb-config .form-group > .form-control { flex: 1 1 auto; }
+    .wb-config .wb-raw { overflow-wrap: anywhere; }
+    .wb-config .wb-raw code { white-space: normal; }
     .wb-form-actions { position: sticky; bottom: 0; background: #fff; padding-top: 10px; margin-top: 8px; border-top: 1px solid #e7ebee; }
     .wb-muted, .wb-empty { color: #8a97a3; font-size: 13px; }
 
@@ -211,11 +216,10 @@ ob_start();
     .wb-sim .form-group > label { font-size: 13px; }
     .wb-sim .form-group > .form-control { font-size: 13px; height: 30px; }
     .wb-sim select[multiple].form-control { height: 84px; }
-    /* After a run: form on the left, results on the right — both on screen. */
-    .wb-sim--split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-    .wb-sim--split .card-body { grid-template-columns: 1fr; max-width: none; }
-    .wb-sim--split .card.mt-3 { margin-top: 0; max-width: none !important; }
-    .wb-sim--split .wb-sim-result .card + .card { margin-top: 12px; }
+    /* Results render below the form (full width). */
+    .wb-sim-result { margin-top: 14px; }
+    .wb-sim-result .card.mt-3 { margin-top: 0; max-width: 720px !important; }
+    .wb-sim-result .card + .card { margin-top: 12px; }
 </style>
 
 <div class="wb">
@@ -236,8 +240,8 @@ ob_start();
             <small><?= $action ? $esc($action->getDisplayName()) : '' ?></small>
         </div>
         <div class="wb-col-body">
-            <div class="wb-tab" data-tab="config"<?= $activeTab === 'config' ? '' : ' hidden' ?>><?= renderFlashMessage() . $configHtml ?></div>
-            <div class="wb-tab wb-sim<?= $simSplit ? ' wb-sim--split' : '' ?>" data-tab="sim"<?= $activeTab === 'sim' ? '' : ' hidden' ?>><?= $simHtml ?></div>
+            <div class="wb-tab wb-config" data-tab="config"<?= $activeTab === 'config' ? '' : ' hidden' ?>><?= renderFlashMessage() . $configHtml ?></div>
+            <div class="wb-tab wb-sim" data-tab="sim"<?= $activeTab === 'sim' ? '' : ' hidden' ?>><?= $simHtml ?></div>
         </div>
     </div>
 </div>
