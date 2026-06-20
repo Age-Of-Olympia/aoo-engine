@@ -5,6 +5,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\Form\ParameterFieldRenderer;
+use App\Action\Schema\Form\RawParamsEditor;
+use App\Action\Schema\ParameterSchema;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionSimulationService;
 use App\Service\Action\SimulationFormBuilder;
@@ -28,9 +30,30 @@ $activeTab = in_array($_GET['tab'] ?? null, ['config', 'sim'], true)
     : ($_SERVER['REQUEST_METHOD'] === 'POST' ? 'sim' : 'config');
 
 $renderer = new ParameterFieldRenderer();
+$rawEditor = new RawParamsEditor();
 $schemaCatalog = new ActionSchemaCatalog();
 $instructionService = new OutcomeInstructionService();
 $csrf = new CsrfProtectionService();
+
+/**
+ * Render the typed schema fields for a condition/instruction, followed by the
+ * raw key→value editor for any parameters the schema doesn't model (the whole
+ * map for schema-less handlers like RequiresTraitValue; the dynamic effect key
+ * for ApplyStatus). $typedPrefix/$rawPrefix are the POST name prefixes.
+ *
+ * @param array<string, mixed> $params
+ */
+$renderParams = static function (ParameterSchema $schema, array $params, string $typedPrefix, string $rawPrefix) use ($renderer, $rawEditor): string {
+    $out = '';
+    $reserved = [];
+    foreach ($schema->fields() as $field) {
+        $reserved[] = $field->key;
+        $out .= $renderer->render($field, $typedPrefix . '[' . $field->key . ']', $params[$field->key] ?? null);
+    }
+    $out .= $rawEditor->render($rawPrefix, $params, $reserved, $schema->isEmpty());
+
+    return $out;
+};
 
 /* ---------- Panel 1: actions list ---------- */
 ob_start();
@@ -74,13 +97,7 @@ if ($action === null) {
         echo '<div class="wb-block-head">' . $esc($condition->getConditionType())
             . ($condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '') . '</div>';
         echo '<div class="wb-block-body">';
-        if ($schema->isEmpty()) {
-            echo '<div class="wb-raw">Paramètres bruts : <code>' . $esc((string) json_encode($params)) . '</code></div>';
-        } else {
-            foreach ($schema->fields() as $field) {
-                echo $renderer->render($field, 'cond[' . (int) $condition->getId() . '][' . $field->key . ']', $params[$field->key] ?? null);
-            }
-        }
+        echo $renderParams($schema, $params, 'cond[' . (int) $condition->getId() . ']', 'cond_raw[' . (int) $condition->getId() . ']');
         echo '</div></div>';
     }
     echo '</div>';
@@ -100,13 +117,7 @@ if ($action === null) {
             $schema = $schemaCatalog->schemaForOutcomeInstruction($instructionType);
             $params = $instruction->getParameters() ?? [];
             echo '<div class="wb-inst-name">' . $esc($instructionType) . '</div>';
-            if ($schema->isEmpty()) {
-                echo '<div class="wb-raw">Paramètres bruts : <code>' . $esc((string) json_encode($params)) . '</code></div>';
-            } else {
-                foreach ($schema->fields() as $field) {
-                    echo $renderer->render($field, 'inst[' . (int) $instruction->getId() . '][' . $field->key . ']', $params[$field->key] ?? null);
-                }
-            }
+            echo $renderParams($schema, $params, 'inst[' . (int) $instruction->getId() . ']', 'inst_raw[' . (int) $instruction->getId() . ']');
         }
         echo '</div></div>';
     }
@@ -186,6 +197,18 @@ ob_start();
     .wb-inst-name { grid-column: 1 / -1; font-weight: 600; font-size: 12px; color: #4a90e2; margin-top: 2px; }
     .wb-raw { grid-column: 1 / -1; font-size: 12px; color: #8a97a3; }
     .wb-raw code { word-break: break-all; }
+
+    /* Raw key→value editor for params the typed schema doesn't model. */
+    .wb-raw-editor { grid-column: 1 / -1; margin-top: 4px; border-top: 1px dashed #e0e6ea; padding-top: 6px; }
+    .wb-raw-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8a97a3; margin-bottom: 4px; }
+    .wb-raw-title small { font-weight: 400; text-transform: none; letter-spacing: 0; color: #b0bac2; }
+    .wb-raw-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .wb-raw-row .wb-raw-k { flex: 0 0 38%; min-width: 0; padding: 3px 7px; font-size: 13px; height: 28px; }
+    .wb-raw-row .wb-raw-v { flex: 1 1 auto; min-width: 0; padding: 3px 7px; font-size: 13px; height: 28px; }
+    .wb-raw-del { flex: 0 0 auto; border: 1px solid #e7ebee; background: #f7f9fb; color: #c0392b; border-radius: 6px; width: 26px; height: 28px; cursor: pointer; line-height: 1; }
+    .wb-raw-del:hover { background: #fdecea; }
+    .wb-raw-add { border: 1px dashed #ced4da; background: #fff; color: #4a90e2; border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+    .wb-raw-add:hover { background: #f3f6f9; }
     /* Configurer labels can be long — let them wrap instead of spilling out of the box. */
     .wb-config .form-group { align-items: flex-start; }
     .wb-config .form-group > label { white-space: normal; flex: 0 1 48%; line-height: 1.25; }
@@ -268,6 +291,29 @@ ob_start();
             });
         }
     })();
+    /* Raw key→value editor: add a row, or remove one. Rows use a unique running
+       index so PHP keeps each (k, v) pair together regardless of deletions. */
+    var wbRawSeq = 0;
+    document.querySelectorAll('.wb-raw-add').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var editor = btn.closest('.wb-raw-editor');
+            var rows = editor.querySelector('.wb-raw-rows');
+            var prefix = editor.getAttribute('data-raw-prefix');
+            var i = 'n' + (++wbRawSeq);
+            var row = document.createElement('div');
+            row.className = 'wb-raw-row';
+            row.innerHTML = '<input class="form-control wb-raw-k" name="' + prefix + '[' + i + '][k]" placeholder="clé" autocomplete="off">'
+                + '<input class="form-control wb-raw-v" name="' + prefix + '[' + i + '][v]" placeholder="valeur" autocomplete="off">'
+                + '<button type="button" class="wb-raw-del" title="Retirer">×</button>';
+            rows.appendChild(row);
+        });
+    });
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('wb-raw-del')) {
+            var row = e.target.closest('.wb-raw-row');
+            if (row) { row.remove(); }
+        }
+    });
     /* Configurer / Simuler tab switching. */
     document.querySelectorAll('.wb-tab-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {

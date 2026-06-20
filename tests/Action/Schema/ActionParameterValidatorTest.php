@@ -85,4 +85,44 @@ class ActionParameterValidatorTest extends TestCase
         $this->assertSame(1, $result['rollDivisor']);
         $this->assertSame('target', $result['to']);
     }
+
+    public function testCoerceRawBuildsAFlatMapWithJsonTypedValues(): void
+    {
+        $result = $this->validator->coerceRaw([
+            ['k' => 'a', 'v' => '1'],
+            ['k' => 'pm', 'v' => '10'],
+            ['k' => 'energie', 'v' => 'both'],
+            ['k' => 'imposture', 'v' => '[1,2]'],
+            ['k' => 'adrenaline', 'v' => 'true'],
+        ]);
+
+        $this->assertSame([
+            'a' => 1,
+            'pm' => 10,
+            'energie' => 'both',
+            'imposture' => [1, 2],
+            'adrenaline' => true,
+        ], $result);
+    }
+
+    public function testCoerceRawDropsBlankKeysAndTrims(): void
+    {
+        $result = $this->validator->coerceRaw([
+            ['k' => '', 'v' => '5'],
+            ['k' => '  a  ', 'v' => '1'],
+            ['v' => '9'],
+        ]);
+
+        $this->assertSame(['a' => 1], $result);
+    }
+
+    public function testCoerceRawSkipsReservedSchemaKeys(): void
+    {
+        $result = $this->validator->coerceRaw([
+            ['k' => 'adrenaline', 'v' => 'true'],
+            ['k' => 'duration', 'v' => '86400'],
+        ], ['duration', 'player', 'value', 'stackable']);
+
+        $this->assertSame(['adrenaline' => true], $result);
+    }
 }

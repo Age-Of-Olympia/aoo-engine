@@ -26,8 +26,10 @@ try {
 
     $conditionParams = is_array($_POST['cond'] ?? null) ? $_POST['cond'] : [];
     $instructionParams = is_array($_POST['inst'] ?? null) ? $_POST['inst'] : [];
+    $conditionRaw = is_array($_POST['cond_raw'] ?? null) ? $_POST['cond_raw'] : [];
+    $instructionRaw = is_array($_POST['inst_raw'] ?? null) ? $_POST['inst_raw'] : [];
 
-    (new ActionSaveService())->saveParameters($actionId, $conditionParams, $instructionParams);
+    (new ActionSaveService())->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
 
     setFlash('success', 'Paramètres enregistrés.');
     $csrf->regenerateToken();

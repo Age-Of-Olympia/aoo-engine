@@ -34,6 +34,46 @@ final class ActionParameterValidator
         return $result;
     }
 
+    /**
+     * Coerce posted key→value rows from the raw editor into a parameter map, for
+     * handlers whose shape doesn't fit the typed schema (RequiresTraitValue's flat
+     * trait→int map, ApplyStatus's effect-as-first-key). Blank-keyed rows and
+     * reserved (schema-owned) keys are dropped; values are JSON-decoded when valid
+     * ("1"→int, "true"→bool, "[1,2]"→array) and kept as strings otherwise.
+     *
+     * @param array<int|string, mixed> $rows     each ['k' => string, 'v' => string]
+     * @param array<int, string>       $reserved keys owned by typed fields, skipped here
+     * @return array<string, mixed>
+     */
+    public function coerceRaw(array $rows, array $reserved = []): array
+    {
+        $result = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $key = trim((string) ($row['k'] ?? ''));
+            if ($key === '' || in_array($key, $reserved, true)) {
+                continue;
+            }
+            $result[$key] = $this->parseRawValue((string) ($row['v'] ?? ''));
+        }
+
+        return $result;
+    }
+
+    private function parseRawValue(string $value): mixed
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
+    }
+
     private function coerceField(ParameterField $field, mixed $raw): mixed
     {
         if ($field->type === FieldType::BOOL) {
