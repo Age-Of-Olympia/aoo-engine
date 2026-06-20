@@ -216,10 +216,9 @@ ob_start();
     .wb-sim .form-group > label { font-size: 13px; }
     .wb-sim .form-group > .form-control { font-size: 13px; height: 30px; }
     .wb-sim select[multiple].form-control { height: 84px; }
-    /* Results render below the form (full width). */
-    .wb-sim-result { margin-top: 14px; }
-    .wb-sim-result .card.mt-3 { margin-top: 0; max-width: 720px !important; }
-    .wb-sim-result .card + .card { margin-top: 12px; }
+    /* Results render below the form and fill the full width (cards flow side by side). */
+    .wb-sim-result { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; align-items: start; }
+    .wb-sim-result .card.mt-3 { margin: 0 !important; max-width: none !important; }
 </style>
 
 <div class="wb">
