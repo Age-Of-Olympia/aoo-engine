@@ -5,9 +5,26 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterSchema;
 
-class RequiresTraitValueCondition extends BaseCondition
+class RequiresTraitValueCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema();
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        $fields = [];
+        foreach (array_keys($params) as $trait) {
+            $fields[] = new \App\Action\Schema\SimulationField('remaining', 'actor', (string) $trait, 'Acteur — ' . $trait . ' disponible');
+        }
+
+        return $fields;
+    }
+
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);

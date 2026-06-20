@@ -2,30 +2,46 @@
 
 namespace Tests\Action\Combat;
 
+use App\Action\ActionResults;
 use App\Action\Condition\DistanceComputeCondition;
 use App\Action\Condition\MeleeComputeCondition;
+use App\Action\BuffAction;
 use App\Action\MeleeAction;
+use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Service\Action\ActionSimulationService;
+use App\Service\Action\SimulationInput;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 #[Group('action-combat')]
 class ActionSimulationServiceTest extends TestCase
 {
-    /**
-     * @param array<string, mixed> $params
-     */
-    private function actionWithComputeCondition(array $params, string $type = 'Compute'): MeleeAction
+    protected function setUp(): void
     {
-        $action = new MeleeAction();
-        $condition = new ActionCondition();
-        $condition->setConditionType($type);
-        $condition->setParameters($params);
-        $action->addCondition($condition);
-
-        return $action;
+        // Constants the combat path reads, normally provided by config/constants.php
+        // (loaded by config.php in the web context, absent under the test bootstrap).
+        // CARACS mirrors the real key set: it is a process-global constant, so a
+        // partial stub would corrupt any later test that builds a player from it.
+        $constants = [
+            'AUTO_FAIL' => false,
+            'DMG_CRIT' => 5,
+            'ACTION_XP' => 5,
+            'ONE_DAY' => 86400,
+            'CARACS' => [
+                'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
+                'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
+                'fm' => 'FM', 'm' => 'M', 'r' => 'R', 'rm' => 'RM', 'spd' => 'Spd', 'ae' => 'Ae',
+            ],
+        ];
+        foreach ($constants as $name => $value) {
+            if (!defined($name)) {
+                define($name, $value);
+            }
+        }
     }
+
+    /* --- the per-type defense formulas (kept; used by the real conditions) --- */
 
     public function testMeleeDefenseUsesMaxOfCcAndAgi(): void
     {
@@ -45,91 +61,140 @@ class ActionSimulationServiceTest extends TestCase
         $this->assertSame(10, DistanceComputeCondition::distanceThresholdFor(4));
     }
 
-    public function testDistanceSimulationAppliesBlendMalusAndThreshold(): void
-    {
-        $action = $this->actionWithComputeCondition(['actorRollType' => 'ct', 'targetRollType' => 'cc/agi'], 'DistanceCompute');
+    /* --- the real engine, driven through SimulatedPlayer (the fix) --- */
 
-        $sim = (new ActionSimulationService())->simulateRoll(
-            $action,
-            ['ct' => 10],
-            ['cc' => 4, 'agi' => 8],
-            forcedActorRoll: 20,
-            forcedTargetRoll: 6,
+    private function meleeWith(ActionCondition ...$conditions): MeleeAction
+    {
+        $action = new MeleeAction();
+        $action->setName('melee');
+        foreach ($conditions as $condition) {
+            $action->addCondition($condition);
+        }
+
+        return $action;
+    }
+
+    private function condition(string $type, array $params): ActionCondition
+    {
+        $condition = new ActionCondition();
+        $condition->setConditionType($type);
+        $condition->setParameters($params);
+        $condition->setBlocking(true);
+        $condition->setExecutionOrder(0);
+
+        return $condition;
+    }
+
+    public function testMeleeIsBlockedAtDistanceFourByRequiresDistance(): void
+    {
+        $action = $this->meleeWith($this->condition('RequiresDistance', ['max' => 1]));
+        $input = new SimulationInput(
+            actorCaracs: ['cc' => 10],
+            targetCaracs: ['cc' => 10],
             distance: 4,
+            actorWeapon: 'melee',
+            targetWeapon: 'melee',
         );
 
-        $this->assertNotNull($sim);
-        $this->assertSame(3, $sim->distanceMalus);
-        $this->assertSame(10, $sim->distanceThreshold);
-        $this->assertSame(17, $sim->actorTotal);
-        $this->assertSame(7, $sim->targetTraitValue);
-        $this->assertTrue($sim->reachedThreshold);
-        $this->assertTrue($sim->hit);
+        $results = (new ActionSimulationService())->simulate($action, $input);
+
+        $this->assertTrue($results->isBlocked());
+        $this->assertStringContainsString('loin', $this->failureText($results));
     }
 
-    public function testDistanceShotThatFallsShortOfThresholdMisses(): void
+    public function testMeleeIsBlockedWithoutAMeleeWeapon(): void
     {
-        $action = $this->actionWithComputeCondition(['actorRollType' => 'ct', 'targetRollType' => 'cc/agi'], 'DistanceCompute');
-
-        $sim = (new ActionSimulationService())->simulateRoll(
-            $action,
-            ['ct' => 10],
-            ['cc' => 1, 'agi' => 1],
-            forcedActorRoll: 8,
-            forcedTargetRoll: 1,
-            distance: 4,
+        $action = $this->meleeWith($this->condition('RequiresWeaponType', ['type' => ['melee']]));
+        $input = new SimulationInput(
+            actorCaracs: ['cc' => 10],
+            targetCaracs: ['cc' => 10],
+            distance: 1,
+            actorWeapon: 'tir',
+            targetWeapon: 'melee',
         );
 
-        $this->assertNotNull($sim);
-        $this->assertFalse($sim->reachedThreshold);
-        $this->assertFalse($sim->hit);
+        $results = (new ActionSimulationService())->simulate($action, $input);
+
+        $this->assertTrue($results->isBlocked());
+        $this->assertStringContainsString('arme', $this->failureText($results));
     }
 
-    public function testSimulatesOpposedRollWithForcedRolls(): void
+    public function testFullHitAppliesLifeLossDamageWithoutTouchingTheDatabase(): void
     {
-        $action = $this->actionWithComputeCondition([
-            'actorRollType' => 'cc',
-            'targetRollType' => 'agi',
-            'actorRollBonus' => 2,
-        ]);
-
-        $sim = (new ActionSimulationService())->simulateRoll(
-            $action,
-            ['cc' => 10],
-            ['agi' => 5],
-            forcedActorRoll: 6,
-            forcedTargetRoll: 6,
+        // BuffAction (not an AttackAction) carries the LifeLoss instruction without
+        // the adrenaline/object-effect auto-instructions, isolating the damage path.
+        $action = new BuffAction();
+        $action->setName('drain');
+        $action->setDisplayName('Drain');
+        $action->addAutomaticOutcomeInstruction(
+            $this->lifeLoss(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi'])
+        );
+        $input = new SimulationInput(
+            actorCaracs: ['cc' => 20],
+            targetCaracs: ['agi' => 2],
         );
 
-        $this->assertNotNull($sim);
-        $this->assertSame(10, $sim->actorTraitValue);
-        $this->assertSame(8, $sim->actorTotal);
-        $this->assertSame(6, $sim->targetTotal);
-        $this->assertTrue($sim->hit);
+        $results = (new ActionSimulationService())->simulate($action, $input);
+
+        $this->assertFalse($results->isBlocked());
+        $damage = 0;
+        foreach ($results->getOutcomesResultsArray() as $outcome) {
+            $damage += (int) $outcome->getTotalDamages();
+        }
+        $this->assertGreaterThan(0, $damage);
     }
 
-    public function testMissWhenActorTotalBelowTarget(): void
+    public function testAutomaticInstructionsGetterIsSafeOnAHydratedEntity(): void
     {
-        $action = $this->actionWithComputeCondition(['actorRollType' => 'cc', 'targetRollType' => 'agi']);
+        // Doctrine builds entities without calling the constructor, leaving the
+        // transient automaticOutcomeInstructions collection uninitialized — the
+        // shape simulate() reads from a DB-loaded action in the admin panel.
+        $action = (new \ReflectionClass(BuffAction::class))->newInstanceWithoutConstructor();
 
-        $sim = (new ActionSimulationService())->simulateRoll($action, ['cc' => 1], ['agi' => 1], forcedActorRoll: 3, forcedTargetRoll: 9);
-
-        $this->assertNotNull($sim);
-        $this->assertFalse($sim->hit);
+        $this->assertCount(0, $action->getAutomaticOutcomeInstructions());
     }
 
-    public function testTargetTraitPairTakesTheMaximum(): void
+    public function testDistributionRestoresTheActionsAutomaticInstructions(): void
     {
-        $action = $this->actionWithComputeCondition(['actorRollType' => 'cc', 'targetRollType' => 'cc/agi']);
+        // cc 1 vs agi 30 → the Compute roll misses on virtually every run, and a
+        // miss adds a MalusOutcomeInstruction to the shared action; the count must
+        // still return to its baseline after the whole distribution.
+        $action = $this->meleeWith(
+            $this->condition('MeleeCompute', ['actorRollType' => 'cc', 'targetRollType' => 'agi'])
+        );
+        $baseline = $action->getAutomaticOutcomeInstructions()->count();
+        $input = new SimulationInput(
+            actorCaracs: ['cc' => 1, 'agi' => 1],
+            targetCaracs: ['cc' => 30, 'agi' => 30],
+            actorWeapon: 'melee',
+            targetWeapon: 'melee',
+        );
 
-        $sim = (new ActionSimulationService())->simulateRoll($action, ['cc' => 5], ['cc' => 3, 'agi' => 9], forcedActorRoll: 5, forcedTargetRoll: 5);
+        (new ActionSimulationService())->distribution($action, $input, 100);
 
-        $this->assertNotNull($sim);
-        $this->assertSame(9, $sim->targetTraitValue);
+        $this->assertSame($baseline, $action->getAutomaticOutcomeInstructions()->count());
     }
 
-    public function testReturnsNullWhenActionHasNoComputeCondition(): void
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function lifeLoss(array $params): LifeLossOutcomeInstruction
     {
-        $this->assertNull((new ActionSimulationService())->simulateRoll(new MeleeAction(), [], []));
+        $instruction = new LifeLossOutcomeInstruction();
+        $instruction->setParameters($params);
+
+        return $instruction;
+    }
+
+    private function failureText(ActionResults $results): string
+    {
+        $text = '';
+        foreach ($results->getConditionsResultsArray() as $conditionResult) {
+            if (!$conditionResult->isSuccess()) {
+                $text .= implode(' ', $conditionResult->getConditionFailureMessages());
+            }
+        }
+
+        return $text;
     }
 }

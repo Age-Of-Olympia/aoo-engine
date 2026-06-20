@@ -252,6 +252,12 @@ abstract class Action implements ActionInterface
      */
     public function getAutomaticOutcomeInstructions(): Collection
     {
+        // Transient (non-mapped) collection: Doctrine hydrates entities without
+        // calling the constructor, so initialize lazily to stay safe for callers
+        // that read it before initAutomaticOutcomeInstructions() runs.
+        if (!isset($this->automaticOutcomeInstructions)) {
+            $this->automaticOutcomeInstructions = new ArrayCollection();
+        }
         return $this->automaticOutcomeInstructions;
     }
 

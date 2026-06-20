@@ -11,7 +11,7 @@ use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 
-class RequiresDistanceCondition extends BaseCondition implements HasParameterSchema
+class RequiresDistanceCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
 {
     public static function parameterSchema(): ParameterSchema
     {
@@ -19,6 +19,11 @@ class RequiresDistanceCondition extends BaseCondition implements HasParameterSch
             new ParameterField('min', FieldType::INT, 'Distance minimale', default: 0),
             new ParameterField('max', FieldType::INT, 'Distance maximale', default: 0),
         );
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        return [new \App\Action\Schema\SimulationField('distance', 'shared', 'distance', 'Distance (cases)')];
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

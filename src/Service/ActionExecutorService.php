@@ -20,14 +20,15 @@ class ActionExecutorService
     private Player $actor;
     private Player $target;
     private Action $action;
-    private PlayerService $playerService;
+    private ?PlayerService $playerService;
+    private bool $simulationMode = false;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
     private int $finalTargetPv;
     private bool $blocked = false;
     private ConditionObject $conditionObject;
     
-    public function __construct(Action $action, Player $actor, Player $target){
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false){
         $this->conditionRegistry = new ConditionRegistry();
         $this->conditionResultsArray = array();
         $this->outcomeResultsArray = array();
@@ -35,7 +36,10 @@ class ActionExecutorService
         $this->actor = $actor;
         $this->target = $target;
         $this->action = $action;
-        $this->playerService = new PlayerService($actor->id);
+        $this->simulationMode = $simulationMode;
+        // PlayerService only drives the updateLastActionTime persistence side-effect,
+        // which is skipped in simulation — so don't construct it (it would hit the DB).
+        $this->playerService = $simulationMode ? null : new PlayerService($actor->id);
         $this->initialTargetPv = $target->getRemaining('pv');
         $this->conditionObject = new ConditionObject();
         $this->conditionObject->setAction($this->action);
@@ -56,7 +60,7 @@ class ActionExecutorService
             $this->finalTargetPv = $this->target->getRemaining('pv');
 
             // update Last Action Time (used on new turn to set antiberserk time)
-            if ($this->action->activateAntiBerserk()) {
+            if (!$this->simulationMode && $this->action->activateAntiBerserk()) {
                 $this->playerService->updateLastActionTime();
             }
 
@@ -79,7 +83,9 @@ class ActionExecutorService
         $logsArray = $this->action->getLogMessages($this->actor, $this->target);
 
         // 6) Trigger automatic screenshot if action occurred on arene_s2
-        $this->triggerAutomaticScreenshot();
+        if (!$this->simulationMode) {
+            $this->triggerAutomaticScreenshot();
+        }
 
         // contains conditionsResults, effectsResults, costsResults, xpResults and logs
         return new ActionResults($this->globalConditionsResult, $this->blocked, $this->conditionResultsArray, $this->outcomeResultsArray, $costsResultsArray, $xpResultsArray, $logsArray);

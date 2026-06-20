@@ -22,7 +22,7 @@ enum Roll: string
     case cc_agi = "cc_agi";
 }
 
-class ComputeCondition extends BaseCondition implements HasParameterSchema
+class ComputeCondition extends BaseCondition implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
 {
     protected int $distance;
     protected string $throwName = "Le tir";
@@ -49,6 +49,49 @@ class ComputeCondition extends BaseCondition implements HasParameterSchema
             new ParameterField('actorDisadvantage', FieldType::BOOL, 'Désavantage acteur', default: false),
             new ParameterField('targetDisadvantage', FieldType::BOOL, 'Désavantage cible', default: false),
         );
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        $fields = [];
+        foreach (explode('/', (string) ($params['actorRollType'] ?? '')) as $trait) {
+            if ($trait !== '') {
+                $fields[] = new \App\Action\Schema\SimulationField('trait', 'actor', $trait, 'Acteur — ' . $trait);
+            }
+        }
+        foreach (static::targetSimulationTraits($params) as $trait) {
+            $fields[] = new \App\Action\Schema\SimulationField('trait', 'target', $trait, 'Cible — ' . $trait);
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Traits the target's defense roll reads. When the subclass implements a
+     * per-type defense formula, its parameter names ARE the traits it reads
+     * (SSOT — e.g. targetDefenseValue(int $cc, int $agi)). Otherwise the roll
+     * uses the configured targetRollType.
+     *
+     * @param array<string, mixed> $params
+     * @return list<string>
+     */
+    protected static function targetSimulationTraits(array $params): array
+    {
+        if (method_exists(static::class, 'targetDefenseValue')) {
+            return array_map(
+                static fn(\ReflectionParameter $parameter): string => $parameter->getName(),
+                (new \ReflectionMethod(static::class, 'targetDefenseValue'))->getParameters(),
+            );
+        }
+
+        $traits = [];
+        foreach (explode('/', (string) ($params['targetRollType'] ?? '')) as $trait) {
+            if ($trait !== '' && !is_numeric($trait)) {
+                $traits[] = $trait;
+            }
+        }
+
+        return $traits;
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

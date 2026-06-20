@@ -11,14 +11,30 @@ use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
-use App\Service\ActionPassiveService;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
-class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
+class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema, \App\Action\Schema\DeclaresSimulationInputs
 {
+    public static function simulationInputs(array $params): array
+    {
+        $fields = [];
+        $field = static function (string $param, string $side, string $label) use ($params, &$fields): void {
+            $trait = $params[$param] ?? null;
+            if (is_string($trait) && $trait !== '' && !is_numeric($trait)) {
+                $fields[] = new \App\Action\Schema\SimulationField('trait', $side, $trait, $label . ' — ' . $trait);
+            }
+        };
+        $field('actorDamagesTrait', 'actor', 'Attaque');
+        $field('bonusDamagesTrait', 'actor', 'Bonus dégâts');
+        $field('targetDamagesTrait', 'target', 'Défense');
+        $field('bonusDefenseTrait', 'target', 'Bonus défense');
+
+        return $fields;
+    }
+
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
@@ -67,7 +83,6 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $actorEffetAgressivite = $actor->getEffectValue("agressivite");
         $targetEffetFragilite = $target->getEffectValue("fragilite");
         $targetEffetArmure = $target->getEffectValue("armure");
-        $actionPassiveService = new ActionPassiveService();
 
         if ($targetIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
