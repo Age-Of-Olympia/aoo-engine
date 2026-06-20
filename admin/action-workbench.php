@@ -228,7 +228,7 @@ ob_start();
     .wb-sim-result { margin-top: 14px; }
     .wb-sim-result .sim-distribution { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; padding: 8px 14px; background: #f7f9fb; border: 1px solid #e7ebee; border-radius: 7px; font-size: 13px; }
     .wb-sim-result .sim-distribution .sim-dist-runs { background: #4a90e2; color: #fff; border-radius: 10px; padding: 1px 9px; font-weight: 700; }
-    .wb-sim-result .card.mt-3 { margin: 12px 0 0 !important; max-width: 760px !important; }
+    .wb-sim-result .card.mt-3 { margin: 12px 0 0 !important; max-width: none !important; }
 </style>
 
 <div class="wb">
