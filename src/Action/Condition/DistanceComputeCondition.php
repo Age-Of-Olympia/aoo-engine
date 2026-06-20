@@ -1,6 +1,8 @@
 <?php
 namespace App\Action\Condition;
 
+use App\Action\Combat\CombatResolver;
+
 class DistanceComputeCondition extends ComputeCondition
 {
     public function __construct()
@@ -31,19 +33,11 @@ class DistanceComputeCondition extends ComputeCondition
             }
         }
 
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
-            $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
-            }   
-            else{
-                $targetRoll = min($targetRoll,$targetRoll2);
-            }
-        }
+        $targetRoll = (new CombatResolver($dice))->roll(
+            (int) $targetRollTraitValue,
+            (bool) $conditionObject->getTargetAdvantage(),
+            (bool) $conditionObject->getTargetDisadvantage()
+        );
         $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
         $targetEffetProtection = $target->getEffectValue("protection");
         $effetVulnerabilite = !empty($targetEffetVulnerabilite) ? $targetEffetVulnerabilite : 0;
