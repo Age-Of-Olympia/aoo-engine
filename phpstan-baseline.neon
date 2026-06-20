@@ -151,12 +151,6 @@ parameters:
 			path: src/Action/Condition/ComputePureCondition.php
 
 		-
-			message: '#^Method App\\Action\\Condition\\DistanceComputeCondition\:\:getDistanceTreshold\(\) should return int but returns float\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Action/Condition/DistanceComputeCondition.php
-
-		-
 			message: '#^Undefined variable\: \$targetRollBonus$#'
 			identifier: variable.undefined
 			count: 1

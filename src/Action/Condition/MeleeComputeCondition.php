@@ -5,11 +5,16 @@ use App\Action\Combat\CombatResolver;
 
 class MeleeComputeCondition extends ComputeCondition
 {
+    public static function targetDefenseValue(int $cc, int $agi): int
+    {
+        return max($cc, $agi);
+    }
+
   protected function computeTarget($target, $dice, $conditionObject)
     {
         $option1 = $target->caracs->cc;
         $option2 = $target->caracs->agi;
-        $targetRollTraitValue = max($option1, $option2);
+        $targetRollTraitValue = self::targetDefenseValue((int) $option1, (int) $option2);
         $targetRoll = (new CombatResolver($dice))->roll(
             (int) $targetRollTraitValue,
             (bool) $conditionObject->getTargetAdvantage(),

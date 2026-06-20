@@ -2,6 +2,8 @@
 
 namespace Tests\Action\Combat;
 
+use App\Action\Condition\DistanceComputeCondition;
+use App\Action\Condition\MeleeComputeCondition;
 use App\Action\MeleeAction;
 use App\Entity\ActionCondition;
 use App\Service\Action\ActionSimulationService;
@@ -14,15 +16,73 @@ class ActionSimulationServiceTest extends TestCase
     /**
      * @param array<string, mixed> $params
      */
-    private function actionWithComputeCondition(array $params): MeleeAction
+    private function actionWithComputeCondition(array $params, string $type = 'Compute'): MeleeAction
     {
         $action = new MeleeAction();
         $condition = new ActionCondition();
-        $condition->setConditionType('Compute');
+        $condition->setConditionType($type);
         $condition->setParameters($params);
         $action->addCondition($condition);
 
         return $action;
+    }
+
+    public function testMeleeDefenseUsesMaxOfCcAndAgi(): void
+    {
+        $this->assertSame(8, MeleeComputeCondition::targetDefenseValue(5, 8));
+    }
+
+    public function testDistanceDefenseUsesTheWeightedBlend(): void
+    {
+        // floor(max(3/4*8 + 1/4*4, 1/4*8 + 3/4*4)) = floor(max(7, 5)) = 7
+        $this->assertSame(7, DistanceComputeCondition::targetDefenseValue(8, 4));
+    }
+
+    public function testDistanceMalusAndThresholdFormulas(): void
+    {
+        $this->assertSame(0, DistanceComputeCondition::distanceMalusFor(2));
+        $this->assertSame(3, DistanceComputeCondition::distanceMalusFor(4));
+        $this->assertSame(10, DistanceComputeCondition::distanceThresholdFor(4));
+    }
+
+    public function testDistanceSimulationAppliesBlendMalusAndThreshold(): void
+    {
+        $action = $this->actionWithComputeCondition(['actorRollType' => 'ct', 'targetRollType' => 'cc/agi'], 'DistanceCompute');
+
+        $sim = (new ActionSimulationService())->simulateRoll(
+            $action,
+            ['ct' => 10],
+            ['cc' => 4, 'agi' => 8],
+            forcedActorRoll: 20,
+            forcedTargetRoll: 6,
+            distance: 4,
+        );
+
+        $this->assertNotNull($sim);
+        $this->assertSame(3, $sim->distanceMalus);
+        $this->assertSame(10, $sim->distanceThreshold);
+        $this->assertSame(17, $sim->actorTotal);
+        $this->assertSame(7, $sim->targetTraitValue);
+        $this->assertTrue($sim->reachedThreshold);
+        $this->assertTrue($sim->hit);
+    }
+
+    public function testDistanceShotThatFallsShortOfThresholdMisses(): void
+    {
+        $action = $this->actionWithComputeCondition(['actorRollType' => 'ct', 'targetRollType' => 'cc/agi'], 'DistanceCompute');
+
+        $sim = (new ActionSimulationService())->simulateRoll(
+            $action,
+            ['ct' => 10],
+            ['cc' => 1, 'agi' => 1],
+            forcedActorRoll: 8,
+            forcedTargetRoll: 1,
+            distance: 4,
+        );
+
+        $this->assertNotNull($sim);
+        $this->assertFalse($sim->reachedThreshold);
+        $this->assertFalse($sim->hit);
     }
 
     public function testSimulatesOpposedRollWithForcedRolls(): void

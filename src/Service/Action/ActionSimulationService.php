@@ -7,6 +7,8 @@ use App\Action\Combat\DamageCalculator;
 use App\Action\Combat\DamageModifiers;
 use App\Action\Combat\DamageSimulation;
 use App\Action\Combat\RollSimulation;
+use App\Action\Condition\DistanceComputeCondition;
+use App\Action\Condition\MeleeComputeCondition;
 use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
@@ -114,12 +116,14 @@ final class ActionSimulationService
         array $targetStats,
         ?int $forcedActorRoll = null,
         ?int $forcedTargetRoll = null,
+        ?int $distance = null,
     ): ?RollSimulation {
         $condition = $this->findComputeCondition($action);
         if ($condition === null) {
             return null;
         }
 
+        $type = $condition->getConditionType();
         $params = $condition->getParameters() ?? [];
         $actorTrait = (string) ($params['actorRollType'] ?? '');
         $targetTrait = (string) ($params['targetRollType'] ?? '');
@@ -127,7 +131,7 @@ final class ActionSimulationService
         $targetBonus = (int) ($params['targetRollBonus'] ?? 0);
 
         $actorValue = $this->traitValue($actorStats, $actorTrait);
-        $targetValue = $this->traitValue($targetStats, $targetTrait);
+        [$targetValue, $targetFormula] = $this->targetDefense($type, $targetStats, $targetTrait);
 
         $actorRoll = $forcedActorRoll ?? array_sum($this->resolver->roll(
             $actorValue,
@@ -140,22 +144,63 @@ final class ActionSimulationService
             (bool) ($params['targetDisadvantage'] ?? false),
         ));
 
-        $actorTotal = $actorRoll + $actorBonus;
+        $isDistance = str_contains($type, 'Distance');
+        $distanceMalus = ($distance !== null && $isDistance) ? DistanceComputeCondition::distanceMalusFor($distance) : 0;
+        $threshold = ($distance !== null && $distance > 1 && $isDistance) ? DistanceComputeCondition::distanceThresholdFor($distance) : 0;
+
+        $actorTotal = $actorRoll + $actorBonus - $distanceMalus;
         $targetTotal = $targetRoll + $targetBonus;
+        $reachedThreshold = $threshold === 0 || $actorTotal >= $threshold;
 
         return new RollSimulation(
             $actorTrait,
             $actorValue,
             $actorRoll,
             $actorBonus,
+            $distanceMalus,
             $actorTotal,
             $targetTrait,
             $targetValue,
+            $targetFormula,
             $targetRoll,
             $targetBonus,
             $targetTotal,
-            $this->resolver->resolve($actorTotal, $targetTotal)->hit,
+            $threshold,
+            $reachedThreshold,
+            $this->resolver->resolve($actorTotal, $targetTotal, $reachedThreshold)->hit,
         );
+    }
+
+    /**
+     * The target's defense roll value and a human-readable derivation, using the
+     * same per-condition-type formula as live combat.
+     *
+     * @param array<string, int> $stats
+     * @return array{0: int, 1: string}
+     */
+    private function targetDefense(string $conditionType, array $stats, string $paramTrait): array
+    {
+        $cc = (int) ($stats['cc'] ?? 0);
+        $agi = (int) ($stats['agi'] ?? 0);
+
+        if (str_contains($conditionType, 'Distance')) {
+            $value = DistanceComputeCondition::targetDefenseValue($cc, $agi);
+            return [$value, "floor(max(¾·cc + ¼·agi, ¼·cc + ¾·agi)) avec cc={$cc}, agi={$agi} = {$value}"];
+        }
+
+        if (str_contains($conditionType, 'Melee')) {
+            $value = MeleeComputeCondition::targetDefenseValue($cc, $agi);
+            return [$value, "max(cc={$cc}, agi={$agi}) = {$value}"];
+        }
+
+        $value = $this->traitValue($stats, $paramTrait);
+        $parts = explode('/', $paramTrait);
+        if (count($parts) > 1) {
+            $detail = implode(', ', array_map(static fn(string $part): string => $part . '=' . (int) ($stats[$part] ?? 0), $parts));
+            return [$value, "max({$detail}) = {$value}"];
+        }
+
+        return [$value, "{$paramTrait} = {$value}"];
     }
 
     private function findComputeCondition(Action $action): ?ActionCondition

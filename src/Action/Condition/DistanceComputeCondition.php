@@ -11,15 +11,32 @@ class DistanceComputeCondition extends ComputeCondition
         array_push($this->preConditions, new ObstacleCondition());
     }
 
+    public static function targetDefenseValue(int $cc, int $agi): int
+    {
+        return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));
+    }
+
+    public static function distanceMalusFor(int $distance): int
+    {
+        $cellCount = $distance - 1;
+
+        return $cellCount > 2 ? ($cellCount - 2) * 3 : 0;
+    }
+
+    public static function distanceThresholdFor(int $distance): int
+    {
+        return (int) floor($distance * 2.5);
+    }
+
     protected function getDistanceTreshold() : int {
-        return floor(($this->distance) * 2.5);
+        return self::distanceThresholdFor($this->distance);
     }
 
     protected function computeTarget($target, $dice, $conditionObject)
     {
         $trait1 = $target->caracs->cc;
         $trait2 = $target->caracs->agi;
-        $targetRollTraitValue = floor(max(3/4 * $trait1 + 1/4 * $trait2, 1/4 * $trait1 + 3/4 * $trait2));
+        $targetRollTraitValue = self::targetDefenseValue((int) $trait1, (int) $trait2);
         
         if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"reflexes_fulgurants")){
             $targetRollTraitValue = floor(6/7 * $trait2 + 1/7 * $trait1);
@@ -75,11 +92,6 @@ class DistanceComputeCondition extends ComputeCondition
     }
     
     protected function getDistanceMalus(): int {
-        $distanceMalus = 0;
-        $cellCount = $this->distance - 1;
-        if($cellCount > 2){
-            $distanceMalus = ($cellCount - 2) * 3;
-        }
-        return $distanceMalus;
+        return self::distanceMalusFor($this->distance);
     }
 }

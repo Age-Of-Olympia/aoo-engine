@@ -35,6 +35,7 @@ if ($action === null) {
                 <?php foreach ($traits['target'] as $trait): ?>
                     <div class="form-group"><label>Cible — <?= $esc($trait) ?></label><input class="form-control" type="number" name="target[<?= $esc($trait) ?>]" value="<?= $esc($targetGet[$trait] ?? 10) ?>"></div>
                 <?php endforeach; ?>
+                <div class="form-group"><label>Distance (cases)</label><input class="form-control" type="number" name="distance" min="1" value="<?= $esc($_GET['distance'] ?? 1) ?>"></div>
                 <div class="form-group"><label>Jet acteur forcé (optionnel)</label><input class="form-control" type="number" name="forceActor" value="<?= $esc($_GET['forceActor'] ?? '') ?>"></div>
                 <div class="form-group"><label>Jet cible forcé (optionnel)</label><input class="form-control" type="number" name="forceTarget" value="<?= $esc($_GET['forceTarget'] ?? '') ?>"></div>
                 <button class="btn btn-primary" type="submit">Simuler</button>
@@ -46,16 +47,20 @@ if ($action === null) {
             $targetStats = array_map('intval', $targetGet);
             $forcedActor = ($_GET['forceActor'] ?? '') !== '' ? (int) $_GET['forceActor'] : null;
             $forcedTarget = ($_GET['forceTarget'] ?? '') !== '' ? (int) $_GET['forceTarget'] : null;
-            $roll = $service->simulateRoll($action, $actorStats, $targetStats, $forcedActor, $forcedTarget);
+            $distance = max(1, (int) ($_GET['distance'] ?? 1));
+            $roll = $service->simulateRoll($action, $actorStats, $targetStats, $forcedActor, $forcedTarget, $distance);
             $damage = $service->simulateDamage($action, $actorStats, $targetStats);
             ?>
             <?php if ($roll !== null): ?>
                 <div class="card mt-3" style="max-width:520px">
                     <div class="card-header"><h3 class="card-title">Jet : <?= $roll->hit ? '<span class="badge badge-success">TOUCHE</span>' : '<span class="badge badge-danger">RATÉ</span>' ?></h3></div>
                     <div class="card-body">
-                        <p>Acteur (<?= $esc($roll->actorTrait) ?> = <?= $roll->actorTraitValue ?>) : jet <?= $roll->actorRoll ?> + <?= $roll->actorBonus ?> = <strong><?= $roll->actorTotal ?></strong></p>
-                        <p>Cible (<?= $esc($roll->targetTrait) ?> = <?= $roll->targetTraitValue ?>) : jet <?= $roll->targetRoll ?> + <?= $roll->targetBonus ?> = <strong><?= $roll->targetTotal ?></strong></p>
-                        <p class="text-muted">Touche si total acteur &ge; total cible.</p>
+                        <p>Acteur (<?= $esc($roll->actorTrait) ?> = <?= $roll->actorTraitValue ?>) : jet <?= $roll->actorRoll ?> + bonus <?= $roll->actorBonus ?><?= $roll->distanceMalus > 0 ? ' - ' . $roll->distanceMalus . ' (distance)' : '' ?> = <strong><?= $roll->actorTotal ?></strong></p>
+                        <p>Cible : défense = <?= $esc($roll->targetFormula) ?> ; jet <?= $roll->targetRoll ?> + bonus <?= $roll->targetBonus ?> = <strong><?= $roll->targetTotal ?></strong></p>
+                        <?php if ($roll->distanceThreshold > 0): ?>
+                            <p>Portée : il faut un total &ge; <strong><?= $roll->distanceThreshold ?></strong> (distance <?= $distance ?>) &mdash; <?= $roll->reachedThreshold ? 'atteinte' : '<span class="badge badge-danger">hors de portée</span>' ?>.</p>
+                        <?php endif; ?>
+                        <p class="text-muted">Touche si la cible est à portée et total acteur &ge; total cible.</p>
                     </div>
                 </div>
             <?php endif; ?>
