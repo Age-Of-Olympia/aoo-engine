@@ -2,6 +2,7 @@
 
 namespace App\Action\Schema;
 
+use App\Entity\EntityManagerFactory;
 use App\Service\ActionPassiveService;
 use App\Service\RecipeService;
 
@@ -100,6 +101,30 @@ final class OptionCatalog
     }
 
     /**
+     * Every item as id => name, for fields that reference a specific item
+     * (e.g. a required ammunition). Names beat raw ids for a human.
+     *
+     * @return array<string, string>
+     */
+    public function items(): array
+    {
+        try {
+            $rows = EntityManagerFactory::getEntityManager()
+                ->createQuery('SELECT i.id AS id, i.name AS name FROM App\Entity\Item i ORDER BY i.name ASC')
+                ->getArrayResult();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($rows as $row) {
+            $items[(string) $row['id']] = $this->humanize((string) $row['name']);
+        }
+
+        return $items;
+    }
+
+    /**
      * Options for a catalog-backed field type, or [] for non-catalog types.
      *
      * @return array<string, string>
@@ -112,6 +137,7 @@ final class OptionCatalog
             FieldType::WEAPON_TYPE => $this->weaponTypes(),
             FieldType::EMPLACEMENT => $this->emplacements(),
             FieldType::MATERIAL => $this->craftingMaterials(),
+            FieldType::ITEM => $this->items(),
             default => [],
         };
     }

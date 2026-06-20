@@ -18,12 +18,13 @@ enum FieldType: string
     case WEAPON_TYPE = 'weapon_type';
     case EMPLACEMENT = 'emplacement';
     case MATERIAL = 'material';
+    case ITEM = 'item';
 
     /** Whether this type's options are sourced from OptionCatalog. */
     public function isCatalog(): bool
     {
         return match ($this) {
-            self::EFFECT, self::PASSIVE, self::WEAPON_TYPE, self::EMPLACEMENT, self::MATERIAL => true,
+            self::EFFECT, self::PASSIVE, self::WEAPON_TYPE, self::EMPLACEMENT, self::MATERIAL, self::ITEM => true,
             default => false,
         };
     }

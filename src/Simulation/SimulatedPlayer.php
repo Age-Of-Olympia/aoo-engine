@@ -44,13 +44,15 @@ class SimulatedPlayer extends Player
         $this->emplacements = $emplacements ?? (object) [];
         // Degressive-XP reduction read by AttackAction::calculateActorXp.
         $this->upgrades = (object) ['a' => 0];
-        $this->data = (object) array_merge(
+        // Lenient: unmodelled data fields the engine reads return null, not a warning.
+        $this->data = new LenientData(array_merge(
             [
                 'name' => 'Simulé', 'race' => 'humain', 'malus' => 0, 'antiBerserkTime' => 0,
-                'rank' => 1, 'faction' => '', 'secretFaction' => '', 'isInactive' => false, 'energie' => 100,
+                'rank' => 1, 'faction' => '', 'secretFaction' => '', 'isInactive' => false,
+                'energie' => 100, 'godId' => 1,
             ],
             $data,
-        );
+        ));
         $this->playerEffectService = new SimulatedEffectService($effects);
         $this->playerPassiveService = new SimulatedPassiveService($passives, $this);
     }

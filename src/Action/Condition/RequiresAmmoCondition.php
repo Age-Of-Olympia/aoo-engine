@@ -17,7 +17,7 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('itemId', FieldType::INT, 'Identifiant de la munition', help: "Laisser vide pour utiliser la munition de l'arme équipée."),
+            new ParameterField('itemId', FieldType::ITEM, 'Munition requise', help: "Laisser vide pour utiliser la munition de l'arme équipée."),
             new ParameterField('itemQuantity', FieldType::INT, 'Quantité consommée', default: 1),
         );
     }
