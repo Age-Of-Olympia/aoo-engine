@@ -4,11 +4,23 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponTypeCondition extends BaseCondition
+class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('type', FieldType::LIST, "Types d'arme", help: 'ex: melee, tir, jet, bouclier'),
+            new ParameterField('location', FieldType::LIST, 'Emplacements', help: 'ex: main1'),
+        );
+    }
+
     private ?string $errorMessage = null;
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

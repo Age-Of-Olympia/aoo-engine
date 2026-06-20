@@ -6,10 +6,12 @@ use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterSchema;
 use Classes\Dice;
 use Classes\View;
 
-class ComputePureCondition extends BaseCondition
+class ComputePureCondition extends BaseCondition implements HasParameterSchema
 {
     protected int $distance;
     protected string $throwName = "Le tir";
@@ -22,6 +24,11 @@ class ComputePureCondition extends BaseCondition
         $this->dice = $dice;
         array_push($this->preConditions, new DodgeCondition());
         array_push($this->preConditions, new NoBerserkCondition());
+    }
+
+    public static function parameterSchema(): ParameterSchema
+    {
+        return ComputeCondition::parameterSchema();
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

@@ -76,6 +76,19 @@ class ActionSchemaCatalogTest extends TestCase
         $this->assertSame(FieldType::TRAIT_OR_INT, $schema->field('value')->type);
     }
 
+    public function testRolledOutConditionSchemas(): void
+    {
+        $distance = $this->catalog->schemaForCondition('RequiresDistance');
+        $this->assertSame(FieldType::INT, $distance->field('min')->type);
+        $this->assertSame(FieldType::INT, $distance->field('max')->type);
+
+        $weapon = $this->catalog->schemaForCondition('RequiresWeaponType');
+        $this->assertSame(FieldType::LIST, $weapon->field('type')->type);
+
+        // ComputePure reuses the Compute schema
+        $this->assertNotNull($this->catalog->schemaForCondition('ComputePure')->field('actorRollType'));
+    }
+
     public function testTypesWithoutASchemaFallBackToEmpty(): void
     {
         $this->assertTrue($this->catalog->schemaForCondition('Plan')->isEmpty());
