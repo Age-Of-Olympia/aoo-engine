@@ -367,12 +367,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
 
 		-
-			message: '#^Loose comparison using \=\= between ''target'' and ''target'' will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
-			count: 1
-			path: src/Action/OutcomeInstruction/MalusOutcomeInstruction.php
-
-		-
 			message: '#^Variable \$param on left side of \?\? is never defined\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
@@ -383,12 +377,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: src/Action/OutcomeInstruction/ObjectOutcomeInstruction.php
-
-		-
-			message: '#^Loose comparison using \=\= between ''target'' and ''target'' will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
-			count: 1
-			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
 
 		-
 			message: '#^Variable \$param on left side of \?\? is never defined\.$#'

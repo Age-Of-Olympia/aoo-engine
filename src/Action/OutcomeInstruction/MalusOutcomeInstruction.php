@@ -29,14 +29,11 @@ class MalusOutcomeInstruction extends OutcomeInstruction
         $to = $param["to"] ?? "target";
 
         $malusTot = $this->computeMalusTotal($baseRoll, $difference, false);
-        if ($to == "target") {
-            $inepuisable = $target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(), "inepuisable");
+        $subject = $this->resolveSubject($to, $actor, $target);
+        if ($subject !== null) {
+            $inepuisable = $subject->playerPassiveService->hasPassiveByPlayerIdByName($subject->getId(), "inepuisable");
             $malusTot = $this->computeMalusTotal($baseRoll, $difference, $inepuisable);
-            $target->put_malus($malusTot);
-        } else if ($to == "actor") {
-            $inepuisable = $actor->playerPassiveService->hasPassiveByPlayerIdByName($actor->getId(), "inepuisable");
-            $malusTot = $this->computeMalusTotal($baseRoll, $difference, $inepuisable);
-            $actor->put_malus($malusTot);
+            $subject->put_malus($malusTot);
         }
 
         $malusTotalTxt = $malusText !== null ? $malusText . ' = ' . $malusTot : $baseRoll;

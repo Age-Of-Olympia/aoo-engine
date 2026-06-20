@@ -22,10 +22,9 @@ class RemoveMalusOutcomeInstruction extends OutcomeInstruction
 
         $to = $param["to"] ?? "target";
 
-        if ($to == "target") {
-            $target->put_malus(-$malus);
-        } else if ($to == "actor") {
-            $actor->put_malus(-$malus);
+        $subject = $this->resolveSubject($to, $actor, $target);
+        if ($subject !== null) {
+            $subject->put_malus(-$malus);
         }
 
         $outcomeMalusMessages = array();
