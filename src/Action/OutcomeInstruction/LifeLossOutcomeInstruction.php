@@ -131,7 +131,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
             if($encaisse){
                 $beforeEncaisseDmg = $totalDamages ?? 0;
-                $totalDamages = max(1,floor($totalDamages*0.75));
+                $totalDamages = $this->computeDamageTaken((int) $totalDamages);
             }
             $target->putBonus(array('pv'=>-$totalDamages));
 
@@ -197,7 +197,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
 
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
 
-            $recoverMalus = floor($totalDamages/2);
+            $recoverMalus = $this->computeRecoverMalus((int) $totalDamages);
 
             if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
                 $malusBonus--;
@@ -210,13 +210,13 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
             $conditionObject->setLifeloss($totalDamages);
 
             if($isDrain){
-                $drain = floor($totalDamages/3);
+                $drain = $this->computeLeech((int) $totalDamages);
                 $actor->putBonus(array('pv'=>$drain));
                 $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $actor->data->name . ' draine ' . $drain . ' PV.';
             }
 
             if($isSiphon){
-                $siphon = floor($totalDamages/3);
+                $siphon = $this->computeLeech((int) $totalDamages);
                 $actor->putBonus(array('pm'=>$siphon));
                 $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $actor->data->name . ' siphone ' . $siphon . ' PM.';
             }
@@ -227,6 +227,21 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$totalDamages);
+    }
+
+    public function computeDamageTaken(int $damage): int
+    {
+        return max(1, (int) floor($damage * 0.75));
+    }
+
+    public function computeRecoverMalus(int $damage): int
+    {
+        return (int) floor($damage / 2);
+    }
+
+    public function computeLeech(int $damage): int
+    {
+        return (int) floor($damage / 3);
     }
 
     private function updatePlayerCaracsWithIgnores(array $ignore, ActorInterface $player)
