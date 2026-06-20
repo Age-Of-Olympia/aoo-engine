@@ -391,12 +391,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
 
 		-
-			message: '#^Variable \$actorCarac in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
-
-		-
 			message: '#^Variable \$param on left side of \?\? is never defined\.$#'
 			identifier: nullCoalesce.variable
 			count: 1
