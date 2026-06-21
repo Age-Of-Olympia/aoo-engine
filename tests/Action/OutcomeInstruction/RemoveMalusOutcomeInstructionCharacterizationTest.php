@@ -52,7 +52,12 @@ class RemoveMalusOutcomeInstructionCharacterizationTest extends TestCase
         $actor->expects($this->once())->method('put_malus')->with(-3);
         $target->expects($this->never())->method('put_malus');
 
-        $instruction->execute($actor, $target, new ConditionObject());
+        $result = $instruction->execute($actor, $target, new ConditionObject());
+
+        // The message must name the subject the malus was removed from, and a
+        // failed read of the (always-success) result must not echo success text.
+        $this->assertStringContainsString('à Actor.', $result->getOutcomeSuccessMessages()[0]);
+        $this->assertSame([], $result->getOutcomeFailureMessages());
     }
 
     public function testRemovalDefaultsToTheTarget(): void
@@ -66,6 +71,8 @@ class RemoveMalusOutcomeInstructionCharacterizationTest extends TestCase
         $actor->expects($this->never())->method('put_malus');
         $target->expects($this->once())->method('put_malus')->with(-3);
 
-        $instruction->execute($actor, $target, new ConditionObject());
+        $result = $instruction->execute($actor, $target, new ConditionObject());
+
+        $this->assertStringContainsString('à Target.', $result->getOutcomeSuccessMessages()[0]);
     }
 }

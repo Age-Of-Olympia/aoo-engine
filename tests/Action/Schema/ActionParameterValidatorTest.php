@@ -142,6 +142,14 @@ class ActionParameterValidatorTest extends TestCase
         $this->validator->coerceRaw([['k' => 'foo bar', 'v' => '1']]);
     }
 
+    public function testCoerceRawRejectsANumericKey(): void
+    {
+        // A numeric key would be reindexed by array_merge, breaking the
+        // raw-key-first ordering ApplyStatus relies on.
+        $this->expectException(InvalidArgumentException::class);
+        $this->validator->coerceRaw([['k' => '1', 'v' => 'true']]);
+    }
+
     public function testCoerceRawAcceptsCamelCaseAndUnderscoreIdentifiers(): void
     {
         $result = $this->validator->coerceRaw([

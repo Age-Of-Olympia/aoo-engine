@@ -76,4 +76,18 @@ class HealingOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertCount(1, $pv, 'the PV heal message must survive a simultaneous PM heal');
         $this->assertCount(1, $pm);
     }
+
+    public function testTotalDamagesCountsBothPvAndPmHeals(): void
+    {
+        // totalDamages used to be overwritten by the PM heal, losing the PV amount.
+        $instruction = new HealingOutcomeInstruction();
+        $instruction->setParameters(['actorHealingTrait' => 5, 'actorPMHealingTrait' => 3]);
+
+        $target = $this->player('Target');
+        $target->method('putBonus')->willReturn(true);
+
+        $result = $instruction->execute($this->player('Actor'), $target, new ConditionObject());
+
+        $this->assertSame(8, $result->getTotalDamages());
+    }
 }

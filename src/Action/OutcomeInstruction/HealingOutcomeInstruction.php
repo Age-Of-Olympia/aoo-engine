@@ -39,7 +39,8 @@ class HealingOutcomeInstruction extends OutcomeInstruction implements HasParamet
         $divisor =  $params['divisor'] ?? 1;
 
         $outcomeSuccessMessages = array();
-        $healing = 0;
+        $pvHealing = 0;
+        $pmHealing = 0;
 
         if(!empty($actorTraitHealing) || !empty($targetTraitHealing)){
             if(!empty($actorTraitHealing)){
@@ -48,22 +49,22 @@ class HealingOutcomeInstruction extends OutcomeInstruction implements HasParamet
             else {
                 $baseHeal = is_numeric($targetTraitHealing) ? $targetTraitHealing : $target->caracs->{$targetTraitHealing};
             }
-            
+
             $bonusHeal = is_numeric($bonusTraitHealing) ? $bonusTraitHealing : ($actor->caracs->$bonusTraitHealing ?? 0);
-            $healing = $this->computePvHeal((float) $baseHeal, (float) $bonusHeal, (int) $divisor);
+            $pvHealing = $this->computePvHeal((float) $baseHeal, (float) $bonusHeal, (int) $divisor);
 
-            $target->putBonus(array('pv'=>$healing));
+            $target->putBonus(array('pv'=>$pvHealing));
 
-            $outcomeSuccessMessages[0] = 'Vous soignez '. $healing .' points de vie à '. $target->data->name.'.';
-        
-        } 
-        
+            $outcomeSuccessMessages[0] = 'Vous soignez '. $pvHealing .' points de vie à '. $target->data->name.'.';
+
+        }
+
         if(!empty($actorTraitPMHealing)){
-            $baseHeal = is_numeric($actorTraitPMHealing) ? $actorTraitPMHealing : $actor->caracs->{$actorTraitPMHealing};
-            $bonusHeal = is_numeric($bonusTraitPMHealing) ? $bonusTraitPMHealing : $actor->caracs->{$bonusTraitPMHealing};
-            $healing = $this->computePmHeal((float) $baseHeal, (float) $bonusHeal);
-            $target->putBonus(array('pm'=>$healing));
-            $outcomeSuccessMessages[] = 'Vous rendez '. $healing .' points de mana à '. $target->data->name.'.';
+            $baseHeal = is_numeric($actorTraitPMHealing) ? $actorTraitPMHealing : ($actor->caracs->{$actorTraitPMHealing} ?? 0);
+            $bonusHeal = is_numeric($bonusTraitPMHealing) ? $bonusTraitPMHealing : ($actor->caracs->{$bonusTraitPMHealing} ?? 0);
+            $pmHealing = $this->computePmHeal((float) $baseHeal, (float) $bonusHeal);
+            $target->putBonus(array('pm'=>$pmHealing));
+            $outcomeSuccessMessages[] = 'Vous rendez '. $pmHealing .' points de mana à '. $target->data->name.'.';
             $pmDetail = is_numeric($actorTraitPMHealing) ? "Valeur fixe à " . $actorTraitPMHealing . '.' : CARACS[$actorTraitPMHealing] .' = '. $baseHeal;
             if ($bonusHeal > 0) {
                 $pmDetail .= ' + '. $bonusHeal;
@@ -71,7 +72,7 @@ class HealingOutcomeInstruction extends OutcomeInstruction implements HasParamet
             $outcomeSuccessMessages[] = $pmDetail;
         }
 
-        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$healing);
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$pvHealing + $pmHealing);
     }
 
     public function computePvHeal(float $baseHeal, float $bonusHeal, int $divisor): int

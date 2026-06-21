@@ -58,8 +58,9 @@ final class ActionParameterValidator
             }
             // A raw key can become an effect name echoed unescaped into outcome HTML
             // (e.g. ApplyStatus keys off the first param), so it must be inert: a
-            // trait/effect identifier is alphanumeric/underscore only.
-            if (preg_match('/^[A-Za-z0-9_]+$/', $key) !== 1) {
+            // trait/effect identifier starts with a letter/underscore (a numeric key
+            // would also be reindexed by array_merge, losing its lead position).
+            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key) !== 1) {
                 throw new InvalidArgumentException("Clé de paramètre invalide : {$key}.");
             }
             $result[$key] = $this->parseRawValue((string) ($row['v'] ?? ''));

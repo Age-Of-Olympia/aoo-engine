@@ -42,9 +42,9 @@ class RemoveMalusOutcomeInstruction extends OutcomeInstruction implements HasPar
         }
 
         $outcomeMalusMessages = array();
-        $outcomeMalusMessages[0] = 'Votre action retire '. $malus .' malus à ' . $target->data->name . '.';
+        $outcomeMalusMessages[0] = 'Votre action retire '. $malus .' malus à ' . ($subject ?? $target)->data->name . '.';
 
-        return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
+        return new OutcomeResult(true, $outcomeMalusMessages, array());
     }
 
     public function computeMalusToRemove(int $fixedMalus, bool $hasCarac, float $caracValue, int $divisor): int
