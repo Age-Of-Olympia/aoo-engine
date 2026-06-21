@@ -11,6 +11,13 @@ namespace App\Simulation;
 class LenientData extends \stdClass
 {
     /**
+     * When true, reading an unmodelled property throws instead of returning null.
+     * Off by default (so simulations stay tolerant); turn on while debugging to
+     * surface a field the simulator should be modelling rather than masking.
+     */
+    public static bool $strict = false;
+
+    /**
      * @param array<string, mixed> $properties
      */
     public function __construct(array $properties)
@@ -22,6 +29,10 @@ class LenientData extends \stdClass
 
     public function __get(string $name): mixed
     {
+        if (self::$strict) {
+            throw new \RuntimeException("SimulatedPlayer data has no '{$name}' property; model it in the simulation input.");
+        }
+
         return null;
     }
 

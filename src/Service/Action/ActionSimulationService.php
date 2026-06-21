@@ -9,6 +9,7 @@ use App\Service\ActionExecutorService;
 use App\Service\ActionPassiveService;
 use App\Simulation\SimulatedItem;
 use App\Simulation\SimulatedPlayer;
+use App\Simulation\SimulationGuard;
 
 /**
  * Previews an action EXACTLY like the live game: it runs the real
@@ -39,7 +40,9 @@ final class ActionSimulationService
         // restore it after each run — otherwise those instructions accumulate.
         $baseline = $action->getAutomaticOutcomeInstructions()->toArray();
         try {
-            return (new ActionExecutorService($action, $actor, $target, simulationMode: true))->executeAction();
+            return SimulationGuard::run(
+                fn() => (new ActionExecutorService($action, $actor, $target, simulationMode: true))->executeAction()
+            );
         } finally {
             $instructions = $action->getAutomaticOutcomeInstructions();
             $instructions->clear();

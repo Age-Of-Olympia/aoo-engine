@@ -1,6 +1,7 @@
 <?php
 namespace Classes;
 
+use App\Simulation\SimulationGuard;
 use mysqli_result;
 
 require_once(__DIR__.'/../config/functions.php');
@@ -18,7 +19,27 @@ class Db{
     public function __destruct(){
     }
 
+    /** Whether a SQL statement mutates data (so it can be blocked in simulation). */
+    public static function isWriteStatement(string $sql): bool
+    {
+        return preg_match('/^\s*(INSERT|UPDATE|DELETE|REPLACE|TRUNCATE|ALTER|DROP|CREATE)\b/i', $sql) === 1;
+    }
+
     public function exe($sql, $array=array(), $returnFalseIfNoAffectedRows = false, $getAffectedRows = false){
+
+        // During a simulation, swallow writes so a preview never persists anything;
+        // reads still run. This is the single boundary that catches every write
+        // path, including ones a SimulatedPlayer can't override (e.g. Item writes).
+        if (SimulationGuard::isActive() && self::isWriteStatement($sql)) {
+            SimulationGuard::recordBlockedWrite();
+            if ($getAffectedRows) {
+                return 0;
+            }
+            if ($returnFalseIfNoAffectedRows) {
+                return false;
+            }
+            return true;
+        }
 
         sqln();
         
