@@ -15,3 +15,6 @@ if (!defined('CARACS')) {
         'fm' => 'FM', 'm' => 'M', 'r' => 'R', 'rm' => 'RM', 'spd' => 'Spd', 'ae' => 'Ae',
     ]);
 }
+if (!defined('ONE_DAY')) {
+    define('ONE_DAY', 86400);
+}

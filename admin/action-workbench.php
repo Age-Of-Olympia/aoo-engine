@@ -145,8 +145,12 @@ if ($action === null) {
 
     // Automatic outcome instructions are added in code (e.g. AttackAction's
     // adrenaline), not the DB; show them read-only so the editor isn't misleading.
-    $action->initAutomaticOutcomeInstructions();
-    echo $automaticView->render($action->getAutomaticOutcomeInstructions());
+    // Enumerate them on a throwaway instance so the action the simulation runs on
+    // isn't mutated (its own init() would then apply them twice).
+    $previewActionClass = get_class($action);
+    $previewAction = new $previewActionClass();
+    $previewAction->initAutomaticOutcomeInstructions();
+    echo $automaticView->render($previewAction->getAutomaticOutcomeInstructions());
 
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
