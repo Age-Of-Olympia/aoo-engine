@@ -22,10 +22,10 @@ class MalusOutcomeInstructionCharacterizationTest extends TestCase
         return $player;
     }
 
-    public function testMalusAlwaysAppliesToTargetEvenWhenConfiguredForActor(): void
+    public function testMalusAppliesToTargetByDefault(): void
     {
         $instruction = new MalusOutcomeInstruction();
-        $instruction->setParameters(['to' => 'actor']);
+        $instruction->setParameters([]);
 
         $passives = new PassiveServiceStub();
         $actor = $this->player('Actor', $passives);
@@ -34,7 +34,26 @@ class MalusOutcomeInstructionCharacterizationTest extends TestCase
         $actor->expects($this->never())->method('put_malus');
         $target->expects($this->once())->method('put_malus');
 
-        $instruction->execute($actor, $target, new ConditionObject());
+        $result = $instruction->execute($actor, $target, new ConditionObject());
+
+        $this->assertStringContainsString('à Target.', $result->getOutcomeSuccessMessages()[0]);
+    }
+
+    public function testMalusAppliesToActorWhenConfigured(): void
+    {
+        $instruction = new MalusOutcomeInstruction();
+        $instruction->setParameters(['to' => 'actor']);
+
+        $passives = new PassiveServiceStub();
+        $actor = $this->player('Actor', $passives);
+        $target = $this->player('Target', $passives);
+
+        $actor->expects($this->once())->method('put_malus');
+        $target->expects($this->never())->method('put_malus');
+
+        $result = $instruction->execute($actor, $target, new ConditionObject());
+
+        $this->assertStringContainsString('à Actor.', $result->getOutcomeSuccessMessages()[0]);
     }
 
     public function testRollDifferenceIsFlooredByDivisor(): void

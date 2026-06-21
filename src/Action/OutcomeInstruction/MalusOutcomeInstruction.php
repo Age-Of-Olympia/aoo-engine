@@ -38,7 +38,7 @@ class MalusOutcomeInstruction extends OutcomeInstruction implements HasParameter
             $malusText = $baseRoll . ' + ' . $difference . ' (Jet)';
         }
 
-        $to = $param["to"] ?? "target";
+        $to = $params["to"] ?? "target";
 
         $malusTot = $this->computeMalusTotal($baseRoll, $difference, false);
         $subject = $this->resolveSubject($to, $actor, $target);
@@ -49,10 +49,11 @@ class MalusOutcomeInstruction extends OutcomeInstruction implements HasParameter
         }
 
         $malusTotalTxt = $malusText !== null ? $malusText . ' = ' . $malusTot : $baseRoll;
+        $subjectName = ($subject ?? $target)->data->name;
         $outcomeMalusMessages = array();
-        $outcomeMalusMessages[0] = 'Votre action inflige '. $malusTotalTxt .' malus à ' . $target->data->name . '.';
+        $outcomeMalusMessages[0] = 'Votre action inflige '. $malusTotalTxt .' malus à ' . $subjectName . '.';
 
-        return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
+        return new OutcomeResult(true, $outcomeMalusMessages, array());
     }
 
     public function computeRollDifference(int $actorRoll, int $targetRoll, int $divisor): int

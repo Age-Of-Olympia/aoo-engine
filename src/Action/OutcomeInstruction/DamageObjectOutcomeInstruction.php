@@ -102,10 +102,11 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
                     //$corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
                     $breakChance = $this->getBreakChance($player, $equipmentToDamage);
 
-                    if(rand(1,100) <= $breakChance || AUTO_BREAK){            
-                        $player->equip($player->emplacements->{$equipmentToDamage});
-                        $player->emplacements->{$equipmentToDamage}->add_item($player, -1);
-                        $result = $equipmentToDamage;
+                    if(rand(1,100) <= $breakChance || AUTO_BREAK){
+                        $equipment = $player->emplacements->{$equipmentToDamage};
+                        $player->equip($equipment);
+                        $equipment->add_item($player, -1);
+                        $result = $equipment;
                     }
                 }
                 break;

@@ -67,4 +67,25 @@ class ManaLossOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertContains(['pm' => -4], $bonusCalls);
         $this->assertContains(['pv' => -3], $bonusCalls);
     }
+
+    public function testBackfireMessageNamesTheActorNotTheTarget(): void
+    {
+        // On a backfire the loss hits the actor; the message used to name the target.
+        $instruction = new ManaLossOutcomeInstruction();
+        $instruction->setParameters(['lossType' => 'difference']);
+
+        $actor = $this->player('Actor');
+        $actor->method('getRemaining')->willReturn(10);
+        $actor->method('putBonus')->willReturn(true);
+        $target = $this->player('Target');
+
+        $conditionObject = new ConditionObject();
+        $conditionObject->setActorRoll(5);
+        $conditionObject->setTargetRoll(8);
+
+        $messages = $instruction->execute($actor, $target, $conditionObject)->getOutcomeSuccessMessages();
+
+        $this->assertStringContainsString('à Actor.', $messages[0]);
+        $this->assertStringNotContainsString('à Target.', $messages[0]);
+    }
 }

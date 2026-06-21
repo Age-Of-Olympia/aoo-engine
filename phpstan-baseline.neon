@@ -269,24 +269,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
-			count: 6
+			count: 5
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
 			message: '#^Comparison operation "\<\=" between int\<1, 100\> and 0 is always false\.$#'
 			identifier: smallerOrEqual.alwaysFalse
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:breakObject\(\) never returns object so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:breakObject\(\) should return object\|null but returns int\|string\|null\.$#'
-			identifier: return.type
 			count: 1
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
@@ -331,12 +319,6 @@ parameters:
 			identifier: nullCoalesce.variable
 			count: 1
 			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$param on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/MalusOutcomeInstruction.php
 
 		-
 			message: '#^Variable \$gain might not be defined\.$#'

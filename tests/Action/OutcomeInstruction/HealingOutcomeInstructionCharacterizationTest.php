@@ -58,4 +58,22 @@ class HealingOutcomeInstructionCharacterizationTest extends TestCase
 
         $this->assertContains(['pv' => 8], $bonusCalls);
     }
+
+    public function testPvAndPmHealsBothKeepTheirMessage(): void
+    {
+        // PM healing used to overwrite message [0], erasing the PV heal line.
+        $instruction = new HealingOutcomeInstruction();
+        $instruction->setParameters(['actorHealingTrait' => 5, 'actorPMHealingTrait' => 3]);
+
+        $target = $this->player('Target');
+        $target->method('putBonus')->willReturn(true);
+
+        $messages = $instruction->execute($this->player('Actor'), $target, new ConditionObject())
+            ->getOutcomeSuccessMessages();
+
+        $pv = array_filter($messages, static fn($m) => str_contains((string) $m, 'points de vie'));
+        $pm = array_filter($messages, static fn($m) => str_contains((string) $m, 'points de mana'));
+        $this->assertCount(1, $pv, 'the PV heal message must survive a simultaneous PM heal');
+        $this->assertCount(1, $pm);
+    }
 }

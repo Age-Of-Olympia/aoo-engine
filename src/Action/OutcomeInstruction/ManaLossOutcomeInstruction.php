@@ -87,7 +87,7 @@ class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         }
         else{
             $finalTarget->putBonus(array('pm'=>-$manaloss));
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous faites perdre ' . $manaloss . ' PM à ' . $target->data->name . '.';
+            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous faites perdre ' . $manaloss . ' PM à ' . $finalTarget->data->name . '.';
             if($backfire){
                 $outcomeFailureMessages[sizeof($outcomeFailureMessages)] = 'Vous perdez ' . $remainingPM . ' PM.';
             }

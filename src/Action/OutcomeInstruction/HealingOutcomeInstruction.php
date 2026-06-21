@@ -63,14 +63,12 @@ class HealingOutcomeInstruction extends OutcomeInstruction implements HasParamet
             $bonusHeal = is_numeric($bonusTraitPMHealing) ? $bonusTraitPMHealing : $actor->caracs->{$bonusTraitPMHealing};
             $healing = $this->computePmHeal((float) $baseHeal, (float) $bonusHeal);
             $target->putBonus(array('pm'=>$healing));
-            $outcomeSuccessMessages[0] = 'Vous rendez '. $healing .' points de mana à '. $target->data->name.'.';
-            $outcomeSuccessMessages[1] = is_numeric($actorTraitPMHealing) ? "Valeur fixe à " . $actorTraitPMHealing . '.' : CARACS[$actorTraitPMHealing] .' = '. $baseHeal;
+            $outcomeSuccessMessages[] = 'Vous rendez '. $healing .' points de mana à '. $target->data->name.'.';
+            $pmDetail = is_numeric($actorTraitPMHealing) ? "Valeur fixe à " . $actorTraitPMHealing . '.' : CARACS[$actorTraitPMHealing] .' = '. $baseHeal;
             if ($bonusHeal > 0) {
-                $outcomeSuccessMessages[1] .= ' + '. $bonusHeal;
+                $pmDetail .= ' + '. $bonusHeal;
             }
-        
-        } {
-            //handle not working case
+            $outcomeSuccessMessages[] = $pmDetail;
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array(), totalDamages:$healing);
