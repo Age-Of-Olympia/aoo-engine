@@ -121,6 +121,8 @@ if ($action === null) {
         echo '<div class="wb-block">';
         echo '<div class="wb-block-head">Outcome '
             . ($outcome->isOnSuccess() ? '<span class="badge badge-success">succès</span>' : '<span class="badge badge-danger">échec</span>')
+            . ($outcome->getApplyToSelf() ? ' <span class="badge badge-info">sur soi</span>' : '')
+            . ($outcome->getName() ? ' <code class="wb-chip">' . e($outcome->getName()) . '</code>' : '')
             . $outcomeEditor->removeOutcomeButton((int) $outcome->getId()) . '</div>';
         echo '<div class="wb-block-body">';
         $instructions = $instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId());
