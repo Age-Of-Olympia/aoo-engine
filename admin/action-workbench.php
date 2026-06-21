@@ -11,6 +11,8 @@ use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionCreateService;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
+use App\View\Action\DeleteActionFormView;
+use App\View\Action\NewActionFormView;
 use App\View\Action\SimulationPanelView;
 
 $catalogService = new ActionCatalogService();
@@ -63,25 +65,7 @@ foreach ($actions as $item) {
 }
 $listHtml = ob_get_clean();
 
-/* ---------- New-action form ---------- */
-ob_start();
-echo '<details class="wb-create"><summary class="btn btn-sm btn-success">+ Nouvelle action</summary>';
-echo '<form method="post" action="/admin/action-create.php" class="wb-create-form">';
-echo $csrf->renderTokenField();
-echo '<select class="form-control" name="type">';
-foreach ($actionTypes as $value => $label) {
-    echo '<option value="' . e($value) . '">' . e($label) . '</option>';
-}
-echo '</select>';
-echo '<input class="form-control" type="text" name="name" placeholder="nom (clé)" required autocomplete="off">';
-echo '<input class="form-control" type="text" name="display_name" placeholder="nom affiché" autocomplete="off">';
-echo '<div class="wb-create-row">';
-echo '<input class="form-control" type="number" name="level" value="1" min="1" title="niveau">';
-echo '<input class="form-control" type="text" name="category" placeholder="catégorie" autocomplete="off">';
-echo '</div>';
-echo '<button type="submit" class="btn btn-sm btn-success">Créer</button>';
-echo '</form></details>';
-$createFormHtml = ob_get_clean();
+$createFormHtml = (new NewActionFormView())->render($actionTypes, $csrf->renderTokenField());
 
 /* ---------- Panel 2: configure (editor) ---------- */
 ob_start();
@@ -142,13 +126,7 @@ if ($action === null) {
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
     echo '</form>';
 
-    // Delete is its own form (can't nest in the save form) with a confirm.
-    echo '<form method="post" action="/admin/action-delete.php" class="wb-delete-form"'
-        . ' onsubmit="return confirm(\'Supprimer définitivement cette action et toutes ses conditions/outcomes ?\');">';
-    echo $csrf->renderTokenField();
-    echo '<input type="hidden" name="action_id" value="' . (int) $action->getId() . '">';
-    echo '<button type="submit" class="btn btn-danger btn-sm">Supprimer l\'action</button>';
-    echo '</form>';
+    echo (new DeleteActionFormView())->render((int) $action->getId(), $csrf->renderTokenField());
 }
 $configHtml = ob_get_clean();
 
