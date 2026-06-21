@@ -73,4 +73,19 @@ class PlayerOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertContains(['mvt' => 2], $calls);
         $this->assertStringContainsString('Target', $messages[0]);
     }
+
+    public function testVisibleEffectDoesNotTouchPlayerServiceDuringSimulation(): void
+    {
+        // SimulatedPlayer has no playerService; the visible branch used to NPE.
+        $instruction = new PlayerOutcomeInstruction();
+        $instruction->setParameters(['carac' => 'visible', 'value' => 1, 'player' => 'actor']);
+
+        $actor = $this->player('Actor');
+        $actor->method('isSimulated')->willReturn(true);
+
+        $messages = $instruction->execute($actor, $this->player('Target'), new ConditionObject())
+            ->getOutcomeSuccessMessages();
+
+        $this->assertStringContainsString('furtivité', $messages[0]);
+    }
 }

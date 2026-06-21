@@ -9,9 +9,11 @@ namespace App\Simulation;
  * The action simulator runs the real engine, which can reach world-mutating
  * paths a DB-free SimulatedPlayer cannot override (notably a real
  * Classes\Item::add_item). The per-method no-ops on SimulatedPlayer avoid DB
- * reads and heavy work; this guard is the single boundary that *guarantees* a
- * preview never persists anything, whatever new outcome instruction is run.
- * Reads are unaffected.
+ * reads and heavy work; this guard is the persistence boundary checked by the
+ * two write chokepoints — Classes\Db::exe() (all SQL) and Classes\Json's file
+ * writes — so a preview persists nothing through them. Reads are unaffected.
+ * (A write via a path that bypasses both — e.g. a future Doctrine flush() — would
+ * not be caught; the engine currently writes only through those two.)
  */
 final class SimulationGuard
 {

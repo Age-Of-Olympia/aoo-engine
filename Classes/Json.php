@@ -1,6 +1,8 @@
 <?php
 namespace Classes;
 
+use App\Simulation\SimulationGuard;
+
 class Json{
     public ?string $id = null;
     private $paths;
@@ -60,6 +62,10 @@ class Json{
 
 
     public static function create_json($path){
+        // A simulation must not touch the filesystem (see SimulationGuard / Db::exe).
+        if (SimulationGuard::isActive()) {
+            return;
+        }
         $myfile = fopen(dirname(__FILE__) .'/../'. $path, "w") or die("Unable to open file!");
         fwrite($myfile, '{"id":"new"}');
         fclose($myfile);
@@ -67,6 +73,9 @@ class Json{
 
 
     public static function write_json($path, $data){
+        if (SimulationGuard::isActive()) {
+            return;
+        }
         $myfile = fopen(dirname(__FILE__) .'/../'. $path, "w") or die("Unable to open file!");
         fwrite($myfile, $data);
         fclose($myfile);

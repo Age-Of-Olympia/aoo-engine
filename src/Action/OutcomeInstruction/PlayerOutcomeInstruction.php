@@ -43,7 +43,11 @@ class PlayerOutcomeInstruction extends OutcomeInstruction implements HasParamete
                 $outcomeSuccessMessages[0] = 'Vous priez '. $god->data->name .' et gagnez '. $pf .' Points de Foi (total '. $actor->data->pf .'Pf).';
                 $outcomeSuccessMessages[1] = '1d3 = '. $pf;
             } elseif ($player === 'actor' && $carac === 'visible') {
-                $actor->playerService->playerUpdateVisible($value);
+                // SimulatedPlayer has no playerService (skips the DB ctor); the
+                // preview just reports the effect without the real visibility write.
+                if (!$actor->isSimulated()) {
+                    $actor->playerService->playerUpdateVisible($value);
+                }
                 $outcomeSuccessMessages[0] = 'Vous agissez avec furtivité...';
             } else {
                 $subject = $player === 'actor' ? $actor : $target;
