@@ -44,7 +44,7 @@ final class SimulationFormBuilder
 
         foreach ($action->getOutcomes() as $outcome) {
             foreach ($this->instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId()) as $instruction) {
-                if ($instruction instanceof DeclaresSimulationInputs && $instruction instanceof \App\Entity\OutcomeInstruction) {
+                if ($instruction instanceof DeclaresSimulationInputs) {
                     foreach ($instruction::simulationInputs($instruction->getParameters() ?? []) as $field) {
                         $fields[$field->id()] = $field;
                     }
