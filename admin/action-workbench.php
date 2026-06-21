@@ -93,7 +93,7 @@ if ($action === null) {
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'
         . '</div>';
 
-    echo '<div class="wb-section-title">Conditions</div>';
+    echo '<div class="wb-section-title wb-section-title--row">Conditions' . $conditionEditor->addControls($conditionTypes) . '</div>';
     if ($action->getConditions()->count() === 0) {
         echo '<p class="wb-muted">Aucune condition.</p>';
     }
@@ -110,9 +110,8 @@ if ($action === null) {
         echo '</div></div>';
     }
     echo '</div>';
-    echo $conditionEditor->addControls($conditionTypes);
 
-    echo '<div class="wb-section-title">Outcomes</div>';
+    echo '<div class="wb-section-title wb-section-title--row">Outcomes' . $outcomeEditor->addOutcomeControls() . '</div>';
     if ($action->getOutcomes()->count() === 0) {
         echo '<p class="wb-muted">Aucun outcome.</p>';
     }
