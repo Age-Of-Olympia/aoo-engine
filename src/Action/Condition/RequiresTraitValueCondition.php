@@ -43,13 +43,8 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
 
         foreach ($params as $key => $value) {
             if ($key == "energie") {
-                if ($value == "both") {
-                    $errorMessage = array();
-                    if (sizeof($errorMessage) > 0) {
-                        return new ConditionResult(false, array(), $errorMessage);
-                    }
-                }
-            } 
+                continue;
+            }
             else if($key == "imposture"){
                 $impostureValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"imposture") + 1;
                 if($actor->getRemaining("pm") < (floor($value[0]*$impostureValue))){
@@ -74,30 +69,10 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                     break;
             }   
             else if(is_array($value)){
-                $passives = $actor->getPassives($actor->getId());
-                $defaultValue = 0;
-                if(!empty($passives)){
-                    foreach ($value as $item) {
-                        foreach ($passives as $passive) {
-                            if($passive->getName() == $item[0]){
-                                if($actor->getRemaining($key) < ($item[1])){
-                                    array_push($details, "Pas assez de ".CARACS[$key]);
-                                    $costIsAffordable = false;
-                                    break 3;
-                                }
-                                break 3;
-                            }
-                        }
-                        if($item[0] == "none"){
-                            $defaultValue = $item[1];
-                        }
-                    }  
-
-                }
-                if ($actor->getRemaining($key) < $defaultValue) {
+                if ($actor->getRemaining($key) < $this->passiveArrayCost($actor, $value)) {
                     array_push($details, "Pas assez de ".CARACS[$key]);
                     $costIsAffordable = false;
-                }    
+                }
             } else if ($actor->getRemaining($key) < $value) {
                 array_push($details, "Pas assez de ".CARACS[$key]);
                 $costIsAffordable = false;
@@ -139,31 +114,9 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 break;
             }
             if(is_array($value)){
-                $passives = $actor->getPassives($actor->getId());
-                $defaultValue = 0;
-                if(!empty($passives)){
-                    foreach ($value as $item) {
-                        foreach ($passives as $passive) {
-                            if($passive->getName() == $item[0]){
-                                $actor->putBonus([$key => -$item[1]]);
-                                $text = "Vous avez dépensé " . $item[1] . " " . CARACS[$key].".";
-                                array_push($result, $text);
-                                break 3;
-                            }
-                        }
-                        if($item[0] == "none"){
-                            $defaultValue = $item[1];
-                        }
-                    }  
-
-                }
-                foreach ($value as $item) {
-                    if($item[0] == "none"){
-                        $defaultValue = $item[1];
-                    }
-                }
-                $actor->putBonus([$key => -$defaultValue]);
-                $text = "Vous avez dépensé " . $defaultValue . " " . CARACS[$key].".";
+                $cost = $this->passiveArrayCost($actor, $value);
+                $actor->putBonus([$key => -$cost]);
+                $text = "Vous avez dépensé " . $cost . " " . CARACS[$key].".";
                 array_push($result, $text);
                 break;
             }
@@ -172,6 +125,32 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
             array_push($result, $text);
         }
         return $result;
+    }
+
+    /**
+     * Cost for a passive-gated entry like [["berserk", 5], ["none", 3]]: the value
+     * tied to the first listed passive the actor owns, otherwise the "none"
+     * default. The default is read whether or not the actor has any passives, so
+     * check() and applyCosts() resolve the same amount.
+     *
+     * @param array<int, array{0: string, 1: int|string}> $value
+     */
+    private function passiveArrayCost(ActorInterface $actor, array $value): int
+    {
+        $passives = $actor->getPassives($actor->getId());
+        $default = 0;
+        foreach ($value as $item) {
+            foreach ($passives as $passive) {
+                if ($passive->getName() == $item[0]) {
+                    return (int) $item[1];
+                }
+            }
+            if ($item[0] == "none") {
+                $default = (int) $item[1];
+            }
+        }
+
+        return $default;
     }
 
     public function toRemove(): bool {

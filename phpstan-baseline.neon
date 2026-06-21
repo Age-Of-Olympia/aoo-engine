@@ -243,12 +243,6 @@ parameters:
 			path: src/Action/Condition/RequiresTraitValueCondition.php
 
 		-
-			message: '#^Comparison operation "\>" between 0 and 0 is always false\.$#'
-			identifier: greater.alwaysFalse
-			count: 1
-			path: src/Action/Condition/RequiresTraitValueCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 1

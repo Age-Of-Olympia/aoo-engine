@@ -17,6 +17,12 @@ class PlayerMock implements ActorInterface
   /** @var array<string, int> */
   public array $effects = [];
 
+  /** @var array<string, int> remaining points per trait; falls back to 10 */
+  public array $remaining = [];
+
+  /** @var array<int, object> passives returned by getPassives() */
+  public array $passivesList = [];
+
   public function __construct(
     int $id = 1,
     string $name = 'MockPlayer',
@@ -89,7 +95,7 @@ class PlayerMock implements ActorInterface
 
   public function getRemaining(string $trait): int
   {
-    return 10;
+    return $this->remaining[$trait] ?? 10;
   }
 
   public function equip(Item $item, bool $doNotRefresh = false): EquipResult
@@ -143,6 +149,6 @@ class PlayerMock implements ActorInterface
 
   public function getPassives(int $id): array
   {
-    return [];
+    return $this->passivesList;
   }
 }
