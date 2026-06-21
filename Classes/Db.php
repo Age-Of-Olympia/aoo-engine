@@ -86,10 +86,8 @@ class Db{
         $stmt->execute();
 
         if ($stmt->errno > 0) {
-            // Log detailed error information for debugging
             error_log("[Db::exe] SQL Error #{$stmt->errno}: {$stmt->error}");
-            error_log("[Db::exe] Query: " . ($query ? substr($query, 0, 200) : 'N/A'));
-            error_log("[Db::exe] Params: " . print_r($values, true));
+            error_log("[Db::exe] Query: " . substr($sql, 0, 200));
             exit('error stmt: '.$stmt->error);
         }
 

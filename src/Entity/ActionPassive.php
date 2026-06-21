@@ -39,7 +39,7 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 50, nullable: true)]
     protected ?string $category = null;
 
-    #[ORM\Column(type: "string", length: 50, name: "display_name")]
+    #[ORM\Column(type: "string", length: 255, name: "display_name")]
     protected string $displayName;
 
     #[ORM\Column(type: "string", length: 150)]
