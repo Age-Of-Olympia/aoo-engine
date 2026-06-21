@@ -119,6 +119,14 @@ if ($action === null) {
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
     echo '</form>';
+
+    // Delete is its own form (can't nest in the save form) with a confirm.
+    echo '<form method="post" action="/admin/action-delete.php" class="wb-delete-form"'
+        . ' onsubmit="return confirm(\'Supprimer définitivement cette action et toutes ses conditions/outcomes ?\');">';
+    echo $csrf->renderTokenField();
+    echo '<input type="hidden" name="action_id" value="' . (int) $action->getId() . '">';
+    echo '<button type="submit" class="btn btn-danger btn-sm">Supprimer l\'action</button>';
+    echo '</form>';
 }
 $configHtml = ob_get_clean();
 
