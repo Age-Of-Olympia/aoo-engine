@@ -26,6 +26,7 @@ final class SimulationReportView
 
         if ($this->report->sample !== null) {
             $logs = $this->report->sample->getLogsArray();
+            $html .= '<div class="sim-detail">';
             $html .= '<div class="card mt-3 sim-sample">'
                 . '<div class="card-header"><h3 class="card-title">Exemple détaillé</h3></div>'
                 . '<div class="card-body">'
@@ -34,9 +35,36 @@ final class SimulationReportView
                 . '<p class="text-muted">Acteur : ' . $this->esc($logs['actor'] ?? '') . '</p>'
                 . '<p class="text-muted">Cible : ' . $this->esc($logs['target'] ?? '') . '</p>'
                 . '</div></div>';
+            $html .= $this->diceBreakdown();
+            $html .= '</div>';
         }
 
         return $html;
+    }
+
+    /**
+     * Simulator-only panel: every die rolled during the detailed sample run, in
+     * order, so you can see exactly what produced the totals above.
+     */
+    private function diceBreakdown(): string
+    {
+        if ($this->report->sampleRolls === []) {
+            return '';
+        }
+
+        $rows = '';
+        foreach ($this->report->sampleRolls as $roll) {
+            $faces = array_map('intval', $roll['faces']);
+            $rows .= '<li><span class="sim-dice-spec">' . count($faces) . 'd' . (int) $roll['sides'] . '</span>'
+                . ' → [' . implode(', ', $faces) . '] = <strong>' . array_sum($faces) . '</strong></li>';
+        }
+
+        return '<div class="card mt-3 sim-dice">'
+            . '<div class="card-header"><h3 class="card-title">Calcul des dés (exemple)</h3></div>'
+            . '<div class="card-body">'
+            . '<p class="text-muted">Tous les jets de l\'exemple détaillé, dans l\'ordre (acteur puis cible).</p>'
+            . '<ol class="sim-dice-list">' . $rows . '</ol>'
+            . '</div></div>';
     }
 
     public static function unavailable(string $message): string

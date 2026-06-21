@@ -7,6 +7,7 @@ use App\Entity\Action;
 use App\Entity\ActionPassive;
 use App\Service\ActionExecutorService;
 use App\Service\ActionPassiveService;
+use App\Simulation\DiceLog;
 use App\Simulation\SimulatedItem;
 use App\Simulation\SimulatedPlayer;
 use App\Simulation\SimulationGuard;
@@ -63,9 +64,21 @@ final class ActionSimulationService
         $hitCount = 0;
         $damageSum = 0;
         $sample = null;
+        $sampleRolls = [];
 
         for ($i = 0; $i < $runs; $i++) {
-            $results = $this->simulate($action, $input);
+            // Record the dice of the first run only — it's the detailed sample.
+            $recordSample = ($i === 0);
+            if ($recordSample) {
+                DiceLog::start();
+            }
+            try {
+                $results = $this->simulate($action, $input);
+            } finally {
+                if ($recordSample) {
+                    $sampleRolls = DiceLog::stop();
+                }
+            }
             if ($i === 0) {
                 $sample = $results;
             }
@@ -89,6 +102,7 @@ final class ActionSimulationService
             $hitCount,
             $hitCount > 0 ? $damageSum / $hitCount : 0.0,
             $sample,
+            $sampleRolls,
         );
     }
 

@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260621';
+const ADMIN_ASSET_VERSION = '20260621b';
 
 /**
  * Render the admin chrome (sidebar + main column) around a page's $content.

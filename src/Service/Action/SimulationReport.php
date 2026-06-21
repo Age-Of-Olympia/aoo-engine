@@ -10,12 +10,16 @@ use App\Action\ActionResults;
  */
 final class SimulationReport
 {
+    /**
+     * @param list<array{sides: int, faces: list<int>}> $sampleRolls dice rolled during the sample run
+     */
     public function __construct(
         public readonly int $runs,
         public readonly int $successCount,
         public readonly int $hitCount,
         public readonly float $averageDamageOnHit,
         public readonly ?ActionResults $sample,
+        public readonly array $sampleRolls = [],
     ) {
     }
 
