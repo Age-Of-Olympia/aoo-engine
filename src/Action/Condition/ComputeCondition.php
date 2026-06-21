@@ -142,7 +142,7 @@ class ComputeCondition extends BaseCondition implements HasParameterSchema, Decl
                         $conditionObject->setTargetAdvantage(true);
                     }
                     else{
-                        $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName()));
+                        $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId()));
                     }
                 }
             }

@@ -7,6 +7,7 @@ use App\Action\Condition\ConditionObject;
 use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Action\MeleeAction;
 use App\Entity\ActionCondition;
+use App\Entity\ActionPassive;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Tests\Action\Mock\PlayerMock;
@@ -124,5 +125,28 @@ class ComputeConditionCharacterizationTest extends TestCase
         $result = $this->check(new ScriptedDice([[8], [10]]), $condition, null, $target);
 
         $this->assertTrue($result->isSuccess());
+    }
+
+    public function testTargetDefensivePassiveBonusIsApplied(): void
+    {
+        // Before the id/name fix the target's def passive resolved by name → 0,
+        // so this attack succeeded; with the bonus applied the target now wins.
+        $passive = new ActionPassive();
+        $passive->setId(7);
+        $passive->setName('bouclier');
+        $passive->setTraits(['force']);
+        $passive->setType('def');
+        $passive->setCarac('fixed');
+        $passive->setValue(0.0);
+
+        $target = $this->target();
+        $target->playerPassiveService->passives = [$passive];
+        $target->playerPassiveService->computedValue = 100;
+
+        $condition = $this->meleeAttackCondition();
+        $result = $this->check(new ScriptedDice([[10], [5]]), $condition, null, $target);
+
+        $this->assertFalse($result->isSuccess());
+        $this->assertCount(1, $condition->getAction()->getAutomaticOutcomeInstructions());
     }
 }
