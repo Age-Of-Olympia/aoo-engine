@@ -69,7 +69,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                     break;
             }   
             else if(is_array($value)){
-                if ($actor->getRemaining($key) < $this->passiveArrayCost($actor, $value)) {
+                if ($actor->getRemaining($key) < $this->costForActorPassive($actor, $value)) {
                     array_push($details, "Pas assez de ".CARACS[$key]);
                     $costIsAffordable = false;
                 }
@@ -114,7 +114,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 break;
             }
             if(is_array($value)){
-                $cost = $this->passiveArrayCost($actor, $value);
+                $cost = $this->costForActorPassive($actor, $value);
                 $actor->putBonus([$key => -$cost]);
                 $text = "Vous avez dépensé " . $cost . " " . CARACS[$key].".";
                 array_push($result, $text);
@@ -128,25 +128,27 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
     }
 
     /**
-     * Cost for a passive-gated entry like [["berserk", 5], ["none", 3]]: the value
-     * tied to the first listed passive the actor owns, otherwise the "none"
-     * default. The default is read whether or not the actor has any passives, so
-     * check() and applyCosts() resolve the same amount.
+     * How much of the resource this action costs *for this actor*, when the cost
+     * varies by passive. The option list is [passiveName, cost] pairs plus a
+     * ["none", cost] fallback, e.g. [["berserk", 5], ["none", 3]] = "5 if the
+     * actor has the berserk passive, otherwise 3". The passive is always active;
+     * it only selects which cost applies. The "none" fallback is read whether or
+     * not the actor has any passives so check() and applyCosts() agree.
      *
-     * @param array<int, array{0: string, 1: int|string}> $value
+     * @param array<int, array{0: string, 1: int|string}> $options
      */
-    private function passiveArrayCost(ActorInterface $actor, array $value): int
+    private function costForActorPassive(ActorInterface $actor, array $options): int
     {
         $passives = $actor->getPassives($actor->getId());
         $default = 0;
-        foreach ($value as $item) {
+        foreach ($options as $option) {
             foreach ($passives as $passive) {
-                if ($passive->getName() == $item[0]) {
-                    return (int) $item[1];
+                if ($passive->getName() == $option[0]) {
+                    return (int) $option[1];
                 }
             }
-            if ($item[0] == "none") {
-                $default = (int) $item[1];
+            if ($option[0] == "none") {
+                $default = (int) $option[1];
             }
         }
 

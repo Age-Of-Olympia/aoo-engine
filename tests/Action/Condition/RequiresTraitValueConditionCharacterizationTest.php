@@ -103,10 +103,11 @@ class RequiresTraitValueConditionCharacterizationTest extends TestCase
         $this->assertStringContainsString('3 PM', $charges[0]);
     }
 
-    public function testPassiveGatedCostFallsBackToTheNoneDefault(): void
+    public function testCostFallsBackToTheNoneDefaultWithoutThePassive(): void
     {
-        // No matching passive → the "none" default (3) is the real cost, in both
-        // the affordability check and applyCosts (previously they disagreed).
+        // The action's PM cost depends on a passive: 5 with "berserk", else the
+        // "none" default of 3. Without the passive the cost is 3 in both the
+        // affordability check and applyCosts (previously they disagreed).
         $actor = new PlayerMock(1, 'Actor');
         $cost = ['pm' => [['berserk', 5], ['none', 3]]];
 
@@ -120,7 +121,7 @@ class RequiresTraitValueConditionCharacterizationTest extends TestCase
         $this->assertStringContainsString('3 PM', $charges[0]);
     }
 
-    public function testPassiveGatedCostUsesThePassiveValueWhenOwned(): void
+    public function testCostUsesThePassiveAmountWhenTheActorHasIt(): void
     {
         $actor = new PlayerMock(1, 'Actor');
         $actor->passivesList = [$this->passive('berserk')];
