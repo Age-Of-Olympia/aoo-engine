@@ -125,4 +125,30 @@ class ActionParameterValidatorTest extends TestCase
 
         $this->assertSame(['adrenaline' => true], $result);
     }
+
+    public function testCoerceRawRejectsAKeyThatIsNotAnInertIdentifier(): void
+    {
+        // A key becomes an effect name echoed unescaped into outcome HTML, so a
+        // payload-bearing key must be rejected rather than persisted.
+        $this->expectException(InvalidArgumentException::class);
+        $this->validator->coerceRaw([
+            ['k' => '<img src=x onerror=alert(1)>', 'v' => 'true'],
+        ]);
+    }
+
+    public function testCoerceRawRejectsKeysWithSpacesOrPunctuation(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->validator->coerceRaw([['k' => 'foo bar', 'v' => '1']]);
+    }
+
+    public function testCoerceRawAcceptsCamelCaseAndUnderscoreIdentifiers(): void
+    {
+        $result = $this->validator->coerceRaw([
+            ['k' => 'remainingNullable', 'v' => 'pm'],
+            ['k' => 'anti_berserk', 'v' => '1'],
+        ]);
+
+        $this->assertSame(['remainingNullable' => 'pm', 'anti_berserk' => 1], $result);
+    }
 }
