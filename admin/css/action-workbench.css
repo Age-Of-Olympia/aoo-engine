@@ -122,3 +122,9 @@
 .wb-add button { background: #eef2f6; border: 1px solid #cfd8e0; color: #2c3e50; border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 12px; white-space: nowrap; }
 .wb-add button:hover { background: #dfe7ee; }
 .wb-add select.form-control { max-width: 220px; }
+
+/* Read-only automatic (code-defined) outcome instructions. */
+.wb-block--auto { border-style: dashed; background: #fafbfc; }
+.wb-auto-badge { background: #8a97a3; color: #fff; }
+.wb-auto-row { font-size: 12px; padding: 1px 0; color: #4a5765; }
+.wb-auto-row code { background: #eef2f6; padding: 0 5px; border-radius: 4px; }

@@ -13,6 +13,7 @@ use App\Service\Action\ActionCreateService;
 use App\Service\Action\ActionOutcomeEditService;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
+use App\View\Action\AutomaticOutcomesView;
 use App\View\Action\ConditionEditorView;
 use App\View\Action\DeleteActionFormView;
 use App\View\Action\NewActionFormView;
@@ -27,6 +28,7 @@ $conditionEditor = new ConditionEditorView();
 $outcomeEditService = new ActionOutcomeEditService();
 $instructionTypes = $outcomeEditService->availableInstructionTypes();
 $outcomeEditor = new OutcomeEditorView();
+$automaticView = new AutomaticOutcomesView();
 $id = (int) ($_GET['id'] ?? ($_POST['id'] ?? 0));
 $action = $id ? $catalogService->getActionById($id) : ($actions[0] ?? null);
 
@@ -140,7 +142,11 @@ if ($action === null) {
         echo '</div></div>';
     }
     echo '</div>';
-    echo $outcomeEditor->addOutcomeControls();
+
+    // Automatic outcome instructions are added in code (e.g. AttackAction's
+    // adrenaline), not the DB; show them read-only so the editor isn't misleading.
+    $action->initAutomaticOutcomeInstructions();
+    echo $automaticView->render($action->getAutomaticOutcomeInstructions());
 
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
