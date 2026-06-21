@@ -8,9 +8,11 @@ use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
 use App\Action\Schema\ParameterSchema;
 use App\Service\Action\ActionCatalogService;
+use App\Service\Action\ActionConditionEditService;
 use App\Service\Action\ActionCreateService;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
+use App\View\Action\ConditionEditorView;
 use App\View\Action\DeleteActionFormView;
 use App\View\Action\NewActionFormView;
 use App\View\Action\SimulationPanelView;
@@ -18,6 +20,8 @@ use App\View\Action\SimulationPanelView;
 $catalogService = new ActionCatalogService();
 $actions = $catalogService->listActions();
 $actionTypes = (new ActionCreateService())->availableTypes();
+$conditionTypes = (new ActionConditionEditService())->availableTypes();
+$conditionEditor = new ConditionEditorView();
 $id = (int) ($_GET['id'] ?? ($_POST['id'] ?? 0));
 $action = $id ? $catalogService->getActionById($id) : ($actions[0] ?? null);
 
@@ -94,12 +98,14 @@ if ($action === null) {
         $params = $condition->getParameters() ?? [];
         echo '<div class="wb-block">';
         echo '<div class="wb-block-head">' . e($condition->getConditionType())
-            . ($condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '') . '</div>';
+            . ($condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '')
+            . $conditionEditor->removeButton((int) $condition->getId()) . '</div>';
         echo '<div class="wb-block-body">';
         echo $renderParams($schema, $params, 'cond[' . (int) $condition->getId() . ']', 'cond_raw[' . (int) $condition->getId() . ']');
         echo '</div></div>';
     }
     echo '</div>';
+    echo $conditionEditor->addControls($conditionTypes);
 
     echo '<div class="wb-section-title">Outcomes</div>';
     if ($action->getOutcomes()->count() === 0) {
