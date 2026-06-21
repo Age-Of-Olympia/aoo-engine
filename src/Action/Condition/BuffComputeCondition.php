@@ -27,7 +27,7 @@ class BuffComputeCondition extends ComputeCondition
             return new ConditionResult(false, ["Aucune cible spécifiée."], []);
         }
 
-        $params = $condition->getParameters(); // e.g. { "max": 1 }
+        $params = $condition->getParameters();
         $this->actorRollTrait = $params['actorRollType'] ?? null;
         $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
         $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);

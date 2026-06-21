@@ -32,8 +32,6 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         return [new SimulationField(SimulationField::KIND_WEAPON, SimulationField::SIDE_ACTOR, 'weapon', $label, $default)];
     }
 
-    private ?string $errorMessage = null;
-
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
@@ -63,10 +61,5 @@ class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterS
         
 
         return $result;
-    }
-
-    public function getErrorMessage(): ?string
-    {
-        return $this->errorMessage;
     }
 }

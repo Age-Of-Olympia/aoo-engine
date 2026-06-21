@@ -24,7 +24,7 @@ class ActionPassive
     #[ORM\Column(type: "string", length: 255)]
     private string $carac;
 
-    #[ORM\Column(type: "decimal", precision: 5, scale: 2)]
+    #[ORM\Column(type: "decimal", precision: 4, scale: 2)]
     private ?string $value = null;
 
     #[ORM\Column(type: "json", nullable: true)]

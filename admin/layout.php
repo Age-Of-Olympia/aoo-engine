@@ -6,6 +6,9 @@ AdminAuthorizationService::DoAdminCheck();
 /** Bump to bust the cache when admin CSS/JS changes. */
 const ADMIN_ASSET_VERSION = '20260621b';
 
+/** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
+const MAIN_CSS_VERSION = '20260614';
+
 /**
  * Render the admin chrome (sidebar + main column) around a page's $content.
  *
@@ -68,6 +71,7 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 
     $version = ADMIN_ASSET_VERSION;
+    $mainCssVersion = MAIN_CSS_VERSION;
 
     $styleLinks = '';
     foreach ($assets['styles'] ?? [] as $href) {
@@ -85,7 +89,7 @@ function admin_layout($title, $content, array $assets = []) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>$title - Admin of Olympia</title>
-    <link href="/css/main.min.css?v=20260614" rel="stylesheet">
+    <link href="/css/main.min.css?v=$mainCssVersion" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/admin/css/admin.css?v=$version">$styleLinks
 </head>

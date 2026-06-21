@@ -213,12 +213,6 @@ parameters:
 			path: src/Action/Condition/RequiresWeaponCraftedWithCondition.php
 
 		-
-			message: '#^Property App\\Action\\Condition\\RequiresWeaponTypeCondition\:\:\$errorMessage \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Action/Condition/RequiresWeaponTypeCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 5
