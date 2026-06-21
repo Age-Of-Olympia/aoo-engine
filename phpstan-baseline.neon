@@ -231,24 +231,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getCorruptedMaterial\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getCorruptedMaterial\(\) never returns string so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getCorruptedMaterial\(\) should return string\|null but returns list\<string\>\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
 			message: '#^Right side of \|\| is always false\.$#'
 			identifier: booleanOr.rightAlwaysFalse
 			count: 2

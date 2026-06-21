@@ -98,8 +98,6 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
                 $equipments = $this->getDamageableDefenseEquipments($player);
                 if (count($equipments) > 0) {
                     $equipmentToDamage = array_rand($equipments);
-                
-                    //$corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
                     $breakChance = $this->getBreakChance($player, $equipmentToDamage);
 
                     if(rand(1,100) <= $breakChance || AUTO_BREAK){
@@ -114,22 +112,6 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
                 break;
         }
         return $result;
-    }
-
-    private function getCorruptedMaterial($player, $equipmentToDamage): ?string
-    {
-        $corrupted = null;
-        $corruptions = ITEM_CORRUPTIONS;
-        foreach($corruptions as $k=>$e){
-            if($player->have_effect($k)){
-                if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
-                    $corrupted = $e;
-                    break;
-                }
-            }
-        }
-
-        return $corrupted;
     }
 
     private function getBreakChance(ActorInterface $player, $equipmentToDamage)
