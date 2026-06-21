@@ -8,12 +8,14 @@ use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
 use App\Action\Schema\ParameterSchema;
 use App\Service\Action\ActionCatalogService;
+use App\Service\Action\ActionCreateService;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
 use App\View\Action\SimulationPanelView;
 
 $catalogService = new ActionCatalogService();
 $actions = $catalogService->listActions();
+$actionTypes = (new ActionCreateService())->availableTypes();
 $id = (int) ($_GET['id'] ?? ($_POST['id'] ?? 0));
 $action = $id ? $catalogService->getActionById($id) : ($actions[0] ?? null);
 
@@ -60,6 +62,26 @@ foreach ($actions as $item) {
         . '</a>';
 }
 $listHtml = ob_get_clean();
+
+/* ---------- New-action form ---------- */
+ob_start();
+echo '<details class="wb-create"><summary class="btn btn-sm btn-success">+ Nouvelle action</summary>';
+echo '<form method="post" action="/admin/action-create.php" class="wb-create-form">';
+echo $csrf->renderTokenField();
+echo '<select class="form-control" name="type">';
+foreach ($actionTypes as $value => $label) {
+    echo '<option value="' . e($value) . '">' . e($label) . '</option>';
+}
+echo '</select>';
+echo '<input class="form-control" type="text" name="name" placeholder="nom (clé)" required autocomplete="off">';
+echo '<input class="form-control" type="text" name="display_name" placeholder="nom affiché" autocomplete="off">';
+echo '<div class="wb-create-row">';
+echo '<input class="form-control" type="number" name="level" value="1" min="1" title="niveau">';
+echo '<input class="form-control" type="text" name="category" placeholder="catégorie" autocomplete="off">';
+echo '</div>';
+echo '<button type="submit" class="btn btn-sm btn-success">Créer</button>';
+echo '</form></details>';
+$createFormHtml = ob_get_clean();
 
 /* ---------- Panel 2: configure (editor) ---------- */
 ob_start();
@@ -150,6 +172,7 @@ ob_start();
     <div class="wb-col">
         <div class="wb-col-head">Actions <small><?= count($actions) ?></small></div>
         <div class="wb-col-body">
+            <?= $createFormHtml ?>
             <input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">
             <div class="wb-list" id="wb-list"><?= $listHtml ?></div>
         </div>
