@@ -22,7 +22,7 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
         );
     }
 
-    public bool $toRemove;
+    public bool $toRemove = false;
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {

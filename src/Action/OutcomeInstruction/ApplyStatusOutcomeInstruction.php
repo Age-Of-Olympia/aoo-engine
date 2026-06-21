@@ -90,7 +90,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
             break;
         }
 
-        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: $outcomeSuccessMessages);
+        return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){
