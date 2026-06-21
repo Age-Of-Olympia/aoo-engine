@@ -1,16 +1,11 @@
 <?php
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
 
 $catalog = new ActionCatalogService();
 $actions = $catalog->listActions();
-
-$esc = static fn($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$typeOf = static function (object $action): string {
-    $shortName = (new ReflectionClass($action))->getShortName();
-    return strtolower(substr($shortName, 0, -6));
-};
 
 ob_start();
 ?>
@@ -33,11 +28,11 @@ ob_start();
     <tbody>
         <?php foreach ($actions as $action): ?>
             <tr>
-                <td><?= $esc($action->getName()) ?></td>
-                <td><?= $esc($action->getDisplayName()) ?></td>
-                <td><span class="badge badge-info"><?= $esc($typeOf($action)) ?></span></td>
-                <td><?= $esc($action->getLevel()) ?></td>
-                <td><?= $esc($action->getCategory()) ?></td>
+                <td><?= e($action->getName()) ?></td>
+                <td><?= e($action->getDisplayName()) ?></td>
+                <td><span class="badge badge-info"><?= e(action_type_label($action)) ?></span></td>
+                <td><?= e($action->getLevel()) ?></td>
+                <td><?= e($action->getCategory()) ?></td>
                 <td><?= $action->getConditions()->count() ?></td>
                 <td><?= $action->getOutcomes()->count() ?></td>
                 <td><a class="btn btn-sm btn-outline-primary" href="/admin/action-editor.php?id=<?= (int) $action->getId() ?>">Edit</a></td>

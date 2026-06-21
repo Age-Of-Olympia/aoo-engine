@@ -1,0 +1,6 @@
+/* Simulation form component, shared by action-simulate.php and the workbench.
+   The workbench layers its own .wb-sim overrides on top of these base rules. */
+
+.sim-form { max-width: 560px; }
+.effect-row { display: flex; gap: 6px; margin-bottom: 4px; }
+.sim-effect-value { max-width: 90px; }

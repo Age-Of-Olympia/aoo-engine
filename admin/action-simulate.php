@@ -8,11 +8,16 @@ use App\Service\Action\SimulationInputMapper;
 use App\View\Action\SimulationFormView;
 use App\View\Action\SimulationReportView;
 
+$assets = [
+    'styles' => ['/admin/css/action-simulate.css'],
+    'scripts' => ['/admin/js/action-simulate.js'],
+];
+
 $id = (int) ($_GET['id'] ?? 0);
 $action = (new ActionCatalogService())->getActionById($id);
 
 if ($action === null) {
-    echo admin_layout('Simuler', '<div class="alert alert-danger">Action introuvable.</div>');
+    echo admin_layout('Simuler', '<div class="alert alert-danger">Action introuvable.</div>', $assets);
 
     return;
 }
@@ -30,4 +35,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-echo admin_layout('Simuler', $content);
+echo admin_layout('Simuler', $content, $assets);

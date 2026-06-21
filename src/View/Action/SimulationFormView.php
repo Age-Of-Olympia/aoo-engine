@@ -49,11 +49,10 @@ final class SimulationFormView
 
         return '<h1>Simuler : ' . $this->esc($action->getDisplayName()) . '</h1>'
             . '<p class="text-muted">Simulation via le moteur réel : conditions, jets, dégâts, messages et logs sont ceux du jeu.</p>'
-            . '<form method="post" class="card" style="max-width:560px">'
+            . '<form method="post" class="card sim-form">'
             . '<input type="hidden" name="id" value="' . $id . '">'
             . '<div class="card-header"><h3 class="card-title">État hypothétique</h3></div>'
-            . '<div class="card-body">' . $body . '</div></form>'
-            . $this->script();
+            . '<div class="card-body">' . $body . '</div></form>';
     }
 
     /**
@@ -130,9 +129,9 @@ final class SimulationFormView
 
     private function effectRow(string $side, string $selected = '', int|string $value = ''): string
     {
-        return '<div class="effect-row" style="display:flex;gap:6px;margin-bottom:4px">'
+        return '<div class="effect-row">'
             . $this->select($side . '_effect_name', ['' => '—'] + $this->catalog->effects(), $selected, brackets: true)
-            . '<input class="form-control" style="max-width:90px" type="number" name="' . $this->esc($side) . '_effect_value[]" value="' . $this->esc($value) . '" placeholder="val">'
+            . '<input class="form-control sim-effect-value" type="number" name="' . $this->esc($side) . '_effect_value[]" value="' . $this->esc($value) . '" placeholder="val">'
             . '<button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentNode.remove()">&times;</button>'
             . '</div>';
     }
@@ -169,21 +168,6 @@ final class SimulationFormView
     private function group(string $label, string $control): string
     {
         return '<div class="form-group"><label>' . $this->esc($label) . '</label>' . $control . '</div>';
-    }
-
-    private function script(): string
-    {
-        return '<script>'
-            . '/* Clone the last effect row (cleared) so admins can add name+value pairs. */'
-            . 'function addEffectRow(side) {'
-            . '  var container = document.getElementById(side + "-effects");'
-            . '  var rows = container.getElementsByClassName("effect-row");'
-            . '  if (rows.length === 0) { return; }'
-            . '  var clone = rows[rows.length - 1].cloneNode(true);'
-            . '  clone.querySelectorAll("select, input").forEach(function (el) { el.value = ""; });'
-            . '  container.appendChild(clone);'
-            . '}'
-            . '</script>';
     }
 
     private function esc(int|string $value): string

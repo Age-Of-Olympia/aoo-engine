@@ -17,8 +17,7 @@ $renderer = new ParameterFieldRenderer();
 $csrf = new CsrfProtectionService();
 $instructionService = new OutcomeInstructionService();
 
-$esc = static fn($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$rawParams = static fn(?array $params): string => $esc((string) json_encode($params ?? []));
+$rawParams = static fn(?array $params): string => e((string) json_encode($params ?? []));
 
 ob_start();
 echo renderFlashMessage();
@@ -27,7 +26,7 @@ if ($action === null) {
     echo '<div class="alert alert-danger">Action introuvable.</div>';
 } else {
     ?>
-    <h1><?= $esc($action->getDisplayName()) ?> <small class="text-muted">(<?= $esc($action->getName()) ?>)</small></h1>
+    <h1><?= e($action->getDisplayName()) ?> <small class="text-muted">(<?= e($action->getName()) ?>)</small></h1>
     <p>
         <a href="/admin/actions.php" class="btn btn-sm btn-outline-secondary">&larr; Toutes les actions</a>
         <a href="/admin/action-simulate.php?id=<?= (int) $action->getId() ?>" class="btn btn-sm btn-outline-primary">Simuler</a>
@@ -41,7 +40,7 @@ if ($action === null) {
         <?php foreach ($action->getConditions() as $condition): ?>
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><?= $esc($condition->getConditionType()) ?><?= $condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '' ?></h3>
+                    <h3 class="card-title"><?= e($condition->getConditionType()) ?><?= $condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '' ?></h3>
                 </div>
                 <div class="card-body">
                     <?php
@@ -72,7 +71,7 @@ if ($action === null) {
                         $schema = $schemaCatalog->schemaForOutcomeInstruction($instructionType);
                         $params = $instruction->getParameters() ?? [];
                         ?>
-                        <h4><?= $esc($instructionType) ?></h4>
+                        <h4><?= e($instructionType) ?></h4>
                         <?php if ($schema->isEmpty()): ?>
                             <div class="alert alert-info">Pas encore de schéma typé. Paramètres : <code><?= $rawParams($params) ?></code></div>
                         <?php else: ?>

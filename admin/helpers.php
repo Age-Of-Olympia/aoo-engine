@@ -18,6 +18,19 @@ function e($value): string
 }
 
 /**
+ * Short type label for an Action / instruction entity: its class short name
+ * without the trailing "Action" suffix, lowercased (e.g. MeleeAction → "melee").
+ *
+ * @param object $action Entity whose class name ends in "Action"
+ */
+function action_type_label(object $action): string
+{
+    $shortName = (new ReflectionClass($action))->getShortName();
+
+    return strtolower(substr($shortName, 0, -strlen('Action')));
+}
+
+/**
  * Get optional string from POST data
  *
  * @param string $key POST key
