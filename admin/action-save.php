@@ -19,7 +19,7 @@ $actionId = (int) ($_POST['action_id'] ?? 0);
 $returnTo = (string) ($_POST['return_to'] ?? '');
 $editorUrl = (str_starts_with($returnTo, '/admin/') && !str_contains($returnTo, "\n"))
     ? $returnTo
-    : '/admin/action-editor.php?id=' . $actionId;
+    : '/admin/action-workbench.php?id=' . $actionId;
 
 try {
     $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);

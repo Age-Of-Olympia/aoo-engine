@@ -35,7 +35,7 @@ ob_start();
                 <td><?= e($action->getCategory()) ?></td>
                 <td><?= $action->getConditions()->count() ?></td>
                 <td><?= $action->getOutcomes()->count() ?></td>
-                <td><a class="btn btn-sm btn-outline-primary" href="/admin/action-editor.php?id=<?= (int) $action->getId() ?>">Edit</a></td>
+                <td><a class="btn btn-sm btn-outline-primary" href="/admin/action-workbench.php?id=<?= (int) $action->getId() ?>">Edit</a></td>
             </tr>
         <?php endforeach; ?>
     </tbody>
