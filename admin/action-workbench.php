@@ -8,13 +8,9 @@ use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
 use App\Action\Schema\ParameterSchema;
 use App\Service\Action\ActionCatalogService;
-use App\Service\Action\ActionSimulationService;
-use App\Service\Action\SimulationFormBuilder;
-use App\Service\Action\SimulationInputMapper;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
-use App\View\Action\SimulationFormView;
-use App\View\Action\SimulationReportView;
+use App\View\Action\SimulationPanelView;
 
 $catalogService = new ActionCatalogService();
 $actions = $catalogService->listActions();
@@ -127,22 +123,13 @@ if ($action === null) {
 $configHtml = ob_get_clean();
 
 /* ---------- Panel 3: simulate (form + results side by side) ---------- */
-$simResultHtml = '';
-if ($action !== null && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $mapper = new SimulationInputMapper();
-    try {
-        $report = (new ActionSimulationService())->distribution($action, $mapper->fromPost($_POST), $mapper->runs($_POST));
-        $simResultHtml = (new SimulationReportView($report))->render();
-    } catch (\Throwable $e) {
-        $simResultHtml = SimulationReportView::unavailable($e->getMessage());
-    }
-}
 ob_start();
 if ($action === null) {
     echo '<p class="wb-empty">—</p>';
 } else {
-    $fields = (new SimulationFormBuilder())->fieldsFor($action);
-    echo '<div class="wb-sim-form">' . (new SimulationFormView())->render($action, $fields, $_POST) . '</div>';
+    $panel = new SimulationPanelView();
+    $simResultHtml = ($_SERVER['REQUEST_METHOD'] === 'POST') ? $panel->result($action, $_POST) : '';
+    echo '<div class="wb-sim-form">' . $panel->form($action, $_POST) . '</div>';
     echo '<div class="wb-sim-result">' . $simResultHtml . '</div>';
 }
 $simHtml = ob_get_clean();

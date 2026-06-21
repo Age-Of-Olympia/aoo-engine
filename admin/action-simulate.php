@@ -2,11 +2,7 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 
 use App\Service\Action\ActionCatalogService;
-use App\Service\Action\ActionSimulationService;
-use App\Service\Action\SimulationFormBuilder;
-use App\Service\Action\SimulationInputMapper;
-use App\View\Action\SimulationFormView;
-use App\View\Action\SimulationReportView;
+use App\View\Action\SimulationPanelView;
 
 $assets = [
     'styles' => ['/admin/css/action-simulate.css'],
@@ -22,17 +18,11 @@ if ($action === null) {
     return;
 }
 
-$fields = (new SimulationFormBuilder())->fieldsFor($action);
-$content = (new SimulationFormView())->render($action, $fields, $_POST);
+$panel = new SimulationPanelView();
+$content = $panel->form($action, $_POST);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $mapper = new SimulationInputMapper();
-    try {
-        $report = (new ActionSimulationService())->distribution($action, $mapper->fromPost($_POST), $mapper->runs($_POST));
-        $content .= (new SimulationReportView($report))->render();
-    } catch (\Throwable $e) {
-        $content .= SimulationReportView::unavailable($e->getMessage());
-    }
+    $content .= $panel->result($action, $_POST);
 }
 
 echo admin_layout('Simuler', $content, $assets);
