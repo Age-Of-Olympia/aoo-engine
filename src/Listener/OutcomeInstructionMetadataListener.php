@@ -24,6 +24,16 @@ class OutcomeInstructionMetadataListener {
                 require_once $file;
             }
             $metadata->discriminatorMap[\App\Action\OutcomeInstruction\OutcomeInstructionFactory::discriminatorKey($className)] = $fullClassName;
+
+            // Register concrete subclasses so STI root queries (e.g. the one in
+            // OutcomeInstructionService) include their discriminators in the
+            // generated `type IN (...)` filter. Unlike Action, OutcomeInstruction
+            // has no #[DiscriminatorMap] attribute for Doctrine to derive these
+            // from — without this the filter is just the base 'outcomeinstruction'
+            // and every real instruction row (lifeloss, healing, …) is excluded.
+            if ($fullClassName !== OutcomeInstruction::class && !in_array($fullClassName, $metadata->subClasses, true)) {
+                $metadata->subClasses[] = $fullClassName;
+            }
         }
     }
 }
