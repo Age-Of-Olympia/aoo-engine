@@ -157,4 +157,27 @@ class SimulatedPlayer extends Player
     {
         return 0;
     }
+
+    /*
+     * These parent mutations write the real world keyed by player id / coords
+     * (map_items, players_actions, players), so they must be no-op'd too:
+     * the simulation runs the real outcome instructions (DropWeapon -> drop(),
+     * RemoveAction -> end_action(), etc.) against players 1/2.
+     */
+
+    public function drop($item, $n)
+    {
+    }
+
+    public function add_action($name)
+    {
+    }
+
+    public function end_action($name)
+    {
+    }
+
+    public function put_pf($pf)
+    {
+    }
 }
