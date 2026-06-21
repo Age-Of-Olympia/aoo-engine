@@ -7,6 +7,7 @@ use App\Action\Condition\ConditionObject;
 use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Action\MeleeAction;
 use App\Entity\ActionCondition;
+use App\Entity\ActionPassive;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Tests\Action\Mock\PlayerMock;
@@ -55,13 +56,26 @@ class ComputePureConditionCharacterizationTest extends TestCase
         return $condition;
     }
 
-    private function check(ScriptedDice $dice, ActionCondition $condition)
+    private function check(ScriptedDice $dice, ActionCondition $condition, ?PlayerMock $target = null)
     {
         $compute = new ComputePureCondition($dice);
         $conditionObject = new ConditionObject();
         $conditionObject->setAction($condition->getAction());
 
-        return $compute->check($this->actor(), $this->target(), $condition, $conditionObject);
+        return $compute->check($this->actor(), $target ?? $this->target(), $condition, $conditionObject);
+    }
+
+    private function defensivePassive(): ActionPassive
+    {
+        $passive = new ActionPassive();
+        $passive->setId(7);
+        $passive->setName('bouclier');
+        $passive->setTraits(['force']);
+        $passive->setType('def');
+        $passive->setCarac('fixed');
+        $passive->setValue(0.0);
+
+        return $passive;
     }
 
     public function testActorWinsWhenRollBeatsTarget(): void
@@ -110,5 +124,34 @@ class ComputePureConditionCharacterizationTest extends TestCase
         $result = $this->check(new ScriptedDice([[12], [5], [10]]), $condition);
 
         $this->assertFalse($result->isSuccess());
+    }
+
+    public function testTargetRollBonusRendersWithoutCrashing(): void
+    {
+        // A non-zero target bonus exercises the "Autre" tooltip branch, which
+        // raised a TypeError (string + int) before the precedence fix.
+        $condition = $this->pureAttackCondition(['targetRollBonus' => 3]);
+
+        $result = $this->check(new ScriptedDice([[10], [5]]), $condition);
+
+        $this->assertTrue($result->isSuccess());
+        $targetTxt = $result->getConditionSuccessMessages()[1] ?? '';
+        $this->assertStringContainsString('Bonus de compétence : 3', $targetTxt);
+        $this->assertStringContainsString('= 8 (Jet pur)', $targetTxt);
+    }
+
+    public function testTargetDefensivePassiveBonusIsApplied(): void
+    {
+        // Before the id/name fix the target's def passive resolved by name → 0,
+        // so this attack succeeded; with the bonus applied the target now wins.
+        $target = $this->target();
+        $target->playerPassiveService->passives = [$this->defensivePassive()];
+        $target->playerPassiveService->computedValue = 100;
+
+        $condition = $this->pureAttackCondition();
+        $result = $this->check(new ScriptedDice([[10], [5]]), $condition, $target);
+
+        $this->assertFalse($result->isSuccess());
+        $this->assertCount(1, $condition->getAction()->getAutomaticOutcomeInstructions());
     }
 }
