@@ -280,9 +280,11 @@ abstract class Action implements ActionInterface
 
     public function initAutomaticOutcomeInstructions(): self
     {
-        if (!isset($this->automaticOutcomeInstructions)) {
-            $this->automaticOutcomeInstructions = new ArrayCollection();
-        }
+        // Reset every call so this is idempotent: subclasses (AttackAction) add
+        // fresh instructions here, and the method can run more than once on the
+        // same action (the workbench previews automatics, then a simulation
+        // re-initialises) without accumulating duplicates.
+        $this->automaticOutcomeInstructions = new ArrayCollection();
         return $this;
     }
 
