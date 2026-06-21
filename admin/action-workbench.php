@@ -10,11 +10,13 @@ use App\Action\Schema\ParameterSchema;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionConditionEditService;
 use App\Service\Action\ActionCreateService;
+use App\Service\Action\ActionOutcomeEditService;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
 use App\View\Action\ConditionEditorView;
 use App\View\Action\DeleteActionFormView;
 use App\View\Action\NewActionFormView;
+use App\View\Action\OutcomeEditorView;
 use App\View\Action\SimulationPanelView;
 
 $catalogService = new ActionCatalogService();
@@ -22,6 +24,9 @@ $actions = $catalogService->listActions();
 $actionTypes = (new ActionCreateService())->availableTypes();
 $conditionTypes = (new ActionConditionEditService())->availableTypes();
 $conditionEditor = new ConditionEditorView();
+$outcomeEditService = new ActionOutcomeEditService();
+$instructionTypes = $outcomeEditService->availableInstructionTypes();
+$outcomeEditor = new OutcomeEditorView();
 $id = (int) ($_GET['id'] ?? ($_POST['id'] ?? 0));
 $action = $id ? $catalogService->getActionById($id) : ($actions[0] ?? null);
 
@@ -115,18 +120,26 @@ if ($action === null) {
     foreach ($action->getOutcomes() as $outcome) {
         echo '<div class="wb-block">';
         echo '<div class="wb-block-head">Outcome '
-            . ($outcome->isOnSuccess() ? '<span class="badge badge-success">succès</span>' : '<span class="badge badge-danger">échec</span>') . '</div>';
+            . ($outcome->isOnSuccess() ? '<span class="badge badge-success">succès</span>' : '<span class="badge badge-danger">échec</span>')
+            . $outcomeEditor->removeOutcomeButton((int) $outcome->getId()) . '</div>';
         echo '<div class="wb-block-body">';
-        foreach ($instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId()) as $instruction) {
+        $instructions = $instructionService->getOutcomeInstructionsByOutcome((int) $outcome->getId());
+        if (count($instructions) === 0) {
+            echo '<p class="wb-muted">Aucune instruction.</p>';
+        }
+        foreach ($instructions as $instruction) {
             $instructionType = OutcomeInstructionFactory::typeOf($instruction);
             $schema = $schemaCatalog->schemaForOutcomeInstruction($instructionType);
             $params = $instruction->getParameters() ?? [];
-            echo '<div class="wb-inst-name">' . e($instructionType) . '</div>';
+            echo '<div class="wb-inst-name">' . e($instructionType)
+                . $outcomeEditor->removeInstructionButton((int) $instruction->getId()) . '</div>';
             echo $renderParams($schema, $params, 'inst[' . (int) $instruction->getId() . ']', 'inst_raw[' . (int) $instruction->getId() . ']');
         }
+        echo $outcomeEditor->addInstructionControls((int) $outcome->getId(), $instructionTypes);
         echo '</div></div>';
     }
     echo '</div>';
+    echo $outcomeEditor->addOutcomeControls();
 
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
