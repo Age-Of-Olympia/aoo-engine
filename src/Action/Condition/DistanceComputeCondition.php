@@ -4,12 +4,13 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
+use Classes\Dice;
 
 class DistanceComputeCondition extends ComputeCondition
 {
-    public function __construct()
+    public function __construct(?Dice $dice = null)
     {
-        parent::__construct();
+        parent::__construct($dice);
         array_push($this->preConditions, new ObstacleCondition());
     }
 

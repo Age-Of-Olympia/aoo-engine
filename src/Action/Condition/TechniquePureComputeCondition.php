@@ -1,13 +1,15 @@
 <?php
 namespace App\Action\Condition;
 
+use Classes\Dice;
+
 class TechniquePureComputeCondition extends ComputePureCondition
 {
     protected string $throwName = "La technique";
 
-    public function __construct()
+    public function __construct(?Dice $dice = null)
     {
-        parent::__construct();
+        parent::__construct($dice);
         array_push($this->preConditions, new ObstacleCondition());
     }
 

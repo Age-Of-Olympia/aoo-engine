@@ -2,12 +2,13 @@
 namespace App\Action\Condition;
 
 use Classes\View;
+use Classes\Dice;
 
 class DistancePureComputeCondition extends ComputePureCondition
 {
-    public function __construct()
+    public function __construct(?Dice $dice = null)
     {
-        parent::__construct();
+        parent::__construct($dice);
         array_push($this->preConditions, new ObstacleCondition());
     }
 

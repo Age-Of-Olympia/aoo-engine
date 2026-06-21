@@ -18,29 +18,8 @@ use App\Action\Schema\SimulationField;
 use Classes\Dice;
 use Classes\View;
 
-enum Roll: string
+class ComputeCondition extends AbstractComputeCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
-    case cc = "cc";
-    case ct = "ct";
-    case fm = "fm";
-    case cc_agi = "cc_agi";
-}
-
-class ComputeCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
-{
-    protected int $distance;
-    protected string $throwName = "Le tir";
-    protected string $actorRollTrait;
-    protected string $targetRollTrait;
-    protected ?Dice $dice = null;
-
-
-    public function __construct(?Dice $dice = null) {
-        $this->dice = $dice;
-        array_push($this->preConditions, new DodgeCondition());
-        array_push($this->preConditions, new NoBerserkCondition());
-    }
-
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
@@ -96,99 +75,6 @@ class ComputeCondition extends BaseCondition implements HasParameterSchema, Decl
         }
 
         return $traits;
-    }
-
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
-    {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
-
-        if (!$target) {
-            return new ConditionResult(false, ["Aucune cible spécifiée."], []);
-        }
-
-        $params = $condition->getParameters(); // e.g. { "max": 1 }
-        $this->actorRollTrait = $params['actorRollType'] ?? null;
-        $this->targetRollTrait = $params['targetRollType'] ?? null;
-        $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
-        $conditionObject->setTargetRollBonus($params['targetRollBonus'] ?? 0);
-        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
-        $conditionObject->setTargetRollTrait($params['targetRollType'] ?? 0);
-        $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
-        $conditionObject->setTargetAdvantage($params['targetAdvantage'] ?? false);
-        $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
-        $conditionObject->setTargetDisadvantage($params['targetDisadvantage'] ?? false);
-        $target->playerPassiveService->getPassivesByPlayerId($target->getId());
-
-        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
-            if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                    if($actorPassive->getCarac() == "advantage"){
-                        $conditionObject->setActorAdvantage(true);
-                    }
-                    else{
-                    $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
-                    }
-                }
-            }
-        }
-
-        foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
-            if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                if($target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)){
-                    if($targetPassive->getCarac() == "advantage"){
-                        $conditionObject->setTargetAdvantage(true);
-                    }
-                    else{
-                        $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId()));
-                    }
-                }
-            }
-        }
-
-        if (!$target) {
-            $errorMessages[0] = "Aucune cible n'a été spécifiée.";
-            return new ConditionResult(success: false, conditionSuccessMessages:$errorMessages, conditionFailureMessages:array());
-        }
-
-        $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
-
-        $result = $this->computeAttack($actor, $target, $conditionObject);
-
-        if (!$result->isSuccess()) {
-            $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
-        }
-
-        return $result;
-    }
-
-    private function computeAttack(ActorInterface $actor, ?ActorInterface $target, ConditionObject $conditionObject): ConditionResult 
-    {
-        $success = false;
-        $dice = $this->dice ?? new Dice(3);
-
-        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
-        $conditionDetailsSuccess[0] = $actorTxt;
-        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $conditionObject);
-        $conditionDetailsSuccess[1] = $targetTxt;
-       
-        $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
-
-        $rollResult = (new CombatResolver())->resolve($actorTotal, $targetTotal, $checkAboveDistance);
-        $success = !AUTO_FAIL && $rollResult->hit;
-
-        $conditionDetailsFailure = array();
-        if (!$success) {
-            $conditionDetailsFailure[0] = $conditionDetailsSuccess[0];
-            $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
-            if (!$checkAboveDistance) {
-                $conditionDetailsFailure[2] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
-            }
-        }
-
-        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure);
     }
 
     protected function computeActor($actor, $dice, $conditionObject)
@@ -258,18 +144,6 @@ class ComputeCondition extends BaseCondition implements HasParameterSchema, Decl
         $conditionObject->setTargetRoll($total);
 
         return array($targetRoll, $total, (new RollDetailView())->renderTarget($detail));
-    }
-
-    protected function getDistanceTreshold() : int {
-        return 0;
-    }
-
-    protected function checkDistanceCondition(int $actorTotal): bool {
-        return true;
-    }
-    
-    protected function getDistanceMalus(): int {
-        return 0;
     }
 
 }
