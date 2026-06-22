@@ -77,6 +77,18 @@ COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `action_type_instructions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type_key` varchar(100) NOT NULL,
+  `instruction_type` varchar(50) NOT NULL,
+  `parameters` longtext DEFAULT NULL,
+  `order_index` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_action_type_instructions_type_key` (`type_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `action_outcomes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `apply_to_self` tinyint(1) NOT NULL DEFAULT 0,

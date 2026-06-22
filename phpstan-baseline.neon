@@ -297,6 +297,12 @@ parameters:
 			path: src/Entity/Race.php
 
 		-
+			message: '#^Property App\\Entity\\ActionTypeInstruction\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/ActionTypeInstruction.php
+
+		-
 			message: '#^Property App\\Entity\\Race\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
