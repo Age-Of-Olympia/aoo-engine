@@ -4,6 +4,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
 use App\Service\ImportExport\BundleEnvelope;
+use App\Service\ImportExport\ImporterRegistry;
 use App\View\Action\ImportFormView;
 
 /** Hard ceiling on an uploaded bundle; a real export of the whole catalogue is ~50 KB. */
@@ -18,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $json = read_uploaded_bundle($_FILES['bundle'] ?? null);
         $parsed = BundleEnvelope::parse($json); // validates envelope + json_decode depth
 
-        if ($parsed->objectType !== 'action') {
+        if (!in_array($parsed->objectType, (new ImporterRegistry())->objectTypes(), true)) {
             throw new InvalidArgumentException("Type d'objet non supporté : « {$parsed->objectType} ».");
         }
 
@@ -71,4 +72,4 @@ function read_uploaded_bundle($file): string
 }
 
 $body = (new ImportFormView())->render($csrf->renderTokenField());
-echo admin_layout('Importer des actions', renderFlashMessage() . $body);
+echo admin_layout('Importer', renderFlashMessage() . $body);

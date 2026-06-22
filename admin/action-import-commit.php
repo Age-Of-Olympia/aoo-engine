@@ -4,8 +4,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
-use App\Service\ImportExport\ActionImporter;
 use App\Service\ImportExport\BundleEnvelope;
+use App\Service\ImportExport\ImporterRegistry;
 
 AdminAuthorizationService::DoAdminCheck();
 
@@ -33,11 +33,12 @@ try {
     // Re-parse + re-validate from the stored JSON: import() classifies every
     // object again and applies the batch transactionally (all-or-nothing).
     $parsed = BundleEnvelope::parse($json);
-    if ($parsed->objectType !== 'action') {
+    $importer = (new ImporterRegistry())->importerFor($parsed->objectType);
+    if ($importer === null) {
         throw new InvalidArgumentException("Type d'objet non supporté : « {$parsed->objectType} ».");
     }
 
-    $report = (new ActionImporter())->import($parsed->objects);
+    $report = $importer->import($parsed->objects);
 
     unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);
     $csrf->regenerateToken();

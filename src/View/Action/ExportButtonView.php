@@ -23,6 +23,16 @@ final class ExportButtonView
             . $this->esc($label) . '</a>';
     }
 
+    /**
+     * "Export all" for a given object family (e.g. passive) — the endpoint routes
+     * on ?type via the ExporterRegistry.
+     */
+    public function allOfType(string $objectType, string $label): string
+    {
+        return '<a class="btn btn-sm btn-outline-secondary" href="' . self::ENDPOINT . '?type=' . urlencode($objectType) . '">'
+            . $this->esc($label) . '</a>';
+    }
+
     private function esc(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');

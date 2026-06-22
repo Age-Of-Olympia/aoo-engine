@@ -4,23 +4,30 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
 use App\Service\AdminAuthorizationService;
-use App\Service\ImportExport\ActionExporter;
 use App\Service\ImportExport\BundleDownload;
 use App\Service\ImportExport\BundleEnvelope;
+use App\Service\ImportExport\ExporterRegistry;
 
 AdminAuthorizationService::DoAdminCheck();
 
 /*
  * Read-only JSON download. Deliberately does NOT include admin/layout.php: the
- * response is a file attachment, not an HTML page. One action when ?id is given,
- * otherwise the whole catalogue.
+ * response is a file attachment, not an HTML page. ?type picks the object family
+ * (default action); ?id exports a single action; otherwise the whole catalogue.
  */
-$catalog = new ActionCatalogService();
-$exporter = new ActionExporter($catalog);
+$type = (string) ($_GET['type'] ?? 'action');
+$exporter = (new ExporterRegistry())->exporterFor($type);
+if ($exporter === null) {
+    setFlash('warning', "Type d'export inconnu : « {$type} ».");
+    header('Location: /admin/actions.php');
+    exit;
+}
 
 $id = (int) ($_GET['id'] ?? 0);
 
-if ($id > 0) {
+if ($type === 'action' && $id > 0) {
+    // Single-action export keeps its by-id lookup (the generic exporter has none).
+    $catalog = new ActionCatalogService();
     $action = $catalog->getActionById($id);
     if ($action === null) {
         setFlash('warning', 'Action introuvable.');
@@ -28,13 +35,13 @@ if ($id > 0) {
         exit;
     }
     $objects = [$exporter->toArray($action)];
-    $filename = BundleDownload::filename($exporter->objectType(), $action->getName());
+    $filename = BundleDownload::filename($type, $action->getName());
 } else {
     $objects = $exporter->exportAll();
-    $filename = BundleDownload::filename($exporter->objectType());
+    $filename = BundleDownload::filename($type);
 }
 
-$json = BundleEnvelope::encode(BundleEnvelope::build($exporter->objectType(), $objects));
+$json = BundleEnvelope::encode(BundleEnvelope::build($type, $objects));
 
 header('Content-Type: application/json; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');

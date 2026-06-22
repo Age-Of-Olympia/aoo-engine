@@ -3,8 +3,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
-use App\Service\ImportExport\ActionImporter;
 use App\Service\ImportExport\BundleEnvelope;
+use App\Service\ImportExport\ImporterRegistry;
 use App\View\Action\ImportPreviewView;
 
 $json = $_SESSION['action_import_bundle'] ?? null;
@@ -16,10 +16,11 @@ if (!is_string($json) || $json === '') {
 
 try {
     $parsed = BundleEnvelope::parse($json);
-    if ($parsed->objectType !== 'action') {
+    $importer = (new ImporterRegistry())->importerFor($parsed->objectType);
+    if ($importer === null) {
         throw new InvalidArgumentException("Type d'objet non supporté : « {$parsed->objectType} ».");
     }
-    $report = (new ActionImporter())->preview($parsed->objects);
+    $report = $importer->preview($parsed->objects);
 } catch (\Throwable $exception) {
     unset($_SESSION['action_import_bundle'], $_SESSION['action_import_filename']);
     setFlash('danger', 'Bundle invalide : ' . $exception->getMessage());

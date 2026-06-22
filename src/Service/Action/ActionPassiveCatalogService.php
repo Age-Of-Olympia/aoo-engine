@@ -31,4 +31,12 @@ final class ActionPassiveCatalogService
     {
         return $this->entityManager->find(ActionPassive::class, $id);
     }
+
+    /**
+     * Look up a passive by its natural key (name). Identity used by import.
+     */
+    public function findByName(string $name): ?ActionPassive
+    {
+        return $this->entityManager->getRepository(ActionPassive::class)->findOneBy(['name' => $name]);
+    }
 }

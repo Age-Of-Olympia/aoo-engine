@@ -4,6 +4,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionPassiveCatalogService;
 use App\Service\CsrfProtectionService;
+use App\View\Action\ExportButtonView;
 use App\View\Action\PassiveWorkbenchView;
 
 $catalog = new ActionPassiveCatalogService();
@@ -12,7 +13,9 @@ $id = (int) ($_GET['id'] ?? 0);
 $selected = $id ? $catalog->getById($id) : ($passives[0] ?? null);
 $csrf = new CsrfProtectionService();
 
-$body = (new PassiveWorkbenchView())->render($passives, $selected, $csrf->renderTokenField());
+$exportBar = '<div class="d-flex justify-content-end mb-3">'
+    . (new ExportButtonView())->allOfType('passive', 'Exporter les passifs') . '</div>';
+$body = $exportBar . (new PassiveWorkbenchView())->render($passives, $selected, $csrf->renderTokenField());
 
 echo admin_layout('Passifs', renderFlashMessage() . $body, [
     'styles' => ['/admin/css/action-workbench.css'],
