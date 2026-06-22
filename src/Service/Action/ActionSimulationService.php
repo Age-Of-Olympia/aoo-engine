@@ -21,10 +21,14 @@ use App\Simulation\SimulationGuard;
 final class ActionSimulationService
 {
     private ?ActionPassiveService $passiveService;
+    private ?ActionTypeInstructionResolver $typeInstructionResolver;
 
-    public function __construct(?ActionPassiveService $passiveService = null)
-    {
+    public function __construct(
+        ?ActionPassiveService $passiveService = null,
+        ?ActionTypeInstructionResolver $typeInstructionResolver = null,
+    ) {
         $this->passiveService = $passiveService;
+        $this->typeInstructionResolver = $typeInstructionResolver;
     }
 
     /**
@@ -42,7 +46,13 @@ final class ActionSimulationService
         $baseline = $action->getAutomaticOutcomeInstructions()->toArray();
         try {
             return SimulationGuard::run(
-                fn() => (new ActionExecutorService($action, $actor, $target, simulationMode: true))->executeAction()
+                fn() => (new ActionExecutorService(
+                    $action,
+                    $actor,
+                    $target,
+                    simulationMode: true,
+                    typeInstructionResolver: $this->typeInstructionResolver,
+                ))->executeAction()
             );
         } finally {
             $instructions = $action->getAutomaticOutcomeInstructions();

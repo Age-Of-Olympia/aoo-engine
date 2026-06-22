@@ -8,6 +8,7 @@ use App\Action\Condition\ConditionRegistry;
 use App\Action\Condition\ConditionObject;
 use App\Entity\Action;
 use App\Entity\OutcomeInstruction;
+use App\Service\Action\ActionTypeInstructionResolver;
 use Exception;
 
 class ActionExecutorService
@@ -21,6 +22,7 @@ class ActionExecutorService
     private Player $target;
     private Action $action;
     private ?PlayerService $playerService;
+    private ActionTypeInstructionResolver $typeInstructionResolver;
     private bool $simulationMode = false;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
@@ -28,8 +30,9 @@ class ActionExecutorService
     private bool $blocked = false;
     private ConditionObject $conditionObject;
     
-    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false){
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null){
         $this->conditionRegistry = new ConditionRegistry();
+        $this->typeInstructionResolver = $typeInstructionResolver ?? new ActionTypeInstructionResolver();
         $this->conditionResultsArray = array();
         $this->outcomeResultsArray = array();
         $this->conditionsToPay = array();
@@ -116,7 +119,16 @@ class ActionExecutorService
             }
         }
 
-        foreach ($this->action->getAutomaticOutcomeInstructions() as $outcomeInstruction) {
+        // Type-level instructions (data-driven, inherited via the class hierarchy)
+        // take precedence; fall back to the legacy code-defined automatics until
+        // they're migrated to the DB (step 4) and the code path is removed
+        // (step 5). The gate keeps exactly one source running, so nothing is
+        // applied twice. While the table is empty this is the legacy behaviour.
+        $typeInstructions = $this->typeInstructionResolver->resolve($this->action);
+        $automaticInstructions = $typeInstructions !== []
+            ? $typeInstructions
+            : $this->action->getAutomaticOutcomeInstructions()->toArray();
+        foreach ($automaticInstructions as $outcomeInstruction) {
             $this->applyActionOutcomeInstruction($outcomeInstruction);
         }
     }

@@ -9,8 +9,12 @@ use App\Action\BuffAction;
 use App\Action\MeleeAction;
 use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\ActionCondition;
+use App\Entity\ActionTypeInstruction;
 use App\Service\Action\ActionSimulationService;
+use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\SimulationInput;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -39,6 +43,26 @@ class ActionSimulationServiceTest extends TestCase
                 define($name, $value);
             }
         }
+    }
+
+    /**
+     * The sim service with a DB-free type-instruction resolver (no type-level
+     * instructions configured), so these tests exercise the legacy automatic
+     * path without hitting the database.
+     */
+    /**
+     * @param array<int, \App\Entity\ActionTypeInstruction> $typeConfigs
+     */
+    private function simulationService(array $typeConfigs = []): ActionSimulationService
+    {
+        $repo = $this->createMock(EntityRepository::class);
+        $repo->method('findBy')->willReturn($typeConfigs);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repo);
+
+        return new ActionSimulationService(
+            typeInstructionResolver: new ActionTypeInstructionResolver($em),
+        );
     }
 
     /* --- the per-type defense formulas (kept; used by the real conditions) --- */
@@ -96,7 +120,7 @@ class ActionSimulationServiceTest extends TestCase
             targetWeapon: 'melee',
         );
 
-        $results = (new ActionSimulationService())->simulate($action, $input);
+        $results = ($this->simulationService())->simulate($action, $input);
 
         $this->assertTrue($results->isBlocked());
         $this->assertStringContainsString('loin', $this->failureText($results));
@@ -113,7 +137,7 @@ class ActionSimulationServiceTest extends TestCase
             targetWeapon: 'melee',
         );
 
-        $results = (new ActionSimulationService())->simulate($action, $input);
+        $results = ($this->simulationService())->simulate($action, $input);
 
         $this->assertTrue($results->isBlocked());
         $this->assertStringContainsString('arme', $this->failureText($results));
@@ -134,9 +158,34 @@ class ActionSimulationServiceTest extends TestCase
             targetCaracs: ['agi' => 2],
         );
 
-        $results = (new ActionSimulationService())->simulate($action, $input);
+        $results = ($this->simulationService())->simulate($action, $input);
 
         $this->assertFalse($results->isBlocked());
+        $damage = 0;
+        foreach ($results->getOutcomesResultsArray() as $outcome) {
+            $damage += (int) $outcome->getTotalDamages();
+        }
+        $this->assertGreaterThan(0, $damage);
+    }
+
+    public function testTypeLevelInstructionsAreRunByTheExecutor(): void
+    {
+        // A LifeLoss configured on the action's TYPE applies even though the
+        // action carries no automatic/DB instructions of its own — proving the
+        // gate runs the resolved type-level instructions.
+        $config = (new ActionTypeInstruction())
+            ->setTypeKey('buff')
+            ->setInstructionType('lifeloss')
+            ->setOrderIndex(0)
+            ->setParameters(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi']);
+
+        $action = new BuffAction();
+        $action->setName('drain');
+        $action->setDisplayName('Drain');
+        $input = new SimulationInput(actorCaracs: ['cc' => 20], targetCaracs: ['agi' => 2]);
+
+        $results = ($this->simulationService([$config]))->simulate($action, $input);
+
         $damage = 0;
         foreach ($results->getOutcomesResultsArray() as $outcome) {
             $damage += (int) $outcome->getTotalDamages();
@@ -170,7 +219,7 @@ class ActionSimulationServiceTest extends TestCase
             targetWeapon: 'melee',
         );
 
-        (new ActionSimulationService())->distribution($action, $input, 100);
+        ($this->simulationService())->distribution($action, $input, 100);
 
         $this->assertSame($baseline, $action->getAutomaticOutcomeInstructions()->count());
     }
