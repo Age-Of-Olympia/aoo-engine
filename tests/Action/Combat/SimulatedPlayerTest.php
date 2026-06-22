@@ -20,6 +20,31 @@ class SimulatedPlayerTest extends TestCase
         );
     }
 
+    public function testEquippedWeaponStatsAreFoldedIntoCaracsLikeARealPlayer(): void
+    {
+        $weapon = SimulatedItem::fromData(['subtype' => 'melee', 'name' => 'Gladius', 'cc' => 2, 'fixedF' => 7]);
+        $player = new SimulatedPlayer(
+            1,
+            ['cc' => 12, 'f' => 3],
+            ['pv' => 10],
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
+            [],
+            (object) ['main1' => $weapon],
+        );
+
+        $this->assertSame(14, $player->caracs->cc); // 12 + weapon's 2
+        $this->assertSame(7, $player->caracs->f);   // fixedF overrides
+    }
+
+    public function testApplyItemCaracsIsTheSharedFoldingRule(): void
+    {
+        $caracs = (object) ['cc' => 10, 'ct' => 4];
+        \Classes\Player::applyItemCaracs($caracs, SimulatedItem::fromData(['cc' => 2]));
+
+        $this->assertSame(12, $caracs->cc);
+        $this->assertSame(4, $caracs->ct); // untouched
+    }
+
     /**
      * The simulator runs the real outcome instructions against players 1/2, so
      * every world-mutating Player method must be inert — otherwise a preview

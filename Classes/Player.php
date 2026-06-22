@@ -170,6 +170,24 @@ class Player implements ActorInterface {
         $this->row = $row;
     }
 
+    /**
+     * Fold one equipped item's stat bonuses into a caracs object: every CARACS
+     * trait the item defines is added (cc, ct, …), and a fixedF item overrides F.
+     * Pure (no DB) so both get_caracs() and the simulator's SimulatedPlayer apply
+     * equipment through the exact same path instead of duplicating the rule.
+     */
+    public static function applyItemCaracs(object $caracs, $item): void
+    {
+        foreach (CARACS as $k => $e) {
+            if (!empty($item->data->$k)) {
+                $caracs->$k += $item->data->$k;
+            }
+        }
+        if (!empty($item->data->fixedF)) {
+            $caracs->f = $item->data->fixedF;
+        }
+    }
+
 
     public function get_caracs(bool $nude=false): bool {
 
@@ -235,24 +253,7 @@ class Player implements ActorInterface {
 
             $this->emplacements->{$row->equiped} = $item;
 
-
-            foreach(CARACS as $k=>$e){
-
-
-                if(!empty($item->data->$k)){
-
-
-                    $this->caracs->$k += $item->data->$k;
-                }
-            }
-
-
-            // fixed caracs
-            if(!empty($item->data->fixedF)){
-
-
-                $this->caracs->f = $item->data->fixedF;
-            }
+            self::applyItemCaracs($this->caracs, $item);
         }
 
         // Esquive

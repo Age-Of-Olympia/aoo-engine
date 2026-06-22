@@ -42,6 +42,12 @@ class SimulatedPlayer extends Player
         $this->turn = (object) $remaining;
         $this->coords = $coords;
         $this->emplacements = $emplacements ?? (object) [];
+        // Fold equipped-item stat bonuses (e.g. a weapon's cc) into caracs the
+        // same way Player::get_caracs() does on a real player — same method, so
+        // the simulator doesn't drift from the game's equipment rule.
+        foreach ((array) $this->emplacements as $item) {
+            self::applyItemCaracs($this->caracs, $item);
+        }
         // Degressive-XP reduction read by AttackAction::calculateActorXp.
         $this->upgrades = (object) ['a' => 0];
         // Lenient: unmodelled data fields the engine reads return null, not a warning.
