@@ -175,8 +175,14 @@ if ($action === null) {
 } else {
     $panel = new SimulationPanelView();
     $simResultHtml = ($_SERVER['REQUEST_METHOD'] === 'POST') ? $panel->result($action, $_POST) : '';
+    /* Result first so it sits at the top after a run (the POST reload scrolls
+       to the top), instead of being buried under the long form. */
+    if ($simResultHtml !== '') {
+        echo '<div class="wb-sim-result" id="sim-result">'
+            . '<div class="wb-sim-result-head">Résultat</div>'
+            . $simResultHtml . '</div>';
+    }
     echo '<div class="wb-sim-form">' . $panel->form($action, $_POST) . '</div>';
-    echo '<div class="wb-sim-result">' . $simResultHtml . '</div>';
 }
 $simHtml = ob_get_clean();
 

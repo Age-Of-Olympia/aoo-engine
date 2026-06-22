@@ -59,12 +59,13 @@
 
 .wb-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
 .wb-chip { background: #eef2f5; color: #5d6d7e; border-radius: 10px; padding: 2px 9px; font-size: 12px; }
-.wb-section-title { text-transform: uppercase; letter-spacing: .05em; font-size: 11px; font-weight: 700; color: #8a97a3; margin: 10px 0 5px; }
+/* Section headers match the simulator's sub-section style (underlined caps). */
+.wb-section-title { text-transform: uppercase; letter-spacing: .04em; font-size: 11px; font-weight: 700; color: #8a95a1; margin: 16px 0 7px; padding-bottom: 3px; border-bottom: 1px solid #e3e6ea; }
 /* Pack condition/outcome blocks into responsive columns so they sit side by side. */
-.wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px 10px; align-items: start; }
-.wb-block { border: 1px solid #e7ebee; border-radius: 7px; margin-bottom: 0; }
-.wb-block-head { background: #f7f9fb; padding: 7px 10px; border-bottom: 1px solid #e7ebee; font-weight: 600; font-size: 13px; border-radius: 7px 7px 0 0; }
-.wb-block-body { padding: 8px 10px; display: grid; grid-template-columns: 1fr; gap: 4px; }
+.wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; align-items: start; }
+.wb-block { border: 1px solid #e3e6ea; border-radius: 8px; margin-bottom: 0; }
+.wb-block-head { background: #f6f8fa; padding: 7px 11px; border-bottom: 1px solid #e3e6ea; font-weight: 600; font-size: 13px; border-radius: 8px 8px 0 0; color: #2c3e50; }
+.wb-block-body { padding: 9px 11px; display: grid; grid-template-columns: 1fr; gap: 4px; }
 
 /* Compact single-line fields (label + control on one row) everywhere. */
 .wb .form-group { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -113,11 +114,14 @@
 .wb-sim h1 { font-size: 1.2em; margin: 0 0 4px; }
 .wb-sim p.text-muted { font-size: 12px; margin: 0 0 10px; }
 .wb-sim .card.mt-3 { max-width: 720px !important; margin-top: 14px; }
-/* Results: a full-width one-line distribution bar, then the detailed sample
-   capped at a readable width (its row/col breakdown spreads if too wide). */
-.wb-sim-result { margin-top: 14px; }
-.wb-sim-result .sim-distribution { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; padding: 8px 14px; background: #f7f9fb; border: 1px solid #e7ebee; border-radius: 7px; font-size: 13px; }
-.wb-sim-result .sim-distribution .sim-dist-runs { background: #4a90e2; color: #fff; border-radius: 10px; padding: 1px 9px; font-weight: 700; }
+/* Result: shown above the form (so it is not buried under it) as a prominent
+   card — the run metrics as stat tiles, then the detailed sample + dice. */
+.wb-sim-result { margin: 0 0 16px; padding: 12px 14px 14px; border: 1px solid #cfe0f0; border-radius: 10px; background: #f4f9ff; }
+.wb-sim-result-head { margin-bottom: 9px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #2e6da4; }
+.wb-sim-result .sim-distribution { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 0; background: none; border: 0; font-size: 13px; }
+.wb-sim-result .sim-distribution > span:not(.sim-dist-runs) { display: inline-flex; flex-direction: column; gap: 1px; padding: 6px 13px; background: #fff; border: 1px solid #dbe7f2; border-radius: 8px; color: #6b7a89; font-size: 12px; line-height: 1.25; }
+.wb-sim-result .sim-distribution > span strong { font-size: 18px; font-weight: 700; color: #2c3e50; }
+.wb-sim-result .sim-distribution .sim-dist-runs { align-self: stretch; display: inline-flex; align-items: center; background: #4a90e2; color: #fff; border-radius: 8px; padding: 0 12px; font-weight: 700; }
 .wb-sim-result .card.mt-3 { margin: 12px 0 0 !important; max-width: none !important; }
 
 /* New-action form (collapsible) in the actions column. */
