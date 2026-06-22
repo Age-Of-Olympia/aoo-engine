@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260622a';
+const ADMIN_ASSET_VERSION = '20260622b';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -53,14 +53,16 @@ function admin_layout($title, $content, array $assets = []) {
 
     /* Action admin pages: the workbench, the per-type defaults editor, the list
      * and the passive editor. */
-    $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php'];
+    $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
+                    'action-import.php', 'action-import-preview.php'];
     $actionsActive = in_array($currentPage, $actionPages, true);
     $actionsGroupClass = $actionsActive ? ' nav-group-open' : '';
     $actionsSubLinks =
         $navLink('action-workbench.php', 'Workbench', '/admin/action-workbench.php') . "\n                    " .
         $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
         $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                    " .
-        $navLink('actions.php', 'List', '/admin/actions.php');
+        $navLink('actions.php', 'List', '/admin/actions.php') . "\n                    " .
+        $navLink('action-import.php', 'Import', '/admin/action-import.php');
 
     $navigation =
         $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .
