@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260621f';
+const ADMIN_ASSET_VERSION = '20260622a';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -81,6 +81,7 @@ function admin_layout($title, $content, array $assets = []) {
         $actionsSubLinks . "\n                " .
         "    </div>\n                " .
         "</div>\n                " .
+        $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                " .
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 

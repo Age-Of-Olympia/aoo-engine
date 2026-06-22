@@ -128,3 +128,8 @@
 .wb-auto-badge { background: #8a97a3; color: #fff; }
 .wb-auto-row { font-size: 12px; padding: 1px 0; color: #4a5765; }
 .wb-auto-row code { background: #eef2f6; padding: 0 5px; border-radius: 4px; }
+
+/* Passive workbench field labels. */
+.wb-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.wb-field > span { color: #8a97a3; font-weight: 600; }
+.wb-field--wide { margin-top: 8px; }
