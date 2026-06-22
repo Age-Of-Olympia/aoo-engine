@@ -41,6 +41,11 @@ session_start();
 
 require_once(__DIR__.'/config/constants.php');
 require_once(__DIR__.'/config/db_constants.php');
+// Optionnel : identifiants OneSignal pour la synchro des contacts de campagnes mail.
+// Fichier absent -> la factory se rabat sur un no-op (cf. App\Service\Mail\MailContactProviderFactory).
+if(file_exists(__DIR__.'/config/onesignal_constants.php')){
+    require_once(__DIR__.'/config/onesignal_constants.php');
+}
 require_once(__DIR__.'/config/bootstrap.php');
 require_once(__DIR__.'/config/functions.php');
 

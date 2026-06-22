@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Mail\MailContactSyncService;
 use Classes\Db;
 
 /**
@@ -19,10 +20,12 @@ class AccountDeletionService
     public const ADMIN_EMAIL = 'admin@age-of-olympia.net';
 
     private MailerService $mailer;
+    private MailContactSyncService $contactSync;
 
-    public function __construct(?MailerService $mailer = null)
+    public function __construct(?MailerService $mailer = null, ?MailContactSyncService $contactSync = null)
     {
         $this->mailer = $mailer ?? new MailerService();
+        $this->contactSync = $contactSync ?? new MailContactSyncService();
     }
 
     /**
@@ -40,13 +43,22 @@ class AccountDeletionService
             [$playerId]
         );
 
-        $this->notifyAdmin($playerId, $playerName, $playerMail);
+        // Source de vérité = la colonne DB. Le mail passé par l'appelant vient
+        // du cache JSON ($player->data), périmé depuis l'inscription (register.php
+        // écrit plain_mail APRÈS get_data() sans rafraîchir le cache) : on
+        // résout donc l'email en base pour ne pas no-op au toggle profil.
+        $mail = $this->resolvePlayerMail($playerId, $playerMail);
+
+        $this->notifyAdmin($playerId, $playerName, $mail);
+
+        // Coupe les mails de campagne pour un joueur en partance (non bloquant).
+        $this->contactSync->onDeletionRequested($playerId, $mail);
     }
 
     /**
      * Clear a pending deletion request (player unticked the option).
      */
-    public function cancelDeletion(int $playerId): void
+    public function cancelDeletion(int $playerId, ?string $playerMail = null): void
     {
         $db = new Db();
 
@@ -54,6 +66,35 @@ class AccountDeletionService
             'UPDATE players SET deletion_asked = NULL WHERE id = ?',
             [$playerId]
         );
+
+        // Réabonne le joueur qui change d'avis (non bloquant). Email résolu en
+        // base pour les mêmes raisons que requestDeletion (cache JSON périmé).
+        $this->contactSync->onDeletionCancelled(
+            $playerId,
+            $this->resolvePlayerMail($playerId, $playerMail)
+        );
+    }
+
+    /**
+     * Résout l'email du joueur de façon fiable.
+     *
+     * Le mail fourni par l'appelant provient du cache JSON ($player->data), qui
+     * peut être vide (cf. requestDeletion). On le garde s'il est renseigné,
+     * sinon on lit `plain_mail` directement en base (source de vérité).
+     */
+    private function resolvePlayerMail(int $playerId, ?string $providedMail): string
+    {
+        if ($providedMail !== null && $providedMail !== '') {
+            return $providedMail;
+        }
+
+        $res = (new Db())->exe('SELECT plain_mail FROM players WHERE id = ?', [$playerId]);
+
+        if ($res && $row = $res->fetch_object()) {
+            return $row->plain_mail ?? '';
+        }
+
+        return '';
     }
 
     private function notifyAdmin(int $playerId, string $playerName, ?string $playerMail): void

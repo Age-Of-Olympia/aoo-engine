@@ -1,0 +1,21 @@
+<?php
+
+/*
+ * Identifiants OneSignal — copier ce fichier vers `config/onesignal_constants.php`
+ * (gitignoré, comme db_constants.php) et y renseigner les vraies valeurs depuis
+ * le dashboard OneSignal (Settings → Keys & IDs).
+ *
+ * Quand le fichier est absent ou les identifiants vides, le fournisseur de
+ * contacts se rabat sur un no-op (cf. MailContactProviderFactory) ; le jeu
+ * continue de fonctionner sans OneSignal configuré (ex. dans le devcontainer).
+ */
+
+define('ONESIGNAL_APP_ID', '');
+define('ONESIGNAL_REST_API_KEY', '');
+
+/*
+ * Quel fournisseur de contacts implémente l'abstraction des campagnes mail.
+ * Le changer pour faire pointer le jeu vers une autre implémentation
+ * (cf. App\Service\Mail\MailContactProviderFactory).
+ */
+define('MAIL_CONTACT_PROVIDER', 'onesignal');

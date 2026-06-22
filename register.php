@@ -9,6 +9,7 @@ use Classes\File;
 use Classes\Ui;
 use Classes\View;
 use App\Service\MissiveService;
+use App\Service\Mail\MailContactSyncService;
 use App\Tutorial\TutorialFeatureFlag;
 
 define('NO_LOGIN', true);
@@ -149,6 +150,16 @@ if(!empty($_POST['race'])){
         ';
 
         $db->exe($sql, array($hashedPsw, $hashedMail, $plainMail, $player->id));
+
+        // Enregistre le nouveau joueur comme contact de campagnes mail (non
+        // bloquant : le fournisseur avale les erreurs, donc une panne de
+        // OneSignal ne casse jamais la création de compte).
+        (new MailContactSyncService())->onRegister(
+            (int) $player->id,
+            $plainMail,
+            $player->data->name,
+            $player->data->race
+        );
 
 
         // add bonus gold

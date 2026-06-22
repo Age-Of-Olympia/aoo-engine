@@ -4,7 +4,8 @@
       "doctrine/dbal": "^4",
       "symfony/cache": "^7",
     "doctrine/migrations": "^3.9",
-    "symfony/console": "^7.2"
+    "symfony/console": "^7.2",
+    "onesignal/onesignal-php-api": "^5.7"
   },
   "autoload": {
       "psr-4": {
