@@ -5,6 +5,7 @@ namespace Tests\Action\View;
 use App\Action\MeleeAction;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\SimulationField;
+use App\Service\Action\SimulationWeaponCatalog;
 use App\View\Action\SimulationFormView;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -12,6 +13,15 @@ use PHPUnit\Framework\TestCase;
 #[Group('action-schema')]
 class SimulationFormViewTest extends TestCase
 {
+    private function view(): SimulationFormView
+    {
+        // Inject a DB-free weapon catalog so the test never touches the datas
+        // files (which need config/functions.php's helpers).
+        $items = ['gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius']];
+
+        return new SimulationFormView(new OptionCatalog(), new SimulationWeaponCatalog($items));
+    }
+
     public function testRendersTheDerivedFieldsAndEffectWidget(): void
     {
         $action = new MeleeAction();
@@ -24,7 +34,7 @@ class SimulationFormViewTest extends TestCase
             new SimulationField('weapon', 'actor', 'weapon', 'Arme acteur', 'melee'),
         ];
 
-        $html = (new SimulationFormView(new OptionCatalog()))->render($action, $fields, []);
+        $html = $this->view()->render($action, $fields, []);
 
         $this->assertStringContainsString('class="sim-panel"', $html);
         $this->assertStringContainsString('Équipement', $html);
@@ -41,13 +51,25 @@ class SimulationFormViewTest extends TestCase
         $action->setName('melee');
         $action->setDisplayName('Attaquer');
 
-        $html = (new SimulationFormView(new OptionCatalog()))->render(
+        $html = $this->view()->render(
             $action,
             [new SimulationField('trait', 'actor', 'cc', 'Acteur — cc')],
-            ['actor_trait' => ['cc' => 17], 'runs' => 250],
+            ['actor_trait' => ['cc' => 17], 'runs' => 60],
         );
 
         $this->assertStringContainsString('value="17"', $html);
-        $this->assertStringContainsString('value="250"', $html);
+        $this->assertStringContainsString('value="60"', $html);
+    }
+
+    public function testRunsAreCappedAtAHundred(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('melee');
+        $action->setDisplayName('Attaquer');
+
+        $html = $this->view()->render($action, [], ['runs' => 250]);
+
+        $this->assertStringContainsString('name="runs" value="100"', $html);
+        $this->assertStringContainsString('max="100"', $html);
     }
 }

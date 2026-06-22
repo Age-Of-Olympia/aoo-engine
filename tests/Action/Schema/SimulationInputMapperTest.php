@@ -70,7 +70,8 @@ class SimulationInputMapperTest extends TestCase
 
         $this->assertSame(1, $mapper->runs([]));
         $this->assertSame(1, $mapper->runs(['runs' => '0']));
-        $this->assertSame(5000, $mapper->runs(['runs' => '99999']));
-        $this->assertSame(250, $mapper->runs(['runs' => '250']));
+        $this->assertSame(100, $mapper->runs(['runs' => '99999']));
+        $this->assertSame(100, $mapper->runs(['runs' => '250']));
+        $this->assertSame(60, $mapper->runs(['runs' => '60']));
     }
 }

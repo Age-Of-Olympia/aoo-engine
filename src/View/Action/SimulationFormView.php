@@ -67,22 +67,23 @@ final class SimulationFormView
     }
 
     /**
-     * Environment toggles that exercise the preconditions: the Enfers plane (the
-     * global Plan gate) and an anti-Berserk window (the NoBerserk gate on compute
-     * conditions).
+     * The Environnement section: the shared distance plus the toggles that
+     * exercise the preconditions — the Enfers plane (the global Plan gate) and an
+     * anti-Berserk window (the NoBerserk gate on compute conditions).
      *
+     * @param string               $distance pre-rendered distance field
      * @param array<string, mixed> $posted
      */
-    private function environment(array $posted): string
+    private function environment(string $distance, array $posted): string
     {
         $enfers = !empty($posted['enfers']) ? ' checked' : '';
         $berserk = !empty($posted['actor_berserk']) ? ' checked' : '';
 
-        return '<div class="form-group"><label>Environnement</label>'
-            . '<div class="sim-env">'
+        return $this->sub('Environnement', '<div class="sim-env">'
+            . $distance
             . '<label class="sim-check"><input type="checkbox" name="enfers" value="1"' . $enfers . '> Aux Enfers</label>'
             . '<label class="sim-check"><input type="checkbox" name="actor_berserk" value="1"' . $berserk . '> Acteur berserk</label>'
-            . '</div></div>';
+            . '</div>');
     }
 
     /**
@@ -128,18 +129,20 @@ final class SimulationFormView
      */
     private function context(array $sharedFields, array $posted): string
     {
-        $shared = '';
+        $distance = '';
         foreach ($sharedFields as $field) {
-            $shared .= $this->fieldControl($field, $posted);
+            $distance .= $this->fieldControl($field, $posted);
         }
 
+        $runs = max(1, min(100, (int) ($posted['runs'] ?? 1)));
+
         return '<div class="sim-context">'
-            . $shared
-            . $this->environment($posted)
+            . $this->environment($distance, $posted)
+            . '<div class="sim-run">'
             . '<div class="form-group"><label>Tirages</label>'
-            . '<input class="form-control" type="number" min="1" max="5000" name="runs" value="' . $this->esc($posted['runs'] ?? 1) . '"></div>'
+            . '<input class="form-control" type="number" min="1" max="100" name="runs" value="' . $runs . '"></div>'
             . '<button class="btn btn-primary" type="submit">Simuler</button>'
-            . '</div>';
+            . '</div></div>';
     }
 
     /**
