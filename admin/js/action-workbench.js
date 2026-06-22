@@ -110,16 +110,13 @@ document.addEventListener('click', function (e) {
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeAll(null); } });
 })();
-/* Result modal: auto-open after a run, close to a floating re-open button, and
-   reroll (re-submit the sim form) without leaving the modal. */
+/* Result modal: auto-opens after a run, closes on backdrop/Escape, and reroll
+   (re-submit the sim form) re-runs without leaving the modal. */
 (function () {
     var modal = document.getElementById('sim-result-modal');
     if (!modal) { return; }
-    var reopen = document.getElementById('sim-reopen');
-    function close() { modal.classList.remove('is-open'); if (reopen) { reopen.hidden = false; } }
-    function open() { modal.classList.add('is-open'); if (reopen) { reopen.hidden = true; } }
+    function close() { modal.classList.remove('is-open'); }
     modal.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) { close(); } });
-    if (reopen) { reopen.addEventListener('click', open); }
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && modal.classList.contains('is-open')) { close(); }
     });

@@ -188,8 +188,7 @@ if ($action === null) {
             . '<button type="button" class="wb-modal-close" data-close aria-label="Fermer">&times;</button>'
             . '</div></div>'
             . '<div class="wb-modal-body wb-sim-result">' . $simResultHtml . '</div>'
-            . '</div></div>'
-            . '<button type="button" class="wb-sim-reopen" id="sim-reopen" hidden>Voir le résultat</button>';
+            . '</div></div>';
     }
 }
 $simHtml = ob_get_clean();
