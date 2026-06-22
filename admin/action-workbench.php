@@ -148,6 +148,7 @@ if ($action === null) {
     // Instructions inherited from the action's type (e.g. an attack's adrenaline),
     // shown read-only — they're configured on the type, not this action.
     echo $automaticView->render($typeInstructionResolver->resolve($action));
+    echo '<p class="wb-muted"><a href="/admin/action-type-defaults.php">Gérer les défauts par type d\'action →</a></p>';
 
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
