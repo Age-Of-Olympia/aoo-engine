@@ -29,6 +29,8 @@ final class SimulationInputMapper
             targetEffects: $this->effectRows($post, 'target'),
             actorPassives: $this->stringList($post['actor_passives'] ?? []),
             targetPassives: $this->stringList($post['target_passives'] ?? []),
+            plan: !empty($post['enfers']) ? 'enfers' : 'gaia',
+            actorBerserk: !empty($post['actor_berserk']),
         );
     }
 

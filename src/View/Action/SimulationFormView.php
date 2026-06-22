@@ -42,6 +42,7 @@ final class SimulationFormView
             . $this->sideGroup('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted)
             . '<div class="sim-run">'
             . $shared
+            . $this->environment($posted)
             . '<div class="form-group"><label>Tirages</label>'
             . '<input class="form-control" type="number" min="1" max="5000" name="runs" value="' . $this->esc($posted['runs'] ?? 1) . '"></div>'
             . '<button class="btn btn-primary" type="submit">Simuler</button>'
@@ -53,6 +54,24 @@ final class SimulationFormView
             . '<input type="hidden" name="id" value="' . $id . '">'
             . '<div class="card-header"><h3 class="card-title">État hypothétique</h3></div>'
             . '<div class="card-body">' . $body . '</div></form>';
+    }
+
+    /**
+     * Environment toggles that exercise the preconditions: the Enfers plane (the
+     * global Plan gate) and an anti-Berserk window (the NoBerserk gate on compute
+     * conditions).
+     *
+     * @param array<string, mixed> $posted
+     */
+    private function environment(array $posted): string
+    {
+        $enfers = !empty($posted['enfers']) ? ' checked' : '';
+        $berserk = !empty($posted['actor_berserk']) ? ' checked' : '';
+
+        return '<div class="form-group"><label>Environnement</label>'
+            . '<label class="sim-check"><input type="checkbox" name="enfers" value="1"' . $enfers . '> Aux Enfers</label>'
+            . '<label class="sim-check"><input type="checkbox" name="actor_berserk" value="1"' . $berserk . '> Acteur sous anti-Berserk</label>'
+            . '</div>';
     }
 
     /**

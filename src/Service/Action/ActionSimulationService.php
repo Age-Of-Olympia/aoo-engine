@@ -128,12 +128,19 @@ final class ActionSimulationService
     {
         $weapon = $isTarget ? $input->targetWeapon : $input->actorWeapon;
 
+        // antiBerserkTime in the future makes the actor's NoBerserk precondition
+        // fail; both fighters share the plan so the enfers gate reads it.
+        $data = ['name' => $isTarget ? 'Cible' : 'Acteur'];
+        if (!$isTarget && $input->actorBerserk) {
+            $data['antiBerserkTime'] = time() + ONE_DAY;
+        }
+
         return new SimulatedPlayer(
             $isTarget ? 2 : 1,
             $isTarget ? $input->targetCaracs : $input->actorCaracs,
             $isTarget ? $input->targetRemaining : $input->actorRemaining,
-            (object) ['x' => $x, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
-            ['name' => $isTarget ? 'Cible' : 'Acteur'],
+            (object) ['x' => $x, 'y' => 0, 'z' => 0, 'plan' => $input->plan],
+            $data,
             $this->emplacements($weapon),
             $isTarget ? $input->targetEffects : $input->actorEffects,
             $this->resolvePassives($isTarget ? $input->targetPassives : $input->actorPassives),

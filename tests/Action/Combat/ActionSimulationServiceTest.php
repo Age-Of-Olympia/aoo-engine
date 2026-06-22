@@ -78,6 +78,32 @@ class ActionSimulationServiceTest extends TestCase
         );
     }
 
+    /**
+     * @param array<int, ActionTypePrecondition>      $globalPreconditions
+     * @param array<int, ActionConditionPrecondition> $conditionPreconditions
+     */
+    private function simulationServiceWith(array $globalPreconditions = [], array $conditionPreconditions = []): ActionSimulationService
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturnCallback(function (string $class) use ($globalPreconditions, $conditionPreconditions): EntityRepository {
+            $rows = match ($class) {
+                ActionTypePrecondition::class => $globalPreconditions,
+                ActionConditionPrecondition::class => $conditionPreconditions,
+                default => [],
+            };
+            $repo = $this->createMock(EntityRepository::class);
+            $repo->method('findBy')->willReturn($rows);
+
+            return $repo;
+        });
+
+        return new ActionSimulationService(
+            typeInstructionResolver: new ActionTypeInstructionResolver($em),
+            preconditionResolver: new ActionTypePreconditionResolver($em),
+            conditionPreconditionResolver: new ConditionPreconditionResolver($em),
+        );
+    }
+
     /* --- the per-type defense formulas (kept; used by the real conditions) --- */
 
     public function testMeleeDefenseUsesMaxOfCcAndAgi(): void
@@ -120,6 +146,32 @@ class ActionSimulationServiceTest extends TestCase
         $condition->setExecutionOrder(0);
 
         return $condition;
+    }
+
+    public function testTheEnfersToggleBlocksTheAction(): void
+    {
+        $action = $this->meleeWith($this->condition('MeleeCompute', ['actorRollType' => 'cc', 'targetRollType' => 'cc']));
+        $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorWeapon: 'melee', plan: 'enfers');
+
+        $globalPlan = (new ActionTypePrecondition())->setTypeKey('')->setConditionType('Plan')
+            ->setParameters(['plan' => 'enfers'])->setBlocking(true)->setOrderIndex(0);
+
+        $results = $this->simulationServiceWith(globalPreconditions: [$globalPlan])->simulate($action, $input);
+
+        $this->assertTrue($results->isBlocked());
+    }
+
+    public function testTheBerserkToggleShortCircuitsACompute(): void
+    {
+        $action = $this->meleeWith($this->condition('MeleeCompute', ['actorRollType' => 'cc', 'targetRollType' => 'cc']));
+        $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorWeapon: 'melee', actorBerserk: true);
+
+        $noBerserk = (new ActionConditionPrecondition())->setParentConditionType('MeleeCompute')
+            ->setPreconditionType('NoBerserk')->setOrderIndex(0);
+
+        $results = $this->simulationServiceWith(conditionPreconditions: [$noBerserk])->simulate($action, $input);
+
+        $this->assertTrue($results->isBlocked());
     }
 
     public function testMeleeIsBlockedAtDistanceFourByRequiresDistance(): void

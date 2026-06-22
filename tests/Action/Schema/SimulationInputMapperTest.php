@@ -41,6 +41,16 @@ class SimulationInputMapperTest extends TestCase
         $this->assertSame('melee', $input->targetWeapon);
         $this->assertSame([], $input->actorEffects);
         $this->assertSame(['pa' => 6, 'pv' => 20, 'pm' => 15, 'mvt' => 6], $input->actorRemaining);
+        $this->assertSame('gaia', $input->plan);
+        $this->assertFalse($input->actorBerserk);
+    }
+
+    public function testMapsTheEnvironmentToggles(): void
+    {
+        $input = (new SimulationInputMapper())->fromPost(['enfers' => '1', 'actor_berserk' => '1']);
+
+        $this->assertSame('enfers', $input->plan);
+        $this->assertTrue($input->actorBerserk);
     }
 
     public function testRunsAreClampedToTheAllowedRange(): void

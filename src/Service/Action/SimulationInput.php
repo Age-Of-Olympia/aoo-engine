@@ -31,6 +31,10 @@ final class SimulationInput
         public readonly array $targetEffects = [],
         public readonly array $actorPassives = [],
         public readonly array $targetPassives = [],
+        // Environment toggles so the global / condition preconditions can be
+        // actually exercised in a simulation.
+        public readonly string $plan = 'gaia',
+        public readonly bool $actorBerserk = false,
     ) {
     }
 }
