@@ -4,6 +4,7 @@ namespace App\View\Action;
 
 use App\Entity\Action;
 use App\Service\Action\ActionSimulationService;
+use App\Service\Action\ActionTargeting;
 use App\Service\Action\SimulationFormBuilder;
 use App\Service\Action\SimulationInputMapper;
 use Throwable;
@@ -19,15 +20,18 @@ final class SimulationPanelView
     private ActionSimulationService $service;
     private SimulationFormBuilder $formBuilder;
     private SimulationInputMapper $mapper;
+    private ActionTargeting $targeting;
 
     public function __construct(
         ?ActionSimulationService $service = null,
         ?SimulationFormBuilder $formBuilder = null,
         ?SimulationInputMapper $mapper = null,
+        ?ActionTargeting $targeting = null,
     ) {
         $this->service = $service ?? new ActionSimulationService();
         $this->formBuilder = $formBuilder ?? new SimulationFormBuilder();
         $this->mapper = $mapper ?? new SimulationInputMapper();
+        $this->targeting = $targeting ?? new ActionTargeting();
     }
 
     /**
@@ -35,7 +39,12 @@ final class SimulationPanelView
      */
     public function form(Action $action, array $posted): string
     {
-        return (new SimulationFormView())->render($action, $this->formBuilder->fieldsFor($action), $posted);
+        return (new SimulationFormView())->render(
+            $action,
+            $this->formBuilder->fieldsFor($action),
+            $posted,
+            $this->targeting->scopeOf($action),
+        );
     }
 
     /**

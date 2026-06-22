@@ -149,6 +149,8 @@ final class ActionSimulationService
             $this->emplacements($weapon, $equipment),
             $isTarget ? $input->targetEffects : $input->actorEffects,
             $this->resolvePassives($isTarget ? $input->targetPassives : $input->actorPassives),
+            // Tile types are the actor's location; the target's tile is irrelevant.
+            $isTarget ? [] : $input->tileTypes,
         );
     }
 
@@ -184,8 +186,13 @@ final class ActionSimulationService
     {
         if ($weaponName === null || $weaponName === '') {
             // A real player is never bare-handed: unarmed means the "Poing" (fist),
-            // which the object-break path treats as unbreakable.
-            $weapon = new SimulatedItem('', 'Poing');
+            // a real melee item — load its real data so it carries subtype 'melee'
+            // (weapon-type conditions pass) while the object-break path treats it
+            // as unbreakable. Fall back to a bare melee item if the datas lack it.
+            $poing = $this->weaponCatalog()->dataFor('poing');
+            $weapon = $poing !== null
+                ? SimulatedItem::fromData($poing)
+                : new SimulatedItem('melee', 'Poing');
         } elseif ($this->weaponCatalog()->has($weaponName)) {
             // A real weapon: carry its data (spellMalus/subtype/…) so the
             // weapon-dependent conditions (AntiSpell, Dodge) read real values.

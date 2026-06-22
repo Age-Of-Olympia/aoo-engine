@@ -34,7 +34,25 @@ final class SimulationInputMapper
             actorBerserk: !empty($post['actor_berserk']),
             actorEquipment: $this->equipment($post['actor_equipment'] ?? []),
             targetEquipment: $this->equipment($post['target_equipment'] ?? []),
+            tileTypes: $this->checkedKeys($post['tile'] ?? []),
         );
+    }
+
+    /**
+     * The keys of the checked tile checkboxes (name="tile[<type>]" value="1").
+     *
+     * @return list<string>
+     */
+    private function checkedKeys(mixed $raw): array
+    {
+        $keys = [];
+        foreach ((array) $raw as $key => $value) {
+            if (!empty($value)) {
+                $keys[] = (string) $key;
+            }
+        }
+
+        return $keys;
     }
 
     /**

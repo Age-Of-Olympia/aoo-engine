@@ -22,6 +22,7 @@ class SimulatedPlayer extends Player
      * @param array<string, mixed> $data    name/malus/antiBerserkTime/rank/faction/energie overrides
      * @param array<string, int> $effects   effect name => value
      * @param list<\App\Entity\ActionPassive> $passives resolved passive configs
+     * @param list<string> $tileTypes map tile types the player stands on (e.g. 'routes')
      */
     public function __construct(
         int $id,
@@ -32,6 +33,7 @@ class SimulatedPlayer extends Player
         ?object $emplacements = null,
         array $effects = [],
         array $passives = [],
+        array $tileTypes = [],
     ) {
         // Deliberately NOT calling parent::__construct() — it news PlayerService($id) (DB).
         $this->id = $id;
@@ -61,11 +63,20 @@ class SimulatedPlayer extends Player
         ));
         $this->playerEffectService = new SimulatedEffectService($effects);
         $this->playerPassiveService = new SimulatedPassiveService($passives, $this);
+        $this->tileTypes = $tileTypes;
     }
+
+    /** @var list<string> map tile types the simulated player stands on */
+    private array $tileTypes = [];
 
     public function isSimulated(): bool
     {
         return true;
+    }
+
+    public function isOnTileType(string $type): bool
+    {
+        return in_array($type, $this->tileTypes, true);
     }
 
     /* --- reads overridden to use injected state instead of the DB --- */

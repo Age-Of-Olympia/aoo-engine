@@ -100,6 +100,12 @@ final class SimulationWeaponCatalog
      */
     private function mainHand(): array
     {
-        return array_filter($this->items, static fn (object $data): bool => ($data->emplacement ?? null) === 'main1');
+        // The bare-handed "Poing" is the implicit default (the empty weapon
+        // option), so it isn't offered again as an explicit pick.
+        return array_filter(
+            $this->items,
+            static fn (object $data, string $name): bool => ($data->emplacement ?? null) === 'main1' && $name !== 'poing',
+            ARRAY_FILTER_USE_BOTH
+        );
     }
 }

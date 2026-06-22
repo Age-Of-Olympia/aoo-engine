@@ -8,6 +8,7 @@ use App\Service\ActionPassiveService;
 use App\Service\PlayerActionsService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
+use App\Service\MapService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
 use App\Service\PlayerEffectService;
@@ -404,6 +405,19 @@ class Player implements ActorInterface {
         return $this->upgrades;
     }
 
+
+    /**
+     * True when this player's current tile is of the given map type (e.g.
+     * 'routes'). The engine's tile-reading instructions go through here so
+     * SimulatedPlayer can override it with injected state instead of the DB —
+     * see App\Action\OutcomeInstruction\TileTypeOutcomeInstruction.
+     */
+    public function isOnTileType(string $type): bool
+    {
+        $this->get_data(false);
+
+        return (bool) (new MapService())->getTileTypeAtCoord($type, (int) $this->data->coords_id)->n;
+    }
 
     public function getCoords(bool $refresh = true): object{
 

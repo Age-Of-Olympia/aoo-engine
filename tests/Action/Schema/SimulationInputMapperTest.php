@@ -64,6 +64,20 @@ class SimulationInputMapperTest extends TestCase
         $this->assertSame(['tete' => 'casque'], $input->targetEquipment);
     }
 
+    public function testMapsCheckedTileTypesAndDropsUnchecked(): void
+    {
+        $input = (new SimulationInputMapper())->fromPost([
+            'tile' => ['routes' => '1', 'eau' => '0', 'sable' => '1'],
+        ]);
+
+        $this->assertSame(['routes', 'sable'], $input->tileTypes);
+    }
+
+    public function testTileTypesDefaultToEmpty(): void
+    {
+        $this->assertSame([], (new SimulationInputMapper())->fromPost([])->tileTypes);
+    }
+
     public function testRunsAreClampedToTheAllowedRange(): void
     {
         $mapper = new SimulationInputMapper();

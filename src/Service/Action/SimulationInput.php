@@ -40,6 +40,9 @@ final class SimulationInput
         // same as the main-hand weapon.
         public readonly array $actorEquipment = [],
         public readonly array $targetEquipment = [],
+        // Map tile types the actor stands on (e.g. 'routes'), so tile-reading
+        // outcome instructions resolve against this instead of the DB.
+        public readonly array $tileTypes = [],
     ) {
     }
 }

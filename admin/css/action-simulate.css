@@ -31,6 +31,30 @@
     color: #2e6da4;
 }
 
+/* A self-only action keeps the Cible panel for a symmetric layout but disables
+   it. The fieldset uses display:contents so it disables every descendant control
+   natively without breaking the panel's subgrid (its rows stay direct children). */
+.sim-panel-fieldset {
+    display: contents;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+}
+
+.sim-panel--disabled .sim-sub {
+    opacity: 0.5;
+}
+
+.sim-panel-note {
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #b08968;
+}
+
 /* Sub-sections inside a panel (Caractéristiques / Équipement / Effets / Passifs). */
 .sim-sub {
     margin-top: 12px;

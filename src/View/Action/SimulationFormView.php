@@ -5,6 +5,7 @@ namespace App\View\Action;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\SimulationField;
 use App\Entity\Action;
+use App\Service\Action\ActionTargeting;
 use App\Service\Action\SimulationWeaponCatalog;
 
 /**
@@ -43,8 +44,11 @@ final class SimulationFormView
     /**
      * @param list<SimulationField> $fields
      * @param array<string, mixed> $posted
+     * @param ActionTargeting::SELF|ActionTargeting::TARGET|ActionTargeting::BOTH $scope
+     *        who the action targets — a self-only action disables the Cible panel.
+     *        The Acteur panel is always enabled (the actor performs the action).
      */
-    public function render(Action $action, array $fields, array $posted): string
+    public function render(Action $action, array $fields, array $posted, string $scope = ActionTargeting::BOTH): string
     {
         $id = (int) $action->getId();
 
@@ -53,9 +57,13 @@ final class SimulationFormView
             $bySide[$field->side][] = $field;
         }
 
+        // A self-only action has no second fighter: keep the Cible panel for a
+        // symmetric layout but disable it so no target state can be entered.
+        $targetDisabled = $scope === ActionTargeting::SELF;
+
         $body = '<div class="sim-sides">'
             . $this->sidePanel('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)
-            . $this->sidePanel('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted)
+            . $this->sidePanel('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted, $targetDisabled)
             . '</div>'
             . $this->context($bySide[SimulationField::SIDE_SHARED], $posted);
 
@@ -69,8 +77,11 @@ final class SimulationFormView
     /**
      * The Environnement section: the distance (always shown — it positions the
      * two fighters, so it matters to every action) plus the toggles that exercise
-     * the preconditions — the Enfers plane (the global Plan gate) and an
-     * anti-Berserk window (the NoBerserk gate on compute conditions).
+     * the preconditions and tile-dependent effects — the Enfers plane (the global
+     * Plan gate), an anti-Berserk window (the NoBerserk gate on compute
+     * conditions), and the actor's tile (e.g. a road, read by the run bonus).
+     * The tile toggle is shown for every action: it's a world property, and an
+     * action that doesn't read it simply ignores it.
      *
      * @param string               $extra any non-distance shared fields (rare)
      * @param array<string, mixed> $posted
@@ -80,10 +91,12 @@ final class SimulationFormView
         $distance = (int) ($posted['distance'] ?? 1);
         $enfers = !empty($posted['enfers']) ? ' checked' : '';
         $berserk = !empty($posted['actor_berserk']) ? ' checked' : '';
+        $route = !empty($posted['tile']['routes']) ? ' checked' : '';
 
         return $this->sub('Environnement', '<div class="sim-env">'
             . $this->group('Distance (cases)', '<input class="form-control" type="number" min="0" name="distance" value="' . $distance . '">')
             . $extra
+            . '<label class="sim-check"><input type="checkbox" name="tile[routes]" value="1"' . $route . '> Sur une route</label>'
             . '<label class="sim-check"><input type="checkbox" name="enfers" value="1"' . $enfers . '> Aux Enfers</label>'
             . '<label class="sim-check"><input type="checkbox" name="actor_berserk" value="1"' . $berserk . '> Acteur berserk</label>'
             . '</div>');
@@ -91,12 +104,15 @@ final class SimulationFormView
 
     /**
      * One fighter's panel: caracs, then equipment (weapon + every slot), effects
-     * and passives — each in its own labelled sub-section.
+     * and passives — each in its own labelled sub-section. When $disabled, the
+     * sub-sections are wrapped in an inert, display:contents <div> with a note —
+     * non-interactive without breaking the panel's subgrid. (A <fieldset> can't
+     * be used: Chromium ignores display:contents on it, collapsing the subgrid.)
      *
      * @param list<SimulationField> $fields
      * @param array<string, mixed>  $posted
      */
-    private function sidePanel(string $title, string $side, array $fields, array $posted): string
+    private function sidePanel(string $title, string $side, array $fields, array $posted, bool $disabled = false): string
     {
         $caracs = '';
         foreach ($fields as $field) {
@@ -108,12 +124,19 @@ final class SimulationFormView
 
         $limit = defined('ITEM_LIMIT') ? ITEM_LIMIT : 3;
 
-        return '<section class="sim-panel"><div class="sim-panel-h">' . $this->esc($title) . '</div>'
-            . $this->sub('Caractéristiques', '<div class="sim-grid">' . $caracs . '</div>')
+        $head = '<div class="sim-panel-h">' . $this->esc($title)
+            . ($disabled ? ' <span class="sim-panel-note">action sur soi — pas de cible</span>' : '') . '</div>';
+
+        $sections = $this->sub('Caractéristiques', '<div class="sim-grid">' . $caracs . '</div>')
             . $this->sub('Équipement', $this->equipment($side, $posted), 'max ' . $limit . ' + 1 bague, 1 munition, 1 trophée')
             . $this->sub('Effets', $this->effects($side, $posted))
-            . $this->sub('Passifs', $this->passives($side . '_passives', $posted))
-            . '</section>';
+            . $this->sub('Passifs', $this->passives($side . '_passives', $posted));
+
+        if ($disabled) {
+            $sections = '<div class="sim-panel-fieldset" inert>' . $sections . '</div>';
+        }
+
+        return '<section class="sim-panel' . ($disabled ? ' sim-panel--disabled' : '') . '">' . $head . $sections . '</section>';
     }
 
     private function sub(string $title, string $content, string $hint = ''): string
@@ -251,12 +274,15 @@ final class SimulationFormView
 
     /**
      * Real weapons grouped by subtype (the subtype as the optgroup label, so the
-     * type still guides the choice) — value is the weapon name.
+     * type still guides the choice) — value is the weapon name. The default
+     * (empty value) is the bare-handed "Poing": a real player is never truly
+     * empty-handed, so the engine equips the Poing fist when main1 is unset
+     * (see ActionSimulationService::emplacements / Player's fist fallback).
      */
     private function weaponSelect(string $name, string $selected): string
     {
         $html = '<select class="form-control" name="' . $this->esc($name) . '">'
-            . '<option value=""' . ($selected === '' ? ' selected' : '') . '>— (mains nues)</option>';
+            . '<option value=""' . ($selected === '' ? ' selected' : '') . '>Poing (mains nues)</option>';
         foreach ($this->weapons->groupedBySubtype() as $subtype => $weapons) {
             $html .= '<optgroup label="' . $this->esc($subtype) . '">';
             foreach ($weapons as $value => $label) {

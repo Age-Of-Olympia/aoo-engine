@@ -29,6 +29,19 @@ class SimulationWeaponCatalogTest extends TestCase
         );
     }
 
+    public function testExcludesPoingFromThePickerSinceItIsTheImplicitDefault(): void
+    {
+        $items = $this->items();
+        $items['poing'] = (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Poing'];
+        $catalog = new SimulationWeaponCatalog($items);
+
+        // Not offered as an explicit melee pick (the empty option already is it)...
+        $this->assertSame(['gladius' => 'Gladius'], $catalog->groupedBySubtype()['melee']);
+        // ...but still available so the bare-handed default can load its real data.
+        $this->assertTrue($catalog->has('poing'));
+        $this->assertSame('melee', $catalog->dataFor('poing')->subtype);
+    }
+
     public function testListsEveryNonMainHandSlotPopulatedOrEmpty(): void
     {
         $slots = (new SimulationWeaponCatalog($this->items()))->equipmentSlots();

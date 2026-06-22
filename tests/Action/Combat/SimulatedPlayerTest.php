@@ -36,6 +36,29 @@ class SimulatedPlayerTest extends TestCase
         $this->assertSame(7, $player->caracs->f);   // fixedF overrides
     }
 
+    public function testIsOnTileTypeReadsInjectedTilesNotTheDb(): void
+    {
+        $player = new SimulatedPlayer(
+            1,
+            ['cc' => 12],
+            ['mvt' => 6],
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'],
+            [],
+            null,
+            [],
+            [],
+            ['routes'],
+        );
+
+        $this->assertTrue($player->isOnTileType('routes'));
+        $this->assertFalse($player->isOnTileType('eau'));
+    }
+
+    public function testIsOnTileTypeDefaultsToFalseWhenNoTilesInjected(): void
+    {
+        $this->assertFalse($this->player()->isOnTileType('routes'));
+    }
+
     public function testApplyItemCaracsIsTheSharedFoldingRule(): void
     {
         $caracs = (object) ['cc' => 10, 'ct' => 4];

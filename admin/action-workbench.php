@@ -11,6 +11,7 @@ use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionConditionEditService;
 use App\Service\Action\ActionCreateService;
 use App\Service\Action\ActionOutcomeEditService;
+use App\Service\Action\ActionTargeting;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\RpgAwesomeIcons;
 use App\Service\CsrfProtectionService;
@@ -99,6 +100,8 @@ if ($action === null) {
 
     echo '<div class="wb-meta">'
         . '<span class="badge badge-info">' . e(action_type_label($action)) . '</span>'
+        . '<span class="badge badge-secondary" title="Cible déterminée par le type d\'action et les outcomes « sur soi »">'
+            . e((new ActionTargeting())->label($action)) . '</span>'
         . '<span class="wb-chip">niv. ' . e($action->getLevel()) . '</span>'
         . ($action->getCategory() ? '<span class="wb-chip">' . e($action->getCategory()) . '</span>' : '')
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'

@@ -8,7 +8,6 @@ use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
-use App\Service\MapService;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
@@ -26,8 +25,6 @@ class TileTypeOutcomeInstruction extends OutcomeInstruction implements HasParame
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
-        $mapService = new MapService();
-
         $outcomeSuccessMessages = array();
 
         $params =$this->getParameters();
@@ -37,9 +34,7 @@ class TileTypeOutcomeInstruction extends OutcomeInstruction implements HasParame
         $carac = $params['carac'] ?? "mvt";
         $value = $params['value'] ?? 1;
 
-        $row = $mapService->getTileTypeAtCoord($tileType, $actor->data->coords_id);
-
-        if($row->n){
+        if($actor->isOnTileType($tileType)){
             $bonus = array($carac=>$value);
             $actor->putBonus($bonus);
             switch ($carac) {
