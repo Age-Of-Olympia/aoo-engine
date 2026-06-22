@@ -62,6 +62,14 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         }
 
         $stackable = $params['stackable'] ?? false;
+
+        // The effect name and value come from action parameters; escape them
+        // before they go into the outcome HTML (the surrounding <span> markup is
+        // ours and stays raw). Defense-in-depth: a config bundle or the raw param
+        // editor could otherwise smuggle markup into every player's combat log.
+        $statusLabel = htmlspecialchars((string) $status, ENT_QUOTES, 'UTF-8');
+        $valueLabel = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+
         $outcomeSuccessMessages = array();
         switch ($player) {
             case 'actor':
@@ -72,20 +80,20 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
                     }
                 } else {
                     $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage.' à ' . $actor->data->name;
+                    $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $actor->data->name;
                 }
                 break;
             case 'target':
                 $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
                 break;
             default:
                 $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $actor);
-                $outcomeSuccessMessages[0] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+                $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
 
             if ($target->data->name !== $actor->data->name) {
                 $this->applyEffect($params[$status], $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[1] = 'L\'effet '.$status.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $value .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                $outcomeSuccessMessages[1] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
             }
             break;
         }

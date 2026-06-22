@@ -48,4 +48,31 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertStringContainsString('adrenaline', $message);
         $this->assertStringContainsString('Actor', $message);
     }
+
+    public function testEscapesTheEffectNameBeforeItReachesTheOutcomeHtml(): void
+    {
+        $payload = '<img src=x onerror=alert(1)>';
+        $instruction = new ApplyStatusOutcomeInstruction();
+        $instruction->setParameters([
+            $payload => true,
+            'player' => 'actor',
+            'duration' => 1,
+            'value' => 2,
+        ]);
+
+        $actor = $this->createMock(Player::class);
+        $actor->data = (object) ['name' => 'Actor'];
+        $actor->method('add_effect');
+
+        $target = $this->createMock(Player::class);
+        $target->data = (object) ['name' => 'Target'];
+
+        // An unknown effect name is not a key of EFFECTS_RA_FONT, which raises an
+        // expected "undefined array key" warning (orthogonal to the escaping); the
+        // point is that the name itself must not reach the HTML unescaped.
+        $message = @$instruction->execute($actor, $target, new ConditionObject())->getOutcomeSuccessMessages()[0];
+
+        $this->assertStringNotContainsString('<img', $message);
+        $this->assertStringContainsString('&lt;img', $message);
+    }
 }
