@@ -11,6 +11,7 @@ use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionConditionEditService;
 use App\Service\Action\ActionCreateService;
 use App\Service\Action\ActionOutcomeEditService;
+use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
 use App\View\Action\AutomaticOutcomesView;
@@ -29,6 +30,7 @@ $outcomeEditService = new ActionOutcomeEditService();
 $instructionTypes = $outcomeEditService->availableInstructionTypes();
 $outcomeEditor = new OutcomeEditorView();
 $automaticView = new AutomaticOutcomesView();
+$typeInstructionResolver = new ActionTypeInstructionResolver();
 $id = (int) ($_GET['id'] ?? ($_POST['id'] ?? 0));
 $action = $id ? $catalogService->getActionById($id) : ($actions[0] ?? null);
 
@@ -143,14 +145,9 @@ if ($action === null) {
     }
     echo '</div>';
 
-    // Automatic outcome instructions are added in code (e.g. AttackAction's
-    // adrenaline), not the DB; show them read-only so the editor isn't misleading.
-    // Enumerate them on a throwaway instance so the action the simulation runs on
-    // isn't mutated (its own init() would then apply them twice).
-    $previewActionClass = get_class($action);
-    $previewAction = new $previewActionClass();
-    $previewAction->initAutomaticOutcomeInstructions();
-    echo $automaticView->render($previewAction->getAutomaticOutcomeInstructions());
+    // Instructions inherited from the action's type (e.g. an attack's adrenaline),
+    // shown read-only — they're configured on the type, not this action.
+    echo $automaticView->render($typeInstructionResolver->resolve($action));
 
     echo $renderer->traitDatalist();
     echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';

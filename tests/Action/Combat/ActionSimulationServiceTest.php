@@ -193,6 +193,37 @@ class ActionSimulationServiceTest extends TestCase
         $this->assertGreaterThan(0, $damage);
     }
 
+    public function testTypeLevelAndDynamicAutomaticInstructionsBothRun(): void
+    {
+        // A type-level LifeLoss (inherited) AND a dynamically-added automatic
+        // LifeLoss (the shape a compute condition's miss-malus uses) must BOTH
+        // apply — the executor runs both sources, it doesn't pick one. This guards
+        // against the earlier gate that skipped the dynamic ones for attacks.
+        $config = (new ActionTypeInstruction())
+            ->setTypeKey('buff')
+            ->setInstructionType('lifeloss')
+            ->setOrderIndex(0)
+            ->setParameters(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi']);
+
+        $action = new BuffAction();
+        $action->setName('drain');
+        $action->setDisplayName('Drain');
+        $action->addAutomaticOutcomeInstruction(
+            $this->lifeLoss(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi'])
+        );
+        $input = new SimulationInput(actorCaracs: ['cc' => 20], targetCaracs: ['agi' => 2]);
+
+        $results = ($this->simulationService([$config]))->simulate($action, $input);
+
+        $damaging = 0;
+        foreach ($results->getOutcomesResultsArray() as $o) {
+            if ((int) $o->getTotalDamages() > 0) {
+                $damaging++;
+            }
+        }
+        $this->assertGreaterThanOrEqual(2, $damaging);
+    }
+
     public function testAutomaticInstructionsGetterIsSafeOnAHydratedEntity(): void
     {
         // Doctrine builds entities without calling the constructor, leaving the

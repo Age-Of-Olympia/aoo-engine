@@ -119,16 +119,16 @@ class ActionExecutorService
             }
         }
 
-        // Type-level instructions (data-driven, inherited via the class hierarchy)
-        // take precedence; fall back to the legacy code-defined automatics until
-        // they're migrated to the DB (step 4) and the code path is removed
-        // (step 5). The gate keeps exactly one source running, so nothing is
-        // applied twice. While the table is empty this is the legacy behaviour.
-        $typeInstructions = $this->typeInstructionResolver->resolve($this->action);
-        $automaticInstructions = $typeInstructions !== []
-            ? $typeInstructions
-            : $this->action->getAutomaticOutcomeInstructions()->toArray();
-        foreach ($automaticInstructions as $outcomeInstruction) {
+        // Inherited type-level instructions (data-driven defaults for the action
+        // type, e.g. an attack's adrenaline).
+        foreach ($this->typeInstructionResolver->resolve($this->action) as $outcomeInstruction) {
+            $this->applyActionOutcomeInstruction($outcomeInstruction);
+        }
+
+        // Instructions added dynamically during this execution — notably the
+        // MalusOutcomeInstruction a compute condition adds on a miss. These are
+        // distinct from the type-level defaults, so both must run.
+        foreach ($this->action->getAutomaticOutcomeInstructions() as $outcomeInstruction) {
             $this->applyActionOutcomeInstruction($outcomeInstruction);
         }
     }

@@ -21,7 +21,7 @@ class AutomaticOutcomesViewTest extends TestCase
         $this->assertStringContainsString('adrenaline', $html);
         $this->assertStringContainsString('true', $html);
         $this->assertStringContainsString('172800', $html);
-        $this->assertStringContainsString('auto', $html);
+        $this->assertStringContainsString('hérité du type', $html);
     }
 
     public function testRendersNothingWhenThereAreNoAutomaticInstructions(): void

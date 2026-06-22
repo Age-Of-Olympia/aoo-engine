@@ -6,10 +6,11 @@ use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Entity\OutcomeInstruction;
 
 /**
- * Read-only view of an action's automatic outcome instructions — the ones added
- * in code (e.g. AttackAction's adrenaline) rather than configured in the DB.
- * They can't be edited here; this just makes the full behaviour visible so the
- * Configurer isn't misleadingly incomplete. Returns '' when there are none.
+ * Read-only view of the outcome instructions an action inherits from its TYPE
+ * (e.g. an attack's adrenaline), resolved via ActionTypeInstructionResolver.
+ * They're configured on the type, not this action, so they're shown read-only
+ * here; the type-defaults editor is where they're changed. Returns '' when
+ * there are none.
  */
 final class AutomaticOutcomesView
 {
@@ -29,7 +30,7 @@ final class AutomaticOutcomesView
             }
             $blocks .= '<div class="wb-block wb-block--auto">'
                 . '<div class="wb-block-head">' . $this->esc($type)
-                . ' <span class="badge wb-auto-badge">auto · code</span></div>'
+                . ' <span class="badge wb-auto-badge">hérité du type</span></div>'
                 . '<div class="wb-block-body">' . ($rows !== '' ? $rows : '<span class="wb-muted">—</span>') . '</div>'
                 . '</div>';
         }
@@ -38,7 +39,7 @@ final class AutomaticOutcomesView
             return '';
         }
 
-        return '<div class="wb-section-title">Automatiques <span class="wb-muted">(définies dans le code, lecture seule)</span></div>'
+        return '<div class="wb-section-title">Héritées du type <span class="wb-muted">(définies sur le type d\'action, lecture seule)</span></div>'
             . '<div class="wb-grid">' . $blocks . '</div>';
     }
 
