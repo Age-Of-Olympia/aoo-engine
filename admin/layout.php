@@ -51,13 +51,15 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('local_maps.php', 'Local Maps', '/admin/local_maps.php') . "\n                    " .
         $navLink('screenshots.php', 'Screenshots', '/admin/screenshots.php');
 
-    /* Action admin pages: the workbench, the per-type defaults editor and the list. */
-    $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php'];
+    /* Action admin pages: the workbench, the per-type defaults editor, the list
+     * and the passive editor. */
+    $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php'];
     $actionsActive = in_array($currentPage, $actionPages, true);
     $actionsGroupClass = $actionsActive ? ' nav-group-open' : '';
     $actionsSubLinks =
         $navLink('action-workbench.php', 'Workbench', '/admin/action-workbench.php') . "\n                    " .
         $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
+        $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                    " .
         $navLink('actions.php', 'List', '/admin/actions.php');
 
     $navigation =
@@ -81,7 +83,6 @@ function admin_layout($title, $content, array $assets = []) {
         $actionsSubLinks . "\n                " .
         "    </div>\n                " .
         "</div>\n                " .
-        $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                " .
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 

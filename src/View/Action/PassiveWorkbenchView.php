@@ -42,6 +42,7 @@ final class PassiveWorkbenchView
         return '<div class="wb">'
             . '<div class="wb-col"><div class="wb-col-head">Passifs <small>' . count($passives) . '</small></div>'
             . '<div class="wb-col-body">'
+            . $this->createForm($csrfTokenField)
             . '<input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">'
             . '<div class="wb-list" id="wb-list">' . $list . '</div></div></div>'
             . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $form . '</div></div>'
@@ -72,7 +73,23 @@ final class PassiveWorkbenchView
             . $this->textarea('text', 'Texte', (string) $passive->getText())
             . $this->textarea('conditions', 'Conditions (JSON)', $conditionsJson)
             . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>'
+            . '</form>'
+            . '<form method="post" action="/admin/passive-delete.php" class="wb-delete-form"'
+            . ' onsubmit="return confirm(\'Supprimer définitivement ce passif ?\');">'
+            . $csrfTokenField
+            . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
+            . '<button type="submit" class="btn btn-danger btn-sm">Supprimer le passif</button>'
             . '</form>';
+    }
+
+    private function createForm(string $csrfTokenField): string
+    {
+        return '<details class="wb-create"><summary class="btn btn-sm btn-success">+ Nouveau passif</summary>'
+            . '<form method="post" action="/admin/passive-create.php" class="wb-create-form">'
+            . $csrfTokenField
+            . '<input class="form-control" type="text" name="name" placeholder="nom (clé)" required autocomplete="off">'
+            . '<button type="submit" class="btn btn-sm btn-success">Créer</button>'
+            . '</form></details>';
     }
 
     private function input(string $name, string $label, string $value, string $type = 'text', ?string $step = null): string
