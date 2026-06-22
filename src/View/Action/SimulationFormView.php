@@ -58,14 +58,16 @@ final class SimulationFormView
         }
 
         // A self-only action has no second fighter: keep the Cible panel for a
-        // symmetric layout but disable it so no target state can be entered.
+        // symmetric layout but disable it so no target state can be entered, and
+        // default the distance to 0 (the fighters share a tile) — one less click.
         $targetDisabled = $scope === ActionTargeting::SELF;
+        $defaultDistance = $scope === ActionTargeting::SELF ? 0 : 1;
 
         $body = '<div class="sim-sides">'
             . $this->sidePanel('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)
             . $this->sidePanel('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted, $targetDisabled)
             . '</div>'
-            . $this->context($bySide[SimulationField::SIDE_SHARED], $posted);
+            . $this->context($bySide[SimulationField::SIDE_SHARED], $posted, $defaultDistance);
 
         return '<h1>Simuler : ' . $this->esc($action->getDisplayName()) . '</h1>'
             . '<p class="text-muted">Simulation via le moteur réel : conditions, jets, dégâts, messages et logs sont ceux du jeu.</p>'
@@ -85,10 +87,12 @@ final class SimulationFormView
      *
      * @param string               $extra any non-distance shared fields (rare)
      * @param array<string, mixed> $posted
+     * @param int                  $defaultDistance distance when none was posted
+     *        (0 for a self action — the fighters share a tile)
      */
-    private function environment(string $extra, array $posted): string
+    private function environment(string $extra, array $posted, int $defaultDistance = 1): string
     {
-        $distance = (int) ($posted['distance'] ?? 1);
+        $distance = (int) ($posted['distance'] ?? $defaultDistance);
         $enfers = !empty($posted['enfers']) ? ' checked' : '';
         $berserk = !empty($posted['actor_berserk']) ? ' checked' : '';
         $route = !empty($posted['tile']['routes']) ? ' checked' : '';
@@ -153,7 +157,7 @@ final class SimulationFormView
      * @param list<SimulationField> $sharedFields
      * @param array<string, mixed>  $posted
      */
-    private function context(array $sharedFields, array $posted): string
+    private function context(array $sharedFields, array $posted, int $defaultDistance = 1): string
     {
         // Distance is rendered unconditionally by environment(); drop any
         // duplicate a condition declared, keep the (rare) other shared fields.
@@ -167,7 +171,7 @@ final class SimulationFormView
         $runs = max(1, min(100, (int) ($posted['runs'] ?? 1)));
 
         return '<div class="sim-context">'
-            . $this->environment($extra, $posted)
+            . $this->environment($extra, $posted, $defaultDistance)
             . '<div class="sim-run">'
             . '<div class="form-group"><label>Tirages</label>'
             . '<input class="form-control" type="number" min="1" max="100" name="runs" value="' . $runs . '"></div>'

@@ -5,6 +5,7 @@ namespace Tests\Action\View;
 use App\Action\MeleeAction;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\SimulationField;
+use App\Service\Action\ActionTargeting;
 use App\Service\Action\SimulationWeaponCatalog;
 use App\View\Action\SimulationFormView;
 use PHPUnit\Framework\Attributes\Group;
@@ -72,6 +73,30 @@ class SimulationFormViewTest extends TestCase
 
         $this->assertStringContainsString('name="distance"', $html);
         $this->assertStringContainsString('Environnement', $html);
+    }
+
+    public function testSelfActionDefaultsDistanceToZeroAndDisablesTheTargetPanel(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('soin');
+        $action->setDisplayName('Soin');
+
+        $html = $this->view()->render($action, [], [], ActionTargeting::SELF);
+
+        $this->assertStringContainsString('name="distance" value="0"', $html);
+        $this->assertStringContainsString('sim-panel--disabled', $html);
+    }
+
+    public function testTargetActionDefaultsDistanceToOne(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('melee');
+        $action->setDisplayName('Attaquer');
+
+        $html = $this->view()->render($action, [], [], ActionTargeting::TARGET);
+
+        $this->assertStringContainsString('name="distance" value="1"', $html);
+        $this->assertStringNotContainsString('sim-panel--disabled', $html);
     }
 
     public function testRunsAreCappedAtAHundred(): void
