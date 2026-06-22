@@ -22,13 +22,16 @@ final class ActionSimulationService
 {
     private ?ActionPassiveService $passiveService;
     private ?ActionTypeInstructionResolver $typeInstructionResolver;
+    private ?ActionTypePreconditionResolver $preconditionResolver;
 
     public function __construct(
         ?ActionPassiveService $passiveService = null,
         ?ActionTypeInstructionResolver $typeInstructionResolver = null,
+        ?ActionTypePreconditionResolver $preconditionResolver = null,
     ) {
         $this->passiveService = $passiveService;
         $this->typeInstructionResolver = $typeInstructionResolver;
+        $this->preconditionResolver = $preconditionResolver;
     }
 
     /**
@@ -52,6 +55,7 @@ final class ActionSimulationService
                     $target,
                     simulationMode: true,
                     typeInstructionResolver: $this->typeInstructionResolver,
+                    preconditionResolver: $this->preconditionResolver,
                 ))->executeAction()
             );
         } finally {
