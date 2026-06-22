@@ -135,7 +135,10 @@ final class ActionSimulationService
 
         // antiBerserkTime in the future makes the actor's NoBerserk precondition
         // fail; both fighters share the plan so the enfers gate reads it.
-        $data = ['name' => $isTarget ? 'Cible' : 'Acteur'];
+        $data = [
+            'name' => $isTarget ? 'Cible' : 'Acteur',
+            'rank' => $isTarget ? $input->targetRank : $input->actorRank,
+        ];
         if (!$isTarget && $input->actorBerserk) {
             $data['antiBerserkTime'] = time() + ONE_DAY;
         }

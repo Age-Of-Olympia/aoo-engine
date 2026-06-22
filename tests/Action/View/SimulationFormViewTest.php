@@ -44,6 +44,9 @@ class SimulationFormViewTest extends TestCase
         $this->assertStringContainsString('name="actor_weapon"', $html);
         $this->assertStringContainsString('name="actor_equipment[tete]"', $html);
         $this->assertStringContainsString('addEffectRow', $html);
+        // Rank picker for each fighter (drives the XP reward).
+        $this->assertStringContainsString('name="actor_rank"', $html);
+        $this->assertStringContainsString('name="target_rank"', $html);
     }
 
     public function testRepopulatesSubmittedValues(): void

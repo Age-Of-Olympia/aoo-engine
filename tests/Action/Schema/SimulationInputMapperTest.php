@@ -78,6 +78,22 @@ class SimulationInputMapperTest extends TestCase
         $this->assertSame([], (new SimulationInputMapper())->fromPost([])->tileTypes);
     }
 
+    public function testMapsPerSideRankFloorIngAtOne(): void
+    {
+        $input = (new SimulationInputMapper())->fromPost(['actor_rank' => '5', 'target_rank' => '0']);
+
+        $this->assertSame(5, $input->actorRank);
+        $this->assertSame(1, $input->targetRank); // floored to 1
+    }
+
+    public function testRankDefaultsToOne(): void
+    {
+        $input = (new SimulationInputMapper())->fromPost([]);
+
+        $this->assertSame(1, $input->actorRank);
+        $this->assertSame(1, $input->targetRank);
+    }
+
     public function testRunsAreClampedToTheAllowedRange(): void
     {
         $mapper = new SimulationInputMapper();

@@ -118,7 +118,10 @@ final class SimulationFormView
      */
     private function sidePanel(string $title, string $side, array $fields, array $posted, bool $disabled = false): string
     {
-        $caracs = '';
+        // Rank is always shown: it shifts the XP reward (actor rank − target rank),
+        // so the user can see its influence on any action that grants XP.
+        $rank = (int) ($posted[$side . '_rank'] ?? 1);
+        $caracs = $this->group('Rang', '<input class="form-control" type="number" min="1" name="' . $side . '_rank" value="' . $rank . '">');
         foreach ($fields as $field) {
             if ($field->kind === SimulationField::KIND_WEAPON) {
                 continue; // the weapon is rendered inside the equipment block

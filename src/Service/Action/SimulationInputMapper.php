@@ -35,6 +35,8 @@ final class SimulationInputMapper
             actorEquipment: $this->equipment($post['actor_equipment'] ?? []),
             targetEquipment: $this->equipment($post['target_equipment'] ?? []),
             tileTypes: $this->checkedKeys($post['tile'] ?? []),
+            actorRank: max(1, (int) ($post['actor_rank'] ?? 1)),
+            targetRank: max(1, (int) ($post['target_rank'] ?? 1)),
         );
     }
 

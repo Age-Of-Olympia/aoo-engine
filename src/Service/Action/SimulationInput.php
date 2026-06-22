@@ -43,6 +43,9 @@ final class SimulationInput
         // Map tile types the actor stands on (e.g. 'routes'), so tile-reading
         // outcome instructions resolve against this instead of the DB.
         public readonly array $tileTypes = [],
+        // Player rank per side: the XP reward shifts by (actor rank − target rank).
+        public readonly int $actorRank = 1,
+        public readonly int $targetRank = 1,
     ) {
     }
 }
