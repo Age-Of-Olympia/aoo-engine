@@ -24,6 +24,12 @@ try {
         throw new InvalidArgumentException('Aucun bundle à appliquer. Importez d\'abord un fichier.');
     }
 
+    // Confirm exactly what was previewed: if the session bundle changed since
+    // (other tab, re-upload), the hash won't match — make the admin re-preview.
+    if (!hash_equals(hash('sha256', $json), (string) ($_POST['bundle_hash'] ?? ''))) {
+        throw new InvalidArgumentException('Le bundle a changé depuis la prévisualisation. Reprévisualisez avant d\'appliquer.');
+    }
+
     // Re-parse + re-validate from the stored JSON: import() classifies every
     // object again and applies the batch transactionally (all-or-nothing).
     $parsed = BundleEnvelope::parse($json);

@@ -20,7 +20,7 @@ class ImportPreviewViewTest extends TestCase
         $report->addUpdated('courir');
         $report->warn('prier', 'Race inconnue ignorée : « Atlante ».');
 
-        $html = (new ImportPreviewView())->render($report, 'bundle.json', self::TOKEN);
+        $html = (new ImportPreviewView())->render($report, 'bundle.json', self::TOKEN, 'abc123');
 
         $this->assertStringContainsString('bundle.json', $html);
         $this->assertStringContainsString('attaquer', $html);
@@ -28,6 +28,7 @@ class ImportPreviewViewTest extends TestCase
         $this->assertStringContainsString('Atlante', $html);
         $this->assertStringContainsString('action="/admin/action-import-commit.php"', $html);
         $this->assertStringContainsString('Appliquer l\'import', $html);
+        $this->assertStringContainsString('name="bundle_hash" value="abc123"', $html);
         $this->assertStringContainsString(self::TOKEN, $html);
     }
 

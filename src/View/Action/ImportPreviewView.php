@@ -12,7 +12,7 @@ use App\Service\ImportExport\ImportReport;
  */
 final class ImportPreviewView
 {
-    public function render(ImportReport $report, string $filename, string $csrfTokenField): string
+    public function render(ImportReport $report, string $filename, string $csrfTokenField, string $bundleHash = ''): string
     {
         $html = '<h1>Prévisualisation de l\'import</h1>';
         $html .= '<p class="wb-muted">Fichier : <code>' . $this->esc($filename) . '</code></p>';
@@ -30,8 +30,11 @@ final class ImportPreviewView
             return $html;
         }
 
+        // Bind the confirm to exactly the previewed bundle: commit re-hashes the
+        // session JSON and refuses if it changed (other tab / re-upload).
         $html .= '<form method="post" action="/admin/action-import-commit.php" class="wb-form">'
             . $csrfTokenField
+            . '<input type="hidden" name="bundle_hash" value="' . $this->esc($bundleHash) . '">'
             . '<div class="wb-form-actions">'
             . '<button type="submit" class="btn btn-success">Appliquer l\'import</button>'
             . '<a class="btn btn-secondary" href="/admin/action-import.php">Annuler</a>'

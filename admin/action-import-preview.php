@@ -29,6 +29,7 @@ try {
 
 $csrf = new CsrfProtectionService();
 $filename = (string) ($_SESSION['action_import_filename'] ?? 'bundle.json');
-$body = (new ImportPreviewView())->render($report, $filename, $csrf->renderTokenField());
+$bundleHash = hash('sha256', $json);
+$body = (new ImportPreviewView())->render($report, $filename, $csrf->renderTokenField(), $bundleHash);
 
 echo admin_layout('Prévisualisation de l\'import', renderFlashMessage() . $body);
