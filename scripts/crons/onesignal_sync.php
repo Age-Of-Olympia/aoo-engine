@@ -36,6 +36,15 @@ $sync = new MailContactSyncService();
 
 $witnessId = isset($argv[1]) ? (int) $argv[1] : null;
 
+// Périmètre des contacts à synchroniser :
+//  - player_type = "real" : exclut les PNJ (id négatifs) et les persos tutoriel.
+//    Les PNJ n'ont de toute façon pas d'email, donc rien à pousser.
+//  - plain_mail <> ""      : un email est requis pour créer un contact OneSignal.
+//  - p.id > 1              : #1 est le compte admin, et surtout OneSignal REJETTE
+//    l'external_id "1" (« external_id is blocked ») -> 400 à chaque passage si on
+//    l'inclut. Seule la valeur "1" est bloquée côté OneSignal ; les autres
+//    matricules passent. #1 n'est de toute façon pas une cible de campagne.
+//
 // delete_account expose l'option legacy de demande de suppression (antérieure à
 // la colonne deletion_asked) pour que le backfill désabonne aussi ces joueurs.
 $sql = '
@@ -44,6 +53,7 @@ $sql = '
     FROM players p
     LEFT JOIN players_options o ON o.player_id = p.id AND o.name = "deleteAccount"
     WHERE p.player_type = "real"
+      AND p.id > 1
       AND p.plain_mail <> ""
 ';
 
