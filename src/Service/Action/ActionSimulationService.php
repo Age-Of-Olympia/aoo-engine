@@ -130,6 +130,7 @@ final class ActionSimulationService
     private function buildPlayer(SimulationInput $input, bool $isTarget, int $x): SimulatedPlayer
     {
         $weapon = $isTarget ? $input->targetWeapon : $input->actorWeapon;
+        $equipment = $isTarget ? $input->targetEquipment : $input->actorEquipment;
 
         // antiBerserkTime in the future makes the actor's NoBerserk precondition
         // fail; both fighters share the plan so the enfers gate reads it.
@@ -144,7 +145,7 @@ final class ActionSimulationService
             $isTarget ? $input->targetRemaining : $input->actorRemaining,
             (object) ['x' => $x, 'y' => 0, 'z' => 0, 'plan' => $input->plan],
             $data,
-            $this->emplacements($weapon),
+            $this->emplacements($weapon, $equipment),
             $isTarget ? $input->targetEffects : $input->actorEffects,
             $this->resolvePassives($isTarget ? $input->targetPassives : $input->actorPassives),
         );
@@ -175,7 +176,10 @@ final class ActionSimulationService
         return $resolved;
     }
 
-    private function emplacements(?string $weaponName): object
+    /**
+     * @param array<string, string> $equipment slot (emplacement) => item name
+     */
+    private function emplacements(?string $weaponName, array $equipment = []): object
     {
         if ($weaponName === null || $weaponName === '') {
             // A real player is never bare-handed: unarmed means the "Poing" (fist),
@@ -190,7 +194,18 @@ final class ActionSimulationService
             $weapon = new SimulatedItem($weaponName, ucfirst($weaponName));
         }
 
-        return (object) ['main1' => $weapon];
+        $emplacements = (object) ['main1' => $weapon];
+
+        // Other equipped slots (helmet, ring, armour, shield, …): their stats
+        // fold into caracs and their properties (e.g. a helmet's spellMalus) feed
+        // the conditions, the same way the weapon does.
+        foreach ($equipment as $slot => $name) {
+            if ($slot !== 'main1' && $this->weaponCatalog()->has($name)) {
+                $emplacements->{$slot} = SimulatedItem::fromData($this->weaponCatalog()->dataFor($name));
+            }
+        }
+
+        return $emplacements;
     }
 
     private function weaponCatalog(): SimulationWeaponCatalog

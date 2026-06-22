@@ -29,12 +29,19 @@ class SimulationWeaponCatalogTest extends TestCase
         );
     }
 
-    public function testExposesAWeaponsRealData(): void
+    public function testGroupsNonMainHandEquipmentBySlot(): void
+    {
+        $catalog = new SimulationWeaponCatalog($this->items());
+
+        $this->assertSame(['tete' => ['casque' => 'Casque']], $catalog->defenseSlots());
+    }
+
+    public function testExposesAnItemsRealData(): void
     {
         $catalog = new SimulationWeaponCatalog($this->items());
 
         $this->assertTrue($catalog->has('gladius'));
-        $this->assertFalse($catalog->has('casque'));   // not main1
+        $this->assertTrue($catalog->has('casque'));    // equipment (other slot)
         $this->assertFalse($catalog->has('bois'));     // not equipement
         $this->assertSame(1, $catalog->dataFor('gladius')->spellMalus);
         $this->assertNull($catalog->dataFor('unknown'));

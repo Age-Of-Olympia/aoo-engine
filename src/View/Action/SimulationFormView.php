@@ -90,9 +90,39 @@ final class SimulationFormView
 
         return '<fieldset class="sim-group"><legend>' . $title . '</legend>'
             . '<div class="sim-fields">' . $controls . '</div>'
+            . $this->equipment($side, $posted)
             . $this->effects($side, 'Effets', $posted)
             . '<div class="form-group"><label>Passifs</label>' . $this->passives($side . '_passives', $posted) . '</div>'
             . '</fieldset>';
+    }
+
+    /**
+     * A picker per non-main-hand slot (helmet, ring, armour, shield, …) so this
+     * side can be equipped with real defense items; their stats fold into caracs
+     * and feed the conditions. Shown for both fighters.
+     *
+     * @param array<string, mixed> $posted
+     */
+    private function equipment(string $side, array $posted): string
+    {
+        $slots = $this->weapons->defenseSlots();
+        if ($slots === []) {
+            return '';
+        }
+
+        $selected = (array) ($posted[$side . '_equipment'] ?? []);
+        $rows = '';
+        foreach ($slots as $slot => $items) {
+            $name = $side . '_equipment[' . $slot . ']';
+            $current = (string) ($selected[$slot] ?? '');
+            $options = '<option value="">—</option>';
+            foreach ($items as $value => $label) {
+                $options .= '<option value="' . $this->esc($value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . $this->esc($label) . '</option>';
+            }
+            $rows .= $this->group($slot, '<select class="form-control" name="' . $this->esc($name) . '">' . $options . '</select>');
+        }
+
+        return '<div class="form-group"><label>Équipement</label><div class="sim-fields">' . $rows . '</div></div>';
     }
 
     private function shortLabel(string $label): string

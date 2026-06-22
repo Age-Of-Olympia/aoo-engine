@@ -31,7 +31,27 @@ final class SimulationInputMapper
             targetPassives: $this->stringList($post['target_passives'] ?? []),
             plan: !empty($post['enfers']) ? 'enfers' : 'gaia',
             actorBerserk: !empty($post['actor_berserk']),
+            actorEquipment: $this->equipment($post['actor_equipment'] ?? []),
+            targetEquipment: $this->equipment($post['target_equipment'] ?? []),
         );
+    }
+
+    /**
+     * Slot => item name, dropping empty selections.
+     *
+     * @return array<string, string>
+     */
+    private function equipment(mixed $raw): array
+    {
+        $equipment = [];
+        foreach ((array) $raw as $slot => $name) {
+            $name = trim((string) $name);
+            if ($name !== '') {
+                $equipment[(string) $slot] = $name;
+            }
+        }
+
+        return $equipment;
     }
 
     /**

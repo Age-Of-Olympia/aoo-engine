@@ -37,7 +37,7 @@ class ActionSimulationServiceTest extends TestCase
             'DMG_CRIT' => 5,
             'ACTION_XP' => 5,
             'ONE_DAY' => 86400,
-            'ITEM_EMPLACEMENT_FORMAT' => ['main1'],
+            'ITEM_EMPLACEMENT_FORMAT' => ['main1', 'main2', 'tete', 'doigt', 'pieds'],
             'CARACS' => [
                 'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
                 'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
@@ -151,6 +151,22 @@ class ActionSimulationServiceTest extends TestCase
         $condition->setExecutionOrder(0);
 
         return $condition;
+    }
+
+    public function testEquipmentOnAnySlotFeedsTheConditions(): void
+    {
+        // A helmet (tete slot) with spellMalus must fire AntiSpell, just like a
+        // weapon would — proving non-main-hand equipment is really equipped.
+        $action = $this->meleeWith($this->condition('SpellCompute', ['actorRollType' => 'cc', 'targetRollType' => 'cc']));
+        $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorEquipment: ['tete' => 'casque']);
+
+        $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
+            ->setPreconditionType('AntiSpell')->setOrderIndex(0);
+        $casque = ['casque' => (object) ['type' => 'equipement', 'emplacement' => 'tete', 'subtype' => 'casque', 'name' => 'Casque', 'spellMalus' => 1]];
+
+        $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $casque)->simulate($action, $input);
+
+        $this->assertTrue($results->isBlocked());
     }
 
     public function testTheEnfersToggleBlocksTheAction(): void

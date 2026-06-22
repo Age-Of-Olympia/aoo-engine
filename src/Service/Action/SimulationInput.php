@@ -35,6 +35,11 @@ final class SimulationInput
         // actually exercised in a simulation.
         public readonly string $plan = 'gaia',
         public readonly bool $actorBerserk = false,
+        // Non-main-hand equipment per side: slot (emplacement) => item name.
+        // Their stats fold into caracs and their properties feed the conditions,
+        // same as the main-hand weapon.
+        public readonly array $actorEquipment = [],
+        public readonly array $targetEquipment = [],
     ) {
     }
 }

@@ -53,6 +53,17 @@ class SimulationInputMapperTest extends TestCase
         $this->assertTrue($input->actorBerserk);
     }
 
+    public function testMapsPerSlotEquipmentForBothSidesDroppingEmpties(): void
+    {
+        $input = (new SimulationInputMapper())->fromPost([
+            'actor_equipment' => ['tete' => 'casque', 'doigt' => ''],
+            'target_equipment' => ['tete' => 'casque'],
+        ]);
+
+        $this->assertSame(['tete' => 'casque'], $input->actorEquipment);
+        $this->assertSame(['tete' => 'casque'], $input->targetEquipment);
+    }
+
     public function testRunsAreClampedToTheAllowedRange(): void
     {
         $mapper = new SimulationInputMapper();
