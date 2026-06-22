@@ -6,10 +6,14 @@ use App\Entity\ActionOutcome;
 use App\Action\ActionResults;
 use App\Action\Condition\ConditionRegistry;
 use App\Action\Condition\ConditionObject;
+use App\Action\Condition\ConditionResult;
 use App\Entity\Action;
+use App\Entity\ActionCondition;
 use App\Entity\OutcomeInstruction;
+use App\Interface\ConditionInterface;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
+use App\Service\Action\ConditionPreconditionResolver;
 use Exception;
 
 class ActionExecutorService
@@ -25,6 +29,7 @@ class ActionExecutorService
     private ?PlayerService $playerService;
     private ActionTypeInstructionResolver $typeInstructionResolver;
     private ActionTypePreconditionResolver $preconditionResolver;
+    private ConditionPreconditionResolver $conditionPreconditionResolver;
     private bool $simulationMode = false;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
@@ -32,10 +37,11 @@ class ActionExecutorService
     private bool $blocked = false;
     private ConditionObject $conditionObject;
 
-    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null){
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null){
         $this->conditionRegistry = new ConditionRegistry();
         $this->typeInstructionResolver = $typeInstructionResolver ?? new ActionTypeInstructionResolver();
         $this->preconditionResolver = $preconditionResolver ?? new ActionTypePreconditionResolver();
+        $this->conditionPreconditionResolver = $conditionPreconditionResolver ?? new ConditionPreconditionResolver();
         $this->conditionResultsArray = array();
         $this->outcomeResultsArray = array();
         $this->conditionsToPay = array();
@@ -164,7 +170,7 @@ class ActionExecutorService
                 return false;
             }
 
-            $conditionResult = $condition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
+            $conditionResult = $this->checkWithPreconditions($condition, $condEntity);
             $result = $result && $conditionResult->isSuccess();
             array_push($this->conditionResultsArray, $conditionResult);
 
@@ -180,6 +186,43 @@ class ActionExecutorService
         }
 
         return $result;
+    }
+
+    /**
+     * Runs the condition-keyed preconditions (Dodge/NoBerserk/Obstacle/AntiSpell)
+     * resolved from config for $condEntity's type, then the condition itself —
+     * the data-driven replacement for what the *Compute conditions used to
+     * array_push into their own preConditions. Mirrors the old
+     * BaseCondition::checkPreconditions: every precondition runs and the messages
+     * aggregate, but a failure short-circuits the condition's check (so a failed
+     * Dodge skips the roll and its miss-malus). Conditions with no preconditions
+     * configured (everything but the compute family) just run their own check.
+     */
+    private function checkWithPreconditions(ConditionInterface $condition, ActionCondition $condEntity): ConditionResult
+    {
+        $preconditions = $this->conditionPreconditionResolver->resolve($condEntity->getConditionType());
+        if ($preconditions === []) {
+            return $condition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
+        }
+
+        $success = true;
+        $successMessages = [];
+        $failureMessages = [];
+        foreach ($preconditions as $precondition) {
+            $preResult = $precondition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
+            if ($preResult->isSuccess()) {
+                $successMessages = array_merge($successMessages, $preResult->getConditionSuccessMessages());
+            } else {
+                $failureMessages = array_merge($failureMessages, $preResult->getConditionFailureMessages());
+            }
+            $success = $success && $preResult->isSuccess();
+        }
+
+        if (!$success) {
+            return new ConditionResult(false, $successMessages, $failureMessages);
+        }
+
+        return $condition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
     }
 
     private function applyActionOutcome(ActionOutcome $outcomeEntity): void

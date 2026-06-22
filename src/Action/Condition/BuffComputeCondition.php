@@ -10,12 +10,6 @@ class BuffComputeCondition extends ComputeCondition
 {
     protected string $throwName = "Le sort de soutien";
 
-    public function __construct()
-    {
-        parent::__construct();
-        array_push($this->preConditions, new AntiSpellCondition());
-    }
-
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);

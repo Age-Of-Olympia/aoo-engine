@@ -9,11 +9,13 @@ use App\Action\BuffAction;
 use App\Action\MeleeAction;
 use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\ActionCondition;
+use App\Entity\ActionConditionPrecondition;
 use App\Entity\ActionTypeInstruction;
 use App\Entity\ActionTypePrecondition;
 use App\Service\Action\ActionSimulationService;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
+use App\Service\Action\ConditionPreconditionResolver;
 use App\Service\Action\SimulationInput;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -59,17 +61,20 @@ class ActionSimulationServiceTest extends TestCase
     {
         $instructionRepo = $this->createMock(EntityRepository::class);
         $instructionRepo->method('findBy')->willReturn($typeConfigs);
-        $preconditionRepo = $this->createMock(EntityRepository::class);
-        $preconditionRepo->method('findBy')->willReturn([]); // no global/type preconditions in combat sims
+        $emptyRepo = $this->createMock(EntityRepository::class);
+        $emptyRepo->method('findBy')->willReturn([]); // no global/type/condition preconditions in combat sims
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getRepository')->willReturnCallback(
-            fn (string $class): EntityRepository => $class === ActionTypePrecondition::class ? $preconditionRepo : $instructionRepo
+            fn (string $class): EntityRepository => in_array($class, [ActionTypePrecondition::class, ActionConditionPrecondition::class], true)
+                ? $emptyRepo
+                : $instructionRepo
         );
 
         return new ActionSimulationService(
             typeInstructionResolver: new ActionTypeInstructionResolver($em),
             preconditionResolver: new ActionTypePreconditionResolver($em),
+            conditionPreconditionResolver: new ConditionPreconditionResolver($em),
         );
     }
 

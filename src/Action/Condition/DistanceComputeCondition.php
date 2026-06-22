@@ -4,16 +4,9 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
-use Classes\Dice;
 
 class DistanceComputeCondition extends ComputeCondition
 {
-    public function __construct(?Dice $dice = null)
-    {
-        parent::__construct($dice);
-        array_push($this->preConditions, new ObstacleCondition());
-    }
-
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));

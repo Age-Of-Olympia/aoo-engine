@@ -29,8 +29,9 @@ abstract class AbstractComputeCondition extends BaseCondition
     public function __construct(?Dice $dice = null)
     {
         $this->dice = $dice;
-        array_push($this->preConditions, new DodgeCondition());
-        array_push($this->preConditions, new NoBerserkCondition());
+        // Dodge/NoBerserk preconditions used to be pushed here; they are now
+        // data-driven, resolved per condition type by ConditionPreconditionResolver
+        // and run by ActionExecutorService.
     }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

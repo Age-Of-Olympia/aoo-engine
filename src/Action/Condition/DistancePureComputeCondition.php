@@ -2,15 +2,9 @@
 namespace App\Action\Condition;
 
 use Classes\View;
-use Classes\Dice;
 
 class DistancePureComputeCondition extends ComputePureCondition
 {
-    public function __construct(?Dice $dice = null)
-    {
-        parent::__construct($dice);
-        array_push($this->preConditions, new ObstacleCondition());
-    }
 
     protected function getDistanceTreshold() : int {
         return floor(($this->distance) * 2.5);
