@@ -114,15 +114,27 @@
 .wb-sim h1 { font-size: 1.2em; margin: 0 0 4px; }
 .wb-sim p.text-muted { font-size: 12px; margin: 0 0 10px; }
 .wb-sim .card.mt-3 { max-width: 720px !important; margin-top: 14px; }
-/* Result: shown above the form (so it is not buried under it) as a prominent
-   card — the run metrics as stat tiles, then the detailed sample + dice. */
-.wb-sim-result { margin: 0 0 16px; padding: 12px 14px 14px; border: 1px solid #cfe0f0; border-radius: 10px; background: #f4f9ff; }
-.wb-sim-result-head { margin-bottom: 9px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #2e6da4; }
+/* Result: shown in a modal so running never shifts the form. The run metrics
+   render as stat tiles, then the detailed sample + dice. */
+.wb-sim-result { margin: 0; }
 .wb-sim-result .sim-distribution { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 0; background: none; border: 0; font-size: 13px; }
 .wb-sim-result .sim-distribution > span:not(.sim-dist-runs) { display: inline-flex; flex-direction: column; gap: 1px; padding: 6px 13px; background: #fff; border: 1px solid #dbe7f2; border-radius: 8px; color: #6b7a89; font-size: 12px; line-height: 1.25; }
 .wb-sim-result .sim-distribution > span strong { font-size: 18px; font-weight: 700; color: #2c3e50; }
 .wb-sim-result .sim-distribution .sim-dist-runs { align-self: stretch; display: inline-flex; align-items: center; background: #4a90e2; color: #fff; border-radius: 8px; padding: 0 12px; font-weight: 700; }
 .wb-sim-result .card.mt-3 { margin: 12px 0 0 !important; max-width: none !important; }
+
+/* Result modal + the floating button that re-opens it. */
+.wb-modal { position: fixed; inset: 0; z-index: 1000; display: none; }
+.wb-modal.is-open { display: block; }
+.wb-modal-backdrop { position: absolute; inset: 0; background: rgba(20, 28, 38, .45); }
+.wb-modal-panel { position: relative; display: flex; flex-direction: column; width: calc(100% - 40px); max-width: 880px; max-height: calc(100vh - 60px); margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 14px 44px rgba(0, 0, 0, .32); overflow: hidden; }
+.wb-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 16px; border-bottom: 1px solid #e3e6ea; font-weight: 700; color: #2c3e50; }
+.wb-modal-actions { display: flex; align-items: center; gap: 10px; }
+.wb-modal-close { border: 0; background: none; font-size: 24px; line-height: 1; color: #8a97a3; cursor: pointer; padding: 0 2px; }
+.wb-modal-close:hover { color: #2c3e50; }
+.wb-modal-body { padding: 16px 18px; overflow-y: auto; }
+.wb-sim-reopen { position: fixed; right: 26px; bottom: 22px; z-index: 900; border: 0; border-radius: 22px; padding: 9px 18px; background: #4a90e2; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(74, 144, 226, .42); }
+.wb-sim-reopen:hover { background: #3f7fc9; }
 
 /* New-action form (collapsible) in the actions column. */
 .wb-create { margin-bottom: 8px; }

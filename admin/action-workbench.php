@@ -175,14 +175,22 @@ if ($action === null) {
 } else {
     $panel = new SimulationPanelView();
     $simResultHtml = ($_SERVER['REQUEST_METHOD'] === 'POST') ? $panel->result($action, $_POST) : '';
-    /* Result first so it sits at the top after a run (the POST reload scrolls
-       to the top), instead of being buried under the long form. */
-    if ($simResultHtml !== '') {
-        echo '<div class="wb-sim-result" id="sim-result">'
-            . '<div class="wb-sim-result-head">Résultat</div>'
-            . $simResultHtml . '</div>';
-    }
     echo '<div class="wb-sim-form">' . $panel->form($action, $_POST) . '</div>';
+    /* The result is a modal overlay (auto-opened after a run) so the form never
+       shifts position between runs; a floating button re-opens it once closed. */
+    if ($simResultHtml !== '') {
+        echo '<div class="wb-modal is-open" id="sim-result-modal">'
+            . '<div class="wb-modal-backdrop" data-close></div>'
+            . '<div class="wb-modal-panel">'
+            . '<div class="wb-modal-head"><span>Résultat de la simulation</span>'
+            . '<div class="wb-modal-actions">'
+            . '<button type="button" class="btn btn-sm btn-primary" id="sim-reroll">↻ Relancer</button>'
+            . '<button type="button" class="wb-modal-close" data-close aria-label="Fermer">&times;</button>'
+            . '</div></div>'
+            . '<div class="wb-modal-body wb-sim-result">' . $simResultHtml . '</div>'
+            . '</div></div>'
+            . '<button type="button" class="wb-sim-reopen" id="sim-reopen" hidden>Voir le résultat</button>';
+    }
 }
 $simHtml = ob_get_clean();
 
