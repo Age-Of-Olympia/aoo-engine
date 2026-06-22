@@ -89,3 +89,26 @@
 .tt-badge--zero {
     opacity: 0.35;
 }
+
+/* Action-list mode: type nodes are headers (not links), actions nest as rows. */
+.tt-link--label {
+    cursor: default;
+    font-weight: 600;
+}
+
+.tt-leaf {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.tt-leaf-name {
+    font-weight: 500;
+}
+
+.tt-leaf-meta {
+    flex: 1 1 auto;
+    color: #888;
+    font-size: 12px;
+}

@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260710a';
+const ADMIN_ASSET_VERSION = '20260712a';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';

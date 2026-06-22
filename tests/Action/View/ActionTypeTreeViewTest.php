@@ -63,6 +63,29 @@ class ActionTypeTreeViewTest extends TestCase
         $this->assertStringContainsString('tt-badge tt-badge--zero', $html); // melee = 0
     }
 
+    public function testEmptyHrefRendersLabelsInsteadOfLinks(): void
+    {
+        $html = (new ActionTypeTreeView())->render($this->sampleTree(), '', '');
+
+        $this->assertStringContainsString('<span class="tt-link tt-link--label">Attack</span>', $html);
+        $this->assertStringNotContainsString('<a class="tt-link', $html);
+    }
+
+    public function testNodeBodyIsNestedUnderTheMatchingTypeAndMakesItCollapsible(): void
+    {
+        $html = (new ActionTypeTreeView())->render(
+            $this->sampleTree(),
+            '',
+            '',
+            ['rest' => 1],
+            ['rest' => '<li class="tt-leaf">repos</li>'],
+        );
+
+        $this->assertStringContainsString('<ul class="tt-children tt-leaves"><li class="tt-leaf">repos</li></ul>', $html);
+        // rest has body, so it is no longer rendered as a terminal leaf node.
+        $this->assertDoesNotMatchRegularExpression('/tt-node tt-node--leaf"[^>]*>.*?rest/s', $html);
+    }
+
     public function testEscapesLabels(): void
     {
         $html = (new ActionTypeTreeView())->render(
