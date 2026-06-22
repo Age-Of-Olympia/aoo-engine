@@ -14,6 +14,23 @@ use App\Service\Action\SimulationWeaponCatalog;
  */
 final class SimulationFormView
 {
+    /** Friendly French labels for the equipment slots (emplacement keys). */
+    private const SLOT_LABELS = [
+        'main2' => 'Main 2',
+        'deuxmains' => 'Deux mains',
+        'doigt' => 'Bague',
+        'tete' => 'Tête',
+        'bouche' => 'Bouche',
+        'cou' => 'Cou',
+        'epaule' => 'Épaule',
+        'cape' => 'Cape',
+        'tronc' => 'Tronc',
+        'taille' => 'Taille',
+        'pieds' => 'Pieds',
+        'munition' => 'Munition',
+        'trophee' => 'Trophée',
+    ];
+
     private OptionCatalog $catalog;
     private SimulationWeaponCatalog $weapons;
 
@@ -36,27 +53,18 @@ final class SimulationFormView
             $bySide[$field->side][] = $field;
         }
 
-        $shared = '';
-        foreach ($bySide[SimulationField::SIDE_SHARED] as $field) {
-            $shared .= $this->fieldControl($field, $posted);
-        }
-
-        $body = $this->sideGroup('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)
-            . $this->sideGroup('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted)
-            . '<div class="sim-run">'
-            . $shared
-            . $this->environment($posted)
-            . '<div class="form-group"><label>Tirages</label>'
-            . '<input class="form-control" type="number" min="1" max="5000" name="runs" value="' . $this->esc($posted['runs'] ?? 1) . '"></div>'
-            . '<button class="btn btn-primary" type="submit">Simuler</button>'
-            . '</div>';
+        $body = '<div class="sim-sides">'
+            . $this->sidePanel('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)
+            . $this->sidePanel('Cible', SimulationField::SIDE_TARGET, $bySide[SimulationField::SIDE_TARGET], $posted)
+            . '</div>'
+            . $this->context($bySide[SimulationField::SIDE_SHARED], $posted);
 
         return '<h1>Simuler : ' . $this->esc($action->getDisplayName()) . '</h1>'
             . '<p class="text-muted">Simulation via le moteur réel : conditions, jets, dégâts, messages et logs sont ceux du jeu.</p>'
             . '<form method="post" class="card sim-form">'
             . '<input type="hidden" name="id" value="' . $id . '">'
             . '<div class="card-header"><h3 class="card-title">État hypothétique</h3></div>'
-            . '<div class="card-body">' . $body . '</div></form>';
+            . '<div class="card-body sim-body">' . $body . '</div></form>';
     }
 
     /**
@@ -72,28 +80,67 @@ final class SimulationFormView
         $berserk = !empty($posted['actor_berserk']) ? ' checked' : '';
 
         return '<div class="form-group"><label>Environnement</label>'
+            . '<div class="sim-env">'
             . '<label class="sim-check"><input type="checkbox" name="enfers" value="1"' . $enfers . '> Aux Enfers</label>'
-            . '<label class="sim-check"><input type="checkbox" name="actor_berserk" value="1"' . $berserk . '> Acteur sous anti-Berserk</label>'
-            . '</div>';
+            . '<label class="sim-check"><input type="checkbox" name="actor_berserk" value="1"' . $berserk . '> Acteur berserk</label>'
+            . '</div></div>';
     }
 
     /**
+     * One fighter's panel: caracs, then equipment (weapon + every slot), effects
+     * and passives — each in its own labelled sub-section.
+     *
      * @param list<SimulationField> $fields
-     * @param array<string, mixed> $posted
+     * @param array<string, mixed>  $posted
      */
-    private function sideGroup(string $title, string $side, array $fields, array $posted): string
+    private function sidePanel(string $title, string $side, array $fields, array $posted): string
     {
-        $controls = '';
+        $caracs = '';
         foreach ($fields as $field) {
-            $controls .= $this->fieldControl($field, $posted);
+            if ($field->kind === SimulationField::KIND_WEAPON) {
+                continue; // the weapon is rendered inside the equipment block
+            }
+            $caracs .= $this->fieldControl($field, $posted);
         }
 
-        return '<fieldset class="sim-group"><legend>' . $title . '</legend>'
-            . '<div class="sim-fields">' . $controls . '</div>'
-            . $this->equipment($side, $posted)
-            . $this->effects($side, 'Effets', $posted)
-            . '<div class="form-group"><label>Passifs</label>' . $this->passives($side . '_passives', $posted) . '</div>'
+        $limit = defined('ITEM_LIMIT') ? ITEM_LIMIT : 3;
+
+        return '<fieldset class="sim-panel"><legend>' . $this->esc($title) . '</legend>'
+            . $this->sub('Caractéristiques', '<div class="sim-grid">' . $caracs . '</div>')
+            . $this->sub('Équipement', $this->equipment($side, $posted), 'max ' . $limit . ' + 1 bague, 1 munition, 1 trophée')
+            . $this->sub('Effets', $this->effects($side, $posted))
+            . $this->sub('Passifs', $this->passives($side . '_passives', $posted))
             . '</fieldset>';
+    }
+
+    private function sub(string $title, string $content, string $hint = ''): string
+    {
+        $head = '<div class="sim-sub-h">' . $this->esc($title)
+            . ($hint !== '' ? ' <small>' . $this->esc($hint) . '</small>' : '') . '</div>';
+
+        return '<div class="sim-sub">' . $head . $content . '</div>';
+    }
+
+    /**
+     * The shared context bar: distance + environment toggles + run count + submit.
+     *
+     * @param list<SimulationField> $sharedFields
+     * @param array<string, mixed>  $posted
+     */
+    private function context(array $sharedFields, array $posted): string
+    {
+        $shared = '';
+        foreach ($sharedFields as $field) {
+            $shared .= $this->fieldControl($field, $posted);
+        }
+
+        return '<div class="sim-context">'
+            . $shared
+            . $this->environment($posted)
+            . '<div class="form-group"><label>Tirages</label>'
+            . '<input class="form-control" type="number" min="1" max="5000" name="runs" value="' . $this->esc($posted['runs'] ?? 1) . '"></div>'
+            . '<button class="btn btn-primary" type="submit">Simuler</button>'
+            . '</div>';
     }
 
     /**
@@ -105,27 +152,23 @@ final class SimulationFormView
      */
     private function equipment(string $side, array $posted): string
     {
-        $slots = $this->weapons->equipmentSlots();
-        if ($slots === []) {
-            return '';
-        }
+        $weaponField = $side . '_weapon';
+        $html = '<div class="sim-grid">'
+            . $this->group('Arme (main1)', $this->weaponSelect($weaponField, (string) ($posted[$weaponField] ?? '')));
 
-        $limit = defined('ITEM_LIMIT') ? ITEM_LIMIT : 3;
         $selected = (array) ($posted[$side . '_equipment'] ?? []);
-        $rows = '';
-        foreach ($slots as $slot => $items) {
+        foreach ($this->weapons->equipmentSlots() as $slot => $items) {
             $name = $side . '_equipment[' . $slot . ']';
             $current = (string) ($selected[$slot] ?? '');
             $options = '<option value="">—</option>';
             foreach ($items as $value => $label) {
                 $options .= '<option value="' . $this->esc($value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . $this->esc($label) . '</option>';
             }
-            $rows .= $this->group($slot, '<select class="form-control" name="' . $this->esc($name) . '">' . $options . '</select>');
+            $label = self::SLOT_LABELS[$slot] ?? ucfirst($slot);
+            $html .= $this->group($label, '<select class="form-control" name="' . $this->esc($name) . '">' . $options . '</select>');
         }
 
-        return '<div class="form-group"><label>Équipement</label>'
-            . '<small class="text-muted">Max ' . $limit . ' objets équipés (l\'arme comprise) + 1 bague, 1 munition, 1 trophée.</small>'
-            . '<div class="sim-fields">' . $rows . '</div></div>';
+        return $html . '</div>';
     }
 
     private function shortLabel(string $label): string
@@ -142,13 +185,6 @@ final class SimulationFormView
             return $this->group($field->label, '<input class="form-control" type="number" min="0" name="distance" value="' . $this->esc($posted['distance'] ?? 1) . '">');
         }
 
-        if ($field->kind === SimulationField::KIND_WEAPON) {
-            $name = $field->side . '_weapon';
-            $selected = (string) ($posted[$name] ?? $field->default ?? '');
-
-            return $this->group($this->shortLabel($field->label), $this->weaponSelect($name, $selected));
-        }
-
         $group = $field->side . '_' . $field->kind;
         $default = $field->kind === SimulationField::KIND_REMAINING ? 6 : 10;
         $value = (int) ($posted[$group][$field->key] ?? $default);
@@ -162,7 +198,7 @@ final class SimulationFormView
     /**
      * @param array<string, mixed> $posted
      */
-    private function effects(string $side, string $label, array $posted): string
+    private function effects(string $side, array $posted): string
     {
         $names = (array) ($posted[$side . '_effect_name'] ?? []);
         $values = (array) ($posted[$side . '_effect_value'] ?? []);
@@ -176,10 +212,8 @@ final class SimulationFormView
             $rows = $this->effectRow($side);
         }
 
-        return '<div class="form-group"><label>' . $this->esc($label) . '</label>'
-            . '<div id="' . $this->esc($side) . '-effects">' . $rows . '</div>'
-            . '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="addEffectRow(\'' . $this->esc($side) . '\')">+ ajouter un effet</button>'
-            . '</div>';
+        return '<div id="' . $this->esc($side) . '-effects">' . $rows . '</div>'
+            . '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="addEffectRow(\'' . $this->esc($side) . '\')">+ ajouter un effet</button>';
     }
 
     private function effectRow(string $side, string $selected = '', int|string $value = ''): string

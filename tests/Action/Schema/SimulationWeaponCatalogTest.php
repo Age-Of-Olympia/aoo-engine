@@ -29,11 +29,16 @@ class SimulationWeaponCatalogTest extends TestCase
         );
     }
 
-    public function testGroupsNonMainHandEquipmentBySlot(): void
+    public function testListsEveryNonMainHandSlotPopulatedOrEmpty(): void
     {
-        $catalog = new SimulationWeaponCatalog($this->items());
+        $slots = (new SimulationWeaponCatalog($this->items()))->equipmentSlots();
 
-        $this->assertSame(['tete' => ['casque' => 'Casque']], $catalog->equipmentSlots());
+        // Every slot of the real model is present, in order, except main1.
+        $expected = array_values(array_filter(ITEM_EMPLACEMENT_FORMAT, static fn (string $s): bool => $s !== 'main1'));
+        $this->assertSame($expected, array_keys($slots));
+        // Slots with items are populated; the rest are empty but still testable.
+        $this->assertSame(['casque' => 'Casque'], $slots['tete']);
+        $this->assertSame([], $slots['cape']);
     }
 
     public function testExposesAnItemsRealData(): void

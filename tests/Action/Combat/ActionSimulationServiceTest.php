@@ -37,8 +37,6 @@ class ActionSimulationServiceTest extends TestCase
             'DMG_CRIT' => 5,
             'ACTION_XP' => 5,
             'ONE_DAY' => 86400,
-            'ITEM_LIMIT' => 3,
-            'ITEM_EMPLACEMENT_FORMAT' => ['main1', 'main2', 'deuxmains', 'doigt', 'tete', 'pieds', 'munition', 'trophee'],
             'CARACS' => [
                 'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
                 'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',

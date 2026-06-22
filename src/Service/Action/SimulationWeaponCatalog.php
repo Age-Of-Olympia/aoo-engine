@@ -52,33 +52,37 @@ final class SimulationWeaponCatalog
     }
 
     /**
-     * Non-main-hand equipment grouped by slot (emplacement), for the per-side
-     * equipment pickers: emplacement => [item name => display label]. Ordered by
-     * the game's real slot order (ITEM_EMPLACEMENT_FORMAT) when available.
+     * Every non-main-hand slot (emplacement), for the per-side equipment pickers:
+     * emplacement => [item name => display label]. EVERY slot of the game's real
+     * slot model (ITEM_EMPLACEMENT_FORMAT) is listed — even slots with no item yet
+     * — so the whole loadout is testable; the main-hand weapon has its own picker.
+     * Falls back to the slots that have items when the constant is absent.
      *
      * @return array<string, array<string, string>>
      */
     public function equipmentSlots(): array
     {
-        $slots = [];
+        $byEmplacement = [];
         foreach ($this->items as $name => $data) {
             $emplacement = (string) ($data->emplacement ?? '');
-            if ($emplacement === '' || $emplacement === 'main1') {
+            if ($emplacement === '') {
                 continue;
             }
-            $slots[$emplacement][$name] = (string) ($data->name ?? $name);
+            $byEmplacement[$emplacement][$name] = (string) ($data->name ?? $name);
         }
 
-        $order = defined('ITEM_EMPLACEMENT_FORMAT') ? ITEM_EMPLACEMENT_FORMAT : array_keys($slots);
-        $ordered = [];
+        $order = defined('ITEM_EMPLACEMENT_FORMAT') ? ITEM_EMPLACEMENT_FORMAT : array_keys($byEmplacement);
+        $slots = [];
         foreach ($order as $slot) {
-            if (isset($slots[$slot])) {
-                asort($slots[$slot]);
-                $ordered[$slot] = $slots[$slot];
+            if ($slot === 'main1') {
+                continue; // the main-hand weapon has its own picker
             }
+            $items = $byEmplacement[$slot] ?? [];
+            asort($items);
+            $slots[$slot] = $items;
         }
 
-        return $ordered;
+        return $slots;
     }
 
     public function has(string $name): bool

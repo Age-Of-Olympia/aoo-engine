@@ -1,9 +1,131 @@
-/* Simulation form component, shared by action-simulate.php and the workbench.
-   The workbench layers its own .wb-sim overrides on top of these base rules. */
+/* Simulation form component, shared by action-simulate.php and the workbench. */
 
-.sim-form { max-width: 560px; }
-.effect-row { display: flex; gap: 6px; margin-bottom: 4px; }
-.sim-effect-value { max-width: 90px; }
+.sim-form { max-width: none; }
+
+/* The two fighter panels, side by side. */
+.sim-sides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.sim-panel {
+    min-width: 0;
+    margin: 0;
+    border: 1px solid #e3e6ea;
+    border-radius: 10px;
+    padding: 8px 14px 14px;
+}
+
+.sim-panel > legend {
+    width: auto;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #2e6da4;
+}
+
+/* Sub-sections inside a panel (Caractéristiques / Équipement / Effets / Passifs). */
+.sim-sub {
+    margin-top: 12px;
+}
+
+.sim-sub-h {
+    margin-bottom: 5px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #eef1f4;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #8a95a1;
+}
+
+.sim-sub-h small {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #aab2bb;
+}
+
+/* Compact input grid (caracs and equipment slots). */
+.sim-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 6px 12px;
+}
+
+.sim-grid .form-group {
+    margin: 0;
+}
+
+.sim-grid label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    color: #5a6b7b;
+}
+
+.sim-form .form-control {
+    height: 30px;
+    font-size: 13px;
+}
+
+.sim-form select[multiple].form-control {
+    height: 80px;
+}
+
+/* Effect rows. */
+.effect-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.sim-effect-value {
+    max-width: 80px;
+}
+
+/* The shared context bar: distance / environment / runs / submit. */
+.sim-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 18px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e3e6ea;
+}
+
+.sim-context .form-group {
+    margin: 0;
+}
+
+.sim-context .form-control {
+    width: 92px;
+}
+
+.sim-context button {
+    margin-left: auto;
+}
+
+.sim-env {
+    display: flex;
+    gap: 14px;
+}
+
+.sim-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 400;
+    cursor: pointer;
+}
 
 /* Detailed sample + its dice breakdown, side by side on wide screens. */
 .sim-detail { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }

@@ -73,26 +73,13 @@
 .wb-tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; }
 .wb-tab[hidden] { display: none; }
 
-/* Simulate tab — full width, readable. */
+/* Simulate tab — full width, readable. The form's own layout lives in
+   action-simulate.css; the workbench only strips the card chrome here. */
 .wb-sim form.card { max-width: none !important; box-shadow: none; border: 0; margin: 0; padding: 0; }
 .wb-sim .card-header { background: transparent; border: 0; margin: 0 0 4px; padding: 0; }
 .wb-sim h1 { font-size: 1.2em; margin: 0 0 4px; }
 .wb-sim p.text-muted { font-size: 12px; margin: 0 0 10px; }
 .wb-sim .card.mt-3 { max-width: 720px !important; margin-top: 14px; }
-.wb-sim .effect-row { margin-bottom: 4px !important; }
-.wb-sim-form .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; align-items: start; max-width: 1000px; }
-.wb-sim-form .card-body > .form-group,
-.wb-sim-form .card-body > .sim-run,
-.wb-sim-form .card-body > button { grid-column: 1 / -1; }
-.wb-sim .sim-run { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
-.wb-sim .sim-run .form-group { margin: 0; }
-.wb-sim .sim-group { grid-column: span 1; min-width: 0; border: 1px solid #e7ebee; border-radius: 8px; padding: 8px 12px 12px; margin: 0; }
-.wb-sim .sim-group > legend { width: auto; border: 0; margin: 0; padding: 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #4a90e2; }
-.wb-sim .sim-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 16px; }
-.wb-sim .sim-group > .form-group { margin-top: 6px; }
-.wb-sim .form-group > label { font-size: 13px; }
-.wb-sim .form-group > .form-control { font-size: 13px; height: 30px; }
-.wb-sim select[multiple].form-control { height: 84px; }
 /* Results: a full-width one-line distribution bar, then the detailed sample
    capped at a readable width (its row/col breakdown spreads if too wide). */
 .wb-sim-result { margin-top: 14px; }

@@ -18,3 +18,15 @@ if (!defined('CARACS')) {
 if (!defined('ONE_DAY')) {
     define('ONE_DAY', 86400);
 }
+// The equipment model, mirrored from config/constants.php so the simulator's
+// slot/limit rules are exercised against the real shape (14 slots; 3 normal
+// items + ring/munition/trophee on top).
+if (!defined('ITEM_EMPLACEMENT_FORMAT')) {
+    define('ITEM_EMPLACEMENT_FORMAT', [
+        'main1', 'main2', 'deuxmains', 'doigt', 'tete', 'bouche', 'cou',
+        'epaule', 'cape', 'tronc', 'taille', 'pieds', 'munition', 'trophee',
+    ]);
+}
+if (!defined('ITEM_LIMIT')) {
+    define('ITEM_LIMIT', 3);
+}
