@@ -32,7 +32,7 @@ class MailContactSyncServiceTest extends TestCase
         }
     }
 
-    public function testOnRegisterUpsertsSubscribedContactWithFullTags(): void
+    public function testOnRegisterUpsertsSubscribedContactWithThreeTags(): void
     {
         $spy = $this->spyProvider();
         (new MailContactSyncService($spy))->onRegister(42, 'a@b.c', 'Yorgos', 'nain');
@@ -43,12 +43,13 @@ class MailContactSyncServiceTest extends TestCase
         $this->assertSame(42, $call['id']);
         $this->assertSame('a@b.c', $call['email']);
         $this->assertTrue($call['subscribed']);
+        // Exactement 3 tags (plafond Free) : pas de is_new.
         $this->assertSame([
             'full_name' => 'Yorgos (mat:42)',
-            'is_new' => '1',
             'is_inactive' => '0',
             'race' => 'nain',
         ], $call['tags']);
+        $this->assertArrayNotHasKey('is_new', $call['tags']);
     }
 
     public function testOnRegisterIgnoresEmptyEmail(): void
@@ -93,7 +94,7 @@ class MailContactSyncServiceTest extends TestCase
         $this->assertSame([], $call['tags']);
     }
 
-    public function testSyncPlayerActivePlayerStaysSubscribedAndFresh(): void
+    public function testSyncPlayerActivePlayerStaysSubscribedAndActive(): void
     {
         $spy = $this->spyProvider();
         $row = (object) [
@@ -101,7 +102,6 @@ class MailContactSyncServiceTest extends TestCase
             'plain_mail' => 'x@y.z',
             'name' => 'Dorna',
             'race' => 'nain',
-            'registerTime' => time(),       // tout juste inscrit => is_new=1
             'lastLoginTime' => time(),       // connecté => is_inactive=0
             'deletion_asked' => null,         // pas de suppression => abonné
         ];
@@ -114,7 +114,6 @@ class MailContactSyncServiceTest extends TestCase
         $this->assertTrue($call['subscribed']);
         $this->assertSame([
             'full_name' => 'Dorna (mat:7)',
-            'is_new' => '1',
             'is_inactive' => '0',
             'race' => 'nain',
         ], $call['tags']);
@@ -128,7 +127,6 @@ class MailContactSyncServiceTest extends TestCase
             'plain_mail' => 'o@y.z',
             'name' => 'Vieux',
             'race' => 'elfe',
-            'registerTime' => time() - (99 * 86400),   // > 30j => is_new=0
             'lastLoginTime' => time() - (30 * 86400),   // > ONE_WEEK => is_inactive=1
             'deletion_asked' => '2026-06-01 00:00:00',   // suppression => désabonné
         ];
@@ -141,7 +139,6 @@ class MailContactSyncServiceTest extends TestCase
         $this->assertFalse($call['subscribed']);
         $this->assertSame([
             'full_name' => 'Vieux (mat:8)',
-            'is_new' => '0',
             'is_inactive' => '1',
             'race' => 'elfe',
         ], $call['tags']);

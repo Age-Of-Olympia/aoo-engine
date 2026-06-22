@@ -19,19 +19,21 @@ namespace App\Service\Mail;
  * contact réabonné) et couvre les contacts legacy importés sans external_id.
  *
  * La graphie des tags est figée par les segments du dashboard OneSignal et NE
- * DOIT PAS changer :
- *  - full_name   : "{name} (mat:{id})"
- *  - is_new      : "1" tant que registerTime est dans NEW_PLAYER_WINDOW, sinon "0"
+ * DOIT PAS changer. Limités à 3 (plafond du plan OneSignal Free) :
+ *  - full_name   : "{name} (mat:{id})" — personnalisation des mails (le matricule
+ *                  permet au joueur dormant de se reconnecter sans son pseudo)
  *  - is_inactive : "1" quand lastLoginTime dépasse INACTIVE_TIME (même règle
  *                  que PlayerService::isInactive, recopiée inline pour rester
- *                  un calcul pur sans connexion DB par joueur)
- *  - race        : code players.race brut (nain/geant/olympien/hs/elfe)
+ *                  un calcul pur sans connexion DB par joueur) — ciblage win-back
+ *  - race        : code players.race brut (nain/geant/olympien/hs/elfe) — ciblage
+ *                  des mails de scénario par race
+ *
+ * L'onboarding (J+1/J+3/J+7) n'utilise PAS de tag : il est piloté par une
+ * automation événementielle déclenchée à l'inscription, ce qui évite d'enrôler
+ * les contacts existants lors du backfill et économise le 3e/4e slot de tag.
  */
 class MailContactSyncService
 {
-    /** Fenêtre pendant laquelle un joueur compte comme « nouveau » : 30 jours (1 mois). */
-    public const NEW_PLAYER_WINDOW = 30 * 86400;
-
     private MailContactProviderInterface $provider;
 
     public function __construct(?MailContactProviderInterface $provider = null)
@@ -43,7 +45,7 @@ class MailContactSyncService
      * Enregistre un joueur fraîchement créé en tant que contact abonné.
      *
      * Appelé juste après le stockage de l'email. Un nouveau joueur est par
-     * définition `is_new=1` et `is_inactive=0`, on évite donc les calculs de date.
+     * définition `is_inactive=0`, on évite donc le calcul de date.
      */
     public function onRegister(int $playerId, string $email, string $name, string $race): void
     {
@@ -53,7 +55,6 @@ class MailContactSyncService
 
         $this->provider->upsertContact($playerId, $email, [
             'full_name' => $this->fullName($name, $playerId),
-            'is_new' => '1',
             'is_inactive' => '0',
             'race' => $race,
         ], true);
@@ -92,8 +93,8 @@ class MailContactSyncService
      *
      * Un seul upsert : (ré)attache l'external_id au contact clé par email,
      * rafraîchit tous les tags et aligne l'abonnement sur l'état de suppression.
-     * La ligne doit exposer : id, plain_mail, name, race, registerTime,
-     * lastLoginTime, deletion_asked, et (optionnel) delete_account.
+     * La ligne doit exposer : id, plain_mail, name, race, lastLoginTime,
+     * deletion_asked, et (optionnel) delete_account.
      */
     public function syncPlayer(object $row): void
     {
@@ -113,7 +114,6 @@ class MailContactSyncService
 
         $this->provider->upsertContact($playerId, $email, [
             'full_name' => $this->fullName((string) $row->name, $playerId),
-            'is_new' => $this->isNew((int) $row->registerTime) ? '1' : '0',
             'is_inactive' => $this->isInactive((int) $row->lastLoginTime) ? '1' : '0',
             'race' => (string) $row->race,
         ], $subscribed);
@@ -122,11 +122,6 @@ class MailContactSyncService
     private function fullName(string $name, int $playerId): string
     {
         return "{$name} (mat:{$playerId})";
-    }
-
-    private function isNew(int $registerTime): bool
-    {
-        return $registerTime > (time() - self::NEW_PLAYER_WINDOW);
     }
 
     private function isInactive(int $lastLoginTime): bool

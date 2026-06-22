@@ -39,7 +39,7 @@ $witnessId = isset($argv[1]) ? (int) $argv[1] : null;
 // delete_account expose l'option legacy de demande de suppression (antérieure à
 // la colonne deletion_asked) pour que le backfill désabonne aussi ces joueurs.
 $sql = '
-    SELECT p.id, p.plain_mail, p.name, p.race, p.registerTime, p.lastLoginTime,
+    SELECT p.id, p.plain_mail, p.name, p.race, p.lastLoginTime,
            p.deletion_asked, o.player_id AS delete_account
     FROM players p
     LEFT JOIN players_options o ON o.player_id = p.id AND o.name = "deleteAccount"
