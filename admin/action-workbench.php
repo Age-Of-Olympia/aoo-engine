@@ -12,9 +12,11 @@ use App\Service\Action\ActionConditionEditService;
 use App\Service\Action\ActionCreateService;
 use App\Service\Action\ActionOutcomeEditService;
 use App\Service\Action\ActionTypeInstructionResolver;
+use App\Service\Action\RpgAwesomeIcons;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
 use App\View\Action\AutomaticOutcomesView;
+use App\View\Action\IconFieldView;
 use App\View\Action\ConditionEditorView;
 use App\View\Action\DeleteActionFormView;
 use App\View\Action\ExportButtonView;
@@ -102,10 +104,7 @@ if ($action === null) {
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'
         . '</div>';
 
-    echo '<div class="wb-icon-field">'
-        . '<span class="wb-icon-preview"><i class="ra ' . e($action->getIcon()) . '"></i></span>'
-        . '<input class="form-control wb-icon-input" type="text" name="icon" value="' . e($action->getIcon()) . '" placeholder="icône (ra-crossed-swords)" autocomplete="off">'
-        . '</div>';
+    echo (new IconFieldView())->render($action->getIcon());
 
     echo '<div class="wb-section-title wb-section-title--row">Conditions' . $conditionEditor->addControls($conditionTypes) . '</div>';
     if ($action->getConditions()->count() === 0) {
@@ -212,6 +211,7 @@ ob_start();
         </div>
     </div>
 </div>
+<script>window.WB_ICONS = <?= json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) ?>;</script>
 
 <?php
 $content = ob_get_clean();

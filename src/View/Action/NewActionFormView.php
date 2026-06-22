@@ -8,6 +8,13 @@ namespace App\View\Action;
  */
 final class NewActionFormView
 {
+    private IconFieldView $iconField;
+
+    public function __construct(?IconFieldView $iconField = null)
+    {
+        $this->iconField = $iconField ?? new IconFieldView();
+    }
+
     /**
      * @param array<string, string> $types discriminator => label
      */
@@ -28,10 +35,7 @@ final class NewActionFormView
             . '<input class="form-control" type="number" name="level" value="1" min="1" title="niveau">'
             . '<input class="form-control" type="text" name="category" placeholder="catégorie" autocomplete="off">'
             . '</div>'
-            . '<div class="wb-icon-field">'
-            . '<span class="wb-icon-preview"><i class="ra"></i></span>'
-            . '<input class="form-control wb-icon-input" type="text" name="icon" placeholder="icône (ra-crossed-swords)" autocomplete="off">'
-            . '</div>'
+            . $this->iconField->render('')
             . '<button type="submit" class="btn btn-sm btn-success">Créer</button>'
             . '</form></details>';
     }
