@@ -62,6 +62,68 @@ final class ActionTypeRegistry
     }
 
     /**
+     * The type hierarchy as a tree of {@see ActionTypeNode}, mirroring the PHP
+     * class inheritance (attack → melee/distance/technique → …). Roots are the
+     * types whose parent is the abstract {@see Action}. Children are sorted by key
+     * so the rendering is deterministic.
+     *
+     * @return array<int, ActionTypeNode>
+     */
+    public function tree(): array
+    {
+        $map = $this->typeMap();
+
+        /** @var array<string, array<int, string>> $childrenByParent keyed by parent type key ('' = root) */
+        $childrenByParent = [];
+        foreach (array_keys($map) as $key) {
+            $childrenByParent[$this->parentTypeKey($map, $key)][] = $key;
+        }
+
+        return $this->buildNodes($map, $childrenByParent, '');
+    }
+
+    /**
+     * The closest ancestor type key of $key, or '' when its parent is the Action
+     * root (i.e. $key is a tree root).
+     *
+     * @param array<string, class-string> $map
+     */
+    private function parentTypeKey(array $map, string $key): string
+    {
+        $parentClass = get_parent_class($map[$key]);
+        if ($parentClass === false || $parentClass === Action::class) {
+            return '';
+        }
+
+        $parentKey = $this->keyForClass($parentClass);
+
+        return isset($map[$parentKey]) ? $parentKey : '';
+    }
+
+    /**
+     * @param array<string, class-string>       $map
+     * @param array<string, array<int, string>> $childrenByParent
+     * @return array<int, ActionTypeNode>
+     */
+    private function buildNodes(array $map, array $childrenByParent, string $parentKey): array
+    {
+        $keys = $childrenByParent[$parentKey] ?? [];
+        sort($keys);
+
+        $nodes = [];
+        foreach ($keys as $key) {
+            $nodes[] = new ActionTypeNode(
+                $key,
+                ucfirst($key),
+                (new ReflectionClass($map[$key]))->isAbstract(),
+                $this->buildNodes($map, $childrenByParent, $key),
+            );
+        }
+
+        return $nodes;
+    }
+
+    /**
      * @return array<string, class-string>
      */
     private function typeMap(): array
