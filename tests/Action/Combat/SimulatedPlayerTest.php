@@ -59,6 +59,21 @@ class SimulatedPlayerTest extends TestCase
         $this->assertFalse($this->player()->isOnTileType('routes'));
     }
 
+    public function testGetMunitionReturnsTheEquippedMunitionOrNull(): void
+    {
+        $coords = (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'gaia'];
+        $arc = SimulatedItem::fromData(['subtype' => 'tir', 'name' => 'Arc', 'munitions' => ['fleche']]);
+        $fleche = SimulatedItem::fromData(['subtype' => 'munition', 'name' => 'Flèche']);
+
+        $withAmmo = new SimulatedPlayer(1, [], [], $coords, [], (object) ['main1' => $arc, 'munition' => $fleche]);
+        $noAmmo = new SimulatedPlayer(1, [], [], $coords, [], (object) ['main1' => $arc]);
+
+        // The real RequiresAmmoCondition gates the tir weapon off this: a munition
+        // when one is equipped, null otherwise.
+        $this->assertSame($fleche, $withAmmo->getMunition($arc, true));
+        $this->assertNull($noAmmo->getMunition($arc, true));
+    }
+
     public function testApplyItemCaracsIsTheSharedFoldingRule(): void
     {
         $caracs = (object) ['cc' => 10, 'ct' => 4];

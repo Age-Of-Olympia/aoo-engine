@@ -133,8 +133,10 @@ class SimulatedPlayer extends Player
 
     public function getMunition(Item $object, bool $equiped = false): ?Item
     {
-        // Assume the simulated character is supplied with ammunition.
-        return new SimulatedItem('munition', 'Munition');
+        // Return the munition the user equipped in the simulator (the munition
+        // slot), or null when none — so the real RequiresAmmoCondition gates a
+        // tir weapon. No rule is re-implemented here; the condition does it.
+        return $this->emplacements->munition ?? null;
     }
 
     /* --- mutations no-op'd so a simulation persists nothing --- */
