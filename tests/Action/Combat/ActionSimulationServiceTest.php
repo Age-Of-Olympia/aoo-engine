@@ -17,6 +17,7 @@ use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
 use App\Service\Action\SimulationInput;
+use App\Service\Action\SimulationWeaponCatalog;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\Attributes\Group;
@@ -36,6 +37,7 @@ class ActionSimulationServiceTest extends TestCase
             'DMG_CRIT' => 5,
             'ACTION_XP' => 5,
             'ONE_DAY' => 86400,
+            'ITEM_EMPLACEMENT_FORMAT' => ['main1'],
             'CARACS' => [
                 'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
                 'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
@@ -75,14 +77,16 @@ class ActionSimulationServiceTest extends TestCase
             typeInstructionResolver: new ActionTypeInstructionResolver($em),
             preconditionResolver: new ActionTypePreconditionResolver($em),
             conditionPreconditionResolver: new ConditionPreconditionResolver($em),
+            weaponCatalog: new SimulationWeaponCatalog([]), // no real datas in the test env
         );
     }
 
     /**
      * @param array<int, ActionTypePrecondition>      $globalPreconditions
      * @param array<int, ActionConditionPrecondition> $conditionPreconditions
+     * @param array<string, object>                   $weapons
      */
-    private function simulationServiceWith(array $globalPreconditions = [], array $conditionPreconditions = []): ActionSimulationService
+    private function simulationServiceWith(array $globalPreconditions = [], array $conditionPreconditions = [], array $weapons = []): ActionSimulationService
     {
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getRepository')->willReturnCallback(function (string $class) use ($globalPreconditions, $conditionPreconditions): EntityRepository {
@@ -101,6 +105,7 @@ class ActionSimulationServiceTest extends TestCase
             typeInstructionResolver: new ActionTypeInstructionResolver($em),
             preconditionResolver: new ActionTypePreconditionResolver($em),
             conditionPreconditionResolver: new ConditionPreconditionResolver($em),
+            weaponCatalog: new SimulationWeaponCatalog($weapons),
         );
     }
 
@@ -159,6 +164,22 @@ class ActionSimulationServiceTest extends TestCase
         $results = $this->simulationServiceWith(globalPreconditions: [$globalPlan])->simulate($action, $input);
 
         $this->assertTrue($results->isBlocked());
+    }
+
+    public function testARealWeaponWithSpellMalusFiresTheAntiSpellPrecondition(): void
+    {
+        $action = $this->meleeWith($this->condition('SpellCompute', ['actorRollType' => 'cc', 'targetRollType' => 'cc']));
+        // gladius is a real datas weapon with spellMalus => AntiSpell blocks.
+        $input = new SimulationInput(actorCaracs: ['cc' => 10], targetCaracs: ['cc' => 1], actorWeapon: 'gladius');
+
+        $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
+            ->setPreconditionType('AntiSpell')->setOrderIndex(0);
+        $gladius = ['gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius', 'spellMalus' => 1]];
+
+        $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $gladius)->simulate($action, $input);
+
+        $this->assertTrue($results->isBlocked());
+        $this->assertStringContainsString('magie', $this->failureText($results));
     }
 
     public function testTheBerserkToggleShortCircuitsACompute(): void

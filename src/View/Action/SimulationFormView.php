@@ -5,6 +5,7 @@ namespace App\View\Action;
 use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\SimulationField;
 use App\Entity\Action;
+use App\Service\Action\SimulationWeaponCatalog;
 
 /**
  * Renders the simulate panel's "hypothetical state" form: the action-derived
@@ -14,10 +15,12 @@ use App\Entity\Action;
 final class SimulationFormView
 {
     private OptionCatalog $catalog;
+    private SimulationWeaponCatalog $weapons;
 
-    public function __construct(?OptionCatalog $catalog = null)
+    public function __construct(?OptionCatalog $catalog = null, ?SimulationWeaponCatalog $weapons = null)
     {
         $this->catalog = $catalog ?? new OptionCatalog();
+        $this->weapons = $weapons ?? new SimulationWeaponCatalog();
     }
 
     /**
@@ -110,7 +113,7 @@ final class SimulationFormView
             $name = $field->side . '_weapon';
             $selected = (string) ($posted[$name] ?? $field->default ?? '');
 
-            return $this->group($this->shortLabel($field->label), $this->select($name, ['' => '—'] + $this->catalog->weaponTypes(), $selected));
+            return $this->group($this->shortLabel($field->label), $this->weaponSelect($name, $selected));
         }
 
         $group = $field->side . '_' . $field->kind;
@@ -165,6 +168,26 @@ final class SimulationFormView
         foreach ($this->catalog->passives() as $value => $label) {
             $isSelected = in_array((string) $value, $selected, true) ? ' selected' : '';
             $html .= '<option value="' . $this->esc($value) . '"' . $isSelected . '>' . $this->esc($label) . '</option>';
+        }
+
+        return $html . '</select>';
+    }
+
+    /**
+     * Real weapons grouped by subtype (the subtype as the optgroup label, so the
+     * type still guides the choice) — value is the weapon name.
+     */
+    private function weaponSelect(string $name, string $selected): string
+    {
+        $html = '<select class="form-control" name="' . $this->esc($name) . '">'
+            . '<option value=""' . ($selected === '' ? ' selected' : '') . '>— (mains nues)</option>';
+        foreach ($this->weapons->groupedBySubtype() as $subtype => $weapons) {
+            $html .= '<optgroup label="' . $this->esc($subtype) . '">';
+            foreach ($weapons as $value => $label) {
+                $isSelected = ((string) $value === $selected) ? ' selected' : '';
+                $html .= '<option value="' . $this->esc($value) . '"' . $isSelected . '>' . $this->esc($label) . '</option>';
+            }
+            $html .= '</optgroup>';
         }
 
         return $html . '</select>';

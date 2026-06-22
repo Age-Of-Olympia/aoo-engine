@@ -24,17 +24,20 @@ final class ActionSimulationService
     private ?ActionTypeInstructionResolver $typeInstructionResolver;
     private ?ActionTypePreconditionResolver $preconditionResolver;
     private ?ConditionPreconditionResolver $conditionPreconditionResolver;
+    private ?SimulationWeaponCatalog $weaponCatalog;
 
     public function __construct(
         ?ActionPassiveService $passiveService = null,
         ?ActionTypeInstructionResolver $typeInstructionResolver = null,
         ?ActionTypePreconditionResolver $preconditionResolver = null,
         ?ConditionPreconditionResolver $conditionPreconditionResolver = null,
+        ?SimulationWeaponCatalog $weaponCatalog = null,
     ) {
         $this->passiveService = $passiveService;
         $this->typeInstructionResolver = $typeInstructionResolver;
         $this->preconditionResolver = $preconditionResolver;
         $this->conditionPreconditionResolver = $conditionPreconditionResolver;
+        $this->weaponCatalog = $weaponCatalog;
     }
 
     /**
@@ -172,14 +175,26 @@ final class ActionSimulationService
         return $resolved;
     }
 
-    private function emplacements(?string $weaponType): object
+    private function emplacements(?string $weaponName): object
     {
-        // A real player is never bare-handed: unarmed means the "Poing" (fist),
-        // which the object-break path treats as unbreakable.
-        $weapon = ($weaponType === null || $weaponType === '')
-            ? new SimulatedItem('', 'Poing')
-            : new SimulatedItem($weaponType, ucfirst($weaponType));
+        if ($weaponName === null || $weaponName === '') {
+            // A real player is never bare-handed: unarmed means the "Poing" (fist),
+            // which the object-break path treats as unbreakable.
+            $weapon = new SimulatedItem('', 'Poing');
+        } elseif ($this->weaponCatalog()->has($weaponName)) {
+            // A real weapon: carry its data (spellMalus/subtype/…) so the
+            // weapon-dependent conditions (AntiSpell, Dodge) read real values.
+            $weapon = SimulatedItem::fromData($this->weaponCatalog()->dataFor($weaponName));
+        } else {
+            // Legacy: a bare subtype string (melee/tir/…).
+            $weapon = new SimulatedItem($weaponName, ucfirst($weaponName));
+        }
 
         return (object) ['main1' => $weapon];
+    }
+
+    private function weaponCatalog(): SimulationWeaponCatalog
+    {
+        return $this->weaponCatalog ??= new SimulationWeaponCatalog();
     }
 }

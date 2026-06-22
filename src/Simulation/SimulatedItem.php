@@ -20,6 +20,28 @@ class SimulatedItem extends Item
         $this->row = (object) ['name' => $name, 'enchanted' => $enchanted];
     }
 
+    /**
+     * Build from a real item's data (a datas/items entry) so the combat code
+     * reads the same fields it would for the equipped item — notably spellMalus
+     * (AntiSpell) and subtype (Dodge). Keeps the base shape and overlays
+     * everything the item defines.
+     *
+     * @param object|array<string, mixed> $data
+     */
+    public static function fromData(object|array $data): self
+    {
+        $data = (object) $data;
+        $item = new self((string) ($data->subtype ?? ''), (string) ($data->name ?? ''), (bool) ($data->enchanted ?? false));
+        foreach ((array) $data as $key => $value) {
+            $item->data->{$key} = $value;
+        }
+        if (!isset($item->data->addEffects)) {
+            $item->data->addEffects = [];
+        }
+
+        return $item;
+    }
+
     public function get_data()
     {
         return $this->data;
