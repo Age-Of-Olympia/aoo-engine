@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Service\ImportExport;
+namespace Tests\Action\ImportExport;
 
 use App\Action\MeleeAction;
 use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
@@ -97,6 +97,24 @@ class ActionExporterTest extends TestCase
             ],
             $payload['outcomes']
         );
+    }
+
+    public function testExportsNullForUninitializedScalarsFromLegacyNullColumns(): void
+    {
+        // Mirrors real rows (e.g. the "distance" action) where actions.text is
+        // NULL despite the NOT NULL schema, leaving the typed property unset.
+        $action = new MeleeAction();
+        $action->setName('distance');
+        $action->setIcon('ra-arrow-cluster');
+        $action->setDisplayName('Attaquer');
+        $action->setLevel(1);
+        // text deliberately never set — getText() would throw.
+
+        $payload = (new ActionExporter())->toArray($action);
+
+        $this->assertNull($payload['text']);
+        $this->assertSame('distance', $payload['name']);
+        $this->assertSame('Attaquer', $payload['displayName']);
     }
 
     public function testRejectsNonActionEntities(): void

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\View\Action;
+namespace Tests\Action\ImportExport;
 
 use App\View\Action\ExportButtonView;
 use PHPUnit\Framework\Attributes\Group;

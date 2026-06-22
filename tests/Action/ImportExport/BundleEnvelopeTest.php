@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Service\ImportExport;
+namespace Tests\Action\ImportExport;
 
 use App\Service\ImportExport\BundleEnvelope;
 use DateTimeImmutable;

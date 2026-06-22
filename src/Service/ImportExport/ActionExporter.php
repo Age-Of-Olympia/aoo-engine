@@ -12,6 +12,7 @@ use App\Service\Action\ActionCatalogService;
 use Doctrine\Persistence\Proxy;
 use InvalidArgumentException;
 use ReflectionClass;
+use ReflectionProperty;
 
 /**
  * Exports {@see Action} entities (with their conditions, outcomes and outcome
@@ -57,21 +58,39 @@ final class ActionExporter implements ObjectExporter
             throw new InvalidArgumentException('ActionExporter can only export Action entities.');
         }
 
+        // Read scalars off the property, not the getter: legacy rows have NULL in
+        // columns the schema marks NOT NULL (e.g. actions.text), which leaves the
+        // typed property uninitialized — the getter would then throw. A NULL in the
+        // payload faithfully records "no value" instead of crashing the export.
         return [
-            'name' => $entity->getName(),
+            'name' => $this->scalar($entity, 'name'),
             'type' => self::discriminatorType($entity),
-            'icon' => $entity->getIcon(),
-            'displayName' => $entity->getDisplayName(),
-            'text' => $entity->getText(),
-            'level' => $entity->getLevel(),
-            'race' => $entity->getRace(),
-            'category' => $entity->getCategory(),
-            'cost' => $entity->getCost(),
-            'prerequisites' => $entity->getPrerequisites(),
+            'icon' => $this->scalar($entity, 'icon'),
+            'displayName' => $this->scalar($entity, 'displayName'),
+            'text' => $this->scalar($entity, 'text'),
+            'level' => $this->scalar($entity, 'level'),
+            'race' => $this->scalar($entity, 'race'),
+            'category' => $this->scalar($entity, 'category'),
+            'cost' => $this->scalar($entity, 'cost'),
+            'prerequisites' => $this->scalar($entity, 'prerequisites'),
             'races' => $this->raceNames($entity),
             'conditions' => $this->conditions($entity),
             'outcomes' => $this->outcomes($entity),
         ];
+    }
+
+    /**
+     * Reads a base-{@see Action} scalar property, returning null when the typed
+     * property is uninitialized (NULL in a NOT NULL column on a legacy row).
+     */
+    private function scalar(Action $action, string $property): string|int|null
+    {
+        $reflection = new ReflectionProperty(Action::class, $property);
+
+        /** @var string|int|null $value */
+        $value = $reflection->isInitialized($action) ? $reflection->getValue($action) : null;
+
+        return $value;
     }
 
     /**
