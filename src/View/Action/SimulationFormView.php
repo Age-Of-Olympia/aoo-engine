@@ -6,6 +6,7 @@ use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\SimulationField;
 use App\Entity\Action;
 use App\Service\Action\ActionTargeting;
+use App\Service\Action\EnergieRule;
 use App\Service\Action\SimulationWeaponCatalog;
 
 /**
@@ -118,10 +119,15 @@ final class SimulationFormView
      */
     private function sidePanel(string $title, string $side, array $fields, array $posted, bool $disabled = false): string
     {
-        // Rank is always shown: it shifts the XP reward (actor rank − target rank),
-        // so the user can see its influence on any action that grants XP.
+        // Rank and energie are always shown: rank shifts the XP reward (actor rank
+        // − target rank), and energie adds XP bonuses — both per fighter, so their
+        // influence on XP is visible. Energie defaults to the real max for this
+        // fighter's action points (ENERGIE_CST − a), not a flat value.
         $rank = (int) ($posted[$side . '_rank'] ?? 1);
-        $caracs = $this->group('Rang', '<input class="form-control" type="number" min="1" name="' . $side . '_rank" value="' . $rank . '">');
+        $actionPoints = (int) ($posted[$side . '_remaining']['a'] ?? EnergieRule::DEFAULT_ACTION_POINTS);
+        $energie = (int) ($posted[$side . '_energie'] ?? EnergieRule::maxFor($actionPoints));
+        $caracs = $this->group('Rang', '<input class="form-control" type="number" min="1" name="' . $side . '_rank" value="' . $rank . '">')
+            . $this->group('Énergie', '<input class="form-control" type="number" min="0" name="' . $side . '_energie" value="' . $energie . '">');
         foreach ($fields as $field) {
             if ($field->kind === SimulationField::KIND_WEAPON) {
                 continue; // the weapon is rendered inside the equipment block
@@ -225,7 +231,8 @@ final class SimulationFormView
         }
 
         $group = $field->side . '_' . $field->kind;
-        $default = $field->kind === SimulationField::KIND_REMAINING ? 6 : 10;
+        // 3 action points is the common case; 6 is rare.
+        $default = $field->kind === SimulationField::KIND_REMAINING ? EnergieRule::DEFAULT_ACTION_POINTS : 10;
         $value = (int) ($posted[$group][$field->key] ?? $default);
 
         return $this->group(

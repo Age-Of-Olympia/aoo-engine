@@ -44,9 +44,37 @@ class SimulationFormViewTest extends TestCase
         $this->assertStringContainsString('name="actor_weapon"', $html);
         $this->assertStringContainsString('name="actor_equipment[tete]"', $html);
         $this->assertStringContainsString('addEffectRow', $html);
-        // Rank picker for each fighter (drives the XP reward).
+        // Rank + energie pickers for each fighter (drive the XP reward).
         $this->assertStringContainsString('name="actor_rank"', $html);
         $this->assertStringContainsString('name="target_rank"', $html);
+        $this->assertStringContainsString('name="actor_energie"', $html);
+        $this->assertStringContainsString('name="target_energie"', $html);
+    }
+
+    public function testActionPointsRemainingDefaultsToThree(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('melee');
+        $action->setDisplayName('Attaquer');
+
+        $html = $this->view()->render($action, [new SimulationField('remaining', 'actor', 'a', 'Acteur — a disponible')], []);
+
+        $this->assertStringContainsString('name="actor_remaining[a]" value="3"', $html);
+    }
+
+    public function testEnergieDefaultsToTheRealMaxForTheActionPoints(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('melee');
+        $action->setDisplayName('Attaquer');
+
+        // No action points posted -> a defaults to 3 -> energie max 7 − 3 = 4.
+        $html = $this->view()->render($action, [], []);
+        $this->assertStringContainsString('name="actor_energie" value="4"', $html);
+
+        // Posted 6 action points -> energie max 7 − 6 = 1.
+        $posted = ['actor_remaining' => ['a' => 6]];
+        $this->assertStringContainsString('name="actor_energie" value="1"', $this->view()->render($action, [], $posted));
     }
 
     public function testRepopulatesSubmittedValues(): void

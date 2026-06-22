@@ -138,6 +138,7 @@ final class ActionSimulationService
         $data = [
             'name' => $isTarget ? 'Cible' : 'Acteur',
             'rank' => $isTarget ? $input->targetRank : $input->actorRank,
+            'energie' => $isTarget ? $input->targetEnergie : $input->actorEnergie,
         ];
         if (!$isTarget && $input->actorBerserk) {
             $data['antiBerserkTime'] = time() + ONE_DAY;

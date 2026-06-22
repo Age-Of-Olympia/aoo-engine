@@ -94,6 +94,24 @@ class SimulationInputMapperTest extends TestCase
         $this->assertSame(1, $input->targetRank);
     }
 
+    public function testMapsEnergieDefaultingToTheRealMaxForTheActionPoints(): void
+    {
+        // actor_energie posted -> kept; target_energie absent -> ENERGIE_CST − a,
+        // with a defaulting to 3 (so 7 − 3 = 4).
+        $input = (new SimulationInputMapper())->fromPost(['actor_energie' => '2']);
+
+        $this->assertSame(2, $input->actorEnergie);
+        $this->assertSame(4, $input->targetEnergie);
+    }
+
+    public function testEnergieDefaultTracksThePostedActionPoints(): void
+    {
+        // 6 action points -> max energie 7 − 6 = 1.
+        $input = (new SimulationInputMapper())->fromPost(['actor_remaining' => ['a' => '6']]);
+
+        $this->assertSame(1, $input->actorEnergie);
+    }
+
     public function testRunsAreClampedToTheAllowedRange(): void
     {
         $mapper = new SimulationInputMapper();

@@ -46,6 +46,9 @@ final class SimulationInput
         // Player rank per side: the XP reward shifts by (actor rank − target rank).
         public readonly int $actorRank = 1,
         public readonly int $targetRank = 1,
+        // Energie per side: grants XP bonuses (>0 and >2), drained by actions.
+        public readonly int $actorEnergie = 100,
+        public readonly int $targetEnergie = 100,
     ) {
     }
 }

@@ -37,7 +37,23 @@ final class SimulationInputMapper
             tileTypes: $this->checkedKeys($post['tile'] ?? []),
             actorRank: max(1, (int) ($post['actor_rank'] ?? 1)),
             targetRank: max(1, (int) ($post['target_rank'] ?? 1)),
+            actorEnergie: max(0, (int) ($post['actor_energie'] ?? $this->defaultEnergie($post, 'actor'))),
+            targetEnergie: max(0, (int) ($post['target_energie'] ?? $this->defaultEnergie($post, 'target'))),
         );
+    }
+
+    /**
+     * The fighter's real max energie (ENERGIE_CST − action points) — the fallback
+     * when no energie was posted, so an API caller gets the same default the form
+     * shows.
+     *
+     * @param array<string, mixed> $post
+     */
+    private function defaultEnergie(array $post, string $side): int
+    {
+        $actionPoints = (int) ($post[$side . '_remaining']['a'] ?? EnergieRule::DEFAULT_ACTION_POINTS);
+
+        return EnergieRule::maxFor($actionPoints);
     }
 
     /**
