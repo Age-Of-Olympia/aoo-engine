@@ -25,6 +25,13 @@ final class Version20260622120000_AddActionTypeInstructions extends AbstractMigr
         return 'Create action_type_instructions (type-level inherited outcome instructions)';
     }
 
+    public function isTransactional(): bool
+    {
+        // DDL auto-commits on MySQL, so wrapping it in a transaction leaves
+        // nothing to commit at the end ("no active transaction").
+        return false;
+    }
+
     public function up(Schema $schema): void
     {
         $this->addSql(
