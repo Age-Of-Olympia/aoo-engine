@@ -4,9 +4,6 @@ namespace App\Service\ImportExport;
 
 /**
  * Imports a family of natural-key payloads (the counterpart of {@see ObjectExporter}).
- *
- * For now the contract is the dry-run {@see preview()} — the transactional
- * commit (import()) lands in a later slice once its writes are security-reviewed.
  */
 interface ObjectImporter
 {
@@ -21,4 +18,13 @@ interface ObjectImporter
      * @param array<int, mixed> $objects raw payloads from a parsed bundle
      */
     public function preview(array $objects): ImportReport;
+
+    /**
+     * Re-validate and apply the objects transactionally (all-or-nothing): if any
+     * object is rejected, nothing is written. Returns the same report shape as
+     * {@see preview()}, describing what was created/updated/rejected/warned.
+     *
+     * @param array<int, mixed> $objects raw payloads from a parsed bundle
+     */
+    public function import(array $objects): ImportReport;
 }
