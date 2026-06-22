@@ -51,6 +51,15 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('local_maps.php', 'Local Maps', '/admin/local_maps.php') . "\n                    " .
         $navLink('screenshots.php', 'Screenshots', '/admin/screenshots.php');
 
+    /* Action admin pages: the workbench, the per-type defaults editor and the list. */
+    $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php'];
+    $actionsActive = in_array($currentPage, $actionPages, true);
+    $actionsGroupClass = $actionsActive ? ' nav-group-open' : '';
+    $actionsSubLinks =
+        $navLink('action-workbench.php', 'Workbench', '/admin/action-workbench.php') . "\n                    " .
+        $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
+        $navLink('actions.php', 'List', '/admin/actions.php');
+
     $navigation =
         $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .
         "<div class=\"nav-group{$tutorialGroupClass}\">\n                " .
@@ -66,7 +75,12 @@ function admin_layout($title, $content, array $assets = []) {
         "    </div>\n                " .
         "</div>\n                " .
         $navLink('upload_image.php', 'Upload Images', '/admin/upload_image.php') . "\n                " .
-        $navLink('action-workbench.php', 'Actions', '/admin/action-workbench.php') . "\n                " .
+        "<div class=\"nav-group{$actionsGroupClass}\">\n                " .
+        "    <span class=\"nav-group-title\">Actions</span>\n                " .
+        "    <div class=\"nav-group-children\">\n                    " .
+        $actionsSubLinks . "\n                " .
+        "    </div>\n                " .
+        "</div>\n                " .
         "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 
