@@ -3,13 +3,18 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
+use App\View\Action\ExportButtonView;
 
 $catalog = new ActionCatalogService();
 $actions = $catalog->listActions();
+$exportButton = new ExportButtonView();
 
 ob_start();
 ?>
-<h1>Actions</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Actions</h1>
+    <?= $exportButton->all() ?>
+</div>
 <p class="text-muted mb-3"><?= count($actions) ?> action(s)</p>
 
 <table class="table table-striped table-hover">
@@ -35,7 +40,10 @@ ob_start();
                 <td><?= e($action->getCategory()) ?></td>
                 <td><?= $action->getConditions()->count() ?></td>
                 <td><?= $action->getOutcomes()->count() ?></td>
-                <td><a class="btn btn-sm btn-outline-primary" href="/admin/action-workbench.php?id=<?= (int) $action->getId() ?>">Edit</a></td>
+                <td>
+                    <a class="btn btn-sm btn-outline-primary" href="/admin/action-workbench.php?id=<?= (int) $action->getId() ?>">Edit</a>
+                    <?= $exportButton->single((int) $action->getId()) ?>
+                </td>
             </tr>
         <?php endforeach; ?>
     </tbody>

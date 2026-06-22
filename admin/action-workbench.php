@@ -17,6 +17,7 @@ use App\Service\OutcomeInstructionService;
 use App\View\Action\AutomaticOutcomesView;
 use App\View\Action\ConditionEditorView;
 use App\View\Action\DeleteActionFormView;
+use App\View\Action\ExportButtonView;
 use App\View\Action\NewActionFormView;
 use App\View\Action\OutcomeEditorView;
 use App\View\Action\SimulationPanelView;
@@ -151,7 +152,8 @@ if ($action === null) {
     echo '<p class="wb-muted"><a href="/admin/action-type-defaults.php">Gérer les défauts par type d\'action →</a></p>';
 
     echo $renderer->traitDatalist();
-    echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>';
+    echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button>'
+        . (new ExportButtonView())->single((int) $action->getId()) . '</div>';
     echo '</form>';
 
     echo (new DeleteActionFormView())->render((int) $action->getId(), $csrf->renderTokenField());
