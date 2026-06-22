@@ -55,6 +55,41 @@ class ActionSaveServiceTest extends TestCase
         $this->assertSame(['a' => 1, 'pm' => 8], $condition->getParameters());
     }
 
+    public function testSavesEachOutcomesApplyToSelfFlag(): void
+    {
+        $toSelf = new ActionOutcome();
+        $this->setId($toSelf, ActionOutcome::class, 3);     // currently target -> set self
+        $toTarget = (new ActionOutcome())->setApplyToSelf(true);
+        $this->setId($toTarget, ActionOutcome::class, 4);    // currently self -> set target
+
+        $action = $this->createMock(Action::class);
+        $action->method('getConditions')->willReturn(new ArrayCollection());
+        $action->method('getOutcomes')->willReturn(new ArrayCollection([$toSelf, $toTarget]));
+
+        $service = new ActionSaveService($this->entityManagerReturning($action), null, null, $this->createMock(OutcomeInstructionService::class));
+
+        $service->saveOutcomeTargets(1, [3 => '1', 4 => '0']);
+
+        $this->assertTrue($toSelf->getApplyToSelf());
+        $this->assertFalse($toTarget->getApplyToSelf());
+    }
+
+    public function testSaveOutcomeTargetsLeavesOutcomesAbsentFromThePayloadUntouched(): void
+    {
+        $outcome = (new ActionOutcome())->setApplyToSelf(true);
+        $this->setId($outcome, ActionOutcome::class, 9);
+
+        $action = $this->createMock(Action::class);
+        $action->method('getConditions')->willReturn(new ArrayCollection());
+        $action->method('getOutcomes')->willReturn(new ArrayCollection([$outcome]));
+
+        $service = new ActionSaveService($this->entityManagerReturning($action), null, null, $this->createMock(OutcomeInstructionService::class));
+
+        $service->saveOutcomeTargets(1, []);
+
+        $this->assertTrue($outcome->getApplyToSelf());
+    }
+
     public function testApplyStatusRawKeyStaysFirstSoTheEffectResolves(): void
     {
         // ApplyStatus keys its effect off array_key_first(); a typed save must keep

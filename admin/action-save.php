@@ -28,12 +28,14 @@ try {
     $instructionParams = is_array($_POST['inst'] ?? null) ? $_POST['inst'] : [];
     $conditionRaw = is_array($_POST['cond_raw'] ?? null) ? $_POST['cond_raw'] : [];
     $instructionRaw = is_array($_POST['inst_raw'] ?? null) ? $_POST['inst_raw'] : [];
+    $outcomeSelf = is_array($_POST['outcome_self'] ?? null) ? $_POST['outcome_self'] : [];
 
     $saveService = new ActionSaveService();
     if (array_key_exists('icon', $_POST)) {
         $saveService->saveIcon($actionId, (string) $_POST['icon']);
     }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
+    $saveService->saveOutcomeTargets($actionId, $outcomeSelf);
 
     setFlash('success', 'Paramètres enregistrés.');
     $csrf->regenerateToken();

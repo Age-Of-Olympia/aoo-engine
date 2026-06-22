@@ -88,6 +88,39 @@ final class ActionSaveService
     }
 
     /**
+     * Set each outcome's apply_to_self flag (who it applies to: the actor when
+     * true, otherwise the target). Drives the action's derived targeting scope
+     * (see App\Service\Action\ActionTargeting). Outcomes absent from the payload
+     * are left untouched; flushes only when something changed.
+     *
+     * @param array<int|string, mixed> $outcomeSelf outcomeId => "0"|"1"
+     */
+    public function saveOutcomeTargets(int $actionId, array $outcomeSelf): void
+    {
+        $action = $this->entityManager->find(Action::class, $actionId);
+        if ($action === null) {
+            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
+        }
+
+        $changed = false;
+        foreach ($action->getOutcomes() as $outcome) {
+            $id = (int) $outcome->getId();
+            if (!array_key_exists($id, $outcomeSelf)) {
+                continue;
+            }
+            $applyToSelf = (bool) (int) $outcomeSelf[$id];
+            if ($applyToSelf !== $outcome->getApplyToSelf()) {
+                $outcome->setApplyToSelf($applyToSelf);
+                $changed = true;
+            }
+        }
+
+        if ($changed) {
+            $this->entityManager->flush();
+        }
+    }
+
+    /**
      * Set an action's display icon (an RPG-Awesome class such as
      * ra-crossed-swords, stored without the leading "ra-" requirement — the
      * value is taken verbatim). A no-op when the icon is unchanged.

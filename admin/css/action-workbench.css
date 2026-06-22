@@ -64,7 +64,8 @@
 /* Pack condition/outcome blocks into responsive columns so they sit side by side. */
 .wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; align-items: start; }
 .wb-block { border: 1px solid #e3e6ea; border-radius: 8px; margin-bottom: 0; }
-.wb-block-head { background: #f6f8fa; padding: 7px 11px; border-bottom: 1px solid #e3e6ea; font-weight: 600; font-size: 13px; border-radius: 8px 8px 0 0; color: #2c3e50; }
+.wb-block-head { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; background: #f6f8fa; padding: 7px 28px 7px 11px; border-bottom: 1px solid #e3e6ea; font-weight: 600; font-size: 13px; border-radius: 8px 8px 0 0; color: #2c3e50; }
+.wb-outcome-target { font-size: 11px; font-weight: 400; padding: 1px 4px; border: 1px solid #cdd6dd; border-radius: 10px; background: #eef6fb; color: #2e6da4; }
 .wb-block-body { padding: 9px 11px; display: grid; grid-template-columns: 1fr; gap: 4px; }
 
 /* Compact single-line fields (label + control on one row) everywhere. */
@@ -75,7 +76,7 @@
 .wb .form-group > select.form-control { height: 28px; }
 .wb select[multiple].form-control { height: 58px; flex: 1 1 auto; }
 .wb .form-check { margin: 0 0 4px; }
-.wb-inst-name { grid-column: 1 / -1; font-weight: 600; font-size: 12px; color: #4a90e2; margin-top: 2px; }
+.wb-inst-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; color: #4a90e2; margin-top: 2px; }
 .wb-raw { grid-column: 1 / -1; font-size: 12px; color: #8a97a3; }
 .wb-raw code { word-break: break-all; }
 
@@ -144,8 +145,12 @@
 .wb-create-row .form-control { min-width: 0; }
 
 /* Add/remove condition controls in the Configurer. */
-.wb-remove-btn { float: right; background: none; border: none; color: #c0392b; font-size: 16px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.wb-remove-btn { background: none; border: none; color: #c0392b; font-size: 16px; line-height: 1; cursor: pointer; padding: 0 2px; }
 .wb-remove-btn:hover { color: #e74c3c; }
+/* In a header the cross is pinned top-right so a wrapping title never pushes it
+   down; in an instruction row it just sits at the end of the flex line. */
+.wb-block-head .wb-remove-btn { position: absolute; top: 6px; right: 8px; }
+.wb-inst-name .wb-remove-btn { margin-left: auto; }
 .wb-add { display: flex; gap: 6px; margin: 8px 0 4px; }
 .wb-add select.form-control { flex: 1; font-size: 13px; height: 30px; }
 

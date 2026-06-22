@@ -20,6 +20,20 @@ final class OutcomeEditorView
             . '</div>';
     }
 
+    /**
+     * The "applies to" picker for an outcome — the actor (sur soi) or the target
+     * (sur la cible). Rendered inside the Configurer save form (name
+     * outcome_self[<id>]) so it saves with everything else; ActionSaveService
+     * persists it and it drives the action's derived targeting scope.
+     */
+    public function targetToggle(int $outcomeId, bool $applyToSelf): string
+    {
+        return '<select class="wb-outcome-target" name="outcome_self[' . $outcomeId . ']" title="Sur qui s\'applique cet outcome">'
+            . '<option value="0"' . ($applyToSelf ? '' : ' selected') . '>sur la cible</option>'
+            . '<option value="1"' . ($applyToSelf ? ' selected' : '') . '>sur soi</option>'
+            . '</select>';
+    }
+
     public function removeOutcomeButton(int $outcomeId): string
     {
         return '<button type="submit" class="wb-remove-btn" name="outcome_id" value="' . $outcomeId . '"'
