@@ -73,7 +73,9 @@ final class ActionTypeInstructionResolver
 
         /** @var OutcomeInstruction $instruction */
         $instruction = new $class();
-        $instruction->setParameters($config->getParameters() ?? []);
+        // Pass params through as-is (incl. null) so a code automatic with no
+        // params and its migrated type-level row behave identically.
+        $instruction->setParameters($config->getParameters());
 
         return $instruction;
     }
