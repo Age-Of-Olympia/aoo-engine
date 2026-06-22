@@ -42,6 +42,23 @@ final class ActionTypeInstructionEditService
             ->findBy(['typeKey' => $typeKey], ['orderIndex' => 'ASC']);
     }
 
+    /**
+     * How many type-level instructions each type owns directly (for the tree
+     * rail's per-node badges).
+     *
+     * @return array<string, int> typeKey => count
+     */
+    public function countsByType(): array
+    {
+        $counts = [];
+        foreach ($this->entityManager->getRepository(ActionTypeInstruction::class)->findAll() as $instruction) {
+            $key = $instruction->getTypeKey();
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+        }
+
+        return $counts;
+    }
+
     public function addInstruction(string $typeKey, string $instructionType): ActionTypeInstruction
     {
         if (!isset($this->registry->assignableTypes()[$typeKey])) {

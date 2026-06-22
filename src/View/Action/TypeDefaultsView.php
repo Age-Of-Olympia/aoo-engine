@@ -32,24 +32,17 @@ final class TypeDefaultsView
     }
 
     /**
-     * @param array<string, string>             $assignableTypes  type key => label
+     * @param string                            $treeRail         pre-rendered ActionTypeTreeView rail
      * @param array<int, ActionTypeInstruction> $instructions
      * @param array<int, string>                $instructionTypes available instruction types
      */
     public function render(
         string $selectedType,
-        array $assignableTypes,
+        string $treeRail,
         array $instructions,
         array $instructionTypes,
         string $csrfTokenField,
     ): string {
-        $tabs = '';
-        foreach ($assignableTypes as $key => $label) {
-            $active = $key === $selectedType ? ' wb-item--active' : '';
-            $tabs .= '<a class="wb-item' . $active . '" href="/admin/action-type-defaults.php?type=' . $this->esc($key) . '">'
-                . $this->esc($label) . '</a>';
-        }
-
         $blocks = '';
         foreach ($instructions as $instruction) {
             $type = $instruction->getInstructionType();
@@ -84,7 +77,7 @@ final class TypeDefaultsView
             . '</form>';
 
         return '<div class="wb"><div class="wb-col"><div class="wb-col-head">Types d\'action</div>'
-            . '<div class="wb-col-body"><div class="wb-list">' . $tabs . '</div></div></div>'
+            . '<div class="wb-col-body">' . $treeRail . '</div></div>'
             . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $form . '</div></div></div>';
     }
 

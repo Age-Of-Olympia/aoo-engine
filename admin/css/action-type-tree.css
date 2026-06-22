@@ -1,0 +1,91 @@
+/* Action-type inheritance tree rail (type-defaults + action list). */
+.tt-tree,
+.tt-children {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tt-children {
+    margin-left: 9px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.tt-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 0;
+}
+
+.tt-toggle {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    color: #888;
+    font-size: 11px;
+    transition: transform 0.1s ease;
+}
+
+.tt-toggle--empty {
+    cursor: default;
+    visibility: hidden;
+}
+
+.tt-node.tt-collapsed > .tt-row > .tt-toggle {
+    transform: rotate(-90deg);
+}
+
+.tt-node.tt-collapsed > .tt-children {
+    display: none;
+}
+
+.tt-link {
+    flex: 1 1 auto;
+    text-decoration: none;
+    color: inherit;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tt-link:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.tt-link--active {
+    background: #2e7d46;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Abstract grouping types (attack, technique) read as categories, not leaves. */
+.tt-node--abstract > .tt-row > .tt-link {
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.tt-badge {
+    flex: 0 0 auto;
+    min-width: 18px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 16px;
+    padding: 0 6px;
+    border-radius: 9px;
+    background: #e4e7ea;
+    color: #333;
+}
+
+.tt-badge--zero {
+    opacity: 0.35;
+}
