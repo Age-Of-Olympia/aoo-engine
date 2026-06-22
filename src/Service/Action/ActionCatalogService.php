@@ -29,4 +29,12 @@ final class ActionCatalogService
     {
         return $this->entityManager->find(Action::class, $id);
     }
+
+    /**
+     * Look up an action by its natural key (name). Identity used by import.
+     */
+    public function findByName(string $name): ?Action
+    {
+        return $this->entityManager->getRepository(Action::class)->findOneBy(['name' => $name]);
+    }
 }
