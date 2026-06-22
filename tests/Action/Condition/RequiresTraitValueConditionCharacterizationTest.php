@@ -94,6 +94,25 @@ class RequiresTraitValueConditionCharacterizationTest extends TestCase
         $this->assertSame([], $charges);
     }
 
+    public function testMarkerParamWithNonNumericValueCostsNothing(): void
+    {
+        // {"repos":"effets"} is a marker, not a payable cost: it must not gate the
+        // action nor warn on a missing CARACS entry (regression).
+        $actor = new PlayerMock(1, 'Actor');
+
+        $this->assertTrue($this->check($actor, $this->condition(['repos' => 'effets']))->isSuccess());
+
+        $charges = (new RequiresTraitValueCondition())->applyCosts($actor, null, $this->condition(['repos' => 'effets']));
+        $this->assertSame([], $charges);
+    }
+
+    public function testSimulationInputsSkipsMarkerParams(): void
+    {
+        $fields = RequiresTraitValueCondition::simulationInputs(['a' => 1, 'repos' => 'effets', 'energie' => 'both']);
+
+        $this->assertSame(['a'], array_map(static fn ($f) => $f->key, $fields));
+    }
+
     public function testApplyCostsChargesAFlatTrait(): void
     {
         $actor = new PlayerMock(1, 'Actor');

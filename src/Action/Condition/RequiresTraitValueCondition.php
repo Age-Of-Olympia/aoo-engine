@@ -20,7 +20,13 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
     public static function simulationInputs(array $params): array
     {
         $fields = [];
-        foreach (array_keys($params) as $trait) {
+        foreach ($params as $trait => $value) {
+            // Only real carac costs get a "disponible" field; marker params whose
+            // value is a non-numeric string (e.g. energie:"both", repos:"effets")
+            // aren't payable costs, so they get no input.
+            if (!is_numeric($value) && !is_array($value)) {
+                continue;
+            }
             $fields[] = new SimulationField(SimulationField::KIND_REMAINING, SimulationField::SIDE_ACTOR, (string) $trait, 'Acteur — ' . $trait . ' disponible');
         }
 
@@ -70,13 +76,17 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
             }   
             else if(is_array($value)){
                 if ($actor->getRemaining($key) < $this->costForActorPassive($actor, $value)) {
-                    array_push($details, "Pas assez de ".CARACS[$key]);
+                    array_push($details, "Pas assez de ".(CARACS[$key] ?? $key));
                     $costIsAffordable = false;
                 }
-            } else if ($actor->getRemaining($key) < $value) {
-                array_push($details, "Pas assez de ".CARACS[$key]);
-                $costIsAffordable = false;
+            } else if (is_numeric($value)) {
+                if ($actor->getRemaining($key) < $value) {
+                    array_push($details, "Pas assez de ".(CARACS[$key] ?? $key));
+                    $costIsAffordable = false;
+                }
             }
+            // A non-numeric value (e.g. {"repos":"effets"}) is a marker, not a
+            // payable cost — it doesn't gate the action here.
         }
         
         if (!$costIsAffordable) {
@@ -116,12 +126,15 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
             if(is_array($value)){
                 $cost = $this->costForActorPassive($actor, $value);
                 $actor->putBonus([$key => -$cost]);
-                $text = "Vous avez dépensé " . $cost . " " . CARACS[$key].".";
+                $text = "Vous avez dépensé " . $cost . " " . (CARACS[$key] ?? $key).".";
                 array_push($result, $text);
                 break;
             }
+            if (!is_numeric($value)) {
+                continue; // marker (e.g. {"repos":"effets"}), nothing to spend
+            }
             $actor->putBonus([$key => -$value]);
-            $text = "Vous avez dépensé " . $value . " " . CARACS[$key].".";
+            $text = "Vous avez dépensé " . $value . " " . (CARACS[$key] ?? $key).".";
             array_push($result, $text);
         }
         return $result;
