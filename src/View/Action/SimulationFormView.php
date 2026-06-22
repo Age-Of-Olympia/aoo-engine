@@ -67,20 +67,23 @@ final class SimulationFormView
     }
 
     /**
-     * The Environnement section: the shared distance plus the toggles that
-     * exercise the preconditions — the Enfers plane (the global Plan gate) and an
+     * The Environnement section: the distance (always shown — it positions the
+     * two fighters, so it matters to every action) plus the toggles that exercise
+     * the preconditions — the Enfers plane (the global Plan gate) and an
      * anti-Berserk window (the NoBerserk gate on compute conditions).
      *
-     * @param string               $distance pre-rendered distance field
+     * @param string               $extra any non-distance shared fields (rare)
      * @param array<string, mixed> $posted
      */
-    private function environment(string $distance, array $posted): string
+    private function environment(string $extra, array $posted): string
     {
+        $distance = (int) ($posted['distance'] ?? 1);
         $enfers = !empty($posted['enfers']) ? ' checked' : '';
         $berserk = !empty($posted['actor_berserk']) ? ' checked' : '';
 
         return $this->sub('Environnement', '<div class="sim-env">'
-            . $distance
+            . $this->group('Distance (cases)', '<input class="form-control" type="number" min="0" name="distance" value="' . $distance . '">')
+            . $extra
             . '<label class="sim-check"><input type="checkbox" name="enfers" value="1"' . $enfers . '> Aux Enfers</label>'
             . '<label class="sim-check"><input type="checkbox" name="actor_berserk" value="1"' . $berserk . '> Acteur berserk</label>'
             . '</div>');
@@ -129,15 +132,19 @@ final class SimulationFormView
      */
     private function context(array $sharedFields, array $posted): string
     {
-        $distance = '';
+        // Distance is rendered unconditionally by environment(); drop any
+        // duplicate a condition declared, keep the (rare) other shared fields.
+        $extra = '';
         foreach ($sharedFields as $field) {
-            $distance .= $this->fieldControl($field, $posted);
+            if ($field->kind !== SimulationField::KIND_DISTANCE) {
+                $extra .= $this->fieldControl($field, $posted);
+            }
         }
 
         $runs = max(1, min(100, (int) ($posted['runs'] ?? 1)));
 
         return '<div class="sim-context">'
-            . $this->environment($distance, $posted)
+            . $this->environment($extra, $posted)
             . '<div class="sim-run">'
             . '<div class="form-group"><label>Tirages</label>'
             . '<input class="form-control" type="number" min="1" max="100" name="runs" value="' . $runs . '"></div>'

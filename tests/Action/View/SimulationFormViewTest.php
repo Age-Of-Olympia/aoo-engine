@@ -61,6 +61,19 @@ class SimulationFormViewTest extends TestCase
         $this->assertStringContainsString('value="60"', $html);
     }
 
+    public function testDistanceIsAlwaysShownEvenWithoutADistanceCondition(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('melee');
+        $action->setDisplayName('Attaquer');
+
+        // No shared/distance field declared by the action's conditions.
+        $html = $this->view()->render($action, [new SimulationField('trait', 'actor', 'cc', 'cc')], []);
+
+        $this->assertStringContainsString('name="distance"', $html);
+        $this->assertStringContainsString('Environnement', $html);
+    }
+
     public function testRunsAreCappedAtAHundred(): void
     {
         $action = new MeleeAction();
