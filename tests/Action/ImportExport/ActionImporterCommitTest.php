@@ -101,6 +101,30 @@ class ActionImporterCommitTest extends TestCase
         $this->assertStringContainsString('Changement de type', $report->rejected()[0]['reason']);
     }
 
+    public function testAbstractActionTypeIsRejectedNotInstantiated(): void
+    {
+        $em = $this->entityManager(existing: null, knownRaces: []);
+        $em->expects($this->once())->method('rollback');
+        $em->expects($this->never())->method('commit');
+
+        $report = (new ActionImporter($em))->import([$this->fullPayload(['type' => 'attack'])]);
+
+        $this->assertStringContainsString('non instanciable', $report->rejected()[0]['reason']);
+        $this->assertSame([], $this->persisted);
+    }
+
+    public function testDuplicateNameWithinTheBatchIsRejectedAndRollsBack(): void
+    {
+        $em = $this->entityManager(existing: null, knownRaces: ['Nain']);
+        $em->expects($this->once())->method('rollback');
+        $em->expects($this->never())->method('commit');
+
+        $report = (new ActionImporter($em))->import([$this->fullPayload(), $this->fullPayload()]);
+
+        $this->assertTrue($report->hasRejections());
+        $this->assertStringContainsString('Doublon', $report->rejected()[0]['reason']);
+    }
+
     public function testRoundTripExportThenImportRebuildsTheActionFieldByField(): void
     {
         $source = $this->sampleAction();

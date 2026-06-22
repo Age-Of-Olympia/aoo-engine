@@ -15,6 +15,7 @@ use App\Service\Action\ActionParameterValidator;
 use App\Service\Action\ActionTypeRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
+use ReflectionClass;
 use ReflectionProperty;
 use Throwable;
 
@@ -63,11 +64,16 @@ final class ActionImporter implements ObjectImporter
     public function preview(array $objects): ImportReport
     {
         $report = new ImportReport();
+        $seen = [];
         foreach ($objects as $index => $object) {
             $accepted = $this->classify($report, $object, (int) $index);
-            if ($accepted !== null) {
-                $this->recordClassification($report, $accepted);
+            if ($accepted === null) {
+                continue;
             }
+            if ($this->isDuplicate($report, $seen, $accepted['name'])) {
+                continue;
+            }
+            $this->recordClassification($report, $accepted);
         }
 
         return $report;
@@ -79,9 +85,13 @@ final class ActionImporter implements ObjectImporter
         $this->entityManager->beginTransaction();
         try {
             $plans = [];
+            $seen = [];
             foreach ($objects as $index => $object) {
                 $accepted = $this->classify($report, $object, (int) $index);
                 if ($accepted === null) {
+                    continue;
+                }
+                if ($this->isDuplicate($report, $seen, $accepted['name'])) {
                     continue;
                 }
                 try {
@@ -96,6 +106,7 @@ final class ActionImporter implements ObjectImporter
             // All-or-nothing: a single rejection aborts the whole batch unwritten.
             if ($report->hasRejections()) {
                 $this->entityManager->rollback();
+                $this->entityManager->clear();
                 return $report;
             }
 
@@ -107,10 +118,31 @@ final class ActionImporter implements ObjectImporter
             $this->entityManager->commit();
         } catch (Throwable $exception) {
             $this->entityManager->rollback();
+            // Detach the scheduled-but-unflushed persists so a reused EM (long
+            // -running process) doesn't re-flush this batch on a later request.
+            $this->entityManager->clear();
             throw $exception;
         }
 
         return $report;
+    }
+
+    /**
+     * True (and records a rejection) when $name was already accepted earlier in
+     * the batch — actions.name is the natural key, so a duplicate in one bundle
+     * would create two rows / be ambiguous on re-import.
+     *
+     * @param array<string, true> $seen
+     */
+    private function isDuplicate(ImportReport $report, array &$seen, string $name): bool
+    {
+        if (isset($seen[$name])) {
+            $report->reject($name, 'Doublon : « ' . $name . " » apparaît plusieurs fois dans le lot.");
+            return true;
+        }
+        $seen[$name] = true;
+
+        return false;
     }
 
     /**
@@ -134,8 +166,15 @@ final class ActionImporter implements ObjectImporter
         }
 
         $type = is_string($object['type'] ?? null) ? $object['type'] : '';
-        if ($this->typeRegistry->classForTypeKey($type) === null) {
+        $class = $this->typeRegistry->classForTypeKey($type);
+        if ($class === null) {
             $report->reject($name, "Type d'action inconnu : « {$type} ».");
+            return null;
+        }
+        // classForTypeKey also resolves abstract grouping types (e.g. "attack");
+        // reject those cleanly instead of letting `new $class()` throw a fatal.
+        if (!(new ReflectionClass($class))->isInstantiable()) {
+            $report->reject($name, "Type d'action non instanciable : « {$type} ».");
             return null;
         }
 
