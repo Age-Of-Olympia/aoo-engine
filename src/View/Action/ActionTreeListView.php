@@ -41,22 +41,48 @@ final class ActionTreeListView
             $nodeBody[(string) $typeKey] = $rows;
         }
 
+        // Drop type branches that hold no actions anywhere beneath them, so the
+        // list shows only populated families instead of the full empty taxonomy.
+        $tree = $this->pruneEmpty($tree, $counts);
+
         return '<div class="d-flex justify-content-between align-items-center mb-3">'
             . '<h1 class="mb-0">Actions</h1>' . $this->exportButton->all() . '</div>'
             . '<p class="text-muted mb-3">' . $total . ' action(s)</p>'
             . $this->tree->render($tree, '', '', $counts, $nodeBody);
     }
 
+    /**
+     * @param array<int, ActionTypeNode> $nodes
+     * @param array<string, int>         $counts
+     * @return array<int, ActionTypeNode>
+     */
+    private function pruneEmpty(array $nodes, array $counts): array
+    {
+        $kept = [];
+        foreach ($nodes as $node) {
+            $children = $this->pruneEmpty($node->children, $counts);
+            if (($counts[$node->key] ?? 0) > 0 || $children !== []) {
+                $kept[] = new ActionTypeNode($node->key, $node->label, $node->abstract, $children);
+            }
+        }
+
+        return $kept;
+    }
+
     private function row(Action $action): string
     {
         $id = (int) $action->getId();
+        $workbench = '/admin/action-workbench.php?id=' . $id;
 
         return '<li class="tt-leaf">'
+            . '<a class="tt-leaf-main" href="' . $workbench . '" title="Éditer">'
             . '<span class="tt-leaf-name">' . $this->esc($action->getDisplayName()) . '</span>'
-            . '<span class="tt-leaf-meta"><code>' . $this->esc($action->getName()) . '</code> · niv.' . (int) $action->getLevel()
-            . ' · ' . $action->getConditions()->count() . 'c/' . $action->getOutcomes()->count() . 'o</span>'
-            . '<a class="btn btn-sm btn-outline-primary" href="/admin/action-workbench.php?id=' . $id . '">Edit</a>'
-            . $this->exportButton->single($id)
+            . '<code class="tt-leaf-slug">' . $this->esc($action->getName()) . '</code>'
+            . '</a>'
+            . '<span class="tt-chip tt-chip--lvl">niv. ' . (int) $action->getLevel() . '</span>'
+            . '<span class="tt-chip" title="conditions · outcomes">'
+            . $action->getConditions()->count() . 'c · ' . $action->getOutcomes()->count() . 'o</span>'
+            . '<span class="tt-leaf-actions">' . $this->exportButton->single($id, 'Exporter') . '</span>'
             . '</li>';
     }
 

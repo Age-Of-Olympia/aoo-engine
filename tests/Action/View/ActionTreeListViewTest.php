@@ -19,11 +19,23 @@ class ActionTreeListViewTest extends TestCase
         $html = (new ActionTreeListView())->render($this->tree(), ['melee' => [$melee]]);
 
         $this->assertStringContainsString('Attaquer', $html);
-        $this->assertStringContainsString('<code>attaquer</code>', $html);
-        $this->assertStringContainsString('niv.1', $html);
+        $this->assertStringContainsString('tt-leaf-slug">attaquer</code>', $html);
+        $this->assertStringContainsString('niv. 1', $html);
         $this->assertStringContainsString('href="/admin/action-workbench.php?id=7"', $html);
         $this->assertStringContainsString('/admin/action-export.php?id=7', $html); // single export
         $this->assertStringContainsString('/admin/action-export.php"', $html);      // export all
+    }
+
+    public function testPrunesTypeBranchesWithNoActions(): void
+    {
+        // Tree has attack→melee and rest; only melee has an action.
+        $melee = $this->action(MeleeAction::class, 1, 'a', 'A', 1);
+
+        $html = (new ActionTreeListView())->render($this->tree(), ['melee' => [$melee]]);
+
+        $this->assertStringContainsString('>Melee<', $html);
+        $this->assertStringContainsString('>Attack<', $html); // kept: has a populated descendant
+        $this->assertStringNotContainsString('>Rest<', $html); // pruned: empty
     }
 
     public function testShowsTheTotalCountAndPerTypeBadges(): void
@@ -40,7 +52,9 @@ class ActionTreeListViewTest extends TestCase
 
     public function testTypeNodesAreHeadersNotLinks(): void
     {
-        $html = (new ActionTreeListView())->render($this->tree(), []);
+        $melee = $this->action(MeleeAction::class, 1, 'a', 'A', 1);
+
+        $html = (new ActionTreeListView())->render($this->tree(), ['melee' => [$melee]]);
 
         $this->assertStringContainsString('tt-link--label', $html);
         $this->assertStringNotContainsString('action-type-defaults.php?type=', $html);

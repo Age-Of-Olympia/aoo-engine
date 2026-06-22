@@ -58,7 +58,9 @@ final class ActionTypeTreeView
 
             $badge = '<span class="tt-badge' . ($count === 0 ? ' tt-badge--zero' : '') . '">' . $count . '</span>';
 
-            $html .= '<li class="' . $liClass . '"><div class="tt-row">' . $toggle . $label . $badge . '</div>';
+            // Label nodes (empty hrefBase) are section headers, not a selector.
+            $rowClass = 'tt-row' . ($hrefBase === '' ? ' tt-row--header' : '');
+            $html .= '<li class="' . $liClass . '"><div class="' . $rowClass . '">' . $toggle . $label . $badge . '</div>';
             if ($hasChildren) {
                 $html .= '<ul class="tt-children">'
                     . $this->renderNodes($node->children, $hrefBase, $activeKey, $counts, $nodeBody)
