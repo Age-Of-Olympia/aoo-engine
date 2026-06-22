@@ -11,6 +11,7 @@ use App\Simulation\DiceLog;
 use App\Simulation\SimulatedItem;
 use App\Simulation\SimulatedPlayer;
 use App\Simulation\SimulationGuard;
+use Classes\Item;
 
 /**
  * Previews an action EXACTLY like the live game: it runs the real
@@ -205,7 +206,41 @@ final class ActionSimulationService
             }
         }
 
-        return $emplacements;
+        return $this->applyEquipLimit($emplacements, $weaponName);
+    }
+
+    /**
+     * Enforce the game's equip rule on a built loadout: at most ITEM_LIMIT real
+     * items across the normal slots (in slot order), while the ring/munition/
+     * trophee slots are kept on top of the cap. The bare-handed "Poing" is not a
+     * real equipped item, so it never counts. Uses Item::countsTowardEquipLimit
+     * so the simulator follows the exact same rule as the game.
+     */
+    private function applyEquipLimit(object $emplacements, ?string $weaponName): object
+    {
+        $weaponIsReal = $weaponName !== null && $weaponName !== '' && $this->weaponCatalog()->has($weaponName);
+        $order = defined('ITEM_EMPLACEMENT_FORMAT') ? ITEM_EMPLACEMENT_FORMAT : array_keys((array) $emplacements);
+        $limit = defined('ITEM_LIMIT') ? ITEM_LIMIT : 3;
+
+        $kept = (object) [];
+        $normalCount = 0;
+        foreach ($order as $slot) {
+            if (!isset($emplacements->{$slot})) {
+                continue;
+            }
+            // Exempt slots (ring/munition/trophee) and the non-real main-hand
+            // (Poing/legacy type) are always kept and don't count toward the cap.
+            if (!Item::countsTowardEquipLimit($slot) || ($slot === 'main1' && !$weaponIsReal)) {
+                $kept->{$slot} = $emplacements->{$slot};
+                continue;
+            }
+            if ($normalCount < $limit) {
+                $kept->{$slot} = $emplacements->{$slot};
+                $normalCount++;
+            }
+        }
+
+        return $kept;
     }
 
     private function weaponCatalog(): SimulationWeaponCatalog

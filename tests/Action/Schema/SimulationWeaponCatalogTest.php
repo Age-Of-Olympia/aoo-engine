@@ -33,7 +33,7 @@ class SimulationWeaponCatalogTest extends TestCase
     {
         $catalog = new SimulationWeaponCatalog($this->items());
 
-        $this->assertSame(['tete' => ['casque' => 'Casque']], $catalog->defenseSlots());
+        $this->assertSame(['tete' => ['casque' => 'Casque']], $catalog->equipmentSlots());
     }
 
     public function testExposesAnItemsRealData(): void

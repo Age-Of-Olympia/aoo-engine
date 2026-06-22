@@ -37,7 +37,8 @@ class ActionSimulationServiceTest extends TestCase
             'DMG_CRIT' => 5,
             'ACTION_XP' => 5,
             'ONE_DAY' => 86400,
-            'ITEM_EMPLACEMENT_FORMAT' => ['main1', 'main2', 'tete', 'doigt', 'pieds'],
+            'ITEM_LIMIT' => 3,
+            'ITEM_EMPLACEMENT_FORMAT' => ['main1', 'main2', 'deuxmains', 'doigt', 'tete', 'pieds', 'munition', 'trophee'],
             'CARACS' => [
                 'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
                 'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
@@ -167,6 +168,46 @@ class ActionSimulationServiceTest extends TestCase
         $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $casque)->simulate($action, $input);
 
         $this->assertTrue($results->isBlocked());
+    }
+
+    public function testTheEquipLimitExemptsRingMunitionAndTrophy(): void
+    {
+        $this->assertTrue(\Classes\Item::countsTowardEquipLimit('main1'));
+        $this->assertTrue(\Classes\Item::countsTowardEquipLimit('tete'));
+        $this->assertFalse(\Classes\Item::countsTowardEquipLimit('doigt'));
+        $this->assertFalse(\Classes\Item::countsTowardEquipLimit('munition'));
+        $this->assertFalse(\Classes\Item::countsTowardEquipLimit('trophee'));
+    }
+
+    public function testEquipLimitDropsNormalItemsBeyondTheCap(): void
+    {
+        // gladius(main1) + bouclier(main2) + lame(deuxmains) = 3 normal items =
+        // the cap, so the casque (tete, 4th normal) is NOT equipped — its
+        // spellMalus must therefore NOT fire AntiSpell. BuffAction has no auto
+        // outcomes, so a successful roll touches nothing.
+        $action = new BuffAction();
+        $action->setName('sort');
+        $action->setDisplayName('Sort');
+        $action->addCondition($this->condition('SpellCompute', ['actorRollType' => 'cc', 'targetRollType' => 'cc']));
+
+        $input = new SimulationInput(
+            actorCaracs: ['cc' => 30],
+            targetCaracs: ['cc' => 1],
+            actorWeapon: 'gladius',
+            actorEquipment: ['main2' => 'bouclier', 'deuxmains' => 'lame', 'tete' => 'casque'],
+        );
+        $antiSpell = (new ActionConditionPrecondition())->setParentConditionType('SpellCompute')
+            ->setPreconditionType('AntiSpell')->setOrderIndex(0);
+        $weapons = [
+            'gladius' => (object) ['type' => 'equipement', 'emplacement' => 'main1', 'subtype' => 'melee', 'name' => 'Gladius'],
+            'bouclier' => (object) ['type' => 'equipement', 'emplacement' => 'main2', 'subtype' => 'bouclier', 'name' => 'Bouclier'],
+            'lame' => (object) ['type' => 'equipement', 'emplacement' => 'deuxmains', 'subtype' => 'melee', 'name' => 'Lame'],
+            'casque' => (object) ['type' => 'equipement', 'emplacement' => 'tete', 'subtype' => 'casque', 'name' => 'Casque', 'spellMalus' => 1],
+        ];
+
+        $results = $this->simulationServiceWith(conditionPreconditions: [$antiSpell], weapons: $weapons)->simulate($action, $input);
+
+        $this->assertStringNotContainsString('magie', $this->failureText($results));
     }
 
     public function testTheEnfersToggleBlocksTheAction(): void

@@ -53,11 +53,12 @@ final class SimulationWeaponCatalog
 
     /**
      * Non-main-hand equipment grouped by slot (emplacement), for the per-side
-     * equipment pickers: emplacement => [item name => display label].
+     * equipment pickers: emplacement => [item name => display label]. Ordered by
+     * the game's real slot order (ITEM_EMPLACEMENT_FORMAT) when available.
      *
      * @return array<string, array<string, string>>
      */
-    public function defenseSlots(): array
+    public function equipmentSlots(): array
     {
         $slots = [];
         foreach ($this->items as $name => $data) {
@@ -67,12 +68,17 @@ final class SimulationWeaponCatalog
             }
             $slots[$emplacement][$name] = (string) ($data->name ?? $name);
         }
-        ksort($slots);
-        foreach ($slots as &$items) {
-            asort($items);
+
+        $order = defined('ITEM_EMPLACEMENT_FORMAT') ? ITEM_EMPLACEMENT_FORMAT : array_keys($slots);
+        $ordered = [];
+        foreach ($order as $slot) {
+            if (isset($slots[$slot])) {
+                asort($slots[$slot]);
+                $ordered[$slot] = $slots[$slot];
+            }
         }
 
-        return $slots;
+        return $ordered;
     }
 
     public function has(string $name): bool

@@ -105,11 +105,12 @@ final class SimulationFormView
      */
     private function equipment(string $side, array $posted): string
     {
-        $slots = $this->weapons->defenseSlots();
+        $slots = $this->weapons->equipmentSlots();
         if ($slots === []) {
             return '';
         }
 
+        $limit = defined('ITEM_LIMIT') ? ITEM_LIMIT : 3;
         $selected = (array) ($posted[$side . '_equipment'] ?? []);
         $rows = '';
         foreach ($slots as $slot => $items) {
@@ -122,7 +123,9 @@ final class SimulationFormView
             $rows .= $this->group($slot, '<select class="form-control" name="' . $this->esc($name) . '">' . $options . '</select>');
         }
 
-        return '<div class="form-group"><label>Équipement</label><div class="sim-fields">' . $rows . '</div></div>';
+        return '<div class="form-group"><label>Équipement</label>'
+            . '<small class="text-muted">Max ' . $limit . ' objets équipés (l\'arme comprise) + 1 bague, 1 munition, 1 trophée.</small>'
+            . '<div class="sim-fields">' . $rows . '</div></div>';
     }
 
     private function shortLabel(string $label): string

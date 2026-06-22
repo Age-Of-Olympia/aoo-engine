@@ -601,6 +601,19 @@ class Item{
     }
 
 
+    /** Emplacements that do NOT count toward the ITEM_LIMIT equip cap. */
+    public const EQUIP_LIMIT_EXEMPT = array('trophee', 'munition', 'doigt');
+
+    /**
+     * Whether an emplacement counts toward the ITEM_LIMIT cap. A ring (doigt),
+     * a munition and a trophee are worn on top of the limit. Shared so the
+     * simulator applies the same equip rule as the game.
+     */
+    public static function countsTowardEquipLimit(string $emplacement): bool
+    {
+        return !in_array($emplacement, self::EQUIP_LIMIT_EXEMPT, true);
+    }
+
     public static function get_free_emplacement($player) : int{
 
 
@@ -609,7 +622,7 @@ class Item{
 
         foreach($values as $k=>$e){
 
-            if(in_array($e, array('trophee','munition', 'doigt'))){
+            if(!self::countsTowardEquipLimit($e)){
 
                 unset($values[$k]);
             }
