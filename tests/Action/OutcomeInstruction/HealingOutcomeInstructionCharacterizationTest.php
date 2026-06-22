@@ -4,6 +4,7 @@ namespace Tests\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Action\OutcomeInstruction\HealingOutcomeInstruction;
+use App\Action\Schema\SimulationField;
 use Classes\Player;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -18,6 +19,27 @@ class HealingOutcomeInstructionCharacterizationTest extends TestCase
         $player->data = (object) ['name' => $name];
 
         return $player;
+    }
+
+    public function testSimulationInputsExposeTheHealingTraitsPerSide(): void
+    {
+        // actorHealingTrait/bonus traits land on the actor, targetHealingTrait on
+        // the target; a fixed numeric value (no trait) gets no field.
+        $fields = HealingOutcomeInstruction::simulationInputs([
+            'actorHealingTrait' => 'agi',
+            'targetHealingTrait' => 'e',
+            'bonusHealingTrait' => '3',
+        ]);
+
+        $byKey = [];
+        foreach ($fields as $field) {
+            $byKey[$field->key] = $field->side;
+            $this->assertSame(SimulationField::KIND_TRAIT, $field->kind);
+        }
+
+        $this->assertSame(SimulationField::SIDE_ACTOR, $byKey['agi']);
+        $this->assertSame(SimulationField::SIDE_TARGET, $byKey['e']);
+        $this->assertArrayNotHasKey('3', $byKey); // fixed number, not a trait
     }
 
     public function testPvHealFloorsBaseByDivisorThenAddsBonus(): void
