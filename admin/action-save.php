@@ -29,7 +29,11 @@ try {
     $conditionRaw = is_array($_POST['cond_raw'] ?? null) ? $_POST['cond_raw'] : [];
     $instructionRaw = is_array($_POST['inst_raw'] ?? null) ? $_POST['inst_raw'] : [];
 
-    (new ActionSaveService())->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
+    $saveService = new ActionSaveService();
+    if (array_key_exists('icon', $_POST)) {
+        $saveService->saveIcon($actionId, (string) $_POST['icon']);
+    }
+    $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
 
     setFlash('success', 'Paramètres enregistrés.');
     $csrf->regenerateToken();

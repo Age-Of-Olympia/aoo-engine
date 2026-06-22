@@ -18,11 +18,36 @@
 
 .wb-search { width: 100%; padding: 7px 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; box-sizing: border-box; }
 .wb-list { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
-.wb-item { display: flex; flex-direction: column; padding: 7px 9px; border-radius: 6px; text-decoration: none; color: #2c3e50; border: 1px solid transparent; }
+.wb-item { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; text-decoration: none; color: #2c3e50; border: 1px solid transparent; }
 .wb-item:hover { background: #f3f6f9; }
 .wb-item--active { background: rgba(74,144,226,.12); border-color: rgba(74,144,226,.35); }
+.wb-item-icon { flex: 0 0 auto; width: 20px; text-align: center; font-size: 16px; color: #7a8794; }
+.wb-item--active .wb-item-icon { color: #4a90e2; }
+.wb-item-text { display: flex; flex-direction: column; min-width: 0; }
 .wb-item-name { font-weight: 600; font-size: 13px; }
 .wb-item-meta { font-size: 11px; color: #8a97a3; }
+
+/* Fold toggle: collapse the actions list to an icon rail for more sim space. */
+.wb-col-head { gap: 8px; }
+.wb-fold-toggle { flex: 0 0 auto; border: 1px solid #e0e6ea; background: #fff; color: #5d6d7e; border-radius: 6px; width: 26px; height: 24px; cursor: pointer; font-size: 11px; line-height: 1; }
+.wb-fold-toggle:hover { background: #f3f6f9; color: #2c3e50; }
+.wb--folded { grid-template-columns: 56px minmax(0, 1fr); }
+.wb--folded .wb-col--list .wb-col-head-title,
+.wb--folded .wb-col--list .wb-search,
+.wb--folded .wb-col--list .wb-create { display: none; }
+.wb--folded .wb-col--list .wb-col-head { justify-content: center; }
+.wb--folded .wb-col--list .wb-col-body { padding: 8px 6px; }
+.wb--folded .wb-item { position: relative; justify-content: center; gap: 0; padding: 8px 0; }
+.wb--folded .wb-item-icon { font-size: 18px; width: auto; }
+.wb--folded .wb-item-text { display: none; }
+/* Hover flyout reveals the name beside the icon. */
+.wb--folded .wb-item:hover .wb-item-text { display: flex; position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-left: 8px; z-index: 30; background: #2c3e50; color: #fff; padding: 6px 10px; border-radius: 6px; white-space: nowrap; box-shadow: 0 2px 10px rgba(0,0,0,.22); }
+.wb--folded .wb-item:hover .wb-item-meta { color: #cdd6df; }
+
+/* Icon field (create form + config tab): live preview + input. */
+.wb-icon-field { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.wb-icon-preview { flex: 0 0 auto; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e0e6ea; border-radius: 6px; background: #f7f9fb; color: #5d6d7e; font-size: 16px; }
+.wb-icon-input { flex: 1 1 auto; min-width: 0; }
 
 .wb-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
 .wb-chip { background: #eef2f5; color: #5d6d7e; border-radius: 10px; padding: 2px 9px; font-size: 12px; }

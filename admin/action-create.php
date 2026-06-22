@@ -23,6 +23,7 @@ try {
         (string) ($_POST['display_name'] ?? ''),
         (int) ($_POST['level'] ?? 1),
         (string) ($_POST['category'] ?? '') ?: null,
+        (string) ($_POST['icon'] ?? ''),
     );
     setFlash('success', 'Action créée.');
     $csrf->regenerateToken();

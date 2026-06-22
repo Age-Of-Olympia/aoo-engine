@@ -33,10 +33,11 @@ final class ActionCreateService
     }
 
     /**
-     * Create a new, empty action of the given STI type. icon/text are NOT NULL on
-     * the table, so they default to '' (configured later); category is optional.
+     * Create a new, empty action of the given STI type. text is NOT NULL on the
+     * table so it defaults to ''; the icon (an RPG-Awesome class, e.g.
+     * ra-crossed-swords) and category are optional.
      */
-    public function create(string $type, string $name, string $displayName, int $level, ?string $category = null): Action
+    public function create(string $type, string $name, string $displayName, int $level, ?string $category = null, string $icon = ''): Action
     {
         $map = $this->entityManager->getClassMetadata(Action::class)->discriminatorMap;
         if (!isset($map[$type])) {
@@ -54,7 +55,7 @@ final class ActionCreateService
         $action->setName($name);
         $action->setDisplayName(trim($displayName) !== '' ? trim($displayName) : $name);
         $action->setLevel($level);
-        $action->setIcon('');
+        $action->setIcon(trim($icon));
         $action->setText('');
         if ($category !== null && trim($category) !== '') {
             $action->setCategory(trim($category));

@@ -35,6 +35,25 @@ document.addEventListener('click', function (e) {
         if (row) { row.remove(); }
     }
 });
+/* Fold / unfold the actions list to an icon rail (persisted) for more space. */
+(function () {
+    var wb = document.querySelector('.wb');
+    var btn = document.getElementById('wb-fold');
+    if (!wb || !btn) { return; }
+    if (localStorage.getItem('wb-folded') === '1') { wb.classList.add('wb--folded'); }
+    btn.addEventListener('click', function () {
+        var folded = wb.classList.toggle('wb--folded');
+        localStorage.setItem('wb-folded', folded ? '1' : '0');
+    });
+})();
+/* Live preview of the icon field (create form + config tab) as you type. */
+document.addEventListener('input', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('wb-icon-input')) {
+        var field = e.target.closest('.wb-icon-field');
+        var preview = field && field.querySelector('.wb-icon-preview i');
+        if (preview) { preview.className = 'ra ' + e.target.value.trim(); }
+    }
+});
 /* Configurer / Simuler tab switching. */
 document.querySelectorAll('.wb-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {

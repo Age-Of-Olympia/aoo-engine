@@ -26,10 +26,12 @@ class SimulationFormViewTest extends TestCase
 
         $html = (new SimulationFormView(new OptionCatalog()))->render($action, $fields, []);
 
-        $this->assertStringContainsString('État hypothétique', $html);
+        $this->assertStringContainsString('class="sim-panel"', $html);
+        $this->assertStringContainsString('Équipement', $html);
         $this->assertStringContainsString('name="distance"', $html);
         $this->assertStringContainsString('name="actor_trait[cc]"', $html);
         $this->assertStringContainsString('name="actor_weapon"', $html);
+        $this->assertStringContainsString('name="actor_equipment[tete]"', $html);
         $this->assertStringContainsString('addEffectRow', $html);
     }
 

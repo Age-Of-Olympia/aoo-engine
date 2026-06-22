@@ -71,10 +71,14 @@ ob_start();
 foreach ($actions as $item) {
     $active = ($action && $item->getId() === $action->getId()) ? ' wb-item--active' : '';
     echo '<a class="wb-item' . $active . '" href="/admin/action-workbench.php?id=' . (int) $item->getId() . '&tab=' . $activeTab . '"'
+        . ' title="' . e($item->getDisplayName()) . '"'
         . ' data-search="' . e(strtolower($item->getName() . ' ' . $item->getDisplayName() . ' ' . action_type_label($item) . ' ' . $item->getCategory())) . '">'
+        . '<i class="ra ' . e($item->getIcon()) . ' wb-item-icon"></i>'
+        . '<span class="wb-item-text">'
         . '<span class="wb-item-name">' . e($item->getDisplayName()) . '</span>'
         . '<span class="wb-item-meta">' . e(action_type_label($item)) . ' · niv.' . e($item->getLevel())
         . ' · ' . $item->getConditions()->count() . 'c/' . $item->getOutcomes()->count() . 'o</span>'
+        . '</span>'
         . '</a>';
 }
 $listHtml = ob_get_clean();
@@ -96,6 +100,11 @@ if ($action === null) {
         . '<span class="wb-chip">niv. ' . e($action->getLevel()) . '</span>'
         . ($action->getCategory() ? '<span class="wb-chip">' . e($action->getCategory()) . '</span>' : '')
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'
+        . '</div>';
+
+    echo '<div class="wb-icon-field">'
+        . '<span class="wb-icon-preview"><i class="ra ' . e($action->getIcon()) . '"></i></span>'
+        . '<input class="form-control wb-icon-input" type="text" name="icon" value="' . e($action->getIcon()) . '" placeholder="icône (ra-crossed-swords)" autocomplete="off">'
         . '</div>';
 
     echo '<div class="wb-section-title wb-section-title--row">Conditions' . $conditionEditor->addControls($conditionTypes) . '</div>';
@@ -177,8 +186,11 @@ ob_start();
 ?>
 
 <div class="wb">
-    <div class="wb-col">
-        <div class="wb-col-head">Actions <small><?= count($actions) ?></small></div>
+    <div class="wb-col wb-col--list">
+        <div class="wb-col-head">
+            <span class="wb-col-head-title">Actions <small><?= count($actions) ?></small></span>
+            <button type="button" class="wb-fold-toggle" id="wb-fold" title="Replier / déplier la liste">⟨⟩</button>
+        </div>
         <div class="wb-col-body">
             <?= $createFormHtml ?>
             <input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">
@@ -204,6 +216,6 @@ ob_start();
 <?php
 $content = ob_get_clean();
 echo admin_layout('Workbench', $content, [
-    'styles' => ['/admin/css/action-simulate.css', '/admin/css/action-workbench.css'],
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-simulate.css', '/admin/css/action-workbench.css'],
     'scripts' => ['/admin/js/action-simulate.js', '/admin/js/action-workbench.js'],
 ]);

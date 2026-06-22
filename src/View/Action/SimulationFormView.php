@@ -63,7 +63,6 @@ final class SimulationFormView
             . '<p class="text-muted">Simulation via le moteur réel : conditions, jets, dégâts, messages et logs sont ceux du jeu.</p>'
             . '<form method="post" class="card sim-form">'
             . '<input type="hidden" name="id" value="' . $id . '">'
-            . '<div class="card-header"><h3 class="card-title">État hypothétique</h3></div>'
             . '<div class="card-body sim-body">' . $body . '</div></form>';
     }
 
@@ -105,12 +104,12 @@ final class SimulationFormView
 
         $limit = defined('ITEM_LIMIT') ? ITEM_LIMIT : 3;
 
-        return '<fieldset class="sim-panel"><legend>' . $this->esc($title) . '</legend>'
+        return '<section class="sim-panel"><div class="sim-panel-h">' . $this->esc($title) . '</div>'
             . $this->sub('Caractéristiques', '<div class="sim-grid">' . $caracs . '</div>')
             . $this->sub('Équipement', $this->equipment($side, $posted), 'max ' . $limit . ' + 1 bague, 1 munition, 1 trophée')
             . $this->sub('Effets', $this->effects($side, $posted))
             . $this->sub('Passifs', $this->passives($side . '_passives', $posted))
-            . '</fieldset>';
+            . '</section>';
     }
 
     private function sub(string $title, string $content, string $hint = ''): string

@@ -86,4 +86,25 @@ final class ActionSaveService
             throw $exception;
         }
     }
+
+    /**
+     * Set an action's display icon (an RPG-Awesome class such as
+     * ra-crossed-swords, stored without the leading "ra-" requirement — the
+     * value is taken verbatim). A no-op when the icon is unchanged.
+     */
+    public function saveIcon(int $actionId, string $icon): void
+    {
+        $action = $this->entityManager->find(Action::class, $actionId);
+        if ($action === null) {
+            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
+        }
+
+        $icon = trim($icon);
+        if ($icon === $action->getIcon()) {
+            return;
+        }
+
+        $action->setIcon($icon);
+        $this->entityManager->flush();
+    }
 }
