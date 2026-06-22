@@ -3,16 +3,8 @@
 namespace App\Service\Mail;
 
 /**
- * Construit le fournisseur de contacts de campagnes mail configuré.
- *
- * C'est le seul endroit qui décide quel fournisseur concret implémente le port
- * {@see MailContactProviderInterface}. Pour changer de vendeur, ajouter un cas
- * ici et faire pointer `MAIL_CONTACT_PROVIDER` (config/onesignal_constants.php)
- * dessus — aucune modification côté appelants.
- *
- * Quand le fournisseur sélectionné n'a pas ses identifiants, la factory se
- * rabat sur {@see NullMailContactProvider} pour que le jeu ne casse jamais par
- * défaut de configuration.
+ * Construit le fournisseur configuré (MAIL_CONTACT_PROVIDER) — seul point de
+ * choix du vendeur. Se rabat sur NullMailContactProvider si non configuré.
  */
 class MailContactProviderFactory
 {

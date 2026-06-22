@@ -43,15 +43,10 @@ class AccountDeletionService
             [$playerId]
         );
 
-        // Source de vérité = la colonne DB. Le mail passé par l'appelant vient
-        // du cache JSON ($player->data), périmé depuis l'inscription (register.php
-        // écrit plain_mail APRÈS get_data() sans rafraîchir le cache) : on
-        // résout donc l'email en base pour ne pas no-op au toggle profil.
+        // Email résolu en base : le cache JSON de l'appelant peut être périmé.
         $mail = $this->resolvePlayerMail($playerId, $playerMail);
 
         $this->notifyAdmin($playerId, $playerName, $mail);
-
-        // Coupe les mails de campagne pour un joueur en partance (non bloquant).
         $this->contactSync->onDeletionRequested($playerId, $mail);
     }
 
@@ -67,21 +62,13 @@ class AccountDeletionService
             [$playerId]
         );
 
-        // Réabonne le joueur qui change d'avis (non bloquant). Email résolu en
-        // base pour les mêmes raisons que requestDeletion (cache JSON périmé).
         $this->contactSync->onDeletionCancelled(
             $playerId,
             $this->resolvePlayerMail($playerId, $playerMail)
         );
     }
 
-    /**
-     * Résout l'email du joueur de façon fiable.
-     *
-     * Le mail fourni par l'appelant provient du cache JSON ($player->data), qui
-     * peut être vide (cf. requestDeletion). On le garde s'il est renseigné,
-     * sinon on lit `plain_mail` directement en base (source de vérité).
-     */
+    /** Garde le mail fourni s'il est renseigné, sinon lit plain_mail en base. */
     private function resolvePlayerMail(int $playerId, ?string $providedMail): string
     {
         if ($providedMail !== null && $providedMail !== '') {

@@ -151,9 +151,7 @@ if(!empty($_POST['race'])){
 
         $db->exe($sql, array($hashedPsw, $hashedMail, $plainMail, $player->id));
 
-        // Enregistre le nouveau joueur comme contact de campagnes mail (non
-        // bloquant : le fournisseur avale les erreurs, donc une panne de
-        // OneSignal ne casse jamais la création de compte).
+        // Enregistre le contact de campagnes mail (non bloquant).
         (new MailContactSyncService())->onRegister(
             (int) $player->id,
             $plainMail,

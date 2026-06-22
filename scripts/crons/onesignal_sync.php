@@ -2,23 +2,9 @@
 <?php
 
 /*
- * Synchro / backfill des contacts OneSignal.
- *
- * Parcourt chaque joueur réel ayant un email et réconcilie son contact
- * OneSignal : (ré)attache external_id = players.id, rafraîchit les tags de
- * segmentation (full_name / is_new / is_inactive / race) et aligne l'état de
- * l'abonnement email sur l'état de suppression (colonne `deletion_asked` du
- * système actuel OU option legacy `players_options.deleteAccount`).
- *
- * Premier run == backfill complet : remplace l'import manuel historique et pose
- * l'external_id sur les contacts qui n'étaient clés que par email.
- *
- * À planifier quotidiennement, ex. crontab :
- *     0 4 * * * php /var/www/html/scripts/crons/onesignal_sync.php
- *
- * Mode témoin (recommandé avant le premier backfill complet) : passer un id de
- * joueur pour synchroniser ce seul contact et vérifier dans le dashboard que
- * l'external_id est correctement attaché :
+ * Synchro / backfill des contacts OneSignal. Premier run = backfill complet.
+ * À planifier quotidiennement : 0 4 * * * php .../scripts/crons/onesignal_sync.php
+ * Mode témoin (1 contact, à vérifier avant le backfill complet) :
  *     php scripts/crons/onesignal_sync.php 102
  */
 
@@ -36,17 +22,9 @@ $sync = new MailContactSyncService();
 
 $witnessId = isset($argv[1]) ? (int) $argv[1] : null;
 
-// Périmètre des contacts à synchroniser :
-//  - player_type = "real" : exclut les PNJ (id négatifs) et les persos tutoriel.
-//    Les PNJ n'ont de toute façon pas d'email, donc rien à pousser.
-//  - plain_mail <> ""      : un email est requis pour créer un contact OneSignal.
-//  - p.id > 1              : #1 est le compte admin, et surtout OneSignal REJETTE
-//    l'external_id "1" (« external_id is blocked ») -> 400 à chaque passage si on
-//    l'inclut. Seule la valeur "1" est bloquée côté OneSignal ; les autres
-//    matricules passent. #1 n'est de toute façon pas une cible de campagne.
-//
-// delete_account expose l'option legacy de demande de suppression (antérieure à
-// la colonne deletion_asked) pour que le backfill désabonne aussi ces joueurs.
+// Filtres : real exclut PNJ (id<0, sans email) + tutoriel ; id>1 car OneSignal
+// bloque l'external_id "1" (admin) ; email requis. delete_account = option legacy
+// de suppression, pour désabonner aussi ces joueurs au backfill.
 $sql = '
     SELECT p.id, p.plain_mail, p.name, p.race, p.lastLoginTime,
            p.deletion_asked, o.player_id AS delete_account

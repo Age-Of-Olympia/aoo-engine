@@ -11,36 +11,19 @@ use onesignal\client\model\UpdateUserRequest;
 use onesignal\client\model\User;
 
 /**
- * Implémentation OneSignal de {@see MailContactProviderInterface}.
- *
- * S'appuie sur le SDK PHP officiel (`onesignal/onesignal-php-api`, lui-même
- * basé sur Guzzle) plutôt que sur du cURL maison : les contrats d'API et les
- * modèles typés sont maintenus par l'éditeur. Les contacts sont des « users »
- * OneSignal identifiés par `external_id = players.id`, avec un abonnement email
- * et des Data Tags qui pilotent les segments du dashboard.
- *
- * Chaque méthode publique est tolérante aux pannes : toute exception du SDK
- * (transport, HTTP non-2xx) est attrapée et journalisée, jamais propagée, afin
- * qu'une panne de OneSignal ne casse ni une inscription ni une demande de
- * suppression.
- *
- * @see https://github.com/OneSignal/onesignal-php-api
+ * Implémentation OneSignal via le SDK officiel (onesignal/onesignal-php-api).
+ * Contact = user OneSignal (external_id = players.id) + abonnement email + tags.
+ * Tolérant aux pannes : toute exception SDK est loggée, jamais propagée.
  */
 class OneSignalProvider implements MailContactProviderInterface
 {
-    /** Label d'alias OneSignal portant le matricule joueur. */
     private const ALIAS_EXTERNAL_ID = 'external_id';
-
-    /** Type d'abonnement email tel que nommé par l'API OneSignal. */
     private const SUBSCRIPTION_EMAIL = 'Email';
 
     private string $appId;
     private DefaultApi $api;
 
-    /**
-     * @param DefaultApi|null $api Injectable pour les tests ; construit à partir
-     *                             des identifiants sinon.
-     */
+    /** @param DefaultApi|null $api Injectable pour les tests. */
     public function __construct(string $appId, string $apiKey, ?DefaultApi $api = null)
     {
         $this->appId = $appId;
@@ -53,10 +36,8 @@ class OneSignalProvider implements MailContactProviderInterface
     public function upsertContact(int $playerId, string $email, array $tags, bool $subscribed = true): void
     {
         try {
-            // createUser est idempotent et réconcilie par email : il attache
-            // l'external_id aux contacts legacy (clés email seul) et fixe l'état
-            // de l'abonnement (enabled) dans le même appel — pas de fenêtre où un
-            // contact « en suppression » resterait abonné.
+            // createUser réconcilie par email : attache l'external_id aux contacts
+            // legacy et fixe l'abonnement, dans le même appel.
             $subscription = (new Subscription())
                 ->setType(self::SUBSCRIPTION_EMAIL)
                 ->setToken($email)
@@ -66,8 +47,7 @@ class OneSignalProvider implements MailContactProviderInterface
                 ->setIdentity([self::ALIAS_EXTERNAL_ID => (string) $playerId])
                 ->setSubscriptions([$subscription]);
 
-            // Tableau vide => on ne touche pas aux tags existants (cas
-            // (dés)abonnement où l'on ne veut pas les recalculer).
+            // Tableau vide => on ne touche pas aux tags existants.
             if ($tags !== []) {
                 $user->setProperties((new PropertiesObject())->setTags($this->stringifyTags($tags)));
             }
@@ -91,8 +71,7 @@ class OneSignalProvider implements MailContactProviderInterface
     }
 
     /**
-     * Les tags OneSignal sont des chaînes : on convertit chaque valeur pour
-     * éviter qu'elles soient silencieusement ignorées.
+     * Les tags OneSignal sont des chaînes.
      *
      * @param array<string,mixed> $tags
      * @return array<string,string>
