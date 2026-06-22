@@ -9,6 +9,7 @@ use App\Action\Condition\ConditionObject;
 use App\Entity\Action;
 use App\Entity\OutcomeInstruction;
 use App\Service\Action\ActionTypeInstructionResolver;
+use App\Service\Action\ActionTypePreconditionResolver;
 use Exception;
 
 class ActionExecutorService
@@ -23,16 +24,18 @@ class ActionExecutorService
     private Action $action;
     private ?PlayerService $playerService;
     private ActionTypeInstructionResolver $typeInstructionResolver;
+    private ActionTypePreconditionResolver $preconditionResolver;
     private bool $simulationMode = false;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
     private int $finalTargetPv;
     private bool $blocked = false;
     private ConditionObject $conditionObject;
-    
-    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null){
+
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null){
         $this->conditionRegistry = new ConditionRegistry();
         $this->typeInstructionResolver = $typeInstructionResolver ?? new ActionTypeInstructionResolver();
+        $this->preconditionResolver = $preconditionResolver ?? new ActionTypePreconditionResolver();
         $this->conditionResultsArray = array();
         $this->outcomeResultsArray = array();
         $this->conditionsToPay = array();
@@ -135,30 +138,48 @@ class ActionExecutorService
 
     private function checkConditions(): bool
     {
-        $globalConditionsResult = true;
-        foreach ($this->action->getConditions() as $condEntity) {
+        // Type-level / global preconditions (e.g. the enfers block) run first,
+        // resolved from config through the action's type ancestry — the
+        // data-driven replacement for what BaseCondition used to inject in code.
+        // They run even when the action has no conditions of its own.
+        $preconditions = $this->preconditionResolver->resolve($this->action);
+        $globalConditionsResult = $this->runConditions($preconditions);
+        if ($this->blocked) {
+            return $globalConditionsResult;
+        }
+
+        return $this->runConditions($this->action->getConditions()->toArray()) && $globalConditionsResult;
+    }
+
+    /**
+     * @param iterable<\App\Entity\ActionCondition> $conditions
+     */
+    private function runConditions(iterable $conditions): bool
+    {
+        $result = true;
+        foreach ($conditions as $condEntity) {
             $condition = $this->conditionRegistry->getCondition($condEntity->getConditionType());
             if (!$condition) {
                 error_log("Condition not found : ". $condEntity->getConditionType());
                 return false;
             }
-        
+
             $conditionResult = $condition->check($this->actor, $this->target, $condEntity, $this->conditionObject);
-            $globalConditionsResult = $globalConditionsResult && $conditionResult->isSuccess();
+            $result = $result && $conditionResult->isSuccess();
             array_push($this->conditionResultsArray, $conditionResult);
-        
+
             if (!$conditionResult->isSuccess() && $condEntity->isBlocking()) {
                 $this->blocked = true;
                 break;
             }
-        
+
             // this condition has a cost and must be removed if the action is performed
             if ($condition->toRemove()) {
                 array_push($this->conditionsToPay, $condEntity);
             }
         }
 
-        return $globalConditionsResult;
+        return $result;
     }
 
     private function applyActionOutcome(ActionOutcome $outcomeEntity): void

@@ -38,7 +38,9 @@ abstract class BaseCondition implements ConditionInterface
 
     public function checkPreconditions(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
-        array_unshift($this->preConditions, new PlanCondition());
+        // PlanCondition (the enfers block) used to be array_unshift-ed here on
+        // every call; it is now a data-driven global precondition run once by
+        // ActionExecutorService. See ActionTypePreconditionResolver.
 
         $success = true;
         $successMessages = array();

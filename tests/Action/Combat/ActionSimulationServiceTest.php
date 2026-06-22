@@ -10,8 +10,10 @@ use App\Action\MeleeAction;
 use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Entity\ActionTypeInstruction;
+use App\Entity\ActionTypePrecondition;
 use App\Service\Action\ActionSimulationService;
 use App\Service\Action\ActionTypeInstructionResolver;
+use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\SimulationInput;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -55,13 +57,19 @@ class ActionSimulationServiceTest extends TestCase
      */
     private function simulationService(array $typeConfigs = []): ActionSimulationService
     {
-        $repo = $this->createMock(EntityRepository::class);
-        $repo->method('findBy')->willReturn($typeConfigs);
+        $instructionRepo = $this->createMock(EntityRepository::class);
+        $instructionRepo->method('findBy')->willReturn($typeConfigs);
+        $preconditionRepo = $this->createMock(EntityRepository::class);
+        $preconditionRepo->method('findBy')->willReturn([]); // no global/type preconditions in combat sims
+
         $em = $this->createMock(EntityManagerInterface::class);
-        $em->method('getRepository')->willReturn($repo);
+        $em->method('getRepository')->willReturnCallback(
+            fn (string $class): EntityRepository => $class === ActionTypePrecondition::class ? $preconditionRepo : $instructionRepo
+        );
 
         return new ActionSimulationService(
             typeInstructionResolver: new ActionTypeInstructionResolver($em),
+            preconditionResolver: new ActionTypePreconditionResolver($em),
         );
     }
 
