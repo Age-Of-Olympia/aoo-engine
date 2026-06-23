@@ -9,8 +9,9 @@ use InvalidArgumentException;
 
 /**
  * Save the editable fields of a passive from the workbench form. Scalars are
- * coerced, traits come in as a comma-separated list, and conditions as a JSON
- * blob (empty = none).
+ * coerced, traits come in as a comma-separated list, and conditions are built
+ * from the structured picker (a `conditions_mode` selecting a weapon/category
+ * whitelist) with a raw-JSON fallback.
  */
 final class ActionPassiveSaveService
 {
@@ -47,9 +48,44 @@ final class ActionPassiveSaveService
         $passive->setText(trim((string) ($fields['text'] ?? '')));
         $passive->setPrerequisites(trim((string) ($fields['prerequisites'] ?? '')));
         $passive->setTraits($this->parseTraits((string) ($fields['traits'] ?? '')));
-        $passive->setConditions($this->parseConditions((string) ($fields['conditions'] ?? '')));
+        $passive->setConditions($this->buildConditions($fields));
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * Build the conditions payload from the structured picker. The mode picks the
+     * shape: a `weapon`/`category` whitelist from the checkboxes, none, or the raw
+     * JSON fallback. An absent mode parses the raw field (backward compatible).
+     *
+     * @param array<string, mixed> $fields
+     * @return array<string, mixed>|null
+     */
+    private function buildConditions(array $fields): ?array
+    {
+        return match ((string) ($fields['conditions_mode'] ?? '')) {
+            'none' => null,
+            'weapon' => $this->whitelist('weapon', $fields['conditions_weapon'] ?? null),
+            'category' => $this->whitelist('category', $fields['conditions_category'] ?? null),
+            default => $this->parseConditions((string) ($fields['conditions'] ?? '')),
+        };
+    }
+
+    /**
+     * A single-key whitelist condition (e.g. {"weapon": [...]}). Blanks are
+     * dropped; an empty selection means "no condition" (null), so an unfinished
+     * pick never silently blocks the passive for everyone.
+     *
+     * @return array<string, array<int, string>>|null
+     */
+    private function whitelist(string $key, mixed $values): ?array
+    {
+        if (!is_array($values)) {
+            return null;
+        }
+        $clean = array_values(array_filter(array_map(static fn ($v): string => trim((string) $v), $values), static fn (string $v): bool => $v !== ''));
+
+        return $clean === [] ? null : [$key => $clean];
     }
 
     /**

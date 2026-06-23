@@ -125,6 +125,32 @@ final class OptionCatalog
     }
 
     /**
+     * The distinct, non-empty action categories in use (e.g. melee-off,
+     * spell-support). Drives the passive "category" condition picker so it offers
+     * the real categories an action can carry instead of free text.
+     *
+     * @return array<string, string> category => human label
+     */
+    public function actionCategories(): array
+    {
+        try {
+            $rows = EntityManagerFactory::getEntityManager()
+                ->createQuery("SELECT DISTINCT a.category AS category FROM App\Entity\Action a WHERE a.category IS NOT NULL AND a.category != '' ORDER BY a.category ASC")
+                ->getArrayResult();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $categories = [];
+        foreach ($rows as $row) {
+            $name = (string) $row['category'];
+            $categories[$name] = $this->humanize($name);
+        }
+
+        return $categories;
+    }
+
+    /**
      * Options for a catalog-backed field type, or [] for non-catalog types.
      *
      * @return array<string, string>

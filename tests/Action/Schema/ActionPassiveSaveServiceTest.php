@@ -90,4 +90,60 @@ class ActionPassiveSaveServiceTest extends TestCase
         (new ActionPassiveSaveService($this->entityManagerFinding(new ActionPassive())))
             ->saveFields(1, $this->fields(['conditions' => '{not json']));
     }
+
+    public function testWeaponModeBuildsAWeaponWhitelist(): void
+    {
+        $passive = new ActionPassive();
+        (new ActionPassiveSaveService($this->entityManagerFinding($passive)))->saveFields(1, $this->fields([
+            'conditions_mode' => 'weapon',
+            'conditions_weapon' => ['arc', 'poing', ''],
+            'conditions' => '{"x":1}',
+        ]));
+
+        $this->assertSame(['weapon' => ['arc', 'poing']], $passive->getConditions());
+    }
+
+    public function testCategoryModeBuildsACategoryWhitelist(): void
+    {
+        $passive = new ActionPassive();
+        (new ActionPassiveSaveService($this->entityManagerFinding($passive)))->saveFields(1, $this->fields([
+            'conditions_mode' => 'category',
+            'conditions_category' => ['spell-support', 'melee-off'],
+        ]));
+
+        $this->assertSame(['category' => ['spell-support', 'melee-off']], $passive->getConditions());
+    }
+
+    public function testNoneModeClearsConditions(): void
+    {
+        $passive = new ActionPassive();
+        (new ActionPassiveSaveService($this->entityManagerFinding($passive)))->saveFields(1, $this->fields([
+            'conditions_mode' => 'none',
+            'conditions' => '{"weapon":["arc"]}',
+        ]));
+
+        $this->assertNull($passive->getConditions());
+    }
+
+    public function testAnEmptyWeaponSelectionMeansNoCondition(): void
+    {
+        $passive = new ActionPassive();
+        (new ActionPassiveSaveService($this->entityManagerFinding($passive)))->saveFields(1, $this->fields([
+            'conditions_mode' => 'weapon',
+            'conditions_weapon' => ['', '  '],
+        ]));
+
+        $this->assertNull($passive->getConditions());
+    }
+
+    public function testRawModeStillParsesTheJsonFallback(): void
+    {
+        $passive = new ActionPassive();
+        (new ActionPassiveSaveService($this->entityManagerFinding($passive)))->saveFields(1, $this->fields([
+            'conditions_mode' => 'raw',
+            'conditions' => '{"weapon":["arc","arbalete"]}',
+        ]));
+
+        $this->assertSame(['weapon' => ['arc', 'arbalete']], $passive->getConditions());
+    }
 }
