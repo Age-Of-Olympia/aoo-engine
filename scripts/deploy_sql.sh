@@ -7,14 +7,12 @@
 
 source "$(dirname "$0")/deploy_lib.sh"
 aoo_assert_env
-aoo_assert_branch
 
 echo "$(date)<br>"
 
-# 1. Refresh the source checkout for THIS env.
-cd "$SRC/aoo-engine" || exit 1
-git pull || exit 1
-git log --oneline -1
+# 1. Bring the checkout to the right branch/code for THIS env, then verify it.
+aoo_update_checkout
+aoo_assert_branch
 
 # 2. Dependencies in the checkout: provides vendor/bin/doctrine-migrations AND
 #    the up-to-date migration classes the migrate step runs.

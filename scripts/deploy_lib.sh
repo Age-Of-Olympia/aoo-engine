@@ -18,6 +18,22 @@ aoo_assert_env() {
     [ -d "$SRC" ]         || aoo_die "source dir '$SRC' missing"
 }
 
+# Bring the engine checkout to the right code before deploying. When the caller
+# requested a specific branch (CHECKOUT_BRANCH, e.g. the experimental env
+# tracking a configurable branch) switch to it; otherwise just pull the branch
+# the checkout is already on. Run this BEFORE aoo_assert_branch.
+aoo_update_checkout() {
+    cd "$SRC/aoo-engine" || aoo_die "cannot enter '$SRC/aoo-engine'"
+    if [ -n "${CHECKOUT_BRANCH:-}" ]; then
+        git fetch origin "$CHECKOUT_BRANCH" || aoo_die "fetch of '$CHECKOUT_BRANCH' failed"
+        git checkout "$CHECKOUT_BRANCH" || aoo_die "checkout of '$CHECKOUT_BRANCH' failed"
+        git pull --ff-only origin "$CHECKOUT_BRANCH" || aoo_die "pull of '$CHECKOUT_BRANCH' failed"
+    else
+        git pull || aoo_die "git pull failed"
+    fi
+    git log --oneline -1
+}
+
 # Refuse to deploy unless the engine checkout is on the branch this env expects.
 # This is the guard that prevents cross-env clobbering: a test-env deploy can
 # never copy a 'main' checkout into the test docroot, and vice versa.

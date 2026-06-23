@@ -56,7 +56,11 @@ if (!function_exists('aoo_deploy_env')) {
             ],
             'experimental.age-of-olympia.net' => [
                 'env'          => 'experimental',
-                'branch'       => 'saison-3',
+                // Default branch for experimental. CI deploys pass the chosen
+                // branch explicitly (EXPERIMENTAL_BRANCH); this default only
+                // applies to manual deploys and can be overridden server-side
+                // with the AOO_EXPERIMENTAL_BRANCH env var.
+                'branch'       => getenv('AOO_EXPERIMENTAL_BRANCH') ?: 'saison-3',
                 'is_prod'      => false,
                 'session_name' => 'AOO_EXP',
             ],

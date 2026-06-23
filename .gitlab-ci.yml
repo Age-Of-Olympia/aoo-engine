@@ -1,9 +1,15 @@
+variables:
+  # Branch auto-deployed to the experimental environment. Override with a
+  # project CI/CD variable (Settings > CI/CD > Variables) to point experimental
+  # at a different branch — no code change needed.
+  EXPERIMENTAL_BRANCH: "saison-3"
+
 .default_rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_REF_NAME == "staging"
-    - if: $CI_COMMIT_REF_NAME == "saison-3"
+    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH
     - if: $CI_COMMIT_REF_NAME == "main"
 
 stages:
@@ -178,12 +184,12 @@ cypress_tutorial_job:
     - if: $CI_COMMIT_REF_NAME == "staging"
       when: manual
       allow_failure: true
-    # tutorial-refactoring / saison-3 / main: manual trigger to
+    # tutorial-refactoring / experimental / main: manual trigger to
     # conserve CI minutes. Reds when a human triggers are still a
     # real signal.
     - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
       when: manual
-    - if: $CI_COMMIT_REF_NAME == "saison-3"
+    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH
       when: manual
     - if: $CI_COMMIT_REF_NAME == "main"
       when: manual
@@ -214,11 +220,12 @@ release-job:
     description: release_notes.md
 
 # Auto-deploy the non-prod environments now co-hosted on the single account:
-#   staging  -> test.age-of-olympia.net
-#   saison-3 -> experimental.age-of-olympia.net
+#   staging               -> test subdomain
+#   $EXPERIMENTAL_BRANCH   -> experimental subdomain (branch is configurable)
 # prod (main) has no deploy job — it stays manual, and admin/deploy.php refuses
 # the `ci` flag on the prod host anyway. The token travels in a header so it is
-# not written to Apache access logs.
+# not written to Apache access logs. env_branch tells deploy.php which branch to
+# check out + deploy (honoured for non-prod only).
 deploy-job-non-prod:
   stage: deployment
   image: alpine
@@ -228,11 +235,11 @@ deploy-job-non-prod:
   before_script:
     - apk add curl
   script:
-    - curl ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci"
+    - curl ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"
   rules:
     - if: $CI_COMMIT_REF_NAME == "staging" && $CI_MERGE_REQUEST_ID == null
       variables:
         DEPLOY_HOST: "test.age-of-olympia.net"
-    - if: $CI_COMMIT_REF_NAME == "saison-3" && $CI_MERGE_REQUEST_ID == null
+    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH && $CI_MERGE_REQUEST_ID == null
       variables:
         DEPLOY_HOST: "experimental.age-of-olympia.net"

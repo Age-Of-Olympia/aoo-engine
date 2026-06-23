@@ -16,15 +16,13 @@
 
 source "$(dirname "$0")/deploy_lib.sh"
 aoo_assert_env
-aoo_assert_branch
 
 echo "$(date)<br>"
 
-# Checkout was already pulled + composer-installed by deploy_sql.sh (code deploys
-# always run SQL first); pull again so a standalone run is still correct.
-cd "$SRC/aoo-engine" \
-&& git pull \
-&& git log --oneline -1
+# Checkout was already aligned + composer-installed by deploy_sql.sh (code
+# deploys run SQL first); re-sync so a standalone run is correct, then verify.
+aoo_update_checkout
+aoo_assert_branch
 
 # Dependencies first: copy the composer manifests and the vendor/ built in the
 # checkout, then regenerate the optimized autoloader in the docroot.

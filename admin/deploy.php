@@ -49,7 +49,10 @@ if (isset($_GET["type"]) && $providedToken !== '') {
     echo "Deploying " . htmlspecialchars($_GET["type"]);
 
     if (validatePassphrase($passPhrase, $providedToken)) {
-        deploy($_GET["type"], $envInfo, $auditService);
+        // Optional: branch to deploy. Honoured for non-prod envs only (lets the
+        // experimental env track a configurable branch); prod ignores it.
+        $envBranch = $_GET["env_branch"] ?? '';
+        deploy($_GET["type"], $envInfo, $envBranch, $auditService);
     } else {
         http_response_code(403);
         $auditService->addAuditLog("Refused: invalid deploy token");
@@ -95,21 +98,46 @@ function validatePassphrase(string $storedPassphrase, string $providedToken): bo
 }
 
 /**
+ * Whether a string is a safe git branch name to act on.
+ */
+function isValidBranchName(string $branch): bool {
+    return $branch !== '' && (bool) preg_match('#^[A-Za-z0-9._/-]+$#', $branch);
+}
+
+/**
  * Build the environment passed to the deploy shell scripts.
  *
  * DOCROOT/SRC/EXPECT_BRANCH replace the paths the scripts used to hardcode.
+ * CHECKOUT_BRANCH, when set, tells the scripts to switch the checkout to that
+ * branch first — this is how the experimental env can track a configurable
+ * branch chosen by the caller (the EXPERIMENTAL_BRANCH CI variable).
  *
  * @param array{env:string,branch:?string,is_prod:bool,session_name:string} $envInfo
+ * @param string $requestedBranch Branch requested by the caller (non-prod only).
  * @return array<string,string>
  */
-function deployEnvVars(array $envInfo): array {
+function deployEnvVars(array $envInfo, string $requestedBranch = ''): array {
     $src = rtrim((string) getenv('HOME'), '/') . '/deploy/' . $envInfo['env'];
+
+    // Prod deploys from a tag (detached HEAD) and ignores any requested branch:
+    // empty EXPECT_BRANCH skips the assertion, empty CHECKOUT_BRANCH skips the
+    // switch. Non-prod envs deploy the requested branch when one is supplied,
+    // otherwise the env's default branch from config/deploy_targets.php.
+    $checkoutBranch = '';
+    $expectBranch   = '';
+    if (!$envInfo['is_prod']) {
+        $expectBranch = isValidBranchName($requestedBranch)
+            ? $requestedBranch
+            : (string) ($envInfo['branch'] ?? '');
+        // Only auto-switch when the caller explicitly asked for a branch.
+        $checkoutBranch = isValidBranchName($requestedBranch) ? $requestedBranch : '';
+    }
+
     return [
-        'DOCROOT'       => $_SERVER['DOCUMENT_ROOT'],
-        'SRC'           => $src,
-        // Prod deploys from a tag (detached HEAD) -> empty = skip branch check.
-        // Non-prod envs are pinned to their branch by the scripts' assertion.
-        'EXPECT_BRANCH' => $envInfo['is_prod'] ? '' : (string) ($envInfo['branch'] ?? ''),
+        'DOCROOT'        => $_SERVER['DOCUMENT_ROOT'],
+        'SRC'            => $src,
+        'EXPECT_BRANCH'  => $expectBranch,
+        'CHECKOUT_BRANCH' => $checkoutBranch,
     ];
 }
 
@@ -132,10 +160,11 @@ function runDeployScript(string $script, array $envVars): string {
  *
  * @param string $type The type of deployment.
  * @param array{env:string,branch:?string,is_prod:bool,session_name:string} $envInfo
+ * @param string $envBranch Branch requested by the caller (non-prod only).
  * @param AuditService $auditService The audit service instance.
  */
-function deploy(string $type, array $envInfo, AuditService $auditService) {
-    $envVars = deployEnvVars($envInfo);
+function deploy(string $type, array $envInfo, string $envBranch, AuditService $auditService) {
+    $envVars = deployEnvVars($envInfo, $envBranch);
 
     if ($type === "code") {
         if (!handleCodeDeployment($envVars, $auditService)) {
