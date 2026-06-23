@@ -128,6 +128,33 @@ document.addEventListener('click', function (e) {
         });
     }
 })();
+/* Passive conditions picker: reveal the panel matching the chosen mode
+   (weapon / category / raw / none) within each .wb-cond block. */
+document.querySelectorAll('.wb-cond .wb-cond-mode').forEach(function (select) {
+    var cond = select.closest('.wb-cond');
+    select.addEventListener('change', function () {
+        cond.querySelectorAll('.wb-cond-panel').forEach(function (panel) {
+            panel.hidden = panel.getAttribute('data-cond-mode') !== select.value;
+        });
+    });
+});
+/* Live filter for the (long) weapon list: hide options that don't match, then
+   hide any group left with no visible option. Checked-first ordering is CSS. */
+document.querySelectorAll('.wb-cond-search').forEach(function (input) {
+    var panel = input.closest('.wb-cond-panel');
+    input.addEventListener('input', function () {
+        var q = input.value.toLowerCase();
+        panel.querySelectorAll('.wb-cond-opt').forEach(function (opt) {
+            opt.style.display = opt.textContent.toLowerCase().indexOf(q) === -1 ? 'none' : '';
+        });
+        panel.querySelectorAll('.wb-cond-group').forEach(function (group) {
+            var visible = Array.prototype.some.call(group.querySelectorAll('.wb-cond-opt'), function (o) {
+                return o.style.display !== 'none';
+            });
+            group.style.display = visible ? '' : 'none';
+        });
+    });
+});
 /* Configurer / Simuler tab switching. */
 document.querySelectorAll('.wb-tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {

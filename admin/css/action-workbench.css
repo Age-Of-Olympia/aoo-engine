@@ -141,6 +141,15 @@
 .wb-modal-close:hover { color: #2c3e50; }
 .wb-modal-body { padding: 16px 18px; overflow-y: auto; }
 
+/* List-column header: create control + export-all side by side. The create
+   button stays content-width (so export sits right next to it); only once the
+   <details> is open does it span the full column for the form, wrapping export. */
+.wb-list-header { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.wb-list-header .wb-create { margin-bottom: 0; flex: 0 0 auto; }
+.wb-list-header .wb-create[open] { flex: 1 1 100%; }
+.wb-list-header > a { flex: 0 0 auto; white-space: nowrap; }
+.wb--folded .wb-col--list .wb-list-header > a { display: none; }
+
 /* New-action form (collapsible) in the actions column. */
 .wb-create { margin-bottom: 8px; }
 .wb-create > summary { cursor: pointer; list-style: none; }
@@ -178,3 +187,22 @@
 .wb-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
 .wb-field > span { color: #8a97a3; font-weight: 600; }
 .wb-field--wide { margin-top: 8px; }
+
+/* Icon picker + level share a row to save vertical space. */
+.wb-iconlevel { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.wb-field--level { width: 90px; }
+
+/* Passive conditions picker */
+.wb-cond { margin-top: 8px; }
+.wb-cond-panel { margin-top: 6px; border: 1px solid #e0e6ea; border-radius: 6px; padding: 8px; max-height: 240px; overflow-y: auto; }
+/* Live weapon filter; sticky so it stays reachable while the list scrolls. */
+.wb-cond-search { position: sticky; top: 0; margin-bottom: 8px; font-size: 12px; height: 28px; padding: 3px 7px; }
+/* Each group is a wrapping row so checked options can float ahead of the rest
+   (order) while the title spans the full width and stays first. */
+.wb-cond-group { display: flex; flex-wrap: wrap; align-items: center; row-gap: 2px; margin-bottom: 8px; }
+.wb-cond-group:last-child { margin-bottom: 0; }
+.wb-cond-group-title { flex: 0 0 100%; order: -2; color: #8a97a3; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 3px; }
+.wb-cond-opt { order: 0; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; margin: 0 10px 4px 0; cursor: pointer; }
+.wb-cond-opt:has(input:checked) { order: -1; }
+.wb-cond-opt input { margin: 0; }
+.wb-cond-raw { font-family: monospace; font-size: 12px; }
