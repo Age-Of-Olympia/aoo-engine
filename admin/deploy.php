@@ -9,14 +9,6 @@ use App\Service\AdminAuthorizationService;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 
-// config-console.php is an unversioned per-server file. Guard the include so a
-// freshly provisioned docroot (e.g. a new subdomain) does not fatal before the
-// passphrase check even runs.
-$consoleConfig = $_SERVER['DOCUMENT_ROOT'] . '/config/config-console.php';
-if (is_file($consoleConfig)) {
-    require_once($consoleConfig);
-}
-
 $auditService = new AuditService();
 
 // Log the start of the deployment attempt
