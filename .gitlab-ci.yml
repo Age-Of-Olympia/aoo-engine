@@ -1,8 +1,13 @@
 variables:
-  # Branch auto-deployed to the experimental environment. Override with a
-  # project CI/CD variable (Settings > CI/CD > Variables) to point experimental
-  # at a different branch — no code change needed.
-  EXPERIMENTAL_BRANCH: "saison-3"
+  # Branch auto-deployed to the experimental environment.
+  # - value:       default used by automatic pipelines.
+  # - description: makes the field prefilled + editable in the "Run pipeline"
+  #                form, so you can pick the branch when launching manually.
+  # Can also be overridden permanently via a project CI/CD variable
+  # (Settings > CI/CD > Variables) — no code change needed either way.
+  EXPERIMENTAL_BRANCH:
+    value: "saison-3"
+    description: "Branch deployed to the experimental environment (set this to the branch you are running the pipeline on)."
 
 .default_rules:
   rules:
@@ -235,7 +240,9 @@ deploy-job-non-prod:
   before_script:
     - apk add curl
   script:
-    - curl ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"
+    # Single-quoted: the "X-Deploy-Token: ..." header contains a colon-space,
+    # which would otherwise make YAML parse this line as a map, not a string.
+    - 'curl ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"'
   rules:
     - if: $CI_COMMIT_REF_NAME == "staging" && $CI_MERGE_REQUEST_ID == null
       variables:
