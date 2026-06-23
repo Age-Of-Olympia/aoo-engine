@@ -29,8 +29,10 @@
 
 /* Fold toggle: collapse the actions list to an icon rail for more sim space. */
 .wb-col-head { gap: 8px; }
-.wb-fold-toggle { flex: 0 0 auto; border: 1px solid #e0e6ea; background: #fff; color: #5d6d7e; border-radius: 6px; width: 26px; height: 24px; cursor: pointer; font-size: 11px; line-height: 1; }
-.wb-fold-toggle:hover { background: #f3f6f9; color: #2c3e50; }
+.wb-fold-toggle { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: 1px solid #e3e8ec; background: #fff; color: #8a97a3; border-radius: 7px; cursor: pointer; font-size: 15px; line-height: 1; transition: background .12s, color .12s, border-color .12s; }
+.wb-fold-toggle:hover { background: #eef4fb; color: #2e6da4; border-color: #cdd9e5; }
+.wb-fold-toggle::before { content: '\00AB'; }        /* « : collapse the list */
+.wb--folded .wb-fold-toggle::before { content: '\00BB'; } /* » : expand the list */
 .wb--folded { grid-template-columns: 56px minmax(0, 1fr); }
 .wb--folded .wb-col--list .wb-col-head-title,
 .wb--folded .wb-col--list .wb-search,

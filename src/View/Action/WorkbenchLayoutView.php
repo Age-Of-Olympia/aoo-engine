@@ -27,7 +27,7 @@ final class WorkbenchLayoutView
             . '<div class="wb-col wb-col--list">'
             . '<div class="wb-col-head">'
             . '<span class="wb-col-head-title">' . $this->esc($listTitle) . ' <small>' . $count . '</small></span>'
-            . '<button type="button" class="wb-fold-toggle" id="wb-fold" title="Replier / déplier la liste">⟨⟩</button>'
+            . '<button type="button" class="wb-fold-toggle" id="wb-fold" title="Replier / déplier la liste" aria-label="Replier / déplier la liste"></button>'
             . '</div>'
             . '<div class="wb-col-body">' . $listBody . '</div>'
             . '</div>'
