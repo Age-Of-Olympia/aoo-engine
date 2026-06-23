@@ -353,12 +353,13 @@ if($res->num_rows){
             }
 
             // Show the action button only in the context its scope allows:
-            // self-only on yourself, target-only on someone else, both in either.
-            $scope = $actionTargeting->scopeOf($actionData);
+            // self on yourself, target on someone else, both in either, none
+            // nowhere (a no-outcome action — e.g. a technique modifier — has no
+            // button here, as the old loop did).
             $observingSelf = ($player->id == $target->id);
             $allowed = $observingSelf
-                ? $scope !== ActionTargeting::TARGET
-                : $scope !== ActionTargeting::SELF;
+                ? $actionTargeting->canTargetSelf($actionData)
+                : $actionTargeting->canTargetOther($actionData);
             if ($allowed) {
                 $dataImg .= buildActionToDisplay($target, $actionData);
             }

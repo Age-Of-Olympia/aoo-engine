@@ -49,9 +49,15 @@ final class ActionTargetingTest extends TestCase
         $this->assertTrue($this->targeting->canTargetOther($action));
     }
 
-    public function testNoOutcomesDefaultsToTarget(): void
+    public function testNoOutcomesIsNoneAndTargetsNobody(): void
     {
-        $this->assertSame(ActionTargeting::TARGET, $this->targeting->scopeOf(new MeleeAction()));
+        // A no-outcome, non-buff action (e.g. a technique modifier) must not
+        // surface a button anywhere — the old observe loop rendered nothing.
+        $action = new MeleeAction();
+
+        $this->assertSame(ActionTargeting::NONE, $this->targeting->scopeOf($action));
+        $this->assertFalse($this->targeting->canTargetSelf($action));
+        $this->assertFalse($this->targeting->canTargetOther($action));
     }
 
     /**

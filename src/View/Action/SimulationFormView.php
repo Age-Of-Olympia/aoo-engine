@@ -45,7 +45,7 @@ final class SimulationFormView
     /**
      * @param list<SimulationField> $fields
      * @param array<string, mixed> $posted
-     * @param ActionTargeting::SELF|ActionTargeting::TARGET|ActionTargeting::BOTH $scope
+     * @param ActionTargeting::* $scope
      *        who the action targets — a self-only action disables the Cible panel.
      *        The Acteur panel is always enabled (the actor performs the action).
      */
@@ -231,8 +231,13 @@ final class SimulationFormView
         }
 
         $group = $field->side . '_' . $field->kind;
-        // 3 action points is the common case; 6 is rare.
-        $default = $field->kind === SimulationField::KIND_REMAINING ? EnergieRule::DEFAULT_ACTION_POINTS : 10;
+        // Action points ('a') commonly sit at 3 (6 is rare); other remaining
+        // resources (pm/mvt) keep a higher default so a real cost is affordable.
+        if ($field->kind === SimulationField::KIND_REMAINING) {
+            $default = $field->key === 'a' ? EnergieRule::DEFAULT_ACTION_POINTS : 6;
+        } else {
+            $default = 10;
+        }
         $value = (int) ($posted[$group][$field->key] ?? $default);
 
         return $this->group(
