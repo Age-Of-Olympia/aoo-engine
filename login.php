@@ -87,6 +87,11 @@ id = ?
 $db->exe($sql, $row['id']);
 
 
+// Regenerate the session id on privilege change (anonymous -> authenticated)
+// to prevent session fixation.
+session_regenerate_id(true);
+
+
 // set sessions var
 $_SESSION['mainPlayerId'] = $row['id'];
 
