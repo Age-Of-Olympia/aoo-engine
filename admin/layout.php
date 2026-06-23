@@ -58,10 +58,10 @@ function admin_layout($title, $content, array $assets = []) {
     $actionsActive = in_array($currentPage, $actionPages, true);
     $actionsGroupClass = $actionsActive ? ' nav-group-open' : '';
     $actionsSubLinks =
-        $navLink('action-workbench.php', 'Workbench', '/admin/action-workbench.php') . "\n                    " .
-        $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
-        $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                    " .
         $navLink('actions.php', 'List', '/admin/actions.php') . "\n                    " .
+        $navLink('action-workbench.php', 'Workbench', '/admin/action-workbench.php') . "\n                    " .
+        $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                    " .
+        $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
         $navLink('action-import.php', 'Import', '/admin/action-import.php');
 
     $navigation =
