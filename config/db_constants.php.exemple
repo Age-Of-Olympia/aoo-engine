@@ -3,13 +3,15 @@ define('DEV_MODE', true);
 // DB CONSTANT
 // We have redundant data because we are switching to Doctrine
 // Note: utf8mb4 charset is enforced in EntityManagerFactory::getEntityManager()
+// IMPORTANT: use SINGLE quotes for values — a password containing $ would be
+// interpreted as a PHP variable inside double quotes.
 define('DB_CONSTANTS', array(
-    'host'=>"localhost",
-    'user'=>"root",
-    'psw'=>"",
-    'db'=>"",
-    'password'=>"",
-    'dbname'=>"",
+    'host'=>'localhost',
+    'user'=>'root',
+    'psw'=>'',
+    'db'=>'',
+    'password'=>'',
+    'dbname'=>'',
     'driver' => 'mysqli',
     'charset' => 'utf8mb4',
 ));
