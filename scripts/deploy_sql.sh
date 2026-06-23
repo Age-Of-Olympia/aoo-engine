@@ -16,7 +16,7 @@ aoo_assert_branch
 
 # 2. Dependencies in the checkout: provides vendor/bin/doctrine-migrations AND
 #    the up-to-date migration classes the migrate step runs.
-~/bin/composer install --no-dev --optimize-autoloader || exit 1
+"$COMPOSER" install --no-dev --optimize-autoloader || exit 1
 
 # 3. Point Doctrine at THIS env's database. db_constants.php is the unversioned
 #    per-docroot source of truth; copy it one-way (docroot -> checkout) only.

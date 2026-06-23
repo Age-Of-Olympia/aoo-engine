@@ -9,6 +9,10 @@
 
 aoo_die() { echo "DEPLOY ABORT: $*" >&2; exit 1; }
 
+# Composer binary. Prefer one on PATH; fall back to ~/bin/composer (where the
+# o2switch prod account historically keeps it). Override by exporting COMPOSER.
+: "${COMPOSER:=$(command -v composer || echo "$HOME/bin/composer")}"
+
 # DOCROOT = the docroot of the calling subdomain (deploy target).
 # SRC     = the per-env source checkout dir (~/deploy/<env>).
 aoo_assert_env() {

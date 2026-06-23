@@ -32,4 +32,4 @@ echo -e "copie des dependances :\n " \
 && echo -e "copie du code :\n " \
 && cp -ra "$SRC/aoo-engine"/{scripts,*.html,*.php,admin,api,config,Classes,css,js,src} "$DOCROOT/" \
 && cd "$DOCROOT" \
-&& ~/bin/composer dump-autoload -o
+&& "$COMPOSER" dump-autoload -o
