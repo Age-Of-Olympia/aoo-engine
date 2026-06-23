@@ -13,7 +13,15 @@ class ExportButtonViewTest extends TestCase
     {
         $html = (new ExportButtonView())->single(42);
 
-        $this->assertStringContainsString('href="/admin/action-export.php?id=42"', $html);
+        $this->assertStringContainsString('href="/admin/action-export.php?type=action&id=42"', $html);
+        $this->assertStringContainsString('>Exporter</a>', $html);
+    }
+
+    public function testSingleOfTypeRoutesOnTheObjectFamily(): void
+    {
+        $html = (new ExportButtonView())->singleOfType('passive', 7);
+
+        $this->assertStringContainsString('href="/admin/action-export.php?type=passive&id=7"', $html);
         $this->assertStringContainsString('>Exporter</a>', $html);
     }
 

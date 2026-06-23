@@ -3,6 +3,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
+use App\Service\Action\ActionPassiveCatalogService;
 use App\Service\AdminAuthorizationService;
 use App\Service\ImportExport\BundleDownload;
 use App\Service\ImportExport\BundleEnvelope;
@@ -25,17 +26,21 @@ if ($exporter === null) {
 
 $id = (int) ($_GET['id'] ?? 0);
 
-if ($type === 'action' && $id > 0) {
-    // Single-action export keeps its by-id lookup (the generic exporter has none).
-    $catalog = new ActionCatalogService();
-    $action = $catalog->getActionById($id);
-    if ($action === null) {
-        setFlash('warning', 'Action introuvable.');
+if ($id > 0) {
+    // Single-object export. The generic exporter has no by-id lookup, so we resolve
+    // the one entity per family here, then hand it to the matching exporter.
+    $object = match ($type) {
+        'action' => (new ActionCatalogService())->getActionById($id),
+        'passive' => (new ActionPassiveCatalogService())->getById($id),
+        default => null,
+    };
+    if ($object === null) {
+        setFlash('warning', 'Objet introuvable.');
         header('Location: /admin/actions.php');
         exit;
     }
-    $objects = [$exporter->toArray($action)];
-    $filename = BundleDownload::filename($type, $action->getName());
+    $objects = [$exporter->toArray($object)];
+    $filename = BundleDownload::filename($type, $object->getName());
 } else {
     $objects = $exporter->exportAll();
     $filename = BundleDownload::filename($type);

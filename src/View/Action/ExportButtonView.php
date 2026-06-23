@@ -13,7 +13,17 @@ final class ExportButtonView
 
     public function single(int $actionId, string $label = 'Exporter'): string
     {
-        return '<a class="btn btn-sm btn-outline-secondary" href="' . self::ENDPOINT . '?id=' . $actionId . '">'
+        return $this->singleOfType('action', $actionId, $label);
+    }
+
+    /**
+     * Single-object export for a given object family (e.g. passive) — the endpoint
+     * routes on ?type via the ExporterRegistry, ?id picks the one object.
+     */
+    public function singleOfType(string $objectType, int $id, string $label = 'Exporter'): string
+    {
+        return '<a class="btn btn-sm btn-outline-secondary" href="' . self::ENDPOINT
+            . '?type=' . urlencode($objectType) . '&id=' . $id . '">'
             . $this->esc($label) . '</a>';
     }
 

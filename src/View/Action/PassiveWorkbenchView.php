@@ -7,8 +7,9 @@ use App\Entity\ActionPassive;
 /**
  * The passive workbench body: a filterable list of passives on the left and the
  * edit form for the selected one on the right. Reuses the action workbench's
- * wb-* layout/CSS. Traits are edited as a comma-separated list, conditions as a
- * JSON blob.
+ * wb-* layout/CSS. Traits are edited as a comma-separated list; conditions use
+ * the structured {@see PassiveConditionEditorView} (weapon/category picker with a
+ * raw-JSON fallback).
  */
 final class PassiveWorkbenchView
 {
@@ -49,7 +50,7 @@ final class PassiveWorkbenchView
             : $this->form($selected, $csrfTokenField);
         $name = $selected !== null ? $this->esc($selected->getDisplayName()) : '';
 
-        $listBody = $this->createForm($csrfTokenField)
+        $listBody = (new WorkbenchListHeaderView())->render($this->createForm($csrfTokenField), 'passive', 'Exporter tout')
             . '<input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">'
             . '<div class="wb-list" id="wb-list">' . $list . '</div>';
         $editorHead = '<span class="wb-col-head-title">Configurer</span><small>' . $name . '</small>';
@@ -61,9 +62,6 @@ final class PassiveWorkbenchView
 
     private function form(ActionPassive $passive, string $csrfTokenField): string
     {
-        $conditions = $passive->getConditions();
-        $conditionsJson = $conditions === null ? '' : (string) json_encode($conditions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
         return '<form method="post" action="/admin/passive-save.php" id="wb-passive-form" class="wb-form">'
             . $csrfTokenField
             . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
@@ -81,7 +79,7 @@ final class PassiveWorkbenchView
             . $this->input('traits', 'Traits (séparés par des virgules)', implode(', ', $passive->getTraits()))
             . '</div>'
             . $this->textarea('text', 'Texte', (string) $passive->getText())
-            . $this->textarea('conditions', 'Conditions (JSON)', $conditionsJson)
+            . (new PassiveConditionEditorView())->render($passive->getConditions())
             . '</form>'
             // Sibling delete form; its button lives in the shared footer (form= attr).
             . '<form method="post" action="/admin/passive-delete.php" id="wb-passive-delete-form" class="wb-delete-form"'
@@ -89,7 +87,12 @@ final class PassiveWorkbenchView
             . $csrfTokenField
             . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
             . '</form>'
-            . (new WorkbenchFooterView())->render('wb-passive-form', 'wb-passive-delete-form', 'Supprimer le passif');
+            . (new WorkbenchFooterView())->render(
+                'wb-passive-form',
+                'wb-passive-delete-form',
+                'Supprimer le passif',
+                (new ExportButtonView())->singleOfType('passive', (int) $passive->getId()),
+            );
     }
 
     private function createForm(string $csrfTokenField): string
