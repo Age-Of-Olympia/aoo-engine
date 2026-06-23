@@ -13,6 +13,8 @@ use App\Entity\ActionPassive;
 final class PassiveWorkbenchView
 {
     private const TYPES = ['att' => 'Attaque', 'def' => 'Défense', 'mixte' => 'Mixte'];
+    /** Passives have no stored icon; fall back to a glyph per type for the list / folded rail. */
+    private const TYPE_ICONS = ['att' => 'ra-sword', 'def' => 'ra-shield', 'mixte' => 'ra-crossed-swords'];
     private const CATEGORIES = [
         '' => '—', 'melee' => 'Mêlée', 'distance' => 'Distance',
         'magic' => 'Magie', 'stealth' => 'Furtivité', 'survival' => 'Survie',
@@ -27,26 +29,34 @@ final class PassiveWorkbenchView
         foreach ($passives as $passive) {
             $active = ($selected !== null && $passive->getId() === $selected->getId()) ? ' wb-item--active' : '';
             $search = strtolower($passive->getName() . ' ' . $passive->getDisplayName() . ' ' . ($passive->getCategory() ?? ''));
+            $icon = self::TYPE_ICONS[$passive->getType()] ?? 'ra-aura';
+            // Same item structure as the action list (icon + wb-item-text) so the
+            // folded rail shows the icon and hides the text, instead of breaking.
             $list .= '<a class="wb-item' . $active . '" href="/admin/passive-workbench.php?id=' . (int) $passive->getId() . '"'
+                . ' title="' . $this->esc($passive->getDisplayName()) . '"'
                 . ' data-search="' . $this->esc($search) . '">'
+                . '<i class="ra ' . $icon . ' wb-item-icon"></i>'
+                . '<span class="wb-item-text">'
                 . '<span class="wb-item-name">' . $this->esc($passive->getDisplayName()) . '</span>'
                 . '<span class="wb-item-meta">' . $this->esc($passive->getType()) . ' · niv.' . (int) $passive->getLevel()
                 . ' · ' . $this->esc($passive->getRace()) . '</span>'
+                . '</span>'
                 . '</a>';
         }
 
         $form = $selected === null
             ? '<p class="wb-empty">Sélectionnez un passif.</p>'
             : $this->form($selected, $csrfTokenField);
+        $name = $selected !== null ? $this->esc($selected->getDisplayName()) : '';
 
-        return '<div class="wb">'
-            . '<div class="wb-col"><div class="wb-col-head">Passifs <small>' . count($passives) . '</small></div>'
-            . '<div class="wb-col-body">'
-            . $this->createForm($csrfTokenField)
+        $listBody = $this->createForm($csrfTokenField)
             . '<input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">'
-            . '<div class="wb-list" id="wb-list">' . $list . '</div></div></div>'
-            . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $form . '</div></div>'
-            . '</div>';
+            . '<div class="wb-list" id="wb-list">' . $list . '</div>';
+        $editorHead = '<span class="wb-col-head-title">Configurer</span><small>' . $name . '</small>';
+
+        // Same shell as the action workbench (no mirroring) — only the list/editor
+        // contents differ.
+        return (new WorkbenchLayoutView())->render('Passifs', count($passives), $listBody, $editorHead, $form);
     }
 
     private function form(ActionPassive $passive, string $csrfTokenField): string
@@ -54,7 +64,7 @@ final class PassiveWorkbenchView
         $conditions = $passive->getConditions();
         $conditionsJson = $conditions === null ? '' : (string) json_encode($conditions, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        return '<form method="post" action="/admin/passive-save.php" class="wb-form">'
+        return '<form method="post" action="/admin/passive-save.php" id="wb-passive-form" class="wb-form">'
             . $csrfTokenField
             . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
             . '<code class="wb-chip">' . $this->esc($passive->getName()) . '</code>'
@@ -72,14 +82,14 @@ final class PassiveWorkbenchView
             . '</div>'
             . $this->textarea('text', 'Texte', (string) $passive->getText())
             . $this->textarea('conditions', 'Conditions (JSON)', $conditionsJson)
-            . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>'
             . '</form>'
-            . '<form method="post" action="/admin/passive-delete.php" class="wb-delete-form"'
+            // Sibling delete form; its button lives in the shared footer (form= attr).
+            . '<form method="post" action="/admin/passive-delete.php" id="wb-passive-delete-form" class="wb-delete-form"'
             . ' onsubmit="return confirm(\'Supprimer définitivement ce passif ?\');">'
             . $csrfTokenField
             . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
-            . '<button type="submit" class="btn btn-danger btn-sm">Supprimer le passif</button>'
-            . '</form>';
+            . '</form>'
+            . (new WorkbenchFooterView())->render('wb-passive-form', 'wb-passive-delete-form', 'Supprimer le passif');
     }
 
     private function createForm(string $csrfTokenField): string

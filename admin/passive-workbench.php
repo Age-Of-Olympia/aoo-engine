@@ -18,6 +18,6 @@ $exportBar = '<div class="d-flex justify-content-end mb-3">'
 $body = $exportBar . (new PassiveWorkbenchView())->render($passives, $selected, $csrf->renderTokenField());
 
 echo admin_layout('Passifs', renderFlashMessage() . $body, [
-    'styles' => ['/admin/css/action-workbench.css'],
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-workbench.css'],
     'scripts' => ['/admin/js/action-workbench.js'],
 ]);

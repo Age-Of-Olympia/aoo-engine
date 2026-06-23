@@ -21,6 +21,8 @@ use App\View\Action\IconFieldView;
 use App\View\Action\ConditionEditorView;
 use App\View\Action\DeleteActionFormView;
 use App\View\Action\ExportButtonView;
+use App\View\Action\WorkbenchFooterView;
+use App\View\Action\WorkbenchLayoutView;
 use App\View\Action\NewActionFormView;
 use App\View\Action\OutcomeEditorView;
 use App\View\Action\SimulationPanelView;
@@ -93,7 +95,7 @@ ob_start();
 if ($action === null) {
     echo '<p class="wb-empty">Sélectionnez une action.</p>';
 } else {
-    echo '<form method="post" action="/admin/action-save.php" class="wb-form">';
+    echo '<form method="post" action="/admin/action-save.php" id="wb-action-form" class="wb-form">';
     echo $csrf->renderTokenField();
     echo '<input type="hidden" name="action_id" value="' . (int) $action->getId() . '">';
     echo '<input type="hidden" name="return_to" value="/admin/action-workbench.php?id=' . (int) $action->getId() . '">';
@@ -163,11 +165,17 @@ if ($action === null) {
     echo '<p class="wb-muted"><a href="/admin/action-type-defaults.php">Gérer les défauts par type d\'action →</a></p>';
 
     echo $renderer->traitDatalist();
-    echo '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button>'
-        . (new ExportButtonView())->single((int) $action->getId()) . '</div>';
     echo '</form>';
 
+    // The delete form is a sibling form (no nested forms); its button lives in
+    // the shared footer, wired back via the HTML form= attribute.
     echo (new DeleteActionFormView())->render((int) $action->getId(), $csrf->renderTokenField());
+    echo (new WorkbenchFooterView())->render(
+        'wb-action-form',
+        DeleteActionFormView::FORM_ID,
+        "Supprimer l'action",
+        (new ExportButtonView())->single((int) $action->getId()),
+    );
 }
 $configHtml = ob_get_clean();
 
@@ -196,41 +204,21 @@ if ($action === null) {
 }
 $simHtml = ob_get_clean();
 
-/* ---------- Assemble the single-screen layout ---------- */
-ob_start();
-?>
+/* ---------- Assemble the single-screen layout (shared workbench shell) ---------- */
+$listBody = $createFormHtml
+    . '<input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">'
+    . '<div class="wb-list" id="wb-list">' . $listHtml . '</div>';
 
-<div class="wb">
-    <div class="wb-col wb-col--list">
-        <div class="wb-col-head">
-            <span class="wb-col-head-title">Actions <small><?= count($actions) ?></small></span>
-            <button type="button" class="wb-fold-toggle" id="wb-fold" title="Replier / déplier la liste">⟨⟩</button>
-        </div>
-        <div class="wb-col-body">
-            <?= $createFormHtml ?>
-            <input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">
-            <div class="wb-list" id="wb-list"><?= $listHtml ?></div>
-        </div>
-    </div>
+$editorHead = '<div class="wb-tabbtns">'
+    . '<button type="button" class="wb-tab-btn' . ($activeTab === 'config' ? ' active' : '') . '" data-tab="config">Configurer</button>'
+    . '<button type="button" class="wb-tab-btn' . ($activeTab === 'sim' ? ' active' : '') . '" data-tab="sim">Simuler</button>'
+    . '</div><small>' . ($action ? e($action->getDisplayName()) : '') . '</small>';
 
-    <div class="wb-col">
-        <div class="wb-col-head wb-tabs">
-            <div class="wb-tabbtns">
-                <button type="button" class="wb-tab-btn<?= $activeTab === 'config' ? ' active' : '' ?>" data-tab="config">Configurer</button>
-                <button type="button" class="wb-tab-btn<?= $activeTab === 'sim' ? ' active' : '' ?>" data-tab="sim">Simuler</button>
-            </div>
-            <small><?= $action ? e($action->getDisplayName()) : '' ?></small>
-        </div>
-        <div class="wb-col-body">
-            <div class="wb-tab wb-config" data-tab="config"<?= $activeTab === 'config' ? '' : ' hidden' ?>><?= renderFlashMessage() . $configHtml ?></div>
-            <div class="wb-tab wb-sim" data-tab="sim"<?= $activeTab === 'sim' ? '' : ' hidden' ?>><?= $simHtml ?></div>
-        </div>
-    </div>
-</div>
-<script>window.WB_ICONS = <?= json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) ?>;</script>
+$editorBody = '<div class="wb-tab wb-config" data-tab="config"' . ($activeTab === 'config' ? '' : ' hidden') . '>' . renderFlashMessage() . $configHtml . '</div>'
+    . '<div class="wb-tab wb-sim" data-tab="sim"' . ($activeTab === 'sim' ? '' : ' hidden') . '>' . $simHtml . '</div>';
 
-<?php
-$content = ob_get_clean();
+$content = (new WorkbenchLayoutView())->render('Actions', count($actions), $listBody, $editorHead, $editorBody, 'wb-tabs')
+    . '<script>window.WB_ICONS = ' . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
 echo admin_layout('Workbench', $content, [
     'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-simulate.css', '/admin/css/action-workbench.css'],
     'scripts' => ['/admin/js/action-simulate.js', '/admin/js/action-workbench.js'],

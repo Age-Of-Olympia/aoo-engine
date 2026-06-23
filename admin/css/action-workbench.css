@@ -97,7 +97,11 @@
 .wb-config .form-group > .form-control { flex: 1 1 auto; }
 .wb-config .wb-raw { overflow-wrap: anywhere; }
 .wb-config .wb-raw code { white-space: normal; }
-.wb-form-actions { position: sticky; bottom: 0; background: #fff; padding-top: 10px; margin-top: 8px; border-top: 1px solid #e7ebee; }
+/* One sticky action bar: Enregistrer (+ extras) left, danger pushed right. */
+.wb-footer { position: sticky; bottom: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #fff; padding: 10px 0 4px; margin-top: 10px; border-top: 1px solid #e7ebee; }
+.wb-footer-danger { margin-left: auto; }
+/* The delete form is just a shell now (its button lives in .wb-footer). */
+.wb-delete-form { display: none; }
 .wb-muted, .wb-empty { color: #8a97a3; font-size: 13px; }
 
 /* Tabs in the main column */
