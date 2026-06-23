@@ -80,3 +80,37 @@ if (!function_exists('aoo_deploy_env')) {
         ];
     }
 }
+
+if (!function_exists('aoo_app_background')) {
+
+    /**
+     * Resolve the body background image for the current environment.
+     *
+     * prod always uses bg.jpeg. Non-prod envs (test, experimental, local) get a
+     * distinct image so it's obvious at a glance you're not on prod: it prefers
+     * bg_<env>.jpeg, then the generic bg_test.jpeg, then falls back to bg.jpeg.
+     * Each candidate is existence-checked against the docroot so we never point
+     * at a missing file.
+     *
+     * @return string Absolute URL path of the background image.
+     */
+    function aoo_app_background(?string $host = null): string
+    {
+        $dir     = '/img/ui/bg';
+        $default = $dir . '/bg.jpeg';
+
+        $env = aoo_deploy_env($host ?? ($_SERVER['HTTP_HOST'] ?? null));
+        if ($env['is_prod']) {
+            return $default;
+        }
+
+        $docroot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+        foreach (["{$dir}/bg_{$env['env']}.jpeg", "{$dir}/bg_test.jpeg"] as $candidate) {
+            if ($docroot !== '' && is_file($docroot . $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $default;
+    }
+}

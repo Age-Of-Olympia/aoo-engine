@@ -40,6 +40,15 @@ class Ui{
                 <link href="css/main.min.css?v=20260614" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
+        // Environment-specific body background: test/experimental get a distinct
+        // image so it's obvious you're not on prod. Emitted only when it differs
+        // from the default, so prod's markup is unchanged. Placed after
+        // main.min.css so it overrides the body background-image there.
+        $appBg = function_exists('aoo_app_background') ? aoo_app_background() : '/img/ui/bg/bg.jpeg';
+        if ($appBg !== '/img/ui/bg/bg.jpeg') {
+            echo '<style>body{background-image:url(\'' . $appBg . '\')}</style>';
+        }
+
         if($loadJQueryUi){
             echo ' <script src="js/jquery-ui.min.js"></script>
                 <link rel="stylesheet" href="css/jquery-ui.min.css" />
