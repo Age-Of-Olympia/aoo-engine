@@ -34,6 +34,9 @@ try {
     if (array_key_exists('icon', $_POST)) {
         $saveService->saveIcon($actionId, (string) $_POST['icon']);
     }
+    if (array_key_exists('text', $_POST) || array_key_exists('level', $_POST)) {
+        $saveService->saveDetails($actionId, (string) ($_POST['text'] ?? ''), (int) ($_POST['level'] ?? 0));
+    }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
     $saveService->saveOutcomeTargets($actionId, $outcomeSelf);
 

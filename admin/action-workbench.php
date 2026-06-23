@@ -26,6 +26,7 @@ use App\View\Action\WorkbenchLayoutView;
 use App\View\Action\NewActionFormView;
 use App\View\Action\OutcomeEditorView;
 use App\View\Action\SimulationPanelView;
+use App\View\Action\WorkbenchListHeaderView;
 
 $catalogService = new ActionCatalogService();
 $actions = $catalogService->listActions();
@@ -104,12 +105,28 @@ if ($action === null) {
         . '<span class="badge badge-info">' . e(action_type_label($action)) . '</span>'
         . '<span class="badge badge-secondary" title="Cible déterminée par le type d\'action et les outcomes « sur soi »">'
             . e((new ActionTargeting())->label($action)) . '</span>'
-        . '<span class="wb-chip">niv. ' . e($action->getLevel()) . '</span>'
         . ($action->getCategory() ? '<span class="wb-chip">' . e($action->getCategory()) . '</span>' : '')
         . '<code class="wb-chip">' . e($action->getName()) . '</code>'
         . '</div>';
 
-    echo (new IconFieldView())->render($action->getIcon());
+    // Legacy rows can hold NULL in these NOT NULL columns, which makes the typed
+    // getter throw before init — read defensively (same guard as the exporter).
+    $readProp = static function (string $property) use ($action) {
+        $reflection = new ReflectionProperty(App\Entity\Action::class, $property);
+
+        return $reflection->isInitialized($action) ? $reflection->getValue($action) : null;
+    };
+
+    // Icon picker and level share one row — level is a small input, no need for a
+    // line of its own.
+    echo '<div class="wb-iconlevel">'
+        . (new IconFieldView())->render($action->getIcon())
+        . '<label class="wb-field wb-field--level"><span>Niveau</span>'
+        . '<input class="form-control" type="number" name="level" min="0" value="' . (int) $readProp('level') . '"'
+        . ' title="Prérequis d\'achat (à venir)"></label>'
+        . '</div>';
+    echo '<label class="wb-field wb-field--wide"><span>Description</span>'
+        . '<textarea class="form-control" name="text" rows="3">' . e((string) $readProp('text')) . '</textarea></label>';
 
     echo '<div class="wb-section-title wb-section-title--row">Conditions' . $conditionEditor->addControls($conditionTypes) . '</div>';
     if ($action->getConditions()->count() === 0) {
@@ -205,7 +222,7 @@ if ($action === null) {
 $simHtml = ob_get_clean();
 
 /* ---------- Assemble the single-screen layout (shared workbench shell) ---------- */
-$listBody = $createFormHtml
+$listBody = (new WorkbenchListHeaderView())->render($createFormHtml, 'action', 'Exporter tout')
     . '<input type="text" class="wb-search" id="wb-search" placeholder="Filtrer…" autocomplete="off">'
     . '<div class="wb-list" id="wb-list">' . $listHtml . '</div>';
 

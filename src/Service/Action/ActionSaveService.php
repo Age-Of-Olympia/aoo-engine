@@ -121,6 +121,48 @@ final class ActionSaveService
     }
 
     /**
+     * Set an action's editable scalar details — its description (`text`, shown to
+     * players) and `level` (a future purchase prerequisite). Flushes only when
+     * something changed. Legacy rows can hold NULL in these NOT NULL columns,
+     * leaving the typed property uninitialized; reads are guarded so the getter
+     * never throws before init (same hazard the exporter guards against).
+     */
+    public function saveDetails(int $actionId, string $text, int $level): void
+    {
+        $action = $this->entityManager->find(Action::class, $actionId);
+        if ($action === null) {
+            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
+        }
+
+        $changed = false;
+
+        $text = trim($text);
+        if ($text !== $this->current($action, 'text')) {
+            $action->setText($text);
+            $changed = true;
+        }
+
+        if ($level !== $this->current($action, 'level')) {
+            $action->setLevel($level);
+            $changed = true;
+        }
+
+        if ($changed) {
+            $this->entityManager->flush();
+        }
+    }
+
+    /**
+     * Read a typed property, or null when a legacy NULL left it uninitialized.
+     */
+    private function current(Action $action, string $property): mixed
+    {
+        $reflection = new \ReflectionProperty(Action::class, $property);
+
+        return $reflection->isInitialized($action) ? $reflection->getValue($action) : null;
+    }
+
+    /**
      * Set an action's display icon (an RPG-Awesome class such as
      * ra-crossed-swords, stored without the leading "ra-" requirement — the
      * value is taken verbatim). A no-op when the icon is unchanged.

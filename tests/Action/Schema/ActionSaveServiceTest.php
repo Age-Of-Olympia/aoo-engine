@@ -12,6 +12,7 @@ use App\Service\OutcomeInstructionService;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[Group('action-schema')]
@@ -88,6 +89,56 @@ class ActionSaveServiceTest extends TestCase
         $service->saveOutcomeTargets(1, []);
 
         $this->assertTrue($outcome->getApplyToSelf());
+    }
+
+    private function entityManager(Action $action): EntityManagerInterface&MockObject
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('find')->willReturn($action);
+
+        return $em;
+    }
+
+    public function testSavesTheActionDescriptionAndLevelTrimmed(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $action->setText('Ancien texte');
+        $action->setLevel(2);
+        $em = $this->entityManager($action);
+        $em->expects($this->once())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveDetails(1, '  Nouvelle description  ', 5);
+
+        $this->assertSame('Nouvelle description', $action->getText());
+        $this->assertSame(5, $action->getLevel());
+    }
+
+    public function testSaveDetailsIsANoOpWhenUnchanged(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $action->setText('Inchangé');
+        $action->setLevel(3);
+        $em = $this->entityManager($action);
+        $em->expects($this->never())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveDetails(1, 'Inchangé', 3);
+    }
+
+    public function testSaveDetailsHandlesLegacyNullColumnsWithoutThrowing(): void
+    {
+        // `text`/`level` left uninitialized (legacy NULL in NOT NULL columns): the
+        // guard must treat them as unset and write the new values instead of throwing.
+        $action = new \App\Action\SearchAction();
+        $em = $this->entityManager($action);
+        $em->expects($this->once())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveDetails(1, 'Première description', 4);
+
+        $this->assertSame('Première description', $action->getText());
+        $this->assertSame(4, $action->getLevel());
     }
 
     public function testApplyStatusRawKeyStaysFirstSoTheEffectResolves(): void
