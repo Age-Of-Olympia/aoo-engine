@@ -190,14 +190,19 @@ cypress_tutorial_job:
       when: manual
       allow_failure: true
     # tutorial-refactoring / experimental / main: manual trigger to
-    # conserve CI minutes. Reds when a human triggers are still a
-    # real signal.
+    # conserve CI minutes. allow_failure so this manual job stays OPTIONAL —
+    # without it a non-triggered manual job blocks the test stage and the
+    # deployment stage never runs (the experimental deploy got stuck behind it).
+    # A human-triggered red is still a real signal.
     - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
       when: manual
+      allow_failure: true
     - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH
       when: manual
+      allow_failure: true
     - if: $CI_COMMIT_REF_NAME == "main"
       when: manual
+      allow_failure: true
 
 prepare_job:
   stage: prepare
