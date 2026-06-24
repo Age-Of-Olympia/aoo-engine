@@ -97,11 +97,34 @@ function isValidBranchName(string $branch): bool {
 }
 
 /**
+ * Resolve the account home directory.
+ *
+ * getenv('HOME') is reliable from a shell or cron but is often unset under the
+ * web server (LiteSpeed/Apache), so fall back to the passwd entry, then to the
+ * docroot's parent — on o2switch the subdomain docroots live directly under the
+ * account home.
+ */
+function deployHome(): string {
+    $home = getenv('HOME');
+    if (is_string($home) && $home !== '') {
+        return rtrim($home, '/');
+    }
+    if (function_exists('posix_getpwuid') && function_exists('posix_getuid')) {
+        $pw = posix_getpwuid(posix_getuid());
+        if (!empty($pw['dir'])) {
+            return rtrim($pw['dir'], '/');
+        }
+    }
+    return rtrim(dirname((string) ($_SERVER['DOCUMENT_ROOT'] ?? '')), '/');
+}
+
+/**
  * Build the environment passed to the deploy shell scripts.
  *
  * DOCROOT/SRC/EXPECT_BRANCH replace the paths the scripts used to hardcode.
- * CHECKOUT_BRANCH, when set, tells the scripts to switch the checkout to that
- * branch first — this is how the experimental env can track a configurable
+ * HOME is passed explicitly so git-over-SSH (and ~/.ssh keys) work under the web
+ * server. CHECKOUT_BRANCH, when set, tells the scripts to switch the checkout to
+ * that branch first — this is how the experimental env can track a configurable
  * branch chosen by the caller (the EXPERIMENTAL_BRANCH CI variable).
  *
  * @param array{env:string,branch:?string,is_prod:bool,session_name:string} $envInfo
@@ -109,7 +132,8 @@ function isValidBranchName(string $branch): bool {
  * @return array<string,string>
  */
 function deployEnvVars(array $envInfo, string $requestedBranch = ''): array {
-    $src = rtrim((string) getenv('HOME'), '/') . '/deploy/' . $envInfo['env'];
+    $home = deployHome();
+    $src  = $home . '/deploy/' . $envInfo['env'];
 
     // Prod deploys from a tag (detached HEAD) and ignores any requested branch:
     // empty EXPECT_BRANCH skips the assertion, empty CHECKOUT_BRANCH skips the
@@ -126,9 +150,10 @@ function deployEnvVars(array $envInfo, string $requestedBranch = ''): array {
     }
 
     return [
-        'DOCROOT'        => $_SERVER['DOCUMENT_ROOT'],
-        'SRC'            => $src,
-        'EXPECT_BRANCH'  => $expectBranch,
+        'HOME'            => $home,
+        'DOCROOT'         => $_SERVER['DOCUMENT_ROOT'],
+        'SRC'             => $src,
+        'EXPECT_BRANCH'   => $expectBranch,
         'CHECKOUT_BRANCH' => $checkoutBranch,
     ];
 }
