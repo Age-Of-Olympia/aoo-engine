@@ -1,9 +1,20 @@
+variables:
+  # Branch auto-deployed to the experimental environment.
+  # - value:       default used by automatic pipelines.
+  # - description: makes the field prefilled + editable in the "Run pipeline"
+  #                form, so you can pick the branch when launching manually.
+  # Can also be overridden permanently via a project CI/CD variable
+  # (Settings > CI/CD > Variables) — no code change needed either way.
+  EXPERIMENTAL_BRANCH:
+    value: "saison-3"
+    description: "Branch deployed to the experimental environment (set this to the branch you are running the pipeline on)."
+
 .default_rules:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
     - if: $CI_COMMIT_REF_NAME == "staging"
-    - if: $CI_COMMIT_REF_NAME == "saison-3"
+    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH
     - if: $CI_COMMIT_REF_NAME == "main"
 
 stages:
@@ -138,56 +149,14 @@ cypress_tutorial_job:
     TEST_DB_NAME: aoo4
     CYPRESS_CONTAINER: "true"
   before_script:
-    # Stage the data + image fixtures the app expects, plus an example
-    # config that we then overwrite to point at the mariadb service alias.
+    # Stage the data + image fixtures the app expects.
     - make setup-ci-env
-    - |
-      cat > config/db_constants.php <<'PHPEOF'
-      <?php
-      define('DEV_MODE', true);
-      // Force-enable the new tutorial system so cypress-registered players
-      // (which get fresh auto-incremented IDs, not the dev whitelist
-      // 1/2/3) hit the tutorial overlay path. Without this,
-      // TutorialFeatureFlag falls back to the [1,2,3] default whitelist
-      // and index.php logs "Tutorial enabled: NO".
-      define('TUTORIAL_V2_ENABLED', true);
-      define('DB_CONSTANTS', array(
-          'host'     => 'mariadb',
-          'user'     => 'root',
-          'psw'      => 'passwordRoot',
-          'db'       => 'aoo4',
-          'password' => 'passwordRoot',
-          'dbname'   => 'aoo4',
-          'driver'   => 'mysqli',
-          'charset'  => 'utf8mb4',
-      ));
-      PHPEOF
     - composer install --no-progress --no-interaction
     - npm ci --no-audit --no-fund
   script:
-    # Wait for the mariadb service to accept connections (cold-start can
-    # take a few seconds before the daemon listens).
-    - until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" >/dev/null 2>&1; do echo "waiting for mariadb..."; sleep 2; done
-    # Seed the source database. Two layers:
-    #  1. db/init_noupdates.sql — base schema + reference data;
-    #  2. Doctrine migrations — adds the tutorial_* tables (Version2025-
-    #     1127000000_CreateCompleteTutorialSystem and the crafting tutorial
-    #     follow-up). Without this, init_test_from_dump.sh's INSERTs into
-    #     tutorial_steps fail with ERROR 1146.
-    - mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 < db/init_noupdates.sql
-    # init_noupdates.sql contains the schema that the pre-snapshot
-    # Doctrine migrations produced (race_actions, etc.) but does NOT
-    # seed the doctrine_migration_versions table that records which
-    # migrations are applied. Without these INSERTs, the migrate step
-    # below tries to re-create existing tables and fails with
-    # "Table 'race_actions' already exists". Add one INSERT IGNORE per
-    # migration whose effect is already in init_noupdates.sql.
-    - |
-      mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" aoo4 -e "
-        INSERT IGNORE INTO doctrine_migration_versions (version, executed_at, execution_time)
-        VALUES ('App\\\\Migrations\\\\Version20250427223731', NOW(), 0);
-      "
-    - vendor/bin/doctrine-migrations migrate --no-interaction --allow-no-migration --no-all-or-nothing
+    # Write the CI db config + seed the mariadb service (schema, migration
+    # tracking, tutorial_* migrations). See the script for the why.
+    - bash scripts/testing/setup_ci_database.sh
     # Sanity probe the data fixtures the Cypress spec depends on. If
     # `make setup-ci-env` failed silently this surfaces it before the
     # spec hits the API.
@@ -220,12 +189,12 @@ cypress_tutorial_job:
     - if: $CI_COMMIT_REF_NAME == "staging"
       when: manual
       allow_failure: true
-    # tutorial-refactoring / saison-3 / main: manual trigger to
+    # tutorial-refactoring / experimental / main: manual trigger to
     # conserve CI minutes. Reds when a human triggers are still a
     # real signal.
     - if: $CI_COMMIT_REF_NAME == "tutorial-refactoring"
       when: manual
-    - if: $CI_COMMIT_REF_NAME == "saison-3"
+    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH
       when: manual
     - if: $CI_COMMIT_REF_NAME == "main"
       when: manual
@@ -255,16 +224,29 @@ release-job:
     ref: '$CI_COMMIT_SHA'
     description: release_notes.md
 
+# Auto-deploy the non-prod environments now co-hosted on the single account:
+#   staging               -> test subdomain
+#   $EXPERIMENTAL_BRANCH   -> experimental subdomain (branch is configurable)
+# prod (main) has no deploy job — it stays manual, and admin/deploy.php refuses
+# the `ci` flag on the prod host anyway. The token travels in a header so it is
+# not written to Apache access logs. env_branch tells deploy.php which branch to
+# check out + deploy (honoured for non-prod only).
 deploy-job-non-prod:
   stage: deployment
   image: alpine
   environment:
-    name: dynamic-env/$CI_COMMIT_REF_NAME
-    url: https://${ENV_DOMAIN_NAME}
+    name: $CI_COMMIT_REF_NAME
+    url: https://${DEPLOY_HOST}
   before_script:
     - apk add curl
   script:
-    - curl ${CURL_OPTS} "${CI_ENVIRONMENT_URL}/admin/deploy.php?type=code&passphrase=${DEPLOY_KEY_PASS}&ci"
+    # Single-quoted: the "X-Deploy-Token: ..." header contains a colon-space,
+    # which would otherwise make YAML parse this line as a map, not a string.
+    - 'curl ${CURL_OPTS} -X POST -H "X-Deploy-Token: ${DEPLOY_KEY_PASS}" "https://${DEPLOY_HOST}/admin/deploy.php?type=code&ci&env_branch=${CI_COMMIT_REF_NAME}"'
   rules:
     - if: $CI_COMMIT_REF_NAME == "staging" && $CI_MERGE_REQUEST_ID == null
-    - if: $CI_COMMIT_REF_NAME == "saison-3" && $CI_MERGE_REQUEST_ID == null
+      variables:
+        DEPLOY_HOST: "test.age-of-olympia.net"
+    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH && $CI_MERGE_REQUEST_ID == null
+      variables:
+        DEPLOY_HOST: "experimental.age-of-olympia.net"

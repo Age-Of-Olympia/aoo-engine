@@ -11,3 +11,7 @@ parameters:
       - api/tutorial
       - admin
       - classements.php
+    scanFiles:
+      # Global helper required at runtime via config.php (not autoloaded), so
+      # PHPStan needs it pointed out to discover aoo_deploy_env().
+      - config/deploy_targets.php
