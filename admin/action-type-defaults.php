@@ -6,10 +6,12 @@ use App\Service\Action\ActionOutcomeEditService;
 use App\Service\Action\ActionTypeInstructionEditService;
 use App\Service\Action\ActionTypeLogEditService;
 use App\Service\Action\ActionTypeRegistry;
+use App\Service\Action\ActionTypeXpEditService;
 use App\Service\CsrfProtectionService;
 use App\View\Action\ActionTypeTreeView;
 use App\View\Action\TypeDefaultsView;
 use App\View\Action\TypeLogEditorView;
+use App\View\Action\TypeXpEditorView;
 
 $registry = new ActionTypeRegistry();
 $assignableTypes = $registry->assignableTypes();
@@ -38,13 +40,21 @@ $logSection = (new TypeLogEditorView())->render(
     $csrf->renderTokenField(),
 );
 
+$xpConfig = (new ActionTypeXpEditService())->configForType($selectedType);
+$xpSection = (new TypeXpEditorView())->render(
+    $selectedType,
+    $xpConfig['mode'],
+    $xpConfig['params'],
+    $csrf->renderTokenField(),
+);
+
 $body = (new TypeDefaultsView())->render(
     $selectedType,
     $treeRail,
     $instructions,
     $instructionTypes,
     $csrf->renderTokenField(),
-    $logSection,
+    $xpSection . $logSection,
 );
 
 echo admin_layout('Défauts par type d\'action', renderFlashMessage() . $body, [
