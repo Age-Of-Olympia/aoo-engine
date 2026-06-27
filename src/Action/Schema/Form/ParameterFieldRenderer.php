@@ -88,9 +88,15 @@ final class ParameterFieldRenderer
     private function input(string $name, string $type, mixed $value, ?string $list = null): string
     {
         $listAttr = $list !== null ? ' list="' . $this->escape($list) . '"' : '';
+        // A TRAIT_OR_INT value can be a dynamic array (e.g. ApplyStatus's
+        // ["rollDivisor", n]); render its JSON so it round-trips through the text
+        // input instead of stringifying to the literal "Array".
+        $text = is_array($value)
+            ? (string) json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            : (string) $value;
 
         return '<input class="form-control" type="' . $type . '" name="' . $this->escape($name)
-            . '" value="' . $this->escape((string) $value) . '"' . $listAttr . '>';
+            . '" value="' . $this->escape($text) . '"' . $listAttr . '>';
     }
 
     private function checkbox(string $name, bool $checked): string

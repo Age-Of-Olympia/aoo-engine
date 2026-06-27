@@ -85,6 +85,17 @@ class ParameterFieldRendererTest extends TestCase
         $this->assertStringContainsString('<datalist id="caracs-options">', $this->renderer->traitDatalist());
     }
 
+    public function testTraitOrIntRendersADynamicArrayAsJsonNotTheWordArray(): void
+    {
+        $field = $this->field($this->catalog->schemaForOutcomeInstruction('applystatus'), 'value');
+
+        $html = $this->renderer->render($field, 'p[value]', ['rollDivisor', 3]);
+
+        $this->assertStringContainsString('value="[&quot;rollDivisor&quot;,3]"', $html);
+        $this->assertStringNotContainsString('>Array', $html);
+        $this->assertStringNotContainsString('value="Array"', $html);
+    }
+
     public function testFallsBackToTheFieldDefaultWhenNoValueGiven(): void
     {
         $field = $this->field($this->catalog->schemaForOutcomeInstruction('malus'), 'rollDivisor');
