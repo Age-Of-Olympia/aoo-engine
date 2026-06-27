@@ -13,6 +13,7 @@ use App\Service\Action\ActionCreateService;
 use App\Service\Action\ActionOutcomeEditService;
 use App\Service\Action\ActionTargeting;
 use App\Service\Action\ActionTypeInstructionResolver;
+use App\Service\Action\ActionTypeRegistry;
 use App\Service\Action\RpgAwesomeIcons;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
@@ -30,6 +31,20 @@ use App\View\Action\WorkbenchListHeaderView;
 
 $catalogService = new ActionCatalogService();
 $actions = $catalogService->listActions();
+
+// Order the list to match the "Types d'action" rail: by the type's depth-first
+// position in the type tree, then by name. (Sorted here, not in listActions(),
+// because the tree order is the PHP class hierarchy — not expressible in SQL —
+// and other callers of listActions() keep the catalogue order.)
+$typeRegistry = new ActionTypeRegistry();
+$typeOrder = $typeRegistry->typeOrderIndex();
+$ranked = [];
+foreach ($actions as $item) {
+    $typeKey = $typeRegistry->typeKeysForAction($item)[0] ?? '';
+    $ranked[] = ['idx' => $typeOrder[$typeKey] ?? PHP_INT_MAX, 'name' => $item->getName(), 'action' => $item];
+}
+usort($ranked, static fn (array $a, array $b): int => [$a['idx'], $a['name']] <=> [$b['idx'], $b['name']]);
+$actions = array_map(static fn (array $row) => $row['action'], $ranked);
 $actionTypes = (new ActionCreateService())->availableTypes();
 $conditionTypes = (new ActionConditionEditService())->availableTypes();
 $conditionEditor = new ConditionEditorView();

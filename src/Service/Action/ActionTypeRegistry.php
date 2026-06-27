@@ -84,6 +84,33 @@ final class ActionTypeRegistry
         return $keys;
     }
 
+    /**
+     * Each type key mapped to its position in the {@see tree()} depth-first order
+     * — i.e. the order the "Types d'action" rail displays them. Lets a flat action
+     * list be sorted to match the tree (attack family first, then heal, …).
+     *
+     * @return array<string, int>
+     */
+    public function typeOrderIndex(): array
+    {
+        $order = [];
+        $this->flattenOrder($this->tree(), $order);
+
+        return $order;
+    }
+
+    /**
+     * @param array<int, ActionTypeNode> $nodes
+     * @param array<string, int>         $order
+     */
+    private function flattenOrder(array $nodes, array &$order): void
+    {
+        foreach ($nodes as $node) {
+            $order[$node->key] = count($order);
+            $this->flattenOrder($node->children, $order);
+        }
+    }
+
     public function classForTypeKey(string $key): ?string
     {
         return $this->typeMap()[$key] ?? null;
