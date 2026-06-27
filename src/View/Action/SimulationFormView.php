@@ -61,8 +61,14 @@ final class SimulationFormView
         // A self-only action has no second fighter: keep the Cible panel for a
         // symmetric layout but disable it so no target state can be entered, and
         // default the distance to 0 (the fighters share a tile) — one less click.
-        $targetDisabled = $scope === ActionTargeting::SELF;
-        $defaultDistance = $scope === ActionTargeting::SELF ? 0 : 1;
+        // Exception: a self-scoped action can still READ target state — e.g. a
+        // heal/buff whose effect computes from the target's caracs (Régénération
+        // soigne depuis la R de la cible). When the action declares any
+        // target-side field, the Cible panel must stay editable, or that value is
+        // silently stuck at its default and the simulation is wrong.
+        $hasTargetFields = $bySide[SimulationField::SIDE_TARGET] !== [];
+        $targetDisabled = $scope === ActionTargeting::SELF && !$hasTargetFields;
+        $defaultDistance = $targetDisabled ? 0 : 1;
 
         $body = '<div class="sim-sides">'
             . $this->sidePanel('Acteur', SimulationField::SIDE_ACTOR, $bySide[SimulationField::SIDE_ACTOR], $posted)

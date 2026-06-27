@@ -118,6 +118,26 @@ class SimulationFormViewTest extends TestCase
         $this->assertStringContainsString('sim-panel--disabled', $html);
     }
 
+    public function testSelfActionKeepsTheTargetPanelEditableWhenItReadsTargetState(): void
+    {
+        $action = new MeleeAction();
+        $action->setName('regeneration');
+        $action->setDisplayName('Régénération');
+
+        // A self-scoped heal that computes from the target's R carac: the field
+        // is declared on the target side, so the Cible panel must stay editable.
+        $html = $this->view()->render(
+            $action,
+            [new SimulationField('trait', 'target', 'r', 'Cible — r')],
+            [],
+            ActionTargeting::SELF,
+        );
+
+        $this->assertStringNotContainsString('sim-panel--disabled', $html);
+        $this->assertStringContainsString('name="target_trait[r]"', $html);
+        $this->assertStringContainsString('name="distance" value="1"', $html);
+    }
+
     public function testTargetActionDefaultsDistanceToOne(): void
     {
         $action = new MeleeAction();
