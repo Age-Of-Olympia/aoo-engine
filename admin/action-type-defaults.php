@@ -58,7 +58,10 @@ $body = (new TypeDefaultsView())->render(
     $instructions,
     $instructionTypes,
     $csrf->renderTokenField(),
-    $xpSection . $logSection,
+    [
+        ['label' => 'Expérience', 'html' => $xpSection],
+        ['label' => 'Journal', 'html' => $logSection],
+    ],
 );
 
 // Export of all per-type config (XP + log templates). Import reuses the generic
@@ -68,5 +71,5 @@ $toolbar = '<div class="wb-list-header"><a class="btn btn-sm btn-outline-seconda
 
 echo admin_layout('Défauts par type d\'action', renderFlashMessage() . $toolbar . $body, [
     'styles' => ['/admin/css/action-workbench.css', '/admin/css/action-type-tree.css'],
-    'scripts' => ['/admin/js/action-type-tree.js'],
+    'scripts' => ['/admin/js/action-type-tree.js', '/admin/js/action-type-defaults.js'],
 ]);

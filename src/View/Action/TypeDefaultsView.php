@@ -35,6 +35,7 @@ final class TypeDefaultsView
      * @param string                            $treeRail         pre-rendered ActionTypeTreeView rail
      * @param array<int, ActionTypeInstruction> $instructions
      * @param array<int, string>                $instructionTypes available instruction types
+     * @param array<int, array{label: string, html: string}> $extraTabs additional tabs (XP, Journal) shown beside Instructions
      */
     public function render(
         string $selectedType,
@@ -42,7 +43,7 @@ final class TypeDefaultsView
         array $instructions,
         array $instructionTypes,
         string $csrfTokenField,
-        string $extraSections = '',
+        array $extraTabs = [],
     ): string {
         $blocks = '';
         foreach ($instructions as $instruction) {
@@ -77,9 +78,34 @@ final class TypeDefaultsView
             . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>'
             . '</form>';
 
+        // Instructions + the injected XP/Journal sections become tabs so the wide
+        // column shows one config area at a time instead of three stacked forms.
+        $tabs = array_merge([['label' => 'Instructions', 'html' => $form]], array_values($extraTabs));
+
         return '<div class="wb"><div class="wb-col"><div class="wb-col-head">Types d\'action</div>'
             . '<div class="wb-col-body">' . $treeRail . '</div></div>'
-            . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $form . $extraSections . '</div></div></div>';
+            . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $this->tabs($tabs) . '</div></div></div>';
+    }
+
+    /**
+     * A tab bar + panels; the first tab is active. Switching is handled client-side
+     * (admin/js/action-type-defaults.js), which also remembers the last tab across
+     * the save → redirect.
+     *
+     * @param array<int, array{label: string, html: string}> $tabs
+     */
+    private function tabs(array $tabs): string
+    {
+        $bar = '';
+        $panels = '';
+        foreach ($tabs as $index => $tab) {
+            $active = $index === 0;
+            $bar .= '<button type="button" class="wb-tab' . ($active ? ' wb-tab--active' : '') . '" data-tab="' . $index . '">'
+                . $this->esc($tab['label']) . '</button>';
+            $panels .= '<div class="wb-tabpanel" data-tab="' . $index . '"' . ($active ? '' : ' hidden') . '>' . $tab['html'] . '</div>';
+        }
+
+        return '<div class="wb-tabs" role="tablist">' . $bar . '</div>' . $panels;
     }
 
     private function removeButton(int $id): string
