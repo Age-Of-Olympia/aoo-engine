@@ -14,7 +14,7 @@ class SimulationInputMapperTest extends TestCase
         $input = (new SimulationInputMapper())->fromPost([
             'actor_trait' => ['cc' => '15', 'f' => '10'],
             'target_trait' => ['agi' => '8'],
-            'actor_remaining' => ['pa' => '4'],
+            'actor_remaining' => ['a' => '4'],
             'distance' => '3',
             'actor_weapon' => 'tir',
             'actor_effect_name' => ['vulnerabilite', '', 'protection'],
@@ -24,7 +24,7 @@ class SimulationInputMapperTest extends TestCase
 
         $this->assertSame(['cc' => 15, 'f' => 10], $input->actorCaracs);
         $this->assertSame(['agi' => 8], $input->targetCaracs);
-        $this->assertSame(4, $input->actorRemaining['pa']);
+        $this->assertSame(4, $input->actorRemaining['a']);
         $this->assertSame(20, $input->actorRemaining['pv']); // base default preserved
         $this->assertSame(3, $input->distance);
         $this->assertSame('tir', $input->actorWeapon);
@@ -40,7 +40,7 @@ class SimulationInputMapperTest extends TestCase
         $this->assertNull($input->actorWeapon);
         $this->assertSame('melee', $input->targetWeapon);
         $this->assertSame([], $input->actorEffects);
-        $this->assertSame(['pa' => 6, 'pv' => 20, 'pm' => 15, 'mvt' => 6], $input->actorRemaining);
+        $this->assertSame(['a' => 6, 'pv' => 20, 'pm' => 15, 'mvt' => 6], $input->actorRemaining);
         $this->assertSame('gaia', $input->plan);
         $this->assertFalse($input->actorBerserk);
     }
@@ -110,6 +110,16 @@ class SimulationInputMapperTest extends TestCase
         $input = (new SimulationInputMapper())->fromPost(['actor_remaining' => ['a' => '6']]);
 
         $this->assertSame(1, $input->actorEnergie);
+    }
+
+    public function testActionPointsBaselineUsesTheEngineKeyNotPa(): void
+    {
+        // The engine reads action points as getRemaining('a'); a 'pa' baseline
+        // would never be consulted, leaving 'a' to fall back to 0.
+        $input = (new SimulationInputMapper())->fromPost([]);
+
+        $this->assertSame(6, $input->actorRemaining['a']);
+        $this->assertArrayNotHasKey('pa', $input->actorRemaining);
     }
 
     public function testRunsAreClampedToTheAllowedRange(): void

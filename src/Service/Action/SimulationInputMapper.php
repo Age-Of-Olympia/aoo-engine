@@ -8,7 +8,9 @@ namespace App\Service\Action;
  */
 final class SimulationInputMapper
 {
-    private const BASE_REMAINING = ['pa' => 6, 'pv' => 20, 'pm' => 15, 'mvt' => 6];
+    // 'a' is the engine's action-points key (SimulatedPlayer::getRemaining('a')),
+    // NOT 'pa' — a 'pa' baseline would never be read.
+    private const BASE_REMAINING = ['a' => 6, 'pv' => 20, 'pm' => 15, 'mvt' => 6];
     private const DEFAULT_TARGET_WEAPON = 'melee';
     // Capped low: each run executes the real engine, so a high count is slow.
     private const MAX_RUNS = 100;
