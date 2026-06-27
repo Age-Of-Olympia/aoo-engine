@@ -1,0 +1,72 @@
+<?php
+
+namespace Tests\Action\Schema;
+
+use App\Entity\ActionTypeLog;
+use App\Service\Action\ActionTypeLogEditService;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+
+#[Group('action-schema')]
+class ActionTypeLogEditServiceTest extends TestCase
+{
+    private function em(?ActionTypeLog $existing): EntityManagerInterface&MockObject
+    {
+        $repo = $this->createMock(EntityRepository::class);
+        $repo->method('findOneBy')->willReturn($existing);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repo);
+
+        return $em;
+    }
+
+    public function testTemplatesForTypeReturnsStoredValues(): void
+    {
+        $log = (new ActionTypeLog())->setActorTemplate('{actor} a frappé.')->setTargetTemplate(null);
+
+        $result = (new ActionTypeLogEditService($this->em($log)))->templatesForType('attack');
+
+        $this->assertSame('{actor} a frappé.', $result['actor']);
+        $this->assertNull($result['target']);
+    }
+
+    public function testSaveCreatesARowForANewType(): void
+    {
+        $em = $this->em(null);
+        $persisted = null;
+        $em->expects($this->once())->method('persist')->willReturnCallback(function ($entity) use (&$persisted) {
+            $persisted = $entity;
+        });
+        $em->expects($this->once())->method('flush');
+
+        (new ActionTypeLogEditService($em))->save('attack', '{actor} a attaqué {target}.', '');
+
+        $this->assertInstanceOf(ActionTypeLog::class, $persisted);
+        $this->assertSame('attack', $persisted->getTypeKey());
+        $this->assertSame('{actor} a attaqué {target}.', $persisted->getActorTemplate());
+        $this->assertNull($persisted->getTargetTemplate(), 'a blank template is stored as null');
+    }
+
+    public function testSaveUpdatesAnExistingRowWithoutPersisting(): void
+    {
+        $log = (new ActionTypeLog())->setTypeKey('heal')->setActorTemplate('old');
+        $em = $this->em($log);
+        $em->expects($this->never())->method('persist');
+        $em->expects($this->once())->method('flush');
+
+        (new ActionTypeLogEditService($em))->save('heal', 'new actor', 'new target');
+
+        $this->assertSame('new actor', $log->getActorTemplate());
+        $this->assertSame('new target', $log->getTargetTemplate());
+    }
+
+    public function testSaveRejectsAnUnknownType(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new ActionTypeLogEditService($this->em(null)))->save('not-a-type', 'x', 'y');
+    }
+}

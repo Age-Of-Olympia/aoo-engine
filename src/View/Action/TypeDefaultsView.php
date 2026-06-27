@@ -42,6 +42,7 @@ final class TypeDefaultsView
         array $instructions,
         array $instructionTypes,
         string $csrfTokenField,
+        string $extraSections = '',
     ): string {
         $blocks = '';
         foreach ($instructions as $instruction) {
@@ -78,7 +79,7 @@ final class TypeDefaultsView
 
         return '<div class="wb"><div class="wb-col"><div class="wb-col-head">Types d\'action</div>'
             . '<div class="wb-col-body">' . $treeRail . '</div></div>'
-            . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $form . '</div></div></div>';
+            . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $form . $extraSections . '</div></div></div>';
     }
 
     private function removeButton(int $id): string

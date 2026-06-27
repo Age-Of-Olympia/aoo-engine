@@ -4,10 +4,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionOutcomeEditService;
 use App\Service\Action\ActionTypeInstructionEditService;
+use App\Service\Action\ActionTypeLogEditService;
 use App\Service\Action\ActionTypeRegistry;
 use App\Service\CsrfProtectionService;
 use App\View\Action\ActionTypeTreeView;
 use App\View\Action\TypeDefaultsView;
+use App\View\Action\TypeLogEditorView;
 
 $registry = new ActionTypeRegistry();
 $assignableTypes = $registry->assignableTypes();
@@ -28,12 +30,21 @@ $treeRail = (new ActionTypeTreeView())->render(
     $editService->countsByType(),
 );
 
+$logTemplates = (new ActionTypeLogEditService())->templatesForType($selectedType);
+$logSection = (new TypeLogEditorView())->render(
+    $selectedType,
+    $logTemplates['actor'],
+    $logTemplates['target'],
+    $csrf->renderTokenField(),
+);
+
 $body = (new TypeDefaultsView())->render(
     $selectedType,
     $treeRail,
     $instructions,
     $instructionTypes,
     $csrf->renderTokenField(),
+    $logSection,
 );
 
 echo admin_layout('Défauts par type d\'action', renderFlashMessage() . $body, [
