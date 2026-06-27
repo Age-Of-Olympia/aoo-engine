@@ -3,6 +3,7 @@
 namespace Tests\Action;
 
 use App\Action\BuffAction;
+use App\Action\HealAction;
 use App\Action\MeleeAction;
 use App\Entity\ActionOutcome;
 use App\Service\Action\ActionTargeting;
@@ -17,59 +18,74 @@ final class ActionTargetingTest extends TestCase
         $this->targeting = new ActionTargeting();
     }
 
-    public function testBuffActionIsSelf(): void
+    public function testPureBuffIsSelfEvenWithATargetOutcome(): void
     {
-        $this->assertSame(ActionTargeting::SELF, $this->targeting->scopeOf(new BuffAction()));
+        // Self-buffs are stored with apply_to_self = 0; the buff rule overrides it.
+        $buff = new BuffAction();
+        $buff->addOutcome($this->successOutcome(false));
+
+        $this->assertSame(ActionTargeting::SELF, $this->targeting->scopeOf($buff));
     }
 
-    public function testOnlySelfOutcomesIsSelf(): void
+    public function testHealWithATargetSuccessOutcomeTargetsTheTarget(): void
     {
-        $action = $this->actionWith([true, true]);
+        // The "barbier" case: a heal aimed at an ally must not be self-only.
+        $heal = new HealAction();
+        $heal->addOutcome($this->successOutcome(false));
+
+        $this->assertSame(ActionTargeting::TARGET, $this->targeting->scopeOf($heal));
+        $this->assertFalse($this->targeting->canTargetSelf($heal));
+        $this->assertTrue($this->targeting->canTargetOther($heal));
+    }
+
+    public function testHealWithASelfSuccessOutcomeTargetsSelf(): void
+    {
+        $heal = new HealAction();
+        $heal->addOutcome($this->successOutcome(true));
+
+        $this->assertSame(ActionTargeting::SELF, $this->targeting->scopeOf($heal));
+    }
+
+    public function testAFailureOutcomeOnSelfDoesNotMakeAnAttackSelfTargetable(): void
+    {
+        // The "attaque sautée" case: target damage on success, self-damage on a
+        // missed jump. The failure outcome must not add self-aim.
+        $attack = new MeleeAction();
+        $attack->addOutcome($this->successOutcome(false));
+        $attack->addOutcome((new ActionOutcome())->setApplyToSelf(true)->setOnSuccess(false));
+
+        $this->assertSame(ActionTargeting::TARGET, $this->targeting->scopeOf($attack));
+        $this->assertFalse($this->targeting->canTargetSelf($attack));
+    }
+
+    public function testOnlySelfSuccessOutcomesIsSelf(): void
+    {
+        $action = new MeleeAction();
+        $action->addOutcome($this->successOutcome(true));
 
         $this->assertSame(ActionTargeting::SELF, $this->targeting->scopeOf($action));
-        $this->assertTrue($this->targeting->canTargetSelf($action));
-        $this->assertFalse($this->targeting->canTargetOther($action));
     }
 
-    public function testOnlyTargetOutcomesIsTarget(): void
+    public function testMixedSuccessOutcomesIsBoth(): void
     {
-        $action = $this->actionWith([false]);
-
-        $this->assertSame(ActionTargeting::TARGET, $this->targeting->scopeOf($action));
-        $this->assertFalse($this->targeting->canTargetSelf($action));
-        $this->assertTrue($this->targeting->canTargetOther($action));
-    }
-
-    public function testMixedOutcomesIsBoth(): void
-    {
-        $action = $this->actionWith([true, false]);
+        $action = new MeleeAction();
+        $action->addOutcome($this->successOutcome(true));
+        $action->addOutcome($this->successOutcome(false));
 
         $this->assertSame(ActionTargeting::BOTH, $this->targeting->scopeOf($action));
-        $this->assertTrue($this->targeting->canTargetSelf($action));
-        $this->assertTrue($this->targeting->canTargetOther($action));
     }
 
-    public function testNoOutcomesIsNoneAndTargetsNobody(): void
+    public function testNoSuccessOutcomesIsNoneForANonBuff(): void
     {
-        // A no-outcome, non-buff action (e.g. a technique modifier) must not
-        // surface a button anywhere — the old observe loop rendered nothing.
-        $action = new MeleeAction();
-
-        $this->assertSame(ActionTargeting::NONE, $this->targeting->scopeOf($action));
-        $this->assertFalse($this->targeting->canTargetSelf($action));
-        $this->assertFalse($this->targeting->canTargetOther($action));
+        // A no-success-outcome, non-buff action (e.g. a technique modifier) must
+        // not surface a button anywhere.
+        $this->assertSame(ActionTargeting::NONE, $this->targeting->scopeOf(new MeleeAction()));
+        $this->assertFalse($this->targeting->canTargetSelf(new MeleeAction()));
+        $this->assertFalse($this->targeting->canTargetOther(new MeleeAction()));
     }
 
-    /**
-     * @param list<bool> $applyToSelfFlags
-     */
-    private function actionWith(array $applyToSelfFlags): MeleeAction
+    private function successOutcome(bool $applyToSelf): ActionOutcome
     {
-        $action = new MeleeAction();
-        foreach ($applyToSelfFlags as $flag) {
-            $action->addOutcome((new ActionOutcome())->setApplyToSelf($flag));
-        }
-
-        return $action;
+        return (new ActionOutcome())->setApplyToSelf($applyToSelf)->setOnSuccess(true);
     }
 }
