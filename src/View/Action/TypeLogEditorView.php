@@ -9,13 +9,13 @@ namespace App\View\Action;
  */
 final class TypeLogEditorView
 {
-    public function render(string $typeKey, ?string $actorTemplate, ?string $targetTemplate, string $csrfTokenField, ?string $inheritedFrom = null): string
+    public function render(string $typeKey, ?string $actorTemplate, ?string $targetTemplate, string $csrfTokenField, ?string $inheritedFrom = null, ?string $overriddenParent = null): string
     {
         return '<form method="post" action="/admin/action-type-log-save.php" class="wb-form wb-logs">'
             . $csrfTokenField
             . '<input type="hidden" name="type_key" value="' . $this->esc($typeKey) . '">'
             . '<div class="wb-section-title">Messages de journal « ' . $this->esc($typeKey) . ' »</div>'
-            . $this->inheritanceBanner($typeKey, $inheritedFrom)
+            . $this->inheritanceBanner($typeKey, $inheritedFrom, $overriddenParent)
             . '<p class="wb-muted">Placeholders : <code>{actor}</code>, <code>{target}</code>, <code>{action}</code> '
             . '(nom affiché), <code>{weapon}</code> (« avec &lt;arme&gt; », vide pour les animaux). '
             . 'Laisser vide pour aucune ligne. Hérité par les types enfants sans message propre.</p>'
@@ -27,14 +27,17 @@ final class TypeLogEditorView
             . '</form>';
     }
 
-    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom): string
+    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom, ?string $overriddenParent): string
     {
-        if ($inheritedFrom === null) {
-            return '';
+        if ($inheritedFrom !== null) {
+            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
+                . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
+        }
+        if ($overriddenParent !== null) {
+            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($overriddenParent) . ' » mais surchargé ici.</p>';
         }
 
-        return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
-            . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
+        return '';
     }
 
     private function esc(string $value): string

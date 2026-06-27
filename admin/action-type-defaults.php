@@ -39,6 +39,7 @@ $logSection = (new TypeLogEditorView())->render(
     $logTemplates['target'],
     $csrf->renderTokenField(),
     $logTemplates['inheritedFrom'],
+    $logTemplates['overriddenParent'],
 );
 
 $xpConfig = (new ActionTypeXpEditService())->configForType($selectedType);
@@ -48,6 +49,7 @@ $xpSection = (new TypeXpEditorView())->render(
     $xpConfig['params'],
     $csrf->renderTokenField(),
     $xpConfig['inheritedFrom'],
+    $xpConfig['overriddenParent'],
 );
 
 $body = (new TypeDefaultsView())->render(

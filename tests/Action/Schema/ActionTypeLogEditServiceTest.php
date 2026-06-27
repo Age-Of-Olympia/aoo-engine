@@ -44,6 +44,32 @@ class ActionTypeLogEditServiceTest extends TestCase
 
         $this->assertSame('ATTACK', $result['actor']);
         $this->assertSame('attack', $result['inheritedFrom']);
+        $this->assertNull($result['overriddenParent']);
+    }
+
+    public function testTemplatesForTypeReportsTheParentItOverridesWhenItHasItsOwnRow(): void
+    {
+        $own = (new ActionTypeLog())->setTypeKey('melee')->setActorTemplate('OWN')->setTargetTemplate(null);
+        $parent = (new ActionTypeLog())->setTypeKey('attack')->setActorTemplate('ATTACK')->setTargetTemplate(null);
+
+        $result = (new ActionTypeLogEditService($this->emWithRows([$own, $parent])))->templatesForType('melee');
+
+        $this->assertSame('OWN', $result['actor']);
+        $this->assertNull($result['inheritedFrom']);
+        $this->assertSame('attack', $result['overriddenParent']);
+    }
+
+    /**
+     * @param array<int, ActionTypeLog> $rows
+     */
+    private function emWithRows(array $rows): EntityManagerInterface&MockObject
+    {
+        $repo = $this->createMock(EntityRepository::class);
+        $repo->method('findBy')->willReturn($rows);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repo);
+
+        return $em;
     }
 
     public function testSaveCreatesARowForANewType(): void

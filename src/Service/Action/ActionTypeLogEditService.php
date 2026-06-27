@@ -23,11 +23,12 @@ final class ActionTypeLogEditService
     }
 
     /**
-     * The EFFECTIVE templates for a type: its own row, or the closest ancestor's
-     * (inheritedFrom names that ancestor type), or nulls when no type in the
-     * ancestry has a row.
+     * The EFFECTIVE templates for a type. `inheritedFrom` names the ancestor the
+     * shown templates come from when the type has no own row; `overriddenParent`
+     * names the closest ancestor row this type's own row overrides (so the editor
+     * can say "hérité de X mais surchargé ici").
      *
-     * @return array{actor: ?string, target: ?string, inheritedFrom: ?string}
+     * @return array{actor: ?string, target: ?string, inheritedFrom: ?string, overriddenParent: ?string}
      */
     public function templatesForType(string $typeKey): array
     {
@@ -40,15 +41,28 @@ final class ActionTypeLogEditService
             $byKey[$row->getTypeKey()] = $row;
         }
 
+        $overriddenParent = null;
+        foreach (array_slice($chain, 1) as $key) {
+            if (isset($byKey[$key])) {
+                $overriddenParent = $key;
+                break;
+            }
+        }
+
         foreach ($chain as $depth => $key) {
             if (isset($byKey[$key])) {
                 $log = $byKey[$key];
 
-                return ['actor' => $log->getActorTemplate(), 'target' => $log->getTargetTemplate(), 'inheritedFrom' => $depth === 0 ? null : $key];
+                return [
+                    'actor' => $log->getActorTemplate(),
+                    'target' => $log->getTargetTemplate(),
+                    'inheritedFrom' => $depth === 0 ? null : $key,
+                    'overriddenParent' => $depth === 0 ? $overriddenParent : null,
+                ];
             }
         }
 
-        return ['actor' => null, 'target' => null, 'inheritedFrom' => null];
+        return ['actor' => null, 'target' => null, 'inheritedFrom' => null, 'overriddenParent' => null];
     }
 
     /**

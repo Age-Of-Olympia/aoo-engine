@@ -54,6 +54,33 @@ class ActionTypeXpEditServiceTest extends TestCase
 
         $this->assertSame('attack', $config['mode']);
         $this->assertSame('attack', $config['inheritedFrom']);
+        $this->assertNull($config['overriddenParent'], 'an inheriting type overrides nothing');
+    }
+
+    public function testConfigForTypeReportsTheParentItOverridesWhenItHasItsOwnRow(): void
+    {
+        // 'melee' has its own row AND an ancestor row ('attack'); it overrides it.
+        $own = (new ActionTypeXp())->setTypeKey('melee')->setMode('fixed')->setParams(['actorSuccess' => 9]);
+        $parent = (new ActionTypeXp())->setTypeKey('attack')->setMode('attack')->setParams([]);
+
+        $config = (new ActionTypeXpEditService($this->emWithRows([$own, $parent])))->configForType('melee');
+
+        $this->assertNull($config['inheritedFrom'], "the values come from the type's own row");
+        $this->assertSame('attack', $config['overriddenParent']);
+        $this->assertSame(9, $config['params']['actorSuccess']);
+    }
+
+    /**
+     * @param array<int, ActionTypeXp> $rows
+     */
+    private function emWithRows(array $rows): EntityManagerInterface&MockObject
+    {
+        $repo = $this->createMock(EntityRepository::class);
+        $repo->method('findBy')->willReturn($rows);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repo);
+
+        return $em;
     }
 
     public function testSaveKeepsOnlyTheModesKnownParamsCoercedToInt(): void

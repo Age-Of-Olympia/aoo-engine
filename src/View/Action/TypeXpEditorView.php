@@ -45,7 +45,7 @@ final class TypeXpEditorView
      * @param array<string, int> $params       the effective mode's params
      * @param ?string            $inheritedFrom the ancestor type this is inherited from, or null when it's the type's own rule
      */
-    public function render(string $typeKey, string $mode, array $params, string $csrfTokenField, ?string $inheritedFrom = null): string
+    public function render(string $typeKey, string $mode, array $params, string $csrfTokenField, ?string $inheritedFrom = null, ?string $overriddenParent = null): string
     {
         $modeOptions = '';
         foreach ($this->calculators->modes() as $value) {
@@ -64,7 +64,7 @@ final class TypeXpEditorView
             . $csrfTokenField
             . '<input type="hidden" name="type_key" value="' . $this->esc($typeKey) . '">'
             . '<div class="wb-section-title">Expérience « ' . $this->esc($typeKey) . ' »</div>'
-            . $this->inheritanceBanner($typeKey, $inheritedFrom)
+            . $this->inheritanceBanner($typeKey, $inheritedFrom, $overriddenParent)
             . '<label class="wb-field"><span>Mode</span><select class="form-control" name="mode">' . $modeOptions . '</select></label>'
             . '<p class="wb-muted">Changer le mode puis enregistrer affiche ses paramètres. Les algorithmes (combat/vol/entraînement) restent dans le code ; seules leurs constantes sont éditables ici.</p>'
             . '<div class="wb-grid">' . $fields . '</div>'
@@ -72,14 +72,17 @@ final class TypeXpEditorView
             . '</form>';
     }
 
-    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom): string
+    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom, ?string $overriddenParent): string
     {
-        if ($inheritedFrom === null) {
-            return '';
+        if ($inheritedFrom !== null) {
+            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
+                . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
+        }
+        if ($overriddenParent !== null) {
+            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($overriddenParent) . ' » mais surchargé ici.</p>';
         }
 
-        return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
-            . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
+        return '';
     }
 
     private function esc(string $value): string

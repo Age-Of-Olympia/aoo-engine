@@ -30,11 +30,12 @@ final class ActionTypeXpEditService
     }
 
     /**
-     * The EFFECTIVE XP rule for a type: its own row, or the closest ancestor's
-     * (inheritedFrom names that ancestor type), or a "fixed" zero reward when no
-     * type in the ancestry has a row. Params are the mode's full key set.
+     * The EFFECTIVE XP rule for a type. `inheritedFrom` names the ancestor the
+     * shown values come from when the type has no own row; `overriddenParent`
+     * names the closest ancestor row this type's own row overrides (so the editor
+     * can say "hérité de X mais surchargé ici"). Params are the mode's full key set.
      *
-     * @return array{mode: string, params: array<string, int>, inheritedFrom: ?string}
+     * @return array{mode: string, params: array<string, int>, inheritedFrom: ?string, overriddenParent: ?string}
      */
     public function configForType(string $typeKey): array
     {
@@ -47,6 +48,8 @@ final class ActionTypeXpEditService
             $byKey[$row->getTypeKey()] = $row;
         }
 
+        $overriddenParent = $this->closestAncestorWithRow($chain, $byKey);
+
         foreach ($chain as $depth => $key) {
             if (!isset($byKey[$key])) {
                 continue;
@@ -58,10 +61,33 @@ final class ActionTypeXpEditService
                 'mode' => $mode,
                 'params' => array_merge($this->calculators->defaultsFor($mode), $row->getParams()),
                 'inheritedFrom' => $depth === 0 ? null : $key,
+                'overriddenParent' => $depth === 0 ? $overriddenParent : null,
             ];
         }
 
-        return ['mode' => XpCalculatorRegistry::MODE_FIXED, 'params' => $this->calculators->defaultsFor(XpCalculatorRegistry::MODE_FIXED), 'inheritedFrom' => null];
+        return [
+            'mode' => XpCalculatorRegistry::MODE_FIXED,
+            'params' => $this->calculators->defaultsFor(XpCalculatorRegistry::MODE_FIXED),
+            'inheritedFrom' => null,
+            'overriddenParent' => null,
+        ];
+    }
+
+    /**
+     * The closest ancestor (excluding the type itself, chain[0]) that has a row.
+     *
+     * @param array<int, string>        $chain
+     * @param array<string, mixed>      $byKey
+     */
+    private function closestAncestorWithRow(array $chain, array $byKey): ?string
+    {
+        foreach (array_slice($chain, 1) as $key) {
+            if (isset($byKey[$key])) {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     /**
