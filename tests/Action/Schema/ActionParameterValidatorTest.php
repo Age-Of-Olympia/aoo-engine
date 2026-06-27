@@ -68,6 +68,29 @@ class ActionParameterValidatorTest extends TestCase
         $this->assertSame('pm', $this->validator->coerce($schema, ['lossType' => 'carac', 'value' => 'pm'])['value']);
     }
 
+    public function testTraitOrIntKeepsADynamicJsonArrayValue(): void
+    {
+        $schema = $this->catalog->schemaForOutcomeInstruction('manaloss');
+
+        $this->assertSame(
+            ['rollDivisor', 3],
+            $this->validator->coerce($schema, ['lossType' => 'carac', 'value' => '["rollDivisor",3]'])['value']
+        );
+        $this->assertSame(
+            [1, 2],
+            $this->validator->coerce($schema, ['lossType' => 'carac', 'value' => '[1,2]'])['value']
+        );
+    }
+
+    public function testTraitOrIntStillRejectsNonNumericNonTraitNonArray(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->validator->coerce(
+            $this->catalog->schemaForOutcomeInstruction('manaloss'),
+            ['lossType' => 'carac', 'value' => 'banana']
+        );
+    }
+
     public function testTraitOrIntAcceptsASlashJoinedTraitSet(): void
     {
         $result = $this->validator->coerce($this->catalog->schemaForCondition('Compute'), [

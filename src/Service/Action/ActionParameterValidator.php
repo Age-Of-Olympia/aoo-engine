@@ -168,10 +168,20 @@ final class ActionParameterValidator
         return $value;
     }
 
-    private function traitOrIntValue(ParameterField $field, string $value): int|string
+    private function traitOrIntValue(ParameterField $field, string $value): int|string|array
     {
         if (is_numeric($value)) {
             return (int) $value;
+        }
+
+        // A dynamic value can be a JSON array: ["rollDivisor", n], ["remaining",
+        // carac], or a list to pick from at random. The engine reads the array
+        // shape directly; keep it intact rather than rejecting it.
+        if (str_starts_with($value, '[')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
         }
 
         // A single trait or a "/"-joined set of traits (e.g. "cc/agi" = max of cc and agi)
