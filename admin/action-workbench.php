@@ -94,7 +94,7 @@ foreach ($actions as $item) {
     echo '<a class="wb-item' . $active . '" href="/admin/action-workbench.php?id=' . (int) $item->getId() . '&tab=' . $activeTab . '"'
         . ' title="' . e($item->getDisplayName()) . '"'
         . ' data-search="' . e(strtolower($item->getName() . ' ' . $item->getDisplayName() . ' ' . action_type_label($item) . ' ' . $item->getCategory())) . '">'
-        . '<i class="ra ' . e($item->getIcon()) . ' wb-item-icon"></i>'
+        . (new \App\View\Action\ActionIconView())->forAction($item, 'i', ['wb-item-icon'])
         . '<span class="wb-item-text">'
         . '<span class="wb-item-name">' . e($item->getDisplayName()) . '</span>'
         . '<span class="wb-item-meta">' . e(action_type_label($item)) . ' · niv.' . e($item->getLevel())

@@ -684,7 +684,7 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $action->getName() .'"
                 >
-                <span class="ra '. $action->getIcon() .'"></span>
+                '. (new \App\View\Action\ActionIconView())->forAction($action, 'span') .'
                 <span class="action-name">'. $action->getDisplayName() .'</span>
                 </button><br/>';
 
@@ -698,7 +698,7 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $nameOverride .'"
                 >
-                <span class="ra '. $action->getIcon() .'"></span>
+                '. (new \App\View\Action\ActionIconView())->forAction($action, 'span') .'
                 <span class="action-name">'. ucfirst($nameOverride) .'</span>
                 </button><br/>';
         }

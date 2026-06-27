@@ -17,7 +17,7 @@ final class IconFieldView
 
         return '<div class="wb-icon-field" data-icon-picker>'
             . '<button type="button" class="wb-icon-trigger">'
-            . '<span class="wb-icon-preview"><i class="ra ' . $this->esc($current) . '"></i></span>'
+            . '<span class="wb-icon-preview">' . (new ActionIconView())->render($current) . '</span>'
             . '<span class="wb-icon-label">' . $this->esc($label) . '</span>'
             . '</button>'
             . '<input type="hidden" class="wb-icon-input" name="' . $this->esc($name) . '" value="' . $this->esc($current) . '">'

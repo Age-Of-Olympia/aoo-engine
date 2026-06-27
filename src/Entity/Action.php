@@ -34,6 +34,10 @@ abstract class Action implements ActionInterface
     #[ORM\Column(type: "string", length: 50)]
     protected string $icon;
 
+    /** A colour token from {@see \App\View\Action\ActionIconPalette}; null = default. */
+    #[ORM\Column(type: "string", length: 20, name: "icon_color", nullable: true)]
+    protected ?string $iconColor = null;
+
     #[ORM\Column(type: "string", length: 50)]
     protected string $name;
 
@@ -138,6 +142,17 @@ abstract class Action implements ActionInterface
     public function setIcon(string $icon): void
     {
         $this->icon = $icon;
+    }
+
+    /** A colour token (see ActionIconPalette), or null for the default colour. */
+    public function getIconColor(): ?string
+    {
+        return $this->iconColor;
+    }
+
+    public function setIconColor(?string $iconColor): void
+    {
+        $this->iconColor = $iconColor !== null && $iconColor !== '' ? $iconColor : null;
     }
 
     public function getDisplayName(): string

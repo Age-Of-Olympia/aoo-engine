@@ -45,7 +45,7 @@ final class PassiveWorkbenchView
             $list .= '<a class="wb-item' . $active . '" href="/admin/passive-workbench.php?id=' . (int) $passive->getId() . '"'
                 . ' title="' . $this->esc($passive->getDisplayName()) . '"'
                 . ' data-search="' . $this->esc($search) . '">'
-                . '<i class="ra ' . $icon . ' wb-item-icon"></i>'
+                . (new ActionIconView())->render($icon, null, 'i', ['wb-item-icon'])
                 . '<span class="wb-item-text">'
                 . '<span class="wb-item-name">' . $this->esc($passive->getDisplayName()) . '</span>'
                 . '<span class="wb-item-meta">' . $this->esc($passive->getType()) . ' · niv.' . (int) $passive->getLevel()
