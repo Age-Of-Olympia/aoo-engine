@@ -194,8 +194,33 @@ final class OptionCatalog
             FieldType::MATERIAL => $this->craftingMaterials(),
             FieldType::ITEM => $this->items(),
             FieldType::ACTION => $this->actions(),
+            FieldType::PLAN => $this->plans(),
             default => [],
         };
+    }
+
+    /**
+     * Map planes (the coords table is the single source). Ephemeral per-session
+     * tutorial instances (plan LIKE 'tut_…') are excluded; the base 'tutorial'
+     * plane is kept.
+     *
+     * @return array<string, string> plan => plan
+     */
+    public function plans(): array
+    {
+        try {
+            $names = EntityManagerFactory::getEntityManager()->getConnection()
+                ->fetchFirstColumn("SELECT DISTINCT plan FROM coords WHERE plan IS NOT NULL AND plan != '' AND plan NOT LIKE 'tut\\_%' ORDER BY plan ASC");
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $plans = [];
+        foreach ($names as $name) {
+            $plans[(string) $name] = (string) $name;
+        }
+
+        return $plans;
     }
 
     /**

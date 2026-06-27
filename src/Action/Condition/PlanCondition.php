@@ -14,7 +14,7 @@ class PlanCondition extends BaseCondition implements HasParameterSchema
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('plan', FieldType::STRING, 'Plan interdit', default: 'enfers'),
+            new ParameterField('plan', FieldType::PLAN, 'Plan interdit', default: 'enfers'),
             new ParameterField('allowed', FieldType::ACTION, 'Actions autorisées (aux Enfers)', default: ['prier'], multiple: true, help: 'Actions exemptées du blocage'),
         );
     }
