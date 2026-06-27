@@ -2,7 +2,6 @@
 
 namespace Tests\Action\Schema;
 
-use App\Action\OutcomeInstruction\ApplyStatusOutcomeInstruction;
 use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
@@ -141,37 +140,4 @@ class ActionSaveServiceTest extends TestCase
         $this->assertSame(4, $action->getLevel());
     }
 
-    public function testApplyStatusRawKeyStaysFirstSoTheEffectResolves(): void
-    {
-        // ApplyStatus keys its effect off array_key_first(); a typed save must keep
-        // the raw effect key ahead of the schema fields.
-        $instruction = new ApplyStatusOutcomeInstruction();
-        $instruction->setParameters(['adrenaline' => true, 'duration' => 1]);
-        $this->setId($instruction, OutcomeInstruction::class, 7);
-
-        $outcome = $this->createMock(ActionOutcome::class);
-        $outcome->method('getId')->willReturn(3);
-
-        $action = $this->createMock(Action::class);
-        $action->method('getConditions')->willReturn(new ArrayCollection());
-        $action->method('getOutcomes')->willReturn(new ArrayCollection([$outcome]));
-
-        $instructionService = $this->createMock(OutcomeInstructionService::class);
-        $instructionService->method('getOutcomeInstructionsByOutcome')->willReturn([$instruction]);
-
-        $service = new ActionSaveService($this->entityManagerReturning($action), null, null, $instructionService);
-
-        $service->saveParameters(
-            1,
-            [],
-            [7 => ['duration' => 2, 'player' => 'actor', 'value' => 1, 'stackable' => false]],
-            [],
-            [7 => [['k' => 'adrenaline', 'v' => 'true']]],
-        );
-
-        $params = $instruction->getParameters();
-        $this->assertSame('adrenaline', array_key_first($params));
-        $this->assertTrue($params['adrenaline']);
-        $this->assertSame(2, $params['duration']);
-    }
 }

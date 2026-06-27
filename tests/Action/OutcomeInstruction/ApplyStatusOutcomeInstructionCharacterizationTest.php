@@ -49,6 +49,39 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $this->assertStringContainsString('Actor', $message);
     }
 
+    public function testReadsTheEffectFromTheNewEffectField(): void
+    {
+        // New shape: effect/apply are normal fields (was the first param key).
+        $instruction = new ApplyStatusOutcomeInstruction();
+        $instruction->setParameters([
+            'effect' => 'adrenaline', 'apply' => true, 'player' => 'actor',
+            'duration' => 1, 'value' => 2, 'stackable' => false,
+        ]);
+
+        $actor = $this->createMock(Player::class);
+        $actor->data = (object) ['name' => 'Actor'];
+        $actor->expects($this->once())->method('add_effect')->with('adrenaline', 1, 2, false);
+        $target = $this->createMock(Player::class);
+        $target->data = (object) ['name' => 'Target'];
+
+        $instruction->execute($actor, $target, new ConditionObject());
+    }
+
+    public function testApplyFalseEndsTheEffectInsteadOfAddingIt(): void
+    {
+        $instruction = new ApplyStatusOutcomeInstruction();
+        $instruction->setParameters(['effect' => 'protection', 'apply' => false, 'player' => 'actor', 'duration' => 1]);
+
+        $actor = $this->createMock(Player::class);
+        $actor->data = (object) ['name' => 'Actor'];
+        $actor->expects($this->once())->method('end_effect')->with('protection');
+        $actor->expects($this->never())->method('add_effect');
+        $target = $this->createMock(Player::class);
+        $target->data = (object) ['name' => 'Target'];
+
+        $instruction->execute($actor, $target, new ConditionObject());
+    }
+
     public function testEscapesTheEffectNameBeforeItReachesTheOutcomeHtml(): void
     {
         $payload = '<img src=x onerror=alert(1)>';
