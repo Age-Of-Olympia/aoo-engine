@@ -15,6 +15,7 @@ class PlanCondition extends BaseCondition implements HasParameterSchema
     {
         return new ParameterSchema(
             new ParameterField('plan', FieldType::STRING, 'Plan interdit', default: 'enfers'),
+            new ParameterField('allowed', FieldType::LIST, 'Actions autorisées (aux Enfers)', default: ['prier'], help: 'Noms d\'actions exemptées du blocage, séparés par des virgules'),
         );
     }
 
@@ -22,10 +23,11 @@ class PlanCondition extends BaseCondition implements HasParameterSchema
     {
         $result = new ConditionResult(true, array(), array());
 
-        $allowedInEnfers = ['prier'];
-
         $params = $condition->getParameters();
         $plan = $params["plan"] ?? "enfers";
+        // Data-driven exemption list (editable on the preconditions tab); defaults
+        // to ['prier'] for any row that predates the param.
+        $allowedInEnfers = is_array($params['allowed'] ?? null) ? $params['allowed'] : ['prier'];
 
         $actionName = $condition->getAction()?->getName();
 
