@@ -50,6 +50,17 @@ class ActionPassiveSaveServiceTest extends TestCase
         $this->assertSame(['x' => 1], $passive->getConditions());
     }
 
+    public function testTraitsFromTheMultiSelectArriveAsAnArray(): void
+    {
+        $passive = new ActionPassive();
+        $em = $this->entityManagerFinding($passive);
+
+        // The multi-select posts passive[traits][] -> an array (with stray blanks).
+        (new ActionPassiveSaveService($em))->saveFields(1, $this->fields(['traits' => ['cc', ' agi ', '']]));
+
+        $this->assertSame(['cc', 'agi'], $passive->getTraits());
+    }
+
     public function testDisplayNameFallsBackToName(): void
     {
         $passive = new ActionPassive();

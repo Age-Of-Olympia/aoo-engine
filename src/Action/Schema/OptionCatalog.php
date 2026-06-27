@@ -42,6 +42,35 @@ final class OptionCatalog
     }
 
     /**
+     * The game caracs, keyed by code (the CARACS constant is the single source).
+     *
+     * @return array<string, string> carac code => label
+     */
+    public function caracs(): array
+    {
+        return defined('CARACS') ? CARACS : [];
+    }
+
+    /**
+     * The playable races (the RACES constant is the single source).
+     *
+     * @return array<string, string> race => label
+     */
+    public function races(): array
+    {
+        if (!defined('RACES')) {
+            return [];
+        }
+
+        $races = [];
+        foreach (RACES as $name) {
+            $races[(string) $name] = $this->humanize((string) $name);
+        }
+
+        return $races;
+    }
+
+    /**
      * @return array<string, string> passive name => display name
      */
     public function passives(): array

@@ -13,10 +13,26 @@ use Classes\Player;
  */
 final class PassiveValueCalculator
 {
+    /**
+     * Special "carac" kinds the compute understands, beyond a plain CARACS code
+     * (the `default` branch reads $player->caracs->{carac}). Single source for the
+     * passive editor's carac dropdown. 'advantage' is a roll flag read by
+     * {@see \App\Action\Condition\AbstractComputeCondition}, not a value here.
+     *
+     * @var array<string, string>
+     */
+    public const SPECIAL_CARACS = [
+        'fixed' => 'Valeur fixe',
+        'lostPV' => 'PV perdus',
+        'effects' => "Nombre d'effets actifs",
+        'advantage' => 'Avantage (jet)',
+    ];
+
     public function compute(ActionPassive $passive, Player $player): int
     {
         $value = $passive->getValue();
 
+        // The 'fixed' / 'lostPV' / 'effects' cases are the SPECIAL_CARACS keys.
         return match ($passive->getCarac()) {
             'fixed' => (int) $value,
             'lostPV' => (int) floor(($player->caracs->pv - $player->getRemaining('pv')) * $value),
