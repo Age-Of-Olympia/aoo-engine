@@ -235,3 +235,8 @@
 /* Per-precondition "bloquant" toggle in the block header */
 .wb-precond-blocking { margin-left: auto; font-size: 12px; font-weight: 600; color: #5a6b7a; display: inline-flex; align-items: center; gap: 4px; }
 .wb-precond-blocking input { margin: 0; }
+
+/* Multi-select (catalog lists, e.g. the enfers "allowed actions") — give it room
+   instead of the cramped default height. */
+.wb-form select[multiple].form-control,
+.wb-grid select[multiple].form-control { min-height: 130px; }

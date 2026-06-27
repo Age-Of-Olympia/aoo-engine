@@ -193,8 +193,33 @@ final class OptionCatalog
             FieldType::EMPLACEMENT => $this->emplacements(),
             FieldType::MATERIAL => $this->craftingMaterials(),
             FieldType::ITEM => $this->items(),
+            FieldType::ACTION => $this->actions(),
             default => [],
         };
+    }
+
+    /**
+     * Action names (the actions table is the single source).
+     *
+     * @return array<string, string> name => name
+     */
+    public function actions(): array
+    {
+        try {
+            $rows = EntityManagerFactory::getEntityManager()
+                ->createQuery("SELECT a.name AS name FROM App\Entity\Action a ORDER BY a.name ASC")
+                ->getArrayResult();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $actions = [];
+        foreach ($rows as $row) {
+            $name = (string) $row['name'];
+            $actions[$name] = $name;
+        }
+
+        return $actions;
     }
 
     private function humanize(string $name): string
