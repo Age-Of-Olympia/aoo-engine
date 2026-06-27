@@ -61,7 +61,12 @@ $body = (new TypeDefaultsView())->render(
     $xpSection . $logSection,
 );
 
-echo admin_layout('Défauts par type d\'action', renderFlashMessage() . $body, [
+// Export of all per-type config (XP + log templates). Import reuses the generic
+// /admin/action-import.php — it routes by the bundle's objectType.
+$toolbar = '<div class="wb-list-header"><a class="btn btn-sm btn-outline-secondary" '
+    . 'href="/admin/action-export.php?type=action-type">Exporter les défauts par type</a></div>';
+
+echo admin_layout('Défauts par type d\'action', renderFlashMessage() . $toolbar . $body, [
     'styles' => ['/admin/css/action-workbench.css', '/admin/css/action-type-tree.css'],
     'scripts' => ['/admin/js/action-type-tree.js'],
 ]);

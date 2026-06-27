@@ -32,10 +32,10 @@ class RegistryTest extends TestCase
         $this->assertSame(['action', 'passive'], $registry->objectTypes());
     }
 
-    public function testTheBuiltInExporterRegistryKnowsActionAndPassive(): void
+    public function testTheBuiltInExporterRegistryKnowsActionPassiveAndActionType(): void
     {
         // Default exporters are lazy (no DB at construction), so this is safe here.
-        $this->assertSame(['action', 'passive'], (new ExporterRegistry())->objectTypes());
+        $this->assertSame(['action', 'passive', 'action-type'], (new ExporterRegistry())->objectTypes());
     }
 
     public function testRegisterOverridesAnExistingType(): void
