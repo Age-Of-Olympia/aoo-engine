@@ -85,6 +85,18 @@ parameters:
 			path: src/Action/AttackAction.php
 
 		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
+			identifier: property.notFound
+			count: 9
+			path: src/Service/Action/Xp/AttackXpCalculator.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Action/Xp/TrainXpCalculator.php
+
+		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1

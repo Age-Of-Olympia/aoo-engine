@@ -13,8 +13,10 @@ use App\Entity\ActionConditionPrecondition;
 use App\Entity\ActionTypeInstruction;
 use App\Entity\ActionTypeLog;
 use App\Entity\ActionTypePrecondition;
+use App\Entity\ActionTypeXp;
 use App\Service\Action\ActionLogResolver;
 use App\Service\Action\ActionSimulationService;
+use App\Service\Action\ActionXpResolver;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
@@ -69,7 +71,7 @@ class ActionSimulationServiceTest extends TestCase
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getRepository')->willReturnCallback(
-            fn (string $class): EntityRepository => in_array($class, [ActionTypePrecondition::class, ActionConditionPrecondition::class, ActionTypeLog::class], true)
+            fn (string $class): EntityRepository => in_array($class, [ActionTypePrecondition::class, ActionConditionPrecondition::class, ActionTypeLog::class, ActionTypeXp::class], true)
                 ? $emptyRepo
                 : $instructionRepo
         );
@@ -80,6 +82,7 @@ class ActionSimulationServiceTest extends TestCase
             conditionPreconditionResolver: new ConditionPreconditionResolver($em),
             weaponCatalog: new SimulationWeaponCatalog([]), // no real datas in the test env
             logResolver: new ActionLogResolver($em),
+            xpResolver: new ActionXpResolver($em),
         );
     }
 
@@ -109,6 +112,7 @@ class ActionSimulationServiceTest extends TestCase
             conditionPreconditionResolver: new ConditionPreconditionResolver($em),
             weaponCatalog: new SimulationWeaponCatalog($weapons),
             logResolver: new ActionLogResolver($em),
+            xpResolver: new ActionXpResolver($em),
         );
     }
 

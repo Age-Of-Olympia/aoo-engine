@@ -18,6 +18,14 @@ if (!defined('CARACS')) {
 if (!defined('ONE_DAY')) {
     define('ONE_DAY', 86400);
 }
+// XP tuning constants, mirrored from config/constants.php — the legacy
+// calculate*Xp() fallbacks (e.g. AttackAction) read these.
+if (!defined('ACTION_XP')) {
+    define('ACTION_XP', 5);
+}
+if (!defined('MAX_XP_FOR_STEALING')) {
+    define('MAX_XP_FOR_STEALING', 3);
+}
 // The equipment model, mirrored from config/constants.php so the simulator's
 // slot/limit rules are exercised against the real shape (14 slots; 3 normal
 // items + ring/munition/trophee on top).

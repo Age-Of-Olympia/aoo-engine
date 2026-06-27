@@ -12,6 +12,7 @@ use App\Entity\ActionCondition;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ConditionInterface;
 use App\Service\Action\ActionLogResolver;
+use App\Service\Action\ActionXpResolver;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
@@ -32,6 +33,7 @@ class ActionExecutorService
     private ActionTypePreconditionResolver $preconditionResolver;
     private ConditionPreconditionResolver $conditionPreconditionResolver;
     private ActionLogResolver $logResolver;
+    private ActionXpResolver $xpResolver;
     private bool $simulationMode = false;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
@@ -39,10 +41,11 @@ class ActionExecutorService
     private bool $blocked = false;
     private ConditionObject $conditionObject;
 
-    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null){
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null, ?ActionXpResolver $xpResolver = null){
         $this->conditionRegistry = new ConditionRegistry();
         $this->typeInstructionResolver = $typeInstructionResolver ?? new ActionTypeInstructionResolver();
         $this->logResolver = $logResolver ?? new ActionLogResolver();
+        $this->xpResolver = $xpResolver ?? new ActionXpResolver();
         $this->preconditionResolver = $preconditionResolver ?? new ActionTypePreconditionResolver();
         $this->conditionPreconditionResolver = $conditionPreconditionResolver ?? new ConditionPreconditionResolver();
         $this->conditionResultsArray = array();
@@ -82,8 +85,9 @@ class ActionExecutorService
             // 3) apply costs
             $costsResultsArray = $this->applyCosts();
 
-            // 4) calculate XP
-            $xpResultsArray = $this->action->calculateXp($this->globalConditionsResult, $this->actor, $this->target);
+            // 4) calculate XP — per-type rule (data); falls back to calculateXp()
+            // for any type not yet seeded.
+            $xpResultsArray = $this->xpResolver->calculate($this->action, $this->globalConditionsResult, $this->actor, $this->target);
             if(!empty($xpResultsArray["actor"])){            
                 $this->actor->put_xp($xpResultsArray["actor"]);
             }
