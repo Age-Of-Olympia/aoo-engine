@@ -236,7 +236,10 @@
 .wb-precond-blocking { margin-left: auto; font-size: 12px; font-weight: 600; color: #5a6b7a; display: inline-flex; align-items: center; gap: 4px; }
 .wb-precond-blocking input { margin: 0; }
 
-/* Multi-select (catalog lists, e.g. the enfers "allowed actions") — give it room
-   instead of the cramped default height. */
-.wb-form select[multiple].form-control,
-.wb-grid select[multiple].form-control { min-height: 130px; }
+/* Multi-select fields (catalog lists, e.g. the enfers "allowed actions"): the
+   long label was eating the row width and squeezing the select to one letter.
+   Stack the label on top so the select spans the full block width and is tall
+   enough to browse. */
+.wb .form-group:has(> select[multiple]) { flex-direction: column; align-items: stretch; }
+.wb .form-group:has(> select[multiple]) > label { white-space: normal; flex: 0 0 auto; }
+.wb select[multiple].form-control { height: auto; min-height: 150px; width: 100%; }
