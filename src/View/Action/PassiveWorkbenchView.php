@@ -2,14 +2,16 @@
 
 namespace App\View\Action;
 
+use App\Action\Combat\PassiveValueCalculator;
+use App\Action\Schema\OptionCatalog;
 use App\Entity\ActionPassive;
 
 /**
  * The passive workbench body: a filterable list of passives on the left and the
  * edit form for the selected one on the right. Reuses the action workbench's
- * wb-* layout/CSS. Traits are edited as a comma-separated list; conditions use
- * the structured {@see PassiveConditionEditorView} (weapon/category picker with a
- * raw-JSON fallback).
+ * wb-* layout/CSS. Carac, race and traits are catalog-backed dropdowns (sourced
+ * from CARACS / RACES / PassiveValueCalculator — no re-listed values); conditions
+ * use the structured {@see PassiveConditionEditorView}.
  */
 final class PassiveWorkbenchView
 {
@@ -20,6 +22,13 @@ final class PassiveWorkbenchView
         '' => '—', 'melee' => 'Mêlée', 'distance' => 'Distance',
         'magic' => 'Magie', 'stealth' => 'Furtivité', 'survival' => 'Survie',
     ];
+
+    private OptionCatalog $catalog;
+
+    public function __construct(?OptionCatalog $catalog = null)
+    {
+        $this->catalog = $catalog ?? new OptionCatalog();
+    }
 
     /**
      * @param array<int, ActionPassive> $passives
@@ -70,13 +79,13 @@ final class PassiveWorkbenchView
             . $this->input('name', 'Nom (clé)', $passive->getName())
             . $this->input('displayName', 'Nom affiché', $passive->getDisplayName())
             . $this->select('type', 'Type', self::TYPES, $passive->getType())
-            . $this->input('carac', 'Carac', $passive->getCarac())
+            . $this->caracSelect($passive->getCarac())
             . $this->input('value', 'Valeur', (string) $passive->getValue(), 'number', '0.01')
             . $this->input('level', 'Niveau', (string) $passive->getLevel(), 'number')
-            . $this->input('race', 'Race', $passive->getRace())
+            . $this->select('race', 'Race', $this->withCurrent(['' => '—'] + $this->catalog->races(), (string) $passive->getRace()), (string) $passive->getRace())
             . $this->select('category', 'Catégorie', self::CATEGORIES, (string) ($passive->getCategory() ?? ''))
             . $this->input('prerequisites', 'Prérequis', (string) ($passive->getPrerequisites() ?? ''))
-            . $this->input('traits', 'Traits (séparés par des virgules)', implode(', ', $passive->getTraits()))
+            . $this->traitsSelect($passive->getTraits())
             . '</div>'
             . $this->textarea('text', 'Texte', (string) $passive->getText())
             . (new PassiveConditionEditorView())->render($passive->getConditions())
@@ -127,6 +136,90 @@ final class PassiveWorkbenchView
 
         return '<label class="wb-field"><span>' . $this->esc($label) . '</span>'
             . '<select class="form-control" name="passive[' . $this->esc($name) . ']">' . $opts . '</select></label>';
+    }
+
+    /**
+     * The carac dropdown: special compute kinds (PassiveValueCalculator) +
+     * the caracs (CARACS via OptionCatalog), grouped. The stored value is kept
+     * selectable even if it is neither, so no data is lost on save.
+     */
+    private function caracSelect(string $current): string
+    {
+        $groups = [
+            'Spécial' => PassiveValueCalculator::SPECIAL_CARACS,
+            'Caractéristique' => $this->catalog->caracs(),
+        ];
+        if ($current !== '' && !$this->inGroups($groups, $current)) {
+            $groups = ['Actuel' => [$current => $current]] + $groups;
+        }
+
+        $opts = '';
+        foreach ($groups as $groupLabel => $options) {
+            $opts .= '<optgroup label="' . $this->esc((string) $groupLabel) . '">';
+            foreach ($options as $value => $optLabel) {
+                $sel = (string) $value === $current ? ' selected' : '';
+                $opts .= '<option value="' . $this->esc((string) $value) . '"' . $sel . '>' . $this->esc((string) $optLabel) . '</option>';
+            }
+            $opts .= '</optgroup>';
+        }
+
+        return '<label class="wb-field"><span>Carac</span>'
+            . '<select class="form-control" name="passive[carac]">' . $opts . '</select></label>';
+    }
+
+    /**
+     * Traits multi-select: the caracs (CARACS) plus whatever the passive already
+     * stores (so non-carac traits like "esquive" / "cc/agi" survive editing).
+     *
+     * @param array<int, string> $current
+     */
+    private function traitsSelect(array $current): string
+    {
+        $options = $this->catalog->caracs();
+        foreach ($current as $trait) {
+            if (!isset($options[$trait])) {
+                $options[(string) $trait] = (string) $trait;
+            }
+        }
+
+        $opts = '';
+        foreach ($options as $value => $optLabel) {
+            $sel = in_array((string) $value, array_map('strval', $current), true) ? ' selected' : '';
+            $opts .= '<option value="' . $this->esc((string) $value) . '"' . $sel . '>' . $this->esc((string) $optLabel) . '</option>';
+        }
+
+        return '<label class="wb-field wb-field--wide"><span>Traits</span>'
+            . '<select class="form-control" name="passive[traits][]" multiple size="6">' . $opts . '</select></label>';
+    }
+
+    /**
+     * Ensure the current value is a selectable option (preserve unknown stored
+     * values instead of silently dropping them on save).
+     *
+     * @param array<string, string> $options
+     * @return array<string, string>
+     */
+    private function withCurrent(array $options, string $current): array
+    {
+        if ($current !== '' && !isset($options[$current])) {
+            $options[$current] = $current;
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param array<string, array<string, string>> $groups
+     */
+    private function inGroups(array $groups, string $value): bool
+    {
+        foreach ($groups as $options) {
+            if (isset($options[$value])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function textarea(string $name, string $label, string $value): string

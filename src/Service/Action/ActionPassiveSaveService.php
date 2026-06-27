@@ -47,7 +47,7 @@ final class ActionPassiveSaveService
         $passive->setCategory(trim((string) ($fields['category'] ?? '')));
         $passive->setText(trim((string) ($fields['text'] ?? '')));
         $passive->setPrerequisites(trim((string) ($fields['prerequisites'] ?? '')));
-        $passive->setTraits($this->parseTraits((string) ($fields['traits'] ?? '')));
+        $passive->setTraits($this->parseTraits($fields['traits'] ?? []));
         $passive->setConditions($this->buildConditions($fields));
 
         $this->entityManager->flush();
@@ -89,11 +89,16 @@ final class ActionPassiveSaveService
     }
 
     /**
+     * Traits arrive as an array from the multi-select (passive[traits][]); a
+     * legacy comma-separated string is still accepted.
+     *
      * @return array<int, string>
      */
-    private function parseTraits(string $raw): array
+    private function parseTraits(mixed $raw): array
     {
-        return array_values(array_filter(array_map('trim', explode(',', $raw)), static fn ($t): bool => $t !== ''));
+        $values = is_array($raw) ? $raw : explode(',', (string) $raw);
+
+        return array_values(array_filter(array_map(static fn ($t): string => trim((string) $t), $values), static fn ($t): bool => $t !== ''));
     }
 
     /**
