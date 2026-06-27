@@ -25,6 +25,13 @@ final class Version20260628100000_AddActionTypeLogs extends AbstractMigration
         return 'Create action_type_logs and seed per-type log templates (was getLogMessages)';
     }
 
+    public function isTransactional(): bool
+    {
+        // CREATE TABLE auto-commits on MySQL, so wrapping it in a transaction
+        // leaves nothing to commit at the end ("no active transaction").
+        return false;
+    }
+
     public function up(Schema $schema): void
     {
         $this->addSql('CREATE TABLE IF NOT EXISTS action_type_logs (
