@@ -9,22 +9,26 @@ use App\Action\Condition\ConditionObject;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
-use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SchemaSimulationInputs;
 use App\Action\Schema\SimulationField;
 use Classes\Dice;
 use Classes\View;
 
-class ComputeCondition extends AbstractComputeCondition implements HasParameterSchema, DeclaresSimulationInputs
+class ComputeCondition extends AbstractComputeCondition implements HasParameterSchema
 {
     public static function parameterSchema(): ParameterSchema
     {
+        // The simulator derives its caracs from this schema (SchemaSimulationInputs):
+        // actorRollType on the actor, targetRollType on the target. The physical
+        // subclasses (melee/distance) instead read a fixed cc/agi defense — see
+        // physicalDefenseSimulationInputs() — so they declare inputs by hand.
         return new ParameterSchema(
             new ParameterField('actorRollType', FieldType::TRAIT, "Trait du jet de l'acteur", required: true),
-            new ParameterField('targetRollType', FieldType::TRAIT_OR_INT, 'Trait du jet de la cible', required: true),
+            new ParameterField('targetRollType', FieldType::TRAIT_OR_INT, 'Trait du jet de la cible', required: true, side: 'target'),
             new ParameterField('actorRollBonus', FieldType::INT, 'Bonus au jet acteur', default: 0),
             new ParameterField('targetRollBonus', FieldType::INT, 'Bonus au jet cible', default: 0),
             new ParameterField('actorAdvantage', FieldType::BOOL, 'Avantage acteur', default: false),
@@ -34,47 +38,25 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
         );
     }
 
-    public static function simulationInputs(array $params): array
-    {
-        $fields = [];
-        foreach (explode('/', (string) ($params['actorRollType'] ?? '')) as $trait) {
-            if ($trait !== '') {
-                $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_ACTOR, $trait, 'Acteur — ' . $trait);
-            }
-        }
-        foreach (static::targetSimulationTraits($params) as $trait) {
-            $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_TARGET, $trait, 'Cible — ' . $trait);
-        }
-
-        return $fields;
-    }
-
     /**
-     * Traits the target's defense roll reads. When the subclass implements a
-     * per-type defense formula, its parameter names ARE the traits it reads
-     * (SSOT — e.g. targetDefenseValue(int $cc, int $agi)). Otherwise the roll
-     * uses the configured targetRollType.
+     * Inputs for the physical computes (melee, distance): the actor's roll trait
+     * comes from the schema, but the defense is a fixed formula over the target's
+     * cc and agi (see each computeTarget), independent of targetRollType — so both
+     * caracs are always offered.
      *
      * @param array<string, mixed> $params
-     * @return list<string>
+     * @return list<SimulationField>
      */
-    protected static function targetSimulationTraits(array $params): array
+    protected static function physicalDefenseSimulationInputs(array $params): array
     {
-        if (method_exists(static::class, 'targetDefenseValue')) {
-            return array_map(
-                static fn(\ReflectionParameter $parameter): string => $parameter->getName(),
-                (new \ReflectionMethod(static::class, 'targetDefenseValue'))->getParameters(),
-            );
-        }
+        $fields = array_values(array_filter(
+            SchemaSimulationInputs::derive(static::parameterSchema(), $params),
+            static fn (SimulationField $field): bool => $field->side === SimulationField::SIDE_ACTOR,
+        ));
+        $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_TARGET, 'cc', 'Cible — cc');
+        $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_TARGET, 'agi', 'Cible — agi');
 
-        $traits = [];
-        foreach (explode('/', (string) ($params['targetRollType'] ?? '')) as $trait) {
-            if ($trait !== '' && !is_numeric($trait)) {
-                $traits[] = $trait;
-            }
-        }
-
-        return $traits;
+        return $fields;
     }
 
     protected function computeActor($actor, $dice, $conditionObject)

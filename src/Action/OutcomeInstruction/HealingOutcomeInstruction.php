@@ -4,55 +4,30 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
-use App\Action\Schema\SimulationField;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class HealingOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema, DeclaresSimulationInputs
+class HealingOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
     public static function parameterSchema(): ParameterSchema
     {
+        // The trait fields are read off the fighters at runtime (e.g. actorHealingTrait
+        // "agi" → $actor->caracs->agi), so the simulator derives its inputs straight
+        // from this schema (SchemaSimulationInputs): TRAIT_OR_INT set to a carac → a
+        // field on its side; set to a fixed number → nothing.
         return new ParameterSchema(
             new ParameterField('actorHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PV depuis (acteur)'),
-            new ParameterField('targetHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PV depuis (cible)'),
+            new ParameterField('targetHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PV depuis (cible)', side: 'target'),
             new ParameterField('bonusHealingTrait', FieldType::TRAIT_OR_INT, 'Bonus soin PV'),
             new ParameterField('actorPMHealingTrait', FieldType::TRAIT_OR_INT, 'Soin PM depuis (acteur)'),
             new ParameterField('bonusPMHealingTrait', FieldType::TRAIT_OR_INT, 'Bonus soin PM'),
             new ParameterField('divisor', FieldType::INT, 'Diviseur', default: 1),
         );
-    }
-
-    /**
-     * The heal amount reads caracs off the fighters (e.g. actorHealingTrait "agi"
-     * → $actor->caracs->agi), so the simulator must offer those caracs. A param
-     * that is a fixed number (not a trait name) needs no field. The actor side
-     * carries every "*actor*"/bonus trait; the target side carries the
-     * targetHealingTrait.
-     */
-    public static function simulationInputs(array $params): array
-    {
-        $fields = [];
-        $traitField = static function (mixed $value, string $side) use (&$fields): void {
-            $trait = (string) ($value ?? '');
-            if ($trait !== '' && !is_numeric($trait)) {
-                $label = ($side === SimulationField::SIDE_ACTOR ? 'Acteur' : 'Cible') . ' — ' . $trait;
-                $fields[$side . '|' . $trait] = new SimulationField(SimulationField::KIND_TRAIT, $side, $trait, $label);
-            }
-        };
-
-        $traitField($params['actorHealingTrait'] ?? null, SimulationField::SIDE_ACTOR);
-        $traitField($params['bonusHealingTrait'] ?? null, SimulationField::SIDE_ACTOR);
-        $traitField($params['actorPMHealingTrait'] ?? null, SimulationField::SIDE_ACTOR);
-        $traitField($params['bonusPMHealingTrait'] ?? null, SimulationField::SIDE_ACTOR);
-        $traitField($params['targetHealingTrait'] ?? null, SimulationField::SIDE_TARGET);
-
-        return array_values($fields);
     }
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {

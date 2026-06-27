@@ -14,6 +14,10 @@ use Classes\Player;
 #[ORM\Entity]
 class RemoveMalusOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    // The malus removed scales off the actor's `actorCarac` ($actor->caracs->{...}
+    // / caracDivisor) — always the actor, even when "to" applies it to the target.
+    // The simulator derives that input from the TRAIT field below; a fixed-only
+    // config (fixedMalus, no trait) surfaces nothing.
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(

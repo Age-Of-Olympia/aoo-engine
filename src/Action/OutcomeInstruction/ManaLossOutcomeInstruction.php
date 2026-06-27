@@ -14,6 +14,9 @@ use Classes\Player;
 #[ORM\Entity]
 class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    // The simulator derives its input from this schema: `value` is TRAIT_OR_INT,
+    // so lossType=carac (value="m") surfaces the actor's M, while fixed/lifeloss/
+    // difference (numeric or absent value) surface nothing — no custom code needed.
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(

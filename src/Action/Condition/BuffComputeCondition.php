@@ -4,11 +4,31 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\SimulationField;
 use Classes\Dice;
 
-class BuffComputeCondition extends ComputeCondition
+class BuffComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
 {
     protected string $throwName = "Le sort de soutien";
+
+    /**
+     * A buff resolves on the actor's roll alone — computeTarget is a no-op and the
+     * threshold is 6 + 6×level, not a contested roll — so the configured
+     * targetRollType reads nothing. Declare only the actor trait; the parent would
+     * otherwise surface a dead "Cible" field in the simulator.
+     */
+    public static function simulationInputs(array $params): array
+    {
+        $fields = [];
+        foreach (explode('/', (string) ($params['actorRollType'] ?? '')) as $trait) {
+            if ($trait !== '') {
+                $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_ACTOR, $trait, 'Acteur — ' . $trait);
+            }
+        }
+
+        return $fields;
+    }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {

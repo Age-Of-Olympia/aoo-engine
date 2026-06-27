@@ -4,12 +4,18 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
+use App\Action\Schema\DeclaresSimulationInputs;
 
-class DistanceComputeCondition extends ComputeCondition
+class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
 {
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        return self::physicalDefenseSimulationInputs($params);
     }
 
     public static function distanceMalusFor(int $distance): int

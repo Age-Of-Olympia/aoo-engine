@@ -4,6 +4,7 @@ namespace Tests\Action\OutcomeInstruction;
 
 use App\Action\Condition\ConditionObject;
 use App\Action\OutcomeInstruction\HealingOutcomeInstruction;
+use App\Action\Schema\SchemaSimulationInputs;
 use App\Action\Schema\SimulationField;
 use Classes\Player;
 use PHPUnit\Framework\Attributes\Group;
@@ -24,8 +25,9 @@ class HealingOutcomeInstructionCharacterizationTest extends TestCase
     public function testSimulationInputsExposeTheHealingTraitsPerSide(): void
     {
         // actorHealingTrait/bonus traits land on the actor, targetHealingTrait on
-        // the target; a fixed numeric value (no trait) gets no field.
-        $fields = HealingOutcomeInstruction::simulationInputs([
+        // the target; a fixed numeric value (no trait) gets no field. Derived from
+        // the schema's TRAIT_OR_INT fields + their declared side.
+        $fields = SchemaSimulationInputs::derive(HealingOutcomeInstruction::parameterSchema(), [
             'actorHealingTrait' => 'agi',
             'targetHealingTrait' => 'e',
             'bonusHealingTrait' => '3',

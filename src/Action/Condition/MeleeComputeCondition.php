@@ -4,12 +4,18 @@ namespace App\Action\Condition;
 use App\Action\Combat\CombatResolver;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
+use App\Action\Schema\DeclaresSimulationInputs;
 
-class MeleeComputeCondition extends ComputeCondition
+class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
 {
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return max($cc, $agi);
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        return self::physicalDefenseSimulationInputs($params);
     }
 
   protected function computeTarget($target, $dice, $conditionObject)

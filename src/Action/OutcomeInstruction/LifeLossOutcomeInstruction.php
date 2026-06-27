@@ -5,12 +5,10 @@ namespace App\Action\OutcomeInstruction;
 use App\Action\Combat\DamageCalculator;
 use App\Action\Combat\DamageModifiers;
 use App\Action\Condition\ConditionObject;
-use App\Action\Schema\DeclaresSimulationInputs;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
 use App\Action\Schema\ParameterField;
 use App\Action\Schema\ParameterSchema;
-use App\Action\Schema\SimulationField;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,32 +16,19 @@ use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
-class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema, DeclaresSimulationInputs
+class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
-    public static function simulationInputs(array $params): array
-    {
-        $fields = [];
-        $field = static function (string $param, string $side, string $label) use ($params, &$fields): void {
-            $trait = $params[$param] ?? null;
-            if (is_string($trait) && $trait !== '' && !is_numeric($trait)) {
-                $fields[] = new SimulationField(SimulationField::KIND_TRAIT, $side, $trait, $label . ' — ' . $trait);
-            }
-        };
-        $field('actorDamagesTrait', 'actor', 'Attaque');
-        $field('bonusDamagesTrait', 'actor', 'Bonus dégâts');
-        $field('targetDamagesTrait', 'target', 'Défense');
-        $field('bonusDefenseTrait', 'target', 'Bonus défense');
-
-        return $fields;
-    }
-
     public static function parameterSchema(): ParameterSchema
     {
+        // Attack/defense traits feed the damage roll off the fighters' caracs, so
+        // the simulator derives its inputs from this schema (SchemaSimulationInputs).
+        // The target reads defense + defense-bonus; everything else is the actor.
+        // A bonus set to a fixed number (or a [trait, divisor] pair) is handled there.
         return new ParameterSchema(
             new ParameterField('actorDamagesTrait', FieldType::TRAIT, "Trait d'attaque", required: true),
-            new ParameterField('targetDamagesTrait', FieldType::TRAIT, 'Trait de défense', required: true),
+            new ParameterField('targetDamagesTrait', FieldType::TRAIT, 'Trait de défense', required: true, side: 'target'),
             new ParameterField('bonusDamagesTrait', FieldType::TRAIT_OR_INT, 'Bonus de dégâts'),
-            new ParameterField('bonusDefenseTrait', FieldType::TRAIT_OR_INT, 'Bonus de défense'),
+            new ParameterField('bonusDefenseTrait', FieldType::TRAIT_OR_INT, 'Bonus de défense', side: 'target'),
             new ParameterField('distance', FieldType::BOOL, 'Influence de la distance', default: false),
             new ParameterField('saut', FieldType::BOOL, 'Influence du saut', default: false),
             new ParameterField('drain', FieldType::BOOL, 'Drain (PV)', default: false),
