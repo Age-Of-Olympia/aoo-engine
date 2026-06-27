@@ -231,3 +231,7 @@
 /* The first section title inside a panel is redundant with the tab label. */
 .wb-tabpanel > .wb-form > .wb-section-title:first-child,
 .wb-tabpanel > .wb-form:first-child > .wb-section-title:first-child { margin-top: 0; }
+
+/* Per-precondition "bloquant" toggle in the block header */
+.wb-precond-blocking { margin-left: auto; font-size: 12px; font-weight: 600; color: #5a6b7a; display: inline-flex; align-items: center; gap: 4px; }
+.wb-precond-blocking input { margin: 0; }

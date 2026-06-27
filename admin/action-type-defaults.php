@@ -2,15 +2,18 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Action\Schema\ActionSchemaCatalog;
 use App\Service\Action\ActionOutcomeEditService;
 use App\Service\Action\ActionTypeInstructionEditService;
 use App\Service\Action\ActionTypeLogEditService;
+use App\Service\Action\ActionTypePreconditionEditService;
 use App\Service\Action\ActionTypeRegistry;
 use App\Service\Action\ActionTypeXpEditService;
 use App\Service\CsrfProtectionService;
 use App\View\Action\ActionTypeTreeView;
 use App\View\Action\TypeDefaultsView;
 use App\View\Action\TypeLogEditorView;
+use App\View\Action\TypePreconditionsView;
 use App\View\Action\TypeXpEditorView;
 
 $registry = new ActionTypeRegistry();
@@ -52,6 +55,27 @@ $xpSection = (new TypeXpEditorView())->render(
     $xpConfig['overriddenParent'],
 );
 
+// Préconditions: the global scope (applies to every action, e.g. "Plan: enfers")
+// plus the selected type's own preconditions.
+$preconditionService = new ActionTypePreconditionEditService();
+$conditionTypes = (new ActionSchemaCatalog())->allConditionTypes();
+$preconditionsView = new TypePreconditionsView();
+$precondSection = $preconditionsView->render(
+    ActionTypePreconditionEditService::GLOBAL_SCOPE,
+    'Global — toutes les actions',
+    $preconditionService->preconditionsForType(ActionTypePreconditionEditService::GLOBAL_SCOPE),
+    $conditionTypes,
+    $selectedType,
+    $csrf->renderTokenField(),
+) . $preconditionsView->render(
+    $selectedType,
+    'Type « ' . $selectedType . ' »',
+    $preconditionService->preconditionsForType($selectedType),
+    $conditionTypes,
+    $selectedType,
+    $csrf->renderTokenField(),
+);
+
 $body = (new TypeDefaultsView())->render(
     $selectedType,
     $treeRail,
@@ -59,6 +83,7 @@ $body = (new TypeDefaultsView())->render(
     $instructionTypes,
     $csrf->renderTokenField(),
     [
+        ['label' => 'Préconditions', 'html' => $precondSection],
         ['label' => 'Expérience', 'html' => $xpSection],
         ['label' => 'Journal', 'html' => $logSection],
     ],
