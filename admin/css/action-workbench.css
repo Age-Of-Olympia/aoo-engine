@@ -251,3 +251,7 @@
 .wb-color-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .25); box-sizing: border-box; }
 .wb-color-dot--default { background: #fff; background-image: linear-gradient(45deg, transparent 44%, #c0392b 44%, #c0392b 56%, transparent 56%); }
 .wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2980b9; }
+
+/* Action title in the editor head — readable on the Configurer tab (was a faint
+   <small>, leaving you unsure which action you were editing). */
+.wb-col-head .wb-editor-title { font-weight: 700; font-size: 15px; color: #2c3e50; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

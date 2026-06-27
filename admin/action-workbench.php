@@ -244,7 +244,7 @@ $listBody = (new WorkbenchListHeaderView())->render($createFormHtml, 'action', '
 $editorHead = '<div class="wb-tabbtns">'
     . '<button type="button" class="wb-tab-btn' . ($activeTab === 'config' ? ' active' : '') . '" data-tab="config">Configurer</button>'
     . '<button type="button" class="wb-tab-btn' . ($activeTab === 'sim' ? ' active' : '') . '" data-tab="sim">Simuler</button>'
-    . '</div><small>' . ($action ? e($action->getDisplayName()) : '') . '</small>';
+    . '</div><span class="wb-editor-title">' . ($action ? e($action->getDisplayName()) : '') . '</span>';
 
 $editorBody = '<div class="wb-tab wb-config" data-tab="config"' . ($activeTab === 'config' ? '' : ' hidden') . '>' . renderFlashMessage() . $configHtml . '</div>'
     . '<div class="wb-tab wb-sim" data-tab="sim"' . ($activeTab === 'sim' ? '' : ' hidden') . '>' . $simHtml . '</div>';
