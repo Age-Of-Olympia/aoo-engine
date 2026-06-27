@@ -50,7 +50,7 @@ class SimulatedPlayer extends Player
         foreach ((array) $this->emplacements as $item) {
             self::applyItemCaracs($this->caracs, $item);
         }
-        // Degressive-XP reduction read by AttackAction::calculateActorXp.
+        // Degressive-XP reduction read by AttackXpCalculator.
         $this->upgrades = (object) ['a' => 0];
         // Lenient: unmodelled data fields the engine reads return null, not a warning.
         $this->data = new LenientData(array_merge(

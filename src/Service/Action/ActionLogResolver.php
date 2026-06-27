@@ -16,9 +16,9 @@ use Doctrine\ORM\EntityManagerInterface;
  * The template is taken from the closest type in the action's class ancestry
  * that has a row (e.g. a spell has no "spell" row → it inherits "technique").
  * Placeholders: {actor}, {target}, {action} (display name) and {weapon} (the
- * " avec <arme>" clause, empty for animals / bare hands). When no type row
- * exists the legacy getLogMessages() is used, so behaviour is preserved until
- * every type is seeded.
+ * " avec <arme>" clause, empty for animals / bare hands). A type with no
+ * configured template produces no log line — the data-driven replacement for the
+ * removed per-subclass getLogMessages().
  */
 final class ActionLogResolver
 {
@@ -38,9 +38,7 @@ final class ActionLogResolver
     {
         $config = $this->configFor($action);
         if ($config === null) {
-            $legacy = $action->getLogMessages($actor, $target);
-
-            return ['actor' => (string) ($legacy['actor'] ?? ''), 'target' => (string) ($legacy['target'] ?? '')];
+            return ['actor' => '', 'target' => '']; // no configured template -> no log line
         }
 
         return [

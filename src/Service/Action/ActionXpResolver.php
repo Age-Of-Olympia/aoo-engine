@@ -11,10 +11,9 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Computes an action's XP from its type-level rule ({@see ActionTypeXp}) — the
- * data-driven replacement for Action::calculateXp(). It picks the closest type
- * in the action's ancestry that has a row and runs the matching calculator with
- * its params. When no type row exists (or the mode is unknown) it falls back to
- * the legacy calculateXp(), so behaviour is preserved until every type is seeded.
+ * data-driven replacement for the removed Action::calculateXp(). It picks the
+ * closest type in the action's ancestry that has a row and runs the matching
+ * calculator with its params. A type with no configured rule grants no XP.
  */
 final class ActionXpResolver
 {
@@ -41,20 +40,10 @@ final class ActionXpResolver
         $calculator = $config === null ? null : $this->calculators->get($config->getMode());
 
         if ($config === null || $calculator === null) {
-            return $this->legacy($action, $success, $actor, $target);
+            return ['actor' => 0, 'target' => 0]; // no configured rule -> no XP
         }
 
         return $calculator->calculate($config->getParams(), $success, $actor, $target);
-    }
-
-    /**
-     * @return array{actor: int, target: int}
-     */
-    private function legacy(Action $action, bool $success, ActorInterface $actor, ActorInterface $target): array
-    {
-        $xp = $action->calculateXp($success, $actor, $target);
-
-        return ['actor' => (int) ($xp['actor'] ?? 0), 'target' => (int) ($xp['target'] ?? 0)];
     }
 
     private function configFor(Action $action): ?ActionTypeXp

@@ -78,11 +78,6 @@ parameters:
 			count: 1
 			path: src/Action/ActionFactory.php
 
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
-			identifier: property.notFound
-			count: 9
-			path: src/Action/AttackAction.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
@@ -271,12 +266,6 @@ parameters:
 			identifier: variable.undefined
 			count: 1
 			path: src/Action/OutcomeInstruction/ResourceOutcomeInstruction.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
-			identifier: property.notFound
-			count: 6
-			path: src/Action/TrainAction.php
 
 		-
 			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions in isset\(\) is not nullable nor uninitialized\.$#'

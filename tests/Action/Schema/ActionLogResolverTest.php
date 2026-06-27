@@ -99,14 +99,12 @@ class ActionLogResolverTest extends TestCase
         $this->assertSame('TECH Dorna', $result['actor']);
     }
 
-    public function testFallsBackToLegacyMethodWhenNoTypeRow(): void
+    public function testATypeWithNoConfiguredTemplateProducesNoLogLine(): void
     {
         $action = $this->spell('Dard');
 
         $result = $this->resolver([])->resolve($action, $this->player('Dorna'), $this->player('Thyrias'));
 
-        // SpellAction inherits TechniqueAction::getLogMessages.
-        $this->assertSame('Dorna a lancé Dard sur Thyrias.', $result['actor']);
-        $this->assertStringContainsString('Thyrias a été attaqué par Dorna', $result['target']);
+        $this->assertSame(['actor' => '', 'target' => ''], $result);
     }
 }

@@ -62,15 +62,10 @@ class ActionXpResolverTest extends TestCase
         $this->assertSame(7, $result['actor']);
     }
 
-    public function testFallsBackToLegacyCalculateXpWhenNoTypeRow(): void
+    public function testATypeWithNoConfiguredRuleGrantsNoXp(): void
     {
-        // No config -> SpellAction::calculateXp (the inherited attack algorithm).
-        $actor = $this->player(['rank' => 5, 'faction' => '', 'secretFaction' => '', 'isInactive' => false]);
-        $actor->method('get_upgrades')->willReturn((object) ['a' => 0]);
-        $target = $this->player(['rank' => 5, 'faction' => '', 'secretFaction' => '', 'isInactive' => false]);
+        $result = $this->resolver([])->calculate(new SpellAction(), true, $this->player([]), $this->player([]));
 
-        $result = $this->resolver([])->calculate(new SpellAction(), true, $actor, $target);
-
-        $this->assertSame(5, $result['actor']); // base 5 - diff 0
+        $this->assertSame(['actor' => 0, 'target' => 0], $result);
     }
 }

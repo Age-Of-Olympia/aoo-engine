@@ -85,8 +85,7 @@ class ActionExecutorService
             // 3) apply costs
             $costsResultsArray = $this->applyCosts();
 
-            // 4) calculate XP — per-type rule (data); falls back to calculateXp()
-            // for any type not yet seeded.
+            // 4) calculate XP — from the action's per-type rule (action_type_xp).
             $xpResultsArray = $this->xpResolver->calculate($this->action, $this->globalConditionsResult, $this->actor, $this->target);
             if(!empty($xpResultsArray["actor"])){            
                 $this->actor->put_xp($xpResultsArray["actor"]);
@@ -98,8 +97,7 @@ class ActionExecutorService
 
         }
         
-        // 5) LOG — per-type templates (data); falls back to getLogMessages() for
-        // any type not yet seeded.
+        // 5) LOG — from the action's per-type templates (action_type_logs).
         $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target);
 
         // 6) Trigger automatic screenshot if action occurred on arene_s2
