@@ -16,7 +16,8 @@ class ActionTypeXpEditServiceTest extends TestCase
     private function em(?ActionTypeXp $existing): EntityManagerInterface&MockObject
     {
         $repo = $this->createMock(EntityRepository::class);
-        $repo->method('findOneBy')->willReturn($existing);
+        $repo->method('findOneBy')->willReturn($existing);          // save() upserts via findOneBy
+        $repo->method('findBy')->willReturn($existing === null ? [] : [$existing]); // configForType() resolves a chain
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getRepository')->willReturn($repo);
 
@@ -29,6 +30,7 @@ class ActionTypeXpEditServiceTest extends TestCase
 
         $this->assertSame('fixed', $config['mode']);
         $this->assertSame(0, $config['params']['actorSuccess']);
+        $this->assertNull($config['inheritedFrom']);
     }
 
     public function testConfigForTypeMergesStoredParamsOverDefaults(): void
@@ -40,6 +42,18 @@ class ActionTypeXpEditServiceTest extends TestCase
         $this->assertSame('attack', $config['mode']);
         $this->assertSame(9, $config['params']['base']);
         $this->assertSame(2, $config['params']['min'], 'unset knobs fall back to the calculator default');
+        $this->assertNull($config['inheritedFrom'], "the type's own row is not inherited");
+    }
+
+    public function testConfigForTypeInheritsFromTheClosestAncestor(): void
+    {
+        // A spell has no "spell" row; it inherits "attack" (spell -> technique -> attack).
+        $row = (new ActionTypeXp())->setTypeKey('attack')->setMode('attack')->setParams(['base' => 5]);
+
+        $config = (new ActionTypeXpEditService($this->em($row)))->configForType('spell');
+
+        $this->assertSame('attack', $config['mode']);
+        $this->assertSame('attack', $config['inheritedFrom']);
     }
 
     public function testSaveKeepsOnlyTheModesKnownParamsCoercedToInt(): void

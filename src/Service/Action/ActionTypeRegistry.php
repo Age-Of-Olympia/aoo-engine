@@ -56,6 +56,34 @@ final class ActionTypeRegistry
         return $keys;
     }
 
+    /**
+     * The type-key ancestry of a type key (closest first, including the key
+     * itself) — e.g. "spell" resolves to ['spell', 'technique', 'attack']. Same
+     * chain typeKeysForAction returns, but resolved from a type key (so the
+     * type-defaults editors can show what a type inherits).
+     *
+     * @return array<int, string>
+     */
+    public function ancestryForTypeKey(string $typeKey): array
+    {
+        $map = $this->typeMap();
+        if (!isset($map[$typeKey])) {
+            return [];
+        }
+
+        $keys = [];
+        $class = $map[$typeKey];
+        while ($class !== false && $class !== Action::class) {
+            $key = $this->keyForClass($class);
+            if (isset($map[$key]) && !in_array($key, $keys, true)) {
+                $keys[] = $key;
+            }
+            $class = get_parent_class($class);
+        }
+
+        return $keys;
+    }
+
     public function classForTypeKey(string $key): ?string
     {
         return $this->typeMap()[$key] ?? null;

@@ -42,9 +42,10 @@ final class TypeXpEditorView
     }
 
     /**
-     * @param array<string, int> $params the current mode's params
+     * @param array<string, int> $params       the effective mode's params
+     * @param ?string            $inheritedFrom the ancestor type this is inherited from, or null when it's the type's own rule
      */
-    public function render(string $typeKey, string $mode, array $params, string $csrfTokenField): string
+    public function render(string $typeKey, string $mode, array $params, string $csrfTokenField, ?string $inheritedFrom = null): string
     {
         $modeOptions = '';
         foreach ($this->calculators->modes() as $value) {
@@ -63,11 +64,22 @@ final class TypeXpEditorView
             . $csrfTokenField
             . '<input type="hidden" name="type_key" value="' . $this->esc($typeKey) . '">'
             . '<div class="wb-section-title">Expérience « ' . $this->esc($typeKey) . ' »</div>'
+            . $this->inheritanceBanner($typeKey, $inheritedFrom)
             . '<label class="wb-field"><span>Mode</span><select class="form-control" name="mode">' . $modeOptions . '</select></label>'
             . '<p class="wb-muted">Changer le mode puis enregistrer affiche ses paramètres. Les algorithmes (combat/vol/entraînement) restent dans le code ; seules leurs constantes sont éditables ici.</p>'
             . '<div class="wb-grid">' . $fields . '</div>'
             . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer l\'XP</button></div>'
             . '</form>';
+    }
+
+    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom): string
+    {
+        if ($inheritedFrom === null) {
+            return '';
+        }
+
+        return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
+            . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
     }
 
     private function esc(string $value): string

@@ -38,6 +38,7 @@ $logSection = (new TypeLogEditorView())->render(
     $logTemplates['actor'],
     $logTemplates['target'],
     $csrf->renderTokenField(),
+    $logTemplates['inheritedFrom'],
 );
 
 $xpConfig = (new ActionTypeXpEditService())->configForType($selectedType);
@@ -46,6 +47,7 @@ $xpSection = (new TypeXpEditorView())->render(
     $xpConfig['mode'],
     $xpConfig['params'],
     $csrf->renderTokenField(),
+    $xpConfig['inheritedFrom'],
 );
 
 $body = (new TypeDefaultsView())->render(

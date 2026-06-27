@@ -23,13 +23,32 @@ final class ActionTypeLogEditService
     }
 
     /**
-     * @return array{actor: ?string, target: ?string}
+     * The EFFECTIVE templates for a type: its own row, or the closest ancestor's
+     * (inheritedFrom names that ancestor type), or nulls when no type in the
+     * ancestry has a row.
+     *
+     * @return array{actor: ?string, target: ?string, inheritedFrom: ?string}
      */
     public function templatesForType(string $typeKey): array
     {
-        $log = $this->find($typeKey);
+        $chain = $this->registry->ancestryForTypeKey($typeKey) ?: [$typeKey];
 
-        return ['actor' => $log?->getActorTemplate(), 'target' => $log?->getTargetTemplate()];
+        /** @var array<int, ActionTypeLog> $rows */
+        $rows = $this->entityManager->getRepository(ActionTypeLog::class)->findBy(['typeKey' => $chain]);
+        $byKey = [];
+        foreach ($rows as $row) {
+            $byKey[$row->getTypeKey()] = $row;
+        }
+
+        foreach ($chain as $depth => $key) {
+            if (isset($byKey[$key])) {
+                $log = $byKey[$key];
+
+                return ['actor' => $log->getActorTemplate(), 'target' => $log->getTargetTemplate(), 'inheritedFrom' => $depth === 0 ? null : $key];
+            }
+        }
+
+        return ['actor' => null, 'target' => null, 'inheritedFrom' => null];
     }
 
     /**

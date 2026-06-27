@@ -9,12 +9,13 @@ namespace App\View\Action;
  */
 final class TypeLogEditorView
 {
-    public function render(string $typeKey, ?string $actorTemplate, ?string $targetTemplate, string $csrfTokenField): string
+    public function render(string $typeKey, ?string $actorTemplate, ?string $targetTemplate, string $csrfTokenField, ?string $inheritedFrom = null): string
     {
         return '<form method="post" action="/admin/action-type-log-save.php" class="wb-form wb-logs">'
             . $csrfTokenField
             . '<input type="hidden" name="type_key" value="' . $this->esc($typeKey) . '">'
             . '<div class="wb-section-title">Messages de journal « ' . $this->esc($typeKey) . ' »</div>'
+            . $this->inheritanceBanner($typeKey, $inheritedFrom)
             . '<p class="wb-muted">Placeholders : <code>{actor}</code>, <code>{target}</code>, <code>{action}</code> '
             . '(nom affiché), <code>{weapon}</code> (« avec &lt;arme&gt; », vide pour les animaux). '
             . 'Laisser vide pour aucune ligne. Hérité par les types enfants sans message propre.</p>'
@@ -24,6 +25,16 @@ final class TypeLogEditorView
             . '<textarea class="form-control" name="target_template" rows="2">' . $this->esc((string) $targetTemplate) . '</textarea></label>'
             . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer les messages</button></div>'
             . '</form>';
+    }
+
+    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom): string
+    {
+        if ($inheritedFrom === null) {
+            return '';
+        }
+
+        return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
+            . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
     }
 
     private function esc(string $value): string

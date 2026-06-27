@@ -206,3 +206,14 @@
 .wb-cond-opt:has(input:checked) { order: -1; }
 .wb-cond-opt input { margin: 0; }
 .wb-cond-raw { font-family: monospace; font-size: 12px; }
+
+/* Inherited type-default banner (XP / log editors on the type-defaults page) */
+.wb-inherited {
+    margin: 6px 0 10px;
+    padding: 6px 10px;
+    border-left: 3px solid #b58900;
+    background: #fdf6e3;
+    color: #735c00;
+    font-size: 13px;
+    border-radius: 2px;
+}

@@ -16,21 +16,34 @@ class ActionTypeLogEditServiceTest extends TestCase
     private function em(?ActionTypeLog $existing): EntityManagerInterface&MockObject
     {
         $repo = $this->createMock(EntityRepository::class);
-        $repo->method('findOneBy')->willReturn($existing);
+        $repo->method('findOneBy')->willReturn($existing);          // save() upserts via findOneBy
+        $repo->method('findBy')->willReturn($existing === null ? [] : [$existing]); // templatesForType() resolves a chain
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getRepository')->willReturn($repo);
 
         return $em;
     }
 
-    public function testTemplatesForTypeReturnsStoredValues(): void
+    public function testTemplatesForTypeReturnsTheTypesOwnStoredValues(): void
     {
-        $log = (new ActionTypeLog())->setActorTemplate('{actor} a frappé.')->setTargetTemplate(null);
+        $log = (new ActionTypeLog())->setTypeKey('attack')->setActorTemplate('{actor} a frappé.')->setTargetTemplate(null);
 
         $result = (new ActionTypeLogEditService($this->em($log)))->templatesForType('attack');
 
         $this->assertSame('{actor} a frappé.', $result['actor']);
         $this->assertNull($result['target']);
+        $this->assertNull($result['inheritedFrom'], "the type's own row is not inherited");
+    }
+
+    public function testTemplatesForTypeFallsBackToAnAncestorAndNamesIt(): void
+    {
+        // A melee has no "melee" row; it inherits "attack" (melee -> attack).
+        $log = (new ActionTypeLog())->setTypeKey('attack')->setActorTemplate('ATTACK')->setTargetTemplate(null);
+
+        $result = (new ActionTypeLogEditService($this->em($log)))->templatesForType('melee');
+
+        $this->assertSame('ATTACK', $result['actor']);
+        $this->assertSame('attack', $result['inheritedFrom']);
     }
 
     public function testSaveCreatesARowForANewType(): void

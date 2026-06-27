@@ -30,20 +30,38 @@ final class ActionTypeXpEditService
     }
 
     /**
-     * The mode + params for a type, defaulting to a "fixed" zero reward when the
-     * type has no row yet. Params are the mode's full key set (stored over default).
+     * The EFFECTIVE XP rule for a type: its own row, or the closest ancestor's
+     * (inheritedFrom names that ancestor type), or a "fixed" zero reward when no
+     * type in the ancestry has a row. Params are the mode's full key set.
      *
-     * @return array{mode: string, params: array<string, int>}
+     * @return array{mode: string, params: array<string, int>, inheritedFrom: ?string}
      */
     public function configForType(string $typeKey): array
     {
-        $row = $this->find($typeKey);
-        $mode = $row?->getMode() ?? XpCalculatorRegistry::MODE_FIXED;
-        if (!$this->calculators->has($mode)) {
-            $mode = XpCalculatorRegistry::MODE_FIXED;
+        $chain = $this->registry->ancestryForTypeKey($typeKey) ?: [$typeKey];
+
+        /** @var array<int, \App\Entity\ActionTypeXp> $rows */
+        $rows = $this->entityManager->getRepository(ActionTypeXp::class)->findBy(['typeKey' => $chain]);
+        $byKey = [];
+        foreach ($rows as $row) {
+            $byKey[$row->getTypeKey()] = $row;
         }
 
-        return ['mode' => $mode, 'params' => array_merge($this->calculators->defaultsFor($mode), $row?->getParams() ?? [])];
+        foreach ($chain as $depth => $key) {
+            if (!isset($byKey[$key])) {
+                continue;
+            }
+            $row = $byKey[$key];
+            $mode = $this->calculators->has($row->getMode()) ? $row->getMode() : XpCalculatorRegistry::MODE_FIXED;
+
+            return [
+                'mode' => $mode,
+                'params' => array_merge($this->calculators->defaultsFor($mode), $row->getParams()),
+                'inheritedFrom' => $depth === 0 ? null : $key,
+            ];
+        }
+
+        return ['mode' => XpCalculatorRegistry::MODE_FIXED, 'params' => $this->calculators->defaultsFor(XpCalculatorRegistry::MODE_FIXED), 'inheritedFrom' => null];
     }
 
     /**
