@@ -11,6 +11,7 @@ use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\OutcomeInstruction;
 use App\Interface\ConditionInterface;
+use App\Service\Action\ActionLogResolver;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
@@ -30,6 +31,7 @@ class ActionExecutorService
     private ActionTypeInstructionResolver $typeInstructionResolver;
     private ActionTypePreconditionResolver $preconditionResolver;
     private ConditionPreconditionResolver $conditionPreconditionResolver;
+    private ActionLogResolver $logResolver;
     private bool $simulationMode = false;
     // Same for actor ? Possible to loose pv on action and die ?
     private int $initialTargetPv;
@@ -37,9 +39,10 @@ class ActionExecutorService
     private bool $blocked = false;
     private ConditionObject $conditionObject;
 
-    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null){
+    public function __construct(Action $action, Player $actor, Player $target, bool $simulationMode = false, ?ActionTypeInstructionResolver $typeInstructionResolver = null, ?ActionTypePreconditionResolver $preconditionResolver = null, ?ConditionPreconditionResolver $conditionPreconditionResolver = null, ?ActionLogResolver $logResolver = null){
         $this->conditionRegistry = new ConditionRegistry();
         $this->typeInstructionResolver = $typeInstructionResolver ?? new ActionTypeInstructionResolver();
+        $this->logResolver = $logResolver ?? new ActionLogResolver();
         $this->preconditionResolver = $preconditionResolver ?? new ActionTypePreconditionResolver();
         $this->conditionPreconditionResolver = $conditionPreconditionResolver ?? new ConditionPreconditionResolver();
         $this->conditionResultsArray = array();
@@ -91,8 +94,9 @@ class ActionExecutorService
 
         }
         
-        // 5) LOG
-        $logsArray = $this->action->getLogMessages($this->actor, $this->target);
+        // 5) LOG — per-type templates (data); falls back to getLogMessages() for
+        // any type not yet seeded.
+        $logsArray = $this->logResolver->resolve($this->action, $this->actor, $this->target);
 
         // 6) Trigger automatic screenshot if action occurred on arene_s2
         if (!$this->simulationMode) {

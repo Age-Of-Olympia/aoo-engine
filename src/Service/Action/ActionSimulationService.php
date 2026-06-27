@@ -26,6 +26,7 @@ final class ActionSimulationService
     private ?ActionTypePreconditionResolver $preconditionResolver;
     private ?ConditionPreconditionResolver $conditionPreconditionResolver;
     private ?SimulationWeaponCatalog $weaponCatalog;
+    private ?ActionLogResolver $logResolver;
 
     public function __construct(
         ?ActionPassiveService $passiveService = null,
@@ -33,12 +34,14 @@ final class ActionSimulationService
         ?ActionTypePreconditionResolver $preconditionResolver = null,
         ?ConditionPreconditionResolver $conditionPreconditionResolver = null,
         ?SimulationWeaponCatalog $weaponCatalog = null,
+        ?ActionLogResolver $logResolver = null,
     ) {
         $this->passiveService = $passiveService;
         $this->typeInstructionResolver = $typeInstructionResolver;
         $this->preconditionResolver = $preconditionResolver;
         $this->conditionPreconditionResolver = $conditionPreconditionResolver;
         $this->weaponCatalog = $weaponCatalog;
+        $this->logResolver = $logResolver;
     }
 
     /**
@@ -64,6 +67,7 @@ final class ActionSimulationService
                     typeInstructionResolver: $this->typeInstructionResolver,
                     preconditionResolver: $this->preconditionResolver,
                     conditionPreconditionResolver: $this->conditionPreconditionResolver,
+                    logResolver: $this->logResolver,
                 ))->executeAction()
             );
         } finally {

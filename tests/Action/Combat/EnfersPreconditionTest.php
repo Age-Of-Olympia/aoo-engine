@@ -6,6 +6,7 @@ use App\Action\PrayAction;
 use App\Action\RunAction;
 use App\Entity\Action;
 use App\Entity\ActionTypePrecondition;
+use App\Service\Action\ActionLogResolver;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
@@ -70,6 +71,7 @@ class EnfersPreconditionTest extends TestCase
             typeInstructionResolver: new ActionTypeInstructionResolver($this->em([])),
             preconditionResolver: new ActionTypePreconditionResolver($this->em([$this->globalPlan()])),
             conditionPreconditionResolver: new ConditionPreconditionResolver($this->em([])),
+            logResolver: new ActionLogResolver($this->em([])),
         ))->executeAction();
     }
 

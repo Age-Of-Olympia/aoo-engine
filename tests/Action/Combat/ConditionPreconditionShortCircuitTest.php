@@ -5,6 +5,7 @@ namespace Tests\Action\Combat;
 use App\Action\MeleeAction;
 use App\Entity\ActionCondition;
 use App\Entity\ActionConditionPrecondition;
+use App\Service\Action\ActionLogResolver;
 use App\Service\Action\ActionTypeInstructionResolver;
 use App\Service\Action\ActionTypePreconditionResolver;
 use App\Service\Action\ConditionPreconditionResolver;
@@ -61,6 +62,7 @@ class ConditionPreconditionShortCircuitTest extends TestCase
             conditionPreconditionResolver: new ConditionPreconditionResolver($this->em([
                 $this->precondition('MeleeCompute', 'NoBerserk'),
             ])),
+            logResolver: new ActionLogResolver($this->em([])),
         ))->executeAction();
 
         // NoBerserk failing sets the parent condition blocking → the action blocks.
