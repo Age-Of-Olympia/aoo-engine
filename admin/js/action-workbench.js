@@ -98,6 +98,16 @@ document.addEventListener('click', function (e) {
             picked.classList.remove('is-open');
             return;
         }
+        var swatch = e.target.closest && e.target.closest('.wb-color-swatch');
+        if (swatch) {
+            /* Reflect the picked colour in the preview immediately (data-hex is the
+               palette hex; empty = default colour). */
+            var fld = swatch.closest('.wb-icon-field');
+            var inp = swatch.querySelector('input');
+            var prev = fld && fld.querySelector('.wb-icon-preview i');
+            if (prev) { prev.style.color = inp.getAttribute('data-hex') || ''; }
+            return;
+        }
         if (!e.target.closest || !e.target.closest('.wb-icon-field')) { closeAll(null); }
     });
     document.addEventListener('input', function (e) {

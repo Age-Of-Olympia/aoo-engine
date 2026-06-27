@@ -290,6 +290,9 @@ final class ActionImporter implements ObjectImporter
     {
         // NOT NULL columns: coerce a missing/legacy-null value to a safe default.
         $action->setIcon((string) ($object['icon'] ?? ''));
+        // Nullable + allowlisted: an unknown/absent colour token becomes null (default).
+        $colorToken = isset($object['iconColor']) ? (string) $object['iconColor'] : null;
+        $action->setIconColor(\App\View\Action\ActionIconPalette::hex($colorToken) !== null ? $colorToken : null);
         $action->setDisplayName((string) ($object['displayName'] ?? $action->getName()));
         $action->setText((string) ($object['text'] ?? ''));
         $action->setLevel((int) ($object['level'] ?? 0));

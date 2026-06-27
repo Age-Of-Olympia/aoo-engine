@@ -37,7 +37,7 @@ final class ActionCreateService
      * table so it defaults to ''; the icon (an RPG-Awesome class, e.g.
      * ra-crossed-swords) and category are optional.
      */
-    public function create(string $type, string $name, string $displayName, int $level, ?string $category = null, string $icon = ''): Action
+    public function create(string $type, string $name, string $displayName, int $level, ?string $category = null, string $icon = '', ?string $iconColor = null): Action
     {
         $map = $this->entityManager->getClassMetadata(Action::class)->discriminatorMap;
         if (!isset($map[$type])) {
@@ -56,6 +56,7 @@ final class ActionCreateService
         $action->setDisplayName(trim($displayName) !== '' ? trim($displayName) : $name);
         $action->setLevel($level);
         $action->setIcon(trim($icon));
+        $action->setIconColor(\App\View\Action\ActionIconPalette::hex($iconColor) !== null ? $iconColor : null);
         $action->setText('');
         if ($category !== null && trim($category) !== '') {
             $action->setCategory(trim($category));

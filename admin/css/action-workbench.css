@@ -243,3 +243,11 @@
 .wb .form-group:has(> select[multiple]) { flex-direction: column; align-items: stretch; }
 .wb .form-group:has(> select[multiple]) > label { white-space: normal; flex: 0 0 auto; }
 .wb select[multiple].form-control { height: auto; min-height: 150px; width: 100%; }
+
+/* Action-icon colour swatches (IconFieldView) */
+.wb-icon-colors { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; align-items: center; }
+.wb-color-swatch { cursor: pointer; line-height: 0; }
+.wb-color-swatch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.wb-color-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .25); box-sizing: border-box; }
+.wb-color-dot--default { background: #fff; background-image: linear-gradient(45deg, transparent 44%, #c0392b 44%, #c0392b 56%, transparent 56%); }
+.wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2980b9; }

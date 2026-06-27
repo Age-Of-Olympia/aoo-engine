@@ -66,6 +66,7 @@ final class ActionExporter implements ObjectExporter
             'name' => $this->scalar($entity, 'name'),
             'type' => self::discriminatorType($entity),
             'icon' => $this->scalar($entity, 'icon'),
+            'iconColor' => $this->scalar($entity, 'iconColor'),
             'displayName' => $this->scalar($entity, 'displayName'),
             'text' => $this->scalar($entity, 'text'),
             'level' => $this->scalar($entity, 'level'),

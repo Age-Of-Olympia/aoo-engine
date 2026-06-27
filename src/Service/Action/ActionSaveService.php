@@ -182,4 +182,25 @@ final class ActionSaveService
         $action->setIcon($icon);
         $this->entityManager->flush();
     }
+
+    /**
+     * Save the icon colour token (see ActionIconPalette). Anything not in the
+     * palette resolves to "default" (null) rather than being stored, so the
+     * admin-set value stays an allowlist before it reaches player-facing HTML.
+     */
+    public function saveIconColor(int $actionId, ?string $colorToken): void
+    {
+        $action = $this->entityManager->find(Action::class, $actionId);
+        if ($action === null) {
+            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
+        }
+
+        $token = \App\View\Action\ActionIconPalette::hex($colorToken) !== null ? $colorToken : null;
+        if ($token === $action->getIconColor()) {
+            return;
+        }
+
+        $action->setIconColor($token);
+        $this->entityManager->flush();
+    }
 }

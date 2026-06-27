@@ -135,7 +135,7 @@ if ($action === null) {
     // Icon picker and level share one row — level is a small input, no need for a
     // line of its own.
     echo '<div class="wb-iconlevel">'
-        . (new IconFieldView())->render($action->getIcon())
+        . (new IconFieldView())->render($action->getIcon(), 'icon', $action->getIconColor())
         . '<label class="wb-field wb-field--level"><span>Niveau</span>'
         . '<input class="form-control" type="number" name="level" min="0" value="' . (int) $readProp('level') . '"'
         . ' title="Prérequis d\'achat (à venir)"></label>'

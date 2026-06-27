@@ -140,4 +140,17 @@ class ActionSaveServiceTest extends TestCase
         $this->assertSame(4, $action->getLevel());
     }
 
+    public function testSaveIconColorStoresAPaletteTokenAndRejectsAnythingElse(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $service = new ActionSaveService($this->entityManager($action), null, null, $this->createMock(OutcomeInstructionService::class));
+
+        $service->saveIconColor(1, 'rouge');
+        $this->assertSame('rouge', $action->getIconColor());
+
+        // Not in the palette -> resolves to default (null), never stored verbatim.
+        $service->saveIconColor(1, '"><script>');
+        $this->assertNull($action->getIconColor());
+    }
+
 }
