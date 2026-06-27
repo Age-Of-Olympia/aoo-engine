@@ -19,11 +19,11 @@ use PHPUnit\Framework\TestCase;
  *      globally enabled in Classes\Db::__construct).
  *
  *   2. `Player::add()` does an ActionService lookup for names other
- *      than 'attaquer'. If the action's ormType is 'spell' or
- *      'technique', the row goes in with `type='sort'` instead of the
- *      default empty string. Dropping this in the extraction would
- *      silently break spell availability for every player who relearns
- *      a sort or technique.
+ *      than 'attaquer'. If the action's ormType is a learned skill
+ *      (spell / technique / buff / heal), the row goes in with
+ *      `type='sort'` instead of the default empty string. Dropping this
+ *      would silently break spell availability for every player who
+ *      relearns a spell, technique or defensive spell.
  *
  * Requires an initialized aoo4 DB with at least one real player. Skips
  * cleanly otherwise. Every test wraps its mutations in a transaction
@@ -164,6 +164,22 @@ class PlayerActionsCharacterizationTest extends TestCase
         $player->add_action('epuisement');
 
         $this->assertSame('sort', $this->fetchActionType('epuisement'));
+    }
+
+    #[Group('player-actions-characterization')]
+    public function testAddActionWithHealNameSetsTypeSort(): void
+    {
+        // A defensive spell (ormType='heal') must persist with type='sort' too,
+        // else the owned-spells page hides it and it escapes NUMBER_MAX_COMP (#264).
+        if ($this->link->fetchOne("SELECT name FROM actions WHERE name = 'soins/barbier'") === false) {
+            $this->markTestSkipped('heal fixture (soins/barbier) not seeded');
+        }
+
+        $player = PlayerFactory::legacy($this->playerId);
+
+        $player->add_action('soins/barbier');
+
+        $this->assertSame('sort', $this->fetchActionType('soins/barbier'));
     }
 
     #[Group('player-actions-characterization')]
