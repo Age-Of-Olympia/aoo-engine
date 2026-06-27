@@ -4,22 +4,24 @@ namespace App\Service\Action;
 
 use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
+use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionTypeInstruction;
-use App\Entity\EntityManagerFactory;
+use App\Entity\TypeChildConfig;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
-use Throwable;
 
 /**
  * Add/remove/edit the instructions configured on an action TYPE (the
- * type-defaults editor). Mirrors the per-action editor but keyed on a type key.
+ * type-defaults editor). The list/add/remove/save plumbing lives in
+ * {@see AbstractTypeChildEditService}; this only supplies the instruction
+ * specifics (entity, instruction-type field, schema, validation).
+ *
+ * @extends AbstractTypeChildEditService<ActionTypeInstruction>
  */
-final class ActionTypeInstructionEditService
+final class ActionTypeInstructionEditService extends AbstractTypeChildEditService
 {
-    private EntityManagerInterface $entityManager;
     private ActionTypeRegistry $registry;
     private ActionSchemaCatalog $catalog;
-    private ParameterMerger $merger;
 
     public function __construct(
         ?EntityManagerInterface $entityManager = null,
@@ -27,95 +29,63 @@ final class ActionTypeInstructionEditService
         ?ActionSchemaCatalog $catalog = null,
         ?ParameterMerger $merger = null,
     ) {
-        $this->entityManager = $entityManager ?? EntityManagerFactory::getEntityManager();
+        parent::__construct($entityManager, $merger);
         $this->registry = $registry ?? new ActionTypeRegistry();
         $this->catalog = $catalog ?? new ActionSchemaCatalog();
-        $this->merger = $merger ?? new ParameterMerger();
     }
 
-    /**
-     * @return array<int, ActionTypeInstruction> ordered by orderIndex
-     */
+    /** @return array<int, ActionTypeInstruction> ordered by orderIndex */
     public function instructionsForType(string $typeKey): array
     {
-        return $this->entityManager->getRepository(ActionTypeInstruction::class)
-            ->findBy(['typeKey' => $typeKey], ['orderIndex' => 'ASC']);
-    }
-
-    /**
-     * How many type-level instructions each type owns directly (for the tree
-     * rail's per-node badges).
-     *
-     * @return array<string, int> typeKey => count
-     */
-    public function countsByType(): array
-    {
-        $counts = [];
-        foreach ($this->entityManager->getRepository(ActionTypeInstruction::class)->findAll() as $instruction) {
-            $key = $instruction->getTypeKey();
-            $counts[$key] = ($counts[$key] ?? 0) + 1;
-        }
-
-        return $counts;
+        return $this->forType($typeKey);
     }
 
     public function addInstruction(string $typeKey, string $instructionType): ActionTypeInstruction
     {
-        if (!isset($this->registry->assignableTypes()[$typeKey])) {
-            throw new InvalidArgumentException("Type d'action inconnu : {$typeKey}.");
-        }
-        if (!isset(OutcomeInstructionFactory::typeMap()[$instructionType])) {
-            throw new InvalidArgumentException("Type d'instruction inconnu : {$instructionType}.");
-        }
-
-        $instruction = (new ActionTypeInstruction())
-            ->setTypeKey($typeKey)
-            ->setInstructionType($instructionType)
-            ->setParameters([])
-            ->setOrderIndex(count($this->instructionsForType($typeKey)));
-
-        $this->entityManager->persist($instruction);
-        $this->entityManager->flush();
-
-        return $instruction;
+        return $this->add($typeKey, $instructionType);
     }
 
     public function removeInstruction(int $id): void
     {
-        $instruction = $this->entityManager->find(ActionTypeInstruction::class, $id);
-        if ($instruction === null) {
-            throw new InvalidArgumentException("Instruction introuvable : {$id}.");
-        }
-
-        $this->entityManager->remove($instruction);
-        $this->entityManager->flush();
+        $this->remove($id);
     }
 
-    /**
-     * @param array<int|string, array<string, mixed>>     $typedById instructionId => posted typed params
-     * @param array<int|string, array<int|string, mixed>> $rawById   instructionId => posted raw rows
-     */
-    public function saveParameters(string $typeKey, array $typedById, array $rawById = []): void
+    protected function entityClass(): string
     {
-        $this->entityManager->beginTransaction();
-        try {
-            foreach ($this->instructionsForType($typeKey) as $instruction) {
-                $merged = $this->merger->merge(
-                    $this->catalog->schemaForOutcomeInstruction($instruction->getInstructionType()),
-                    $instruction->getParameters() ?? [],
-                    $typedById[$instruction->getId()] ?? null,
-                    $rawById[$instruction->getId()] ?? null,
-                );
-                if ($merged !== null) {
-                    $instruction->setParameters($merged);
-                }
-            }
+        return ActionTypeInstruction::class;
+    }
 
-            $this->entityManager->flush();
-            $this->entityManager->commit();
-        } catch (Throwable $exception) {
-            $this->entityManager->rollback();
-            throw $exception;
+    protected function childTypeOf(TypeChildConfig $entity): string
+    {
+        /** @var ActionTypeInstruction $entity */
+        return $entity->getInstructionType();
+    }
+
+    protected function schemaFor(string $childType): ParameterSchema
+    {
+        return $this->catalog->schemaForOutcomeInstruction($childType);
+    }
+
+    protected function assertChildType(string $childType): void
+    {
+        if (!isset(OutcomeInstructionFactory::typeMap()[$childType])) {
+            throw new InvalidArgumentException("Type d'instruction inconnu : {$childType}.");
         }
+    }
+
+    protected function assertScope(string $typeKey): void
+    {
+        if (!isset($this->registry->assignableTypes()[$typeKey])) {
+            throw new InvalidArgumentException("Type d'action inconnu : {$typeKey}.");
+        }
+    }
+
+    protected function makeChild(string $typeKey, string $childType, int $orderIndex): TypeChildConfig
+    {
+        return (new ActionTypeInstruction())
+            ->setTypeKey($typeKey)
+            ->setInstructionType($childType)
+            ->setParameters([])
+            ->setOrderIndex($orderIndex);
     }
 }

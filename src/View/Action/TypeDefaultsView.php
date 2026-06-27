@@ -3,39 +3,31 @@
 namespace App\View\Action;
 
 use App\Action\Schema\ActionSchemaCatalog;
-use App\Action\Schema\Form\ParameterFieldRenderer;
-use App\Action\Schema\Form\RawParamsEditor;
-use App\Action\Schema\ParameterSchema;
 use App\Entity\ActionTypeInstruction;
 
 /**
  * The "type defaults" editor body: a type picker plus the editable instructions
  * configured on the selected action type (the data-driven home of what used to
- * be code automatics, e.g. an attack's adrenaline). Mirrors the workbench
- * Configurer: typed schema fields + raw editor per instruction, add/remove via
- * formaction buttons that reuse the save form's csrf_token/type_key.
+ * be code automatics, e.g. an attack's adrenaline). The instructions form is the
+ * shared {@see TypeChildFormView} (same as the preconditions editor); this wraps
+ * it in the type rail + tabs layout and slots in the injected XP/Journal tabs.
  */
 final class TypeDefaultsView
 {
-    private ParameterFieldRenderer $renderer;
-    private RawParamsEditor $rawEditor;
     private ActionSchemaCatalog $catalog;
+    private TypeChildFormView $form;
 
-    public function __construct(
-        ?ParameterFieldRenderer $renderer = null,
-        ?RawParamsEditor $rawEditor = null,
-        ?ActionSchemaCatalog $catalog = null,
-    ) {
-        $this->renderer = $renderer ?? new ParameterFieldRenderer();
-        $this->rawEditor = $rawEditor ?? new RawParamsEditor();
+    public function __construct(?ActionSchemaCatalog $catalog = null, ?TypeChildFormView $form = null)
+    {
         $this->catalog = $catalog ?? new ActionSchemaCatalog();
+        $this->form = $form ?? new TypeChildFormView();
     }
 
     /**
      * @param string                            $treeRail         pre-rendered ActionTypeTreeView rail
      * @param array<int, ActionTypeInstruction> $instructions
      * @param array<int, string>                $instructionTypes available instruction types
-     * @param array<int, array{label: string, html: string}> $extraTabs additional tabs (XP, Journal) shown beside Instructions
+     * @param array<int, array{label: string, html: string}> $extraTabs additional tabs (XP, Journal, Préconditions) shown beside Instructions
      */
     public function render(
         string $selectedType,
@@ -45,41 +37,38 @@ final class TypeDefaultsView
         string $csrfTokenField,
         array $extraTabs = [],
     ): string {
-        $blocks = '';
+        $rows = [];
         foreach ($instructions as $instruction) {
-            $type = $instruction->getInstructionType();
             $id = (int) $instruction->getId();
-            $blocks .= '<div class="wb-block"><div class="wb-block-head">' . $this->esc($type)
-                . $this->removeButton($id) . '</div><div class="wb-block-body">'
-                . $this->renderParams(
-                    $this->catalog->schemaForOutcomeInstruction($type),
-                    $instruction->getParameters() ?? [],
-                    'type_inst[' . $id . ']',
-                    'type_inst_raw[' . $id . ']',
-                )
-                . '</div></div>';
+            $rows[] = [
+                'id' => $id,
+                'childType' => $instruction->getInstructionType(),
+                'schema' => $this->catalog->schemaForOutcomeInstruction($instruction->getInstructionType()),
+                'params' => $instruction->getParameters() ?? [],
+                'typedPrefix' => 'type_inst[' . $id . ']',
+                'rawPrefix' => 'type_inst_raw[' . $id . ']',
+                'headExtra' => '',
+            ];
         }
 
-        $options = '';
-        foreach ($instructionTypes as $instructionType) {
-            $options .= '<option value="' . $this->esc($instructionType) . '">' . $this->esc($instructionType) . '</option>';
-        }
+        $form = $this->form->render(
+            saveAction: '/admin/action-type-save.php',
+            addAction: '/admin/action-type-instruction-add.php',
+            removeAction: '/admin/action-type-instruction-remove.php',
+            csrfTokenField: $csrfTokenField,
+            sectionTitle: 'Instructions du type « ' . $selectedType . ' »',
+            childSelectName: 'instruction_type',
+            childOptions: $instructionTypes,
+            addLabel: '+ Instruction',
+            removeIdName: 'instruction_id',
+            removeConfirm: 'Retirer cette instruction du type ?',
+            rows: $rows,
+            emptyLabel: 'Aucune instruction pour ce type.',
+            hidden: ['type_key' => $selectedType],
+        );
 
-        $form = '<form method="post" action="/admin/action-type-save.php" class="wb-form">'
-            . $csrfTokenField
-            . '<input type="hidden" name="type_key" value="' . $this->esc($selectedType) . '">'
-            . '<div class="wb-section-title wb-section-title--row">Instructions du type « ' . $this->esc($selectedType) . ' »'
-            . '<div class="wb-add"><select class="form-control" name="instruction_type">' . $options . '</select>'
-            . '<button type="submit" class="btn btn-sm btn-default" formaction="/admin/action-type-instruction-add.php" formnovalidate>+ Instruction</button></div>'
-            . '</div>'
-            . ($instructions === [] ? '<p class="wb-muted">Aucune instruction pour ce type.</p>' : '')
-            . '<div class="wb-grid">' . $blocks . '</div>'
-            . $this->renderer->traitDatalist()
-            . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>'
-            . '</form>';
-
-        // Instructions + the injected XP/Journal sections become tabs so the wide
-        // column shows one config area at a time instead of three stacked forms.
+        // Instructions + the injected XP/Journal/Préconditions sections become tabs
+        // so the wide column shows one config area at a time.
         $tabs = array_merge([['label' => 'Instructions', 'html' => $form]], array_values($extraTabs));
 
         return '<div class="wb"><div class="wb-col"><div class="wb-col-head">Types d\'action</div>'
@@ -106,29 +95,6 @@ final class TypeDefaultsView
         }
 
         return '<div class="wb-tabs" role="tablist">' . $bar . '</div>' . $panels;
-    }
-
-    private function removeButton(int $id): string
-    {
-        return '<button type="submit" class="wb-remove-btn" name="instruction_id" value="' . $id . '"'
-            . ' formaction="/admin/action-type-instruction-remove.php" formnovalidate'
-            . ' onclick="return confirm(\'Retirer cette instruction du type ?\');" title="Retirer">&times;</button>';
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     */
-    private function renderParams(ParameterSchema $schema, array $params, string $typedPrefix, string $rawPrefix): string
-    {
-        $out = '';
-        $reserved = [];
-        foreach ($schema->fields() as $field) {
-            $reserved[] = $field->key;
-            $out .= $this->renderer->render($field, $typedPrefix . '[' . $field->key . ']', $params[$field->key] ?? null);
-        }
-        $out .= $this->rawEditor->render($rawPrefix, $params, $reserved, $schema->isEmpty());
-
-        return $out;
     }
 
     private function esc(string $value): string

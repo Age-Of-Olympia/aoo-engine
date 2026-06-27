@@ -15,7 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: "action_type_instructions")]
 #[ORM\Index(name: "idx_action_type_instructions_type_key", columns: ["type_key"])]
-class ActionTypeInstruction
+class ActionTypeInstruction implements TypeChildConfig
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
