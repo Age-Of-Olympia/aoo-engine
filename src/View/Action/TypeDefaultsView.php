@@ -16,11 +16,16 @@ final class TypeDefaultsView
 {
     private ActionSchemaCatalog $catalog;
     private TypeChildFormView $form;
+    private WorkbenchListHeaderView $listHeader;
 
-    public function __construct(?ActionSchemaCatalog $catalog = null, ?TypeChildFormView $form = null)
-    {
+    public function __construct(
+        ?ActionSchemaCatalog $catalog = null,
+        ?TypeChildFormView $form = null,
+        ?WorkbenchListHeaderView $listHeader = null,
+    ) {
         $this->catalog = $catalog ?? new ActionSchemaCatalog();
         $this->form = $form ?? new TypeChildFormView();
+        $this->listHeader = $listHeader ?? new WorkbenchListHeaderView();
     }
 
     /**
@@ -71,8 +76,13 @@ final class TypeDefaultsView
         // so the wide column shows one config area at a time.
         $tabs = array_merge([['label' => 'Instructions', 'html' => $form]], array_values($extraTabs));
 
+        // The export lives at the top of the left column (a wb-list-header, same
+        // component the action/passive workbenches use) instead of floating above
+        // the layout.
+        $listHeader = $this->listHeader->render('', 'action-type', 'Exporter les défauts par type');
+
         return '<div class="wb"><div class="wb-col"><div class="wb-col-head">Types d\'action</div>'
-            . '<div class="wb-col-body">' . $treeRail . '</div></div>'
+            . '<div class="wb-col-body">' . $listHeader . $treeRail . '</div></div>'
             . '<div class="wb-col wb-col--wide"><div class="wb-col-body">' . $this->tabs($tabs) . '</div></div></div>';
     }
 
