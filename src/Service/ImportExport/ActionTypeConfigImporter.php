@@ -8,7 +8,6 @@ use App\Entity\EntityManagerFactory;
 use App\Service\Action\ActionTypeRegistry;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 use Doctrine\ORM\EntityManagerInterface;
-use Throwable;
 
 /**
  * Imports per-type action config (XP rule + log templates) produced by
@@ -19,9 +18,8 @@ use Throwable;
  * Only the selected XP mode's known params are kept (coerced to int), so a
  * bundle can't smuggle arbitrary keys.
  */
-final class ActionTypeConfigImporter implements ObjectImporter
+final class ActionTypeConfigImporter extends AbstractObjectImporter
 {
-    private EntityManagerInterface $entityManager;
     private ActionTypeRegistry $registry;
     private XpCalculatorRegistry $calculators;
 
@@ -40,52 +38,28 @@ final class ActionTypeConfigImporter implements ObjectImporter
         return 'action-type';
     }
 
-    public function preview(array $objects): ImportReport
+    protected function accept(ImportReport $report, array &$seen, mixed $object, int $index): mixed
     {
-        $report = new ImportReport();
-        $seen = [];
-        foreach ($objects as $index => $object) {
-            $this->classify($report, $seen, $object, (int) $index);
+        $typeKey = $this->classify($report, $seen, $object, $index);
+        if ($typeKey === null) {
+            return null;
         }
 
-        return $report;
+        /** @var array<string, mixed> $object */
+        return ['typeKey' => $typeKey, 'object' => $object];
     }
 
-    public function import(array $objects): ImportReport
+    protected function applyPlan(mixed $plan): void
     {
-        $report = new ImportReport();
-        $seen = [];
-        $accepted = [];
-        foreach ($objects as $index => $object) {
-            $typeKey = $this->classify($report, $seen, $object, (int) $index);
-            if ($typeKey !== null) {
-                $accepted[$typeKey] = $object;
-            }
-        }
-
-        if ($report->hasRejections()) {
-            return $report;
-        }
-
-        $this->entityManager->beginTransaction();
-        try {
-            foreach ($accepted as $typeKey => $object) {
-                $this->apply($typeKey, $object);
-            }
-            $this->entityManager->flush();
-            $this->entityManager->commit();
-        } catch (Throwable $exception) {
-            $this->entityManager->rollback();
-            $this->entityManager->clear();
-            throw $exception;
-        }
-
-        return $report;
+        /** @var array{typeKey: string, object: array<string, mixed>} $plan */
+        $this->apply($plan['typeKey'], $plan['object']);
     }
 
     /**
      * Validate one object, record its create/update/reject status, and return the
-     * accepted typeKey (or null when rejected / a duplicate).
+     * accepted typeKey (or null when rejected / a duplicate). This importer's
+     * dedup is interleaved with type validation, so it keeps its own check rather
+     * than the base isDuplicate().
      *
      * @param array<string, true> $seen
      */

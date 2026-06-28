@@ -6,19 +6,16 @@ use App\Entity\ActionPassive;
 use App\Entity\EntityManagerFactory;
 use App\Service\Action\ActionPassiveCatalogService;
 use Doctrine\ORM\EntityManagerInterface;
-use Throwable;
 
 /**
  * Imports passive payloads produced by {@see PassiveExporter}. A passive is flat
  * (no STI, no children), so create-or-update by name just overwrites scalars and
- * the two JSON columns — no type whitelisting or child rebuild. import() is
- * transactional and all-or-nothing, matching {@see ActionImporter}.
+ * the two JSON columns — no type whitelisting or child rebuild.
  *
- * Proves the {@see ObjectImporter} seam generalises beyond actions.
+ * Proves the {@see AbstractObjectImporter} skeleton generalises beyond actions.
  */
-final class PassiveImporter implements ObjectImporter
+final class PassiveImporter extends AbstractObjectImporter
 {
-    private EntityManagerInterface $entityManager;
     private ActionPassiveCatalogService $catalog;
 
     public function __construct(
@@ -34,57 +31,23 @@ final class PassiveImporter implements ObjectImporter
         return 'passive';
     }
 
-    public function preview(array $objects): ImportReport
+    protected function accept(ImportReport $report, array &$seen, mixed $object, int $index): mixed
     {
-        $report = new ImportReport();
-        $seen = [];
-        foreach ($objects as $index => $object) {
-            $name = $this->classify($report, $object, (int) $index);
-            if ($name === null || $this->isDuplicate($report, $seen, $name)) {
-                continue;
-            }
-            $this->record($report, $name);
+        $name = $this->classify($report, $object, $index);
+        if ($name === null || $this->isDuplicate($report, $seen, $name)) {
+            return null;
         }
 
-        return $report;
+        $this->record($report, $name);
+        /** @var array<string, mixed> $object */
+
+        return $object;
     }
 
-    public function import(array $objects): ImportReport
+    protected function applyPlan(mixed $plan): void
     {
-        $report = new ImportReport();
-        $this->entityManager->beginTransaction();
-        try {
-            $seen = [];
-            $plans = [];
-            foreach ($objects as $index => $object) {
-                $name = $this->classify($report, $object, (int) $index);
-                if ($name === null || $this->isDuplicate($report, $seen, $name)) {
-                    continue;
-                }
-                /** @var array<string, mixed> $object */
-                $plans[] = $object;
-                $this->record($report, $name);
-            }
-
-            if ($report->hasRejections()) {
-                $this->entityManager->rollback();
-                $this->entityManager->clear();
-                return $report;
-            }
-
-            foreach ($plans as $object) {
-                $this->apply($object);
-            }
-
-            $this->entityManager->flush();
-            $this->entityManager->commit();
-        } catch (Throwable $exception) {
-            $this->entityManager->rollback();
-            $this->entityManager->clear();
-            throw $exception;
-        }
-
-        return $report;
+        /** @var array<string, mixed> $plan */
+        $this->apply($plan);
     }
 
     /**
@@ -171,19 +134,5 @@ final class PassiveImporter implements ObjectImporter
         }
 
         return array_values($clean);
-    }
-
-    /**
-     * @param array<string, true> $seen
-     */
-    private function isDuplicate(ImportReport $report, array &$seen, string $name): bool
-    {
-        if (isset($seen[$name])) {
-            $report->reject($name, 'Doublon : « ' . $name . " » apparaît plusieurs fois dans le lot.");
-            return true;
-        }
-        $seen[$name] = true;
-
-        return false;
     }
 }
