@@ -8,7 +8,6 @@ use App\Entity\Action;
 use App\Entity\EntityManagerFactory;
 use App\Service\OutcomeInstructionService;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 use Throwable;
 
 final class ActionSaveService
@@ -46,10 +45,7 @@ final class ActionSaveService
         array $conditionRaw = [],
         array $instructionRaw = [],
     ): void {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $this->entityManager->beginTransaction();
         try {
@@ -97,10 +93,7 @@ final class ActionSaveService
      */
     public function saveOutcomeTargets(int $actionId, array $outcomeSelf): void
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $changed = false;
         foreach ($action->getOutcomes() as $outcome) {
@@ -129,10 +122,7 @@ final class ActionSaveService
      */
     public function saveDetails(int $actionId, string $text, int $level): void
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $changed = false;
 
@@ -169,10 +159,7 @@ final class ActionSaveService
      */
     public function saveIcon(int $actionId, string $icon): void
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $icon = trim($icon);
         if ($icon === $action->getIcon()) {
@@ -190,10 +177,7 @@ final class ActionSaveService
      */
     public function saveIconColor(int $actionId, ?string $colorToken): void
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $token = \App\View\Action\ActionIconPalette::hex($colorToken) !== null ? $colorToken : null;
         if ($token === $action->getIconColor()) {

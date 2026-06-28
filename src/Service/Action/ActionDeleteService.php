@@ -5,7 +5,6 @@ namespace App\Service\Action;
 use App\Entity\Action;
 use App\Entity\EntityManagerFactory;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 use Throwable;
 
 final class ActionDeleteService
@@ -24,10 +23,7 @@ final class ActionDeleteService
      */
     public function delete(int $actionId): void
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $this->entityManager->beginTransaction();
         try {

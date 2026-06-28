@@ -5,7 +5,6 @@ namespace App\Service\Action;
 use App\Entity\ActionPassive;
 use App\Entity\EntityManagerFactory;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 
 /**
  * Delete a passive. ActionPassive owns no relations, so a plain remove suffices
@@ -22,10 +21,7 @@ final class ActionPassiveDeleteService
 
     public function delete(int $id): void
     {
-        $passive = $this->entityManager->find(ActionPassive::class, $id);
-        if ($passive === null) {
-            throw new InvalidArgumentException("Passif introuvable : {$id}.");
-        }
+        $passive = EntityFinder::orFail($this->entityManager, ActionPassive::class, $id, 'Passif');
 
         $this->entityManager->remove($passive);
         $this->entityManager->flush();

@@ -34,10 +34,7 @@ final class ActionOutcomeEditService
 
     public function addOutcome(int $actionId, bool $onSuccess): ActionOutcome
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $outcome = new ActionOutcome();
         $outcome->setOnSuccess($onSuccess);
@@ -52,10 +49,7 @@ final class ActionOutcomeEditService
 
     public function removeOutcome(int $outcomeId): void
     {
-        $outcome = $this->entityManager->find(ActionOutcome::class, $outcomeId);
-        if ($outcome === null) {
-            throw new InvalidArgumentException("Outcome introuvable : {$outcomeId}.");
-        }
+        $outcome = EntityFinder::orFail($this->entityManager, ActionOutcome::class, $outcomeId, 'Outcome');
 
         // Detach from the owning action so orphanRemoval deletes it and its
         // instructions (cascade remove + orphanRemoval on the instructions).
@@ -71,10 +65,7 @@ final class ActionOutcomeEditService
 
     public function addInstruction(int $outcomeId, string $type): OutcomeInstruction
     {
-        $outcome = $this->entityManager->find(ActionOutcome::class, $outcomeId);
-        if ($outcome === null) {
-            throw new InvalidArgumentException("Outcome introuvable : {$outcomeId}.");
-        }
+        $outcome = EntityFinder::orFail($this->entityManager, ActionOutcome::class, $outcomeId, 'Outcome');
 
         $map = OutcomeInstructionFactory::typeMap();
         if (!isset($map[$type])) {
@@ -97,10 +88,7 @@ final class ActionOutcomeEditService
 
     public function removeInstruction(int $instructionId): void
     {
-        $instruction = $this->entityManager->find(OutcomeInstruction::class, $instructionId);
-        if ($instruction === null) {
-            throw new InvalidArgumentException("Instruction introuvable : {$instructionId}.");
-        }
+        $instruction = EntityFinder::orFail($this->entityManager, OutcomeInstruction::class, $instructionId, 'Instruction');
 
         $outcome = $instruction->getOutcome();
         if ($outcome !== null) {

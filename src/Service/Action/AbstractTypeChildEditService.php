@@ -85,10 +85,7 @@ abstract class AbstractTypeChildEditService
 
     public function remove(int $id): void
     {
-        $child = $this->entityManager->find($this->entityClass(), $id);
-        if ($child === null) {
-            throw new InvalidArgumentException("Élément introuvable : {$id}.");
-        }
+        $child = EntityFinder::orFail($this->entityManager, $this->entityClass(), $id, 'Élément');
 
         $this->entityManager->remove($child);
         $this->entityManager->flush();

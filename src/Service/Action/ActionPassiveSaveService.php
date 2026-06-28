@@ -27,10 +27,7 @@ final class ActionPassiveSaveService
      */
     public function saveFields(int $id, array $fields): void
     {
-        $passive = $this->entityManager->find(ActionPassive::class, $id);
-        if ($passive === null) {
-            throw new InvalidArgumentException("Passif introuvable : {$id}.");
-        }
+        $passive = EntityFinder::orFail($this->entityManager, ActionPassive::class, $id, 'Passif');
 
         $name = trim((string) ($fields['name'] ?? ''));
         if ($name === '') {
