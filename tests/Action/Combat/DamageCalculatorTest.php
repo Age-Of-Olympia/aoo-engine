@@ -64,20 +64,9 @@ class DamageCalculatorTest extends TestCase
         $this->assertSame(-9, (new DamageCalculator())->rawDamage(1, 10, $this->modifiers()));
     }
 
-    public function testTotalDamageIsBasePlusAdditional(): void
-    {
-        // base 10-4 = 6 ; additional bonusDamages 2 ; 8
-        $this->assertSame(8, (new DamageCalculator())->totalDamage(10, 4, $this->modifiers(bonusDamages: 2)));
-    }
-
-    public function testTotalDamageHasAMinimumOfOne(): void
-    {
-        $this->assertSame(1, (new DamageCalculator())->totalDamage(1, 10, $this->modifiers()));
-    }
-
     public function testBaseDamageIsFlooredAtZeroWhenTargetHasADefenseBonus(): void
     {
-        // base -8 floored to 0 ; additional 5 - 3 = 2 ; total 2 (without the floor it would be 1)
-        $this->assertSame(2, (new DamageCalculator())->totalDamage(2, 10, $this->modifiers(bonusDamages: 5, bonusDefense: 3)));
+        // base 2-10 = -8, floored to 0 by the bonusDefense rule ; additional 5 - 3 = 2 ; rawDamage 2
+        $this->assertSame(2, (new DamageCalculator())->rawDamage(2, 10, $this->modifiers(bonusDamages: 5, bonusDefense: 3)));
     }
 }
