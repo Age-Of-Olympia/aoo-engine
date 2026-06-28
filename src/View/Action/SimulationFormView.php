@@ -17,7 +17,7 @@ use App\Service\Action\SimulationWeaponCatalog;
  */
 final class SimulationFormView
 {
-    use EscapesHtml;
+    use RendersOptions;
 
     /** Friendly French labels for the equipment slots (emplacement keys). */
     private const SLOT_LABELS = [
@@ -215,10 +215,7 @@ final class SimulationFormView
         foreach ($this->weapons->equipmentSlots() as $slot => $items) {
             $name = $side . '_equipment[' . $slot . ']';
             $current = (string) ($selected[$slot] ?? '');
-            $options = '<option value="">—</option>';
-            foreach ($items as $value => $label) {
-                $options .= '<option value="' . $this->esc($value) . '"' . ((string) $value === $current ? ' selected' : '') . '>' . $this->esc($label) . '</option>';
-            }
+            $options = $this->option('', '—') . $this->options($items, $current);
             $label = self::SLOT_LABELS[$slot] ?? ucfirst($slot);
             $html .= $this->group($label, '<select class="form-control" name="' . $this->esc($name) . '">' . $options . '</select>');
         }
@@ -291,14 +288,11 @@ final class SimulationFormView
      */
     private function passives(string $name, array $posted): string
     {
-        $selected = array_map('strval', (array) ($posted[$name] ?? []));
-        $html = '<select class="form-control" name="' . $this->esc($name) . '[]" multiple>';
-        foreach ($this->catalog->passives() as $value => $label) {
-            $isSelected = in_array((string) $value, $selected, true) ? ' selected' : '';
-            $html .= '<option value="' . $this->esc($value) . '"' . $isSelected . '>' . $this->esc($label) . '</option>';
-        }
+        $selected = (array) ($posted[$name] ?? []);
 
-        return $html . '</select>';
+        return '<select class="form-control" name="' . $this->esc($name) . '[]" multiple>'
+            . $this->optionsMulti($this->catalog->passives(), $selected)
+            . '</select>';
     }
 
     /**
@@ -311,14 +305,9 @@ final class SimulationFormView
     private function weaponSelect(string $name, string $selected): string
     {
         $html = '<select class="form-control" name="' . $this->esc($name) . '">'
-            . '<option value=""' . ($selected === '' ? ' selected' : '') . '>Poing (mains nues)</option>';
+            . $this->option('', 'Poing (mains nues)', $selected === '');
         foreach ($this->weapons->groupedBySubtype() as $subtype => $weapons) {
-            $html .= '<optgroup label="' . $this->esc($subtype) . '">';
-            foreach ($weapons as $value => $label) {
-                $isSelected = ((string) $value === $selected) ? ' selected' : '';
-                $html .= '<option value="' . $this->esc($value) . '"' . $isSelected . '>' . $this->esc($label) . '</option>';
-            }
-            $html .= '</optgroup>';
+            $html .= $this->optgroup((string) $subtype, $weapons, $selected);
         }
 
         return $html . '</select>';
@@ -329,13 +318,9 @@ final class SimulationFormView
      */
     private function select(string $name, array $options, string $selected, bool $brackets = false): string
     {
-        $html = '<select class="form-control" name="' . $this->esc($name) . ($brackets ? '[]' : '') . '">';
-        foreach ($options as $value => $label) {
-            $isSelected = ((string) $value === $selected) ? ' selected' : '';
-            $html .= '<option value="' . $this->esc($value) . '"' . $isSelected . '>' . $this->esc($label) . '</option>';
-        }
-
-        return $html . '</select>';
+        return '<select class="form-control" name="' . $this->esc($name) . ($brackets ? '[]' : '') . '">'
+            . $this->options($options, $selected)
+            . '</select>';
     }
 
     private function group(string $label, string $control): string

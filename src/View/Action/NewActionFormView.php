@@ -8,7 +8,7 @@ namespace App\View\Action;
  */
 final class NewActionFormView
 {
-    use EscapesHtml;
+    use RendersOptions;
 
     private IconFieldView $iconField;
 
@@ -22,15 +22,10 @@ final class NewActionFormView
      */
     public function render(array $types, string $csrfTokenField): string
     {
-        $options = '';
-        foreach ($types as $value => $label) {
-            $options .= '<option value="' . $this->esc($value) . '">' . $this->esc($label) . '</option>';
-        }
-
         return '<details class="wb-create"><summary class="btn btn-sm btn-success">+ Nouvelle action</summary>'
             . '<form method="post" action="/admin/action-create.php" class="wb-create-form">'
             . $csrfTokenField
-            . '<select class="form-control" name="type">' . $options . '</select>'
+            . '<select class="form-control" name="type">' . $this->options($types) . '</select>'
             . '<input class="form-control" type="text" name="name" placeholder="nom (clé)" required autocomplete="off">'
             . '<input class="form-control" type="text" name="display_name" placeholder="nom affiché" autocomplete="off">'
             . '<div class="wb-create-row">'

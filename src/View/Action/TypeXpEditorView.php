@@ -11,7 +11,7 @@ use App\Service\Action\Xp\XpCalculatorRegistry;
  */
 final class TypeXpEditorView
 {
-    use EscapesHtml;
+    use RendersOptions;
     use RendersInheritanceBanner;
 
     private XpCalculatorRegistry $calculators;
@@ -50,11 +50,11 @@ final class TypeXpEditorView
      */
     public function render(string $typeKey, string $mode, array $params, string $csrfTokenField, ?string $inheritedFrom = null, ?string $overriddenParent = null): string
     {
-        $modeOptions = '';
+        $modeMap = [];
         foreach ($this->calculators->modes() as $value) {
-            $sel = $value === $mode ? ' selected' : '';
-            $modeOptions .= '<option value="' . $this->esc($value) . '"' . $sel . '>' . $this->esc(self::MODE_LABELS[$value] ?? $value) . '</option>';
+            $modeMap[$value] = self::MODE_LABELS[$value] ?? $value;
         }
+        $modeOptions = $this->options($modeMap, $mode);
 
         $fields = '';
         foreach ($params as $key => $value) {
