@@ -188,7 +188,7 @@ class NewTurnView
                             $val = $player->caracs->a;
 
                             // Énergie max au rafraîchissement de tour : ENERGIE_CST − a.
-                            $recovEnergie = EnergieRule::maxFor($val);
+                            $recovEnergie = EnergieRule::maxEnergieFor($val);
 
                             continue;
                         }

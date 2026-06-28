@@ -57,7 +57,7 @@ final class SimulationInputMapper
     {
         $actionPoints = (int) ($post[$side . '_remaining']['a'] ?? self::BASE_REMAINING['a']);
 
-        return EnergieRule::maxFor($actionPoints);
+        return EnergieRule::maxEnergieFor($actionPoints);
     }
 
     /**

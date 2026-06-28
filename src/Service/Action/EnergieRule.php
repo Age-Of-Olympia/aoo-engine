@@ -14,8 +14,8 @@ final class EnergieRule
     /** The common action-point count (6 is rare). */
     public const DEFAULT_ACTION_POINTS = 3;
 
-    /** Max energie for a fighter with the given action points: ENERGIE_CST − a. */
-    public static function maxFor(int $actionPoints): int
+    /** The maximum energie a fighter with the given action points can have: ENERGIE_CST − a. */
+    public static function maxEnergieFor(int $actionPoints): int
     {
         $cst = defined('ENERGIE_CST') ? ENERGIE_CST : 7;
 

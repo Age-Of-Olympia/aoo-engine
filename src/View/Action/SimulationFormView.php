@@ -134,7 +134,7 @@ final class SimulationFormView
         // fighter's action points (ENERGIE_CST − a), not a flat value.
         $rank = (int) ($posted[$side . '_rank'] ?? 1);
         $actionPoints = (int) ($posted[$side . '_remaining']['a'] ?? EnergieRule::DEFAULT_ACTION_POINTS);
-        $energie = (int) ($posted[$side . '_energie'] ?? EnergieRule::maxFor($actionPoints));
+        $energie = (int) ($posted[$side . '_energie'] ?? EnergieRule::maxEnergieFor($actionPoints));
         $caracs = $this->group('Rang', '<input class="form-control" type="number" min="1" name="' . $side . '_rank" value="' . $rank . '">')
             . $this->group('Énergie', '<input class="form-control" type="number" min="0" name="' . $side . '_energie" value="' . $energie . '">');
         foreach ($fields as $field) {
