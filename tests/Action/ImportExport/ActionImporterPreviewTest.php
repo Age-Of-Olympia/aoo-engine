@@ -95,6 +95,17 @@ class ActionImporterPreviewTest extends TestCase
         $this->assertStringContainsString('Nom manquant', $report->rejected()[0]['reason']);
     }
 
+    public function testAnIllegalParamKeyIsRejectedAtPreviewNotJustAtCommit(): void
+    {
+        $report = $this->importer()->preview([
+            $this->payload(['conditions' => [['type' => 'Plan', 'parameters' => ['bad key' => 1]]]]),
+        ]);
+
+        $this->assertSame([], $report->created());
+        $this->assertCount(1, $report->rejected());
+        $this->assertStringContainsString('Clé de paramètre invalide', $report->rejected()[0]['reason']);
+    }
+
     // -------------------------------------------------------------------------
 
     /**
