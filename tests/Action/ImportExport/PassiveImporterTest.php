@@ -52,6 +52,14 @@ class PassiveImporterTest extends TestCase
         $this->assertSame(['weapon' => 'bow'], $passive->getConditions());
     }
 
+    public function testImportCoercesTraitsToACleanListOfStrings(): void
+    {
+        (new PassiveImporter($this->entityManager(null)))
+            ->import([$this->payload(['traits' => ['ct', '', '  agi  ', ['nested'], 5]])]);
+
+        $this->assertSame(['ct', 'agi', '5'], $this->persistedPassive()->getTraits());
+    }
+
     public function testImportUpdatesAnExistingPassiveInPlace(): void
     {
         $existing = $this->existing();
