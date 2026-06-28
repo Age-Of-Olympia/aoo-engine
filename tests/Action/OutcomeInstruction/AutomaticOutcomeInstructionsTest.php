@@ -4,26 +4,28 @@ namespace Tests\Action\OutcomeInstruction;
 
 use App\Action\MeleeAction;
 use App\Action\StealAction;
+use App\Entity\Action;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 #[Group('action-outcome')]
 class AutomaticOutcomeInstructionsTest extends TestCase
 {
-    public function testAttacksNoLongerAddCodeDefinedAutomatics(): void
+    /**
+     * @return array<string, array{Action}>
+     */
+    public static function actions(): array
     {
-        // Adrenaline/object-effect moved to the 'attack' type-level instructions;
-        // init no longer seeds anything in code. The collection now only ever holds
-        // instructions added dynamically during execution (e.g. a miss malus).
-        $action = new MeleeAction();
-        $action->initAutomaticOutcomeInstructions();
-
-        $this->assertCount(0, $action->getAutomaticOutcomeInstructions());
+        return [
+            'attack' => [new MeleeAction()],
+            'non-attack' => [new StealAction()],
+        ];
     }
 
-    public function testNonAttackActionsHaveNoAutomaticInstructions(): void
+    #[DataProvider('actions')]
+    public function testInitAddsNoCodeDefinedAutomaticInstructions(Action $action): void
     {
-        $action = new StealAction();
         $action->initAutomaticOutcomeInstructions();
 
         $this->assertCount(0, $action->getAutomaticOutcomeInstructions());

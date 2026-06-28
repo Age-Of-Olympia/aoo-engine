@@ -314,7 +314,8 @@ class ActionSimulationServiceTest extends TestCase
         foreach ($results->getOutcomesResultsArray() as $outcome) {
             $damage += (int) $outcome->getTotalDamages();
         }
-        $this->assertGreaterThan(0, $damage);
+        // cc 20 - agi 2 = 18 (no modifiers); exact so a damage-math mutation fails.
+        $this->assertSame(18, $damage);
     }
 
     public function testTypeLevelInstructionsAreRunByTheExecutor(): void
@@ -339,7 +340,8 @@ class ActionSimulationServiceTest extends TestCase
         foreach ($results->getOutcomesResultsArray() as $outcome) {
             $damage += (int) $outcome->getTotalDamages();
         }
-        $this->assertGreaterThan(0, $damage);
+        // cc 20 - agi 2 = 18 (no modifiers); exact so a damage-math mutation fails.
+        $this->assertSame(18, $damage);
     }
 
     public function testTypeLevelAndDynamicAutomaticInstructionsBothRun(): void

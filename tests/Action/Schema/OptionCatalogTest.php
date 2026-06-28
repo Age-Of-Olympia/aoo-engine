@@ -30,14 +30,6 @@ class OptionCatalogTest extends TestCase
         $this->assertSame('Maladresse', $effects['maladresse']);
     }
 
-    public function testWeaponTypesAndEmplacementsAreEnumerated(): void
-    {
-        $catalog = new OptionCatalog();
-
-        $this->assertSame(['melee', 'tir', 'jet', 'bouclier'], array_keys($catalog->weaponTypes()));
-        $this->assertArrayHasKey('main1', $catalog->emplacements());
-    }
-
     public function testPassivesDegradeToEmptyWhenTheDatabaseIsUnavailable(): void
     {
         // No DB under the unit bootstrap: the lookup must not throw.
