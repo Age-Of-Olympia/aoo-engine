@@ -188,7 +188,7 @@ final class ActionTypeRegistry
         }
 
         $map = [];
-        foreach (glob(__DIR__ . '/../../Action/*Action.php') as $file) {
+        foreach (glob(__DIR__ . '/../../Action/*Action.php') ?: [] as $file) {
             $className = basename($file, '.php');
             $fqcn = "App\\Action\\$className";
             if (!class_exists($fqcn)) {

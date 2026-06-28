@@ -14,7 +14,7 @@ class OutcomeInstructionFactory
     public static function typeMap(): array
     {
         $map = [];
-        foreach (glob(__DIR__ . '/*OutcomeInstruction.php') as $file) {
+        foreach (glob(__DIR__ . '/*OutcomeInstruction.php') ?: [] as $file) {
             $className = basename($file, '.php');
             $map[self::discriminatorKey($className)] = "App\\Action\\OutcomeInstruction\\$className";
         }
