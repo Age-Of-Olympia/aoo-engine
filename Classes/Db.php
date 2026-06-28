@@ -88,6 +88,7 @@ class Db{
         if ($stmt->errno > 0) {
             error_log("[Db::exe] SQL Error #{$stmt->errno}: {$stmt->error}");
             error_log("[Db::exe] Query: " . substr($sql, 0, 200));
+            error_log("[Db::exe] Params: " . print_r($array, true));
             exit('error stmt: '.$stmt->error);
         }
 
