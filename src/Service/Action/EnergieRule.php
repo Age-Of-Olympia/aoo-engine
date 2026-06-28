@@ -3,11 +3,11 @@
 namespace App\Service\Action;
 
 /**
- * The game's max-energie rule, for the simulator's defaults. At a turn refresh
- * the engine sets energie to ENERGIE_CST − a (action points) — see
- * NewTurnView — so a fighter's real maximum energie depends on how many actions
- * they have. The simulator defaults the energie field to that real max instead
- * of a flat 100.
+ * The game's max-energie rule: at a turn refresh a player's energie is set to
+ * ENERGIE_CST − a (action points), so the real maximum depends on how many
+ * actions they have. Single source of truth — the turn engine (NewTurnView)
+ * and the workbench simulator (SimulationInputMapper) both resolve energie
+ * through here rather than each spelling out the formula.
  */
 final class EnergieRule
 {
