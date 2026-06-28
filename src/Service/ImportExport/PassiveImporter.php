@@ -147,12 +147,30 @@ final class PassiveImporter implements ObjectImporter
     }
 
     /**
+     * Mirror ActionPassiveSaveService::parseTraits: a clean list of trimmed,
+     * non-empty strings. Imported traits are matched with in_array() at runtime
+     * and run through strval() in the editor, so a non-scalar or blank value
+     * would corrupt both — coerce here instead of storing the bundle verbatim.
+     *
      * @param array<string, mixed> $object
-     * @return array<int, mixed>
+     * @return array<int, string>
      */
     private function traits(array $object): array
     {
-        return is_array($object['traits'] ?? null) ? array_values($object['traits']) : [];
+        $raw = is_array($object['traits'] ?? null) ? $object['traits'] : [];
+
+        $clean = [];
+        foreach ($raw as $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+            $trait = trim((string) $value);
+            if ($trait !== '') {
+                $clean[] = $trait;
+            }
+        }
+
+        return array_values($clean);
     }
 
     /**
