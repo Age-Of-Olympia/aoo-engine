@@ -97,11 +97,13 @@ class SimulationInputMapperTest extends TestCase
     public function testMapsEnergieDefaultingToTheRealMaxForTheActionPoints(): void
     {
         // actor_energie posted -> kept; target_energie absent -> ENERGIE_CST − a,
-        // with a defaulting to 3 (so 7 − 3 = 4).
+        // where a falls back to the same baseline the remaining map uses (6), so
+        // 7 − 6 = 1 — not a different baseline that would mismatch the action points.
         $input = (new SimulationInputMapper())->fromPost(['actor_energie' => '2']);
 
         $this->assertSame(2, $input->actorEnergie);
-        $this->assertSame(4, $input->targetEnergie);
+        $this->assertSame(6, $input->targetRemaining['a']);
+        $this->assertSame(1, $input->targetEnergie);
     }
 
     public function testEnergieDefaultTracksThePostedActionPoints(): void
