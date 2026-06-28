@@ -79,12 +79,12 @@ class XpCalculatorTest extends TestCase
         $this->assertSame(['actor' => 0, 'target' => 2], (new StealXpCalculator())->calculate(StealXpCalculator::defaults(), false, $actor, $target));
     }
 
-    public function testTrainAddsEnergieAndRankBonusesAndSpendsOneEnergiePerSide(): void
+    public function testTrainAddsEnergieAndRankBonuses(): void
     {
         $actor = $this->player(['rank' => 2, 'energie' => 3]);
         $target = $this->player(['rank' => 4, 'energie' => 1]);
-        $actor->expects($this->once())->method('putEnergie')->with(-1);
-        $target->expects($this->once())->method('putEnergie')->with(-1);
+        $actor->expects($this->never())->method('putEnergie');
+        $target->expects($this->never())->method('putEnergie');
 
         $result = (new TrainXpCalculator())->calculate(TrainXpCalculator::defaults(), true, $actor, $target);
 
@@ -92,5 +92,15 @@ class XpCalculatorTest extends TestCase
         $this->assertSame(4, $result['actor']);
         // target: 1 + (energie>0) only = 2
         $this->assertSame(2, $result['target']);
+    }
+
+    public function testTrainSpendsOneEnergiePerSideAsAnActorMutation(): void
+    {
+        $actor = $this->player(['rank' => 2, 'energie' => 3]);
+        $target = $this->player(['rank' => 4, 'energie' => 1]);
+        $actor->expects($this->once())->method('putEnergie')->with(-1);
+        $target->expects($this->once())->method('putEnergie')->with(-1);
+
+        (new TrainXpCalculator())->applyMutations(TrainXpCalculator::defaults(), true, $actor, $target);
     }
 }

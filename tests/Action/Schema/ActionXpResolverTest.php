@@ -3,6 +3,7 @@
 namespace Tests\Action\Schema;
 
 use App\Action\SpellAction;
+use App\Action\TrainAction;
 use App\Entity\ActionTypeXp;
 use App\Service\Action\ActionXpResolver;
 use App\Service\Action\Xp\XpCalculatorRegistry;
@@ -60,6 +61,37 @@ class ActionXpResolverTest extends TestCase
         $result = $this->resolver([$config])->calculate(new SpellAction(), true, $this->player([]), $this->player([]));
 
         $this->assertSame(7, $result['actor']);
+    }
+
+    public function testCalculateIsPureWhileApplyMutationsSpendsTrainingEnergie(): void
+    {
+        $config = (new ActionTypeXp())->setTypeKey('train')->setMode(XpCalculatorRegistry::MODE_TRAIN)
+            ->setParams(['base' => 1, 'energieHighBonus' => 1, 'energieAnyBonus' => 1, 'rankBonus' => 1]);
+        $resolver = $this->resolver([$config]);
+
+        $actor = $this->player(['rank' => 2, 'energie' => 3]);
+        $target = $this->player(['rank' => 4, 'energie' => 1]);
+
+        $actor->expects($this->once())->method('putEnergie')->with(-1);
+        $target->expects($this->once())->method('putEnergie')->with(-1);
+
+        $xp = $resolver->calculate(new TrainAction(), true, $actor, $target);
+        $this->assertSame(['actor' => 4, 'target' => 2], $xp);
+
+        $resolver->applyMutations(new TrainAction(), true, $actor, $target);
+    }
+
+    public function testApplyMutationsIsANoOpForRulesThatOnlyComputeXp(): void
+    {
+        $config = (new ActionTypeXp())->setTypeKey('attack')->setMode(XpCalculatorRegistry::MODE_FIXED)
+            ->setParams(['actorSuccess' => 7, 'actorFail' => 0, 'targetSuccess' => 0, 'targetFail' => 0]);
+
+        $actor = $this->player([]);
+        $target = $this->player([]);
+        $actor->expects($this->never())->method('putEnergie');
+        $target->expects($this->never())->method('putEnergie');
+
+        $this->resolver([$config])->applyMutations(new SpellAction(), true, $actor, $target);
     }
 
     public function testATypeWithNoConfiguredRuleGrantsNoXp(): void
