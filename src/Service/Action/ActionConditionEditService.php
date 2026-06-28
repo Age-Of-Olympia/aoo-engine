@@ -36,10 +36,7 @@ final class ActionConditionEditService
      */
     public function addCondition(int $actionId, string $conditionType): ActionCondition
     {
-        $action = $this->entityManager->find(Action::class, $actionId);
-        if ($action === null) {
-            throw new InvalidArgumentException("Action introuvable : {$actionId}.");
-        }
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
         if (!in_array($conditionType, $this->registry->getTypes(), true)) {
             throw new InvalidArgumentException("Type de condition inconnu : {$conditionType}.");
         }
@@ -59,10 +56,7 @@ final class ActionConditionEditService
 
     public function removeCondition(int $conditionId): void
     {
-        $condition = $this->entityManager->find(ActionCondition::class, $conditionId);
-        if ($condition === null) {
-            throw new InvalidArgumentException("Condition introuvable : {$conditionId}.");
-        }
+        $condition = EntityFinder::orFail($this->entityManager, ActionCondition::class, $conditionId, 'Condition');
 
         // Detach from the owning action so orphanRemoval deletes the row.
         $action = $condition->getAction();
