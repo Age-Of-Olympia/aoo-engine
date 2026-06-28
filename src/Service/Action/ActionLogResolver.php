@@ -4,7 +4,6 @@ namespace App\Service\Action;
 
 use App\Entity\Action;
 use App\Entity\ActionTypeLog;
-use App\Entity\EntityManagerFactory;
 use Classes\Player;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -22,13 +21,14 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class ActionLogResolver
 {
-    private EntityManagerInterface $entityManager;
-    private ActionTypeRegistry $registry;
+    private TypeConfigLocator $locator;
 
-    public function __construct(?EntityManagerInterface $entityManager = null, ?ActionTypeRegistry $registry = null)
-    {
-        $this->entityManager = $entityManager ?? EntityManagerFactory::getEntityManager();
-        $this->registry = $registry ?? new ActionTypeRegistry();
+    public function __construct(
+        ?EntityManagerInterface $entityManager = null,
+        ?ActionTypeRegistry $registry = null,
+        ?TypeConfigLocator $locator = null,
+    ) {
+        $this->locator = $locator ?? new TypeConfigLocator($entityManager, $registry);
     }
 
     /**
@@ -52,30 +52,7 @@ final class ActionLogResolver
      */
     private function configFor(Action $action): ?ActionTypeLog
     {
-        $keys = $this->registry->typeKeysForAction($action);
-        if ($keys === []) {
-            return null;
-        }
-
-        /** @var array<int, ActionTypeLog> $rows */
-        $rows = $this->entityManager->getRepository(ActionTypeLog::class)->findBy(['typeKey' => $keys]);
-        if ($rows === []) {
-            TypeConfigWarning::once('log', $keys);
-            return null;
-        }
-
-        $byKey = [];
-        foreach ($rows as $row) {
-            $byKey[$row->getTypeKey()] = $row;
-        }
-        // typeKeysForAction is closest-first, so the first hit is the most specific.
-        foreach ($keys as $key) {
-            if (isset($byKey[$key])) {
-                return $byKey[$key];
-            }
-        }
-
-        return null;
+        return $this->locator->closest($action, ActionTypeLog::class, 'log');
     }
 
     public function render(?string $template, Action $action, Player $actor, Player $target): string
