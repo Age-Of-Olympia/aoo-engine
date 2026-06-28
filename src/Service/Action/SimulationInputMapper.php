@@ -46,14 +46,16 @@ final class SimulationInputMapper
 
     /**
      * The fighter's real max energie (ENERGIE_CST − action points) — the fallback
-     * when no energie was posted, so an API caller gets the same default the form
-     * shows.
+     * when no energie was posted. The action-points fallback is the SAME baseline
+     * the remaining map uses (BASE_REMAINING['a']); deriving it from a different
+     * constant let a no-post fighter end up with N action points but an energie
+     * ceiling computed for a different N.
      *
      * @param array<string, mixed> $post
      */
     private function defaultEnergie(array $post, string $side): int
     {
-        $actionPoints = (int) ($post[$side . '_remaining']['a'] ?? EnergieRule::DEFAULT_ACTION_POINTS);
+        $actionPoints = (int) ($post[$side . '_remaining']['a'] ?? self::BASE_REMAINING['a']);
 
         return EnergieRule::maxFor($actionPoints);
     }
