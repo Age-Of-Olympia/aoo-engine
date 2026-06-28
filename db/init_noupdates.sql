@@ -85,10 +85,89 @@ CREATE TABLE `action_type_instructions` (
   `order_index` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_action_type_instructions_type_key` (`type_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 INSERT INTO `action_type_instructions` VALUES (1,'attack','applystatus','{"adrenaline":true,"duration":172800}',0);
 INSERT INTO `action_type_instructions` VALUES (2,'attack','objecteffect',NULL,1);
+
+--
+-- Action-system per-type config tables (kept in sync with src/Migrations so a
+-- fresh install matches a migrated DB). All use utf8mb4_unicode_ci, the unified
+-- collation for the action_type_* family.
+--
+CREATE TABLE IF NOT EXISTS `action_type_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type_key` varchar(100) NOT NULL,
+  `actor_template` text DEFAULT NULL,
+  `target_template` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_action_type_logs_type_key` (`type_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO `action_type_logs` (`type_key`,`actor_template`,`target_template`) VALUES
+('attack','{actor} a attaqué {target}{weapon}.','{target} a été attaqué par {actor}{weapon}.'),
+('technique','{actor} a lancé {action} sur {target}.','{target} a été attaqué par {actor} avec {action}.'),
+('buff','{actor} a lancé {action}.',NULL),
+('heal','{actor} a lancé {action} sur {target}.','{target} a été soigné par {actor} avec {action}.'),
+('pray','{actor} a prié.',NULL),
+('rest','Vous vous êtes reposé.',NULL),
+('run','Vous avez couru.',NULL),
+('search','Vous avez fouillé les alentours.',NULL),
+('steal','{actor} a volé {target}.','{target} a été volé par {actor}.'),
+('train','{actor} s\'est entraîné avec {target}.','{target} a été entraîné par {actor}.');
+
+CREATE TABLE IF NOT EXISTS `action_type_xp` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type_key` varchar(100) NOT NULL,
+  `mode` varchar(30) NOT NULL,
+  `params` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`params`)),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_action_type_xp_type_key` (`type_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO `action_type_xp` (`type_key`,`mode`,`params`) VALUES
+('attack','attack','{"base":5,"min":2,"reducedXp":1,"diffCap":3,"targetFail":2}'),
+('buff','fixed','{"actorSuccess":2,"actorFail":0,"targetSuccess":0,"targetFail":0}'),
+('heal','fixed','{"actorSuccess":3,"actorFail":0,"targetSuccess":0,"targetFail":0}'),
+('pray','fixed','{"actorSuccess":1,"actorFail":0,"targetSuccess":0,"targetFail":0}'),
+('rest','fixed','{"actorSuccess":0,"actorFail":0,"targetSuccess":0,"targetFail":0}'),
+('run','fixed','{"actorSuccess":1,"actorFail":1,"targetSuccess":0,"targetFail":0}'),
+('search','fixed','{"actorSuccess":1,"actorFail":1,"targetSuccess":0,"targetFail":0}'),
+('steal','steal','{"cap":3,"targetFail":2}'),
+('train','train','{"base":1,"energieHighBonus":1,"energieAnyBonus":1,"rankBonus":1}');
+
+CREATE TABLE IF NOT EXISTS `action_type_preconditions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type_key` varchar(100) NOT NULL,
+  `condition_type` varchar(100) NOT NULL,
+  `parameters` longtext DEFAULT NULL,
+  `order_index` int(11) NOT NULL DEFAULT 0,
+  `blocking` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_action_type_preconditions_type_key` (`type_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO `action_type_preconditions` (`type_key`,`condition_type`,`parameters`,`order_index`,`blocking`) VALUES
+('','Plan','{"plan":"enfers"}',0,1);
+
+CREATE TABLE IF NOT EXISTS `action_condition_preconditions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_condition_type` varchar(100) NOT NULL,
+  `precondition_type` varchar(100) NOT NULL,
+  `parameters` longtext DEFAULT NULL,
+  `order_index` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_action_condition_preconditions_parent` (`parent_condition_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO `action_condition_preconditions` (`parent_condition_type`,`precondition_type`,`parameters`,`order_index`) VALUES
+('Compute','Dodge',NULL,0),('Compute','NoBerserk',NULL,1),
+('ComputePure','Dodge',NULL,0),('ComputePure','NoBerserk',NULL,1),
+('MeleeCompute','Dodge',NULL,0),('MeleeCompute','NoBerserk',NULL,1),
+('MeleePureCompute','Dodge',NULL,0),('MeleePureCompute','NoBerserk',NULL,1),
+('DistanceCompute','Dodge',NULL,0),('DistanceCompute','NoBerserk',NULL,1),('DistanceCompute','Obstacle',NULL,2),
+('DistancePureCompute','Dodge',NULL,0),('DistancePureCompute','NoBerserk',NULL,1),('DistancePureCompute','Obstacle',NULL,2),
+('TechniqueCompute','Dodge',NULL,0),('TechniqueCompute','NoBerserk',NULL,1),('TechniqueCompute','Obstacle',NULL,2),
+('TechniquePureCompute','Dodge',NULL,0),('TechniquePureCompute','NoBerserk',NULL,1),('TechniquePureCompute','Obstacle',NULL,2),
+('SpellCompute','Dodge',NULL,0),('SpellCompute','NoBerserk',NULL,1),('SpellCompute','Obstacle',NULL,2),('SpellCompute','AntiSpell',NULL,3),
+('SpellPureCompute','Dodge',NULL,0),('SpellPureCompute','NoBerserk',NULL,1),('SpellPureCompute','Obstacle',NULL,2),('SpellPureCompute','AntiSpell',NULL,3),
+('BuffCompute','Dodge',NULL,0),('BuffCompute','NoBerserk',NULL,1),('BuffCompute','AntiSpell',NULL,2);
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `action_outcomes` (
@@ -4608,7 +4687,6 @@ CREATE TABLE `players` (
   `antiBerserkTime` int(11) NOT NULL DEFAULT 0,
   `lastTravelTime` int(11) NOT NULL DEFAULT 0,
   `bonus_points` int(11) NOT NULL DEFAULT 0,
-  `deletion_asked` datetime DEFAULT NULL,
   `email_bonus` tinyint(1) DEFAULT 0,
   `visible` varchar(255) DEFAULT NULL,
   `tutorial_session_id` varchar(36) DEFAULT NULL COMMENT 'Tutorial session UUID (for tutorial players)',
@@ -5874,4 +5952,12 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
+
+-- Columns added by migrations whose positional INSERT seeds above were never
+-- updated. Adding them via ALTER after the data keeps those INSERTs valid;
+-- IF NOT EXISTS keeps each a no-op once migrations have also run.
+--   icon_color: Version20260628130000_AddActionIconColor
+--   deletion_asked: Version20260614130000_AddDeletionAskedToPlayers
+ALTER TABLE `actions` ADD COLUMN IF NOT EXISTS `icon_color` varchar(20) DEFAULT NULL;
+ALTER TABLE `players` ADD COLUMN IF NOT EXISTS `deletion_asked` datetime DEFAULT NULL;
 
