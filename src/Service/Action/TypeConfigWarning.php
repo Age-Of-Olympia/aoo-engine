@@ -46,12 +46,17 @@ final class TypeConfigWarning
 
     /**
      * Test seam: route messages to a collector instead of the error log.
+     * Returns the previous sink so a caller can restore it (like ini_set).
      *
      * @param (callable(string): void)|null $sink null restores the default error_log sink
+     * @return (callable(string): void)|null
      */
-    public static function setSink(?callable $sink): void
+    public static function setSink(?callable $sink): ?callable
     {
+        $previous = self::$sink;
         self::$sink = $sink;
+
+        return $previous;
     }
 
     /**

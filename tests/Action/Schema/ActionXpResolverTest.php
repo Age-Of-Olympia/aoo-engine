@@ -66,7 +66,7 @@ class ActionXpResolverTest extends TestCase
     public function testATypeWithNoConfiguredRuleGrantsNoXpAndWarns(): void
     {
         $warnings = [];
-        TypeConfigWarning::setSink(function (string $message) use (&$warnings): void {
+        $previous = TypeConfigWarning::setSink(function (string $message) use (&$warnings): void {
             $warnings[] = $message;
         });
         TypeConfigWarning::reset();
@@ -74,7 +74,7 @@ class ActionXpResolverTest extends TestCase
         try {
             $result = $this->resolver([])->calculate(new SpellAction(), true, $this->player([]), $this->player([]));
         } finally {
-            TypeConfigWarning::setSink(null);
+            TypeConfigWarning::setSink($previous);
             TypeConfigWarning::reset();
         }
 

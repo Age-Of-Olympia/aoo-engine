@@ -103,7 +103,7 @@ class ActionLogResolverTest extends TestCase
     public function testATypeWithNoConfiguredTemplateProducesNoLogLineAndWarns(): void
     {
         $warnings = [];
-        TypeConfigWarning::setSink(function (string $message) use (&$warnings): void {
+        $previous = TypeConfigWarning::setSink(function (string $message) use (&$warnings): void {
             $warnings[] = $message;
         });
         TypeConfigWarning::reset();
@@ -113,7 +113,7 @@ class ActionLogResolverTest extends TestCase
         try {
             $result = $this->resolver([])->resolve($action, $this->player('Dorna'), $this->player('Thyrias'));
         } finally {
-            TypeConfigWarning::setSink(null);
+            TypeConfigWarning::setSink($previous);
             TypeConfigWarning::reset();
         }
 

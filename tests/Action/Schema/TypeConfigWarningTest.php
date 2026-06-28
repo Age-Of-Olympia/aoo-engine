@@ -12,18 +12,21 @@ class TypeConfigWarningTest extends TestCase
     /** @var list<string> */
     private array $messages = [];
 
+    /** @var (callable(string): void)|null */
+    private $previousSink;
+
     protected function setUp(): void
     {
         TypeConfigWarning::reset();
         $this->messages = [];
-        TypeConfigWarning::setSink(function (string $message): void {
+        $this->previousSink = TypeConfigWarning::setSink(function (string $message): void {
             $this->messages[] = $message;
         });
     }
 
     protected function tearDown(): void
     {
-        TypeConfigWarning::setSink(null);
+        TypeConfigWarning::setSink($this->previousSink);
         TypeConfigWarning::reset();
     }
 
