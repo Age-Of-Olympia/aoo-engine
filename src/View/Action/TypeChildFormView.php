@@ -15,7 +15,7 @@ use App\Action\Schema\ParameterSchema;
  */
 final class TypeChildFormView
 {
-    use EscapesHtml;
+    use RendersOptions;
 
     private ParameterFieldRenderer $renderer;
     private RawParamsEditor $rawEditor;
@@ -56,10 +56,7 @@ final class TypeChildFormView
                 . '</div></div>';
         }
 
-        $options = '';
-        foreach ($childOptions as $option) {
-            $options .= '<option value="' . $this->esc($option) . '">' . $this->esc($option) . '</option>';
-        }
+        $options = $this->optionsList($childOptions);
 
         $hiddenInputs = '';
         foreach ($hidden as $name => $value) {

@@ -15,7 +15,7 @@ use App\Entity\ActionPassive;
  */
 final class PassiveWorkbenchView
 {
-    use EscapesHtml;
+    use RendersOptions;
 
     private const TYPES = ['att' => 'Attaque', 'def' => 'Défense', 'mixte' => 'Mixte'];
     /** Passives have no stored icon; fall back to a glyph per type for the list / folded rail. */
@@ -130,14 +130,9 @@ final class PassiveWorkbenchView
      */
     private function select(string $name, string $label, array $options, string $current): string
     {
-        $opts = '';
-        foreach ($options as $value => $optLabel) {
-            $sel = $value === $current ? ' selected' : '';
-            $opts .= '<option value="' . $this->esc($value) . '"' . $sel . '>' . $this->esc($optLabel) . '</option>';
-        }
-
         return '<label class="wb-field"><span>' . $this->esc($label) . '</span>'
-            . '<select class="form-control" name="passive[' . $this->esc($name) . ']">' . $opts . '</select></label>';
+            . '<select class="form-control" name="passive[' . $this->esc($name) . ']">'
+            . $this->options($options, $current) . '</select></label>';
     }
 
     /**
@@ -157,12 +152,7 @@ final class PassiveWorkbenchView
 
         $opts = '';
         foreach ($groups as $groupLabel => $options) {
-            $opts .= '<optgroup label="' . $this->esc((string) $groupLabel) . '">';
-            foreach ($options as $value => $optLabel) {
-                $sel = (string) $value === $current ? ' selected' : '';
-                $opts .= '<option value="' . $this->esc((string) $value) . '"' . $sel . '>' . $this->esc((string) $optLabel) . '</option>';
-            }
-            $opts .= '</optgroup>';
+            $opts .= $this->optgroup((string) $groupLabel, $options, $current);
         }
 
         return '<label class="wb-field"><span>Carac</span>'
@@ -184,14 +174,9 @@ final class PassiveWorkbenchView
             }
         }
 
-        $opts = '';
-        foreach ($options as $value => $optLabel) {
-            $sel = in_array((string) $value, array_map('strval', $current), true) ? ' selected' : '';
-            $opts .= '<option value="' . $this->esc((string) $value) . '"' . $sel . '>' . $this->esc((string) $optLabel) . '</option>';
-        }
-
         return '<label class="wb-field wb-field--wide"><span>Traits</span>'
-            . '<select class="form-control" name="passive[traits][]" multiple size="6">' . $opts . '</select></label>';
+            . '<select class="form-control" name="passive[traits][]" multiple size="6">'
+            . $this->optionsMulti($options, $current) . '</select></label>';
     }
 
     /**

@@ -11,20 +11,15 @@ namespace App\View\Action;
  */
 final class ConditionEditorView
 {
-    use EscapesHtml;
+    use RendersOptions;
 
     /**
      * @param array<int, string> $types available condition types
      */
     public function addControls(array $types): string
     {
-        $options = '';
-        foreach ($types as $type) {
-            $options .= '<option value="' . $this->esc($type) . '">' . $this->esc($type) . '</option>';
-        }
-
         return '<div class="wb-add">'
-            . '<select class="form-control" name="condition_type">' . $options . '</select>'
+            . '<select class="form-control" name="condition_type">' . $this->optionsList($types) . '</select>'
             . '<button type="submit" class="btn btn-sm btn-default" formaction="/admin/action-condition-add.php" formnovalidate>+ Condition</button>'
             . '</div>';
     }

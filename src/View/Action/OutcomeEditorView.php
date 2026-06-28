@@ -12,7 +12,7 @@ namespace App\View\Action;
  */
 final class OutcomeEditorView
 {
-    use EscapesHtml;
+    use RendersOptions;
 
     public function addOutcomeControls(): string
     {
@@ -31,8 +31,8 @@ final class OutcomeEditorView
     public function targetToggle(int $outcomeId, bool $applyToSelf): string
     {
         return '<select class="wb-outcome-target" name="outcome_self[' . $outcomeId . ']" title="Sur qui s\'applique cet outcome">'
-            . '<option value="0"' . ($applyToSelf ? '' : ' selected') . '>sur la cible</option>'
-            . '<option value="1"' . ($applyToSelf ? ' selected' : '') . '>sur soi</option>'
+            . $this->option('0', 'sur la cible', !$applyToSelf)
+            . $this->option('1', 'sur soi', $applyToSelf)
             . '</select>';
     }
 
@@ -48,13 +48,8 @@ final class OutcomeEditorView
      */
     public function addInstructionControls(int $outcomeId, array $types): string
     {
-        $options = '';
-        foreach ($types as $type) {
-            $options .= '<option value="' . $this->esc($type) . '">' . $this->esc($type) . '</option>';
-        }
-
         return '<div class="wb-add">'
-            . '<select class="form-control" name="instruction_type_' . $outcomeId . '">' . $options . '</select>'
+            . '<select class="form-control" name="instruction_type_' . $outcomeId . '">' . $this->optionsList($types) . '</select>'
             . '<button type="submit" class="btn btn-sm btn-default" name="outcome_id" value="' . $outcomeId . '"'
             . ' formaction="/admin/action-instruction-add.php" formnovalidate>+ Instruction</button>'
             . '</div>';
