@@ -56,6 +56,7 @@ final class ActionXpResolver
         /** @var array<int, ActionTypeXp> $rows */
         $rows = $this->entityManager->getRepository(ActionTypeXp::class)->findBy(['typeKey' => $keys]);
         if ($rows === []) {
+            TypeConfigWarning::once('XP', $keys);
             return null;
         }
 

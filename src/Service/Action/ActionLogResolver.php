@@ -60,6 +60,7 @@ final class ActionLogResolver
         /** @var array<int, ActionTypeLog> $rows */
         $rows = $this->entityManager->getRepository(ActionTypeLog::class)->findBy(['typeKey' => $keys]);
         if ($rows === []) {
+            TypeConfigWarning::once('log', $keys);
             return null;
         }
 

@@ -5,6 +5,7 @@ namespace Tests\Action\Schema;
 use App\Action\SpellAction;
 use App\Entity\ActionTypeXp;
 use App\Service\Action\ActionXpResolver;
+use App\Service\Action\TypeConfigWarning;
 use App\Service\Action\Xp\XpCalculatorRegistry;
 use Classes\Player;
 use Doctrine\ORM\EntityManagerInterface;
@@ -62,10 +63,23 @@ class ActionXpResolverTest extends TestCase
         $this->assertSame(7, $result['actor']);
     }
 
-    public function testATypeWithNoConfiguredRuleGrantsNoXp(): void
+    public function testATypeWithNoConfiguredRuleGrantsNoXpAndWarns(): void
     {
-        $result = $this->resolver([])->calculate(new SpellAction(), true, $this->player([]), $this->player([]));
+        $warnings = [];
+        TypeConfigWarning::setSink(function (string $message) use (&$warnings): void {
+            $warnings[] = $message;
+        });
+        TypeConfigWarning::reset();
+
+        try {
+            $result = $this->resolver([])->calculate(new SpellAction(), true, $this->player([]), $this->player([]));
+        } finally {
+            TypeConfigWarning::setSink(null);
+            TypeConfigWarning::reset();
+        }
 
         $this->assertSame(['actor' => 0, 'target' => 0], $result);
+        $this->assertCount(1, $warnings);
+        $this->assertStringContainsString('no XP config', $warnings[0]);
     }
 }

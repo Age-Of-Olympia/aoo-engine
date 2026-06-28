@@ -6,6 +6,7 @@ use App\Action\MeleeAction;
 use App\Action\SpellAction;
 use App\Entity\ActionTypeLog;
 use App\Service\Action\ActionLogResolver;
+use App\Service\Action\TypeConfigWarning;
 use Classes\Player;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
@@ -99,12 +100,25 @@ class ActionLogResolverTest extends TestCase
         $this->assertSame('TECH Dorna', $result['actor']);
     }
 
-    public function testATypeWithNoConfiguredTemplateProducesNoLogLine(): void
+    public function testATypeWithNoConfiguredTemplateProducesNoLogLineAndWarns(): void
     {
+        $warnings = [];
+        TypeConfigWarning::setSink(function (string $message) use (&$warnings): void {
+            $warnings[] = $message;
+        });
+        TypeConfigWarning::reset();
+
         $action = $this->spell('Dard');
 
-        $result = $this->resolver([])->resolve($action, $this->player('Dorna'), $this->player('Thyrias'));
+        try {
+            $result = $this->resolver([])->resolve($action, $this->player('Dorna'), $this->player('Thyrias'));
+        } finally {
+            TypeConfigWarning::setSink(null);
+            TypeConfigWarning::reset();
+        }
 
         $this->assertSame(['actor' => '', 'target' => ''], $result);
+        $this->assertCount(1, $warnings);
+        $this->assertStringContainsString('no log config', $warnings[0]);
     }
 }
