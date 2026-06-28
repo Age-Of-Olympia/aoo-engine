@@ -64,17 +64,10 @@ final class ActionImporter implements ObjectImporter
     public function preview(array $objects): ImportReport
     {
         $report = new ImportReport();
-        $seen = [];
-        foreach ($objects as $index => $object) {
-            $accepted = $this->classify($report, $object, (int) $index);
-            if ($accepted === null) {
-                continue;
-            }
-            if ($this->isDuplicate($report, $seen, $accepted['name'])) {
-                continue;
-            }
-            $this->recordClassification($report, $accepted);
-        }
+        // Build the plans too (the throwing step) and discard them, so preview
+        // reports exactly what import would accept or reject — never a clean
+        // preview followed by a commit-time failure on a bad param key.
+        $this->plan($objects, $report);
 
         return $report;
     }
@@ -84,24 +77,7 @@ final class ActionImporter implements ObjectImporter
         $report = new ImportReport();
         $this->entityManager->beginTransaction();
         try {
-            $plans = [];
-            $seen = [];
-            foreach ($objects as $index => $object) {
-                $accepted = $this->classify($report, $object, (int) $index);
-                if ($accepted === null) {
-                    continue;
-                }
-                if ($this->isDuplicate($report, $seen, $accepted['name'])) {
-                    continue;
-                }
-                try {
-                    // coerceRaw (inside buildPlan) can throw on an illegal param key.
-                    $plans[] = $this->buildPlan($accepted);
-                    $this->recordClassification($report, $accepted);
-                } catch (InvalidArgumentException $exception) {
-                    $report->reject($accepted['name'], $exception->getMessage());
-                }
-            }
+            $plans = $this->plan($objects, $report);
 
             // All-or-nothing: a single rejection aborts the whole batch unwritten.
             if ($report->hasRejections()) {
@@ -125,6 +101,39 @@ final class ActionImporter implements ObjectImporter
         }
 
         return $report;
+    }
+
+    /**
+     * The accept / dedup / build pipeline shared by preview (dry run) and
+     * import. Records created/updated/rejected/warnings on the report and
+     * returns the built plans for the accepted objects. buildPlan() runs here —
+     * its param coercion can throw on an illegal key — so preview and import
+     * accept and reject identically; preview just discards the returned plans.
+     *
+     * @param array<int|string, mixed> $objects
+     * @return array<int, array{name: string, type: string, existing: ?Action, object: array<string, mixed>, conditions: array<int, array<string, mixed>>, outcomes: array<int, array<string, mixed>>}>
+     */
+    private function plan(array $objects, ImportReport $report): array
+    {
+        $plans = [];
+        $seen = [];
+        foreach ($objects as $index => $object) {
+            $accepted = $this->classify($report, $object, (int) $index);
+            if ($accepted === null) {
+                continue;
+            }
+            if ($this->isDuplicate($report, $seen, $accepted['name'])) {
+                continue;
+            }
+            try {
+                $plans[] = $this->buildPlan($accepted);
+                $this->recordClassification($report, $accepted);
+            } catch (InvalidArgumentException $exception) {
+                $report->reject($accepted['name'], $exception->getMessage());
+            }
+        }
+
+        return $plans;
     }
 
     /**
