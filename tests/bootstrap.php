@@ -2,11 +2,10 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Silence the data-driven-config warning by default: the engine/simulator unit
-// tests deliberately run actions with no seeded XP/log rows, and the warning's
-// error_log() would otherwise mark them risky. Tests that assert the warning
-// install (and restore) their own capturing sink.
-App\Service\Action\TypeConfigWarning::setSink(static fn(string $message) => null);
+// The engine/simulator unit tests deliberately run actions with no seeded
+// XP/log rows; silence the data-driven-config warning so its error_log() does
+// not trip the suite's strict no-output / fail-on-risky checks.
+App\Service\Action\TypeConfigWarning::$silenced = true;
 
 // Canonical game constants for the whole suite. Defining CARACS here, once and
 // complete, removes the global-constant pollution where the first test to define
