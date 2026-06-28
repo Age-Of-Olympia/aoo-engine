@@ -91,9 +91,13 @@ class ActionExecutorService
                 $this->actor->put_xp($xpResultsArray["actor"]);
             }
             
-            if(!empty($xpResultsArray["target"])){            
+            if(!empty($xpResultsArray["target"])){
                 $this->target->put_xp($xpResultsArray["target"]);
             }
+
+            // 4b) apply the rule's resource side-effects (e.g. training spends
+            // one energie per side) — kept out of the pure XP calculation.
+            $this->xpResolver->applySideEffects($this->action, $this->globalConditionsResult, $this->actor, $this->target);
 
         }
         
