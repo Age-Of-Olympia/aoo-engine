@@ -9,6 +9,8 @@ namespace App\View\Action;
  */
 final class ExportButtonView
 {
+    use EscapesHtml;
+
     private const ENDPOINT = '/admin/action-export.php';
 
     public function single(int $actionId, string $label = 'Exporter'): string
@@ -43,8 +45,4 @@ final class ExportButtonView
             . $this->esc($label) . '</a>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

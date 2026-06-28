@@ -11,6 +11,8 @@ use App\View\ActionResultsView;
  */
 final class SimulationReportView
 {
+    use EscapesHtml;
+
     public function __construct(private readonly SimulationReport $report)
     {
     }
@@ -75,8 +77,4 @@ final class SimulationReportView
             . '(elle dépend de l\'état réel du monde, ex. la carte) : ' . $escaped . '</div>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

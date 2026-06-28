@@ -11,6 +11,8 @@ namespace App\View\Action;
  */
 final class WorkbenchFooterView
 {
+    use EscapesHtml;
+
     public function render(string $saveFormId, string $deleteFormId, string $deleteLabel, string $extra = ''): string
     {
         return '<div class="wb-footer">'
@@ -21,8 +23,4 @@ final class WorkbenchFooterView
             . '</div>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

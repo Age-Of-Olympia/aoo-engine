@@ -11,6 +11,8 @@ namespace App\View\Action;
  */
 final class ConditionEditorView
 {
+    use EscapesHtml;
+
     /**
      * @param array<int, string> $types available condition types
      */
@@ -34,8 +36,4 @@ final class ConditionEditorView
             . ' onclick="return confirm(\'Retirer cette condition ?\');" title="Retirer">&times;</button>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

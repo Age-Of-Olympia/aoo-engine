@@ -14,6 +14,8 @@ use App\Entity\OutcomeInstruction;
  */
 final class AutomaticOutcomesView
 {
+    use EscapesHtml;
+
     /**
      * @param iterable<OutcomeInstruction> $instructions
      */
@@ -55,8 +57,4 @@ final class AutomaticOutcomesView
         return (string) $value;
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

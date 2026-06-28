@@ -15,6 +15,8 @@ use App\Action\Schema\ParameterSchema;
  */
 final class TypeChildFormView
 {
+    use EscapesHtml;
+
     private ParameterFieldRenderer $renderer;
     private RawParamsEditor $rawEditor;
 
@@ -101,8 +103,4 @@ final class TypeChildFormView
         return $out;
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

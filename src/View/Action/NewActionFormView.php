@@ -8,6 +8,8 @@ namespace App\View\Action;
  */
 final class NewActionFormView
 {
+    use EscapesHtml;
+
     private IconFieldView $iconField;
 
     public function __construct(?IconFieldView $iconField = null)
@@ -40,8 +42,4 @@ final class NewActionFormView
             . '</form></details>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

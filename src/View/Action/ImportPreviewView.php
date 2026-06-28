@@ -12,6 +12,8 @@ use App\Service\ImportExport\ImportReport;
  */
 final class ImportPreviewView
 {
+    use EscapesHtml;
+
     public function render(ImportReport $report, string $filename, string $csrfTokenField, string $bundleHash = ''): string
     {
         $html = '<h1>Prévisualisation de l\'import</h1>';
@@ -98,8 +100,4 @@ final class ImportPreviewView
             . '<ul class="wb-list wb-list--danger">' . $items . '</ul>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

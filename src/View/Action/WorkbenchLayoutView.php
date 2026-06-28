@@ -13,6 +13,8 @@ namespace App\View\Action;
  */
 final class WorkbenchLayoutView
 {
+    use EscapesHtml;
+
     public function render(
         string $listTitle,
         int $count,
@@ -38,8 +40,4 @@ final class WorkbenchLayoutView
             . '</div>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

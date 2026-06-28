@@ -9,6 +9,9 @@ namespace App\View\Action;
  */
 final class TypeLogEditorView
 {
+    use EscapesHtml;
+    use RendersInheritanceBanner;
+
     public function render(string $typeKey, ?string $actorTemplate, ?string $targetTemplate, string $csrfTokenField, ?string $inheritedFrom = null, ?string $overriddenParent = null): string
     {
         return '<form method="post" action="/admin/action-type-log-save.php" class="wb-form wb-logs">'
@@ -25,23 +28,5 @@ final class TypeLogEditorView
             . '<textarea class="form-control" name="target_template" rows="2">' . $this->esc((string) $targetTemplate) . '</textarea></label>'
             . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer les messages</button></div>'
             . '</form>';
-    }
-
-    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom, ?string $overriddenParent): string
-    {
-        if ($inheritedFrom !== null) {
-            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
-                . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
-        }
-        if ($overriddenParent !== null) {
-            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($overriddenParent) . ' » mais surchargé ici.</p>';
-        }
-
-        return '';
-    }
-
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 }

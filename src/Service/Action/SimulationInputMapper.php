@@ -13,7 +13,7 @@ final class SimulationInputMapper
     private const BASE_REMAINING = ['a' => 6, 'pv' => 20, 'pm' => 15, 'mvt' => 6];
     private const DEFAULT_TARGET_WEAPON = 'melee';
     // Capped low: each run executes the real engine, so a high count is slow.
-    private const MAX_RUNS = 100;
+    public const MAX_RUNS = 100;
 
     /**
      * @param array<string, mixed> $post

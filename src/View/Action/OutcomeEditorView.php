@@ -12,6 +12,8 @@ namespace App\View\Action;
  */
 final class OutcomeEditorView
 {
+    use EscapesHtml;
+
     public function addOutcomeControls(): string
     {
         return '<div class="wb-add">'
@@ -65,8 +67,4 @@ final class OutcomeEditorView
             . ' onclick="return confirm(\'Retirer cette instruction ?\');" title="Retirer">&times;</button>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

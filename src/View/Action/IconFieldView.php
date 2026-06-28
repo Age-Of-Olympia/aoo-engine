@@ -11,6 +11,8 @@ namespace App\View\Action;
  */
 final class IconFieldView
 {
+    use EscapesHtml;
+
     public function render(string $current, string $name = 'icon', ?string $currentColor = null, string $colorName = 'icon_color'): string
     {
         $current = trim($current);
@@ -53,8 +55,4 @@ final class IconFieldView
             . $dot . '</label>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

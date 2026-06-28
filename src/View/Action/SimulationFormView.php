@@ -7,6 +7,7 @@ use App\Action\Schema\SimulationField;
 use App\Entity\Action;
 use App\Service\Action\ActionTargeting;
 use App\Service\Action\EnergieRule;
+use App\Service\Action\SimulationInputMapper;
 use App\Service\Action\SimulationWeaponCatalog;
 
 /**
@@ -16,6 +17,8 @@ use App\Service\Action\SimulationWeaponCatalog;
  */
 final class SimulationFormView
 {
+    use EscapesHtml;
+
     /** Friendly French labels for the equipment slots (emplacement keys). */
     private const SLOT_LABELS = [
         'main2' => 'Main 2',
@@ -183,13 +186,14 @@ final class SimulationFormView
             }
         }
 
-        $runs = max(1, min(100, (int) ($posted['runs'] ?? 1)));
+        $maxRuns = SimulationInputMapper::MAX_RUNS;
+        $runs = max(1, min($maxRuns, (int) ($posted['runs'] ?? 1)));
 
         return '<div class="sim-context">'
             . $this->environment($extra, $posted, $defaultDistance)
             . '<div class="sim-run">'
             . '<div class="form-group"><label>Tirages</label>'
-            . '<input class="form-control" type="number" min="1" max="100" name="runs" value="' . $runs . '"></div>'
+            . '<input class="form-control" type="number" min="1" max="' . $maxRuns . '" name="runs" value="' . $runs . '"></div>'
             . '<button class="btn btn-primary" type="submit">Simuler</button>'
             . '</div></div>';
     }
@@ -339,8 +343,4 @@ final class SimulationFormView
         return '<div class="form-group"><label>' . $this->esc($label) . '</label>' . $control . '</div>';
     }
 
-    private function esc(int|string $value): string
-    {
-        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-    }
 }

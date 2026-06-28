@@ -11,6 +11,9 @@ use App\Service\Action\Xp\XpCalculatorRegistry;
  */
 final class TypeXpEditorView
 {
+    use EscapesHtml;
+    use RendersInheritanceBanner;
+
     private XpCalculatorRegistry $calculators;
 
     /** Friendly labels for the param keys (fallback: the raw key). */
@@ -70,23 +73,5 @@ final class TypeXpEditorView
             . '<div class="wb-grid">' . $fields . '</div>'
             . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer l\'XP</button></div>'
             . '</form>';
-    }
-
-    private function inheritanceBanner(string $typeKey, ?string $inheritedFrom, ?string $overriddenParent): string
-    {
-        if ($inheritedFrom !== null) {
-            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($inheritedFrom) . ' ». '
-                . 'Enregistrer créera une surcharge pour « ' . $this->esc($typeKey) . ' ».</p>';
-        }
-        if ($overriddenParent !== null) {
-            return '<p class="wb-inherited">Hérité du type « ' . $this->esc($overriddenParent) . ' » mais surchargé ici.</p>';
-        }
-
-        return '';
-    }
-
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 }

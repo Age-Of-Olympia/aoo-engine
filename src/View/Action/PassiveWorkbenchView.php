@@ -15,6 +15,8 @@ use App\Entity\ActionPassive;
  */
 final class PassiveWorkbenchView
 {
+    use EscapesHtml;
+
     private const TYPES = ['att' => 'Attaque', 'def' => 'Défense', 'mixte' => 'Mixte'];
     /** Passives have no stored icon; fall back to a glyph per type for the list / folded rail. */
     private const TYPE_ICONS = ['att' => 'ra-sword', 'def' => 'ra-shield', 'mixte' => 'ra-crossed-swords'];
@@ -228,8 +230,4 @@ final class PassiveWorkbenchView
             . '<textarea class="form-control" name="passive[' . $this->esc($name) . ']" rows="3">' . $this->esc($value) . '</textarea></label>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

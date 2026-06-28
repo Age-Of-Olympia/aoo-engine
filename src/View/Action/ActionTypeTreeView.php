@@ -14,6 +14,8 @@ use App\Service\Action\ActionTypeNode;
  */
 final class ActionTypeTreeView
 {
+    use EscapesHtml;
+
     /**
      * @param array<int, ActionTypeNode> $nodes
      * @param array<string, int>         $counts type key => badge count
@@ -61,8 +63,4 @@ final class ActionTypeTreeView
         return $html;
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

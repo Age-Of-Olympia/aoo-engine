@@ -14,6 +14,8 @@ use App\Entity\ActionTypeInstruction;
  */
 final class TypeDefaultsView
 {
+    use EscapesHtml;
+
     private ActionSchemaCatalog $catalog;
     private TypeChildFormView $form;
     private WorkbenchListHeaderView $listHeader;
@@ -107,8 +109,4 @@ final class TypeDefaultsView
         return '<div class="wb-tabs" role="tablist">' . $bar . '</div>' . $panels;
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }

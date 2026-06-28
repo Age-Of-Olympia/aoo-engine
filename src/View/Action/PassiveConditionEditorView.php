@@ -16,6 +16,8 @@ use App\Service\Action\SimulationWeaponCatalog;
  */
 final class PassiveConditionEditorView
 {
+    use EscapesHtml;
+
     /** Bare-handed pseudo-weapon: the engine treats "poing" as "no weapon equipped". */
     private const BARE_HANDS = 'poing';
 
@@ -149,8 +151,4 @@ final class PassiveConditionEditorView
             . ' value="' . $this->esc($value) . '"' . ($checked ? ' checked' : '') . '> ' . $this->esc($label) . '</label>';
     }
 
-    private function esc(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-    }
 }
