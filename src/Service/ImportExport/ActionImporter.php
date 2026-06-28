@@ -17,7 +17,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionProperty;
-use Throwable;
 
 /**
  * Imports action payloads produced by {@see ActionExporter}.
@@ -34,9 +33,8 @@ use Throwable;
  * critical part — the parameter-key allow-list — since keys can be echoed into
  * outcome HTML.
  */
-final class ActionImporter implements ObjectImporter
+final class ActionImporter extends AbstractObjectImporter
 {
-    private EntityManagerInterface $entityManager;
     private ActionCatalogService $catalog;
     private ActionTypeRegistry $typeRegistry;
     private ConditionRegistry $conditionRegistry;
@@ -61,97 +59,28 @@ final class ActionImporter implements ObjectImporter
         return 'action';
     }
 
-    public function preview(array $objects): ImportReport
+    /**
+     * Classify, dedup and build one object. buildPlan() runs here — its param
+     * coercion can throw on an illegal key — so preview and import accept and
+     * reject identically (preview just discards the returned plan).
+     */
+    protected function accept(ImportReport $report, array &$seen, mixed $object, int $index): mixed
     {
-        $report = new ImportReport();
-        // Build the plans too (the throwing step) and discard them, so preview
-        // reports exactly what import would accept or reject — never a clean
-        // preview followed by a commit-time failure on a bad param key.
-        $this->plan($objects, $report);
+        $accepted = $this->classify($report, $object, $index);
+        if ($accepted === null || $this->isDuplicate($report, $seen, $accepted['name'])) {
+            return null;
+        }
 
-        return $report;
-    }
-
-    public function import(array $objects): ImportReport
-    {
-        $report = new ImportReport();
-        $this->entityManager->beginTransaction();
         try {
-            $plans = $this->plan($objects, $report);
-
-            // All-or-nothing: a single rejection aborts the whole batch unwritten.
-            if ($report->hasRejections()) {
-                $this->entityManager->rollback();
-                $this->entityManager->clear();
-                return $report;
-            }
-
-            foreach ($plans as $plan) {
-                $this->applyPlan($plan);
-            }
-
-            $this->entityManager->flush();
-            $this->entityManager->commit();
-        } catch (Throwable $exception) {
-            $this->entityManager->rollback();
-            // Detach the scheduled-but-unflushed persists so a reused EM (long
-            // -running process) doesn't re-flush this batch on a later request.
-            $this->entityManager->clear();
-            throw $exception;
+            $plan = $this->buildPlan($accepted);
+        } catch (InvalidArgumentException $exception) {
+            $report->reject($accepted['name'], $exception->getMessage());
+            return null;
         }
 
-        return $report;
-    }
+        $this->recordClassification($report, $accepted);
 
-    /**
-     * The accept / dedup / build pipeline shared by preview (dry run) and
-     * import. Records created/updated/rejected/warnings on the report and
-     * returns the built plans for the accepted objects. buildPlan() runs here —
-     * its param coercion can throw on an illegal key — so preview and import
-     * accept and reject identically; preview just discards the returned plans.
-     *
-     * @param array<int|string, mixed> $objects
-     * @return array<int, array{name: string, type: string, existing: ?Action, object: array<string, mixed>, conditions: array<int, array<string, mixed>>, outcomes: array<int, array<string, mixed>>}>
-     */
-    private function plan(array $objects, ImportReport $report): array
-    {
-        $plans = [];
-        $seen = [];
-        foreach ($objects as $index => $object) {
-            $accepted = $this->classify($report, $object, (int) $index);
-            if ($accepted === null) {
-                continue;
-            }
-            if ($this->isDuplicate($report, $seen, $accepted['name'])) {
-                continue;
-            }
-            try {
-                $plans[] = $this->buildPlan($accepted);
-                $this->recordClassification($report, $accepted);
-            } catch (InvalidArgumentException $exception) {
-                $report->reject($accepted['name'], $exception->getMessage());
-            }
-        }
-
-        return $plans;
-    }
-
-    /**
-     * True (and records a rejection) when $name was already accepted earlier in
-     * the batch — actions.name is the natural key, so a duplicate in one bundle
-     * would create two rows / be ambiguous on re-import.
-     *
-     * @param array<string, true> $seen
-     */
-    private function isDuplicate(ImportReport $report, array &$seen, string $name): bool
-    {
-        if (isset($seen[$name])) {
-            $report->reject($name, 'Doublon : « ' . $name . " » apparaît plusieurs fois dans le lot.");
-            return true;
-        }
-        $seen[$name] = true;
-
-        return false;
+        return $plan;
     }
 
     /**
@@ -272,11 +201,9 @@ final class ActionImporter implements ObjectImporter
         ];
     }
 
-    /**
-     * @param array{name: string, type: string, existing: ?Action, object: array<string, mixed>, conditions: array<int, array<string, mixed>>, outcomes: array<int, array<string, mixed>>} $plan
-     */
-    private function applyPlan(array $plan): void
+    protected function applyPlan(mixed $plan): void
     {
+        /** @var array{name: string, type: string, existing: ?Action, object: array<string, mixed>, conditions: array<int, array<string, mixed>>, outcomes: array<int, array<string, mixed>>} $plan */
         $action = $plan['existing'];
         if ($action === null) {
             /** @var class-string<Action> $class */

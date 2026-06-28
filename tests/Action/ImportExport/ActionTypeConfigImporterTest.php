@@ -49,8 +49,9 @@ class ActionTypeConfigImporterTest extends TestCase
     public function testImportRollsBackWholeBatchOnAnyRejection(): void
     {
         $em = $this->em();
-        $em->expects($this->never())->method('beginTransaction');
+        $em->expects($this->once())->method('rollback');
         $em->expects($this->never())->method('flush');
+        $em->expects($this->never())->method('commit');
 
         $report = (new ActionTypeConfigImporter($em))->import([
             ['typeKey' => 'attack', 'xp' => ['mode' => 'attack'], 'logs' => null],
