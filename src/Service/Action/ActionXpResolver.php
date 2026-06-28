@@ -4,7 +4,6 @@ namespace App\Service\Action;
 
 use App\Entity\Action;
 use App\Entity\ActionTypeXp;
-use App\Entity\EntityManagerFactory;
 use App\Interface\ActorInterface;
 use App\Service\Action\Xp\XpCalculator;
 use App\Service\Action\Xp\XpCalculatorRegistry;
@@ -19,9 +18,8 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class ActionXpResolver
 {
-    private EntityManagerInterface $entityManager;
-    private ActionTypeRegistry $registry;
     private XpCalculatorRegistry $calculators;
+    private TypeConfigLocator $locator;
 
     /** @var array<int, array{0: ?ActionTypeXp, 1: ?XpCalculator}> */
     private array $ruleCache = [];
@@ -30,10 +28,10 @@ final class ActionXpResolver
         ?EntityManagerInterface $entityManager = null,
         ?ActionTypeRegistry $registry = null,
         ?XpCalculatorRegistry $calculators = null,
+        ?TypeConfigLocator $locator = null,
     ) {
-        $this->entityManager = $entityManager ?? EntityManagerFactory::getEntityManager();
-        $this->registry = $registry ?? new ActionTypeRegistry();
         $this->calculators = $calculators ?? new XpCalculatorRegistry();
+        $this->locator = $locator ?? new TypeConfigLocator($entityManager, $registry);
     }
 
     /**
@@ -89,29 +87,6 @@ final class ActionXpResolver
 
     private function configFor(Action $action): ?ActionTypeXp
     {
-        $keys = $this->registry->typeKeysForAction($action);
-        if ($keys === []) {
-            return null;
-        }
-
-        /** @var array<int, ActionTypeXp> $rows */
-        $rows = $this->entityManager->getRepository(ActionTypeXp::class)->findBy(['typeKey' => $keys]);
-        if ($rows === []) {
-            TypeConfigWarning::once('XP', $keys);
-            return null;
-        }
-
-        $byKey = [];
-        foreach ($rows as $row) {
-            $byKey[$row->getTypeKey()] = $row;
-        }
-        // typeKeysForAction is closest-first, so the first hit is the most specific.
-        foreach ($keys as $key) {
-            if (isset($byKey[$key])) {
-                return $byKey[$key];
-            }
-        }
-
-        return null;
+        return $this->locator->closest($action, ActionTypeXp::class, 'XP');
     }
 }
