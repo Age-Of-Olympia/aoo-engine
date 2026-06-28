@@ -116,6 +116,51 @@ class ActionSimulationServiceTest extends TestCase
         );
     }
 
+    private function simulationServiceWithXp(ActionTypeXp $xp): ActionSimulationService
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturnCallback(function (string $class) use ($xp): EntityRepository {
+            $repo = $this->createMock(EntityRepository::class);
+            $repo->method('findBy')->willReturn($class === ActionTypeXp::class ? [$xp] : []);
+
+            return $repo;
+        });
+
+        return new ActionSimulationService(
+            typeInstructionResolver: new ActionTypeInstructionResolver($em),
+            preconditionResolver: new ActionTypePreconditionResolver($em),
+            conditionPreconditionResolver: new ConditionPreconditionResolver($em),
+            weaponCatalog: new SimulationWeaponCatalog([]),
+            logResolver: new ActionLogResolver($em),
+            xpResolver: new ActionXpResolver($em),
+        );
+    }
+
+    public function testASuccessfulAttackAwardsRankDerivedXpEndToEnd(): void
+    {
+        // The other sim tests wire an empty XP repo, so XP-from-combat was never
+        // asserted through the real executor. 'attack' mode derives XP from the
+        // rank gap (base − diff − upgrade), so this runs the real combat XP formula
+        // through the executor — not a flat constant. Actor rank 5 vs target rank 3:
+        // 5 − (5−3) − 0 = 3 (≥ min 2, diff ≤ cap, no faction/inactive reduction).
+        $xp = (new ActionTypeXp())->setTypeKey('melee')->setMode('attack')
+            ->setParams(['base' => 5, 'min' => 2, 'reducedXp' => 1, 'diffCap' => 3, 'targetFail' => 2]);
+
+        $action = new MeleeAction();
+        $action->setName('frapper');
+        $input = new SimulationInput(
+            actorCaracs: ['cc' => 10],
+            targetCaracs: ['cc' => 1],
+            actorRank: 5,
+            targetRank: 3,
+        );
+
+        $results = $this->simulationServiceWithXp($xp)->simulate($action, $input);
+
+        $this->assertFalse($results->isBlocked());
+        $this->assertSame(['actor' => 3, 'target' => 0], $results->getXpResultsArray());
+    }
+
     /* --- the per-type defense formulas (kept; used by the real conditions) --- */
 
     public function testMeleeDefenseUsesMaxOfCcAndAgi(): void
