@@ -27,13 +27,4 @@ final class DamageCalculator
 
         return $base + $this->additionalDamages($modifiers);
     }
-
-    /**
-     * rawDamage() with the minimum-1 floor — the damage a hit deals before
-     * distance, crit and encaisse.
-     */
-    public function totalDamage(int $actorDamages, int $targetDefense, DamageModifiers $modifiers): int
-    {
-        return max(1, $this->rawDamage($actorDamages, $targetDefense, $modifiers));
-    }
 }
