@@ -7,6 +7,7 @@ use Classes\Str;
 use Classes\Item;
 use App\Service\ActionService;
 use App\Service\ActionPassiveService;
+use App\Service\RaceService;
 
 class SpellView
 {
@@ -98,7 +99,7 @@ class SpellView
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
-                $raceColor = WarSchoolUtils::getRaceColor($action->getRace());
+                $raceColor = RaceService::getRaceColor($action->getRace());
                 $alreadyLearned = (bool)$player->have_action($action->getName());
                 $actionRace = $action->getRace();
                 $isRaceLearnable = (empty($actionRace) || $player->data->race == $actionRace);

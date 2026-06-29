@@ -34,6 +34,22 @@ class RaceService
     }
 
     /**
+     * Returns the colour used to display a race-gated action/passive name: the
+     * race's `bgColor` from its JSON — the same single source the map, the
+     * ranking and the forum already read. Empty races (all races / "commun") and
+     * any race without a JSON colour fall back to black.
+     */
+    public static function getRaceColor(?string $race): string {
+        if (empty($race)) {
+            return '#000000';
+        }
+
+        $raceData = json()->decode('races', strtolower($race));
+
+        return $raceData->bgColor ?? '#000000';
+    }
+
+    /**
      * Returns the background color of the Race that matches the given name.
      */
     public function getRaceBackgroundColor(string $raceName): string {
