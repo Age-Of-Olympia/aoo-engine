@@ -118,16 +118,18 @@ class ComputePureCondition extends BaseCondition
         $actorRollBonus = $conditionObject->getActorRollBonus();
         $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
         $actorRoll = $dice->roll($actorRollTraitValue);
+        $actorSum = array_sum($actorRoll);
         if($conditionObject->getActorAdvantage() && $conditionObject->getActorDisadvantage()){
             // Do nothing if advantage and disadvantage
         }
         elseif($conditionObject->getActorAdvantage() || $conditionObject->getActorDisadvantage()){
             $actorRoll2 = $dice->roll($actorRollTraitValue);
+            $actorSum2 = array_sum($actorRoll2);
             if($conditionObject->getActorAdvantage()){
-                $actorRoll = max($actorRoll,$actorRoll2);
+                $actorSum = max($actorSum,$actorSum2);
             }   
             else{
-                $actorRoll = min($actorRoll,$actorRoll2);
+                $actorSum = min($actorSum,$actorSum2);
             }
         }
         $bonus = $conditionObject->getActorRollBonus();
@@ -157,16 +159,18 @@ class ComputePureCondition extends BaseCondition
         }
         
         $targetRoll = $dice->roll($targetRollTraitValue);
+        $targetSum = array_sum($targetRoll);
         if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
             // Do nothing if advantage and disadvantage
         }
         elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
             $targetRoll2 = $dice->roll($targetRollTraitValue);
+            $targetSum2 = array_sum($targetRoll2);
             if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
+                $targetSum = max($targetSum,$targetSum2);
             }   
             else{
-                $targetRoll = min($targetRoll,$targetRoll2);
+                $targetSum = min($targetSum,$targetSum2);
             }
         }
         $bonus = $conditionObject->getTargetRollBonus();

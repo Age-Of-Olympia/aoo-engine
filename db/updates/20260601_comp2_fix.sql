@@ -22,3 +22,11 @@ WHERE id = 3;
 UPDATE action_passives 
 SET level = 3
 WHERE id = 3;
+
+UPDATE outcome_instructions 
+SET parameters = '{ "actorHealingTrait": "r", "divisor": 2 }'
+WHERE outcome_id = 90;
+
+UPDATE outcome_instructions 
+SET parameters = '{ "actorHealingTrait": "r"}'
+WHERE outcome_id = 91;

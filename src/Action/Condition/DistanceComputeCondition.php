@@ -32,16 +32,18 @@ class DistanceComputeCondition extends ComputeCondition
         }
 
         $targetRoll = $dice->roll($targetRollTraitValue);
+        $targetSum = array_sum($targetRoll);
         if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
             // Do nothing if advantage and disadvantage
         }
         elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
             $targetRoll2 = $dice->roll($targetRollTraitValue);
+            $targetSum2 = array_sum($targetRoll2);
             if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
+                $targetSum = max($targetSum,$targetSum2);
             }   
             else{
-                $targetRoll = min($targetRoll,$targetRoll2);
+                $targetSum = min($targetSum,$targetSum2);
             }
         }
         $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
