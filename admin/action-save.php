@@ -40,6 +40,9 @@ try {
     if (array_key_exists('text', $_POST) || array_key_exists('level', $_POST)) {
         $saveService->saveDetails($actionId, (string) ($_POST['text'] ?? ''), (int) ($_POST['level'] ?? 0));
     }
+    if (array_key_exists('race', $_POST)) {
+        $saveService->saveRace($actionId, (string) $_POST['race']);
+    }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
     $saveService->saveOutcomeTargets($actionId, $outcomeSelf);
 

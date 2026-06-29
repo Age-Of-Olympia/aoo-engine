@@ -6,6 +6,7 @@ use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Action\Schema\Form\ParameterFieldRenderer;
 use App\Action\Schema\Form\RawParamsEditor;
+use App\Action\Schema\OptionCatalog;
 use App\Action\Schema\ParameterSchema;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionConditionEditService;
@@ -17,6 +18,7 @@ use App\Service\Action\ActionTypeRegistry;
 use App\Service\Action\RpgAwesomeIcons;
 use App\Service\CsrfProtectionService;
 use App\Service\OutcomeInstructionService;
+use App\Service\RaceService;
 use App\View\Action\AutomaticOutcomesView;
 use App\View\Action\IconFieldView;
 use App\View\Action\ConditionEditorView;
@@ -91,14 +93,19 @@ $renderParams = static function (ParameterSchema $schema, array $params, string 
 ob_start();
 foreach ($actions as $item) {
     $active = ($action && $item->getId() === $action->getId()) ? ' wb-item--active' : '';
+    // Tint the name with the race colour when the action is race-gated, so the
+    // list reads at a glance (coloured = restricted, default = all races).
+    $itemRace = (string) $item->getRace();
+    $nameStyle = $itemRace !== '' ? ' style="color: ' . e(RaceService::getRaceColor($itemRace)) . '"' : '';
+    $raceMeta = $itemRace !== '' ? ' · ' . e(ucfirst($itemRace)) : '';
     echo '<a class="wb-item' . $active . '" href="/admin/action-workbench.php?id=' . (int) $item->getId() . '&tab=' . $activeTab . '"'
         . ' title="' . e($item->getDisplayName()) . '"'
         . ' data-search="' . e(strtolower($item->getName() . ' ' . $item->getDisplayName() . ' ' . action_type_label($item) . ' ' . $item->getCategory())) . '">'
         . (new \App\View\Action\ActionIconView())->forAction($item, 'i', ['wb-item-icon'])
         . '<span class="wb-item-text">'
-        . '<span class="wb-item-name">' . e($item->getDisplayName()) . '</span>'
+        . '<span class="wb-item-name"' . $nameStyle . '>' . e($item->getDisplayName()) . '</span>'
         . '<span class="wb-item-meta">' . e(action_type_label($item)) . ' · niv.' . e($item->getLevel())
-        . ' · ' . $item->getConditions()->count() . 'c/' . $item->getOutcomes()->count() . 'o</span>'
+        . ' · ' . $item->getConditions()->count() . 'c/' . $item->getOutcomes()->count() . 'o' . $raceMeta . '</span>'
         . '</span>'
         . '</a>';
 }
@@ -132,13 +139,29 @@ if ($action === null) {
         return $reflection->isInitialized($action) ? $reflection->getValue($action) : null;
     };
 
-    // Icon picker and level share one row — level is a small input, no need for a
-    // line of its own.
+    // Race restriction — the scalar `race` the runtime gates on (empty = all
+    // races). "—" clears it; an unknown stored value is kept selectable so a
+    // legacy/non-playable race survives a save. Mirrors the passive editor.
+    $raceOptions = ['' => '—'] + (new OptionCatalog())->races();
+    $currentRace = (string) $action->getRace();
+    if ($currentRace !== '' && !isset($raceOptions[$currentRace])) {
+        $raceOptions[$currentRace] = $currentRace;
+    }
+    $raceSelect = '';
+    foreach ($raceOptions as $value => $label) {
+        $raceSelect .= '<option value="' . e((string) $value) . '"'
+            . ((string) $value === $currentRace ? ' selected' : '') . '>' . e((string) $label) . '</option>';
+    }
+
+    // Icon picker, level and race share one row — all small fields, no need for a
+    // line each.
     echo '<div class="wb-iconlevel">'
         . (new IconFieldView())->render($action->getIcon(), 'icon', $action->getIconColor())
         . '<label class="wb-field wb-field--level"><span>Niveau</span>'
         . '<input class="form-control" type="number" name="level" min="0" value="' . (int) $readProp('level') . '"'
         . ' title="Prérequis d\'achat (à venir)"></label>'
+        . '<label class="wb-field"><span>Race</span>'
+        . '<select class="form-control" name="race" title="Restreint l\'action à une race ; — = toutes">' . $raceSelect . '</select></label>'
         . '</div>';
     echo '<label class="wb-field wb-field--wide"><span>Description</span>'
         . '<textarea class="form-control" name="text" rows="3">' . e((string) $readProp('text')) . '</textarea></label>';
@@ -244,7 +267,9 @@ $listBody = (new WorkbenchListHeaderView())->render($createFormHtml, 'action', '
 $editorHead = '<div class="wb-tabbtns">'
     . '<button type="button" class="wb-tab-btn' . ($activeTab === 'config' ? ' active' : '') . '" data-tab="config">Configurer</button>'
     . '<button type="button" class="wb-tab-btn' . ($activeTab === 'sim' ? ' active' : '') . '" data-tab="sim">Simuler</button>'
-    . '</div><span class="wb-editor-title">' . ($action ? e($action->getDisplayName()) : '') . '</span>';
+    . '</div><span class="wb-editor-title"'
+    . ($action && (string) $action->getRace() !== '' ? ' style="color: ' . e(RaceService::getRaceColor($action->getRace())) . '"' : '')
+    . '>' . ($action ? e($action->getDisplayName()) : '') . '</span>';
 
 $editorBody = '<div class="wb-tab wb-config" data-tab="config"' . ($activeTab === 'config' ? '' : ' hidden') . '>' . renderFlashMessage() . $configHtml . '</div>'
     . '<div class="wb-tab wb-sim" data-tab="sim"' . ($activeTab === 'sim' ? '' : ' hidden') . '>' . $simHtml . '</div>';

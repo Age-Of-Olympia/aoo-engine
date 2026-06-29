@@ -140,6 +140,55 @@ class ActionSaveServiceTest extends TestCase
         $this->assertSame(4, $action->getLevel());
     }
 
+    public function testSavesTheActionRaceTrimmed(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $action->setRace('elfe');
+        $em = $this->entityManager($action);
+        $em->expects($this->once())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveRace(1, '  nain  ');
+
+        $this->assertSame('nain', $action->getRace());
+    }
+
+    public function testSaveRaceClearsTheRestrictionWithAnEmptyValue(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $action->setRace('nain');
+        $em = $this->entityManager($action);
+        $em->expects($this->once())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveRace(1, '');
+
+        $this->assertSame('', $action->getRace());
+    }
+
+    public function testSaveRaceIsANoOpWhenUnchanged(): void
+    {
+        $action = new \App\Action\SearchAction();
+        $action->setRace('nain');
+        $em = $this->entityManager($action);
+        $em->expects($this->never())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveRace(1, 'nain');
+    }
+
+    public function testSaveRaceTreatsAnUnsetRaceAsEmptyAndDoesNotFlushOnEmptyInput(): void
+    {
+        // A never-set race is null; saving "" (the "all races" choice) must
+        // normalise null to "" for the comparison and skip the flush.
+        $action = new \App\Action\SearchAction();
+        $em = $this->entityManager($action);
+        $em->expects($this->never())->method('flush');
+
+        (new ActionSaveService($em, null, null, $this->createMock(OutcomeInstructionService::class)))
+            ->saveRace(1, '');
+    }
+
     public function testSaveIconColorStoresAPaletteTokenAndRejectsAnythingElse(): void
     {
         $action = new \App\Action\SearchAction();

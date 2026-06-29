@@ -143,6 +143,26 @@ final class ActionSaveService
     }
 
     /**
+     * Restrict an action to a single race, or clear the restriction. The scalar
+     * `race` is the field the runtime honours (the WarSchool views gate on
+     * `empty($action->getRace()) || $player->race === $action->getRace()`); an
+     * empty string means "all races". A no-op when unchanged. Null (legacy /
+     * never-set) is normalised to "" for the comparison.
+     */
+    public function saveRace(int $actionId, string $race): void
+    {
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
+
+        $race = trim($race);
+        if ($race === (string) $action->getRace()) {
+            return;
+        }
+
+        $action->setRace($race);
+        $this->entityManager->flush();
+    }
+
+    /**
      * Read a typed property, or null when a legacy NULL left it uninitialized.
      */
     private function current(Action $action, string $property): mixed
