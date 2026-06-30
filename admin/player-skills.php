@@ -6,13 +6,13 @@ use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionPassiveCatalogService;
 use App\Service\CsrfProtectionService;
 use App\Service\PlayerActionsService;
-use App\Service\PlayerLoadoutService;
+use App\Service\PlayerSkillsService;
 use App\Service\PlayerPassiveService;
-use App\View\Player\PlayerLoadoutView;
+use App\View\Player\PlayerSkillsView;
 
 $id = (int) ($_GET['id'] ?? 0);
 
-$summary = $id > 0 ? (new PlayerLoadoutService())->getPlayerSummary($id) : null;
+$summary = $id > 0 ? (new PlayerSkillsService())->getPlayerSummary($id) : null;
 if ($summary === null) {
     setFlash('warning', 'Joueur introuvable.');
     redirectTo('/admin/players.php');
@@ -44,7 +44,7 @@ foreach ((new ActionCatalogService())->listActions() as $action) {
 // notably 'attaquer', the base attack (melee AND distance), which the catalog
 // does not model. This catalog-driven view would otherwise hide them, making a
 // player look like they lack their basic attack. Surface them as owned rows in
-// their own group so the loadout stays truthful.
+// their own group so the skills stays truthful.
 $orphanActions = [];
 foreach ($ownedActionNames as $name) {
     if (!isset($catalogActionNames[$name])) {
@@ -74,13 +74,13 @@ foreach ((new ActionPassiveCatalogService())->listPassives() as $passive) {
     ];
 }
 
-$body = (new PlayerLoadoutView())->render(
+$body = (new PlayerSkillsView())->render(
     $summary,
     $actions,
     $passives,
     (new CsrfProtectionService())->renderTokenField()
 );
 
-echo admin_layout($summary['name'] . ' — loadout', renderFlashMessage() . $body, [
-    'styles' => ['/admin/css/player-loadout.css'],
+echo admin_layout($summary['name'] . ' — compétences', renderFlashMessage() . $body, [
+    'styles' => ['/admin/css/player-skills.css'],
 ]);

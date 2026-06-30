@@ -4,7 +4,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
-use App\Service\PlayerLoadoutService;
+use App\Service\PlayerSkillsService;
 
 AdminAuthorizationService::DoAdminCheck();
 
@@ -14,12 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $csrf = new CsrfProtectionService();
-$service = new PlayerLoadoutService();
+$service = new PlayerSkillsService();
 $playerId = (int) ($_POST['player_id'] ?? 0);
 
 if (!$csrf->validateToken($_POST['csrf_token'] ?? null)) {
     setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/player-loadout.php?id=' . $playerId);
+    redirectTo('/admin/player-skills.php?id=' . $playerId);
 }
 
 try {
@@ -32,14 +32,14 @@ try {
     $desiredActions = array_map('strval', (array) ($_POST['actions'] ?? []));
     $desiredPassives = array_map('intval', (array) ($_POST['passives'] ?? []));
 
-    $changes = $service->applyLoadout($playerId, $desiredActions, $desiredPassives);
+    $changes = $service->applySkills($playerId, $desiredActions, $desiredPassives);
 
     $touched = array_sum($changes);
     if ($touched === 0) {
         setFlash('info', 'Aucune modification.');
     } else {
         setFlash('success', sprintf(
-            'Loadout enregistré : actions +%d / −%d, passifs +%d / −%d.',
+            'Compétences enregistrées : actions +%d / −%d, passifs +%d / −%d.',
             $changes['actions_added'],
             $changes['actions_removed'],
             $changes['passives_added'],
@@ -50,8 +50,8 @@ try {
 } catch (\InvalidArgumentException $exception) {
     setFlash('warning', $exception->getMessage());
 } catch (\Throwable $exception) {
-    setFlash('danger', "Erreur lors de l'enregistrement du loadout.");
+    setFlash('danger', "Erreur lors de l'enregistrement des compétences.");
 }
 
-header('Location: /admin/player-loadout.php?id=' . $playerId);
+header('Location: /admin/player-skills.php?id=' . $playerId);
 exit;

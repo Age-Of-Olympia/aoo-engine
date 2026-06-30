@@ -3,7 +3,7 @@
 namespace App\View\Player;
 
 /**
- * One character's loadout: the action and passive catalogs as two tables, each
+ * One character's skills: the action and passive catalogs as two tables, each
  * row a checkbox for ownership. Built from the shared admin components (tables,
  * badges, buttons) so it matches the rest of the admin (see admin/actions.php).
  *
@@ -11,10 +11,10 @@ namespace App\View\Player;
  * no catalog row — e.g. 'attaquer', the base attack the catalog does not model —
  * are shown read-only (no checkbox), so a save can never silently revoke them.
  *
- * @phpstan-type LoadoutItem array{key:string, label:string, sub:string, category:string, owned:bool, editable:bool, field?:string, value?:string}
+ * @phpstan-type SkillsItem array{key:string, label:string, sub:string, category:string, owned:bool, editable:bool, field?:string, value?:string}
  * @phpstan-type PlayerSummary array{id:int, name:string, race:string, player_type:string, xp:int}
  */
-final class PlayerLoadoutView
+final class PlayerSkillsView
 {
     /**
      * @param PlayerSummary $summary
@@ -23,16 +23,16 @@ final class PlayerLoadoutView
      */
     public function render(array $summary, array $actions, array $passives, string $csrfTokenField): string
     {
-        return '<form method="post" action="/admin/player-loadout-save.php">'
+        return '<form method="post" action="/admin/player-skills-save.php">'
             . $csrfTokenField
             . '<input type="hidden" name="player_id" value="' . (int) $summary['id'] . '">'
             . $this->header($summary, $actions, $passives)
-            . '<div class="loadout-columns">'
+            . '<div class="skills-columns">'
             . $this->column('Actions', $actions)
             . $this->column('Passifs', $passives)
             . '</div>'
             . '<div class="mt-3 mb-4">'
-            . '<button type="submit" class="btn btn-primary">Enregistrer le loadout</button> '
+            . '<button type="submit" class="btn btn-primary">Enregistrer les compétences</button> '
             . '<span class="text-muted ml-2">Les entrées « hors catalogue » ne sont pas modifiables ici.</span>'
             . '</div>'
             . '</form>';
@@ -87,7 +87,7 @@ final class PlayerLoadoutView
             }
         }
 
-        return '<section class="loadout-col">'
+        return '<section class="skills-col">'
             . '<h2 class="h5 mb-2">' . $this->esc($title)
             . ' <span class="badge badge-info">' . $this->countOwned($items) . '</span></h2>'
             . '<table class="table table-hover"><tbody>' . $rows . '</tbody></table>'
@@ -100,13 +100,13 @@ final class PlayerLoadoutView
     private function row(array $item): string
     {
         $cell = $item['editable']
-            ? '<input type="checkbox" class="loadout-checkbox" name="' . $this->esc(($item['field'] ?? '') . '[]')
+            ? '<input type="checkbox" class="skills-checkbox" name="' . $this->esc(($item['field'] ?? '') . '[]')
                 . '" value="' . $this->esc($item['value'] ?? '') . '"' . ($item['owned'] ? ' checked' : '')
                 . ' aria-label="' . $this->esc($item['label']) . '">'
             : '<span class="text-muted" title="Possédé, hors catalogue — non modifiable ici">✓</span>';
 
         return '<tr>'
-            . '<td class="loadout-check">' . $cell . '</td>'
+            . '<td class="skills-check">' . $cell . '</td>'
             . '<td>' . $this->esc($item['label']) . ' <code class="text-muted">' . $this->esc($item['key']) . '</code></td>'
             . '<td class="text-right text-muted">' . $this->esc($item['sub']) . '</td>'
             . '</tr>';

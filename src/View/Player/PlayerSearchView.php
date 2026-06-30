@@ -3,8 +3,8 @@
 namespace App\View\Player;
 
 /**
- * The loadout entry point: search a character by matricule or name, then open
- * their loadout. Uses the shared admin components (search form + striped table)
+ * The skills entry point: search a character by matricule or name, then open
+ * their skills. Uses the shared admin components (search form + striped table)
  * so it reads like every other admin list page (see admin/actions.php).
  */
 final class PlayerSearchView
@@ -14,7 +14,7 @@ final class PlayerSearchView
      */
     public function render(string $term, array $players): string
     {
-        return '<h1 class="mb-3">Loadouts des joueurs</h1>'
+        return '<h1 class="mb-3">Compétences des joueurs</h1>'
             . $this->searchForm($term)
             . $this->results($term, $players);
     }
@@ -50,8 +50,8 @@ final class PlayerSearchView
                 . '<td>' . $this->esc($player['race']) . '</td>'
                 . '<td><span class="badge badge-info">' . $this->esc($player['player_type']) . '</span></td>'
                 . '<td>' . (int) $player['xp'] . '</td>'
-                . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/player-loadout.php?id='
-                . (int) $player['id'] . '">Éditer le loadout</a></td>'
+                . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/player-skills.php?id='
+                . (int) $player['id'] . '">Éditer les compétences</a></td>'
                 . '</tr>';
         }
 

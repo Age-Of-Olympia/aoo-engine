@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701i';
+const ADMIN_ASSET_VERSION = '20260701j';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -27,7 +27,7 @@ function admin_layout($title, $content, array $assets = []) {
     $navLink = function($page, $label, $href) use ($currentPage) {
         $isActive = ($currentPage === $page) ||
                     ($page === 'tutorial.php' && $currentPage === 'tutorial-step-editor.php') ||
-                    ($page === 'players.php' && $currentPage === 'player-loadout.php');
+                    ($page === 'players.php' && $currentPage === 'player-skills.php');
         $activeClass = $isActive ? ' active' : '';
         $star = $isActive ? '⭐ ' : '';
         return "<a href=\"$href\" class=\"nav-link$activeClass\">$star$label</a>";
@@ -65,13 +65,13 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
         $navLink('action-import.php', 'Import', '/admin/action-import.php');
 
-    /* Player admin pages: per-player action/passive loadouts. The loadout
-     * detail page shares the "Loadouts" highlight with the search landing. */
-    $playerPages = ['players.php', 'player-loadout.php'];
+    /* Player admin pages: per-player action/passive skillss. The skills
+     * detail page shares the "Skillss" highlight with the search landing. */
+    $playerPages = ['players.php', 'player-skills.php'];
     $playersActive = in_array($currentPage, $playerPages, true);
     $playersGroupClass = $playersActive ? ' nav-group-open' : '';
     $playersSubLinks =
-        $navLink('players.php', 'Loadouts', '/admin/players.php');
+        $navLink('players.php', 'Compétences', '/admin/players.php');
 
     $navigation =
         $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .

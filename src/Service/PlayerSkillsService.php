@@ -7,19 +7,19 @@ use App\Service\Action\ActionPassiveCatalogService;
 use Classes\Db;
 
 /**
- * Read access for the admin "player loadout" pages: resolve a player by
- * matricule or name, and expose the lightweight summary row the loadout
+ * Read access for the admin "player skills" pages: resolve a player by
+ * matricule or name, and expose the lightweight summary row the skills
  * editor renders in its header.
  *
  * This sits alongside PlayerActionsService / PlayerPassiveService (which own
  * the per-player actions/passives rows). It deliberately does NOT exclude PNJs
  * or anonyme-mode players the way PlayerService::searchNonAnonymePlayer does:
- * an admin editing loadouts needs to reach every character, not just the
+ * an admin editing skillss needs to reach every character, not just the
  * public roster.
  */
-class PlayerLoadoutService
+class PlayerSkillsService
 {
-    /** Columns surfaced in search results and the loadout header. */
+    /** Columns surfaced in search results and the skills header. */
     private const SUMMARY_FIELDS = 'id, name, race, player_type, xp';
 
     /**
@@ -89,7 +89,7 @@ class PlayerLoadoutService
      * @param array<int, int>    $desiredPassiveIds   passive ids the form submitted as checked
      * @return array{actions_added:int, actions_removed:int, passives_added:int, passives_removed:int}
      */
-    public function applyLoadout(int $playerId, array $desiredActionNames, array $desiredPassiveIds): array
+    public function applySkills(int $playerId, array $desiredActionNames, array $desiredPassiveIds): array
     {
         $catalogActionNames = array_map(
             static fn($action) => $action->getName(),
@@ -131,7 +131,7 @@ class PlayerLoadoutService
         );
 
         // One transaction around all four loops so a mid-sequence failure
-        // (e.g. a passive insert blowing up) leaves no half-applied loadout.
+        // (e.g. a passive insert blowing up) leaves no half-applied skills.
         $connection = \db();
         $connection->beginTransaction();
         try {

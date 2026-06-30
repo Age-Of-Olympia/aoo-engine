@@ -2,13 +2,13 @@
 
 namespace Tests\Various;
 
-use App\Service\PlayerLoadoutService;
+use App\Service\PlayerSkillsService;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Functional test for PlayerLoadoutService::applyLoadout — the admin loadout
+ * Functional test for PlayerSkillsService::applySkills — the admin skills
  * editor's write path. Pins the two safety-critical guarantees:
  *
  *   1. Orphan-safety: an owned action with no catalog row (e.g. the base attack
@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * transaction holds, so seeded rows are visible to the service and vice versa.
  * Skips cleanly when no initialized aoo4 DB is reachable.
  */
-class PlayerLoadoutServiceTest extends TestCase
+class PlayerSkillsServiceTest extends TestCase
 {
     private ?Connection $link = null;
     private int $playerId = 0;
@@ -41,8 +41,8 @@ class PlayerLoadoutServiceTest extends TestCase
             [$this->playerId]
         );
 
-        $this->orphanName = 'loadoutTest_orphan_' . bin2hex(random_bytes(4));
-        $this->bogusName = 'loadoutTest_bogus_' . bin2hex(random_bytes(4));
+        $this->orphanName = 'skillsTest_orphan_' . bin2hex(random_bytes(4));
+        $this->bogusName = 'skillsTest_bogus_' . bin2hex(random_bytes(4));
     }
 
     protected function tearDown(): void
@@ -53,32 +53,32 @@ class PlayerLoadoutServiceTest extends TestCase
         $this->link = null;
     }
 
-    #[Group('player-loadout')]
-    public function testApplyLoadoutAddsDesiredCatalogAction(): void
+    #[Group('player-skills')]
+    public function testApplySkillsAddsDesiredCatalogAction(): void
     {
-        (new PlayerLoadoutService())->applyLoadout($this->playerId, [$this->catalogAction], []);
+        (new PlayerSkillsService())->applySkills($this->playerId, [$this->catalogAction], []);
 
         $this->assertContains($this->catalogAction, $this->ownedActionNames());
     }
 
-    #[Group('player-loadout')]
-    public function testApplyLoadoutRemovesCatalogActionWhenOmitted(): void
+    #[Group('player-skills')]
+    public function testApplySkillsRemovesCatalogActionWhenOmitted(): void
     {
         $this->seedOwned($this->catalogAction);
         $this->assertContains($this->catalogAction, $this->ownedActionNames());
 
-        (new PlayerLoadoutService())->applyLoadout($this->playerId, [], []);
+        (new PlayerSkillsService())->applySkills($this->playerId, [], []);
 
         $this->assertNotContains($this->catalogAction, $this->ownedActionNames());
     }
 
-    #[Group('player-loadout')]
-    public function testApplyLoadoutPreservesOwnedOrphanOnEmptySave(): void
+    #[Group('player-skills')]
+    public function testApplySkillsPreservesOwnedOrphanOnEmptySave(): void
     {
         // An owned action with no catalog row — the base-attack case.
         $this->seedOwned($this->orphanName);
 
-        (new PlayerLoadoutService())->applyLoadout($this->playerId, [], []);
+        (new PlayerSkillsService())->applySkills($this->playerId, [], []);
 
         $this->assertContains(
             $this->orphanName,
@@ -87,10 +87,10 @@ class PlayerLoadoutServiceTest extends TestCase
         );
     }
 
-    #[Group('player-loadout')]
-    public function testApplyLoadoutIgnoresNonCatalogDesiredName(): void
+    #[Group('player-skills')]
+    public function testApplySkillsIgnoresNonCatalogDesiredName(): void
     {
-        (new PlayerLoadoutService())->applyLoadout($this->playerId, [$this->bogusName], []);
+        (new PlayerSkillsService())->applySkills($this->playerId, [$this->bogusName], []);
 
         $this->assertNotContains(
             $this->bogusName,
