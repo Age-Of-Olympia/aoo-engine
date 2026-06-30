@@ -10,6 +10,7 @@
 use App\Factory\PlayerFactory;
 use Classes\Db;
 use App\Tutorial\TutorialSessionManager;
+use App\Tutorial\TutorialHelper;
 
 define('NO_LOGIN', true);
 require_once(__DIR__ . '/../../config.php');
@@ -105,6 +106,10 @@ try {
     if (!$hasCompletedBefore) {
         $skipReward = TUTORIAL_SKIP_REWARD;
         $player->put_xp($skipReward['xp']); /* This adds both XP and PI */
+
+        // Starter pack the old gaia2 rez trigger used to hand out (gold +
+        // walking stick + first-spawn avatar). First-time only, like the XP.
+        TutorialHelper::grantStarterPack($player);
     }
 
     // If redirect parameter is set, redirect to index instead of returning JSON

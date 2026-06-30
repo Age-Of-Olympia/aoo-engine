@@ -1,27 +1,12 @@
 <?php
-use Classes\Item;
 use Classes\Log;
 use Classes\View;
-Use App\Service\PlayerEffectService;
 
-// first spawn : change avatar
-if($player->coords->plan == 'gaia2'){
-
-
-    $item = Item::get_item_by_name('or');
-    $item->add_item($player, 20);
-
-
-    $item = Item::get_item_by_name('baton_marche');
-    $item->add_item($player, 1);
-
-
-    $playerEffectService = new PlayerEffectService();
-    $playerEffectService->removeAllEffectsForPlayer($player->id);
-
-    $player->change_avatar('1.png');
-}
-
+// The old gaia2 first-spawn branch (starter gold/stick/avatar + effect
+// reset) was retired with the legacy tutorial. The new tutorial grants the
+// starter pack via TutorialHelper::grantStarterPack() in the
+// complete/skip/cancel endpoints. This trigger now only handles the
+// faction-respawn teleport (underworld exit).
 
 $factionJson = json()->decode('factions', $player->data->faction);
 

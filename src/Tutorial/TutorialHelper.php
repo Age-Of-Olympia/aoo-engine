@@ -230,4 +230,47 @@ class TutorialHelper
 
         return $player;
     }
+
+    /**
+     * Grant the one-time starter pack a brand-new character used to receive
+     * from the old gaia2 rez trigger (scripts/map/triggers/rez.php) before
+     * the tutorial replaced that flow: a flat 20 gold, a walking stick, and
+     * the default first-spawn avatar.
+     *
+     * The 20 gold is ON TOP of the race bonus already granted at
+     * registration (register.php); the walking stick and avatar were not
+     * carried over anywhere else. Call this from the first-time
+     * (!hasCompletedBefore) branch of the tutorial complete/skip/cancel
+     * endpoints so it fires exactly once per character and never on replay.
+     *
+     * @param \Classes\Player $player The main (real) player.
+     */
+    public static function grantStarterPack(\Classes\Player $player): void
+    {
+        if ($gold = \Classes\Item::get_item_by_name('or')) {
+            $gold->add_item($player, 20);
+        }
+        if ($stick = \Classes\Item::get_item_by_name('baton_marche')) {
+            $stick->add_item($player, 1);
+        }
+
+        // Avatar is written directly rather than via Player::change_avatar():
+        // that method's file_exists() check is relative to the CWD and
+        // hard-exits on a miss, which would corrupt this JSON response when
+        // the CWD is not the document root or the race has no 1.png (e.g.
+        // 'ame'). Guard with an absolute path, store the same relative value
+        // the rest of the app uses, and refresh the caches change_avatar
+        // would have refreshed.
+        $player->get_data();
+        $race = $player->data->race ?? '';
+        $avatar = 'img/avatars/' . $race . '/1.png';
+        if ($race !== '' && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $avatar)) {
+            (new \Classes\Db())->exe(
+                'UPDATE players SET avatar = ? WHERE id = ?',
+                [$avatar, $player->id]
+            );
+            $player->refresh_data();
+            $player->refresh_view();
+        }
+    }
 }

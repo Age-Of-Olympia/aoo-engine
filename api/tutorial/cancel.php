@@ -206,6 +206,10 @@ try {
     if (!$hasCompletedBefore) {
         $skipReward = TUTORIAL_SKIP_REWARD;
         $mainPlayer->put_xp($skipReward['xp']); /* This adds both XP and PI */
+
+        // Starter pack the old gaia2 rez trigger used to hand out (gold +
+        // walking stick + first-spawn avatar). First-time only, like the XP.
+        TutorialHelper::grantStarterPack($mainPlayer);
     }
 
     // Refresh player data and view cache (so new coords/stats are shown after reload)

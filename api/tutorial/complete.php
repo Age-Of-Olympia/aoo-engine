@@ -74,6 +74,10 @@ try {
         $mainPlayer->put_xp($completionReward['xp']); /* This adds both XP and PI */
         $xpEarned = $completionReward['xp'];
         $piEarned = $completionReward['pi'];
+
+        // Starter pack the old gaia2 rez trigger used to hand out (gold +
+        // walking stick + first-spawn avatar). First-time only, like the XP.
+        TutorialHelper::grantStarterPack($mainPlayer);
     }
 
     // Remove invisibleMode from main player
