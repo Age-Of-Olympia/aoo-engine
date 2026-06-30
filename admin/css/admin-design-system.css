@@ -268,3 +268,35 @@
 .admin-layout .vertical-nav .nav-link:hover { background: rgba(176, 125, 63, 0.16); color: #fff; }
 .admin-layout .vertical-nav .nav-link.active { background: rgba(176, 125, 63, 0.28); color: #fff; box-shadow: inset 2px 0 0 var(--bronze-bright); }
 .admin-layout .nav-group-title { color: #8a96a2; }
+
+/* Foldable nav groups: collapsed by default; the active group (server-set
+   .nav-group-open) and any the user opens expand. Keeps the sidebar within one
+   screen as the admin grows. */
+.admin-layout .nav-group-title {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+.admin-layout .nav-group-title::after {
+    content: "\25B8";
+    font-size: 0.7em;
+    opacity: 0.6;
+    transition: transform 0.15s ease;
+}
+.admin-layout .nav-group.nav-group-open > .nav-group-title::after {
+    transform: rotate(90deg);
+}
+.admin-layout .nav-group-children {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease;
+}
+.admin-layout .nav-group.nav-group-open > .nav-group-children {
+    max-height: 24rem;
+}
+@media (prefers-reduced-motion: reduce) {
+    .admin-layout .nav-group-title::after,
+    .admin-layout .nav-group-children { transition: none; }
+}
