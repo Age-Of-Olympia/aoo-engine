@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701j';
+const ADMIN_ASSET_VERSION = '20260701k';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -41,16 +41,16 @@ function admin_layout($title, $content, array $assets = []) {
     $tutorialGroupClass = $tutorialActive ? ' nav-group-open' : '';
 
     $tutorialSubLinks =
-        $navLink('tutorial-catalog.php', 'Catalog', '/admin/tutorial-catalog.php') . "\n                    " .
-        $navLink('tutorial.php', 'Steps', '/admin/tutorial.php') . "\n                    " .
-        $navLink('tutorial-npcs.php', 'NPCs', '/admin/tutorial-npcs.php') . "\n                    " .
-        $navLink('tutorial-settings.php', 'Flags', '/admin/tutorial-settings.php');
+        $navLink('tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php') . "\n                    " .
+        $navLink('tutorial.php', 'Étapes', '/admin/tutorial.php') . "\n                    " .
+        $navLink('tutorial-npcs.php', 'PNJ', '/admin/tutorial-npcs.php') . "\n                    " .
+        $navLink('tutorial-settings.php', 'Options', '/admin/tutorial-settings.php');
 
     /* Map admin pages get their own group too. */
     $mapsSubLinks =
-        $navLink('world_map.php', 'World Map', '/admin/world_map.php') . "\n                    " .
-        $navLink('local_maps.php', 'Local Maps', '/admin/local_maps.php') . "\n                    " .
-        $navLink('screenshots.php', 'Screenshots', '/admin/screenshots.php');
+        $navLink('world_map.php', 'Carte monde', '/admin/world_map.php') . "\n                    " .
+        $navLink('local_maps.php', 'Cartes locales', '/admin/local_maps.php') . "\n                    " .
+        $navLink('screenshots.php', 'Captures', '/admin/screenshots.php');
 
     /* Action admin pages: the workbench, the per-type defaults editor, the list
      * and the passive editor. */
@@ -59,11 +59,11 @@ function admin_layout($title, $content, array $assets = []) {
     $actionsActive = in_array($currentPage, $actionPages, true);
     $actionsGroupClass = $actionsActive ? ' nav-group-open' : '';
     $actionsSubLinks =
-        $navLink('actions.php', 'List', '/admin/actions.php') . "\n                    " .
-        $navLink('action-workbench.php', 'Workbench', '/admin/action-workbench.php') . "\n                    " .
-        $navLink('passive-workbench.php', 'Passives', '/admin/passive-workbench.php') . "\n                    " .
-        $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
-        $navLink('action-import.php', 'Import', '/admin/action-import.php');
+        $navLink('actions.php', 'Liste', '/admin/actions.php') . "\n                    " .
+        $navLink('action-workbench.php', 'Atelier', '/admin/action-workbench.php') . "\n                    " .
+        $navLink('passive-workbench.php', 'Passifs', '/admin/passive-workbench.php') . "\n                    " .
+        $navLink('action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php') . "\n                    " .
+        $navLink('action-import.php', 'Importer', '/admin/action-import.php');
 
     /* Player admin pages: per-player action/passive skillss. The skills
      * detail page shares the "Skillss" highlight with the search landing. */
@@ -74,20 +74,20 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('players.php', 'Compétences', '/admin/players.php');
 
     $navigation =
-        $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .
+        $navLink('index.php', 'Tableau de bord', '/admin/index.php') . "\n                " .
         "<div class=\"nav-group{$tutorialGroupClass}\">\n                " .
-        "    <span class=\"nav-group-title\">Tutorial</span>\n                " .
+        "    <span class=\"nav-group-title\">Tutoriel</span>\n                " .
         "    <div class=\"nav-group-children\">\n                    " .
         $tutorialSubLinks . "\n                " .
         "    </div>\n                " .
         "</div>\n                " .
         "<div class=\"nav-group\">\n                " .
-        "    <span class=\"nav-group-title\">Maps</span>\n                " .
+        "    <span class=\"nav-group-title\">Cartes</span>\n                " .
         "    <div class=\"nav-group-children\">\n                    " .
         $mapsSubLinks . "\n                " .
         "    </div>\n                " .
         "</div>\n                " .
-        $navLink('upload_image.php', 'Upload Images', '/admin/upload_image.php') . "\n                " .
+        $navLink('upload_image.php', 'Importer images', '/admin/upload_image.php') . "\n                " .
         "<div class=\"nav-group{$actionsGroupClass}\">\n                " .
         "    <span class=\"nav-group-title\">Actions</span>\n                " .
         "    <div class=\"nav-group-children\">\n                    " .
@@ -95,12 +95,12 @@ function admin_layout($title, $content, array $assets = []) {
         "    </div>\n                " .
         "</div>\n                " .
         "<div class=\"nav-group{$playersGroupClass}\">\n                " .
-        "    <span class=\"nav-group-title\">Players</span>\n                " .
+        "    <span class=\"nav-group-title\">Joueurs</span>\n                " .
         "    <div class=\"nav-group-children\">\n                    " .
         $playersSubLinks . "\n                " .
         "    </div>\n                " .
         "</div>\n                " .
-        $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
+        $navLink('view_recipes.php', 'Recettes', '/admin/view_recipes.php');
 
     $version = ADMIN_ASSET_VERSION;
     $mainCssVersion = MAIN_CSS_VERSION;
