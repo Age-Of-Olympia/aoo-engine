@@ -178,7 +178,7 @@ function setFlash(string $type, string $message): void
  *
  * @param string $url URL to redirect to
  */
-function redirectTo(string $url): void
+function redirectTo(string $url): never
 {
     header("Location: {$url}");
     exit;
