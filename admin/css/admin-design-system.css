@@ -300,3 +300,7 @@
     .admin-layout .nav-group-title::after,
     .admin-layout .nav-group-children { transition: none; }
 }
+
+/* Nav labels may wrap to two lines in the narrow sidebar (e.g. "Configuration
+   actions"); give them tidy spacing so the active highlight reads cleanly. */
+.admin-layout .vertical-nav .nav-link { line-height: 1.3; align-items: flex-start; }
