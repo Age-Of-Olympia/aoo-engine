@@ -50,6 +50,19 @@
     box-shadow: none;
 }
 
+/* The game paints text inputs with a parchment JPEG texture
+   (input[type=text|password|number]{background:white url(bg_white2.jpeg)}).
+   Strip it for every admin input, not just .form-control ones (e.g. .wb-search). */
+.admin-layout input[type="text"],
+.admin-layout input[type="search"],
+.admin-layout input[type="password"],
+.admin-layout input[type="number"],
+.admin-layout input[type="email"],
+.admin-layout textarea {
+    background-image: none;
+    background-color: var(--paper);
+}
+
 .admin-layout code {
     display: inline;
     background: none;
