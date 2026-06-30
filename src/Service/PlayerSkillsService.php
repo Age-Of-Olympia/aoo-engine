@@ -57,6 +57,22 @@ class PlayerSkillsService
     }
 
     /**
+     * Every real player (player_type = 'real'), name-ordered — the default
+     * roster shown on the Compétences landing, filtered client-side.
+     *
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int}>
+     */
+    public function listRealPlayers(): array
+    {
+        $sql = 'SELECT ' . self::SUMMARY_FIELDS . "
+                FROM players
+                WHERE player_type = 'real'
+                ORDER BY name ASC";
+
+        return $this->hydrateRows((new Db())->exe($sql));
+    }
+
+    /**
      * Load a single player's summary row, or null when no such id exists.
      *
      * @return array{id:int, name:string, race:string, player_type:string, xp:int}|null
