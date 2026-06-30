@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701h';
+const ADMIN_ASSET_VERSION = '20260701i';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -26,7 +26,8 @@ function admin_layout($title, $content, array $assets = []) {
     // Helper function to add active class and star
     $navLink = function($page, $label, $href) use ($currentPage) {
         $isActive = ($currentPage === $page) ||
-                    ($page === 'tutorial.php' && $currentPage === 'tutorial-step-editor.php');
+                    ($page === 'tutorial.php' && $currentPage === 'tutorial-step-editor.php') ||
+                    ($page === 'players.php' && $currentPage === 'player-loadout.php');
         $activeClass = $isActive ? ' active' : '';
         $star = $isActive ? '⭐ ' : '';
         return "<a href=\"$href\" class=\"nav-link$activeClass\">$star$label</a>";
@@ -64,6 +65,14 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('action-type-defaults.php', 'Type defaults', '/admin/action-type-defaults.php') . "\n                    " .
         $navLink('action-import.php', 'Import', '/admin/action-import.php');
 
+    /* Player admin pages: per-player action/passive loadouts. The loadout
+     * detail page shares the "Loadouts" highlight with the search landing. */
+    $playerPages = ['players.php', 'player-loadout.php'];
+    $playersActive = in_array($currentPage, $playerPages, true);
+    $playersGroupClass = $playersActive ? ' nav-group-open' : '';
+    $playersSubLinks =
+        $navLink('players.php', 'Loadouts', '/admin/players.php');
+
     $navigation =
         $navLink('index.php', 'Dashboard', '/admin/index.php') . "\n                " .
         "<div class=\"nav-group{$tutorialGroupClass}\">\n                " .
@@ -85,7 +94,12 @@ function admin_layout($title, $content, array $assets = []) {
         $actionsSubLinks . "\n                " .
         "    </div>\n                " .
         "</div>\n                " .
-        "<!-- <a href=\"/admin/players.php\" class=\"nav-link\">Manage Players</a> -->\n                " .
+        "<div class=\"nav-group{$playersGroupClass}\">\n                " .
+        "    <span class=\"nav-group-title\">Players</span>\n                " .
+        "    <div class=\"nav-group-children\">\n                    " .
+        $playersSubLinks . "\n                " .
+        "    </div>\n                " .
+        "</div>\n                " .
         $navLink('view_recipes.php', 'View Recipes', '/admin/view_recipes.php');
 
     $version = ADMIN_ASSET_VERSION;

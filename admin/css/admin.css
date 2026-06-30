@@ -96,11 +96,13 @@ body {
 
 .admin-main {
     flex: 1;
-    padding: 20px;
+    /* Generous left gutter so content clears the fixed sidebar instead of
+       crowding against it; symmetric breathing room top/right/bottom. */
+    padding: 28px 36px 36px;
     background: #ecf0f1;
     overflow-x: auto;
     font-size: 14px;
-    margin-left: 180px;
+    margin-left: 204px;
 }
 
 .admin-main h1 {
