@@ -3,62 +3,66 @@
 namespace App\View\Player;
 
 /**
- * The skills entry point: search a character by matricule or name, then open
- * their skills. Uses the shared admin components (search form + striped table)
- * so it reads like every other admin list page (see admin/actions.php).
+ * The Compétences landing: the full roster of real players, filtered live by a
+ * search field (name or matricule). Each row opens that player's editor.
+ * The filter is client-side so it responds as you type.
  */
 final class PlayerSearchView
 {
     /**
      * @param array<int, array{id:int, name:string, race:string, player_type:string, xp:int}> $players
      */
-    public function render(string $term, array $players): string
+    public function render(array $players): string
     {
         return '<h1 class="mb-3">Compétences des joueurs</h1>'
-            . $this->searchForm($term)
-            . $this->results($term, $players);
-    }
-
-    private function searchForm(string $term): string
-    {
-        return '<form method="get" action="/admin/players.php" class="form-inline mb-3" role="search">'
-            . '<input type="text" name="q" class="form-control mr-2" style="min-width:18rem"'
-            . ' placeholder="Matricule ou nom…" value="' . $this->esc($term) . '"'
-            . ' autofocus autocomplete="off" aria-label="Matricule ou nom du joueur">'
-            . ' <button type="submit" class="btn btn-primary">Rechercher</button>'
-            . '</form>';
+            . '<input type="search" id="skills-filter" class="form-control mb-3" style="max-width:24rem"'
+            . ' placeholder="Filtrer par nom ou matricule…" autofocus autocomplete="off"'
+            . ' aria-label="Filtrer les joueurs">'
+            . $this->table($players)
+            . $this->script();
     }
 
     /**
      * @param array<int, array{id:int, name:string, race:string, player_type:string, xp:int}> $players
      */
-    private function results(string $term, array $players): string
+    private function table(array $players): string
     {
-        if ($term === '') {
-            return '<p class="text-muted">Recherchez un joueur par matricule ou par nom.</p>';
-        }
-
-        if ($players === []) {
-            return '<p class="text-muted">Aucun joueur ne correspond à « ' . $this->esc($term) . ' ».</p>';
-        }
-
         $rows = '';
         foreach ($players as $player) {
-            $rows .= '<tr>'
+            $needle = strtolower($player['name'] . ' ' . $player['id']);
+            $rows .= '<tr data-filter="' . $this->esc($needle) . '">'
                 . '<td>' . (int) $player['id'] . '</td>'
                 . '<td>' . $this->esc($player['name']) . '</td>'
                 . '<td>' . $this->esc($player['race']) . '</td>'
-                . '<td><span class="badge badge-info">' . $this->esc($player['player_type']) . '</span></td>'
                 . '<td>' . (int) $player['xp'] . '</td>'
                 . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/player-skills.php?id='
                 . (int) $player['id'] . '">Éditer les compétences</a></td>'
                 . '</tr>';
         }
 
-        return '<p class="text-muted mb-2">' . count($players) . ' joueur(s)</p>'
-            . '<table class="table table-striped table-hover">'
-            . '<thead><tr><th>Matricule</th><th>Nom</th><th>Race</th><th>Type</th><th>XP</th><th></th></tr></thead>'
-            . '<tbody>' . $rows . '</tbody></table>';
+        return '<p class="text-muted mb-2"><span id="skills-count">' . count($players) . '</span> joueur(s)</p>'
+            . '<table class="table table-striped table-hover" id="skills-table">'
+            . '<thead><tr><th>Matricule</th><th>Nom</th><th>Race</th><th>XP</th><th></th></tr></thead>'
+            . '<tbody>' . $rows . '</tbody></table>'
+            . '<p class="text-muted" id="skills-empty" style="display:none">Aucun joueur ne correspond.</p>';
+    }
+
+    private function script(): string
+    {
+        return '<script>(function(){'
+            . 'var input=document.getElementById("skills-filter");'
+            . 'var rows=Array.prototype.slice.call(document.querySelectorAll("#skills-table tbody tr"));'
+            . 'var count=document.getElementById("skills-count");'
+            . 'var empty=document.getElementById("skills-empty");'
+            . 'if(!input)return;'
+            . 'input.addEventListener("input",function(){'
+            . 'var q=input.value.trim().toLowerCase();var shown=0;'
+            . 'rows.forEach(function(r){'
+            . 'var match=q===""||r.getAttribute("data-filter").indexOf(q)!==-1;'
+            . 'r.style.display=match?"":"none";if(match)shown++;});'
+            . 'if(count)count.textContent=shown;'
+            . 'if(empty)empty.style.display=shown===0?"":"none";'
+            . '});})();</script>';
     }
 
     private function esc(string $value): string
