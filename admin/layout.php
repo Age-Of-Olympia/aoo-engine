@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701m';
+const ADMIN_ASSET_VERSION = '20260701n';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -141,6 +141,23 @@ function admin_layout($title, $content, array $assets = []) {
             $content
         </div>
     </div>$scriptTags
+    <script>(function(){
+        var nav = document.querySelector('.vertical-nav');
+        if (!nav) return;
+        var KEY = 'adminNavOpen';
+        var open = {};
+        try { open = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+        nav.querySelectorAll('.nav-group').forEach(function (g) {
+            var title = g.querySelector('.nav-group-title');
+            if (!title) return;
+            var name = title.textContent.trim();
+            if (open[name]) g.classList.add('nav-group-open');
+            title.addEventListener('click', function () {
+                open[name] = g.classList.toggle('nav-group-open');
+                try { localStorage.setItem(KEY, JSON.stringify(open)); } catch (e) {}
+            });
+        });
+    })();</script>
 </body>
 </html>
 HTML;
