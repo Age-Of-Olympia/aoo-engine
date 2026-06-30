@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701n';
+const ADMIN_ASSET_VERSION = '20260701o';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -60,8 +60,8 @@ function admin_layout($title, $content, array $assets = []) {
     $actionsGroupClass = $actionsActive ? ' nav-group-open' : '';
     $actionsSubLinks =
         $navLink('actions.php', 'Liste', '/admin/actions.php') . "\n                    " .
-        $navLink('action-workbench.php', 'Atelier', '/admin/action-workbench.php') . "\n                    " .
-        $navLink('passive-workbench.php', 'Passifs', '/admin/passive-workbench.php') . "\n                    " .
+        $navLink('action-workbench.php', 'Configuration actions', '/admin/action-workbench.php') . "\n                    " .
+        $navLink('passive-workbench.php', 'Configuration passifs', '/admin/passive-workbench.php') . "\n                    " .
         $navLink('action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php') . "\n                    " .
         $navLink('action-import.php', 'Importer', '/admin/action-import.php');
 
