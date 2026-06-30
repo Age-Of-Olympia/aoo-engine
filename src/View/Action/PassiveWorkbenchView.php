@@ -35,7 +35,7 @@ final class PassiveWorkbenchView
     /**
      * @param array<int, ActionPassive> $passives
      */
-    public function render(array $passives, ?ActionPassive $selected, string $csrfTokenField): string
+    public function render(array $passives, ?ActionPassive $selected, string $csrfTokenField, int $ownerCount = 0): string
     {
         $list = '';
         foreach ($passives as $passive) {
@@ -58,7 +58,7 @@ final class PassiveWorkbenchView
 
         $form = $selected === null
             ? '<p class="wb-empty">Sélectionnez un passif.</p>'
-            : $this->form($selected, $csrfTokenField);
+            : $this->form($selected, $csrfTokenField, $ownerCount);
         $name = $selected !== null ? $this->esc($selected->getDisplayName()) : '';
 
         $listBody = (new WorkbenchListHeaderView())->render($this->createForm($csrfTokenField), 'passive', 'Exporter tout')
@@ -71,12 +71,23 @@ final class PassiveWorkbenchView
         return (new WorkbenchLayoutView())->render('Passifs', count($passives), $listBody, $editorHead, $form);
     }
 
-    private function form(ActionPassive $passive, string $csrfTokenField): string
+    private function owners(int $passiveId, int $count): string
+    {
+        if ($count <= 0) {
+            return '<span class="wb-owners wb-owners--none">0 joueur</span>';
+        }
+
+        return '<a class="wb-owners" href="/admin/skill-owners.php?type=passive&amp;id=' . $passiveId . '">'
+            . $count . ' joueur' . ($count > 1 ? 's' : '') . '</a>';
+    }
+
+    private function form(ActionPassive $passive, string $csrfTokenField, int $ownerCount = 0): string
     {
         return '<form method="post" action="/admin/passive-save.php" id="wb-passive-form" class="wb-form">'
             . $csrfTokenField
             . '<input type="hidden" name="passive_id" value="' . (int) $passive->getId() . '">'
             . '<code class="wb-chip">' . $this->esc($passive->getName()) . '</code>'
+            . $this->owners($passive->getId(), $ownerCount)
             . '<div class="wb-grid">'
             . $this->input('name', 'Nom (clé)', $passive->getName())
             . $this->input('displayName', 'Nom affiché', $passive->getDisplayName())

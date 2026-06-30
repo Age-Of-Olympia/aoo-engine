@@ -256,3 +256,7 @@
 /* Action title in the editor head — readable on the Configurer tab (was a faint
    <small>, leaving you unsure which action you were editing). */
 .wb-col-head .wb-editor-title { font-weight: 700; font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* "Qui a ce passif ?" owner count by the chip in the passive editor. */
+.wb-owners { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--bronze); }
+.wb-owners--none { color: var(--mute); font-weight: 400; }
