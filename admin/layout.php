@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701o';
+const ADMIN_ASSET_VERSION = '20260701p';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -23,14 +23,13 @@ function admin_layout($title, $content, array $assets = []) {
     // Get current page for active menu highlighting
     $currentPage = basename($_SERVER['PHP_SELF']);
 
-    // Helper function to add active class and star
+    // Helper function to flag the active nav link
     $navLink = function($page, $label, $href) use ($currentPage) {
         $isActive = ($currentPage === $page) ||
                     ($page === 'tutorial.php' && $currentPage === 'tutorial-step-editor.php') ||
                     ($page === 'players.php' && $currentPage === 'player-skills.php');
         $activeClass = $isActive ? ' active' : '';
-        $star = $isActive ? '⭐ ' : '';
-        return "<a href=\"$href\" class=\"nav-link$activeClass\">$star$label</a>";
+        return "<a href=\"$href\" class=\"nav-link$activeClass\">$label</a>";
     };
 
     /* "Tutorial" pages share a section heading + indented children so
