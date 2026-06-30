@@ -232,6 +232,118 @@ class TutorialHelper
     }
 
     /**
+     * Finalize a player's exit from the tutorial into the real game.
+     *
+     * This is the shared tail of the complete / skip / cancel endpoints,
+     * which previously each copy-pasted (and had started to drift on) the
+     * same four steps: drop invisibleMode, teleport out of waiting_room to
+     * the faction respawn plan, grant the race's starter actions, and — on
+     * the first run only — award the reward XP/PI plus the starter pack.
+     *
+     * The only thing that varies between callers is the reward table, so it
+     * is passed in. Each endpoint keeps its own unique concerns (auth gates,
+     * session/resource cleanup, output buffering) and delegates this tail.
+     *
+     * @param \Classes\Player      $player            The main (real) player.
+     * @param array{xp:int,pi:int} $reward            TUTORIAL_COMPLETION_REWARD or TUTORIAL_SKIP_REWARD.
+     * @param bool                 $hasCompletedBefore True on a replay — suppresses the reward + starter pack.
+     * @return array{xp:int,pi:int} XP/PI actually awarded (zeros on replay), for the caller's JSON response.
+     */
+    public static function finalizeExitToGame(
+        \Classes\Player $player,
+        array $reward,
+        bool $hasCompletedBefore
+    ): array {
+        $player->get_data();
+
+        self::removeInvisibleMode($player);
+        self::teleportFromWaitingRoom($player);
+        self::grantRaceActions($player);
+
+        $earned = ['xp' => 0, 'pi' => 0];
+        if (!$hasCompletedBefore) {
+            $player->put_xp($reward['xp']); /* This adds both XP and PI */
+            $earned = ['xp' => $reward['xp'], 'pi' => $reward['pi']];
+            self::grantStarterPack($player);
+        }
+
+        $player->refresh_data();
+        $player->refresh_view();
+        $player->getCoords();
+
+        return $earned;
+    }
+
+    /**
+     * Drop invisibleMode so the player can be seen/interact normally.
+     */
+    private static function removeInvisibleMode(\Classes\Player $player): void
+    {
+        if ($player->have_option('invisibleMode')) {
+            $player->end_option('invisibleMode');
+        }
+    }
+
+    /**
+     * Teleport the player off the waiting_room plan to their faction's
+     * respawn plan (default "olympia") at/around 0,0,0. No-op if they have
+     * already left waiting_room. Falls back to creating the destination
+     * coords row when none is free — previously only cancel.php did this,
+     * so the same teleport behaved differently per endpoint.
+     */
+    private static function teleportFromWaitingRoom(\Classes\Player $player): void
+    {
+        $player->getCoords();
+        if ($player->coords->plan !== 'waiting_room') {
+            return;
+        }
+
+        $factionJson = json()->decode('factions', $player->data->faction);
+        $respawnPlan = isset($factionJson->respawnPlan) ? $factionJson->respawnPlan : 'olympia';
+
+        $goCoords = (object) array('x' => 0, 'y' => 0, 'z' => 0, 'plan' => $respawnPlan);
+
+        $db = new \Classes\Db();
+        $coordsId = \Classes\View::get_free_coords_id_arround($goCoords);
+
+        if ($coordsId === null) {
+            $db->exe(
+                'INSERT INTO coords (x, y, z, plan) VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
+                array(0, 0, 0, $respawnPlan)
+            );
+            /* LAST_INSERT_ID() works for both the INSERT and the UPDATE path */
+            $row = $db->exe('SELECT LAST_INSERT_ID() as id')->fetch_assoc();
+            $coordsId = $row['id'];
+        }
+
+        $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $player->id));
+    }
+
+    /**
+     * Grant the race's starter actions, idempotently. have_action() guards
+     * against duplicates on replay/partial completion; a Doctrine hiccup on
+     * one action is logged and the rest still process.
+     */
+    private static function grantRaceActions(\Classes\Player $player): void
+    {
+        $raceJson = json()->decode('races', $player->data->race);
+        if (!$raceJson || empty($raceJson->actions)) {
+            return;
+        }
+
+        foreach ($raceJson->actions as $actionName) {
+            try {
+                if (!$player->have_action($actionName)) {
+                    $player->add_action($actionName);
+                }
+            } catch (\Exception $e) {
+                error_log("[TutorialHelper] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
      * Grant the one-time starter pack a brand-new character used to receive
      * from the old gaia2 rez trigger (scripts/map/triggers/rez.php) before
      * the tutorial replaced that flow: a flat 20 gold, a walking stick, and
@@ -239,13 +351,12 @@ class TutorialHelper
      *
      * The 20 gold is ON TOP of the race bonus already granted at
      * registration (register.php); the walking stick and avatar were not
-     * carried over anywhere else. Call this from the first-time
-     * (!hasCompletedBefore) branch of the tutorial complete/skip/cancel
-     * endpoints so it fires exactly once per character and never on replay.
+     * carried over anywhere else. Only called from the first-time branch of
+     * finalizeExitToGame(), so it fires exactly once per character.
      *
      * @param \Classes\Player $player The main (real) player.
      */
-    public static function grantStarterPack(\Classes\Player $player): void
+    private static function grantStarterPack(\Classes\Player $player): void
     {
         if ($gold = \Classes\Item::get_item_by_name('or')) {
             $gold->add_item($player, 20);
@@ -261,7 +372,6 @@ class TutorialHelper
         // 'ame'). Guard with an absolute path, store the same relative value
         // the rest of the app uses, and refresh the caches change_avatar
         // would have refreshed.
-        $player->get_data();
         $race = $player->data->race ?? '';
         $avatar = 'img/avatars/' . $race . '/1.png';
         if ($race !== '' && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $avatar)) {

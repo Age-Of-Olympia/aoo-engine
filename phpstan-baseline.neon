@@ -37,28 +37,10 @@ parameters:
 			path: admin/tutorial-step-editor.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>respawnPlan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: api/tutorial/cancel.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>respawnPlan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: api/tutorial/complete.php
-
-		-
 			message: '#^Function getConnection not found\.$#'
 			identifier: function.notFound
 			count: 1
 			path: api/tutorial/jump-to-step.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>respawnPlan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: api/tutorial/skip.php
 
 		-
 			message: '#^Right side of && is always true\.$#'
