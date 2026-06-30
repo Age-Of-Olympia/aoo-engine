@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260628e';
+const ADMIN_ASSET_VERSION = '20260701b';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -109,7 +109,8 @@ function admin_layout($title, $content, array $assets = []) {
     <title>$title - Admin of Olympia</title>
     <link href="/css/main.min.css?v=$mainCssVersion" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="/admin/css/admin.css?v=$version">$styleLinks
+    <link rel="stylesheet" href="/admin/css/admin.css?v=$version">
+    <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">$styleLinks
 </head>
 <body>
     <div class="admin-layout">
