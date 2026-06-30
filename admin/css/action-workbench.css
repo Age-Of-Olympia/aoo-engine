@@ -20,9 +20,9 @@
 .wb-list { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
 .wb-item { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 6px; text-decoration: none; color: #2c3e50; border: 1px solid transparent; }
 .wb-item:hover { background: #f3f6f9; }
-.wb-item--active { background: rgba(74,144,226,.12); border-color: rgba(74,144,226,.35); }
+.wb-item--active { background: var(--bronze-wash); border-color: rgba(138, 90, 43, .35); }
 .wb-item-icon { flex: 0 0 auto; width: 20px; text-align: center; font-size: 16px; color: #7a8794; }
-.wb-item--active .wb-item-icon { color: #4a90e2; }
+.wb-item--active .wb-item-icon { color: var(--bronze); }
 .wb-item-text { display: flex; flex-direction: column; min-width: 0; }
 .wb-item-name { font-weight: 600; font-size: 13px; }
 .wb-item-meta { font-size: 11px; color: #8a97a3; }
@@ -57,7 +57,7 @@
 .wb-icon-search { width: 100%; padding: 6px 9px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; box-sizing: border-box; margin-bottom: 6px; }
 .wb-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 3px; max-height: 240px; overflow-y: auto; }
 .wb-icon-opt { display: inline-flex; align-items: center; justify-content: center; height: 32px; border: 1px solid transparent; border-radius: 6px; background: #f7f9fb; color: #5d6d7e; font-size: 16px; cursor: pointer; }
-.wb-icon-opt:hover { background: #4a90e2; color: #fff; }
+.wb-icon-opt:hover { background: var(--bronze); color: #fff; }
 
 .wb-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
 .wb-chip { background: #eef2f5; color: #5d6d7e; border-radius: 10px; padding: 2px 9px; font-size: 12px; }
@@ -78,7 +78,7 @@
 .wb .form-group > select.form-control { height: 28px; }
 .wb select[multiple].form-control { height: 58px; flex: 1 1 auto; }
 .wb .form-check { margin: 0 0 4px; }
-.wb-inst-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; color: #4a90e2; margin-top: 2px; }
+.wb-inst-name { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 12px; color: var(--bronze); margin-top: 2px; }
 .wb-raw { grid-column: 1 / -1; font-size: 12px; color: #8a97a3; }
 .wb-raw code { word-break: break-all; }
 
@@ -91,7 +91,7 @@
 .wb-raw-row .wb-raw-v { flex: 1 1 auto; min-width: 0; padding: 3px 7px; font-size: 13px; height: 28px; }
 .wb-raw-del { flex: 0 0 auto; border: 1px solid #e7ebee; background: #f7f9fb; color: #c0392b; border-radius: 6px; width: 26px; height: 28px; cursor: pointer; line-height: 1; }
 .wb-raw-del:hover { background: #fdecea; }
-.wb-raw-add { border: 1px dashed #ced4da; background: #fff; color: #4a90e2; border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+.wb-raw-add { border: 1px dashed #ced4da; background: #fff; color: var(--bronze); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
 .wb-raw-add:hover { background: #f3f6f9; }
 /* Configurer labels can be long — let them wrap instead of spilling out of the box. */
 .wb-config .form-group { align-items: flex-start; }
@@ -111,7 +111,7 @@
 .wb-tabbtns { display: flex; gap: 2px; }
 .wb-tab-btn { border: 0; background: transparent; padding: 11px 16px; font-size: 14px; font-weight: 600; color: #8a97a3; cursor: pointer; border-bottom: 2px solid transparent; }
 .wb-tab-btn:hover { color: #2c3e50; }
-.wb-tab-btn.active { color: #4a90e2; border-bottom-color: #4a90e2; }
+.wb-tab-btn.active { color: var(--bronze); border-bottom-color: var(--bronze); }
 .wb-tab[hidden] { display: none; }
 
 /* Simulate tab — full width, readable. The form's own layout lives in
@@ -127,7 +127,7 @@
 .wb-sim-result .sim-distribution { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 0; background: none; border: 0; font-size: 13px; }
 .wb-sim-result .sim-distribution > span:not(.sim-dist-runs) { display: inline-flex; flex-direction: column; gap: 1px; padding: 6px 13px; background: #fff; border: 1px solid #dbe7f2; border-radius: 8px; color: #6b7a89; font-size: 12px; line-height: 1.25; }
 .wb-sim-result .sim-distribution > span strong { font-size: 18px; font-weight: 700; color: #2c3e50; }
-.wb-sim-result .sim-distribution .sim-dist-runs { align-self: stretch; display: inline-flex; align-items: center; background: #4a90e2; color: #fff; border-radius: 8px; padding: 0 12px; font-weight: 700; }
+.wb-sim-result .sim-distribution .sim-dist-runs { align-self: stretch; display: inline-flex; align-items: center; background: var(--bronze); color: #fff; border-radius: 8px; padding: 0 12px; font-weight: 700; }
 .wb-sim-result .card.mt-3 { margin: 12px 0 0 !important; max-width: none !important; }
 
 /* Result modal (auto-opened after a run; re-running re-opens it). */
@@ -226,7 +226,7 @@
     border-bottom: 2px solid transparent; border-radius: 6px 6px 0 0;
 }
 .wb-tab:hover { color: #2c3e50; background: #f6f8fa; }
-.wb-tab--active { color: #2c3e50; border-bottom-color: #2980b9; }
+.wb-tab--active { color: #2c3e50; border-bottom-color: var(--bronze-bright); }
 .wb-tabpanel[hidden] { display: none; }
 /* The first section title inside a panel is redundant with the tab label. */
 .wb-tabpanel > .wb-form > .wb-section-title:first-child,
@@ -250,7 +250,7 @@
 .wb-color-swatch input { position: absolute; opacity: 0; width: 0; height: 0; }
 .wb-color-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .25); box-sizing: border-box; }
 .wb-color-dot--default { background: #fff; background-image: linear-gradient(45deg, transparent 44%, #c0392b 44%, #c0392b 56%, transparent 56%); }
-.wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2980b9; }
+.wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--bronze-bright); }
 
 /* Action title in the editor head — readable on the Configurer tab (was a faint
    <small>, leaving you unsure which action you were editing). */

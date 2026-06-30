@@ -26,7 +26,7 @@ final class TypeLogEditorView
             . '<textarea class="form-control" name="actor_template" rows="2">' . $this->esc((string) $actorTemplate) . '</textarea></label>'
             . '<label class="wb-field wb-field--wide"><span>Ligne cible</span>'
             . '<textarea class="form-control" name="target_template" rows="2">' . $this->esc((string) $targetTemplate) . '</textarea></label>'
-            . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer les messages</button></div>'
+            . '<div class="wb-form-actions"><button type="submit" class="btn btn-primary">Enregistrer les messages</button></div>'
             . '</form>';
     }
 }

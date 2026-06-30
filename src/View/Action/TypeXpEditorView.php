@@ -71,7 +71,7 @@ final class TypeXpEditorView
             . '<label class="wb-field"><span>Mode</span><select class="form-control" name="mode">' . $modeOptions . '</select></label>'
             . '<p class="wb-muted">Changer le mode puis enregistrer affiche ses paramètres. Les algorithmes (combat/vol/entraînement) restent dans le code ; seules leurs constantes sont éditables ici.</p>'
             . '<div class="wb-grid">' . $fields . '</div>'
-            . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer l\'XP</button></div>'
+            . '<div class="wb-form-actions"><button type="submit" class="btn btn-primary">Enregistrer l\'XP</button></div>'
             . '</form>';
     }
 }

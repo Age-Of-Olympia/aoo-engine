@@ -16,7 +16,7 @@ final class WorkbenchFooterView
     public function render(string $saveFormId, string $deleteFormId, string $deleteLabel, string $extra = ''): string
     {
         return '<div class="wb-footer">'
-            . '<button type="submit" form="' . $this->esc($saveFormId) . '" class="btn btn-success">Enregistrer</button>'
+            . '<button type="submit" form="' . $this->esc($saveFormId) . '" class="btn btn-primary">Enregistrer</button>'
             . $extra
             . '<button type="submit" form="' . $this->esc($deleteFormId) . '" class="btn btn-danger wb-footer-danger">'
             . $this->esc($deleteLabel) . '</button>'

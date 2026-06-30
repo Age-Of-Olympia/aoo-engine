@@ -63,7 +63,7 @@
 }
 
 .tt-link--active {
-    background: #2e7d46;
+    background: var(--bronze);
     color: #fff;
     font-weight: 600;
 }

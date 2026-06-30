@@ -73,7 +73,7 @@ final class TypeChildFormView
             . ($rows === [] ? '<p class="wb-muted">' . $this->esc($emptyLabel) . '</p>' : '')
             . '<div class="wb-grid">' . $blocks . '</div>'
             . $this->renderer->traitDatalist()
-            . '<div class="wb-form-actions"><button type="submit" class="btn btn-success">Enregistrer</button></div>'
+            . '<div class="wb-form-actions"><button type="submit" class="btn btn-primary">Enregistrer</button></div>'
             . '</form>';
     }
 
