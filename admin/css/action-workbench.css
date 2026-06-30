@@ -148,6 +148,7 @@
 .wb-list-header .wb-create { margin-bottom: 0; flex: 0 0 auto; }
 .wb-list-header .wb-create[open] { flex: 1 1 100%; }
 .wb-list-header > a { flex: 0 0 auto; white-space: nowrap; }
+.wb-list-header .btn { padding: 0.25rem 0.5rem; letter-spacing: 0; }
 .wb--folded .wb-col--list .wb-list-header > a { display: none; }
 
 /* New-action form (collapsible) in the actions column. */
