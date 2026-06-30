@@ -97,8 +97,6 @@ ob_start();
     .badge-beginner { background: #27ae60; color: white; }
     .badge-intermediate { background: #f39c12; color: white; }
     .badge-advanced { background: #e74c3c; color: white; }
-    .btn-launch { background: #27ae60; color: white; border: none; }
-    .btn-launch:hover { background: #229954; color: white; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -171,14 +169,14 @@ ob_start();
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button type="button" class="btn btn-launch btn-sm btn-launch-tutorial"
+                                        <button type="button" class="btn btn-success btn-sm btn-launch-tutorial"
                                                 data-version="<?= htmlspecialchars($tut['version']) ?>"
                                                 data-name="<?= htmlspecialchars($tut['name']) ?>"
                                                 data-csrf-token="<?= htmlspecialchars($csrf->generateToken()) ?>"
                                                 title="Lancer ce tutoriel">
                                             Lancer
                                         </button>
-                                        <a href="?edit=<?= $tut['id'] ?>" class="btn btn-warning btn-sm" title="Modifier">
+                                        <a href="?edit=<?= $tut['id'] ?>" class="btn btn-outline-primary btn-sm" title="Modifier">
                                             Edit
                                         </a>
                                         <a href="/admin/tutorial.php?version=<?= urlencode($tut['version']) ?>" class="btn btn-info btn-sm" title="Voir les steps">
