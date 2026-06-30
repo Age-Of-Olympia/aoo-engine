@@ -4,7 +4,7 @@ use App\Service\AdminAuthorizationService;
 AdminAuthorizationService::DoAdminCheck();
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701l';
+const ADMIN_ASSET_VERSION = '20260701m';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -65,13 +65,15 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php') . "\n                    " .
         $navLink('action-import.php', 'Importer', '/admin/action-import.php');
 
-    /* Player admin pages: per-player action/passive skillss. The skills
-     * detail page shares the "Skillss" highlight with the search landing. */
-    $playerPages = ['players.php', 'player-skills.php'];
+    /* Player admin pages: the Compétences editor (per-player actions/passives),
+     * its stats overview, and the owner roster. The editor's detail page shares
+     * the "Compétences" highlight with the search landing. */
+    $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php'];
     $playersActive = in_array($currentPage, $playerPages, true);
     $playersGroupClass = $playersActive ? ' nav-group-open' : '';
     $playersSubLinks =
-        $navLink('players.php', 'Compétences', '/admin/players.php');
+        $navLink('players.php', 'Compétences', '/admin/players.php') . "\n                    " .
+        $navLink('skill-stats.php', 'Statistiques', '/admin/skill-stats.php');
 
     $navigation =
         $navLink('index.php', 'Tableau de bord', '/admin/index.php') . "\n                " .

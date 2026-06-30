@@ -1,0 +1,91 @@
+/* Compétences statistics page — stat blocks, two-column adoption, coverage bars.
+   Tokens come from the admin design system (.admin-layout scope). */
+
+.stats-summary {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.stats-stat {
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    padding: 0.75rem 1rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-lg);
+}
+
+.stats-stat-value {
+    font-family: goudy, Georgia, serif;
+    font-size: 1.9rem;
+    line-height: 1;
+    color: var(--bronze);
+}
+
+.stats-stat-label {
+    margin-top: 0.3rem;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mute);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 820px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.stats-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stats-scroll {
+    max-height: 460px;
+    overflow: auto;
+}
+
+.stats-card .table {
+    margin: 0;
+}
+
+.stats-count {
+    width: 3rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.stats-row--zero {
+    color: var(--mute);
+}
+
+.stats-bar-cell {
+    width: 38%;
+}
+
+.stats-bar {
+    display: block;
+    height: 6px;
+    background: var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.stats-bar-fill {
+    display: block;
+    height: 100%;
+    min-width: 1px;
+    background: linear-gradient(90deg, var(--bronze), var(--bronze-bright));
+}
