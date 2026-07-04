@@ -5,15 +5,15 @@ namespace App\View\Hud;
 use Classes\Str;
 
 /**
- * Panneaux glissants du HUD (Phase 2, multi-panneaux) : deux slots
- * identiques dans lesquels le routeur (js/hud.js) charge les
- * sous-pages en fragments. Desktop : jusqu'à deux panneaux côte à
- * côte (ex. Inventaire + Banque pour les dépôts) ; mobile : un seul,
- * en bottom-sheet. L'attribution des slots est gérée par le routeur.
+ * Panneau glissant du HUD (Phase 2) : un slot unique dans lequel le
+ * routeur (js/hud.js) charge les sous-pages en fragments — ouvrir une
+ * autre entrée REMPLACE le panneau courant (décision UX : deux
+ * panneaux côte à côte étaient pénibles à manipuler). Le markup garde
+ * la forme slot/data-slot pour pouvoir rouvrir la question plus tard.
  */
 final class PanelView
 {
-    private const SLOTS = 2;
+    private const SLOTS = 1;
 
     public static function render(): void
     {

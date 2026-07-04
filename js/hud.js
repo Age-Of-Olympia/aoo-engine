@@ -205,17 +205,18 @@
     }
 
     /*
-     * Multi-panneaux : chaque URL de fragment est un panneau
-     * indépendant (Inventaire, Artisanat, Banque, Caractéristiques,
-     * fiche…). Desktop : 2 slots côte à côte — ouvrir un 3e panneau
-     * ferme le plus ancien. Mobile : 1 seul slot (bottom-sheet).
+     * Panneaux : chaque URL de fragment est un panneau (Inventaire,
+     * Artisanat, Banque, Caractéristiques, fiche…). UN SEUL panneau à
+     * la fois — ouvrir une autre entrée remplace le contenu courant
+     * (décision UX : deux panneaux côte à côte étaient pénibles).
      * L'état est persisté en sessionStorage pour survivre aux
-     * rechargements (déplacement, action).
+     * rechargements (déplacement, action). La mécanique reste en
+     * liste/slots pour pouvoir rouvrir la question plus tard.
      */
     var openPanels = []; /* du plus ancien au plus récent : {url, title} */
 
     function maxPanels() {
-        return isMobileViewport() ? 1 : 2;
+        return 1;
     }
 
     function loadPanelContent(slot, url) {
@@ -232,17 +233,15 @@
 
     /* Projette openPanels sur les slots DOM et persiste l'état. */
     function syncPanels() {
-        for (var slot = 0; slot < 2; slot++) {
-            var $panel = $('#hud-panel-' + slot);
-            var entry = openPanels[slot];
-            $panel.toggleClass('hud-panel--open', !!entry)
+        $('.hud-panel').each(function () {
+            var entry = openPanels[$(this).data('slot')];
+            $(this).toggleClass('hud-panel--open', !!entry)
                 .attr('aria-hidden', entry ? 'false' : 'true');
             if (entry) {
-                $panel.find('.hud-panel-title').text(entry.title || '');
+                $(this).find('.hud-panel-title').text(entry.title || '');
             }
-        }
-        $('#hud').toggleClass('hud--panel-open', openPanels.length > 0)
-            .toggleClass('hud--two-panels', openPanels.length > 1);
+        });
+        $('#hud').toggleClass('hud--panel-open', openPanels.length > 0);
         sessionStorage.setItem('hudPanels', JSON.stringify(openPanels));
     }
 

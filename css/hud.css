@@ -430,17 +430,17 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
-/* ---------- Panneaux glissants (sous-pages, Phase 2) ---------- */
+/* ---------- Panneau glissant (sous-pages, Phase 2) ---------- */
 
-/* Glissent depuis la gauche (côté rail) par-dessus la carte ; barre
- * de statut, chat et bandeau bas restent visibles. Deux slots en
- * desktop (ex. Inventaire + Banque côte à côte), un seul en mobile. */
+/* Glisse depuis la gauche (côté rail) par-dessus la carte ; barre de
+ * statut, chat et bandeau bas restent visibles. Un seul panneau à la
+ * fois : ouvrir une autre entrée remplace le contenu courant. */
 .hud-panel {
     position: fixed;
     top: 80px;
     left: 80px;
     bottom: 8px;
-    width: min(560px, calc((100vw - 480px) / 2));
+    width: min(640px, calc(100vw - 460px));
     z-index: 55;
     display: flex;
     flex-direction: column;
@@ -451,15 +451,6 @@ body:has(#hud) #view-landing-wrapper {
     transform: translateX(calc(-100% - 700px));
     transition: transform 0.25s ease;
     visibility: hidden;
-}
-
-/* Un seul panneau ouvert : il profite de toute la largeur disponible */
-#hud:not(.hud--two-panels) .hud-panel {
-    width: min(640px, calc(100vw - 460px));
-}
-
-#hud-panel-1 {
-    left: calc(88px + min(560px, (100vw - 480px) / 2));
 }
 
 .hud-panel.hud-panel--open {
@@ -751,10 +742,8 @@ body:has(#hud) #debug-flags {
         font-size: 80%;
     }
 
-    /* --- Panneaux glissants : bottom-sheet 85 %, stats visibles.
-     * Un seul slot en mobile (le routeur n'utilise que le slot 0). --- */
-    .hud-panel,
-    #hud:not(.hud--two-panels) .hud-panel {
+    /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
+    .hud-panel {
         left: 0;
         right: 0;
         bottom: 0;
@@ -766,10 +755,6 @@ body:has(#hud) #debug-flags {
 
     .hud-panel.hud-panel--open {
         transform: none;
-    }
-
-    #hud-panel-1 {
-        display: none;
     }
 
     /* --- Flyout caracs (tutoriel) : plein écran utilisable --- */
