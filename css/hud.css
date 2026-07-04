@@ -430,16 +430,17 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
-/* ---------- Panneau glissant (sous-pages, Phase 2) ---------- */
+/* ---------- Panneaux glissants (sous-pages, Phase 2) ---------- */
 
-/* Glisse depuis la gauche (côté rail) par-dessus la carte ; barre de
- * statut, chat et bandeau bas restent visibles. */
-#hud-panel {
+/* Glissent depuis la gauche (côté rail) par-dessus la carte ; barre
+ * de statut, chat et bandeau bas restent visibles. Deux slots en
+ * desktop (ex. Inventaire + Banque côte à côte), un seul en mobile. */
+.hud-panel {
     position: fixed;
     top: 80px;
     left: 80px;
     bottom: 8px;
-    width: min(640px, calc(100vw - 460px));
+    width: min(560px, calc((100vw - 480px) / 2));
     z-index: 55;
     display: flex;
     flex-direction: column;
@@ -447,17 +448,26 @@ body:has(#hud) #view-landing-wrapper {
     border: 1px solid #444;
     border-radius: 6px;
     box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.5);
-    transform: translateX(calc(-100% - 100px));
+    transform: translateX(calc(-100% - 700px));
     transition: transform 0.25s ease;
     visibility: hidden;
 }
 
-#hud.hud--panel-open #hud-panel {
+/* Un seul panneau ouvert : il profite de toute la largeur disponible */
+#hud:not(.hud--two-panels) .hud-panel {
+    width: min(640px, calc(100vw - 460px));
+}
+
+#hud-panel-1 {
+    left: calc(88px + min(560px, (100vw - 480px) / 2));
+}
+
+.hud-panel.hud-panel--open {
     transform: none;
     visibility: visible;
 }
 
-#hud-panel .hud-panel-head {
+.hud-panel .hud-panel-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -465,12 +475,12 @@ body:has(#hud) #view-landing-wrapper {
     border-bottom: 1px solid #666;
 }
 
-#hud-panel #hud-panel-title {
+.hud-panel .hud-panel-title {
     font-family: goudy;
     font-size: 130%;
 }
 
-#hud-panel #hud-panel-content {
+.hud-panel .hud-panel-content {
     flex: 1 1 auto;
     overflow: auto;
     padding: 10px;
@@ -741,8 +751,10 @@ body:has(#hud) #debug-flags {
         font-size: 80%;
     }
 
-    /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
-    #hud-panel {
+    /* --- Panneaux glissants : bottom-sheet 85 %, stats visibles.
+     * Un seul slot en mobile (le routeur n'utilise que le slot 0). --- */
+    .hud-panel,
+    #hud:not(.hud--two-panels) .hud-panel {
         left: 0;
         right: 0;
         bottom: 0;
@@ -752,8 +764,12 @@ body:has(#hud) #debug-flags {
         transform: translateY(105%);
     }
 
-    #hud.hud--panel-open #hud-panel {
+    .hud-panel.hud-panel--open {
         transform: none;
+    }
+
+    #hud-panel-1 {
+        display: none;
     }
 
     /* --- Flyout caracs (tutoriel) : plein écran utilisable --- */

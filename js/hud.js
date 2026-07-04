@@ -144,7 +144,7 @@
 
     /*
      * Routeur de panneaux (Phase 2) : charge les sous-pages en
-     * fragments dans le panneau glissant #hud-panel, sans navigation.
+     * fragments dans les panneaux glissants (.hud-panel), sans navigation.
      *
      * Les liens gardent leurs URLs plein-page (repli sans JS,
      * clic-molette intact) ; panelUrl() les réécrit vers les endpoints
@@ -185,43 +185,96 @@
         return '';
     }
 
-    /* Panneau courant, persisté en sessionStorage pour survivre aux
-     * rechargements de page (un déplacement recharge index.php — même
-     * confort que l'ancien cookie caracs_panel_open). */
-    var currentPanelUrl = null;
+    /*
+     * Multi-panneaux : chaque URL de fragment est un panneau
+     * indépendant (Inventaire, Artisanat, Banque, Caractéristiques,
+     * fiche…). Desktop : 2 slots côte à côte — ouvrir un 3e panneau
+     * ferme le plus ancien. Mobile : 1 seul slot (bottom-sheet).
+     * L'état est persisté en sessionStorage pour survivre aux
+     * rechargements (déplacement, action).
+     */
+    var openPanels = []; /* du plus ancien au plus récent : {url, title} */
 
-    function openPanel(url, title) {
-        currentPanelUrl = url;
-        sessionStorage.setItem('hudPanelUrl', url);
-        sessionStorage.setItem('hudPanelTitle', title || '');
+    function maxPanels() {
+        return isMobileViewport() ? 1 : 2;
+    }
 
-        $('#hud-panel-title').text(title || '');
-        $('#hud-panel-content').html('Chargement…');
-        $('#hud').addClass('hud--panel-open');
-        $('#hud-panel').attr('aria-hidden', 'false');
-
+    function loadPanelContent(slot, url) {
+        var $content = $('#hud-panel-' + slot + ' .hud-panel-content');
+        $content.html('Chargement…');
         $.get(url)
             .done(function (data) {
-                $('#hud-panel-content').html(data);
+                $content.html(data);
             })
             .fail(function () {
-                $('#hud-panel-content').html('<p class="hud-feed-empty">Impossible de charger cette page.</p>');
+                $content.html('<p class="hud-feed-empty">Impossible de charger cette page.</p>');
             });
     }
 
-    function closePanel() {
-        currentPanelUrl = null;
-        sessionStorage.removeItem('hudPanelUrl');
-        sessionStorage.removeItem('hudPanelTitle');
-
-        $('#hud').removeClass('hud--panel-open');
-        $('#hud-panel').attr('aria-hidden', 'true');
+    /* Projette openPanels sur les slots DOM et persiste l'état. */
+    function syncPanels() {
+        for (var slot = 0; slot < 2; slot++) {
+            var $panel = $('#hud-panel-' + slot);
+            var entry = openPanels[slot];
+            $panel.toggleClass('hud-panel--open', !!entry)
+                .attr('aria-hidden', entry ? 'false' : 'true');
+            if (entry) {
+                $panel.find('.hud-panel-title').text(entry.title || '');
+            }
+        }
+        $('#hud').toggleClass('hud--panel-open', openPanels.length > 0)
+            .toggleClass('hud--two-panels', openPanels.length > 1);
+        sessionStorage.setItem('hudPanels', JSON.stringify(openPanels));
     }
 
-    /* Boutons du rail : deuxième clic sur la même entrée = fermeture. */
+    function reloadAllPanels() {
+        openPanels.forEach(function (entry, slot) {
+            loadPanelContent(slot, entry.url);
+        });
+    }
+
+    function openPanel(url, title) {
+        var idx = openPanels.findIndex(function (p) { return p.url === url; });
+
+        if (idx !== -1) {
+            /* Déjà ouvert : rafraîchir son contenu */
+            openPanels[idx].title = title || openPanels[idx].title;
+            syncPanels();
+            loadPanelContent(idx, url);
+            return;
+        }
+
+        /* Slot plein : le plus ancien laisse sa place */
+        var shifted = false;
+        while (openPanels.length >= maxPanels()) {
+            openPanels.shift();
+            shifted = true;
+        }
+
+        openPanels.push({ url: url, title: title || '' });
+        syncPanels();
+
+        if (shifted) {
+            reloadAllPanels();
+        } else {
+            loadPanelContent(openPanels.length - 1, url);
+        }
+    }
+
+    function closePanelAt(idx) {
+        if (idx < 0 || idx >= openPanels.length) {
+            return;
+        }
+        openPanels.splice(idx, 1);
+        syncPanels();
+        reloadAllPanels();
+    }
+
+    /* Deuxième clic sur la même entrée = fermeture. */
     function togglePanel(url, title) {
-        if (currentPanelUrl === url && $('#hud').hasClass('hud--panel-open')) {
-            closePanel();
+        var idx = openPanels.findIndex(function (p) { return p.url === url; });
+        if (idx !== -1) {
+            closePanelAt(idx);
         } else {
             openPanel(url, title);
         }
@@ -373,11 +426,19 @@
             $('.hud-tab[data-tab="events"]').trigger('click');
         });
 
-        /* Panneau persisté : rouvrir après un rechargement de page
+        /* Panneaux persistés : rouvrir après un rechargement de page
          * (déplacement, action…). */
-        var savedPanelUrl = sessionStorage.getItem('hudPanelUrl');
-        if (savedPanelUrl && !tutorialActive()) {
-            openPanel(savedPanelUrl, sessionStorage.getItem('hudPanelTitle') || '');
+        if (!tutorialActive()) {
+            try {
+                var saved = JSON.parse(sessionStorage.getItem('hudPanels') || '[]');
+                openPanels = saved.slice(0, maxPanels());
+            } catch (err) {
+                openPanels = [];
+            }
+            if (openPanels.length) {
+                syncPanels();
+                reloadAllPanels();
+            }
         }
 
         /* Chip joueur : fiche perso en panneau */
@@ -389,30 +450,34 @@
             openPanel(panelUrl($(this).attr('href')), 'Personnage');
         });
 
-        /* Navigation interne au panneau : réécrire les liens
-         * panneau-compatibles, fermer sur « Retour » (index.php),
-         * laisser passer le reste (réputation, faction, wiki…). */
-        $('#hud-panel-content').on('click', 'a[href]', function (e) {
+        /* Navigation interne aux panneaux : réécrire les liens
+         * panneau-compatibles (ouverture dans un slot libre — ex.
+         * Banque depuis l'Inventaire s'ouvre à côté), fermer sur
+         * « Retour » (index.php), laisser passer le reste (réputation,
+         * faction, wiki…). */
+        $('.hud-panel-content').on('click', 'a[href]', function (e) {
             var href = $(this).attr('href');
 
             if (/^index\.php/.test(href)) {
                 e.preventDefault();
-                closePanel();
+                closePanelAt($(this).closest('.hud-panel').data('slot'));
                 return;
             }
 
             var fragment = panelUrl(href);
             if (fragment) {
                 e.preventDefault();
-                openPanel(fragment, panelTitle(href));
+                togglePanel(fragment, panelTitle(href));
             }
         });
 
-        $('#hud-panel-close').on('click', closePanel);
+        $('.hud-panel-close').on('click', function () {
+            closePanelAt($(this).closest('.hud-panel').data('slot'));
+        });
 
         $(document).on('keydown', function (e) {
-            if (e.key === 'Escape' && $('#hud').hasClass('hud--panel-open')) {
-                closePanel();
+            if (e.key === 'Escape' && openPanels.length) {
+                closePanelAt(openPanels.length - 1);
             }
         });
 
