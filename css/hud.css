@@ -488,7 +488,8 @@ body:has(#hud) #view-landing-wrapper {
 #hud-burger,
 #hud-bubble,
 #hud-dots,
-#hud-backdrop {
+#hud-backdrop,
+#hud-side-close {
     display: none;
 }
 
@@ -538,8 +539,18 @@ body:has(#hud) #debug-flags {
     }
 
     #hud-topbar .hud-chip-id sup,
-    #hud-topbar .hud-place,
     #hud-topbar .hud-quick {
+        display: none;
+    }
+
+    /* Prochain tour visible (horaire informatif, cf. wireframe) ;
+     * la localisation détaillée reste réservée au desktop. */
+    #hud-topbar .hud-place {
+        margin-left: 0;
+        flex: 0 0 auto;
+    }
+
+    #hud-topbar .hud-place #hud-location {
         display: none;
     }
 
@@ -693,6 +704,11 @@ body:has(#hud) #debug-flags {
 
     #hud.hud--chat-open #hud-side {
         transform: none;
+    }
+
+    #hud-side-close {
+        display: block;
+        flex: 0 0 auto;
     }
 
     /* --- Bulle de chat flottante ---

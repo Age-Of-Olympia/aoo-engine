@@ -58,9 +58,12 @@
             return parseInt($(this).data('time'), 10) > lastSeen;
         }).length;
 
-        $('#hud-events-badge')
-            .text(unread)
-            .toggle(unread > 0 && activeTab() !== 'events');
+        var show = unread > 0 && activeTab() !== 'events';
+
+        $('#hud-events-badge').text(unread).toggle(show);
+        /* Écho sur la bulle mobile : le badge de l'onglet est invisible
+         * tant que la sheet est fermée. */
+        $('#hud-bubble-badge').text(unread).toggle(show);
     }
 
     function markEventsSeen() {
@@ -72,6 +75,20 @@
             localStorage.setItem(SEEN_KEY, String(latest));
         }
         $('#hud-events-badge').hide();
+        $('#hud-bubble-badge').hide();
+    }
+
+    /*
+     * Centre la vue sur le joueur : le SVG place toujours le joueur au
+     * centre géométrique, il suffit de centrer le défilement du
+     * conteneur (utile dès que la carte déborde — mobile surtout).
+     */
+    function centerMap() {
+        var el = document.querySelector('#hud #game-map');
+        if (el) {
+            el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+            el.scrollTop = (el.scrollHeight - el.clientHeight) / 2;
+        }
     }
 
     /*
@@ -220,6 +237,22 @@
      * strictement inchangée — le déplacement est fait à tous les
      * viewports pour éviter toute gestion de resize.
      */
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 1023px)').matches;
+    }
+
+    /* Fait défiler le carrousel bas vers une position (0 minimap,
+     * 1 sélection, 2 actions). */
+    function scrollCarouselTo(index, smooth) {
+        var el = document.getElementById('hud-carousel');
+        if (el) {
+            el.scrollTo({
+                left: index * el.clientWidth,
+                behavior: smooth ? 'smooth' : 'auto'
+            });
+        }
+    }
+
     function initMobile() {
 
         var $carousel = $('<div id="hud-carousel"></div>').insertAfter('#hud-main');
@@ -243,12 +276,11 @@
         $carousel.on('scroll', syncDots);
 
         $dots.on('click', '.hud-dot', function () {
-            var el = $carousel[0];
-            el.scrollTo({ left: $(this).data('index') * el.clientWidth, behavior: 'smooth' });
+            scrollCarouselTo($(this).data('index'), true);
         });
 
         /* Position par défaut : sélection (milieu), sans animation */
-        if (window.matchMedia('(max-width: 1023px)').matches) {
+        if (isMobileViewport()) {
             $carousel[0].scrollLeft = $carousel[0].clientWidth;
         }
         syncDots();
@@ -261,6 +293,11 @@
         /* Bulle de chat : ouvre le panneau latéral en sheet */
         $('#hud-bubble').on('click', function () {
             $('#hud').toggleClass('hud--chat-open');
+        });
+
+        /* Fermeture de la sheet chat (bouton × mobile) */
+        $('#hud-side-close').on('click', function () {
+            $('#hud').removeClass('hud--chat-open');
         });
 
         /* Fond : referme tiroir et sheet */
@@ -385,8 +422,14 @@
          * après une action. */
         var ajaxData = document.getElementById('ajax-data');
         if (ajaxData) {
-            new MutationObserver(relocateCardActions)
-                .observe(ajaxData, { childList: true });
+            new MutationObserver(function () {
+                relocateCardActions();
+                /* Mobile : montrer le résultat de l'observation — le
+                 * carrousel rejoint la position sélection. */
+                if (isMobileViewport() && ajaxData.childNodes.length) {
+                    scrollCarouselTo(1, true);
+                }
+            }).observe(ajaxData, { childList: true });
             relocateCardActions();
         }
 
@@ -417,7 +460,11 @@
         });
 
         fitMinimap();
-        $(window).on('resize', fitMinimap);
+        centerMap();
+        $(window).on('resize', function () {
+            fitMinimap();
+            centerMap();
+        });
 
         initMobile();
     });
