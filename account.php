@@ -77,6 +77,7 @@ $options = array(
     'hideGrid'=>"Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",
     'noMask'=>"Désactiver les masques<br /><sup>Les effets de brumes et de pluie ne s'afficheront plus</sup>",
     'showActionDetails'=>"Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
+    'newHud'=>"Nouvelle interface (bêta)<br /><sup>Nouvelle disposition du jeu sur grand écran : barre de statut, rail de navigation, chat et évènements</sup>",
     'noTrain'=>"Interdire les entraînements<br />",
     'dlag'=>"DLA glissante<br /><sup>Décale l'heure du prochain tour</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
