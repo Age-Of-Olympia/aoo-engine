@@ -300,7 +300,15 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
 
 // Nouveau HUD (Phase 1, opt-in) : option joueur newHud, avec surcharge
 // ponctuelle ?hud=1 / ?hud=0 pour tester sans toucher à l'option.
-$useNewHud = $player->have_option('newHud');
+// L'option est lue sur le joueur RÉEL : pendant le tutoriel, $player
+// est le personnage temporaire (sans options) mais l'interface choisie
+// par le joueur doit rester la même.
+$hudOptionPlayer = $player;
+$mainPlayerId = TutorialHelper::getMainPlayerId();
+if ($player->id !== $mainPlayerId && $mainPlayerId > 0) {
+    $hudOptionPlayer = PlayerFactory::legacy($mainPlayerId);
+}
+$useNewHud = $hudOptionPlayer->have_option('newHud');
 if (isset($_GET['hud'])) {
     $useNewHud = $_GET['hud'] === '1';
 }
