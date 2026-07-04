@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AoO — Wireframe : Desktop sous-pages en panneau</title>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        /* URL-anchor-driven state — reload preserves the current view */
+        .panel-anchor { display: block; height: 0; }
+
+        /* Two panels: pcard (default), inv. The "events" view doesn't open a panel —
+           it switches the chat to its Événements tab. */
+        .show-inv { display: none; }
+        .show-pcard { display: flex; }
+
+        #p-inv:target ~ .stage .show-pcard  { display: none; }
+        #p-inv:target ~ .stage .show-inv    { display: flex; }
+        /* When viewing events, no panel is open over the map */
+        #p-log:target ~ .stage .show-pcard  { display: none; }
+
+        /* Chat tab swap: default = Général, #p-log targeted = Événements */
+        .chat-body-events { display: none; }
+        #p-log:target ~ .stage .chat-body-general { display: none; }
+        #p-log:target ~ .stage .chat-body-events  { display: flex; }
+        #p-log:target ~ .stage .chat-tabs .tab.general {
+            background: transparent; border-color: transparent;
+            color: var(--text-2); font-weight: 400;
+        }
+        #p-log:target ~ .stage .chat-tabs .tab.events {
+            background: var(--bg-parchment); border-color: var(--border-mid);
+            border-bottom-color: var(--bg-parchment); color: var(--accent-burgundy);
+            font-weight: 600;
+        }
+
+        /* Toggle active state */
+        .wf-toggle[data-panel="pcard"] { background: linear-gradient(180deg, var(--accent-red), var(--accent-burgundy)); border-color: #2a0a0a; color: #fff; font-weight: 600; }
+        #p-inv:target ~ .wf-toggles .wf-toggle[data-panel="pcard"],
+        #p-log:target ~ .wf-toggles .wf-toggle[data-panel="pcard"] { background: var(--bg-elevated); border-color: var(--border-strong); color: var(--text-1); font-weight: 400; }
+        #p-inv:target ~ .wf-toggles .wf-toggle[data-panel="inv"],
+        #p-log:target ~ .wf-toggles .wf-toggle[data-panel="log"]   { background: linear-gradient(180deg, var(--accent-red), var(--accent-burgundy)); border-color: #2a0a0a; color: #fff; font-weight: 600; }
+
+        /* Rail button highlighting */
+        .rail-btn.rail-personnage {
+            background: var(--accent-burgundy);
+            color: var(--accent-gold-2);
+            border-color: var(--accent-gold);
+            box-shadow: inset 0 1px 4px #0008;
+        }
+        #p-inv:target ~ .stage .rail-btn.rail-personnage,
+        #p-log:target ~ .stage .rail-btn.rail-personnage { background: transparent; color: #555; border-color: transparent; box-shadow: none; }
+        #p-inv:target ~ .stage .rail-btn.rail-inv {
+            background: var(--accent-burgundy);
+            color: var(--accent-gold-2);
+            border-color: var(--accent-gold);
+            box-shadow: inset 0 1px 4px #0008;
+        }
+
+        /* When viewing events, the map is no longer covered — remove the padding-left */
+        #p-log:target ~ .stage .hud-desktop { /* keep panel-open class for default styles */ }
+        #p-log:target ~ .stage .hud-desktop.panel-open .hud-map { padding-left: 0; }
+
+        .map-grid.square {
+            grid-template-columns: repeat(11, 46px);
+            grid-template-rows: repeat(11, 46px);
+        }
+        .map-grid.square .map-tile { width: 46px; height: 46px; }
+    </style>
+</head>
+<body>
+    <div class="wf-page">
+        <header class="wf-header">
+            <h1>Desktop — Sous-pages en panneau glissant</h1>
+            <span class="crumb"><a href="index.html">← Retour</a> · desktop-panel.html</span>
+        </header>
+
+        <p class="wf-intro">
+            Les sous-pages glissent depuis la <b>gauche</b> (le rail de navigation
+            est à gauche, donc le panneau émerge naturellement du côté de son
+            déclencheur). Le map est centré automatiquement dans l'espace visible
+            restant, et le chat reste visible à droite. Trois exemples ci-dessous :
+            <b>fiche personnage</b> (déclenchée par le clic sur le player chip),
+            <b>inventaire</b>, et <b>journal d'événements</b>.
+        </p>
+
+        <a id="p-pcard" class="panel-anchor"></a>
+        <a id="p-inv"   class="panel-anchor"></a>
+        <a id="p-log"   class="panel-anchor"></a>
+
+        <div class="wf-toggles">
+            <a class="wf-toggle" href="#p-pcard" data-panel="pcard">Fiche personnage (panneau)</a>
+            <a class="wf-toggle" href="#p-inv"   data-panel="inv">Inventaire (panneau)</a>
+            <a class="wf-toggle" href="#p-log"   data-panel="log">Journal d'événements (onglet du chat)</a>
+        </div>
+
+        <div class="stage wf-stage">
+            <div>
+                <div class="wf-stage-label">HUD avec panneau ouvert — 1440×820</div>
+                <div class="hud-desktop panel-open">
+
+                    <!-- Top bar -->
+                    <div class="hud-topbar">
+                        <button class="player-chip" data-race="nain">
+                            <span class="pc-portrait">C</span>
+                            <span class="pc-body">
+                                <span class="pc-name">Cradek</span>
+                                <span class="pc-meta">Nain · Rang 4</span>
+                            </span>
+                        </button>
+                        <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span><span class="max">/8</span><span class="stat-label">A</span></span>
+                        <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span><span class="max">/5</span><span class="stat-label">MVT</span></span>
+                        <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span><span class="max">/50</span><span class="stat-label">PV</span></span>
+                        <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span><span class="max">/12</span><span class="stat-label">PM</span></span>
+                        <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span><span class="max">/5</span><span class="stat-label">PF</span></span>
+                        <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span><span class="max">/7</span><span class="stat-label">EN</span></span>
+                        <div class="topbar-spacer"></div>
+                        <div class="topbar-right">
+                            <div class="topbar-meta">
+                                <span class="plan-name">Olympia</span>
+                                <span style="color: #d4c8b0;">·</span>
+                                <span>Eryn Dolen</span>
+                                <span class="coords">(7, 4)</span>
+                            </div>
+                            <button class="topbar-iconbtn" title="Changer de personnage"><i class="ra ra-cycle"></i></button>
+                            <button class="topbar-iconbtn" title="Classements"><i class="ra ra-podium"></i></button>
+                            <button class="topbar-iconbtn" title="Aide"><i class="ra ra-help"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Rail -->
+                    <nav class="hud-rail">
+                        <button class="rail-btn rail-personnage" title="Personnage"><i class="ra ra-player"></i><span class="label">Personnage</span></button>
+                        <button class="rail-btn" title="Carte"><i class="ra ra-mountains"></i><span class="label">Carte (monde / locale)</span></button>
+                        <button class="rail-btn rail-inv" title="Inventaire / Banque"><i class="ra ra-ammo-bag"></i><span class="label">Inventaire / Banque</span></button>
+                        <button class="rail-btn" title="Craft"><i class="ra ra-anvil"></i><span class="label">Craft</span></button>
+                        <button class="rail-btn" title="Caractéristiques"><i class="ra ra-perspective-dice-six"></i><span class="label">Caractéristiques</span></button>
+                        <button class="rail-btn" title="Sorts / Techniques"><i class="ra ra-fire"></i><span class="label">Sorts / Techniques</span></button>
+                        <button class="rail-btn" title="Forum"><i class="ra ra-speech-bubbles"></i><span class="label">Forum</span></button>
+                        <div class="rail-spacer"></div>
+                        <button class="rail-btn" title="Paramètres"><i class="ra ra-cog-wheel"></i><span class="label">Paramètres</span></button>
+                    </nav>
+
+                    <!-- Map (auto-centered in remaining space via .panel-open) -->
+                    <div class="hud-map">
+                        <div class="map-grid square">
+                            <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div><div class="map-tile water"></div><div class="map-tile water"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div>
+                            <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div>
+                            <div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile stone"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                            <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div>
+                            <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                        </div>
+                    </div>
+
+                    <!-- Chat (always visible) -->
+                    <aside class="hud-chat">
+                        <header class="chat-header">
+                            <i class="ra ra-speech-bubbles"></i>
+                            <h3>Chat &amp; événements</h3>
+                        </header>
+                        <div class="chat-tabs">
+                            <button class="tab general active">Général</button>
+                            <button class="tab events">Événements <span class="badge" style="background:var(--accent-gold); color:#1a1a1a; padding: 0 4px; border-radius: 6px; font-size: 9px; margin-left: 2px;">3</span></button>
+                        </div>
+                        <div class="chat-body chat-body-general">
+                            <div class="chat-msg" data-race="elfe"><span class="time">14:03</span><span class="author">Thyrias :</span> Quelqu'un sait où trouver de la pierre ?</div>
+                            <div class="chat-msg" data-race="nain"><span class="time">14:05</span><span class="author">Dorna :</span> Au sud-est de la rivière.</div>
+                            <div class="chat-msg system"><span class="time">14:12</span> Dorna a quitté la zone</div>
+                            <div class="chat-msg" data-race="hs"><span class="time">14:18</span><span class="author">Krug :</span> Ennemis à l'est !</div>
+                        </div>
+                        <div class="chat-body chat-body-events">
+                            <div class="log-entry" data-kind="turn" style="margin-bottom: 6px;"><i class="ra ra-hourglass"></i><div class="text"><b>Nouveau tour</b> · +8 A et +5 MVT.</div><span class="time">14:02</span></div>
+                            <div class="log-entry" data-kind="gain" style="margin-bottom: 6px;"><i class="ra ra-axe"></i><div class="text">Récolté <b>4 bois</b> sur Grand chêne (5,3).</div><span class="time">14:05</span></div>
+                            <div class="log-entry" data-kind="social" style="margin-bottom: 6px;"><i class="ra ra-speech-bubble"></i><div class="text"><b>Thyrias</b> est entré dans la zone.</div><span class="time">14:07</span></div>
+                            <div class="log-entry" data-kind="combat" style="margin-bottom: 6px;"><i class="ra ra-crossed-swords"></i><div class="text">Attaqué <b>Gobelin</b> (-12 PV).</div><span class="time">14:11</span></div>
+                            <div class="log-entry" data-kind="combat" style="margin-bottom: 6px;"><i class="ra ra-player-pain"></i><div class="text"><b>Gobelin</b> a riposté (-8 PV).</div><span class="time">14:11</span></div>
+                            <div class="log-entry" data-kind="gain" style="margin-bottom: 6px;"><i class="ra ra-trophy"></i><div class="text">Gobelin vaincu · <b>+45 XP</b>, <b>+8 or</b>.</div><span class="time">14:12</span></div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" placeholder="Écrire un message…" />
+                            <button>Env.</button>
+                        </div>
+                    </aside>
+
+                    <!-- Bottom row -->
+                    <div class="hud-bottom">
+                        <div class="bottom-zone">
+                            <div class="zone-title"><i class="ra ra-compass"></i> Minimap</div>
+                            <div class="minimap minimap-orient">
+                                <span class="minimap-mode">Orientation</span>
+                                <span class="me" style="top: 48%; left: 52%;"></span>
+                                <span class="npc" style="top: 25%; left: 30%;"></span>
+                                <span class="enemy" style="top: 40%; left: 70%;"></span>
+                            </div>
+                        </div>
+                        <div class="bottom-zone">
+                            <div class="zone-title"><i class="ra ra-aware"></i> Sélection — Eryn Dolen</div>
+                            <div class="location-info">
+                                <div class="location-icon"><i class="ra ra-pine-tree"></i></div>
+                                <div class="location-body">
+                                    <div class="where">Eryn Dolen</div>
+                                    <div class="where-desc" style="margin-top:4px;">La forêt dans laquelle les Elfes ont établi leur ville.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bottom-zone">
+                            <div class="zone-title"><i class="ra ra-crossed-swords"></i> Actions</div>
+                            <div class="actions-grid">
+                                <button class="action-btn"><i class="ra ra-health"></i>Repos<span class="cost">1 A</span></button>
+                                <button class="action-btn"><i class="ra ra-muscle-up"></i>Entraînt.<span class="cost">1 A</span></button>
+                                <button class="action-btn"><i class="ra ra-quill-ink"></i>Prier<span class="cost">1 A</span></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ============ PANEL: Player Card ============ -->
+                    <aside class="subpage-panel show-pcard">
+                        <header class="subpage-header">
+                            <i class="ra ra-player"></i>
+                            <h2>Cradek</h2>
+                            <button class="subpage-close">×</button>
+                        </header>
+                        <div class="subpage-body">
+                            <div class="pcard-hero" data-race="nain">
+                                <div class="portrait">C</div>
+                                <div class="body">
+                                    <div class="name">Cradek</div>
+                                    <div class="race">Nain · Faction <b>Forge</b></div>
+                                    <div class="level">Rang 4 · Niveau 18</div>
+                                    <div class="xp-bar"><i style="width: 62%;"></i></div>
+                                    <div class="xp-text">1 240 / 2 000 XP</div>
+                                </div>
+                            </div>
+
+                            <div class="pcard-section-title">Caractéristiques</div>
+                            <div class="pcard-caracs">
+                                <div class="pcard-carac"><span>PV</span><b>42 / 50</b></div>
+                                <div class="pcard-carac"><span>Actions</span><b>6 / 8</b></div>
+                                <div class="pcard-carac"><span>MVT max</span><b>4</b></div>
+                                <div class="pcard-carac"><span>PM</span><b>8 / 12</b></div>
+                                <div class="pcard-carac"><span>PF</span><b>3 / 5</b></div>
+                                <div class="pcard-carac"><span>Énergie</span><b>5 / 7</b></div>
+                                <div class="pcard-carac"><span>Force</span><b>14</b></div>
+                                <div class="pcard-carac"><span>Mental</span><b>9</b></div>
+                            </div>
+
+                            <div class="pcard-section-title">Affiliations &amp; progression</div>
+                            <div class="pcard-access">
+                                <button class="access-btn">
+                                    <i class="ra ra-castle-flag"></i>
+                                    Faction
+                                    <span class="sub">Forge</span>
+                                </button>
+                                <button class="access-btn">
+                                    <i class="ra ra-arena"></i>
+                                    École de guerre
+                                    <span class="sub">Rang 2</span>
+                                </button>
+                                <button class="access-btn">
+                                    <i class="ra ra-fire"></i>
+                                    Sorts/Techn.
+                                    <span class="sub">5 connus</span>
+                                </button>
+                                <button class="access-btn">
+                                    <i class="ra ra-book"></i>
+                                    Logs personnels
+                                    <span class="sub">23 entrées</span>
+                                </button>
+                                <button class="access-btn">
+                                    <i class="ra ra-helmet"></i>
+                                    Équipement
+                                    <span class="sub">3 / 4 portés</span>
+                                </button>
+                                <button class="access-btn coming">
+                                    <i class="ra ra-trophy"></i>
+                                    Hauts faits
+                                    <span class="sub">à venir</span>
+                                </button>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <!-- ============ PANEL: Inventaire ============ -->
+                    <aside class="subpage-panel show-inv">
+                        <header class="subpage-header">
+                            <i class="ra ra-ammo-bag"></i>
+                            <h2>Inventaire</h2>
+                            <button class="subpage-close">×</button>
+                        </header>
+                        <div class="subpage-body">
+                            <div style="display: flex; gap: 10px; align-items: center; padding: 8px 10px; background: #ffffffaa; border-radius: var(--r-md); border: 1px solid var(--border-soft); margin-bottom: 12px;">
+                                <div style="width: 40px; height: 40px; background: #fff; border: 2px solid #c4853a; border-radius: 6px; display: grid; place-items: center; color: var(--accent-burgundy); font-family: var(--font-fantasy); font-size: 20px;">C</div>
+                                <div style="flex: 1;">
+                                    <div style="font-family: var(--font-fantasy); font-size: 15px; color: var(--accent-burgundy);">Cradek</div>
+                                    <div style="font-size: 11px; color: var(--text-2);">Poids : <b style="color: var(--text-1);">7,2 / 15 kg</b></div>
+                                </div>
+                                <span style="font-family: var(--font-mono); color: var(--accent-burgundy); font-size: 13px;">48%</span>
+                            </div>
+
+                            <div class="inv-section-title">Équipement</div>
+                            <div class="inv-grid eq">
+                                <div class="inv-slot filled"><i class="ra ra-axe"></i></div>
+                                <div class="inv-slot filled"><i class="ra ra-vest"></i></div>
+                                <div class="inv-slot filled"><i class="ra ra-boot-stomp"></i></div>
+                                <div class="inv-slot"><span style="opacity: 0.4;">+</span></div>
+                            </div>
+
+                            <div class="inv-section-title">Sac (12 / 20)</div>
+                            <div class="inv-grid">
+                                <div class="inv-slot filled"><i class="ra ra-axe"></i><span class="qty">4</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-rune-stone"></i><span class="qty">2</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-meat"></i><span class="qty">6</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-apple"></i><span class="qty">3</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-water-drop"></i><span class="qty">2</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-gem"></i></div>
+                                <div class="inv-slot filled"><i class="ra ra-acorn"></i><span class="qty">5</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-super-mushroom"></i><span class="qty">4</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-fish"></i><span class="qty">2</span></div>
+                                <div class="inv-slot filled"><i class="ra ra-bone-knife"></i></div>
+                                <div class="inv-slot filled"><i class="ra ra-roast-chicken"></i></div>
+                                <div class="inv-slot filled"><i class="ra ra-flask"></i></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                                <div class="inv-slot"></div>
+                            </div>
+
+                            <div class="inv-section-title">Or &amp; ressources</div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; font-family: var(--font-fantasy);">
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border-soft); padding: 4px 10px; border-radius: var(--r-md); color: var(--accent-gold); font-size: 13px;"><i class="ra ra-gold-bar"></i> 124 or</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border-soft); padding: 4px 10px; border-radius: var(--r-md); color: var(--accent-blue); font-size: 13px;"><i class="ra ra-gem"></i> 3 cristaux</span>
+                            </div>
+                        </div>
+                    </aside>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AoO — Wireframe : Mobile écran principal</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+    <div class="wf-page">
+        <header class="wf-header">
+            <h1>Mobile — Écran principal (carrousel à 3 positions)</h1>
+            <span class="crumb"><a href="index.html">← Retour</a> · mobile-main.html</span>
+        </header>
+
+        <p class="wf-intro">
+            Sur mobile (390×780), les trois zones du bas desktop deviennent un
+            <b>carrousel swipeable</b>. Position par défaut : au milieu
+            (sélection + actions). Le <b>player chip compact</b> à gauche du top
+            bar reste cliquable pour ouvrir la fiche complète. Une <b>pastille
+            chat</b> flotte au bas du map et affiche le dernier message — tap
+            pour ouvrir le chat en bottom-sheet (cf. mobile-sheet.html).
+        </p>
+
+        <div class="callout">
+            <b>À noter</b> · Tour suivant = horaire informatif, pas de countdown.
+            Chat accessible via la pastille overlay <i>et</i> l'onglet "Chat" dans
+            la tab-bar (en remplacement de Forum, qui passe dans "Plus").
+        </div>
+
+        <div class="stage wf-stage">
+
+            <!-- Phone 1: Carousel @ position 0 (Minimap) -->
+            <div>
+                <div class="wf-stage-label">Position 0 — Minimap</div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="mobile-topbar">
+                            <button class="mobile-hamburger" title="Menu"><i></i></button>
+                            <span class="mobile-player-chip" data-race="nain">
+                                <span class="pc-portrait">C</span>
+                                <span class="pc-name">Cradek</span>
+                            </span>
+                            <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span></span>
+                            <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span></span>
+                            <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span></span>
+                            <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span></span>
+                            <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span></span>
+                            <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span></span>
+                        </div>
+
+                        <div class="mobile-map">
+                            <div class="chat-overlay-mobile">
+                                <i class="ra ra-speech-bubbles"></i>
+                                <span class="author elfe">Thyrias :</span>
+                                <span class="msg-text">Quelqu'un sait où trouver…</span>
+                                <span class="badge">2</span>
+                            </div>
+                            <div class="map-grid">
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile forest has-tree selected"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-carousel">
+                            <div class="carousel-pane">
+                                <div class="zone-title"><i class="ra ra-compass"></i> Minimap — Olympia</div>
+                                <div class="minimap minimap-orient" style="margin-bottom: 16px;">
+                                    <span class="minimap-mode">Orientation</span>
+                                    <span class="me" style="top: 48%; left: 52%;"></span>
+                                    <span class="npc" style="top: 25%; left: 30%;"></span>
+                                    <span class="enemy" style="top: 40%; left: 70%;"></span>
+                                </div>
+                            </div>
+                            <div class="carousel-dots">
+                                <span class="dot active"></span>
+                                <span class="dot"></span>
+                                <span class="dot"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone 2: Carousel @ position 1 (Selected + Actions — default) -->
+            <div>
+                <div class="wf-stage-label">Position 1 — Sélection + Actions <b style="color: var(--accent-gold);">(par défaut)</b></div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="mobile-topbar">
+                            <button class="mobile-hamburger" title="Menu"><i></i></button>
+                            <span class="mobile-player-chip" data-race="nain">
+                                <span class="pc-portrait">C</span>
+                                <span class="pc-name">Cradek</span>
+                            </span>
+                            <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span></span>
+                            <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span></span>
+                            <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span></span>
+                            <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span></span>
+                            <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span></span>
+                            <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span></span>
+                        </div>
+
+                        <div class="mobile-map">
+                            <div class="chat-overlay-mobile">
+                                <i class="ra ra-speech-bubbles"></i>
+                                <span class="author nain">Dorna :</span>
+                                <span class="msg-text">Au sud-est de la rivière, plein de filons.</span>
+                            </div>
+                            <div class="map-grid">
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile forest has-tree selected"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-carousel">
+                            <div class="carousel-pane">
+                                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                                    <div style="width: 50px; height: 50px; flex-shrink: 0; border-radius: 6px; background: linear-gradient(135deg, #4a3520, #2a1f12); border: 2px solid var(--accent-gold-2); display: grid; place-items: center; font-size: 22px; color: var(--accent-gold);">
+                                        <i class="ra ra-pine-tree"></i>
+                                    </div>
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-family: var(--font-fantasy); font-size: 15px; color: var(--accent-gold); line-height: 1.2;">Grand chêne</div>
+                                        <div style="font-size: 11px; color: var(--text-2);">Arbre · Récoltable</div>
+                                        <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">Ressource : <b style="color: var(--accent-green);">Bois</b></div>
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                    <button class="action-btn primary" style="padding: 6px;">
+                                        <i class="ra ra-axe"></i>Fouiller<span class="cost">1 A</span>
+                                    </button>
+                                    <button class="action-btn" style="padding: 6px;">
+                                        <i class="ra ra-aware"></i>Observer<span class="cost">0 A</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="carousel-dots">
+                                <span class="dot"></span>
+                                <span class="dot active"></span>
+                                <span class="dot"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone 3: Carousel @ position 2 (Full action grid) -->
+            <div>
+                <div class="wf-stage-label">Position 2 — Grille d'actions complète</div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="mobile-topbar">
+                            <button class="mobile-hamburger" title="Menu"><i></i></button>
+                            <span class="mobile-player-chip" data-race="nain">
+                                <span class="pc-portrait">C</span>
+                                <span class="pc-name">Cradek</span>
+                            </span>
+                            <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span></span>
+                            <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span></span>
+                            <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span></span>
+                            <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span></span>
+                            <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span></span>
+                            <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span></span>
+                        </div>
+
+                        <div class="mobile-map">
+                            <div class="chat-overlay-mobile">
+                                <i class="ra ra-speech-bubbles"></i>
+                                <span class="author elfe">Thyrias :</span>
+                                <span class="msg-text">Merci ! J'y file.</span>
+                            </div>
+                            <div class="map-grid">
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile forest has-tree selected"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-carousel">
+                            <div class="carousel-pane">
+                                <div class="zone-title"><i class="ra ra-crossed-swords"></i> Toutes les actions</div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                                    <button class="action-btn primary" style="padding: 4px; font-size: 10px;"><i class="ra ra-axe"></i>Fouiller<span class="cost">1 A</span></button>
+                                    <button class="action-btn" style="padding: 4px; font-size: 10px;"><i class="ra ra-aware"></i>Observer<span class="cost">0 A</span></button>
+                                    <button class="action-btn" style="padding: 4px; font-size: 10px;"><i class="ra ra-health"></i>Repos<span class="cost">0 A</span></button>
+                                    <button class="action-btn" style="padding: 4px; font-size: 10px;"><i class="ra ra-quill-ink"></i>Prier<span class="cost">1 A</span></button>
+                                    <button class="action-btn" style="padding: 4px; font-size: 10px;"><i class="ra ra-muscle-up"></i>Entraint.<span class="cost">2 A</span></button>
+                                    <button class="action-btn" style="padding: 4px; font-size: 10px;"><i class="ra ra-archery-target"></i>Pêcher<span class="cost">1 A</span></button>
+                                    <button class="action-btn disabled" style="padding: 4px; font-size: 10px;"><i class="ra ra-crossed-swords"></i>Attaquer<span class="cost">cible ?</span></button>
+                                    <button class="action-btn" style="padding: 4px; font-size: 10px;"><i class="ra ra-burning-book"></i>Examiner<span class="cost">0 A</span></button>
+                                </div>
+                            </div>
+                            <div class="carousel-dots">
+                                <span class="dot"></span>
+                                <span class="dot"></span>
+                                <span class="dot active"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
