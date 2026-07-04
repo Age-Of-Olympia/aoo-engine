@@ -166,6 +166,16 @@
         if (/^infos\.php\?targetId=\d+$/.test(href)) {
             return href.replace(/^infos\.php/, 'load_infos.php');
         }
+        /* Améliorations et Sorts (upgrades.php seul ou ?spells ;
+         * ?caracTables reste un export plein-page). */
+        if (/^upgrades\.php(\?spells)?$/.test(href)) {
+            return href.replace(/^upgrades\.php/, 'load_upgrades.php');
+        }
+        /* Profil : la racine seulement, les sous-pages (portraits,
+         * mdj, histoire, mails…) restent plein-page. */
+        if (href === 'account.php') {
+            return 'load_account.php';
+        }
         return null;
     }
 
@@ -181,6 +191,15 @@
         }
         if (href.indexOf('infos') !== -1) {
             return 'Personnage';
+        }
+        if (href.indexOf('spells') !== -1) {
+            return 'Sorts & Techniques';
+        }
+        if (href.indexOf('upgrades') !== -1) {
+            return 'Améliorations';
+        }
+        if (href.indexOf('account') !== -1) {
+            return 'Profil';
         }
         return '';
     }
@@ -379,25 +398,37 @@
         loadFeed('mdj');
         loadFeed('events');
 
-        /* Artisanat et Banque, émis en fin de rail par HudLayoutView,
-         * prennent leur place juste après Inventaire. */
+        /* Artisanat, Banque et Sorts, émis en fin de rail par
+         * HudLayoutView, prennent leur place : possessions après
+         * Inventaire, Sorts après Caractéristiques. */
         $('#show-craft, #show-bank').insertAfter('#show-inventory');
+        $('#show-spells').insertAfter('#show-caracs');
 
-        /* Rail : Inventaire / Artisanat / Banque en panneaux
-         * indépendants (hors tutoriel — navigation normale). */
+        /* Rail : chaque entrée ouvre son panneau indépendant
+         * (hors tutoriel — navigation normale). */
         var RAIL_PANELS = {
             'show-inventory': { url: 'load_inventory.php', title: 'Inventaire' },
             'show-craft': { url: 'load_inventory.php?craft', title: 'Artisanat' },
-            'show-bank': { url: 'load_inventory.php?bank', title: 'Banque' }
+            'show-bank': { url: 'load_inventory.php?bank', title: 'Banque' },
+            'show-spells': { url: 'load_upgrades.php?spells', title: 'Sorts & Techniques' }
         };
 
-        $(document).on('click', '#show-inventory, #show-craft, #show-bank', function (e) {
+        $(document).on('click', '#show-inventory, #show-craft, #show-bank, #show-spells', function (e) {
             if (tutorialActive()) {
                 return;
             }
             e.preventDefault();
             var entry = RAIL_PANELS[this.id];
             togglePanel(entry.url, entry.title);
+        });
+
+        /* Rail : Profil en panneau (l'ancre de MenuView n'a pas d'id) */
+        $(document).on('click', '#hud-rail a[href="account.php"]', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            e.preventDefault();
+            togglePanel('load_account.php', 'Profil');
         });
 
         /* Rail : Caractéristiques en panneau (hors tutoriel).

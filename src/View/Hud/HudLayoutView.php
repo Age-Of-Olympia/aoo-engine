@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260705h';
+    private const VERSION = '20260706a';
 
     public static function render(Player $player): void
     {
@@ -39,7 +39,8 @@ final class HudLayoutView
         echo '<nav id="hud-rail"><div id="menu">';
         MenuView::renderMenu();
         echo '<a href="inventory.php?craft" id="show-craft" title="Artisanat"><button><span class="ra ra-forging"></span></button></a>'
-            . '<a href="inventory.php?bank" id="show-bank" title="Banque"><button><span class="ra ra-gold-bar"></span></button></a>';
+            . '<a href="inventory.php?bank" id="show-bank" title="Banque"><button><span class="ra ra-gold-bar"></span></button></a>'
+            . '<a href="upgrades.php?spells" id="show-spells" title="Sorts &amp; Techniques"><button><span class="ra ra-fairy-wand"></span></button></a>';
         echo '</div></nav>';
 
         MinimapView::render($player);
