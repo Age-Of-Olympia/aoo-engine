@@ -28,10 +28,69 @@
         $.post(feed.url)
             .done(function (data) {
                 $(feed.pane).html(data);
+                if (name === 'events') {
+                    /* Onglet ouvert : tout est vu ; sinon, compter. */
+                    if (activeTab() === 'events') {
+                        markEventsSeen();
+                    } else {
+                        updateEventsBadge();
+                    }
+                }
             })
             .fail(function () {
                 $(feed.pane).html('<p class="hud-feed-empty">Impossible de charger le flux.</p>');
             });
+    }
+
+    /*
+     * Compteur d'évènements non lus : compare les data-time du flux au
+     * dernier passage sur l'onglet (localStorage). Purement frontend,
+     * pas de marqueur "lu" côté serveur en Phase 1.
+     */
+    var SEEN_KEY = 'hudEventsSeen';
+
+    function updateEventsBadge() {
+        var lastSeen = parseInt(localStorage.getItem(SEEN_KEY), 10) || 0;
+        var unread = $('#hud-feed-events .hud-feed-item').filter(function () {
+            return parseInt($(this).data('time'), 10) > lastSeen;
+        }).length;
+
+        $('#hud-events-badge')
+            .text(unread)
+            .toggle(unread > 0 && activeTab() !== 'events');
+    }
+
+    function markEventsSeen() {
+        var latest = 0;
+        $('#hud-feed-events .hud-feed-item').each(function () {
+            latest = Math.max(latest, parseInt($(this).data('time'), 10) || 0);
+        });
+        if (latest > 0) {
+            localStorage.setItem(SEEN_KEY, String(latest));
+        }
+        $('#hud-events-badge').hide();
+    }
+
+    /*
+     * Minimap : dimensionne le wrapper au ratio de l'image (data-ratio,
+     * posé par MinimapView) pour tenir dans la case — équivalent
+     * d'object-fit: contain, mais le marqueur en pourcentages reste
+     * aligné sur l'image.
+     */
+    function fitMinimap() {
+        var $box = $('#hud-minimap');
+        var $map = $box.find('.hud-minimap-map');
+        var ratio = parseFloat($map.data('ratio'));
+
+        if (!$map.length || !ratio) {
+            return;
+        }
+
+        var boxW = $box.innerWidth() - 8;
+        var boxH = $box.innerHeight() - 8;
+        var w = Math.min(boxW, boxH * ratio);
+
+        $map.css({ width: w + 'px', height: (w / ratio) + 'px' });
     }
 
     /*
@@ -94,12 +153,19 @@
             $('#hud-feed-mdj').toggle(tab === 'mdj');
             $('#hud-feed-events').toggle(tab === 'events');
 
+            if (tab === 'events') {
+                markEventsSeen();
+            }
+
             loadFeed(tab);
         });
 
         $('#hud-feed-refresh').on('click', function () {
             loadFeed(activeTab());
         });
+
+        fitMinimap();
+        $(window).on('resize', fitMinimap);
     });
 
 })();

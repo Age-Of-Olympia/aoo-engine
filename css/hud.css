@@ -299,6 +299,8 @@ body:has(#hud) #view-landing-wrapper {
 
 #hud-minimap {
     grid-area: 3 / 2 / 4 / 3;
+    display: grid;
+    place-items: center;
     position: relative;
     overflow: hidden;
     border: 1px solid #444;
@@ -306,10 +308,12 @@ body:has(#hud) #view-landing-wrapper {
     background: url('../img/ui/bg/marbre.jpeg');
 }
 
+/* Le wrapper est dimensionné par js/hud.js (fitMinimap) au ratio
+ * exact de l'image : les pourcentages du marqueur tombent juste,
+ * sans letterbox object-fit. */
 #hud-minimap .hud-minimap-map {
     display: block;
     position: relative;
-    height: 100%;
 }
 
 #hud-minimap .hud-minimap-map img {
@@ -317,7 +321,25 @@ body:has(#hud) #view-landing-wrapper {
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain;
+}
+
+/* Marqueur « vous êtes ici » — pulsation douce, pas d'urgence */
+.hud-minimap-me {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: #e0218a;
+    border: 1px solid #fff;
+    box-shadow: 0 0 4px rgba(224, 33, 138, 0.9);
+    animation: hud-minimap-pulse 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes hud-minimap-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
 }
 
 #hud-minimap .hud-minimap-placeholder {
@@ -361,6 +383,21 @@ body:has(#hud) #view-landing-wrapper {
 
 #hud-side #hud-feed-refresh {
     flex: 0 0 auto;
+}
+
+/* Pastille d'évènements non lus sur l'onglet */
+.hud-badge {
+    display: inline-block;
+    min-width: 16px;
+    padding: 1px 4px;
+    margin-left: 5px;
+    border-radius: 999px;
+    background: #a00;
+    color: #fff;
+    font-size: 75%;
+    line-height: 1.4;
+    text-align: center;
+    vertical-align: text-top;
 }
 
 .hud-feed {

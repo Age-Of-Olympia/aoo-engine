@@ -10,17 +10,18 @@ use Classes\Str;
 /**
  * Case minimap du HUD (coin bas-gauche de la grille).
  *
- * Réutilise les couches PNG pré-générées de la carte locale
- * (ViewService::getLocalMap — simple glob, aucun rendu GD). Les couches
- * joueurs (generateLocalPlayersLayer / generateLocalPlayerLayer) sont
- * volontairement exclues : elles déclenchent un rendu GD à chaque
- * affichage de page. La minimap est un simple repère cliquable vers
- * map.php, pas une carte temps réel.
+ * Réutilise les couches PNG pré-générées (ViewService::getGlobalMap /
+ * getLocalMap — simples glob, aucun rendu GD) : carte du monde sur le
+ * plan monde, carte locale ailleurs. Les couches joueurs GD sont
+ * volontairement exclues ; la position du joueur est un marqueur CSS
+ * placé via ViewService::getPositionPercent(). Le bloc est un repère
+ * cliquable vers map.php, pas une carte temps réel.
  */
 final class MinimapView
 {
     /** Couches statiques empilées, dans l'ordre de dessin de map.php. */
-    private const LAYERS = ['tiles', 'elements', 'walls', 'routes'];
+    private const LOCAL_LAYERS = ['tiles', 'elements', 'walls', 'routes'];
+    private const WORLD_LAYERS = ['tiles', 'elements', 'locations', 'routes'];
 
     public static function render(Player $player): void
     {
@@ -33,23 +34,52 @@ final class MinimapView
         try {
             $planJson = json()->decode('plans', $coords->plan);
             if (!is_object($planJson) || empty($planJson->id)) {
-                throw new \RuntimeException('plan sans carte locale');
+                throw new \RuntimeException('plan sans carte');
             }
 
             $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planJson->id);
-            $mapResult = $viewService->getLocalMap();
+
+            if ($viewService->isWorldPlan()) {
+                $mapResult = $viewService->getGlobalMap();
+                $layers = self::WORLD_LAYERS;
+                $href = 'map.php?world';
+            } else {
+                $mapResult = $viewService->getLocalMap();
+                $layers = self::LOCAL_LAYERS;
+                $href = 'map.php?local=1';
+            }
 
             $imgs = '';
-            foreach (self::LAYERS as $layer) {
+            $aspect = '';
+            foreach ($layers as $layer) {
                 $imagePath = $mapResult[$layer]['imagePath'] ?? null;
                 if ($imagePath && file_exists($_SERVER['DOCUMENT_ROOT'] . $imagePath)) {
+                    /* Ratio pris sur la première couche : le wrapper doit
+                     * avoir la proportion exacte de l'image pour que le
+                     * marqueur en pourcentages tombe juste (pas de
+                     * letterbox object-fit). */
+                    if ($aspect === '') {
+                        [$w, $h] = getimagesize($_SERVER['DOCUMENT_ROOT'] . $imagePath);
+                        $aspect = (string) round($w / max(1, $h), 4);
+                    }
                     $imgs .= '<img src="' . $imagePath . '" alt="" />';
                 }
             }
 
             if ($imgs !== '') {
-                echo '<a href="map.php?local=1" class="hud-minimap-map" title="Ouvrir la carte de ' . $planJson->name . '">'
-                    . $imgs . '</a>';
+                $marker = '';
+                $pos = $viewService->getPositionPercent();
+                if ($pos !== null) {
+                    $marker = '<span class="hud-minimap-me" title="Vous êtes ici" style="left: '
+                        . round($pos['x'], 2) . '%; top: ' . round($pos['y'], 2) . '%;"></span>';
+                }
+
+                /* data-ratio : js/hud.js dimensionne le wrapper pour tenir
+                 * dans la case en conservant la proportion de l'image, afin
+                 * que le marqueur en pourcentages tombe juste. */
+                echo '<a href="' . $href . '" class="hud-minimap-map" data-ratio="' . $aspect . '"'
+                    . ' title="Ouvrir la carte de ' . $planJson->name . '">'
+                    . $imgs . $marker . '</a>';
             } else {
                 self::placeholder();
             }

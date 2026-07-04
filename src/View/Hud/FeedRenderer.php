@@ -61,7 +61,9 @@ final class FeedRenderer
             $planJson = json()->decode('plans', $e->plan);
             $planName = is_object($planJson) ? $planJson->name : '?';
 
-            echo '<div class="hud-feed-item">'
+            /* data-time : js/hud.js s'en sert pour le compteur d'évènements
+             * non lus (comparaison au dernier passage, localStorage). */
+            echo '<div class="hud-feed-item" data-time="' . (int) $e->time . '">'
                 . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
                 . '<div class="hud-feed-meta">'
                 . self::authorName($playerService, (int) $e->player_id)
