@@ -165,7 +165,16 @@
         return '';
     }
 
+    /* Panneau courant, persisté en sessionStorage pour survivre aux
+     * rechargements de page (un déplacement recharge index.php — même
+     * confort que l'ancien cookie caracs_panel_open). */
+    var currentPanelUrl = null;
+
     function openPanel(url, title) {
+        currentPanelUrl = url;
+        sessionStorage.setItem('hudPanelUrl', url);
+        sessionStorage.setItem('hudPanelTitle', title || '');
+
         $('#hud-panel-title').text(title || '');
         $('#hud-panel-content').html('Chargement…');
         $('#hud').addClass('hud--panel-open');
@@ -181,8 +190,21 @@
     }
 
     function closePanel() {
+        currentPanelUrl = null;
+        sessionStorage.removeItem('hudPanelUrl');
+        sessionStorage.removeItem('hudPanelTitle');
+
         $('#hud').removeClass('hud--panel-open');
         $('#hud-panel').attr('aria-hidden', 'true');
+    }
+
+    /* Boutons du rail : deuxième clic sur la même entrée = fermeture. */
+    function togglePanel(url, title) {
+        if (currentPanelUrl === url && $('#hud').hasClass('hud--panel-open')) {
+            closePanel();
+        } else {
+            openPanel(url, title);
+        }
     }
 
     $(document).ready(function () {
@@ -196,8 +218,53 @@
                 return;
             }
             e.preventDefault();
-            openPanel('load_inventory.php', 'Inventaire');
+            togglePanel('load_inventory.php', 'Inventaire');
         });
+
+        /* Rail : Caractéristiques en panneau (hors tutoriel).
+         * On débranche le toggle flyout de MenuView et on route vers le
+         * panneau ; le flyout #load-caracs est vidé pour ne jamais
+         * dupliquer #mvt-counter / #action-counter dans le DOM. Pendant
+         * le tutoriel, comportement flyout d'origine (ses steps
+         * observent #load-caracs et y surlignent les compteurs). */
+        if (!tutorialActive()) {
+            $('#show-caracs').off('click');
+
+            $(document).on('click', '#show-caracs', function (e) {
+                e.preventDefault();
+
+                if (tutorialActive()) {
+                    /* Tutoriel lancé depuis cette page : retomber sur le
+                     * comportement flyout via les helpers de view.js. */
+                    if ($('#load-caracs').is(':visible')) {
+                        window.closeCaracsPanel();
+                    } else {
+                        window.openCaracsPanel();
+                    }
+                    return;
+                }
+
+                $('#load-caracs').hide().empty();
+                togglePanel('load_caracs.php', 'Caractéristiques');
+            });
+        }
+
+        /* Rail : Évènements → onglet Événements du panneau latéral
+         * (la page complète logs.php reste accessible via « Tout voir »). */
+        $(document).on('click', '#hud-rail a[href^="logs.php"]', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            e.preventDefault();
+            $('.hud-tab[data-tab="events"]').trigger('click');
+        });
+
+        /* Panneau persisté : rouvrir après un rechargement de page
+         * (déplacement, action…). */
+        var savedPanelUrl = sessionStorage.getItem('hudPanelUrl');
+        if (savedPanelUrl && !tutorialActive()) {
+            openPanel(savedPanelUrl, sessionStorage.getItem('hudPanelTitle') || '');
+        }
 
         /* Chip joueur : fiche perso en panneau */
         $(document).on('click', '#hud-chip-name', function (e) {

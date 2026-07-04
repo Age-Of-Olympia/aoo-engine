@@ -24,6 +24,7 @@ final class SidePanelView
             . '<button class="hud-tab" data-tab="events">Événements'
             . '<span id="hud-events-badge" class="hud-badge" style="display:none;"></span></button>'
             . '<button id="hud-feed-refresh" title="Rafraîchir"><span class="ra ra-cycle"></span></button>'
+            . '<a id="hud-feed-full" href="logs.php?light" title="Page complète des évènements (perception, messages du jour, quêtes)"><button><span class="ra ra-book"></span></button></a>'
             . '</div>'
             . '<div id="hud-feed-mdj" class="hud-feed">Chargement…</div>'
             . '<div id="hud-feed-events" class="hud-feed" style="display:none;">Chargement…</div>'
