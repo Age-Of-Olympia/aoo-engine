@@ -548,15 +548,19 @@ body:has(#hud) #debug-flags {
         width: 36px;
     }
 
+    /* Pastilles compactes sur deux lignes maximum : tout reste
+     * visible, pas de défilement horizontal déroutant. */
     .hud-pills {
-        overflow-x: auto;
-        scrollbar-width: none;
         flex: 1 1 auto;
         min-width: 0;
+        flex-wrap: wrap;
+        gap: 3px;
     }
 
-    .hud-pills::-webkit-scrollbar {
-        display: none;
+    .hud-pill {
+        padding: 1px 6px;
+        font-size: 72%;
+        gap: 3px;
     }
 
     #hud-burger {
@@ -691,7 +695,9 @@ body:has(#hud) #debug-flags {
         transform: none;
     }
 
-    /* --- Bulle de chat flottante --- */
+    /* --- Bulle de chat flottante ---
+     * Sous les sheets (z-index) et masquée dès qu'un panneau ou le
+     * chat est ouvert : elle ne doit jamais recouvrir une sous-page. */
     #hud-bubble {
         display: flex;
         align-items: center;
@@ -699,11 +705,17 @@ body:has(#hud) #debug-flags {
         position: fixed;
         right: 8px;
         bottom: calc(32vh + 24px);
-        z-index: 60;
-        max-width: 60vw;
+        z-index: 50;
+        max-width: 50vw;
         padding: 6px 10px;
         border-radius: 999px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    #hud.hud--panel-open #hud-bubble,
+    #hud.hud--chat-open #hud-bubble,
+    #hud.hud--drawer-open #hud-bubble {
+        display: none;
     }
 
     #hud-bubble #hud-bubble-text {
