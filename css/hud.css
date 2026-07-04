@@ -213,13 +213,13 @@ body:has(#hud) #view-landing-wrapper {
     background: rgba(0, 0, 0, 0.35);
 }
 
-/* ---------- Bandeau bas : sélection + actions (#ajax-data) ---------- */
+/* ---------- Bandeau bas : sélection (#ajax-data) + actions ---------- */
 
-/* observe.php continue d'injecter .case-infos + #ui-card ici ;
- * le conteneur unique occupe les colonnes sélection + actions,
- * son bord droit sous le panneau latéral (décision wireframe). */
+/* observe.php continue d'injecter .case-infos + #ui-card ici (cellule
+ * sélection) ; js/hud.js déplace ensuite la .card-actions vers le
+ * panneau #hud-actions voisin. Zéro changement back-end. */
 #hud #ajax-data {
-    grid-area: 3 / 3 / 4 / 5;
+    grid-area: 3 / 3 / 4 / 4;
     overflow: auto;
     display: flex;
     align-items: flex-start;
@@ -254,6 +254,45 @@ body:has(#hud) #view-landing-wrapper {
 #hud #case-coords {
     align-self: flex-end;
     margin-left: auto;
+}
+
+/* ---------- Panneau d'actions (sous le panneau latéral) ---------- */
+
+#hud-actions {
+    grid-area: 3 / 4 / 4 / 5;
+    overflow: auto;
+    padding: 8px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: url('../img/ui/bg/marbre.jpeg');
+}
+
+#hud-actions:empty::before {
+    content: "Aucune action — sélectionnez une cible.";
+    display: block;
+    margin-top: 2em;
+    text-align: center;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Sortie de #ui-card, la .card-actions récupère les noms visibles
+ * (la règle #ui-card .card-actions .action-name de main.css ne
+ * s'applique plus) ; on liste les boutons pleine largeur. */
+#hud-actions .card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+
+#hud-actions .card-actions br {
+    display: none;
+}
+
+#hud-actions .action {
+    width: 100%;
+    text-align: left;
 }
 
 /* ---------- Minimap ---------- */
@@ -434,6 +473,14 @@ body:has(#hud) #debug-flags {
 
     #hud #ajax-data .case-infos {
         max-width: none;
+    }
+
+    #hud-actions {
+        margin-bottom: 6px;
+    }
+
+    #hud-actions:empty {
+        display: none;
     }
 
     #hud-minimap {

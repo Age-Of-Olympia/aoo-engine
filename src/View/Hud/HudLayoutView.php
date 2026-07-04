@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260704';
+    private const VERSION = '20260705';
 
     public static function render(Player $player): void
     {
@@ -44,6 +44,12 @@ final class HudLayoutView
         echo '</div>';
 
         SidePanelView::render();
+
+        /* Panneau d'actions (bandeau bas, sous le panneau latéral) :
+         * js/hud.js y déplace la .card-actions injectée par observe.php
+         * dans #ajax-data — la sélection reste dans #ajax-data, les
+         * boutons d'action vivent ici, comme sur le wireframe. */
+        echo '<div id="hud-actions"></div>';
 
         echo '</div>';
 
