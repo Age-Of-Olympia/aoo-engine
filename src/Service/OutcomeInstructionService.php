@@ -32,4 +32,29 @@ class OutcomeInstructionService
 
         return $query->getResult();
     }
+
+    /**
+     * Instructions d'un outcome filtrées par type (nom court de classe,
+     * ex. "LifeLossOutcomeInstruction").
+     *
+     * Rétabli après la refonte mono-requête (843c68b9) qui l'avait
+     * supprimé en oubliant deux appelants (scripts/upgrades/spells.php,
+     * scripts/tools/generate_actions_wiki.php) — fatal sur la page
+     * Sorts pour tout personnage connaissant un sort. Réutilise la
+     * requête unique puis filtre en mémoire : le gain de la refonte
+     * est conservé.
+     *
+     * @return array<int, \App\Entity\OutcomeInstruction>
+     */
+    public function getOutcomeInstructionByTypeByOutcome(string $type, int $outcomeId): array
+    {
+        $fqcn = 'App\\Action\\OutcomeInstruction\\' . $type;
+
+        return array_values(array_filter(
+            $this->getOutcomeInstructionsByOutcome($outcomeId),
+            static function ($instruction) use ($fqcn) {
+                return $instruction instanceof $fqcn;
+            }
+        ));
+    }
 }
