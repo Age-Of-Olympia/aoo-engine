@@ -242,13 +242,98 @@ body:has(#hud) #view-landing-wrapper {
     max-width: 40%;
 }
 
-/* La carte de personnage n'est plus un popup absolu : elle vit
- * en flux dans le bandeau (annule .popup,#ui-card de main.css). */
+/* ----- Carte de sélection retravaillée pour le bandeau bas -----
+ * La carte verticale héritée (portrait 220×230, marges négatives,
+ * cadre noir 17px) est recomposée en fiche horizontale : portrait à
+ * gauche, nom / type / faction / description à droite. Les nœuds
+ * injectés par observe.php sont inchangés (handlers et résultats
+ * d'action dans .card-text préservés) — seule la mise en page change,
+ * l'ordre DOM (name, image, type, faction, text) remplit la grille
+ * naturellement. */
 #hud #ui-card {
     position: static;
     top: auto;
     flex: 1 1 auto;
     min-width: 0;
+    height: 100%;
+}
+
+#hud #ajax-data .card-wrapper {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 2px;
+    box-sizing: border-box;
+    height: 100%;
+    padding: 8px 12px;
+    border: 2px solid #222;
+    border-radius: 6px;
+}
+
+#hud #ajax-data .card-name {
+    grid-column: 2;
+    margin: 0;
+    text-align: left;
+}
+
+#hud #ajax-data .card-name .effects {
+    position: static;
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+#hud #ajax-data .card-image {
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    width: 96px;
+    height: 100%;
+    max-height: 160px;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    align-self: start;
+}
+
+#hud #ajax-data .card-image .card-portrait {
+    position: static;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+    display: block;
+}
+
+/* PV perdus : js/hud.js convertit le #red-filter hérité (hauteur px
+ * calée sur l'ancien portrait) en voile pourcentage dans .card-image */
+#hud #ajax-data .hud-pv-lost {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #770001;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: height 0.2s linear;
+}
+
+#hud #ajax-data .card-type,
+#hud #ajax-data .card-faction {
+    grid-column: 2;
+    margin: 0;
+    text-align: left;
+}
+
+#hud #ajax-data .card-text {
+    grid-column: 2;
+    margin: 0;
+    overflow-y: auto;
+    min-height: 0;
+    text-align: left;
 }
 
 #hud #case-coords {

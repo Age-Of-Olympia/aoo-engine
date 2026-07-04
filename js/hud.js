@@ -140,6 +140,29 @@
             $panel.append($actions);
             window.visible = true;
         }
+
+        adaptPvFilter();
+    }
+
+    /*
+     * Le #red-filter hérité (PV perdus) est calé en pixels sur
+     * l'ancien portrait 225px ; dans la fiche recomposée du bandeau,
+     * on le convertit en voile pourcentage ancré en haut du portrait
+     * — même information, indépendante de la taille du portrait.
+     */
+    function adaptPvFilter() {
+        var $filter = $('#ajax-data #red-filter');
+        if (!$filter.length) {
+            return;
+        }
+
+        var match = ($filter.attr('style') || '').match(/height:\s*([\d.]+)px/);
+        var lostPct = match ? Math.min(100, Math.max(0, parseFloat(match[1]) / 225 * 100)) : 0;
+
+        $filter.removeAttr('style')
+            .addClass('hud-pv-lost')
+            .css('height', lostPct + '%')
+            .appendTo($('#ajax-data .card-image'));
     }
 
     /*
