@@ -237,80 +237,70 @@ body:has(#hud) #view-landing-wrapper {
     font-style: italic;
 }
 
+/* Réponses non composées (texte brut de go.php, erreurs) : le flex
+ * de base suffit ; les observations sont recomposées en .hud-sel par
+ * js/hud.js — voir la section zone de sélection. */
 #hud #ajax-data .case-infos {
     flex: 0 0 auto;
-    max-width: 40%;
 }
 
-/* ----- Carte de sélection retravaillée pour le bandeau bas -----
- * La carte verticale héritée (portrait 220×230, marges négatives,
- * cadre noir 17px) est recomposée en fiche horizontale : portrait à
- * gauche, nom / type / faction / description à droite. Les nœuds
- * injectés par observe.php sont inchangés (handlers et résultats
- * d'action dans .card-text préservés) — seule la mise en page change,
- * l'ordre DOM (name, image, type, faction, text) remplit la grille
- * naturellement. */
-#hud #ui-card {
-    position: static;
-    top: auto;
-    flex: 1 1 auto;
-    min-width: 0;
-    height: 100%;
-}
-
-#hud #ajax-data .card-wrapper {
+/* ----- Zone de sélection recomposée (wireframe, bandeau bas) -----
+ * js/hud.js (composeSelection) réorganise la réponse d'observe.php en
+ * une vue unique qui occupe TOUT le bandeau : portrait à gauche (voile
+ * de blessures conservé), nom + statut + effets + description au
+ * centre, contenu de la case et coordonnées à droite. L'ancienne
+ * carte (cadre noir, fond de race) disparaît ; les nœuds d'origine
+ * sont déplacés, jamais recréés (handlers et résultats d'action dans
+ * .card-text préservés). */
+#hud #ajax-data .hud-sel {
     display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(0, 1fr);
-    column-gap: 12px;
-    row-gap: 2px;
+    grid-template-columns: 110px minmax(0, 1fr) minmax(170px, 28%);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 4px 14px;
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
-    height: 100%;
-    padding: 8px 12px;
-    border: 2px solid #222;
-    border-radius: 6px;
 }
 
-#hud #ajax-data .card-name {
-    grid-column: 2;
-    margin: 0;
-    text-align: left;
-}
-
-#hud #ajax-data .card-name .effects {
+/* La coquille #ui-card reste (« Fermer » la masque) mais est
+ * transparente pour la grille : ses deux sections se placent seules. */
+#hud .hud-sel #ui-card {
+    display: contents;
     position: static;
-    display: inline-flex;
-    gap: 2px;
-    margin-left: 8px;
-    vertical-align: middle;
+    pointer-events: auto;
+    color: inherit;
 }
 
-#hud #ajax-data .card-image {
+.hud-sel .hud-sel-left {
     grid-column: 1;
-    grid-row: 1 / span 4;
-    width: 96px;
-    height: 100%;
-    max-height: 160px;
-    margin: 0;
+    grid-row: 1 / span 2;
     position: relative;
     overflow: hidden;
     border-radius: 4px;
-    align-self: start;
+    align-self: stretch;
 }
 
-#hud #ajax-data .card-image .card-portrait {
+.hud-sel .hud-sel-left .card-image {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hud-sel .hud-sel-left .card-portrait {
     position: static;
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: top;
     border: 2px solid rgba(0, 0, 0, 0.5);
     box-sizing: border-box;
-    display: block;
 }
 
-/* PV perdus : js/hud.js convertit le #red-filter hérité (hauteur px
- * calée sur l'ancien portrait) en voile pourcentage dans .card-image */
-#hud #ajax-data .hud-pv-lost {
+/* Voile de blessures : #red-filter converti en pourcentage par js/hud.js */
+.hud-sel .hud-pv-lost {
     position: absolute;
     top: 0;
     left: 0;
@@ -321,24 +311,93 @@ body:has(#hud) #view-landing-wrapper {
     transition: height 0.2s linear;
 }
 
-#hud #ajax-data .card-type,
-#hud #ajax-data .card-faction {
+.hud-sel .hud-sel-main {
     grid-column: 2;
-    margin: 0;
-    text-align: left;
-}
-
-#hud #ajax-data .card-text {
-    grid-column: 2;
-    margin: 0;
-    overflow-y: auto;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     min-height: 0;
     text-align: left;
 }
 
-#hud #case-coords {
-    align-self: flex-end;
-    margin-left: auto;
+.hud-sel .hud-sel-main .card-name {
+    margin: 0;
+    font-family: goudy;
+    font-size: 1.25em;
+    letter-spacing: 1px;
+}
+
+.hud-sel .hud-sel-main .card-name a {
+    font-family: goudy;
+}
+
+.hud-sel .hud-sel-main .card-name .effects {
+    position: static;
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.hud-sel .hud-sel-main .card-type,
+.hud-sel .hud-sel-main .card-faction {
+    margin: 0;
+    font-size: 88%;
+    opacity: 0.85;
+    text-shadow: none;
+    color: inherit;
+}
+
+.hud-sel .hud-sel-main .card-text {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    margin-top: 4px;
+}
+
+/* Contenu de la case (éléments, murs, objets au sol) */
+.hud-sel .hud-sel-tile {
+    grid-column: 3;
+    grid-row: 1;
+    overflow-y: auto;
+    min-height: 0;
+    border-left: 1px dotted #777;
+    padding-left: 10px;
+    text-align: left;
+}
+
+.hud-sel .hud-sel-tile-title {
+    font-family: goudy;
+    font-size: 105%;
+    opacity: 0.75;
+    margin-bottom: 4px;
+}
+
+.hud-sel .hud-sel-tile .case-infos {
+    flex: none;
+    max-width: none;
+    margin-bottom: 6px;
+}
+
+/* Coordonnées : coin bas-droit, discret */
+.hud-sel #case-coords {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: end;
+    align-self: end;
+    margin: 0;
+}
+
+/* Sans personnage sélectionné, le contenu de la case prend tout */
+.hud-sel.hud-sel--nocard .hud-sel-tile {
+    grid-column: 1 / span 3;
+    border-left: none;
+    padding-left: 0;
+}
+
+.hud-sel.hud-sel--nocard #case-coords {
+    grid-column: 1 / span 3;
 }
 
 /* ---------- Panneau d'actions (sous le panneau latéral) ---------- */

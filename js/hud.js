@@ -142,6 +142,62 @@
         }
 
         adaptPvFilter();
+        composeSelection();
+    }
+
+    /*
+     * Recompose la réponse d'observe.php en vue de sélection occupant
+     * tout le bandeau (wireframe) : portrait + voile de blessures à
+     * gauche, nom / statut / effets / description au centre, contenu
+     * de la case et coordonnées à droite. L'habillage carte hérité
+     * (.card-wrapper, cadre, fond de race) disparaît ; les nœuds sont
+     * déplacés, jamais recréés. La coquille #ui-card est conservée car
+     * « Fermer » (observe.js) la masque — le contenu de la case et les
+     * coordonnées restent alors visibles. Doit passer APRÈS
+     * relocateCardActions/adaptPvFilter (actions déjà sorties,
+     * #red-filter déjà rapatrié dans .card-image).
+     */
+    function composeSelection() {
+        var $d = $('#ajax-data');
+        if ($d.children('.hud-sel').length) {
+            return;
+        }
+
+        var $card = $d.children('#ui-card');
+        var $infos = $d.children('.case-infos');
+        if (!$card.length && !$infos.length) {
+            return; /* réponse brute (go.php, erreurs) : ne pas toucher */
+        }
+
+        var $sel = $('<div class="hud-sel"></div>');
+
+        if ($card.length) {
+            var $w = $card.find('.card-wrapper');
+            var $left = $('<div class="hud-sel-left"></div>')
+                .append($w.children('.card-image'));
+            var $main = $('<div class="hud-sel-main"></div>').append(
+                $w.children('.card-name'),
+                $w.children('.card-type'),
+                $w.children('.card-faction'),
+                $w.children('.card-text')
+            );
+            $card.empty().append($left, $main);
+            $sel.append($card);
+        } else {
+            $sel.addClass('hud-sel--nocard');
+        }
+
+        if ($infos.length) {
+            $sel.append(
+                $('<div class="hud-sel-tile"></div>')
+                    .append('<div class="hud-sel-tile-title">Sur la case</div>')
+                    .append($infos)
+            );
+        }
+
+        $sel.append($d.children('#case-coords'));
+
+        $d.prepend($sel);
     }
 
     /*
