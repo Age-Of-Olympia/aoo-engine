@@ -248,13 +248,15 @@ body:has(#hud) #view-landing-wrapper {
  * js/hud.js (composeSelection) réorganise la réponse d'observe.php en
  * une vue unique qui occupe TOUT le bandeau : portrait à gauche (voile
  * de blessures conservé), nom + statut + effets + description au
- * centre, contenu de la case et coordonnées à droite. L'ancienne
- * carte (cadre noir, fond de race) disparaît ; les nœuds d'origine
- * sont déplacés, jamais recréés (handlers et résultats d'action dans
- * .card-text préservés). */
+ * centre, contenu de la case et coordonnées à droite.
+ *
+ * IMPORTANT : tout est scopé #hud #ajax-data (2 ids) pour battre les
+ * règles de carte héritées de main.css (#ui-card .card-image 220×230,
+ * portrait en absolu, .case-infos 300px…) qui gagnaient sinon la
+ * cascade et cassaient portrait, voile et colonne de case. */
 #hud #ajax-data .hud-sel {
     display: grid;
-    grid-template-columns: 110px minmax(0, 1fr) minmax(170px, 28%);
+    grid-template-columns: 110px minmax(0, 1fr) minmax(200px, 34%);
     grid-template-rows: minmax(0, 1fr) auto;
     gap: 4px 14px;
     width: 100%;
@@ -264,14 +266,14 @@ body:has(#hud) #view-landing-wrapper {
 
 /* La coquille #ui-card reste (« Fermer » la masque) mais est
  * transparente pour la grille : ses deux sections se placent seules. */
-#hud .hud-sel #ui-card {
+#hud #ajax-data .hud-sel #ui-card {
     display: contents;
     position: static;
     pointer-events: auto;
     color: inherit;
 }
 
-.hud-sel .hud-sel-left {
+#hud #ajax-data .hud-sel-left {
     grid-column: 1;
     grid-row: 1 / span 2;
     position: relative;
@@ -280,7 +282,7 @@ body:has(#hud) #view-landing-wrapper {
     align-self: stretch;
 }
 
-.hud-sel .hud-sel-left .card-image {
+#hud #ajax-data .hud-sel-left .card-image {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -288,7 +290,7 @@ body:has(#hud) #view-landing-wrapper {
     overflow: hidden;
 }
 
-.hud-sel .hud-sel-left .card-portrait {
+#hud #ajax-data .hud-sel-left .card-portrait {
     position: static;
     display: block;
     width: 100%;
@@ -299,19 +301,23 @@ body:has(#hud) #view-landing-wrapper {
     box-sizing: border-box;
 }
 
-/* Voile de blessures : #red-filter converti en pourcentage par js/hud.js */
-.hud-sel .hud-pv-lost {
+/* Voile de blessures : #red-filter converti en pourcentage par
+ * js/hud.js — au-dessus du portrait quel que soit l'empilement */
+#hud #ajax-data .hud-pv-lost {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
+    width: auto;
+    bottom: auto;
+    z-index: 2;
     background: #770001;
     opacity: 0.5;
     pointer-events: none;
     transition: height 0.2s linear;
 }
 
-.hud-sel .hud-sel-main {
+#hud #ajax-data .hud-sel-main {
     grid-column: 2;
     grid-row: 1 / span 2;
     display: flex;
@@ -321,18 +327,20 @@ body:has(#hud) #view-landing-wrapper {
     text-align: left;
 }
 
-.hud-sel .hud-sel-main .card-name {
+#hud #ajax-data .hud-sel-main .card-name {
     margin: 0;
+    position: static;
     font-family: goudy;
     font-size: 1.25em;
     letter-spacing: 1px;
+    text-align: left;
 }
 
-.hud-sel .hud-sel-main .card-name a {
+#hud #ajax-data .hud-sel-main .card-name a {
     font-family: goudy;
 }
 
-.hud-sel .hud-sel-main .card-name .effects {
+#hud #ajax-data .hud-sel-main .card-name .effects {
     position: static;
     display: inline-flex;
     gap: 2px;
@@ -340,26 +348,32 @@ body:has(#hud) #view-landing-wrapper {
     vertical-align: middle;
 }
 
-.hud-sel .hud-sel-main .card-type,
-.hud-sel .hud-sel-main .card-faction {
+#hud #ajax-data .hud-sel-main .card-type,
+#hud #ajax-data .hud-sel-main .card-faction {
     margin: 0;
     font-size: 88%;
     opacity: 0.85;
     text-shadow: none;
     color: inherit;
+    text-align: left;
 }
 
-.hud-sel .hud-sel-main .card-text {
+#hud #ajax-data .hud-sel-main .card-text {
     flex: 1 1 auto;
     overflow-y: auto;
     min-height: 0;
-    margin-top: 4px;
+    margin: 4px 0 0 0;
+    width: auto;
+    text-align: left;
 }
 
-/* Contenu de la case (éléments, murs, objets au sol) */
-.hud-sel .hud-sel-tile {
+/* Contenu de la case (éléments, murs, objets au sol) : neutralise la
+ * largeur fixe 300px et les floats hérités de main.css */
+#hud #ajax-data .hud-sel-tile {
     grid-column: 3;
     grid-row: 1;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     min-height: 0;
     border-left: 1px dotted #777;
@@ -367,36 +381,50 @@ body:has(#hud) #view-landing-wrapper {
     text-align: left;
 }
 
-.hud-sel .hud-sel-tile-title {
+#hud #ajax-data .hud-sel-tile-title {
     font-family: goudy;
     font-size: 105%;
     opacity: 0.75;
     margin-bottom: 4px;
+    flex: 0 0 auto;
 }
 
-.hud-sel .hud-sel-tile .case-infos {
-    flex: none;
+#hud #ajax-data .hud-sel-tile .case-infos {
+    flex: 0 0 auto;
+    width: auto;
     max-width: none;
-    margin-bottom: 6px;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Coordonnées : coin bas-droit, discret */
-.hud-sel #case-coords {
+#hud #ajax-data .hud-sel-tile .case-infos img {
+    float: none;
+    margin: 0;
+    max-width: 44px;
+    max-height: 44px;
+    flex: 0 0 auto;
+}
+
+/* Coordonnées : sous le contenu de case, alignées à droite */
+#hud #ajax-data .hud-sel #case-coords {
     grid-column: 3;
     grid-row: 2;
     justify-self: end;
     align-self: end;
     margin: 0;
+    padding-left: 10px;
 }
 
 /* Sans personnage sélectionné, le contenu de la case prend tout */
-.hud-sel.hud-sel--nocard .hud-sel-tile {
+#hud #ajax-data .hud-sel--nocard .hud-sel-tile {
     grid-column: 1 / span 3;
     border-left: none;
     padding-left: 0;
 }
 
-.hud-sel.hud-sel--nocard #case-coords {
+#hud #ajax-data .hud-sel--nocard #case-coords {
     grid-column: 1 / span 3;
 }
 
