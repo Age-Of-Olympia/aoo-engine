@@ -203,6 +203,10 @@ class Ui{
         $defaultItem = new Item(1);
         $defaultItem->get_data();
 
+        /* Liste vide (ex. artisanat sans matériaux) : l'objet par
+         * défaut n'y figure pas, l'aperçu affiche alors x0. */
+        $defaultItemN = isset($itemList[$defaultItem->id]) ? $itemList[$defaultItem->id]->n : 0;
+
         ob_start();
 
 
@@ -220,7 +224,7 @@ class Ui{
         echo '
             <div class="inventory-preview">
 
-                <div class="preview-n">x'. $itemList[$defaultItem->id]->n .'</div>
+                <div class="preview-n">x'. $defaultItemN .'</div>
 
                 <div class="preview-img">
                     <img
@@ -340,8 +344,8 @@ class Ui{
         <script>
         window.id = <?php echo $defaultItem->row->id ?>;
         window.name = "<?php echo $defaultItem->row->name ?>";
-        window.type = "<?php echo $type ?>";
-        window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
+        window.type = "<?php echo $type ?? '' ?>";
+        window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
         <script src="js/inventUi.js?v=20260220"></script>
