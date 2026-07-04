@@ -379,13 +379,25 @@
         loadFeed('mdj');
         loadFeed('events');
 
-        /* Rail : Inventaire en panneau (hors tutoriel) */
-        $(document).on('click', '#show-inventory', function (e) {
+        /* Artisanat et Banque, émis en fin de rail par HudLayoutView,
+         * prennent leur place juste après Inventaire. */
+        $('#show-craft, #show-bank').insertAfter('#show-inventory');
+
+        /* Rail : Inventaire / Artisanat / Banque en panneaux
+         * indépendants (hors tutoriel — navigation normale). */
+        var RAIL_PANELS = {
+            'show-inventory': { url: 'load_inventory.php', title: 'Inventaire' },
+            'show-craft': { url: 'load_inventory.php?craft', title: 'Artisanat' },
+            'show-bank': { url: 'load_inventory.php?bank', title: 'Banque' }
+        };
+
+        $(document).on('click', '#show-inventory, #show-craft, #show-bank', function (e) {
             if (tutorialActive()) {
                 return;
             }
             e.preventDefault();
-            togglePanel('load_inventory.php', 'Inventaire');
+            var entry = RAIL_PANELS[this.id];
+            togglePanel(entry.url, entry.title);
         });
 
         /* Rail : Caractéristiques en panneau (hors tutoriel).

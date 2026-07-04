@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260705g';
+    private const VERSION = '20260705h';
 
     public static function render(Player $player): void
     {
@@ -32,9 +32,14 @@ final class HudLayoutView
 
         /* Le rail réutilise la sortie de MenuView telle quelle (ids
          * #show-caracs, #show-inventory… préservés pour le tutoriel) ;
-         * seul le CSS la passe en colonne d'icônes. */
+         * seul le CSS la passe en colonne d'icônes. Artisanat et Banque
+         * sont des entrées propres au HUD (panneaux indépendants) —
+         * js/hud.js les repositionne juste après Inventaire ; le menu
+         * hérité n'est pas modifié. */
         echo '<nav id="hud-rail"><div id="menu">';
         MenuView::renderMenu();
+        echo '<a href="inventory.php?craft" id="show-craft" title="Artisanat"><button><span class="ra ra-forging"></span></button></a>'
+            . '<a href="inventory.php?bank" id="show-bank" title="Banque"><button><span class="ra ra-gold-bar"></span></button></a>';
         echo '</div></nav>';
 
         MinimapView::render($player);
