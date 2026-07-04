@@ -44,7 +44,7 @@ final class TopBarView
             . '<a href="pnjs.php"><img src="' . $player->data->avatar . '" alt="" /></a>'
             . '</div>'
             . '<div class="hud-chip-id">'
-            . '<a href="infos.php?targetId=' . $player->id . '">' . $player->data->name . '</a>'
+            . '<a id="hud-chip-name" href="infos.php?targetId=' . $player->id . '">' . $player->data->name . '</a>'
             . '<sup>' . $raceName . ' · Rang ' . $player->data->rank . ' · mat.' . $player->getDisplayId() . '</sup>'
             . '</div>'
             . '</div>';

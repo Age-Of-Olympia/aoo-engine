@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260705a';
+    private const VERSION = '20260705b';
 
     public static function render(Player $player): void
     {
@@ -50,6 +50,8 @@ final class HudLayoutView
          * dans #ajax-data — la sélection reste dans #ajax-data, les
          * boutons d'action vivent ici, comme sur le wireframe. */
         echo '<div id="hud-actions"></div>';
+
+        PanelView::render();
 
         echo '</div>';
 

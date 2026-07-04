@@ -122,10 +122,118 @@
         }
     }
 
+    /*
+     * Routeur de panneaux (Phase 2) : charge les sous-pages en
+     * fragments dans le panneau glissant #hud-panel, sans navigation.
+     *
+     * Les liens gardent leurs URLs plein-page (repli sans JS,
+     * clic-molette intact) ; panelUrl() les réécrit vers les endpoints
+     * fragments load_*.php. Pendant le tutoriel, aucune interception :
+     * ses steps ciblent les vraies pages (inventory.php…).
+     */
+    function tutorialActive() {
+        return sessionStorage.getItem('tutorial_active') === 'true';
+    }
+
+    /* Réécrit une URL plein-page vers son fragment ; null = pas de
+     * version panneau (laisser la navigation normale). */
+    function panelUrl(href) {
+        if (/^inventory\.php/.test(href)) {
+            return href.replace(/^inventory\.php/, 'load_inventory.php');
+        }
+        /* Fiche perso : uniquement la vue de base (réputation et
+         * récompenses restent des pages complètes). */
+        if (/^infos\.php\?targetId=\d+$/.test(href)) {
+            return href.replace(/^infos\.php/, 'load_infos.php');
+        }
+        return null;
+    }
+
+    function panelTitle(href) {
+        if (href.indexOf('craft') !== -1) {
+            return 'Artisanat';
+        }
+        if (href.indexOf('bank') !== -1) {
+            return 'Banque';
+        }
+        if (href.indexOf('inventory') !== -1) {
+            return 'Inventaire';
+        }
+        if (href.indexOf('infos') !== -1) {
+            return 'Personnage';
+        }
+        return '';
+    }
+
+    function openPanel(url, title) {
+        $('#hud-panel-title').text(title || '');
+        $('#hud-panel-content').html('Chargement…');
+        $('#hud').addClass('hud--panel-open');
+        $('#hud-panel').attr('aria-hidden', 'false');
+
+        $.get(url)
+            .done(function (data) {
+                $('#hud-panel-content').html(data);
+            })
+            .fail(function () {
+                $('#hud-panel-content').html('<p class="hud-feed-empty">Impossible de charger cette page.</p>');
+            });
+    }
+
+    function closePanel() {
+        $('#hud').removeClass('hud--panel-open');
+        $('#hud-panel').attr('aria-hidden', 'true');
+    }
+
     $(document).ready(function () {
 
         loadFeed('mdj');
         loadFeed('events');
+
+        /* Rail : Inventaire en panneau (hors tutoriel) */
+        $(document).on('click', '#show-inventory', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            e.preventDefault();
+            openPanel('load_inventory.php', 'Inventaire');
+        });
+
+        /* Chip joueur : fiche perso en panneau */
+        $(document).on('click', '#hud-chip-name', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            e.preventDefault();
+            openPanel(panelUrl($(this).attr('href')), 'Personnage');
+        });
+
+        /* Navigation interne au panneau : réécrire les liens
+         * panneau-compatibles, fermer sur « Retour » (index.php),
+         * laisser passer le reste (réputation, faction, wiki…). */
+        $('#hud-panel-content').on('click', 'a[href]', function (e) {
+            var href = $(this).attr('href');
+
+            if (/^index\.php/.test(href)) {
+                e.preventDefault();
+                closePanel();
+                return;
+            }
+
+            var fragment = panelUrl(href);
+            if (fragment) {
+                e.preventDefault();
+                openPanel(fragment, panelTitle(href));
+            }
+        });
+
+        $('#hud-panel-close').on('click', closePanel);
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape' && $('#hud').hasClass('hud--panel-open')) {
+                closePanel();
+            }
+        });
 
         /* childList sans subtree : seul le remplacement du contenu de
          * #ajax-data (view.js .html()) déclenche — ni notre propre

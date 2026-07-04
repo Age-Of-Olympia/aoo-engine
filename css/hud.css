@@ -430,6 +430,52 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
+/* ---------- Panneau glissant (sous-pages, Phase 2) ---------- */
+
+/* Glisse depuis la gauche (côté rail) par-dessus la carte ; barre de
+ * statut, chat et bandeau bas restent visibles. */
+#hud-panel {
+    position: fixed;
+    top: 80px;
+    left: 80px;
+    bottom: 8px;
+    width: min(640px, calc(100vw - 460px));
+    z-index: 55;
+    display: flex;
+    flex-direction: column;
+    background: url('../img/ui/bg/marbre.jpeg');
+    border: 1px solid #444;
+    border-radius: 6px;
+    box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.5);
+    transform: translateX(calc(-100% - 100px));
+    transition: transform 0.25s ease;
+    visibility: hidden;
+}
+
+#hud.hud--panel-open #hud-panel {
+    transform: none;
+    visibility: visible;
+}
+
+#hud-panel .hud-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid #666;
+}
+
+#hud-panel #hud-panel-title {
+    font-family: goudy;
+    font-size: 130%;
+}
+
+#hud-panel #hud-panel-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 10px;
+}
+
 /* ---------- Divers ---------- */
 
 /* Outil de coordonnées admin (admin-tools.js écrit dedans) */
@@ -527,5 +573,13 @@ body:has(#hud) #debug-flags {
 
     #hud-side {
         height: 320px;
+    }
+
+    #hud-panel {
+        left: 4px;
+        right: 4px;
+        top: 4px;
+        bottom: 4px;
+        width: auto;
     }
 }
