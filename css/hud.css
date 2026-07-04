@@ -476,6 +476,22 @@ body:has(#hud) #view-landing-wrapper {
     padding: 10px;
 }
 
+/* ---------- Conteneur carrousel (neutre en desktop) ---------- */
+
+/* js/hud.js déplace minimap / #ajax-data / #hud-actions dedans une
+ * fois pour toutes ; en desktop il est transparent pour la grille. */
+#hud-carousel {
+    display: contents;
+}
+
+/* Widgets mobile — invisibles en desktop */
+#hud-burger,
+#hud-bubble,
+#hud-dots,
+#hud-backdrop {
+    display: none;
+}
+
 /* ---------- Divers ---------- */
 
 /* Outil de coordonnées admin (admin-tools.js écrit dedans) */
@@ -495,91 +511,233 @@ body:has(#hud) #debug-flags {
     text-align: right;
 }
 
-/* ---------- Repli < 1024px ----------
- * Phase 1 : simple empilement fonctionnel ; la vraie déclinaison
- * mobile (tiroir, bottom-sheets, carrousel) arrive en Phase 3. */
+/* ---------- Mobile < 1024px (Phase 3, wireframe mobile-main) ----------
+ * Barre compacte · carte plein écran · carrousel bas 3 positions ·
+ * tiroir de navigation · bulle de chat → sheet · panneaux en
+ * bottom-sheet (85 %) avec la barre de stats toujours visible. */
 @media (max-width: 1023px) {
 
     body:has(#hud) {
-        overflow: auto;
-        text-align: center;
+        overflow: hidden;
     }
 
     #hud {
-        display: block;
-        height: auto;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
         padding: 4px;
+        gap: 4px;
     }
 
+    /* --- Barre compacte : chip + pastilles défilantes --- */
     #hud-topbar {
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-bottom: 6px;
+        flex: 0 0 auto;
+        gap: 8px;
+        padding: 4px 6px;
     }
 
-    #hud-topbar .hud-place {
-        margin-left: 0;
-        text-align: center;
+    #hud-topbar .hud-chip-id sup,
+    #hud-topbar .hud-place,
+    #hud-topbar .hud-quick {
+        display: none;
     }
 
+    #hud-topbar #player-avatar img {
+        height: 36px;
+        width: 36px;
+    }
+
+    .hud-pills {
+        overflow-x: auto;
+        scrollbar-width: none;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .hud-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    #hud-burger {
+        display: block;
+        flex: 0 0 auto;
+        font-size: 20px;
+        padding: 4px 8px;
+    }
+
+    /* --- Tiroir de navigation (rail off-canvas) --- */
     #hud-rail {
-        flex-direction: row;
-        margin-bottom: 6px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 220px;
+        z-index: 80;
+        border-radius: 0 6px 6px 0;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        overflow-y: auto;
     }
 
+    #hud.hud--drawer-open #hud-rail {
+        transform: none;
+    }
+
+    /* Dans le tiroir, boutons avec libellés (title recopié inutile :
+     * on rend juste les boutons pleine largeur, icône + texte natif) */
     #hud-rail #menu {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
+        width: 100%;
+        padding: 0 8px;
     }
 
-    body:has(#hud) #load-caracs {
-        position: static;
-        max-width: none;
-        max-height: none;
-        box-shadow: none;
+    #hud-rail #menu > a {
+        width: 100%;
     }
 
+    #hud-rail #menu > a > button {
+        width: 100%;
+        height: 44px;
+        font-size: 100%;
+        text-align: left;
+        padding: 0 10px;
+    }
+
+    #hud-rail #menu .ra {
+        line-height: 44px;
+        margin-right: 8px;
+    }
+
+    #hud.hud--drawer-open #hud-backdrop,
+    #hud.hud--chat-open #hud-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: rgba(0, 0, 0, 0.45);
+    }
+
+    /* --- Carte : prend l'espace restant --- */
     #hud #game-map {
-        display: block;
-        margin-bottom: 6px;
+        flex: 1 1 auto;
+        min-height: 0;
     }
 
-    #hud #ajax-data {
-        display: block;
-        margin-bottom: 6px;
+    /* --- Carrousel bas : 3 positions scroll-snap --- */
+    #hud-carousel {
+        display: flex;
+        flex: 0 0 32vh;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        gap: 4px;
     }
 
-    #hud #ajax-data:empty {
+    #hud-carousel::-webkit-scrollbar {
         display: none;
     }
 
-    #hud #ajax-data .case-infos {
-        max-width: none;
+    #hud-carousel > * {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        min-width: 100%;
+        overflow: auto;
     }
 
-    #hud-actions {
-        margin-bottom: 6px;
+    #hud-carousel #hud-minimap {
+        display: grid;
+        place-items: center;
     }
 
-    #hud-actions:empty {
-        display: none;
+    #hud #ajax-data:empty::before {
+        content: "Cliquez sur une case pour l'observer.";
     }
 
-    #hud-minimap {
-        height: 180px;
-        margin-bottom: 6px;
+    #hud-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex: 0 0 auto;
+        padding: 2px 0;
     }
 
+    .hud-dot {
+        width: 10px;
+        height: 10px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid #666;
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .hud-dot--active {
+        background: #444;
+    }
+
+    /* --- Panneau latéral : sheet ouverte par la bulle --- */
     #hud-side {
-        height: 320px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: 15vh;
+        z-index: 75;
+        border-radius: 12px 12px 0 0;
+        transform: translateY(105%);
+        transition: transform 0.25s ease;
     }
 
+    #hud.hud--chat-open #hud-side {
+        transform: none;
+    }
+
+    /* --- Bulle de chat flottante --- */
+    #hud-bubble {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        position: fixed;
+        right: 8px;
+        bottom: calc(32vh + 24px);
+        z-index: 60;
+        max-width: 60vw;
+        padding: 6px 10px;
+        border-radius: 999px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    #hud-bubble #hud-bubble-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 80%;
+    }
+
+    /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
     #hud-panel {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: 15vh;
+        width: auto;
+        border-radius: 12px 12px 0 0;
+        transform: translateY(105%);
+    }
+
+    #hud.hud--panel-open #hud-panel {
+        transform: none;
+    }
+
+    /* --- Flyout caracs (tutoriel) : plein écran utilisable --- */
+    body:has(#hud) #load-caracs {
         left: 4px;
         right: 4px;
-        top: 4px;
-        bottom: 4px;
-        width: auto;
+        max-width: none;
+    }
+
+    /* --- Divers --- */
+    body:has(#hud) #admin-coords {
+        left: 4px;
+        bottom: 2px;
     }
 }

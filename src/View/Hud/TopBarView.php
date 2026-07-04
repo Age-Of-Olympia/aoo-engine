@@ -39,6 +39,10 @@ final class TopBarView
 
         echo '<header id="hud-topbar">';
 
+        /* Hamburger (mobile uniquement, masqué en CSS ≥1024px) :
+         * ouvre le rail en tiroir latéral. */
+        echo '<button id="hud-burger" title="Menu" aria-label="Menu">&#9776;</button>';
+
         echo '<div class="hud-chip">'
             . '<div id="player-avatar" data-id="' . $player->id . '">'
             . '<a href="pnjs.php"><img src="' . $player->data->avatar . '" alt="" /></a>'

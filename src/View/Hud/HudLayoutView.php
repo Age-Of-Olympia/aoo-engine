@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260705c';
+    private const VERSION = '20260705d';
 
     public static function render(Player $player): void
     {
@@ -52,6 +52,16 @@ final class HudLayoutView
         echo '<div id="hud-actions"></div>';
 
         PanelView::render();
+
+        /* Widgets mobile (masqués ≥1024px) : bulle de chat flottante
+         * (dernier message + accès au panneau latéral en sheet),
+         * pagination du carrousel bas, fond de fermeture du tiroir. */
+        echo '<button id="hud-bubble" title="Chat &amp; évènements">'
+            . '<span class="ra ra-speech-bubbles"></span>'
+            . '<span id="hud-bubble-text"></span>'
+            . '</button>';
+        echo '<div id="hud-dots"></div>';
+        echo '<div id="hud-backdrop"></div>';
 
         echo '</div>';
 

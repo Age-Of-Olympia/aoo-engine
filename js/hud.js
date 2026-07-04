@@ -36,6 +36,9 @@
                         updateEventsBadge();
                     }
                 }
+                if (name === 'mdj') {
+                    updateBubbleText();
+                }
             })
             .fail(function () {
                 $(feed.pane).html('<p class="hud-feed-empty">Impossible de charger le flux.</p>');
@@ -207,6 +210,80 @@
         }
     }
 
+    /*
+     * ===== Mobile (<1024px) — Phase 3 =====
+     *
+     * Le bandeau bas devient un carrousel scroll-snap à 3 positions
+     * (minimap · sélection · actions, wireframe mobile-main). Les trois
+     * blocs existants sont déplacés UNE FOIS dans #hud-carousel ; en
+     * desktop ce conteneur est en display:contents, donc la grille est
+     * strictement inchangée — le déplacement est fait à tous les
+     * viewports pour éviter toute gestion de resize.
+     */
+    function initMobile() {
+
+        var $carousel = $('<div id="hud-carousel"></div>').insertAfter('#hud-main');
+        $carousel.append($('#hud-minimap'), $('#ajax-data'), $('#hud-actions'));
+
+        /* Pagination : un point par position, synchronisé au scroll */
+        var labels = ['Minimap', 'Sélection', 'Actions'];
+        var $dots = $('#hud-dots');
+        labels.forEach(function (label, i) {
+            $('<button class="hud-dot" aria-label="' + label + '" data-index="' + i + '"></button>')
+                .appendTo($dots);
+        });
+
+        function syncDots() {
+            var el = $carousel[0];
+            var index = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+            $('.hud-dot').removeClass('hud-dot--active')
+                .filter('[data-index="' + index + '"]').addClass('hud-dot--active');
+        }
+
+        $carousel.on('scroll', syncDots);
+
+        $dots.on('click', '.hud-dot', function () {
+            var el = $carousel[0];
+            el.scrollTo({ left: $(this).data('index') * el.clientWidth, behavior: 'smooth' });
+        });
+
+        /* Position par défaut : sélection (milieu), sans animation */
+        if (window.matchMedia('(max-width: 1023px)').matches) {
+            $carousel[0].scrollLeft = $carousel[0].clientWidth;
+        }
+        syncDots();
+
+        /* Tiroir de navigation (hamburger) */
+        $('#hud-burger').on('click', function () {
+            $('#hud').toggleClass('hud--drawer-open');
+        });
+
+        /* Bulle de chat : ouvre le panneau latéral en sheet */
+        $('#hud-bubble').on('click', function () {
+            $('#hud').toggleClass('hud--chat-open');
+        });
+
+        /* Fond : referme tiroir et sheet */
+        $('#hud-backdrop').on('click', function () {
+            $('#hud').removeClass('hud--drawer-open hud--chat-open');
+        });
+
+        /* Le tiroir se referme après un clic de navigation */
+        $('#hud-rail').on('click', 'a', function () {
+            $('#hud').removeClass('hud--drawer-open');
+        });
+    }
+
+    /* Dernier message dans la bulle flottante */
+    function updateBubbleText() {
+        var latest = $('#hud-feed-mdj .hud-feed-item').first();
+        var author = latest.find('strong').text();
+        var text = latest.find('.hud-mdj-text').text();
+        if (text) {
+            $('#hud-bubble-text').text((author ? author + ' : ' : '') + text);
+        }
+    }
+
     $(document).ready(function () {
 
         loadFeed('mdj');
@@ -341,6 +418,8 @@
 
         fitMinimap();
         $(window).on('resize', fitMinimap);
+
+        initMobile();
     });
 
 })();
