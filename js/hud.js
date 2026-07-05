@@ -431,6 +431,17 @@
 
     function initMobile() {
 
+        /* Libellés du tiroir : certains boutons du menu hérité sont
+         * icône seule (le nom vit dans le title du lien) — sans copie,
+         * le tiroir mélangeait entrées nommées et pictogrammes muets.
+         * Le texte ajouté reste invisible en rail desktop (font-size:0). */
+        $('#hud-rail #menu > a[title]').each(function () {
+            var $btn = $(this).children('button').first();
+            if ($btn.length && !$btn.text().trim()) {
+                $btn.append(document.createTextNode(' ' + this.title));
+            }
+        });
+
         var $carousel = $('<div id="hud-carousel"></div>').insertAfter('#hud-main');
         $carousel.append($('#hud-minimap'), $('#ajax-data'), $('#hud-actions'));
 
