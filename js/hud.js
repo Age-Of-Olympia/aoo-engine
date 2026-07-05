@@ -691,6 +691,11 @@
                         '<span class="hud-action-cancel" title="Annuler">'
                         + '<span class="ra ra-cancel"></span></span>'
                     );
+                    /* Nom dans le bandeau bas, persistant tant qu'armé */
+                    $('#hud-action-hint').remove();
+                    $('<div id="hud-action-hint"></div>')
+                        .text((btn.title || '') + ' — cliquez à nouveau pour confirmer')
+                        .appendTo('#hud-actions');
                     return;
                 }
 
@@ -704,6 +709,7 @@
                 .removeClass('hud-action--armed')
                 .find('.hud-action-cancel').remove();
             $('#hud-actions .hud-action-cancel').remove();
+            $('#hud-action-hint').remove();
         }
 
         /* Appui long mobile (contextmenu) : afficher le nom de

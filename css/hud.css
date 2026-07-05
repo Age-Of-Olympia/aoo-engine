@@ -502,37 +502,35 @@ body:has(#hud) #view-landing-wrapper {
     display: none;
 }
 
-/* Bouton armé (premier clic) : pleine ligne, nom visible, annuler à
- * droite — le second clic exécute, les autres boutons restent carrés. */
-#hud-actions .hud-action--armed {
-    grid-column: 1 / -1;
-    width: 100%;
-    justify-content: flex-start;
-    gap: 8px;
-    padding: 0 44px 0 12px;
+/* Bouton armé (premier clic) : il RESTE À SA PLACE (transform ne
+ * réagence pas la grille) — léger agrandissement + anneau de
+ * confirmation + badge annuler sur le coin ; le nom s'affiche dans le
+ * bandeau bas du panneau. Second clic : exécution. */
+#hud-actions .action {
     position: relative;
 }
 
-#hud-actions .hud-action--armed .action-name {
-    display: inline;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+#hud-actions .hud-action--armed {
+    transform: scale(1.12);
+    z-index: 3;
+    box-shadow: 0 0 0 2px #b98a1c, 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 #hud-actions .hud-action-cancel {
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: -9px;
+    right: -9px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.18);
+    background: #222;
+    color: #fff;
+    font-size: 11px;
     cursor: pointer;
+    z-index: 4;
 }
 
 /* Nom de l'action en appui long (mobile) : petit bandeau posé par
