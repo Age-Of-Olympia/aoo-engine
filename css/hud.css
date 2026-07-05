@@ -502,6 +502,39 @@ body:has(#hud) #view-landing-wrapper {
     display: none;
 }
 
+/* Bouton armé (premier clic) : pleine ligne, nom visible, annuler à
+ * droite — le second clic exécute, les autres boutons restent carrés. */
+#hud-actions .hud-action--armed {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 44px 0 12px;
+    position: relative;
+}
+
+#hud-actions .hud-action--armed .action-name {
+    display: inline;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#hud-actions .hud-action-cancel {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+}
+
 /* Nom de l'action en appui long (mobile) : petit bandeau posé par
  * js/hud.js en bas du panneau */
 #hud-action-hint {

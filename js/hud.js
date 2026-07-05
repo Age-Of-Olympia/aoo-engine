@@ -657,6 +657,55 @@
             $('#hud-actions').empty();
         });
 
+        /* Confirmation par bouton : premier clic ARME le bouton (il
+         * s'élargit en pleine ligne avec son nom + annuler), second
+         * clic exécute. Listener en phase capture : il précède le
+         * handler direct d'observe.js et permet de le court-circuiter.
+         * Épingle aussi window.visible — observe.js est ré-exécuté par
+         * les résultats d'action et remettait son « révélateur de
+         * noms » qui élargissait tous les boutons. */
+        var actionsEl = document.getElementById('hud-actions');
+        if (actionsEl) {
+            actionsEl.addEventListener('click', function (e) {
+                window.visible = true;
+
+                var btn = e.target.closest('.action');
+                if (!btn || !actionsEl.contains(btn)) {
+                    disarmActions();
+                    return;
+                }
+
+                if (e.target.closest('.hud-action-cancel')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    disarmActions();
+                    return;
+                }
+
+                if (!btn.classList.contains('hud-action--armed')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    disarmActions();
+                    btn.classList.add('hud-action--armed');
+                    $(btn).append(
+                        '<span class="hud-action-cancel" title="Annuler">'
+                        + '<span class="ra ra-cancel"></span></span>'
+                    );
+                    return;
+                }
+
+                /* Armé : on laisse filer le clic vers observe.js */
+                disarmActions();
+            }, true);
+        }
+
+        function disarmActions() {
+            $('#hud-actions .hud-action--armed')
+                .removeClass('hud-action--armed')
+                .find('.hud-action-cancel').remove();
+            $('#hud-actions .hud-action-cancel').remove();
+        }
+
         /* Appui long mobile (contextmenu) : afficher le nom de
          * l'action en bandeau au lieu du menu contextuel. */
         var hintTimer = null;
