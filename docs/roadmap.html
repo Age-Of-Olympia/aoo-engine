@@ -456,7 +456,7 @@ const QUARTERS = [
   '2026-Q1','2026-Q2','2026-Q3','2026-Q4',
   '2027-Q1','2027-Q2','Long terme'
 ];
-const NOW_INDEX = 5.85; /* late 2026-Q2 (June 2026) */
+const NOW_INDEX = 6.05; /* early 2026-Q3 (July 2026) */
 const N_COLS = QUARTERS.length;
 const QUARTER_PX = 210; /* vertical pixels per unit-weight quarter */
 
@@ -713,11 +713,17 @@ const FEATURES = [
     enables:[] },
 
   /* ─────────────────────────── PLANNED (next 6-12 months) ─────────────────────────── */
-  { id:'action-v2', title:"Système d'actions v2 (correctifs)", category:'action-system', status:'progress',
-    quarter:6.0, date:'2026-Q3',
-    tech:"Deuxième couche sur les actions corrigeant les défauts de la v1 (retour détaillé de Gremlo après usage intensif).",
-    player:"Après un an d'usage par les animateurs, on lisse les angles morts du système : composabilité, lisibilité, prévisibilité.",
+  { id:'action-v2', title:"⭐ Système d'actions v2 (refonte moteur)", category:'action-system', status:'shipped',
+    quarter:5.95, date:'Juil 2026',
+    tech:"Refonte du moteur : CombatResolver isolé, règles pures extraites (dégâts, soins, malus), préconditions pilotées par la donnée, XP et journaux par type d'action, grosse batterie de tests de caractérisation.",
+    player:"Le cœur du combat a été refait sur des bases saines : calculs corrigés (dégâts additionnels, soins, malus, munitions) et équilibrages futurs beaucoup plus sûrs.",
     enables:['admin-actions','pf-aoe'] },
+
+  { id:'hud-refonte', title:"Refonte de l'interface (HUD)", category:'ui-ux', status:'progress',
+    quarter:6.2, date:'2026-Q3',
+    tech:"Implémentation des wireframes UI/UX validés : grille HUD, barre de statut, rail, panneaux glissants, zone de sélection recomposée, déclinaison mobile (carrousel, tiroir, sheets). Chaîne de MR !609–!614, issue #266. 100% front, opt-in via l'option newHud.",
+    player:"Une nouvelle interface de jeu : vos points toujours visibles, navigation latérale, sous-pages en panneaux sans quitter la carte, vraie version mobile. En bêta opt-in dans les options du profil.",
+    enables:[] },
 
   { id:'magic-split', title:"Séparation de la Magie + correction des carac races & objets", category:'combat', status:'progress',
     quarter:6.1, date:'2026-Q3',
@@ -731,10 +737,10 @@ const FEATURES = [
     player:"Plus de popups système moches qui bloquent tout. Confirmations cohérentes avec le reste du jeu.",
     enables:['ajaxify-blocks'] },
 
-  { id:'admin-actions', title:"Interface d'admin pour les actions", category:'admin', status:'planned',
-    quarter:6.4, date:'2026-Q3',
-    tech:"UI admin pour créer / voir / comprendre les actions. Le système v2 est conçu pour être exposable.",
-    player:"L'équipe peut créer de nouvelles actions sans demander à un dev. Énorme accélérateur de contenu.",
+  { id:'admin-actions', title:"⭐ Atelier d'actions (admin)", category:'admin', status:'shipped',
+    quarter:6.0, date:'Juil 2026',
+    tech:"Workbench complet : édition des actions et passifs, héritage par type, import/export de bundles, simulateur branché sur le vrai moteur (garanti sans écriture en base).",
+    player:"L'équipe peut créer, régler et simuler de nouvelles actions sans demander à un dev. Énorme accélérateur de contenu.",
     enables:['admin-team-autonomy'] },
 
   { id:'new-comp-3', title:"Nouvelles compétences/sorts", category:'combat', status:'planned',
