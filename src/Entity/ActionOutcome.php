@@ -1,6 +1,7 @@
 <?php
 namespace App\Entity;
 
+use App\Enum\OutcomeTarget;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -18,8 +19,8 @@ class ActionOutcome
     #[ORM\JoinColumn(nullable: false)]
     private ?Action $action = null;
 
-    #[ORM\Column(type: "boolean", name: "apply_to_self", options: ["default" => false])]
-    private bool $applyToSelf = false;
+    #[ORM\Column(type: "string", length: 10, name: "apply_to", enumType: OutcomeTarget::class, options: ["default" => "target"])]
+    private OutcomeTarget $applyTo = OutcomeTarget::Target;
 
     #[ORM\Column(type: "string", length: 100, nullable: true)]
     private ?string $name = null;
@@ -67,14 +68,14 @@ class ActionOutcome
         return $this;
     }
 
-    public function getApplyToSelf(): bool
+    public function getApplyTo(): OutcomeTarget
     {
-        return $this->applyToSelf;
+        return $this->applyTo;
     }
 
-    public function setApplyToSelf(bool $applyToSelf): self
+    public function setApplyTo(OutcomeTarget $applyTo): self
     {
-        $this->applyToSelf = $applyToSelf;
+        $this->applyTo = $applyTo;
         return $this;
     }
 

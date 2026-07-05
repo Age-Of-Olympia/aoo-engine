@@ -5961,3 +5961,13 @@ SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 ALTER TABLE `actions` ADD COLUMN IF NOT EXISTS `icon_color` varchar(20) DEFAULT NULL;
 ALTER TABLE `players` ADD COLUMN IF NOT EXISTS `deletion_asked` datetime DEFAULT NULL;
 
+-- apply_to tri-state ('self'|'target'|'both') replacing apply_to_self, with its
+-- data fixes: Version20260705120000_OutcomeApplyToTriState. Run here so a fresh
+-- install matches migrated databases; the migration skips itself when it finds
+-- apply_to present and apply_to_self already dropped.
+ALTER TABLE `action_outcomes` ADD COLUMN IF NOT EXISTS `apply_to` varchar(10) NOT NULL DEFAULT 'target' AFTER `apply_to_self`;
+UPDATE `action_outcomes` SET `apply_to` = IF(`apply_to_self` = 1, 'self', 'target');
+UPDATE `action_outcomes` o JOIN `actions` a ON a.id = o.action_id SET o.`apply_to` = 'both' WHERE a.category = 'spell-support' AND o.on_success = 1;
+UPDATE `action_outcomes` SET `apply_to` = 'self' WHERE `name` = 'buff_pasleger';
+ALTER TABLE `action_outcomes` DROP COLUMN IF EXISTS `apply_to_self`;
+

@@ -138,7 +138,7 @@ final class ActionExporter implements ObjectExporter
             $rows[] = [
                 'name' => $outcome->getName(),
                 'onSuccess' => $outcome->isOnSuccess(),
-                'applyToSelf' => $outcome->getApplyToSelf(),
+                'applyTo' => $outcome->getApplyTo()->value,
                 'instructions' => $this->instructions($outcome),
             ];
         }

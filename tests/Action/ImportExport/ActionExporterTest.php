@@ -7,6 +7,7 @@ use App\Action\OutcomeInstruction\LifeLossOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Entity\Race;
+use App\Enum\OutcomeTarget;
 use App\Service\Action\ActionCatalogService;
 use App\Service\ImportExport\ActionExporter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -76,7 +77,7 @@ class ActionExporterTest extends TestCase
         $outcome = new ActionOutcome();
         $outcome->setName('hit');
         $outcome->setOnSuccess(true);
-        $outcome->setApplyToSelf(false);
+        $outcome->setApplyTo(OutcomeTarget::Both);
         $outcome->addInstruction($this->instruction(['amount' => 5], 0));
         $outcome->addInstruction($this->instruction(['amount' => 2], 1));
         $action->addOutcome($outcome);
@@ -88,7 +89,7 @@ class ActionExporterTest extends TestCase
                 [
                     'name' => 'hit',
                     'onSuccess' => true,
-                    'applyToSelf' => false,
+                    'applyTo' => 'both',
                     'instructions' => [
                         ['type' => 'lifeloss', 'orderIndex' => 0, 'parameters' => ['amount' => 5]],
                         ['type' => 'lifeloss', 'orderIndex' => 1, 'parameters' => ['amount' => 2]],

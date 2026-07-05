@@ -6,6 +6,7 @@ use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Entity\OutcomeInstruction;
+use App\Enum\OutcomeTarget;
 use App\Service\Action\ActionSaveService;
 use App\Service\OutcomeInstructionService;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -55,28 +56,28 @@ class ActionSaveServiceTest extends TestCase
         $this->assertSame(['a' => 1, 'pm' => 8], $condition->getParameters());
     }
 
-    public function testSavesEachOutcomesApplyToSelfFlag(): void
+    public function testSavesEachOutcomesApplyToValue(): void
     {
         $toSelf = new ActionOutcome();
         $this->setId($toSelf, ActionOutcome::class, 3);     // currently target -> set self
-        $toTarget = (new ActionOutcome())->setApplyToSelf(true);
-        $this->setId($toTarget, ActionOutcome::class, 4);    // currently self -> set target
+        $toBoth = (new ActionOutcome())->setApplyTo(OutcomeTarget::Self);
+        $this->setId($toBoth, ActionOutcome::class, 4);      // currently self -> set both
 
         $action = $this->createMock(Action::class);
         $action->method('getConditions')->willReturn(new ArrayCollection());
-        $action->method('getOutcomes')->willReturn(new ArrayCollection([$toSelf, $toTarget]));
+        $action->method('getOutcomes')->willReturn(new ArrayCollection([$toSelf, $toBoth]));
 
         $service = new ActionSaveService($this->entityManagerReturning($action), null, null, $this->createMock(OutcomeInstructionService::class));
 
-        $service->saveOutcomeTargets(1, [3 => '1', 4 => '0']);
+        $service->saveOutcomeTargets(1, [3 => 'self', 4 => 'both']);
 
-        $this->assertTrue($toSelf->getApplyToSelf());
-        $this->assertFalse($toTarget->getApplyToSelf());
+        $this->assertSame(OutcomeTarget::Self, $toSelf->getApplyTo());
+        $this->assertSame(OutcomeTarget::Both, $toBoth->getApplyTo());
     }
 
     public function testSaveOutcomeTargetsLeavesOutcomesAbsentFromThePayloadUntouched(): void
     {
-        $outcome = (new ActionOutcome())->setApplyToSelf(true);
+        $outcome = (new ActionOutcome())->setApplyTo(OutcomeTarget::Self);
         $this->setId($outcome, ActionOutcome::class, 9);
 
         $action = $this->createMock(Action::class);
@@ -87,7 +88,24 @@ class ActionSaveServiceTest extends TestCase
 
         $service->saveOutcomeTargets(1, []);
 
-        $this->assertTrue($outcome->getApplyToSelf());
+        $this->assertSame(OutcomeTarget::Self, $outcome->getApplyTo());
+    }
+
+    public function testSaveOutcomeTargetsIgnoresAnUnknownPostedValue(): void
+    {
+        // A tampered/stale form value must not corrupt the stored enum.
+        $outcome = (new ActionOutcome())->setApplyTo(OutcomeTarget::Both);
+        $this->setId($outcome, ActionOutcome::class, 9);
+
+        $action = $this->createMock(Action::class);
+        $action->method('getConditions')->willReturn(new ArrayCollection());
+        $action->method('getOutcomes')->willReturn(new ArrayCollection([$outcome]));
+
+        $service = new ActionSaveService($this->entityManagerReturning($action), null, null, $this->createMock(OutcomeInstructionService::class));
+
+        $service->saveOutcomeTargets(1, [9 => '1']);
+
+        $this->assertSame(OutcomeTarget::Both, $outcome->getApplyTo());
     }
 
     private function entityManager(Action $action): EntityManagerInterface&MockObject

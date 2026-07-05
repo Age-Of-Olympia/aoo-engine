@@ -10,6 +10,7 @@ use App\Entity\ActionOutcome;
 use App\Entity\EntityManagerFactory;
 use App\Entity\OutcomeInstruction;
 use App\Entity\Race;
+use App\Enum\OutcomeTarget;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionParameterValidator;
 use App\Service\Action\ActionTypeRegistry;
@@ -186,7 +187,7 @@ final class ActionImporter extends AbstractObjectImporter
             $outcomes[] = [
                 'name' => is_string($outcome['name'] ?? null) ? $outcome['name'] : null,
                 'onSuccess' => (bool) ($outcome['onSuccess'] ?? false),
-                'applyToSelf' => (bool) ($outcome['applyToSelf'] ?? false),
+                'applyTo' => $this->applyToOf($outcome),
                 'instructions' => $instructions,
             ];
         }
@@ -283,7 +284,7 @@ final class ActionImporter extends AbstractObjectImporter
             $outcome = new ActionOutcome();
             $outcome->setName($row['name']);
             $outcome->setOnSuccess($row['onSuccess']);
-            $outcome->setApplyToSelf($row['applyToSelf']);
+            $outcome->setApplyTo($row['applyTo']);
             $outcome->setAction($action);
             $action->addOutcome($outcome);
             $this->entityManager->persist($outcome);
@@ -342,6 +343,29 @@ final class ActionImporter extends AbstractObjectImporter
     private function paramsOf(array $row): array
     {
         return is_array($row['parameters'] ?? null) ? $row['parameters'] : [];
+    }
+
+    /**
+     * An outcome's applyTo value. Accepts the current "applyTo" string and, for
+     * bundles exported before the tri-state, the legacy "applyToSelf" boolean.
+     * A present-but-unknown applyTo rejects the action (buildPlan catches).
+     *
+     * @param array<string, mixed> $outcome
+     */
+    private function applyToOf(array $outcome): OutcomeTarget
+    {
+        if (array_key_exists('applyTo', $outcome)) {
+            $applyTo = is_string($outcome['applyTo']) ? OutcomeTarget::tryFrom($outcome['applyTo']) : null;
+            if ($applyTo === null) {
+                throw new InvalidArgumentException(
+                    'Valeur applyTo inconnue : « ' . (is_scalar($outcome['applyTo']) ? (string) $outcome['applyTo'] : gettype($outcome['applyTo'])) . ' ».'
+                );
+            }
+
+            return $applyTo;
+        }
+
+        return ((bool) ($outcome['applyToSelf'] ?? false)) ? OutcomeTarget::Self : OutcomeTarget::Target;
     }
 
     /**
