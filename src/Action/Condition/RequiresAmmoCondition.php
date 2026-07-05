@@ -4,13 +4,25 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Classes\Db;
 use Classes\Item;
 use Classes\View;
 
-class RequiresAmmoCondition extends BaseCondition
+class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
 {
-    public bool $toRemove;
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('itemId', FieldType::ITEM, 'Munition requise', help: "Laisser vide pour utiliser la munition de l'arme équipée."),
+            new ParameterField('itemQuantity', FieldType::INT, 'Quantité consommée', default: 1),
+        );
+    }
+
+    public bool $toRemove = false;
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
@@ -72,24 +84,28 @@ class RequiresAmmoCondition extends BaseCondition
             }
     
             if($actor->emplacements->main1->data->subtype == 'jet'){
-                $distance = View::get_distance($actor->getCoords(), $target->getCoords());
-                if($distance > 2){
-                    $dropCoords = clone $target->coords;
-                    $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
-                    $values = array(
-                    'item_id'=>$actor->emplacements->main1->id,
-                    'coords_id'=>$coordsId,
-                    'n'=>1
-                    );
-        
-                    $db = new Db();
-                    $db->insert('map_items', $values);
-        
-                    $actor->emplacements->main1->add_item($actor, -1);
-            
+                $distance = $target !== null ? View::get_distance($actor->getCoords(), $target->getCoords()) : 0;
+                if($target !== null && $distance > 2){
+                    // A simulation must not drop the weapon onto the real map; still report the loss.
+                    if (!$actor->isSimulated()) {
+                        $dropCoords = clone $target->coords;
+                        $coordsId = View::get_free_coords_id_arround($dropCoords, $p=1);
+                        $values = array(
+                        'item_id'=>$actor->emplacements->main1->id,
+                        'coords_id'=>$coordsId,
+                        'n'=>1
+                        );
+
+                        $db = new Db();
+                        $db->insert('map_items', $values);
+
+                        $actor->emplacements->main1->add_item($actor, -1);
+
+                        View::refresh_players_svg($dropCoords);
+                        $conditionToPay->getAction()->setRefreshScreen(true);
+                    }
+
                     $text = 'Vous perdez '. $actor->emplacements->main1->data->name .'.';
-                    View::refresh_players_svg($dropCoords);
-                    $conditionToPay->getAction()->setRefreshScreen(true);
                     array_push($result, $text);
                 } else {
                     $text = 'Vous gardez '. $actor->emplacements->main1->data->name .'.';

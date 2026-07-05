@@ -4,14 +4,26 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
 use Classes\Str;
 
 #[ORM\Entity]
-class DropWeaponOutcomeInstruction extends OutcomeInstruction
+class DropWeaponOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('targetLocation', FieldType::EMPLACEMENT, 'Emplacement de la cible'),
+            new ParameterField('dropChance', FieldType::INT, 'Chance de chute (%)', default: 10),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $outcomeSuccessMessages = array();
         $outcomeFailureMessages = array();

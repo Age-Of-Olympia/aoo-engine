@@ -4,13 +4,25 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
-class ObjectOutcomeInstruction extends OutcomeInstruction
+class ObjectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('action', FieldType::STRING, 'Action', help: 'ex: steal'),
+            new ParameterField('object', FieldType::INT, "ID de l'objet", default: 0),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
         // e.g. {"action":"steal", "object": 1 }

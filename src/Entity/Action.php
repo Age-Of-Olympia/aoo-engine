@@ -2,7 +2,6 @@
 namespace App\Entity;
 
 use App\Interface\ActionInterface;
-use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -34,6 +33,10 @@ abstract class Action implements ActionInterface
 
     #[ORM\Column(type: "string", length: 50)]
     protected string $icon;
+
+    /** A colour token from {@see \App\View\Action\ActionIconPalette}; null = default. */
+    #[ORM\Column(type: "string", length: 20, name: "icon_color", nullable: true)]
+    protected ?string $iconColor = null;
 
     #[ORM\Column(type: "string", length: 50)]
     protected string $name;
@@ -139,6 +142,17 @@ abstract class Action implements ActionInterface
     public function setIcon(string $icon): void
     {
         $this->icon = $icon;
+    }
+
+    /** A colour token (see ActionIconPalette), or null for the default colour. */
+    public function getIconColor(): ?string
+    {
+        return $this->iconColor;
+    }
+
+    public function setIconColor(?string $iconColor): void
+    {
+        $this->iconColor = $iconColor !== null && $iconColor !== '' ? $iconColor : null;
     }
 
     public function getDisplayName(): string
@@ -252,6 +266,12 @@ abstract class Action implements ActionInterface
      */
     public function getAutomaticOutcomeInstructions(): Collection
     {
+        // Transient (non-mapped) collection: Doctrine hydrates entities without
+        // calling the constructor, so initialize lazily to stay safe for callers
+        // that read it before initAutomaticOutcomeInstructions() runs.
+        if (!isset($this->automaticOutcomeInstructions)) {
+            $this->automaticOutcomeInstructions = new ArrayCollection();
+        }
         return $this->automaticOutcomeInstructions;
     }
 
@@ -336,22 +356,6 @@ abstract class Action implements ActionInterface
         return $this;
     }
 
-    public function calculateXp(bool $success, ActorInterface $actor, ActorInterface $target): array
-    {
-        $actorXp = $this->calculateActorXp($success, $actor, $target);
-        $targetXp = $this->calculateTargetXp($success, $actor, $target);
-        $xpResultsArray["actor"] = $actorXp;
-        $xpResultsArray["target"] = $targetXp;
-        return $xpResultsArray;
-    }
-
-    protected function calculateActorXp(bool $success, ActorInterface $actor, ActorInterface $target): int {
-        return 1;
-    }
-
-    protected function calculateTargetXp(bool $success, ActorInterface $actor, ActorInterface $target): int {
-        return 1;
-    }
 
     public function hideOnSuccess(): bool {
         return $this->hideOnSuccess;

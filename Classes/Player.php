@@ -8,6 +8,7 @@ use App\Service\ActionPassiveService;
 use App\Service\PlayerActionsService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
+use App\Service\MapService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
 use App\Service\PlayerEffectService;
@@ -16,6 +17,8 @@ use Exception;
 use Throwable;
 
 class Player implements ActorInterface {
+
+    public function isSimulated(): bool { return false; }
 
     public $id;
     public object $data;
@@ -168,6 +171,24 @@ class Player implements ActorInterface {
         $this->row = $row;
     }
 
+    /**
+     * Fold one equipped item's stat bonuses into a caracs object: every CARACS
+     * trait the item defines is added (cc, ct, …), and a fixedF item overrides F.
+     * Pure (no DB) so both get_caracs() and the simulator's SimulatedPlayer apply
+     * equipment through the exact same path instead of duplicating the rule.
+     */
+    public static function applyItemCaracs(object $caracs, $item): void
+    {
+        foreach (CARACS as $k => $e) {
+            if (!empty($item->data->$k)) {
+                $caracs->$k += $item->data->$k;
+            }
+        }
+        if (!empty($item->data->fixedF)) {
+            $caracs->f = $item->data->fixedF;
+        }
+    }
+
 
     public function get_caracs(bool $nude=false): bool {
 
@@ -233,24 +254,7 @@ class Player implements ActorInterface {
 
             $this->emplacements->{$row->equiped} = $item;
 
-
-            foreach(CARACS as $k=>$e){
-
-
-                if(!empty($item->data->$k)){
-
-
-                    $this->caracs->$k += $item->data->$k;
-                }
-            }
-
-
-            // fixed caracs
-            if(!empty($item->data->fixedF)){
-
-
-                $this->caracs->f = $item->data->fixedF;
-            }
+            self::applyItemCaracs($this->caracs, $item);
         }
 
         // Esquive
@@ -401,6 +405,19 @@ class Player implements ActorInterface {
         return $this->upgrades;
     }
 
+
+    /**
+     * True when this player's current tile is of the given map type (e.g.
+     * 'routes'). The engine's tile-reading instructions go through here so
+     * SimulatedPlayer can override it with injected state instead of the DB —
+     * see App\Action\OutcomeInstruction\TileTypeOutcomeInstruction.
+     */
+    public function isOnTileType(string $type): bool
+    {
+        $this->get_data(false);
+
+        return (bool) (new MapService())->getTileTypeAtCoord($type, (int) $this->data->coords_id)->n;
+    }
 
     public function getCoords(bool $refresh = true): object{
 

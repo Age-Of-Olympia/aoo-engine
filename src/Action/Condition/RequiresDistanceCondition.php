@@ -6,9 +6,28 @@ use Classes\View;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 
-class RequiresDistanceCondition extends BaseCondition
+class RequiresDistanceCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('min', FieldType::INT, 'Distance minimale', default: 0),
+            new ParameterField('max', FieldType::INT, 'Distance maximale', default: 0),
+        );
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        return [new SimulationField(SimulationField::KIND_DISTANCE, SimulationField::SIDE_SHARED, 'distance', 'Distance (cases)')];
+    }
+
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());

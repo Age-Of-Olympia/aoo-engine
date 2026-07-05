@@ -140,78 +140,12 @@ try {
         }
     }
 
-    // Remove invisibleMode from main player and add race actions (player already loaded above)
-    $mainPlayer->get_data();
-
-    // Remove invisibleMode so player can interact normally
-    if ($mainPlayer->have_option('invisibleMode')) {
-        $mainPlayer->end_option('invisibleMode');
-    }
-
-    // Move player from waiting_room to faction's respawn plan if they're still there
-    $mainPlayer->getCoords();
-    if ($mainPlayer->coords->plan === 'waiting_room') {
-        $factionJson = json()->decode('factions', $mainPlayer->data->faction);
-        $respawnPlan = $factionJson?->respawnPlan ?? "olympia";
-
-        $goCoords = (object) array(
-            'x' => 0,
-            'y' => 0,
-            'z' => 0,
-            'plan' => $respawnPlan
-        );
-
-        // Try to get or create coords for the respawn location
-        $coordsId = \Classes\View::get_free_coords_id_arround($goCoords);
-
-        // If no coords found, create the coords entry
-        if ($coordsId === null) {
-            $coordsDb = new \Classes\Db();
-            $sql = 'INSERT INTO coords (x, y, z, plan) VALUES (?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)';
-            $coordsDb->exe($sql, array(0, 0, 0, $respawnPlan));
-            /* Use MySQL's LAST_INSERT_ID() to get the ID (works for both INSERT and UPDATE) */
-            $result = $coordsDb->exe('SELECT LAST_INSERT_ID() as id');
-            $row = $result->fetch_assoc();
-            $coordsId = $row['id'];
-        }
-
-        // Update player's coordinates
-        $db = new \Classes\Db();
-        $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
-        $db->exe($sql, array($coordsId, $playerId));
-
-    }
-
-    // Add race actions if not already present
-    $raceJson = json()->decode('races', $mainPlayer->data->race);
-    if ($raceJson && !empty($raceJson->actions)) {
-        $addedCount = 0;
-        foreach($raceJson->actions as $actionName) {
-            try {
-                /* Only add if player doesn't already have this action */
-                if (!$mainPlayer->have_action($actionName)) {
-                    $mainPlayer->add_action($actionName);
-                    $addedCount++;
-                }
-            } catch (\Exception $e) {
-                /* Log Doctrine errors but continue processing other actions */
-                error_log("[Cancel] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
-            }
-        }
-    }
-
-    // Grant skip rewards ONLY if this is their first time (not a replay)
-    // Already checked at the beginning before marking session as completed
-    if (!$hasCompletedBefore) {
-        $skipReward = TUTORIAL_SKIP_REWARD;
-        $mainPlayer->put_xp($skipReward['xp']); /* This adds both XP and PI */
-    }
-
-    // Refresh player data and view cache (so new coords/stats are shown after reload)
-    $mainPlayer->refresh_data(); /* Clear JSON cache */
-    $mainPlayer->refresh_view(); /* Clear view HTML cache */
-    $mainPlayer->getCoords(); /* Reload coordinates */
+    // Drop into the real game: invisibleMode off, teleport out of
+    // waiting_room, grant race actions, first-time reward + starter pack,
+    // and refresh the data/view caches. Shared with complete.php / skip.php
+    // ($hasCompletedBefore was captured above, before the session was
+    // marked completed).
+    TutorialHelper::finalizeExitToGame($mainPlayer, TUTORIAL_SKIP_REWARD, $hasCompletedBefore);
 
     // Clean output buffer (discard any PHP warnings/errors/output)
     if (ob_get_length()) {

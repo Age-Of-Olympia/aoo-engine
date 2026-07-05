@@ -6,165 +6,86 @@ use App\Action\OutcomeInstruction\MalusOutcomeInstruction;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Combat\CombatResolver;
+use App\Action\Combat\RollDetail;
+use App\Action\Combat\RollDetailView;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SchemaSimulationInputs;
+use App\Action\Schema\SimulationField;
 use Classes\Dice;
 use Classes\View;
 
-enum Roll: string
+class ComputeCondition extends AbstractComputeCondition implements HasParameterSchema
 {
-    case cc = "cc";
-    case ct = "ct";
-    case fm = "fm";
-    case cc_agi = "cc_agi";
-}
-
-class ComputeCondition extends BaseCondition
-{
-    protected int $distance;
-    protected string $throwName = "Le tir";
-    protected string $actorRollTrait;
-    protected string $targetRollTrait;
-
-
-    public function __construct() {
-        array_push($this->preConditions, new DodgeCondition());
-        array_push($this->preConditions, new NoBerserkCondition());
+    public static function parameterSchema(): ParameterSchema
+    {
+        // The simulator derives its caracs from this schema (SchemaSimulationInputs):
+        // actorRollType on the actor, targetRollType on the target. The physical
+        // subclasses (melee/distance) instead read a fixed cc/agi defense — see
+        // physicalDefenseSimulationInputs() — so they declare inputs by hand.
+        return new ParameterSchema(
+            new ParameterField('actorRollType', FieldType::TRAIT, "Trait du jet de l'acteur", required: true),
+            new ParameterField('targetRollType', FieldType::TRAIT_OR_INT, 'Trait du jet de la cible', required: true, side: 'target'),
+            new ParameterField('actorRollBonus', FieldType::INT, 'Bonus au jet acteur', default: 0),
+            new ParameterField('targetRollBonus', FieldType::INT, 'Bonus au jet cible', default: 0),
+            new ParameterField('actorAdvantage', FieldType::BOOL, 'Avantage acteur', default: false),
+            new ParameterField('targetAdvantage', FieldType::BOOL, 'Avantage cible', default: false),
+            new ParameterField('actorDisadvantage', FieldType::BOOL, 'Désavantage acteur', default: false),
+            new ParameterField('targetDisadvantage', FieldType::BOOL, 'Désavantage cible', default: false),
+        );
     }
 
-    public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
+    /**
+     * Inputs for the physical computes (melee, distance): the actor's roll trait
+     * comes from the schema, but the defense is a fixed formula over the target's
+     * cc and agi (see each computeTarget), independent of targetRollType — so both
+     * caracs are always offered.
+     *
+     * @param array<string, mixed> $params
+     * @return list<SimulationField>
+     */
+    protected static function physicalDefenseSimulationInputs(array $params): array
     {
-        $preConditionResult = parent::check($actor, $target, $condition, $conditionObject);
-        if (!$preConditionResult->isSuccess()) {
-            return $preConditionResult;
-        }
+        $fields = array_values(array_filter(
+            SchemaSimulationInputs::derive(static::parameterSchema(), $params),
+            static fn (SimulationField $field): bool => $field->side === SimulationField::SIDE_ACTOR,
+        ));
+        $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_TARGET, 'cc', 'Cible — cc');
+        $fields[] = new SimulationField(SimulationField::KIND_TRAIT, SimulationField::SIDE_TARGET, 'agi', 'Cible — agi');
 
-        if (!$target) {
-            return new ConditionResult(false, ["Aucune cible spécifiée."], []);
-        }
-
-        $params = $condition->getParameters(); // e.g. { "max": 1 }
-        $this->actorRollTrait = $params['actorRollType'] ?? null;
-        $this->targetRollTrait = $params['targetRollType'] ?? null;
-        $conditionObject->setActorRollBonus($params['actorRollBonus'] ?? 0);
-        $conditionObject->setTargetRollBonus($params['targetRollBonus'] ?? 0);
-        $conditionObject->setActorRollTrait($params['actorRollType'] ?? 0);
-        $conditionObject->setTargetRollTrait($params['targetRollType'] ?? 0);
-        $conditionObject->setActorAdvantage($params['actorAdvantage'] ?? false);
-        $conditionObject->setTargetAdvantage($params['targetAdvantage'] ?? false);
-        $conditionObject->setActorDisadvantage($params['actorDisadvantage'] ?? false);
-        $conditionObject->setTargetDisadvantage($params['targetDisadvantage'] ?? false);
-        $target->playerPassiveService->getPassivesByPlayerId($target->getId());
-
-        foreach ($actor->playerPassiveService->getPassivesByPlayerId($actor->getId()) as $actorPassive) {
-            if (in_array($this->actorRollTrait, $actorPassive->getTraits()) && ($actorPassive->getType() == "att" || $actorPassive->getType() == "mixte" )) {
-                if($actor->playerPassiveService->checkPassiveConditionsByPlayerById($actor,$actorPassive,$conditionObject)){
-                    if($actorPassive->getCarac() == "advantage"){
-                        $conditionObject->setActorAdvantage(true);
-                    }
-                    else{
-                    $conditionObject->addActorRollBonus($actor->playerPassiveService->getComputedValueByPlayerIdById($actor->id,$actorPassive->getId()));
-                    }
-                }
-            }
-        }
-
-        foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
-            if (in_array($this->targetRollTrait, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" )) {
-                if($target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)){
-                    if($targetPassive->getCarac() == "advantage"){
-                        $conditionObject->setTargetAdvantage(true);
-                    }
-                    else{
-                        $conditionObject->addTargetRollBonus($target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getName()));
-                    }
-                }
-            }
-        }
-
-        if (!$target) {
-            $errorMessages[0] = "Aucune cible n'a été spécifiée.";
-            return new ConditionResult(success: false, conditionSuccessMessages:$errorMessages, conditionFailureMessages:array());
-        }
-
-        $this->distance = View::get_distance($actor->getCoords(), $target->getCoords());
-
-        $result = $this->computeAttack($actor, $target, $conditionObject);
-
-        if (!$result->isSuccess()) {
-            $condition->getAction()->addAutomaticOutcomeInstruction(new MalusOutcomeInstruction());
-        }
-
-        return $result;
-    }
-
-    private function computeAttack(ActorInterface $actor, ?ActorInterface $target, ConditionObject $conditionObject): ConditionResult 
-    {
-        $success = false;
-        $dice = new Dice(3);
-
-        list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
-        $conditionDetailsSuccess[0] = $actorTxt;
-        list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $conditionObject);
-        $conditionDetailsSuccess[1] = $targetTxt;
-       
-        $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
-
-        if(!AUTO_FAIL && $checkAboveDistance && ($actorTotal >= $targetTotal))
-        {
-            $success = true;
-        }
-
-        $conditionDetailsFailure = array();
-        if (!$success) {
-            $conditionDetailsFailure[0] = $conditionDetailsSuccess[0];
-            $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
-            if (!$checkAboveDistance) {
-                $conditionDetailsFailure[2] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
-            }
-        }
-
-        return new ConditionResult($success,$conditionDetailsSuccess,$conditionDetailsFailure);
+        return $fields;
     }
 
     protected function computeActor($actor, $dice, $conditionObject)
     {
-        $actorRollBonus = $conditionObject->getActorRollBonus();
-        $actorRollTraitValue = $actor->caracs->{$this->actorRollTrait};
-        $actorRoll = $dice->roll($actorRollTraitValue);
-        if($conditionObject->getActorAdvantage() && $conditionObject->getActorDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getActorAdvantage() || $conditionObject->getActorDisadvantage()){
-            $actorRoll2 = $dice->roll($actorRollTraitValue);
-            if($conditionObject->getActorAdvantage()){
-                $actorRoll = max($actorRoll,$actorRoll2);
-            }   
-            else{
-                $actorRoll = min($actorRoll,$actorRoll2);
-            }
-        }
-        $actorEffetMaladresse = $actor->getEffectValue("maladresse");
-        $actorEffetDexterite = $actor->getEffectValue("dexterite");
-        $effetMaladresse = !empty($actorEffetMaladresse) ? $actorEffetMaladresse : 0;
-        $effetDexterite = !empty($actorEffetDexterite) ? $actorEffetDexterite : 0;
-        $bonus = $conditionObject->getActorRollBonus();
-        $totalOther = $bonus + $effetDexterite - $effetMaladresse;
-        $tooltipOtherTxt = 
-            (!empty($actorEffetDexterite) || !empty($actorEffetMaladresse)
-            ? 'Effets :' .
-            (!empty($actorEffetDexterite) ? ' ' . $effetDexterite : '') .
-            (!empty($actorEffetMaladresse) ? ' - ' . $effetMaladresse : '') . ' '
-            : ''
-            ) .
-            (!empty($actorRollBonus) ? 'Bonus de compétence : ' . $actorRollBonus . ' ' : '');
-        $actorTotal = array_sum($actorRoll) + $totalOther;
+        $actorRoll = (new CombatResolver($dice))->roll(
+            (int) $actor->caracs->{$this->actorRollTrait},
+            (bool) $conditionObject->getActorAdvantage(),
+            (bool) $conditionObject->getActorDisadvantage()
+        );
+
+        $bonus = (int) $conditionObject->getActorRollBonus();
+        $dexterite = (int) ($actor->getEffectValue("dexterite") ?: 0);
+        $maladresse = (int) ($actor->getEffectValue("maladresse") ?: 0);
         $distanceMalus = $this->getDistanceMalus();
-        $distanceMalusTxt = ($distanceMalus) ? ' - '. $distanceMalus .' (Distance)' : '';
-        $actorTotal = $actorTotal - $distanceMalus;
-        $actorTxt = 'Jet ' . $actor->data->name .' = ' . '<span style="text-decoration: underline;" flow="up" tooltip="' . $distanceMalusTxt . (($distanceMalusTxt) ? ', ' . $tooltipOtherTxt : $tooltipOtherTxt) . '">' . $actorTotal . '</span>';
+        $total = array_sum($actorRoll) + $bonus + $dexterite - $maladresse - $distanceMalus;
 
-        $conditionObject->setActorRoll($actorTotal);
+        $detail = new RollDetail(
+            name: $actor->data->name,
+            rollSum: array_sum($actorRoll),
+            bonus: $bonus,
+            positiveEffect: $dexterite,
+            negativeEffect: $maladresse,
+            distanceMalus: $distanceMalus,
+            total: $total,
+        );
 
-        return array($actorRoll, $actorTotal, $actorTxt);
+        $conditionObject->setActorRoll($total);
+
+        return array($actorRoll, $total, (new RollDetailView())->renderActor($detail));
     }
 
     protected function computeTarget($target, $dice, $conditionObject)
@@ -181,54 +102,30 @@ class ComputeCondition extends BaseCondition
             return array(0, 0, "Impossible de calculer, erreur de paramétrage.");
         }
         
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
-            $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
-            }   
-            else{
-                $targetRoll = min($targetRoll,$targetRoll2);
-            }
-        }
-        $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
-        $targetEffetProtection = $target->getEffectValue("protection");
-        $effetVulnerabilite = !empty($targetEffetVulnerabilite) ? $targetEffetVulnerabilite : 0;
-        $effetProtection = !empty($targetEffetProtection) ? $targetEffetProtection : 0;
-        $bonus = $conditionObject->getTargetRollBonus();
-        $totalOther = $bonus + $effetProtection - $effetVulnerabilite;
-        $targetTotal = array_sum($targetRoll) - $target->data->malus + $totalOther;
-        $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-        $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
-        $tooltipOtherTxt = 
-            (!empty($targetEffetProtection) || !empty($targetEffetVulnerabilite)
-            ? 'Effets :' .
-            (!empty($targetEffetProtection) ? ' ' . $effetProtection : '') .
-            (!empty($targetEffetVulnerabilite) ? ' - ' . $effetVulnerabilite : '') . ' '
-            : ''
-            ) .
-            (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
-        $targetOtherTxt = ($bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
+        $targetRoll = (new CombatResolver($dice))->roll(
+            (int) $targetRollTraitValue,
+            (bool) $conditionObject->getTargetAdvantage(),
+            (bool) $conditionObject->getTargetDisadvantage()
+        );
+        $bonus = (int) $conditionObject->getTargetRollBonus();
+        $protection = (int) ($target->getEffectValue("protection") ?: 0);
+        $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
+        $malus = (int) $target->data->malus;
+        $total = array_sum($targetRoll) - $malus + $bonus + $protection - $vulnerabilite;
 
-        $conditionObject->setTargetRoll($targetTotal);
+        $detail = new RollDetail(
+            name: $target->data->name,
+            rollSum: array_sum($targetRoll),
+            bonus: $bonus,
+            positiveEffect: $protection,
+            negativeEffect: $vulnerabilite,
+            malus: $malus,
+            total: $total,
+        );
 
-        return array($targetRoll, $targetTotal, $targetTxt);
-    }
+        $conditionObject->setTargetRoll($total);
 
-    protected function getDistanceTreshold() : int {
-        return 0;
-    }
-
-    protected function checkDistanceCondition(int $actorTotal): bool {
-        return true;
-    }
-    
-    protected function getDistanceMalus(): int {
-        return 0;
+        return array($targetRoll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
 }

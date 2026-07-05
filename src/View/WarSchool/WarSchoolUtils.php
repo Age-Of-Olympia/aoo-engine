@@ -5,6 +5,7 @@ namespace App\View\WarSchool;
 use Classes\Player;
 use Classes\Str;
 use App\Service\ActionService;
+use App\Service\RaceService;
 
 class WarSchoolUtils
 {
@@ -39,7 +40,7 @@ class WarSchoolUtils
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = self::getColor($action->getCategory());
-                $raceColor = self::getRaceColor($action->getRace());
+                $raceColor = RaceService::getRaceColor($action->getRace());
 
                 $race = $action->getRace();
                 $raceTxt = (!empty($race)) ? ucfirst($race) : 'Commun';
@@ -110,25 +111,4 @@ class WarSchoolUtils
         }
     }
 
-    public static function getRaceColor(?string $race): string {
-
-        if (empty($race)) {
-            return '#000000';
-        }
-
-        switch ($race) {
-        case 'nain':
-            return '#FF0000'; 
-        case 'olympien':
-            return '#ff9933'; 
-        case 'elfe':
-            return '#008000'; 
-        case 'geant':
-            return '#661414'; 
-        case 'hs':
-            return '#2e6650'; 
-        default:
-            return '#000000'; 
-        }
-    }
 }

@@ -4,39 +4,62 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Player;
 
 #[ORM\Entity]
-class RemoveMalusOutcomeInstruction extends OutcomeInstruction
+class RemoveMalusOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    // The malus removed scales off the actor's `actorCarac` ($actor->caracs->{...}
+    // / caracDivisor) — always the actor, even when "to" applies it to the target.
+    // The simulator derives that input from the TRAIT field below; a fixed-only
+    // config (fixedMalus, no trait) surfaces nothing.
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('actorCarac', FieldType::TRAIT, 'Trait source', default: 0),
+            new ParameterField('caracDivisor', FieldType::INT, 'Diviseur du trait', default: 1),
+            new ParameterField('fixedMalus', FieldType::INT, 'Malus fixe', default: 0),
+            new ParameterField('to', FieldType::ENUM, 'Appliquer à', default: 'target', options: ['actor' => 'Acteur', 'target' => 'Cible']),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
-        
-        $malus = 0;
+
         $params = $this->getParameters();
         $actorCarac = $params['actorCarac'] ?? 0;
-        $divisor =  $params['caracDivisor'] ?? 1;
+        $divisor = (int) ($params['caracDivisor'] ?? 1);
+        $hasCarac = !empty($actorCarac);
 
-        $to = $param["to"] ?? "target";
+        $caracValue = $hasCarac ? (float) $actor->caracs->{$actorCarac} : 0.0;
+        $malus = $this->computeMalusToRemove((int) ($params['fixedMalus'] ?? 0), $hasCarac, $caracValue, $divisor);
 
-        if (isset($params['fixedMalus']) && $params['fixedMalus']) {
-            $malus = $params['fixedMalus'];
-        }
+        $to = $params["to"] ?? "target";
 
-        if(!empty($actorCarac) || !empty($actorCarac)){
-            $malus = floor($actor->caracs->{$actorCarac}/$divisor);
-        }
-
-        if ($to == "target") {
-            $target->put_malus(-$malus);
-        } else if ($to == "actor") {
-            $actor->put_malus(-$malus);
+        $subject = $this->resolveSubject($to, $actor, $target);
+        if ($subject !== null) {
+            $subject->put_malus(-$malus);
         }
 
         $outcomeMalusMessages = array();
-        $outcomeMalusMessages[0] = 'Votre action retire '. $malus .' malus à ' . $target->data->name . '.';
+        $outcomeMalusMessages[0] = 'Votre action retire '. $malus .' malus à ' . ($subject ?? $target)->data->name . '.';
 
-        return new OutcomeResult(true, $outcomeMalusMessages, $outcomeMalusMessages);
+        return new OutcomeResult(true, $outcomeMalusMessages, array());
+    }
+
+    public function computeMalusToRemove(int $fixedMalus, bool $hasCarac, float $caracValue, int $divisor): int
+    {
+        $malus = $fixedMalus;
+
+        if ($hasCarac) {
+            $malus = (int) floor($caracValue / $divisor);
+        }
+
+        return $malus;
     }
 
 }

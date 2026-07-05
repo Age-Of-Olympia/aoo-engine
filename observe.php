@@ -4,7 +4,7 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
-use App\Action\BuffAction;
+use App\Service\Action\ActionTargeting;
 use App\Factory\PlayerFactory;
 use Classes\Str;
 use Classes\Ui;
@@ -332,6 +332,7 @@ if($res->num_rows){
         $actions = $player->get_actions();
         $actionService = new ActionService();
         $actions = sortActionsByCategory($actions, $actionService);
+        $actionTargeting = new ActionTargeting();
 
         foreach($actions as $actionName){
             $entityManager = EntityManagerFactory::getEntityManager();
@@ -351,20 +352,16 @@ if($res->num_rows){
                 continue;
             }
 
-            if ($actionData instanceof BuffAction && $player->id == $target->id) {
+            // Show the action button only in the context its scope allows:
+            // self on yourself, target on someone else, both in either, none
+            // nowhere (a no-outcome action — e.g. a technique modifier — has no
+            // button here, as the old loop did).
+            $observingSelf = ($player->id == $target->id);
+            $allowed = $observingSelf
+                ? $actionTargeting->canTargetSelf($actionData)
+                : $actionTargeting->canTargetOther($actionData);
+            if ($allowed) {
                 $dataImg .= buildActionToDisplay($target, $actionData);
-                continue;
-            }
-
-            $actionOutcomes = $actionData->getOutcomes();
-            foreach ($actionOutcomes as $actionOutcome) {
-                if ($actionOutcome->getApplyToSelf() && $player->id == $target->id) {
-                    $dataImg .= buildActionToDisplay($target, $actionData);
-                    continue 2;
-                } else if (!$actionOutcome->getApplyToSelf() && $player->id != $target->id) {
-                    $dataImg .= buildActionToDisplay($target, $actionData);
-                    continue 2;
-                }
             }
         }
 
@@ -687,7 +684,7 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $action->getName() .'"
                 >
-                <span class="ra '. $action->getIcon() .'"></span>
+                '. (new \App\View\Action\ActionIconView())->forAction($action, 'span') .'
                 <span class="action-name">'. $action->getDisplayName() .'</span>
                 </button><br/>';
 
@@ -701,7 +698,7 @@ function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?
                 data-target-id="'. $target->getId() .'"
                 data-action="'. $nameOverride .'"
                 >
-                <span class="ra '. $action->getIcon() .'"></span>
+                '. (new \App\View\Action\ActionIconView())->forAction($action, 'span') .'
                 <span class="action-name">'. ucfirst($nameOverride) .'</span>
                 </button><br/>';
         }

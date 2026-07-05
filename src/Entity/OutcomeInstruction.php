@@ -77,4 +77,13 @@ abstract class OutcomeInstruction implements OutcomeInstructionInterface
     }
 
     abstract public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult;
+
+    protected function resolveSubject(string $to, Player $actor, Player $target): ?Player
+    {
+        return match ($to) {
+            'actor' => $actor,
+            'target' => $target,
+            default => null,
+        };
+    }
 }

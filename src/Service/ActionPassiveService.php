@@ -54,6 +54,25 @@ class ActionPassiveService
         }
     }
 
+    /**
+     * Every passive as name => display_name, for schema/simulation dropdowns.
+     *
+     * @return array<string, string>
+     */
+    public function getAllNames(): array
+    {
+        $rows = $this->entityManager->createQuery(
+            'SELECT a.name AS name, a.displayName AS displayName FROM App\Entity\ActionPassive a ORDER BY a.category ASC, a.name ASC'
+        )->getArrayResult();
+
+        $names = [];
+        foreach ($rows as $row) {
+            $names[$row['name']] = $row['displayName'] !== '' ? $row['displayName'] : $row['name'];
+        }
+
+        return $names;
+    }
+
     public function getActionPassivesByCategory(string $category): array
     {
         $query = $this->entityManager->createQuery(

@@ -2,6 +2,7 @@
 
 namespace App\View;
 
+use App\Service\Action\EnergieRule;
 use App\Tutorial\TutorialHelper;
 use Classes\Db;
 use Classes\Player;
@@ -186,8 +187,8 @@ class NewTurnView
 
                             $val = $player->caracs->a;
 
-                            // Calcul de la valeur d'énergie
-                            $recovEnergie = ENERGIE_CST - $val;
+                            // Énergie max au rafraîchissement de tour : ENERGIE_CST − a.
+                            $recovEnergie = EnergieRule::maxEnergieFor($val);
 
                             continue;
                         }

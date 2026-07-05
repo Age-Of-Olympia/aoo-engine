@@ -5,11 +5,6 @@ use Classes\View;
 
 class DistancePureComputeCondition extends ComputePureCondition
 {
-    public function __construct()
-    {
-        parent::__construct();
-        array_push($this->preConditions, new ObstacleCondition());
-    }
 
     protected function getDistanceTreshold() : int {
         return floor(($this->distance) * 2.5);
@@ -49,7 +44,7 @@ class DistancePureComputeCondition extends ComputePureCondition
         $bonus = $conditionObject->getTargetRollBonus();
         $targetTotal = array_sum($targetRoll) + $bonus;
         $tooltipOtherTxt = !empty($bonus) ? 'Bonus de compétence : ' . $conditionObject->getTargetRollBonus() . ' ' : '';
-        $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt+$bonus . '">Autre</span>) = ' . array_sum($targetRoll)+$bonus . ' (Jet pur)' : ' (Jet pur)';
+        $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>) = ' . (array_sum($targetRoll) + $bonus) . ' (Jet pur)' : ' (Jet pur)';
         $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt;
 
         $conditionObject->setTargetRoll($targetTotal);

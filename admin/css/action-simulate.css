@@ -1,0 +1,178 @@
+/* Simulation form component, shared by action-simulate.php and the workbench. */
+
+.sim-form { max-width: none; }
+
+/* The two fighter panels, side by side. Both share the outer grid's rows via
+   subgrid, so the panels are the same height AND their sub-sections line up
+   row-for-row (header + 4 sub-sections = 5 rows). */
+.sim-sides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(5, auto);
+    gap: 0 16px;
+}
+
+.sim-panel {
+    display: grid;
+    grid-row: 1 / -1;
+    grid-template-rows: subgrid;
+    min-width: 0;
+    margin: 0;
+    border: 1px solid #e3e6ea;
+    border-radius: 10px;
+}
+
+.sim-panel-h {
+    padding: 9px 14px 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #2e6da4;
+}
+
+/* A self-only action keeps the Cible panel for a symmetric layout but disables
+   it. The fieldset uses display:contents so it disables every descendant control
+   natively without breaking the panel's subgrid (its rows stay direct children). */
+.sim-panel-fieldset {
+    display: contents;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+}
+
+.sim-panel--disabled .sim-sub {
+    opacity: 0.5;
+}
+
+.sim-panel-note {
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #b08968;
+}
+
+/* Sub-sections inside a panel (Caractéristiques / Équipement / Effets / Passifs). */
+.sim-sub {
+    margin-top: 12px;
+    padding: 0 14px;
+}
+
+.sim-sub:last-child {
+    padding-bottom: 14px;
+}
+
+.sim-sub-h {
+    margin-bottom: 5px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #eef1f4;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #8a95a1;
+}
+
+.sim-sub-h small {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #aab2bb;
+}
+
+/* Compact input grid (caracs and equipment slots). */
+.sim-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 6px 12px;
+}
+
+.sim-grid .form-group {
+    margin: 0;
+}
+
+.sim-grid label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 12px;
+    color: #5a6b7b;
+}
+
+.sim-form .form-control {
+    height: 30px;
+    font-size: 13px;
+}
+
+.sim-form select[multiple].form-control {
+    height: 80px;
+}
+
+/* Effect rows. */
+.effect-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.sim-effect-value {
+    max-width: 80px;
+}
+
+/* Context bar: the Environnement section (distance + toggles) on the left, the
+   run controls (tirages + submit) on the right, sharing one row. */
+.sim-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-top: 14px;
+    padding-top: 4px;
+    border-top: 1px solid #e3e6ea;
+}
+
+.sim-context .sim-sub {
+    flex: 1 1 340px;
+    margin-top: 10px;
+    padding: 0;
+}
+
+.sim-context .form-group {
+    margin: 0;
+}
+
+.sim-context .form-control {
+    width: 88px;
+}
+
+.sim-env {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 18px;
+}
+
+.sim-run {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sim-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+/* Detailed sample + its dice breakdown, side by side on wide screens. */
+.sim-detail { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.sim-detail > .sim-sample { flex: 3 1 420px; min-width: 0; }
+.sim-detail > .sim-dice { flex: 1 1 260px; min-width: 0; }
+.sim-dice-list { margin: 0; padding-left: 20px; font-size: 13px; }
+.sim-dice-list li { margin-bottom: 3px; }
+.sim-dice-spec { display: inline-block; min-width: 44px; color: var(--bronze); font-weight: 600; }

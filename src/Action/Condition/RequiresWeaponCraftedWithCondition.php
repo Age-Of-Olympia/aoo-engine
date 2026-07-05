@@ -4,11 +4,23 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponCraftedWithCondition extends BaseCondition
+class RequiresWeaponCraftedWithCondition extends BaseCondition implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('craftedWith', FieldType::MATERIAL, 'Matériaux de fabrication', multiple: true),
+            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true),
+        );
+    }
+
     private ?string $errorMessage = null;
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

@@ -4,14 +4,25 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
 use Classes\View;
 
 #[ORM\Entity]
-class EnchantOutcomeInstruction extends OutcomeInstruction
+class EnchantOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacement à enchanter'),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $outcomeSuccessMessages = array();
         $outcomeFailureMessages = array();

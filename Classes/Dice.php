@@ -1,6 +1,8 @@
 <?php
 namespace Classes;
 
+use App\Simulation\DiceLog;
+
 class Dice{
 
     public int $n;
@@ -31,6 +33,8 @@ class Dice{
         for( $i = 0; $i < $d; $i++ ){
             $dicesTbl[] = rand(1,$this->n);
         }
+
+        DiceLog::record($this->n, $dicesTbl);
 
         return $dicesTbl;
     }

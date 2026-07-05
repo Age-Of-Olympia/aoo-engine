@@ -4,17 +4,30 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 
-class PlanCondition extends BaseCondition
+class PlanCondition extends BaseCondition implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('plan', FieldType::PLAN, 'Plan interdit', default: 'enfers'),
+            new ParameterField('allowed', FieldType::ACTION, 'Actions autorisées (aux Enfers)', default: ['prier'], multiple: true, help: 'Actions exemptées du blocage'),
+        );
+    }
+
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $result = new ConditionResult(true, array(), array());
 
-        $allowedInEnfers = ['prier'];
-
         $params = $condition->getParameters();
         $plan = $params["plan"] ?? "enfers";
+        // Data-driven exemption list (editable on the preconditions tab); defaults
+        // to ['prier'] for any row that predates the param.
+        $allowedInEnfers = is_array($params['allowed'] ?? null) ? $params['allowed'] : ['prier'];
 
         $actionName = $condition->getAction()?->getName();
 

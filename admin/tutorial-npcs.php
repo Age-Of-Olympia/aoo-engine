@@ -289,7 +289,7 @@ if ($action === 'new') {
                 . '<td>%d</td><td>%s</td><td>%s</td><td>%s</td>'
                 . '<td>%d, %d</td><td>%s</td><td>%s</td>'
                 . '<td>%s</td><td>%s</td>'
-                . '<td><a href="tutorial-npcs.php?action=edit&id=%d" class="btn btn-sm btn-secondary">Éditer</a> %s</td>'
+                . '<td><a href="tutorial-npcs.php?action=edit&id=%d" class="btn btn-sm btn-outline-primary">Éditer</a> %s</td>'
                 . '</tr>',
                 (int) $r['id'], $h($r['version']), $h($r['role']), $modeBadge,
                 (int) $r['x'], (int) $r['y'], $h($r['name']), $h($r['race']),

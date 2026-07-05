@@ -5,9 +5,23 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 
-class ForbidIfHasEffectCondition extends BaseCondition
+class ForbidIfHasEffectCondition extends BaseCondition implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('actorEffect', FieldType::EFFECT, "Effet interdit sur l'acteur"),
+            new ParameterField('targetEffect', FieldType::EFFECT, 'Effet interdit sur la cible'),
+            new ParameterField('actorEffects', FieldType::EFFECT, "Effets interdits (acteur)", multiple: true),
+            new ParameterField('targetEffects', FieldType::EFFECT, 'Effets interdits (cible)', multiple: true),
+        );
+    }
+
     private array $errorMessage = array();
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult

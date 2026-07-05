@@ -37,28 +37,10 @@ parameters:
 			path: admin/tutorial-step-editor.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>respawnPlan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: api/tutorial/cancel.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>respawnPlan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: api/tutorial/complete.php
-
-		-
 			message: '#^Function getConnection not found\.$#'
 			identifier: function.notFound
 			count: 1
 			path: api/tutorial/jump-to-step.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>respawnPlan" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: api/tutorial/skip.php
 
 		-
 			message: '#^Right side of && is always true\.$#'
@@ -78,11 +60,18 @@ parameters:
 			count: 1
 			path: src/Action/ActionFactory.php
 
+
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
 			identifier: property.notFound
 			count: 9
-			path: src/Action/AttackAction.php
+			path: src/Service/Action/Xp/AttackXpCalculator.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Action/Xp/TrainXpCalculator.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
@@ -108,65 +97,6 @@ parameters:
 			count: 1
 			path: src/Action/Condition/BuffComputeCondition.php
 
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/ComputeCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerPassiveService\.$#'
-			identifier: property.notFound
-			count: 7
-			path: src/Action/Condition/ComputeCondition.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/Action/Condition/ComputeCondition.php
-
-		-
-			message: '#^Negated boolean expression is always true\.$#'
-			identifier: booleanNot.alwaysTrue
-			count: 1
-			path: src/Action/Condition/ComputeCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/ComputePureCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerPassiveService\.$#'
-			identifier: property.notFound
-			count: 7
-			path: src/Action/Condition/ComputePureCondition.php
-
-		-
-			message: '#^Negated boolean expression is always true\.$#'
-			identifier: booleanNot.alwaysTrue
-			count: 1
-			path: src/Action/Condition/ComputePureCondition.php
-
-		-
-			message: '#^Method App\\Action\\Condition\\DistanceComputeCondition\:\:getDistanceTreshold\(\) should return int but returns float\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Action/Condition/DistanceComputeCondition.php
-
-		-
-			message: '#^Undefined variable\: \$targetRollBonus$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/Condition/DistanceComputeCondition.php
-
-		-
-			message: '#^Variable \$targetRollBonus in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Action/Condition/DistanceComputeCondition.php
 
 		-
 			message: '#^Method App\\Action\\Condition\\DistancePureComputeCondition\:\:getDistanceTreshold\(\) should return int but returns float\.$#'
@@ -204,17 +134,6 @@ parameters:
 			count: 1
 			path: src/Action/Condition/ForbidOnEquipedObjectStatusCondition.php
 
-		-
-			message: '#^Undefined variable\: \$targetRollBonus$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/Condition/MeleeComputeCondition.php
-
-		-
-			message: '#^Variable \$targetRollBonus in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Action/Condition/MeleeComputeCondition.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
@@ -271,12 +190,6 @@ parameters:
 			path: src/Action/Condition/RequiresTraitValueCondition.php
 
 		-
-			message: '#^Comparison operation "\>" between 0 and 0 is always false\.$#'
-			identifier: greater.alwaysFalse
-			count: 1
-			path: src/Action/Condition/RequiresTraitValueCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 1
@@ -289,15 +202,9 @@ parameters:
 			path: src/Action/Condition/RequiresWeaponCraftedWithCondition.php
 
 		-
-			message: '#^Property App\\Action\\Condition\\RequiresWeaponTypeCondition\:\:\$errorMessage \(string\|null\) is never assigned string so it can be removed from the property type\.$#'
-			identifier: property.unusedType
-			count: 1
-			path: src/Action/Condition/RequiresWeaponTypeCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
-			count: 6
+			count: 5
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
@@ -307,45 +214,9 @@ parameters:
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:breakObject\(\) never returns object so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:breakObject\(\) should return object\|null but returns int\|string\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getCorruptedMaterial\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getCorruptedMaterial\(\) never returns string so it can be removed from the return type\.$#'
-			identifier: return.unusedType
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Method App\\Action\\OutcomeInstruction\\DamageObjectOutcomeInstruction\:\:getCorruptedMaterial\(\) should return string\|null but returns list\<string\>\|null\.$#'
-			identifier: return.type
-			count: 1
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
 			message: '#^Right side of \|\| is always false\.$#'
 			identifier: booleanOr.rightAlwaysFalse
 			count: 2
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$params on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
@@ -367,40 +238,10 @@ parameters:
 			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
 
 		-
-			message: '#^Loose comparison using \=\= between ''target'' and ''target'' will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
-			count: 1
-			path: src/Action/OutcomeInstruction/MalusOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$param on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/MalusOutcomeInstruction.php
-
-		-
 			message: '#^Variable \$gain might not be defined\.$#'
 			identifier: variable.undefined
 			count: 1
 			path: src/Action/OutcomeInstruction/ObjectOutcomeInstruction.php
-
-		-
-			message: '#^Loose comparison using \=\= between ''target'' and ''target'' will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
-			count: 1
-			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$actorCarac in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$param on left side of \?\? is never defined\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/RemoveMalusOutcomeInstruction.php
 
 		-
 			message: '#^Variable \$rand might not be defined\.$#'
@@ -409,15 +250,9 @@ parameters:
 			path: src/Action/OutcomeInstruction/ResourceOutcomeInstruction.php
 
 		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
-			identifier: property.notFound
-			count: 6
-			path: src/Action/TrainAction.php
-
-		-
 			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions in isset\(\) is not nullable nor uninitialized\.$#'
 			identifier: isset.initializedProperty
-			count: 2
+			count: 3
 			path: src/Entity/Action.php
 
 		-
@@ -492,11 +327,6 @@ parameters:
 			count: 1
 			path: src/Service/PlantsService.php
 
-		-
-			message: '#^Method App\\Service\\PlayerPassiveService\:\:getComputedValueByPlayerIdById\(\) should return int but returns float\.$#'
-			identifier: return.type
-			count: 3
-			path: src/Service/PlayerPassiveService.php
 
 		-
 			message: '#^Method App\\Service\\ScreenshotService\:\:convertImagesToBase64\(\) is unused\.$#'
@@ -845,3 +675,22 @@ parameters:
 			identifier: empty.variable
 			count: 1
 			path: src/View/WarSchool/WarSchoolUtils.php
+
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerPassiveService\.$#'
+			identifier: property.notFound
+			count: 6
+			path: src/Action/Condition/AbstractComputeCondition.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: src/Action/Condition/AbstractComputeCondition.php

@@ -1,0 +1,202 @@
+<?php
+
+namespace App\Simulation;
+
+use App\Enum\EquipResult;
+use Classes\Item;
+use Classes\Player;
+
+/**
+ * A DB-free Player for simulation: it satisfies the concrete `Player` typehint
+ * that outcome instructions require, reads all state from injected values, and
+ * no-ops every mutation so running the real ActionExecutorService against it
+ * persists nothing. Reads that would hit the DB on a real Player are overridden
+ * to use the injected state; effect/passive lookups go through the simulated
+ * services. See src/Simulation/Simulated{Effect,Passive}Service.
+ */
+class SimulatedPlayer extends Player
+{
+    /**
+     * @param array<string, int> $caracs    trait => value
+     * @param array<string, int> $remaining pa/pv/pm/mvt => value
+     * @param array<string, mixed> $data    name/malus/antiBerserkTime/rank/faction/energie overrides
+     * @param array<string, int> $effects   effect name => value
+     * @param list<\App\Entity\ActionPassive> $passives resolved passive configs
+     * @param list<string> $tileTypes map tile types the player stands on (e.g. 'routes')
+     */
+    public function __construct(
+        int $id,
+        array $caracs,
+        array $remaining,
+        object $coords,
+        array $data = [],
+        ?object $emplacements = null,
+        array $effects = [],
+        array $passives = [],
+        array $tileTypes = [],
+    ) {
+        // Deliberately NOT calling parent::__construct() — it news PlayerService($id) (DB).
+        $this->id = $id;
+        // Default every known trait to 0 so any defense/roll formula that reads a
+        // trait the caller didn't provide returns 0 instead of warning.
+        $caracDefaults = defined('CARACS') ? array_fill_keys(array_keys(CARACS), 0) : [];
+        $this->caracs = (object) array_merge($caracDefaults, $caracs);
+        $this->turn = (object) $remaining;
+        $this->coords = $coords;
+        $this->emplacements = $emplacements ?? (object) [];
+        // Fold equipped-item stat bonuses (e.g. a weapon's cc) into caracs the
+        // same way Player::get_caracs() does on a real player — same method, so
+        // the simulator doesn't drift from the game's equipment rule.
+        foreach ((array) $this->emplacements as $item) {
+            self::applyItemCaracs($this->caracs, $item);
+        }
+        // Degressive-XP reduction read by AttackXpCalculator.
+        $this->upgrades = (object) ['a' => 0];
+        // Lenient: unmodelled data fields the engine reads return null, not a warning.
+        $this->data = new LenientData(array_merge(
+            [
+                'name' => 'Simulé', 'race' => 'humain', 'malus' => 0, 'antiBerserkTime' => 0,
+                'rank' => 1, 'faction' => '', 'secretFaction' => '', 'isInactive' => false,
+                'energie' => 100, 'godId' => 1,
+            ],
+            $data,
+        ));
+        $this->playerEffectService = new SimulatedEffectService($effects);
+        $this->playerPassiveService = new SimulatedPassiveService($passives, $this);
+        $this->tileTypes = $tileTypes;
+    }
+
+    /** @var list<string> map tile types the simulated player stands on */
+    private array $tileTypes = [];
+
+    public function isSimulated(): bool
+    {
+        return true;
+    }
+
+    public function isOnTileType(string $type): bool
+    {
+        return in_array($type, $this->tileTypes, true);
+    }
+
+    /* --- reads overridden to use injected state instead of the DB --- */
+
+    public function getCoords(bool $refresh = true): object
+    {
+        return $this->coords;
+    }
+
+    public function getRemaining(string $trait): int
+    {
+        return (int) ($this->turn->{$trait} ?? $this->caracs->{$trait} ?? 0);
+    }
+
+    public function get_caracs(bool $nude = false): bool
+    {
+        return true;
+    }
+
+    public function get_data(bool $forceRefresh = true)
+    {
+        return $this->data;
+    }
+
+    public function getEquipedItems(): array
+    {
+        return [];
+    }
+
+    public function getPassives(int $id): array
+    {
+        return [];
+    }
+
+    public function get_upgrades()
+    {
+        return $this->upgrades;
+    }
+
+    public function get_action_xp($target)
+    {
+        return 0;
+    }
+
+    public function have_option($name): int
+    {
+        return 0;
+    }
+
+    public function have_effects_to_purge(): bool
+    {
+        return false;
+    }
+
+    public function getMunition(Item $object, bool $equiped = false): ?Item
+    {
+        // Return the munition the user equipped in the simulator (the munition
+        // slot), or null when none — so the real RequiresAmmoCondition gates a
+        // tir weapon. No rule is re-implemented here; the condition does it.
+        return $this->emplacements->munition ?? null;
+    }
+
+    /* --- mutations no-op'd so a simulation persists nothing --- */
+
+    public function putBonus($bonus): bool
+    {
+        return true;
+    }
+
+    public function put_malus($malus): void
+    {
+    }
+
+    public function put_xp($xp)
+    {
+        return 0;
+    }
+
+    public function put_assist($target, $damages)
+    {
+    }
+
+    public function putEnergie($energie): void
+    {
+    }
+
+    public function go($goCoords)
+    {
+    }
+
+    public function equip(Item $item, bool $doNotRefresh = false): EquipResult
+    {
+        return EquipResult::DoNothing;
+    }
+
+    public function purge_effects(): int
+    {
+        return 0;
+    }
+
+    /*
+     * These parent mutations write the real world keyed by player id / coords
+     * (map_items, players_actions, players), so they must be no-op'd too:
+     * the simulation runs the real outcome instructions (DropWeapon -> drop(),
+     * RemoveAction -> end_action(), etc.) against players 1/2.
+     */
+
+    public function drop($item, $n)
+    {
+    }
+
+    public function add_action($name)
+    {
+    }
+
+    public function end_action($name)
+    {
+    }
+
+    public function put_pf($pf)
+    {
+    }
+}

@@ -1,23 +1,44 @@
 <?php
 namespace App\Action\Condition;
 
-class DistanceComputeCondition extends ComputeCondition
+use App\Action\Combat\CombatResolver;
+use App\Action\Combat\RollDetail;
+use App\Action\Combat\RollDetailView;
+use App\Action\Schema\DeclaresSimulationInputs;
+
+class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
 {
-    public function __construct()
+    public static function targetDefenseValue(int $cc, int $agi): int
     {
-        parent::__construct();
-        array_push($this->preConditions, new ObstacleCondition());
+        return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        return self::physicalDefenseSimulationInputs($params);
+    }
+
+    public static function distanceMalusFor(int $distance): int
+    {
+        $cellCount = $distance - 1;
+
+        return $cellCount > 2 ? ($cellCount - 2) * 3 : 0;
+    }
+
+    public static function distanceThresholdFor(int $distance): int
+    {
+        return (int) floor($distance * 2.5);
     }
 
     protected function getDistanceTreshold() : int {
-        return floor(($this->distance) * 2.5);
+        return self::distanceThresholdFor($this->distance);
     }
 
     protected function computeTarget($target, $dice, $conditionObject)
     {
         $trait1 = $target->caracs->cc;
         $trait2 = $target->caracs->agi;
-        $targetRollTraitValue = floor(max(3/4 * $trait1 + 1/4 * $trait2, 1/4 * $trait1 + 3/4 * $trait2));
+        $targetRollTraitValue = self::targetDefenseValue((int) $trait1, (int) $trait2);
         
         if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"reflexes_fulgurants")){
             $targetRollTraitValue = floor(6/7 * $trait2 + 1/7 * $trait1);
@@ -31,44 +52,32 @@ class DistanceComputeCondition extends ComputeCondition
             }
         }
 
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
-            $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
-            }   
-            else{
-                $targetRoll = min($targetRoll,$targetRoll2);
-            }
-        }
-        $targetEffetVulnerabilite = $target->getEffectValue("vulnerabilite");
-        $targetEffetProtection = $target->getEffectValue("protection");
-        $effetVulnerabilite = !empty($targetEffetVulnerabilite) ? $targetEffetVulnerabilite : 0;
-        $effetProtection = !empty($targetEffetProtection) ? $targetEffetProtection : 0;
-        $targetEsq = $target->caracs->esquive ?? 0;
-        $bonus = $conditionObject->getTargetRollBonus();
-        $totalOther = $bonus + $effetProtection - $effetVulnerabilite + $targetEsq;
-        $targetTotal = array_sum($targetRoll) - $target->data->malus + $totalOther;
-        $malusTxt = ($target->data->malus != 0) ? ' - '. $target->data->malus .' (Malus)' : '';
-        $targetTotalTxt = $target->data->malus ? ' = '. $targetTotal : '';
-        $tooltipOtherTxt = 
-            (!empty($targetEffetProtection) || !empty($targetEffetVulnerabilite)
-            ? 'Effets :' .
-            (!empty($targetEffetProtection) ? ' ' . $effetProtection : '') .
-            (!empty($targetEffetVulnerabilite) ? ' - ' . $effetVulnerabilite : '') . ' '
-            : ''
-            ) .
-            (($targetEsq != 0) ? 'Esquive : ' . ($targetEsq < 0 ? ' - ' . abs($targetEsq) : $targetEsq) . ' ' : '') .
-            (!empty($targetRollBonus) ? 'Bonus de compétence : ' . $targetRollBonus . ' ' : '');
-        $targetOtherTxt = ($targetEsq != 0 || $bonus != 0 || $effetVulnerabilite != 0 || $effetProtection != 0) ? ($totalOther < 0 ? ' - '.abs($totalOther) : ' + ' . $totalOther) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>)' : '';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt . $malusTxt . $targetTotalTxt;
+        $targetRoll = (new CombatResolver($dice))->roll(
+            (int) $targetRollTraitValue,
+            (bool) $conditionObject->getTargetAdvantage(),
+            (bool) $conditionObject->getTargetDisadvantage()
+        );
+        $bonus = (int) $conditionObject->getTargetRollBonus();
+        $protection = (int) ($target->getEffectValue("protection") ?: 0);
+        $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
+        $esquive = (int) ($target->caracs->esquive ?? 0);
+        $malus = (int) $target->data->malus;
+        $total = array_sum($targetRoll) - $malus + $bonus + $protection - $vulnerabilite + $esquive;
 
-        $conditionObject->setTargetRoll($targetTotal);
-        
-        return array($targetRoll, $targetTotal, $targetTxt);
+        $detail = new RollDetail(
+            name: $target->data->name,
+            rollSum: array_sum($targetRoll),
+            bonus: $bonus,
+            positiveEffect: $protection,
+            negativeEffect: $vulnerabilite,
+            malus: $malus,
+            esquive: $esquive,
+            total: $total,
+        );
+
+        $conditionObject->setTargetRoll($total);
+
+        return array($targetRoll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
     protected function checkDistanceCondition(int $actorTotal): bool {
@@ -81,11 +90,6 @@ class DistanceComputeCondition extends ComputeCondition
     }
     
     protected function getDistanceMalus(): int {
-        $distanceMalus = 0;
-        $cellCount = $this->distance - 1;
-        if($cellCount > 2){
-            $distanceMalus = ($cellCount - 2) * 3;
-        }
-        return $distanceMalus;
+        return self::distanceMalusFor($this->distance);
     }
 }

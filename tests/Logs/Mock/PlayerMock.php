@@ -6,7 +6,8 @@ use Tests\Action\Mock\PlayerMock as BasePlayerMock;
 class PlayerMock extends BasePlayerMock
 {
     private array $options = [];
-    public object $coords;
+    /** @var object Untyped to match the parent mock's $coords (PHPStan level 4 forbids adding a native type an inherited property lacks). */
+    public $coords;
 
     public function __construct(int $id = 1, string $name = 'MockPlayer')
     {

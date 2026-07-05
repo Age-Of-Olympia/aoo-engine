@@ -1,0 +1,45 @@
+/* Player skills — two catalog tables side by side, built on the shared admin
+   table / badge / button components so it matches the other admin sections.
+   Only the column grid, the checkbox cell, and a faint owned-row tint are
+   page-specific. */
+
+.skills-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 820px) {
+    .skills-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+.skills-col .table {
+    margin-bottom: 0;
+}
+
+.skills-check {
+    width: 2.5rem;
+    text-align: center;
+}
+
+.skills-checkbox {
+    cursor: pointer;
+}
+
+/* The game styles <code> as a block with a textured background; the slug here
+   is an inline label, so reset it back to plain inline monospace. */
+.skills-columns code {
+    display: inline;
+    background: none;
+    padding: 0;
+    white-space: normal;
+}
+
+/* Owned (checked) rows get a faint tint in the admin's blue accent so they
+   stay scannable down a long catalog. */
+.skills-col tbody tr:has(.skills-checkbox:checked) {
+    background: rgba(52, 152, 219, 0.10);
+}

@@ -11,6 +11,17 @@ class PlayerMock implements ActorInterface
   public $id;
   public $data;
   public $caracs;
+  public $coords;
+  public $playerPassiveService;
+
+  /** @var array<string, int> */
+  public array $effects = [];
+
+  /** @var array<string, int> remaining points per trait; falls back to 10 */
+  public array $remaining = [];
+
+  /** @var array<int, object> passives returned by getPassives() */
+  public array $passivesList = [];
 
   public function __construct(
     int $id = 1,
@@ -26,12 +37,25 @@ class PlayerMock implements ActorInterface
       'faction' => $faction,
       'secretFaction' => $secretFaction,
       'isInactive' => $isInactive,
+      'malus' => 0,
+      'antiBerserkTime' => 0,
     ];
     $this->caracs = (object) [];
+    $this->coords = (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => 'test_plan'];
+    $this->playerPassiveService = new PassiveServiceStub();
+  }
+
+  public function getEffectValue(string $name): ?int
+  {
+    return $this->effects[$name] ?? null;
   }
 
   public function getId(): int {
     return $this->id;
+  }
+
+  public function isSimulated(): bool {
+    return false;
   }
 
   // Méthodes requises par ActorInterface
@@ -66,17 +90,12 @@ class PlayerMock implements ActorInterface
 
   public function getCoords(bool $refresh = true): object
   {
-    return (object) [
-      'x' => 0,
-      'y' => 0,
-      'z' => 0,
-      'plan' => 'test_plan'
-    ];
+    return $this->coords;
   }
 
   public function getRemaining(string $trait): int
   {
-    return 10;
+    return $this->remaining[$trait] ?? 10;
   }
 
   public function equip(Item $item, bool $doNotRefresh = false): EquipResult
@@ -130,6 +149,6 @@ class PlayerMock implements ActorInterface
 
   public function getPassives(int $id): array
   {
-    return [];
+    return $this->passivesList;
   }
 }

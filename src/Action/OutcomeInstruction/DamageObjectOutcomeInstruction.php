@@ -4,18 +4,34 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
 use App\Interface\ActorInterface;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
-class DamageObjectOutcomeInstruction extends OutcomeInstruction
+class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('player', FieldType::ENUM, 'Casser l\'objet de', default: 'BOTH', options: [
+                'ACTOR' => 'Acteur',
+                'TARGET' => 'Cible',
+                'BOTH' => 'Les deux',
+            ]),
+        );
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $result = new OutcomeResult(false);
         $outcomeSuccessMessages = array();
         $outcomeSuccessMessages[0] = null;
+        $params = $this->getParameters() ?? [];
         $player = $params['player'] ?? 'BOTH';
         switch ($player) {
             case 'ACTOR':
@@ -82,14 +98,13 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
                 $equipments = $this->getDamageableDefenseEquipments($player);
                 if (count($equipments) > 0) {
                     $equipmentToDamage = array_rand($equipments);
-                
-                    //$corruptedMaterial = $this->getCorruptedMaterial($player, $equipmentToDamage);
                     $breakChance = $this->getBreakChance($player, $equipmentToDamage);
 
-                    if(rand(1,100) <= $breakChance || AUTO_BREAK){            
-                        $player->equip($player->emplacements->{$equipmentToDamage});
-                        $player->emplacements->{$equipmentToDamage}->add_item($player, -1);
-                        $result = $equipmentToDamage;
+                    if(rand(1,100) <= $breakChance || AUTO_BREAK){
+                        $equipment = $player->emplacements->{$equipmentToDamage};
+                        $player->equip($equipment);
+                        $equipment->add_item($player, -1);
+                        $result = $equipment;
                     }
                 }
                 break;
@@ -97,22 +112,6 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction
                 break;
         }
         return $result;
-    }
-
-    private function getCorruptedMaterial($player, $equipmentToDamage): ?string
-    {
-        $corrupted = null;
-        $corruptions = ITEM_CORRUPTIONS;
-        foreach($corruptions as $k=>$e){
-            if($player->have_effect($k)){
-                if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
-                    $corrupted = $e;
-                    break;
-                }
-            }
-        }
-
-        return $corrupted;
     }
 
     private function getBreakChance(ActorInterface $player, $equipmentToDamage)

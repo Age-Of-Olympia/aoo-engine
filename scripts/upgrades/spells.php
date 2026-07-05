@@ -124,7 +124,7 @@ foreach($spellList as $e){
             '. $spell->getDisplayName() .'
         </td>
         <td>
-            <span class="ra '. $spell->getIcon() .'"></span>
+            '. (new \App\View\Action\ActionIconView())->forAction($spell, 'span') .'
         </td>
         <td>
             ' . $cost . '

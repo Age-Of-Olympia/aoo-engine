@@ -4,14 +4,21 @@ namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterSchema;
 use App\Service\ResourceService;
 use Doctrine\ORM\Mapping as ORM;
 use Classes\Item;
 use Classes\Player;
 
 #[ORM\Entity]
-class ResourceOutcomeInstruction extends OutcomeInstruction
+class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
 {
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema();
+    }
+
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $ressources = array();
         $biomes = array();

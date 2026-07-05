@@ -4,12 +4,33 @@ namespace App\Action\Condition;
 use App\Entity\ActionCondition;
 use App\Interface\ActorInterface;
 use App\Action\Condition\ConditionObject;
+use App\Action\Schema\DeclaresSimulationInputs;
+use App\Action\Schema\FieldType;
+use App\Action\Schema\HasParameterSchema;
+use App\Action\Schema\ParameterField;
+use App\Action\Schema\ParameterSchema;
+use App\Action\Schema\SimulationField;
 
 //add enum to display correctly the weapon type names (melee, distance, multipurpose, etc)
 
-class RequiresWeaponTypeCondition extends BaseCondition
+class RequiresWeaponTypeCondition extends BaseCondition implements HasParameterSchema, DeclaresSimulationInputs
 {
-    private ?string $errorMessage = null;
+    public static function parameterSchema(): ParameterSchema
+    {
+        return new ParameterSchema(
+            new ParameterField('type', FieldType::WEAPON_TYPE, "Types d'arme", multiple: true),
+            new ParameterField('location', FieldType::EMPLACEMENT, 'Emplacements', multiple: true),
+        );
+    }
+
+    public static function simulationInputs(array $params): array
+    {
+        $types = (array) ($params['type'] ?? []);
+        $label = 'Arme acteur' . ($types ? ' (' . implode('/', $types) . ')' : '');
+        $default = $types[0] ?? null;
+
+        return [new SimulationField(SimulationField::KIND_WEAPON, SimulationField::SIDE_ACTOR, 'weapon', $label, $default)];
+    }
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
@@ -40,10 +61,5 @@ class RequiresWeaponTypeCondition extends BaseCondition
         
 
         return $result;
-    }
-
-    public function getErrorMessage(): ?string
-    {
-        return $this->errorMessage;
     }
 }
