@@ -85,6 +85,11 @@ final class MinimapView
                 echo '<a href="' . $href . '" class="hud-minimap-map" data-ratio="' . $aspect . '"'
                     . ' title="Ouvrir la carte de ' . $planJson->name . '">'
                     . $imgs . $marker . '</a>';
+
+                /* Nom du lieu sous la carte : seul repère de
+                 * localisation sur mobile, où la barre de statut
+                 * masque #hud-location. */
+                echo '<div class="hud-minimap-caption">' . $planJson->name . '</div>';
             } else {
                 self::placeholder();
             }

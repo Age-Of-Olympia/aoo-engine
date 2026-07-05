@@ -542,6 +542,20 @@ body:has(#hud) #view-landing-wrapper {
     font-style: italic;
 }
 
+/* Titre gravé du panneau, même inscription que « Sur la case » */
+#hud-actions:not(:empty)::before {
+    content: "Actions";
+    display: block;
+    margin-bottom: 8px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--hud-line-soft);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
 /* Grille de boutons carrés (wireframe) : icône seule, nom au survol
  * (title posé par js/hud.js, appui long sur mobile). Le bouton
  * « Fermer » disparaît — changer de sélection suffit. */
@@ -613,20 +627,35 @@ body:has(#hud) #view-landing-wrapper {
     z-index: 4;
 }
 
-/* Nom de l'action en appui long (mobile) : petit bandeau posé par
- * js/hud.js en bas du panneau */
+/* Nom de l'action (armement, appui long mobile) : bandeau posé par
+ * js/hud.js en bas du panneau — nuit + bronze, le nom en Goudy pour
+ * que la confirmation soit l'évidence du panneau, pas une ligne
+ * grise noyée. */
 #hud-action-hint {
     position: absolute;
     left: 8px;
     right: 8px;
     bottom: 8px;
-    padding: 4px 8px;
+    padding: 6px 10px;
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    font-size: 85%;
+    background: rgba(36, 29, 21, 0.92);
+    border: 1px solid var(--hud-bronze-bright);
+    color: var(--hud-parchment);
     text-align: center;
     pointer-events: none;
+}
+
+#hud-action-hint .hud-action-hint-name {
+    display: block;
+    font-family: goudy;
+    font-size: 105%;
+    letter-spacing: 0.8px;
+}
+
+#hud-action-hint .hud-action-hint-tip {
+    display: block;
+    font-size: 75%;
+    opacity: 0.75;
 }
 
 /* ---------- Minimap ---------- */
@@ -634,12 +663,27 @@ body:has(#hud) #view-landing-wrapper {
 #hud-minimap {
     grid-area: 3 / 2 / 4 / 3;
     display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
     place-items: center;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: url('../img/ui/bg/marbre.jpeg');
+}
+
+/* Nom du lieu en Goudy sous la carte — seul repère de localisation
+ * sur mobile (la barre compacte masque #hud-location). */
+#hud-minimap .hud-minimap-caption {
+    max-width: 100%;
+    padding: 2px 8px 4px;
+    font-family: goudy;
+    font-size: 105%;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Le wrapper est dimensionné par js/hud.js (fitMinimap) au ratio
@@ -1183,6 +1227,7 @@ body:has(#hud) #debug-flags {
     /* --- Bulle de chat flottante ---
      * Sous les sheets (z-index) et masquée dès qu'un panneau ou le
      * chat est ouvert : elle ne doit jamais recouvrir une sous-page. */
+    /* Même matériau que la plaque de parole : c'est du discours. */
     #hud-bubble {
         display: flex;
         align-items: center;
@@ -1194,7 +1239,14 @@ body:has(#hud) #debug-flags {
         max-width: 50vw;
         padding: 6px 10px;
         border-radius: 999px;
+        background: var(--hud-parchment);
+        border: 1px solid var(--hud-bronze);
+        color: var(--hud-ink);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    #hud-bubble .ra {
+        color: var(--hud-bronze);
     }
 
     #hud.hud--panel-open #hud-bubble,
@@ -1208,6 +1260,7 @@ body:has(#hud) #debug-flags {
         text-overflow: ellipsis;
         white-space: nowrap;
         font-size: 80%;
+        font-style: italic;
     }
 
     /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */

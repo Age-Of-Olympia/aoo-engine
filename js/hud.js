@@ -106,8 +106,11 @@
             return;
         }
 
+        /* La légende (nom du lieu) prend sa part de hauteur : la carte
+         * se dimensionne dans ce qui reste, sans déborder la case. */
+        var captionH = $box.find('.hud-minimap-caption').outerHeight(true) || 0;
         var boxW = $box.innerWidth() - 8;
-        var boxH = $box.innerHeight() - 8;
+        var boxH = $box.innerHeight() - 8 - captionH;
         var w = Math.min(boxW, boxH * ratio);
 
         $map.css({ width: w + 'px', height: (w / ratio) + 'px' });
@@ -702,10 +705,14 @@
                         '<span class="hud-action-cancel" title="Annuler">'
                         + '<span class="ra ra-cancel"></span></span>'
                     );
-                    /* Nom dans le bandeau bas, persistant tant qu'armé */
+                    /* Nom dans le bandeau bas, persistant tant qu'armé :
+                     * nom en Goudy, consigne en dessous — le bandeau
+                     * remplit l'espace vide du panneau au lieu d'une
+                     * ligne grise noyée. */
                     $('#hud-action-hint').remove();
                     $('<div id="hud-action-hint"></div>')
-                        .text((btn.title || '') + ' — cliquez à nouveau pour confirmer')
+                        .append($('<span class="hud-action-hint-name"></span>').text(btn.title || ''))
+                        .append($('<span class="hud-action-hint-tip"></span>').text('cliquez à nouveau pour confirmer'))
                         .appendTo('#hud-actions');
                     return;
                 }
@@ -730,7 +737,7 @@
             e.preventDefault();
             $('#hud-action-hint').remove();
             $('<div id="hud-action-hint"></div>')
-                .text(this.title || '')
+                .append($('<span class="hud-action-hint-name"></span>').text(this.title || ''))
                 .appendTo('#hud-actions');
             clearTimeout(hintTimer);
             hintTimer = setTimeout(function () {
