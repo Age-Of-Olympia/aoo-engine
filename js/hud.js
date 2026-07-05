@@ -192,10 +192,19 @@
             var $w = $card.find('.card-wrapper');
             var $left = $('<div class="hud-sel-left"></div>')
                 .append($w.children('.card-image'));
+
+            /* Faction fusionnée dans la ligne de type :
+             * « Nain (inactif) · ⚒ » */
+            var $type = $w.children('.card-type');
+            var $faction = $w.children('.card-faction');
+            if ($type.length && $faction.length) {
+                $type.append(' · ').append($faction);
+            }
+
             var $main = $('<div class="hud-sel-main"></div>').append(
                 $w.children('.card-name'),
-                $w.children('.card-type'),
-                $w.children('.card-faction'),
+                $type,
+                $faction.parent().hasClass('card-type') ? $() : $faction,
                 $w.children('.card-text')
             );
             $card.empty().append($left, $main);

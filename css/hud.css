@@ -362,6 +362,7 @@ body:has(#hud) #view-landing-wrapper {
 #hud #ajax-data .hud-sel-main .card-type,
 #hud #ajax-data .hud-sel-main .card-faction {
     position: static;
+    display: inline;
     margin: 0;
     font-size: 88%;
     opacity: 0.85;
@@ -465,10 +466,10 @@ body:has(#hud) #view-landing-wrapper {
  * (title posé par js/hud.js, appui long sur mobile). Le bouton
  * « Fermer » disparaît — changer de sélection suffit. */
 #hud-actions .card-actions {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 52px);
+    justify-content: space-between;
+    align-content: start;
     gap: 6px;
 }
 
