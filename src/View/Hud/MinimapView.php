@@ -33,11 +33,16 @@ final class MinimapView
 
         try {
             $planJson = json()->decode('plans', $coords->plan);
-            if (!is_object($planJson) || empty($planJson->id)) {
+            if (!is_object($planJson)) {
                 throw new \RuntimeException('plan sans carte');
             }
 
-            $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planJson->id);
+            /* Certains JSON de plan n'ont pas de champ id : le slug du
+             * plan sert alors d'identifiant, comme pour le nommage des
+             * couches PNG (local_{plan}_{z}_{couche}_*.png). */
+            $planId = $planJson->id ?? $coords->plan;
+
+            $viewService = new ViewService(new Db(), $coords->x, $coords->y, $coords->z, $player->id, $planId);
 
             if ($viewService->isWorldPlan()) {
                 $mapResult = $viewService->getGlobalMap();
