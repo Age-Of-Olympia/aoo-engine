@@ -361,6 +361,7 @@ body:has(#hud) #view-landing-wrapper {
 
 #hud #ajax-data .hud-sel-main .card-type,
 #hud #ajax-data .hud-sel-main .card-faction {
+    position: static;
     margin: 0;
     font-size: 88%;
     opacity: 0.85;
@@ -443,6 +444,7 @@ body:has(#hud) #view-landing-wrapper {
 
 #hud-actions {
     grid-area: 3 / 4 / 4 / 5;
+    position: relative;
     overflow: auto;
     padding: 8px;
     border: 1px solid #444;
@@ -459,23 +461,60 @@ body:has(#hud) #view-landing-wrapper {
     font-style: italic;
 }
 
-/* Sortie de #ui-card, la .card-actions récupère les noms visibles
- * (la règle #ui-card .card-actions .action-name de main.css ne
- * s'applique plus) ; on liste les boutons pleine largeur. */
+/* Grille de boutons carrés (wireframe) : icône seule, nom au survol
+ * (title posé par js/hud.js, appui long sur mobile). Le bouton
+ * « Fermer » disparaît — changer de sélection suffit. */
 #hud-actions .card-actions {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 6px;
 }
 
-#hud-actions .card-actions br {
+#hud-actions .card-actions br,
+#hud-actions .action.close-card {
     display: none;
 }
 
+/* Les liens enveloppants (Missive…) deviennent transparents pour la
+ * grille : tous les boutons se rangent uniformément. */
+#hud-actions .card-actions a {
+    display: contents;
+}
+
 #hud-actions .action {
-    width: 100%;
-    text-align: left;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#hud-actions .action .ra {
+    font-size: 22px;
+    line-height: 1;
+}
+
+#hud-actions .action .action-name {
+    display: none;
+}
+
+/* Nom de l'action en appui long (mobile) : petit bandeau posé par
+ * js/hud.js en bas du panneau */
+#hud-action-hint {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 85%;
+    text-align: center;
+    pointer-events: none;
 }
 
 /* ---------- Minimap ---------- */

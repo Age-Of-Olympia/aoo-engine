@@ -138,6 +138,16 @@
 
         if ($actions.length) {
             $panel.append($actions);
+            /* Icônes seules dans la grille : le nom passe en title
+             * (survol desktop, appui long mobile via contextmenu). */
+            $actions.find('.action').each(function () {
+                var name = $(this).find('.action-name').text().trim();
+                if (name) {
+                    this.title = name;
+                }
+            });
+            /* Clic direct : on saute l'étape « révéler les noms »
+             * d'observe.js (les noms sont déjà portés par les title). */
             window.visible = true;
         }
 
@@ -632,9 +642,25 @@
         }
 
         /* Fermer depuis le panneau : observe.js (handler direct) cache
-         * déjà #ui-card ; on vide aussi le panneau d'actions. */
+         * déjà #ui-card ; on vide aussi le panneau d'actions. (Le
+         * bouton est masqué dans la grille, gardé par prudence.) */
         $('#hud-actions').on('click', '.close-card', function () {
             $('#hud-actions').empty();
+        });
+
+        /* Appui long mobile (contextmenu) : afficher le nom de
+         * l'action en bandeau au lieu du menu contextuel. */
+        var hintTimer = null;
+        $('#hud-actions').on('contextmenu', '.action', function (e) {
+            e.preventDefault();
+            $('#hud-action-hint').remove();
+            $('<div id="hud-action-hint"></div>')
+                .text(this.title || '')
+                .appendTo('#hud-actions');
+            clearTimeout(hintTimer);
+            hintTimer = setTimeout(function () {
+                $('#hud-action-hint').remove();
+            }, 1600);
         });
 
         $('.hud-tab').on('click', function () {
