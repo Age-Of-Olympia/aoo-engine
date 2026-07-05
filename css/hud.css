@@ -117,6 +117,16 @@ body:has(#hud) {
     margin-left: auto;
     text-align: right;
     white-space: nowrap;
+    min-width: 0;
+}
+
+#hud-location {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hud-quick {
+    flex: 0 0 auto;
 }
 
 .hud-quick {
@@ -192,6 +202,7 @@ body:has(#hud) #load-caracs {
     overflow: auto;
     display: grid;
     place-items: center;
+    text-align: center;
     border: 1px solid #444;
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.15);
@@ -256,7 +267,7 @@ body:has(#hud) #view-landing-wrapper {
  * cascade et cassaient portrait, voile et colonne de case. */
 #hud #ajax-data .hud-sel {
     display: grid;
-    grid-template-columns: 110px minmax(0, 1fr) minmax(200px, 34%);
+    grid-template-columns: 130px minmax(0, 1fr) minmax(200px, 34%);
     grid-template-rows: minmax(0, 1fr) auto;
     gap: 4px 14px;
     width: 100%;
@@ -305,11 +316,11 @@ body:has(#hud) #view-landing-wrapper {
  * js/hud.js — au-dessus du portrait quel que soit l'empilement */
 #hud #ajax-data .hud-pv-lost {
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 0;
     right: 0;
     width: auto;
-    bottom: auto;
+    top: auto;
     z-index: 2;
     background: #770001;
     opacity: 0.5;

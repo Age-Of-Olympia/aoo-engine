@@ -157,6 +157,11 @@
      * relocateCardActions/adaptPvFilter (actions déjà sorties,
      * #red-filter déjà rapatrié dans .card-image).
      */
+    /* La recomposition modifie les enfants directs de #ajax-data, ce
+     * qui redéclenche l'observer ; sans ce drapeau, la seconde passe
+     * revidait #hud-actions (panneau d'actions cassé). */
+    var selfCompose = false;
+
     function composeSelection() {
         var $d = $('#ajax-data');
         if ($d.children('.hud-sel').length) {
@@ -168,6 +173,8 @@
         if (!$card.length && !$infos.length) {
             return; /* réponse brute (go.php, erreurs) : ne pas toucher */
         }
+
+        selfCompose = true;
 
         var $sel = $('<div class="hud-sel"></div>');
 
@@ -609,6 +616,11 @@
         var ajaxData = document.getElementById('ajax-data');
         if (ajaxData) {
             new MutationObserver(function () {
+                /* Mutations issues de composeSelection : ignorer. */
+                if (selfCompose) {
+                    selfCompose = false;
+                    return;
+                }
                 relocateCardActions();
                 /* Mobile : montrer le résultat de l'observation — le
                  * carrousel rejoint la position sélection. */
