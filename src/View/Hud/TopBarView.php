@@ -90,6 +90,7 @@ final class TopBarView
             . '</div>';
 
         echo '<div class="hud-quick">'
+            . '<a href="classements.php" title="Classements"><button class="hud-quick-icon"><span class="ra ra-trophy"></span></button></a>'
             . '<a href="forum.php?lastPosts" title="' . self::lastPostTitle($player) . '"><button>Forum</button></a>'
             . '<a href="index.php?menu" title="Menu principal"><button><span class="ra ra-castle-flag"></span></button></a>'
             . '<a href="index.php?logout" title="Se déconnecter"><button>Quitter</button></a>'

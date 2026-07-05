@@ -522,6 +522,15 @@
         $('#show-craft, #show-bank').insertAfter('#show-inventory');
         $('#show-spells').insertAfter('#show-caracs');
 
+        /* Séparateurs de groupes du rail : la vue / le personnage
+         * (caracs, sorts, possessions) / le monde (évènements, carte,
+         * missives) / le compte. Posés après le repositionnement. */
+        var $menu = $('#hud-rail #menu');
+        $('<span class="hud-rail-sep"></span>').insertAfter('#show-damier');
+        $('<span class="hud-rail-sep"></span>').insertAfter('#show-bank');
+        $('<span class="hud-rail-sep"></span>')
+            .insertAfter($menu.children('a[href="forum.php?forum=Missives"]'));
+
         /* Rail : chaque entrée ouvre son panneau indépendant
          * (hors tutoriel — navigation normale). */
         var RAIL_PANELS = {

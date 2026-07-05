@@ -151,6 +151,12 @@ body:has(#hud) {
     gap: 4px;
 }
 
+/* Accès discret (Classements) : icône seule, bronze */
+.hud-quick .hud-quick-icon .ra {
+    font-size: 16px;
+    color: var(--hud-bronze);
+}
+
 /* ---------- Rail de navigation gauche ---------- */
 
 /* La sortie de MenuView est inchangée : le CSS la passe simplement
@@ -191,6 +197,16 @@ body:has(#hud) {
 /* Pastille missives : l'hôte doit être positionné */
 #hud-rail #missive-btn {
     position: relative;
+}
+
+/* Séparateurs de groupes (posés par js/hud.js) : la vue / le
+ * personnage / le monde / le compte */
+#hud-rail .hud-rail-sep {
+    width: 28px;
+    height: 1px;
+    flex: 0 0 auto;
+    background: var(--hud-line-soft);
+    margin: 3px 0;
 }
 
 /* Panneau de caracs : flyout à droite du rail. Le contenu
@@ -757,6 +773,7 @@ body:has(#hud) #view-landing-wrapper {
 #hud-side .hud-tab--active {
     opacity: 1;
     font-weight: bold;
+    box-shadow: inset 0 -2px 0 var(--hud-bronze);
 }
 
 #hud-side #hud-feed-refresh {
@@ -770,7 +787,7 @@ body:has(#hud) #view-landing-wrapper {
     padding: 1px 4px;
     margin-left: 5px;
     border-radius: 999px;
-    background: #a00;
+    background: var(--hud-blood);
     color: #fff;
     font-size: 75%;
     line-height: 1.4;
@@ -788,7 +805,7 @@ body:has(#hud) #view-landing-wrapper {
 
 .hud-feed-item {
     padding: 6px 4px;
-    border-bottom: 1px dotted #999;
+    border-bottom: 1px solid var(--hud-line-soft);
 }
 
 .hud-feed-meta {
@@ -808,21 +825,25 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
-/* Saisie du message du jour, façon chat (onglet Général) */
+/* Saisie du message du jour, façon chat (onglet Général) — c'est de
+ * la parole : même matériau parchemin que la plaque et la bulle. */
 #hud-mdj-form {
     display: flex;
     gap: 4px;
     flex: 0 0 auto;
     padding: 6px;
-    border-top: 1px solid #666;
+    border-top: 1px solid var(--hud-line);
 }
 
 #hud-mdj-form input {
     flex: 1 1 auto;
     min-width: 0;
     padding: 5px 8px;
-    border: 1px solid #888;
+    border: 1px solid var(--hud-bronze);
     border-radius: 4px;
+    background: var(--hud-parchment);
+    color: var(--hud-ink);
+    font-style: italic;
 }
 
 #hud-mdj-form button {
@@ -1035,6 +1056,10 @@ body:has(#hud) #debug-flags {
     #hud-rail #menu .ra {
         line-height: 44px;
         margin-right: 8px;
+    }
+
+    #hud-rail .hud-rail-sep {
+        width: 80%;
     }
 
     #hud.hud--drawer-open #hud-backdrop,
