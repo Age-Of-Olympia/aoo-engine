@@ -9,6 +9,22 @@
  * bandeau bas = #ajax-data (sélection + actions d'observe.php).
  * ============================================================ */
 
+/* ---------- Jetons de design ----------
+ * Matériaux du jeu : marbre (fond), encre gravée, bronze vieilli pour
+ * toute la structure (remplace les gris anonymes #444/#666), parchemin
+ * pour la parole des personnages, sang pour les blessures. */
+body:has(#hud) {
+    --hud-ink: #2c241d;
+    --hud-ink-soft: rgba(44, 36, 29, 0.62);
+    --hud-bronze: #8a6a35;
+    --hud-bronze-bright: #b98a1c;
+    --hud-line: rgba(93, 74, 42, 0.55);
+    --hud-line-soft: rgba(93, 74, 42, 0.3);
+    --hud-parchment: #f0e8d6;
+    --hud-night: #241d15;
+    --hud-blood: #770001;
+}
+
 body:has(#hud) {
     max-width: 100%;
     margin: 0;
@@ -35,7 +51,7 @@ body:has(#hud) {
     gap: 14px;
     padding: 0 10px;
     background: url('../img/ui/bg/marbre.jpeg');
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     overflow: hidden;
@@ -86,7 +102,7 @@ body:has(#hud) {
     align-items: center;
     gap: 4px;
     padding: 3px 8px;
-    border: 1px solid #666;
+    border: 1px solid var(--hud-line);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.75);
     font-size: 85%;
@@ -146,7 +162,7 @@ body:has(#hud) {
     align-items: center;
     padding: 8px 0;
     background: url('../img/ui/bg/marbre.jpeg');
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     overflow: visible;
 }
@@ -203,7 +219,7 @@ body:has(#hud) #load-caracs {
     display: grid;
     place-items: center;
     text-align: center;
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.15);
 }
@@ -236,7 +252,7 @@ body:has(#hud) #view-landing-wrapper {
     align-items: flex-start;
     gap: 8px;
     padding: 8px;
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: url('../img/ui/bg/marbre.jpeg');
 }
@@ -322,7 +338,7 @@ body:has(#hud) #view-landing-wrapper {
     width: auto;
     top: auto;
     z-index: 2;
-    background: #770001;
+    background: var(--hud-blood);
     opacity: 0.5;
     pointer-events: none;
     transition: height 0.2s linear;
@@ -371,13 +387,63 @@ body:has(#hud) #view-landing-wrapper {
     text-align: left;
 }
 
+/* ----- Plaque de parole (signature) -----
+ * Ce que dit le personnage est la monnaie sociale du jeu : la parole
+ * passe du noir illisible hérité (main.css, 225×125 fixes) à une
+ * plaque parchemin citée — guillemet Goudy surdimensionné, filet
+ * bronze. Même traitement desktop et mobile. */
 #hud #ajax-data .hud-sel-main .card-text {
     flex: 1 1 auto;
     overflow-y: auto;
     min-height: 0;
-    margin: 4px 0 0 0;
+    height: auto;
+    margin: 6px 0 0 0;
     width: auto;
+    box-sizing: border-box;
+    position: relative;
+    padding: 7px 12px 7px 34px;
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-line-soft);
+    border-left: 3px solid var(--hud-bronze);
+    border-radius: 0 4px 4px 0;
+    color: var(--hud-ink);
+    font-style: italic;
+    font-size: 92%;
+    line-height: 1.45;
     text-align: left;
+}
+
+#hud #ajax-data .hud-sel-main .card-text::before {
+    content: "\201C";
+    position: absolute;
+    left: 9px;
+    top: -3px;
+    font-family: goudy;
+    font-size: 32px;
+    font-style: normal;
+    line-height: 1.2;
+    color: var(--hud-bronze);
+    opacity: 0.85;
+}
+
+/* Contenu hérité de la plaque : liens cyan et textes blancs pensés
+ * pour le fond noir — repassés à l'encre sur parchemin. */
+#hud #ajax-data #ui-card .card-text a {
+    color: var(--hud-bronze);
+    font-weight: bold;
+}
+
+#hud #ajax-data #ui-card .card-text textarea {
+    color: var(--hud-ink);
+    font-style: italic;
+}
+
+#hud #ajax-data #ui-card .action-text {
+    color: var(--hud-ink);
+}
+
+#hud #ajax-data #ui-card .card-text .action-details {
+    color: var(--hud-ink-soft);
 }
 
 /* Contenu de la case (éléments, murs, objets au sol) : neutralise la
@@ -389,17 +455,31 @@ body:has(#hud) #view-landing-wrapper {
     flex-direction: column;
     overflow-y: auto;
     min-height: 0;
-    border-left: 1px dotted #777;
+    border-left: 1px solid var(--hud-line-soft);
     padding-left: 10px;
     text-align: left;
 }
 
+/* Titre de section gravé : petites capitales espacées + filet,
+ * comme une inscription — sobre, la plaque garde le premier rôle. */
 #hud #ajax-data .hud-sel-tile-title {
-    font-family: goudy;
-    font-size: 105%;
-    opacity: 0.75;
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex: 0 0 auto;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
+#hud #ajax-data .hud-sel-tile-title::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--hud-line-soft);
 }
 
 #hud #ajax-data .hud-sel-tile .case-infos {
@@ -448,7 +528,7 @@ body:has(#hud) #view-landing-wrapper {
     position: relative;
     overflow: auto;
     padding: 8px;
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: url('../img/ui/bg/marbre.jpeg');
 }
@@ -513,7 +593,7 @@ body:has(#hud) #view-landing-wrapper {
 #hud-actions .hud-action--armed {
     transform: scale(1.12);
     z-index: 3;
-    box-shadow: 0 0 0 2px #b98a1c, 0 2px 8px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 2px var(--hud-bronze-bright), 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 #hud-actions .hud-action-cancel {
@@ -557,7 +637,7 @@ body:has(#hud) #view-landing-wrapper {
     place-items: center;
     position: relative;
     overflow: hidden;
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: url('../img/ui/bg/marbre.jpeg');
 }
@@ -611,7 +691,7 @@ body:has(#hud) #view-landing-wrapper {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: url('../img/ui/bg/marbre.jpeg');
     overflow: hidden;
@@ -622,7 +702,7 @@ body:has(#hud) #view-landing-wrapper {
     align-items: center;
     gap: 4px;
     padding: 6px;
-    border-bottom: 1px solid #666;
+    border-bottom: 1px solid var(--hud-line);
 }
 
 #hud-side .hud-tab {
@@ -720,7 +800,7 @@ body:has(#hud) #view-landing-wrapper {
     display: flex;
     flex-direction: column;
     background: url('../img/ui/bg/marbre.jpeg');
-    border: 1px solid #444;
+    border: 1px solid var(--hud-line);
     border-radius: 6px;
     box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.5);
     transform: translateX(calc(-100% - 700px));
@@ -738,7 +818,7 @@ body:has(#hud) #view-landing-wrapper {
     align-items: center;
     justify-content: space-between;
     padding: 6px 10px;
-    border-bottom: 1px solid #666;
+    border-bottom: 1px solid var(--hud-line);
 }
 
 .hud-panel .hud-panel-title {
@@ -807,10 +887,17 @@ body:has(#hud) #debug-flags {
         gap: 4px;
     }
 
-    /* --- Barre compacte : chip + pastilles défilantes --- */
+    /* --- Barre compacte : grille deux rangées ---
+     * Rangée 1 : burger · avatar · prochain tour ; rangée 2 : les
+     * pastilles pleine largeur. Fini les chevauchements avatar/pilules
+     * du flex enveloppant. Tout reste visible, aucun défilement. */
     #hud-topbar {
         flex: 0 0 auto;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: auto auto 1fr auto;
+        grid-template-rows: auto auto;
+        align-items: center;
+        gap: 4px 8px;
         padding: 4px 6px;
     }
 
@@ -819,11 +906,17 @@ body:has(#hud) #debug-flags {
         display: none;
     }
 
+    #hud-topbar .hud-chip {
+        grid-area: 1 / 2;
+    }
+
     /* Prochain tour visible (horaire informatif, cf. wireframe) ;
      * la localisation détaillée reste réservée au desktop. */
     #hud-topbar .hud-place {
+        grid-area: 1 / 4;
         margin-left: 0;
         flex: 0 0 auto;
+        font-size: 88%;
     }
 
     #hud-topbar .hud-place #hud-location {
@@ -831,14 +924,14 @@ body:has(#hud) #debug-flags {
     }
 
     #hud-topbar #player-avatar img {
-        height: 36px;
-        width: 36px;
+        height: 32px;
+        width: 32px;
     }
 
     /* Pastilles compactes sur deux lignes maximum : tout reste
      * visible, pas de défilement horizontal déroutant. */
     .hud-pills {
-        flex: 1 1 auto;
+        grid-area: 2 / 1 / 3 / 5;
         min-width: 0;
         flex-wrap: wrap;
         gap: 3px;
@@ -852,6 +945,7 @@ body:has(#hud) #debug-flags {
 
     #hud-burger {
         display: block;
+        grid-area: 1 / 1;
         flex: 0 0 auto;
         font-size: 20px;
         padding: 4px 8px;
@@ -944,6 +1038,105 @@ body:has(#hud) #debug-flags {
         content: "Cliquez sur une case pour l'observer.";
     }
 
+    /* --- Fiche de sélection mobile : la parole d'abord ---
+     * La grille desktop 3 colonnes (portrait 130px | centre | case 34%)
+     * écrasait tout dans la cellule du carrousel : la plaque de parole
+     * devenait une languette illisible. Ici : vignette 64px + identité
+     * côte à côte, plaque pleine largeur dessous, contenu de la case en
+     * pied avec les coordonnées dans le filet du titre. */
+    #hud #ajax-data {
+        padding: 8px 10px;
+    }
+
+    #hud #ajax-data .hud-sel {
+        grid-template-columns: 48px minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+        gap: 6px 10px;
+        height: auto;
+        min-height: 100%;
+        align-content: start;
+    }
+
+    #hud #ajax-data .hud-sel-left {
+        grid-column: 1;
+        grid-row: 1;
+        width: 48px;
+        height: 48px;
+        align-self: start;
+        border-radius: 6px;
+    }
+
+    /* Identité à droite de la vignette (nom ~21px + statut ~17px ≈
+     * 42px), plaque pleine largeur dessous : la marge négative la
+     * ramène au bord de la vignette, la marge haute (10px) garantit
+     * qu'elle démarre sous les 48px de portrait — jamais dessus. */
+    #hud #ajax-data .hud-sel-main {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        min-width: 0;
+    }
+
+    #hud #ajax-data .hud-sel-main .card-name {
+        font-size: 1.05em;
+    }
+
+    #hud #ajax-data .hud-sel-main .card-text {
+        margin-left: -58px;
+        margin-top: 10px;
+        max-height: 108px;
+        flex: 0 1 auto;
+    }
+
+    #hud #ajax-data .hud-sel-tile {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        border-left: none;
+        padding-left: 0;
+        overflow: visible;
+    }
+
+    #hud #ajax-data .hud-sel #case-coords {
+        grid-column: 2;
+        grid-row: 3;
+        align-self: start;
+        justify-self: end;
+        padding-left: 0;
+        font-size: 80%;
+        opacity: 0.7;
+        position: relative;
+        z-index: 1;
+    }
+
+    #hud #ajax-data .hud-sel--nocard .hud-sel-tile,
+    #hud #ajax-data .hud-sel--nocard #case-coords {
+        grid-column: 1 / span 2;
+    }
+
+    #hud #ajax-data .hud-sel--nocard .hud-sel-tile {
+        grid-row: 1;
+    }
+
+    #hud #ajax-data .hud-sel--nocard #case-coords {
+        grid-row: 2;
+    }
+
+    /* --- Panneau d'actions : cibles tactiles 60px, rangées centrées --- */
+    #hud-carousel #hud-actions .card-actions {
+        grid-template-columns: repeat(auto-fit, 60px);
+        justify-content: center;
+        gap: 10px;
+        padding-top: 4px;
+    }
+
+    #hud-carousel #hud-actions .action {
+        width: 60px;
+        height: 60px;
+    }
+
+    #hud-carousel #hud-actions .action .ra {
+        font-size: 26px;
+    }
+
     #hud-dots {
         display: flex;
         justify-content: center;
@@ -957,12 +1150,12 @@ body:has(#hud) #debug-flags {
         height: 10px;
         padding: 0;
         border-radius: 50%;
-        border: 1px solid #666;
+        border: 1px solid var(--hud-line);
         background: rgba(255, 255, 255, 0.5);
     }
 
     .hud-dot--active {
-        background: #444;
+        background: var(--hud-bronze);
     }
 
     /* --- Panneau latéral : sheet ouverte par la bulle --- */
