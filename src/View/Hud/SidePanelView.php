@@ -9,8 +9,9 @@ use Classes\Str;
  * Événements (perception). Les flux sont chargés en AJAX par js/hud.js
  * depuis load_chat.php / load_events.php — voir FeedRenderer.
  *
- * Lecture seule en Phase 1 : pas de champ de saisie tant que le vrai
- * chat n'existe pas, pour ne pas laisser croire qu'on peut écrire.
+ * L'onglet Général propose une saisie façon chat qui change le message
+ * du jour du joueur via le endpoint existant account.php?mdj — pas de
+ * nouveau back-end, chaque changement alimente le flux (log mdj).
  */
 final class SidePanelView
 {
@@ -29,6 +30,10 @@ final class SidePanelView
             . '</div>'
             . '<div id="hud-feed-mdj" class="hud-feed">Chargement…</div>'
             . '<div id="hud-feed-events" class="hud-feed" style="display:none;">Chargement…</div>'
+            . '<form id="hud-mdj-form" autocomplete="off">'
+            . '<input type="text" id="hud-mdj-input" maxlength="255" placeholder="Votre message du jour…" />'
+            . '<button type="submit" title="Publier"><span class="ra ra-quill-ink"></span></button>'
+            . '</form>'
             . '</aside>';
 
         echo Str::minify(ob_get_clean());

@@ -684,6 +684,27 @@ body:has(#hud) #view-landing-wrapper {
     text-align: center;
 }
 
+/* Saisie du message du jour, façon chat (onglet Général) */
+#hud-mdj-form {
+    display: flex;
+    gap: 4px;
+    flex: 0 0 auto;
+    padding: 6px;
+    border-top: 1px solid #666;
+}
+
+#hud-mdj-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1px solid #888;
+    border-radius: 4px;
+}
+
+#hud-mdj-form button {
+    flex: 0 0 auto;
+}
+
 /* ---------- Panneau glissant (sous-pages, Phase 2) ---------- */
 
 /* Glisse depuis la gauche (côté rail) par-dessus la carte ; barre de

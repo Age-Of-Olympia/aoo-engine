@@ -735,12 +735,46 @@
 
             $('#hud-feed-mdj').toggle(tab === 'mdj');
             $('#hud-feed-events').toggle(tab === 'events');
+            $('#hud-mdj-form').toggle(tab === 'mdj');
 
             if (tab === 'events') {
                 markEventsSeen();
             }
 
             loadFeed(tab);
+        });
+
+        /* Saisie du message du jour façon chat : POST vers le endpoint
+         * existant (account.php?mdj) puis rechargement du flux. */
+        $('#hud-mdj-form').on('submit', function (e) {
+            e.preventDefault();
+
+            var text = $.trim($('#hud-mdj-input').val());
+            if (!text) {
+                return;
+            }
+
+            var $btn = $(this).find('button');
+            $btn.prop('disabled', true);
+
+            $.post('account.php?mdj', {
+                'text': text,
+                'author-id': $('#player-avatar').data('id')
+            })
+                .done(function (data) {
+                    if (String(data).indexOf('Changement de personnage') !== -1) {
+                        alert('Erreur lors de la sauvegarde du message du jour, veuillez réessayer.');
+                        return;
+                    }
+                    $('#hud-mdj-input').val('');
+                    loadFeed('mdj');
+                })
+                .fail(function () {
+                    alert('Erreur lors de la sauvegarde du message du jour.');
+                })
+                .always(function () {
+                    $btn.prop('disabled', false);
+                });
         });
 
         $('#hud-feed-refresh').on('click', function () {
