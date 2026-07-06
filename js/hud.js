@@ -459,6 +459,16 @@
         $panel.empty();
 
         if ($actions.length) {
+            /* Rappel de la cible en tête du volet (mobile : le volet
+             * Actions est seul à l'écran, sans ce rappel on ne sait
+             * plus sur qui on agit — masqué en desktop par le CSS). */
+            var targetName = $('#ajax-data .card-name a').first().text().trim();
+            if (targetName) {
+                $('<div class="hud-actions-target"></div>')
+                    .text(targetName)
+                    .appendTo($panel);
+            }
+
             $panel.append($actions);
             /* Icônes seules dans la grille : le nom passe en title
              * (survol desktop, appui long mobile via contextmenu). */
@@ -1141,7 +1151,12 @@
                         alert('Erreur lors de la sauvegarde du message du jour, veuillez réessayer.');
                         return;
                     }
-                    $('#hud-mdj-input').val('');
+                    /* Message posté : champ vidé ET rendu — clavier
+                     * mobile refermé (blur), sheet chat refermée pour
+                     * revenir au jeu (sans effet en desktop, la classe
+                     * n'y pilote rien). */
+                    $('#hud-mdj-input').val('').trigger('blur');
+                    $('#hud').removeClass('hud--chat-open');
                     loadFeed('mdj');
                 })
                 .fail(function () {

@@ -290,6 +290,17 @@ body > a:hover > img[src*="partenaires"] {
 
 /* ---------- Mobile : les chips quittent le coin du héros ---------- */
 
+/* fixed + cover se dégrade en zoom flou sur mobile (iOS ignore
+ * fixed) : la composition défile avec la page, cadrée à l'écran. */
+@media (max-width: 1023px) {
+    body {
+        background-attachment: scroll;
+        background-size: auto 100vh;
+        background-position: center top;
+        background-repeat: no-repeat;
+    }
+}
+
 @media (max-width: 700px) {
     #index-changelog {
         position: static;

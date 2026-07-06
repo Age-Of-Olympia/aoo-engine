@@ -354,3 +354,26 @@ a:hover {
 .missive-hint-warning {
     color: #770001;
 }
+
+/* ============================================================
+ * Mobile — le papier cadré à l'écran
+ * ============================================================ */
+
+/* background-attachment: fixed est ignoré/dégradé sur mobile (iOS
+ * surtout) : cover se calcule alors sur TOUTE la hauteur de page et
+ * la feuille devient un zoom flou (retour testeur). Cadrage à la
+ * hauteur d'écran, texture répétée verticalement. */
+@media (max-width: 1023px) {
+    body {
+        background-attachment: scroll;
+        background-size: auto 100vh;
+        background-position: center top;
+    }
+
+    /* Tables larges (évènements…) : défilement horizontal contenu
+     * plutôt que page compressée. */
+    .logs-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
