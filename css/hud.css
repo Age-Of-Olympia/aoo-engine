@@ -9,20 +9,59 @@
  * bandeau bas = #ajax-data (sélection + actions d'observe.php).
  * ============================================================ */
 
+/* ---------- Typographies de la maquette (auto-hébergées) ----------
+ * Gloock : titres et noms ; DM Serif Display : parole des personnages
+ * (italique) ; Seaweed Script : accents manuscrits. Sous-ensemble
+ * latin (accents français inclus). */
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display-italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Seaweed Script';
+    src: url('fonts/seaweed-script.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
 /* ---------- Jetons de design ----------
- * Matériaux du jeu : marbre (fond), encre gravée, bronze vieilli pour
- * toute la structure (remplace les gris anonymes #444/#666), parchemin
- * pour la parole des personnages, sang pour les blessures. */
+ * Univers papier & encre de la maquette graphiste (olympia-tests.psd) :
+ * papier vieilli en fond de scène, cellules en voile crème translucide
+ * (le grain du papier reste visible), encre presque noire, bronze du
+ * parchemin brûlé pour la structure, parole sur parchemin clair, sang
+ * pour les blessures. */
 body:has(#hud) {
-    --hud-ink: #2c241d;
-    --hud-ink-soft: rgba(44, 36, 29, 0.62);
-    --hud-bronze: #8a6a35;
+    --hud-ink: #1d1c1b;
+    --hud-ink-soft: rgba(29, 28, 27, 0.6);
+    --hud-bronze: #8d6839;
     --hud-bronze-bright: #b98a1c;
     --hud-line: rgba(93, 74, 42, 0.55);
     --hud-line-soft: rgba(93, 74, 42, 0.3);
-    --hud-parchment: #f0e8d6;
+    --hud-parchment: #f7e7c9;
     --hud-night: #241d15;
     --hud-blood: #770001;
+    --hud-veil: rgba(252, 248, 238, 0.55);
+    --hud-display: 'Gloock', goudy, serif;
+    --hud-speech: 'DM Serif Display', serif;
 }
 
 body:has(#hud) {
@@ -30,6 +69,30 @@ body:has(#hud) {
     margin: 0;
     overflow: hidden;
     text-align: left;
+    color: var(--hud-ink);
+    /* La feuille de papier entière, bords déchirés aux bords de
+     * l'écran : tout le jeu est posé sur une seule feuille. */
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat fixed;
+}
+
+/* Ornements de ferronnerie aux coins hauts DU DAMIER : les deux
+ * pseudo-éléments sont des items de grille superposés à la cellule
+ * de la carte (même grid-area que #game-map) — décor pur, jamais
+ * cliquable. Le gauche est le miroir du droit. */
+#hud::before,
+#hud::after {
+    content: "";
+    grid-area: 2 / 2 / 3 / 4;
+    z-index: 1;
+    margin: 9px;
+    background: url('../img/ui/paper/ornament.png') top right / clamp(110px, 16vw, 210px) no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+#hud::before {
+    transform: scaleX(-1);
 }
 
 #hud {
@@ -50,7 +113,7 @@ body:has(#hud) {
     align-items: center;
     gap: 14px;
     padding: 0 10px;
-    background: url('../img/ui/bg/marbre.jpeg');
+    background: var(--hud-veil);
     border: 1px solid var(--hud-line);
     border-radius: 6px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
@@ -167,7 +230,7 @@ body:has(#hud) {
     flex-direction: column;
     align-items: center;
     padding: 8px 0;
-    background: url('../img/ui/bg/marbre.jpeg');
+    background: var(--hud-veil);
     border: 1px solid var(--hud-line);
     border-radius: 6px;
     overflow: visible;
@@ -197,6 +260,52 @@ body:has(#hud) {
 /* Pastille missives : l'hôte doit être positionné */
 #hud-rail #missive-btn {
     position: relative;
+}
+
+/* ---------- Icônes peintes de la maquette ----------
+ * Les sept entrées de navigation de la maquette reçoivent leur objet
+ * peint (dés, coffre, livre, rose des vents, plume, engrenages) en
+ * pseudo-élément : le fond papier de la découpe disparaît en
+ * mix-blend-mode multiply. Le glyphe rpg-awesome reste dans le DOM
+ * (tutoriel, accessibilité) mais devient invisible. Artisanat, Banque
+ * et Sorts gardent leur glyphe en attendant leurs objets peints. */
+#hud-rail #show-damier button::before,
+#hud-rail #show-caracs button::before,
+#hud-rail #show-inventory button::before,
+#hud-rail #menu > a[href^="logs.php"] > button::before,
+#hud-rail #menu > a[href="map.php"] > button::before,
+#hud-rail #missive-btn::before,
+#hud-rail #menu > a[href="account.php"] > button::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    background: center / contain no-repeat;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+}
+
+/* « Vue » est retirée par js/hud.js ; ceinture CSS si le JS tarde. */
+#hud-rail #show-damier {
+    display: none;
+}
+
+#hud-rail #show-caracs button::before { background-image: url('../img/ui/paper/icon-caracs.png'); }
+#hud-rail #show-inventory button::before { background-image: url('../img/ui/paper/icon-inventaire.png'); }
+#hud-rail #menu > a[href^="logs.php"] > button::before { background-image: url('../img/ui/paper/icon-evenements.png'); }
+/* La Carte reçoit le dessin de carte (ex-icône « Retour au damier ») ;
+ * la rose des vents (icon-carte.png) reste disponible. */
+#hud-rail #menu > a[href="map.php"] > button::before { background-image: url('../img/ui/paper/icon-vue.png'); }
+#hud-rail #missive-btn::before { background-image: url('../img/ui/paper/icon-missives.png'); }
+#hud-rail #menu > a[href="account.php"] > button::before { background-image: url('../img/ui/paper/icon-profil.png'); }
+
+#hud-rail #show-damier button .ra,
+#hud-rail #show-caracs button .ra,
+#hud-rail #show-inventory button .ra,
+#hud-rail #menu > a[href^="logs.php"] > button .ra,
+#hud-rail #menu > a[href="map.php"] > button .ra,
+#hud-rail #missive-btn .ra,
+#hud-rail #menu > a[href="account.php"] > button .ra {
+    visibility: hidden;
 }
 
 /* Séparateurs de groupes (posés par js/hud.js) : la vue / le
@@ -235,15 +344,114 @@ body:has(#hud) #load-caracs {
     display: grid;
     place-items: center;
     text-align: center;
-    border: 1px solid var(--hud-line);
+    /* Cadre de planche cartographique : double filet bronze, puis un
+     * filet gravé en retrait (l'outline reste collée à la boîte, elle
+     * ne défile pas avec la carte). Les ornements de ferronnerie
+     * complètent les coins hauts. */
+    border: 4px double var(--hud-bronze);
+    outline: 1px solid var(--hud-line-soft);
+    outline-offset: -9px;
     border-radius: 6px;
-    background: rgba(0, 0, 0, 0.15);
+    /* Le damier est une feuille : la même image de papier, entière,
+     * avec ses bords déchirés pour cadre. */
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat;
 }
 
-/* #view scrolle déjà en interne ; dans la grille on le laisse
- * prendre sa taille naturelle, le conteneur gère le débordement. */
+/* Le damier s'adapte à son cadre, comme il s'adapte à l'écran en
+ * mobile : le SVG (viewBox carré, width 100%) est piloté par la
+ * hauteur de la cellule — une perception élevée reste visible en
+ * entier, sans défilement. Le max-width inline hérité (650px,
+ * Classes/View.php) doit céder, d'où le !important. */
 #hud #view {
     overflow: visible;
+    height: 100%;
+    box-sizing: border-box;
+    padding-bottom: 0;
+}
+
+#hud #view #svg-container {
+    display: block;
+    height: 100%;
+    text-align: center;
+}
+
+/* La taille exacte (carré ajusté à la hauteur du cadre) est posée en
+ * inline par js/hud.js (fitDamier) — l'attribut width="100%" hérité
+ * du SVG ne peut pas être battu proprement en CSS seul. En display
+ * block : en inline, la ligne de base décalait le SVG vers le haut
+ * (bord gradué rogné en haut, jour en bas). */
+#hud #svg-view {
+    display: block;
+    margin: 0 auto;
+}
+
+/* ⛔ des cases infranchissables (blocked-tiles.js, option
+ * showBlockedTiles) : le z-index 9999 hérité du spotlight tutoriel
+ * les faisait passer AU-DESSUS des panneaux latéraux — dans le HUD
+ * ils restent dans le plan de la carte. */
+body:has(#hud) #svg-container .blocked-tile-marker {
+    z-index: 1;
+}
+
+/* Coordonnées en bordure du damier (js/hud.js : <text> SVG dans la
+ * marge du viewBox) — elles font partie de la planche et bougent
+ * avec elle. */
+/* Zoom du damier : deux médaillons au coin bas-droit du cadre,
+ * superposés à la cellule de la carte (js/hud.js). */
+#hud-zoom {
+    grid-area: 2 / 2 / 3 / 4;
+    justify-self: end;
+    align-self: end;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 22px 22px 0;
+}
+
+/* Police système (Gloock n'a pas de « − » net), fond parchemin
+ * opaque : lisible au-dessus des tuiles. */
+#hud-zoom button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--hud-ink);
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+#hud-zoom button:hover:not(:disabled) {
+    background: var(--hud-parchment);
+}
+
+#hud-zoom button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* Bandes sombres de la bordure graduée */
+#hud #svg-view .hud-svg-coord-band {
+    fill: var(--hud-night);
+    opacity: 0.82;
+    pointer-events: none;
+}
+
+#hud #svg-view .hud-svg-coord {
+    /* Unités du viewBox : la planche est affichée réduite (~0.6),
+     * 13 unités rendent ~8px lisibles. */
+    font-size: 13px;
+    font-weight: bold;
+    fill: var(--hud-parchment);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    user-select: none;
 }
 
 /* Message d'arrivée : overlay centré au-dessus de la carte */
@@ -270,7 +478,7 @@ body:has(#hud) #view-landing-wrapper {
     padding: 8px;
     border: 1px solid var(--hud-line);
     border-radius: 6px;
-    background: url('../img/ui/bg/marbre.jpeg');
+    background: var(--hud-veil);
 }
 
 #hud #ajax-data:empty::before {
@@ -278,6 +486,25 @@ body:has(#hud) #view-landing-wrapper {
     margin: auto;
     opacity: 0.6;
     font-style: italic;
+}
+
+/* Zone de sélection au repos (js/hud.js) : le lieu en majesté */
+#hud #ajax-data .hud-sel-idle {
+    margin: auto;
+    text-align: center;
+}
+
+#hud #ajax-data .hud-sel-idle-name {
+    font-family: var(--hud-display);
+    font-size: 1.6em;
+    letter-spacing: 1px;
+}
+
+#hud #ajax-data .hud-sel-idle-hint {
+    margin-top: 4px;
+    font-style: italic;
+    font-size: 88%;
+    opacity: 0.6;
 }
 
 /* Réponses non composées (texte brut de go.php, erreurs) : le flex
@@ -373,14 +600,20 @@ body:has(#hud) #view-landing-wrapper {
 #hud #ajax-data .hud-sel-main .card-name {
     margin: 0;
     position: static;
-    font-family: goudy;
+    font-family: var(--hud-display);
     font-size: 1.25em;
     letter-spacing: 1px;
     text-align: left;
+    color: var(--hud-ink);
+    text-shadow: none;
 }
 
+/* main.css blanchit le nom (pensé pour les cartes sombres) :
+ * sur papier, encre. */
 #hud #ajax-data .hud-sel-main .card-name a {
-    font-family: goudy;
+    font-family: var(--hud-display);
+    color: var(--hud-ink);
+    text-shadow: none;
 }
 
 #hud #ajax-data .hud-sel-main .card-name .effects {
@@ -403,6 +636,20 @@ body:has(#hud) #view-landing-wrapper {
     text-align: left;
 }
 
+/* Médaillon de faction : main.css blanchit les glyphes (pensés pour
+ * les cartes sombres) — sur papier, on les pose sur une pastille
+ * nuit pour qu'ils restent lisibles. */
+#hud #ajax-data .hud-sel-main .card-faction a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--hud-night);
+    vertical-align: middle;
+}
+
 /* ----- Plaque de parole (signature) -----
  * Ce que dit le personnage est la monnaie sociale du jeu : la parole
  * passe du noir illisible hérité (main.css, 225×125 fixes) à une
@@ -423,8 +670,9 @@ body:has(#hud) #view-landing-wrapper {
     border-left: 3px solid var(--hud-bronze);
     border-radius: 0 4px 4px 0;
     color: var(--hud-ink);
+    font-family: var(--hud-speech);
     font-style: italic;
-    font-size: 92%;
+    font-size: 98%;
     line-height: 1.45;
     text-align: left;
 }
@@ -434,7 +682,7 @@ body:has(#hud) #view-landing-wrapper {
     position: absolute;
     left: 9px;
     top: -3px;
-    font-family: goudy;
+    font-family: var(--hud-display);
     font-size: 32px;
     font-style: normal;
     line-height: 1.2;
@@ -546,7 +794,7 @@ body:has(#hud) #view-landing-wrapper {
     padding: 8px;
     border: 1px solid var(--hud-line);
     border-radius: 6px;
-    background: url('../img/ui/bg/marbre.jpeg');
+    background: var(--hud-veil);
 }
 
 #hud-actions:empty::before {
@@ -663,7 +911,7 @@ body:has(#hud) #view-landing-wrapper {
 
 #hud-action-hint .hud-action-hint-name {
     display: block;
-    font-family: goudy;
+    font-family: var(--hud-display);
     font-size: 105%;
     letter-spacing: 0.8px;
 }
@@ -679,27 +927,12 @@ body:has(#hud) #view-landing-wrapper {
 #hud-minimap {
     grid-area: 3 / 2 / 4 / 3;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
     place-items: center;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--hud-line);
     border-radius: 6px;
-    background: url('../img/ui/bg/marbre.jpeg');
-}
-
-/* Nom du lieu en Goudy sous la carte — seul repère de localisation
- * sur mobile (la barre compacte masque #hud-location). */
-#hud-minimap .hud-minimap-caption {
-    max-width: 100%;
-    padding: 2px 8px 4px;
-    font-family: goudy;
-    font-size: 105%;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    background: var(--hud-veil);
 }
 
 /* Le wrapper est dimensionné par js/hud.js (fitMinimap) au ratio
@@ -740,7 +973,7 @@ body:has(#hud) #view-landing-wrapper {
     display: grid;
     place-items: center;
     height: 100%;
-    font-family: goudy;
+    font-family: var(--hud-display);
     font-size: 120%;
 }
 
@@ -753,7 +986,7 @@ body:has(#hud) #view-landing-wrapper {
     min-height: 0;
     border: 1px solid var(--hud-line);
     border-radius: 6px;
-    background: url('../img/ui/bg/marbre.jpeg');
+    background: var(--hud-veil);
     overflow: hidden;
 }
 
@@ -864,7 +1097,7 @@ body:has(#hud) #view-landing-wrapper {
     z-index: 55;
     display: flex;
     flex-direction: column;
-    background: url('../img/ui/bg/marbre.jpeg');
+    background: var(--hud-veil);
     border: 1px solid var(--hud-line);
     border-radius: 6px;
     box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.5);
@@ -887,7 +1120,7 @@ body:has(#hud) #view-landing-wrapper {
 }
 
 .hud-panel .hud-panel-title {
-    font-family: goudy;
+    font-family: var(--hud-display);
     font-size: 130%;
 }
 
@@ -950,6 +1183,15 @@ body:has(#hud) #debug-flags {
         height: 100dvh;
         padding: 4px;
         gap: 4px;
+    }
+
+    /* Les ornements et le zoom sont des items de la grille desktop :
+     * en colonne flex ils deviendraient des enfants parasites (le
+     * zoom mobile reste le pincement natif). */
+    #hud::before,
+    #hud::after,
+    #hud-zoom {
+        display: none;
     }
 
     /* --- Barre compacte : grille deux rangées ---
@@ -1060,6 +1302,32 @@ body:has(#hud) #debug-flags {
 
     #hud-rail .hud-rail-sep {
         width: 80%;
+    }
+
+    /* Icônes peintes dans le tiroir : vignette fixe à gauche, le
+     * libellé se décale pour ne pas passer dessous. */
+    #hud-rail #show-damier button::before,
+    #hud-rail #show-caracs button::before,
+    #hud-rail #show-inventory button::before,
+    #hud-rail #menu > a[href^="logs.php"] > button::before,
+    #hud-rail #menu > a[href="map.php"] > button::before,
+    #hud-rail #missive-btn::before,
+    #hud-rail #menu > a[href="account.php"] > button::before {
+        inset: auto;
+        left: 8px;
+        top: 8px;
+        width: 28px;
+        height: 28px;
+    }
+
+    #hud-rail #show-damier button,
+    #hud-rail #show-caracs button,
+    #hud-rail #show-inventory button,
+    #hud-rail #menu > a[href^="logs.php"] > button,
+    #hud-rail #menu > a[href="map.php"] > button,
+    #hud-rail #missive-btn,
+    #hud-rail #menu > a[href="account.php"] > button {
+        padding-left: 44px;
     }
 
     #hud.hud--drawer-open #hud-backdrop,

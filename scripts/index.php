@@ -7,7 +7,21 @@ if(isset($_GET['resetPsw'])){
     exit();
 }
 
-echo '<a href="index.php"><img src="img/ui/fillers/banner.png" data-src="img/ui/bg/banner.webp" /></a>';
+/* Habillage papier & encre de la maquette graphiste : la bannière
+ * cède la place au héros planète + titre Gloock (css/landing.css). */
+echo '<link rel="stylesheet" href="css/landing.css?v=20260708a" />';
+
+/* Papier filigrané « aootest » hors prod : on réécrit la liste des
+ * trois calques (cité, jardin, papier) pour ne changer que le papier. */
+$paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
+if ($paperBg !== '/img/ui/paper/paper.jpg') {
+    echo '<style>body{background-image:url(\'/img/ui/paper/city-right.webp\'),url(\'/img/ui/paper/garden-left.webp\'),url(\'' . $paperBg . '\')}</style>';
+}
+
+echo '<a href="index.php" id="landing-hero">'
+    . '<img src="img/ui/paper/planet.png" alt="" />'
+    . '<h1>Age of Olympia</h1>'
+    . '</a>';
 
 echo '
 <div id="index-menu" class="box-shadow scrolling-bg">
@@ -172,7 +186,8 @@ if($annonceJson){
 
     // Définir la locale en français
     $jour= DAYS_OF_WEEK[getdate($annonceJson->time)["wday"]];
-    echo '<div id="index-changelog"><a class="install-app" style="background: black; color: white;" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
+    /* Chip papier (css/landing.css) — l'ancien style inline noir gagnait la cascade. */
+    echo '<div id="index-changelog"><a class="install-app" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
 }
 
 echo '<div id="index-discord"><a class="install-app" style="background: #5865f2; color: white;" href="https://discord.gg/djPRYwEt8E"><img src="img/ui/partenaires/discord.webp" /> Discord </a></div>';

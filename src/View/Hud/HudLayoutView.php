@@ -20,11 +20,20 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260707c';
+    private const VERSION = '20260708l';
 
     public static function render(Player $player): void
     {
         echo '<link rel="stylesheet" href="css/hud.min.css?v=' . self::VERSION . '" />';
+
+        /* Papier filigrané « aootest » hors prod (même mécanisme que le
+         * fond hérité, cf. aoo_app_background) : seule l'image change,
+         * cadrage et calques du CSS conservés. Appliqué aussi au damier,
+         * la feuille la plus visible de l'écran. */
+        $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
+        if ($paperBg !== '/img/ui/paper/paper.jpg') {
+            echo '<style>body:has(#hud),#hud #game-map{background-image:url(\'' . $paperBg . '\')}</style>';
+        }
 
         echo '<div id="hud">';
 

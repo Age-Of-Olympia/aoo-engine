@@ -106,14 +106,180 @@
             return;
         }
 
-        /* La légende (nom du lieu) prend sa part de hauteur : la carte
-         * se dimensionne dans ce qui reste, sans déborder la case. */
-        var captionH = $box.find('.hud-minimap-caption').outerHeight(true) || 0;
         var boxW = $box.innerWidth() - 8;
-        var boxH = $box.innerHeight() - 8 - captionH;
+        var boxH = $box.innerHeight() - 8;
         var w = Math.min(boxW, boxH * ratio);
 
         $map.css({ width: w + 'px', height: (w / ratio) + 'px' });
+    }
+
+    /*
+     * Le damier s'adapte à la HAUTEUR de son cadre (comme il s'adapte
+     * à l'écran en mobile) : une perception élevée reste visible en
+     * entier. Taille posée en inline — l'attribut width="100%" et le
+     * max-width 650px hérités du SVG ne se battent pas en CSS seul.
+     * damierZoom (boutons +/− du cadre) multiplie la taille ajustée :
+     * à 1 tout tient, au-delà le cadre défile (recentré sur soi).
+     * Mobile : pincement natif inchangé, pas de boutons.
+     */
+    var damierZoom = 1;
+    var DAMIER_ZOOM_MAX = 2.5;
+    var DAMIER_ZOOM_STEP = 1.25;
+
+    function fitDamier() {
+        var svg = document.getElementById('svg-view');
+        var map = document.getElementById('game-map');
+        if (!svg || !map) {
+            return;
+        }
+
+        if (isMobileViewport()) {
+            svg.style.width = '';
+            svg.style.height = '';
+            svg.style.maxWidth = '';
+            return;
+        }
+
+        /* Toute la hauteur du cadre (−2px de garde d'arrondi), la
+         * largeur suit le ratio carré du viewBox. */
+        var side = Math.max(120, Math.min(map.clientWidth, map.clientHeight) - 2) * damierZoom;
+        svg.style.width = side + 'px';
+        svg.style.height = side + 'px';
+        svg.style.maxWidth = 'none';
+    }
+
+    /* Les ⛔ (option showBlockedTiles) sont dessinés par view.js AVANT
+     * fitDamier : après chaque redimensionnement du damier (fit, zoom,
+     * re-rendu), on les redessine aux nouvelles positions. */
+    function redrawBlockedMarkers() {
+        if (window.showBlockedTiles
+            && typeof window.drawBlockedTileMarkers === 'function'
+            && sessionStorage.getItem('tutorial_active') !== 'true') {
+            window.drawBlockedTileMarkers(null, 'blocked-tile-marker', $('#svg-container'));
+        }
+    }
+
+    function setDamierZoom(zoom) {
+        damierZoom = Math.min(DAMIER_ZOOM_MAX, Math.max(1, zoom));
+        fitDamier();
+        centerMap();
+        redrawBlockedMarkers();
+        $('#hud-zoom-out').prop('disabled', damierZoom <= 1);
+        $('#hud-zoom-in').prop('disabled', damierZoom >= DAMIER_ZOOM_MAX);
+    }
+
+    function initDamierZoom() {
+        $('<div id="hud-zoom">'
+            + '<button id="hud-zoom-in" title="Zoomer" aria-label="Zoomer">+</button>'
+            + '<button id="hud-zoom-out" title="Dézoomer" aria-label="Dézoomer" disabled>-</button>'
+            + '</div>').appendTo('#hud');
+
+        $('#hud-zoom-in').on('click', function () {
+            setDamierZoom(damierZoom * DAMIER_ZOOM_STEP);
+        });
+        $('#hud-zoom-out').on('click', function () {
+            setDamierZoom(damierZoom / DAMIER_ZOOM_STEP);
+        });
+    }
+
+    /*
+     * Coordonnées en bordure du damier : des <text> SVG injectés dans
+     * la planche elle-même, dans une marge ajoutée au viewBox — x en
+     * haut, y à gauche. Partie intégrante du damier : elles se
+     * déplacent, défilent et se redimensionnent avec lui.
+     */
+    function buildMapRulers() {
+        var svg = document.getElementById('svg-view');
+        if (!svg) {
+            return;
+        }
+
+        var oldG = svg.querySelector('#hud-svg-coords');
+        if (oldG) {
+            oldG.parentNode.removeChild(oldG);
+        }
+        if (svg.dataset.origViewbox) {
+            svg.setAttribute('viewBox', svg.dataset.origViewbox);
+        }
+
+        var cols = {};
+        var rows = {};
+        var xs = [];
+        $(svg).find('.case').each(function () {
+            var c = (this.getAttribute('data-coords') || '').split(',');
+            var x = parseFloat(this.getAttribute('x'));
+            var y = parseFloat(this.getAttribute('y'));
+            if (c.length !== 2 || isNaN(x) || isNaN(y)) {
+                return;
+            }
+            cols[c[0]] = x;
+            rows[c[1]] = y;
+            xs.push(x);
+        });
+        if (!xs.length) {
+            return;
+        }
+
+        /* Taille de tuile : plus petit écart entre deux colonnes */
+        var tile = 50;
+        xs.sort(function (a, b) { return a - b; });
+        for (var i = 1; i < xs.length; i++) {
+            if (xs[i] - xs[i - 1] > 0) {
+                tile = xs[i] - xs[i - 1];
+                break;
+            }
+        }
+
+        /* Bordure graduée sur les QUATRE côtés : bandes sombres dans
+         * la marge du viewBox, numéros parchemin par-dessus. */
+        var G = 16;
+        var vb = svg.dataset.origViewbox || svg.getAttribute('viewBox') || '0 0 650 650';
+        svg.dataset.origViewbox = vb;
+        var p = vb.split(/[ ,]+/).map(Number);
+        svg.setAttribute('viewBox',
+            (p[0] - G) + ' ' + (p[1] - G) + ' ' + (p[2] + 2 * G) + ' ' + (p[3] + 2 * G));
+
+        var NS = 'http://www.w3.org/2000/svg';
+        var g = document.createElementNS(NS, 'g');
+        g.setAttribute('id', 'hud-svg-coords');
+
+        function band(bx, by, bw, bh) {
+            var r = document.createElementNS(NS, 'rect');
+            r.setAttribute('x', bx);
+            r.setAttribute('y', by);
+            r.setAttribute('width', bw);
+            r.setAttribute('height', bh);
+            r.setAttribute('class', 'hud-svg-coord-band');
+            g.appendChild(r);
+        }
+
+        band(p[0] - G, p[1] - G, p[2] + 2 * G, G);          /* haut  */
+        band(p[0] - G, p[1] + p[3], p[2] + 2 * G, G);       /* bas   */
+        band(p[0] - G, p[1], G, p[3]);                      /* gauche */
+        band(p[0] + p[2], p[1], G, p[3]);                   /* droite */
+
+        function coordLabel(tx, ty, str) {
+            var t = document.createElementNS(NS, 'text');
+            t.setAttribute('x', tx);
+            t.setAttribute('y', ty);
+            t.setAttribute('text-anchor', 'middle');
+            t.setAttribute('class', 'hud-svg-coord');
+            t.textContent = str;
+            g.appendChild(t);
+        }
+
+        Object.keys(cols).forEach(function (cx) {
+            var mid = cols[cx] + tile / 2;
+            coordLabel(mid, p[1] - G / 2 + 4.5, cx);                 /* haut */
+            coordLabel(mid, p[1] + p[3] + G / 2 + 4.5, cx);          /* bas  */
+        });
+        Object.keys(rows).forEach(function (cy) {
+            var mid = rows[cy] + tile / 2 + 4.5;
+            coordLabel(p[0] - G / 2, mid, cy);                       /* gauche */
+            coordLabel(p[0] + p[2] + G / 2, mid, cy);                /* droite */
+        });
+
+        svg.appendChild(g);
     }
 
     /*
@@ -174,6 +340,29 @@
      * qui redéclenche l'observer ; sans ce drapeau, la seconde passe
      * revidait #hud-actions (panneau d'actions cassé). */
     var selfCompose = false;
+
+    /* Zone de sélection au repos : sans case sélectionnée, le bandeau
+     * présente le lieu (nom du plan — sa description et d'autres
+     * données viendront s'y ajouter). view.js réécrit #ajax-data en
+     * entier à la première observation, la carte au repos disparaît
+     * d'elle-même. */
+    function renderIdleSelection() {
+        var $d = $('#ajax-data');
+        if ($d.children().length || $d.text().trim()) {
+            return;
+        }
+
+        var name = ($('#hud-location').text().split('—')[0] || '').trim();
+        if (!name) {
+            return; /* le message :empty::before du CSS reste en place */
+        }
+
+        selfCompose = true;
+        $('<div class="hud-sel-idle"></div>')
+            .append($('<div class="hud-sel-idle-name"></div>').text(name))
+            .append('<div class="hud-sel-idle-hint">Cliquez sur une case pour l\'observer.</div>')
+            .appendTo($d);
+    }
 
     function composeSelection() {
         var $d = $('#ajax-data');
@@ -522,11 +711,15 @@
         $('#show-craft, #show-bank').insertAfter('#show-inventory');
         $('#show-spells').insertAfter('#show-caracs');
 
-        /* Séparateurs de groupes du rail : la vue / le personnage
-         * (caracs, sorts, possessions) / le monde (évènements, carte,
+        /* « Vue » (retour au damier) n'a plus de sens dans le HUD :
+         * on est toujours sur le damier, les sous-pages sont des
+         * panneaux. */
+        $('#show-damier').remove();
+
+        /* Séparateurs de groupes du rail : le personnage (caracs,
+         * sorts, possessions) / le monde (évènements, carte,
          * missives) / le compte. Posés après le repositionnement. */
         var $menu = $('#hud-rail #menu');
-        $('<span class="hud-rail-sep"></span>').insertAfter('#show-damier');
         $('<span class="hud-rail-sep"></span>').insertAfter('#show-bank');
         $('<span class="hud-rail-sep"></span>')
             .insertAfter($menu.children('a[href="forum.php?forum=Missives"]'));
@@ -664,6 +857,7 @@
                     return;
                 }
                 relocateCardActions();
+                renderIdleSelection();
                 /* Mobile : montrer le résultat de l'observation — le
                  * carrousel rejoint la position sélection. */
                 if (isMobileViewport() && ajaxData.childNodes.length) {
@@ -671,6 +865,7 @@
                 }
             }).observe(ajaxData, { childList: true });
             relocateCardActions();
+            renderIdleSelection();
         }
 
         /* Fermer depuis le panneau : observe.js (handler direct) cache
@@ -810,10 +1005,47 @@
 
         fitMinimap();
         centerMap();
+        initDamierZoom();
+        fitDamier();
+        buildMapRulers();
+        redrawBlockedMarkers();
         $(window).on('resize', function () {
             fitMinimap();
             centerMap();
+            fitDamier();
+            buildMapRulers();
+            redrawBlockedMarkers();
         });
+
+        /* La carte est re-rendue après un déplacement (view.js) : la
+         * taille, les règles et les ⛔ se recalent après chaque vague
+         * de mutations. Les mutations qui ne concernent QUE nos ⛔
+         * sont ignorées — sans ce filtre, le redraw des marqueurs
+         * redéclencherait l'observer en boucle (150 ms). */
+        var viewEl = document.getElementById('view');
+        if (viewEl) {
+            var rulerTimer = null;
+            new MutationObserver(function (muts) {
+                var relevant = muts.some(function (m) {
+                    var nodes = Array.prototype.slice.call(m.addedNodes)
+                        .concat(Array.prototype.slice.call(m.removedNodes));
+                    return nodes.some(function (n) {
+                        var marker = n.classList && n.classList.contains('blocked-tile-marker');
+                        var rulers = n.id === 'hud-svg-coords';
+                        return !marker && !rulers;
+                    });
+                });
+                if (!relevant) {
+                    return;
+                }
+                clearTimeout(rulerTimer);
+                rulerTimer = setTimeout(function () {
+                    fitDamier();
+                    buildMapRulers();
+                    redrawBlockedMarkers();
+                }, 150);
+            }).observe(viewEl, { childList: true, subtree: true });
+        }
 
         initMobile();
     });

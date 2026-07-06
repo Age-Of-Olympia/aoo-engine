@@ -1,0 +1,164 @@
+/* ============================================================
+ * Page d'accueil — habillage papier & encre de la maquette
+ * graphiste (olympia-tests.psd). Chargé uniquement par
+ * scripts/index.php (accueil déconnecté et menu principal).
+ *
+ * Le DOM existant est conservé : #index-menu, .index-button et le
+ * formulaire de connexion gardent leurs ids/classes (main.js les
+ * pilote) — seule la matière change : planète en héros, titre
+ * Gloock, entrées en encre séparées par des fleurons.
+ * ============================================================ */
+
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    --lp-ink: #1d1c1b;
+    --lp-bronze: #8d6839;
+    --lp-line-soft: rgba(93, 74, 42, 0.3);
+    --lp-veil: rgba(252, 248, 238, 0.6);
+    /* Dessin de la cité à droite, jardin à gauche (calque du PSD,
+     * fondu en multiply : le papier de la découpe disparaît), papier
+     * en fond de scène. */
+    background:
+        url('../img/ui/paper/city-right.webp') right 4vh / min(46vw, 820px) auto no-repeat fixed,
+        url('../img/ui/paper/garden-left.webp') left bottom / min(32vw, 560px) auto no-repeat fixed,
+        #e7ded0 url('../img/ui/paper/paper.jpg') center / cover fixed;
+    background-blend-mode: multiply, multiply, normal;
+    color: var(--lp-ink);
+}
+
+/* Ornements de ferronnerie aux coins hauts */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    width: min(220px, 24vw);
+    height: 193px;
+    z-index: 0;
+    background: url('../img/ui/paper/ornament.png') top right / contain no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+body::after {
+    right: 0;
+}
+
+body::before {
+    left: 0;
+    transform: scaleX(-1);
+}
+
+/* ---------- Héros : planète + titre ---------- */
+
+#landing-hero {
+    position: relative;
+    display: grid;
+    place-items: center;
+    margin: 3vh auto 0;
+}
+
+#landing-hero img {
+    display: block;
+    width: min(52vw, 340px);
+    filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.35));
+}
+
+#landing-hero h1 {
+    position: absolute;
+    margin: 0;
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    font-size: clamp(1.9rem, 6vw, 3.6rem);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+}
+
+/* ---------- Carte de menu ---------- */
+
+#index-menu {
+    background: var(--lp-veil);
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 10px;
+    width: 260px;
+    padding: 18px 24px;
+    animation: none;
+}
+
+#index-menu .text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 95%;
+}
+
+/* Entrées : encre sur papier, plus de boutons de pierre */
+#index-menu .index-button {
+    background: none;
+    width: auto;
+    height: 44px;
+    color: var(--lp-ink);
+    font-family: 'Gloock', goudy, serif;
+    font-size: 1.45em;
+    letter-spacing: 0.03em;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#index-menu .index-button:hover,
+#index-menu .index-button:active,
+#index-menu .index-button:focus {
+    background: none;
+    color: var(--lp-bronze);
+}
+
+/* Fleuron gravé entre les entrées (pas après la dernière) */
+#index-menu > a.index-button:not(:last-of-type)::after,
+#index-menu #index-button-play::after {
+    content: "";
+    display: block;
+    width: 130px;
+    height: 16px;
+    margin: 8px auto 0;
+    background: url('../img/ui/paper/flourish.png') center / contain no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.8;
+}
+
+#index-menu button.index-button {
+    margin: 0 auto;
+}
+
+/* Changelog et Discord : chips papier discrètes au lieu des bandeaux
+ * noirs monospace, au-dessus de l'ornement du coin droit. */
+#index-changelog,
+#index-discord {
+    z-index: 1;
+}
+
+#index-changelog .install-app {
+    background: var(--lp-veil);
+    color: var(--lp-ink);
+    font-family: inherit;
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 999px;
+}
