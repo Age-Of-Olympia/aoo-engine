@@ -366,14 +366,16 @@ if($res->num_rows){
         }
 
 
+        /* class="action" comme Missive : sans elle, la grille d'actions
+         * du HUD ignore ces boutons (nom toujours affiché, taille libre). */
         if($target->have_option('isMerchant')){
 
-            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
+            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
         }
 
         if($target->have_option('isTrainer')){
 
-            $dataImg .= '<a href="warschool.php?targetId='. $target->id .'"><button><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
+            $dataImg .= '<a href="warschool.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
         }
 
 
