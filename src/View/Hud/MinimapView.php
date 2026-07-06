@@ -48,10 +48,24 @@ final class MinimapView
                 $mapResult = $viewService->getGlobalMap();
                 $layers = self::WORLD_LAYERS;
                 $href = 'map.php?world';
+
+                /* Couches jamais générées (environnement neuf : rien ne
+                 * les crée avant la première visite de map.php) : la
+                 * couche de base manquante déclenche une génération
+                 * unique — les hits suivants repassent par le glob. */
+                if (!isset($mapResult['tiles'])) {
+                    $viewService->generateGlobalMap($layers);
+                    $mapResult = $viewService->getGlobalMap();
+                }
             } else {
                 $mapResult = $viewService->getLocalMap();
                 $layers = self::LOCAL_LAYERS;
                 $href = 'map.php?local=1';
+
+                if (!isset($mapResult['tiles'])) {
+                    $viewService->generateLocalMap($layers);
+                    $mapResult = $viewService->getLocalMap();
+                }
             }
 
             $imgs = '';
