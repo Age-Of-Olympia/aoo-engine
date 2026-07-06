@@ -36,9 +36,6 @@
                         updateEventsBadge();
                     }
                 }
-                if (name === 'mdj') {
-                    updateBubbleText();
-                }
             })
             .fail(function () {
                 $(feed.pane).html('<p class="hud-feed-empty">Impossible de charger le flux.</p>');
@@ -61,9 +58,10 @@
         var show = unread > 0 && activeTab() !== 'events';
 
         $('#hud-events-badge').text(unread).toggle(show);
-        /* Écho sur la bulle mobile : le badge de l'onglet est invisible
-         * tant que la sheet est fermée. */
-        $('#hud-bubble-badge').text(unread).toggle(show);
+        /* Écho sur le point « Discussions » du carrousel mobile : le
+         * badge de l'onglet est invisible quand un autre volet occupe
+         * l'écran. */
+        $('.hud-dot[data-index="0"]').toggleClass('hud-dot--badge', show);
     }
 
     function markEventsSeen() {
@@ -75,7 +73,7 @@
             localStorage.setItem(SEEN_KEY, String(latest));
         }
         $('#hud-events-badge').hide();
-        $('#hud-bubble-badge').hide();
+        $('.hud-dot[data-index="0"]').removeClass('hud-dot--badge');
     }
 
     /*
@@ -814,11 +812,18 @@
             }
         });
 
+        /* Volets : discussions (panneau latéral entier : onglets
+         * Général/Événements + message du jour), sélection, actions.
+         * La minimap quitte le carrousel mobile (retour testeur : la
+         * carte reste accessible via l'entrée Carte du tiroir) et la
+         * bulle de chat flottante disparaît — c'est le volet 0.
+         * En desktop #hud-carousel est en display:contents : chaque
+         * bloc garde sa cellule de grille, rien ne change. */
         var $carousel = $('<div id="hud-carousel"></div>').insertAfter('#hud-main');
-        $carousel.append($('#hud-minimap'), $('#ajax-data'), $('#hud-actions'));
+        $carousel.append($('#hud-side'), $('#ajax-data'), $('#hud-actions'));
 
         /* Pagination : un point par position, synchronisé au scroll */
-        var labels = ['Minimap', 'Sélection', 'Actions'];
+        var labels = ['Discussions', 'Sélection', 'Actions'];
         var $dots = $('#hud-dots');
         labels.forEach(function (label, i) {
             $('<button class="hud-dot" aria-label="' + label + '" data-index="' + i + '"></button>')
@@ -849,35 +854,15 @@
             $('#hud').toggleClass('hud--drawer-open');
         });
 
-        /* Bulle de chat : ouvre le panneau latéral en sheet */
-        $('#hud-bubble').on('click', function () {
-            $('#hud').toggleClass('hud--chat-open');
-        });
-
-        /* Fermeture de la sheet chat (bouton × mobile) */
-        $('#hud-side-close').on('click', function () {
-            $('#hud').removeClass('hud--chat-open');
-        });
-
-        /* Fond : referme tiroir et sheet */
+        /* Fond : referme le tiroir */
         $('#hud-backdrop').on('click', function () {
-            $('#hud').removeClass('hud--drawer-open hud--chat-open');
+            $('#hud').removeClass('hud--drawer-open');
         });
 
         /* Le tiroir se referme après un clic de navigation */
         $('#hud-rail').on('click', 'a', function () {
             $('#hud').removeClass('hud--drawer-open');
         });
-    }
-
-    /* Dernier message dans la bulle flottante */
-    function updateBubbleText() {
-        var latest = $('#hud-feed-mdj .hud-feed-item').first();
-        var author = latest.find('strong').text();
-        var text = latest.find('.hud-mdj-text').text();
-        if (text) {
-            $('#hud-bubble-text').text((author ? author + ' : ' : '') + text);
-        }
     }
 
     $(document).ready(function () {
@@ -1186,12 +1171,9 @@
                         alert('Erreur lors de la sauvegarde du message du jour, veuillez réessayer.');
                         return;
                     }
-                    /* Message posté : champ vidé ET rendu — clavier
-                     * mobile refermé (blur), sheet chat refermée pour
-                     * revenir au jeu (sans effet en desktop, la classe
-                     * n'y pilote rien). */
+                    /* Message posté : champ vidé ET rendu — le clavier
+                     * mobile se referme (blur). */
                     $('#hud-mdj-input').val('').trigger('blur');
-                    $('#hud').removeClass('hud--chat-open');
                     loadFeed('mdj');
                 })
                 .fail(function () {

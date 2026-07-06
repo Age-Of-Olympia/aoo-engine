@@ -1406,10 +1406,8 @@ body:has(#hud) ::-webkit-scrollbar-thumb {
 
 /* Widgets mobile — invisibles en desktop */
 #hud-burger,
-#hud-bubble,
 #hud-dots,
-#hud-backdrop,
-#hud-side-close {
+#hud-backdrop {
     display: none;
 }
 
@@ -1638,8 +1636,7 @@ body:has(#hud) #debug-flags {
         padding-left: 44px;
     }
 
-    #hud.hud--drawer-open #hud-backdrop,
-    #hud.hud--chat-open #hud-backdrop {
+    #hud.hud--drawer-open #hud-backdrop {
         display: block;
         position: fixed;
         inset: 0;
@@ -1672,11 +1669,6 @@ body:has(#hud) #debug-flags {
         scroll-snap-align: start;
         min-width: 100%;
         overflow: auto;
-    }
-
-    #hud-carousel #hud-minimap {
-        display: grid;
-        place-items: center;
     }
 
     #hud #ajax-data:empty::before {
@@ -1803,76 +1795,43 @@ body:has(#hud) #debug-flags {
         background: var(--hud-bronze);
     }
 
-    /* --- Panneau latéral : sheet ouverte par la bulle --- */
-    /* Feuille OPAQUE : en desktop le voile translucide pose sur le
-     * papier de la page ; en mobile il pose sur le damier, illisible
-     * (retour testeur). Même papier que la page, cadré à la feuille. */
-    #hud-side {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        top: 15vh;
-        z-index: 75;
-        border-radius: 12px 12px 0 0;
-        transform: translateY(105%);
-        transition: transform 0.25s ease;
+    /* --- Panneau latéral : volet « Discussions » du carrousel ---
+     * (plus de sheet flottante ni de bulle : retour testeur.)
+     * Feuille OPAQUE : le voile translucide pose sur le damier en
+     * mobile, illisible. Même papier que la page, cadré au volet. */
+    #hud-carousel #hud-side {
         background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
-        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.35);
+        display: flex;
+        flex-direction: column;
     }
 
-    /* Tiroir de navigation : même exigence d'opacité que la sheet */
+    /* La minimap n'a plus de volet : la carte vit dans le panneau
+     * Carte (tiroir) — son bloc de grille desktop disparaît. */
+    #hud-minimap {
+        display: none;
+    }
+
+    /* Tiroir de navigation : même exigence d'opacité que les volets */
     #hud-rail {
         background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
         box-shadow: 8px 0 28px rgba(0, 0, 0, 0.35);
     }
 
-    #hud.hud--chat-open #hud-side {
-        transform: none;
+    /* Badge du point « Discussions » : évènements non lus */
+    .hud-dot--badge {
+        position: relative;
     }
 
-    #hud-side-close {
-        display: block;
-        flex: 0 0 auto;
-    }
-
-    /* --- Bulle de chat flottante ---
-     * Sous les sheets (z-index) et masquée dès qu'un panneau ou le
-     * chat est ouvert : elle ne doit jamais recouvrir une sous-page. */
-    /* Même matériau que la plaque de parole : c'est du discours. */
-    #hud-bubble {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        position: fixed;
-        right: 8px;
-        bottom: calc(32vh + 24px);
-        z-index: 50;
-        max-width: 50vw;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: var(--hud-parchment);
-        border: 1px solid var(--hud-bronze);
-        color: var(--hud-ink);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    }
-
-    #hud-bubble .ra {
-        color: var(--hud-bronze);
-    }
-
-    #hud.hud--panel-open #hud-bubble,
-    #hud.hud--chat-open #hud-bubble,
-    #hud.hud--drawer-open #hud-bubble {
-        display: none;
-    }
-
-    #hud-bubble #hud-bubble-text {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 80%;
-        font-style: italic;
+    .hud-dot--badge::after {
+        content: "";
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--hud-blood);
+        border: 1px solid #fff;
     }
 
     /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
