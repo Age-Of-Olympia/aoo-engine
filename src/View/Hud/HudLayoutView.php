@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260709b';
+    private const VERSION = '20260709c';
 
     public static function render(Player $player): void
     {
@@ -65,6 +65,29 @@ final class HudLayoutView
          * dans #ajax-data — la sélection reste dans #ajax-data, les
          * boutons d'action vivent ici, comme sur le wireframe. */
         echo '<div id="hud-actions"></div>';
+
+        /* Calques d'affichage de la carte (façon applis de carto) :
+         * médaillon boussole au-dessus du zoom, popover papier de
+         * bascules. Chaque entrée bascule son option via account.php
+         * (POST option) — showBlockedTiles s'applique à chaud, les
+         * calques rendus côté serveur rechargent la vue (js/hud.js). */
+        $mapLayers = [
+            'raceHint'         => 'Indice de race',
+            'raceHintMax'      => 'Indice de race maximale',
+            'showBlockedTiles' => 'Cases infranchissables',
+            'hideGrid'         => 'Masquer la grille',
+            'noMask'           => 'Désactiver les masques météo',
+        ];
+        echo '<div id="hud-layers">'
+            . '<button id="hud-layers-btn" title="Affichage de la carte" aria-label="Affichage de la carte"></button>'
+            . '<div id="hud-layers-pop" hidden>'
+            . '<div class="hud-layers-title">Affichage</div>';
+        foreach ($mapLayers as $option => $label) {
+            $on = $player->have_option($option) ? ' hud-layer--on' : '';
+            echo '<button class="hud-layer' . $on . '" data-option="' . $option . '">'
+                . '<span class="hud-layer-dot"></span>' . $label . '</button>';
+        }
+        echo '</div></div>';
 
         PanelView::render();
 

@@ -168,6 +168,51 @@
         $('#hud-zoom-in').prop('disabled', damierZoom >= DAMIER_ZOOM_MAX);
     }
 
+    /*
+     * Calques d'affichage de la carte (popover boussole, façon applis
+     * de carto) : chaque bascule flippe son option joueur via
+     * account.php. showBlockedTiles s'applique à chaud ; les calques
+     * rendus côté serveur (indices de race, grille, masques)
+     * rechargent la vue.
+     */
+    function initMapLayers() {
+        $('#hud-layers-btn').on('click', function (e) {
+            e.stopPropagation();
+            var pop = document.getElementById('hud-layers-pop');
+            pop.hidden = !pop.hidden;
+        });
+
+        $(document).on('click', function (e) {
+            if (!$(e.target).closest('#hud-layers').length) {
+                $('#hud-layers-pop').prop('hidden', true);
+            }
+        });
+
+        $('#hud-layers-pop').on('click', '.hud-layer', function () {
+            var $layer = $(this);
+            var option = $layer.data('option');
+            $layer.toggleClass('hud-layer--on');
+
+            $.post('account.php', { option: option })
+                .done(function () {
+                    if (option === 'showBlockedTiles') {
+                        window.showBlockedTiles = $layer.hasClass('hud-layer--on');
+                        if (window.showBlockedTiles) {
+                            redrawBlockedMarkers();
+                        } else if (typeof window.clearBlockedTileMarkers === 'function') {
+                            window.clearBlockedTileMarkers('blocked-tile-marker');
+                        }
+                        return;
+                    }
+                    document.location.reload();
+                })
+                .fail(function () {
+                    /* Échec serveur : la bascule revient à son état. */
+                    $layer.toggleClass('hud-layer--on');
+                });
+        });
+    }
+
     function initDamierZoom() {
         $('<div id="hud-zoom">'
             + '<button id="hud-zoom-in" title="Zoomer" aria-label="Zoomer">+</button>'
@@ -1006,6 +1051,7 @@
         fitMinimap();
         centerMap();
         initDamierZoom();
+        initMapLayers();
         fitDamier();
         buildMapRulers();
         redrawBlockedMarkers();
