@@ -318,6 +318,9 @@ class TutorialHelper
         }
 
         $db->exe('UPDATE players SET coords_id = ? WHERE id = ?', array($coordsId, $player->id));
+
+        /* getCoords() est mémoïsé : invalider après l'écriture directe. */
+        unset($player->coords);
     }
 
     /**

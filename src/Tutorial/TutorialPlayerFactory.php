@@ -130,6 +130,8 @@ class TutorialPlayerFactory
             'player_id' => $actualPlayerId,
             'name'      => 'showActionDetails',
         ]);
+        /* Écriture directe hors PlayerOptionsService : purger son cache. */
+        \App\Service\PlayerOptionsService::resetCache($actualPlayerId);
 
         // Step 10: Tutorial tracking entry.
         // Phase 4.5 collapsed the real-player link onto players.real_player_id_ref

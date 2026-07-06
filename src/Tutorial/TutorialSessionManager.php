@@ -215,6 +215,8 @@ class TutorialSessionManager
 
             $this->db->exe($sql, [$finalXP, $sessionId]);
 
+            self::$hasCompletedCache = [];
+
         } catch (\Exception $e) {
             throw new TutorialSessionException(
                 "Failed to mark session {$sessionId} as completed",
@@ -244,6 +246,8 @@ class TutorialSessionManager
 
             $this->db->exe($sql, [$sessionId]);
 
+            self::$hasCompletedCache = [];
+
         } catch (\Exception $e) {
             throw new TutorialSessionException(
                 "Failed to cancel session {$sessionId}",
@@ -260,15 +264,28 @@ class TutorialSessionManager
      * @param int $playerId Real player's ID
      * @return bool True if player completed first_time tutorial before
      */
+    /**
+     * Memo par requête HTTP (index.php + MenuView posent la même
+     * question quatre fois par page) ; purgé par completeSession /
+     * cancelSession — les seules écritures de completed.
+     *
+     * @var array<int, bool>
+     */
+    private static array $hasCompletedCache = [];
+
     public function hasCompletedBefore(int $playerId): bool
     {
+        if (isset(self::$hasCompletedCache[$playerId])) {
+            return self::$hasCompletedCache[$playerId];
+        }
+
         $sql = 'SELECT COUNT(*) as count FROM tutorial_progress
                 WHERE player_id = ? AND completed = 1 AND tutorial_mode = "first_time"';
 
         $result = $this->db->exe($sql, [$playerId]);
         $row = $result->fetch_assoc();
 
-        return (int) $row['count'] > 0;
+        return self::$hasCompletedCache[$playerId] = (int) $row['count'] > 0;
     }
 
     /**

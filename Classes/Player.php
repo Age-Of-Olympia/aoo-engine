@@ -427,7 +427,13 @@ class Player implements ActorInterface {
         return (bool) (new MapService())->getTileTypeAtCoord($type, (int) $this->data->coords_id)->n;
     }
 
-    public function getCoords(bool $refresh = true): object{
+    /**
+     * Mémoïsé par défaut : la barre de statut, la minimap et la vue
+     * relisaient chacune les coordonnées (3 requêtes par page). go()
+     * invalide le memo après déplacement ; $refresh=true force la
+     * relecture.
+     */
+    public function getCoords(bool $refresh = false): object{
 
 
         if (!$refresh && isset($this->coords)) {
@@ -741,6 +747,10 @@ class Player implements ActorInterface {
 
         $db = new Db();
         $db->exe($sql, array($coordsId, $this->id));
+
+        /* Invalide le memo de getCoords() : la prochaine lecture
+         * repart de la base. */
+        unset($this->coords);
 
 
         // territory change
