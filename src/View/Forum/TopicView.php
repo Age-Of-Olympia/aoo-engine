@@ -15,6 +15,14 @@ use App\View\Forum\CookieView;
 
 class TopicView
 {
+    /**
+     * Mode fragment (panneaux glissants du HUD, via load_forum.php) :
+     * ni enveloppe Ui, ni Infos/Menu — même dégraissage que hideMenu,
+     * plus un titre compact (le fil doit rester identifiable dans le
+     * panneau « Missives »).
+     */
+    public static bool $fragment = false;
+
     public static function renderTopic(): void
     {
         $playerService = new PlayerService($_SESSION['playerId']);
@@ -27,18 +35,25 @@ class TopicView
         }
 
 
-        $ui = new Ui(htmlentities($topJson->title), true);
+        if (!self::$fragment) {
+
+            $ui = new Ui(htmlentities($topJson->title), true);
+        }
 
 
         ob_start();
 
-    
+
         $player = $playerService->GetPlayer($_SESSION['playerId']);
         $player->get_data(false);
-        echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.webp" /></a><br /><a href="#last"><img src="img/ui/forum/down.webp" /></a></div>';
+
+        if (!self::$fragment) {
+
+            echo '<div id="elebata"><a href="#"><img src="img/ui/forum/up.webp" /></a><br /><a href="#last"><img src="img/ui/forum/down.webp" /></a></div>';
+        }
 
 
-        if (!isset($_GET['hideMenu'])) {
+        if (!isset($_GET['hideMenu']) && !self::$fragment) {
 
             InfosView::renderInfos($player);
             MenuView::renderMenu();
@@ -73,9 +88,16 @@ class TopicView
 
         Forum::check_access($player, $forumJson);
 
-        if (!isset($_GET['hideMenu'])) {
+        if (!isset($_GET['hideMenu']) && !self::$fragment) {
 
             echo '<h1>' . htmlentities($topJson->title) . '</h1>';
+        }
+
+        /* Fragment : titre compact — le panneau affiche « Missives »,
+         * le fil doit rester identifiable. */
+        if (self::$fragment) {
+
+            echo '<h2 class="hud-panel-topic-title">' . htmlentities($topJson->title) . '</h2>';
         }
 
         if ($topJson->forum_id == 'Missives') {
@@ -369,7 +391,7 @@ class TopicView
             window.topicName = <?php echo $topJson->name ?>;
             window.pageN = <?php echo $page ?>;
         </script>
-        <script src="js/forum_topic.js?v=20251017"></script>
+        <script src="js/forum_topic.js?v=20260714"></script>
 <?php
     }
 }

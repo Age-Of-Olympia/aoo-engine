@@ -636,6 +636,17 @@
         if (href === 'account.php') {
             return 'load_account.php';
         }
+        /* Forum : liste de sujets et fils en fragments (Missives dans
+         * son panneau, navigation interne comprise) ; répondre, éditer
+         * et créer un sujet restent plein-page (formulaires). */
+        if (/^forum\.php\?(forum|topic)=/.test(href)) {
+            return href.replace(/^forum\.php/, 'load_forum.php');
+        }
+        /* Carte : la vue simple en panneau ; les pages avec options
+         * de couches (map.php?world / ?local) restent plein-page. */
+        if (href === 'map.php') {
+            return 'load_map.php';
+        }
         return null;
     }
 
@@ -660,6 +671,12 @@
         }
         if (href.indexOf('account') !== -1) {
             return 'Profil';
+        }
+        if (href.indexOf('forum') !== -1 || href.indexOf('topic') !== -1) {
+            return 'Missives';
+        }
+        if (href.indexOf('map') !== -1) {
+            return 'Carte';
         }
         return '';
     }
@@ -912,6 +929,24 @@
             }
             e.preventDefault();
             togglePanel('load_account.php', 'Profil');
+        });
+
+        /* Rail : Missives et Carte en panneaux — dernières entrées qui
+         * naviguaient encore vers des pages complètes (retour testeur). */
+        $(document).on('click', '#hud-rail a[href="forum.php?forum=Missives"]', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            e.preventDefault();
+            togglePanel('load_forum.php?forum=Missives', 'Missives');
+        });
+
+        $(document).on('click', '#hud-rail a[href="map.php"]', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            e.preventDefault();
+            togglePanel('load_map.php', 'Carte');
         });
 
         /* Rail : Caractéristiques en panneau (hors tutoriel).

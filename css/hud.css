@@ -1253,6 +1253,39 @@ body:has(#hud) #view-landing-wrapper {
     padding: 10px;
 }
 
+/* Titre compact des fragments (fil de missive, nom du plan…) : le
+ * panneau porte déjà son titre de rubrique dans sa barre. */
+.hud-panel-topic-title {
+    margin: 0 0 10px;
+    font-size: 20px;
+    text-align: center;
+}
+
+/* Fragment carte (load_map.php) : couches PNG empilées, pleine
+ * largeur de panneau — même matière que la minimap. */
+.hud-map-stack {
+    position: relative;
+    width: 100%;
+}
+
+.hud-map-stack img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hud-map-stack img:first-child {
+    position: static;
+    height: auto;
+}
+
+.hud-map-fragment-links {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 88%;
+}
+
 /* ========== Intérieurs de panneaux : thème papier ==========
  * Les contenus des panneaux glissants et du volet de caracs sont des
  * fragments hérités (inventory.php, upgrades.php, account.php…)
