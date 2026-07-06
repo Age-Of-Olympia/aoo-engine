@@ -1130,6 +1130,96 @@ body:has(#hud) #view-landing-wrapper {
     padding: 10px;
 }
 
+/* ========== Intérieurs de panneaux : thème papier ==========
+ * Les contenus des panneaux glissants et du volet de caracs sont des
+ * fragments hérités (inventory.php, upgrades.php, account.php…)
+ * pensés pour l'habillage sombre : on les repose sur papier — encre,
+ * filets bronze, chips parchemin — sans toucher à leur markup. */
+
+/* Chaque panneau est une feuille à part entière, bords déchirés
+ * compris : opaque, la carte ne transparaît plus au travers. */
+.hud-panel,
+body:has(#hud) #load-caracs {
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat;
+}
+
+body:has(#hud) #load-caracs {
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+/* Tables héritées : filets bronze doux, plus de gris ni de marbre */
+.hud-panel-content table,
+.hud-panel-content table td,
+.hud-panel-content table th,
+body:has(#hud) #load-caracs table,
+body:has(#hud) #load-caracs td,
+body:has(#hud) #load-caracs th {
+    border-color: var(--hud-line-soft);
+}
+
+.hud-panel-content .marbre,
+.hud-panel-content .tr-cat,
+.hud-panel-content .section,
+.hud-panel-content .tr-topic1,
+.hud-panel-content .tr-topic2 {
+    background: var(--hud-veil);
+}
+
+/* Boutons et champs : chips parchemin, encre */
+.hud-panel-content button,
+.hud-panel-content input[type="button"],
+.hud-panel-content select,
+body:has(#hud) #load-caracs button {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 4px;
+    color: var(--hud-ink);
+    box-shadow: none;
+}
+
+.hud-panel-content button:hover:not(:disabled),
+body:has(#hud) #load-caracs button:hover:not(:disabled) {
+    background: #fdf6e5;
+}
+
+.hud-panel-content button:disabled {
+    opacity: 0.45;
+    border-color: var(--hud-line-soft);
+}
+
+.hud-panel-content input[type="text"],
+.hud-panel-content input[type="password"],
+.hud-panel-content input[type="number"],
+.hud-panel-content textarea {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-line-soft);
+    border-radius: 4px;
+    color: var(--hud-ink);
+}
+
+/* Barre d'Xp : bronze au lieu du dégradé bleu */
+.hud-panel-content .progress-bar .bar,
+body:has(#hud) #load-caracs .progress-bar .bar {
+    background: linear-gradient(to right, var(--hud-bronze-bright), var(--hud-bronze));
+}
+
+/* Ascenseurs : le track noir hérité de la console jure sur papier */
+body:has(#hud) ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+body:has(#hud) ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body:has(#hud) ::-webkit-scrollbar-thumb {
+    background: var(--hud-line);
+    border-radius: 4px;
+}
+
 /* ---------- Conteneur carrousel (neutre en desktop) ---------- */
 
 /* js/hud.js déplace minimap / #ajax-data / #hud-actions dedans une
