@@ -183,3 +183,83 @@ code {
 #top-menu-button::after {
     content: "Menu";
 }
+
+/* ============================================================
+ * Évènements (logs.php) — la table de perception en papier & encre
+ * ============================================================ */
+
+/* Filets d'encre discrets au lieu du quadrillage gris/blanc hérité */
+.logs-table,
+.logs-table td,
+.logs-table th {
+    border: 0;
+}
+
+.logs-table {
+    border-collapse: collapse;
+}
+
+.logs-table td,
+.logs-table th {
+    border-bottom: 1px solid var(--pa-line-soft);
+    padding: 8px 10px;
+}
+
+.logs-table th {
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--pa-line);
+}
+
+/* Acteurs : la couleur de race quitte la cellule pleine (rouge
+ * criard sur parchemin) pour une chip compacte qui garde l'identité */
+.logs-table .log-td {
+    background: transparent;
+    color: var(--pa-ink);
+}
+
+.logs-table .log-actor {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--race-bg, transparent);
+    color: var(--race-fg, inherit);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: 95%;
+    line-height: 1.35;
+}
+
+.logs-table .log-actor a {
+    color: inherit;
+}
+
+/* Détails d'action : plaque d'encre posée sur le papier plutôt que
+ * boîte noire brute — les couleurs internes (réussite, échec, jets)
+ * sont conçues pour fond sombre, la nuit brune les garde lisibles. */
+.logs-table .logs-hidden {
+    background: #241d15;
+    color: #b6a88f;
+    padding: 6px 10px;
+    margin-top: 4px;
+    border-radius: 6px;
+}
+
+/* Types d'évènements : la palette hérité (bleu/vert/rouge purs)
+ * rejoint l'encrier — mêmes distinctions, teintes assourdies. */
+.logs-table .log-kill,
+.logs-table .log-break {
+    color: #770001;
+}
+
+.logs-table .log-fishing {
+    color: #33536b;
+}
+
+.logs-table .log-harvest {
+    color: #3f6b3f;
+}
+
+.logs-table .log-travel {
+    color: #6b4a2f;
+}

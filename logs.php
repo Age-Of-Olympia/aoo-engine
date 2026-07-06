@@ -78,7 +78,7 @@ if ($debug) {
 echo '<p>Voici les évènements qui se sont déroulés récemment<br /> du point de vue de votre personnage (max. 24h)</p>';
 
 echo '
-<table class="box-shadow marbre" border="1" align="center" style="width: 100%;">';
+<table class="box-shadow marbre logs-table" border="1" align="center" style="width: 100%;">';
 
     echo '
     <tr>
@@ -111,7 +111,9 @@ echo '
 
         if($e->player_id == $player->id && $e->hiddenText != ''){
 
-            $hiddenText = '<div class="logs-hidden" style="background: black; color: gray; padding: 5px; font-size: 88%;">'. str_replace('<style>.action-details{display: none;}</style>', '', $e->hiddenText) .'</div>';
+            /* Style porté par .logs-hidden (main.css pour l'habillage
+             * hérité, css/paper-app.css pour le thème papier). */
+            $hiddenText = '<div class="logs-hidden">'. str_replace('<style>.action-details{display: none;}</style>', '', $e->hiddenText) .'</div>';
         }
 
 
@@ -135,18 +137,18 @@ echo '
                     <span class="log-'. $e->type .'">'. $e->text .'</span><br />
                     '. $hiddenText .'
                 </td>
-            <td class="log-td" style="background-color: '. $playerRaceJson->bgColor .'; color: '. $playerRaceJson->color .';">
-                '. $player->data->name .'<br />
-                (<a style="color: '. $playerRaceJson->color .';" href="infos.php?targetId='. $player->id .'">mat.'. $player->getDisplayId() .'</a>)
+            <td class="log-td" style="--race-bg: '. $playerRaceJson->bgColor .'; --race-fg: '. $playerRaceJson->color .';">
+                <span class="log-actor">'. $player->data->name .'<br />
+                (<a href="infos.php?targetId='. $player->id .'">mat.'. $player->getDisplayId() .'</a>)</span>
             </td>
             ';
 
             if(!empty($target)){
 
                 echo '
-                <td  class="log-td" style="background-color: '. $targetRaceJson->bgColor .'; color: '. $targetRaceJson->color .';">
-                    '. $target->data->name .'<br />
-                    (<a style="color: '. $targetRaceJson->color .';" href="infos.php?targetId='. $target->id .'">mat.'. $target->getDisplayId() .'</a>)
+                <td class="log-td" style="--race-bg: '. $targetRaceJson->bgColor .'; --race-fg: '. $targetRaceJson->color .';">
+                    <span class="log-actor">'. $target->data->name .'<br />
+                    (<a href="infos.php?targetId='. $target->id .'">mat.'. $target->getDisplayId() .'</a>)</span>
                 </td>
                 ';
             }
