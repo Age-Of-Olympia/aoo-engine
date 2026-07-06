@@ -9,13 +9,13 @@ if(isset($_GET['resetPsw'])){
 
 /* Habillage papier & encre de la maquette graphiste : la bannière
  * cède la place au héros planète + titre Gloock (css/landing.css). */
-echo '<link rel="stylesheet" href="css/landing.css?v=20260709c" />';
+echo '<link rel="stylesheet" href="css/landing.css?v=20260710a" />';
 
-/* Papier filigrané « aootest » hors prod : on réécrit la liste des
- * trois calques (cité, jardin, papier) pour ne changer que le papier. */
+/* Fond filigrané « aootest » hors prod (variante _test du fond
+ * composité de la maquette). */
 $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
 if ($paperBg !== '/img/ui/paper/paper.jpg') {
-    echo '<style>body{background-image:url(\'/img/ui/paper/city-right.webp\'),url(\'/img/ui/paper/garden-left.webp\'),url(\'' . $paperBg . '\')}</style>';
+    echo '<style>body{background-image:url(\'/img/ui/paper/landing-bg_test.jpg\')}</style>';
 }
 
 echo '<a href="index.php" id="landing-hero">'
@@ -32,6 +32,7 @@ echo '
     ';
 
     echo '<a href="index.php" action="login" id="index-button-play", class="index-button">Jouer</a>';
+    echo '<div class="menu-sep"></div>';
 
 
     $raceBg = RACES[0];
@@ -142,7 +143,9 @@ echo '
         echo '<a href="index.php?logout" class="index-button">Déconnexion</a>';
     }
 
+    echo '<div class="menu-sep"></div>';
     echo '<a href="forum.php" class="index-button">Forum</a>';
+    echo '<div class="menu-sep"></div>';
     echo '<a href="https://age-of-olympia.net/wiki/" class="index-button">Aide Wiki</a>';
 
     echo '
@@ -206,7 +209,7 @@ echo '<div class="preload"><img src="img/ui/bg/button3.png" /></div>';
     if(!empty($_GET['login']) && is_numeric($_GET['login'])):
     ?>
 
-    $('.index-button').not('[action="retour"], [action="submit"]').hide();
+    $('.index-button, .menu-sep').not('[action="retour"], [action="submit"]').hide();
     $('#index-login').fadeIn();
     $('[type="text"]').val(<?php echo $_GET['login'] ?>);
     $('[type="password"]').focus();
@@ -221,7 +224,7 @@ $('a[action="login"]').click(function(e){
     <?php if(!isset($_SESSION['playerId'])): ?>
     e.preventDefault();
 
-    $('.index-button').not('[action="retour"], [action="submit"]').hide();
+    $('.index-button, .menu-sep').not('[action="retour"], [action="submit"]').hide();
 
     $('#index-login').fadeIn();
     <?php endif ?>

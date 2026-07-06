@@ -29,14 +29,10 @@ body {
     --lp-bronze: #8d6839;
     --lp-line-soft: rgba(93, 74, 42, 0.3);
     --lp-veil: rgba(252, 248, 238, 0.6);
-    /* Dessin de la cité à droite, jardin à gauche (calque du PSD,
-     * fondu en multiply : le papier de la découpe disparaît), papier
-     * en fond de scène. */
-    background:
-        url('../img/ui/paper/city-right.webp') right 4vh / min(46vw, 820px) auto no-repeat fixed,
-        url('../img/ui/paper/garden-left.webp') left bottom / min(32vw, 560px) auto no-repeat fixed,
-        #e7ded0 url('../img/ui/paper/paper.jpg') center / cover fixed;
-    background-blend-mode: multiply, multiply, normal;
+    /* Fond de la maquette composité tel quel (papier + dessin
+     * d'architecture pleine largeur, opacité du calque respectée) :
+     * une seule image cohérente, comme dans le PSD. */
+    background: #e7ded0 url('../img/ui/paper/landing-bg.jpg') center / cover fixed;
     color: var(--lp-ink);
 }
 
@@ -88,7 +84,9 @@ body::before {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #fff;
-    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4);
+    /* La planète recomposée est sombre : le blanc porte, l'ombre
+     * assoit le contraste sur les bords qui débordent sur le papier */
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.55);
     white-space: nowrap;
 }
 
@@ -141,6 +139,15 @@ body::before {
 
 #index-menu button.index-button {
     margin: 10px auto;
+}
+
+/* Fleurons gravés entre les entrées (calque alpha de la maquette) */
+.menu-sep {
+    width: 120px;
+    height: 15px;
+    margin: 1px auto;
+    background: url('../img/ui/paper/flourish-sep.png') center / contain no-repeat;
+    opacity: 0.85;
 }
 
 /* ---------- Devise sous la planète ---------- */
