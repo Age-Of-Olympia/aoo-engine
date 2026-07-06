@@ -64,11 +64,14 @@ class PlayerPassiveService
         return $this->passiveValueCalculator->compute($result, $player);
     }
 
+    /**
+     * Appelé en fin de Player::get_caracs() : les caracs sont déjà
+     * calculées (surtout ne pas rappeler get_caracs ici — récursion).
+     */
     public function setEsquivePlayer(Player $player): void
     {
         $passives = $this->getPassivesByPlayerId($player->getId());
         $esquive = 0;
-        $player->get_caracs();
 
         foreach($passives as $passive){
             if (in_array("esquive", $passive->getTraits())){

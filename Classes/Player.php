@@ -52,7 +52,10 @@ class Player implements ActorInterface {
         $this->playerBonusService = new PlayerBonusService();
         $this->actionPassiveService = new ActionPassiveService();
 
-        $this->playerPassiveService->setEsquivePlayer($this);
+        /* L'esquive est calculée en fin de get_caracs() — la calculer
+         * ici forçait le chargement complet des caracs (4+ requêtes) à
+         * CHAQUE instanciation, y compris pour un simple avatar sur le
+         * damier (~40 requêtes par affichage de la vue). */
     }
 
     public function getId(): int {
@@ -333,6 +336,11 @@ class Player implements ActorInterface {
             $this->emplacements->main1 = $item;
         }
 
+
+        /* Esquive (passifs à trait « esquive ») : fait partie des
+         * caracs — calculée ici, elle est présente dès que les caracs
+         * le sont, et part dans le cache .caracs.json. */
+        $this->playerPassiveService->setEsquivePlayer($this);
 
         // save .caracs
         $data = Json::encode($this->caracs);
