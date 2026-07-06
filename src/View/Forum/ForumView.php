@@ -12,6 +12,13 @@ use App\View\MenuView;
 
 class ForumView
 {
+    /**
+     * Mode fragment (panneaux glissants du HUD, via load_forum.php) :
+     * ni enveloppe Ui, ni Infos/Menu — le contenu seul, le panneau
+     * fournit titre et cadre.
+     */
+    public static bool $fragment = false;
+
     public static function renderForum(): void
     {
         $playerService = new PlayerService($_SESSION['playerId']);
@@ -26,7 +33,10 @@ class ForumView
         }
 
 
-        $ui = new Ui($forumJson->name);
+        if (!self::$fragment) {
+
+            $ui = new Ui($forumJson->name);
+        }
 
 
         ob_start();
@@ -34,10 +44,13 @@ class ForumView
 
 
 
-        InfosView::renderInfos($player);
-        MenuView::renderMenu();
+        if (!self::$fragment) {
 
-        echo '<h1>' . $forumJson->name . '</h1>';
+            InfosView::renderInfos($player);
+            MenuView::renderMenu();
+
+            echo '<h1>' . $forumJson->name . '</h1>';
+        }
 
 
         Forum::check_access($player, $forumJson);

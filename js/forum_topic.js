@@ -36,7 +36,11 @@ $(document).ready(function(e){
         });
     });
 
-    $(document).on('click', 'img.give-cookie:not(.disable)', function() {
+    /* Handler délégué NAMESPACÉ : le script est ré-exécuté à chaque
+     * chargement du fil en panneau HUD (load_forum.php) — sans le
+     * .off, chaque ouverture empilerait un handler de plus (cookies
+     * donnés en double). */
+    $(document).off('click.forumCookie').on('click.forumCookie', 'img.give-cookie:not(.disable)', function() {
         var $this = $(this);
     
         if( !$this.hasClass("disable")) {
