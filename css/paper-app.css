@@ -263,3 +263,94 @@ code {
 .logs-table .log-travel {
     color: #6b4a2f;
 }
+
+/* ============================================================
+ * Carte du monde (map.php) — couches en mini-interrupteurs
+ * ============================================================ */
+
+/* Les cases à cocher brutes deviennent les mêmes interrupteurs que
+ * les couches de la carte du HUD (esprit « applis de cartes »). */
+.layer-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 3px 6px;
+    padding: 4px 12px;
+    background: var(--pa-veil);
+    border: 1px solid var(--pa-line-soft);
+    border-radius: 999px;
+    font-size: 88%;
+    cursor: pointer;
+    user-select: none;
+}
+
+.layer-controls input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    width: 24px;
+    height: 13px;
+    margin: 0;
+    border: 1px solid var(--pa-bronze);
+    border-radius: 999px;
+    background: var(--pa-parchment);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.layer-controls input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--pa-bronze);
+    opacity: 0.55;
+    transition: left 0.15s ease, opacity 0.15s ease;
+}
+
+.layer-controls input[type="checkbox"]:checked {
+    background: var(--pa-bronze);
+}
+
+.layer-controls input[type="checkbox"]:checked::after {
+    left: 12px;
+    background: var(--pa-parchment);
+    opacity: 1;
+}
+
+.layer-controls input[type="checkbox"]:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* ============================================================
+ * Encres communes — liens et consignes des pages autonomes
+ * ============================================================ */
+
+/* Le bleu hypertexte hérité rejoint l'encrier : brun-bronze foncé,
+ * souligné au survol seulement (les filets restent aux tables). */
+a {
+    color: #7a5230;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Les liens posés sur plaques sombres (détails d'action des logs)
+ * gardent une teinte claire lisible sur la nuit brune. */
+.logs-hidden a {
+    color: #cfa96a;
+}
+
+/* Consignes des missives : encre assourdie, avertissement sang */
+.missive-hint {
+    color: var(--pa-ink-soft);
+}
+
+.missive-hint-warning {
+    color: #770001;
+}

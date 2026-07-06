@@ -700,6 +700,25 @@ img {
     font-size: 88%;
 }
 
+
+/*
+ * missives
+ */
+
+
+.missive-hint{
+
+    color: blue;
+    text-align: left;
+    font-size: 88%;
+    margin: 10px;
+}
+
+.missive-hint-warning{
+
+    color: red;
+}
+
 .log-rez, .log-kill{
 
     color: black;

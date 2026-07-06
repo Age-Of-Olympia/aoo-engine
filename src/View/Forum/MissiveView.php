@@ -194,8 +194,10 @@ class MissiveView
         if (count($destTbl) == 1) {
 
 
-            echo '<div style="color: blue; text-align: left; font-size: 88%; margin: 10px;">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre faction/peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple, sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.<br />
-    <font color="red">Les Missives sans destinataires sont automatiquement supprimées.</font></div>';
+            /* Style porté par .missive-hint (main.css hérité : bleu/rouge ;
+             * css/paper-app.css : encre et sang de la maquette). */
+            echo '<div class="missive-hint">Vous pouvez maintenant sélectionner un ou plusieurs destinataires de votre faction/peuple.<br />Pour envoyer un message à un personnage d\'un autre peuple, sélectionnez l\'animateur de son peuple, tout en bas de la liste.<br />Ce dernier invitera ce personnage dans la discussion.<br />
+    <span class="missive-hint-warning">Les Missives sans destinataires sont automatiquement supprimées.</span></div>';
         }
 
 

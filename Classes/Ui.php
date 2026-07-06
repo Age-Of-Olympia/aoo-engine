@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20250516"></script>
                 <script src="js/console.js?v=20260614"></script>
-                <link href="css/main.min.css?v=20260712" rel="stylesheet">
+                <link href="css/main.min.css?v=20260713" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct
@@ -55,7 +55,7 @@ class Ui{
          * pixel pour les autres. have_option est mémoïsé, le test est
          * gratuit. Filigrane « aootest » hors prod, comme le HUD. */
         if (self::usesPaperTheme()) {
-            echo '<link href="css/paper-app.css?v=20260712a" rel="stylesheet">';
+            echo '<link href="css/paper-app.css?v=20260712c" rel="stylesheet">';
 
             $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
             if ($paperBg !== '/img/ui/paper/paper.jpg') {
