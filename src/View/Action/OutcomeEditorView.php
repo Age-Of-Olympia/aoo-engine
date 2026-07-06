@@ -2,6 +2,8 @@
 
 namespace App\View\Action;
 
+use App\Enum\OutcomeTarget;
+
 /**
  * Workbench controls for adding/removing an action's outcomes and their
  * instructions. Like ConditionEditorView these render INSIDE the Configurer save
@@ -23,16 +25,18 @@ final class OutcomeEditorView
     }
 
     /**
-     * The "applies to" picker for an outcome — the actor (sur soi) or the target
-     * (sur la cible). Rendered inside the Configurer save form (name
-     * outcome_self[<id>]) so it saves with everything else; ActionSaveService
-     * persists it and it drives the action's derived targeting scope.
+     * The "applies to" picker for an outcome — the actor (sur soi), the target
+     * (sur la cible), or either (sur soi ou la cible). Rendered inside the
+     * Configurer save form (name outcome_apply_to[<id>]) so it saves with
+     * everything else; ActionSaveService persists it and it drives the action's
+     * derived targeting scope.
      */
-    public function targetToggle(int $outcomeId, bool $applyToSelf): string
+    public function targetToggle(int $outcomeId, OutcomeTarget $applyTo): string
     {
-        return '<select class="wb-outcome-target" name="outcome_self[' . $outcomeId . ']" title="Sur qui s\'applique cet outcome">'
-            . $this->option('0', 'sur la cible', !$applyToSelf)
-            . $this->option('1', 'sur soi', $applyToSelf)
+        return '<select class="wb-outcome-target" name="outcome_apply_to[' . $outcomeId . ']" title="Sur qui s\'applique cet outcome">'
+            . $this->option(OutcomeTarget::Target->value, 'sur la cible', $applyTo === OutcomeTarget::Target)
+            . $this->option(OutcomeTarget::Self->value, 'sur soi', $applyTo === OutcomeTarget::Self)
+            . $this->option(OutcomeTarget::Both->value, 'sur soi ou la cible', $applyTo === OutcomeTarget::Both)
             . '</select>';
     }
 

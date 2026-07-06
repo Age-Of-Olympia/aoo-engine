@@ -28,7 +28,7 @@ try {
     $instructionParams = is_array($_POST['inst'] ?? null) ? $_POST['inst'] : [];
     $conditionRaw = is_array($_POST['cond_raw'] ?? null) ? $_POST['cond_raw'] : [];
     $instructionRaw = is_array($_POST['inst_raw'] ?? null) ? $_POST['inst_raw'] : [];
-    $outcomeSelf = is_array($_POST['outcome_self'] ?? null) ? $_POST['outcome_self'] : [];
+    $outcomeTargets = is_array($_POST['outcome_apply_to'] ?? null) ? $_POST['outcome_apply_to'] : [];
 
     $saveService = new ActionSaveService();
     if (array_key_exists('icon', $_POST)) {
@@ -44,7 +44,7 @@ try {
         $saveService->saveRace($actionId, (string) $_POST['race']);
     }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
-    $saveService->saveOutcomeTargets($actionId, $outcomeSelf);
+    $saveService->saveOutcomeTargets($actionId, $outcomeTargets);
 
     setFlash('success', 'Paramètres enregistrés.');
     $csrf->regenerateToken();

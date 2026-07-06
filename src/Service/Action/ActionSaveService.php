@@ -6,6 +6,7 @@ use App\Action\OutcomeInstruction\OutcomeInstructionFactory;
 use App\Action\Schema\ActionSchemaCatalog;
 use App\Entity\Action;
 use App\Entity\EntityManagerFactory;
+use App\Enum\OutcomeTarget;
 use App\Service\OutcomeInstructionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Throwable;
@@ -84,26 +85,27 @@ final class ActionSaveService
     }
 
     /**
-     * Set each outcome's apply_to_self flag (who it applies to: the actor when
-     * true, otherwise the target). Drives the action's derived targeting scope
-     * (see App\Service\Action\ActionTargeting). Outcomes absent from the payload
-     * are left untouched; flushes only when something changed.
+     * Set each outcome's apply_to value (who it applies to: self, target or
+     * both — see App\Enum\OutcomeTarget). Drives the action's derived targeting
+     * scope (see App\Service\Action\ActionTargeting). Outcomes absent from the
+     * payload — and unknown posted values — are left untouched; flushes only
+     * when something changed.
      *
-     * @param array<int|string, mixed> $outcomeSelf outcomeId => "0"|"1"
+     * @param array<int|string, mixed> $outcomeTargets outcomeId => "self"|"target"|"both"
      */
-    public function saveOutcomeTargets(int $actionId, array $outcomeSelf): void
+    public function saveOutcomeTargets(int $actionId, array $outcomeTargets): void
     {
         $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
         $changed = false;
         foreach ($action->getOutcomes() as $outcome) {
             $id = (int) $outcome->getId();
-            if (!array_key_exists($id, $outcomeSelf)) {
+            if (!array_key_exists($id, $outcomeTargets)) {
                 continue;
             }
-            $applyToSelf = (bool) (int) $outcomeSelf[$id];
-            if ($applyToSelf !== $outcome->getApplyToSelf()) {
-                $outcome->setApplyToSelf($applyToSelf);
+            $applyTo = OutcomeTarget::tryFrom((string) $outcomeTargets[$id]);
+            if ($applyTo !== null && $applyTo !== $outcome->getApplyTo()) {
+                $outcome->setApplyTo($applyTo);
                 $changed = true;
             }
         }

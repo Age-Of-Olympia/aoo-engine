@@ -8,6 +8,7 @@ use App\Entity\Action;
 use App\Entity\ActionCondition;
 use App\Entity\ActionOutcome;
 use App\Entity\Race;
+use App\Enum\OutcomeTarget;
 use App\Service\ImportExport\ActionExporter;
 use App\Service\ImportExport\ActionImporter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -125,6 +126,35 @@ class ActionImporterCommitTest extends TestCase
         $this->assertStringContainsString('Doublon', $report->rejected()[0]['reason']);
     }
 
+    public function testImportsTheLegacyApplyToSelfBooleanFromOldBundles(): void
+    {
+        // Bundles exported before the tri-state carry applyToSelf true/false.
+        $payload = $this->fullPayload();
+        unset($payload['outcomes'][0]['applyTo']);
+        $payload['outcomes'][0]['applyToSelf'] = true;
+
+        $em = $this->entityManager(existing: null, knownRaces: ['Nain']);
+        $report = (new ActionImporter($em))->import([$payload]);
+
+        $this->assertSame([], $report->rejected());
+        $this->assertSame(OutcomeTarget::Self, $this->persistedAction()->getOutcomes()->first()->getApplyTo());
+    }
+
+    public function testAnUnknownApplyToValueIsRejectedAndRollsBack(): void
+    {
+        $payload = $this->fullPayload();
+        $payload['outcomes'][0]['applyTo'] = 'everyone';
+
+        $em = $this->entityManager(existing: null, knownRaces: ['Nain']);
+        $em->expects($this->once())->method('rollback');
+        $em->expects($this->never())->method('commit');
+
+        $report = (new ActionImporter($em))->import([$payload]);
+
+        $this->assertStringContainsString('applyTo', $report->rejected()[0]['reason']);
+        $this->assertSame([], $this->persisted);
+    }
+
     public function testRoundTripExportThenImportRebuildsTheActionFieldByField(): void
     {
         $source = $this->sampleAction();
@@ -164,7 +194,7 @@ class ActionImporterCommitTest extends TestCase
                 [
                     'name' => null,
                     'onSuccess' => true,
-                    'applyToSelf' => false,
+                    'applyTo' => 'target',
                     'instructions' => [
                         ['type' => 'lifeloss', 'orderIndex' => 0, 'parameters' => ['amount' => 5]],
                     ],
@@ -192,7 +222,7 @@ class ActionImporterCommitTest extends TestCase
         $outcome = new ActionOutcome();
         $outcome->setName('hit');
         $outcome->setOnSuccess(true);
-        $outcome->setApplyToSelf(false);
+        $outcome->setApplyTo(OutcomeTarget::Target);
         $outcome->addInstruction($instruction);
         $action->addOutcome($outcome);
 
