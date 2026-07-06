@@ -108,44 +108,50 @@ body::before {
     font-size: 95%;
 }
 
-/* Entrées : encre sur papier, plus de boutons de pierre */
+/* Entrées : plaques parchemin — clairement cliquables, plus des
+ * lignes de texte (retour joueur), l'esprit gravé reste. */
 #index-menu .index-button {
-    background: none;
-    width: auto;
-    height: 44px;
+    background: #f7e7c9;
+    width: 100%;
+    height: 46px;
+    margin: 10px 0;
     color: var(--lp-ink);
     font-family: 'Gloock', goudy, serif;
-    font-size: 1.45em;
+    font-size: 1.35em;
     letter-spacing: 0.03em;
-    border: none;
-    box-shadow: none;
+    border: 1px solid var(--lp-bronze);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    box-sizing: border-box;
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
 }
 
 #index-menu .index-button:hover,
-#index-menu .index-button:active,
 #index-menu .index-button:focus {
-    background: none;
+    background: #fdf6e5;
     color: var(--lp-bronze);
 }
 
-/* Fleuron gravé entre les entrées (pas après la dernière) */
-#index-menu > a.index-button:not(:last-of-type)::after,
-#index-menu #index-button-play::after {
+#index-menu .index-button:active {
+    background: #efe0bd;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Filet gravé sous la devise (le fleuron bitmap laissait voir son
+ * rectangle de découpe sur la carte claire) */
+#index-menu > .text:first-of-type::after {
     content: "";
     display: block;
     width: 130px;
-    height: 16px;
-    margin: 8px auto 0;
-    background: url('../img/ui/paper/flourish.png') center / contain no-repeat;
-    mix-blend-mode: multiply;
-    opacity: 0.8;
+    height: 1px;
+    margin: 12px auto 2px;
+    background: var(--lp-line-soft);
 }
 
 #index-menu button.index-button {
-    margin: 0 auto;
+    margin: 10px auto;
 }
 
 /* Changelog et Discord : chips papier discrètes au lieu des bandeaux

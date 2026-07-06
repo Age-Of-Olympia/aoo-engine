@@ -9,7 +9,7 @@ if(isset($_GET['resetPsw'])){
 
 /* Habillage papier & encre de la maquette graphiste : la bannière
  * cède la place au héros planète + titre Gloock (css/landing.css). */
-echo '<link rel="stylesheet" href="css/landing.css?v=20260708a" />';
+echo '<link rel="stylesheet" href="css/landing.css?v=20260709b" />';
 
 /* Papier filigrané « aootest » hors prod : on réécrit la liste des
  * trois calques (cité, jardin, papier) pour ne changer que le papier. */
