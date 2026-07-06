@@ -929,6 +929,54 @@ body:has(#hud) #view-landing-wrapper {
     display: none;
 }
 
+/* ---------- Modale de résultat d'action ----------
+ * Par-dessus le damier, la fiche de la cible reste intacte : le
+ * résultat est un évènement ponctuel, pas une description. */
+#hud-action-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 85;
+    display: grid;
+    place-items: center;
+    background: rgba(36, 29, 21, 0.35);
+}
+
+.hud-action-modal-sheet {
+    position: relative;
+    width: min(480px, 92vw);
+    max-height: 70vh;
+    overflow: auto;
+    padding: 20px 24px;
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 4px double var(--hud-bronze);
+    border-radius: 8px;
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+    text-align: left;
+}
+
+.hud-action-modal-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Les détails de calcul étaient gris-sur-noir dans la carte héritée :
+ * sur papier, encre assourdie. */
+.hud-action-modal-body .action-details {
+    color: var(--hud-ink);
+    opacity: 0.75;
+    font-size: 92%;
+}
+
 /* Titre gravé du panneau, même inscription que « Sur la case » */
 #hud-actions:not(:empty)::before {
     content: "Actions";

@@ -51,7 +51,20 @@ $(document).ready(function(){
         }
 
 
-        $('.card-text').html('<div class="action-details"><i><span class="ra ra-perspective-dice-random"></span> Lancé de dés...</i></div>');
+        /* HUD : le résultat arrive dans une modale par-dessus le damier
+         * (window.hudShowActionResult, js/hud.js) — la fiche de la
+         * cible reste intacte. Habillage hérité : comportement
+         * d'origine, le résultat remplace le texte de la carte. */
+        let diceHtml = '<div class="action-details"><i><span class="ra ra-perspective-dice-random"></span> Lancé de dés...</i></div>';
+
+        if(window.hudShowActionResult){
+
+            window.hudShowActionResult(diceHtml);
+        }
+        else{
+
+            $('.card-text').html(diceHtml);
+        }
 
 
         $.ajax({
@@ -60,8 +73,15 @@ $(document).ready(function(){
             data: {'action':action, 'targetId':targetId, 'coordsX': coordsX, 'coordsY': coordsY, 'coordsZ': coordsZ, 'coordsPlan': coordsPlan}, // serializes the form's elements.
             success: function(data)
             {
-                let $action = $('<div>'+ data +'</div>').hide();
-                $('.card-text').html('').addClass('action-text').append($action.fadeIn());
+                if(window.hudShowActionResult){
+
+                    window.hudShowActionResult(data);
+                }
+                else{
+
+                    let $action = $('<div>'+ data +'</div>').hide();
+                    $('.card-text').html('').addClass('action-text').append($action.fadeIn());
+                }
                 $('.action').prop('disabled', false);
             }
         });
