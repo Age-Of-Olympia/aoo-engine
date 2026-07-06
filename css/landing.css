@@ -32,7 +32,7 @@ body {
     /* Fond de la maquette composité tel quel (papier + dessin
      * d'architecture pleine largeur, opacité du calque respectée) :
      * une seule image cohérente, comme dans le PSD. */
-    background: #e7ded0 url('../img/ui/paper/landing-bg.jpg') center / cover fixed;
+    background: #e7ded0 url('../img/ui/paper/landing-bg.jpg?v=20260711') center / cover fixed;
     color: var(--lp-ink);
 }
 
@@ -95,19 +95,17 @@ body::before {
 
 /* ---------- Carte de menu ---------- */
 
-/* La carte épouse le portail du dessin : l'ouverture entre les deux
- * piliers fait ~12.5% de la largeur de l'image, centrée à ~48.7% —
- * largeur en vw et léger décalage à gauche pour tomber dedans
- * (le fond est en cover, les proportions suivent l'écran 16:9). */
+/* La carte épouse le portail du dessin (l'ouverture entre les deux
+ * piliers, ~12.5% de la largeur de l'image). Le portail est centré
+ * DANS l'image de fond (asset recadré) : carte centrée = carte dans
+ * le portail, alignée avec la planète, sur tous les écrans. */
 #index-menu {
     background: var(--lp-veil);
     border: 1px solid var(--lp-line-soft);
     border-radius: 10px;
     width: clamp(190px, 13.5vw, 264px);
     padding: 8px 14px;
-    margin: 3.5vh auto 4vh;
-    position: relative;
-    left: -1.3vw;
+    margin: 3.5vh auto 2vh;
     animation: none;
 }
 
@@ -158,6 +156,22 @@ body::before {
     margin: 0 auto;
     background: url('../img/ui/paper/flourish-sep.png') center / contain no-repeat;
     opacity: 0.85;
+}
+
+/* Écrans courts (portables 768p) : héros légèrement resserré pour
+ * que logo partenaire + pastille tiennent au bas du premier écran. */
+@media (max-height: 820px) {
+    #landing-hero {
+        margin-top: 1.5vh;
+    }
+
+    #landing-hero img {
+        width: min(52vw, 26vh, 300px);
+    }
+
+    #index-menu {
+        margin: 2vh auto 1.5vh;
+    }
 }
 
 /* ---------- Devise sous la planète ---------- */
@@ -213,6 +227,29 @@ body::before {
 
 /* ---------- Partenaires : bandeaux fondus dans le papier ---------- */
 
+/* Premier écran : colonne pleine hauteur — héros et carte en tête,
+ * le premier logo partenaire épinglé en bas du pli comme amorce de
+ * la suite, le repère « Partenaires » (fixe) juste dessous. */
+#landing-fold {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+#index-partenaires {
+    /* Poussé au bas du premier écran, la pastille suit dans le flux */
+    margin-top: auto;
+    padding-top: 4px;
+    line-height: 0;
+}
+
+/* Logo compact pour tenir dans la bande du pli, même en 768 de haut */
+#index-partenaires img {
+    max-height: 46px;
+    width: auto;
+}
+
 #index-partenaires img,
 body > a > img[src*="partenaires"] {
     filter: sepia(0.35) saturate(0.8);
@@ -254,8 +291,7 @@ body > a:hover > img[src*="partenaires"] {
 /* ---------- Mobile : les chips quittent le coin du héros ---------- */
 
 @media (max-width: 700px) {
-    #index-changelog,
-    #index-discord {
+    #index-changelog {
         position: static;
         margin: 8px auto 0;
         text-align: center;
@@ -265,14 +301,72 @@ body > a:hover > img[src*="partenaires"] {
      * n'est plus un repère, la carte reprend une largeur confortable. */
     #index-menu {
         width: min(76vw, 300px);
-        left: 0;
     }
 }
 
-/* Changelog et Discord : chips papier discrètes au lieu des bandeaux
- * noirs monospace, au-dessus de l'ornement du coin droit. */
-#index-changelog,
-#index-discord {
+/* ---------- Indice de défilement vers les partenaires ---------- */
+
+/* Les partenaires vivent sous la ligne de flottaison : petit repère
+ * fixe en bas d'écran, dans l'esprit gravé (devise + chevron), qui
+ * s'efface dès que le joueur descend (JS scripts/index.php). */
+/* Pastille parchemin dans le flux, sous le premier logo partenaire :
+ * elle défile avec la page, aucun recouvrement possible. */
+#landing-scroll-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    align-self: center;
+    margin: 4px auto 6px;
+    padding: 4px 14px;
+    background: #f6ecd8;
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 999px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 0.85em;
+    color: var(--lp-ink);
+    text-decoration: none;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+#landing-scroll-hint:hover {
+    opacity: 1;
+    color: var(--lp-bronze);
+}
+
+/* Chevron gravé (bordures pivotées : pas d'asset, encre pure) */
+#landing-scroll-hint::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-top: -4px;
+    border-right: 2px solid var(--lp-bronze);
+    border-bottom: 2px solid var(--lp-bronze);
+    transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    #landing-scroll-hint::after {
+        animation: lp-bob 2s ease-in-out infinite;
+    }
+
+    @keyframes lp-bob {
+        0%, 100% { transform: rotate(45deg) translate(0, 0); }
+        50% { transform: rotate(45deg) translate(3px, 3px); }
+    }
+}
+
+/* Le clic sur le repère glisse jusqu'aux partenaires */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Changelog : chip papier discrète au lieu du bandeau noir monospace,
+ * au-dessus de l'ornement du coin droit. Le Discord a rejoint la
+ * carte de menu (entrée après le wiki). */
+#index-changelog {
     z-index: 1;
 }
 

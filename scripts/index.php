@@ -9,14 +9,20 @@ if(isset($_GET['resetPsw'])){
 
 /* Habillage papier & encre de la maquette graphiste : la bannière
  * cède la place au héros planète + titre Gloock (css/landing.css). */
-echo '<link rel="stylesheet" href="css/landing.css?v=20260710e" />';
+echo '<link rel="stylesheet" href="css/landing.css?v=20260711l" />';
 
 /* Fond filigrané « aootest » hors prod (variante _test du fond
  * composité de la maquette). */
 $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
 if ($paperBg !== '/img/ui/paper/paper.jpg') {
-    echo '<style>body{background-image:url(\'/img/ui/paper/landing-bg_test.jpg\')}</style>';
+    echo '<style>body{background-image:url(\'/img/ui/paper/landing-bg_test.jpg?v=20260711\')}</style>';
 }
+
+/* Premier écran : héros + carte de menu, avec le premier logo
+ * partenaire épinglé en bas (css/landing.css #landing-fold) — il
+ * dépasse du pli, le repère « Partenaires » juste dessous, pour
+ * montrer que la page continue. */
+echo '<div id="landing-fold">';
 
 echo '<a href="index.php" id="landing-hero">'
     . '<img src="img/ui/paper/planet.png" alt="" />'
@@ -147,6 +153,8 @@ echo '
     echo '<a href="forum.php" class="index-button">Forum</a>';
     echo '<div class="menu-sep"></div>';
     echo '<a href="https://age-of-olympia.net/wiki/" class="index-button">Aide Wiki</a>';
+    echo '<div class="menu-sep"></div>';
+    echo '<a href="https://discord.gg/djPRYwEt8E" target="_blank" rel="noopener" class="index-button">Discord</a>';
 
     echo '
     <div class="text">
@@ -162,11 +170,18 @@ echo '
 
 
 
+/* Bas du premier écran : le premier logo partenaire amorce la suite
+ * de la page, le repère « Partenaires » juste dessous — dans le flux,
+ * il défile avec le contenu, aucun recouvrement possible. */
 echo '
 <div id="index-partenaires">
-    <a href="https://ame-jdr.net"><img src="img/ui/partenaires/ame-jdr.net.webp" /></a><br />
+    <a href="https://ame-jdr.net"><img src="img/ui/partenaires/ame-jdr.net.webp" /></a>
 </div>
 ';
+
+echo '<a id="landing-scroll-hint" href="#index-partenaires">Partenaires</a>';
+
+echo '</div>'; /* /#landing-fold */
 
 
 echo '<a href="https://aufonddutrou.fr/" title="Au fond du trou"><img src="img/ui/partenaires/afdt.gif" /></a>';
@@ -178,7 +193,6 @@ echo '<a href="https://www.tourdejeu.net/annu/fichejeu.php?id=14616" title="Tour
 echo '<br />';
 
 echo '<a href="https://www.les12singes.com/84-les-oublies"><img src="img/ui/partenaires/les_oublies.jpeg" /></a><br />';
-echo '<a href="https://discord.gg/Zhy9WxPHta"><img src="img/ui/partenaires/freedom-chill.png" /></a><br />';
 
 echo '<div style="font-size: 75%; color: #333;"><a href="https://votezpourmoi.com/">Votez Pour Moi</a>, Jeu de simulation de campagne électorale! (<a href="https://votezpourmoi.com/jeu-politique/but-jeu.php">en savoir plus</a>)</div>';
 
@@ -195,7 +209,8 @@ if($annonceJson){
     echo '<div id="index-changelog"><a class="install-app" href="https://age-of-olympia.net/wiki/doku.php?id=dev:changelog"><img src="img/ui/partenaires/code.gif" /> '. $annonceJson->text .' ('. $jour .' '. date('d/m/Y', $annonceJson->time) .')</a></div>';
 }
 
-echo '<div id="index-discord"><a class="install-app" style="background: #5865f2; color: white;" href="https://discord.gg/djPRYwEt8E"><img src="img/ui/partenaires/discord.webp" /> Discord </a></div>';
+/* Le Discord du jeu vit désormais dans la carte de menu (après le
+ * wiki) — plus de chip flottante en coin d'écran. */
 
 
 echo '<div class="preload"><img src="img/ui/bg/button2.png" /></div>';
