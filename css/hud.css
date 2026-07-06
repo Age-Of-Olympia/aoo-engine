@@ -922,6 +922,13 @@ body:has(#hud) #view-landing-wrapper {
     font-style: italic;
 }
 
+/* Rappel de la cible en tête du volet Actions (js/hud.js) : utile en
+ * mobile où le volet occupe l'écran seul ; en desktop la sélection
+ * est visible juste à côté, le rappel serait du bruit. */
+.hud-actions-target {
+    display: none;
+}
+
 /* Titre gravé du panneau, même inscription que « Sur la case » */
 #hud-actions:not(:empty)::before {
     content: "Actions";
@@ -1515,17 +1522,57 @@ body:has(#hud) #debug-flags {
         width: 100%;
     }
 
-    #hud-rail #menu > a > button {
+    /* Cible rappelée en tête du volet Actions du carrousel */
+    .hud-actions-target {
+        display: block;
+        text-align: center;
+        font-family: var(--hud-display);
+        font-size: 15px;
+        margin: 0 0 8px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid var(--hud-line-soft);
+    }
+
+    /* Toutes les entrées sur la même ligne verticale : icône (peinte
+     * ou glyphe) dans la bande 8-36px, libellé à 44px — avant, les
+     * paddings variaient selon la spécificité des sélecteurs d'icônes
+     * peintes, d'où des libellés tantôt à gauche tantôt « centrés »
+     * (retour testeur). */
+    #hud-rail #menu > a > button,
+    #hud-rail #menu > button {
         width: 100%;
         height: 44px;
         font-size: 100%;
         text-align: left;
-        padding: 0 10px;
+        padding: 0 10px 0 44px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
     }
 
     #hud-rail #menu .ra {
-        line-height: 44px;
-        margin-right: 8px;
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        margin: 0;
+        line-height: 1;
+        text-align: center;
+    }
+
+    /* Le glyphe invisible des entrées peintes garde sa largeur en
+     * flex : libellés décalés d'un cran par rapport aux autres
+     * (retour testeur « certains titres centrés »). Dans le tiroir il
+     * sort du flux — l'icône peinte (::before, absolue) suffit. */
+    #hud-rail #show-damier button .ra,
+    #hud-rail #show-caracs button .ra,
+    #hud-rail #show-inventory button .ra,
+    #hud-rail #menu > a[href^="logs.php"] > button .ra,
+    #hud-rail #menu > a[href="map.php"] > button .ra,
+    #hud-rail #missive-btn .ra,
+    #hud-rail #menu > a[href="account.php"] > button .ra {
+        display: none;
     }
 
     #hud-rail .hud-rail-sep {
@@ -1724,6 +1771,9 @@ body:has(#hud) #debug-flags {
     }
 
     /* --- Panneau latéral : sheet ouverte par la bulle --- */
+    /* Feuille OPAQUE : en desktop le voile translucide pose sur le
+     * papier de la page ; en mobile il pose sur le damier, illisible
+     * (retour testeur). Même papier que la page, cadré à la feuille. */
     #hud-side {
         position: fixed;
         left: 0;
@@ -1734,6 +1784,14 @@ body:has(#hud) #debug-flags {
         border-radius: 12px 12px 0 0;
         transform: translateY(105%);
         transition: transform 0.25s ease;
+        background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
+        box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Tiroir de navigation : même exigence d'opacité que la sheet */
+    #hud-rail {
+        background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
+        box-shadow: 8px 0 28px rgba(0, 0, 0, 0.35);
     }
 
     #hud.hud--chat-open #hud-side {
