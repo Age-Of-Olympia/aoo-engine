@@ -74,7 +74,7 @@ body::before {
 
 #landing-hero img {
     display: block;
-    width: min(52vw, 38vh, 320px);
+    width: min(52vw, 30vh, 300px);
     filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.35));
 }
 
@@ -83,7 +83,7 @@ body::before {
     margin: 0;
     font-family: 'Gloock', goudy, serif;
     font-weight: 400;
-    font-size: clamp(1.7rem, min(5.6vw, 5vh), 3.4rem);
+    font-size: clamp(1.6rem, min(5.6vw, 4.4vh), 3.2rem);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #fff;
@@ -100,8 +100,8 @@ body::before {
     border: 1px solid var(--lp-line-soft);
     border-radius: 10px;
     width: 250px;
-    padding: 10px 22px;
-    margin: 2.5vh auto 5vh;
+    padding: 8px 20px;
+    margin: 2vh auto 4vh;
     animation: none;
 }
 
@@ -115,11 +115,11 @@ body::before {
 #index-menu .index-button {
     background: #f7e7c9;
     width: 100%;
-    height: clamp(36px, 5.2vh, 44px);
-    margin: 5px 0;
+    height: clamp(34px, 4.6vh, 42px);
+    margin: 4px 0;
     color: var(--lp-ink);
     font-family: 'Gloock', goudy, serif;
-    font-size: clamp(1.05em, 2.6vh, 1.3em);
+    font-size: clamp(1em, 2.3vh, 1.25em);
     letter-spacing: 0.03em;
     border: 1px solid var(--lp-bronze);
     border-radius: 6px;
