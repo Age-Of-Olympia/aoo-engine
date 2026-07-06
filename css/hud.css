@@ -1205,6 +1205,26 @@ body:has(#hud) #load-caracs .progress-bar .bar {
     background: linear-gradient(to right, var(--hud-bronze-bright), var(--hud-bronze));
 }
 
+/* Même gabarit pour tous les panneaux : les largeurs fixes héritées
+ * (inventaire 350px, table de craft 600px, tables de caracs au plus
+ * juste) laissaient chaque panneau composer sa propre colonne — tout
+ * s'étire désormais sur la largeur du panneau. */
+.hud-panel-content .inventory-container,
+.hud-panel-content .item-list,
+.hud-panel-content .item-list table,
+.hud-panel-content #craft-wrapper table,
+.hud-panel-content > table,
+.hud-panel-content table.marbre {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+body:has(#hud) #load-caracs table {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 /* Ascenseurs : le track noir hérité de la console jure sur papier */
 body:has(#hud) ::-webkit-scrollbar {
     width: 8px;
