@@ -743,14 +743,14 @@ class Player implements ActorInterface {
         $this->move_followers($coordsId);
 
 
+        /* getCoords() est mémoïsé : $this->coords garde volontairement
+         * les ANCIENNES coordonnées jusqu'à la fin de go() (le
+         * rafraîchissement SVG de l'ancien plan en dépend), puis go()
+         * pose lui-même les nouvelles ($this->coords = $goCoords). */
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
 
         $db = new Db();
         $db->exe($sql, array($coordsId, $this->id));
-
-        /* Invalide le memo de getCoords() : la prochaine lecture
-         * repart de la base. */
-        unset($this->coords);
 
 
         // territory change
