@@ -1065,6 +1065,22 @@
             closePanelAt($(this).closest('.hud-panel').data('slot'));
         });
 
+        /* Bandeau de sélection : les liens panneau-compatibles (fiche
+         * de la cible…) ouvrent leur panneau au lieu de quitter la
+         * page — quitter le damier pour une fiche puis revenir perdait
+         * l'état du jeu (retour testeur). */
+        $('#ajax-data').on('click', 'a[href]', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            var href = $(this).attr('href');
+            var fragment = panelUrl(href);
+            if (fragment) {
+                e.preventDefault();
+                togglePanel(fragment, panelTitle(href));
+            }
+        });
+
         $(document).on('keydown', function (e) {
             if (e.key === 'Escape' && openPanels.length) {
                 closePanelAt(openPanels.length - 1);
