@@ -214,6 +214,50 @@
     }
 
     /*
+     * Résultat d'action en modale par-dessus le damier (appelée par
+     * js/observe.js à la place de l'écriture dans .card-text quand le
+     * HUD est actif) : la fiche de la cible reste intacte — le résultat
+     * est un évènement, pas une description (retour testeur). Feuille
+     * papier, fermeture par ×, clic sur le fond ou Échap.
+     */
+    window.hudShowActionResult = function (html) {
+        /* Tutoriel : ses étapes observent la carte héritée — le
+         * résultat y reste écrit comme avant, pas de modale. */
+        if (sessionStorage.getItem('tutorial_active') === 'true') {
+            $('.card-text').html('').addClass('action-text')
+                .append($('<div></div>').html(html));
+            return;
+        }
+
+        var $modal = $('#hud-action-modal');
+
+        if (!$modal.length) {
+            $modal = $('<div id="hud-action-modal" role="dialog" aria-label="Résultat de l\'action">'
+                + '<div class="hud-action-modal-sheet">'
+                + '<button class="hud-action-modal-close" title="Fermer" aria-label="Fermer">×</button>'
+                + '<div class="hud-action-modal-body"></div>'
+                + '</div></div>').appendTo('#hud');
+
+            $modal.on('click', function (e) {
+                if (e.target === this) {
+                    $modal.hide();
+                }
+            });
+            $modal.find('.hud-action-modal-close').on('click', function () {
+                $modal.hide();
+            });
+            $(document).on('keydown.hudActionModal', function (e) {
+                if (e.key === 'Escape' && $modal.is(':visible')) {
+                    $modal.hide();
+                }
+            });
+        }
+
+        $modal.find('.hud-action-modal-body').html(html);
+        $modal.show();
+    };
+
+    /*
      * Rafraîchit la vue après un déplacement SANS recharger la page
      * (appelé par js/view.js à la place du reload quand le HUD est
      * actif) : re-rend la page côté serveur et ne remplace que les
