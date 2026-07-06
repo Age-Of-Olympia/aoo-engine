@@ -1213,6 +1213,23 @@
         }
 
         initMobile();
+
+        /* La minimap n'a sa taille définitive qu'une fois déplacée
+         * dans le carrousel (mobile, initMobile) : la première mesure
+         * de fitMinimap est faite trop tôt et peut valoir zéro — or
+         * les images du volet sont absolues dans leur wrapper, sans
+         * mesure correcte il reste en 0×0 (carte invisible). Re-mesure
+         * après le déplacement, puis à chaque changement de taille du
+         * bloc (barre d'adresse mobile, rotation, resize). */
+        fitMinimap();
+        if (window.ResizeObserver) {
+            var minimapBox = document.getElementById('hud-minimap');
+            if (minimapBox) {
+                new ResizeObserver(function () {
+                    fitMinimap();
+                }).observe(minimapBox);
+            }
+        }
     });
 
 })();
