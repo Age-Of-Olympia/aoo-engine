@@ -9,7 +9,7 @@ if(isset($_GET['resetPsw'])){
 
 /* Habillage papier & encre de la maquette graphiste : la bannière
  * cède la place au héros planète + titre Gloock (css/landing.css). */
-echo '<link rel="stylesheet" href="css/landing.css?v=20260709b" />';
+echo '<link rel="stylesheet" href="css/landing.css?v=20260709c" />';
 
 /* Papier filigrané « aootest » hors prod : on réécrit la liste des
  * trois calques (cité, jardin, papier) pour ne changer que le papier. */
@@ -23,11 +23,13 @@ echo '<a href="index.php" id="landing-hero">'
     . '<h1>Age of Olympia</h1>'
     . '</a>';
 
+/* Devise sous la planète (composition de la maquette) — plus de
+ * doublon « Age of Olympia » dans la carte de menu. */
+echo '<p id="landing-tagline">JDR gratuit au tour-par-tour.</p>';
+
 echo '
 <div id="index-menu" class="box-shadow scrolling-bg">
     ';
-
-    echo '<div class="text"><b>Age of Olympia,<br />JDR gratuit au tour-par-tour.</b></div>';
 
     echo '<a href="index.php" action="login" id="index-button-play", class="index-button">Jouer</a>';
 
