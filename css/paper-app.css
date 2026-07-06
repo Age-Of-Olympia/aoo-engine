@@ -1,0 +1,185 @@
+/* ============================================================
+ * Thème papier & encre des PAGES AUTONOMES (forum, carte monde,
+ * classements, marchand, école de guerre, fiches…).
+ *
+ * Chargé par Classes/Ui.php UNIQUEMENT quand le joueur a l'option
+ * newHud : les joueurs de l'habillage hérité ne voient rien changer.
+ * Pas de scope : le chargement conditionnel EST le scope.
+ * Mêmes matériaux que css/hud.css (maquette olympia-tests.psd).
+ * ============================================================ */
+
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    --pa-ink: #1d1c1b;
+    --pa-ink-soft: rgba(29, 28, 27, 0.6);
+    --pa-bronze: #8d6839;
+    --pa-line: rgba(93, 74, 42, 0.55);
+    --pa-line-soft: rgba(93, 74, 42, 0.3);
+    --pa-parchment: #f7e7c9;
+    --pa-veil: rgba(252, 248, 238, 0.55);
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / cover fixed;
+    color: var(--pa-ink);
+}
+
+/* Ornements de ferronnerie aux coins hauts — décor pur */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    width: min(200px, 20vw);
+    height: 176px;
+    z-index: 0;
+    background: url('../img/ui/paper/ornament.png') top right / contain no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+body::after {
+    right: 0;
+}
+
+body::before {
+    left: 0;
+    transform: scaleX(-1);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+}
+
+/* Fonds hérités : marbre et rayures grises → voiles crème */
+.marbre,
+.tr-cat {
+    background: var(--pa-veil);
+}
+
+.tr-topic1,
+.tr-topic2 {
+    background: rgba(252, 248, 238, 0.35);
+}
+
+.tr-topic2 {
+    background: rgba(240, 230, 210, 0.45);
+}
+
+.section {
+    background: var(--pa-veil);
+}
+
+/* Filets de tables : bronze doux au lieu des gris */
+.marbre table {
+    border-color: var(--pa-line-soft);
+}
+
+.marbre td,
+.marbre th {
+    border-color: var(--pa-line-soft);
+}
+
+/* Boutons, champs et selects : chips parchemin */
+button,
+input[type="button"],
+select {
+    background: var(--pa-parchment);
+    border: 1px solid var(--pa-bronze);
+    border-radius: 4px;
+    color: var(--pa-ink);
+    box-shadow: none;
+}
+
+button:hover:not(:disabled),
+input[type="button"]:hover,
+select:hover {
+    background: #fdf6e5;
+}
+
+button:disabled {
+    opacity: 0.45;
+    border-color: var(--pa-line-soft);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea {
+    background: var(--pa-parchment);
+    border: 1px solid var(--pa-line-soft);
+    border-radius: 4px;
+    color: var(--pa-ink);
+}
+
+/* Citations et code : parchemin plutôt que gris */
+blockquote {
+    background: var(--pa-veil);
+    border-left: 4px solid var(--pa-bronze);
+}
+
+code {
+    background: var(--pa-veil);
+}
+
+/* Ascenseurs : plus de track noir de console */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--pa-line);
+    border-radius: 4px;
+}
+
+/* Barres de progression : bronze */
+.progress-bar .bar {
+    background: linear-gradient(to right, #b98a1c, var(--pa-bronze));
+}
+
+/* Onglet « Menu » : la languette sombre héritée devient l'onglet
+ * papier de la maquette. L'image grise disparaît, le libellé Gloock
+ * la remplace. */
+#top-menu-button {
+    height: auto;
+    margin: 0 0 4px;
+    padding: 3px 28px 6px;
+    background: var(--pa-veil);
+    border: 1px solid var(--pa-line-soft);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    font-family: 'Gloock', goudy, serif;
+    font-size: 16px;
+    color: var(--pa-ink);
+}
+
+#top-menu-button img {
+    display: none;
+}
+
+#top-menu-button::after {
+    content: "Menu";
+}

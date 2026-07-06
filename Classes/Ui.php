@@ -49,6 +49,20 @@ class Ui{
             echo '<style>body{background-image:url(\'' . $appBg . '\')}</style>';
         }
 
+        /* Thème papier & encre des pages autonomes : chargé UNIQUEMENT
+         * quand le joueur (réel, pas le personnage de tutoriel) a
+         * l'option newHud — l'habillage hérité ne change pas d'un
+         * pixel pour les autres. have_option est mémoïsé, le test est
+         * gratuit. Filigrane « aootest » hors prod, comme le HUD. */
+        if (self::usesPaperTheme()) {
+            echo '<link href="css/paper-app.css?v=20260709b" rel="stylesheet">';
+
+            $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
+            if ($paperBg !== '/img/ui/paper/paper.jpg') {
+                echo '<style>body{background-image:url(\'' . $paperBg . '\')}</style>';
+            }
+        }
+
         if($loadJQueryUi){
             echo ' <script src="js/jquery-ui.min.js"></script>
                 <link rel="stylesheet" href="css/jquery-ui.min.css" />
@@ -113,6 +127,31 @@ class Ui{
 
 
     // STATIC
+
+    /**
+     * Le joueur courant voit-il le thème papier (option newHud) ?
+     *
+     * Lue sur le joueur RÉEL — pendant le tutoriel, le personnage
+     * temporaire n'a pas d'options mais l'interface choisie par le
+     * joueur doit rester la même (même logique qu'index.php).
+     */
+    public static function usesPaperTheme(): bool
+    {
+        /* Surface publique (inscription, connexion, reset) : papier
+         * pour tout le monde — l'accueil l'est déjà. */
+        if (empty($_SESSION['playerId'])) {
+            return true;
+        }
+
+        try {
+            $mainPlayerId = \App\Tutorial\TutorialHelper::getMainPlayerId();
+            $optionPlayerId = $mainPlayerId > 0 ? $mainPlayerId : (int) $_SESSION['playerId'];
+
+            return (bool) \App\Factory\PlayerFactory::legacy($optionPlayerId)->have_option('newHud');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 
     public static function get_card($data) : string{
 
