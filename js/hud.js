@@ -126,6 +126,52 @@
     var DAMIER_ZOOM_MAX = 2.5;
     var DAMIER_ZOOM_STEP = 1.25;
 
+    /* Réglages du damier conservés par onglet (sessionStorage) : le
+     * déplacement recharge la page (view.js), le joueur doit
+     * retrouver son niveau de zoom et, hors déplacement, son
+     * panoramique. Après un déplacement le panoramique est remis au
+     * centre : la nouvelle case du joueur EST l'endroit cliqué. */
+    var DAMIER_ZOOM_KEY = 'hudDamierZoom';
+    var DAMIER_PAN_KEY = 'hudDamierPan';
+
+    function restorePan() {
+        var el = document.querySelector('#hud #game-map');
+        var saved = null;
+        try {
+            saved = JSON.parse(sessionStorage.getItem(DAMIER_PAN_KEY));
+        } catch (e) {
+            saved = null;
+        }
+        if (!el || !saved) {
+            return;
+        }
+        el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2 + (saved.dx || 0);
+        el.scrollTop = (el.scrollHeight - el.clientHeight) / 2 + (saved.dy || 0);
+    }
+
+    function initDamierMemory() {
+        /* Panoramique : delta par rapport au centre, sauvé au fil du
+         * défilement. Un recentrage (zoom, resize) sauve un delta nul,
+         * cohérent avec ce que le joueur voit. */
+        var panTimer = null;
+        $('#hud #game-map').on('scroll', function () {
+            var el = this;
+            clearTimeout(panTimer);
+            panTimer = setTimeout(function () {
+                sessionStorage.setItem(DAMIER_PAN_KEY, JSON.stringify({
+                    dx: Math.round(el.scrollLeft - (el.scrollWidth - el.clientWidth) / 2),
+                    dy: Math.round(el.scrollTop - (el.scrollHeight - el.clientHeight) / 2)
+                }));
+            }, 150);
+        });
+
+        /* Déplacement (#go-rect, recréé à chaque panneau observe.php) :
+         * après le rechargement, recentré sur la nouvelle position. */
+        $(document).on('click', '#go-rect', function () {
+            sessionStorage.removeItem(DAMIER_PAN_KEY);
+        });
+    }
+
     function fitDamier() {
         var svg = document.getElementById('svg-view');
         var map = document.getElementById('game-map');
@@ -161,12 +207,74 @@
 
     function setDamierZoom(zoom) {
         damierZoom = Math.min(DAMIER_ZOOM_MAX, Math.max(1, zoom));
+        sessionStorage.setItem(DAMIER_ZOOM_KEY, String(damierZoom));
         fitDamier();
         centerMap();
         redrawBlockedMarkers();
         $('#hud-zoom-out').prop('disabled', damierZoom <= 1);
         $('#hud-zoom-in').prop('disabled', damierZoom >= DAMIER_ZOOM_MAX);
     }
+
+    /*
+     * Rafraîchit la vue après un déplacement SANS recharger la page
+     * (appelé par js/view.js à la place du reload quand le HUD est
+     * actif) : re-rend la page côté serveur et ne remplace que les
+     * régions qui changent — damier, position, minimap, pilules de
+     * caracs. Zoom conservé, défilement recentré sur la nouvelle case.
+     */
+    window.hudRefreshAfterMove = function () {
+        $.ajax({ url: document.location.href, cache: false })
+            .done(function (html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var freshMap = doc.getElementById('game-map');
+                var current = document.getElementById('game-map');
+                if (!freshMap || !current) {
+                    document.location.reload();
+                    return;
+                }
+
+                current.innerHTML = freshMap.innerHTML;
+                current.setAttribute('data-map-hash', freshMap.getAttribute('data-map-hash') || '');
+
+                ['hud-location', 'hud-minimap'].forEach(function (id) {
+                    var fresh = doc.getElementById(id);
+                    var el = document.getElementById(id);
+                    if (fresh && el) {
+                        el.innerHTML = fresh.innerHTML;
+                    }
+                });
+
+                /* Pilules du bandeau haut (PA, MVT…) : remplacées une à
+                 * une, le reste du bandeau garde ses gestionnaires. */
+                $('.hud-pill').each(function () {
+                    var fresh = doc.getElementById(this.id);
+                    if (fresh) {
+                        this.innerHTML = fresh.innerHTML;
+                    }
+                });
+
+                /* Sélection et actions de l'ancienne case : obsolètes. */
+                $('#ajax-data').empty();
+                $('#hud-actions').empty();
+                window.clickedCases = [];
+
+                /* Les gestionnaires du SVG sont morts avec l'ancien
+                 * balisage : re-liaison (js/view.js). */
+                if (typeof window.bindMapView === 'function') {
+                    window.bindMapView();
+                }
+
+                fitMinimap();
+                fitDamier();
+                buildMapRulers();
+                centerMap();
+                redrawBlockedMarkers();
+                renderIdleSelection();
+            })
+            .fail(function () {
+                document.location.reload();
+            });
+    };
 
     /*
      * Calques d'affichage de la carte (popover boussole, façon applis
@@ -1055,6 +1163,15 @@
         fitDamier();
         buildMapRulers();
         redrawBlockedMarkers();
+
+        /* Réglages mémorisés du damier : zoom retrouvé après tout
+         * rechargement, panoramique retrouvé hors déplacement. */
+        initDamierMemory();
+        var savedZoom = parseFloat(sessionStorage.getItem(DAMIER_ZOOM_KEY));
+        if (savedZoom > 1) {
+            setDamierZoom(savedZoom);
+        }
+        restorePan();
         $(window).on('resize', function () {
             fitMinimap();
             centerMap();
@@ -1067,8 +1184,10 @@
          * taille, les règles et les ⛔ se recalent après chaque vague
          * de mutations. Les mutations qui ne concernent QUE nos ⛔
          * sont ignorées — sans ce filtre, le redraw des marqueurs
-         * redéclencherait l'observer en boucle (150 ms). */
-        var viewEl = document.getElementById('view');
+         * redéclencherait l'observer en boucle (150 ms). Observé sur
+         * #game-map (pérenne) : hudRefreshAfterMove remplace tout le
+         * contenu, dont le nœud #view lui-même. */
+        var viewEl = document.getElementById('game-map');
         if (viewEl) {
             var rulerTimer = null;
             new MutationObserver(function (muts) {
