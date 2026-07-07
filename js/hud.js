@@ -1003,7 +1003,10 @@
                 }
 
                 $('#load-caracs').hide().empty();
-                togglePanel('load_caracs.php', 'Caractéristiques');
+                /* Directement la page d'amélioration (dépense d'XP) :
+                 * l'ancien volet de lecture seule faisait doublon avec
+                 * les pilules du bandeau haut (retour testeur). */
+                togglePanel('load_upgrades.php', 'Caractéristiques');
             });
         }
 
