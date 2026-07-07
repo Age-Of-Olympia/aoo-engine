@@ -28,6 +28,19 @@ if (isset($_GET['spells'])) {
     exit();
 }
 
+/* Progression d'XP au-dessus de la table d'amélioration : la barre du
+ * volet de caracs hérité vit désormais ici (l'entrée Caractéristiques
+ * du rail ouvre directement ce panneau), avec le portefeuille de Pi
+ * que les améliorations dépensent. */
+$pct = Str::calculate_xp_percentage($player->data->xp, $player->data->rank);
+echo '<div class="hud-xp-progress">'
+    . '<div class="progress-bar">'
+    . '<div class="bar" style="width: ' . $pct . '%;">&nbsp;</div>'
+    . '<div class="text">Xp : ' . $player->data->xp . ' / ' . Str::get_next_xp($player->data->rank) . '</div>'
+    . '</div>'
+    . '<div class="hud-xp-pi">Rang ' . $player->data->rank . ' · Pi : ' . $player->data->pi . '</div>'
+    . '</div>';
+
 UpgradesView::render($player);
 
 echo Str::minify(ob_get_clean());
