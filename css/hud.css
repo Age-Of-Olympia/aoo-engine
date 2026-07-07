@@ -257,6 +257,18 @@ body:has(#hud) {
     line-height: 48px;
 }
 
+/* Les deux glyphes encore sans objet peint prennent des teintes de
+ * leur métier : fer bruni pour la forge, or pour la banque. */
+#hud-rail #show-craft .ra {
+    color: #7a4a21;
+    text-shadow: 0 1px 0 rgba(255, 214, 130, 0.55);
+}
+
+#hud-rail #show-bank .ra {
+    color: #a8790f;
+    text-shadow: 0 1px 0 rgba(255, 230, 150, 0.6);
+}
+
 /* Pastille missives : l'hôte doit être positionné */
 #hud-rail #missive-btn {
     position: relative;
@@ -272,7 +284,7 @@ body:has(#hud) {
 #hud-rail #show-damier button::before,
 #hud-rail #show-caracs button::before,
 #hud-rail #show-inventory button::before,
-#hud-rail #menu > a[href^="logs.php"] > button::before,
+#hud-rail #show-spells button::before,
 #hud-rail #menu > a[href="map.php"] > button::before,
 #hud-rail #missive-btn::before,
 #hud-rail #menu > a[href="account.php"] > button::before {
@@ -291,7 +303,7 @@ body:has(#hud) {
 
 #hud-rail #show-caracs button::before { background-image: url('../img/ui/paper/icon-caracs.png'); }
 #hud-rail #show-inventory button::before { background-image: url('../img/ui/paper/icon-inventaire.png'); }
-#hud-rail #menu > a[href^="logs.php"] > button::before { background-image: url('../img/ui/paper/icon-evenements.png'); }
+#hud-rail #show-spells button::before { background-image: url('../img/ui/paper/icon-evenements.png'); }
 /* La Carte reçoit le dessin de carte (ex-icône « Retour au damier ») ;
  * la rose des vents (icon-carte.png) reste disponible. */
 #hud-rail #menu > a[href="map.php"] > button::before { background-image: url('../img/ui/paper/icon-vue.png'); }
@@ -301,7 +313,7 @@ body:has(#hud) {
 #hud-rail #show-damier button .ra,
 #hud-rail #show-caracs button .ra,
 #hud-rail #show-inventory button .ra,
-#hud-rail #menu > a[href^="logs.php"] > button .ra,
+#hud-rail #show-spells button .ra,
 #hud-rail #menu > a[href="map.php"] > button .ra,
 #hud-rail #missive-btn .ra,
 #hud-rail #menu > a[href="account.php"] > button .ra {
@@ -444,7 +456,7 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     align-self: end;
     position: relative;
     z-index: 3;
-    margin: 0 22px 98px 0;
+    margin: 0 22px 132px 0;
 }
 
 #hud-layers-btn {
@@ -1667,7 +1679,7 @@ body:has(#hud) #debug-flags {
     #hud-rail #show-damier button .ra,
     #hud-rail #show-caracs button .ra,
     #hud-rail #show-inventory button .ra,
-    #hud-rail #menu > a[href^="logs.php"] > button .ra,
+    #hud-rail #show-spells button .ra,
     #hud-rail #menu > a[href="map.php"] > button .ra,
     #hud-rail #missive-btn .ra,
     #hud-rail #menu > a[href="account.php"] > button .ra {
@@ -1683,7 +1695,7 @@ body:has(#hud) #debug-flags {
     #hud-rail #show-damier button::before,
     #hud-rail #show-caracs button::before,
     #hud-rail #show-inventory button::before,
-    #hud-rail #menu > a[href^="logs.php"] > button::before,
+    #hud-rail #show-spells button::before,
     #hud-rail #menu > a[href="map.php"] > button::before,
     #hud-rail #missive-btn::before,
     #hud-rail #menu > a[href="account.php"] > button::before {
@@ -1697,7 +1709,7 @@ body:has(#hud) #debug-flags {
     #hud-rail #show-damier button,
     #hud-rail #show-caracs button,
     #hud-rail #show-inventory button,
-    #hud-rail #menu > a[href^="logs.php"] > button,
+    #hud-rail #show-spells button,
     #hud-rail #menu > a[href="map.php"] > button,
     #hud-rail #missive-btn,
     #hud-rail #menu > a[href="account.php"] > button {
@@ -1976,4 +1988,180 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
     right: -6px;
     font-size: 11px;
     line-height: 1.4;
+}
+
+/* ============================================================
+ * Mode théâtre — le plateau seul en scène (desktop)
+ * ============================================================
+ * Une classe sur #hud : rail, minimap et bandeaux disparaissent. La
+ * scène devient trois colonnes SYMÉTRIQUES : 1fr | plateau | 1fr —
+ * la colonne centrale est dimensionnée par le plateau (carré, calé
+ * sur la hauteur), les coulisses vivent dans les colonnes latérales.
+ * Le damier ne bouge JAMAIS : les colonnes existent qu'elles soient
+ * vides ou pleines. À gauche, sélection puis actions (même largeur,
+ * empilées) ; à droite, les discussions dans tout l'espace restant —
+ * la grille rend le chevauchement impossible. */
+
+@media (min-width: 1024px) {
+
+    #hud.hud--theater {
+        grid-template-columns: 64px minmax(0, 1fr) auto minmax(0, 1fr);
+        grid-template-rows: 64px minmax(0, 1fr) auto;
+    }
+
+    #hud.hud--theater #hud-topbar {
+        grid-area: 1 / 1 / 2 / 5;
+    }
+
+    /* Le rail de navigation reste en scène, à sa place habituelle */
+    #hud.hud--theater #hud-rail {
+        grid-area: 2 / 1 / 4 / 2;
+    }
+
+    #hud.hud--theater #hud-side,
+    #hud.hud--theater #hud-minimap {
+        display: none;
+    }
+
+    #hud.hud--theater #game-map,
+    #hud.hud--theater::before,
+    #hud.hud--theater::after,
+    #hud.hud--theater #hud-zoom,
+    #hud.hud--theater #hud-layers {
+        grid-area: 2 / 3 / 4 / 4;
+    }
+
+    /* Même matière pour les trois coulisses : un seul meuble. */
+    #hud.hud--theater #ajax-data,
+    #hud.hud--theater.hud--theater-chat #hud-side,
+    #hud.hud--theater #hud-actions {
+        z-index: 5;
+        background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
+        border: 1px solid var(--hud-line);
+        border-radius: 8px;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
+        box-sizing: border-box;
+    }
+
+    /* Coulisse gauche, haut : la sélection (personnage / contenu de
+     * case), seulement quand une vraie sélection existe. */
+    #hud.hud--theater #ajax-data {
+        grid-area: 2 / 2 / 3 / 3;
+        justify-self: stretch;
+        /* Toute la hauteur disponible jusqu'aux actions : la feuille
+         * occupe sa ligne 1fr, le contenu s'aligne en haut. */
+        align-self: stretch;
+        display: none;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px;
+    }
+
+    #hud.hud--theater #ajax-data:has(.hud-sel) {
+        display: block;
+    }
+
+    /* Dans cette coulisse étroite, la sélection s'empile : portrait,
+     * identité, contenu de la case. */
+    #hud.hud--theater #ajax-data .hud-sel {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: auto;
+    }
+
+    #hud.hud--theater #ajax-data .hud-sel-left {
+        width: 150px;
+        align-self: center;
+    }
+
+    /* Coulisse gauche, bas : les actions, même largeur, juste sous la
+     * sélection (la ligne AUTO de la grille les emboîte). */
+    #hud.hud--theater #hud-actions {
+        grid-area: 3 / 2 / 4 / 3;
+        justify-self: stretch;
+        align-self: end;
+        display: none;
+        max-height: 32vh;
+        overflow: auto;
+        padding: 8px;
+    }
+
+    #hud.hud--theater #hud-actions:not(:empty) {
+        display: block;
+    }
+
+    /* Coulisse droite : les discussions occupent TOUT l'espace
+     * restant — jamais par-dessus le plateau. */
+    #hud.hud--theater.hud--theater-chat #hud-side {
+        display: flex;
+        grid-area: 2 / 4 / 4 / 5;
+        justify-self: stretch;
+        align-self: stretch;
+        z-index: 4;
+        min-height: 0;
+    }
+
+    /* Poignée du volet discussions : dans la pile de médaillons du
+     * plateau, avec le théâtre et le zoom. */
+    #hud.hud--theater #hud-theater-chat-btn {
+        display: block;
+    }
+
+    /* Le nom du personnage coiffe le portrait dans la coulisse :
+     * .hud-sel-main éclate (display: contents), ses enfants
+     * deviennent des éléments de la pile et le nom remonte en tête. */
+    #hud.hud--theater #ajax-data .hud-sel-main {
+        display: contents;
+    }
+
+    #hud.hud--theater #ajax-data .hud-sel-main .card-name {
+        order: -1;
+        text-align: center;
+        margin: 0;
+    }
+
+    /* La pile de médaillons gagne la poignée discussions : la
+     * boussole monte d'un cran. */
+    #hud.hud--theater #hud-layers {
+        margin-bottom: 166px;
+    }
+}
+
+/* Bouton théâtre : même matière que les médaillons de zoom */
+#hud-theater-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    color: var(--hud-ink);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#hud-theater-btn:hover {
+    background: #fdf6e5;
+}
+
+/* Poignée discussions du mode théâtre : même matière que les
+ * médaillons, masquée hors théâtre. */
+#hud-theater-chat-btn {
+    display: none;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    color: var(--hud-bronze);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#hud-theater-chat-btn:hover {
+    background: #fdf6e5;
 }

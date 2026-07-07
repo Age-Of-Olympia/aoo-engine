@@ -185,8 +185,13 @@
         }
 
         /* Toute la hauteur du cadre (−2px de garde d'arrondi), la
-         * largeur suit le ratio carré du viewBox. */
-        var side = Math.max(120, Math.min(map.clientWidth, map.clientHeight) - 2) * damierZoom;
+         * largeur suit le ratio carré du viewBox. En mode théâtre la
+         * colonne du plateau est AUTO (dimensionnée par son contenu) :
+         * la hauteur de scène est la seule référence stable. */
+        var base = $('#hud').hasClass('hud--theater')
+            ? map.clientHeight
+            : Math.min(map.clientWidth, map.clientHeight);
+        var side = Math.max(120, base - 2) * damierZoom;
         svg.style.width = side + 'px';
         svg.style.height = side + 'px';
         svg.style.maxWidth = 'none';
@@ -298,6 +303,7 @@
                 /* Sélection et actions de l'ancienne case : obsolètes. */
                 $('#ajax-data').empty();
                 $('#hud-actions').empty();
+                sessionStorage.removeItem('hudSelCoords');
                 window.clickedCases = [];
 
                 /* Les gestionnaires du SVG sont morts avec l'ancien
@@ -365,6 +371,7 @@
 
     function initDamierZoom() {
         $('<div id="hud-zoom">'
+            + '<button id="hud-theater-btn" title="Mode théâtre : le plateau seul en scène" aria-label="Mode théâtre">⛶</button>'
             + '<button id="hud-zoom-in" title="Zoomer" aria-label="Zoomer">+</button>'
             + '<button id="hud-zoom-out" title="Dézoomer" aria-label="Dézoomer" disabled>-</button>'
             + '</div>').appendTo('#hud');
@@ -375,6 +382,112 @@
         $('#hud-zoom-out').on('click', function () {
             setDamierZoom(damierZoom / DAMIER_ZOOM_STEP);
         });
+    }
+
+    /*
+     * Mode théâtre : le plateau seul en scène — rail, panneau latéral,
+     * minimap et bandeaux masqués (CSS .hud--theater), sélection et
+     * actions en nappes flottantes sur le plateau. Persisté par onglet
+     * pour survivre aux rechargements qui restent (calques…).
+     */
+    function setTheaterMode(on) {
+        $('#hud').toggleClass('hud--theater', on);
+        $('#hud-theater-btn')
+            .attr('title', on
+                ? 'Quitter le mode théâtre'
+                : 'Mode théâtre : le plateau seul en scène');
+        sessionStorage.setItem('hudTheater', on ? '1' : '0');
+
+        /* Le cadre du damier change de taille : tout se recale. */
+        fitDamier();
+        centerMap();
+        buildMapRulers();
+        redrawBlockedMarkers();
+    }
+
+    function initTheaterMode() {
+        $('#hud-theater-btn').on('click', function () {
+            setTheaterMode(!$('#hud').hasClass('hud--theater'));
+        });
+
+        /* Poignée du volet discussions (mdj / évènements) : au théâtre
+         * on regarde aussi ce que les gens disent — ouvrable/fermable,
+         * persisté par onglet comme le mode lui-même. Elle rejoint la
+         * pile de médaillons du plateau, au-dessus du zoom. */
+        $('<button id="hud-theater-chat-btn" title="Discussions" aria-label="Discussions">'
+            + '<span class="ra ra-speech-bubbles"></span></button>').prependTo('#hud-zoom');
+
+        $('#hud-theater-chat-btn').on('click', function () {
+            var on = !$('#hud').hasClass('hud--theater-chat');
+            $('#hud').toggleClass('hud--theater-chat', on);
+            sessionStorage.setItem('hudTheaterChat', on ? '1' : '0');
+        });
+
+        if (sessionStorage.getItem('hudTheaterChat') === '1') {
+            $('#hud').addClass('hud--theater-chat');
+        }
+
+        if (sessionStorage.getItem('hudTheater') === '1') {
+            setTheaterMode(true);
+        }
+
+        /* Clic hors des nappes : la scène se vide — la sélection et
+         * ses actions se re-masquent. Un clic sur une case relance une
+         * observation, la nouvelle sélection remplace simplement
+         * l'ancienne. */
+        $(document).on('click', function (e) {
+            if (!$('#hud').hasClass('hud--theater')) {
+                return;
+            }
+            if (!$('#ajax-data').children('.hud-sel').length) {
+                return;
+            }
+            if (!e.target.isConnected) {
+                return;
+            }
+            if ($(e.target).closest(
+                '#ajax-data, #hud-actions, #hud-zoom, #hud-layers,'
+                + ' #hud-side, #hud-theater-chat-btn, #hud-topbar,'
+                + ' .aoo-dialog-bg, #hud-action-modal, .hud-panel, #hud-rail'
+            ).length) {
+                return;
+            }
+            $('#ajax-data').empty();
+            $('#hud-actions').empty();
+            sessionStorage.removeItem('hudSelCoords');
+            renderIdleSelection();
+        });
+    }
+
+    /*
+     * Sélection persistée par onglet : la case observée est mémorisée
+     * et re-observée après un rechargement — le panneau de sélection
+     * rouvre là où on l'avait laissé.
+     */
+    function initSelectionMemory() {
+        /* Le clic de case ne bulle pas (view.js return false) : la
+         * mémorisation s'accroche à la requête observe.php elle-même. */
+        $(document).ajaxSuccess(function (e, xhr, settings) {
+            if (settings.url === 'observe.php'
+                && typeof settings.data === 'string'
+                && settings.data.indexOf('coords=') === 0) {
+                sessionStorage.setItem('hudSelCoords',
+                    decodeURIComponent(settings.data.slice('coords='.length)));
+            }
+        });
+
+        /* « Fermer » sur la carte : la sélection est volontairement
+         * refermée, ne pas la rouvrir au prochain chargement. */
+        $(document).on('click', '.close-card', function () {
+            sessionStorage.removeItem('hudSelCoords');
+        });
+
+        var saved = sessionStorage.getItem('hudSelCoords');
+        if (saved && !isMobileViewport() && !tutorialActive()) {
+            $.post('observe.php', { coords: saved }, function (data) {
+                $('#ajax-data').html(data);
+            });
+        }
     }
 
     /*
@@ -934,6 +1047,11 @@
          * panneaux. */
         $('#show-damier').remove();
 
+        /* « Évènements » quitte le rail : le flux vit dans l'onglet
+         * Événements du panneau latéral (et logs.php via son bouton
+         * livre) — son icône peinte passe à Sorts & Techniques. */
+        $('#hud-rail a[href^="logs.php"]').remove();
+
         /* Séparateurs de groupes du rail : le personnage (caracs,
          * sorts, possessions) / le monde (évènements, carte,
          * missives) / le compte. Posés après le repositionnement. */
@@ -1295,6 +1413,8 @@
         fitMinimap();
         centerMap();
         initDamierZoom();
+        initTheaterMode();
+        initSelectionMemory();
         initMapLayers();
         fitDamier();
         buildMapRulers();
