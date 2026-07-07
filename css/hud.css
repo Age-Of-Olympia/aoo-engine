@@ -1953,3 +1953,27 @@ body:has(#hud) .aoo-dialog-buttons button {
 body:has(#hud) .aoo-dialog-buttons button:hover {
     background: #fdf6e5;
 }
+
+/* ---------- Badge missives (personnage courant) ----------
+ * main.js le pose sur #missive-btn : les boutons du rail sont en
+ * font-size:0, le badge fixe la sienne — coin haut-droit de l'icône. */
+#hud-rail #missive-btn .bulle {
+    font-size: 11px;
+    line-height: 1.4;
+    left: auto;
+    right: -5px;
+    top: -5px;
+}
+
+/* Écho du badge missives sur le burger mobile (main.js) */
+#hud-burger {
+    position: relative;
+}
+
+#hud-burger #hud-burger-mails {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    font-size: 11px;
+    line-height: 1.4;
+}
