@@ -2091,6 +2091,16 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
         display: block;
     }
 
+    /* Le rappel d'action armée est ancré au bas du bandeau LARGE en
+     * mode normal ; dans la coulisse étroite (boutons sur deux
+     * lignes), il passe dans le flux, sous les boutons — jamais
+     * par-dessus. */
+    #hud.hud--theater #hud-action-hint {
+        position: static;
+        display: block;
+        margin-top: 8px;
+    }
+
     /* Coulisse droite : les discussions occupent TOUT l'espace
      * restant — jamais par-dessus le plateau. */
     #hud.hud--theater.hud--theater-chat #hud-side {
