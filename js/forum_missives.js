@@ -34,24 +34,27 @@ $(document).ready(function() {
 
         var dest = $(this).data('id');
 
-        if (!confirm('Supprimer ce personnage de la conversation?')) {
-            return false;
-        }
+        aooConfirm('Supprimer ce personnage de la conversation?').then(function(ok) {
 
-        $.ajax({
-            type: "POST",
-            url: 'forum.php?topic='+ window.topName,
-            data: {'removeDest': dest},
-            success: function(data) {
-                $dataHtml = $('<div>');
-                $dataHtml.html(data);
-                if($dataHtml.find('#error')[0] != null){
-                    alert($dataHtml.find('#error').text());
-                }
-                else{
-                    document.location.reload();
-                }
+            if (!ok) {
+                return;
             }
+
+            $.ajax({
+                type: "POST",
+                url: 'forum.php?topic='+ window.topName,
+                data: {'removeDest': dest},
+                success: function(data) {
+                    $dataHtml = $('<div>');
+                    $dataHtml.html(data);
+                    if($dataHtml.find('#error')[0] != null){
+                        aooAlert($dataHtml.find('#error').text());
+                    }
+                    else{
+                        document.location.reload();
+                    }
+                }
+            });
         });
     });
 });

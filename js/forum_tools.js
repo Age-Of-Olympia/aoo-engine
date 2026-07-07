@@ -10,12 +10,15 @@ $(document).ready(function() {
 
         if(tag == null){
 
-            if(!confirm('Quitter cette page pour consulter le Wiki?')){
+            var wikiHref = $(this).parent('a').attr('href');
 
-                return false;
-            }
+            aooConfirm('Quitter cette page pour consulter le Wiki?').then(function(ok){
 
-            document.location = $(this).parent('a').attr('href');
+                if(ok){
+
+                    document.location = wikiHref;
+                }
+            });
             return false;
         }
 

@@ -52,7 +52,7 @@ class UploadImageForm
         <head>
             <title>Upload portrait ou avatar</title>
             <link rel="stylesheet" href="/css/modal.css" />
-            <script src="/js/modal.js"></script>
+            <script src="/js/modal.js?v=20260715"></script>
 
         </head>
         <script>

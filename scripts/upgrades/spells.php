@@ -257,7 +257,7 @@ if (!empty($passives)) {
 }
 
 ?>
-<script src="js/forget_spells.js"></script>
+<script src="js/forget_spells.js?v=20260715"></script>
 <?php
 
 echo Str::minify(ob_get_clean());

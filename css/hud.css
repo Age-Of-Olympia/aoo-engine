@@ -1930,3 +1930,26 @@ body:has(#hud) #debug-flags {
         bottom: 2px;
     }
 }
+
+/* ---------- Dialogues mutualisés (js/modal.js) : feuille papier ----------
+ * Le HUD ne charge pas paper-app.css : mêmes matériaux, portée body#hud. */
+body:has(#hud) .aoo-dialog {
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 4px double var(--hud-bronze);
+    border-radius: 8px;
+    color: var(--hud-ink);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+}
+
+body:has(#hud) .aoo-dialog-input,
+body:has(#hud) .aoo-dialog-buttons button {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 6px;
+    color: var(--hud-ink);
+    padding: 6px 12px;
+}
+
+body:has(#hud) .aoo-dialog-buttons button:hover {
+    background: #fdf6e5;
+}

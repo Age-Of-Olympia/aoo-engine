@@ -72,7 +72,7 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
 ?>
         <script src="js/progressive_loader.js"></script>
-        <script src="js/inventory.js?v=20251218"></script>
+        <script src="js/inventory.js?v=20260715"></script>
 <?php
     }
 }

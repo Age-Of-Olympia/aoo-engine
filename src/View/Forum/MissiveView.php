@@ -205,7 +205,7 @@ class MissiveView
         <script>
             window.topName = "<?php echo $topJson->name ?>";
         </script>
-        <script src="js/forum_missives.js"></script>
+        <script src="js/forum_missives.js?v=20260715"></script>
         <script src="js/autocomplete.js"></script>
         <script>
             $(function() {
