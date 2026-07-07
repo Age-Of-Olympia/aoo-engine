@@ -210,6 +210,15 @@ $(document).ready(function(){
                 popupOtherCharacter.text(otherCharactersNewMails);
                 popupOtherCharacter.toggle(otherCharactersNewMails > 0);
 
+                /* Mobile (HUD) : le rail vit dans le tiroir fermé — écho
+                 * du badge missives sur le bouton burger. */
+                let burgerBadge = $('#hud-burger-mails');
+                if (!burgerBadge.length && $('#hud-burger').length)
+                    burgerBadge = $('<span id="hud-burger-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></span>').appendTo('#hud-burger');
+
+                burgerBadge.text(currentCharacterNewMails);
+                burgerBadge.toggle(currentCharacterNewMails > 0);
+
                 // change favicon
                 $("link[rel*='icon']").attr("href", totalNewMails > 0 ? "img/ui/favicons/favicon_alert.png" : "img/ui/favicons/favicon.png");
 
