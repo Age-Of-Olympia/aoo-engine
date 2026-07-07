@@ -1072,6 +1072,24 @@
             closePanelAt($(this).closest('.hud-panel').data('slot'));
         });
 
+        /* Clic hors du panneau : fermeture (comme un popover). Sont
+         * exclus le panneau lui-même, tout ce qui OUVRE des panneaux
+         * (rail, chip joueur, liens de la sélection — sinon le même
+         * clic ferme ce qu'il vient d'ouvrir) et la modale de résultat
+         * (son fond se ferme déjà lui-même, le panneau reste). */
+        $(document).on('click', function (e) {
+            if (!openPanels.length) {
+                return;
+            }
+            if ($(e.target).closest(
+                '.hud-panel, #hud-rail, #hud-burger, #hud-chip-name,'
+                + ' #ajax-data a, #hud-action-modal'
+            ).length) {
+                return;
+            }
+            closePanelAt(openPanels.length - 1);
+        });
+
         /* Bandeau de sélection : les liens panneau-compatibles (fiche
          * de la cible…) ouvrent leur panneau au lieu de quitter la
          * page — quitter le damier pour une fiche puis revenir perdait
