@@ -14,13 +14,10 @@ class AdminAuthorizationService
 
         // check admin (only once per session)
         if (!isset($_SESSION['isAdmin'])) {
-            // check admin
-            $playerToCheck = new Player(self::realPlayerId());
-            if (!$playerToCheck->have_option('isAdmin')) {
+            if (!self::sessionGrantsOption('isAdmin')) {
                 exit('Action réservée aux admin');
-            } else {
-                $_SESSION['isAdmin'] = true;
             }
+            $_SESSION['isAdmin'] = true;
         }
     }
 
@@ -32,30 +29,40 @@ class AdminAuthorizationService
 
         // check super admin
         if (!isset($_SESSION['isSuperAdmin'])) {
-            // check super admin
-            $playerToCheck = new Player(self::realPlayerId());
-            if (!$playerToCheck->have_option('isSuperAdmin')) {
+            if (!self::sessionGrantsOption('isSuperAdmin')) {
                 exit('Action réservée aux super administrateurs');
-            } else {
-                $_SESSION['isSuperAdmin'] = true;
             }
+            $_SESSION['isSuperAdmin'] = true;
         }
     }
 
     /**
-     * Les droits appartiennent à l'HUMAIN connecté, pas au personnage
-     * incarné : un animateur qui a basculé sur un PNJ (pnjs.php,
-     * session open) garde ses pouvoirs. Vérifier playerId rendait les
-     * droits dépendants de l'ORDRE des actions — la première commande
-     * admin lancée en incarnant un PNJ sans option refusait l'accès,
-     * alors que la même commande lancée avant la bascule le mettait en
-     * cache session pour toute la suite.
+     * Le droit est accordé si le PERSONNAGE INCARNÉ **ou** l'HUMAIN
+     * connecté porte l'option.
      *
-     * originalPlayerId est posé au login (login.php) depuis la ligne
-     * authentifiée — repli sur playerId pour les sessions antérieures.
+     * - Personnage incarné : le pouvoir se donne en jeu en confiant un
+     *   PNJ porteur (les « oiseaux » : PNJ à id négatif avec
+     *   isSuperAdmin) — l'incarner confère le pouvoir.
+     * - Humain (originalPlayerId, posé au login) : un animateur qui a
+     *   basculé sur un PNJ sans option garde ses propres droits.
+     *   Sans cette branche, le droit dépendait de l'ORDRE des actions :
+     *   la première commande admin lancée en incarnant un PNJ nu était
+     *   refusée, la même commande lancée avant la bascule mettait le
+     *   drapeau en cache session pour toute la suite.
      */
-    private static function realPlayerId(): int
+    private static function sessionGrantsOption(string $option): bool
     {
-        return (int) ($_SESSION['originalPlayerId'] ?? $_SESSION['playerId']);
+        $candidates = array_unique(array_filter([
+            (int) $_SESSION['playerId'],
+            (int) ($_SESSION['originalPlayerId'] ?? 0),
+        ]));
+
+        foreach ($candidates as $playerId) {
+            if ((new Player($playerId))->have_option($option)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
