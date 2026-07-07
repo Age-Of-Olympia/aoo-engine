@@ -163,34 +163,40 @@ class SpellView
                     var btn = $(this);
                     var skillId = btn.data('id');
 
-                    if(!confirm('Voulez-vous vraiment apprendre cette compétence ?')) return;
-                    
-                    btn.prop('disabled', true);
+                    aooConfirm('Voulez-vous vraiment apprendre cette compétence ?').then(function(ok) {
+                        if (!ok) return;
 
-                    postData = { 'buySkillId': skillId };
+                        btn.prop('disabled', true);
 
-                    $.ajax({
-                        type: "POST",
-                        url: window.location.href,
-                        data: postData,
-                        success: function(response) {
-                            // On cherche la div #data dans la réponse brute
-                            var message = $(response).find('#data').html() || $(response).filter('#data').html();
-                            
-                            if (message) {
-                                alert(message);
-                            } else {
-                                // Si on ne trouve pas #data, on affiche la réponse brute pour débugger
-                                console.log(response); 
-                                alert("Réponse serveur : " + response.replace(/<[^>]*>?/gm, ''));
-                            }
-                            
-                            document.location.reload();
-                            },
-                        error: function(xhr) {
-                            alert("Erreur réseau : " + xhr.status);
-                            btn.prop('disabled', false);
+                        var postData = {};
+                        if (type === 'passive') {
+                            postData = { 'buyPassiveId': skillId };
+                        } else {
+                            postData = { 'buySkillId': skillId };
                         }
+
+                        $.ajax({
+                            type: "POST",
+                            url: window.location.href,
+                            data: postData,
+                            success: function(response) {
+                                /* On cherche la div #data dans la réponse brute */
+                                var message = $(response).find('#data').html() || $(response).filter('#data').html();
+
+                                if (!message) {
+                                    message = "Réponse serveur : " + response.replace(/<[^>]*>?/gm, '');
+                                }
+
+                                /* Message PUIS rechargement : l'alerte modale n'est pas bloquante */
+                                aooAlert($('<div>').html(message).text()).then(function() {
+                                    document.location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                aooAlert("Erreur réseau : " + xhr.status);
+                                btn.prop('disabled', false);
+                            }
+                        });
                     });
                 });
             });

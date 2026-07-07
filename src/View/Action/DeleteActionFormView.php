@@ -14,7 +14,7 @@ final class DeleteActionFormView
     public function render(int $actionId, string $csrfTokenField): string
     {
         return '<form method="post" action="/admin/action-delete.php" id="' . self::FORM_ID . '" class="wb-delete-form"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement cette action et toutes ses conditions/outcomes ?\');">'
+            . ' onsubmit="var f=this; aooConfirm(\'Supprimer définitivement cette action et toutes ses conditions/outcomes ?\').then(function(ok){ if(ok){ f.submit(); } }); return false;">'
             . $csrfTokenField
             . '<input type="hidden" name="action_id" value="' . $actionId . '">'
             . '</form>';

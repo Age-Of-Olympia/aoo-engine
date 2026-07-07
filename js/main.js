@@ -57,24 +57,37 @@ function aooFetch(url,  payload = null, method = null,autoProcess = true) {
 
 function autoModal(data) {
     if (data.error) {
-        alert(data.error);
+        aooAlert(data.error);
     }
     else if (data.result) {
+        if (data.result.message && data.result.redirect) {
+            /* Message PUIS redirection : l'alerte modale n'est pas bloquante */
+            aooAlert(data.result.message).then(function () {
+                document.location = data.result.redirect;
+            });
+            return;
+        }
         if (data.result.message)
-            alert(data.result.message);
+            aooAlert(data.result.message);
         if (data.result.redirect)
             document.location = data.result.redirect;
     }
 }
 
-function autoError(log=true,alert=true,reload=true) {
+/* NB : le paramètre s'appelait « alert » et masquait window.alert —
+ * l'appeler levait TypeError et le reload n'arrivait jamais. */
+function autoError(log=true,showAlert=true,reload=true) {
     return function (error) {
-        console.error('Error:', error);
         if (log) {
             console.error('Error:', error);
         }
-        if (alert) {
-            alert('Une erreur est survenue, veuillez réessayer.');
+        if (showAlert) {
+            aooAlert('Une erreur est survenue, veuillez réessayer.').then(function () {
+                if (reload) {
+                    location.reload();
+                }
+            });
+            return;
         }
         if (reload) {
             location.reload();

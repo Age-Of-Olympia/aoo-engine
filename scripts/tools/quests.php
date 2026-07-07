@@ -191,22 +191,19 @@ function force_cmd(text, cmd){
 
     if(text){
 
-        var value = prompt(text);
-        if(!value) return false;
-    }
+        aooPrompt(text).then(function(value){
 
+            if(!value) return;
+
+            create_console();
+            $('#input-line').val(cmd +' "'+ value +'"').focus();
+            submit_cmd();
+        });
+        return false;
+    }
 
     create_console();
-
-    if(text){
-
-        $('#input-line').val(cmd +' "'+ value +'"').focus();
-    }
-    else{
-
-        $('#input-line').val(cmd).focus();
-    }
-
+    $('#input-line').val(cmd).focus();
     submit_cmd();
 
     return false;
@@ -243,17 +240,18 @@ $(document).ready(function(){
         if(action == 'addPlayer'){
 
 
-            let text = 'Id ou Nom du Player';
-            var value = prompt(text);
-            if(!value) return false;
+            aooPrompt('Id ou Nom du Player').then(function(value){
 
-            let cmd = 'quest player "'+ value +'" start '+ questId;
+                if(!value) return;
 
-            create_console();
+                let cmd = 'quest player "'+ value +'" start '+ questId;
 
-            $('#input-line').val(cmd).focus();
+                create_console();
 
-            submit_cmd();
+                $('#input-line').val(cmd).focus();
+
+                submit_cmd();
+            });
 
             return false;
         }
