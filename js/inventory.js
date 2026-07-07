@@ -13,7 +13,6 @@ $(document).ready(function(){
 
 
         var action = $(this).data('action');
-        var n = 0;
 
 
         if(action == 'craft'){
@@ -22,77 +21,89 @@ $(document).ready(function(){
             return false;
         }
 
-        if(action == 'drop' || action == "store" || action == "newAsk" || action == "newBid"){
+        if(action == 'use' && window.type == 'structure'){
 
-            n = parseInt(prompt('Combien?', window.n));
-
-            if(isNaN(n) || n < 1 || n > window.n){
-                alert('Nombre invalide!');
-                return false;
-            }
-        }
-
-        if(action == "newAsk" || action == "newBid"){
-
-
-            if(window.name == 'or'){
-                alert('Impossible de vendre cet objet.');
-                return false;
-            }
-
-
-            price = prompt('Pour quel prix? (à l\'unité)', window.price);
-
-            if(price == null){
-
-                return false;
-            }
-            if(price == '' || price < 1){
-
-                alert('Prix invalide!');
-                return false;
-            }
-            const urlParams = new URLSearchParams(window.location.search);
-            targetId = urlParams.get('targetId');
-             let url= 'api/exchanges/asks-bids.php?targetId='+targetId;
-             let payload = {
-                'action': 'create',
-                'type': action == 'newAsk' ? 'asks' : 'bids',
-                'item_id': window.id,
-                'quantity': n,
-                'price': price
-             };
-            aooFetch(url,payload,null)
-            .then(autoModal)
-            .catch(autoError());
+            document.location = 'build.php?itemId='+ window.id;
             return false;
         }
 
+        var isMarket = (action == "newAsk" || action == "newBid");
+        var needsN = (action == 'drop' || action == "store" || isMarket);
 
-        if(action == 'use'){
-
-            if(window.type == 'structure'){
-
-                document.location = 'build.php?itemId='+ window.id;
-
-                return false;
-            }
+        if(isMarket && window.name == 'or'){
+            aooAlert('Impossible de vendre cet objet.');
+            return false;
         }
 
-
-        $.ajax({
-            type: "POST",
-            url: 'inventory.php',
-            data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
-            success: function(data)
-            {
-                // alert(data);
-                var contentData = $('<div></div>').html(data).find('#data');
-                if(contentData.html()){
-                    alert(contentData.html())
+        /* Quantité demandée en modale ; null = annulé (silencieux) */
+        var askN = needsN
+            ? aooPrompt('Combien?', window.n).then(function(value){
+                if(value === null){
+                    return null;
                 }
-                document.location.reload();
+                var n = parseInt(value);
+                if(isNaN(n) || n < 1 || n > window.n){
+                    aooAlert('Nombre invalide!');
+                    return null;
+                }
+                return n;
+            })
+            : Promise.resolve(0);
+
+        askN.then(function(n){
+
+            if(n === null){
+                return;
             }
+
+            if(isMarket){
+
+                aooPrompt('Pour quel prix? (à l\'unité)', window.price).then(function(price){
+
+                    if(price === null){
+                        return;
+                    }
+                    if(price == '' || price < 1){
+                        aooAlert('Prix invalide!');
+                        return;
+                    }
+                    const urlParams = new URLSearchParams(window.location.search);
+                    targetId = urlParams.get('targetId');
+                    let url= 'api/exchanges/asks-bids.php?targetId='+targetId;
+                    let payload = {
+                        'action': 'create',
+                        'type': action == 'newAsk' ? 'asks' : 'bids',
+                        'item_id': window.id,
+                        'quantity': n,
+                        'price': price
+                    };
+                    aooFetch(url,payload,null)
+                    .then(autoModal)
+                    .catch(autoError());
+                });
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: 'inventory.php',
+                data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
+                success: function(data)
+                {
+                    var contentData = $('<div></div>').html(data).find('#data');
+                    if(contentData.html()){
+                        /* Message PUIS rechargement : l'alerte modale
+                         * n'est pas bloquante, il faut chaîner. */
+                        aooAlert(contentData.text()).then(function(){
+                            document.location.reload();
+                        });
+                        return;
+                    }
+                    document.location.reload();
+                }
+            });
         });
+
+        return false;
     });
 });

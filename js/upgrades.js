@@ -7,23 +7,23 @@ $(document).ready(function(){
         let carac = $(this).data('carac');
 
 
-        if(!confirm('Augmenter '+ $(this).data('carac-name') +'?')){
+        aooConfirm('Augmenter '+ $(this).data('carac-name') +'?').then(function(ok){
 
+            if(!ok){
 
-            $('.upgrade').prop('disabled', false);
-            return false;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: 'upgrades.php',
-            data: {'carac':carac}, // serializes the form's elements.
-            success: function(data)
-            {
-                // alert(data);
-
-                document.location.reload();
+                $('.upgrade').prop('disabled', false);
+                return;
             }
+
+            $.ajax({
+                type: "POST",
+                url: 'upgrades.php',
+                data: {'carac':carac}, // serializes the form's elements.
+                success: function(data)
+                {
+                    document.location.reload();
+                }
+            });
         });
     });
 });

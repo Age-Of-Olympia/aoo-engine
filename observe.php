@@ -567,7 +567,7 @@ else{
         var x = <?php echo $x ?>;
         var y = <?php echo $y ?>;
         </script>
-        <script src="js/observe_destroy.js?v=31102024"></script>
+        <script src="js/observe_destroy.js?v=20260715"></script>
         <?php
 
     }

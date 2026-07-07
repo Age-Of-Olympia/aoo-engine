@@ -215,6 +215,6 @@ final class AccountView
             . 'window.alreadyChanged = ' . ($player->have_option('alreadyChanged') ? 1 : 0) . ';'
             . 'window.oldName = "' . $player->data->name . '";'
             . '</script>'
-            . '<script src="js/account.js"></script>';
+            . '<script src="js/account.js?v=20260715"></script>';
     }
 }

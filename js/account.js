@@ -9,33 +9,33 @@ $(document).ready(function(){
             return false;
         }
 
-        var name = prompt('Nouveau nom:');
+        aooPrompt('Nouveau nom:').then(function(name){
 
+            if(name == null || name.trim() == ''){
 
-        if(name == null || name.trim() == ''){
-
-            return false;
-        }
-
-
-        var oldName = window.oldName;
-
-        if(name == oldName){
-
-            alert('Le nouveau nom est identique à l\'ancien nom.');
-
-            return false;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: 'account.php',
-            data: {'changeName': name}, // serializes the form's elements.
-            success: function(data)
-            {
-                htmlContent = $('<div>').html(data).find('#data').html();
-                alert(htmlContent);
+                return;
             }
+
+
+            var oldName = window.oldName;
+
+            if(name == oldName){
+
+                aooAlert('Le nouveau nom est identique à l\'ancien nom.');
+
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: 'account.php',
+                data: {'changeName': name}, // serializes the form's elements.
+                success: function(data)
+                {
+                    htmlContent = $('<div>').html(data).find('#data').html();
+                    aooAlert($('<div>').html(htmlContent).text());
+                }
+            });
         });
     });
 

@@ -157,7 +157,7 @@ final class UpgradesView
 
         echo Str::minify(ob_get_clean());
 
-        echo '<script src="js/upgrades.js"></script>';
+        echo '<script src="js/upgrades.js?v=20260715"></script>';
     }
 
     private static function getTooltip(string $key): string

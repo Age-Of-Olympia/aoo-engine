@@ -377,3 +377,21 @@ a:hover {
         overflow-x: auto;
     }
 }
+
+/* ============================================================
+ * Dialogues mutualisés (js/modal.js) : feuille papier
+ * ============================================================ */
+.aoo-dialog {
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 4px double var(--pa-bronze);
+    border-radius: 8px;
+    color: var(--pa-ink);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+}
+
+.aoo-dialog-input {
+    background: var(--pa-parchment);
+    border: 1px solid var(--pa-line-soft);
+    border-radius: 4px;
+    color: var(--pa-ink);
+}

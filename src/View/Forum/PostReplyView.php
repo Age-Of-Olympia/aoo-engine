@@ -170,7 +170,7 @@ class PostReplyView
         echo Str::minify(ob_get_clean());
 
 ?>
-        <script src="js/autosave.js?20241016"></script>
+        <script src="js/autosave.js?v=20260715"></script>
         <script>
             window.pagesN = <?php echo $nextPagesN ?>;
         </script>

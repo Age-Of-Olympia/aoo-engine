@@ -51,10 +51,13 @@ $(document).ready(function(){
 
     $('#delete').click(function(e){
 
-        if(confirm('Êtes-vous certain de vouloir effacer le texte?')){
+        aooConfirm('Êtes-vous certain de vouloir effacer le texte?').then(function(ok){
 
-            $('textarea').val('').focus();
-        }
+            if(ok){
+
+                $('textarea').val('').focus();
+            }
+        });
     });
 
     $('#add-rows').click(function(e){

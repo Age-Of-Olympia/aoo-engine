@@ -1,9 +1,15 @@
 // Shared admin tools for both tiled editor and main game view
 
 function teleport(coords){
-    if(!confirm('Téléporter vers ' + coords + ' ?')){
-        return false;
-    }
+    aooConfirm('Téléporter vers ' + coords + ' ?').then(function(ok){
+        if(!ok){
+            return;
+        }
+        doTeleport(coords);
+    });
+}
+
+function doTeleport(coords){
 
     // Remember current selection (for tiled editor)
     var $selected = $('.map.selected');

@@ -477,7 +477,7 @@ echo '</div>
 <div class="tiled-container">
     <!-- Map view on the left -->
     <div id="map-view-container">
-        <script src="js/modal.js"></script>
+        <script src="js/modal.js?v=20260715"></script>
         ';
 
 echo $data;
@@ -552,7 +552,7 @@ $modalView->displayModal('tile-info','info-display');
 }
 </style>
 
-<script src="js/admin-tools.js?v=20260413"></script>
+<script src="js/admin-tools.js?v=20260715"></script>
 <script src="js/blocked-tiles.js?v=20260501c"></script>
 <script src="js/tiled.js?v=20260421"></script>
 <script>

@@ -55,7 +55,7 @@ class Ui{
          * pixel pour les autres. have_option est mémoïsé, le test est
          * gratuit. Filigrane « aootest » hors prod, comme le HUD. */
         if (self::usesPaperTheme()) {
-            echo '<link href="css/paper-app.css?v=20260712d" rel="stylesheet">';
+            echo '<link href="css/paper-app.css?v=20260715a" rel="stylesheet">';
 
             $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
             if ($paperBg !== '/img/ui/paper/paper.jpg') {
@@ -73,8 +73,8 @@ class Ui{
         $tutorialVersion = '20260705a';
         echo '
                 <!-- Modal System -->
-                <link href="css/modal.css?v=20260418" rel="stylesheet">
-                <script src="js/modal.js?v=20251112"></script>
+                <link href="css/modal.css?v=20260715" rel="stylesheet">
+                <script src="js/modal.js?v=20260715"></script>
 
                 <!-- Tutorial System -->
                 <link href="css/tutorial/tutorial.css?v=' . $tutorialVersion . '" rel="stylesheet">

@@ -25,50 +25,52 @@ $(document).ready(function () {
 
         var itemId = window.itemId;
 
-        var n = prompt('Quantité?', 1);
+        aooPrompt('Quantité?', 1).then(function (n) {
 
-        if (n == null) {
+            if (n == null) {
 
-            return false;
-        }
+                return;
+            }
 
-        if (n == '' || n < 1) {
+            if (n == '' || n < 1) {
 
-            alert('Nombre invalide!');
-            return false;
-        }
-
-
-        let basePrice = window.basePrice || 0;
+                aooAlert('Nombre invalide!');
+                return;
+            }
 
 
-        var price = prompt('Prix à l\'unité?', basePrice);
-
-        if (price == null) {
-
-            return false;
-        }
-
-        if (price == '' || price < 1) {
-
-            alert('Nombre invalide!');
-            return false;
-        }
+            let basePrice = window.basePrice || 0;
 
 
+            aooPrompt('Prix à l\'unité?', basePrice).then(function (price) {
 
-        const urlParams = new URLSearchParams(window.location.search);
-        targetId = urlParams.get('targetId');
-        let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
-        let payload = {
-            'action': 'create',
-            'type': 'asks',
-            'item_id': itemId,
-            'quantity': n,
-            'price': price
-        };
-        aooFetch(url, payload, null)
-            .then(autoModal)
-            .catch(autoError());
+                if (price == null) {
+
+                    return;
+                }
+
+                if (price == '' || price < 1) {
+
+                    aooAlert('Nombre invalide!');
+                    return;
+                }
+
+
+
+                const urlParams = new URLSearchParams(window.location.search);
+                targetId = urlParams.get('targetId');
+                let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
+                let payload = {
+                    'action': 'create',
+                    'type': 'asks',
+                    'item_id': itemId,
+                    'quantity': n,
+                    'price': price
+                };
+                aooFetch(url, payload, null)
+                    .then(autoModal)
+                    .catch(autoError());
+            });
+        });
     });
 });
