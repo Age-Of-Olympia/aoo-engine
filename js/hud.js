@@ -1084,6 +1084,14 @@
             if (!openPanels.length) {
                 return;
             }
+            /* Cible détachée du DOM : le gestionnaire de l'élément a
+             * déjà re-rendu son conteneur (lien de fil de missive,
+             * bouton +1…). Un tel clic vient toujours de DANS un
+             * composant vivant, jamais du dehors — closest() ne peut
+             * plus le prouver puisque l'ancêtre est détaché. */
+            if (!e.target.isConnected) {
+                return;
+            }
             if ($(e.target).closest(
                 '.hud-panel, #hud-rail, #hud-burger, #hud-chip-name,'
                 + ' #ajax-data a, #hud-action-modal'
