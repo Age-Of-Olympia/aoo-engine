@@ -474,14 +474,11 @@
             setTheaterMode(true);
         }
 
-        /* Clic hors des nappes : la scène se vide — la sélection et
-         * ses actions se re-masquent. Un clic sur une case relance une
-         * observation, la nouvelle sélection remplace simplement
-         * l'ancienne. */
+        /* Clic hors des nappes (mode théâtre OU normal) : la sélection
+         * et ses actions se referment, la carte au repos (nom du lieu)
+         * revient. Un clic sur une case relance une observation, la
+         * nouvelle sélection remplace simplement l'ancienne. */
         $(document).on('click', function (e) {
-            if (!$('#hud').hasClass('hud--theater')) {
-                return;
-            }
             if (!$('#ajax-data').children('.hud-sel').length) {
                 return;
             }
