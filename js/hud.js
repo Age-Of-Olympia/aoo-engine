@@ -225,13 +225,20 @@
      * est un évènement, pas une description (retour testeur). Feuille
      * papier, fermeture par ×, clic sur le fond ou Échap.
      */
-    window.hudShowActionResult = function (html) {
+    window.hudShowActionResult = function (html, isFinal) {
         /* Tutoriel : ses étapes observent la carte héritée — le
          * résultat y reste écrit comme avant, pas de modale. */
         if (sessionStorage.getItem('tutorial_active') === 'true') {
             $('.card-text').html('').addClass('action-text')
                 .append($('<div></div>').html(html));
             return;
+        }
+
+        /* Résultat final : l'action a coûté et produit — pilules du
+         * bandeau (A, PV…), prochain tour, cible observée (PV,
+         * charges d'actions) et flux d'évènements se rafraîchissent. */
+        if (isFinal) {
+            refreshAfterAction();
         }
 
         var $modal = $('#hud-action-modal');
@@ -261,6 +268,42 @@
         $modal.find('.hud-action-modal-body').html(html);
         $modal.show();
     };
+
+    /*
+     * Après une action : re-rend la page côté serveur et ne remet à
+     * jour que les valeurs vivantes — pilules du bandeau haut et
+     * prochain tour. La cible observée est re-observée (PV, charges)
+     * et le flux d'évènements rechargé.
+     */
+    function refreshAfterAction() {
+        $.ajax({ url: document.location.href, cache: false })
+            .done(function (html) {
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+
+                $('.hud-pill').each(function () {
+                    var fresh = doc.getElementById(this.id);
+                    if (fresh) {
+                        this.innerHTML = fresh.innerHTML;
+                    }
+                });
+
+                var freshTimer = doc.getElementById('next-turn-timer');
+                var timer = document.getElementById('next-turn-timer');
+                if (freshTimer && timer) {
+                    timer.innerHTML = freshTimer.innerHTML;
+                    timer.title = freshTimer.title || timer.title;
+                }
+            });
+
+        var selCoords = sessionStorage.getItem('hudSelCoords');
+        if (selCoords) {
+            $.post('observe.php', { coords: selCoords }, function (data) {
+                $('#ajax-data').html(data);
+            });
+        }
+
+        loadFeed('events');
+    }
 
     /*
      * Rafraîchit la vue après un déplacement SANS recharger la page

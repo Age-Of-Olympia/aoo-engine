@@ -75,7 +75,9 @@ $(document).ready(function(){
             {
                 if(window.hudShowActionResult){
 
-                    window.hudShowActionResult(data);
+                    /* true = résultat FINAL : le HUD rafraîchit pilules,
+                     * cible observée et flux d'évènements. */
+                    window.hudShowActionResult(data, true);
                 }
                 else{
 
