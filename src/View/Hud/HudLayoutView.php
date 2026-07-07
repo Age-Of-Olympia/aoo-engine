@@ -79,7 +79,7 @@ final class HudLayoutView
             'noMask'           => 'Désactiver les masques météo',
         ];
         echo '<div id="hud-layers">'
-            . '<button id="hud-layers-btn" title="Affichage de la carte" aria-label="Affichage de la carte"></button>'
+            . '<button id="hud-layers-btn" title="Options d\'affichage du plateau" aria-label="Options d\'affichage du plateau"></button>'
             . '<div id="hud-layers-pop" hidden>'
             . '<div class="hud-layers-title">Affichage</div>';
         foreach ($mapLayers as $option => $label) {
