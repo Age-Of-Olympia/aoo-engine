@@ -669,7 +669,7 @@ if(!empty($card)){
     echo $card;
 
     ?>
-    <script src="js/observe.js?v=20260714"></script>
+    <script src="js/observe.js?v=20260716"></script>
     <?php
 }
 

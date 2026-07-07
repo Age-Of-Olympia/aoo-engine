@@ -2173,3 +2173,22 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
 #hud-theater-chat-btn:hover {
     background: #fdf6e5;
 }
+
+/* ---------- Pastille réussite / échec du flux d'évènements ---------- */
+.hud-feed-outcome {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    margin-right: 5px;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+    vertical-align: 1px;
+}
+
+.hud-feed-outcome--ok { background: #3f6b3f; }
+.hud-feed-outcome--ko { background: var(--hud-blood); }
+.hud-feed-outcome--na { background: #8a7f6e; }
