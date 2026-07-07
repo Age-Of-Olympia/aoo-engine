@@ -233,9 +233,17 @@ $(document).ready(function(){
                 console.error('Error:', error);
             });
 
-        setTimeout(checkMailFunction, 60000);
+        /* Ré-armement à tir unique : un appel manuel (lecture de
+         * missive en panneau) ne doit pas empiler une seconde chaîne
+         * de polls parallèle. */
+        clearTimeout(window.checkMailTimer);
+        window.checkMailTimer = setTimeout(checkMailFunction, 60000);
 
     }
+
+    /* Exposée : lire une missive en panneau HUD (sans rechargement)
+     * doit rafraîchir les badges sans attendre le poll de 60 s. */
+    window.refreshMailBadges = checkMailFunction;
 
     if($('#player-avatar')[0] != null){
 
