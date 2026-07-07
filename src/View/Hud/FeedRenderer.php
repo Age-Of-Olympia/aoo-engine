@@ -63,8 +63,7 @@ final class FeedRenderer
 
             /* data-time : js/hud.js s'en sert pour le compteur d'évènements
              * non lus (comparaison au dernier passage, localStorage). */
-            echo '<div class="hud-feed-item" data-time="' . (int) $e->time . '">'
-                . self::outcomeChip((string) $e->hiddenText)
+            echo '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '">'
                 . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
                 . '<div class="hud-feed-meta">'
                 . self::authorName($playerService, (int) $e->player_id)
@@ -78,23 +77,24 @@ final class FeedRenderer
     }
 
     /**
-     * Pastille réussite / échec : le détail d'action (hiddenText)
-     * commence par le verdict — un indice visuel suffit pour lire le
-     * flux d'un coup d'œil.
+     * Teinte réussite / échec : le détail d'action (hiddenText)
+     * commence par le verdict — l'entrée du flux prend un lavis aux
+     * couleurs de l'affichage historique (bleu réussite, rouge échec,
+     * orangé impossible).
      */
-    private static function outcomeChip(string $hiddenText): string
+    private static function outcomeClass(string $hiddenText): string
     {
         if ($hiddenText === '') {
             return '';
         }
         if (strpos($hiddenText, 'Réussite') !== false) {
-            return '<span class="hud-feed-outcome hud-feed-outcome--ok" title="Réussite">✓</span>';
+            return ' hud-feed-item--ok';
         }
         if (strpos($hiddenText, 'Echec') !== false || strpos($hiddenText, 'Échec') !== false) {
-            return '<span class="hud-feed-outcome hud-feed-outcome--ko" title="Échec">✗</span>';
+            return ' hud-feed-item--ko';
         }
         if (strpos($hiddenText, 'Impossible') !== false) {
-            return '<span class="hud-feed-outcome hud-feed-outcome--na" title="Action impossible">•</span>';
+            return ' hud-feed-item--na';
         }
 
         return '';
