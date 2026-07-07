@@ -745,6 +745,14 @@
         $.get(url)
             .done(function (data) {
                 $content.html(data);
+
+                /* Ouvrir un fil de missive le marque « vu » côté
+                 * serveur (Forum::put_view au rendu) : les badges se
+                 * rafraîchissent tout de suite, pas au poll de 60 s. */
+                if (/^load_forum\.php\?topic=/.test(url)
+                    && typeof window.refreshMailBadges === 'function') {
+                    window.refreshMailBadges();
+                }
             })
             .fail(function () {
                 $content.html('<p class="hud-feed-empty">Impossible de charger cette page.</p>');
