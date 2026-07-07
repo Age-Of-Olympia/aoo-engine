@@ -2177,6 +2177,13 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
 /* ---------- Lavis réussite / échec du flux d'évènements ----------
  * Couleurs de l'affichage historique, en transparence sur le papier :
  * bleu réussite, rouge échec, orangé action impossible. */
-.hud-feed-item--ok { background: rgba(102, 204, 255, 0.16); }
-.hud-feed-item--ko { background: rgba(200, 40, 30, 0.13); }
-.hud-feed-item--na { background: rgba(235, 160, 30, 0.16); }
+.hud-feed-item--ok,
+.hud-feed-item--ko,
+.hud-feed-item--na {
+    border-left: 3px solid transparent;
+    padding-left: 7px;
+}
+
+.hud-feed-item--ok { background: rgba(102, 204, 255, 0.07); border-left-color: rgba(80, 170, 220, 0.55); }
+.hud-feed-item--ko { background: rgba(200, 40, 30, 0.06); border-left-color: rgba(180, 40, 30, 0.55); }
+.hud-feed-item--na { background: rgba(235, 160, 30, 0.07); border-left-color: rgba(210, 140, 25, 0.55); }
