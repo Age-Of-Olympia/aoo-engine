@@ -1411,8 +1411,16 @@
                 markEventsSeen();
             }
 
+            /* Onglet actif persisté par onglet navigateur : un
+             * rechargement rouvre le flux qu'on lisait. */
+            sessionStorage.setItem('hudFeedTab', tab);
+
             loadFeed(tab);
         });
+
+        if (sessionStorage.getItem('hudFeedTab') === 'events') {
+            $('.hud-tab[data-tab="events"]').trigger('click');
+        }
 
         /* Saisie du message du jour façon chat : POST vers le endpoint
          * existant (account.php?mdj) puis rechargement du flux. */
