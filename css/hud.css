@@ -1301,6 +1301,18 @@ body:has(#hud) #view-landing-wrapper {
     padding: 10px;
 }
 
+/* Progression d'XP en tête du panneau Caractéristiques */
+.hud-xp-progress {
+    margin: 0 0 12px;
+}
+
+.hud-xp-progress .hud-xp-pi {
+    margin-top: 5px;
+    text-align: center;
+    font-size: 88%;
+    opacity: 0.8;
+}
+
 /* Titre compact des fragments (fil de missive, nom du plan…) : le
  * panneau porte déjà son titre de rubrique dans sa barre. */
 .hud-panel-topic-title {
