@@ -268,17 +268,18 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
                          "Tu recevras seulement " + skipXP + " XP/PI\n" +
                          "au lieu de " + totalXP + " XP/PI du tutoriel complet.";
 
-            if (confirm(message)) {
+            aooConfirm(message).then(function(ok) {
+                if (!ok) { return; }
                 $.post("api/tutorial/skip.php", {}, function(response) {
                     if (response.success) {
                         window.location.reload();
                     } else {
-                        alert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
+                        aooAlert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
                     }
                 }, "json").fail(function() {
-                    alert("Erreur de connexion au serveur");
+                    aooAlert("Erreur de connexion au serveur");
                 });
-            }
+            });
         });
 
         // Block all clicks outside modal

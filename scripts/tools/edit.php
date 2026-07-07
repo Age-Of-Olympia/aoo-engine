@@ -97,18 +97,24 @@ $(document).ready(function(){
 
     $('#reset').click(function(e){
 
-        if(confirm('confirm reset?')){
+        aooConfirm('confirm reset?').then(function(ok){
 
-            document.location.reload();
-        }
+            if(ok){
+
+                document.location.reload();
+            }
+        });
     });
 
     $('#back').click(function(e){
 
-        if(confirm('confirm back?')){
+        aooConfirm('confirm back?').then(function(ok){
 
-            document.location = "index.php";
-        }
+            if(ok){
+
+                document.location = "index.php";
+            }
+        });
     });
 
     $('textarea').keydown(function(e) {

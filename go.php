@@ -209,7 +209,13 @@ if($goCoords->z < 0){
 
             echo '<script>
             aooConfirm("Vous n\'avez pas de Pioche en main : creuser à mains nues fatigue (malus).\n\nCreuser quand même ?").then(function(ok){
-                if(!ok){ return; }
+                if(!ok){
+                    /* view.js a déjà montré l\'engrenage et débranché la
+                     * flèche : restaurer l\'état cliquable sans recharger. */
+                    $("#go-img").attr("href", "img/ui/view/arrow.webp");
+                    if(typeof window.bindMapView === "function"){ window.bindMapView(); }
+                    return;
+                }
                 $.post("go.php", {"coords": "'. $digCoords .'", "digConfirmed": 1}, function(data){
                     if($.trim(data) !== ""){ $("#ajax-data").html(data); return; }
                     if(typeof window.hudRefreshAfterMove === "function"){ window.hudRefreshAfterMove(); }

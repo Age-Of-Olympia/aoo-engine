@@ -28,7 +28,7 @@ final class ConditionEditorView
     {
         return '<button type="submit" class="wb-remove-btn" name="condition_id" value="' . $conditionId . '"'
             . ' formaction="/admin/action-condition-remove.php" formnovalidate'
-            . ' onclick="return confirm(\'Retirer cette condition ?\');" title="Retirer">&times;</button>';
+            . ' onclick="var b=this; aooConfirm(\'Retirer cette condition ?\').then(function(ok){ if(ok){ b.form.requestSubmit(b); } }); return false;" title="Retirer">&times;</button>';
     }
 
 }

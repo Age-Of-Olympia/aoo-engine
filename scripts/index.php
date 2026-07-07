@@ -249,15 +249,17 @@ $('a[action="register"]').click(function(e){
 
     e.preventDefault();
 
-    let player = prompt('Nom du personnage (sans espace)');
+    aooPrompt('Nom du personnage (sans espace)').then(function(player){
 
-    if(!player) return false;
+        if(!player) return;
 
-    let race = prompt('Race du personnage\n(nain/geant/hs/olympien/elfe/lutin/redoraan/dieu)');
+        aooPrompt('Race du personnage\n(nain/geant/hs/olympien/elfe/lutin/redoraan/dieu)').then(function(race){
 
-    if(!race) return false;
+            if(!race) return;
 
-    open_console('create player '+ player +' '+ race);
+            open_console('create player '+ player +' '+ race);
+        });
+    });
 });
 </script>
 <?php
