@@ -665,7 +665,8 @@
         }
         /* Fiche perso : uniquement la vue de base (réputation et
          * récompenses restent des pages complètes). */
-        if (/^infos\.php\?targetId=\d+$/.test(href)) {
+        /* Ids négatifs = PNJ : la fiche se charge pareil. */
+        if (/^infos\.php\?targetId=-?\d+$/.test(href)) {
             return href.replace(/^infos\.php/, 'load_infos.php');
         }
         /* Améliorations et Sorts (upgrades.php seul ou ?spells ;
@@ -1031,13 +1032,19 @@
             }
         }
 
-        /* Chip joueur : fiche perso en panneau */
+        /* Chip joueur : fiche perso en panneau. Sans fragment (href
+         * imprévu), navigation normale — openPanel(null) chargerait la
+         * page courante ENTIÈRE dans le panneau. */
         $(document).on('click', '#hud-chip-name', function (e) {
             if (tutorialActive()) {
                 return;
             }
+            var fragment = panelUrl($(this).attr('href'));
+            if (!fragment) {
+                return;
+            }
             e.preventDefault();
-            openPanel(panelUrl($(this).attr('href')), 'Personnage');
+            openPanel(fragment, 'Personnage');
         });
 
         /* Navigation interne aux panneaux : réécrire les liens
