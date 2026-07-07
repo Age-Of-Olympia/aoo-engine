@@ -64,6 +64,7 @@ final class FeedRenderer
             /* data-time : js/hud.js s'en sert pour le compteur d'évènements
              * non lus (comparaison au dernier passage, localStorage). */
             echo '<div class="hud-feed-item" data-time="' . (int) $e->time . '">'
+                . self::outcomeChip((string) $e->hiddenText)
                 . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
                 . '<div class="hud-feed-meta">'
                 . self::authorName($playerService, (int) $e->player_id)
@@ -74,6 +75,29 @@ final class FeedRenderer
         }
 
         return Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Pastille réussite / échec : le détail d'action (hiddenText)
+     * commence par le verdict — un indice visuel suffit pour lire le
+     * flux d'un coup d'œil.
+     */
+    private static function outcomeChip(string $hiddenText): string
+    {
+        if ($hiddenText === '') {
+            return '';
+        }
+        if (strpos($hiddenText, 'Réussite') !== false) {
+            return '<span class="hud-feed-outcome hud-feed-outcome--ok" title="Réussite">✓</span>';
+        }
+        if (strpos($hiddenText, 'Echec') !== false || strpos($hiddenText, 'Échec') !== false) {
+            return '<span class="hud-feed-outcome hud-feed-outcome--ko" title="Échec">✗</span>';
+        }
+        if (strpos($hiddenText, 'Impossible') !== false) {
+            return '<span class="hud-feed-outcome hud-feed-outcome--na" title="Action impossible">•</span>';
+        }
+
+        return '';
     }
 
     private static function authorName(PlayerService $playerService, int $playerId): string
