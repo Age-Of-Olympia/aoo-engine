@@ -17,7 +17,10 @@ class MailContactProviderFactory
         switch ($provider) {
             case self::PROVIDER_ONESIGNAL:
                 if (self::oneSignalConfigured()) {
-                    return new OneSignalProvider(ONESIGNAL_APP_ID, ONESIGNAL_REST_API_KEY);
+                    return new OneSignalProvider(
+                        (string) constant('ONESIGNAL_APP_ID'),
+                        (string) constant('ONESIGNAL_REST_API_KEY')
+                    );
                 }
                 break;
         }

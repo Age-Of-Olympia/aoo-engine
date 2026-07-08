@@ -61,8 +61,8 @@ class MailContactSyncService
      */
     public function syncPlayer(object $row): void
     {
-        $email = $row->plain_mail ?? '';
-        if ($email === '' || $email === null) {
+        $email = (string) ($row->plain_mail ?? '');
+        if ($email === '') {
             return;
         }
 
