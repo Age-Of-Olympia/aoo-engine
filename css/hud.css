@@ -75,9 +75,34 @@ body:has(#hud) {
     background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat fixed;
 }
 
-/* (Les ornements de ferronnerie aux coins du damier ont été retirés
- * — trop présents, retour testeur. img/ui/paper/ornament.png reste
- * disponible pour un usage plus discret.) */
+/* Ornements de ferronnerie aux coins hauts DU DAMIER : les deux
+ * pseudo-éléments sont des items de grille superposés à la cellule
+ * de la carte (même grid-area que #game-map) — décor pur, jamais
+ * cliquable. Le gauche est le miroir du droit. */
+#hud::before,
+#hud::after {
+    content: "";
+    grid-area: 2 / 2 / 3 / 4;
+    z-index: 1;
+    margin: 9px;
+    background: url('../img/ui/paper/ornament.png') top right / clamp(110px, 16vw, 210px) no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+#hud::before {
+    transform: scaleX(-1);
+}
+
+/* En revanche, les ornements de coin de la FEUILLE (paper-app.css,
+ * body::before/::after, communs aux pages papier autonomes) sont de
+ * trop sur la page de jeu — retirés ici, gardés ailleurs (retour
+ * testeur). */
+body:has(#hud)::before,
+body:has(#hud)::after {
+    content: none;
+}
 
 #hud {
     display: grid;
