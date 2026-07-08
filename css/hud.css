@@ -1794,10 +1794,14 @@ body:has(#hud) #debug-flags {
     }
 
     /* Dans le tiroir, boutons avec libellés (title recopié inutile :
-     * on rend juste les boutons pleine largeur, icône + texte natif) */
+     * on rend juste les boutons pleine largeur, icône + texte natif).
+     * border-box : sans lui le rembourrage droit — où débordent les
+     * pastilles — passait DERRIÈRE le bord du tiroir ; 12px pour que
+     * les pastilles (débord de 7px) respirent des deux côtés. */
     #hud-rail #menu {
         width: 100%;
-        padding: 0 8px;
+        box-sizing: border-box;
+        padding: 0 12px;
     }
 
     #hud-rail #menu > a {

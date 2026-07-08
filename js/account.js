@@ -71,11 +71,20 @@ $(document).ready(function(){
             }, // serializes the form's elements.
             success: function(data)
             {
+                $box.prop('checked', !$box.prop('checked'));
+
+                /* Option de plateau basculée depuis le panneau Profil
+                 * (HUD) : le plateau se rafraîchit comme depuis le
+                 * popover de calques — à chaud ou par rechargement,
+                 * qui vaut confirmation. Habillage hérité (ou option
+                 * sans rapport avec le plateau) : alerte d'origine. */
+                if(window.hudApplyBoardOption && window.hudApplyBoardOption($box.data('option'), $box.prop('checked'))){
+
+                    return;
+                }
 
                 // alert(data);
                 alert('Changement effectué.');
-
-                $box.prop('checked', !$box.prop('checked'));
             }
         });
     });
