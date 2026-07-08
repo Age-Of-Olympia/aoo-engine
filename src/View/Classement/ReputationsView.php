@@ -41,7 +41,7 @@ class ReputationsView
             }
 
 
-            print_players($playerList);
+            PlayersTableView::render($playerList);
 
 
             $data = ob_get_clean();

@@ -1,6 +1,7 @@
 <?php
 
 use App\View\Classement\BourrinsView;
+use App\View\Classement\PlayersTableView;
 use App\View\Classement\FortunesView;
 use App\View\Classement\ReputationsView;
 use App\View\Classement\FoiView;
@@ -15,71 +16,6 @@ use Classes\Str;
  * réécrit en fragments, la page complète les suit tels quels.
  */
 
-
-function print_players($list){
-
-    echo '
-    <table border="1" align="center" class="marbre" cellspacing="0">
-    <tr>
-        <th>#</th>
-        <th>Nom</th>
-        <th>Mat.</th>
-        <th>Réputation</th>
-        <th>Xp</th>
-        <th>Rang</th>
-        ';
-
-        if(isset($list[0]->gold)){
-
-            echo '<th>Or</th>';
-        }
-        elseif(isset($list[0]->showReput)){
-
-            echo '<th>Pr</th>';
-        }
-
-        echo '
-    </tr>
-    ';
-
-    $n = 1;
-
-    foreach($list as $player){
-
-        $raceJson = json()->decode('races', $player->race);
-
-        $reput = Str::get_reput(floor($player->pr/COEFFICIENT_PR));
-
-        echo '
-        <tr style="color: '. $raceJson->color .'; background: '. $raceJson->bgColor .'">
-            <td align="center">'. $n .'</td>
-            <td style="white-space: nowrap;">'. $player->name .'</td>
-            <td align="center"><a href="infos.php?targetId='. $player->id .'">mat.'. ($player->display_id ?? $player->id) .'</a></td>
-            <td><a href="infos.php?targetId='. $player->id .'&reputation">'. $reput .'</a></td>
-            <td align="center">'. $player->xp .'</td>
-            <td align="center">'. $player->rank .'</td>
-            ';
-
-            if(isset($player->gold)){
-
-                echo '<td align="center">'. $player->gold .'</td>';
-            }
-            elseif(isset($list[0]->showReput)){
-
-                echo '<td align="center">'. floor($player->pr/COEFFICIENT_PR) .'</td>';
-            }
-
-            echo '
-        </tr>
-        ';
-
-        $n++;
-    }
-
-    echo '
-    </table>
-    ';
-}
 
 $playerList = Player::get_player_list()->list;
 
@@ -140,7 +76,7 @@ else{
 
     ob_start();
 
-    print_players($playerList);
+    PlayersTableView::render($playerList);
 
     $data = ob_get_clean();
 

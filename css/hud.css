@@ -1907,6 +1907,10 @@ body:has(#hud) #debug-flags {
         scroll-snap-align: start;
         min-width: 100%;
         overflow: auto;
+        /* border-box : rembourrage et filet COMPRIS dans les 100 % —
+         * sans lui, chaque volet débordait de ~18px à droite
+         * (coordonnées, boutons d'action coupés — retour testeur). */
+        box-sizing: border-box;
     }
 
     #hud #ajax-data:empty::before {

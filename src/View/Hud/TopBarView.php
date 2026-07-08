@@ -91,11 +91,11 @@ final class TopBarView
 
         echo '<div class="hud-quick">';
 
-        /* Console d'administration (touche ² / page Profil) : un accès
-         * visible pour les super-administrateurs — open_console() vit
-         * dans js/console.js, chargé globalement par l'entête Ui. */
+        /* Panneau d'administration (/admin : actions, tutoriel,
+         * joueurs…) pour les super-administrateurs. La console texte
+         * reste sur la touche ² et la page Profil. */
         if ($player->have_option('isSuperAdmin')) {
-            echo '<a href="#" onclick="open_console(); return false;" title="Console d\'administration">'
+            echo '<a href="admin/" title="Panneau d\'administration">'
                 . '<button class="hud-quick-icon"><span class="ra ra-cog"></span></button></a>';
         }
 
