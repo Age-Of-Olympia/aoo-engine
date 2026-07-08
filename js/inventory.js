@@ -51,6 +51,14 @@ $(document).ready(function(){
 
         if(action == 'craft'){
 
+            /* HUD : le panneau Artisanat pré-filtré sur l'objet, sans
+             * quitter le plateau ; habillage hérité : pleine page. */
+            if(window.hudOpenPanel){
+
+                window.hudOpenPanel('load_inventory.php?craft&itemId='+ window.id, 'Artisanat');
+                return false;
+            }
+
             document.location = 'inventory.php?craft&itemId='+ window.id;
             return false;
         }

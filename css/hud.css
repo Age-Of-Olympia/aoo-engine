@@ -1454,6 +1454,15 @@ body:has(#hud) #view-landing-wrapper {
 .hud-panel .hud-panel-title {
     font-family: var(--hud-display);
     font-size: 130%;
+    /* le titre occupe l'espace entre retour (optionnel) et fermer */
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+/* Retour au panneau remplacé (pile tenue par js/hud.js) */
+.hud-panel .hud-panel-back {
+    flex: 0 0 auto;
+    margin-right: 8px;
 }
 
 .hud-panel .hud-panel-content {

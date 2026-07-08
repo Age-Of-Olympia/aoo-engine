@@ -72,6 +72,14 @@ class CraftView
 
                         e.preventDefault();
 
+                        /* HUD : rester dans le panneau Artisanat ;
+                         * habillage hérité : pleine page. */
+                        if(window.hudOpenPanel){
+
+                            window.hudOpenPanel('load_inventory.php?craft&itemId=' + $(this).data('id'), 'Artisanat');
+                            return;
+                        }
+
                         document.location = 'inventory.php?craft&itemId=' + $(this).data('id');
                     });
                 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\View\Forum\ForumView;
+use App\View\Forum\LastPostsView;
 use App\View\Forum\TopicView;
 
 require_once('config.php');
@@ -29,6 +30,13 @@ if (!empty($_GET['topic'])) {
 
     TopicView::$fragment = true;
     TopicView::renderTopic();
+    exit();
+}
+
+if (isset($_GET['lastPosts'])) {
+
+    LastPostsView::$fragment = true;
+    LastPostsView::renderLastPosts();
     exit();
 }
 
