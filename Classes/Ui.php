@@ -236,7 +236,21 @@ class Ui{
     }
 
 
-    public static function print_inventory($itemList){
+    /**
+     * @param string|null $aeInfo     compteur d'Actions d'Équipement (HUD)
+     * @param bool        $rowActions boutons Utiliser/Jeter/Artisanat sur
+     *                                chaque ligne (panneau inventaire du
+     *                                HUD) — ils délèguent aux boutons de
+     *                                l'aperçu via js/inventory.js, la
+     *                                logique d'état reste unique.
+     * @param int|null    $aeLeft     Ae restantes ce tour : grise les
+     *                                boutons de ligne qui en coûtent
+     *                                (équiper, parchemins) — mêmes règles
+     *                                qu'InventoryService::useItem.
+     * @param int|null    $aLeft      Actions restantes : grise Utiliser
+     *                                des consommables/structures.
+     */
+    public static function print_inventory($itemList, ?string $aeInfo = null, bool $rowActions = false, ?int $aeLeft = null, ?int $aLeft = null){
 
 
         $defaultItem = new Item(1);
@@ -287,6 +301,11 @@ class Ui{
         <tr>
         <td align="right">
             ';
+
+            if($aeInfo !== null){
+
+                echo $aeInfo;
+            }
 
             echo '<input type="text" value="chercher" id="item-search" style="opacity: 0.5;" class="desaturate" />';
 
@@ -359,6 +378,58 @@ class Ui{
                 <td width="50">
                     x'. $row->n .'
                 </td>
+                ';
+
+            if($rowActions){
+
+                /* Mêmes règles de coût qu'InventoryService::useItem et
+                 * js/inventUi.js : déséquiper est gratuit ; équiper et
+                 * lire un parchemin coûtent 1 Ae ; consommer coûte 1 A.
+                 * Sans le point requis, le bouton est grisé et
+                 * l'infobulle dit pourquoi. */
+                $isEquipped = !empty($row->equiped);
+
+                if($isEquipped){
+
+                    $usable = true;
+                    $useTitle = 'Déséquiper';
+                }
+                elseif($type == 'equipement'){
+
+                    $usable = ($aeLeft === null || $aeLeft > 0);
+                    $useTitle = $usable ? 'Équiper (1 Ae)' : 'Équiper (1 Ae) — plus d\'Action d\'Équipement ce tour';
+                }
+                elseif($type == 'parchemin' || $emp != ''){
+
+                    $usable = ($aeLeft === null || $aeLeft > 0);
+                    $useTitle = $usable ? 'Utiliser (1 Ae)' : 'Utiliser (1 Ae) — plus d\'Action d\'Équipement ce tour';
+                }
+                elseif($type == 'consommable' || $type == 'structure'){
+
+                    $usable = ($aLeft === null || $aLeft > 0);
+                    $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
+                }
+                else{
+
+                    $usable = false;
+                    $useTitle = 'Utiliser';
+                }
+
+                /* Porté : bouton « rendre » plein (nuit) — impossible à
+                 * confondre avec la main « prendre/équiper ». */
+                $useIcon = $isEquipped ? 'ra-reverse' : 'ra-hand';
+                $wornClass = $isEquipped ? ' row-action--worn' : '';
+
+                echo '
+                <td class="item-actions">
+                    <button class="row-action'. $wornClass .'" data-action="use" title="'. $useTitle .'" '. ($usable ? '' : 'disabled') .'><span class="ra '. $useIcon .'"></span></button>
+                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
+                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>
+                </td>
+                ';
+            }
+
+            echo '
             </tr>
             ';
         }

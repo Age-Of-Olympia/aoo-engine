@@ -41,6 +41,6 @@ echo '<div class="hud-xp-progress">'
     . '<div class="hud-xp-pi">Rang ' . $player->data->rank . ' · Pi : ' . $player->data->pi . '</div>'
     . '</div>';
 
-UpgradesView::render($player);
+UpgradesView::render($player, hudPanel: true);
 
 echo Str::minify(ob_get_clean());

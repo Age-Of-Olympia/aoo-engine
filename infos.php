@@ -21,6 +21,8 @@ $target->get_data();
 
 if(isset($_GET['reputation'])){
 
+    $ui = new Ui($target->data->name .' (réputation)');
+
     include('scripts/infos/reputation.php');
 
     exit();

@@ -285,6 +285,7 @@ if($res->num_rows){
     }
 
     $card="";
+    $equipStrip="";
     while($row = $res->fetch_object()){
 
 
@@ -434,6 +435,15 @@ if($res->num_rows){
         );
 
         $card .= Ui::get_card($data);
+
+        /* Équipement porté par le personnage observé — alvéoles pour
+         * la vue de sélection du HUD papier, visibles sur écrans
+         * larges seulement (js/hud.js + css/hud.css). L'habillage
+         * hérité garde sa carte telle quelle. */
+        if (Ui::usesPaperTheme()) {
+
+            $equipStrip = \App\View\EquipmentSlotsView::render($target->id);
+        }
     }
 }
 
@@ -533,8 +543,9 @@ else{
                                 data-url="worship.php"
                                 data-action="worship"
                                 data-target-id="'. $row->id .'"
-                            ><span class="ra ra-candle"></span> Vénérer
-                            </button>';
+                            ><span class="ra ra-candle"></span>
+                            <span class="action-name">Vénérer</span>
+                            </button><br/>';
 
                             $dataText = "Vénérez ce Dieu pour pouvoir lui adresser vos prières.";
                         }
@@ -667,6 +678,11 @@ echo '<div id="case-coords"><button OnClick="copyToClipboard(this);">x'. $x .',y
 if(!empty($card)){
 
     echo $card;
+
+    if(!empty($equipStrip)){
+
+        echo $equipStrip;
+    }
 
     ?>
     <script src="js/observe.js?v=20260716"></script>

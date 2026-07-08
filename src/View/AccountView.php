@@ -37,6 +37,7 @@ final class AccountView
             // 'noPrompt'=>"Désactiver le système anti-misslick<br /><sup>Vous n'aurez plus d'alertes pour confirmer vos Actions</sup>",
             'hideGrid' => "Cacher le damier de la Vue<br /><sup>La grille ne s'affichera plus</sup>",
             'noMask' => "Désactiver les masques<br /><sup>Les effets de brumes et de pluie ne s'afficheront plus</sup>",
+            'hideBoardCoords' => "Masquer les coordonnées du bord<br /><sup>La bordure graduée du plateau (nouvelle interface) disparaît</sup>",
             'showActionDetails' => "Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
             'newHud' => "Nouvelle interface (bêta)<br /><sup>Nouvelle disposition du jeu sur grand écran : barre de statut, rail de navigation, chat et évènements</sup>",
             'noTrain' => "Interdire les entraînements<br />",

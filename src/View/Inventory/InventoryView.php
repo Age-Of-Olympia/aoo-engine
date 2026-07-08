@@ -10,7 +10,15 @@ use Classes\Ui;
 
 class InventoryView
 {
-    public static function renderInventory(bool $itemsFromBank): void
+    /**
+     * @param bool $hudPanel rendu en panneau du HUD : chaque ligne porte
+     *                       ses boutons Utiliser/Jeter/Artisanat (même
+     *                       esprit que le bouton Améliorer par ligne du
+     *                       panneau de caractéristiques). Les pages
+     *                       héritées (inventory.php, marchand) sont
+     *                       inchangées.
+     */
+    public static function renderInventory(bool $itemsFromBank, bool $hudPanel = false): void
     {
 
         if (!empty($_POST['action'])) {
@@ -54,7 +62,22 @@ class InventoryView
         $player = PlayerFactory::legacy($activePlayerId);
 
         $itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
-        $data = Ui::print_inventory($itemList);
+
+        /* Compteur d'Actions d'Équipement : la carac n'apparaît plus
+         * dans le nouveau HUD (pilules et page d'amélioration l'ignorent),
+         * on l'affiche là où elle sert — équiper/déséquiper un objet. */
+        $aeInfo = '<span class="inventory-ae" style="float: left; line-height: 28px;" flow="right" tooltip="'
+            . CARACS_TXT_LONG['ae'] . '">'
+            . 'Actions d\'équipement : ' . $player->getRemaining('ae') . '/' . $player->get_caracsJson()->ae
+            . '</span>';
+
+        $data = Ui::print_inventory(
+            $itemList,
+            $aeInfo,
+            rowActions: $hudPanel,
+            aeLeft: $player->getRemaining('ae'),
+            aLeft: $player->getRemaining('a')
+        );
         $data .= '
 <script>
 window.freeEmp = ' . Item::get_free_emplacement($player) . ';
@@ -71,8 +94,8 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
 
 ?>
-        <script src="js/progressive_loader.js"></script>
-        <script src="js/inventory.js?v=20260715"></script>
+        <script src="js/progressive_loader.js?v=20260716"></script>
+        <script src="js/inventory.js?v=20260716c"></script>
 <?php
     }
 }

@@ -74,7 +74,7 @@ class BankView
 
 
 ?>
-        <script src="js/progressive_loader.js"></script>
+        <script src="js/progressive_loader.js?v=20260716"></script>
         <?php
         if ($market->HasTarget()) {
         ?>

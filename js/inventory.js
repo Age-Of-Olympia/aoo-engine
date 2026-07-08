@@ -8,6 +8,40 @@ $(document).ready(function(){
     .append('<button class="action" data-action="drop">Jeter</button><br />')
     .append('<button class="action" data-action="craft">Artisanat</button><br />');
 
+    /* Panneau HUD (boutons par ligne) : l'aperçu redevient une fiche de
+     * lecture — ses boutons restent dans le DOM (les boutons de ligne
+     * leur délèguent l'exécution et l'état) mais sont masqués. */
+    if($('.item-case .row-action').length){
+
+        $actions.hide();
+    }
+
+
+    /* Boutons par ligne (panneau HUD, Ui::print_inventory rowActions) :
+     * sélectionner la ligne (inventUi.js pose window.* et l'état du
+     * bouton Utiliser de l'aperçu), puis déléguer au bouton d'aperçu
+     * correspondant — la logique d'état et de coût reste unique.
+     * Liaison directe (pas de délégation document) : le script est
+     * ré-exécuté à chaque chargement du panneau, une délégation
+     * s'empilerait. */
+    $('.item-case .row-action').click(function(e){
+
+        e.stopPropagation();
+
+        $(this).closest('.item-case').trigger('click');
+
+        var $preview = $('.preview-action .action[data-action="'+ $(this).data('action') +'"]').first();
+
+        /* .trigger() de jQuery ignore l'attribut disabled : ne pas
+         * exécuter une action que l'aperçu interdit (Ae/A épuisés…). */
+        if(!$preview.prop('disabled')){
+
+            $preview.trigger('click');
+        }
+
+        return false;
+    });
+
 
     $('.action').click(function(e){
 
@@ -16,6 +50,14 @@ $(document).ready(function(){
 
 
         if(action == 'craft'){
+
+            /* HUD : le panneau Artisanat pré-filtré sur l'objet, sans
+             * quitter le plateau ; habillage hérité : pleine page. */
+            if(window.hudOpenPanel){
+
+                window.hudOpenPanel('load_inventory.php?craft&itemId='+ window.id, 'Artisanat');
+                return false;
+            }
 
             document.location = 'inventory.php?craft&itemId='+ window.id;
             return false;

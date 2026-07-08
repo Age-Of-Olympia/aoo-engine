@@ -320,6 +320,15 @@ body:has(#hud) {
     visibility: hidden;
 }
 
+/* Clones mobiles des raccourcis du bandeau haut (js/hud.js
+ * initMobile) : réservés au tiroir — jamais sur le rail desktop. */
+@media (min-width: 1024px) {
+
+    #hud-rail .hud-quick-clone {
+        display: none;
+    }
+}
+
 /* Séparateurs de groupes (posés par js/hud.js) : la vue / le
  * personnage / le monde / le compte */
 #hud-rail .hud-rail-sep {
@@ -607,6 +616,9 @@ body:has(#hud) #view-landing-wrapper {
     border: 1px solid var(--hud-line);
     border-radius: 6px;
     background: var(--hud-veil);
+    /* ancre des #case-coords épinglés en bas à droite (réponses non
+     * recomposées : case vide sans .hud-sel) */
+    position: relative;
 }
 
 #hud #ajax-data:empty::before {
@@ -660,6 +672,8 @@ body:has(#hud) #view-landing-wrapper {
     width: 100%;
     height: 100%;
     box-sizing: border-box;
+    /* ancre des #case-coords épinglés en bas à droite */
+    position: relative;
 }
 
 /* La coquille #ui-card reste (« Fermer » la masque) mais est
@@ -842,13 +856,15 @@ body:has(#hud) #view-landing-wrapper {
  * largeur fixe 300px et les floats hérités de main.css */
 #hud #ajax-data .hud-sel-tile {
     grid-column: 3;
-    grid-row: 1;
+    grid-row: 1 / span 2;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     min-height: 0;
     border-left: 1px solid var(--hud-line-soft);
     padding-left: 10px;
+    /* réserve le coin bas-droit aux coordonnées épinglées */
+    padding-bottom: 24px;
     text-align: left;
 }
 
@@ -892,12 +908,15 @@ body:has(#hud) #view-landing-wrapper {
     flex: 0 0 auto;
 }
 
-/* Coordonnées : sous le contenu de case, alignées à droite */
-#hud #ajax-data .hud-sel #case-coords {
-    grid-column: 3;
-    grid-row: 2;
-    justify-self: end;
-    align-self: end;
+/* Coordonnées : ÉPINGLÉES au coin bas-droit du bandeau — en absolu,
+ * pour que leur place ne dépende plus de la composition (fiche seule,
+ * contenu de case, case vide sans .hud-sel…). Le mobile garde son
+ * flux en grille (media query plus bas, qui rend la position à la
+ * grille). */
+#hud #ajax-data #case-coords {
+    position: absolute;
+    right: 6px;
+    bottom: 4px;
     margin: 0;
     padding-left: 10px;
 }
@@ -909,8 +928,135 @@ body:has(#hud) #view-landing-wrapper {
     padding-left: 0;
 }
 
-#hud #ajax-data .hud-sel--nocard #case-coords {
-    grid-column: 1 / span 3;
+/* ---------- Équipement porté : alvéoles parchemin ----------
+ * Tuiles fixes de 46px « creusées » dans la feuille (ombre interne),
+ * comme des logements taillés pour les objets, sous un titre gravé en
+ * petites capitales filetées (même inscription que « Sur la case »).
+ * Partagé entre le panneau Personnage (load_infos.php) et la vue de
+ * sélection sur écrans larges (observe.php + js/hud.js). */
+#hud .equip-strip {
+    text-align: left;
+}
+
+#hud .equip-strip-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
+#hud .equip-strip-title::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--hud-line-soft);
+}
+
+#hud .equip-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#hud .equip-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    box-sizing: border-box;
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-line-soft);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+
+#hud .equip-slot:hover {
+    border-color: var(--hud-bronze-bright);
+}
+
+#hud .equip-slot img {
+    display: block;
+    max-width: 38px;
+    max-height: 38px;
+}
+
+/* Panneau Personnage : l'alvéolier remplace la table marbre pleine
+ * largeur, dans la même cellule de la fiche. */
+#hud .hud-panel .equip-strip {
+    margin: 6px 0;
+}
+
+/* ---------- Inventaire : boutons d'action par ligne ----------
+ * (panneau HUD seulement, Ui::print_inventory rowActions) — icônes
+ * carrées discrètes en fin de ligne : agir sur l'objet sans passer
+ * par l'aperçu, comme le bouton Améliorer par ligne des caracs. */
+#hud .hud-panel .item-actions {
+    white-space: nowrap;
+}
+
+#hud .hud-panel .item-actions .row-action {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    margin: 0 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#hud .hud-panel .item-actions .row-action .ra {
+    font-size: 14px;
+    line-height: 1;
+}
+
+#hud .hud-panel .item-actions .row-action[disabled] {
+    opacity: 0.35;
+}
+
+/* Objet porté : bouton « rendre » plein — encre nuit, glyphe
+ * parchemin — l'état équipé se lit sans ouvrir l'infobulle. */
+#hud .hud-panel .item-actions .row-action--worn {
+    background: var(--hud-night);
+    border-color: var(--hud-night);
+    color: var(--hud-parchment);
+}
+
+/* Vue de sélection : colonne dédiée de la grille, seulement quand la
+ * place est là (dès les écrans de portable courants) — en dessous, le
+ * bandeau garde ses trois zones et la fiche complète reste à un clic
+ * (panneau). */
+#hud #ajax-data .hud-sel .equip-strip {
+    display: none;
+}
+
+@media (min-width: 1200px) {
+
+    #hud #ajax-data .hud-sel:has(.equip-strip) {
+        grid-template-columns: 130px minmax(0, 1fr) auto minmax(200px, 30%);
+    }
+
+    #hud #ajax-data .hud-sel .equip-strip {
+        display: flex;
+        flex-direction: column;
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        max-width: 170px;
+        min-height: 0;
+        overflow-y: auto;
+        border-left: 1px solid var(--hud-line-soft);
+        padding-left: 10px;
+    }
+
+    #hud #ajax-data .hud-sel:has(.equip-strip) .hud-sel-tile {
+        grid-column: 4;
+    }
 }
 
 /* ---------- Panneau d'actions (sous le panneau latéral) ---------- */
@@ -955,6 +1101,9 @@ body:has(#hud) #view-landing-wrapper {
 
 .hud-action-modal-sheet {
     position: relative;
+    /* border-box : sans lui, 92vw + marges internes + double filet
+     * débordent l'écran mobile (croix de fermeture inatteignable) */
+    box-sizing: border-box;
     width: min(480px, 92vw);
     max-height: 70vh;
     overflow: auto;
@@ -1305,6 +1454,15 @@ body:has(#hud) #view-landing-wrapper {
 .hud-panel .hud-panel-title {
     font-family: var(--hud-display);
     font-size: 130%;
+    /* le titre occupe l'espace entre retour (optionnel) et fermer */
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+/* Retour au panneau remplacé (pile tenue par js/hud.js) */
+.hud-panel .hud-panel-back {
+    flex: 0 0 auto;
+    margin-right: 8px;
 }
 
 .hud-panel .hud-panel-content {
@@ -1749,6 +1907,10 @@ body:has(#hud) #debug-flags {
         scroll-snap-align: start;
         min-width: 100%;
         overflow: auto;
+        /* border-box : rembourrage et filet COMPRIS dans les 100 % —
+         * sans lui, chaque volet débordait de ~18px à droite
+         * (coordonnées, boutons d'action coupés — retour testeur). */
+        box-sizing: border-box;
     }
 
     #hud #ajax-data:empty::before {
@@ -1809,10 +1971,12 @@ body:has(#hud) #debug-flags {
         grid-row: 3;
         border-left: none;
         padding-left: 0;
+        /* pas de coordonnées épinglées en mobile : pas de réserve */
+        padding-bottom: 0;
         overflow: visible;
     }
 
-    #hud #ajax-data .hud-sel #case-coords {
+    #hud #ajax-data #case-coords {
         grid-column: 2;
         grid-row: 3;
         align-self: start;
@@ -1820,7 +1984,11 @@ body:has(#hud) #debug-flags {
         padding-left: 0;
         font-size: 80%;
         opacity: 0.7;
+        /* retour au flux (grille ou brut) : neutralise l'épinglage
+         * absolu bas-droit du desktop */
         position: relative;
+        right: auto;
+        bottom: auto;
         z-index: 1;
     }
 
@@ -1946,6 +2114,9 @@ body:has(#hud) #debug-flags {
 /* ---------- Dialogues mutualisés (js/modal.js) : feuille papier ----------
  * Le HUD ne charge pas paper-app.css : mêmes matériaux, portée body#hud. */
 body:has(#hud) .aoo-dialog {
+    /* border-box : 90vw + rembourrage + double filet débordaient
+     * l'écran mobile (boutons Ok/Annuler tronqués à droite) */
+    box-sizing: border-box;
     background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
     border: 4px double var(--hud-bronze);
     border-radius: 8px;

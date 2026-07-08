@@ -51,7 +51,10 @@
 
     function updateEventsBadge() {
         var lastSeen = parseInt(localStorage.getItem(SEEN_KEY), 10) || 0;
-        var unread = $('#hud-feed-events .hud-feed-item').filter(function () {
+        /* Nos propres actions (data-own, FeedRenderer) ne sont jamais
+         * « non lues » : le badge ne signale que ce que les autres
+         * nous font. */
+        var unread = $('#hud-feed-events .hud-feed-item').not('[data-own]').filter(function () {
             return parseInt($(this).data('time'), 10) > lastSeen;
         }).length;
 
@@ -443,6 +446,12 @@
                         }
                         return;
                     }
+                    /* Bordure graduée : dessinée côté client, bascule
+                     * à chaud — buildMapRulers lit l'état du popover. */
+                    if (option === 'hideBoardCoords') {
+                        buildMapRulers();
+                        return;
+                    }
                     document.location.reload();
                 })
                 .fail(function () {
@@ -588,6 +597,15 @@
         }
         if (svg.dataset.origViewbox) {
             svg.setAttribute('viewBox', svg.dataset.origViewbox);
+        }
+
+        /* Option d'affichage (popover calques) : bordure graduée
+         * masquée — le nettoyage ci-dessus a déjà rendu la planche
+         * nue, on recale juste les masques météo sur le viewBox
+         * d'origine. */
+        if ($('.hud-layer[data-option="hideBoardCoords"]').hasClass('hud-layer--on')) {
+            fitWeatherMasks();
+            return;
         }
 
         var cols = {};
@@ -814,6 +832,10 @@
             );
         }
 
+        /* Équipement porté (observe.php, personnage sélectionné) :
+         * colonne dédiée de la grille, écrans larges seulement (CSS). */
+        $sel.append($d.children('.equip-strip'));
+
         $sel.append($d.children('#case-coords'));
 
         $d.prepend($sel);
@@ -859,10 +881,10 @@
         if (/^inventory\.php/.test(href)) {
             return href.replace(/^inventory\.php/, 'load_inventory.php');
         }
-        /* Fiche perso : uniquement la vue de base (réputation et
-         * récompenses restent des pages complètes). */
+        /* Fiche perso : vue de base et réputation (les récompenses
+         * restent une page complète). */
         /* Ids négatifs = PNJ : la fiche se charge pareil. */
-        if (/^infos\.php\?targetId=-?\d+$/.test(href)) {
+        if (/^infos\.php\?targetId=-?\d+(&reputation)?$/.test(href)) {
             return href.replace(/^infos\.php/, 'load_infos.php');
         }
         /* Améliorations et Sorts (upgrades.php seul ou ?spells ;
@@ -875,16 +897,31 @@
         if (href === 'account.php') {
             return 'load_account.php';
         }
-        /* Forum : liste de sujets et fils en fragments (Missives dans
-         * son panneau, navigation interne comprise) ; répondre, éditer
-         * et créer un sujet restent plein-page (formulaires). */
-        if (/^forum\.php\?(forum|topic)=/.test(href)) {
+        /* Forum : liste de sujets, fils et derniers messages en
+         * fragments (Missives dans son panneau, navigation interne
+         * comprise) ; répondre, éditer et créer un sujet restent
+         * plein-page (formulaires). */
+        if (/^forum\.php\?(forum=|topic=|lastPosts)/.test(href)) {
             return href.replace(/^forum\.php/, 'load_forum.php');
         }
         /* Carte : la vue simple en panneau ; les pages avec options
          * de couches (map.php?world / ?local) restent plein-page. */
         if (href === 'map.php') {
             return 'load_map.php';
+        }
+        /* Pages de lecture : classements (onglets compris), factions,
+         * évènements (onglets compris), personnages secondaires. */
+        if (/^classements\.php/.test(href)) {
+            return href.replace(/^classements\.php/, 'load_classements.php');
+        }
+        if (/^faction\.php\?faction=/.test(href)) {
+            return href.replace(/^faction\.php/, 'load_faction.php');
+        }
+        if (/^logs\.php/.test(href)) {
+            return href.replace(/^logs\.php/, 'load_logs.php');
+        }
+        if (href === 'pnjs.php') {
+            return 'load_pnjs.php';
         }
         return null;
     }
@@ -899,6 +936,14 @@
         if (href.indexOf('inventory') !== -1) {
             return 'Inventaire';
         }
+        /* AVANT le test « reputation » : l'onglet
+         * classements.php?reputation est un classement. */
+        if (href.indexOf('classements') !== -1) {
+            return 'Classements';
+        }
+        if (href.indexOf('reputation') !== -1) {
+            return 'Réputation';
+        }
         if (href.indexOf('infos') !== -1) {
             return 'Personnage';
         }
@@ -910,6 +955,18 @@
         }
         if (href.indexOf('account') !== -1) {
             return 'Profil';
+        }
+        if (href.indexOf('lastPosts') !== -1) {
+            return 'Forum';
+        }
+        if (href.indexOf('faction') !== -1) {
+            return 'Faction';
+        }
+        if (href.indexOf('logs') !== -1) {
+            return 'Évènements';
+        }
+        if (href.indexOf('pnjs') !== -1) {
+            return 'Personnages';
         }
         if (href.indexOf('forum') !== -1 || href.indexOf('topic') !== -1) {
             return 'Missives';
@@ -930,6 +987,13 @@
      * liste/slots pour pouvoir rouvrir la question plus tard.
      */
     var openPanels = []; /* du plus ancien au plus récent : {url, title} */
+
+    /* Pile de retour : les panneaux REMPLACÉS (Inventaire → Artisanat,
+     * liste de missives → fil…) — la flèche du bandeau du panneau
+     * rouvre le précédent. Vidée quand le panneau est fermé
+     * volontairement ; persistée comme openPanels. */
+    var panelHistory = [];
+    var PANEL_HISTORY_MAX = 10;
 
     function maxPanels() {
         return 1;
@@ -964,9 +1028,11 @@
             if (entry) {
                 $(this).find('.hud-panel-title').text(entry.title || '');
             }
+            $(this).find('.hud-panel-back').toggle(panelHistory.length > 0);
         });
         $('#hud').toggleClass('hud--panel-open', openPanels.length > 0);
         sessionStorage.setItem('hudPanels', JSON.stringify(openPanels));
+        sessionStorage.setItem('hudPanelHistory', JSON.stringify(panelHistory));
     }
 
     function reloadAllPanels() {
@@ -975,7 +1041,7 @@
         });
     }
 
-    function openPanel(url, title) {
+    function openPanel(url, title, fromHistory) {
         var idx = openPanels.findIndex(function (p) { return p.url === url; });
 
         if (idx !== -1) {
@@ -986,10 +1052,19 @@
             return;
         }
 
-        /* Slot plein : le plus ancien laisse sa place */
+        /* Slot plein : le plus ancien laisse sa place — et alimente la
+         * pile de retour (sauf si on est justement en train d'y
+         * revenir). Point de passage unique : TOUT remplacement de
+         * panneau devient « retournable », quel que soit le flux. */
         var shifted = false;
         while (openPanels.length >= maxPanels()) {
-            openPanels.shift();
+            var replaced = openPanels.shift();
+            if (!fromHistory) {
+                panelHistory.push(replaced);
+                if (panelHistory.length > PANEL_HISTORY_MAX) {
+                    panelHistory.shift();
+                }
+            }
             shifted = true;
         }
 
@@ -1008,8 +1083,19 @@
             return;
         }
         openPanels.splice(idx, 1);
+        /* Fermeture volontaire : la pile de retour meurt avec le
+         * panneau — rouvrir plus tard repart d'un historique neuf. */
+        panelHistory = [];
         syncPanels();
         reloadAllPanels();
+    }
+
+    /* Flèche du bandeau du panneau : rouvre le panneau remplacé. */
+    function goBackPanel() {
+        var prev = panelHistory.pop();
+        if (prev) {
+            openPanel(prev.url, prev.title, true);
+        }
     }
 
     /* Deuxième clic sur la même entrée = fermeture. */
@@ -1021,6 +1107,12 @@
             openPanel(url, title);
         }
     }
+
+    /* Exposé aux scripts hérités injectés dans les panneaux : ouvrir
+     * un panneau sans quitter le plateau (bouton Artisanat par ligne
+     * de l'inventaire, liens d'objets de l'artisanat — js/inventory.js
+     * et CraftView). */
+    window.hudOpenPanel = openPanel;
 
     /*
      * ===== Mobile (<1024px) — Phase 3 =====
@@ -1049,6 +1141,19 @@
     }
 
     function initMobile() {
+
+        /* Raccourcis du bandeau haut (console admin, classements,
+         * forum, menu principal, déconnexion) : le CSS mobile masque
+         * .hud-quick, ils étaient inatteignables — clones en fin de
+         * tiroir, après un séparateur. Le rail desktop les ignore
+         * (CSS ≥1024px sur .hud-quick-clone). */
+        var $quick = $('#hud-topbar .hud-quick a');
+        if ($quick.length) {
+            $('<span class="hud-rail-sep hud-quick-clone"></span>').appendTo('#hud-rail #menu');
+            $quick.each(function () {
+                $(this).clone().addClass('hud-quick-clone').appendTo('#hud-rail #menu');
+            });
+        }
 
         /* Libellés du tiroir : certains boutons du menu hérité sont
          * icône seule (le nom vit dans le title du lien) — sans copie,
@@ -1143,50 +1248,12 @@
         $('<span class="hud-rail-sep"></span>')
             .insertAfter($menu.children('a[href="forum.php?forum=Missives"]'));
 
-        /* Rail : chaque entrée ouvre son panneau indépendant
-         * (hors tutoriel — navigation normale). */
-        var RAIL_PANELS = {
-            'show-inventory': { url: 'load_inventory.php', title: 'Inventaire' },
-            'show-craft': { url: 'load_inventory.php?craft', title: 'Artisanat' },
-            'show-bank': { url: 'load_inventory.php?bank', title: 'Banque' },
-            'show-spells': { url: 'load_upgrades.php?spells', title: 'Sorts & Techniques' }
-        };
-
-        $(document).on('click', '#show-inventory, #show-craft, #show-bank, #show-spells', function (e) {
-            if (tutorialActive()) {
-                return;
-            }
-            e.preventDefault();
-            var entry = RAIL_PANELS[this.id];
-            togglePanel(entry.url, entry.title);
-        });
-
-        /* Rail : Profil en panneau (l'ancre de MenuView n'a pas d'id) */
-        $(document).on('click', '#hud-rail a[href="account.php"]', function (e) {
-            if (tutorialActive()) {
-                return;
-            }
-            e.preventDefault();
-            togglePanel('load_account.php', 'Profil');
-        });
-
-        /* Rail : Missives et Carte en panneaux — dernières entrées qui
-         * naviguaient encore vers des pages complètes (retour testeur). */
-        $(document).on('click', '#hud-rail a[href="forum.php?forum=Missives"]', function (e) {
-            if (tutorialActive()) {
-                return;
-            }
-            e.preventDefault();
-            togglePanel('load_forum.php?forum=Missives', 'Missives');
-        });
-
-        $(document).on('click', '#hud-rail a[href="map.php"]', function (e) {
-            if (tutorialActive()) {
-                return;
-            }
-            e.preventDefault();
-            togglePanel('load_map.php', 'Carte');
-        });
+        /* Rail : Inventaire, Artisanat, Banque, Sorts, Profil,
+         * Missives, Carte… — plus AUCUN gestionnaire dédié : leurs
+         * hrefs pleine-page ont tous un fragment (panelUrl), le
+         * routeur global de liens (plus bas) les ouvre en panneau.
+         * Seul Caractéristiques garde le sien (ancre href="#",
+         * bascule flyout pendant le tutoriel). */
 
         /* Rail : Caractéristiques en panneau (hors tutoriel).
          * On débranche le toggle flyout de MenuView et on route vers le
@@ -1230,7 +1297,7 @@
         });
 
         /* Panneaux persistés : rouvrir après un rechargement de page
-         * (déplacement, action…). */
+         * (déplacement, action…) — pile de retour comprise. */
         if (!tutorialActive()) {
             try {
                 var saved = JSON.parse(sessionStorage.getItem('hudPanels') || '[]');
@@ -1238,36 +1305,32 @@
             } catch (err) {
                 openPanels = [];
             }
+            try {
+                panelHistory = JSON.parse(sessionStorage.getItem('hudPanelHistory') || '[]');
+            } catch (err) {
+                panelHistory = [];
+            }
             if (openPanels.length) {
                 syncPanels();
                 reloadAllPanels();
             }
         }
 
-        /* Chip joueur : fiche perso en panneau. Sans fragment (href
-         * imprévu), navigation normale — openPanel(null) chargerait la
-         * page courante ENTIÈRE dans le panneau. */
-        $(document).on('click', '#hud-chip-name', function (e) {
+        /* ===== Routeur global de liens =====
+         * UN SEUL délégué : tout lien dont l'URL a un équivalent
+         * fragment (panelUrl) s'ouvre en panneau, où qu'il soit —
+         * rail, bandeau haut (chip, avatar, raccourcis), tiroir
+         * mobile, bandeau de sélection, flux, contenu de panneau.
+         * Dans un panneau, « Retour » (index.php) referme le panneau.
+         * Le reste (wiki, formulaires, récompenses, déconnexion…)
+         * navigue normalement. */
+        $(document).on('click', 'a[href]', function (e) {
             if (tutorialActive()) {
                 return;
             }
-            var fragment = panelUrl($(this).attr('href'));
-            if (!fragment) {
-                return;
-            }
-            e.preventDefault();
-            openPanel(fragment, 'Personnage');
-        });
-
-        /* Navigation interne aux panneaux : réécrire les liens
-         * panneau-compatibles (ouverture dans un slot libre — ex.
-         * Banque depuis l'Inventaire s'ouvre à côté), fermer sur
-         * « Retour » (index.php), laisser passer le reste (réputation,
-         * faction, wiki…). */
-        $('.hud-panel-content').on('click', 'a[href]', function (e) {
             var href = $(this).attr('href');
 
-            if (/^index\.php/.test(href)) {
+            if (/^index\.php/.test(href) && $(this).closest('.hud-panel-content').length) {
                 e.preventDefault();
                 closePanelAt($(this).closest('.hud-panel').data('slot'));
                 return;
@@ -1276,6 +1339,7 @@
             var fragment = panelUrl(href);
             if (fragment) {
                 e.preventDefault();
+                $('#hud').removeClass('hud--drawer-open');
                 togglePanel(fragment, panelTitle(href));
             }
         });
@@ -1284,11 +1348,13 @@
             closePanelAt($(this).closest('.hud-panel').data('slot'));
         });
 
+        $('.hud-panel-back').on('click', goBackPanel);
+
         /* Clic hors du panneau : fermeture (comme un popover). Sont
-         * exclus le panneau lui-même, tout ce qui OUVRE des panneaux
-         * (rail, chip joueur, liens de la sélection — sinon le même
-         * clic ferme ce qu'il vient d'ouvrir) et la modale de résultat
-         * (son fond se ferme déjà lui-même, le panneau reste). */
+         * exclus le panneau lui-même, le rail et la modale de résultat
+         * (son fond se ferme déjà lui-même, le panneau reste) — et
+         * tout lien qui OUVRE un panneau (même règle panelUrl que le
+         * routeur global : le clic qui vient d'ouvrir ne referme pas). */
         $(document).on('click', function (e) {
             if (!openPanels.length) {
                 return;
@@ -1302,28 +1368,15 @@
                 return;
             }
             if ($(e.target).closest(
-                '.hud-panel, #hud-rail, #hud-burger, #hud-chip-name,'
-                + ' #ajax-data a, #hud-action-modal'
+                '.hud-panel, #hud-rail, #hud-burger, #hud-action-modal'
             ).length) {
                 return;
             }
-            closePanelAt(openPanels.length - 1);
-        });
-
-        /* Bandeau de sélection : les liens panneau-compatibles (fiche
-         * de la cible…) ouvrent leur panneau au lieu de quitter la
-         * page — quitter le damier pour une fiche puis revenir perdait
-         * l'état du jeu (retour testeur). */
-        $('#ajax-data').on('click', 'a[href]', function (e) {
-            if (tutorialActive()) {
+            var $link = $(e.target).closest('a[href]');
+            if ($link.length && panelUrl($link.attr('href'))) {
                 return;
             }
-            var href = $(this).attr('href');
-            var fragment = panelUrl(href);
-            if (fragment) {
-                e.preventDefault();
-                togglePanel(fragment, panelTitle(href));
-            }
+            closePanelAt(openPanels.length - 1);
         });
 
         $(document).on('keydown', function (e) {

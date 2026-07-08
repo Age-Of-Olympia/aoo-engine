@@ -22,6 +22,10 @@ final class PanelView
         for ($slot = 0; $slot < self::SLOTS; $slot++) {
             echo '<aside class="hud-panel" id="hud-panel-' . $slot . '" data-slot="' . $slot . '" aria-hidden="true">'
                 . '<div class="hud-panel-head">'
+                /* Retour au panneau remplacé (Inventaire → Artisanat…) :
+                 * js/hud.js tient la pile et masque la flèche sans
+                 * historique. */
+                . '<button class="hud-panel-back" title="Panneau précédent" style="display:none;"><span class="ra ra-sideswipe"></span></button>'
                 . '<span class="hud-panel-title"></span>'
                 . '<button class="hud-panel-close" title="Fermer"><span class="ra ra-cancel"></span></button>'
                 . '</div>'

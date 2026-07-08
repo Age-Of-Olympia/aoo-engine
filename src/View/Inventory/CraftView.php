@@ -61,7 +61,7 @@ class CraftView
                     display: none;
                 }
             </style>
-            <script src="js/progressive_loader.js"></script>
+            <script src="js/progressive_loader.js?v=20260716"></script>
             <script>
                 $(document).ready(function() {
 
@@ -71,6 +71,14 @@ class CraftView
                     $('.item-case').click(function(e) {
 
                         e.preventDefault();
+
+                        /* HUD : rester dans le panneau Artisanat ;
+                         * habillage hérité : pleine page. */
+                        if(window.hudOpenPanel){
+
+                            window.hudOpenPanel('load_inventory.php?craft&itemId=' + $(this).data('id'), 'Artisanat');
+                            return;
+                        }
 
                         document.location = 'inventory.php?craft&itemId=' + $(this).data('id');
                     });
@@ -273,7 +281,7 @@ class CraftView
         echo Str::minify(ob_get_clean());
 
         ?>
-        <script src="js/progressive_loader.js"></script>
+        <script src="js/progressive_loader.js?v=20260716"></script>
         <script>
             $('input[type="button"]').click(function(e) {
 

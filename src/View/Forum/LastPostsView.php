@@ -13,6 +13,9 @@ use App\View\MenuView;
 
 class LastPostsView
 {
+    /** Rendu en fragment (panneau HUD) : pas d'enveloppe Ui/Infos/Menu. */
+    public static bool $fragment = false;
+
     public static function renderLastPosts(): void
     {
         $playerService = new PlayerService($_SESSION['playerId']);
@@ -20,10 +23,13 @@ class LastPostsView
         $player->get_data(false);
         ob_start();
 
-        $ui = new Ui('Derniers Messages du Forum');
+        if (!self::$fragment) {
 
-        InfosView::renderInfos($player);
-        MenuView::renderMenu();
+            $ui = new Ui('Derniers Messages du Forum');
+
+            InfosView::renderInfos($player);
+            MenuView::renderMenu();
+        }
 
         echo <<<HTML
         <h1>Derniers Messages du Forum</h1>

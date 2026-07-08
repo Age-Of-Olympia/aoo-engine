@@ -1,0 +1,157 @@
+<?php
+
+use App\Factory\PlayerFactory;
+use App\Service\PlayerPnjService;
+use App\Service\PlayerEffectService;
+use Classes\Db;
+use Classes\Str;
+
+/*
+ * Corps de la page des personnages secondaires, partagé entre la
+ * page complète (pnjs.php, enveloppe Ui) et le panneau glissant
+ * du HUD (load_pnjs.php). Contient aussi le POST de bascule de
+ * personnage (js/pnjs.js poste sur pnjs.php).
+ */
+
+
+$playerPnjService = new PlayerPnjService();
+
+
+$main = PlayerFactory::legacy($_SESSION['mainPlayerId']);
+
+
+$playersTbl = array(
+    $main->id=>$main
+);
+
+$hiddenPnjs = array();
+
+$playerPnjs = $playerPnjService->getByPlayerId($main->id);
+foreach($playerPnjs as $playerPnj ){
+    if($playerPnj->isDisplayed()){
+        $playersTbl[$playerPnj->getPnjId()] = PlayerFactory::legacy($playerPnj->getPnjId());
+    }else{
+        $hiddenPnjs[$playerPnj->getPnjId()] = PlayerFactory::legacy($playerPnj->getPnjId());
+    }
+}
+
+
+if(!empty($_POST['switch'])){
+
+    $db = new Db();
+    if(!isset($playersTbl[$_POST['switch']]) && !isset($hiddenPnjs[$_POST['switch']])){
+
+        exit('error pnj');
+    }
+
+    $_SESSION['playerId'] = $_POST['switch'];
+
+    // update lastLoginTime
+
+    $sql = 'UPDATE players SET lastLoginTime = ? WHERE id = ?';
+
+    $time = time();
+
+    $db->exe($sql, array($time, $_SESSION['playerId']));
+
+    exit();
+}
+
+
+echo '<section class="marbre pnj-container">';
+
+
+$playerEffectService = new PlayerEffectService();
+
+$allMails = $main->get_new_mails(true);
+foreach($playersTbl as $pnj){
+
+
+    $pnj->get_data();
+
+    $effectsTbl = array();
+
+    $playerEffects = $playerEffectService->getEffectsByPlayerId($pnj->id);
+    
+    foreach ($playerEffects as $effect){
+        
+        $endTime = '(reposez-vous)';
+
+        if(time() < $effect->getEndTime()){
+
+            $endTime = Str::convert_time($effect->getEndTime()- time());
+        }
+
+
+        if(!$effect->getEndTime()){
+
+            $endTime = '∞';
+        }
+
+        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span> <sup>'. $endTime .'</sup>';
+    }
+    
+    $raceJson = json()->decode('races', $pnj->data->race);
+
+
+    $mails = isset($allMails[$pnj->id]) ? $allMails[$pnj->id] : 0;
+
+    if($mails){
+
+
+        $mails = '<div class="cartouche bulle blink" data-id="'. $pnj->id .'">'. $mails .'</div>';
+    }
+    else{
+
+
+        $mails = '';
+    }
+
+
+    echo '
+    <article class="pnj" style="cursor: pointer; position:relative;" data-id="'. $pnj->id .'">
+        <div style="position: relative;">'. $mails .'
+            <div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div>
+            <img class="portrait" src="'. $pnj->data->portrait .'" /><br />
+            '. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />
+            '. ($raceJson?->name ?? '???') .'<br />Rang '. $pnj->data->rank .'</span>
+        </div>';
+    if($pnj->id!=$_SESSION['originalPlayerId']){  
+        echo '<div class="masquer-pnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $pnj->id .'" ><span class="ra ra-fall-down "/> masquer</div>';
+    }
+    echo '
+    </article>
+    ';
+}
+
+if(!empty($hiddenPnjs)){
+echo '
+</section>
+
+<section class="marbre pnj-container hidden-pnjs"><div id="display-hidden-pnjs" style="cursor:pointer"> + Afficher la liste des PNJs Masqués.</div>
+<div id="hidden-pnjs-list">
+';
+
+}
+foreach($hiddenPnjs as $hiddenPnj){
+    $hiddenPnj->get_data();
+    $raceJson = json()->decode('races', $hiddenPnj->data->race);  
+    $mails = isset($allMails[$hiddenPnj->id]) ? $allMails[$hiddenPnj->id] : 0;
+
+    if($mails){
+        $mails = '<span class="cartouche bulle-mini blink" data-id="'. $hiddenPnj->id .'">'. $mails .'</span>';
+    }else{
+        $mails = '';
+    }
+    echo '<div data-player-id="'. $_SESSION['playerId'] .'" data-id="'. $hiddenPnj->id .'" >'. $hiddenPnj->data->name .' - <span style="font-size: 88%;">mat.'. $hiddenPnj->id .' - 
+            '. ($raceJson?->name ?? '???') .' - Rang '. $hiddenPnj->data->rank .' '.$mails.'
+            <button class="showPnj" data-player-id="'. $_SESSION['originalPlayerId'] .'" data-id="'. $hiddenPnj->id .'">Afficher</button>
+            <button class="impersonate" data-id="'. $hiddenPnj->id .'">Jouer</button>
+            </div>';
+
+}
+echo '
+</div></section>'
+
+?>
+<script src="js/pnjs.js"></script>

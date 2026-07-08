@@ -20,7 +20,13 @@ use Classes\View;
  */
 final class InfosSheetView
 {
-    public static function render(Player $player, PlayerEntity $targetEntity): void
+    /**
+     * @param bool $hudPanel rendu en panneau glissant du HUD : l'équipement
+     *                       passe en alvéoles compactes (EquipmentSlotsView)
+     *                       au lieu de la table marbre pleine largeur.
+     *                       La page complète (infos.php) est inchangée.
+     */
+    public static function render(Player $player, PlayerEntity $targetEntity, bool $hudPanel = false): void
     {
         $playerEffectService = new PlayerEffectService();
 
@@ -136,6 +142,21 @@ final class InfosSheetView
             echo '<div class="secret-faction"><a href="faction.php?faction=' . $targetSecretFaction . '">' . $secretFactionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $secretFactionJson->raFont . '"></span> (<i>' . $secretFactionJson->role[$targetEntity->getSecretFactionRole()]->name . '</i>) </div>';
         }
 
+        /* Dieu vénéré — sur sa propre fiche uniquement (la foi ne
+         * regarde personne d'autre). Le dieu est un personnage : lien
+         * vers sa fiche, bougie de l'action Vénérer en rappel. */
+        if ($player->id == $targetEntity->getId() && $targetEntity->getGodId() != 0) {
+
+            try {
+                $god = \App\Factory\PlayerFactory::legacy($targetEntity->getGodId());
+                $god->get_data(false);
+
+                echo '<div class="infos-god">Vénère <a href="infos.php?targetId=' . $god->id . '">' . $god->data->name . '</a> <span style="font-size: 1.3em" class="ra ra-candle"></span></div>';
+            } catch (\Throwable $e) {
+                /* godId orphelin (dieu supprimé) : la fiche reste muette. */
+            }
+        }
+
         echo '<img src="' . $targetEntity->getAvatar() . '" />';
 
 
@@ -174,6 +195,17 @@ final class InfosSheetView
 
         if ($player->coords->plan == $targetCoords->plan && $distance <= $caracsJson->p) {
 
+
+            if ($hudPanel) {
+
+                echo '
+                <tr>
+                    <td colspan="2">
+                        ' . EquipmentSlotsView::render($targetEntity->getId()) . '
+                    </td>
+                </tr>
+                ';
+            } else {
 
             echo '
             <tr>
@@ -224,6 +256,7 @@ final class InfosSheetView
                 </td>
             </tr>
             ';
+            }
         }
 
         echo '

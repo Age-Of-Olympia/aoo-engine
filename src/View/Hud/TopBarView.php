@@ -89,8 +89,17 @@ final class TopBarView
             . '<sup>' . self::nextTurn($player) . '</sup>'
             . '</div>';
 
-        echo '<div class="hud-quick">'
-            . '<a href="classements.php" title="Classements"><button class="hud-quick-icon"><span class="ra ra-trophy"></span></button></a>'
+        echo '<div class="hud-quick">';
+
+        /* Panneau d'administration (/admin : actions, tutoriel,
+         * joueurs…) pour les super-administrateurs. La console texte
+         * reste sur la touche ² et la page Profil. */
+        if ($player->have_option('isSuperAdmin')) {
+            echo '<a href="admin/" title="Panneau d\'administration">'
+                . '<button class="hud-quick-icon"><span class="ra ra-cog"></span></button></a>';
+        }
+
+        echo '<a href="classements.php" title="Classements"><button class="hud-quick-icon"><span class="ra ra-trophy"></span></button></a>'
             . '<a href="forum.php?lastPosts" title="' . self::lastPostTitle($player) . '"><button>Forum</button></a>'
             . '<a href="index.php?menu" title="Menu principal"><button><span class="ra ra-castle-flag"></span></button></a>'
             . '<a href="index.php?logout" title="Se déconnecter"><button>Déconnexion</button></a>'
@@ -146,6 +155,11 @@ final class TopBarView
             }
         }
 
-        return htmlspecialchars(strip_tags((string) $lastPost), ENT_QUOTES);
+        /* Le texte stocké contient déjà des entités HTML (htmlentities
+         * dans Forum::refresh_last_posts) : on les décode avant de ré-échapper,
+         * sinon l'info-bulle affiche « D&eacute;cision » littéralement. */
+        $text = html_entity_decode(strip_tags((string) $lastPost), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return htmlspecialchars($text, ENT_QUOTES);
     }
 }
