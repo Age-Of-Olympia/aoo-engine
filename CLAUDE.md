@@ -493,6 +493,13 @@ define('DB_CONSTANTS', array(
 ));
 ```
 
+3. **`config/onesignal_constants.php`** (from `config/onesignal_constants.php.exemple`) — optionnel, chargé via `file_exists()` dans `config.php` ; absent/vide → provider de contacts mail no-op. Ne jamais commiter les clés (fichier gitignoré, même pattern que `db_constants.php`) :
+```php
+define('ONESIGNAL_APP_ID', '');       // Dashboard OneSignal → Settings → Keys & IDs
+define('ONESIGNAL_REST_API_KEY', '');
+define('MAIL_CONTACT_PROVIDER', 'onesignal');
+```
+
 ## CI/CD Pipeline
 
 GitLab CI with multiple stages (`.gitlab-ci.yml`):

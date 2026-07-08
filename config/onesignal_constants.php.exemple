@@ -1,0 +1,12 @@
+<?php
+
+/*
+ * Copier vers config/onesignal_constants.php (gitignoré) et remplir depuis le
+ * dashboard OneSignal (Settings → Keys & IDs). Vide/absent -> provider no-op.
+ */
+
+define('ONESIGNAL_APP_ID', '');
+define('ONESIGNAL_REST_API_KEY', '');
+
+/* Fournisseur de contacts (cf. MailContactProviderFactory). */
+define('MAIL_CONTACT_PROVIDER', 'onesignal');

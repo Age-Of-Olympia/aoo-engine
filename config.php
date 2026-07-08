@@ -41,6 +41,10 @@ session_start();
 
 require_once(__DIR__.'/config/constants.php');
 require_once(__DIR__.'/config/db_constants.php');
+// Identifiants OneSignal (optionnel) ; absent -> provider no-op.
+if(file_exists(__DIR__.'/config/onesignal_constants.php')){
+    require_once(__DIR__.'/config/onesignal_constants.php');
+}
 require_once(__DIR__.'/config/bootstrap.php');
 require_once(__DIR__.'/config/functions.php');
 

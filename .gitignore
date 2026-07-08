@@ -3,6 +3,7 @@ wiki/
 datas/
 img/
 config/db_constants.php
+config/onesignal_constants.php
 sessions/
 db/updates_done/
 /data/

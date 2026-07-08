@@ -139,7 +139,10 @@ if(!empty($_POST['option'])){
 
         if($wasEnabled){
 
-            $deletionService->cancelDeletion($player->id);
+            $deletionService->cancelDeletion(
+                $player->id,
+                $player->data->plain_mail ?? null
+            );
         }
         else{
 
