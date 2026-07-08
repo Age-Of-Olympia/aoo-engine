@@ -31,6 +31,15 @@ class ForumHomeView
 
         echo '<h1>Forums</h1>';
 
+        /* Pastilles orange : sujets non lus par forum, sommés sur la
+         * catégorie — même couleur que la pastille du bouton Forum. */
+        $unreadByForum = (new \App\Service\ForumService())->GetUnreadCountByForum($player);
+
+        $unreadBadge = function (int $n): string {
+            return $n > 0
+                ? ' <span class="cartouche bulle-mini forum-unread-mini" style="background:#d9720f;">' . $n . '</span>'
+                : '';
+        };
 
         echo '
 <table border="0" align="center" width="500">
@@ -43,10 +52,16 @@ class ForumHomeView
             $catJson = json()->decode('forum', 'categories/' . $cat);
 
 
+            $catUnread = 0;
+            foreach ($catJson->forums as $forum) {
+                $catUnread += $unreadByForum[$forum->name] ?? 0;
+            }
+
+
             echo '
         <tr>
             <th width="50" height="50"></th>
-            <th>' . $catJson->name . '</th>
+            <th>' . $catJson->name . $unreadBadge($catUnread) . '</th>
             <th width="1%">Sujets</th>
         </tr>
         ';
@@ -90,7 +105,7 @@ class ForumHomeView
                     ';
 
 
-                echo '' . $forJson->name . '';
+                echo '' . $forJson->name . $unreadBadge($unreadByForum[$forJson->name] ?? 0) . '';
 
 
                 echo '

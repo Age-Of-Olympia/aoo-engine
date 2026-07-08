@@ -101,8 +101,9 @@ final class TopBarView
 
         /* Badge orange : sujets de forum non lus (les missives ont déjà
          * leurs pastilles rouge — personnage courant — et bleue —
-         * autres personnages). */
-        $forumUnread = self::unreadForumCount($player);
+         * autres personnages). Rafraîchi à chaud par js/hud.js via
+         * check_forum.php quand un sujet est lu en panneau. */
+        $forumUnread = (new \App\Service\ForumService())->GetUnreadCount($player);
         $forumBadge = $forumUnread > 0
             ? '<span id="forum-unread-badge" class="cartouche bulle">' . $forumUnread . '</span>'
             : '';
@@ -148,32 +149,6 @@ final class TopBarView
 
         return 'Prochain tour à <a href="#" id="next-turn-timer" title="dans ' . $timeToNextTurn . '">'
             . date('H:i', $player->data->nextTurnTime) . '</a>' . $adminInfos;
-    }
-
-    /**
-     * Sujets de forum non lus (catégories RP / Privés / HRP — les
-     * Missives ont leurs propres pastilles). Le décompte lit tous les
-     * JSONs de sujets : cache de session, invalidé par Forum::put_view
-     * dès qu'un sujet est lu, et au bout d'une minute (nouveaux posts).
-     */
-    private static function unreadForumCount(Player $player): int
-    {
-        $cache = $_SESSION['forumUnreadCache'] ?? null;
-
-        if (is_array($cache) && $cache['playerId'] === $player->id && $cache['time'] > time() - 60) {
-
-            return $cache['n'];
-        }
-
-        try {
-            $n = count((new \App\Service\ForumService())->GetAllUnreadTopics($player));
-        } catch (\Throwable $e) {
-            $n = 0;
-        }
-
-        $_SESSION['forumUnreadCache'] = ['playerId' => $player->id, 'time' => time(), 'n' => $n];
-
-        return $n;
     }
 
     /** Extrait du dernier message du forum (général ou faction), pour l'info-bulle. */

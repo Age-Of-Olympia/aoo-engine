@@ -121,7 +121,8 @@
      * max-width 650px hérités du SVG ne se battent pas en CSS seul.
      * damierZoom (boutons +/− du cadre) multiplie la taille ajustée :
      * à 1 tout tient, au-delà le cadre défile (recentré sur soi).
-     * Mobile : pincement natif inchangé, pas de boutons.
+     * Mobile : pas de boutons — le pincement sur le plateau pilote le
+     * même damierZoom (initPinchZoom), la page ne zoome pas.
      */
     var damierZoom = 1;
     var DAMIER_ZOOM_MAX = 2.5;
@@ -180,7 +181,10 @@
             return;
         }
 
-        if (isMobileViewport()) {
+        /* Mobile non zoomé : mise en page naturelle du SVG. Zoomé
+         * (pincement, initPinchZoom) : même dimensionnement explicite
+         * que le desktop, le cadre défile. */
+        if (isMobileViewport() && damierZoom <= 1) {
             svg.style.width = '';
             svg.style.height = '';
             svg.style.maxWidth = '';
@@ -459,6 +463,61 @@
                     $layer.toggleClass('hud-layer--on');
                 });
         });
+    }
+
+    /*
+     * Pincement sur le plateau (mobile/tactile) : le geste pilote
+     * damierZoom — SEUL le plateau zoome, la page ne bouge pas
+     * (touch-action pan-x pan-y sur #game-map + preventDefault du
+     * geste à deux doigts ; un pincement HORS du plateau garde le
+     * zoom de page natif, accessibilité oblige). rAF-throttlé :
+     * setDamierZoom recale masques et marqueurs à chaque pas.
+     */
+    function initPinchZoom() {
+        var map = document.getElementById('game-map');
+        if (!map) {
+            return;
+        }
+
+        var pinch = null;
+        var rafPending = false;
+
+        function dist(touches) {
+            var dx = touches[0].clientX - touches[1].clientX;
+            var dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy) || 1;
+        }
+
+        map.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                pinch = { d: dist(e.touches), z: damierZoom };
+            }
+        }, { passive: true });
+
+        map.addEventListener('touchmove', function (e) {
+            if (!pinch || e.touches.length !== 2) {
+                return;
+            }
+            e.preventDefault();
+            var target = pinch.z * dist(e.touches) / pinch.d;
+            if (!rafPending) {
+                rafPending = true;
+                requestAnimationFrame(function () {
+                    rafPending = false;
+                    setDamierZoom(target);
+                });
+            }
+        }, { passive: false });
+
+        map.addEventListener('touchend', function (e) {
+            if (e.touches.length < 2) {
+                pinch = null;
+            }
+        }, { passive: true });
+
+        map.addEventListener('touchcancel', function () {
+            pinch = null;
+        }, { passive: true });
     }
 
     function initDamierZoom() {
@@ -999,6 +1058,27 @@
         return 1;
     }
 
+    /* Pastille orange du bouton Forum (bandeau haut + clone du
+     * tiroir) : recomptée côté serveur — Forum::put_view vient
+     * d'invalider le cache, la lecture se reflète sans rechargement. */
+    function refreshForumBadge() {
+        $.get('check_forum.php').done(function (data) {
+            var n = data && typeof data.n === 'number' ? data.n : 0;
+            var $badges = $('[id="forum-unread-badge"]');
+
+            if (n < 1) {
+                $badges.remove();
+                return;
+            }
+            if ($badges.length) {
+                $badges.text(n);
+                return;
+            }
+            $('#hud-topbar a[href="forum.php"] > button, #hud-rail a.hud-quick-clone[href="forum.php"] > button')
+                .append('<span id="forum-unread-badge" class="cartouche bulle">' + n + '</span>');
+        });
+    }
+
     function loadPanelContent(slot, url) {
         var $content = $('#hud-panel-' + slot + ' .hud-panel-content');
         $content.html('Chargement…');
@@ -1006,12 +1086,15 @@
             .done(function (data) {
                 $content.html(data);
 
-                /* Ouvrir un fil de missive le marque « vu » côté
-                 * serveur (Forum::put_view au rendu) : les badges se
-                 * rafraîchissent tout de suite, pas au poll de 60 s. */
-                if (/^load_forum\.php\?topic=/.test(url)
-                    && typeof window.refreshMailBadges === 'function') {
-                    window.refreshMailBadges();
+                /* Ouvrir un fil le marque « vu » côté serveur
+                 * (Forum::put_view au rendu) : pastilles missives ET
+                 * forum se rafraîchissent tout de suite, pas au poll
+                 * de 60 s ni au prochain rechargement. */
+                if (/^load_forum\.php\?topic=/.test(url)) {
+                    if (typeof window.refreshMailBadges === 'function') {
+                        window.refreshMailBadges();
+                    }
+                    refreshForumBadge();
                 }
             })
             .fail(function () {
@@ -1557,6 +1640,7 @@
         fitMinimap();
         centerMap();
         initDamierZoom();
+        initPinchZoom();
         initTheaterMode();
         initSelectionMemory();
         initMapLayers();
