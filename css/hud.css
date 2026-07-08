@@ -320,6 +320,15 @@ body:has(#hud) {
     visibility: hidden;
 }
 
+/* Clones mobiles des raccourcis du bandeau haut (js/hud.js
+ * initMobile) : réservés au tiroir — jamais sur le rail desktop. */
+@media (min-width: 1024px) {
+
+    #hud-rail .hud-quick-clone {
+        display: none;
+    }
+}
+
 /* Séparateurs de groupes (posés par js/hud.js) : la vue / le
  * personnage / le monde / le compte */
 #hud-rail .hud-rail-sep {

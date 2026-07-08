@@ -446,6 +446,12 @@
                         }
                         return;
                     }
+                    /* Bordure graduée : dessinée côté client, bascule
+                     * à chaud — buildMapRulers lit l'état du popover. */
+                    if (option === 'hideBoardCoords') {
+                        buildMapRulers();
+                        return;
+                    }
                     document.location.reload();
                 })
                 .fail(function () {
@@ -591,6 +597,15 @@
         }
         if (svg.dataset.origViewbox) {
             svg.setAttribute('viewBox', svg.dataset.origViewbox);
+        }
+
+        /* Option d'affichage (popover calques) : bordure graduée
+         * masquée — le nettoyage ci-dessus a déjà rendu la planche
+         * nue, on recale juste les masques météo sur le viewBox
+         * d'origine. */
+        if ($('.hud-layer[data-option="hideBoardCoords"]').hasClass('hud-layer--on')) {
+            fitWeatherMasks();
+            return;
         }
 
         var cols = {};
@@ -1057,6 +1072,19 @@
 
     function initMobile() {
 
+        /* Raccourcis du bandeau haut (console admin, classements,
+         * forum, menu principal, déconnexion) : le CSS mobile masque
+         * .hud-quick, ils étaient inatteignables — clones en fin de
+         * tiroir, après un séparateur. Le rail desktop les ignore
+         * (CSS ≥1024px sur .hud-quick-clone). */
+        var $quick = $('#hud-topbar .hud-quick a');
+        if ($quick.length) {
+            $('<span class="hud-rail-sep hud-quick-clone"></span>').appendTo('#hud-rail #menu');
+            $quick.each(function () {
+                $(this).clone().addClass('hud-quick-clone').appendTo('#hud-rail #menu');
+            });
+        }
+
         /* Libellés du tiroir : certains boutons du menu hérité sont
          * icône seule (le nom vit dans le title du lien) — sans copie,
          * le tiroir mélangeait entrées nommées et pictogrammes muets.
@@ -1310,18 +1338,19 @@
             }
             if ($(e.target).closest(
                 '.hud-panel, #hud-rail, #hud-burger, #hud-chip-name,'
-                + ' #ajax-data a, #hud-action-modal'
+                + ' #ajax-data a, #hud-side a, #hud-action-modal'
             ).length) {
                 return;
             }
             closePanelAt(openPanels.length - 1);
         });
 
-        /* Bandeau de sélection : les liens panneau-compatibles (fiche
-         * de la cible…) ouvrent leur panneau au lieu de quitter la
-         * page — quitter le damier pour une fiche puis revenir perdait
-         * l'état du jeu (retour testeur). */
-        $('#ajax-data').on('click', 'a[href]', function (e) {
+        /* Bandeau de sélection et flux du panneau latéral : les liens
+         * panneau-compatibles (fiche d'un personnage nommé dans un
+         * évènement…) ouvrent leur panneau au lieu de quitter la page —
+         * quitter le damier pour une fiche puis revenir perdait l'état
+         * du jeu (retour testeur). */
+        $('#ajax-data, #hud-side').on('click', 'a[href]', function (e) {
             if (tutorialActive()) {
                 return;
             }
