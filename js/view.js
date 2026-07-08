@@ -90,6 +90,16 @@ $(document).ready(function(){
 
         $('#admin-coords').html(html);
 
+        /* La boîte se pose à l'endroit du clic (bornée aux bords de
+         * l'écran), plus au coin fixe de la page. */
+        var box = document.getElementById('admin-coords');
+        box.style.right = 'auto';
+        box.style.bottom = 'auto';
+        var bx = Math.min(e.clientX + 10, window.innerWidth - box.offsetWidth - 12);
+        var by = Math.min(e.clientY + 10, window.innerHeight - box.offsetHeight - 12);
+        box.style.left = Math.max(6, bx) + 'px';
+        box.style.top = Math.max(6, by) + 'px';
+
         // Bind close button
         $('#admin-coords-close').off('click').on('click', function(e) {
             e.stopPropagation();
