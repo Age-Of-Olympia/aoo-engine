@@ -2187,3 +2187,37 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
 .hud-feed-item--ok { background: rgba(102, 204, 255, 0.07); border-left-color: rgba(80, 170, 220, 0.55); }
 .hud-feed-item--ko { background: rgba(200, 40, 30, 0.06); border-left-color: rgba(180, 40, 30, 0.55); }
 .hud-feed-item--na { background: rgba(235, 160, 30, 0.07); border-left-color: rgba(210, 140, 25, 0.55); }
+
+/* ---------- Outil de coordonnées (clic droit sur une case) ----------
+ * Feuille papier posée à l'endroit du clic (js/view.js), boutons
+ * parchemin — la boîte blanche héritée reste aux autres habillages. */
+body:has(#hud) #admin-coords {
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 8px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+    color: var(--hud-ink);
+    padding: 24px 12px 10px;
+}
+
+body:has(#hud) #admin-coords button {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 6px;
+    color: var(--hud-ink);
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+body:has(#hud) #admin-coords button:hover {
+    background: #fdf6e5;
+}
+
+body:has(#hud) #admin-coords #admin-coords-close {
+    background: none;
+    border: none;
+    color: var(--hud-ink);
+    padding: 0;
+    width: 20px;
+    height: 20px;
+}
