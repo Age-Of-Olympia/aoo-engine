@@ -897,11 +897,11 @@
         if (href === 'account.php') {
             return 'load_account.php';
         }
-        /* Forum : liste de sujets, fils et derniers messages en
-         * fragments (Missives dans son panneau, navigation interne
-         * comprise) ; répondre, éditer et créer un sujet restent
-         * plein-page (formulaires). */
-        if (/^forum\.php\?(forum=|topic=|lastPosts)/.test(href)) {
+        /* Forum : accueil (catégories), listes de sujets, fils et
+         * derniers messages en fragments (Missives dans son panneau,
+         * navigation interne comprise) ; répondre, éditer, créer un
+         * sujet et la recherche restent plein-page (formulaires). */
+        if (href === 'forum.php' || /^forum\.php\?(forum=|topic=|lastPosts)/.test(href)) {
             return href.replace(/^forum\.php/, 'load_forum.php');
         }
         /* Carte : la vue simple en panneau ; les pages avec options
@@ -956,7 +956,7 @@
         if (href.indexOf('account') !== -1) {
             return 'Profil';
         }
-        if (href.indexOf('lastPosts') !== -1) {
+        if (href === 'forum.php' || href.indexOf('lastPosts') !== -1) {
             return 'Forum';
         }
         if (href.indexOf('faction') !== -1) {

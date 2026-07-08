@@ -99,8 +99,18 @@ final class TopBarView
                 . '<button class="hud-quick-icon"><span class="ra ra-cog"></span></button></a>';
         }
 
+        /* Badge orange : sujets de forum non lus (les missives ont déjà
+         * leurs pastilles rouge — personnage courant — et bleue —
+         * autres personnages). */
+        $forumUnread = self::unreadForumCount($player);
+        $forumBadge = $forumUnread > 0
+            ? '<span id="forum-unread-badge" class="cartouche bulle">' . $forumUnread . '</span>'
+            : '';
+
         echo '<a href="classements.php" title="Classements"><button class="hud-quick-icon"><span class="ra ra-trophy"></span></button></a>'
-            . '<a href="forum.php?lastPosts" title="' . self::lastPostTitle($player) . '"><button>Forum</button></a>'
+            /* Le bouton mène à l'ACCUEIL du forum (catégories) ; les
+             * derniers messages y restent à un clic. */
+            . '<a href="forum.php" title="' . self::lastPostTitle($player) . '"><button>Forum' . $forumBadge . '</button></a>'
             . '<a href="index.php?menu" title="Menu principal"><button><span class="ra ra-castle-flag"></span></button></a>'
             . '<a href="index.php?logout" title="Se déconnecter"><button>Déconnexion</button></a>'
             . '</div>';
@@ -138,6 +148,32 @@ final class TopBarView
 
         return 'Prochain tour à <a href="#" id="next-turn-timer" title="dans ' . $timeToNextTurn . '">'
             . date('H:i', $player->data->nextTurnTime) . '</a>' . $adminInfos;
+    }
+
+    /**
+     * Sujets de forum non lus (catégories RP / Privés / HRP — les
+     * Missives ont leurs propres pastilles). Le décompte lit tous les
+     * JSONs de sujets : cache de session, invalidé par Forum::put_view
+     * dès qu'un sujet est lu, et au bout d'une minute (nouveaux posts).
+     */
+    private static function unreadForumCount(Player $player): int
+    {
+        $cache = $_SESSION['forumUnreadCache'] ?? null;
+
+        if (is_array($cache) && $cache['playerId'] === $player->id && $cache['time'] > time() - 60) {
+
+            return $cache['n'];
+        }
+
+        try {
+            $n = count((new \App\Service\ForumService())->GetAllUnreadTopics($player));
+        } catch (\Throwable $e) {
+            $n = 0;
+        }
+
+        $_SESSION['forumUnreadCache'] = ['playerId' => $player->id, 'time' => time(), 'n' => $n];
+
+        return $n;
     }
 
     /** Extrait du dernier message du forum (général ou faction), pour l'info-bulle. */

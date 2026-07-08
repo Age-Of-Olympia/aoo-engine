@@ -46,6 +46,10 @@ class Forum{
 
         Json::write_json('datas/private/forum/topics/'. $topJson->name .'.json', $data);
 
+        /* Un sujet vient d'être lu : le badge forum du bandeau haut
+         * (TopBarView::unreadForumCount) recompte au prochain rendu. */
+        unset($_SESSION['forumUnreadCache']);
+
         if($topJson->forum_id == 'Missives')
         {
             // put viewed in db

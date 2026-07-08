@@ -10,13 +10,20 @@ use App\View\MenuView;
 
 class ForumHomeView
 {
+    /** Rendu en fragment (panneau HUD) : pas d'enveloppe Ui/Infos/Menu. */
+    public static bool $fragment = false;
+
     public static function renderHomeView(): void
     {
-        $ui = new Ui('Forum');
         $player = PlayerFactory::active();
         $player->get_data(false);
-        InfosView::renderInfos($player);
-        MenuView::renderMenu();
+
+        if (!self::$fragment) {
+
+            $ui = new Ui('Forum');
+            InfosView::renderInfos($player);
+            MenuView::renderMenu();
+        }
 
 
         ob_start();
@@ -114,7 +121,7 @@ class ForumHomeView
 ';
 
 
-        echo '<div><a href="forum.php?search"><button>Recherche</button></a></div>';
+        echo '<div><a href="forum.php?lastPosts"><button>Derniers messages</button></a> <a href="forum.php?search"><button>Recherche</button></a></div>';
 
 
 ?>
@@ -123,7 +130,17 @@ class ForumHomeView
 
                 $('.forum').click(function(e) {
 
-                    document.location = 'forum.php?forum=' + $(this).data('forum');
+                    var forum = $(this).data('forum');
+
+                    /* HUD : le forum s'ouvre dans le panneau (le nom du
+                     * forum en titre) ; habillage hérité : pleine page. */
+                    if(window.hudOpenPanel){
+
+                        window.hudOpenPanel('load_forum.php?forum=' + encodeURIComponent(forum), forum);
+                        return;
+                    }
+
+                    document.location = 'forum.php?forum=' + forum;
                 });
             });
         </script>

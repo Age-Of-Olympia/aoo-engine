@@ -1,5 +1,6 @@
 <?php
 
+use App\View\Forum\ForumHomeView;
 use App\View\Forum\ForumView;
 use App\View\Forum\LastPostsView;
 use App\View\Forum\TopicView;
@@ -40,4 +41,6 @@ if (isset($_GET['lastPosts'])) {
     exit();
 }
 
-exit('error fragment');
+/* Sans paramètre : l'accueil du forum (catégories et forums). */
+ForumHomeView::$fragment = true;
+ForumHomeView::renderHomeView();

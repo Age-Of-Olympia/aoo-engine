@@ -2148,6 +2148,25 @@ body:has(#hud) .aoo-dialog-buttons button:hover {
     top: -5px;
 }
 
+/* Badge forum (sujets non lus, TopBarView) : orange — la légende des
+ * pastilles : rouge = missives du personnage, bleu = missives des
+ * autres personnages, orange = forum. Coin haut-droit du bouton
+ * Forum, bandeau haut comme clone du tiroir mobile. */
+.hud-quick a > button,
+#hud-rail .hud-quick-clone > button {
+    position: relative;
+}
+
+#forum-unread-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    left: auto;
+    background: #d9720f;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 /* Écho du badge missives sur le burger mobile (main.js) */
 #hud-burger {
     position: relative;
