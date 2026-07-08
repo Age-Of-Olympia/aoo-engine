@@ -195,6 +195,46 @@
         svg.style.width = side + 'px';
         svg.style.height = side + 'px';
         svg.style.maxWidth = 'none';
+
+        fitWeatherMasks();
+    }
+
+    /*
+     * Masques météo (.view-mask — brume, nuages) : calés EXACTEMENT
+     * sur la planche. Leur width/height 100 % (et le max-width 650
+     * hérité, inline) se résolvaient sur le conteneur — trop large en
+     * vue standard, trop étroit au théâtre. La planche n'occupe pas
+     * tout le SVG : la marge graduée (buildMapRulers) agrandit le
+     * viewBox, le masque se réduit et se décale d'autant.
+     */
+    function fitWeatherMasks() {
+        var svg = document.getElementById('svg-view');
+        var $masks = $('#view .view-mask');
+        if (!svg || !$masks.length) {
+            return;
+        }
+
+        if (isMobileViewport()) {
+            $masks.css({ width: '', height: '', maxWidth: '', maxHeight: '', top: '' });
+            return;
+        }
+
+        var sidePx = parseFloat(svg.style.width);
+        if (!sidePx) {
+            return;
+        }
+
+        var vb = (svg.getAttribute('viewBox') || '0 0 650 650').split(/[ ,]+/).map(Number);
+        var orig = (svg.dataset.origViewbox || svg.getAttribute('viewBox') || '0 0 650 650').split(/[ ,]+/).map(Number);
+        var scale = sidePx / vb[2];
+
+        $masks.css({
+            width: (orig[2] * scale) + 'px',
+            height: (orig[3] * scale) + 'px',
+            maxWidth: 'none',
+            maxHeight: 'none',
+            top: ((orig[1] - vb[1]) * scale) + 'px'
+        });
     }
 
     /* Les ⛔ (option showBlockedTiles) sont dessinés par view.js AVANT
@@ -628,6 +668,9 @@
         });
 
         svg.appendChild(g);
+
+        /* Le viewBox vient de changer : recaler les masques météo. */
+        fitWeatherMasks();
     }
 
     /*
