@@ -374,6 +374,10 @@ body:has(#hud) #load-caracs {
     display: grid;
     place-items: center;
     text-align: center;
+    /* Pincement : le plateau zoome SEUL (js/hud.js initPinchZoom) —
+     * pan à un doigt conservé, mais le navigateur ne démarre pas de
+     * zoom de PAGE depuis le plateau. Ailleurs, zoom natif intact. */
+    touch-action: pan-x pan-y;
     /* Cadre de planche cartographique : double filet bronze, puis un
      * filet gravé en retrait (l'outline reste collée à la boîte, elle
      * ne défile pas avec la carte). Les ornements de ferronnerie
