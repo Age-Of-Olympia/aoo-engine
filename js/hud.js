@@ -437,33 +437,52 @@
         $('#hud-layers-pop').on('click', '.hud-layer', function () {
             var $layer = $(this);
             var option = $layer.data('option');
-            $layer.toggleClass('hud-layer--on');
+            var willBeOn = !$layer.hasClass('hud-layer--on');
 
             $.post('account.php', { option: option })
                 .done(function () {
-                    if (option === 'showBlockedTiles') {
-                        window.showBlockedTiles = $layer.hasClass('hud-layer--on');
-                        if (window.showBlockedTiles) {
-                            redrawBlockedMarkers();
-                        } else if (typeof window.clearBlockedTileMarkers === 'function') {
-                            window.clearBlockedTileMarkers('blocked-tile-marker');
-                        }
-                        return;
-                    }
-                    /* Bordure graduée : dessinée côté client, bascule
-                     * à chaud — buildMapRulers lit l'état du popover. */
-                    if (option === 'hideBoardCoords') {
-                        buildMapRulers();
-                        return;
-                    }
-                    document.location.reload();
-                })
-                .fail(function () {
-                    /* Échec serveur : la bascule revient à son état. */
-                    $layer.toggleClass('hud-layer--on');
+                    window.hudApplyBoardOption(option, willBeOn);
                 });
         });
     }
+
+    /* Options d'affichage du plateau — liste partagée entre le popover
+     * de calques et les options du panneau Profil (js/account.js). */
+    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords'];
+
+    /*
+     * Applique côté client une option de plateau que le serveur vient
+     * de basculer : synchronise le popover de calques (buildMapRulers
+     * lit son état), applique à chaud ce qui peut l'être, recharge la
+     * vue sinon (les panneaux persistent). Renvoie false pour une
+     * option étrangère au plateau — l'appelant garde alors son
+     * comportement. Exposée : le panneau Profil rafraîchit ainsi le
+     * plateau exactement comme le popover.
+     */
+    window.hudApplyBoardOption = function (option, isOn) {
+        if (BOARD_OPTIONS.indexOf(option) === -1) {
+            return false;
+        }
+
+        $('.hud-layer[data-option="' + option + '"]').toggleClass('hud-layer--on', isOn);
+
+        if (option === 'showBlockedTiles') {
+            window.showBlockedTiles = isOn;
+            if (isOn) {
+                redrawBlockedMarkers();
+            } else if (typeof window.clearBlockedTileMarkers === 'function') {
+                window.clearBlockedTileMarkers('blocked-tile-marker');
+            }
+            return true;
+        }
+        /* Bordure graduée : dessinée côté client, bascule à chaud. */
+        if (option === 'hideBoardCoords') {
+            buildMapRulers();
+            return true;
+        }
+        document.location.reload();
+        return true;
+    };
 
     /*
      * Pincement sur le plateau (mobile/tactile) : le geste pilote
