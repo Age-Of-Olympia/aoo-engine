@@ -23,4 +23,4 @@ if ($targetEntity === null) {
     exit('error target id');
 }
 
-InfosSheetView::render($player, $targetEntity);
+InfosSheetView::render($player, $targetEntity, hudPanel: true);

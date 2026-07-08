@@ -51,7 +51,10 @@
 
     function updateEventsBadge() {
         var lastSeen = parseInt(localStorage.getItem(SEEN_KEY), 10) || 0;
-        var unread = $('#hud-feed-events .hud-feed-item').filter(function () {
+        /* Nos propres actions (data-own, FeedRenderer) ne sont jamais
+         * « non lues » : le badge ne signale que ce que les autres
+         * nous font. */
+        var unread = $('#hud-feed-events .hud-feed-item').not('[data-own]').filter(function () {
             return parseInt($(this).data('time'), 10) > lastSeen;
         }).length;
 
@@ -813,6 +816,10 @@
                     .append($infos)
             );
         }
+
+        /* Équipement porté (observe.php, personnage sélectionné) :
+         * colonne dédiée de la grille, écrans larges seulement (CSS). */
+        $sel.append($d.children('.equip-strip'));
 
         $sel.append($d.children('#case-coords'));
 

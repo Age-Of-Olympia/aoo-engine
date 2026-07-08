@@ -62,8 +62,12 @@ final class FeedRenderer
             $planName = is_object($planJson) ? $planJson->name : '?';
 
             /* data-time : js/hud.js s'en sert pour le compteur d'évènements
-             * non lus (comparaison au dernier passage, localStorage). */
-            echo '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '">'
+             * non lus (comparaison au dernier passage, localStorage).
+             * data-own : nos propres actions ne comptent pas comme non
+             * lues — seul ce que les autres nous font mérite le badge. */
+            $own = ((int) $e->player_id === (int) $player->id) ? ' data-own="1"' : '';
+
+            echo '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '"' . $own . '>'
                 . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
                 . '<div class="hud-feed-meta">'
                 . self::authorName($playerService, (int) $e->player_id)

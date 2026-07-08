@@ -58,14 +58,27 @@ final class UpgradesView
         return $total;
     }
 
-    public static function render(Player $player): void
+    /**
+     * @param bool $hudPanel rendu en panneau du HUD : la colonne
+     *                       « Reste » disparaît (les pilules du bandeau
+     *                       haut l'affichent déjà) et « Coût » fusionne
+     *                       avec le +1 en un bouton « Améliorer (X Pi) ».
+     *                       La page héritée (upgrades.php) est inchangée.
+     */
+    public static function render(Player $player, bool $hudPanel = false): void
     {
         ob_start();
 
         echo '
         <table class="box-shadow marbre" border="1" align="center" style="position:relative; margin-top: 60px;">';
 
-        echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th>Reste</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
+        if ($hudPanel) {
+
+            echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th><span class="ra ra-archery-target"></span></th></tr>';
+        } else {
+
+            echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th>Reste</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
+        }
 
         foreach (CARACS as $k => $e) {
 
@@ -115,6 +128,35 @@ final class UpgradesView
             if (!empty($player->debuffs->$k)) {
 
                 $debuff = '<span class="ra ' . EFFECTS_RA_FONT[$player->debuffs->$k] . '"></span>';
+            }
+
+            if ($hudPanel) {
+
+                echo '
+                <tr>
+                    <th ' . self::getTooltip($k) . '>
+                        ' . $e . '
+                    </th>
+                    <td>
+                        ' . $player->nude->$k . '
+                    </td>
+                    <td>
+                        ' . $carac . $debuff . '
+                    </td>
+                    <td>
+                        <button
+                            data-carac="' . $k . '"
+                            data-carac-name="' . CARACS[$k] . '"
+                            ' . $disabled . '
+                            class="upgrade"
+                            >
+                            Améliorer (<font color="' . $color . '">' . $cost . ' Pi</font>)
+                        </button>
+                    </td>
+                </tr>
+                ';
+
+                continue;
             }
 
             echo '

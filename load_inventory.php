@@ -29,4 +29,4 @@ if (isset($_GET['craft'])) {
     exit();
 }
 
-InventoryView::renderInventory(itemsFromBank: false);
+InventoryView::renderInventory(itemsFromBank: false, hudPanel: true);
