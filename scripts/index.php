@@ -217,7 +217,7 @@ echo '<div class="preload"><img src="img/ui/bg/button2.png" /></div>';
 echo '<div class="preload"><img src="img/ui/bg/button3.png" /></div>';
 
 ?>
-<script src="js/progressive_loader.js"></script>
+<script src="js/progressive_loader.js?v=20260716"></script>
 <script>
 
     <?php

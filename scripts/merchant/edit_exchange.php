@@ -61,7 +61,7 @@ $otherPlayer->get_data();
     </a>
   </div>
 </div>
-<script src="js/progressive_loader.js"></script>
+<script src="js/progressive_loader.js?v=20260716"></script>
 <script>
   $(function() {
     var objects = <?php echo json_encode($objects); ?>;

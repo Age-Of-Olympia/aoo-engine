@@ -28,7 +28,7 @@ foreach(File::scan_dir($dir) as $e){
 }
 
 ?>
-<script src="js/progressive_loader.js"></script>
+<script src="js/progressive_loader.js?v=20260716"></script>
 <script>
 $(document).ready(function(){
 
