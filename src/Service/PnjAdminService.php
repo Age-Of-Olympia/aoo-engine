@@ -3,21 +3,66 @@
 namespace App\Service;
 
 use Classes\Db;
+use Classes\Player;
 
 /**
  * Read + light-write access for the admin PNJ management page (admin/pnjs.php).
  *
  * A "PNJ" is a character row with player_type = 'npc' (negative id). This
  * service exposes the roster (with the players that control each PNJ, its
- * activity and XP), the per-PNJ owner list, and the soft-retire operation.
+ * activity and XP), the per-PNJ owner list, creation, identity edit and the
+ * soft-retire operation.
  *
  * Assignment (linking a PNJ to a controlling player) stays in PlayerPnjService,
  * which owns the players_pnjs table; this service only reads that table for the
- * roster and clears it on retire. PNJ creation stays in Player::put_player, the
- * canonical creation path shared with registration.
+ * roster and clears it on retire. Character creation delegates to
+ * Player::put_player, the canonical creation path shared with registration.
  */
 class PnjAdminService
 {
+    /**
+     * Races offerable when creating/editing a PNJ: RACES_EXT filtered to those
+     * that actually have a race JSON with a faction. put_player derefs
+     * $raceJson->faction and the faction column is NOT NULL, so a race without a
+     * JSON (e.g. geant, humain) would blow up creation — this is the single
+     * source of truth both the dropdown and the server-side whitelist use.
+     *
+     * @return array<int, string>
+     */
+    public function availableRaces(): array
+    {
+        $races = defined('RACES_EXT') ? RACES_EXT : (defined('RACES') ? RACES : []);
+
+        $valid = [];
+        foreach ($races as $race) {
+            $raceJson = \json()->decode('races', (string) $race);
+            if ($raceJson && isset($raceJson->faction)) {
+                $valid[] = (string) $race;
+            }
+        }
+
+        return $valid;
+    }
+
+    /**
+     * Create a PNJ (npc, negative id) via the canonical put_player path, then
+     * stamp lastLoginTime so a freshly-created PNJ reads as active rather than
+     * immediately "Inactif" (put_player leaves the column at its 0 default).
+     *
+     * @return int the new PNJ id
+     */
+    public function createPnj(string $name, string $race): int
+    {
+        $id = Player::put_player($name, $race, true);
+
+        (new Db())->exe(
+            "UPDATE players SET lastLoginTime = ? WHERE id = ? AND player_type = 'npc'",
+            [time(), $id]
+        );
+
+        return $id;
+    }
+
     /**
      * Every PNJ with its controlling owner(s), activity flag and XP, name-ordered.
      *
@@ -38,10 +83,12 @@ class PnjAdminService
                 GROUP BY p.id, p.name, p.race, p.xp, p.lastLoginTime
                 ORDER BY p.name ASC";
 
-        $res = (new Db())->exe($sql);
-
-        // Same INACTIVE_TIME cutoff as the roster / PlayerService::isInactive.
-        $activeThreshold = time() - INACTIVE_TIME;
+        $db = new Db();
+        // GROUP_CONCAT truncates silently at group_concat_max_len (default 1024).
+        // Raise it on this connection so a heavily-controlled PNJ's owner list is
+        // never cut off (which would read as "fewer owners than there are").
+        $db->exe('SET SESSION group_concat_max_len = 1000000');
+        $res = $db->exe($sql);
 
         $rows = [];
         while ($row = $res->fetch_assoc()) {
@@ -52,7 +99,7 @@ class PnjAdminService
                 'race'          => (string) $row['race'],
                 'xp'            => (int) $row['xp'],
                 'lastLoginTime' => $lastLoginTime,
-                'active'        => $lastLoginTime >= $activeThreshold,
+                'active'        => !PlayerService::isInactiveSince($lastLoginTime),
                 'owners'        => $row['owners'] !== null ? (string) $row['owners'] : null,
                 'owner_count'   => (int) $row['owner_count'],
             ];

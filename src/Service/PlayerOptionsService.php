@@ -28,6 +28,21 @@ use Classes\Db;
 class PlayerOptionsService
 {
     /**
+     * The canonical set of admin-toggleable option names. Single source of truth
+     * shared by the admin options manager (admin/admin-access*.php) and the
+     * `option` console command (Classes/console-commands/optioncmd.php), so the
+     * two surfaces can never disagree on what is a valid option.
+     */
+    public const MANAGEABLE_OPTIONS = [
+        'isSuperAdmin', 'isAdmin', 'isMerchant', 'isTrainer', 'showActionDetails',
+        'alreadyFished', 'incognitoMode', 'invisibleMode', 'showBlockedTiles',
+        'doubleUpload', 'alreadyChanged', 'dlag',
+    ];
+
+    /** Options that carry admin authority — highlighted / guarded in the UI. */
+    public const PRIVILEGED_OPTIONS = ['isAdmin', 'isSuperAdmin'];
+
+    /**
      * Count rows matching (player_id, name) in players_options.
      *
      * Returns an int because callers historically treat the result as

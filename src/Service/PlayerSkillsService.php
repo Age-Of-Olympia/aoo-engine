@@ -202,13 +202,11 @@ class PlayerSkillsService
      */
     private function hydrateRows(\mysqli_result $res): array
     {
-        // "Active" mirrors PlayerService::isInactive exactly (inactive = no login
-        // for over INACTIVE_TIME); computed once here so every roster row shares
-        // the same cutoff. PNJs carry a real lastLoginTime (bumped on their turn
-        // in pnjs.php), so the flag is meaningful for them too — unlike
-        // Player::data->isInactive, which forces false for negative ids.
-        $activeThreshold = time() - INACTIVE_TIME;
-
+        // "Active" is the negation of the one shared inactivity rule
+        // (PlayerService::isInactiveSince). PNJs carry a real lastLoginTime
+        // (bumped on their turn in pnjs.php), so the flag is meaningful for them
+        // too — unlike Player::data->isInactive, which forces false for
+        // negative ids.
         $players = [];
         while ($row = $res->fetch_assoc()) {
             $lastLoginTime = (int) $row['lastLoginTime'];
@@ -219,7 +217,7 @@ class PlayerSkillsService
                 'player_type'   => (string) $row['player_type'],
                 'xp'            => (int) $row['xp'],
                 'lastLoginTime' => $lastLoginTime,
-                'active'        => $lastLoginTime >= $activeThreshold,
+                'active'        => !PlayerService::isInactiveSince($lastLoginTime),
             ];
         }
 

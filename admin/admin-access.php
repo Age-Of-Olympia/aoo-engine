@@ -27,6 +27,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/admin-access-options.php');
 
 use Classes\Db;
 use App\Service\CsrfProtectionService;
+use App\Service\PlayerLookupService;
 use App\Service\PlayerOptionsService;
 
 $db = new Db();
@@ -68,6 +69,9 @@ ORDER BY p.id
 ";
 
 $dashboard = [];
+// GROUP_CONCAT (via_pnjs) truncates silently at group_concat_max_len (default
+// 1024); raise it so a heavily-controlled account's PNJ list is never cut off.
+$db->exe('SET SESSION group_concat_max_len = 1000000');
 $res = $db->exe($dashboardSql);
 while ($row = $res->fetch_object()) {
     $dashboard[] = $row;
@@ -76,22 +80,23 @@ while ($row = $res->fetch_object()) {
 /* -------------------------------------------------------------------------
  * DATA: options of the currently looked-up player (manager panel)
  * ---------------------------------------------------------------------- */
-$lookupTerm    = trim((string) ($_GET['q'] ?? ''));
-$lookupPlayer  = null;
-$lookupOptions = [];
-$lookupError   = null;
+$lookupTerm     = trim((string) ($_GET['q'] ?? ''));
+$lookupPlayer   = null;
+$lookupOptions  = [];
+$lookupError    = null;
+$lookupDisambig = null;
 
 if ($lookupTerm !== '') {
-    // Resolve by matricule (numeric) or exact name.
-    if (is_numeric($lookupTerm)) {
-        $r = $db->get_single('players', (int) $lookupTerm);
-    } else {
-        $r = $db->exe('SELECT * FROM players WHERE name = ?', [$lookupTerm]);
-    }
+    // Resolve by matricule or exact name. Names are not unique across kinds, so
+    // a name that matches several characters is disambiguated (choose by
+    // matricule) rather than silently toggling options on the first row.
+    $matches = (new PlayerLookupService())->resolve($lookupTerm);
 
-    if ($r->num_rows) {
-        $lookupPlayer  = $r->fetch_object();
-        $lookupOptions = (new PlayerOptionsService())->getOptions((int) $lookupPlayer->id);
+    if (count($matches) === 1) {
+        $lookupPlayer  = $matches[0];
+        $lookupOptions = (new PlayerOptionsService())->getOptions($lookupPlayer['id']);
+    } elseif (count($matches) > 1) {
+        $lookupDisambig = $matches;
     } else {
         $lookupError = 'Aucun personnage trouvé pour « ' . e($lookupTerm) . ' ».';
     }
@@ -150,10 +155,21 @@ $managerPanel = '';
 if ($lookupError !== null) {
     $managerPanel .= '<div class="alert alert-warning">' . $lookupError . '</div>';
 }
+if ($lookupDisambig !== null) {
+    // Several characters share this name — let the admin pick by matricule.
+    $items = '';
+    foreach ($lookupDisambig as $m) {
+        $items .= '<li><a href="/admin/admin-access.php?q=' . (int) $m['id'] . '#manager">'
+            . e($m['name']) . ' <span class="aa-muted">(#' . (int) $m['id'] . ', ' . e($m['player_type']) . ')</span>'
+            . '</a></li>';
+    }
+    $managerPanel .= '<div class="alert alert-warning">Plusieurs personnages portent ce nom — '
+        . 'choisissez par matricule :<ul style="margin:.4rem 0 0">' . $items . '</ul></div>';
+}
 if ($lookupPlayer !== null) {
     $toggles = '';
     foreach (ADMIN_ACCESS_VALID_OPTIONS as $opt) {
-        $toggles .= $renderToggle((int) $lookupPlayer->id, $opt, in_array($opt, $lookupOptions, true));
+        $toggles .= $renderToggle($lookupPlayer['id'], $opt, in_array($opt, $lookupOptions, true));
     }
 
     // Surface any option the player has that is outside the whitelist so it is
@@ -165,8 +181,8 @@ if ($lookupPlayer !== null) {
         : '';
 
     $managerPanel .= '<div class="card">'
-        . '<div class="card-header"><h3 class="card-title">' . e($lookupPlayer->name)
-            . ' <span class="aa-muted">(#' . (int) $lookupPlayer->id . ')</span></h3></div>'
+        . '<div class="card-header"><h3 class="card-title">' . e($lookupPlayer['name'])
+            . ' <span class="aa-muted">(#' . (int) $lookupPlayer['id'] . ')</span></h3></div>'
         . '<div class="card-body" style="padding:14px">'
         . '<p class="aa-muted">Cliquez pour ajouter / retirer une option. Les options en gras confèrent des droits admin.</p>'
         . '<div class="aa-opts">' . $toggles . '</div>'

@@ -58,15 +58,24 @@ class PlayerService
     }
 
     /**
+     * The one definition of the "inactive" cutoff: no login within INACTIVE_TIME.
+     * Static so roster/list code can reuse it without constructing a
+     * PlayerService (whose id it does not need). The instance method below
+     * delegates here for the existing entity/service callers.
+     */
+    public static function isInactiveSince(int $lastLoginTime): bool
+    {
+        return $lastLoginTime < time() - INACTIVE_TIME;
+    }
+
+    /**
      * Helper function to calculate if a login time is considered inactive
      * @param int $lastLoginTime The last login time to check
      * @return bool True if inactive, false otherwise
      */
     public function isInactive(int $lastLoginTime): bool
     {
-        $current_time = time();
-        $inactive_threshold = $current_time - (INACTIVE_TIME);
-        return $lastLoginTime < $inactive_threshold;
+        return self::isInactiveSince($lastLoginTime);
     }
 
     public function searchNonAnonymePlayer(string $searchKey): array

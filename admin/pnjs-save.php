@@ -13,11 +13,10 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
 use App\Service\CsrfProtectionService;
-use App\Service\PlayerPnjService;
+use App\Service\PlayerLookupService;
 use App\Service\PlayerOptionsService;
+use App\Service\PlayerPnjService;
 use App\Service\PnjAdminService;
-use Classes\Db;
-use Classes\Player;
 
 AdminAuthorizationService::DoAdminCheck();
 
@@ -36,18 +35,25 @@ try {
 $action = $_GET['action'] ?? '';
 $service = new PnjAdminService();
 
-/** Valid races for create/update — mirrors admin/pnjs.php's dropdown source. */
-$validRaces = defined('RACES_EXT') ? RACES_EXT : (defined('RACES') ? RACES : []);
-
 /**
- * Super-admin guard: a PNJ holding isSuperAdmin can only be modified by a
- * super-admin (same rule as console pnjcmd). Called for every mutation on an
- * existing PNJ.
+ * Load an existing PNJ and enforce the super-admin guard, or flash + redirect.
+ * Shared by every mutation on an existing PNJ so the not-found handling and the
+ * privilege guard can never drift apart (or be forgotten on a new branch).
+ * Returns the PNJ row; never returns when the PNJ is missing (redirectTo exits).
+ *
+ * @return array{id:int, name:string, race:string, xp:int, lastLoginTime:int}
  */
-$guardSuperAdminPnj = static function (int $pnjId): void {
+$resolveAndGuardPnj = static function (int $pnjId) use ($service): array {
+    $pnj = $service->getPnj($pnjId);
+    if ($pnj === null) {
+        setFlash('warning', 'PNJ introuvable.');
+        redirectTo('/admin/pnjs.php');
+    }
+    // A PNJ holding isSuperAdmin can only be modified by a super-admin.
     if ((new PlayerOptionsService())->hasOption($pnjId, 'isSuperAdmin')) {
         AdminAuthorizationService::DoSuperAdminCheck();
     }
+    return $pnj;
 };
 
 /* ---------------------------------------------------------------------- */
@@ -59,13 +65,15 @@ if ($action === 'create') {
         setFlash('warning', 'Le nom est requis.');
         redirectTo('/admin/pnjs.php?action=new');
     }
-    if (!in_array($race, $validRaces, true)) {
-        setFlash('warning', 'Race non reconnue.');
+    // Whitelist against the same creatable-races set the dropdown offers, so a
+    // race without a JSON/faction can never reach put_player.
+    if (!in_array($race, $service->availableRaces(), true)) {
+        setFlash('warning', 'Race non reconnue ou non disponible pour un PNJ.');
         redirectTo('/admin/pnjs.php?action=new');
     }
 
     try {
-        $id = Player::put_player($name, $race, true);
+        $id = $service->createPnj($name, $race);
         setFlash('success', 'PNJ « ' . e($name) . ' » créé (#' . (int) $id . ').');
         redirectTo('/admin/pnjs.php?action=edit&id=' . (int) $id);
     } catch (\Throwable $e) {
@@ -77,21 +85,17 @@ if ($action === 'create') {
 /* ---------------------------------------------------------------------- */
 if ($action === 'update') {
     $pnjId = (int) ($_POST['pnj_id'] ?? 0);
+    $resolveAndGuardPnj($pnjId);
+
     $name = trim((string) ($_POST['name'] ?? ''));
     $race = (string) ($_POST['race'] ?? '');
-
-    if ($service->getPnj($pnjId) === null) {
-        setFlash('warning', 'PNJ introuvable.');
-        redirectTo('/admin/pnjs.php');
-    }
-    $guardSuperAdminPnj($pnjId);
 
     if ($name === '') {
         setFlash('warning', 'Le nom est requis.');
         redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
     }
-    if (!in_array($race, $validRaces, true)) {
-        setFlash('warning', 'Race non reconnue.');
+    if (!in_array($race, $service->availableRaces(), true)) {
+        setFlash('warning', 'Race non reconnue ou non disponible pour un PNJ.');
         redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
     }
 
@@ -107,28 +111,21 @@ if ($action === 'update') {
 /* ---------------------------------------------------------------------- */
 if ($action === 'assign') {
     $pnjId = (int) ($_POST['pnj_id'] ?? 0);
+    $resolveAndGuardPnj($pnjId);
+
     $term = trim((string) ($_POST['player'] ?? ''));
 
-    if ($service->getPnj($pnjId) === null) {
-        setFlash('warning', 'PNJ introuvable.');
-        redirectTo('/admin/pnjs.php');
-    }
-    $guardSuperAdminPnj($pnjId);
-
-    // Resolve the controlling player: a real player (id > 0), by matricule or
-    // exact name.
-    $db = new Db();
-    if (is_numeric($term)) {
-        $res = $db->exe("SELECT id FROM players WHERE id = ? AND player_type = 'real'", [(int) $term]);
-    } else {
-        $res = $db->exe("SELECT id FROM players WHERE name = ? AND player_type = 'real'", [$term]);
-    }
-
-    if (!$res->num_rows) {
+    // Owner must be a real player (id > 0), resolved by matricule or exact name.
+    $matches = (new PlayerLookupService())->resolve($term, ['real']);
+    if (count($matches) === 0) {
         setFlash('warning', 'Aucun joueur réel trouvé pour « ' . e($term) . ' ».');
         redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
     }
-    $playerId = (int) $res->fetch_assoc()['id'];
+    if (count($matches) > 1) {
+        setFlash('warning', 'Plusieurs joueurs portent ce nom — utilisez le matricule.');
+        redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
+    }
+    $playerId = $matches[0]['id'];
 
     $pnjService = new PlayerPnjService();
     if ($pnjService->getByPlayerIdAndPnjId($playerId, $pnjId) !== null) {
@@ -143,14 +140,9 @@ if ($action === 'assign') {
 /* ---------------------------------------------------------------------- */
 if ($action === 'unassign') {
     $pnjId = (int) ($_POST['pnj_id'] ?? 0);
+    $resolveAndGuardPnj($pnjId);
+
     $playerId = (int) ($_POST['player_id'] ?? 0);
-
-    if ($service->getPnj($pnjId) === null) {
-        setFlash('warning', 'PNJ introuvable.');
-        redirectTo('/admin/pnjs.php');
-    }
-    $guardSuperAdminPnj($pnjId);
-
     (new PlayerPnjService())->deleteByPlayerIdAndPnjId($playerId, $pnjId);
     setFlash('success', 'PNJ désassigné du joueur #' . $playerId . '.');
     redirectTo('/admin/pnjs.php?action=edit&id=' . $pnjId);
@@ -159,12 +151,7 @@ if ($action === 'unassign') {
 /* ---------------------------------------------------------------------- */
 if ($action === 'retire') {
     $pnjId = (int) ($_POST['pnj_id'] ?? 0);
-
-    if ($service->getPnj($pnjId) === null) {
-        setFlash('warning', 'PNJ introuvable.');
-        redirectTo('/admin/pnjs.php');
-    }
-    $guardSuperAdminPnj($pnjId);
+    $resolveAndGuardPnj($pnjId);
 
     $service->softRetire($pnjId);
     setFlash('success', 'PNJ retiré (désassigné de tous les joueurs et masqué).');

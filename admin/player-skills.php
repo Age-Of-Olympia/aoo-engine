@@ -12,10 +12,11 @@ use App\View\Player\PlayerSkillsView;
 
 $id = (int) ($_GET['id'] ?? 0);
 
-// PNJs carry negative ids, so gate on "not zero" rather than "> 0" — the editor
-// must reach PNJ characters too. getPlayerSummary has no type filter.
+// Editable characters are real players and PNJs only. PNJs carry negative ids,
+// so we can't gate on "> 0"; instead resolve then restrict by player_type, so
+// other negative-id system rows (not 'npc') stay off-limits as before.
 $summary = $id !== 0 ? (new PlayerSkillsService())->getPlayerSummary($id) : null;
-if ($summary === null) {
+if ($summary === null || !in_array($summary['player_type'], ['real', 'npc'], true)) {
     setFlash('warning', 'Joueur introuvable.');
     redirectTo('/admin/players.php');
 }

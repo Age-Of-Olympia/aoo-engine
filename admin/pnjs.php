@@ -21,17 +21,17 @@ use App\Service\CsrfProtectionService;
 use App\Service\PnjAdminService;
 
 /**
- * Race options for the create/edit dropdowns. RACES_EXT covers the PNJ-friendly
- * races (lutin, humain, …) on top of the playable set.
+ * Race options for the create/edit dropdowns — only races that can actually be
+ * created (JSON + faction present), from the one source PnjAdminService owns and
+ * the save endpoint validates against.
  *
  * @return array<string,string>
  */
 function pnj_race_options(): array
 {
-    $races = defined('RACES_EXT') ? RACES_EXT : (defined('RACES') ? RACES : []);
     $out = [];
-    foreach ($races as $race) {
-        $out[(string) $race] = ucfirst((string) $race);
+    foreach ((new PnjAdminService())->availableRaces() as $race) {
+        $out[$race] = ucfirst($race);
     }
     return $out;
 }
