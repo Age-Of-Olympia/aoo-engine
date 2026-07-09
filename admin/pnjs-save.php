@@ -60,6 +60,17 @@ $resolveAndGuardPnj = static function (int $pnjId) use ($service): array {
 };
 
 /* ---------------------------------------------------------------------- */
+if ($action === 'set_retire_plan') {
+    $stored = $service->setRetirePlan((string) ($_POST['retire_plan'] ?? ''));
+    if ($stored === null) {
+        setFlash('warning', 'Nom de plan invalide.');
+    } else {
+        setFlash('success', 'Plan des PNJ retirés : « ' . e($stored) . ' ».');
+    }
+    redirectTo('/admin/pnjs.php');
+}
+
+/* ---------------------------------------------------------------------- */
 if ($action === 'create') {
     $name = trim((string) ($_POST['name'] ?? ''));
     $race = (string) ($_POST['race'] ?? '');
@@ -157,7 +168,7 @@ if ($action === 'retire') {
     $resolveAndGuardPnj($pnjId);
 
     $service->softRetire($pnjId);
-    setFlash('success', 'PNJ retiré (désassigné de tous les joueurs et masqué).');
+    setFlash('success', 'PNJ retiré : désassigné, passé en incognito + anonyme et déplacé sur le plan des PNJ retirés.');
     redirectTo('/admin/pnjs.php');
 }
 

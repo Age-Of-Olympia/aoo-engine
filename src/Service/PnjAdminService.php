@@ -4,6 +4,7 @@ namespace App\Service;
 
 use Classes\Db;
 use Classes\Player;
+use Classes\View;
 
 /**
  * Read + light-write access for the admin PNJ management page (admin/pnjs.php).
@@ -180,23 +181,149 @@ class PnjAdminService
         );
     }
 
+    /** Default plan where retired PNJs are parked (overridable via settings). */
+    public const RETIRE_PLAN_DEFAULT = 'pnjs';
+
+    /** admin_settings key holding the configured retirement plan name. */
+    public const RETIRE_PLAN_SETTING = 'pnj_retire_plan';
+
     /**
-     * Soft-retire a PNJ: unassign it from every controlling player and hide it
-     * on the map (incognitoMode). Nothing is destroyed — the character row and
-     * its data survive, so re-assigning it later fully restores it.
+     * The configured retirement plan name (admin_settings), or the default.
+     * Sanitised to a safe slug so it can only ever be a plan identifier.
+     */
+    public function getRetirePlan(): string
+    {
+        $plan = (new AdminSettingsService())->get(self::RETIRE_PLAN_SETTING, self::RETIRE_PLAN_DEFAULT);
+        $plan = $this->sanitizePlan($plan);
+
+        return $plan !== '' ? $plan : self::RETIRE_PLAN_DEFAULT;
+    }
+
+    /**
+     * Set the retirement plan name. Returns the stored (sanitised) value, or
+     * null if the input sanitised to nothing (rejected).
+     */
+    public function setRetirePlan(string $plan): ?string
+    {
+        $plan = $this->sanitizePlan($plan);
+        if ($plan === '') {
+            return null;
+        }
+
+        (new AdminSettingsService())->set(self::RETIRE_PLAN_SETTING, $plan);
+
+        return $plan;
+    }
+
+    /** Reduce a plan name to a safe slug: lowercase letters, digits, _ and -. */
+    private function sanitizePlan(string $plan): string
+    {
+        return substr((string) preg_replace('/[^a-z0-9_-]/', '', strtolower(trim($plan))), 0, 64);
+    }
+
+    /**
+     * Distinct existing plan names (for the retirement-plan autocomplete).
+     *
+     * @return array<int, string>
+     */
+    public function listPlans(): array
+    {
+        $res = (new Db())->exe('SELECT DISTINCT plan FROM coords ORDER BY plan');
+
+        $plans = [];
+        while ($row = $res->fetch_assoc()) {
+            $plans[] = (string) $row['plan'];
+        }
+
+        return $plans;
+    }
+
+    /**
+     * Soft-retire a PNJ. Nothing is destroyed — the character row and its data
+     * survive, so re-assigning it later fully restores it. Three effects:
+     *
+     *   1. Unassigned from every controlling player (players_pnjs cleared).
+     *   2. incognitoMode  — invisible on the map and in events.
+     *   3. anonymeMode    — not found in recipient (missive) searches.
+     *   4. Teleported to the dedicated 'pnjs' plan, on a free tile, so it leaves
+     *      the live world entirely.
      */
     public function softRetire(int $pnjId): void
     {
         $db = new Db();
 
-        // Drop every control link (players_pnjs.pnj_id = this PNJ).
+        // 1. Drop every control link (players_pnjs.pnj_id = this PNJ).
         $db->exe('DELETE FROM players_pnjs WHERE pnj_id = ?', [$pnjId]);
 
-        // Ensure it is hidden on the map. No UNIQUE constraint on
-        // (player_id, name), so guard against a duplicate incognitoMode row.
+        // 2 & 3. Hide it in-game. No UNIQUE constraint on (player_id, name), so
+        // guard each option against a duplicate row.
         $optionsService = new PlayerOptionsService();
-        if (!$optionsService->hasOption($pnjId, 'incognitoMode')) {
-            $optionsService->addOption($pnjId, 'incognitoMode');
+        foreach (['incognitoMode', 'anonymeMode'] as $option) {
+            if (!$optionsService->hasOption($pnjId, $option)) {
+                $optionsService->addOption($pnjId, $option);
+            }
         }
+
+        // 4. Park it on the 'pnjs' plan, out of the live world.
+        $this->teleportToPnjPlan($pnjId);
+    }
+
+    /**
+     * Move a PNJ to the first free tile of the retirement plan. get_coords_id
+     * creates the tile (and the plan) on demand; the coords_id is set directly,
+     * mirroring how put_player initialises position (no movement side effects).
+     */
+    private function teleportToPnjPlan(int $pnjId): void
+    {
+        $plan = $this->getRetirePlan();
+        [$x, $y] = $this->firstFreeTileOnRetirePlan($plan);
+
+        $coordsId = View::get_coords_id((object) [
+            'x'    => $x,
+            'y'    => $y,
+            'z'    => 0,
+            'plan' => $plan,
+        ]);
+
+        if ($coordsId !== null) {
+            (new Db())->exe(
+                "UPDATE players SET coords_id = ? WHERE id = ? AND player_type = 'npc'",
+                [$coordsId, $pnjId]
+            );
+        }
+    }
+
+    /**
+     * First (x, y) on the retirement plan not occupied by a player, scanning a
+     * bounded grid so retired PNJs don't stack on one tile. Falls back to (0,0)
+     * if the grid is somehow full.
+     *
+     * @return array{0:int, 1:int}
+     */
+    private function firstFreeTileOnRetirePlan(string $plan): array
+    {
+        $res = (new Db())->exe(
+            'SELECT c.x, c.y
+             FROM players p
+             JOIN coords c ON c.id = p.coords_id
+             WHERE c.plan = ?',
+            [$plan]
+        );
+
+        $occupied = [];
+        while ($row = $res->fetch_assoc()) {
+            $occupied[(int) $row['x'] . ',' . (int) $row['y']] = true;
+        }
+
+        $side = 100;
+        for ($y = 0; $y < $side; $y++) {
+            for ($x = 0; $x < $side; $x++) {
+                if (!isset($occupied[$x . ',' . $y])) {
+                    return [$x, $y];
+                }
+            }
+        }
+
+        return [0, 0];
     }
 }

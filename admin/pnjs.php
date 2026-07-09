@@ -55,7 +55,7 @@ function pnj_render_list(array $pnjs, string $csrfToken): string
         $owners = $pnj['owners'] !== null ? e($pnj['owners']) : '<span class="text-muted">— non assigné —</span>';
 
         $retireForm = '<form method="post" action="/admin/pnjs-save.php?action=retire" style="display:inline"'
-            . ' onsubmit="return confirm(\'Retirer ce PNJ ? Il sera désassigné de tous les joueurs et masqué (réversible).\')">'
+            . ' onsubmit="return confirm(\'Retirer ce PNJ ? Il sera désassigné de tous les joueurs, passé en incognito + anonyme et déplacé sur le plan des PNJ retirés. Réversible.\')">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="pnj_id" value="' . (int) $pnj['id'] . '">'
             . '<button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button></form>';
@@ -92,9 +92,30 @@ function pnj_render_list(array $pnjs, string $csrfToken): string
         . '<option value="0">Non assignés</option></select>'
         . '</div>';
 
+    // Settings: the plan retired PNJs are parked on (configurable, not hardcoded).
+    $service = new PnjAdminService();
+    $currentPlan = $service->getRetirePlan();
+    $planOptions = '';
+    foreach ($service->listPlans() as $plan) {
+        $planOptions .= '<option value="' . e($plan) . '"></option>';
+    }
+    // Secondary setting: kept compact and collapsed so it doesn't crowd the page.
+    $settingsCard = '<details class="pnj-retire-setting text-muted" style="margin-bottom:1rem;font-size:.9em">'
+        . '<summary style="cursor:pointer">⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong></summary>'
+        . '<form method="post" action="/admin/pnjs-save.php?action=set_retire_plan"'
+        . ' class="d-flex flex-wrap align-items-center" style="gap:.5rem;margin-top:.5rem">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="text" name="retire_plan" list="pnj-plan-list" value="' . e($currentPlan) . '"'
+        . ' class="form-control form-control-sm" style="max-width:14rem" required>'
+        . '<datalist id="pnj-plan-list">' . $planOptions . '</datalist>'
+        . '<button type="submit" class="btn btn-sm btn-secondary">Enregistrer</button>'
+        . '<span>Les PNJ retirés y sont déplacés (case libre).</span>'
+        . '</form></details>';
+
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">Gestion des PNJ</h1>'
         . '<a class="btn btn-primary" href="/admin/pnjs.php?action=new">+ Créer un PNJ</a></div>'
+        . $settingsCard
         . $filters
         . '<p class="text-muted mb-2"><span id="pnj-count">' . count($pnjs) . '</span> PNJ</p>'
         . '<table class="table table-striped table-hover" id="pnj-table">'
@@ -193,8 +214,14 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
     $retire = '<div class="card" style="max-width:32rem;border-color:var(--danger,#d93025)">'
         . '<div class="card-header"><h3 class="card-title">Retrait</h3></div>'
         . '<div class="card-body" style="padding:16px">'
-        . '<p class="text-muted">Le retrait désassigne le PNJ de tous les joueurs et le masque sur la carte. '
-        . 'Rien n\'est supprimé — réassignez-le pour le réactiver.</p>'
+        . '<p class="text-muted">Le retrait, sans rien supprimer :</p>'
+        . '<ul class="text-muted" style="margin:0 0 10px 1.1rem">'
+        . '<li>le <strong>désassigne</strong> de tous les joueurs qui le contrôlent ;</li>'
+        . '<li>le passe en <strong>incognito</strong> (invisible sur la carte et dans les évènements) ;</li>'
+        . '<li>le passe en <strong>anonyme</strong> (introuvable dans les recherches de destinataires) ;</li>'
+        . '<li>le <strong>déplace sur le plan « ' . e((new PnjAdminService())->getRetirePlan()) . ' »</strong> (case libre), hors du monde vivant.</li>'
+        . '</ul>'
+        . '<p class="text-muted">Réversible : réassignez-le à un joueur pour le réactiver.</p>'
         . '<form method="post" action="/admin/pnjs-save.php?action=retire"'
         . ' onsubmit="return confirm(\'Retirer ce PNJ ?\')">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
