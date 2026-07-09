@@ -19,6 +19,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
 use App\Service\PnjAdminService;
+use Classes\Player;
 
 /**
  * Race options for the create/edit dropdowns — only races that can actually be
@@ -46,7 +47,7 @@ function pnj_status_badge(bool $active): string
 /**
  * @param array<int, array{id:int, name:string, race:string, xp:int, lastLoginTime:int, active:bool, owners:?string, owner_count:int}> $pnjs
  */
-function pnj_render_list(array $pnjs, string $csrfToken): string
+function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan): string
 {
     $rows = '';
     foreach ($pnjs as $pnj) {
@@ -100,17 +101,25 @@ function pnj_render_list(array $pnjs, string $csrfToken): string
         $planOptions .= '<option value="' . e($plan) . '"></option>';
     }
     // Secondary setting: kept compact and collapsed so it doesn't crowd the page.
-    $settingsCard = '<details class="pnj-retire-setting text-muted" style="margin-bottom:1rem;font-size:.9em">'
-        . '<summary style="cursor:pointer">⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong></summary>'
-        . '<form method="post" action="/admin/pnjs-save.php?action=set_retire_plan"'
-        . ' class="d-flex flex-wrap align-items-center" style="gap:.5rem;margin-top:.5rem">'
-        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-        . '<input type="text" name="retire_plan" list="pnj-plan-list" value="' . e($currentPlan) . '"'
-        . ' class="form-control form-control-sm" style="max-width:14rem" required>'
-        . '<datalist id="pnj-plan-list">' . $planOptions . '</datalist>'
-        . '<button type="submit" class="btn btn-sm btn-secondary">Enregistrer</button>'
-        . '<span>Les PNJ retirés y sont déplacés (case libre).</span>'
-        . '</form></details>';
+    // Editing the retirement plan is super-admin only; plain admins see it
+    // read-only (enforcement also lives server-side in pnjs-save.php).
+    if ($canEditRetirePlan) {
+        $settingsCard = '<details class="pnj-retire-setting text-muted" style="margin-bottom:1rem;font-size:.9em">'
+            . '<summary style="cursor:pointer">⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong></summary>'
+            . '<form method="post" action="/admin/pnjs-save.php?action=set_retire_plan"'
+            . ' class="d-flex flex-wrap align-items-center" style="gap:.5rem;margin-top:.5rem">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="text" name="retire_plan" list="pnj-plan-list" value="' . e($currentPlan) . '"'
+            . ' class="form-control form-control-sm" style="max-width:14rem" required>'
+            . '<datalist id="pnj-plan-list">' . $planOptions . '</datalist>'
+            . '<button type="submit" class="btn btn-sm btn-secondary">Enregistrer</button>'
+            . '<span>Les PNJ retirés y sont déplacés (case libre).</span>'
+            . '</form></details>';
+    } else {
+        $settingsCard = '<p class="text-muted" style="margin-bottom:1rem;font-size:.9em">'
+            . '⚙ Plan des PNJ retirés : <strong>' . e($currentPlan) . '</strong>'
+            . ' <span style="font-size:.9em">(modifiable par un super-admin)</span></p>';
+    }
 
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">Gestion des PNJ</h1>'
@@ -255,7 +264,11 @@ if ($action === 'new') {
     }
     $content = pnj_render_edit_form($pnj, $service->getOwners($id), $csrfToken);
 } else {
-    $content = pnj_render_list($service->listPnjs(), $csrfToken);
+    // Only super-admins may edit the retirement plan (server-side guard is in
+    // pnjs-save.php); plain admins see it read-only.
+    $viewerIsSuperAdmin = !empty($_SESSION['isSuperAdmin'])
+        || (bool) (new Player($_SESSION['playerId']))->have_option('isSuperAdmin');
+    $content = pnj_render_list($service->listPnjs(), $csrfToken, $viewerIsSuperAdmin);
 }
 
 echo admin_layout('PNJ', renderFlashMessage() . $content, [

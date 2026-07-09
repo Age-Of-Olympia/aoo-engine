@@ -61,6 +61,9 @@ $resolveAndGuardPnj = static function (int $pnjId) use ($service): array {
 
 /* ---------------------------------------------------------------------- */
 if ($action === 'set_retire_plan') {
+    // Changing where PNJs are dumped is a config decision → super-admins only.
+    AdminAuthorizationService::DoSuperAdminCheck();
+
     $stored = $service->setRetirePlan((string) ($_POST['retire_plan'] ?? ''));
     if ($stored === null) {
         setFlash('warning', 'Nom de plan invalide.');
