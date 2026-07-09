@@ -1,0 +1,11 @@
+/* PNJ management page — page-specific styles.
+   Loaded by admin/pnjs.php via the layout's $assets['styles']. */
+
+#pnj-table td form { margin: 0; }
+
+/* Keep row action buttons on one line, wrapping gracefully on narrow screens. */
+#pnj-table td:last-child {
+    white-space: nowrap;
+}
+
+.card .table-sm td { padding: .4rem .5rem; }

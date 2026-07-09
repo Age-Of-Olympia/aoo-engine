@@ -67,11 +67,13 @@ function admin_layout($title, $content, array $assets = []) {
     /* Player admin pages: the Compétences editor (per-player actions/passives),
      * its stats overview, and the owner roster. The editor's detail page shares
      * the "Compétences" highlight with the search landing. */
-    $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php'];
+    $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
+                    'pnjs.php'];
     $playersActive = in_array($currentPage, $playerPages, true);
     $playersGroupClass = $playersActive ? ' nav-group-open' : '';
     $playersSubLinks =
         $navLink('players.php', 'Compétences', '/admin/players.php') . "\n                    " .
+        $navLink('pnjs.php', 'PNJ', '/admin/pnjs.php') . "\n                    " .
         $navLink('skill-stats.php', 'Statistiques', '/admin/skill-stats.php') . "\n                    " .
         $navLink('admin-access.php', 'Accès &amp; options', '/admin/admin-access.php');
 
