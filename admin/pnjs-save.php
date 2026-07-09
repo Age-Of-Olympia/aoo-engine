@@ -12,13 +12,16 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\PlayerLookupService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerPnjService;
 use App\Service\PnjAdminService;
 
-AdminAuthorizationService::DoAdminCheck();
+// Enforce the same level as the PNJ menu, so a direct POST can't bypass a
+// superadmin-only setting on that menu.
+(new AdminMenuAccessService())->enforce('pnjs.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/pnjs.php');

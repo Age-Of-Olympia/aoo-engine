@@ -18,11 +18,14 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/admin-access-options.php');
 
 use App\Service\AdminAuthorizationService;
+use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Factory\PlayerFactory;
 use Classes\Db;
 
-AdminAuthorizationService::DoAdminCheck();
+// Enforce the same level as the admin-access menu, so a direct POST can't
+// bypass a superadmin-only setting on that menu.
+(new AdminMenuAccessService())->enforce('admin-access.php');
 
 $backTerm = trim((string) ($_POST['q'] ?? ''));
 $back = '/admin/admin-access.php' . ($backTerm !== '' ? '?q=' . urlencode($backTerm) . '#manager' : '');
