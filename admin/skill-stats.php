@@ -11,9 +11,13 @@ use App\View\Player\SkillStatsView;
 $ownership = new SkillOwnershipService();
 $stats = new SkillStatsService();
 
-$playerCount = $stats->realPlayerCount();
-$actionByPlayer = $stats->playerActionCounts();
-$passiveByPlayer = $stats->playerPassiveCounts();
+// "Inclure les PNJ" toggle: folds player_type='npc' into the per-player counts
+// and averages. Adoption figures below stay real-only (catalogue coverage).
+$includeNpcs = !empty($_GET['npc']);
+
+$playerCount = $stats->realPlayerCount($includeNpcs);
+$actionByPlayer = $stats->playerActionCounts($includeNpcs);
+$passiveByPlayer = $stats->playerPassiveCounts($includeNpcs);
 
 // Per-player: merge action + passive counts by id (action list is the spine —
 // it already holds every real player and is sorted most-equipped first).
@@ -66,6 +70,15 @@ usort($passiveAdoption, $byCountDesc);
 
 $body = (new SkillStatsView())->render($summary, $actionAdoption, $passiveAdoption, $players);
 
-echo admin_layout('Compétences — statistiques', $body, [
+// PNJ inclusion toggle: a plain GET link that flips the ?npc flag, so the state
+// is bookmarkable and needs no JS.
+$toggle = $includeNpcs
+    ? '<a class="btn btn-sm btn-secondary" href="/admin/skill-stats.php">Joueurs uniquement</a>'
+    : '<a class="btn btn-sm btn-outline-secondary" href="/admin/skill-stats.php?npc=1">Inclure les PNJ</a>';
+$toggleBar = '<div class="mb-3">' . $toggle
+    . ' <span class="text-muted">' . ($includeNpcs ? 'PNJ inclus dans les compteurs par personnage.' : 'Joueurs réels uniquement.')
+    . '</span></div>';
+
+echo admin_layout('Compétences — statistiques', $toggleBar . $body, [
     'styles' => ['/admin/css/skill-stats.css'],
 ]);

@@ -14,24 +14,39 @@ use Classes\Db;
  */
 class SkillStatsService
 {
-    public function realPlayerCount(): int
+    /**
+     * SQL predicate for the player kinds a stats query covers. Real players by
+     * default; PNJs (player_type = 'npc') are folded in when the caller opts in
+     * via the "Inclure les PNJ" toggle. Kept as a single source of truth so the
+     * count and the per-player queries always agree on the population.
+     */
+    private function playerTypeClause(bool $includeNpcs): string
     {
-        $res = (new Db())->exe("SELECT COUNT(*) AS n FROM players WHERE player_type = 'real'");
+        return $includeNpcs
+            ? "player_type IN ('real', 'npc')"
+            : "player_type = 'real'";
+    }
+
+    public function realPlayerCount(bool $includeNpcs = false): int
+    {
+        $res = (new Db())->exe(
+            'SELECT COUNT(*) AS n FROM players WHERE ' . $this->playerTypeClause($includeNpcs)
+        );
 
         return (int) $res->fetch_assoc()['n'];
     }
 
     /**
-     * Real players with their action count (0 included), most-equipped first.
+     * Players with their action count (0 included), most-equipped first.
      *
      * @return array<int, array{id:int, name:string, count:int}>
      */
-    public function playerActionCounts(): array
+    public function playerActionCounts(bool $includeNpcs = false): array
     {
         $sql = "SELECT p.id, p.name, COUNT(pa.name) AS n
                 FROM players p
                 LEFT JOIN players_actions pa ON pa.player_id = p.id
-                WHERE p.player_type = 'real'
+                WHERE p." . $this->playerTypeClause($includeNpcs) . "
                 GROUP BY p.id, p.name
                 ORDER BY n DESC, p.name ASC";
 
@@ -39,16 +54,16 @@ class SkillStatsService
     }
 
     /**
-     * Real players with their passive count (0 included), most-equipped first.
+     * Players with their passive count (0 included), most-equipped first.
      *
      * @return array<int, array{id:int, name:string, count:int}>
      */
-    public function playerPassiveCounts(): array
+    public function playerPassiveCounts(bool $includeNpcs = false): array
     {
         $sql = "SELECT p.id, p.name, COUNT(pp.passive_id) AS n
                 FROM players p
                 LEFT JOIN players_passives pp ON pp.player_id = p.id
-                WHERE p.player_type = 'real'
+                WHERE p." . $this->playerTypeClause($includeNpcs) . "
                 GROUP BY p.id, p.name
                 ORDER BY n DESC, p.name ASC";
 

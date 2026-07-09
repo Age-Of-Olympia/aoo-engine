@@ -12,7 +12,9 @@ use App\View\Player\PlayerSkillsView;
 
 $id = (int) ($_GET['id'] ?? 0);
 
-$summary = $id > 0 ? (new PlayerSkillsService())->getPlayerSummary($id) : null;
+// PNJs carry negative ids, so gate on "not zero" rather than "> 0" — the editor
+// must reach PNJ characters too. getPlayerSummary has no type filter.
+$summary = $id !== 0 ? (new PlayerSkillsService())->getPlayerSummary($id) : null;
 if ($summary === null) {
     setFlash('warning', 'Joueur introuvable.');
     redirectTo('/admin/players.php');
