@@ -89,7 +89,7 @@ abstract class PlayerEntity
     protected string $portrait = '';
 
     #[ORM\Column(type: "text")]
-    protected string $text = 'Je suis nouveau, frappez-moi!';
+    protected string $text = 'Débutant, chaud devant !';
 
     #[ORM\Column(type: "text")]
     protected string $story = 'Je préfère garder cela pour moi.';
