@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\Mail\MailContactSyncService;
 use Classes\Db;
 
 /**
@@ -19,10 +20,12 @@ class AccountDeletionService
     public const ADMIN_EMAIL = 'admin@age-of-olympia.net';
 
     private MailerService $mailer;
+    private MailContactSyncService $contactSync;
 
-    public function __construct(?MailerService $mailer = null)
+    public function __construct(?MailerService $mailer = null, ?MailContactSyncService $contactSync = null)
     {
         $this->mailer = $mailer ?? new MailerService();
+        $this->contactSync = $contactSync ?? new MailContactSyncService();
     }
 
     /**
@@ -40,13 +43,17 @@ class AccountDeletionService
             [$playerId]
         );
 
-        $this->notifyAdmin($playerId, $playerName, $playerMail);
+        // Email résolu en base : le cache JSON de l'appelant peut être périmé.
+        $mail = $this->resolvePlayerMail($playerId, $playerMail);
+
+        $this->notifyAdmin($playerId, $playerName, $mail);
+        $this->contactSync->onDeletionRequested($playerId, $mail);
     }
 
     /**
      * Clear a pending deletion request (player unticked the option).
      */
-    public function cancelDeletion(int $playerId): void
+    public function cancelDeletion(int $playerId, ?string $playerMail = null): void
     {
         $db = new Db();
 
@@ -54,6 +61,27 @@ class AccountDeletionService
             'UPDATE players SET deletion_asked = NULL WHERE id = ?',
             [$playerId]
         );
+
+        $this->contactSync->onDeletionCancelled(
+            $playerId,
+            $this->resolvePlayerMail($playerId, $playerMail)
+        );
+    }
+
+    /** Garde le mail fourni s'il est renseigné, sinon lit plain_mail en base. */
+    private function resolvePlayerMail(int $playerId, ?string $providedMail): string
+    {
+        if ($providedMail !== null && $providedMail !== '') {
+            return $providedMail;
+        }
+
+        $res = (new Db())->exe('SELECT plain_mail FROM players WHERE id = ?', [$playerId]);
+
+        if ($res && $row = $res->fetch_object()) {
+            return $row->plain_mail ?? '';
+        }
+
+        return '';
     }
 
     private function notifyAdmin(int $playerId, string $playerName, ?string $playerMail): void

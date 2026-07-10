@@ -168,7 +168,7 @@ class BidsAsksService
 
                 // transfer item to target bank
                 if (!$item->give_item($player, $target, $quantity, bank: true)) {
-                    ExitError("Pas assez de cet objet.");
+                    ExitError("Vous n'avez pas assez de cet objet en banque.");
                 }
 
                 // transfer gold to player bank from market

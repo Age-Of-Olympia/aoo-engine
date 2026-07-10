@@ -20,7 +20,7 @@ use Classes\Db;
 class PlayerSkillsService
 {
     /** Columns surfaced in search results and the skills header. */
-    private const SUMMARY_FIELDS = 'id, name, race, player_type, xp';
+    private const SUMMARY_FIELDS = 'id, name, race, player_type, xp, lastLoginTime';
 
     /**
      * Resolve players for the admin picker.
@@ -28,7 +28,7 @@ class PlayerSkillsService
      * A purely numeric term is treated as a matricule (exact id match); any
      * other term is a name LIKE search. Results are name-ordered and capped.
      *
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int}>
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
      */
     public function searchPlayers(string $term, int $limit = 50): array
     {
@@ -60,7 +60,7 @@ class PlayerSkillsService
      * Every real player (player_type = 'real'), name-ordered — the default
      * roster shown on the Compétences landing, filtered client-side.
      *
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int}>
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
      */
     public function listRealPlayers(): array
     {
@@ -73,9 +73,27 @@ class PlayerSkillsService
     }
 
     /**
+     * Real players and PNJs together, name-ordered — the roster shown on the
+     * Compétences landing, where a client-side Type filter (Joueurs / PNJ) and
+     * a Statut filter (Actifs / Inactifs) narrow the list. Tutorial and other
+     * ephemeral character kinds stay excluded.
+     *
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
+     */
+    public function listCharacters(): array
+    {
+        $sql = 'SELECT ' . self::SUMMARY_FIELDS . "
+                FROM players
+                WHERE player_type IN ('real', 'npc')
+                ORDER BY name ASC";
+
+        return $this->hydrateRows((new Db())->exe($sql));
+    }
+
+    /**
      * Load a single player's summary row, or null when no such id exists.
      *
-     * @return array{id:int, name:string, race:string, player_type:string, xp:int}|null
+     * @return array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}|null
      */
     public function getPlayerSummary(int $playerId): ?array
     {
@@ -180,18 +198,26 @@ class PlayerSkillsService
     }
 
     /**
-     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int}>
+     * @return array<int, array{id:int, name:string, race:string, player_type:string, xp:int, lastLoginTime:int, active:bool}>
      */
     private function hydrateRows(\mysqli_result $res): array
     {
+        // "Active" is the negation of the one shared inactivity rule
+        // (PlayerService::isInactiveSince). PNJs carry a real lastLoginTime
+        // (bumped on their turn in pnjs.php), so the flag is meaningful for them
+        // too — unlike Player::data->isInactive, which forces false for
+        // negative ids.
         $players = [];
         while ($row = $res->fetch_assoc()) {
+            $lastLoginTime = (int) $row['lastLoginTime'];
             $players[] = [
-                'id'          => (int) $row['id'],
-                'name'        => (string) $row['name'],
-                'race'        => (string) $row['race'],
-                'player_type' => (string) $row['player_type'],
-                'xp'          => (int) $row['xp'],
+                'id'            => (int) $row['id'],
+                'name'          => (string) $row['name'],
+                'race'          => (string) $row['race'],
+                'player_type'   => (string) $row['player_type'],
+                'xp'            => (int) $row['xp'],
+                'lastLoginTime' => $lastLoginTime,
+                'active'        => !PlayerService::isInactiveSince($lastLoginTime),
             ];
         }
 

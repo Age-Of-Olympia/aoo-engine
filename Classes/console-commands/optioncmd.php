@@ -2,6 +2,7 @@
 use Classes\Command;
 use Classes\Argument;
 use App\Service\AdminAuthorizationService;
+use App\Service\PlayerOptionsService;
 
 class OptionCmd extends Command
 {
@@ -20,7 +21,7 @@ EOT);
 
         $player=parent::getPlayer($argumentValues[0]);
         $player->get_data();
-        $valid_options = ['isSuperAdmin', 'isAdmin', 'isMerchant', 'isTrainer','showActionDetails','alreadyFished','incognitoMode','invisibleMode','showBlockedTiles','doubleUpload','alreadyChanged','dlag'];
+        $valid_options = PlayerOptionsService::MANAGEABLE_OPTIONS;
         if( !in_array( $argumentValues[1], $valid_options)){
             $this->result->Warning('Option non reconnue. Options valides: '. implode(', ', $valid_options));
             return '';

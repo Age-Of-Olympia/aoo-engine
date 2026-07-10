@@ -1,0 +1,41 @@
+/* Admin Access dashboard & options manager — page-specific styles.
+   Loaded by admin/admin-access.php via the layout's $assets['styles']. */
+
+.aa-muted { color: #888; font-size: 0.9em; }
+
+/* Access badges in the dashboard */
+.aa-badge--sa { background: var(--danger, #d93025); color: #fff; }
+.aa-badge--a  { background: var(--info, #1a73e8); color: #fff; }
+
+/* Lookup form */
+.aa-lookup { display: flex; gap: 8px; margin: 10px 0 18px; }
+.aa-lookup input[type="text"] {
+    padding: 8px 10px;
+    font-size: 1em;
+    min-width: 280px;
+    border: 1px solid #c9cdd2;
+    border-radius: 6px;
+}
+
+/* Option toggle grid */
+.aa-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.aa-opt-form { display: inline; margin: 0; }
+.aa-opt {
+    border: 1px solid #bbb;
+    background: #f8f9fa;
+    color: #555;
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: filter 0.12s ease;
+}
+.aa-opt:hover { filter: brightness(0.97); }
+.aa-opt--on  { background: #e6f4ea; border-color: var(--success, #34a853); color: #1e6b34; }
+.aa-opt--off { background: #fff; }
+.aa-opt--priv { font-weight: 700; }
+.aa-opt--priv.aa-opt--on {
+    background: #fce8e6;
+    border-color: var(--danger, #d93025);
+    color: #a5261b;
+}

@@ -9,6 +9,7 @@ use Classes\File;
 use Classes\Ui;
 use Classes\View;
 use App\Service\MissiveService;
+use App\Service\Mail\MailContactSyncService;
 use App\Tutorial\TutorialFeatureFlag;
 
 define('NO_LOGIN', true);
@@ -149,6 +150,14 @@ if(!empty($_POST['race'])){
         ';
 
         $db->exe($sql, array($hashedPsw, $hashedMail, $plainMail, $player->id));
+
+        // Enregistre le contact de campagnes mail (non bloquant).
+        (new MailContactSyncService())->onRegister(
+            (int) $player->id,
+            $plainMail,
+            $player->data->name,
+            $player->data->race
+        );
 
 
         // add bonus gold
