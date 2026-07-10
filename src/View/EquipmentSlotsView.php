@@ -54,9 +54,11 @@ final class EquipmentSlotsView
                 $img = 'img/items/' . $item->row->name . '.webp';
             }
 
+            /* get_item_carac renvoie du HTML (<font>, <del>…) : le
+             * title natif l'afficherait littéralement. */
             $title = strip_tags($itemName);
             if ($caracs !== '') {
-                $title .= ' — ' . $caracs;
+                $title .= ' — ' . strip_tags($caracs);
             }
             if (!empty($row->equiped)) {
                 $title .= ' (' . $row->equiped . ')';

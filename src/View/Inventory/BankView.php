@@ -112,7 +112,9 @@ class BankView
                                     'n': n
                                 },
                                 success: function(data) {
-                                    document.location.reload();
+
+                                    /* Panneau HUD ou page (main.js) */
+                                    aooReload();
                                 }
                             });
                         });

@@ -13,6 +13,9 @@ use App\View\MenuView;
 
 class PostEditView
 {
+    /** Rendu en fragment (panneau HUD) : pas d'enveloppe Ui/Infos/Menu. */
+    public static bool $fragment = false;
+
     public static function renderPostEdit(): void
     {
         $playerService = new PlayerService($_SESSION['playerId']);
@@ -61,14 +64,20 @@ class PostEditView
         }
 
 
-        $ui = new Ui('Éditer un message');
+        if (!self::$fragment) {
+
+            $ui = new Ui('Éditer un message');
+        }
 
 
         ob_start();
 
 
-        InfosView::renderInfos($player);
-        MenuView::renderMenu();
+        if (!self::$fragment) {
+
+            InfosView::renderInfos($player);
+            MenuView::renderMenu();
+        }
 
         echo '<h1>' . $topJson->title . '</h1>';
 
@@ -136,12 +145,17 @@ class PostEditView
         $pagesN = Forum::get_pages($postN);
 
 
-        echo '
+        /* En panneau, le fil est à un « retour » de pile : l'iframe
+         * des anciens messages n'apporte que du poids. */
+        if (!self::$fragment) {
+
+            echo '
 <iframe
     id="older-iframe"
     src="forum.php?topic=' . $topJson->name . '&page=' . $pagesN . '&hideMenu=1#' . $postJson->name . '"
 ></iframe>
 ';
+        }
 
         echo Str::minify(ob_get_clean());
 
@@ -151,7 +165,7 @@ class PostEditView
             window.topId = <?php echo $postJson->top_id ?>;
             window.pagesN = <?php echo $pagesN ?>;
         </script>
-        <script src="js/forum_edit.js"></script>
+        <script src="js/forum_edit.js?v=20260716"></script>
 <?php
     }
 }

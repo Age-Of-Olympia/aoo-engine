@@ -78,6 +78,14 @@ $(document).ready(function(){
             data: {'img':img}, // serializes the form's elements.
             success: function(data)
             {
+                /* Panneau HUD : retour au Profil sans navigation */
+                if(window.hudOpenPanel){
+
+                    aooAlert('Portrait changé avec succès!');
+                    window.hudOpenPanel('load_account.php', 'Profil');
+                    return;
+                }
+
                 alert('Portrait changé avec succès!');
                 document.location = 'account.php';
             }

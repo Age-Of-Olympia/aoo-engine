@@ -92,6 +92,10 @@ $(document).ready(function(){
             })
             : Promise.resolve(0);
 
+        /* Libellé du bouton d'aperçu (« Équiper (1 Ae) »,
+         * « Déséquiper »…) : sert au message de confirmation. */
+        var label = $(this).text().trim();
+
         askN.then(function(n){
 
             if(n === null){
@@ -109,8 +113,9 @@ $(document).ready(function(){
                         aooAlert('Prix invalide!');
                         return;
                     }
-                    const urlParams = new URLSearchParams(window.location.search);
-                    targetId = urlParams.get('targetId');
+                    /* Panneau HUD : les paramètres sont ceux du
+                     * fragment, pas de la page (main.js). */
+                    targetId = aooViewParam('targetId');
                     let url= 'api/exchanges/asks-bids.php?targetId='+targetId;
                     let payload = {
                         'action': 'create',
@@ -126,23 +131,61 @@ $(document).ready(function(){
                 return;
             }
 
-            $.ajax({
-                type: "POST",
-                url: 'inventory.php',
-                data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
-                success: function(data)
-                {
-                    var contentData = $('<div></div>').html(data).find('#data');
-                    if(contentData.html()){
-                        /* Message PUIS rechargement : l'alerte modale
-                         * n'est pas bloquante, il faut chaîner. */
-                        aooAlert(contentData.text()).then(function(){
-                            document.location.reload();
-                        });
-                        return;
-                    }
-                    document.location.reload();
+            /* Équiper / déséquiper / consommer : confirmation — le
+             * clic direct sans validation causait des erreurs
+             * (retours joueurs juillet 2026). Message composé du
+             * libellé d'aperçu : « Équiper gladius en main1 (1 Ae) ? » */
+            var askConfirm = Promise.resolve(true);
+
+            if(action == 'use'){
+
+                var verb = label.split(' ')[0];
+                var cost = label.substring(verb.length).trim();
+
+                var msg = verb + ' ' + window.name;
+                if(verb == 'Équiper' && window.emplacement){
+                    msg += ' en ' + window.emplacement;
                 }
+                if(cost){
+                    msg += ' ' + cost;
+                }
+
+                askConfirm = aooConfirm(msg + ' ?');
+            }
+
+            askConfirm.then(function(ok){
+
+                if(!ok){
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: 'inventory.php',
+                    data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
+                    success: function(data)
+                    {
+                        var contentData = $('<div></div>').html(data).find('#data');
+
+                        if(!contentData.html()){
+
+                            aooReload();
+                            return;
+                        }
+
+                        /* HUD : le panneau se recharge sous l'alerte ;
+                         * habillage hérité : message PUIS rechargement
+                         * (l'alerte modale n'est pas bloquante). */
+                        if(window.hudReloadPanels){
+
+                            aooAlert(contentData.text());
+                            aooReload();
+                            return;
+                        }
+
+                        aooAlert(contentData.text()).then(aooReload);
+                    }
+                });
             });
         });
 

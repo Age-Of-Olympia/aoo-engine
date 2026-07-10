@@ -128,7 +128,7 @@ final class InfosSheetView
             && $targetEntity->isInactive(new PlayerService($targetEntity->getId()));
         $inactifText = ($targetEntity->getId() > 0 && $isInactive) ? ' (inactif)' : '';
 
-        echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . Str::get_reput(floor($targetEntity->getPr() / COEFFICIENT_PR)) . '</a> Rang ' . $targetEntity->getRank() . '</div>';
+        echo '<div>' . $raceJson->name . $pnjText . $inactifText . ' - <a href="infos.php?targetId=' . $targetEntity->getId() . '&reputation">' . Str::get_reput(floor($targetEntity->getPr() / COEFFICIENT_PR)) . '</a> Rang ' . $targetEntity->getRank() . ' <span style="opacity: 0.6; font-size: 88%; white-space: nowrap;">· mat. ' . $targetEntity->getDisplayId() . '</span></div>';
 
 
         $factionJson = json()->decode('factions', $targetEntity->getFaction());
@@ -259,11 +259,19 @@ final class InfosSheetView
             }
         }
 
+        /* Sur sa propre fiche : l'histoire s'édite ici (l'entrée du
+         * Profil du HUD a été retirée — retours joueurs juillet 2026).
+         * account.php?story s'ouvre en panneau via js/hud.js, en page
+         * complète dans l'habillage hérité. */
+        $storyEdit = ($player->id == $targetEntity->getId())
+            ? ' <a href="account.php?story"><button><span class="ra ra-quill-ink"></span> Modifier</button></a>'
+            : '';
+
         echo '
         <tr>
             <td colspan="2" align="left">
 
-                <h2>Histoire:</h2>
+                <h2>Histoire:' . $storyEdit . '</h2>
 
                 ' . nl2br($targetEntity->getStory()) . '
             </td>

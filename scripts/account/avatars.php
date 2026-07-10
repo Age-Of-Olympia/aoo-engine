@@ -35,6 +35,9 @@ $(document).ready(function(){
     $('img').click(function(e){
 
         let img = $(this).data('img');
+        /* progressive_loader.js retire data-src une fois l'image
+         * chargée : le vrai chemin est alors dans src. */
+        let src = $(this).attr('data-src') || $(this).attr('src');
 
         $.ajax({
             type: "POST",
@@ -42,6 +45,18 @@ $(document).ready(function(){
             data: {'img':img}, // serializes the form's elements.
             success: function(data)
             {
+                /* Panneau HUD : avatar du bandeau mis à jour à chaud,
+                 * retour au Profil sans navigation */
+                if(window.hudOpenPanel){
+
+                    if(src){
+                        $('#player-avatar img').attr('src', src);
+                    }
+                    aooAlert('Avatar changé avec succès!');
+                    window.hudOpenPanel('load_account.php', 'Profil');
+                    return;
+                }
+
                 alert('Avatar changé avec succès!');
                 document.location = 'account.php';
             }

@@ -22,30 +22,29 @@ if (isset($_GET['forget_p']) && !empty($_POST['passive'])) {
     }
 }
 
+/*
+ * Table unique : la colonne Action porte le bouton « Oublier » sur
+ * chaque ligne, comme l'inventaire (mêmes classes item-actions /
+ * row-action, mêmes styles de panneau) — l'ancien « mode oubli »
+ * (?forget / ?forget_p), page séparée, déroutait les joueurs
+ * (retours juillet 2026). Les handlers POST ci-dessus gardent les
+ * mêmes URLs.
+ */
+
 echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
 
 $spellList = $player->get_spells();
 $spellsN = count($spellList);
 $trStyle = '';
-$buttonStyle = '';
 
-$maxColSpan = 7;
-if(isset($_GET['forget'])){
-    $maxColSpan++;
-}
-
-$maxColSpanP = 7;
-if(isset($_GET['forget_p'])){
-    $maxColSpanP++;
-}
+$maxColSpan = 8;
 
 $numberOfSpellsAvailable = NUMBER_MAX_COMP - $spellsN;
 $maxSpells = NUMBER_MAX_COMP;
 
 if($numberOfSpellsAvailable < 0){
-    echo '<tr><th colspan="'.$maxColSpan.'"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $maxSpells .')</font></th>';
-    $trStyle = (!isset($_GET['forget'])) ? 'style="opacity: 0.5;"' : '';
-    $buttonStyle = 'class="blink" style="color: red;"';
+    echo '<tr><th colspan="'.$maxColSpan.'"><font color="red">Vous ne pouvez pas utiliser vos sorts (max.'. $maxSpells .') : oubliez-en pour repasser sous la limite.</font></th>';
+    $trStyle = 'style="opacity: 0.5;"';
 } else {
     echo '<tr><th colspan="'.$maxColSpan.'"><font color="blue">Le maximum de sorts/techniques que vous pouvez utiliser est de '. $maxSpells .'.</font>';
     if ($maxSpells == $spellsN) {
@@ -55,13 +54,7 @@ if($numberOfSpellsAvailable < 0){
 }
 echo '</tr>';
 
-echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th>';
-
-if(isset($_GET['forget'])){
-    echo '<th>Action</th>';
-}
-
-echo '</tr>';
+echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th><th>Action</th></tr>';
 
 $actionService = new ActionService();
 foreach($spellList as $e){
@@ -158,36 +151,18 @@ foreach($spellList as $e){
         ';
 
 
-        if(isset($_GET['forget'])){
-
-            echo '
-            <td valign="top">
-                <input
-                    type="button"
-                    class="forget"
-                    data-spell="'. $e .'"
-                    data-name="'. $spell->getDisplayName() .'"
-                    value="Oublier"
-                    style="height: 50px;"
-                    />
-            </td>
-            ';
-        }
+        echo '
+        <td class="item-actions">
+            <button
+                class="row-action forget"
+                data-spell="'. $e .'"
+                data-name="'. $spell->getDisplayName() .'"
+                title="Oublier '. htmlspecialchars($spell->getDisplayName(), ENT_QUOTES) .'"
+                ><span class="ra ra-burning-book"></span></button>
+        </td>
+        ';
 
         echo '
-    </tr>
-    ';
-}
-
-
-if(!isset($_GET['forget'])){
-
-    echo '
-    <tr>
-        <td colspan="'.$maxColSpan.'" align="right">
-
-            <a href="upgrades.php?spells&forget"><button '. $buttonStyle .'>Oublier un sort</button></a>
-        </td>
     </tr>
     ';
 }
@@ -203,12 +178,7 @@ $passives = $player->getPassives($player->id);
 if (!empty($passives)) {
     echo '<table class="box-shadow marbre" border="1" cellspacing="0" align="center">';
     echo '<tr><th colspan="6" style="background-color: rgba(0,0,139,0.1);"><font color="blue">Compétences Passives Possédées</font></th></tr>';
-    echo '<tr><th colspan="2">Passif</th><th>Description</th><th>Catégorie</th><th>Niveau</th>';
-    
-    if(isset($_GET['forget_p'])){
-        echo '<th>Action</th>';
-    }
-    echo '</tr>';
+    echo '<tr><th colspan="2">Passif</th><th>Description</th><th>Catégorie</th><th>Niveau</th><th>Action</th></tr>';
 
     foreach($passives as $passive) {
 
@@ -222,42 +192,25 @@ if (!empty($passives)) {
             <td align="center"><strong>'. $passive->getCategoryRender() .'</strong></td>
             <td align="center" style="font-size: 0.9em; max-width: 300px;">'. $passive->getLevel() .'</td>';
         
-        if(isset($_GET['forget_p'])){
-
-            echo '
-            <td valign="top">
-                <input
-                    type="button"
-                    class="forget"
+        echo '
+            <td class="item-actions">
+                <button
+                    class="row-action forget"
                     data-passive="'. $passive->getName() .'"
                     data-name="'. $passive->getDisplayName() .'"
-                    value="Oublier"
-                    style="height: 50px;"
-                    />
+                    title="Oublier '. htmlspecialchars($passive->getDisplayName(), ENT_QUOTES) .'"
+                    ><span class="ra ra-burning-book"></span></button>
             </td>
             ';
-        }
 
         echo '</tr>';
-    }
-
-    if(!isset($_GET['forget_p'])){
-
-    echo '
-    <tr>
-        <td colspan="'.$maxColSpanP.'" align="right">
-
-            <a href="upgrades.php?spells&forget_p"><button '. $buttonStyle .'>Oublier un passif</button></a>
-        </td>
-    </tr>
-    ';
     }
 
     echo '</table>';
 }
 
 ?>
-<script src="js/forget_spells.js?v=20260715"></script>
+<script src="js/forget_spells.js?v=20260716"></script>
 <?php
 
 echo Str::minify(ob_get_clean());

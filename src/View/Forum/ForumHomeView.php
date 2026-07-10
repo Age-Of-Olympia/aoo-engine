@@ -136,7 +136,7 @@ class ForumHomeView
 ';
 
 
-        echo '<div><a href="forum.php?lastPosts"><button>Derniers messages</button></a> <a href="forum.php?search"><button>Recherche</button></a></div>';
+        echo '<div><a href="forum.php?lastPosts"><button>Derniers messages</button></a> <a href="forum.php?search"><button>Recherche</button></a> <button id="forum-mark-all-read">Tout marquer comme lu</button></div>';
 
 
 ?>
@@ -156,6 +156,32 @@ class ForumHomeView
                     }
 
                     document.location = 'forum.php?forum=' + forum;
+                });
+
+                /* Tout marquer comme lu : en panneau HUD on recharge
+                 * l'accueil (les pastilles par forum sont recomptées au
+                 * rendu) au lieu de suivre le redirect de l'API, qui
+                 * renverrait sur la pleine page héritée. */
+                $('#forum-mark-all-read').click(function(e) {
+
+                    aooFetch('api/forum/markAllAsRead.php', null, 'POST')
+                        .then(function(data) {
+
+                            if(window.hudOpenPanel){
+
+                                if(window.hudRefreshForumBadge){
+                                    window.hudRefreshForumBadge();
+                                }
+                                if(window.refreshMailBadges){
+                                    window.refreshMailBadges();
+                                }
+                                window.hudOpenPanel('load_forum.php', 'Forum');
+                                return;
+                            }
+
+                            autoModal(data);
+                        })
+                        .catch(autoError());
                 });
             });
         </script>

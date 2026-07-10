@@ -35,7 +35,7 @@ class Ui{
                 <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
-                <script src="js/main.js?v=20260715c"></script>
+                <script src="js/main.js?v=20260716"></script>
                 <script src="js/console.js?v=20260614"></script>
                 <link href="css/main.min.css?v=20260713" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
@@ -416,8 +416,27 @@ class Ui{
                 }
 
                 /* Porté : bouton « rendre » plein (nuit) — impossible à
-                 * confondre avec la main « prendre/équiper ». */
-                $useIcon = $isEquipped ? 'ra-reverse' : 'ra-hand';
+                 * confondre avec « équiper ». Une icône par geste :
+                 * équiper ≠ consommer ≠ lire (retours joueurs juillet
+                 * 2026 — la même main pour tout prêtait à confusion). */
+                if($isEquipped){
+                    $useIcon = 'ra-reverse';
+                }
+                elseif($type == 'equipement'){
+                    $useIcon = 'ra-vest';
+                }
+                elseif($type == 'parchemin'){
+                    $useIcon = 'ra-scroll-unfurled';
+                }
+                elseif($type == 'consommable'){
+                    $useIcon = 'ra-potion';
+                }
+                elseif($type == 'structure'){
+                    $useIcon = 'ra-hammer';
+                }
+                else{
+                    $useIcon = 'ra-hand';
+                }
                 $wornClass = $isEquipped ? ' row-action--worn' : '';
 
                 echo '
@@ -575,7 +594,7 @@ class Ui{
         // $dialogCssVersion = filemtime('css/dialog.min.css');
 
         echo '
-        <script src="js/dialog.js"></script>
+        <script src="js/dialog.js?v=20260716"></script>
         <link rel="stylesheet" href="css/dialog.min.css">
         ';
 

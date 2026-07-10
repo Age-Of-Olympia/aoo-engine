@@ -205,7 +205,7 @@ class SpellsView
                             // alert(data);
                             var content = $('<div>').html(data).find('#data').html();
                             alert(content);
-                            document.location.reload();
+                            aooReload();
                         }
                     });
                 });

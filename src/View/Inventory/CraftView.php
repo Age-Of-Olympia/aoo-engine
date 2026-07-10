@@ -297,7 +297,23 @@ class CraftView
                 aooFetch('api/player/craft_item.php', {
                         'craft_id': artId
                     }, null)
-                    .then(autoModal)
+                    .then(function(data) {
+
+                        /* Panneau HUD : message + rechargement du
+                         * panneau — le redirect inventory.php de l'API
+                         * renvoyait sur la page héritée (retours
+                         * joueurs juillet 2026). */
+                        if (window.hudReloadPanels && data.result) {
+
+                            if (data.result.message) {
+                                aooAlert(data.result.message);
+                            }
+                            aooReload();
+                            return;
+                        }
+
+                        autoModal(data);
+                    })
                     .catch(autoError());
             });
         </script>

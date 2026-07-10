@@ -55,10 +55,18 @@ final class TopBarView
 
         echo '<div class="hud-pills">';
         foreach (self::CONSUMABLE_PILLS as $k) {
+            $total = (int) $caracsJson->$k;
+            $remaining = isset($turnJson->$k) ? (int) $turnJson->$k : $total;
             $value = isset($turnJson->$k)
                 ? $turnJson->$k . '/' . $caracsJson->$k
                 : (string) $caracsJson->$k;
-            echo self::pill($k, CARACS[$k], $value, CARACS_TXT[$k]);
+            /* Jauge intégrée : la part MANQUANTE teinte la pilule
+             * depuis la droite (sang pour les PV, encre pour la
+             * dépense) — pleine, la pilule reste papier vierge. Les
+             * dégâts se voient d'un coup d'œil dès la connexion
+             * (retours joueurs juillet 2026). */
+            $missing = $total > 0 ? (int) round(100 - $remaining / $total * 100) : 0;
+            echo self::pill($k, CARACS[$k], $value, CARACS_TXT[$k], '', $missing);
         }
         echo self::pill('pf', 'PF', (string) $player->data->pf, 'Points de Foi');
         echo self::pill('en', 'EN', (string) $player->data->energie, 'Énergie');
@@ -121,9 +129,23 @@ final class TopBarView
         echo Str::minify(ob_get_clean());
     }
 
-    private static function pill(string $key, string $label, string $value, string $title, string $extraClass = ''): string
+    /**
+     * @param int|null $missingPct part manquante en % (0-100) : teinte
+     *                             la pilule depuis la droite (jauge
+     *                             intégrée, css/hud.css) ; null = pas
+     *                             de jauge (PF, EN, malus…)
+     */
+    private static function pill(string $key, string $label, string $value, string $title, string $extraClass = '', ?int $missingPct = null): string
     {
-        return '<span class="hud-pill' . $extraClass . '" id="hud-pill-' . $key . '" title="' . $title . '">'
+        $class = 'hud-pill' . $extraClass;
+        $style = '';
+
+        if ($missingPct !== null) {
+            $class .= ' hud-pill--gauge';
+            $style = ' style="--hud-missing: ' . $missingPct . '%;"';
+        }
+
+        return '<span class="' . $class . '"' . $style . ' id="hud-pill-' . $key . '" title="' . $title . '">'
             . '<span class="hud-pill-label">' . $label . '</span>'
             . '<span class="hud-pill-value">' . $value . '</span>'
             . '</span>';

@@ -27,6 +27,16 @@ $(document).ready(function(){
         }
 
 
+        /* Boutons de NAVIGATION (Marchander, Apprendre…) : un lien
+         * autour et pas de data-action — rien à POSTer vers
+         * action.php ; le lien (ou le routeur de panneaux du HUD)
+         * s'en charge. */
+        if(!$(this).data('action') && $(this).closest('a[href]').length){
+
+            return;
+        }
+
+
         $('.action').prop('disabled', true);
         $('#action-data').hide().html();
 

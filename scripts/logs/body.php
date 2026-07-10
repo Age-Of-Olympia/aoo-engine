@@ -36,10 +36,13 @@ echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Ret
 <a href="logs.php?light"><button>Perception</button></a>
 <a href="logs.php"><button>Perception complète</button></a>
 <a href="logs.php?self&light"><button>Du personnage</button></a>
-<a href="logs.php?mdj"><button>Messages du jour</button></a>
-<a href="logs.php?quests"><button>Quêtes</button></a></div>';
+<a href="logs.php?mdj"><button>Messages du jour</button></a></div>';
+/* Quêtes : fonctionnalité incomprise des joueurs (retours juillet
+ * 2026) — masquée du grand public jusqu'à ce qu'elle soit reprise,
+ * les admins gardent l'accès. */
 if($displayAllCondition) {
-    echo '<br /><a href="logs.php?admin"><button>Vue complète</button></a></div>';
+    echo '<br /><a href="logs.php?quests"><button>Quêtes</button></a>
+    <a href="logs.php?admin"><button>Vue complète</button></a></div>';
 }
 
 

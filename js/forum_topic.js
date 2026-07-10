@@ -2,6 +2,14 @@ $(document).ready(function(e){
 
     $('.reply').click(function(e){
 
+        /* HUD : le formulaire de réponse s'ouvre dans le panneau
+         * (le fil reste dans la pile de retour) ; habillage hérité :
+         * pleine page. */
+        if(window.hudOpenPanel){
+
+            window.hudOpenPanel('load_forum.php?reply='+ $(this).data('topic'), 'Répondre');
+            return;
+        }
 
         document.location = 'forum.php?reply='+ $(this).data('topic');
     });

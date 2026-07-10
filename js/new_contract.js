@@ -13,8 +13,8 @@ $(document).ready(function () {
             url: 'merchant.php?targetId=' + window.targetId + '&bids&hideMenu&itemId=' + itemId,
             data: {}, // serializes the form's elements.
             success: function (data) {
-                // alert(data);
-                $('#ajax-data').html(data);
+                /* voir new_contract.php : id propre au contrat */
+                $('#contract-preview').html(data);
             }
         });
     });
@@ -57,8 +57,9 @@ $(document).ready(function () {
 
 
 
-                const urlParams = new URLSearchParams(window.location.search);
-                targetId = urlParams.get('targetId');
+                /* Panneau HUD : les paramètres sont ceux du
+                 * fragment, pas de la page (main.js). */
+                targetId = aooViewParam('targetId');
                 let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
                 let payload = {
                     'action': 'create',
