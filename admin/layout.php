@@ -106,6 +106,7 @@ function admin_layout($title, $content, array $assets = []) {
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
         $navLink('view_recipes.php', 'Recettes', '/admin/view_recipes.php'),
+        $navLink('races.php', 'Races', '/admin/races.php'),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
     ]);

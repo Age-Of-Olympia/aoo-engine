@@ -55,6 +55,7 @@ class AdminMenuAccessService
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
         'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
+        'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
     ];
 
     /**
@@ -62,6 +63,7 @@ class AdminMenuAccessService
      * via layout.php but not themselves nav entries.
      */
     private const ALIASES = [
+        'races-save.php'             => 'races.php',
         'player-skills.php'          => 'players.php',
         'skill-owners.php'           => 'players.php',
         'tutorial-step-editor.php'   => 'tutorial.php',
