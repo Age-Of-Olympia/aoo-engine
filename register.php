@@ -9,6 +9,7 @@ use Classes\File;
 use Classes\Ui;
 use Classes\View;
 use App\Service\MissiveService;
+use App\Service\RaceService;
 use App\Service\Mail\MailContactSyncService;
 use App\Tutorial\TutorialFeatureFlag;
 
@@ -32,7 +33,7 @@ if(!empty($_POST['race'])){
     ){
 
 
-        if(!in_array($_POST['race'], RACES)){
+        if(!in_array($_POST['race'], (new RaceService())->getPlayableRaceNames())){
 
             exit('error race');
         }
@@ -184,7 +185,7 @@ if(!empty($_POST['race'])){
             $db->insert('players_forum_missives', $values);
         }
 
-        $raceJson = json()->decode('races', $player->data->race);
+        $raceJson = (new RaceService())->getRaceData($player->data->race);
         $newPlayerName = $player->data->name;
 
         // Send welcome missive to faction animateur (NPC) if configured and exists
@@ -231,16 +232,12 @@ EOT;
 
     echo '<td><select name="race" class="field">';
 
-    foreach(RACES as $e){
+    foreach((new RaceService())->getPlayableRaces() as $race){
 
 
-        $raceJson = json()->decode('races', $e);
+        $selected = ($race->getName() == $_POST['race']) ? 'selected' : '';
 
-        $selected = ($e == $_POST['race']) ? 'selected' : '';
-
-        if ($raceJson) {
-            echo '<option value="'. $e .'" '. $selected .'>'. $raceJson->name .'</option>';
-        }
+        echo '<option value="'. $race->getName() .'" '. $selected .'>'. $race->getLabel() .'</option>';
     }
 
     echo '</td>';

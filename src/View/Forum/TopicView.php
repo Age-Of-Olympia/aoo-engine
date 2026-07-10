@@ -8,6 +8,7 @@ use Classes\Ui;
 use Classes\bbcode;
 use Classes\Str;
 use App\Service\PlayerService;
+use App\Service\RaceService;
 use App\View\InfosView;
 use App\View\MenuView;
 use App\View\Forum\CookieView;
@@ -103,6 +104,8 @@ class TopicView
     ';
 
 
+        $raceService = new RaceService();
+
         foreach ($topJson->posts as $postN => $post) {
 
 
@@ -151,7 +154,7 @@ class TopicView
             echo '<div><a href="infos.php?targetId=' . $author->id . '">' . $author->data->name . '</a>, mat.' . $author->id . '</div>';
 
 
-            $raceJson = json()->decode('races', $author->data->race);
+            $raceJson = $raceService->getRaceData($author->data->race);
             $pnjText = $author->id < 0 ? ' - PNJ' : '';
 
             echo '<div style="font-size: 88%;"><i>' . $raceJson->name . $pnjText . ' - <a href="infos.php?targetId=' . $author->id . '&reputation">' . Str::get_reput(floor($author->data->pr/COEFFICIENT_PR)) . '</a> Rang ' . $author->data->rank . '</i></div>';

@@ -18,7 +18,7 @@ echo '
     echo '<a href="index.php" action="login" id="index-button-play", class="index-button">Jouer</a>';
 
 
-    $raceBg = RACES[0];
+    $raceBg = (new \App\Service\RaceService())->getPlayableRaceNames()[0] ?? 'nain';
 
     echo '
     <div id="index-login">

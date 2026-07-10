@@ -18,7 +18,7 @@ use Doctrine\DBAL\Connection;
  * Every step the original did is still done in the same order:
  *   1. Create isolated map instance via TutorialMapInstance
  *   2. Resolve race (defaults to real player's race)
- *   3. Validate race against RACES_EXT
+ *   3. Validate race against the races table
  *   4. Compute avatar/portrait defaults
  *   5. Generate IDs via getNextEntityId/getNextDisplayId
  *   6. INSERT players row (tutorial discriminator)
@@ -65,10 +65,11 @@ class TutorialPlayerFactory
             $race = $playerData['race'] ?? 'Humain';
         }
 
-        // Step 3: Validate race against extended races list
-        if (!in_array(strtolower($race), RACES_EXT, true)) {
+        // Step 3: Validate race against the races table
+        $allRaceNames = (new \App\Service\RaceService())->getAllRaceNames();
+        if (!in_array(strtolower($race), $allRaceNames, true)) {
             throw new \InvalidArgumentException(
-                "Invalid race '{$race}'. Valid races: " . implode(', ', RACES_EXT)
+                "Invalid race '{$race}'. Valid races: " . implode(', ', $allRaceNames)
             );
         }
 

@@ -68,11 +68,11 @@ class InventoryService
                 exit('error ae');
             }
 
-            $raceJson = json()->decode('races', $player->data->race);
+            $raceData = (new RaceService())->getRaceData($player->data->race);
 
             $charges = false;
 
-            if (!$raceJson || empty($raceJson->spells) || !in_array($item->row->spell, $raceJson->spells)) {
+            if (!$raceData || empty($raceData->spells) || !in_array($item->row->spell, $raceData->spells)) {
 
                 $charges = 1;
             }

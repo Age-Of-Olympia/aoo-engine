@@ -2,14 +2,17 @@
 
 use App\Service\ActionService;
 use App\Service\OutcomeInstructionService;
+use App\Service\RaceService;
 
 echo '<textarea style="width: 100vw; height: 50vw;">';
 
 
-foreach(RACES as $race){
+$raceService = new RaceService();
+
+foreach($raceService->getPlayableRaceNames() as $race){
 
 
-    $raceJson = json()->decode('races', $race);
+    $raceJson = $raceService->getRaceData($race);
 
     echo '==== '. $raceJson->name .' ====
 ^ # ^ Nom de l\'action ^ Type ^ Coût ^ Bonus ^ Description ^

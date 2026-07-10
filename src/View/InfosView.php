@@ -5,6 +5,7 @@ namespace App\View;
 use Classes\Player;
 use Classes\Str;
 use App\Service\PlayerService;
+use App\Service\RaceService;
 
 class InfosView
 {
@@ -13,7 +14,7 @@ class InfosView
         $player->get_data(false);
 
 
-        $raceJson = json()->decode('races', $player->data->race);
+        $raceJson = (new RaceService())->getRaceData($player->data->race);
 
 
         $lastPostJson = json()->decode('forum', 'lastPosts');

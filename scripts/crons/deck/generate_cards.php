@@ -12,7 +12,8 @@ foreach($list as $k=>$e){
     }
         // unset($list[$k]);
     //Enlever les races "privées" dieux, animaux, protocols... au cas où ce ne soit pas un pnj
-    if(file_exists('datas/private/races/' . $e->race . '.json'))
+    $race = (new \App\Service\RaceService())->getRaceByName($e->race);
+    if($race !== null && $race->getHidden())
         unset($list[$k]);
 }
 

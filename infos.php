@@ -1,5 +1,6 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\Service\RaceService;
 use Classes\Item;
 use Classes\Ui;
 use Classes\View;
@@ -138,7 +139,7 @@ echo '
             echo '<h1>'. $targetEntity->getName() .'</h1>';
 
 
-            $raceJson = json()->decode('races', $targetEntity->getRace());
+            $raceJson = (new RaceService())->getRaceData($targetEntity->getRace());
 
             $pnjText = $targetEntity->getId() < 0 ? ' - PNJ' : '';
             // isInactive is runtime-computed (RealPlayer domain method from !384).

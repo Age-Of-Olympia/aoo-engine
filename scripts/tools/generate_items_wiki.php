@@ -91,10 +91,10 @@ foreach($artJson as $occ=>$e){
 }
 
 /*
-foreach(RACES as $race){
+foreach((new \App\Service\RaceService())->getPlayableRaceNames() as $race){
 
 
-    $raceJson = json()->decode('races', $race);
+    $raceJson = (new \App\Service\RaceService())->getRaceData($race);
 
     echo '==== '. $raceJson->name .' ====
 ^ # ^ Nom de l\'objet ^ Type ^ Coût ^ Description ^

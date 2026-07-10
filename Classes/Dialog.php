@@ -233,7 +233,8 @@ class Dialog{
 
 
         // default
-        foreach(RACES as $e)
+        $playableRaces = (new \App\Service\RaceService())->getPlayableRaceNames();
+        foreach($playableRaces as $e)
             $raceNTbl[$e] = 0;
 
 
@@ -242,7 +243,7 @@ class Dialog{
         while($row = $result->fetch_assoc()){
 
 
-            if(!in_array($row['race'], RACES)){
+            if(!in_array($row['race'], $playableRaces)){
 
                 continue;
             }
@@ -285,12 +286,13 @@ class Dialog{
         $options = array();
 
 
+        $raceService = new \App\Service\RaceService();
         foreach(self::get_race_n() as $k=>$e){
 
 
-            $raceJson = json()->decode('races', $k);
-            if ($raceJson) {
-                $options[] = (object) array('go'=>$k, 'text'=>$raceJson->name .' '. $e);
+            $race = $raceService->getRaceByName($k);
+            if ($race) {
+                $options[] = (object) array('go'=>$k, 'text'=>$race->getLabel() .' '. $e);
             }
         }
 

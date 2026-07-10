@@ -4,6 +4,7 @@ use App\View\Classement\BourrinsView;
 use App\View\Classement\FortunesView;
 use App\View\Classement\ReputationsView;
 use App\View\Classement\FoiView;
+use App\Service\RaceService;
 use Classes\Player;
 use Classes\Ui;
 use Classes\Str;
@@ -42,9 +43,11 @@ function print_players($list){
 
     $n = 1;
 
+    $raceService = new RaceService();
+
     foreach($list as $player){
 
-        $raceJson = json()->decode('races', $player->race);
+        $raceJson = $raceService->getRaceData($player->race);
 
         $reput = Str::get_reput(floor($player->pr/COEFFICIENT_PR));
 

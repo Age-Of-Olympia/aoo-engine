@@ -2,6 +2,8 @@
 
 namespace App\View;
 
+use App\Service\RaceService;
+
 class FactionView
 {
     public static function renderFaction($player,$facJson,$res,): void
@@ -23,10 +25,12 @@ class FactionView
     </tr>
     ';
 
+        $raceService = new RaceService();
+
         while ($row = $res->fetch_object()) {
 
 
-            $raceJson = json()->decode('races', $row->race);
+            $raceJson = $raceService->getRaceData($row->race);
 
             $planJson = json()->decode('plans', $row->plan);
 

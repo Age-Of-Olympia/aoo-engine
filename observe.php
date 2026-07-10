@@ -4,6 +4,7 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Service\RaceService;
 use App\Service\Action\ActionTargeting;
 use App\Factory\PlayerFactory;
 use Classes\Str;
@@ -285,6 +286,7 @@ if($res->num_rows){
     }
 
     $card="";
+    $raceService = new RaceService();
     while($row = $res->fetch_object()){
 
 
@@ -377,7 +379,7 @@ if($res->num_rows){
         }
 
 
-        $raceJson = json()->decode('races', $target->data->race);
+        $raceJson = $raceService->getRaceData($target->data->race);
 
         $pnjText = $target->id<0 ? ' - PNJ' : '';
 

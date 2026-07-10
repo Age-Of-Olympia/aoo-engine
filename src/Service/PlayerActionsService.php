@@ -89,6 +89,31 @@ class PlayerActionsService
     }
 
     /**
+     * Grant a race's starter actions (race_starter_actions list),
+     * idempotently. Used at player creation and when a tutorial
+     * finishes/aborts. A failure on one action is logged and the rest
+     * still process — granting must never block creation or tutorial
+     * completion.
+     */
+    public function grantRaceStarterPack(int $playerId, string $race): void
+    {
+        $raceEntity = (new RaceService())->getRaceByName($race);
+        if ($raceEntity === null) {
+            return;
+        }
+
+        foreach ($raceEntity->getStarterActionNames() as $name) {
+            try {
+                if (!$this->hasAction($playerId, $name)) {
+                    $this->addAction($playerId, $name);
+                }
+            } catch (\Throwable $e) {
+                error_log("[grantRaceStarterPack] could not add action '{$name}' to player {$playerId}: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
      * Delete the row matching (player_id, name). No-op when absent.
      */
     public function endAction(int $playerId, string $name): void

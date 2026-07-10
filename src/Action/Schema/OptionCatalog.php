@@ -52,19 +52,15 @@ final class OptionCatalog
     }
 
     /**
-     * The playable races (the RACES constant is the single source).
+     * The playable races (the races table is the single source).
      *
      * @return array<string, string> race => label
      */
     public function races(): array
     {
-        if (!defined('RACES')) {
-            return [];
-        }
-
         $races = [];
-        foreach (RACES as $name) {
-            $races[(string) $name] = $this->humanize((string) $name);
+        foreach ((new \App\Service\RaceService())->getPlayableRaces() as $race) {
+            $races[$race->getName()] = $race->getLabel();
         }
 
         return $races;

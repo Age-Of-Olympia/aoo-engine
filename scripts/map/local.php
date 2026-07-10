@@ -1,6 +1,7 @@
 <?php
 use Classes\Player;
 use Classes\Db;
+use App\Service\RaceService;
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button>'. $planJson->name .'</button></a></div>';
 
@@ -68,11 +69,13 @@ echo '
     >
     ';
 
+    $raceService = new RaceService();
+
     while($row = $res->fetch_object()){
         if($row->id != $player->id && isset($incognitos[$row->id])){
             continue;
         }
-        $raceJson = json()->decode('races', $row->race);
+        $raceJson = $raceService->getRaceData($row->race);
 
 
         $x = ($row->x + $width) * 5;
@@ -198,7 +201,7 @@ if(!empty($planJson->pnj)){
 
     $pnj->get_data();
 
-    $raceJson = json()->decode('races', $pnj->data->race);
+    $raceJson = $raceService->getRaceData($pnj->data->race);
 
     echo '
     <h2>PNJ</h2>

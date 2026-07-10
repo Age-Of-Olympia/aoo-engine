@@ -19,7 +19,7 @@ if (!$raceName) {
 }
 
 $raceName = strtolower($raceName);
-$raceData = json()->decode('races', $raceName);
+$raceData = (new \App\Service\RaceService())->getRaceData($raceName);
 
 if (!$raceData) {
     echo json_encode(['success' => false, 'error' => 'Race not found: ' . $raceName]);

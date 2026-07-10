@@ -1,5 +1,6 @@
 <?php
 use Classes\Player;
+use App\Service\RaceService;
 // scripts/map/local_map.php
 
 // Display current player's Z-coordinate and full position
@@ -26,7 +27,7 @@ if (!empty($planJson->pnj)) {
     $pnj->get_data();
 
     // Fetch race information
-    $raceJson = json()->decode('races', $pnj->data->race);
+    $raceJson = (new RaceService())->getRaceData($pnj->data->race);
 
     // Display PNJ information
     echo '

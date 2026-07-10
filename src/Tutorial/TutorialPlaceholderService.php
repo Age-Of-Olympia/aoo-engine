@@ -2,8 +2,8 @@
 
 namespace App\Tutorial;
 
+use App\Service\RaceService;
 use Classes\Player;
-use Classes\Json;
 
 /**
  * TutorialPlaceholderService - Replaces dynamic placeholders in tutorial text
@@ -101,16 +101,7 @@ class TutorialPlaceholderService
             $this->player->get_data();
         }
 
-        // Get race data
-        $race = $this->player->data->race;
-        $raceJson = (new Json())->decode('races', $race);
-
-        if ($raceJson && isset($raceJson->mvt)) {
-            return (string) $raceJson->mvt;
-        }
-
-        // Fallback to default (should not happen with valid race)
-        return '4';
+        return (string) (new RaceService())->getRaceMaxMvt($this->player->data->race);
     }
 
     /**
@@ -125,12 +116,10 @@ class TutorialPlaceholderService
             $this->player->get_data();
         }
 
-        // Get race data
-        $race = $this->player->data->race;
-        $raceJson = (new Json())->decode('races', $race);
+        $race = (new RaceService())->getRaceByName($this->player->data->race);
 
-        if ($raceJson && isset($raceJson->a)) {
-            return (string) $raceJson->a;
+        if ($race !== null) {
+            return (string) $race->getCarac('a');
         }
 
         // Fallback to default
@@ -164,10 +153,10 @@ class TutorialPlaceholderService
 
         $race = $this->player->data->race ?? 'nain';
 
-        // Get race display name from JSON
-        $raceJson = (new Json())->decode('races', $race);
-        if ($raceJson && isset($raceJson->name)) {
-            return $raceJson->name;
+        // Display label from the races table
+        $raceEntity = (new RaceService())->getRaceByName($race);
+        if ($raceEntity !== null) {
+            return $raceEntity->getLabel();
         }
 
         // Fallback to capitalized race code

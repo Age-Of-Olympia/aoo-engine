@@ -13,6 +13,7 @@ use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
 use App\Service\PlayerEffectService;
 use App\Service\PlayerBonusService;
+use App\Service\RaceService;
 use Exception;
 use Throwable;
 
@@ -199,9 +200,7 @@ class Player implements ActorInterface {
         }
 
 
-        $raceJson = json()->decode('races', $this->data->race);
-
-        $this->raceData = $raceJson;
+        $this->raceData = (new RaceService())->getRaceData($this->data->race);
 
         // Initialize caracs object if not exists
         if (!isset($this->caracs) || !is_object($this->caracs)) {
@@ -2213,7 +2212,7 @@ class Player implements ActorInterface {
         $displayId = getNextDisplayId($type);
 
 
-        $raceJson = json()->decode('races', $race);
+        $raceData = (new RaceService())->getRaceData($race);
 
 
         $time = time();
@@ -2228,7 +2227,7 @@ class Player implements ActorInterface {
             'avatar'=>'img/avatars/ame/'. $race .'.webp',
             'portrait'=>'img/portraits/ame/1.jpeg',
             'coords_id'=>$coordsId,
-            'faction'=>$raceJson->faction,
+            'faction'=>$raceData->faction ?? '',
             'nextTurnTime'=>$time,
             'registerTime'=>$time
         );
@@ -2246,19 +2245,8 @@ class Player implements ActorInterface {
         $player->get_data();
 
 
-        // Grant the race's starter pack. Same loop as api/tutorial/
-        // {skip,cancel,complete}.php so the canonical list stays in one
-        // place: datas/[public|private]/races/<race>.json `actions`.
-        $raceJson = json()->decode('races', $race);
-        if ($raceJson && !empty($raceJson->actions)) {
-            foreach ($raceJson->actions as $actionName) {
-                try {
-                    $player->add_action($actionName);
-                } catch (\Throwable $e) {
-                    error_log("[put_player] could not add action '{$actionName}' to player {$id}: " . $e->getMessage());
-                }
-            }
-        }
+        // Grant the race's starter pack (race_starter_actions in DB).
+        (new PlayerActionsService())->grantRaceStarterPack($id, $race);
 
 
         Player::refresh_list();
@@ -2408,20 +2396,22 @@ class Player implements ActorInterface {
         $data = array();
 
         $list= array();
-        $privateRaces = array();
+        $hiddenRaces = array();
+        $raceService = new RaceService();
         $firstData = null;
         while($row = $res->fetch_object()){
 
             $list[] = $row;
             if($row->id > 0 )
             {
-                if(!isset($privateRaces[$row->race]))
+                if(!isset($hiddenRaces[$row->race]))
                 {
-                    $privateRaces[$row->race]=file_exists(dirname(__FILE__) .'/../'.'datas/private/races/' . $row->race . '.json');
-                    //echo $row->race . ":" . (($privateRaces[$row->race]) ? "private" :"public") . '<br>';
+                    // Hidden races (ex-private race JSON) stay out of the public first-player spot.
+                    $race = $raceService->getRaceByName($row->race);
+                    $hiddenRaces[$row->race] = $race !== null && $race->getHidden();
                 }
 
-                if($privateRaces[$row->race])continue;
+                if($hiddenRaces[$row->race])continue;
 
                 if(!$firstData || $row->xp > $firstData->xp){
                     $firstData = $row;

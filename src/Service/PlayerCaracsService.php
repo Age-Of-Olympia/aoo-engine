@@ -16,7 +16,7 @@ use Classes\Db;
  * once.
  *
  * What's in the nude path:
- *   - race stats (from `datas/public/races/<race>.json`)
+ *   - race stats (from the `races` table via RaceService)
  *   - upgrades bought by the player (rows in `players_upgrades`)
  *
  * What's NOT in the nude path (stays on legacy
@@ -53,20 +53,19 @@ class PlayerCaracsService
     }
 
     /**
-     * Fetch the race JSON from `datas/public/races/<race>.json`. A
-     * missing race file returns a zero-filled stdClass — matches the
-     * defensive fallback on `Classes\Player::get_caracs` (Player.php
-     * around L191).
+     * Fetch the race definition from the DB (races table). An unknown
+     * race returns a zero-filled stdClass — matches the defensive
+     * fallback on `Classes\Player::get_caracs` (Player.php around L191).
      */
     private function loadRaceData(string $race): object
     {
-        $raceJson = json()->decode('races', $race);
+        $raceData = (new RaceService())->getRaceData($race);
 
-        if (!$raceJson || !is_object($raceJson)) {
+        if ($raceData === null) {
             return (object) array_fill_keys(array_keys(CARACS), 0);
         }
 
-        return $raceJson;
+        return $raceData;
     }
 
     /**

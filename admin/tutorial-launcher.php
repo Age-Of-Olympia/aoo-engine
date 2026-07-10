@@ -81,18 +81,17 @@ try {
     // Race override for admin testing.
     //
     // In prod, admins are NPC characters (id<0) often with race='animal'
-    // (or another non-playable race). TutorialPlayerFactory defaults the
-    // tutorial-character race to the launching player's race and then
-    // validates it against RACES_EXT — so an admin testing a tutorial
-    // would otherwise get an InvalidArgumentException ("Invalid race
-    // 'animal'..."), surfaced as the generic "failed to create tutorial".
+    // (or another non-playable race). The tutorial must run as a playable
+    // race — a PNJ race would produce a zero-stat tutorial character (and
+    // used to throw "Invalid race 'animal'" before races moved to the DB).
     //
     // Override to a sane playable race when the launcher's own race
     // isn't tutorial-compatible. Real players with playable races keep
     // their own race (admin testing as a real test character still
     // works as before).
     $launcherRace = strtolower($player->data->race ?? '');
-    $raceOverride = in_array($launcherRace, RACES_EXT, true) ? null : 'nain';
+    $launcherRaceEntity = (new \App\Service\RaceService())->getRaceByName($launcherRace);
+    $raceOverride = ($launcherRaceEntity !== null && $launcherRaceEntity->getPlayable()) ? null : 'nain';
 
     // Start the tutorial with specific version (and race override if any)
     $result = $manager->startTutorial($version, $raceOverride);

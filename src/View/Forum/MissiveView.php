@@ -4,6 +4,7 @@ namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
 use App\Service\PlayerService;
+use App\Service\RaceService;
 use Classes\Db;
 use Classes\Forum;
 use Classes\Player;
@@ -14,6 +15,8 @@ class MissiveView
     {
         $player->get_data(false);
         $destTbl = Forum::get_top_dest($topJson);
+
+        $raceService = new RaceService();
 
         if (!in_array($player->id, $destTbl) || (($player->id > 0) && ($player->id != $_SESSION['originalPlayerId']))) {
             exit('Accès refusé');
@@ -57,7 +60,7 @@ class MissiveView
                     (($player->data->secretFaction == "") ||
                         ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))
                 ) {
-                    $raceJson = json()->decode('races', $desti->data->race);
+                    $raceJson = $raceService->getRaceData($desti->data->race);
                     if ($raceJson !== null && !empty($raceJson->animateur)) {
                         Forum::add_dest($player, $raceJson->animateur, $topJson, $destTbl);
                     }
@@ -89,7 +92,7 @@ class MissiveView
             $dest = $playerService->GetPlayer($e);
             $dest->get_data(false);
 
-            $raceJson = json()->decode('races', $dest->data->race);
+            $raceJson = $raceService->getRaceData($dest->data->race);
 
             echo '
             <span
@@ -133,7 +136,7 @@ class MissiveView
 
                 $faction[] = $e;
             } else {
-                // $raceJson = json()->decode('races', $e->race);
+                // $raceJson = $raceService->getRaceData($e->race);
                 //
                 // echo '<option value="'. $e->id .'">- '. $e->name .' '. $raceJson->name .'</option>';
                 continue;
@@ -147,7 +150,7 @@ class MissiveView
         foreach ($faction as $e) {
 
 
-            $raceJson = json()->decode('races', $e->race);
+            $raceJson = $raceService->getRaceData($e->race);
 
             echo '<option value="' . $e->id . '">- ' . $e->name . ' (' . ($raceJson?->name ?? '???') . ')</option>';
         }
@@ -163,7 +166,7 @@ class MissiveView
             foreach ($secretFaction as $e) {
 
 
-                $raceJson = json()->decode('races', $e->race);
+                $raceJson = $raceService->getRaceData($e->race);
 
                 echo '<option value="' . $e->id . '">- ' . $e->name . ' (' . ($raceJson?->name ?? '???') . ')</option>';
             }
@@ -172,10 +175,10 @@ class MissiveView
 
         echo '<option disabled>Animateurs:</option>';
 
-        foreach (RACES_EXT as $e) {
+        foreach ($raceService->getAllRaceNames() as $e) {
 
 
-            $raceJson = json()->decode('races', $e);
+            $raceJson = $raceService->getRaceData($e);
 
             if ($raceJson === null || empty($raceJson->animateur)) {
                 continue;

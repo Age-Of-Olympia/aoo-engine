@@ -16,13 +16,10 @@ define('ENTITY_ID_RANGES', [
 
 
 /*
- * races
+ * races : définies en base (table races), voir App\Service\RaceService.
+ * getPlayableRaceNames() remplace l'ancien RACES, getAllRaceNames()
+ * l'ancien RACES_EXT.
  */
-
-
-define('RACES', array('nain','geant','olympien','hs','elfe'));
-
-define('RACES_EXT', array('nain','geant','olympien','hs','elfe','lutin','humain','dieu','ame'));
 
 
 /*

@@ -2,6 +2,7 @@
 use Classes\Command;
 use Classes\Argument;
 use Classes\Db;
+use App\Service\RaceService;
 
 class ActionCmd extends Command
 {
@@ -27,7 +28,7 @@ EOT);
 
             $player=parent::getPlayer($argumentValues[0]);
             $player->get_data();
-            $raceJson = json()->decode('races', $player->data->race);
+            $raceJson = (new RaceService())->getRaceData($player->data->race);
 
             echo 'delete all actions for '. $player->data->name .'...<br />';
 
@@ -64,7 +65,7 @@ EOT);
 
             $race = (!empty($argumentValues[2])) ? $argumentValues[2] : $player->data->race;
 
-            $raceJson = json()->decode('races', $race);
+            $raceJson = (new RaceService())->getRaceData($race);
 
             echo 'delete all actions for '. $player->data->name .'...<br />';
 

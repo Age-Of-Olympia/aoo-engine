@@ -4,6 +4,7 @@ namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
 use App\Service\PlayerService;
+use App\Service\RaceService;
 use Classes\Forum;
 use Classes\Str;
 use Classes\Ui;
@@ -70,7 +71,7 @@ class NewTopicView
                             (($player->data->secretFaction == "") ||
                                 ($player->data->secretFaction != "" && $player->data->secretFaction != $desti->data->secretFaction))
                         ) {
-                            $raceJson = json()->decode('races', $desti->data->race);
+                            $raceJson = (new RaceService())->getRaceData($desti->data->race);
                             Forum::add_dest($player, $raceJson->animateur, $topJson, $destTbl);
                         }
                     }

@@ -268,28 +268,16 @@ parameters:
 			path: src/Entity/EntityManagerFactory.php
 
 		-
-			message: '#^Property App\\Entity\\Race\:\:\$code is never written, only read\.$#'
-			identifier: property.onlyRead
-			count: 1
-			path: src/Entity/Race.php
-
-		-
-			message: '#^Property App\\Entity\\Race\:\:\$hidden is never written, only read\.$#'
-			identifier: property.onlyRead
-			count: 1
-			path: src/Entity/Race.php
-
-		-
 			message: '#^Property App\\Entity\\Race\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
 			path: src/Entity/Race.php
 
 		-
-			message: '#^Property App\\Entity\\Race\:\:\$playable is never written, only read\.$#'
-			identifier: property.onlyRead
+			message: '#^Property App\\Entity\\RaceNameListEntry\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
 			count: 1
-			path: src/Entity/Race.php
+			path: src/Entity/RaceNameListEntry.php
 
 		-
 			message: '#^Class App\\Entity\\Recipe referenced with incorrect case\: App\\Entity\\recipe\.$#'
@@ -361,12 +349,6 @@ parameters:
 		-
 			message: '#^Method App\\Service\\ViewService\:\:saveImage\(\) is unused\.$#'
 			identifier: method.unused
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Property App\\Service\\ViewService\:\:\$raceService is never read, only written\.$#'
-			identifier: property.onlyWritten
 			count: 1
 			path: src/Service/ViewService.php
 

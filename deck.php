@@ -1,5 +1,6 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\Service\RaceService;
 use Classes\Db;
 use Classes\Ui;
 require_once('config.php');
@@ -13,6 +14,8 @@ $sql = 'SELECT * FROM players_deck WHERE player_id = ?';
 
 $res = $db->exe($sql, $_SESSION['playerId']);
 
+$raceService = new RaceService();
+
 while($row = $res->fetch_object()){
 
 
@@ -23,7 +26,7 @@ while($row = $res->fetch_object()){
 
     $dataName = '<a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a>';
 
-    $raceJson = json()->decode('races', $target->data->race);
+    $raceJson = $raceService->getRaceData($target->data->race);
 
     $factionJson = json()->decode('factions', $target->data->faction);
 

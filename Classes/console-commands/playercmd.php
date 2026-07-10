@@ -167,7 +167,7 @@ function create_player($argumentValues){
     }
 
 
-    if(!$raceJson = json()->decode('races', $race)){
+    if(!$raceJson = (new \App\Service\RaceService())->getRaceData($race)){
 
         return '<font color="red">invalid race ('. $race .')</font>';
     }

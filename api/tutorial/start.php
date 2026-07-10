@@ -62,12 +62,13 @@ if (!in_array($mode, ['first_time', 'replay', 'practice'])) {
 
 // Validate race override up front so we fail with 400 rather than leaking
 // TutorialPlayerFactory's InvalidArgumentException as a 500.
-if ($raceOverride !== null && !in_array(strtolower($raceOverride), RACES_EXT, true)) {
+$allRaceNames = (new \App\Service\RaceService())->getAllRaceNames();
+if ($raceOverride !== null && !in_array(strtolower($raceOverride), $allRaceNames, true)) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
         'error'   => "Invalid race '{$raceOverride}'",
-        'valid'   => array_values(RACES_EXT),
+        'valid'   => $allRaceNames,
     ]);
     exit;
 }

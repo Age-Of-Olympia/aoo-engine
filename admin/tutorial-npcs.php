@@ -37,7 +37,7 @@ while ($row = $res->fetch_assoc()) {
     $stepsByVersion[$row['version']][] = $row;
 }
 
-$races = defined('RACES_EXT') ? RACES_EXT : ['nain', 'elfe', 'dieu', 'ame', 'humain', 'lutin'];
+$races = (new \App\Service\RaceService())->getAllRaceNames();
 
 /* ---------------------- Form rendering helpers --------------------- */
 function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, array $races, string $csrfToken): string
