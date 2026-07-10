@@ -13,6 +13,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Race;
+use App\Service\ActionService;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
 use App\Service\RaceService;
@@ -74,6 +75,20 @@ $applyForm = static function (Race $race): void {
 $linesToNames = static fn (string $field): array =>
     preg_split('/\R+/', trim((string) ($_POST[$field] ?? ''))) ?: [];
 
+/**
+ * Typo guard: names absent from the known-action catalog are saved anyway
+ * (an action can be configured afterwards) but flagged in the flash so a
+ * misspelled name doesn't silently fail to grant at character creation.
+ */
+$unknownNamesNotice = static function (array $names): string {
+    $known = (new ActionService())->getKnownActionNames();
+    $unknown = array_filter(array_map('trim', $names), static fn (string $n): bool => $n !== '' && !isset($known[$n]));
+
+    return $unknown === []
+        ? ''
+        : ' ⚠ Noms inconnus du jeu (vérifiez l\'orthographe) : ' . implode(', ', array_unique($unknown)) . '.';
+};
+
 if ($error = $validate()) {
     setFlash('warning', $error);
     redirectTo('/admin/races.php');
@@ -94,9 +109,14 @@ if ($action === 'create') {
     $race->setCode(strtoupper($name));
     $applyForm($race);
     $service->save($race);
-    $service->replaceNameLists($race, $linesToNames('starter_actions'), $linesToNames('spells'));
+    $starterActions = $linesToNames('starter_actions');
+    $spells = $linesToNames('spells');
+    // Compute the typo notice BEFORE saving: the catalog includes the race
+    // list tables, so a just-saved typo would count as "known".
+    $notice = $unknownNamesNotice(array_merge($starterActions, $spells));
+    $service->replaceNameLists($race, $starterActions, $spells);
 
-    setFlash('success', "Race « {$name} » créée.");
+    setFlash('success', "Race « {$name} » créée." . $notice);
     redirectTo('/admin/races.php');
 }
 
@@ -109,9 +129,14 @@ if ($action === 'update') {
 
     $applyForm($race);
     $service->save($race);
-    $service->replaceNameLists($race, $linesToNames('starter_actions'), $linesToNames('spells'));
+    $starterActions = $linesToNames('starter_actions');
+    $spells = $linesToNames('spells');
+    // Compute the typo notice BEFORE saving: the catalog includes the race
+    // list tables, so a just-saved typo would count as "known".
+    $notice = $unknownNamesNotice(array_merge($starterActions, $spells));
+    $service->replaceNameLists($race, $starterActions, $spells);
 
-    setFlash('success', 'Race « ' . $race->getLabel() . ' » enregistrée.');
+    setFlash('success', 'Race « ' . $race->getLabel() . ' » enregistrée.' . $notice);
     redirectTo('/admin/races.php?action=edit&name=' . urlencode($name));
 }
 

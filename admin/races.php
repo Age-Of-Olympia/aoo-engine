@@ -22,6 +22,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Race;
+use App\Service\ActionService;
 use App\Service\CsrfProtectionService;
 use App\Service\RaceService;
 
@@ -96,6 +97,51 @@ function race_render_form(?Race $race, string $csrfToken): string
     $starterActions = $isEdit ? implode("\n", $race->getStarterActionNames()) : '';
     $spells = $isEdit ? implode("\n", $race->getSpellNames()) : '';
 
+    // Autocomplete catalog for both list editors: every action name the game
+    // knows (configured actions labelled by type + legacy granted-only names).
+    $knownActions = (new ActionService())->getKnownActionNames();
+    $catalog = renderDatalist('race-action-catalog', $knownActions);
+
+    // Search + add picker wired onto a textarea by data-target.
+    $picker = static fn (string $target): string =>
+        '<div class="input-group input-group-sm mb-2">'
+        . '<input type="text" class="form-control race-action-picker" list="race-action-catalog"'
+        . ' data-target="' . e($target) . '" placeholder="Rechercher une action à ajouter…" autocomplete="off">'
+        . '<div class="input-group-append">'
+        . '<button type="button" class="btn btn-outline-primary race-action-add">Ajouter</button>'
+        . '</div></div>';
+
+    $pickerScript = <<<HTML
+<script>
+(function () {
+    /* Append the picked action name to the target textarea (one per line,
+       no duplicates), on button click or Enter in the picker field. */
+    function add(picker) {
+        var name = picker.value.trim();
+        if (name === '') return;
+        var area = document.querySelector('textarea[name="' + picker.dataset.target + '"]');
+        var lines = area.value.split(/\\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+        if (lines.indexOf(name) === -1) {
+            lines.push(name);
+            area.value = lines.join('\\n');
+        }
+        picker.value = '';
+        picker.focus();
+    }
+    document.querySelectorAll('.race-action-add').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            add(btn.closest('.input-group').querySelector('.race-action-picker'));
+        });
+    });
+    document.querySelectorAll('.race-action-picker').forEach(function (picker) {
+        picker.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); add(picker); }
+        });
+    });
+})();
+</script>
+HTML;
+
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">' . $title . '</h1>'
         . '<a class="btn btn-sm btn-outline-secondary" href="/admin/races.php">← Retour à la liste</a></div>'
@@ -145,17 +191,21 @@ function race_render_form(?Race $race, string $csrfToken): string
 
         . '<div class="card mb-3"><div class="card-header">Listes d\'actions</div><div class="card-body"><div class="row">'
         . '<div class="form-group col-md-6"><label>Actions de départ (une par ligne)</label>'
+        . $picker('starter_actions')
         . '<textarea class="form-control" name="starter_actions" rows="10" spellcheck="false">'
         . e($starterActions) . '</textarea>'
         . '<small class="form-text text-muted">Accordées à la création du personnage (ex: attaquer, dmg1/pic_de_pierre).</small></div>'
         . '<div class="form-group col-md-6"><label>Sorts apprenables (un par ligne)</label>'
+        . $picker('spells')
         . '<textarea class="form-control" name="spells" rows="10" spellcheck="false">'
         . e($spells) . '</textarea>'
         . '<small class="form-text text-muted">Conditionnent le marchand de sorts et les objets à sort intégré.</small></div>'
         . '</div></div></div>'
 
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer la race') . '</button>'
-        . '</form>';
+        . '</form>'
+        . $catalog
+        . $pickerScript;
 }
 
 /* -------------------------------------------------------------------------
