@@ -1522,6 +1522,42 @@ body:has(#hud) #view-landing-wrapper {
     right: 8px;
 }
 
+/* Tirer pour rafraîchir (mobile, js/hud.js initPullToRefresh) :
+ * pastille parchemin sous le bandeau, même glyphe que le bouton de
+ * rafraîchissement du flux ; armée (seuil atteint), elle se retourne
+ * — relâcher recharge la page. */
+#hud-ptr {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--hud-line);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    color: var(--hud-bronze);
+    font-size: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -16px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#hud-ptr.hud-ptr--visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+#hud-ptr.hud-ptr--armed {
+    color: var(--hud-ink);
+    transform: translate(-50%, 8px) rotate(180deg);
+}
+
 .hud-panel .hud-panel-content {
     flex: 1 1 auto;
     overflow: auto;
