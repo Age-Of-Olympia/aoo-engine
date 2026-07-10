@@ -32,6 +32,15 @@ $('button').click(function(e){
         data: {'text':text}, // serializes the form's elements.
         success: function(data)
         {
+            /* Panneau HUD : retour sur la fiche, où l'histoire vit
+             * désormais (le Profil du HUD n'a plus l'entrée) */
+            if(window.hudOpenPanel){
+
+                aooAlert('Votre Histoire a bien été changée!');
+                window.hudOpenPanel('load_infos.php?targetId=<?php echo $player->id; ?>', 'Personnage');
+                return;
+            }
+
             alert('Votre Histoire a bien été changée!');
 
             document.location = 'account.php';

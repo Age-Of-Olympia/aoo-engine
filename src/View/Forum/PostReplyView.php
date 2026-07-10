@@ -14,6 +14,9 @@ use App\View\MenuView;
 
 class PostReplyView
 {
+    /** Rendu en fragment (panneau HUD) : pas d'enveloppe Ui/Infos/Menu. */
+    public static bool $fragment = false;
+
     public static function renderPostReply(): void
     {
 
@@ -94,12 +97,18 @@ class PostReplyView
         }
 
 
-        $ui = new Ui('Répondre');
+        if (!self::$fragment) {
+
+            $ui = new Ui('Répondre');
+        }
 
         ob_start();
 
-        InfosView::renderInfos($player);
-        MenuView::renderMenu();
+        if (!self::$fragment) {
+
+            InfosView::renderInfos($player);
+            MenuView::renderMenu();
+        }
 
 
         echo '<h1>' . $topJson->title . '</h1>';
@@ -156,12 +165,17 @@ class PostReplyView
         $pagesN = Forum::get_pages($postTotal);
 
 
-        echo '
+        /* En panneau, le fil est à un « retour » de pile : l'iframe
+         * des anciens messages n'apporte que du poids. */
+        if (!self::$fragment) {
+
+            echo '
 <iframe
     id="older-iframe"
     src="forum.php?topic=' . $topJson->name . '&page=' . $pagesN . '&hideMenu=1#last"
 ></iframe>
 ';
+        }
 
 
         $nextPagesN = Forum::get_pages($postTotal + 1);
@@ -174,7 +188,7 @@ class PostReplyView
         <script>
             window.pagesN = <?php echo $nextPagesN ?>;
         </script>
-        <script src="js/forum_reply.js?20241016"></script>
+        <script src="js/forum_reply.js?v=20260716"></script>
 <?php
     }
 }

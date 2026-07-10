@@ -275,7 +275,7 @@ class DistanceView
 
                                 /* Message PUIS rechargement : l'alerte modale n'est pas bloquante */
                                 aooAlert($('<div>').html(message).text()).then(function() {
-                                    document.location.reload();
+                                    aooReload();
                                 });
                             },
                             error: function(xhr) {

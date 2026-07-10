@@ -14,6 +14,9 @@ use App\View\MenuView;
 
 class NewTopicView
 {
+    /** Rendu en fragment (panneau HUD) : pas d'enveloppe Ui/Infos/Menu. */
+    public static bool $fragment = false;
+
     public static function renderNewTopic(): void
     {
 
@@ -87,14 +90,20 @@ class NewTopicView
         }
 
 
-        $ui = new Ui('Nouveau sujet');
+        if (!self::$fragment) {
+
+            $ui = new Ui('Nouveau sujet');
+        }
 
 
         ob_start();
 
 
-        InfosView::renderInfos($player);
-        MenuView::renderMenu();
+        if (!self::$fragment) {
+
+            InfosView::renderInfos($player);
+            MenuView::renderMenu();
+        }
 
 
         echo '<h1>' . $forumJson->name . '</h1>';
@@ -208,7 +217,7 @@ class NewTopicView
 
 ?>
         <script src="js/autosave.js?v=20260715"></script>
-        <script src="js/forum_newTopic.js?20241016"></script>
+        <script src="js/forum_newTopic.js?v=20260716"></script>
 <?php
     }
 }

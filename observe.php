@@ -685,7 +685,7 @@ if(!empty($card)){
     }
 
     ?>
-    <script src="js/observe.js?v=20260716"></script>
+    <script src="js/observe.js?v=20260716a"></script>
     <?php
 }
 

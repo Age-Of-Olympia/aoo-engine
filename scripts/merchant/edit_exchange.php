@@ -100,7 +100,7 @@ $otherPlayer->get_data();
         })
         .catch((error) => {
           console.error('Error:', error);
-          location.reload();
+          aooReload();
         });
       });
       

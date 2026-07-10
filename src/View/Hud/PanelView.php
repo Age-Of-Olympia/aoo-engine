@@ -27,6 +27,9 @@ final class PanelView
                  * historique. */
                 . '<button class="hud-panel-back" title="Panneau précédent" style="display:none;"><span class="ra ra-sideswipe"></span></button>'
                 . '<span class="hud-panel-title"></span>'
+                /* Agrandit le panneau sur toute la largeur (js/hud.js,
+                 * hud--panel-wide) : lecture confortable du forum. */
+                . '<button class="hud-panel-fullpage" title="Agrandir le panneau">&#x26F6;</button>'
                 . '<button class="hud-panel-close" title="Fermer"><span class="ra ra-cancel"></span></button>'
                 . '</div>'
                 . '<div class="hud-panel-content"></div>'

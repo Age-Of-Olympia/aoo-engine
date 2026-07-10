@@ -67,9 +67,19 @@ final class AccountView
 
     /**
      * @param array<string, string> $options sortie de buildOptions()
+     * @param bool $hudPanel rendu en panneau du HUD : mdj et histoire
+     *                       disparaissent des options — le mdj s'édite
+     *                       dans le panneau latéral et l'histoire
+     *                       depuis la fiche de personnage (retours
+     *                       joueurs juillet 2026). La page complète
+     *                       est inchangée.
      */
-    public static function render(Player $player, array $options): void
+    public static function render(Player $player, array $options, bool $hudPanel = false): void
     {
+        if ($hudPanel) {
+            unset($options['changeMdj'], $options['changeStory']);
+        }
+
         ob_start();
 
         echo '<a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a>';

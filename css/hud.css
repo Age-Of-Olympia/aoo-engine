@@ -187,6 +187,37 @@ body:has(#hud)::after {
     opacity: 0.7;
 }
 
+/* Jauge intégrée (A, Mvt, PV, PM) : la part MANQUANTE teinte le fond
+ * de la pilule depuis la droite — pleine, la pilule reste papier
+ * vierge ; entamée, l'encre (dépense) ou le sang (PV) gagne du
+ * terrain. --hud-missing est posé par TopBarView et rafraîchi avec
+ * les pilules après chaque action (retours joueurs juillet 2026). */
+.hud-pill--gauge {
+    background:
+        linear-gradient(
+            to left,
+            var(--hud-gauge-tint, rgba(29, 28, 27, 0.13)) var(--hud-missing, 0%),
+            rgba(255, 255, 255, 0) var(--hud-missing, 0%)
+        ),
+        rgba(255, 255, 255, 0.75);
+}
+
+/* PV : la part manquante est du sang perdu */
+#hud-pill-pv.hud-pill--gauge {
+    --hud-gauge-tint: rgba(119, 0, 1, 0.22);
+}
+
+/* A et Mvt : l'orange des évènements « action » (.hud-feed-item--na) */
+#hud-pill-a.hud-pill--gauge,
+#hud-pill-mvt.hud-pill--gauge {
+    --hud-gauge-tint: rgba(210, 140, 25, 0.28);
+}
+
+/* PM : le bleu des évènements « réussite » (.hud-feed-item--ok) */
+#hud-pill-pm.hud-pill--gauge {
+    --hud-gauge-tint: rgba(80, 170, 220, 0.3);
+}
+
 .hud-pill--warn {
     border-color: #a33;
     color: #a00;
@@ -1478,6 +1509,19 @@ body:has(#hud) #view-landing-wrapper {
     margin-right: 8px;
 }
 
+/* « Agrandir » : bascule hud--panel-wide (js/hud.js) */
+.hud-panel .hud-panel-fullpage {
+    flex: 0 0 auto;
+    margin-right: 6px;
+}
+
+/* Panneau agrandi : toute la largeur disponible, sans quitter le
+ * plateau (retours joueurs juillet 2026). */
+#hud.hud--panel-wide .hud-panel {
+    width: auto;
+    right: 8px;
+}
+
 .hud-panel .hud-panel-content {
     flex: 1 1 auto;
     overflow: auto;
@@ -1610,6 +1654,33 @@ body:has(#hud) #load-caracs button:hover:not(:disabled) {
 .hud-panel-content .progress-bar .bar,
 body:has(#hud) #load-caracs .progress-bar .bar {
     background: linear-gradient(to right, var(--hud-bronze-bright), var(--hud-bronze));
+}
+
+/* Cadre de la jauge d'Xp : sans lui les joueurs ne la lisaient pas
+ * comme une barre de progression (retours juillet 2026) — creux
+ * encré dans le papier, filet bronze, la barre reste dedans. */
+.hud-panel-content .progress-bar,
+body:has(#hud) #load-caracs .progress-bar {
+    border: 1px solid var(--hud-line);
+    border-radius: 4px;
+    background: rgba(29, 28, 27, 0.07);
+    box-shadow: inset 0 1px 3px rgba(29, 28, 27, 0.2);
+    overflow: hidden;
+}
+
+/* « Points de Réputation » : le dégradé or en texte transparent de
+ * la page héritée (scripts/infos/reputation.php) est illisible sur
+ * le papier et sa pulsation .glow fatigue l'œil — encre bronze
+ * pleine, corps ramené à la largeur du panneau. La page complète
+ * (fond sombre) garde son style d'origine. */
+.hud-panel-content #pr-wrapper {
+    background-image: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    color: var(--hud-bronze);
+    font-size: 48px;
+    animation: none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* Même gabarit pour tous les panneaux : les largeurs fixes héritées
@@ -2112,6 +2183,15 @@ body:has(#hud) #debug-flags {
 
     .hud-panel.hud-panel--open {
         transform: none;
+    }
+
+    /* Déjà pleine largeur en bottom-sheet : « Agrandir » sans objet */
+    #hud.hud--panel-wide .hud-panel {
+        right: 0;
+    }
+
+    .hud-panel .hud-panel-fullpage {
+        display: none;
     }
 
     /* --- Flyout caracs (tutoriel) : plein écran utilisable --- */

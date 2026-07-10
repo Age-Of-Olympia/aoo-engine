@@ -95,6 +95,45 @@ function autoError(log=true,showAlert=true,reload=true) {
     }
 }
 
+/* Paramètre d'URL de la vue courante : dans un panneau HUD, l'URL de
+ * la page (index.php) ne porte pas les paramètres du fragment — le
+ * routeur (js/hud.js) les expose dans window.hudPanelQuery. Les
+ * scripts partagés (marché, contrats…) doivent lire targetId ici
+ * plutôt que dans window.location.search. */
+function aooViewParam(name) {
+
+    if (window.hudPanelQuery) {
+
+        var value = new URLSearchParams(window.hudPanelQuery).get(name);
+        if (value !== null) {
+            return value;
+        }
+    }
+
+    return new URLSearchParams(window.location.search).get(name);
+}
+
+/* Recharge la vue après une action (achat, apprentissage, échange,
+ * équipement…) : dans le HUD, recharge le panneau ouvert et les
+ * valeurs vivantes du bandeau sans toucher à la page — un reload
+ * fermait le panneau (retours joueurs juillet 2026) ; dans
+ * l'habillage hérité, reload classique. Point unique : tous les
+ * scripts d'action doivent passer par ici plutôt que par
+ * document.location.reload(). */
+function aooReload() {
+
+    if (window.hudReloadPanels) {
+
+        window.hudReloadPanels();
+        if (window.hudRefreshAfterAction) {
+            window.hudRefreshAfterAction();
+        }
+        return;
+    }
+
+    document.location.reload();
+}
+
 // preload img
 function preload(img, element){
 

@@ -1,7 +1,8 @@
 <?php
-use Classes\Ui;
 use Classes\Db;
-$ui = new Ui($target->data->name .' (réputation)');
+
+/* L'enveloppe Ui vit dans le contrôleur : infos.php la crée, le
+ * fragment load_infos.php (panneau HUD) inclut ce corps tel quel. */
 
 echo '
 <style>

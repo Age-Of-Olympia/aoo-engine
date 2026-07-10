@@ -322,17 +322,26 @@
      * prochain tour. La cible observée est re-observée (PV, charges)
      * et le flux d'évènements rechargé.
      */
+    /* Pilules du bandeau haut, remplacées une à une depuis un re-rendu
+     * serveur : innerHTML ET class/style — la jauge intégrée
+     * (--hud-missing) vit dans les attributs de la pilule elle-même. */
+    function refreshPills(doc) {
+        $('.hud-pill').each(function () {
+            var fresh = doc.getElementById(this.id);
+            if (fresh) {
+                this.innerHTML = fresh.innerHTML;
+                this.className = fresh.className;
+                this.setAttribute('style', fresh.getAttribute('style') || '');
+            }
+        });
+    }
+
     function refreshAfterAction() {
         $.ajax({ url: document.location.href, cache: false })
             .done(function (html) {
                 var doc = new DOMParser().parseFromString(html, 'text/html');
 
-                $('.hud-pill').each(function () {
-                    var fresh = doc.getElementById(this.id);
-                    if (fresh) {
-                        this.innerHTML = fresh.innerHTML;
-                    }
-                });
+                refreshPills(doc);
 
                 var freshTimer = doc.getElementById('next-turn-timer');
                 var timer = document.getElementById('next-turn-timer');
@@ -383,12 +392,7 @@
 
                 /* Pilules du bandeau haut (PA, MVT…) : remplacées une à
                  * une, le reste du bandeau garde ses gestionnaires. */
-                $('.hud-pill').each(function () {
-                    var fresh = doc.getElementById(this.id);
-                    if (fresh) {
-                        this.innerHTML = fresh.innerHTML;
-                    }
-                });
+                refreshPills(doc);
 
                 /* Sélection et actions de l'ancienne case : obsolètes. */
                 $('#ajax-data').empty();
@@ -959,27 +963,37 @@
         if (/^inventory\.php/.test(href)) {
             return href.replace(/^inventory\.php/, 'load_inventory.php');
         }
-        /* Fiche perso : vue de base et réputation (les récompenses
-         * restent une page complète). */
-        /* Ids négatifs = PNJ : la fiche se charge pareil. */
-        if (/^infos\.php\?targetId=-?\d+(&reputation)?$/.test(href)) {
+        /* Fiche perso : vue de base, réputation et récompenses.
+         * Ids négatifs = PNJ : la fiche se charge pareil. */
+        if (/^infos\.php\?targetId=-?\d+(&reputation|&rewards)?$/.test(href)) {
             return href.replace(/^infos\.php/, 'load_infos.php');
         }
-        /* Améliorations et Sorts (upgrades.php seul ou ?spells ;
-         * ?caracTables reste un export plein-page). */
-        if (/^upgrades\.php(\?spells)?$/.test(href)) {
+        /* Marchands et instructeurs : toutes les sous-pages
+         * (dialogue, offres, demandes, échanges, banque, inventaire,
+         * disciplines de l'école de guerre). */
+        if (/^merchant\.php\?/.test(href)) {
+            return href.replace(/^merchant\.php/, 'load_merchant.php');
+        }
+        if (/^warschool\.php\?/.test(href)) {
+            return href.replace(/^warschool\.php/, 'load_warschool.php');
+        }
+        /* Améliorations et Sorts, y compris les modes « oublier »
+         * (?spells&forget / &forget_p — leur lien éjectait vers la
+         * page héritée) ; ?caracTables reste un export plein-page. */
+        if (/^upgrades\.php(\?spells(&forget(_p)?)?)?$/.test(href)) {
             return href.replace(/^upgrades\.php/, 'load_upgrades.php');
         }
-        /* Profil : la racine seulement, les sous-pages (portraits,
-         * mdj, histoire, mails…) restent plein-page. */
-        if (href === 'account.php') {
-            return 'load_account.php';
+        /* Profil : racine et sous-pages (mot de passe, mail, galeries
+         * de portraits/avatars, histoire) ; mdj reste plein-page (le
+         * HUD a son formulaire dans le panneau latéral). */
+        if (href === 'account.php'
+            || /^account\.php\?(changePsw|changeMail|portraits|avatars|story)$/.test(href)) {
+            return href.replace(/^account\.php/, 'load_account.php');
         }
-        /* Forum : accueil (catégories), listes de sujets, fils et
-         * derniers messages en fragments (Missives dans son panneau,
-         * navigation interne comprise) ; répondre, éditer, créer un
-         * sujet et la recherche restent plein-page (formulaires). */
-        if (href === 'forum.php' || /^forum\.php\?(forum=|topic=|lastPosts)/.test(href)) {
+        /* Forum : accueil (catégories), listes de sujets, fils,
+         * derniers messages, répondre, éditer et nouveau sujet en
+         * fragments ; la recherche reste plein-page. */
+        if (href === 'forum.php' || /^forum\.php\?(forum=|topic=|lastPosts|reply=|edit=|newTopic=)/.test(href)) {
             return href.replace(/^forum\.php/, 'load_forum.php');
         }
         /* Carte : la vue simple en panneau ; les pages avec options
@@ -1008,6 +1022,35 @@
         if (href.indexOf('craft') !== -1) {
             return 'Artisanat';
         }
+        /* Sous-pages du profil et du forum : AVANT les tests
+         * génériques « account » / « forum ». */
+        if (href.indexOf('changePsw') !== -1) {
+            return 'Mot de passe';
+        }
+        if (href.indexOf('changeMail') !== -1) {
+            return 'Email';
+        }
+        if (href.indexOf('portraits') !== -1) {
+            return 'Portrait';
+        }
+        if (href.indexOf('avatars') !== -1) {
+            return 'Avatar';
+        }
+        if (href.indexOf('story') !== -1) {
+            return 'Histoire';
+        }
+        if (href.indexOf('reply=') !== -1) {
+            return 'Répondre';
+        }
+        if (href.indexOf('edit=') !== -1) {
+            return 'Éditer';
+        }
+        if (href.indexOf('newTopic=Missives') !== -1) {
+            return 'Nouvelle missive';
+        }
+        if (href.indexOf('newTopic=') !== -1) {
+            return 'Nouveau sujet';
+        }
         if (href.indexOf('bank') !== -1) {
             return 'Banque';
         }
@@ -1021,6 +1064,15 @@
         }
         if (href.indexOf('reputation') !== -1) {
             return 'Réputation';
+        }
+        if (href.indexOf('rewards') !== -1) {
+            return 'Récompenses';
+        }
+        if (href.indexOf('merchant') !== -1) {
+            return 'Marchand';
+        }
+        if (href.indexOf('warschool') !== -1) {
+            return 'École de guerre';
         }
         if (href.indexOf('infos') !== -1) {
             return 'Personnage';
@@ -1103,6 +1155,12 @@
         $content.html('Chargement…');
         $.get(url)
             .done(function (data) {
+                /* Les scripts du fragment (marché, contrats…) lisent
+                 * leurs paramètres (targetId…) via aooViewParam :
+                 * l'URL de la page ne les porte pas. */
+                window.hudPanelQuery = url.indexOf('?') !== -1
+                    ? url.slice(url.indexOf('?') + 1)
+                    : '';
                 $content.html(data);
 
                 /* Ouvrir un fil le marque « vu » côté serveur
@@ -1215,6 +1273,30 @@
      * de l'inventaire, liens d'objets de l'artisanat — js/inventory.js
      * et CraftView). */
     window.hudOpenPanel = openPanel;
+
+    /* Idem pour la pastille du Forum : « Tout marquer comme lu »
+     * (ForumHomeView) doit la recompter sans rechargement. */
+    window.hudRefreshForumBadge = refreshForumBadge;
+
+    /* Après une action DANS un panneau (équiper, oublier un sort…) :
+     * recharge le contenu du panneau et les valeurs vivantes du
+     * bandeau (pilules, prochain tour, observation, évènements) sans
+     * recharger la page — le document.location.reload() des scripts
+     * hérités fermait le panneau (retour joueurs juillet 2026). */
+    window.hudReloadPanels = reloadAllPanels;
+    window.hudRefreshAfterAction = refreshAfterAction;
+
+    /* Navigation générique pour les scripts hérités qui naviguent en
+     * JS (options de dialogue marchand/instructeur…) : panneau si
+     * l'URL a un fragment, navigation pleine page sinon. */
+    window.hudNavigate = function (url) {
+        var fragment = panelUrl(url);
+        if (fragment) {
+            openPanel(fragment, panelTitle(url));
+            return;
+        }
+        document.location = url;
+    };
 
     /*
      * ===== Mobile (<1024px) — Phase 3 =====
@@ -1442,7 +1524,16 @@
             if (fragment) {
                 e.preventDefault();
                 $('#hud').removeClass('hud--drawer-open');
-                togglePanel(fragment, panelTitle(href));
+                /* Depuis l'INTÉRIEUR d'un panneau (onglets du
+                 * classement, liens du forum…), re-cliquer l'entrée
+                 * déjà affichée recharge le contenu au lieu de fermer
+                 * le panneau : le toggle ouvrir/fermer n'a de sens que
+                 * pour les entrées extérieures (rail, bandeau, tiroir). */
+                if ($(this).closest('.hud-panel-content').length) {
+                    openPanel(fragment, panelTitle(href));
+                } else {
+                    togglePanel(fragment, panelTitle(href));
+                }
             }
         });
 
@@ -1451,6 +1542,47 @@
         });
 
         $('.hud-panel-back').on('click', goBackPanel);
+
+        /* « Agrandir » : étend le panneau sur toute la largeur
+         * disponible, SANS changer de page (retours joueurs juillet
+         * 2026) — lire ou répondre au forum tient mieux en grand.
+         * État persisté comme les panneaux eux-mêmes. */
+        $('.hud-panel-fullpage').on('click', function () {
+            var wide = !$('#hud').hasClass('hud--panel-wide');
+            $('#hud').toggleClass('hud--panel-wide', wide);
+            sessionStorage.setItem('hudPanelWide', wide ? '1' : '');
+            $(this).attr('title', wide ? 'Réduire le panneau' : 'Agrandir le panneau');
+        });
+
+        if (sessionStorage.getItem('hudPanelWide') === '1') {
+            $('#hud').addClass('hud--panel-wide');
+            $('.hud-panel-fullpage').attr('title', 'Réduire le panneau');
+        }
+
+        /* ===== Formulaires dans les panneaux =====
+         * Un formulaire dont l'action a un équivalent fragment est
+         * envoyé en AJAX vers ce fragment et sa réponse remplace le
+         * contenu du panneau (mot de passe, mail…) — sinon l'envoi
+         * naviguerait vers la page héritée. Les autres formulaires
+         * (récompenses, recherche…) gardent l'envoi normal. */
+        $(document).on('submit', '.hud-panel-content form', function (e) {
+            if (tutorialActive()) {
+                return;
+            }
+            var fragment = panelUrl($(this).attr('action') || '');
+            if (!fragment) {
+                return;
+            }
+            e.preventDefault();
+            var $content = $(this).closest('.hud-panel-content');
+            $.post(fragment, $(this).serialize())
+                .done(function (data) {
+                    $content.html(data);
+                })
+                .fail(function () {
+                    $content.html('<p class="hud-feed-empty">Impossible d\'envoyer le formulaire.</p>');
+                });
+        });
 
         /* Clic hors du panneau : fermeture (comme un popover). Sont
          * exclus le panneau lui-même, le rail et la modale de résultat
@@ -1532,6 +1664,14 @@
 
                 var btn = e.target.closest('.action');
                 if (!btn || !actionsEl.contains(btn)) {
+                    disarmActions();
+                    return;
+                }
+
+                /* Boutons de NAVIGATION (Marchander, Apprendre…) : un
+                 * lien autour, pas de data-action — rien à confirmer,
+                 * le routeur de panneaux prend le clic directement. */
+                if (!btn.dataset.action && btn.closest('a[href]')) {
                     disarmActions();
                     return;
                 }

@@ -33,7 +33,9 @@ $(document).ready(function(){
                 data: postData,
                 success: function(data)
                 {
-                    document.location.reload();
+                    /* Panneau HUD ou page : la vue « oublier » se
+                     * recharge avec la liste à jour (main.js). */
+                    aooReload();
                 },
                 error: function() {
                     aooAlert("Erreur lors de la suppression.");

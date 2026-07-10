@@ -29,6 +29,8 @@ if(isset($_GET['reputation'])){
 }
 if(isset($_GET['rewards'])){
 
+    $ui = new Ui($target->data->name .' (réputation)');
+
     include('scripts/infos/rewards.php');
 
     exit();

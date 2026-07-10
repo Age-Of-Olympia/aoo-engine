@@ -17,6 +17,15 @@ $(document).ready(function(){
 
         if($(this).data('url')){
 
+            /* HUD : banque, offres… du dialogue s'ouvrent dans le
+             * panneau (js/hud.js) ; habillage hérité : navigation. */
+            if(window.hudNavigate){
+
+                window.hudNavigate($(this).data('url'));
+
+                return false;
+            }
+
             document.location = $(this).data('url');
 
             return false;
