@@ -224,6 +224,19 @@ body:has(#hud)::after {
     background: rgba(255, 230, 230, 0.85);
 }
 
+/* Effets actifs (TopBarView::effectChips) : pastilles d'icônes après
+ * les caracs, détail (valeur, temps restant) dans l'infobulle. Le
+ * conteneur est transparent pour la rangée flex. */
+#hud-effects {
+    display: contents;
+}
+
+.hud-pill--effect {
+    padding: 3px 7px;
+    cursor: help;
+    font-size: 100%;
+}
+
 .hud-pill--bonus {
     border-color: #36a;
     color: #226;
@@ -1872,6 +1885,12 @@ body:has(#hud) #debug-flags {
         padding: 1px 6px;
         font-size: 72%;
         gap: 3px;
+    }
+
+    /* Effets : trop pour le bandeau mobile — ils restent sur la
+     * fiche, à un tap de l'avatar. */
+    .hud-pill--effect {
+        display: none;
     }
 
     #hud-burger {

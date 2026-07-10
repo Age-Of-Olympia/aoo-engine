@@ -2,6 +2,7 @@
 
 namespace App\View\Hud;
 
+use App\Service\PlayerEffectService;
 use Classes\Player;
 use Classes\Str;
 
@@ -88,6 +89,7 @@ final class TopBarView
                 $caracsJson->esquive < 0 ? ' hud-pill--warn' : ' hud-pill--bonus'
             );
         }
+        echo self::effectChips($player);
         echo '</div>';
 
         echo '<div class="hud-place">'
@@ -127,6 +129,44 @@ final class TopBarView
         echo '</header>';
 
         echo Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Effets actifs du personnage (adrénaline, eau, feu…) en pastilles
+     * d'icônes à côté des caracs — visibles dès la connexion, sans
+     * ouvrir la fiche (retours joueurs juillet 2026). Bureau seulement
+     * (masqués en CSS sur mobile, le bandeau y est déjà plein) ; le
+     * conteneur #hud-effects est re-rendu par js/hud.js après chaque
+     * action, même quand un effet apparaît ou disparaît.
+     */
+    private static function effectChips(Player $player): string
+    {
+        $chips = '';
+
+        foreach ((new PlayerEffectService())->getEffectsByPlayerId($player->id) as $effect) {
+
+            if (in_array($effect->getName(), EFFECTS_HIDDEN)) {
+                continue;
+            }
+
+            /* Même lecture du temps restant que la fiche (InfosSheetView) */
+            $endTime = '(reposez-vous)';
+            if (time() < $effect->getEndTime()) {
+                $endTime = Str::convert_time($effect->getEndTime() - time());
+            }
+            if (!$effect->getEndTime()) {
+                $endTime = '∞';
+            }
+
+            $title = ucfirst($effect->getName()) . ' (' . $effect->getValue() . ') · ' . $endTime;
+            $icon = EFFECTS_RA_FONT[$effect->getName()] ?? 'ra-fairy-wand';
+
+            $chips .= '<span class="hud-pill hud-pill--effect" title="' . htmlspecialchars($title, ENT_QUOTES) . '">'
+                . '<span class="ra ' . $icon . '"></span>'
+                . '</span>';
+        }
+
+        return '<span id="hud-effects">' . $chips . '</span>';
     }
 
     /**
