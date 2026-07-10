@@ -334,6 +334,14 @@
                 this.setAttribute('style', fresh.getAttribute('style') || '');
             }
         });
+
+        /* Effets : remplacés en bloc — contrairement aux pilules
+         * fixes, ils apparaissent et disparaissent. */
+        var freshEffects = doc.getElementById('hud-effects');
+        var effects = document.getElementById('hud-effects');
+        if (freshEffects && effects) {
+            effects.innerHTML = freshEffects.innerHTML;
+        }
     }
 
     function refreshAfterAction() {

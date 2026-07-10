@@ -483,6 +483,27 @@ class Ui{
         return Str::minify(ob_get_clean());
     }
 
+    /**
+     * Voile de sang sur un portrait : la part manquante de PV monte
+     * depuis le bas (même lecture que le filtre rouge de la carte de
+     * sélection ci-dessus). Chaîne vide si indemne. Styles en ligne :
+     * utilisable dans l'habillage hérité comme dans le HUD sans
+     * toucher aux pipelines CSS. Le parent doit être en
+     * position:relative ; pointer-events:none laisse cliquer au
+     * travers (cartes de personnages secondaires).
+     */
+    public static function get_pv_veil(int $pvPct): string
+    {
+        if ($pvPct >= 100) {
+
+            return '';
+        }
+
+        $height = min(100 - $pvPct, 100);
+
+        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(119, 0, 1, 0.35); border-top: 2px solid rgba(119, 0, 1, 0.7); pointer-events: none;"></div>';
+    }
+
    #
     # dialog ui
     #

@@ -5,6 +5,7 @@ use App\Service\PlayerPnjService;
 use App\Service\PlayerEffectService;
 use Classes\Db;
 use Classes\Str;
+use Classes\Ui;
 
 /*
  * Corps de la page des personnages secondaires, partagé entre la
@@ -108,11 +109,21 @@ foreach($playersTbl as $pnj){
     }
 
 
+    /* Voile de sang : un personnage blessé se repère d'un coup d'œil
+     * dans la liste (retours joueurs juillet 2026). */
+    $pnj->get_caracs();
+
+    $pvPct = ($pnj->caracs->pv > 0)
+        ? (int) floor($pnj->getRemaining('pv') / $pnj->caracs->pv * 100)
+        : 100;
+
+    $pvVeil = Ui::get_pv_veil($pvPct);
+
     echo '
     <article class="pnj" style="cursor: pointer; position:relative;" data-id="'. $pnj->id .'">
         <div style="position: relative;">'. $mails .'
             <div class="infos-effects">'. implode('<br />', $effectsTbl) .'</div>
-            <img class="portrait" src="'. $pnj->data->portrait .'" /><br />
+            <span style="position: relative; display: inline-block;"><img class="portrait" style="display: block;" src="'. $pnj->data->portrait .'" />'. $pvVeil .'</span><br />
             '. $pnj->data->name .'<br /><span style="font-size: 88%;">mat.'. $pnj->id .'<br />
             '. ($raceJson?->name ?? '???') .'<br />Rang '. $pnj->data->rank .'</span>
         </div>';

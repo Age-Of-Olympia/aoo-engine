@@ -53,11 +53,26 @@ final class InfosSheetView
 
         $distance = View::get_distance($player->coords, $targetCoords);
 
+        /* Voile de sang sur le portrait : même règle de perception que
+         * les effets, le mdj et l'équipement ci-dessous — soi-même ou
+         * une cible à portée (retours joueurs juillet 2026). */
+        $pvVeil = '';
+
         if (
             $player->id == $targetEntity->getId()
             ||
             $distance <= $caracsJson->p
         ) {
+
+            $target = \App\Factory\PlayerFactory::legacy($targetEntity->getId());
+            $target->get_data();
+            $target->get_caracs();
+
+            $pvPct = ($target->caracs->pv > 0)
+                ? (int) floor($target->getRemaining('pv') / $target->caracs->pv * 100)
+                : 100;
+
+            $pvVeil = \Classes\Ui::get_pv_veil($pvPct);
 
             echo '<div class="infos-effects">';
 
@@ -102,7 +117,13 @@ final class InfosSheetView
         }
 
 
-        echo '<img src="' . $targetEntity->getPortrait() . '" height="330" />';
+        /* display:block sur l'image : en inline, la boîte de ligne
+         * dépasse l'image de quelques pixels (jambage) et le voile
+         * débordait sous le portrait. */
+        echo '<div style="position: relative; display: inline-block;">'
+            . '<img src="' . $targetEntity->getPortrait() . '" height="330" style="display: block;" />'
+            . $pvVeil
+            . '</div>';
 
 
         echo '
