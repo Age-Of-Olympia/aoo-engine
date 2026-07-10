@@ -303,9 +303,11 @@ select.form-control {
     margin: 0 -10px;
 }
 
+.col-md-2 { flex: 0 0 16.666%; padding: 0 10px; margin-bottom: 20px; }
 .col-md-3 { flex: 0 0 25%; padding: 0 10px; margin-bottom: 20px; }
 .col-md-4 { flex: 0 0 33.333%; padding: 0 10px; margin-bottom: 20px; }
 .col-md-6 { flex: 0 0 50%; padding: 0 10px; margin-bottom: 20px; }
+.col-12 { flex: 0 0 100%; padding: 0 10px; margin-bottom: 20px; }
 
 .display-4 { font-size: 2em; font-weight: 300; line-height: 1.2; }
 .text-muted { color: #6c757d; font-size: 0.9em; }
@@ -321,7 +323,9 @@ select.form-control {
 .img-fluid { max-width: 100%; height: auto; }
 
 @media (max-width: 768px) {
-    .col-md-3, .col-md-4, .col-md-6 { flex: 0 0 100%; }
+    .col-md-2, .col-md-3, .col-md-4, .col-md-6 { flex: 0 0 100%; }
+    /* .col-6 keeps two per row on mobile (e.g. the race caracs grid). */
+    .col-md-3.col-6 { flex: 0 0 50%; }
 }
 
 @media (max-width: 768px) {

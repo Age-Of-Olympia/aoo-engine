@@ -161,7 +161,7 @@ HTML;
         . checked($isEdit && $race->getHidden()) . '> Cachée (exclue des listes publiques)</label>'
         . '</div></div>'
         . '<div class="form-group col-12"><label>Description</label>'
-        . '<textarea class="form-control" name="description" rows="3">'
+        . '<textarea class="form-control" name="description" rows="5">'
         . e($isEdit ? $race->getDescription() : '') . '</textarea></div>'
         . '</div></div></div>'
 
