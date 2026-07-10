@@ -543,6 +543,110 @@
         }, { passive: true });
     }
 
+    /*
+     * ===== Tirer pour rafraîchir (mobile) =====
+     *
+     * La page du HUD ne défile jamais (body overflow hidden) : le
+     * geste natif du navigateur ne se déclenche plus (retours joueurs
+     * juillet 2026). Réimplémenté à la main : tirer vers le bas d'un
+     * doigt depuis une zone au repos recharge la page. Sont exclus le
+     * plateau (un doigt y déplace la carte — panoramique), les
+     * pincements et tout contenu déjà défilé (le geste y remonte le
+     * contenu, il ne rafraîchit pas). Pas de preventDefault : rien ne
+     * défile là où le geste est accepté, les listeners restent
+     * passifs.
+     */
+    function initPullToRefresh() {
+        var THRESHOLD = 80; /* px de tirage avant armement */
+        var start = null;
+        var armed = false;
+        var $hint = null;
+
+        function hint() {
+            if (!$hint) {
+                $hint = $('<div id="hud-ptr" aria-hidden="true"><span class="ra ra-cycle"></span></div>')
+                    .appendTo('#hud');
+            }
+            return $hint;
+        }
+
+        function reset() {
+            start = null;
+            armed = false;
+            if ($hint) {
+                $hint.removeClass('hud-ptr--visible hud-ptr--armed');
+            }
+        }
+
+        /* Un ancêtre a déjà défilé : le doigt remonte ce contenu. */
+        function insideScrolledContent(el) {
+            while (el && el !== document.body) {
+                if (el.scrollTop > 0) {
+                    return true;
+                }
+                el = el.parentElement;
+            }
+            return false;
+        }
+
+        /* e.touches direct pour les évènements synthétiques (tests). */
+        function touchesOf(e) {
+            return (e.originalEvent || e).touches || [];
+        }
+
+        $(document).on('touchstart.hudPtr', function (e) {
+            start = null;
+            var touches = touchesOf(e);
+            if (!isMobileViewport()
+                || touches.length !== 1
+                || e.target.closest('#game-map')
+                || insideScrolledContent(e.target)) {
+                return;
+            }
+            start = { x: touches[0].clientX, y: touches[0].clientY };
+            armed = false;
+        });
+
+        $(document).on('touchmove.hudPtr', function (e) {
+            if (!start) {
+                return;
+            }
+            var touches = touchesOf(e);
+            if (touches.length !== 1) {
+                reset();
+                return;
+            }
+            var dy = touches[0].clientY - start.y;
+            var dx = Math.abs(touches[0].clientX - start.x);
+            /* geste franchement vertical et vers le bas uniquement */
+            if (dy < 10 || dx > dy) {
+                if (armed || ($hint && $hint.hasClass('hud-ptr--visible'))) {
+                    armed = false;
+                    hint().removeClass('hud-ptr--visible hud-ptr--armed');
+                }
+                return;
+            }
+            armed = dy >= THRESHOLD;
+            hint().addClass('hud-ptr--visible')
+                .toggleClass('hud-ptr--armed', armed);
+        });
+
+        $(document).on('touchend.hudPtr', function () {
+            if (!start) {
+                return;
+            }
+            var doReload = armed;
+            reset();
+            if (doReload) {
+                document.location.reload();
+            }
+        });
+
+        /* Annulation système (appel, changement d'app…) : jamais de
+         * rechargement sur un geste interrompu. */
+        $(document).on('touchcancel.hudPtr', reset);
+    }
+
     function initDamierZoom() {
         $('<div id="hud-zoom">'
             + '<button id="hud-theater-btn" title="Mode théâtre : le plateau seul en scène" aria-label="Mode théâtre">⛶</button>'
@@ -1800,6 +1904,7 @@
         centerMap();
         initDamierZoom();
         initPinchZoom();
+        initPullToRefresh();
         initTheaterMode();
         initSelectionMemory();
         initMapLayers();
