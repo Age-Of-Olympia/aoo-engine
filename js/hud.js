@@ -359,14 +359,21 @@
                 }
             });
 
+        refreshSelection();
+
+        loadFeed('events');
+    }
+
+    /* Re-observe la sélection courante : PV, charges, message du
+     * jour… — utilisée après une action et par le bouton de
+     * rafraîchissement du panneau latéral. */
+    function refreshSelection() {
         var selCoords = sessionStorage.getItem('hudSelCoords');
         if (selCoords) {
             $.post('observe.php', { coords: selCoords }, function (data) {
                 $('#ajax-data').html(data);
             });
         }
-
-        loadFeed('events');
     }
 
     /*
@@ -1906,6 +1913,14 @@
 
         $('#hud-feed-refresh').on('click', function () {
             loadFeed(activeTab());
+
+            /* Le message du jour affiché ailleurs doit suivre : sans
+             * cela les personnages gardaient leur ancien message tant
+             * que la page n'était pas rechargée (retours joueurs
+             * juillet 2026) — re-observation de la sélection (bulle du
+             * bandeau bas) et rechargement du panneau ouvert (fiche). */
+            refreshSelection();
+            reloadAllPanels();
         });
 
         fitMinimap();
