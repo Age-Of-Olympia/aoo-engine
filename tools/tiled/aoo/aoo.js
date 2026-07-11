@@ -191,12 +191,15 @@ tiled.registerAction('AoOPull', function() {
     }
 }).text = 'AoO : Pull un plan du jeu…';
 
-/* En mode --evaluate (headless), les menus n'existent pas */
+/* Menu Fichier : toujours visible, contrairement au menu Carte qui
+   n'existe que lorsqu'une carte est ouverte. En mode --evaluate
+   (headless), les menus n'existent pas du tout. */
 try {
-    tiled.extendMenu('Map', [
-        { action: 'AoOPull', before: 'MapProperties' },
-        { separator: true }
+    tiled.extendMenu('File', [
+        { separator: true },
+        { action: 'AoOPull' }
     ]);
+    tiled.log('AoO : extension chargée, action disponible dans le menu Fichier');
 } catch (error) {
     tiled.log('AoO : menus indisponibles (mode headless) — ' + error);
 }
