@@ -418,7 +418,10 @@ AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
 
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
-        var object = new MapObject(row.name);
+        /* pas de nom : Tiled l'afficherait en étiquette au-dessus de chaque
+           objet, redondant avec l'icône et la classe. Le push retrouve
+           l'identité via la classe (serializeObjectLayer). */
+        var object = new MapObject();
         var tile = tiles ? tiles[row.name] : null;
 
         /* la classe relie l'objet à son type du projet aoo.tiled-project
