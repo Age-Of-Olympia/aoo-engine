@@ -126,10 +126,12 @@ Fait :
   métadonnée d'éditeur : le push est inchangé.
 
 - Art de transition : `tools/tiled/generate_transitions.php <couche> <A> <B>`
-  génère les 14 tuiles de fondu entre deux biomes (GD, interpolation
-  bilinéaire des coins) et déclare leurs wangId dans `terrains.json` —
-  le pinceau Terrain fait alors de vraies transitions douces. Fait pour
-  carreaux ↔ desert ; relancer le script par paire de biomes utile.
+  (ou `--all <couche>` pour toutes les paires) génère les 14 tuiles de fondu
+  par paire de biomes (GD, interpolation bilinéaire des coins) et déclare
+  leurs wangId dans `terrains.json` — le pinceau Terrain fait de vraies
+  transitions douces entre tous les biomes du set (21 paires générées).
+  La carte du jeu colore ces tuiles en mélangeant les couleurs des deux
+  biomes (`ColorService::colorFor`, testé unitairement).
   ⚠ `img/` n'est pas versionné : reporter les PNG générés dans la source
   d'assets déployée. Les tuiles générées sont remplaçables par de l'art
   dessiné à la main (mêmes noms).

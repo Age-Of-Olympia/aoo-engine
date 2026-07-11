@@ -94,10 +94,11 @@ portent le même terrain — d'où le mode d'emploi :
    fondu. Un seul clic ne pose qu'un coin = juste une tache de transition.
 4. Pour revenir en arrière : repeindre avec le terrain d'origine (ou Ctrl+Z).
 
-Seules les paires générées via `tools/tiled/generate_transitions.php` ont de
-vraies transitions douces (carreaux ↔ desert pour l'instant) ; entre les
-autres biomes, Tiled pose des tuiles pleines en bords francs, faute de tuile
-de fondu à sa disposition.
+Toutes les paires de biomes du set ont leurs tuiles de fondu (générées via
+`php tools/tiled/generate_transitions.php --all tiles`). Sur la carte du
+jeu, ces tuiles prennent automatiquement un mélange des couleurs des deux
+biomes (`ColorService::colorFor`). Après ajout d'un nouveau biome au set,
+relancer la génération `--all` puis re-puller.
 
 ## Les déclencheurs et dialogues (objets)
 

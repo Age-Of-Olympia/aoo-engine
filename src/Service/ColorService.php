@@ -3,6 +3,52 @@
 namespace App\Service;
 
 class ColorService {
+
+    /**
+     * Couleur carte d'une tuile, y compris les tuiles de transition générées
+     * par tools/tiled/generate_transitions.php (« trans_<A>_<B>_<code> ») :
+     * mélange des couleurs des deux biomes, pondéré par le nombre de coins du
+     * second dans le code (1 à 3 sur 4). Inconnue → couleur « default ».
+     *
+     * @param array<string, array{int, int, int}> $colors table name => RGB
+     * @return array{int, int, int}
+     */
+    public static function colorFor(string $name, array $colors): array
+    {
+        return $colors[$name]
+            ?? self::transitionBlend($name, $colors)
+            ?? $colors['default'];
+    }
+
+    /** @return array{int, int, int}|null */
+    private static function transitionBlend(string $name, array $colors): ?array
+    {
+        if (!preg_match('/^trans_(.+)_([ab]{4})$/', $name, $matches)) {
+            return null;
+        }
+
+        // Les deux noms de biomes peuvent contenir des underscores
+        // (desert_de_l_egeon) : on cherche la coupure où les deux côtés
+        // sont des tuiles connues de la table
+        $parts = explode('_', $matches[1]);
+        $weight = substr_count($matches[2], 'b') / 4;
+
+        for ($i = 1; $i < count($parts); $i++) {
+            $nameA = implode('_', array_slice($parts, 0, $i));
+            $nameB = implode('_', array_slice($parts, $i));
+
+            if (isset($colors[$nameA], $colors[$nameB])) {
+                return [
+                    (int) round($colors[$nameA][0] + ($colors[$nameB][0] - $colors[$nameA][0]) * $weight),
+                    (int) round($colors[$nameA][1] + ($colors[$nameB][1] - $colors[$nameA][1]) * $weight),
+                    (int) round($colors[$nameA][2] + ($colors[$nameB][2] - $colors[$nameA][2]) * $weight),
+                ];
+            }
+        }
+
+        return null;
+    }
+
     public static function initializePastelColors(): array {
         // Pastel colors for terrains
         return [

@@ -168,6 +168,2806 @@
                 1,
                 0,
                 3
+            ],
+            "trans_carreaux_caverne_aaab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                2,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_aaba": [
+                0,
+                1,
+                0,
+                2,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_aabb": [
+                0,
+                1,
+                0,
+                2,
+                0,
+                2,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_abaa": [
+                0,
+                2,
+                0,
+                1,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_abab": [
+                0,
+                2,
+                0,
+                1,
+                0,
+                2,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_abba": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_abbb": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                2,
+                0,
+                1
+            ],
+            "trans_carreaux_caverne_baaa": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                1,
+                0,
+                2
+            ],
+            "trans_carreaux_caverne_baab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_carreaux_caverne_baba": [
+                0,
+                1,
+                0,
+                2,
+                0,
+                1,
+                0,
+                2
+            ],
+            "trans_carreaux_caverne_babb": [
+                0,
+                1,
+                0,
+                2,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_carreaux_caverne_bbaa": [
+                0,
+                2,
+                0,
+                1,
+                0,
+                1,
+                0,
+                2
+            ],
+            "trans_carreaux_caverne_bbab": [
+                0,
+                2,
+                0,
+                1,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_carreaux_caverne_bbba": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                1,
+                0,
+                2
+            ],
+            "trans_carreaux_eryn_dolen_aaab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                4,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_aaba": [
+                0,
+                1,
+                0,
+                4,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_aabb": [
+                0,
+                1,
+                0,
+                4,
+                0,
+                4,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_abaa": [
+                0,
+                4,
+                0,
+                1,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_abab": [
+                0,
+                4,
+                0,
+                1,
+                0,
+                4,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_abba": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_abbb": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                4,
+                0,
+                1
+            ],
+            "trans_carreaux_eryn_dolen_baaa": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                1,
+                0,
+                4
+            ],
+            "trans_carreaux_eryn_dolen_baab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_carreaux_eryn_dolen_baba": [
+                0,
+                1,
+                0,
+                4,
+                0,
+                1,
+                0,
+                4
+            ],
+            "trans_carreaux_eryn_dolen_babb": [
+                0,
+                1,
+                0,
+                4,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_carreaux_eryn_dolen_bbaa": [
+                0,
+                4,
+                0,
+                1,
+                0,
+                1,
+                0,
+                4
+            ],
+            "trans_carreaux_eryn_dolen_bbab": [
+                0,
+                4,
+                0,
+                1,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_carreaux_eryn_dolen_bbba": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                1,
+                0,
+                4
+            ],
+            "trans_carreaux_falaise_aaab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                5,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_aaba": [
+                0,
+                1,
+                0,
+                5,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_aabb": [
+                0,
+                1,
+                0,
+                5,
+                0,
+                5,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_abaa": [
+                0,
+                5,
+                0,
+                1,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_abab": [
+                0,
+                5,
+                0,
+                1,
+                0,
+                5,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_abba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_abbb": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                5,
+                0,
+                1
+            ],
+            "trans_carreaux_falaise_baaa": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                1,
+                0,
+                5
+            ],
+            "trans_carreaux_falaise_baab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_carreaux_falaise_baba": [
+                0,
+                1,
+                0,
+                5,
+                0,
+                1,
+                0,
+                5
+            ],
+            "trans_carreaux_falaise_babb": [
+                0,
+                1,
+                0,
+                5,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_carreaux_falaise_bbaa": [
+                0,
+                5,
+                0,
+                1,
+                0,
+                1,
+                0,
+                5
+            ],
+            "trans_carreaux_falaise_bbab": [
+                0,
+                5,
+                0,
+                1,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_carreaux_falaise_bbba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                1,
+                0,
+                5
+            ],
+            "trans_carreaux_pit_aaab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                6,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_aaba": [
+                0,
+                1,
+                0,
+                6,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_aabb": [
+                0,
+                1,
+                0,
+                6,
+                0,
+                6,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_abaa": [
+                0,
+                6,
+                0,
+                1,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_abab": [
+                0,
+                6,
+                0,
+                1,
+                0,
+                6,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_abba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_abbb": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                6,
+                0,
+                1
+            ],
+            "trans_carreaux_pit_baaa": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                1,
+                0,
+                6
+            ],
+            "trans_carreaux_pit_baab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_carreaux_pit_baba": [
+                0,
+                1,
+                0,
+                6,
+                0,
+                1,
+                0,
+                6
+            ],
+            "trans_carreaux_pit_babb": [
+                0,
+                1,
+                0,
+                6,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_carreaux_pit_bbaa": [
+                0,
+                6,
+                0,
+                1,
+                0,
+                1,
+                0,
+                6
+            ],
+            "trans_carreaux_pit_bbab": [
+                0,
+                6,
+                0,
+                1,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_carreaux_pit_bbba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                1,
+                0,
+                6
+            ],
+            "trans_carreaux_route_aaab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                7,
+                0,
+                1
+            ],
+            "trans_carreaux_route_aaba": [
+                0,
+                1,
+                0,
+                7,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_route_aabb": [
+                0,
+                1,
+                0,
+                7,
+                0,
+                7,
+                0,
+                1
+            ],
+            "trans_carreaux_route_abaa": [
+                0,
+                7,
+                0,
+                1,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_route_abab": [
+                0,
+                7,
+                0,
+                1,
+                0,
+                7,
+                0,
+                1
+            ],
+            "trans_carreaux_route_abba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_route_abbb": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                7,
+                0,
+                1
+            ],
+            "trans_carreaux_route_baaa": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                1,
+                0,
+                7
+            ],
+            "trans_carreaux_route_baab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_carreaux_route_baba": [
+                0,
+                1,
+                0,
+                7,
+                0,
+                1,
+                0,
+                7
+            ],
+            "trans_carreaux_route_babb": [
+                0,
+                1,
+                0,
+                7,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_carreaux_route_bbaa": [
+                0,
+                7,
+                0,
+                1,
+                0,
+                1,
+                0,
+                7
+            ],
+            "trans_carreaux_route_bbab": [
+                0,
+                7,
+                0,
+                1,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_carreaux_route_bbba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                1,
+                0,
+                7
+            ],
+            "trans_caverne_desert_de_l_egeon_aaab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                3,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_aaba": [
+                0,
+                2,
+                0,
+                3,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_aabb": [
+                0,
+                2,
+                0,
+                3,
+                0,
+                3,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_abaa": [
+                0,
+                3,
+                0,
+                2,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_abab": [
+                0,
+                3,
+                0,
+                2,
+                0,
+                3,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_abba": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_abbb": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                3,
+                0,
+                2
+            ],
+            "trans_caverne_desert_de_l_egeon_baaa": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                2,
+                0,
+                3
+            ],
+            "trans_caverne_desert_de_l_egeon_baab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_caverne_desert_de_l_egeon_baba": [
+                0,
+                2,
+                0,
+                3,
+                0,
+                2,
+                0,
+                3
+            ],
+            "trans_caverne_desert_de_l_egeon_babb": [
+                0,
+                2,
+                0,
+                3,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_caverne_desert_de_l_egeon_bbaa": [
+                0,
+                3,
+                0,
+                2,
+                0,
+                2,
+                0,
+                3
+            ],
+            "trans_caverne_desert_de_l_egeon_bbab": [
+                0,
+                3,
+                0,
+                2,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_caverne_desert_de_l_egeon_bbba": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                2,
+                0,
+                3
+            ],
+            "trans_caverne_eryn_dolen_aaab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                4,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_aaba": [
+                0,
+                2,
+                0,
+                4,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_aabb": [
+                0,
+                2,
+                0,
+                4,
+                0,
+                4,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_abaa": [
+                0,
+                4,
+                0,
+                2,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_abab": [
+                0,
+                4,
+                0,
+                2,
+                0,
+                4,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_abba": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_abbb": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                4,
+                0,
+                2
+            ],
+            "trans_caverne_eryn_dolen_baaa": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                2,
+                0,
+                4
+            ],
+            "trans_caverne_eryn_dolen_baab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_caverne_eryn_dolen_baba": [
+                0,
+                2,
+                0,
+                4,
+                0,
+                2,
+                0,
+                4
+            ],
+            "trans_caverne_eryn_dolen_babb": [
+                0,
+                2,
+                0,
+                4,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_caverne_eryn_dolen_bbaa": [
+                0,
+                4,
+                0,
+                2,
+                0,
+                2,
+                0,
+                4
+            ],
+            "trans_caverne_eryn_dolen_bbab": [
+                0,
+                4,
+                0,
+                2,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_caverne_eryn_dolen_bbba": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                2,
+                0,
+                4
+            ],
+            "trans_caverne_falaise_aaab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                5,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_aaba": [
+                0,
+                2,
+                0,
+                5,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_aabb": [
+                0,
+                2,
+                0,
+                5,
+                0,
+                5,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_abaa": [
+                0,
+                5,
+                0,
+                2,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_abab": [
+                0,
+                5,
+                0,
+                2,
+                0,
+                5,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_abba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_abbb": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                5,
+                0,
+                2
+            ],
+            "trans_caverne_falaise_baaa": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                2,
+                0,
+                5
+            ],
+            "trans_caverne_falaise_baab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_caverne_falaise_baba": [
+                0,
+                2,
+                0,
+                5,
+                0,
+                2,
+                0,
+                5
+            ],
+            "trans_caverne_falaise_babb": [
+                0,
+                2,
+                0,
+                5,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_caverne_falaise_bbaa": [
+                0,
+                5,
+                0,
+                2,
+                0,
+                2,
+                0,
+                5
+            ],
+            "trans_caverne_falaise_bbab": [
+                0,
+                5,
+                0,
+                2,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_caverne_falaise_bbba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                2,
+                0,
+                5
+            ],
+            "trans_caverne_pit_aaab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                6,
+                0,
+                2
+            ],
+            "trans_caverne_pit_aaba": [
+                0,
+                2,
+                0,
+                6,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_pit_aabb": [
+                0,
+                2,
+                0,
+                6,
+                0,
+                6,
+                0,
+                2
+            ],
+            "trans_caverne_pit_abaa": [
+                0,
+                6,
+                0,
+                2,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_pit_abab": [
+                0,
+                6,
+                0,
+                2,
+                0,
+                6,
+                0,
+                2
+            ],
+            "trans_caverne_pit_abba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_pit_abbb": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                6,
+                0,
+                2
+            ],
+            "trans_caverne_pit_baaa": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                2,
+                0,
+                6
+            ],
+            "trans_caverne_pit_baab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_caverne_pit_baba": [
+                0,
+                2,
+                0,
+                6,
+                0,
+                2,
+                0,
+                6
+            ],
+            "trans_caverne_pit_babb": [
+                0,
+                2,
+                0,
+                6,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_caverne_pit_bbaa": [
+                0,
+                6,
+                0,
+                2,
+                0,
+                2,
+                0,
+                6
+            ],
+            "trans_caverne_pit_bbab": [
+                0,
+                6,
+                0,
+                2,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_caverne_pit_bbba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                2,
+                0,
+                6
+            ],
+            "trans_caverne_route_aaab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                7,
+                0,
+                2
+            ],
+            "trans_caverne_route_aaba": [
+                0,
+                2,
+                0,
+                7,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_route_aabb": [
+                0,
+                2,
+                0,
+                7,
+                0,
+                7,
+                0,
+                2
+            ],
+            "trans_caverne_route_abaa": [
+                0,
+                7,
+                0,
+                2,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_route_abab": [
+                0,
+                7,
+                0,
+                2,
+                0,
+                7,
+                0,
+                2
+            ],
+            "trans_caverne_route_abba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                2,
+                0,
+                2
+            ],
+            "trans_caverne_route_abbb": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                7,
+                0,
+                2
+            ],
+            "trans_caverne_route_baaa": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                2,
+                0,
+                7
+            ],
+            "trans_caverne_route_baab": [
+                0,
+                2,
+                0,
+                2,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_caverne_route_baba": [
+                0,
+                2,
+                0,
+                7,
+                0,
+                2,
+                0,
+                7
+            ],
+            "trans_caverne_route_babb": [
+                0,
+                2,
+                0,
+                7,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_caverne_route_bbaa": [
+                0,
+                7,
+                0,
+                2,
+                0,
+                2,
+                0,
+                7
+            ],
+            "trans_caverne_route_bbab": [
+                0,
+                7,
+                0,
+                2,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_caverne_route_bbba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                2,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_aaab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                4,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_aaba": [
+                0,
+                3,
+                0,
+                4,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_aabb": [
+                0,
+                3,
+                0,
+                4,
+                0,
+                4,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_abaa": [
+                0,
+                4,
+                0,
+                3,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_abab": [
+                0,
+                4,
+                0,
+                3,
+                0,
+                4,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_abba": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_abbb": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                4,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_baaa": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                3,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_baab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_baba": [
+                0,
+                3,
+                0,
+                4,
+                0,
+                3,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_babb": [
+                0,
+                3,
+                0,
+                4,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_bbaa": [
+                0,
+                4,
+                0,
+                3,
+                0,
+                3,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_bbab": [
+                0,
+                4,
+                0,
+                3,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_eryn_dolen_bbba": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                3,
+                0,
+                4
+            ],
+            "trans_desert_de_l_egeon_falaise_aaab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                5,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_aaba": [
+                0,
+                3,
+                0,
+                5,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_aabb": [
+                0,
+                3,
+                0,
+                5,
+                0,
+                5,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_abaa": [
+                0,
+                5,
+                0,
+                3,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_abab": [
+                0,
+                5,
+                0,
+                3,
+                0,
+                5,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_abba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_abbb": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                5,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_falaise_baaa": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                3,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_falaise_baab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_falaise_baba": [
+                0,
+                3,
+                0,
+                5,
+                0,
+                3,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_falaise_babb": [
+                0,
+                3,
+                0,
+                5,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_falaise_bbaa": [
+                0,
+                5,
+                0,
+                3,
+                0,
+                3,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_falaise_bbab": [
+                0,
+                5,
+                0,
+                3,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_falaise_bbba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                3,
+                0,
+                5
+            ],
+            "trans_desert_de_l_egeon_pit_aaab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                6,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_aaba": [
+                0,
+                3,
+                0,
+                6,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_aabb": [
+                0,
+                3,
+                0,
+                6,
+                0,
+                6,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_abaa": [
+                0,
+                6,
+                0,
+                3,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_abab": [
+                0,
+                6,
+                0,
+                3,
+                0,
+                6,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_abba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_abbb": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                6,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_pit_baaa": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                3,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_pit_baab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_pit_baba": [
+                0,
+                3,
+                0,
+                6,
+                0,
+                3,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_pit_babb": [
+                0,
+                3,
+                0,
+                6,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_pit_bbaa": [
+                0,
+                6,
+                0,
+                3,
+                0,
+                3,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_pit_bbab": [
+                0,
+                6,
+                0,
+                3,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_pit_bbba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                3,
+                0,
+                6
+            ],
+            "trans_desert_de_l_egeon_route_aaab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                7,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_aaba": [
+                0,
+                3,
+                0,
+                7,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_aabb": [
+                0,
+                3,
+                0,
+                7,
+                0,
+                7,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_abaa": [
+                0,
+                7,
+                0,
+                3,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_abab": [
+                0,
+                7,
+                0,
+                3,
+                0,
+                7,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_abba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_abbb": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                7,
+                0,
+                3
+            ],
+            "trans_desert_de_l_egeon_route_baaa": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                3,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_route_baab": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_route_baba": [
+                0,
+                3,
+                0,
+                7,
+                0,
+                3,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_route_babb": [
+                0,
+                3,
+                0,
+                7,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_route_bbaa": [
+                0,
+                7,
+                0,
+                3,
+                0,
+                3,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_route_bbab": [
+                0,
+                7,
+                0,
+                3,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_desert_de_l_egeon_route_bbba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                3,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_falaise_aaab": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                5,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_aaba": [
+                0,
+                4,
+                0,
+                5,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_aabb": [
+                0,
+                4,
+                0,
+                5,
+                0,
+                5,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_abaa": [
+                0,
+                5,
+                0,
+                4,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_abab": [
+                0,
+                5,
+                0,
+                4,
+                0,
+                5,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_abba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_abbb": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                5,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_falaise_baaa": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                4,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_falaise_baab": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_falaise_baba": [
+                0,
+                4,
+                0,
+                5,
+                0,
+                4,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_falaise_babb": [
+                0,
+                4,
+                0,
+                5,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_falaise_bbaa": [
+                0,
+                5,
+                0,
+                4,
+                0,
+                4,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_falaise_bbab": [
+                0,
+                5,
+                0,
+                4,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_falaise_bbba": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                4,
+                0,
+                5
+            ],
+            "trans_eryn_dolen_pit_aaab": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                6,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_aaba": [
+                0,
+                4,
+                0,
+                6,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_aabb": [
+                0,
+                4,
+                0,
+                6,
+                0,
+                6,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_abaa": [
+                0,
+                6,
+                0,
+                4,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_abab": [
+                0,
+                6,
+                0,
+                4,
+                0,
+                6,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_abba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_abbb": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                6,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_pit_baaa": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                4,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_pit_baab": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_pit_baba": [
+                0,
+                4,
+                0,
+                6,
+                0,
+                4,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_pit_babb": [
+                0,
+                4,
+                0,
+                6,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_pit_bbaa": [
+                0,
+                6,
+                0,
+                4,
+                0,
+                4,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_pit_bbab": [
+                0,
+                6,
+                0,
+                4,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_pit_bbba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                4,
+                0,
+                6
+            ],
+            "trans_eryn_dolen_route_aaab": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                7,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_aaba": [
+                0,
+                4,
+                0,
+                7,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_aabb": [
+                0,
+                4,
+                0,
+                7,
+                0,
+                7,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_abaa": [
+                0,
+                7,
+                0,
+                4,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_abab": [
+                0,
+                7,
+                0,
+                4,
+                0,
+                7,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_abba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                4,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_abbb": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                7,
+                0,
+                4
+            ],
+            "trans_eryn_dolen_route_baaa": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                4,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_route_baab": [
+                0,
+                4,
+                0,
+                4,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_route_baba": [
+                0,
+                4,
+                0,
+                7,
+                0,
+                4,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_route_babb": [
+                0,
+                4,
+                0,
+                7,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_route_bbaa": [
+                0,
+                7,
+                0,
+                4,
+                0,
+                4,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_route_bbab": [
+                0,
+                7,
+                0,
+                4,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_eryn_dolen_route_bbba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                4,
+                0,
+                7
+            ],
+            "trans_falaise_pit_aaab": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                6,
+                0,
+                5
+            ],
+            "trans_falaise_pit_aaba": [
+                0,
+                5,
+                0,
+                6,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_falaise_pit_aabb": [
+                0,
+                5,
+                0,
+                6,
+                0,
+                6,
+                0,
+                5
+            ],
+            "trans_falaise_pit_abaa": [
+                0,
+                6,
+                0,
+                5,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_falaise_pit_abab": [
+                0,
+                6,
+                0,
+                5,
+                0,
+                6,
+                0,
+                5
+            ],
+            "trans_falaise_pit_abba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_falaise_pit_abbb": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                6,
+                0,
+                5
+            ],
+            "trans_falaise_pit_baaa": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                5,
+                0,
+                6
+            ],
+            "trans_falaise_pit_baab": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_falaise_pit_baba": [
+                0,
+                5,
+                0,
+                6,
+                0,
+                5,
+                0,
+                6
+            ],
+            "trans_falaise_pit_babb": [
+                0,
+                5,
+                0,
+                6,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_falaise_pit_bbaa": [
+                0,
+                6,
+                0,
+                5,
+                0,
+                5,
+                0,
+                6
+            ],
+            "trans_falaise_pit_bbab": [
+                0,
+                6,
+                0,
+                5,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_falaise_pit_bbba": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                5,
+                0,
+                6
+            ],
+            "trans_falaise_route_aaab": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                7,
+                0,
+                5
+            ],
+            "trans_falaise_route_aaba": [
+                0,
+                5,
+                0,
+                7,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_falaise_route_aabb": [
+                0,
+                5,
+                0,
+                7,
+                0,
+                7,
+                0,
+                5
+            ],
+            "trans_falaise_route_abaa": [
+                0,
+                7,
+                0,
+                5,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_falaise_route_abab": [
+                0,
+                7,
+                0,
+                5,
+                0,
+                7,
+                0,
+                5
+            ],
+            "trans_falaise_route_abba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                5,
+                0,
+                5
+            ],
+            "trans_falaise_route_abbb": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                7,
+                0,
+                5
+            ],
+            "trans_falaise_route_baaa": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                5,
+                0,
+                7
+            ],
+            "trans_falaise_route_baab": [
+                0,
+                5,
+                0,
+                5,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_falaise_route_baba": [
+                0,
+                5,
+                0,
+                7,
+                0,
+                5,
+                0,
+                7
+            ],
+            "trans_falaise_route_babb": [
+                0,
+                5,
+                0,
+                7,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_falaise_route_bbaa": [
+                0,
+                7,
+                0,
+                5,
+                0,
+                5,
+                0,
+                7
+            ],
+            "trans_falaise_route_bbab": [
+                0,
+                7,
+                0,
+                5,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_falaise_route_bbba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                5,
+                0,
+                7
+            ],
+            "trans_pit_route_aaab": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                7,
+                0,
+                6
+            ],
+            "trans_pit_route_aaba": [
+                0,
+                6,
+                0,
+                7,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_pit_route_aabb": [
+                0,
+                6,
+                0,
+                7,
+                0,
+                7,
+                0,
+                6
+            ],
+            "trans_pit_route_abaa": [
+                0,
+                7,
+                0,
+                6,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_pit_route_abab": [
+                0,
+                7,
+                0,
+                6,
+                0,
+                7,
+                0,
+                6
+            ],
+            "trans_pit_route_abba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                6,
+                0,
+                6
+            ],
+            "trans_pit_route_abbb": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                7,
+                0,
+                6
+            ],
+            "trans_pit_route_baaa": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                6,
+                0,
+                7
+            ],
+            "trans_pit_route_baab": [
+                0,
+                6,
+                0,
+                6,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_pit_route_baba": [
+                0,
+                6,
+                0,
+                7,
+                0,
+                6,
+                0,
+                7
+            ],
+            "trans_pit_route_babb": [
+                0,
+                6,
+                0,
+                7,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_pit_route_bbaa": [
+                0,
+                7,
+                0,
+                6,
+                0,
+                6,
+                0,
+                7
+            ],
+            "trans_pit_route_bbab": [
+                0,
+                7,
+                0,
+                6,
+                0,
+                7,
+                0,
+                7
+            ],
+            "trans_pit_route_bbba": [
+                0,
+                7,
+                0,
+                7,
+                0,
+                6,
+                0,
+                7
             ]
         }
     }

@@ -5,36 +5,36 @@
  *
  * Usage (dans le devcontainer) :
  *   php tools/tiled/generate_transitions.php tiles carreaux desert_de_l_egeon
+ *   php tools/tiled/generate_transitions.php --all tiles   # toutes les paires
  *
  * Produit img/<couche>/trans_<A>_<B>_<code>.png pour les 14 combinaisons de
  * coins (code = 4 lettres a/b dans l'ordre TL,TR,BR,BL), par fondu bilinéaire
  * entre les deux images de base. Le jeu les rend comme n'importe quelle tuile
- * (img/<table>/<name>.png, Classes/View.php) — img/ n'étant pas versionné,
- * penser à reporter les PNG générés dans la source d'assets déployée.
+ * (img/<table>/<name>.png, Classes/View.php) et la carte du jeu mélange leurs
+ * couleurs (ColorService::colorFor) — img/ n'étant pas versionné, penser à
+ * reporter les PNG générés dans la source d'assets déployée.
  *
- * Relançable : écrase les PNG et resynchronise les entrées de terrains.json.
+ * --all génère chaque paire (non ordonnée) de tuiles pleines déclarées dans
+ * terrains.json pour la couche. Relançable : écrase les PNG et resynchronise
+ * les entrées de terrains.json.
  */
 
 const TILE_SIZE = 50;
 const IMAGE_EXTENSIONS = ['png', 'webp', 'gif'];
 
-if ($argc !== 4) {
+$all = ($argv[1] ?? '') === '--all';
+
+if (!($all && $argc === 3) && !(!$all && $argc === 4)) {
     fwrite(STDERR, "Usage: php tools/tiled/generate_transitions.php <couche> <tuileA> <tuileB>\n");
+    fwrite(STDERR, "       php tools/tiled/generate_transitions.php --all <couche>\n");
     exit(1);
 }
 
-[, $layer, $tileA, $tileB] = $argv;
+$layer = $all ? $argv[2] : $argv[1];
 
 $root = dirname(__DIR__, 2);
 $imgDir = $root . '/img/' . $layer;
 $terrainsPath = $root . '/tools/tiled/aoo/terrains.json';
-
-foreach ([$tileA, $tileB] as $name) {
-    if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $name)) {
-        fwrite(STDERR, "Nom de tuile invalide : $name\n");
-        exit(1);
-    }
-}
 
 /** Charge une image de tuile (png/webp/gif) redimensionnée en 50x50. */
 function loadTile(string $dir, string $name): \GdImage
@@ -115,8 +115,58 @@ function blend(\GdImage $a, \GdImage $b, \GdImage $mask): \GdImage
     return $out;
 }
 
-$imageA = loadTile($imgDir, $tileA);
-$imageB = loadTile($imgDir, $tileB);
+/** Génère les 14 tuiles d'une paire et déclare leurs wangId dans $cfg. */
+function generatePair(array &$cfg, string $imgDir, string $tileA, string $tileB): int
+{
+    foreach ([$tileA, $tileB] as $name) {
+        if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $name)) {
+            fwrite(STDERR, "Nom de tuile invalide : $name\n");
+            exit(1);
+        }
+    }
+
+    $imageA = loadTile($imgDir, $tileA);
+    $imageB = loadTile($imgDir, $tileB);
+
+    $colorOf = function (string $tile) use (&$cfg): string {
+        $color = $cfg['tiles'][$tile] ?? null;
+        if (!is_string($color)) {
+            $color = $tile;
+            if (!in_array($color, $cfg['colors'], true)) {
+                $cfg['colors'][] = $color;
+            }
+            $cfg['tiles'][$tile] = $color;
+        }
+        return $color;
+    };
+
+    $indexA = array_search($colorOf($tileA), $cfg['colors'], true) + 1;
+    $indexB = array_search($colorOf($tileB), $cfg['colors'], true) + 1;
+
+    $generated = 0;
+
+    // Tous les mélanges de coins sauf les deux tuiles pleines (0000 et 1111)
+    for ($combo = 1; $combo <= 14; $combo++) {
+        $tl = ($combo >> 3) & 1;
+        $tr = ($combo >> 2) & 1;
+        $br = ($combo >> 1) & 1;
+        $bl = $combo & 1;
+
+        $code = implode('', array_map(fn($c) => $c ? 'b' : 'a', [$tl, $tr, $br, $bl]));
+        $name = 'trans_' . $tileA . '_' . $tileB . '_' . $code;
+
+        $image = blend($imageA, $imageB, buildMask($tl * 255, $tr * 255, $br * 255, $bl * 255));
+        imagepng($image, $imgDir . '/' . $name . '.png');
+
+        // wangId Tiled : [haut, TR, droite, BR, bas, BL, gauche, TL], coins seuls
+        $of = fn(int $corner) => $corner ? $indexB : $indexA;
+        $cfg['tiles'][$name] = [0, $of($tr), 0, $of($br), 0, $of($bl), 0, $of($tl)];
+
+        $generated++;
+    }
+
+    return $generated;
+}
 
 // terrains.json : garantir la section de couche, les couleurs et les tuiles pleines
 $terrains = json_decode(file_get_contents($terrainsPath), true);
@@ -125,41 +175,24 @@ if (!isset($terrains[$layer])) {
 }
 $cfg = &$terrains[$layer];
 
-$colorOf = function (string $tile) use (&$cfg): string {
-    $color = $cfg['tiles'][$tile] ?? null;
-    if (!is_string($color)) {
-        $color = $tile;
-        if (!in_array($color, $cfg['colors'], true)) {
-            $cfg['colors'][] = $color;
+if ($all) {
+    // Toutes les paires (non ordonnées) de tuiles pleines déclarées
+    $fullTiles = array_keys(array_filter($cfg['tiles'], 'is_string'));
+    $generated = 0;
+    $pairs = 0;
+
+    foreach ($fullTiles as $i => $tileA) {
+        foreach (array_slice($fullTiles, $i + 1) as $tileB) {
+            $generated += generatePair($cfg, $imgDir, $tileA, $tileB);
+            $pairs++;
         }
-        $cfg['tiles'][$tile] = $color;
     }
-    return $color;
-};
 
-$indexA = array_search($colorOf($tileA), $cfg['colors'], true) + 1;
-$indexB = array_search($colorOf($tileB), $cfg['colors'], true) + 1;
-
-$generated = 0;
-
-// Tous les mélanges de coins sauf les deux tuiles pleines (0000 et 1111)
-for ($combo = 1; $combo <= 14; $combo++) {
-    $tl = ($combo >> 3) & 1;
-    $tr = ($combo >> 2) & 1;
-    $br = ($combo >> 1) & 1;
-    $bl = $combo & 1;
-
-    $code = implode('', array_map(fn($c) => $c ? 'b' : 'a', [$tl, $tr, $br, $bl]));
-    $name = 'trans_' . $tileA . '_' . $tileB . '_' . $code;
-
-    $image = blend($imageA, $imageB, buildMask($tl * 255, $tr * 255, $br * 255, $bl * 255));
-    imagepng($image, $imgDir . '/' . $name . '.png');
-
-    // wangId Tiled : [haut, TR, droite, BR, bas, BL, gauche, TL], coins seuls
-    $of = fn(int $corner) => $corner ? $indexB : $indexA;
-    $cfg['tiles'][$name] = [0, $of($tr), 0, $of($br), 0, $of($bl), 0, $of($tl)];
-
-    $generated++;
+    echo "$generated tuiles générées pour $pairs paires dans img/$layer/\n";
+} else {
+    [, , $tileA, $tileB] = $argv;
+    $generated = generatePair($cfg, $imgDir, $tileA, $tileB);
+    echo "$generated tuiles de transition générées dans img/$layer/ (trans_{$tileA}_{$tileB}_*.png)\n";
 }
 
 file_put_contents(
@@ -167,5 +200,4 @@ file_put_contents(
     json_encode($terrains, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
 );
 
-echo "$generated tuiles de transition générées dans img/$layer/ (trans_{$tileA}_{$tileB}_*.png)\n";
 echo "terrains.json mis à jour — re-puller un plan pour recharger les tilesets.\n";

@@ -153,12 +153,9 @@ class ViewService {
     }
     
     private function getColorForType($name) {
-        if (isset($this->colors[$name])) {
-            $rgb = $this->colors[$name];
-            return imagecolorallocate($this->image, $rgb[0], $rgb[1], $rgb[2]);
-        }
-
-        $rgb = $this->colors['default'];
+        // Résout aussi les tuiles de transition générées (trans_A_B_code)
+        // en mélangeant les couleurs des deux biomes
+        $rgb = ColorService::colorFor($name, $this->colors);
         return imagecolorallocate($this->image, $rgb[0], $rgb[1], $rgb[2]);
     }
     
