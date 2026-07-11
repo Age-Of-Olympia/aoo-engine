@@ -190,17 +190,15 @@ déclarés…).
 
 ### Reste à faire
 
-- **Édition assistée des biomes** : aujourd'hui `aooPlan_biomes` s'édite en
-  JSON brut ; un formulaire dédié (ou des objets typés) serait plus sûr.
-  À valider en jeu : la clé d'identité des plantes inclut `params`.
-- **Bibliothèque de structures** : tampons Tiled partagés dans le dépôt
-  (`tools/tiled/stamps/`).
-- **Rendu du fond/masque dans Tiled** : l'éditeur ne montre pas les images
-  bg/mask (seule leur valeur est en propriété) ; on pourrait poser l'image
-  de fond de la carte au pull.
+- À valider en jeu : la clé d'identité des plantes inclut `params`.
 - **Industrialisation** (phase 3) : export périodique des plans en `.tmj`
   versionnés dans git (diff/review, sauvegarde) ; décommissionnement
   progressif de `tiled.php` (gardé pour les retouches rapides in-game).
+
+Fait récemment : édition assistée des biomes (action « Biomes… »,
+formulaire `wall:ressource:exhaust:regrow`), aperçu du fond/masque
+(calques image verrouillés au pull), bibliothèque de tampons partagés
+(`tools/tiled/stamps/`).
 
 ### Déploiement (à ne pas oublier)
 

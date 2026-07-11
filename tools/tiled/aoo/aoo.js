@@ -50,6 +50,49 @@ AoO.hasParams = function(value) {
     return value !== undefined && value !== null && String(value) !== '';
 };
 
+/* Biomes ↔ texte « wall:ressource:exhaust:regrow » (un par ligne), pour
+   éditer les ressources sans écrire de JSON. */
+AoO.formatBiomes = function(json) {
+    var biomes;
+    try {
+        biomes = JSON.parse(json || '[]');
+    } catch (error) {
+        return String(json || ''); /* JSON cassé : montrer tel quel pour correction */
+    }
+    if (!Array.isArray(biomes)) {
+        return '';
+    }
+    return biomes.map(function(b) {
+        return [b.wall || '', b.ressource || '', b.exhaust || '', b.regrow || ''].join(':');
+    }).join('\n');
+};
+
+AoO.parseBiomes = function(text) {
+    var biomes = [];
+    /* une ligne par biome ; virgules aussi acceptées (repli prompt) */
+    var lines = String(text || '').split(/[\r\n,]+/);
+
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) {
+            continue;
+        }
+        var parts = line.split(':');
+        if (parts.length !== 4 || !parts[0].trim() || !parts[1].trim()
+            || !/^\d+$/.test(parts[2].trim()) || !/^\d+$/.test(parts[3].trim())) {
+            throw new Error('Biome mal formé (attendu « wall:ressource:exhaust:regrow ») : ' + line);
+        }
+        biomes.push({
+            wall: parts[0].trim(),
+            ressource: parts[1].trim(),
+            exhaust: parseInt(parts[2].trim(), 10),
+            regrow: parseInt(parts[3].trim(), 10)
+        });
+    }
+
+    return biomes;
+};
+
 /*
  * Codecs params ↔ propriétés typées des objets à cas particuliers.
  * Alignés sur les consommateurs du jeu (scripts/map/triggers/*.php) et sur
@@ -285,6 +328,12 @@ AoO.showFormDialog = function(title, fields) {
                     var combo = dialog.addComboBox(fields[i].label, fields[i].options);
                     combo.currentIndex = Math.max(0, fields[i].options.indexOf(fields[i].value || ''));
                     widgets.push(combo);
+                } else if (fields[i].type === 'textarea') {
+                    dialog.addLabel(fields[i].label);
+                    dialog.addNewRow();
+                    var textEdit = dialog.addTextEdit();
+                    textEdit.plainText = fields[i].value || '';
+                    widgets.push(textEdit);
                 } else {
                     var input = dialog.addTextInput(fields[i].label);
                     if (fields[i].value) {
@@ -301,7 +350,7 @@ AoO.showFormDialog = function(title, fields) {
                 for (var j = 0; j < fields.length; j++) {
                     result[fields[j].key] = fields[j].type === 'combo'
                         ? fields[j].options[widgets[j].currentIndex]
-                        : widgets[j].text;
+                        : (fields[j].type === 'textarea' ? widgets[j].plainText : widgets[j].text);
                 }
                 dialog.accept();
             });
@@ -699,8 +748,46 @@ AoO.pull = function(plan, zSpec, config) {
     AoO.addCatalogTiles(map, firstData, registry, config);
     AoO.addCompositeTiles(map, firstData, registry, config);
     AoO.applyTerrains(registry, config);
+    AoO.applyBackgroundPreview(map, config);
 
     return map;
+};
+
+/*
+ * Aperçu du fond et du masque dans l'éditeur : calques image verrouillés,
+ * purement visuels (aucune couche AoO, donc ignorés au push). Le fond en
+ * bas de la pile, le masque en haut (semi-transparent), tous deux répétés
+ * comme le fait le jeu. Reconstruit à chaque appel — utilisé au pull et
+ * après un changement via l'action « Fond / ambiance ».
+ */
+AoO.applyBackgroundPreview = function(map, config) {
+    /* retire les aperçus existants (property aooPreview) */
+    for (var i = map.layerCount - 1; i >= 0; i--) {
+        if (map.layerAt(i).property('aooPreview')) {
+            map.removeLayerAt(i);
+        }
+    }
+
+    var addPreview = function(image, top, opacity) {
+        if (!image) {
+            return;
+        }
+        var layer = new ImageLayer(top ? 'masque (aperçu)' : 'fond (aperçu)');
+        layer.imageFileName = config.gameDir + '/' + image;
+        layer.repeatX = true;
+        layer.repeatY = true;
+        layer.opacity = opacity;
+        layer.locked = true;
+        layer.setProperty('aooPreview', true);
+        if (top) {
+            map.addLayer(layer);              /* au-dessus de tout */
+        } else {
+            map.insertLayerAt(0, layer);      /* sous tout */
+        }
+    };
+
+    addPreview(String(map.property(AoO.PROP.planPrefix + 'bg') || ''), false, 1);
+    addPreview(String(map.property(AoO.PROP.planPrefix + 'mask') || ''), true, 0.5);
 };
 
 /*
@@ -1134,8 +1221,35 @@ AoO.registerSafeAction('AoOBg', 'AoO : Fond / ambiance du plan…', 'AoO — Fon
 
     map.setProperty(propBg, values.bg === NONE ? '' : values.bg);
     map.setProperty(propMask, values.mask === NONE ? '' : values.mask);
+    AoO.applyBackgroundPreview(map, AoO.loadConfig()); /* rafraîchit l'aperçu */
     tiled.log('AoO : fond/masque du plan mis à jour — appliqué au prochain push ' +
         '(vitesse du masque : propriété ' + AoO.PROP.planPrefix + 'scrollingMask)');
+});
+
+AoO.registerSafeAction('AoOBiomes', 'AoO : Biomes (ressources) du plan…', 'AoO — Biomes', function() {
+    var map = tiled.activeAsset;
+    if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
+        throw new Error('Ouvrir d\'abord une carte pullée du jeu.');
+    }
+
+    var propBiomes = AoO.PROP.planPrefix + 'biomes';
+    var current = AoO.formatBiomes(String(map.property(propBiomes) || ''));
+
+    var values = AoO.showFormDialog('AoO — Biomes (ressources) du plan', [
+        {
+            key: 'biomes', type: 'textarea',
+            label: 'Un biome par ligne : wall:ressource:exhaust:regrow\n' +
+                '(ex. arbre1:bois:75:20 — mur récoltable, item obtenu, % épuisement, tours de repousse)',
+            value: current
+        }
+    ]);
+    if (!values) {
+        return;
+    }
+
+    var biomes = AoO.parseBiomes(values.biomes); /* valide le format */
+    map.setProperty(propBiomes, biomes.length ? JSON.stringify(biomes) : '');
+    tiled.log('AoO : ' + biomes.length + ' biome(s) — appliqué au prochain push');
 });
 
 AoO.registerSafeAction('AoONew', 'AoO : Nouveau plan dans le jeu…', 'AoO — Nouveau plan', function() {
@@ -1190,7 +1304,8 @@ try {
         { action: 'AoOPull' },
         { action: 'AoOPush' },
         { action: 'AoONew' },
-        { action: 'AoOBg' }
+        { action: 'AoOBg' },
+        { action: 'AoOBiomes' }
     ]);
     tiled.log('AoO : extension chargée, actions dans le menu Fichier');
 } catch (error) {

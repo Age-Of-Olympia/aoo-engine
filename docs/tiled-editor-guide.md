@@ -27,6 +27,8 @@ Les actions AoO vivent en bas du menu **Fichier** :
 | AoO : Pull un plan du jeu… | télécharge un plan (liste des plans affichée) |
 | AoO : Push la carte vers le jeu… | applique la carte ouverte à son instance d'origine |
 | AoO : Nouveau plan dans le jeu… | crée un plan vierge et l'ouvre |
+| AoO : Fond / ambiance du plan… | choisit le fond et le masque animé |
+| AoO : Biomes (ressources) du plan… | édite les ressources récoltables (formulaire, sans JSON) |
 
 ## L'interface en 30 secondes
 
@@ -175,8 +177,19 @@ Propriétés) plutôt que dans ce menu :
   chutes) au lieu d'horizontal (nuages poussés par le vent).
 
 Le choix est mémorisé sur la carte et écrit dans le JSON de plan au push.
-Note : Tiled n'affiche pas ces images dans l'éditeur (seule leur valeur est
-visible en propriété) — l'effet se voit en jeu après le push.
+Un **aperçu** est ajouté dans l'éditeur : un calque image verrouillé « fond
+(aperçu) » sous la carte et « masque (aperçu) » (semi-transparent) au-dessus
+— purement visuels, ignorés au push. Le rendu exact reste celui du jeu.
+
+#### Les biomes / ressources (Fichier → AoO : Biomes… )
+
+Les biomes définissent quels murs sont **récoltables** et ce qu'ils donnent.
+Cette action ouvre un éditeur : **un biome par ligne**, au format
+`wall:ressource:exhaust:regrow` — le mur récoltable, l'item obtenu, le
+pourcentage d'épuisement à chaque récolte, le nombre de tours de repousse
+(ex. `arbre1:bois:75:20`). Chaque champ est validé (exhaust/regrow
+numériques) ; le tout est écrit dans la clé `biomes` du JSON de plan au push,
+puis contrôlé par le validateur (ressources inconnues signalées).
 
 ### Le pinceau Terrain (transitions automatiques)
 
