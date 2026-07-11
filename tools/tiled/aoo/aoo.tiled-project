@@ -1,92 +1,139 @@
 {
     "automappingRulesFile": "",
-    "commands": [],
+    "commands": [
+    ],
     "compatibilityVersion": 1100,
     "extensionsPath": "extensions",
     "folders": [
-        "../maps"
+    ],
+    "properties": [
     ],
     "propertyTypes": [
         {
-            "color": "#3b82f6",
+            "color": "#ffeab308",
             "drawFill": true,
-            "id": 1,
+            "id": 6,
             "members": [
-                { "name": "x", "type": "string", "value": "x" },
-                { "name": "y", "type": "string", "value": "y" },
-                { "name": "z", "type": "string", "value": "z" },
-                { "name": "plan", "type": "string", "value": "plan" }
             ],
-            "name": "tp",
+            "name": "altar",
             "type": "class",
-            "useAs": [ "object" ]
+            "useAs": [
+                "object"
+            ]
         },
         {
-            "color": "#f59e0b",
+            "color": "#ff14b8a6",
+            "drawFill": true,
+            "id": 7,
+            "members": [
+            ],
+            "name": "enter",
+            "type": "class",
+            "useAs": [
+                "object"
+            ]
+        },
+        {
+            "color": "#fff97316",
+            "drawFill": true,
+            "id": 8,
+            "members": [
+            ],
+            "name": "exit",
+            "type": "class",
+            "useAs": [
+                "object"
+            ]
+        },
+        {
+            "color": "#ffef4444",
+            "drawFill": true,
+            "id": 4,
+            "members": [
+            ],
+            "name": "forbidden",
+            "type": "class",
+            "useAs": [
+                "object"
+            ]
+        },
+        {
+            "color": "#fff59e0b",
             "drawFill": true,
             "id": 2,
             "members": [
-                { "name": "conditions", "type": "string", "value": "" }
+                {
+                    "name": "conditions",
+                    "type": "string",
+                    "value": ""
+                }
             ],
             "name": "need",
             "type": "class",
-            "useAs": [ "object" ]
+            "useAs": [
+                "object"
+            ]
         },
         {
-            "color": "#8b5cf6",
+            "color": "#ff8b5cf6",
             "drawFill": true,
             "id": 3,
             "members": [
-                { "name": "dialog", "type": "string", "value": "" }
+                {
+                    "name": "dialog",
+                    "type": "string",
+                    "value": ""
+                }
             ],
             "name": "question",
             "type": "class",
-            "useAs": [ "object" ]
+            "useAs": [
+                "object"
+            ]
         },
         {
-            "color": "#ef4444",
-            "drawFill": true,
-            "id": 4,
-            "members": [],
-            "name": "forbidden",
-            "type": "class",
-            "useAs": [ "object" ]
-        },
-        {
-            "color": "#22c55e",
+            "color": "#ff22c55e",
             "drawFill": true,
             "id": 5,
-            "members": [],
+            "members": [
+            ],
             "name": "rez",
             "type": "class",
-            "useAs": [ "object" ]
+            "useAs": [
+                "object"
+            ]
         },
         {
-            "color": "#eab308",
+            "color": "#ff3b82f6",
             "drawFill": true,
-            "id": 6,
-            "members": [],
-            "name": "altar",
+            "id": 1,
+            "members": [
+                {
+                    "name": "plan",
+                    "type": "string",
+                    "value": "plan"
+                },
+                {
+                    "name": "x",
+                    "type": "string",
+                    "value": "x"
+                },
+                {
+                    "name": "y",
+                    "type": "string",
+                    "value": "y"
+                },
+                {
+                    "name": "z",
+                    "type": "string",
+                    "value": "z"
+                }
+            ],
+            "name": "tp",
             "type": "class",
-            "useAs": [ "object" ]
-        },
-        {
-            "color": "#14b8a6",
-            "drawFill": true,
-            "id": 7,
-            "members": [],
-            "name": "enter",
-            "type": "class",
-            "useAs": [ "object" ]
-        },
-        {
-            "color": "#f97316",
-            "drawFill": true,
-            "id": 8,
-            "members": [],
-            "name": "exit",
-            "type": "class",
-            "useAs": [ "object" ]
+            "useAs": [
+                "object"
+            ]
         }
     ]
 }
