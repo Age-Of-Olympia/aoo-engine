@@ -120,25 +120,33 @@ Reste :
 - Bibliothèque de structures : tampons Tiled partagés dans le dépôt
   (`tools/tiled/stamps/`).
 
-### Phase 2b — Spécificités du jeu (à faire)
+### Phase 2b — Spécificités du jeu (faite pour les triggers/dialogs)
 
-L'ancien éditeur expose des cas particuliers qui doivent devenir de vrais
-objets typés dans Tiled. Inventaire (palette de `scripts/tiled/`) :
+Les cas particuliers de l'ancien éditeur sont de vrais objets typés :
 
-| Cas | Données | Dans Tiled |
+- **Projet Tiled** `tools/tiled/aoo/aoo.tiled-project` : une classe par type
+  de déclencheur (couleur + champs typés dans le panneau Propriétés). À
+  ouvrir dans Tiled : *Fichier → Ouvrir un projet…* — il référence aussi le
+  dossier des cartes pullées.
+- **Codecs** params ↔ champs typés dans l'extension (`AoO.PARAM_CODECS`),
+  alignés sur les consommateurs du jeu (`scripts/map/triggers/*.php`) :
+  - `tp` : champs x, y, z, plan (positionnel « x,y,z,plan » ; segment non
+    numérique = conserver la valeur courante du joueur) ;
+  - `need` : champ conditions (« item:nom:n,spell:nom ») ;
+  - `question` (dialogs) : champ dialog.
+- Un objet créé à la main avec seulement une classe (sans nom) est poussé
+  sous le nom de sa classe ; les objets sans codec gardent leur propriété
+  `params` brute.
+
+| Cas | Données | État |
 |---|---|---|
-| Déclencheurs `tp` | params `x,y,z,plan` | objet trigger, params — OK, à typer |
-| Déclencheurs `need` | params `item:name:n,spell:...` | objet trigger, params — OK, à typer |
-| `forbidden`, `rez`, `altar`, `enter`, `exit` | sans params | objets triggers — OK |
-| Dialogs `question` | params = id de dialogue | objet dialog, params — OK, à typer |
+| Déclencheurs `tp` | params `x,y,z,plan` | ✅ champs typés |
+| Déclencheurs `need` | params `item:name:n,spell:...` | ✅ champ conditions |
+| `forbidden`, `rez`, `altar`, `enter`, `exit` | sans params | ✅ classes colorées |
+| Dialogs `question` | params = id de dialogue | ✅ champ dialog |
 | Murs ressources | `damages` -1/-2, WALLS_PV | défaut -1 à l'insertion — OK ; mode récolte à revoir |
 | Éléments temporaires | `endTime` | préservé sur lignes conservées ; création avec endTime à définir |
 | Plantes | params (croissance) | params dans la clé d'identité — à valider en jeu |
-
-Piste principale : un fichier projet Tiled (`aoo.tiled-project`) avec des
-**types d'objets** (propertyTypes) par déclencheur — champs typés (x, y, z,
-plan pour un tp ; item/n pour un need…) au lieu d'un params libre, avec
-sérialisation params ↔ champs dans l'extension. À concevoir en phase 2b.
 
 ### Phase 3 — Industrialisation
 
@@ -153,6 +161,7 @@ sérialisation params ↔ champs dans l'extension. À concevoir en phase 2b.
 
 - Extension Tiled : `tools/tiled/aoo/aoo.js` (+ `config.json` et
   `session.json` locaux, gitignorés, `.exemple` fournis)
+- Projet Tiled (types d'objets, dossier des cartes) : `tools/tiled/aoo/aoo.tiled-project`
 - Endpoints : `api/admin/map/auth.php`, `export.php`, `import.php`
 - Services : `src/Service/TiledMapService.php`, `src/Service/TiledAuthService.php`
 - Secret HMAC : `config/tiled_constants.php` (gitignoré, `.exemple` fourni)

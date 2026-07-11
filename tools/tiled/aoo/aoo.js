@@ -47,6 +47,62 @@ AoO.hasParams = function(value) {
 };
 
 /*
+ * Codecs params ↔ propriétés typées des objets à cas particuliers.
+ * Alignés sur les consommateurs du jeu (scripts/map/triggers/*.php) et sur
+ * les classes du projet aoo.tiled-project (mêmes noms de champs) :
+ *  - tp : params positionnel « x,y,z,plan », un segment non numérique
+ *    (ou « plan ») = conserver la valeur courante du joueur ;
+ *  - need : liste libre « item:nom:n,spell:nom » — un seul champ texte ;
+ *  - question (dialogs) : identifiant du dialogue.
+ * Les objets sans codec gardent leur propriété « params » brute.
+ */
+AoO.PARAM_CODECS = {
+    tp: { fields: ['x', 'y', 'z', 'plan'] },
+    need: { fields: ['conditions'] },
+    question: { fields: ['dialog'] }
+};
+
+/* params (chaîne) → { champ: valeur } */
+AoO.decodeParams = function(codec, params) {
+    var raw = AoO.hasParams(params) ? String(params) : '';
+    var values = {};
+
+    if (codec.fields.length === 1) {
+        values[codec.fields[0]] = raw;
+        return values;
+    }
+
+    var parts = raw.split(',');
+    for (var i = 0; i < codec.fields.length; i++) {
+        values[codec.fields[i]] = parts[i] !== undefined ? parts[i] : '';
+    }
+    return values;
+};
+
+/* objet Tiled → params (chaîne), null si aucun champ renseigné.
+   resolvedProperty intègre les défauts de la classe du projet
+   (un tp fraîchement créé hérite de « x », « y », « z ») */
+AoO.encodeParams = function(codec, object) {
+    var values = [];
+    var any = false;
+
+    for (var i = 0; i < codec.fields.length; i++) {
+        var value = object.resolvedProperty
+            ? object.resolvedProperty(codec.fields[i])
+            : object.property(codec.fields[i]);
+        if (AoO.hasParams(value)) {
+            any = true;
+        }
+        values.push(AoO.hasParams(value) ? String(value) : '');
+    }
+
+    if (!any) {
+        return null;
+    }
+    return codec.fields.length === 1 ? values[0] : values.join(',');
+};
+
+/*
  * Ancrage vertical des objets — convention Tiled : objet-tuile ancré en
  * bas à gauche, rectangle nu en haut à gauche. Ces deux fonctions sont
  * inverses l'une de l'autre ; toute modification doit toucher les deux.
@@ -258,6 +314,10 @@ AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
         var object = new MapObject(row.name);
         var tile = tiles ? tiles[row.name] : null;
 
+        /* la classe relie l'objet à son type du projet aoo.tiled-project
+           (couleur + champs typés dans le panneau Propriétés) */
+        object.className = row.name;
+
         object.x = row.x * tileSize;
         object.y = AoO.objectYFromCell(row.y, Boolean(tile), tileSize);
         object.width = tileSize;
@@ -265,9 +325,17 @@ AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
         if (tile) {
             object.tile = tile;
         }
-        if (AoO.hasParams(row.params)) {
+
+        var codec = AoO.PARAM_CODECS[row.name];
+        if (codec) {
+            var values = AoO.decodeParams(codec, row.params);
+            for (var field in values) {
+                object.setProperty(field, values[field]);
+            }
+        } else if (AoO.hasParams(row.params)) {
             object.setProperty('params', String(row.params));
         }
+
         group.addObject(object);
     }
 };
@@ -474,12 +542,17 @@ AoO.serializeObjectLayer = function(layer, tileSize) {
     for (var i = 0; i < layer.objectCount; i++) {
         var object = layer.objectAt(i);
 
+        /* nom : explicite, sinon tuile, sinon classe (objet créé à la main
+           en choisissant juste la classe du projet) */
         var name = object.name;
         if (!name && object.tile) {
             name = object.tile.property(AoO.PROP.name);
         }
         if (!name) {
-            throw new Error('Objet sans nom dans la couche ' + layer.name);
+            name = object.className;
+        }
+        if (!name) {
+            throw new Error('Objet sans nom ni classe dans la couche ' + layer.name);
         }
 
         var row = {
@@ -488,7 +561,8 @@ AoO.serializeObjectLayer = function(layer, tileSize) {
             name: name
         };
 
-        var params = object.property('params');
+        var codec = AoO.PARAM_CODECS[name];
+        var params = codec ? AoO.encodeParams(codec, object) : object.property('params');
         if (AoO.hasParams(params)) {
             row.params = String(params);
         }
