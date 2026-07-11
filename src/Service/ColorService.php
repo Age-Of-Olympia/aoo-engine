@@ -20,6 +20,16 @@ class ColorService {
             ?? $colors['default'];
     }
 
+    /**
+     * Nom d'une tuile de transition — le pendant constructeur du parseur
+     * transitionBlend ci-dessous, pour que la convention vive en un seul
+     * endroit (le générateur tools/tiled/generate_transitions.php l'appelle).
+     */
+    public static function transitionTileName(string $tileA, string $tileB, string $cornerCode): string
+    {
+        return 'trans_' . $tileA . '_' . $tileB . '_' . $cornerCode;
+    }
+
     /** @return array{int, int, int}|null */
     private static function transitionBlend(string $name, array $colors): ?array
     {

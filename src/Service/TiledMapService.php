@@ -9,6 +9,10 @@ use RuntimeException;
 /**
  * Export / import des plans du jeu pour l'extension Tiled (tools/tiled/aoo).
  *
+ * Ce service porte le moteur de diff transactionnel sur les tables map_* et
+ * compose deux services voisins : TileCatalogService (images de img/) et
+ * PlanConfigService (JSON de plan).
+ *
  * Un « plan » exporté = les couches authorables d'un (plan, z) donné.
  * map_items n'apparaît jamais : c'est de l'état runtime (objets au sol).
  *
@@ -32,28 +36,32 @@ class TiledMapService
      *  - paramsInKey : params fait partie de la clé d'identité (contenu
      *    authoré — modifier le params d'un trigger = suppression +
      *    insertion). Pour les autres couches, les colonnes hors clé sont de
-     *    l'état runtime préservé sur les lignes conservées.
+     *    l'état runtime préservé sur les lignes conservées ;
+     *  - composites : la couche accepte les structures multi-tuiles (le sol
+     *    reste strictement 50x50).
      */
     public const AUTHORABLE_LAYERS = [
-        'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false],
-        'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false],
-        'plants'      => ['columns' => ['params'],                  'paramsInKey' => true],
-        'walls'       => ['columns' => ['damages', 'player_id'],    'paramsInKey' => false],
-        'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false],
-        'foregrounds' => ['columns' => [],                          'paramsInKey' => false],
-        'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true],
-        'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true],
+        'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false, 'composites' => false],
+        'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
+        'plants'      => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => true],
+        'walls'       => ['columns' => ['damages', 'player_id'],    'paramsInKey' => false, 'composites' => true],
+        'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => true],
+        'foregrounds' => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
+        'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
+        'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
     ];
-
-    private const IMAGE_EXTENSIONS = ['png', 'webp', 'gif'];
 
     public const TILE_SIZE = 50;
 
     private Db $db;
+    private TileCatalogService $catalog;
+    private PlanConfigService $planConfig;
 
     public function __construct()
     {
         $this->db = new Db();
+        $this->catalog = new TileCatalogService();
+        $this->planConfig = new PlanConfigService();
     }
 
     /** @return array|null null si le (plan, z) n'existe pas */
@@ -67,8 +75,14 @@ class TiledMapService
             return null;
         }
 
+        $layerNames = array_keys(self::AUTHORABLE_LAYERS);
+        $compositeLayers = array_keys(array_filter(
+            self::AUTHORABLE_LAYERS,
+            fn(array $spec) => $spec['composites']
+        ));
+
         $layers = $this->fetchLayers($plan, $z);
-        ['catalog' => $catalog, 'images' => $images] = $this->buildCatalog();
+        ['catalog' => $catalog, 'images' => $images] = $this->catalog->buildCatalog($layerNames);
 
         return [
             'plan'       => $plan,
@@ -79,262 +93,43 @@ class TiledMapService
             'layers'     => $layers,
             'catalog'    => $catalog,
             'images'     => $images,
-            'composites' => $this->buildComposites(),
-            'planConfig' => $this->readPlanConfig($plan),
+            'composites' => $this->catalog->buildComposites($compositeLayers),
+            'planConfig' => [
+                'values'    => $this->planConfig->read($plan),
+                'bgChoices' => $this->catalog->backgroundChoices(),
+            ],
         ];
     }
 
     /**
-     * Clés du JSON de plan éditables depuis Tiled. Toutes voyagent en
-     * chaîne côté éditeur ('' = clé absente/retirée) ; le type sert à la
-     * validation et au cast à l'écriture. `json` = structure éditée en
-     * texte JSON (biomes).
-     */
-    public const PLAN_CONFIG_KEYS = [
-        'name'              => 'string',
-        'shortName'         => 'string',
-        'x'                 => 'int',
-        'y'                 => 'int',
-        'player_visibility' => 'bool',
-        'pnj'               => 'int',
-        'size'              => 'int',
-        'bg'                => 'image',
-        'mask'              => 'image',
-        'scrollingMask'     => 'int',
-        'verticalScrolling' => 'bool',
-        'biomes'            => 'json',
-    ];
-
-    /**
-     * Configuration de plan pour l'extension : valeurs courantes (en
-     * chaînes) et images candidates pour bg/mask — les grandes images de
-     * img/tiles (fonds, météo), justement celles écartées du catalogue.
+     * Cas d'usage complet d'un push : valide la configuration de plan AVANT
+     * la transaction (aucun 400 possible après le commit des couches),
+     * importe les couches, écrit la configuration, recale les bornes du
+     * niveau, et remonte le bilan de santé du JSON de plan.
      *
-     * @return array{values: array<string, string>, bgChoices: string[]}
+     * @return array{layers: array, newVersion: string, planHealth?: array}
      */
-    private function readPlanConfig(string $plan): array
+    public function applyPush(string $plan, int $z, array $layers, string $expectedVersion, ?array $planConfig): array
     {
-        $json = @json_decode((string) @file_get_contents($this->planJsonPath($plan)), true);
-        $json = is_array($json) ? $json : [];
+        $parsedConfig = $planConfig !== null ? $this->planConfig->parse($planConfig) : null;
 
-        $values = [];
-        foreach (self::PLAN_CONFIG_KEYS as $key => $type) {
-            $raw = $json[$key] ?? null;
-            $values[$key] = match (true) {
-                $raw === null           => '',
-                $type === 'bool'        => $raw ? 'true' : 'false',
-                $type === 'json'        => json_encode($raw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-                default                 => (string) $raw,
-            };
+        $result = $this->importPlan($plan, $z, $layers, $expectedVersion);
+
+        if ($parsedConfig !== null) {
+            $this->planConfig->write($plan, $parsedConfig);
         }
 
-        $choices = [];
-        $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/tiles';
-        foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
-            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            if (!in_array($ext, self::IMAGE_EXTENSIONS, true)) {
-                continue;
-            }
-            $size = @getimagesize($dir . '/' . $fileName);
-            if ($size && ($size[0] > self::TILE_SIZE * 1.2 || $size[1] > self::TILE_SIZE * 1.2)) {
-                $choices[] = 'img/tiles/' . $fileName;
-            }
-        }
-        sort($choices);
-
-        return ['values' => $values, 'bgChoices' => $choices];
-    }
-
-    /**
-     * Écrit les clés fournies dans le JSON de plan ('' = retirer la clé).
-     * Crée le JSON minimal si absent.
-     *
-     * @param array<string, mixed> $config clé => valeur chaîne
-     * @throws RuntimeException code 400 sur clé inconnue ou valeur invalide
-     */
-    public function writePlanConfig(string $plan, array $config): void
-    {
-        $json = $this->loadPlanJson($plan);
-
-        foreach ($config as $key => $raw) {
-            $type = self::PLAN_CONFIG_KEYS[$key] ?? null;
-            if ($type === null || !is_scalar($raw)) {
-                throw new RuntimeException('Propriété de plan inconnue : ' . $key, 400);
-            }
-
-            $raw = trim((string) $raw);
-
-            if ($raw === '') {
-                unset($json[$key]);
-                continue;
-            }
-
-            $json[$key] = match ($type) {
-                'int'    => is_numeric($raw) ? (int) $raw
-                    : throw new RuntimeException($key . ' doit être un entier : ' . $raw, 400),
-                'bool'   => in_array(strtolower($raw), ['true', '1'], true) ? true
-                    : (in_array(strtolower($raw), ['false', '0'], true) ? false
-                    : throw new RuntimeException($key . ' doit valoir true ou false : ' . $raw, 400)),
-                'image'  => (preg_match('#^img/[a-z]+/[a-zA-Z0-9_.-]+$#', $raw)
-                        && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $raw)) ? $raw
-                    : throw new RuntimeException($key . ' : image introuvable : ' . $raw, 400),
-                'json'   => is_array($decoded = json_decode($raw, true)) ? $decoded
-                    : throw new RuntimeException($key . ' : JSON invalide', 400),
-                default  => mb_substr($raw, 0, 255),
-            };
+        $bounds = $this->levelBounds($plan, $z);
+        if ($bounds !== null) {
+            $this->planConfig->writeZLevelBounds($plan, $z, $bounds);
         }
 
-        $this->savePlanJson($plan, $json);
-    }
-
-    /**
-     * Recale les bornes visibles du niveau z sur l'étendue réelle de ses
-     * coordonnées (sauf niveau marqué MapUnavailable). Crée l'entrée
-     * z_levels manquante — plus de bornes à maintenir à la main.
-     */
-    public function updateZLevelBounds(string $plan, int $z): void
-    {
-        $res = $this->db->exe(
-            'SELECT MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY FROM coords WHERE plan = ? AND z = ?',
-            array($plan, $z)
-        );
-        $bounds = $res->fetch_assoc();
-        if ($bounds === null || $bounds['minX'] === null) {
-            return;
+        $health = $this->planConfig->validate($plan, $this->db, $this->knownItemNames());
+        if ($health['errors'] !== [] || $health['warnings'] !== []) {
+            $result['planHealth'] = $health;
         }
 
-        $json = $this->loadPlanJson($plan);
-        $json['z_levels'] ??= [];
-
-        $entry = null;
-        foreach ($json['z_levels'] as $i => $level) {
-            if ((int) ($level['z'] ?? PHP_INT_MIN) === $z) {
-                $entry = $i;
-                break;
-            }
-        }
-
-        if ($entry !== null && !empty($json['z_levels'][$entry]['MapUnavailable'])) {
-            return;
-        }
-
-        if ($entry === null) {
-            $json['z_levels'][] = ['z' => $z, 'z-name' => 'Niveau ' . $z];
-            $entry = array_key_last($json['z_levels']);
-        }
-
-        $json['z_levels'][$entry]['visibleBoundsMinX'] = (int) $bounds['minX'];
-        $json['z_levels'][$entry]['visibleBoundsMaxX'] = (int) $bounds['maxX'];
-        $json['z_levels'][$entry]['visibleBoundsMinY'] = (int) $bounds['minY'];
-        $json['z_levels'][$entry]['visibleBoundsMaxY'] = (int) $bounds['maxY'];
-
-        $this->savePlanJson($plan, $json);
-    }
-
-    /**
-     * Bilan de santé du JSON de plan (PlanJsonValidator), remonté dans le
-     * rapport de push. Vide si tout va bien.
-     *
-     * @return array{errors: string[], warnings: string[]}
-     */
-    public function validatePlanJson(string $plan): array
-    {
-        $data = @json_decode((string) @file_get_contents($this->planJsonPath($plan)));
-        if (!is_object($data)) {
-            return ['errors' => [], 'warnings' => []];
-        }
-
-        $result = PlanJsonValidator::validate($data, $plan, $this->db);
-
-        return ['errors' => $result['errors'], 'warnings' => $result['warnings']];
-    }
-
-    /** @return array<string, mixed> */
-    private function loadPlanJson(string $plan): array
-    {
-        $json = @json_decode((string) @file_get_contents($this->planJsonPath($plan)), true);
-
-        return is_array($json) ? $json : ['name' => $plan];
-    }
-
-    private function savePlanJson(string $plan, array $json): void
-    {
-        $path = $this->planJsonPath($plan);
-
-        if (!is_dir(dirname($path))) {
-            throw new RuntimeException('Répertoire des plans introuvable : ' . dirname($path), 500);
-        }
-
-        file_put_contents($path, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
-    }
-
-    private function planJsonPath(string $plan): string
-    {
-        return $_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . $plan . '.json';
-    }
-
-    /**
-     * Structures multi-tuiles : les grandes images découpées en morceaux
-     * « base-NN » (row-major depuis le coin haut-gauche, cf. les convert.sh
-     * historiques). Convention détectée : img/<couche>/<base>/<base>.png
-     * (l'originale entière) + les morceaux img/<couche>/<base>-NN.png à la
-     * racine. L'extension en fait des tuiles de palette « une structure en
-     * un clic » que le push ré-éclate en morceaux individuels.
-     *
-     * @return array<string, array<int, array{name: string, image: string, width: int, height: int, pieces: string[]}>>
-     */
-    private function buildComposites(): array
-    {
-        $composites = [];
-
-        foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
-            // Le sol reste strictement 50x50 : les structures multi-tuiles
-            // appartiennent aux couches de décor (foregrounds, elements…)
-            if ($layer === 'tiles') {
-                continue;
-            }
-            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
-
-            foreach (is_dir($dir) ? scandir($dir) : [] as $base) {
-                if ($base === '.' || $base === '..'
-                    || !preg_match('/^[a-zA-Z0-9_.-]+$/', $base)
-                    || !is_file($dir . '/' . $base . '/' . $base . '.png')
-                ) {
-                    continue;
-                }
-
-                $size = @getimagesize($dir . '/' . $base . '/' . $base . '.png');
-                if (!$size || $size[0] % self::TILE_SIZE !== 0 || $size[1] % self::TILE_SIZE !== 0) {
-                    continue;
-                }
-
-                $width = (int) ($size[0] / self::TILE_SIZE);
-                $height = (int) ($size[1] / self::TILE_SIZE);
-                if ($width * $height < 2) {
-                    continue;
-                }
-
-                // Tous les morceaux doivent exister à la racine (rendu du jeu)
-                $pieces = [];
-                for ($i = 0; $i < $width * $height; $i++) {
-                    $piece = sprintf('%s-%02d', $base, $i);
-                    if (!file_exists($dir . '/' . $piece . '.png')) {
-                        continue 2;
-                    }
-                    $pieces[] = $piece;
-                }
-
-                $composites[$layer][] = [
-                    'name'   => $base,
-                    'image'  => 'img/' . $layer . '/' . $base . '/' . $base . '.png',
-                    'width'  => $width,
-                    'height' => $height,
-                    'pieces' => $pieces,
-                ];
-            }
-        }
-
-        return $composites;
+        return $result;
     }
 
     /** @return array<string, array{zLevels: int[], coords: int}> plans existants */
@@ -374,6 +169,10 @@ class TiledMapService
      */
     public function importPlan(string $plan, int $z, array $incomingLayers, string $expectedVersion): array
     {
+        // WALLS_PV (damages par défaut des murs) : dépendance du service,
+        // pas de ses appelants
+        require_once __DIR__ . '/../../config/constants.php';
+
         foreach (array_keys($incomingLayers) as $layer) {
             if (!isset(self::AUTHORABLE_LAYERS[$layer])) {
                 throw new RuntimeException('Couche inconnue : ' . $layer, 400);
@@ -460,6 +259,35 @@ class TiledMapService
         }
 
         return $zLevels;
+    }
+
+    /** @return array{minX: int, maxX: int, minY: int, maxY: int}|null étendue du niveau */
+    private function levelBounds(string $plan, int $z): ?array
+    {
+        $res = $this->db->exe(
+            'SELECT MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY FROM coords WHERE plan = ? AND z = ?',
+            array($plan, $z)
+        );
+        $bounds = $res->fetch_assoc();
+
+        if ($bounds === null || $bounds['minX'] === null) {
+            return null;
+        }
+
+        return array_map('intval', $bounds);
+    }
+
+    /** @return list<string> noms d'items existants, pour le validator (une requête au lieu d'une par biome) */
+    private function knownItemNames(): array
+    {
+        $res = $this->db->exe('SELECT name FROM items');
+
+        $names = [];
+        while ($row = $res->fetch_assoc()) {
+            $names[] = $row['name'];
+        }
+
+        return $names;
     }
 
     /** @return array<string, int> "x|y" => coords_id du (plan, z) */
@@ -568,7 +396,7 @@ class TiledMapService
             || !isset($row['x'], $row['y'], $row['name'])
             || !is_numeric($row['x']) || !is_numeric($row['y'])
             || !is_string($row['name'])
-            || !preg_match('/^[a-zA-Z0-9_.-]+$/', $row['name'])
+            || !preg_match(TileCatalogService::ASSET_NAME_PATTERN, $row['name'])
         ) {
             throw new RuntimeException('Ligne invalide dans la couche ' . $layer . ' : ' . json_encode($row), 400);
         }
@@ -606,7 +434,7 @@ class TiledMapService
         if ($layer === 'walls') {
             // Défaut authoré : -1 (récoltable) pour les ressources de
             // WALLS_PV, 0 (intact) pour les autres murs
-            $values['damages'] = (defined('WALLS_PV') && (WALLS_PV[$row['name']] ?? 0) === -1) ? -1 : 0;
+            $values['damages'] = ((WALLS_PV[$row['name']] ?? 0) === -1) ? -1 : 0;
         }
 
         if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {
@@ -614,53 +442,5 @@ class TiledMapService
         }
 
         $this->db->insert('map_' . $layer, $values);
-    }
-
-    /**
-     * Catalogue complet des images disponibles par couche (pas seulement
-     * celles déjà posées) : palette entière dans l'éditeur, indispensable
-     * pour les plans neufs. `images` couvre toute tuile référençable —
-     * une tuile posée sans image sur disque est simplement absente de la
-     * table, ce que l'extension traite comme « pas d'image ».
-     *
-     * @return array{catalog: array<string, string[]>, images: array<string, string>}
-     */
-    private function buildCatalog(): array
-    {
-        $catalog = [];
-        $images = [];
-
-        foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
-            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
-            $names = [];
-
-            foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
-                $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $name = pathinfo($fileName, PATHINFO_FILENAME);
-
-                if (!in_array($ext, self::IMAGE_EXTENSIONS, true)
-                    || !preg_match('/^[a-zA-Z0-9_.-]+$/', $name)
-                    || isset($names[$name])
-                ) {
-                    continue;
-                }
-
-                // Écarte les images qui ne sont pas des tuiles posables :
-                // fonds de plan et effets météo (gaia.webp 500x500,
-                // dust_storm.webp 2848x862…) rangés dans les mêmes dossiers
-                $size = @getimagesize($dir . '/' . $fileName);
-                if (!$size || $size[0] > self::TILE_SIZE * 1.2 || $size[1] > self::TILE_SIZE * 1.2) {
-                    continue;
-                }
-
-                $names[$name] = true;
-                $images[$layer . '/' . $name] = 'img/' . $layer . '/' . $fileName;
-            }
-
-            $catalog[$layer] = array_keys($names);
-            sort($catalog[$layer]);
-        }
-
-        return ['catalog' => $catalog, 'images' => $images];
     }
 }

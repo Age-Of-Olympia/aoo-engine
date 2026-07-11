@@ -138,15 +138,8 @@ AoO.writeJsonFile = function(path, data) {
 
 AoO.loadConfig = function() {
     var config = AoO.readJsonFile(tiled.extensionsPath + '/aoo/config.json');
-    if (!config.gameDir) {
-        throw new Error('config.json incomplet : gameDir est requis');
-    }
-    /* rétro-compatibilité : ancien format à baseUrl unique */
-    if (!config.instances) {
-        if (!config.baseUrl) {
-            throw new Error('config.json incomplet : instances (ou baseUrl) requis');
-        }
-        config.instances = { local: { baseUrl: config.baseUrl } };
+    if (!config.gameDir || !config.instances) {
+        throw new Error('config.json incomplet : gameDir et instances sont requis (voir config.json.exemple)');
     }
     return config;
 };
@@ -157,19 +150,15 @@ AoO.sessionPath = function() {
 
 /* session.json : { current: "local", instances: { local: {token, expiresAt}, ... } } */
 AoO.loadSession = function() {
-    var session;
     try {
-        session = AoO.readJsonFile(AoO.sessionPath());
+        var session = AoO.readJsonFile(AoO.sessionPath());
+        if (session.instances) {
+            return session;
+        }
     } catch (error) {
-        session = {};
+        /* pas de session en cache */
     }
-    if (!session.instances) {
-        /* rétro-compatibilité : ancien format plat à jeton unique */
-        session = session.token
-            ? { current: 'local', instances: { local: { token: session.token, expiresAt: session.expiresAt } } }
-            : { current: null, instances: {} };
-    }
-    return session;
+    return { current: null, instances: {} };
 };
 
 /* Instance active : la dernière connectée, sinon la première configurée */
@@ -215,39 +204,45 @@ AoO.request = function(config, instance, method, path, body, token) {
 };
 
 /*
- * Formulaire de connexion. fixedInstance impose la cible (reconnexion pour
- * une carte déjà liée à son instance) ; sinon liste déroulante. Repli sur
- * tiled.prompt si la classe Dialog n'est pas disponible.
- * Retourne { instance, name, psw } ou null si annulé.
+ * Formulaire générique : Dialog Tiled si disponible, sinon dégradation en
+ * prompts successifs — champ par champ, rien n'est perdu au passage.
+ * fields : [{ key, label, type: 'text'|'combo', options?, value? }]
+ * Retourne { clé: valeur } ou null si annulé.
  */
-AoO.showLoginDialog = function(config, fixedInstance) {
-    var names = Object.keys(config.instances);
+AoO.showFormDialog = function(title, fields) {
+    var i;
 
     if (typeof Dialog !== 'undefined') {
         try {
-            var dialog = new Dialog('AoO — Connexion');
-            var combo = null;
+            var dialog = new Dialog(title);
+            var widgets = [];
 
-            if (fixedInstance) {
-                dialog.addHeading('Instance : ' + fixedInstance + ' (' + AoO.instanceBaseUrl(config, fixedInstance) + ')');
-            } else {
-                combo = dialog.addComboBox('Instance :', names);
-                combo.currentIndex = Math.max(0, names.indexOf(AoO.currentInstance(config)));
+            for (i = 0; i < fields.length; i++) {
+                if (i > 0) {
+                    dialog.addNewRow();
+                }
+                if (fields[i].type === 'combo') {
+                    var combo = dialog.addComboBox(fields[i].label, fields[i].options);
+                    combo.currentIndex = Math.max(0, fields[i].options.indexOf(fields[i].value || ''));
+                    widgets.push(combo);
+                } else {
+                    var input = dialog.addTextInput(fields[i].label);
+                    if (fields[i].value) {
+                        input.text = fields[i].value;
+                    }
+                    widgets.push(input);
+                }
             }
 
             dialog.addNewRow();
-            var nameInput = dialog.addTextInput('Compte admin :');
-            dialog.addNewRow();
-            var passwordInput = dialog.addTextInput('Mot de passe :');
-
-            dialog.addNewRow();
             var result = null;
-            dialog.addButton('Connexion').clicked.connect(function() {
-                result = {
-                    instance: fixedInstance || names[combo.currentIndex],
-                    name: nameInput.text,
-                    psw: passwordInput.text
-                };
+            dialog.addButton('OK').clicked.connect(function() {
+                result = {};
+                for (var j = 0; j < fields.length; j++) {
+                    result[fields[j].key] = fields[j].type === 'combo'
+                        ? fields[j].options[widgets[j].currentIndex]
+                        : widgets[j].text;
+                }
                 dialog.accept();
             });
             dialog.addButton('Annuler').clicked.connect(function() {
@@ -261,25 +256,44 @@ AoO.showLoginDialog = function(config, fixedInstance) {
         }
     }
 
-    /* repli : prompts successifs (saisie visible) */
-    var instance = fixedInstance;
-    if (!instance) {
-        instance = tiled.prompt('Instance (' + names.join(', ') + ') :', AoO.currentInstance(config), 'AoO — Connexion');
-        if (!instance) {
+    /* repli : un prompt par champ (saisie visible) */
+    var values = {};
+    for (i = 0; i < fields.length; i++) {
+        var hint = fields[i].type === 'combo' ? '\n  ' + fields[i].options.join('\n  ') : '';
+        var answer = tiled.prompt(fields[i].label + hint, fields[i].value || '', title);
+        if (answer === null) {
             return null;
         }
-        instance = instance.trim();
-        AoO.instanceBaseUrl(config, instance); /* valide le nom */
+        values[fields[i].key] = answer.trim();
     }
-    var name = tiled.prompt('Compte admin du jeu (nom ou matricule) :', '', 'AoO — Connexion');
-    if (!name) {
+    return values;
+};
+
+/*
+ * Formulaire de connexion. fixedInstance impose la cible (reconnexion pour
+ * une carte déjà liée à son instance) ; sinon liste déroulante.
+ * Retourne { instance, name, psw } ou null si annulé.
+ */
+AoO.showLoginDialog = function(config, fixedInstance) {
+    var fields = [];
+    if (!fixedInstance) {
+        fields.push({
+            key: 'instance', label: 'Instance :', type: 'combo',
+            options: Object.keys(config.instances), value: AoO.currentInstance(config)
+        });
+    }
+    fields.push({ key: 'name', label: 'Compte admin (nom ou matricule) :', type: 'text' });
+    fields.push({ key: 'psw', label: 'Mot de passe (saisie visible !) :', type: 'text' });
+
+    var title = 'AoO — Connexion' + (fixedInstance ? ' (' + fixedInstance + ')' : '');
+    var values = AoO.showFormDialog(title, fields);
+    if (!values || !values.name) {
         return null;
     }
-    var password = tiled.prompt('Mot de passe (saisie visible !) :', '', 'AoO — Connexion');
-    if (password === null) {
-        return null;
-    }
-    return { instance: instance, name: name, psw: password };
+
+    values.instance = fixedInstance || values.instance;
+    AoO.instanceBaseUrl(config, values.instance); /* rejette une instance inconnue saisie au prompt */
+    return values;
 };
 
 /* Connexion à une instance ; mémorise le jeton et l'instance courante */
@@ -331,7 +345,6 @@ AoO.api = function(config, instance, method, path, body) {
  * Tilesets « collection d'images », un par couche, partagés entre les
  * niveaux z : une tuile par nom distinct, image individuelle du dépôt.
  */
-/* Tileset (lazy) d'une couche, partagé entre les niveaux z */
 AoO.layerTileset = function(map, registry, layerName) {
     var entry = registry[layerName];
 
@@ -412,9 +425,7 @@ AoO.buildSplitTileLayers = function(container, layerName, rows, tiles) {
         (AoO.isPlayerRow(rows[i]) ? playerBuilt : authored).push(rows[i]);
     }
 
-    if (authored.length > 0 || playerBuilt.length === 0) {
-        AoO.buildTileLayer(container, layerName, authored, tiles);
-    }
+    AoO.buildTileLayer(container, layerName, authored, tiles);
 
     if (playerBuilt.length > 0) {
         var lockedLayer = AoO.buildTileLayer(container, layerName + ' (joueurs)', playerBuilt, tiles);
@@ -628,7 +639,7 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
         var entries = data.composites[compositeLayer];
         for (var e = 0; e < entries.length; e++) {
             for (var p = 0; p < entries[e].pieces.length; p++) {
-                pieceNames[compositeLayer + '/' + entries[e].pieces[p]] = true;
+                pieceNames[compositeLayer + '/' + entries[e].pieces[p].name] = true;
             }
         }
     }
@@ -673,21 +684,20 @@ AoO.addCompositeTiles = function(map, data, registry, config) {
 
 /*
  * Éclate une grande tuile de structure posée en (x, y) Tiled (= sa case
- * d'ancrage, en bas à gauche) en morceaux individuels. Les morceaux sont
- * numérotés row-major depuis le coin haut-gauche (convention des
- * convert.sh historiques), et le y du jeu monte.
+ * d'ancrage, en bas à gauche) en morceaux individuels. Les offsets
+ * (dx, dy, relatifs à l'ancre, en coordonnées jeu) sont fournis par le
+ * serveur : aucune convention de découpe à connaître ici.
  */
 AoO.expandComposite = function(composite, tiledX, tiledY, rows) {
     var anchorGameY = -tiledY;
 
-    for (var r = 0; r < composite.height; r++) {
-        for (var c = 0; c < composite.width; c++) {
-            rows.push({
-                x: tiledX + c,
-                y: anchorGameY + (composite.height - 1 - r),
-                name: composite.pieces[r * composite.width + c]
-            });
-        }
+    for (var i = 0; i < composite.pieces.length; i++) {
+        var piece = composite.pieces[i];
+        rows.push({
+            x: tiledX + piece.dx,
+            y: anchorGameY + piece.dy,
+            name: piece.name
+        });
     }
 };
 
@@ -814,17 +824,27 @@ AoO.serializeContainer = function(container, tileSize) {
 
 /* Propriétés aooPlan_* de la carte → objet {clé: valeur} pour l'import */
 AoO.collectPlanConfig = function(map) {
-    var config = null;
+    var config = {};
+    var found = false;
     var properties = map.properties();
 
     for (var name in properties) {
         if (name.indexOf(AoO.PROP.planPrefix) === 0) {
-            config = config || {};
             config[name.substring(AoO.PROP.planPrefix.length)] = String(properties[name]);
+            found = true;
         }
     }
 
-    return config;
+    return found ? config : null;
+};
+
+/* Instance cible d'un push : celle d'origine de la carte, sinon la
+   courante — et rejetée si elle a disparu de config.json. Utilisée à la
+   fois par le push et par sa confirmation, pour qu'ils ne divergent pas. */
+AoO.pushInstance = function(map, config) {
+    var instance = map.property(AoO.PROP.instance) || AoO.currentInstance(config);
+    AoO.instanceBaseUrl(config, instance);
+    return instance;
 };
 
 /*
@@ -841,8 +861,8 @@ AoO.push = function(map) {
     var plan = map.property(AoO.PROP.plan);
     /* le push est verrouillé sur l'instance d'origine de la carte : une
        carte pullée de test ne peut pas partir vers prod par accident */
-    var instance = map.property(AoO.PROP.instance) || AoO.currentInstance(config);
-    AoO.instanceBaseUrl(config, instance); /* valide que l'instance est configurée */
+    var instance = AoO.pushInstance(map, config);
+    var planConfigSent = false;
     var reports = [];
 
     for (var i = 0; i < map.layerCount; i++) {
@@ -859,12 +879,13 @@ AoO.push = function(map) {
             layers: AoO.serializeContainer(group, map.tileWidth)
         };
 
-        /* les propriétés du plan sont globales : envoyées avec le premier niveau */
-        if (reports.length === 0) {
+        /* les propriétés du plan sont globales : envoyées une seule fois */
+        if (!planConfigSent) {
             var planConfig = AoO.collectPlanConfig(map);
             if (planConfig) {
                 payload.planConfig = planConfig;
             }
+            planConfigSent = true;
         }
 
         try {
@@ -933,150 +954,113 @@ AoO.describePlans = function(config, instance) {
     return lines;
 };
 
-tiled.registerAction('AoOConnect', function() {
-    try {
-        var config = AoO.loadConfig();
-        AoO.login(config, null);
-        var instance = AoO.currentInstance(config);
-        tiled.alert('Connecté à « ' + instance + ' » (' + AoO.instanceBaseUrl(config, instance) + ').\n\n' +
-            'Les pulls et créations de plan visent désormais cette instance.', 'AoO — Connexion');
-    } catch (error) {
-        tiled.alert(String(error), 'AoO — Connexion');
-    }
-}).text = 'AoO : Connexion / changer d\'instance…';
-
-tiled.registerAction('AoOPull', function() {
-    try {
-        var config = AoO.loadConfig();
-        var instance = AoO.currentInstance(config);
-        var plans = AoO.describePlans(config, instance);
-
-        var spec = tiled.prompt(
-            'Instance : ' + instance + ' (' + AoO.instanceBaseUrl(config, instance) + ')\n\n' +
-            'Plans existants :\n  ' + plans.join('\n  ') +
-            '\n\nPlan à récupérer (« plan » = tous les niveaux, « plan:z » = un seul) :',
-            'gaia', 'AoO — Pull');
-        if (!spec) {
-            return;
+/* registerAction + garde d'erreur uniforme : toute exception du handler
+   devient une alerte au lieu d'un échec silencieux */
+AoO.registerSafeAction = function(id, text, title, handler) {
+    tiled.registerAction(id, function() {
+        try {
+            handler();
+        } catch (error) {
+            tiled.alert(String(error), title);
         }
-        var parts = spec.split(':');
-        var plan = parts[0].trim();
-        var z = parts.length > 1 ? (parseInt(parts[1], 10) || 0) : null;
+    }).text = text;
+};
 
-        var fileName = AoO.pullAndOpen(plan, z);
-        tiled.log('AoO : plan « ' + plan + ' » ouvert depuis ' + fileName);
-    } catch (error) {
-        tiled.alert(String(error), 'AoO — Pull');
+AoO.registerSafeAction('AoOConnect', 'AoO : Connexion / changer d\'instance…', 'AoO — Connexion', function() {
+    var config = AoO.loadConfig();
+    AoO.login(config, null);
+    var instance = AoO.currentInstance(config);
+    tiled.alert('Connecté à « ' + instance + ' » (' + AoO.instanceBaseUrl(config, instance) + ').\n\n' +
+        'Les pulls et créations de plan visent désormais cette instance.', 'AoO — Connexion');
+});
+
+AoO.registerSafeAction('AoOPull', 'AoO : Pull un plan du jeu…', 'AoO — Pull', function() {
+    var config = AoO.loadConfig();
+    var instance = AoO.currentInstance(config);
+    var plans = AoO.describePlans(config, instance);
+
+    var spec = tiled.prompt(
+        'Instance : ' + instance + ' (' + AoO.instanceBaseUrl(config, instance) + ')\n\n' +
+        'Plans existants :\n  ' + plans.join('\n  ') +
+        '\n\nPlan à récupérer (« plan » = tous les niveaux, « plan:z » = un seul) :',
+        'gaia', 'AoO — Pull');
+    if (!spec) {
+        return;
     }
-}).text = 'AoO : Pull un plan du jeu…';
+    var parts = spec.split(':');
+    var plan = parts[0].trim();
+    var z = parts.length > 1 ? (parseInt(parts[1], 10) || 0) : null;
 
-tiled.registerAction('AoOBg', function() {
+    var fileName = AoO.pullAndOpen(plan, z);
+    tiled.log('AoO : plan « ' + plan + ' » ouvert depuis ' + fileName);
+});
+
+AoO.registerSafeAction('AoOBg', 'AoO : Fond / ambiance du plan…', 'AoO — Fond du plan', function() {
     var map = tiled.activeAsset;
     if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
-        tiled.alert('Ouvrir d\'abord une carte pullée du jeu.', 'AoO — Fond du plan');
+        throw new Error('Ouvrir d\'abord une carte pullée du jeu.');
+    }
+
+    var choices = JSON.parse(String(map.property(AoO.PROP.imageChoices) || '[]'));
+    var NONE = '(aucun / défaut)';
+    var options = [NONE].concat(choices);
+    var propBg = AoO.PROP.planPrefix + 'bg';
+    var propMask = AoO.PROP.planPrefix + 'mask';
+
+    var values = AoO.showFormDialog('AoO — Fond / ambiance du plan', [
+        { key: 'bg', label: 'Fond (bg) :', type: 'combo', options: options, value: String(map.property(propBg) || '') || NONE },
+        { key: 'mask', label: 'Masque animé (mask) :', type: 'combo', options: options, value: String(map.property(propMask) || '') || NONE }
+    ]);
+    if (!values) {
         return;
     }
 
-    try {
-        var choices = JSON.parse(String(map.property(AoO.PROP.imageChoices) || '[]'));
-        var NONE = '(aucun / défaut)';
-        var options = [NONE].concat(choices);
-        var propBg = AoO.PROP.planPrefix + 'bg';
-        var propMask = AoO.PROP.planPrefix + 'mask';
-        var currentBg = String(map.property(propBg) || '');
-        var currentMask = String(map.property(propMask) || '');
-        var applied = false;
+    map.setProperty(propBg, values.bg === NONE ? '' : values.bg);
+    map.setProperty(propMask, values.mask === NONE ? '' : values.mask);
+    tiled.log('AoO : fond/masque du plan mis à jour — appliqué au prochain push ' +
+        '(vitesse du masque : propriété ' + AoO.PROP.planPrefix + 'scrollingMask)');
+});
 
-        if (typeof Dialog !== 'undefined') {
-            try {
-                var dialog = new Dialog('AoO — Fond / ambiance du plan');
-                var comboBg = dialog.addComboBox('Fond (bg) :', options);
-                comboBg.currentIndex = Math.max(0, options.indexOf(currentBg));
-                dialog.addNewRow();
-                var comboMask = dialog.addComboBox('Masque animé (mask) :', options);
-                comboMask.currentIndex = Math.max(0, options.indexOf(currentMask));
-                dialog.addNewRow();
-                dialog.addButton('OK').clicked.connect(function() {
-                    map.setProperty(propBg, options[comboBg.currentIndex] === NONE ? '' : options[comboBg.currentIndex]);
-                    map.setProperty(propMask, options[comboMask.currentIndex] === NONE ? '' : options[comboMask.currentIndex]);
-                    applied = true;
-                    dialog.accept();
-                });
-                dialog.addButton('Annuler').clicked.connect(function() { dialog.reject(); });
-                dialog.exec();
-            } catch (dialogError) {
-                var picked = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
-                    currentBg, 'AoO — Fond du plan');
-                if (picked !== null) {
-                    map.setProperty(propBg, picked.trim());
-                    applied = true;
-                }
-            }
-        } else {
-            var pickedBg = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
-                currentBg, 'AoO — Fond du plan');
-            if (pickedBg !== null) {
-                map.setProperty(propBg, pickedBg.trim());
-                applied = true;
-            }
-        }
-
-        if (applied) {
-            tiled.log('AoO : fond/masque du plan mis à jour — appliqué au prochain push ' +
-                '(vitesse du masque : propriété ' + AoO.PROP.planPrefix + 'scrollingMask)');
-        }
-    } catch (error) {
-        tiled.alert(String(error), 'AoO — Fond du plan');
+AoO.registerSafeAction('AoONew', 'AoO : Nouveau plan dans le jeu…', 'AoO — Nouveau plan', function() {
+    var config = AoO.loadConfig();
+    var instance = AoO.currentInstance(config);
+    var plan = tiled.prompt('Nom du nouveau plan sur « ' + instance + ' » (minuscules, chiffres, _ et -) :',
+        '', 'AoO — Nouveau plan');
+    if (!plan) {
+        return;
     }
-}).text = 'AoO : Fond / ambiance du plan…';
+    plan = plan.trim();
 
-tiled.registerAction('AoONew', function() {
-    try {
-        var config = AoO.loadConfig();
-        var instance = AoO.currentInstance(config);
-        var plan = tiled.prompt('Nom du nouveau plan sur « ' + instance + ' » (minuscules, chiffres, _ et -) :',
-            '', 'AoO — Nouveau plan');
-        if (!plan) {
-            return;
-        }
-        plan = plan.trim();
+    AoO.api(config, instance, 'POST', '/api/admin/map/create.php', { plan: plan });
 
-        AoO.api(config, instance, 'POST', '/api/admin/map/create.php', { plan: plan });
+    /* le plan vierge existe : le pull ramène une carte vide avec la
+       palette complète (catalogue) prête à peindre */
+    var fileName = AoO.pullAndOpen(plan);
+    tiled.log('AoO : plan « ' + plan + ' » créé et ouvert depuis ' + fileName);
+});
 
-        /* le plan vierge existe : le pull ramène une carte vide avec la
-           palette complète (catalogue) prête à peindre */
-        var fileName = AoO.pullAndOpen(plan);
-        tiled.log('AoO : plan « ' + plan + ' » créé et ouvert depuis ' + fileName);
-    } catch (error) {
-        tiled.alert(String(error), 'AoO — Nouveau plan');
-    }
-}).text = 'AoO : Nouveau plan dans le jeu…';
-
-tiled.registerAction('AoOPush', function() {
+AoO.registerSafeAction('AoOPush', 'AoO : Push la carte vers le jeu…', 'AoO — Push', function() {
     var map = tiled.activeAsset;
     if (!map || !map.isTileMap) {
-        tiled.alert('Ouvrir d\'abord une carte pullée du jeu.', 'AoO — Push');
-        return;
+        throw new Error('Ouvrir d\'abord une carte pullée du jeu.');
     }
 
-    try {
-        /* carte hors jeu : AoO.push lèvera l'erreur explicite, pas de confirm */
-        var plan = map.property(AoO.PROP.plan);
-        var instance = map.property(AoO.PROP.instance) || 'local';
+    /* carte hors jeu : AoO.push lèvera l'erreur explicite, pas de confirm */
+    var plan = map.property(AoO.PROP.plan);
 
+    if (plan) {
+        var instance = AoO.pushInstance(map, AoO.loadConfig());
         var question = 'Pousser « ' + plan + ' » vers l\'instance « ' + instance + ' » ' +
             '(tous les niveaux z de la carte) ?\n\n' +
             'Les cases construites par des joueurs et les objets au sol ne seront pas touchés.';
-        if (plan && typeof tiled.confirm === 'function' && !tiled.confirm(question, 'AoO — Push')) {
+        if (typeof tiled.confirm === 'function' && !tiled.confirm(question, 'AoO — Push')) {
             return;
         }
-
-        var reports = AoO.push(map);
-        tiled.alert('Plan appliqué au jeu.\n\n' + AoO.formatReport(reports), 'AoO — Push');
-    } catch (error) {
-        tiled.alert(String(error), 'AoO — Push');
     }
-}).text = 'AoO : Push la carte vers le jeu…';
+
+    var reports = AoO.push(map);
+    tiled.alert('Plan appliqué au jeu.\n\n' + AoO.formatReport(reports), 'AoO — Push');
+});
 
 /* Menu Fichier : toujours visible, contrairement au menu Carte qui
    n'existe que lorsqu'une carte est ouverte. En mode --evaluate

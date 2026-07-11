@@ -17,8 +17,6 @@
 use App\Service\TiledMapService;
 
 require_once __DIR__ . '/_common.php';
-// WALLS_PV : damages par défaut des murs insérés
-require_once __DIR__ . '/../../../config/constants.php';
 
 tiledRequireAdmin();
 
@@ -34,24 +32,10 @@ if (!tiledValidPlanName($plan) || $version === '' || !is_array($layers)) {
 
 $z = (int) ($body['z'] ?? 0);
 
+$planConfig = (isset($body['planConfig']) && is_array($body['planConfig'])) ? $body['planConfig'] : null;
+
 try {
-    $service = new TiledMapService();
-    $result = $service->importPlan($plan, $z, $layers, $version);
-
-    // Propriétés du plan (JSON de plan), '' = retirer la clé. Hors du
-    // contrôle de version : configuration de plan, pas du contenu de carte.
-    if (isset($body['planConfig']) && is_array($body['planConfig'])) {
-        $service->writePlanConfig($plan, $body['planConfig']);
-    }
-
-    // Bornes visibles du niveau recalées sur le contenu réel
-    $service->updateZLevelBounds($plan, $z);
-
-    // Bilan de santé du JSON de plan (validator), remonté si non vide
-    $health = $service->validatePlanJson($plan);
-    if ($health['errors'] !== [] || $health['warnings'] !== []) {
-        $result['planHealth'] = $health;
-    }
+    $result = (new TiledMapService())->applyPush($plan, $z, $layers, $version, $planConfig);
 } catch (\RuntimeException $e) {
     tiledFail(tiledHttpCode($e), $e->getMessage());
 }

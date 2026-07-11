@@ -152,10 +152,14 @@ class ViewService {
         }
     }
     
+    private array $tileColorCache = [];
+
     private function getColorForType($name) {
         // Résout aussi les tuiles de transition générées (trans_A_B_code)
-        // en mélangeant les couleurs des deux biomes
-        $rgb = ColorService::colorFor($name, $this->colors);
+        // en mélangeant les couleurs des deux biomes ; mémoïsé — les tuiles
+        // arrivent triées par nom, chaque nom se recalculerait des
+        // centaines de fois sinon
+        $rgb = $this->tileColorCache[$name] ??= ColorService::colorFor($name, $this->colors);
         return imagecolorallocate($this->image, $rgb[0], $rgb[1], $rgb[2]);
     }
     
