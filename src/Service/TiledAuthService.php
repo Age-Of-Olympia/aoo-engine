@@ -96,6 +96,10 @@ class TiledAuthService
      * Le compte lui-même a l'option isAdmin, ou bien l'un des PNJ qu'il
      * possède (players_pnjs) l'a — un MJ joue souvent via ses PNJ sans que
      * son compte principal soit admin.
+     *
+     * Requête directe plutôt que PlayerOptionsService + PlayerPnjService :
+     * ce contrôle tourne à chaque requête de l'éditeur, une seule requête
+     * indexée remplace 1 + N allers-retours.
      */
     private static function isAdmin(int $playerId): bool
     {

@@ -25,9 +25,40 @@
 
 var AoO = {};
 
-/* Ordre d'empilement bas → haut, aligné sur le rendu du jeu (Classes/View.php) */
+/* Ordre d'empilement bas → haut, aligné sur le rendu du jeu
+   (Classes/View.php) — doit rester le miroir de
+   TiledMapService::AUTHORABLE_LAYERS côté serveur */
 AoO.TILE_LAYERS = ['tiles', 'routes', 'plants', 'walls', 'elements', 'foregrounds'];
 AoO.OBJECT_LAYERS = ['triggers', 'dialogs'];
+
+/* Propriétés custom posées sur les cartes/couches/tuiles générées —
+   source unique, une faute de frappe échouerait silencieusement */
+AoO.PROP = {
+    name: 'aooName',            /* tuile : nom côté jeu */
+    layer: 'aooLayer',          /* tileset/couche : table map_* correspondante */
+    playerBuilt: 'aooPlayerBuilt', /* couche : constructions des joueurs, hors push */
+    plan: 'aooPlan',            /* carte : nom du plan */
+    z: 'aooZ',                  /* groupe : niveau z */
+    version: 'aooVersion'       /* groupe : version d'édition du niveau */
+};
+
+AoO.hasParams = function(value) {
+    return value !== undefined && value !== null && String(value) !== '';
+};
+
+/*
+ * Ancrage vertical des objets — convention Tiled : objet-tuile ancré en
+ * bas à gauche, rectangle nu en haut à gauche. Ces deux fonctions sont
+ * inverses l'une de l'autre ; toute modification doit toucher les deux.
+ */
+AoO.objectYFromCell = function(gameY, hasTile, tileSize) {
+    return ((hasTile ? 1 : 0) - gameY) * tileSize;
+};
+
+AoO.cellYFromObject = function(object, tileSize) {
+    var tiledY = Math.round(object.y / tileSize) - (object.tile ? 1 : 0);
+    return -tiledY;
+};
 
 /* ------------------------------------------------------------------ */
 /* Configuration et session                                            */
@@ -140,7 +171,7 @@ AoO.tileFor = function(map, registry, layerName, name, images, config) {
 
     if (!entry) {
         var tileset = new Tileset('aoo-' + layerName);
-        tileset.setProperty('aooLayer', layerName);
+        tileset.setProperty(AoO.PROP.layer, layerName);
         map.addTileset(tileset);
         entry = registry[layerName] = { tileset: tileset, byName: {} };
     }
@@ -148,7 +179,7 @@ AoO.tileFor = function(map, registry, layerName, name, images, config) {
     var tile = entry.byName[name];
     if (!tile) {
         tile = entry.tileset.addTile();
-        tile.setProperty('aooName', name);
+        tile.setProperty(AoO.PROP.name, name);
         var imagePath = images[layerName + '/' + name];
         if (imagePath) {
             tile.imageFileName = config.gameDir + '/' + imagePath;
@@ -159,12 +190,24 @@ AoO.tileFor = function(map, registry, layerName, name, images, config) {
     return tile;
 };
 
+/* Enregistre les tuiles d'une liste de lignes et retourne le dictionnaire
+   nom → tuile de la couche */
+AoO.registerTiles = function(map, registry, layerName, rows, images, config) {
+    for (var i = 0; i < rows.length; i++) {
+        AoO.tileFor(map, registry, layerName, rows[i].name, images, config);
+    }
+    return registry[layerName] ? registry[layerName].byName : {};
+};
+
 AoO.isPlayerRow = function(row) {
     return Boolean(row.player_id && parseInt(row.player_id, 10) !== 0);
 };
 
 AoO.buildTileLayer = function(container, layerName, rows, tiles) {
     var layer = new TileLayer(layerName);
+    /* la table map_* cible vit dans une propriété : le push s'y fie, pas au
+       nom affiché (renommable par l'admin) */
+    layer.setProperty(AoO.PROP.layer, layerName);
     container.addLayer(layer);
 
     var edit = layer.edit();
@@ -197,12 +240,17 @@ AoO.buildSplitTileLayers = function(container, layerName, rows, tiles) {
 
     if (playerBuilt.length > 0) {
         var lockedLayer = AoO.buildTileLayer(container, layerName + ' (joueurs)', playerBuilt, tiles);
+        lockedLayer.setProperty(AoO.PROP.layer, layerName);
+        /* la propriété — pas le nom ni le verrou — protège ces lignes au
+           push : déverrouiller ou renommer la couche ne les expose pas */
+        lockedLayer.setProperty(AoO.PROP.playerBuilt, true);
         lockedLayer.locked = true;
     }
 };
 
 AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
     var group = new ObjectGroup(layerName);
+    group.setProperty(AoO.PROP.layer, layerName);
     container.addLayer(group);
 
     for (var i = 0; i < rows.length; i++) {
@@ -211,14 +259,13 @@ AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
         var tile = tiles ? tiles[row.name] : null;
 
         object.x = row.x * tileSize;
-        /* objet-tuile : ancré en bas à gauche ; rectangle nu : en haut à gauche */
-        object.y = (tile ? (-row.y + 1) : -row.y) * tileSize;
+        object.y = AoO.objectYFromCell(row.y, Boolean(tile), tileSize);
         object.width = tileSize;
         object.height = tileSize;
         if (tile) {
             object.tile = tile;
         }
-        if (row.params !== undefined && row.params !== null && row.params !== '') {
+        if (AoO.hasParams(row.params)) {
             object.setProperty('params', String(row.params));
         }
         group.addObject(object);
@@ -231,26 +278,20 @@ AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
  * et un plan neuf est peignable immédiatement.
  */
 AoO.buildLevel = function(map, container, data, registry, config) {
-    var i, layerName, rows;
+    var i, layerName, rows, tiles;
 
     for (i = 0; i < AoO.TILE_LAYERS.length; i++) {
         layerName = AoO.TILE_LAYERS[i];
         rows = data.layers[layerName] || [];
-        for (var j = 0; j < rows.length; j++) {
-            AoO.tileFor(map, registry, layerName, rows[j].name, data.images, config);
-        }
-        AoO.buildSplitTileLayers(container, layerName, rows,
-            registry[layerName] ? registry[layerName].byName : {});
+        tiles = AoO.registerTiles(map, registry, layerName, rows, data.images, config);
+        AoO.buildSplitTileLayers(container, layerName, rows, tiles);
     }
 
     for (i = 0; i < AoO.OBJECT_LAYERS.length; i++) {
         layerName = AoO.OBJECT_LAYERS[i];
         rows = data.layers[layerName] || [];
-        for (var k = 0; k < rows.length; k++) {
-            AoO.tileFor(map, registry, layerName, rows[k].name, data.images, config);
-        }
-        AoO.buildObjectLayer(container, layerName, rows,
-            registry[layerName] ? registry[layerName].byName : {}, data.tileSize);
+        tiles = AoO.registerTiles(map, registry, layerName, rows, data.images, config);
+        AoO.buildObjectLayer(container, layerName, rows, tiles, data.tileSize);
     }
 };
 
@@ -322,12 +363,16 @@ AoO.applyTerrains = function(registry, config) {
  * au-dessus), seul le niveau le plus haut visible au départ. zSpec
  * restreint à un seul niveau.
  */
-AoO.pull = function(plan, zSpec) {
-    var config = AoO.loadConfig();
+AoO.pull = function(plan, zSpec, config) {
+    config = config || AoO.loadConfig();
+
+    var exportLevel = function(z) {
+        return AoO.api(config, 'GET', '/api/admin/map/export.php?plan=' + plan + '&z=' + z);
+    };
 
     var singleZ = (zSpec !== undefined && zSpec !== null);
     var firstZ = singleZ ? zSpec : 0;
-    var firstData = AoO.api(config, 'GET', '/api/admin/map/export.php?plan=' + plan + '&z=' + firstZ);
+    var firstData = exportLevel(firstZ);
 
     var zLevels = singleZ ? [zSpec] : (firstData.zLevels || [0]);
     zLevels.sort(function(a, b) { return a - b; });
@@ -337,19 +382,18 @@ AoO.pull = function(plan, zSpec) {
     map.orientation = TileMap.Orthogonal;
     map.setTileSize(firstData.tileSize, firstData.tileSize);
     map.infinite = true;
-    map.setProperty('aooPlan', plan);
+    map.setProperty(AoO.PROP.plan, plan);
 
     var registry = {};
 
     for (var i = 0; i < zLevels.length; i++) {
         var z = zLevels[i];
-        var data = (z === firstZ) ? firstData
-            : AoO.api(config, 'GET', '/api/admin/map/export.php?plan=' + plan + '&z=' + z);
+        var data = (z === firstZ) ? firstData : exportLevel(z);
 
         var group = new GroupLayer('z=' + z);
         map.addLayer(group);
-        group.setProperty('aooZ', z);
-        group.setProperty('aooVersion', data.version);
+        group.setProperty(AoO.PROP.z, z);
+        group.setProperty(AoO.PROP.version, data.version);
         group.visible = (z === topZ);
 
         AoO.buildLevel(map, group, data, registry, config);
@@ -381,7 +425,7 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
 /* Pull + sauvegarde en .tmj ; utilisable sans éditeur (tests headless) */
 AoO.pullAndSave = function(plan, zSpec) {
     var config = AoO.loadConfig();
-    var map = AoO.pull(plan, zSpec);
+    var map = AoO.pull(plan, zSpec, config);
 
     var suffix = (zSpec !== undefined && zSpec !== null) ? ('_z' + zSpec) : '';
     var fileName = config.gameDir + '/tools/tiled/maps/' + plan + suffix + '.tmj';
@@ -412,9 +456,9 @@ AoO.serializeTileLayer = function(layer) {
             if (!tile) {
                 continue;
             }
-            var name = tile.property('aooName');
+            var name = tile.property(AoO.PROP.name);
             if (!name) {
-                throw new Error('Tuile sans propriété aooName en ' + x + ',' + (-y) +
+                throw new Error('Tuile sans propriété ' + AoO.PROP.name + ' en ' + x + ',' + (-y) +
                     ' (couche ' + layer.name + ') — utiliser les tuiles des tilesets aoo-*');
             }
             rows.push({ x: x, y: -y, name: name });
@@ -432,26 +476,20 @@ AoO.serializeObjectLayer = function(layer, tileSize) {
 
         var name = object.name;
         if (!name && object.tile) {
-            name = object.tile.property('aooName');
+            name = object.tile.property(AoO.PROP.name);
         }
         if (!name) {
             throw new Error('Objet sans nom dans la couche ' + layer.name);
         }
 
-        var tiledY = Math.round(object.y / tileSize);
-        /* objet-tuile ancré en bas : sa case est une tuile plus haut */
-        if (object.tile) {
-            tiledY -= 1;
-        }
-
         var row = {
             x: Math.round(object.x / tileSize),
-            y: -tiledY,
+            y: AoO.cellYFromObject(object, tileSize),
             name: name
         };
 
         var params = object.property('params');
-        if (params !== undefined && params !== null && String(params) !== '') {
+        if (AoO.hasParams(params)) {
             row.params = String(params);
         }
 
@@ -461,17 +499,27 @@ AoO.serializeObjectLayer = function(layer, tileSize) {
     return rows;
 };
 
-/* Sérialise les couches AoO d'un conteneur (groupe de niveau) */
+/*
+ * Sérialise les couches AoO d'un conteneur (groupe de niveau). La table
+ * cible vient de la propriété aooLayer (posée au pull), avec repli sur le
+ * nom pour les couches créées à la main ; les couches marquées
+ * aooPlayerBuilt (constructions des joueurs) ne sont jamais poussées.
+ */
 AoO.serializeContainer = function(container, tileSize) {
     var layers = {};
 
     for (var i = 0; i < container.layerCount; i++) {
         var layer = container.layerAt(i);
+        var target = layer.property(AoO.PROP.layer) || layer.name;
 
-        if (layer.isTileLayer && AoO.TILE_LAYERS.indexOf(layer.name) !== -1) {
-            layers[layer.name] = AoO.serializeTileLayer(layer);
-        } else if (layer.isObjectLayer && AoO.OBJECT_LAYERS.indexOf(layer.name) !== -1) {
-            layers[layer.name] = AoO.serializeObjectLayer(layer, tileSize);
+        if (layer.property(AoO.PROP.playerBuilt)) {
+            continue;
+        }
+
+        if (layer.isTileLayer && AoO.TILE_LAYERS.indexOf(target) !== -1) {
+            layers[target] = AoO.serializeTileLayer(layer);
+        } else if (layer.isObjectLayer && AoO.OBJECT_LAYERS.indexOf(target) !== -1) {
+            layers[target] = AoO.serializeObjectLayer(layer, tileSize);
         } else {
             tiled.log('AoO : couche « ' + layer.name + ' » ignorée au push');
         }
@@ -486,25 +534,25 @@ AoO.serializeContainer = function(container, tileSize) {
  * déjà appliqués le restent (leurs versions locales sont à jour).
  */
 AoO.push = function(map) {
-    if (!map || !map.property('aooPlan')) {
-        throw new Error('Cette carte ne vient pas du jeu (propriété aooPlan absente) — faire un pull d\'abord');
+    if (!map || !map.property(AoO.PROP.plan)) {
+        throw new Error('Cette carte ne vient pas du jeu (propriété ' + AoO.PROP.plan + ' absente) — faire un pull d\'abord');
     }
 
     var config = AoO.loadConfig();
-    var plan = map.property('aooPlan');
+    var plan = map.property(AoO.PROP.plan);
     var reports = [];
 
     for (var i = 0; i < map.layerCount; i++) {
         var group = map.layerAt(i);
-        if (!group.isGroupLayer || group.property('aooZ') === undefined) {
+        if (!group.isGroupLayer || group.property(AoO.PROP.z) === undefined) {
             continue;
         }
 
-        var z = group.property('aooZ');
+        var z = group.property(AoO.PROP.z);
         var payload = {
             plan: plan,
             z: z,
-            version: group.property('aooVersion'),
+            version: group.property(AoO.PROP.version),
             layers: AoO.serializeContainer(group, map.tileWidth)
         };
 
@@ -517,7 +565,7 @@ AoO.push = function(map) {
             throw error;
         }
 
-        group.setProperty('aooVersion', data.newVersion);
+        group.setProperty(AoO.PROP.version, data.newVersion);
         reports.push({ z: z, layers: data.layers });
     }
 
@@ -612,14 +660,12 @@ tiled.registerAction('AoOPush', function() {
     }
 
     try {
-        var plan = map.property('aooPlan');
-        if (!plan) {
-            throw new Error('Cette carte ne vient pas du jeu (propriété aooPlan absente)');
-        }
+        /* carte hors jeu : AoO.push lèvera l'erreur explicite, pas de confirm */
+        var plan = map.property(AoO.PROP.plan);
 
         var question = 'Pousser « ' + plan + ' » vers le jeu (tous les niveaux z de la carte) ?\n\n' +
             'Les cases construites par des joueurs et les objets au sol ne seront pas touchés.';
-        if (typeof tiled.confirm === 'function' && !tiled.confirm(question, 'AoO — Push')) {
+        if (plan && typeof tiled.confirm === 'function' && !tiled.confirm(question, 'AoO — Push')) {
             return;
         }
 

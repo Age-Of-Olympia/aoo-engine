@@ -23,25 +23,27 @@ use RuntimeException;
  */
 class TiledMapService
 {
-    /** Couche => colonnes exportées en plus de name/x/y */
-    public const AUTHORABLE_LAYERS = [
-        'tiles'       => ['foreground', 'player_id'],
-        'routes'      => ['player_id'],
-        'plants'      => ['params'],
-        'walls'       => ['damages', 'player_id'],
-        'elements'    => ['endTime'],
-        'foregrounds' => [],
-        'triggers'    => ['params'],
-        'dialogs'     => ['params'],
-    ];
+    /** Règle unique des noms de plan (endpoints : tiledValidPlanName()) */
+    public const PLAN_NAME_PATTERN = '/^[a-z0-9_-]{1,64}$/';
 
     /**
-     * Couches dont params est du contenu authoré : il fait partie de la clé
-     * d'identité (modifier le params d'un trigger = suppression + insertion).
-     * Pour les autres couches, les colonnes hors clé sont de l'état runtime
-     * préservé sur les lignes conservées.
+     * Spécification des couches authorables.
+     *  - columns : colonnes exportées en plus de name/x/y ;
+     *  - paramsInKey : params fait partie de la clé d'identité (contenu
+     *    authoré — modifier le params d'un trigger = suppression +
+     *    insertion). Pour les autres couches, les colonnes hors clé sont de
+     *    l'état runtime préservé sur les lignes conservées.
      */
-    private const PARAMS_AUTHORED_LAYERS = ['plants', 'triggers', 'dialogs'];
+    public const AUTHORABLE_LAYERS = [
+        'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false],
+        'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false],
+        'plants'      => ['columns' => ['params'],                  'paramsInKey' => true],
+        'walls'       => ['columns' => ['damages', 'player_id'],    'paramsInKey' => false],
+        'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false],
+        'foregrounds' => ['columns' => [],                          'paramsInKey' => false],
+        'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true],
+        'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true],
+    ];
 
     private const IMAGE_EXTENSIONS = ['png', 'webp', 'gif'];
 
@@ -54,27 +56,28 @@ class TiledMapService
         $this->db = new Db();
     }
 
-    /** @return array|null null si le (plan, z) n'a ni contenu ni coordonnées */
+    /** @return array|null null si le (plan, z) n'existe pas */
     public function exportPlan(string $plan, int $z): ?array
     {
-        $layers = $this->fetchLayers($plan, $z);
+        $zLevels = $this->planZLevels($plan);
 
         // Un niveau vide mais existant (coords sans contenu) reste pullable :
         // l'extension multi-z doit pouvoir l'afficher et le remplir
-        if (array_sum(array_map('count', $layers)) === 0 && !$this->hasCoords($plan, $z)) {
+        if (!in_array($z, $zLevels, true)) {
             return null;
         }
 
-        $images = $this->resolveImages($layers);
+        $layers = $this->fetchLayers($plan, $z);
+        ['catalog' => $catalog, 'images' => $images] = $this->buildCatalog();
 
         return [
             'plan'     => $plan,
             'z'        => $z,
-            'zLevels'  => $this->planZLevels($plan),
+            'zLevels'  => $zLevels,
             'tileSize' => self::TILE_SIZE,
             'version'  => $this->computeVersion($layers),
             'layers'   => $layers,
-            'catalog'  => $this->buildCatalog($images),
+            'catalog'  => $catalog,
             'images'   => $images,
         ];
     }
@@ -110,63 +113,6 @@ class TiledMapService
     }
 
     /**
-     * Catalogue complet des images disponibles par couche (pas seulement
-     * celles déjà posées) : palette entière dans l'éditeur, indispensable
-     * pour les plans neufs. Complète $images au passage.
-     *
-     * @return array<string, string[]>
-     */
-    private function buildCatalog(array &$images): array
-    {
-        $catalog = [];
-
-        foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
-            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
-            $names = [];
-
-            foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
-                $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $name = pathinfo($fileName, PATHINFO_FILENAME);
-
-                if (!in_array($ext, self::IMAGE_EXTENSIONS, true)
-                    || !preg_match('/^[a-zA-Z0-9_.-]+$/', $name)
-                    || isset($names[$name])
-                ) {
-                    continue;
-                }
-
-                $names[$name] = true;
-                $images[$layer . '/' . $name] ??= 'img/' . $layer . '/' . $fileName;
-            }
-
-            $catalog[$layer] = array_keys($names);
-            sort($catalog[$layer]);
-        }
-
-        return $catalog;
-    }
-
-    /** @return int[] niveaux z existants du plan, croissants */
-    private function planZLevels(string $plan): array
-    {
-        $res = $this->db->exe('SELECT DISTINCT z FROM coords WHERE plan = ? ORDER BY z', array($plan));
-
-        $zLevels = [];
-        while ($row = $res->fetch_assoc()) {
-            $zLevels[] = (int) $row['z'];
-        }
-
-        return $zLevels;
-    }
-
-    private function hasCoords(string $plan, int $z): bool
-    {
-        $res = $this->db->exe('SELECT 1 FROM coords WHERE plan = ? AND z = ? LIMIT 1', array($plan, $z));
-
-        return $res->num_rows > 0;
-    }
-
-    /**
      * @param array<string, array> $incomingLayers couches envoyées par l'extension
      * @return array{layers: array, newVersion: string}
      * @throws RuntimeException code 400 (payload invalide) ou 409 (conflit de version)
@@ -180,21 +126,21 @@ class TiledMapService
         }
 
         $currentLayers = $this->fetchLayers($plan, $z);
-        $currentVersion = $this->computeVersion($currentLayers);
 
-        if (!hash_equals($currentVersion, $expectedVersion)) {
+        if (!hash_equals($this->computeVersion($currentLayers), $expectedVersion)) {
             throw new RuntimeException(
                 'Le plan a changé depuis le pull — refaire un pull avant de pousser.',
                 409
             );
         }
 
+        $coordsIds = $this->loadCoordsIds($plan, $z);
         $report = [];
 
         $this->db->beginTransaction();
         try {
             foreach ($incomingLayers as $layer => $rows) {
-                $report[$layer] = $this->importLayer($plan, $z, $layer, $rows, $currentLayers[$layer]);
+                $report[$layer] = $this->importLayer($plan, $z, $layer, $rows, $currentLayers[$layer], $coordsIds);
             }
             $this->db->commit();
         } catch (\Throwable $e) {
@@ -202,9 +148,14 @@ class TiledMapService
             throw $e;
         }
 
+        // L'état post-import est connu sans relire la base : les couches
+        // importées valent exactement les lignes reçues (les lignes joueurs,
+        // hors diff, sont aussi hors empreinte), les autres n'ont pas bougé
+        $postLayers = array_merge($currentLayers, $incomingLayers);
+
         return [
             'layers'     => $report,
-            'newVersion' => $this->computeVersion($this->fetchLayers($plan, $z)),
+            'newVersion' => $this->computeVersion($postLayers),
         ];
     }
 
@@ -213,10 +164,10 @@ class TiledMapService
     {
         $layers = [];
 
-        foreach (self::AUTHORABLE_LAYERS as $layer => $extraColumns) {
+        foreach (self::AUTHORABLE_LAYERS as $layer => $spec) {
 
             $columns = 'm.id, m.name, c.x, c.y';
-            foreach ($extraColumns as $column) {
+            foreach ($spec['columns'] as $column) {
                 $columns .= ', m.`' . $column . '`';
             }
 
@@ -243,6 +194,32 @@ class TiledMapService
         return $layers;
     }
 
+    /** @return int[] niveaux z existants du plan, croissants */
+    private function planZLevels(string $plan): array
+    {
+        $res = $this->db->exe('SELECT DISTINCT z FROM coords WHERE plan = ? ORDER BY z', array($plan));
+
+        $zLevels = [];
+        while ($row = $res->fetch_assoc()) {
+            $zLevels[] = (int) $row['z'];
+        }
+
+        return $zLevels;
+    }
+
+    /** @return array<string, int> "x|y" => coords_id du (plan, z) */
+    private function loadCoordsIds(string $plan, int $z): array
+    {
+        $res = $this->db->exe('SELECT id, x, y FROM coords WHERE plan = ? AND z = ?', array($plan, $z));
+
+        $coordsIds = [];
+        while ($row = $res->fetch_assoc()) {
+            $coordsIds[$row['x'] . '|' . $row['y']] = (int) $row['id'];
+        }
+
+        return $coordsIds;
+    }
+
     /**
      * Empreinte du contenu authoré. Exclut les lignes protégées (player_id)
      * et les colonnes runtime (damages, endTime), qui évoluent pendant le jeu
@@ -253,13 +230,11 @@ class TiledMapService
         $parts = [];
 
         foreach ($layers as $layer => $rows) {
-            $paramsAuthored = in_array($layer, self::PARAMS_AUTHORED_LAYERS, true);
-
             foreach ($rows as $row) {
                 if (!empty($row['player_id'])) {
                     continue;
                 }
-                $parts[] = $layer . '|' . $this->rowKey($row, $paramsAuthored);
+                $parts[] = $layer . '|' . $this->rowKey($layer, $row);
             }
         }
 
@@ -268,22 +243,23 @@ class TiledMapService
         return sha1(implode("\n", $parts));
     }
 
-    private function rowKey(array $row, bool $paramsAuthored): string
+    private function rowKey(string $layer, array $row): string
     {
         $key = $row['x'] . '|' . $row['y'] . '|' . $row['name'];
 
-        if ($paramsAuthored) {
+        if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey']) {
             $key .= '|' . (string) ($row['params'] ?? '');
         }
 
         return $key;
     }
 
-    /** @return array{inserted: int, deleted: int, kept: int, protected: int} */
-    private function importLayer(string $plan, int $z, string $layer, array $incomingRows, array $currentRows): array
+    /**
+     * @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations
+     * @return array{inserted: int, deleted: int, kept: int, protected: int}
+     */
+    private function importLayer(string $plan, int $z, string $layer, array $incomingRows, array $currentRows, array &$coordsIds): array
     {
-        $paramsAuthored = in_array($layer, self::PARAMS_AUTHORED_LAYERS, true);
-
         // Lignes existantes disponibles pour le rapprochement, par clé
         $available = [];
         $protected = 0;
@@ -293,7 +269,7 @@ class TiledMapService
                 $protected++;
                 continue;
             }
-            $available[$this->rowKey($row, $paramsAuthored)][] = $row['id'];
+            $available[$this->rowKey($layer, $row)][] = $row['id'];
         }
 
         $kept = 0;
@@ -302,7 +278,7 @@ class TiledMapService
         foreach ($incomingRows as $row) {
             $this->validateIncomingRow($layer, $row);
 
-            $key = $this->rowKey($row, $paramsAuthored);
+            $key = $this->rowKey($layer, $row);
 
             if (!empty($available[$key])) {
                 array_pop($available[$key]);
@@ -313,15 +289,10 @@ class TiledMapService
         }
 
         foreach ($toInsert as $row) {
-            $this->insertRow($plan, $z, $layer, $row, $paramsAuthored);
+            $this->insertRow($plan, $z, $layer, $row, $coordsIds);
         }
 
-        $toDelete = [];
-        foreach ($available as $ids) {
-            foreach ($ids as $id) {
-                $toDelete[] = $id;
-            }
-        }
+        $toDelete = array_merge([], ...array_values($available));
 
         if ($toDelete !== []) {
             $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
@@ -352,22 +323,29 @@ class TiledMapService
         }
     }
 
-    private function insertRow(string $plan, int $z, string $layer, array $row, bool $paramsAuthored): void
+    /** @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations */
+    private function insertRow(string $plan, int $z, string $layer, array $row, array &$coordsIds): void
     {
-        $coordsId = View::get_coords_id((object) [
-            'x'    => (int) $row['x'],
-            'y'    => (int) $row['y'],
-            'z'    => $z,
-            'plan' => $plan,
-        ]);
+        $coordsKey = (int) $row['x'] . '|' . (int) $row['y'];
 
-        if (!$coordsId) {
-            throw new RuntimeException('Création de coordonnées impossible en ' . $row['x'] . ',' . $row['y'], 500);
+        if (!isset($coordsIds[$coordsKey])) {
+            $coordsId = View::get_coords_id((object) [
+                'x'    => (int) $row['x'],
+                'y'    => (int) $row['y'],
+                'z'    => $z,
+                'plan' => $plan,
+            ]);
+
+            if (!$coordsId) {
+                throw new RuntimeException('Création de coordonnées impossible en ' . $row['x'] . ',' . $row['y'], 500);
+            }
+
+            $coordsIds[$coordsKey] = (int) $coordsId;
         }
 
         $values = [
             'name'      => $row['name'],
-            'coords_id' => $coordsId,
+            'coords_id' => $coordsIds[$coordsKey],
         ];
 
         if ($layer === 'walls') {
@@ -376,36 +354,50 @@ class TiledMapService
             $values['damages'] = (defined('WALLS_PV') && (WALLS_PV[$row['name']] ?? 0) === -1) ? -1 : 0;
         }
 
-        if ($paramsAuthored && isset($row['params']) && $row['params'] !== '') {
+        if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {
             $values['params'] = (string) $row['params'];
         }
 
         $this->db->insert('map_' . $layer, $values);
     }
 
-    /** @return array<string, string|null> "couche/nom" => chemin image ou null */
-    private function resolveImages(array $layers): array
+    /**
+     * Catalogue complet des images disponibles par couche (pas seulement
+     * celles déjà posées) : palette entière dans l'éditeur, indispensable
+     * pour les plans neufs. `images` couvre toute tuile référençable —
+     * une tuile posée sans image sur disque est simplement absente de la
+     * table, ce que l'extension traite comme « pas d'image ».
+     *
+     * @return array{catalog: array<string, string[]>, images: array<string, string>}
+     */
+    private function buildCatalog(): array
     {
+        $catalog = [];
         $images = [];
 
-        foreach ($layers as $layer => $rows) {
-            foreach ($rows as $row) {
-                $key = $layer . '/' . $row['name'];
-                if (array_key_exists($key, $images)) {
+        foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
+            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
+            $names = [];
+
+            foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
+                $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                $name = pathinfo($fileName, PATHINFO_FILENAME);
+
+                if (!in_array($ext, self::IMAGE_EXTENSIONS, true)
+                    || !preg_match('/^[a-zA-Z0-9_.-]+$/', $name)
+                    || isset($names[$name])
+                ) {
                     continue;
                 }
 
-                $images[$key] = null;
-                foreach (self::IMAGE_EXTENSIONS as $ext) {
-                    $candidate = 'img/' . $layer . '/' . $row['name'] . '.' . $ext;
-                    if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $candidate)) {
-                        $images[$key] = $candidate;
-                        break;
-                    }
-                }
+                $names[$name] = true;
+                $images[$layer . '/' . $name] = 'img/' . $layer . '/' . $fileName;
             }
+
+            $catalog[$layer] = array_keys($names);
+            sort($catalog[$layer]);
         }
 
-        return $images;
+        return ['catalog' => $catalog, 'images' => $images];
     }
 }
