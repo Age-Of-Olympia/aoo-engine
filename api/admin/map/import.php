@@ -33,9 +33,10 @@ if (!tiledValidPlanName($plan) || $version === '' || !is_array($layers)) {
 $z = (int) ($body['z'] ?? 0);
 
 $planConfig = (isset($body['planConfig']) && is_array($body['planConfig'])) ? $body['planConfig'] : null;
+$zConfig = (isset($body['zConfig']) && is_array($body['zConfig'])) ? $body['zConfig'] : null;
 
 try {
-    $result = (new TiledMapService())->applyPush($plan, $z, $layers, $version, $planConfig);
+    $result = (new TiledMapService())->applyPush($plan, $z, $layers, $version, $planConfig, $zConfig);
 } catch (\RuntimeException $e) {
     tiledFail(tiledHttpCode($e), $e->getMessage());
 }

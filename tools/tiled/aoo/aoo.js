@@ -40,6 +40,7 @@ AoO.PROP = {
     plan: 'aooPlan',            /* carte : nom du plan */
     instance: 'aooInstance',    /* carte : instance d'origine — le push y est verrouillé */
     planPrefix: 'aooPlan_',     /* carte : propriétés du JSON de plan (aooPlan_name, aooPlan_bg…) */
+    zPrefix: 'aooZ_',           /* groupe z : config du niveau (aooZ_name, aooZ_mapUnavailable, aooZ_bounds) */
     imageChoices: 'aooImageChoices', /* carte : images candidates bg/mask (info, alimenté au pull) */
     z: 'aooZ',                  /* groupe : niveau z */
     version: 'aooVersion'       /* groupe : version d'édition du niveau */
@@ -683,6 +684,15 @@ AoO.pull = function(plan, zSpec, config) {
         group.setProperty(AoO.PROP.version, data.version);
         group.visible = (z === topZ);
 
+        /* config du niveau (nom, MapUnavailable, bornes) éditable dans les
+           propriétés du groupe ; « bounds » = auto (recalculé) ou
+           « minX,maxX,minY,maxY » */
+        if (data.zConfig) {
+            for (var zKey in data.zConfig) {
+                group.setProperty(AoO.PROP.zPrefix + zKey, data.zConfig[zKey]);
+            }
+        }
+
         AoO.buildLevel(map, group, data, registry, config);
     }
 
@@ -894,20 +904,21 @@ AoO.serializeContainer = function(container, tileSize) {
     return layers;
 };
 
-/* Propriétés aooPlan_* de la carte → objet {clé: valeur} pour l'import */
-AoO.collectPlanConfig = function(map) {
-    var config = {};
+/* Propriétés préfixées d'un objet (carte ou groupe) → { clé: valeur } sans
+   le préfixe, ou null si aucune */
+AoO.collectPrefixed = function(holder, prefix) {
+    var collected = {};
     var found = false;
-    var properties = map.properties();
+    var properties = holder.properties();
 
     for (var name in properties) {
-        if (name.indexOf(AoO.PROP.planPrefix) === 0) {
-            config[name.substring(AoO.PROP.planPrefix.length)] = String(properties[name]);
+        if (name.indexOf(prefix) === 0) {
+            collected[name.substring(prefix.length)] = String(properties[name]);
             found = true;
         }
     }
 
-    return found ? config : null;
+    return found ? collected : null;
 };
 
 /* Instance cible d'un push : celle d'origine de la carte, sinon la
@@ -948,12 +959,13 @@ AoO.push = function(map) {
             plan: plan,
             z: z,
             version: group.property(AoO.PROP.version),
-            layers: AoO.serializeContainer(group, map.tileWidth)
+            layers: AoO.serializeContainer(group, map.tileWidth),
+            zConfig: AoO.collectPrefixed(group, AoO.PROP.zPrefix) /* config du niveau */
         };
 
         /* les propriétés du plan sont globales : envoyées une seule fois */
         if (!planConfigSent) {
-            var planConfig = AoO.collectPlanConfig(map);
+            var planConfig = AoO.collectPrefixed(map, AoO.PROP.planPrefix);
             if (planConfig) {
                 payload.planConfig = planConfig;
             }

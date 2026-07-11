@@ -100,7 +100,41 @@ class PlanConfigService
      *
      * @param array{minX: int, maxX: int, minY: int, maxY: int} $bounds
      */
-    public function writeZLevelBounds(string $plan, int $z, array $bounds): void
+    /**
+     * Configuration d'un niveau z pour l'éditeur : nom affiché et drapeau
+     * « pas de carte » (le reste — les bornes — est recalculé au push).
+     *
+     * @return array{name: string, mapUnavailable: string}
+     */
+    public function readZLevel(string $plan, int $z): array
+    {
+        $level = $this->findZLevel($this->load($plan), $z);
+
+        // Bornes « auto » par défaut (recalculées au push) ; si le JSON en
+        // porte déjà d'explicites, on les montre « minX,maxX,minY,maxY »
+        // pour que l'admin les voie et puisse les ajuster
+        $bounds = 'auto';
+        if (isset($level['visibleBoundsMinX'], $level['visibleBoundsMaxX'], $level['visibleBoundsMinY'], $level['visibleBoundsMaxY'])) {
+            $bounds = $level['visibleBoundsMinX'] . ',' . $level['visibleBoundsMaxX'] . ',' .
+                $level['visibleBoundsMinY'] . ',' . $level['visibleBoundsMaxY'];
+        }
+
+        return [
+            'name'           => (string) ($level['z-name'] ?? ''),
+            'mapUnavailable' => !empty($level['MapUnavailable']) ? 'true' : 'false',
+            'bounds'         => $bounds,
+        ];
+    }
+
+    /**
+     * Écrit la configuration éditable d'un niveau z (nom, MapUnavailable) et
+     * recale ses bornes visibles sur l'étendue réelle — sauf niveau marqué
+     * MapUnavailable, qui n'a pas de carte. Crée l'entrée z_levels au besoin.
+     *
+     * @param array<string, mixed>                             $zConfig clé => valeur chaîne (issue des propriétés du groupe)
+     * @param array{minX: int, maxX: int, minY: int, maxY: int}|null $bounds étendue du niveau, null si vide
+     */
+    public function writeZLevel(string $plan, int $z, array $zConfig, ?array $bounds): void
     {
         $json = $this->load($plan);
         $json['z_levels'] ??= [];
@@ -112,23 +146,79 @@ class PlanConfigService
                 break;
             }
         }
-
-        if ($index !== null && !empty($json['z_levels'][$index]['MapUnavailable'])) {
-            return;
-        }
-
         if ($index === null) {
-            $json['z_levels'][] = ['z' => $z, 'z-name' => 'Niveau ' . $z];
+            $json['z_levels'][] = ['z' => $z];
             $index = array_key_last($json['z_levels']);
         }
 
         $level = &$json['z_levels'][$index];
-        $level['visibleBoundsMinX'] = $bounds['minX'];
-        $level['visibleBoundsMaxX'] = $bounds['maxX'];
-        $level['visibleBoundsMinY'] = $bounds['minY'];
-        $level['visibleBoundsMaxY'] = $bounds['maxY'];
+        $level['z'] = $z;
+
+        if (isset($zConfig['name'])) {
+            $name = trim((string) $zConfig['name']);
+            $level['z-name'] = $name !== '' ? $name : 'Niveau ' . $z;
+        } elseif (!isset($level['z-name'])) {
+            $level['z-name'] = 'Niveau ' . $z;
+        }
+
+        $mapUnavailable = isset($zConfig['mapUnavailable'])
+            ? in_array(strtolower((string) $zConfig['mapUnavailable']), ['true', '1'], true)
+            : !empty($level['MapUnavailable']);
+
+        if ($mapUnavailable) {
+            $level['MapUnavailable'] = true;
+            unset($level['visibleBoundsMinX'], $level['visibleBoundsMaxX'], $level['visibleBoundsMinY'], $level['visibleBoundsMaxY']);
+        } else {
+            unset($level['MapUnavailable']);
+
+            // Bornes explicites « minX,maxX,minY,maxY » saisies par l'admin,
+            // sinon « auto » → étendue réelle du contenu ($bounds)
+            $chosen = $this->parseBounds($zConfig['bounds'] ?? 'auto') ?? $bounds;
+            if ($chosen !== null) {
+                $level['visibleBoundsMinX'] = $chosen['minX'];
+                $level['visibleBoundsMaxX'] = $chosen['maxX'];
+                $level['visibleBoundsMinY'] = $chosen['minY'];
+                $level['visibleBoundsMaxY'] = $chosen['maxY'];
+            }
+        }
 
         $this->save($plan, $json);
+    }
+
+    /**
+     * « minX,maxX,minY,maxY » → bornes, ou null pour « auto »/vide.
+     *
+     * @return array{minX: int, maxX: int, minY: int, maxY: int}|null
+     * @throws RuntimeException code 400 si non vide et mal formé
+     */
+    private function parseBounds(string $raw): ?array
+    {
+        $raw = trim($raw);
+        if ($raw === '' || strtolower($raw) === 'auto') {
+            return null;
+        }
+
+        $parts = array_map('trim', explode(',', $raw));
+        if (count($parts) !== 4 || count(array_filter($parts, 'is_numeric')) !== 4) {
+            throw new RuntimeException('Bornes du niveau invalides (attendu « minX,maxX,minY,maxY » ou « auto ») : ' . $raw, 400);
+        }
+
+        return [
+            'minX' => (int) $parts[0], 'maxX' => (int) $parts[1],
+            'minY' => (int) $parts[2], 'maxY' => (int) $parts[3],
+        ];
+    }
+
+    /** @return array<string, mixed> entrée z_levels du niveau, ou [] */
+    private function findZLevel(array $json, int $z): array
+    {
+        foreach ($json['z_levels'] ?? [] as $level) {
+            if (isset($level['z']) && (int) $level['z'] === $z) {
+                return $level;
+            }
+        }
+
+        return [];
     }
 
     /**

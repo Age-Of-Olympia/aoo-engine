@@ -126,9 +126,23 @@ sur la carte du monde), `player_visibility` (`true`/`false`),
 validé et appliqué au push ; le rapport remonte le bilan de santé du
 plan (`PlanJsonValidator` : biomes en doublon, ressources inconnues…).
 
-Les **bornes visibles des niveaux z** (`z_levels`) ne se maintiennent plus
-à la main : à chaque push, elles sont recalées sur l'étendue réelle du
-niveau (sauf niveau marqué `MapUnavailable`).
+#### La configuration d'un niveau z
+
+Chaque niveau z est un **groupe de calques** (`z=0`, `z=-1`…) : ses
+propriétés (panneau Propriétés en sélectionnant le groupe) portent la config
+de ce niveau, préfixée `aooZ_` :
+
+- **`aooZ_name`** : le nom affiché du niveau (« Surface », « Sous-sol »…).
+- **`aooZ_mapUnavailable`** : `true` si le niveau n'a pas de carte
+  (les bornes sont alors ignorées).
+- **`aooZ_bounds`** : les bornes visibles du niveau —
+  - `auto` (défaut) : recalculées sur l'étendue réelle du contenu à chaque
+    push, aucune maintenance ;
+  - `minX,maxX,minY,maxY` : bornes fixes imposées (ex. `-5,10,-5,10`).
+  Après un push en `auto`, un re-pull montre les bornes calculées (elles
+  restent modifiables, et `auto` les refait coller au contenu).
+
+Tout est écrit dans `z_levels` du JSON de plan au push.
 
 #### Le fond et l'ambiance (Fichier → AoO : Fond / ambiance du plan…)
 

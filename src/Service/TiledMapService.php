@@ -98,6 +98,7 @@ class TiledMapService
                 'values'    => $this->planConfig->read($plan),
                 'bgChoices' => $this->catalog->backgroundChoices(),
             ],
+            'zConfig'    => $this->planConfig->readZLevel($plan, $z),
         ];
     }
 
@@ -109,7 +110,7 @@ class TiledMapService
      *
      * @return array{layers: array, newVersion: string, planHealth?: array}
      */
-    public function applyPush(string $plan, int $z, array $layers, string $expectedVersion, ?array $planConfig): array
+    public function applyPush(string $plan, int $z, array $layers, string $expectedVersion, ?array $planConfig, ?array $zConfig): array
     {
         $parsedConfig = $planConfig !== null ? $this->planConfig->parse($planConfig) : null;
 
@@ -119,10 +120,7 @@ class TiledMapService
             $this->planConfig->write($plan, $parsedConfig);
         }
 
-        $bounds = $this->levelBounds($plan, $z);
-        if ($bounds !== null) {
-            $this->planConfig->writeZLevelBounds($plan, $z, $bounds);
-        }
+        $this->planConfig->writeZLevel($plan, $z, $zConfig ?? [], $this->levelBounds($plan, $z));
 
         $health = $this->planConfig->validate($plan, $this->db, $this->knownItemNames());
         if ($health['errors'] !== [] || $health['warnings'] !== []) {
