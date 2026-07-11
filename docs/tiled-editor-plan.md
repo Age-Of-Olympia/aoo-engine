@@ -195,6 +195,26 @@ déclarés…).
   versionnés dans git (diff/review, sauvegarde) ; décommissionnement
   progressif de `tiled.php` (gardé pour les retouches rapides in-game).
 
+#### Phase 3 — Monde Tiled (multi-plans en un espace)
+
+Un **World** Tiled (fichier `.world`) assemble plusieurs cartes en un
+espace navigable : positions (x, y) par carte, on édite les territoires
+voisins ensemble et on traverse leurs bords. Idée : une action
+« AoO : Générer le monde » qui écrit un `<instance>.world` (par niveau z)
+positionnant chaque plan pullé, à partir de **deux sources complémentaires** :
+
+- **`x` / `y` du plan** (la grille olympia) : position absolue des
+  territoires présents sur la carte du monde — décalage pixel = `x/y × pas`.
+- **Déclencheurs `tp`** (params `x,y,z,plan`) : le graphe de connexions
+  entre plans. Sert à placer les plans **hors grille** (donjons comme
+  `nidhogg`, qui n'existent que comme destination d'un `tp`) à côté de leur
+  entrée, et à **valider les liens** (tp vers un plan inexistant, ou hors des
+  bornes visibles du niveau visé → signalé, comme le bilan de santé actuel).
+
+Nuances : layout = vue d'ensemble (chaque plan garde son origine locale, ce
+n'est pas une grille continue) ; un `.world` par z (les niveaux ne se
+superposent pas à plat) ; purement éditeur, le push reste par carte.
+
 Fait récemment : édition assistée des biomes (action « Biomes… »,
 formulaire `wall:ressource:exhaust:regrow`), aperçu du fond/masque
 (calques image verrouillés au pull), bibliothèque de tampons partagés
