@@ -1,7 +1,8 @@
 # Guide : éditer les cartes du jeu avec Tiled
 
-Guide pratique pour les admins/MJ. Pour l'architecture et les décisions,
-voir [tiled-editor-plan.md](tiled-editor-plan.md).
+Guide pratique pour les admins/MJ. La partie [Architecture &
+décisions](#architecture--décisions) en fin de document sert de référence
+technique (le pourquoi, ce qui reste, le déploiement).
 
 ## Mise en route (une fois)
 
@@ -286,3 +287,77 @@ Garanties :
 | Le formulaire de connexion n'apparaît pas | Un jeton valide est en cache (`session.json`) — passer par « AoO : Connexion… » pour changer de compte ou d'instance |
 | Une couche est grisée/inéditable | C'est une couche « (joueurs) » verrouillée : constructions des joueurs, volontairement intouchables |
 | Nouvelles images dans `img/` invisibles | Re-puller le plan (les tilesets sont reconstruits au pull) |
+
+---
+
+# Architecture & décisions
+
+Référence technique de l'intégration Tiled (remplace l'ancien
+`tiled-editor-plan.md`). Le détail par étape vit dans l'historique git ;
+cette section garde le **pourquoi**, ce qui **reste** et le **déploiement**.
+
+## Principe
+
+L'éditeur Tiled est branché sur le jeu via son **API de scripting** (extension
+`tools/tiled/aoo/aoo.js`), tout passe par **HTTP** — une instance = une URL de
+base. Le modèle de données du jeu est conservé : `coords` (x, y, z, plan) +
+tables de couches `map_*`. Flux **pull → édition → push**, pas de synchro
+temps réel.
+
+Emplacements :
+- Extension + projet : `tools/tiled/aoo/` (`aoo.js`, `aoo.tiled-project`,
+  `config.json`/`session.json` locaux gitignorés, `.exemple` fournis).
+- Endpoints : `api/admin/map/{auth,export,import,plans,create,world}.php`
+  (socle commun `_common.php`).
+- Services : `TiledMapService` (diff transactionnel `map_*`),
+  `PlanConfigService` (JSON de plan), `TileCatalogService` (scan `img/`),
+  `TiledAuthService` (jetons), plus `ColorService`/`PlanJsonValidator` existants.
+- Secret : `config/tiled_constants.php` (gitignoré). Cartes/tampons :
+  `tools/tiled/maps/<instance>/`, `tools/tiled/stamps/`.
+
+## Décisions structurantes
+
+- **Import par diff sur clé d'identité** (x, y, name[, params]) : les lignes
+  inchangées sont conservées telles quelles, donc leur **état runtime**
+  (`damages` des murs, `endTime` des éléments) survit à un push. Import
+  transactionnel.
+- **Lignes des joueurs intouchables** : toute ligne `player_id` non nul est
+  montrée (couches verrouillées « (joueurs) ») mais jamais modifiée ni
+  poussée — protection portée par une **propriété**, pas par le nom de couche
+  (résiste au renommage/déverrouillage). `map_items` (objets au sol) jamais
+  concerné.
+- **Contrôle de version optimiste** : empreinte du contenu authoré calculée au
+  pull (colonnes runtime et lignes joueurs exclues), vérifiée au push → **409**
+  si le plan a bougé entre-temps.
+- **Auth par compte du jeu** (`isAdmin`, lui-même ou un PNJ possédé), jeton
+  HMAC sans état, droits revérifiés à chaque requête ; pare-feu réutilisé de
+  `login.php`. **Push verrouillé sur l'instance d'origine** de la carte.
+- **Axe y** : le jeu monte, Tiled descend → `tiledY = -gameY`.
+- **Config de plan hors transaction** : les propriétés du JSON de plan sont
+  validées **avant** la transaction (aucun 400 après le commit des couches),
+  écrites via `Classes\Json` (inerte en simulation).
+- **`exits` et `war` retirés** : sous-systèmes jamais terminés ni utilisés
+  (aucune donnée en base).
+
+## Reste à faire
+
+- **Monde** : cases dimensionnées par plan plutôt qu'au plus grand (`enfers`,
+  421 tuiles, gonfle l'espacement) ; validation des liens `tp` cassés
+  (destination inexistante / hors bornes) remontée comme le bilan de santé.
+- **Biomes** : édition assistée existante (`wall:ressource:exhaust:regrow`) ;
+  des objets typés seraient encore plus sûrs. À valider en jeu : la clé
+  d'identité des plantes inclut `params`.
+- **Aperçu** : bg/mask affichés en calques image ; on pourrait aussi poser
+  l'image de fond de la carte.
+- **Industrialisation** : export périodique des plans en `.tmj` versionnés
+  (diff/review, sauvegarde) ; décommissionnement progressif de `tiled.php`
+  (gardé pour les retouches rapides in-game).
+
+## Déploiement (à ne pas oublier)
+
+- `img/` **n'est pas versionné** : reporter dans la source d'assets déployée
+  les tuiles de transition générées (`img/tiles/trans_*`), l'arbre sacré
+  déplacé en `img/foregrounds/`, et le retrait de `img/triggers/{enter,exit}.png`.
+- Pour viser une **instance déployée** (test suit `staging`), y créer
+  `config/tiled_constants.php` avec son propre secret (`openssl rand -hex 32`) ;
+  secret vide/absent = endpoints désactivés.
