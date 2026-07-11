@@ -51,16 +51,29 @@ Règles de sécurité à l'import (côté serveur, `TiledMapService`) :
   courant, sinon 409 (les colonnes runtime et lignes joueurs sont exclues de
   l'empreinte pour éviter les faux conflits).
 
-## Authentification
+## Authentification et instances
 
 Les endpoints `api/admin/map/*` sont réservés aux comptes du jeu possédant
-l'option `isAdmin` : l'extension se connecte via `auth.php` (nom ou matricule
-+ mot de passe) et reçoit un jeton HMAC signé, sans état, valable 30 jours
-(`TiledAuthService`). Le secret de signature (`TILED_HMAC_SECRET`) vit dans
-`config/tiled_constants.php`, gitignoré ; vide = endpoints désactivés. Les
-droits admin sont revérifiés à chaque requête : retirer `isAdmin` invalide
-immédiatement les jetons du joueur. Le jeton est mis en cache côté extension
-dans `tools/tiled/aoo/session.json` (gitignoré).
+l'option `isAdmin` (le compte lui-même ou l'un de ses PNJ) : l'extension se
+connecte via `auth.php` (nom ou matricule + mot de passe) et reçoit un jeton
+HMAC signé, sans état, valable 30 jours (`TiledAuthService`). Le secret de
+signature (`TILED_HMAC_SECRET`) vit dans `config/tiled_constants.php`,
+gitignoré ; vide = endpoints désactivés. Les droits admin sont revérifiés à
+chaque requête : retirer `isAdmin` invalide immédiatement les jetons.
+
+L'extension gère plusieurs **instances** (tout passe par HTTP, une instance
+= une URL de base ; chaque déploiement a sa propre base derrière son
+hostname, cf. `config/deploy_targets.php`) : `config.json` les déclare
+(local, test, experimental, prod), l'action « AoO : Connexion / changer
+d'instance… » ouvre le formulaire (liste déroulante + identifiants). Jetons
+mis en cache par instance dans `session.json` (gitignoré), cartes pullées
+rangées par instance (`tools/tiled/maps/<instance>/`), et chaque carte est
+**verrouillée sur son instance d'origine** au push : une carte pullée de
+test ne peut pas partir vers prod par accident.
+
+⚠ Pour viser une instance déployée (test…), il faut que cette MR y soit
+déployée (test suit la branche `staging`) et qu'un
+`config/tiled_constants.php` avec son propre secret existe sur ce serveur.
 
 ## Phases
 

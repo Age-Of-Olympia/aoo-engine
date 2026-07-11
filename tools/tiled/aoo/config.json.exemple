@@ -1,4 +1,9 @@
 {
-    "baseUrl": "http://localhost:9000",
-    "gameDir": "/chemin/absolu/vers/le/depot/aoo4"
+    "gameDir": "/chemin/absolu/vers/le/depot/aoo4",
+    "instances": {
+        "local": { "baseUrl": "http://localhost:9000" },
+        "test": { "baseUrl": "https://test.age-of-olympia.net" },
+        "experimental": { "baseUrl": "https://experimental.age-of-olympia.net" },
+        "prod": { "baseUrl": "https://age-of-olympia.net" }
+    }
 }
