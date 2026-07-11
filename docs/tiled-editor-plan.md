@@ -39,16 +39,32 @@ temps réel, ce qui est le comportement voulu : préparer, relire, appliquer).
 | `map_items` | **non authorable** : état runtime, jamais écrasé à l'import |
 | PNG individuels `img/{tiles,walls,…}` | tilesets « image collection » `.tsj` générés |
 
-Règles de sécurité à l'import (côté serveur) :
-- ne jamais toucher `map_items` ni les entrées avec `player_id` non nul ;
-- préserver l'état runtime des ressources (`damages = -2` épuisé) : l'import
-  compare à l'état authoré précédent, pas à l'état vivant ;
-- import transactionnel (tout ou rien) + contrôle de version (etag) pour
-  éviter que deux admins s'écrasent mutuellement.
+Règles de sécurité à l'import (côté serveur, `TiledMapService`) :
+- ne jamais toucher `map_items` ni les entrées avec `player_id` non nul
+  (montrées dans l'éditeur en couches verrouillées « xxx (joueurs) »,
+  ignorées au push) ;
+- diff par clé d'identité (x, y, name[, params]) : les lignes inchangées
+  sont conservées telles quelles, donc leur état runtime (`damages` des murs,
+  `endTime` des éléments) survit à l'import ;
+- import transactionnel (tout ou rien) + contrôle de version optimiste :
+  l'empreinte du contenu authoré calculée au pull doit correspondre à l'état
+  courant, sinon 409 (les colonnes runtime et lignes joueurs sont exclues de
+  l'empreinte pour éviter les faux conflits).
+
+## Authentification
+
+Les endpoints `api/admin/map/*` sont réservés aux comptes du jeu possédant
+l'option `isAdmin` : l'extension se connecte via `auth.php` (nom ou matricule
++ mot de passe) et reçoit un jeton HMAC signé, sans état, valable 30 jours
+(`TiledAuthService`). Le secret de signature (`TILED_HMAC_SECRET`) vit dans
+`config/tiled_constants.php`, gitignoré ; vide = endpoints désactivés. Les
+droits admin sont revérifiés à chaque requête : retirer `isAdmin` invalide
+immédiatement les jetons du joueur. Le jeton est mis en cache côté extension
+dans `tools/tiled/aoo/session.json` (gitignoré).
 
 ## Phases
 
-### Phase 0 — Spike de faisabilité (en cours)
+### Phase 0 — Spike de faisabilité (faite)
 
 1. Installer Tiled dans le devcontainer (AppImage extraite, exécution sous
    `xvfb-run` comme Cypress) — permet des tests automatisés headless via
@@ -65,14 +81,19 @@ Règles de sécurité à l'import (côté serveur) :
 
 **Critère de sortie** : un plan réel du jeu visible et éditable dans Tiled.
 
-### Phase 1 — Push (écriture)
+### Phase 1 — Push (écriture) (faite)
 
 - Endpoint `api/admin/map/import.php` : reçoit les calques, écrit en
   transaction, applique les règles de sécurité ci-dessus.
-- Action « AoO / Push » dans l'extension : sérialise la carte ouverte,
-  POST, affiche le rapport (créés/supprimés/ignorés).
+- Action « AoO : Push la carte vers le jeu… » : sérialise la carte ouverte,
+  POST, affiche le rapport (insérés/supprimés/conservés/protégés) et met à
+  jour la version locale.
 - Contrôle de concurrence : version du plan renvoyée au pull, vérifiée au
   push (409 si le plan a changé entre-temps).
+- Authentification par compte admin du jeu (voir section ci-dessus) au lieu
+  du jeton statique initial du spike.
+- Gestion des niveaux z : un (plan, z) par carte (« plan:z » au pull),
+  arcadia a par exemple un sous-sol en z=-1.
 
 ### Phase 2 — Confort d'édition
 
@@ -96,7 +117,9 @@ Règles de sécurité à l'import (côté serveur) :
 
 ## Emplacements
 
-- Extension Tiled : `tools/tiled/aoo/` (extension JS + tilesets générés)
-- Endpoints : `api/admin/map/export.php`, `api/admin/map/import.php`
-- Token : `config/tiled_constants.php` (gitignoré, `.exemple` fourni)
-- Scripts de test headless : `scripts/testing/tiled/`
+- Extension Tiled : `tools/tiled/aoo/aoo.js` (+ `config.json` et
+  `session.json` locaux, gitignorés, `.exemple` fournis)
+- Endpoints : `api/admin/map/auth.php`, `export.php`, `import.php`
+- Services : `src/Service/TiledMapService.php`, `src/Service/TiledAuthService.php`
+- Secret HMAC : `config/tiled_constants.php` (gitignoré, `.exemple` fourni)
+- Cartes pullées : `tools/tiled/maps/*.tmj` (gitignoré, généré)

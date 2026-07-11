@@ -6,6 +6,7 @@ config/db_constants.php
 config/onesignal_constants.php
 config/tiled_constants.php
 tools/tiled/aoo/config.json
+tools/tiled/aoo/session.json
 tools/tiled/maps/
 sessions/
 db/updates_done/
