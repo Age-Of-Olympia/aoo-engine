@@ -9,9 +9,11 @@ voir [tiled-editor-plan.md](tiled-editor-plan.md).
    devcontainer : `~/opt/tiled/tiled-headless`).
 2. **Lier l'extension** : Édition → Préférences → Plugins → « Ouvrir le
    dossier d'extensions », y créer un lien vers `tools/tiled/aoo` du dépôt.
-3. **Configurer** : copier `tools/tiled/aoo/config.json.exemple` en
-   `config.json`, renseigner `gameDir` (chemin absolu du dépôt) et les
-   instances utiles.
+3. **Configurer** : **Fichier → AoO : Configuration…** — renseigner le
+   dossier du dépôt (`gameDir`, chemin absolu) et les instances
+   (`nom=url`, séparées par des virgules). Écrit `config.json` tout seul,
+   pas besoin d'éditer un fichier à la main. (Alternative : copier
+   `config.json.exemple` en `config.json`.)
 4. **Ouvrir le projet** : Fichier → Ouvrir un projet… →
    `tools/tiled/aoo/aoo.tiled-project`. C'est lui qui apporte les classes
    typées des déclencheurs et référence le dossier des cartes pullées.
@@ -20,6 +22,7 @@ Les actions AoO vivent en bas du menu **Fichier** :
 
 | Action | Rôle |
 |---|---|
+| AoO : Configuration… | dossier du dépôt + instances (écrit `config.json`) |
 | AoO : Connexion / changer d'instance… | formulaire compte + instance (local, test… ou « adresse personnalisée » pour saisir une URL à la volée) |
 | AoO : Pull un plan du jeu… | télécharge un plan (liste des plans affichée) |
 | AoO : Push la carte vers le jeu… | applique la carte ouverte à son instance d'origine |

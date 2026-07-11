@@ -136,12 +136,60 @@ AoO.writeJsonFile = function(path, data) {
     file.commit();
 };
 
+AoO.configPath = function() {
+    return tiled.extensionsPath + '/aoo/config.json';
+};
+
+/* Config brute ou null si le fichier n'existe pas encore (premier lancement) */
+AoO.loadConfigOrNull = function() {
+    try {
+        return AoO.readJsonFile(AoO.configPath());
+    } catch (error) {
+        return null;
+    }
+};
+
 AoO.loadConfig = function() {
-    var config = AoO.readJsonFile(tiled.extensionsPath + '/aoo/config.json');
-    if (!config.gameDir || !config.instances) {
-        throw new Error('config.json incomplet : gameDir et instances sont requis (voir config.json.exemple)');
+    var config = AoO.loadConfigOrNull();
+    if (!config || !config.gameDir || !config.instances) {
+        throw new Error('Configuration manquante ou incomplète — Fichier → « AoO : Configuration… » ' +
+            'pour renseigner le dossier du dépôt et les instances.');
     }
     return config;
+};
+
+/* Instances { nom: {baseUrl} } ↔ texte « nom=url, nom=url » du formulaire */
+AoO.formatInstances = function(instances) {
+    var lines = [];
+    for (var name in (instances || {})) {
+        lines.push(name + '=' + instances[name].baseUrl);
+    }
+    return lines.join(', ');
+};
+
+AoO.parseInstances = function(text) {
+    var instances = {};
+    var pairs = String(text || '').split(',');
+    for (var i = 0; i < pairs.length; i++) {
+        var pair = pairs[i].trim();
+        if (!pair) {
+            continue;
+        }
+        var eq = pair.indexOf('=');
+        if (eq === -1) {
+            throw new Error('Instance mal formée (attendu « nom=url ») : ' + pair);
+        }
+        var name = pair.substring(0, eq).trim();
+        var url = pair.substring(eq + 1).trim().replace(/\/+$/, '');
+        if (!name || !AoO.isUrl(url)) {
+            throw new Error('Instance mal formée (nom + URL http(s)) : ' + pair);
+        }
+        instances[name] = { baseUrl: url };
+    }
+    if (Object.keys(instances).length === 0) {
+        throw new Error('Au moins une instance est requise (ex. local=http://localhost:9000)');
+    }
+    return instances;
 };
 
 AoO.sessionPath = function() {
@@ -990,6 +1038,39 @@ AoO.registerSafeAction = function(id, text, title, handler) {
     }).text = text;
 };
 
+AoO.registerSafeAction('AoOConfig', 'AoO : Configuration…', 'AoO — Configuration', function() {
+    var config = AoO.loadConfigOrNull() || {};
+
+    var values = AoO.showFormDialog('AoO — Configuration', [
+        {
+            key: 'gameDir', type: 'text',
+            label: 'Dossier du dépôt (chemin absolu) :',
+            value: config.gameDir || ''
+        },
+        {
+            key: 'instances', type: 'text',
+            label: 'Instances (nom=url, séparées par des virgules) :',
+            value: AoO.formatInstances(config.instances) ||
+                'local=http://localhost:9000, test=https://test.age-of-olympia.net'
+        }
+    ]);
+    if (!values) {
+        return;
+    }
+
+    var gameDir = String(values.gameDir).trim().replace(/\/+$/, '');
+    if (!gameDir) {
+        throw new Error('Le dossier du dépôt est requis.');
+    }
+
+    config.gameDir = gameDir;
+    config.instances = AoO.parseInstances(values.instances); /* valide le format */
+    AoO.writeJsonFile(AoO.configPath(), config);
+
+    tiled.alert('Configuration enregistrée.\n\nInstances : ' +
+        Object.keys(config.instances).join(', '), 'AoO — Configuration');
+});
+
 AoO.registerSafeAction('AoOConnect', 'AoO : Connexion / changer d\'instance…', 'AoO — Connexion', function() {
     var config = AoO.loadConfig();
     AoO.login(config, null);
@@ -1092,6 +1173,7 @@ AoO.registerSafeAction('AoOPush', 'AoO : Push la carte vers le jeu…', 'AoO —
 try {
     tiled.extendMenu('File', [
         { separator: true },
+        { action: 'AoOConfig' },
         { action: 'AoOConnect' },
         { action: 'AoOPull' },
         { action: 'AoOPush' },
