@@ -29,6 +29,20 @@ Les actions AoO vivent en bas du menu **Fichier** :
 | AoO : Nouveau plan dans le jeu… | crée un plan vierge et l'ouvre |
 | AoO : Fond / ambiance du plan… | choisit le fond et le masque animé |
 | AoO : Biomes (ressources) du plan… | édite les ressources récoltables (formulaire, sans JSON) |
+| AoO : Générer le monde… | pull tous les plans et écrit un `.world` (vue d'ensemble) |
+
+### Le monde (tous les plans en un espace)
+
+**Fichier → AoO : Générer le monde…** pull tous les plans de l'instance et
+écrit un fichier `.world` (`tools/tiled/maps/<instance>/<instance>.world`) qui
+les dispose côte à côte : chaque territoire à sa position (`x`/`y`) de la
+carte du monde, et les donjons hors grille (atteints par un `tp`) sous leur
+plan d'entrée. Charger via **Carte → Charger le monde…** (*Load World*) : on
+voit et édite alors les plans voisins ensemble, et on traverse leurs bords.
+
+C'est une **vue d'ensemble** — chaque plan garde ses coordonnées locales, ce
+n'est pas une grille continue (les vrais déplacements passent toujours par
+les `tp`). Le push reste par plan, inchangé.
 
 ## L'interface en 30 secondes
 

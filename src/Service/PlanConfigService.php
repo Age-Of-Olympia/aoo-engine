@@ -40,6 +40,22 @@ class PlanConfigService
     /** Sentinelle interne de parse() : retirer la clé du JSON */
     private const REMOVE = "\0remove";
 
+    /**
+     * Position (x, y) du territoire sur la carte du monde olympia, ou null
+     * si le plan n'y figure pas (donjon hors grille).
+     *
+     * @return array{x: ?int, y: ?int}
+     */
+    public function readPosition(string $plan): array
+    {
+        $json = $this->load($plan);
+
+        return [
+            'x' => isset($json['x']) && is_numeric($json['x']) ? (int) $json['x'] : null,
+            'y' => isset($json['y']) && is_numeric($json['y']) ? (int) $json['y'] : null,
+        ];
+    }
+
     /** @return array<string, string> valeurs courantes, en chaînes */
     public function read(string $plan): array
     {

@@ -1114,6 +1114,102 @@ AoO.formatReport = function(reports) {
 /* Actions et menus                                                    */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Génère un monde Tiled (<instance>.world) : chaque plan pullé, positionné
+ * par sa case (x, y) sur la carte du monde ; les plans hors grille (donjons
+ * atteints seulement par un tp) sont placés sous leur plan d'entrée, ou dans
+ * une rangée « orphelins » à défaut. Purement éditeur — la disposition est
+ * une vue d'ensemble, chaque plan gardant son origine locale.
+ */
+AoO.generateWorld = function(config, instance) {
+    var data = AoO.api(config, instance, 'GET', '/api/admin/map/world.php');
+    var plans = data.plans;
+    var tileSize = data.tileSize;
+    var names = Object.keys(plans);
+
+    /* étendue (en tuiles) d'un plan sur son niveau de référence */
+    var extentOf = function(plan) {
+        var zs = plans[plan].zLevels || [];
+        var b = plans[plan].bounds ? (plans[plan].bounds[0] || plans[plan].bounds[zs[0]]) : null;
+        return b ? { w: b.maxX - b.minX + 1, h: b.maxY - b.minY + 1, minX: b.minX, maxY: b.maxY }
+                 : { w: 1, h: 1, minX: 0, maxY: 0 };
+    };
+
+    /* pas d'une case : plus grand plan + marge, pour ne pas chevaucher */
+    var maxSpan = 1;
+    for (var n = 0; n < names.length; n++) {
+        var e = extentOf(names[n]);
+        maxSpan = Math.max(maxSpan, e.w, e.h);
+    }
+    var cell = (maxSpan + 6) * tileSize;
+
+    var occupied = {};       /* "col,row" → true */
+    var placement = {};      /* plan → {col, row} */
+
+    var place = function(plan, col, row) {
+        while (occupied[col + ',' + row]) {
+            row++;           /* case prise : descendre */
+        }
+        occupied[col + ',' + row] = true;
+        placement[plan] = { col: col, row: row };
+    };
+
+    /* 1. plans sur la grille olympia (x/y présents) — y inversé (nord en haut) */
+    var maxRow = 0;
+    for (var i = 0; i < names.length; i++) {
+        var p = plans[names[i]];
+        if (p.x !== null && p.y !== null) {
+            place(names[i], p.x, -p.y);
+            maxRow = Math.max(maxRow, -p.y);
+        }
+    }
+
+    /* 2. plans hors grille : sous un plan d'entrée qui les vise par tp */
+    var orphanCol = 0;
+    for (var j = 0; j < names.length; j++) {
+        var name = names[j];
+        if (placement[name]) {
+            continue;
+        }
+        var source = null;
+        for (var s = 0; s < names.length; s++) {
+            if (placement[names[s]] && (plans[names[s]].links || []).indexOf(name) !== -1) {
+                source = names[s];
+                break;
+            }
+        }
+        if (source) {
+            place(name, placement[source].col, placement[source].row + 1);
+        } else {
+            place(name, orphanCol++, maxRow + 2); /* rangée orphelins */
+        }
+    }
+
+    /* 3. pull de chaque plan + entrée .world (offset pixel = case − contenu local) */
+    var maps = [];
+    for (var k = 0; k < names.length; k++) {
+        var plan = names[k];
+        var ext = extentOf(plan);
+        var cellX = placement[plan].col * cell;
+        var cellY = placement[plan].row * cell;
+
+        AoO.pullAndSave(plan); /* garantit maps/<instance>/<plan>.tmj */
+
+        maps.push({
+            fileName: plan + '.tmj',
+            /* aligne le coin haut-gauche du contenu sur la case */
+            x: Math.round(cellX - ext.minX * tileSize),
+            y: Math.round(cellY + ext.maxY * tileSize)
+        });
+    }
+
+    var world = { maps: maps, onlyShowAdjacentMaps: false, type: 'world' };
+    var fileName = config.gameDir + '/tools/tiled/maps/' + instance + '/' + instance + '.world';
+    AoO.writeJsonFile(fileName, world);
+
+    return { fileName: fileName, count: maps.length };
+};
+
 /* Liste « plan (z...) » des plans existants, pour guider le pull */
 AoO.describePlans = function(config, instance) {
     var data = AoO.api(config, instance, 'GET', '/api/admin/map/plans.php');
@@ -1226,6 +1322,21 @@ AoO.registerSafeAction('AoOBg', 'AoO : Fond / ambiance du plan…', 'AoO — Fon
         '(vitesse du masque : propriété ' + AoO.PROP.planPrefix + 'scrollingMask)');
 });
 
+AoO.registerSafeAction('AoOWorld', 'AoO : Générer le monde (tous les plans)…', 'AoO — Monde', function() {
+    var config = AoO.loadConfig();
+    var instance = AoO.currentInstance(config);
+
+    if (typeof tiled.confirm === 'function' &&
+        !tiled.confirm('Pull de tous les plans de « ' + instance + ' » et génération du monde ?\n\n' +
+            'Peut prendre un moment selon le nombre de plans.', 'AoO — Monde')) {
+        return;
+    }
+
+    var result = AoO.generateWorld(config, instance);
+    tiled.alert(result.count + ' plans positionnés.\n\nMonde écrit : ' + result.fileName +
+        '\n\nOuvrir via le menu Carte → « Charger le monde… » (Load World).', 'AoO — Monde');
+});
+
 AoO.registerSafeAction('AoOBiomes', 'AoO : Biomes (ressources) du plan…', 'AoO — Biomes', function() {
     var map = tiled.activeAsset;
     if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
@@ -1305,7 +1416,8 @@ try {
         { action: 'AoOPush' },
         { action: 'AoONew' },
         { action: 'AoOBg' },
-        { action: 'AoOBiomes' }
+        { action: 'AoOBiomes' },
+        { action: 'AoOWorld' }
     ]);
     tiled.log('AoO : extension chargée, actions dans le menu Fichier');
 } catch (error) {

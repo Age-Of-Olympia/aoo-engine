@@ -130,6 +130,58 @@ class TiledMapService
         return $result;
     }
 
+    /**
+     * Données de disposition pour un monde Tiled : par plan, sa position
+     * (x, y) sur la carte du monde, son étendue de contenu par niveau z, et
+     * les plans vers lesquels ses déclencheurs `tp` mènent (graphe de liens,
+     * pour placer les plans hors grille et signaler les liens cassés).
+     *
+     * @return array{tileSize: int, plans: array<string, array<string, mixed>>}
+     */
+    public function worldLayout(): array
+    {
+        $plans = [];
+
+        // Étendue du contenu par (plan, z)
+        $res = $this->db->exe(
+            'SELECT plan, z, MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY
+             FROM coords GROUP BY plan, z ORDER BY plan, z'
+        );
+        while ($row = $res->fetch_assoc()) {
+            $plan = $row['plan'];
+            $z = (int) $row['z'];
+            $plans[$plan]['zLevels'][] = $z;
+            $plans[$plan]['bounds'][$z] = [
+                'minX' => (int) $row['minX'], 'maxX' => (int) $row['maxX'],
+                'minY' => (int) $row['minY'], 'maxY' => (int) $row['maxY'],
+            ];
+        }
+
+        // Liens tp : plan source → plans destination distincts
+        $links = [];
+        $res = $this->db->exe(
+            'SELECT c.plan AS src, t.params FROM map_triggers t
+             JOIN coords c ON c.id = t.coords_id WHERE t.name = "tp"'
+        );
+        while ($row = $res->fetch_assoc()) {
+            $dest = explode(',', (string) $row['params'])[3] ?? '';
+            $dest = trim($dest);
+            if ($dest !== '' && $dest !== 'plan' && $dest !== $row['src']) {
+                $links[$row['src']][$dest] = true;
+            }
+        }
+
+        // Position (x, y) depuis le JSON de plan + liens
+        foreach ($plans as $plan => &$data) {
+            $position = $this->planConfig->readPosition($plan);
+            $data['x'] = $position['x'];
+            $data['y'] = $position['y'];
+            $data['links'] = array_keys($links[$plan] ?? []);
+        }
+
+        return ['tileSize' => self::TILE_SIZE, 'plans' => $plans];
+    }
+
     /** @return array<string, array{zLevels: int[], coords: int}> plans existants */
     public function listPlans(): array
     {
