@@ -85,16 +85,48 @@ class TiledMapService
     }
 
     /**
-     * Configuration de plan éditable depuis Tiled : le fond/ambiance (clé
-     * « bg » du JSON de plan, cf. Classes/View.php) et les images
-     * candidates — les grandes images de img/tiles (fonds, météo), justement
-     * celles écartées du catalogue de tuiles posables.
+     * Clés du JSON de plan éditables depuis Tiled. Toutes voyagent en
+     * chaîne côté éditeur ('' = clé absente/retirée) ; le type sert à la
+     * validation et au cast à l'écriture. `json` = structure éditée en
+     * texte JSON (biomes).
+     */
+    public const PLAN_CONFIG_KEYS = [
+        'name'              => 'string',
+        'shortName'         => 'string',
+        'x'                 => 'int',
+        'y'                 => 'int',
+        'player_visibility' => 'bool',
+        'pnj'               => 'int',
+        'size'              => 'int',
+        'bg'                => 'image',
+        'mask'              => 'image',
+        'scrollingMask'     => 'int',
+        'verticalScrolling' => 'bool',
+        'biomes'            => 'json',
+    ];
+
+    /**
+     * Configuration de plan pour l'extension : valeurs courantes (en
+     * chaînes) et images candidates pour bg/mask — les grandes images de
+     * img/tiles (fonds, météo), justement celles écartées du catalogue.
      *
-     * @return array{bg: ?string, bgChoices: string[]}
+     * @return array{values: array<string, string>, bgChoices: string[]}
      */
     private function readPlanConfig(string $plan): array
     {
         $json = @json_decode((string) @file_get_contents($this->planJsonPath($plan)), true);
+        $json = is_array($json) ? $json : [];
+
+        $values = [];
+        foreach (self::PLAN_CONFIG_KEYS as $key => $type) {
+            $raw = $json[$key] ?? null;
+            $values[$key] = match (true) {
+                $raw === null           => '',
+                $type === 'bool'        => $raw ? 'true' : 'false',
+                $type === 'json'        => json_encode($raw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                default                 => (string) $raw,
+            };
+        }
 
         $choices = [];
         $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/tiles';
@@ -110,38 +142,124 @@ class TiledMapService
         }
         sort($choices);
 
-        return [
-            'bg'        => is_array($json) ? ($json['bg'] ?? null) : null,
-            'bgChoices' => $choices,
-        ];
+        return ['values' => $values, 'bgChoices' => $choices];
     }
 
     /**
-     * Écrit la clé « bg » du JSON de plan ('' = retirer, retour au fond par
-     * défaut img/tiles/<plan>.webp). Crée le JSON minimal si absent.
+     * Écrit les clés fournies dans le JSON de plan ('' = retirer la clé).
+     * Crée le JSON minimal si absent.
      *
-     * @throws RuntimeException code 400 si la valeur n'est pas une image connue
+     * @param array<string, mixed> $config clé => valeur chaîne
+     * @throws RuntimeException code 400 sur clé inconnue ou valeur invalide
      */
-    public function writePlanBg(string $plan, string $bg): void
+    public function writePlanConfig(string $plan, array $config): void
     {
-        if ($bg !== ''
-            && (!preg_match('#^img/tiles/[a-zA-Z0-9_.-]+$#', $bg)
-                || !file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $bg))
-        ) {
-            throw new RuntimeException('Fond de plan invalide : ' . $bg, 400);
+        $json = $this->loadPlanJson($plan);
+
+        foreach ($config as $key => $raw) {
+            $type = self::PLAN_CONFIG_KEYS[$key] ?? null;
+            if ($type === null || !is_scalar($raw)) {
+                throw new RuntimeException('Propriété de plan inconnue : ' . $key, 400);
+            }
+
+            $raw = trim((string) $raw);
+
+            if ($raw === '') {
+                unset($json[$key]);
+                continue;
+            }
+
+            $json[$key] = match ($type) {
+                'int'    => is_numeric($raw) ? (int) $raw
+                    : throw new RuntimeException($key . ' doit être un entier : ' . $raw, 400),
+                'bool'   => in_array(strtolower($raw), ['true', '1'], true) ? true
+                    : (in_array(strtolower($raw), ['false', '0'], true) ? false
+                    : throw new RuntimeException($key . ' doit valoir true ou false : ' . $raw, 400)),
+                'image'  => (preg_match('#^img/[a-z]+/[a-zA-Z0-9_.-]+$#', $raw)
+                        && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $raw)) ? $raw
+                    : throw new RuntimeException($key . ' : image introuvable : ' . $raw, 400),
+                'json'   => is_array($decoded = json_decode($raw, true)) ? $decoded
+                    : throw new RuntimeException($key . ' : JSON invalide', 400),
+                default  => mb_substr($raw, 0, 255),
+            };
         }
 
+        $this->savePlanJson($plan, $json);
+    }
+
+    /**
+     * Recale les bornes visibles du niveau z sur l'étendue réelle de ses
+     * coordonnées (sauf niveau marqué MapUnavailable). Crée l'entrée
+     * z_levels manquante — plus de bornes à maintenir à la main.
+     */
+    public function updateZLevelBounds(string $plan, int $z): void
+    {
+        $res = $this->db->exe(
+            'SELECT MIN(x) minX, MAX(x) maxX, MIN(y) minY, MAX(y) maxY FROM coords WHERE plan = ? AND z = ?',
+            array($plan, $z)
+        );
+        $bounds = $res->fetch_assoc();
+        if ($bounds === null || $bounds['minX'] === null) {
+            return;
+        }
+
+        $json = $this->loadPlanJson($plan);
+        $json['z_levels'] ??= [];
+
+        $entry = null;
+        foreach ($json['z_levels'] as $i => $level) {
+            if ((int) ($level['z'] ?? PHP_INT_MIN) === $z) {
+                $entry = $i;
+                break;
+            }
+        }
+
+        if ($entry !== null && !empty($json['z_levels'][$entry]['MapUnavailable'])) {
+            return;
+        }
+
+        if ($entry === null) {
+            $json['z_levels'][] = ['z' => $z, 'z-name' => 'Niveau ' . $z];
+            $entry = array_key_last($json['z_levels']);
+        }
+
+        $json['z_levels'][$entry]['visibleBoundsMinX'] = (int) $bounds['minX'];
+        $json['z_levels'][$entry]['visibleBoundsMaxX'] = (int) $bounds['maxX'];
+        $json['z_levels'][$entry]['visibleBoundsMinY'] = (int) $bounds['minY'];
+        $json['z_levels'][$entry]['visibleBoundsMaxY'] = (int) $bounds['maxY'];
+
+        $this->savePlanJson($plan, $json);
+    }
+
+    /**
+     * Bilan de santé du JSON de plan (PlanJsonValidator), remonté dans le
+     * rapport de push. Vide si tout va bien.
+     *
+     * @return array{errors: string[], warnings: string[]}
+     */
+    public function validatePlanJson(string $plan): array
+    {
+        $data = @json_decode((string) @file_get_contents($this->planJsonPath($plan)));
+        if (!is_object($data)) {
+            return ['errors' => [], 'warnings' => []];
+        }
+
+        $result = PlanJsonValidator::validate($data, $plan, $this->db);
+
+        return ['errors' => $result['errors'], 'warnings' => $result['warnings']];
+    }
+
+    /** @return array<string, mixed> */
+    private function loadPlanJson(string $plan): array
+    {
+        $json = @json_decode((string) @file_get_contents($this->planJsonPath($plan)), true);
+
+        return is_array($json) ? $json : ['name' => $plan];
+    }
+
+    private function savePlanJson(string $plan, array $json): void
+    {
         $path = $this->planJsonPath($plan);
-        $json = @json_decode((string) @file_get_contents($path), true);
-        if (!is_array($json)) {
-            $json = ['name' => $plan];
-        }
-
-        if ($bg === '') {
-            unset($json['bg']);
-        } else {
-            $json['bg'] = $bg;
-        }
 
         if (!is_dir(dirname($path))) {
             throw new RuntimeException('Répertoire des plans introuvable : ' . dirname($path), 500);

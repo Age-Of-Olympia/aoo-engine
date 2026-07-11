@@ -38,11 +38,19 @@ try {
     $service = new TiledMapService();
     $result = $service->importPlan($plan, $z, $layers, $version);
 
-    // Fond/ambiance du plan (clé bg du JSON de plan), '' = retirer.
-    // Hors du contrôle de version : configuration de plan, pas du contenu.
-    if (isset($body['bg']) && is_string($body['bg'])) {
-        $service->writePlanBg($plan, $body['bg']);
-        $result['bg'] = $body['bg'];
+    // Propriétés du plan (JSON de plan), '' = retirer la clé. Hors du
+    // contrôle de version : configuration de plan, pas du contenu de carte.
+    if (isset($body['planConfig']) && is_array($body['planConfig'])) {
+        $service->writePlanConfig($plan, $body['planConfig']);
+    }
+
+    // Bornes visibles du niveau recalées sur le contenu réel
+    $service->updateZLevelBounds($plan, $z);
+
+    // Bilan de santé du JSON de plan (validator), remonté si non vide
+    $health = $service->validatePlanJson($plan);
+    if ($health['errors'] !== [] || $health['warnings'] !== []) {
+        $result['planHealth'] = $health;
     }
 } catch (\RuntimeException $e) {
     tiledFail(tiledHttpCode($e), $e->getMessage());

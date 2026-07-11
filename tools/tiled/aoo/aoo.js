@@ -39,8 +39,8 @@ AoO.PROP = {
     playerBuilt: 'aooPlayerBuilt', /* couche : constructions des joueurs, hors push */
     plan: 'aooPlan',            /* carte : nom du plan */
     instance: 'aooInstance',    /* carte : instance d'origine — le push y est verrouillé */
-    bg: 'aooBg',                /* carte : fond/ambiance du plan (clé bg du JSON de plan) */
-    bgChoices: 'aooBgChoices',  /* carte : images candidates (info, alimenté au pull) */
+    planPrefix: 'aooPlan_',     /* carte : propriétés du JSON de plan (aooPlan_name, aooPlan_bg…) */
+    imageChoices: 'aooImageChoices', /* carte : images candidates bg/mask (info, alimenté au pull) */
     z: 'aooZ',                  /* groupe : niveau z */
     version: 'aooVersion'       /* groupe : version d'édition du niveau */
 };
@@ -579,11 +579,13 @@ AoO.pull = function(plan, zSpec, config) {
     map.setProperty(AoO.PROP.plan, plan);
     map.setProperty(AoO.PROP.instance, instance);
 
-    /* fond/ambiance du plan (clé bg du JSON de plan) — modifiable via
-       l'action « Fond / ambiance du plan… », appliqué au push */
+    /* propriétés du JSON de plan, éditables directement dans le panneau
+       Propriétés de la carte ('' = clé absente), réécrites au push */
     if (firstData.planConfig) {
-        map.setProperty(AoO.PROP.bg, firstData.planConfig.bg || '');
-        map.setProperty(AoO.PROP.bgChoices, JSON.stringify(firstData.planConfig.bgChoices || []));
+        for (var configKey in firstData.planConfig.values) {
+            map.setProperty(AoO.PROP.planPrefix + configKey, firstData.planConfig.values[configKey]);
+        }
+        map.setProperty(AoO.PROP.imageChoices, JSON.stringify(firstData.planConfig.bgChoices || []));
     }
 
     var registry = {};
@@ -810,6 +812,21 @@ AoO.serializeContainer = function(container, tileSize) {
     return layers;
 };
 
+/* Propriétés aooPlan_* de la carte → objet {clé: valeur} pour l'import */
+AoO.collectPlanConfig = function(map) {
+    var config = null;
+    var properties = map.properties();
+
+    for (var name in properties) {
+        if (name.indexOf(AoO.PROP.planPrefix) === 0) {
+            config = config || {};
+            config[name.substring(AoO.PROP.planPrefix.length)] = String(properties[name]);
+        }
+    }
+
+    return config;
+};
+
 /*
  * Pousse la carte vers le jeu, un import transactionnel par niveau z.
  * Retourne [{z, layers}] ; en cas d'échec sur un niveau, les niveaux
@@ -842,9 +859,12 @@ AoO.push = function(map) {
             layers: AoO.serializeContainer(group, map.tileWidth)
         };
 
-        /* le fond du plan est global : envoyé avec le premier niveau */
-        if (reports.length === 0 && map.property(AoO.PROP.bg) !== undefined) {
-            payload.bg = String(map.property(AoO.PROP.bg));
+        /* les propriétés du plan sont globales : envoyées avec le premier niveau */
+        if (reports.length === 0) {
+            var planConfig = AoO.collectPlanConfig(map);
+            if (planConfig) {
+                payload.planConfig = planConfig;
+            }
         }
 
         try {
@@ -857,7 +877,7 @@ AoO.push = function(map) {
         }
 
         group.setProperty(AoO.PROP.version, data.newVersion);
-        reports.push({ z: z, layers: data.layers });
+        reports.push({ z: z, layers: data.layers, planHealth: data.planHealth });
     }
 
     if (reports.length === 0) {
@@ -869,6 +889,7 @@ AoO.push = function(map) {
 
 AoO.formatReport = function(reports) {
     var lines = [];
+    var health = null;
 
     for (var i = 0; i < reports.length; i++) {
         var report = reports[i];
@@ -880,9 +901,21 @@ AoO.formatReport = function(reports) {
                     (r.protected ? ' / ' + r.protected + ' protégés (joueurs)' : ''));
             }
         }
+        if (report.planHealth) {
+            health = report.planHealth; /* même bilan à chaque niveau : garder le dernier */
+        }
     }
 
-    return lines.length ? lines.join('\n') : 'Aucun changement.';
+    var text = lines.length ? lines.join('\n') : 'Aucun changement.';
+
+    if (health) {
+        var issues = (health.errors || []).concat(health.warnings || []);
+        if (issues.length) {
+            text += '\n\n⚠ Santé du JSON de plan :\n' + issues.join('\n');
+        }
+    }
+
+    return text;
 };
 
 /* ------------------------------------------------------------------ */
@@ -945,39 +978,53 @@ tiled.registerAction('AoOBg', function() {
     }
 
     try {
-        var choices = JSON.parse(String(map.property(AoO.PROP.bgChoices) || '[]'));
-        var current = String(map.property(AoO.PROP.bg) || '');
-        var NONE = '(défaut : img/tiles/' + map.property(AoO.PROP.plan) + '.webp)';
+        var choices = JSON.parse(String(map.property(AoO.PROP.imageChoices) || '[]'));
+        var NONE = '(aucun / défaut)';
         var options = [NONE].concat(choices);
-        var picked = null;
+        var propBg = AoO.PROP.planPrefix + 'bg';
+        var propMask = AoO.PROP.planPrefix + 'mask';
+        var currentBg = String(map.property(propBg) || '');
+        var currentMask = String(map.property(propMask) || '');
+        var applied = false;
 
         if (typeof Dialog !== 'undefined') {
             try {
                 var dialog = new Dialog('AoO — Fond / ambiance du plan');
-                var combo = dialog.addComboBox('Fond :', options);
-                combo.currentIndex = Math.max(0, options.indexOf(current));
+                var comboBg = dialog.addComboBox('Fond (bg) :', options);
+                comboBg.currentIndex = Math.max(0, options.indexOf(currentBg));
+                dialog.addNewRow();
+                var comboMask = dialog.addComboBox('Masque animé (mask) :', options);
+                comboMask.currentIndex = Math.max(0, options.indexOf(currentMask));
                 dialog.addNewRow();
                 dialog.addButton('OK').clicked.connect(function() {
-                    picked = options[combo.currentIndex];
+                    map.setProperty(propBg, options[comboBg.currentIndex] === NONE ? '' : options[comboBg.currentIndex]);
+                    map.setProperty(propMask, options[comboMask.currentIndex] === NONE ? '' : options[comboMask.currentIndex]);
+                    applied = true;
                     dialog.accept();
                 });
                 dialog.addButton('Annuler').clicked.connect(function() { dialog.reject(); });
                 dialog.exec();
             } catch (dialogError) {
-                picked = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
-                    current, 'AoO — Fond du plan');
+                var picked = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
+                    currentBg, 'AoO — Fond du plan');
+                if (picked !== null) {
+                    map.setProperty(propBg, picked.trim());
+                    applied = true;
+                }
             }
         } else {
-            picked = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
-                current, 'AoO — Fond du plan');
+            var pickedBg = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
+                currentBg, 'AoO — Fond du plan');
+            if (pickedBg !== null) {
+                map.setProperty(propBg, pickedBg.trim());
+                applied = true;
+            }
         }
 
-        if (picked === null) {
-            return;
+        if (applied) {
+            tiled.log('AoO : fond/masque du plan mis à jour — appliqué au prochain push ' +
+                '(vitesse du masque : propriété ' + AoO.PROP.planPrefix + 'scrollingMask)');
         }
-
-        map.setProperty(AoO.PROP.bg, picked === NONE ? '' : picked.trim());
-        tiled.log('AoO : fond du plan « ' + (picked === NONE ? '(défaut)' : picked) + ' » — appliqué au prochain push');
     } catch (error) {
         tiled.alert(String(error), 'AoO — Fond du plan');
     }

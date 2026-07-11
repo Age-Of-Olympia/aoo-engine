@@ -112,13 +112,24 @@ haut-gauche) à la racine de `img/<couche>/`, puis re-puller. Les tuiles de
 sol (`tiles`) restent strictement 50x50 : pas de structures sur cette
 couche, le décor multi-tuiles vit en `foregrounds`/`elements`.
 
-### Le fond / l'ambiance du plan
+### Les propriétés du plan (nom, fond, visibilité, biomes…)
 
-Le fond du plan (et les ambiances type brume, tempête…) n'est pas une
-tuile : c'est la clé `bg` du JSON de plan. **Fichier → AoO : Fond /
+Le JSON de plan est éditable directement : chaque clé apparaît en
+**propriété de la carte** préfixée `aooPlan_` (panneau Propriétés quand
+aucun élément n'est sélectionné) — `name`, `shortName`, `x`/`y` (position
+sur la carte du monde), `player_visibility` (`true`/`false`),
+`pnj`, `size`, `bg`, `mask`, `scrollingMask`, `verticalScrolling`,
+`biomes` (JSON des ressources). Une valeur vide = clé retirée. Tout est
+validé et appliqué au push ; le rapport remonte le bilan de santé du
+plan (`PlanJsonValidator` : biomes en doublon, ressources inconnues…).
+
+Raccourci pour le fond et le masque animé : **Fichier → AoO : Fond /
 ambiance du plan…** liste les grandes images disponibles (celles justement
-absentes de la palette) ; le choix est mémorisé sur la carte et appliqué au
-prochain push.
+absentes de la palette).
+
+Les **bornes visibles des niveaux z** (`z_levels`) ne se maintiennent plus
+à la main : à chaque push, elles sont recalées sur l'étendue réelle du
+niveau (sauf niveau marqué `MapUnavailable`).
 
 ### Le pinceau Terrain (transitions automatiques)
 
