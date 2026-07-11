@@ -161,16 +161,27 @@ AoO.loadSession = function() {
     return { current: null, instances: {} };
 };
 
-/* Instance active : la dernière connectée, sinon la première configurée */
+/* Instance active : la dernière connectée (nom déclaré ou URL ad hoc),
+   sinon la première configurée */
 AoO.currentInstance = function(config) {
     var session = AoO.loadSession();
-    if (session.current && config.instances[session.current]) {
+    if (session.current && (config.instances[session.current] || AoO.isUrl(session.current))) {
         return session.current;
     }
     return Object.keys(config.instances)[0];
 };
 
+/* Une « instance » est soit un nom déclaré dans config.json, soit une URL
+   saisie à la volée (elle est alors sa propre identité et son propre
+   baseUrl) — pour viser un serveur ponctuel sans éditer config.json. */
+AoO.isUrl = function(instance) {
+    return /^https?:\/\//i.test(instance);
+};
+
 AoO.instanceBaseUrl = function(config, instance) {
+    if (AoO.isUrl(instance)) {
+        return instance.replace(/\/+$/, '');
+    }
     var entry = config.instances[instance];
     if (!entry || !entry.baseUrl) {
         throw new Error('Instance inconnue dans config.json : ' + instance);
@@ -274,12 +285,15 @@ AoO.showFormDialog = function(title, fields) {
  * une carte déjà liée à son instance) ; sinon liste déroulante.
  * Retourne { instance, name, psw } ou null si annulé.
  */
+AoO.CUSTOM_INSTANCE = '(adresse personnalisée…)';
+
 AoO.showLoginDialog = function(config, fixedInstance) {
     var fields = [];
     if (!fixedInstance) {
         fields.push({
             key: 'instance', label: 'Instance :', type: 'combo',
-            options: Object.keys(config.instances), value: AoO.currentInstance(config)
+            options: Object.keys(config.instances).concat(AoO.CUSTOM_INSTANCE),
+            value: AoO.currentInstance(config)
         });
     }
     fields.push({ key: 'name', label: 'Compte admin (nom ou matricule) :', type: 'text' });
@@ -292,6 +306,16 @@ AoO.showLoginDialog = function(config, fixedInstance) {
     }
 
     values.instance = fixedInstance || values.instance;
+
+    /* adresse saisie directement : demander l'URL du serveur */
+    if (values.instance === AoO.CUSTOM_INSTANCE) {
+        var url = tiled.prompt('Adresse du serveur (ex. https://mon-serveur.net) :', 'https://', title);
+        if (!url || !AoO.isUrl(url.trim())) {
+            return null;
+        }
+        values.instance = url.trim().replace(/\/+$/, '');
+    }
+
     AoO.instanceBaseUrl(config, values.instance); /* rejette une instance inconnue saisie au prompt */
     return values;
 };

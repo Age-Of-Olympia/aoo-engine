@@ -5,5 +5,6 @@
         "test": { "baseUrl": "https://test.age-of-olympia.net" },
         "experimental": { "baseUrl": "https://experimental.age-of-olympia.net" },
         "prod": { "baseUrl": "https://age-of-olympia.net" }
-    }
+    },
+    "_note": "À la connexion, choisir « (adresse personnalisée…) » permet de saisir une URL de serveur à la volée, sans l'ajouter ici."
 }
