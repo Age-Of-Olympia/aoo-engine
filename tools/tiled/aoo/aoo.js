@@ -586,6 +586,7 @@ AoO.pull = function(plan, zSpec, config) {
     }
 
     AoO.addCatalogTiles(map, firstData, registry, config);
+    AoO.addCompositeTiles(map, firstData, registry, config);
     AoO.applyTerrains(registry, config);
 
     return map;
@@ -604,6 +605,56 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
         var names = data.catalog[layerName];
         for (var i = 0; i < names.length; i++) {
             AoO.tileFor(map, registry, layerName, names[i], data.images, config);
+        }
+    }
+};
+
+/*
+ * Structures multi-tuiles : une grande tuile de palette par structure
+ * (image entière, ancrée en bas à gauche de sa case), que le push
+ * ré-éclate en morceaux « base-NN » individuels — voir
+ * AoO.expandComposite. Un pull ultérieur ré-affiche les morceaux, ce qui
+ * revient au même visuellement.
+ */
+AoO.addCompositeTiles = function(map, data, registry, config) {
+    if (!data.composites) {
+        return;
+    }
+    for (var layerName in data.composites) {
+        var entries = data.composites[layerName];
+        for (var i = 0; i < entries.length; i++) {
+            var composite = entries[i];
+            /* garantit le tileset de la couche puis y ajoute la grande tuile */
+            AoO.tileFor(map, registry, layerName, composite.pieces[0], data.images, config);
+            var entry = registry[layerName];
+
+            var tile = entry.tileset.addTile();
+            tile.imageFileName = config.gameDir + '/' + composite.image;
+            tile.setProperty('aooComposite', JSON.stringify({
+                width: composite.width,
+                height: composite.height,
+                pieces: composite.pieces
+            }));
+        }
+    }
+};
+
+/*
+ * Éclate une grande tuile de structure posée en (x, y) Tiled (= sa case
+ * d'ancrage, en bas à gauche) en morceaux individuels. Les morceaux sont
+ * numérotés row-major depuis le coin haut-gauche (convention des
+ * convert.sh historiques), et le y du jeu monte.
+ */
+AoO.expandComposite = function(composite, tiledX, tiledY, rows) {
+    var anchorGameY = -tiledY;
+
+    for (var r = 0; r < composite.height; r++) {
+        for (var c = 0; c < composite.width; c++) {
+            rows.push({
+                x: tiledX + c,
+                y: anchorGameY + (composite.height - 1 - r),
+                name: composite.pieces[r * composite.width + c]
+            });
         }
     }
 };
@@ -644,6 +695,13 @@ AoO.serializeTileLayer = function(layer) {
             if (!tile) {
                 continue;
             }
+
+            var compositeSpec = tile.property('aooComposite');
+            if (compositeSpec) {
+                AoO.expandComposite(JSON.parse(compositeSpec), x, y, rows);
+                continue;
+            }
+
             var name = tile.property(AoO.PROP.name);
             if (!name) {
                 throw new Error('Tuile sans propriété ' + AoO.PROP.name + ' en ' + x + ',' + (-y) +

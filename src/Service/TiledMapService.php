@@ -71,15 +71,75 @@ class TiledMapService
         ['catalog' => $catalog, 'images' => $images] = $this->buildCatalog();
 
         return [
-            'plan'     => $plan,
-            'z'        => $z,
-            'zLevels'  => $zLevels,
-            'tileSize' => self::TILE_SIZE,
-            'version'  => $this->computeVersion($layers),
-            'layers'   => $layers,
-            'catalog'  => $catalog,
-            'images'   => $images,
+            'plan'       => $plan,
+            'z'          => $z,
+            'zLevels'    => $zLevels,
+            'tileSize'   => self::TILE_SIZE,
+            'version'    => $this->computeVersion($layers),
+            'layers'     => $layers,
+            'catalog'    => $catalog,
+            'images'     => $images,
+            'composites' => $this->buildComposites(),
         ];
+    }
+
+    /**
+     * Structures multi-tuiles : les grandes images découpées en morceaux
+     * « base-NN » (row-major depuis le coin haut-gauche, cf. les convert.sh
+     * historiques). Convention détectée : img/<couche>/<base>/<base>.png
+     * (l'originale entière) + les morceaux img/<couche>/<base>-NN.png à la
+     * racine. L'extension en fait des tuiles de palette « une structure en
+     * un clic » que le push ré-éclate en morceaux individuels.
+     *
+     * @return array<string, array<int, array{name: string, image: string, width: int, height: int, pieces: string[]}>>
+     */
+    private function buildComposites(): array
+    {
+        $composites = [];
+
+        foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
+            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
+
+            foreach (is_dir($dir) ? scandir($dir) : [] as $base) {
+                if ($base === '.' || $base === '..'
+                    || !preg_match('/^[a-zA-Z0-9_.-]+$/', $base)
+                    || !is_file($dir . '/' . $base . '/' . $base . '.png')
+                ) {
+                    continue;
+                }
+
+                $size = @getimagesize($dir . '/' . $base . '/' . $base . '.png');
+                if (!$size || $size[0] % self::TILE_SIZE !== 0 || $size[1] % self::TILE_SIZE !== 0) {
+                    continue;
+                }
+
+                $width = (int) ($size[0] / self::TILE_SIZE);
+                $height = (int) ($size[1] / self::TILE_SIZE);
+                if ($width * $height < 2) {
+                    continue;
+                }
+
+                // Tous les morceaux doivent exister à la racine (rendu du jeu)
+                $pieces = [];
+                for ($i = 0; $i < $width * $height; $i++) {
+                    $piece = sprintf('%s-%02d', $base, $i);
+                    if (!file_exists($dir . '/' . $piece . '.png')) {
+                        continue 2;
+                    }
+                    $pieces[] = $piece;
+                }
+
+                $composites[$layer][] = [
+                    'name'   => $base,
+                    'image'  => 'img/' . $layer . '/' . $base . '/' . $base . '.png',
+                    'width'  => $width,
+                    'height' => $height,
+                    'pieces' => $pieces,
+                ];
+            }
+        }
+
+        return $composites;
     }
 
     /** @return array<string, array{zLevels: int[], coords: int}> plans existants */
@@ -387,6 +447,14 @@ class TiledMapService
                     || !preg_match('/^[a-zA-Z0-9_.-]+$/', $name)
                     || isset($names[$name])
                 ) {
+                    continue;
+                }
+
+                // Écarte les images qui ne sont pas des tuiles posables :
+                // fonds de plan et effets météo (gaia.webp 500x500,
+                // dust_storm.webp 2848x862…) rangés dans les mêmes dossiers
+                $size = @getimagesize($dir . '/' . $fileName);
+                if (!$size || $size[0] > self::TILE_SIZE * 1.2 || $size[1] > self::TILE_SIZE * 1.2) {
                     continue;
                 }
 

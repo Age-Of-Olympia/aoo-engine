@@ -70,8 +70,45 @@ clair.
      des zones entières.
 4. **Capturer une structure** : avec le tampon (B), **clic droit + glisser**
    sur la carte capture la zone sous le curseur comme pinceau — idéal pour
-   dupliquer un bâtiment. (La capture ne prend que la couche active.)
+   dupliquer un bâtiment.
 5. **Ctrl+Z** annule, sans limite, jusqu'au push.
+
+### Copier des zones sur plusieurs couches à la fois
+
+Les outils opèrent sur **les couches sélectionnées** — et on peut en
+sélectionner plusieurs (**Ctrl+clic** dans le panneau Calques) :
+
+- couches `tiles` + `walls` + `foregrounds` sélectionnées → **R**, tracer la
+  zone, **Ctrl+C**, **Ctrl+V** : l'aperçu suit la souris, un clic dépose le
+  tout, chaque contenu sur sa couche ;
+- même principe pour le tampon : capture au clic droit avec plusieurs
+  couches sélectionnées = **tampon multi-couches** (sol + murs + décor en un
+  seul pinceau) ;
+- les bons tampons se conservent : panneau **Affichage → Tile Stamps** →
+  enregistrer (pointer le dossier des tampons sur `tools/tiled/stamps/` pour
+  les partager via git) ;
+- pour dupliquer un niveau entier : tout sélectionner (**Ctrl+A**) avec les
+  couches voulues, copier, sélectionner les couches de destination (autre
+  groupe z ou autre carte), coller.
+
+Limites : les **objets** (triggers, dialogs) ne suivent pas le copier-coller
+de tuiles — les dupliquer à part (outil flèche, sélection, Ctrl+C/V ou
+Ctrl+D) ; et les couches verrouillées « (joueurs) » refusent le collage,
+c'est voulu.
+
+### Les structures multi-tuiles (olympia, porte des enfers…)
+
+Les grandes images historiquement découpées en morceaux (`olympia-00` à
+`-03`…) existent dans la palette **en une seule grande tuile** (l'image
+entière, à la fin du tileset de leur couche). La poser = **un clic**, ancré
+par sa case bas-gauche ; au push, elle est automatiquement ré-éclatée en
+morceaux individuels pour le jeu. Un pull ultérieur ré-affiche les morceaux
+séparés — c'est normal, le rendu est identique.
+
+Convention pour créer une nouvelle structure : déposer l'image entière dans
+`img/<couche>/<base>/<base>.png` (dimensions multiples de 50) et ses
+morceaux `<base>-NN.png` (numérotés ligne par ligne depuis le coin
+haut-gauche) à la racine de `img/<couche>/`, puis re-puller.
 
 ### Le pinceau Terrain (transitions automatiques)
 
