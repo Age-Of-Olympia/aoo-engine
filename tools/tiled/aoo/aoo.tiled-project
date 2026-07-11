@@ -22,30 +22,6 @@
             ]
         },
         {
-            "color": "#ff14b8a6",
-            "drawFill": true,
-            "id": 7,
-            "members": [
-            ],
-            "name": "enter",
-            "type": "class",
-            "useAs": [
-                "object"
-            ]
-        },
-        {
-            "color": "#fff97316",
-            "drawFill": true,
-            "id": 8,
-            "members": [
-            ],
-            "name": "exit",
-            "type": "class",
-            "useAs": [
-                "object"
-            ]
-        },
-        {
             "color": "#ffef4444",
             "drawFill": true,
             "id": 4,

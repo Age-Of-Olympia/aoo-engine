@@ -162,7 +162,8 @@ Les cas particuliers de l'ancien éditeur sont de vrais objets typés :
 |---|---|---|
 | Déclencheurs `tp` | params `x,y,z,plan` | ✅ champs typés |
 | Déclencheurs `need` | params `item:name:n,spell:...` | ✅ champ conditions |
-| `forbidden`, `rez`, `altar`, `enter`, `exit` | sans params | ✅ classes colorées |
+| `forbidden`, `rez`, `altar` | sans params | ✅ classes colorées |
+| `enter`, `exit` | voyage inter-plans | 🗑 supprimés avec le système d'exits (jamais utilisé) |
 | Dialogs `question` | params = id de dialogue | ✅ champ dialog |
 | Murs ressources | `damages` -1/-2, WALLS_PV | défaut -1 à l'insertion — OK ; l'état de récolte (-2 épuisé) est du **runtime**, non authorable depuis Tiled (préservé sur les lignes conservées ; l'outil faux de `tiled.php` reste l'outil de retouche en jeu) |
 | Éléments temporaires | `endTime` | ✅ rien à faire : insertion sans endTime = défaut 0 = permanent (le cron `delete_elements` ne supprime que `endTime != 0`) ; préservé sur lignes conservées |
@@ -180,12 +181,12 @@ Toutes les clés du JSON de plan lues par le code, et leur état côté Tiled :
 | `x`, `y` | ViewService:1069 | position du territoire sur la carte du monde | ❌ |
 | `player_visibility` | View/go/observe (isolation tutoriel) | masquer les autres joueurs | ❌ |
 | `pnj` | local.php, local_map.php | PNJ gardien du territoire | ❌ |
-| `war` | local.php | bandeau « territoire en guerre » | ❌ |
 | `size` | local.php | largeur de la carte locale | ❌ |
 | `mask` | View.php:655 | image de masque par-dessus la vue | ❌ (même liste d'images que bg) |
 | `scrollingMask` | View.php:658 | vitesse d'animation du masque (s) | ❌ |
 | `verticalScrolling` | View.php:678 | sens de défilement du masque | ❌ |
-| `exits` | travel.php | sorties directionnelles vers d'autres plans | ❌ (structuré) |
+| `war` | — | 🗑 fonctionnalité jamais terminée, code retiré |
+| `exits` | — | 🗑 voyage inter-plans jamais utilisé, retiré (avec travel.php, triggers enter/exit, get_from_dir, table Routes) |
 | `biomes` | ResourceService, cron refresh_resources, ResourceOutcomeInstruction | ressources : mur → ressource, exhaust/regrow | ❌ (structuré) |
 | `z_levels` | map.php, ViewService, PlanJsonValidator | nom + bornes visibles par niveau (ou MapUnavailable) | ❌ (bornes dérivables du contenu poussé !) |
 | `id`, `fromCoords` | injectés au runtime par map.php | — | n/a (jamais stockés) |

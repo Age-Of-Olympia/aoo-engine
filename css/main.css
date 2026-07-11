@@ -778,10 +778,6 @@ article.pnj {
     stroke-linejoin: miter;
 }
 
-#svg-map .colored-red {
-
-    filter: brightness(0) saturate(100%) invert(29%) sepia(100%) saturate(7495%) hue-rotate(1deg) brightness(103%) contrast(103%);
-}
 
 
 .map-local{
