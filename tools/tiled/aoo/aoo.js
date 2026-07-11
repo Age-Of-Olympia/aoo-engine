@@ -329,7 +329,8 @@ AoO.api = function(config, instance, method, path, body) {
  * Tilesets « collection d'images », un par couche, partagés entre les
  * niveaux z : une tuile par nom distinct, image individuelle du dépôt.
  */
-AoO.tileFor = function(map, registry, layerName, name, images, config) {
+/* Tileset (lazy) d'une couche, partagé entre les niveaux z */
+AoO.layerTileset = function(map, registry, layerName) {
     var entry = registry[layerName];
 
     if (!entry) {
@@ -338,6 +339,12 @@ AoO.tileFor = function(map, registry, layerName, name, images, config) {
         map.addTileset(tileset);
         entry = registry[layerName] = { tileset: tileset, byName: {} };
     }
+
+    return entry;
+};
+
+AoO.tileFor = function(map, registry, layerName, name, images, config) {
+    var entry = AoO.layerTileset(map, registry, layerName);
 
     var tile = entry.byName[name];
     if (!tile) {
@@ -601,10 +608,26 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
     if (!data.catalog) {
         return;
     }
+
+    /* les morceaux des structures (olympia-00…) n'encombrent pas la
+       palette : on pose la structure entière (addCompositeTiles) ; ils ne
+       réapparaissent que si le plan pullé en contient déjà (buildLevel) */
+    var pieceNames = {};
+    for (var compositeLayer in (data.composites || {})) {
+        var entries = data.composites[compositeLayer];
+        for (var e = 0; e < entries.length; e++) {
+            for (var p = 0; p < entries[e].pieces.length; p++) {
+                pieceNames[compositeLayer + '/' + entries[e].pieces[p]] = true;
+            }
+        }
+    }
+
     for (var layerName in data.catalog) {
         var names = data.catalog[layerName];
         for (var i = 0; i < names.length; i++) {
-            AoO.tileFor(map, registry, layerName, names[i], data.images, config);
+            if (!pieceNames[layerName + '/' + names[i]]) {
+                AoO.tileFor(map, registry, layerName, names[i], data.images, config);
+            }
         }
     }
 };
@@ -624,9 +647,7 @@ AoO.addCompositeTiles = function(map, data, registry, config) {
         var entries = data.composites[layerName];
         for (var i = 0; i < entries.length; i++) {
             var composite = entries[i];
-            /* garantit le tileset de la couche puis y ajoute la grande tuile */
-            AoO.tileFor(map, registry, layerName, composite.pieces[0], data.images, config);
-            var entry = registry[layerName];
+            var entry = AoO.layerTileset(map, registry, layerName);
 
             var tile = entry.tileset.addTile();
             tile.imageFileName = config.gameDir + '/' + composite.image;
