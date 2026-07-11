@@ -169,47 +169,49 @@ Les cas particuliers de l'ancien éditeur sont de vrais objets typés :
 | Éléments temporaires | `endTime` | ✅ rien à faire : insertion sans endTime = défaut 0 = permanent (le cron `delete_elements` ne supprime que `endTime != 0`) ; préservé sur lignes conservées |
 | Plantes | params (croissance) | params dans la clé d'identité — à valider en jeu |
 
-### Phase 2c — Propriétés de plan (inventaire, à faire)
+### Phase 2c — Propriétés de plan (faite)
 
-Toutes les clés du JSON de plan lues par le code, et leur état côté Tiled :
+Toutes les clés du JSON de plan lues par le code sont éditables depuis Tiled :
 
-| Clé | Consommateurs | Rôle | Tiled |
-|---|---|---|---|
-| `bg` | `Classes/View.php:96` | fond/ambiance de la vue | ✅ action dédiée |
-| `name` | map.php, local.php… (13 usages) | nom affiché du territoire | ❌ |
-| `shortName` | ViewService (carte du monde) | nom court | ❌ |
-| `x`, `y` | ViewService:1069 | position du territoire sur la carte du monde | ❌ |
-| `player_visibility` | View/go/observe (isolation tutoriel) | masquer les autres joueurs | ❌ |
-| `pnj` | local.php, local_map.php | PNJ gardien du territoire | ❌ |
-| `size` | local.php | largeur de la carte locale | ❌ |
-| `mask` | View.php:655 | image de masque par-dessus la vue | ❌ (même liste d'images que bg) |
-| `scrollingMask` | View.php:658 | vitesse d'animation du masque (s) | ❌ |
-| `verticalScrolling` | View.php:678 | sens de défilement du masque | ❌ |
-| `war` | — | 🗑 fonctionnalité jamais terminée, code retiré |
-| `exits` | — | 🗑 voyage inter-plans jamais utilisé, retiré (avec travel.php, triggers enter/exit, get_from_dir, table Routes) |
-| `biomes` | ResourceService, cron refresh_resources, ResourceOutcomeInstruction | ressources : mur → ressource, exhaust/regrow | ❌ (structuré) |
-| `z_levels` | map.php, ViewService, PlanJsonValidator | nom + bornes visibles par niveau (ou MapUnavailable) | ❌ (bornes dérivables du contenu poussé !) |
-| `id`, `fromCoords` | injectés au runtime par map.php | — | n/a (jamais stockés) |
+| Clé | Rôle | État Tiled |
+|---|---|---|
+| `name`, `shortName`, `x`, `y`, `pnj`, `size` | nom/position/gardien/taille | ✅ propriétés de carte `aooPlan_*` |
+| `player_visibility` | masquer les autres joueurs | ✅ `aooPlan_player_visibility` |
+| `bg` | fond de la vue | ✅ `aooPlan_bg` + action « Fond / ambiance » |
+| `mask`, `scrollingMask`, `verticalScrolling` | masque animé (météo) | ✅ `aooPlan_*` (+ action pour bg/mask) |
+| `biomes` | ressources : mur → ressource, exhaust/regrow | ✅ `aooPlan_biomes` (JSON édité en propriété) |
+| `z_levels` | nom + bornes visibles + MapUnavailable par niveau | ✅ propriétés du groupe `aooZ_*` ; bornes `auto` (recalculées) ou imposées |
+| `war`, `exits` | — | 🗑 morts-nés, code retiré |
+| `id`, `fromCoords` | injectés au runtime par map.php | n/a (jamais stockés) |
 
-Lots proposés :
-1. **Scalaires simples** (name, shortName, x, y, player_visibility, pnj,
-   war, size, mask, scrollingMask, verticalScrolling) : exposés en
-   propriétés de carte `aooPlan_*` au pull, réécrits génériquement au push —
-   même mécanique que `bg`.
-2. **z_levels** : calculer automatiquement les bornes visibles depuis le
-   contenu poussé (min/max des coords par niveau) et valider via le
-   `PlanJsonValidator` existant — supprime une maintenance manuelle.
-3. **biomes / exits** : structurés, à concevoir (édition JSON assistée ou
-   objets typés dédiés).
+Validation : chaque push passe par `PlanJsonValidator` (enrichi côté staging)
+et remonte son bilan (biomes en doublon, ressources inconnues, niveaux z non
+déclarés…).
 
-### Phase 3 — Industrialisation
+### Reste à faire
 
-- Documentation admin (`docs/tiled-editor-guide.md`) : installation de Tiled,
-  dépôt des extensions, workflow pull/édition/push.
-- Export périodique des plans en `.tmj` versionnés dans git (diff/review des
-  cartes, sauvegarde).
-- Décommissionnement progressif de `tiled.php` (gardé pour les retouches
-  rapides in-game tant qu'utile).
+- **Édition assistée des biomes** : aujourd'hui `aooPlan_biomes` s'édite en
+  JSON brut ; un formulaire dédié (ou des objets typés) serait plus sûr.
+  À valider en jeu : la clé d'identité des plantes inclut `params`.
+- **Bibliothèque de structures** : tampons Tiled partagés dans le dépôt
+  (`tools/tiled/stamps/`).
+- **Rendu du fond/masque dans Tiled** : l'éditeur ne montre pas les images
+  bg/mask (seule leur valeur est en propriété) ; on pourrait poser l'image
+  de fond de la carte au pull.
+- **Industrialisation** (phase 3) : export périodique des plans en `.tmj`
+  versionnés dans git (diff/review, sauvegarde) ; décommissionnement
+  progressif de `tiled.php` (gardé pour les retouches rapides in-game).
+
+### Déploiement (à ne pas oublier)
+
+- `img/` n'est pas versionné : les assets **générés/déplacés** par ce travail
+  doivent être reportés dans la source d'assets déployée — les ~294 tuiles de
+  transition (`img/tiles/trans_*`) et l'arbre sacré déplacé en
+  `img/foregrounds/` ; les images `enter.png`/`exit.png` retirées de
+  `img/triggers/`.
+- Pour viser une instance déployée (test…), cette MR doit y être déployée
+  (test suit `staging`) et un `config/tiled_constants.php` avec son propre
+  secret doit exister sur ce serveur.
 
 ## Emplacements
 
