@@ -8,8 +8,9 @@ use Classes\Db;
  * Authentification des endpoints Tiled (api/admin/map/*).
  *
  * L'extension Tiled se connecte avec un compte du jeu (nom ou matricule +
- * mot de passe) qui doit posséder l'option isAdmin. Le serveur délivre un
- * jeton signé HMAC, sans état : « v1.<playerId>.<expiration>.<signature> ».
+ * mot de passe). Le compte doit posséder l'option isAdmin — lui-même ou via
+ * l'un de ses PNJ (players_pnjs). Le serveur délivre un jeton signé HMAC,
+ * sans état : « v1.<playerId>.<expiration>.<signature> ».
  *
  * Le secret de signature vit dans config/tiled_constants.php
  * (TILED_HMAC_SECRET, gitignoré) ; secret vide = endpoints désactivés.
@@ -91,9 +92,26 @@ class TiledAuthService
         return self::isAdmin($playerId) ? $playerId : null;
     }
 
+    /**
+     * Le compte lui-même a l'option isAdmin, ou bien l'un des PNJ qu'il
+     * possède (players_pnjs) l'a — un MJ joue souvent via ses PNJ sans que
+     * son compte principal soit admin.
+     */
     private static function isAdmin(int $playerId): bool
     {
-        return (bool) (new PlayerOptionsService())->hasOption($playerId, 'isAdmin');
+        $db = new Db();
+
+        $res = $db->exe(
+            'SELECT 1
+             FROM players_options
+             WHERE name = "isAdmin"
+               AND (player_id = ?
+                    OR player_id IN (SELECT pnj_id FROM players_pnjs WHERE player_id = ?))
+             LIMIT 1',
+            array($playerId, $playerId)
+        );
+
+        return $res->num_rows > 0;
     }
 
     private static function sign(string $payload): string

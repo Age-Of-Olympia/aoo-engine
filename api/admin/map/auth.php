@@ -3,7 +3,7 @@
  * Admin API : connexion de l'extension Tiled avec un compte du jeu.
  *
  * POST /api/admin/map/auth.php  body JSON : { "name": "...", "psw": "..." }
- * Le compte doit posséder l'option isAdmin.
+ * Le compte doit posséder l'option isAdmin, lui-même ou via l'un de ses PNJ.
  *
  * Réponse : { success, token, expiresAt } — jeton à renvoyer dans le header
  * X-AoO-Tiled-Token des appels export/import.
