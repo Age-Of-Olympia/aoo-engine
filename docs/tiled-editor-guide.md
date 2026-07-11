@@ -75,11 +75,29 @@ clair.
 
 ### Le pinceau Terrain (transitions automatiques)
 
-Onglet **Terrain Sets** (à côté des Tilesets) → set « Biomes » : choisir un
-terrain, puis peindre sur la couche `tiles` — Tiled pose tout seul les
-tuiles de transition (fondus générés). Seules les paires générées via
-`tools/tiled/generate_transitions.php` ont de vraies transitions douces ;
-les autres biomes se posent en bords francs.
+L'idée : au lieu de choisir des tuiles, on peint des **étiquettes de
+terrain** ("ici c'est du désert") et Tiled choisit lui-même la bonne tuile —
+pleine ou de transition — selon les voisines.
+
+Particularité à comprendre : notre set « Biomes » est de type *corner*, donc
+**le pinceau peint les coins entre les tuiles, pas les tuiles**. Le curseur
+s'aimante sur les intersections (un losange en surbrillance couvre les 4
+tuiles autour) ; peindre un coin remplace ces 4 tuiles par celles dont le
+coin correspond. Une tuile ne devient « pleine » que quand ses 4 coins
+portent le même terrain — d'où le mode d'emploi :
+
+1. Sélectionner la couche `tiles` (dans le bon groupe z).
+2. Onglet **Terrain Sets** → « Biomes » → cliquer un terrain (ex. *desert*) —
+   l'outil Pinceau Terrain s'active tout seul (sinon touche **T**).
+3. Sur la carte, **glisser sur une zone** (pas un clic isolé) : l'intérieur
+   devient du désert plein, le pourtour reçoit automatiquement les tuiles de
+   fondu. Un seul clic ne pose qu'un coin = juste une tache de transition.
+4. Pour revenir en arrière : repeindre avec le terrain d'origine (ou Ctrl+Z).
+
+Seules les paires générées via `tools/tiled/generate_transitions.php` ont de
+vraies transitions douces (carreaux ↔ desert pour l'instant) ; entre les
+autres biomes, Tiled pose des tuiles pleines en bords francs, faute de tuile
+de fondu à sa disposition.
 
 ## Les déclencheurs et dialogues (objets)
 
