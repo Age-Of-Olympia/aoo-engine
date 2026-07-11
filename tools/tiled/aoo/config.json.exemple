@@ -1,0 +1,5 @@
+{
+    "baseUrl": "http://localhost:9000",
+    "token": "voir config/tiled_constants.php (TILED_ADMIN_TOKEN)",
+    "gameDir": "/chemin/absolu/vers/le/depot/aoo4"
+}

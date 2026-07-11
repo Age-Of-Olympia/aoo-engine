@@ -1,0 +1,10 @@
+<?php
+/**
+ * Jeton d'accès aux endpoints admin de l'éditeur Tiled (api/admin/map/*).
+ *
+ * Copier ce fichier en tiled_constants.php (gitignoré) et générer un jeton :
+ *   openssl rand -hex 24
+ *
+ * Un jeton vide désactive les endpoints (403).
+ */
+define('TILED_ADMIN_TOKEN', '');
