@@ -343,6 +343,12 @@ AoO.tileFor = function(map, registry, layerName, name, images, config) {
     if (!tile) {
         tile = entry.tileset.addTile();
         tile.setProperty(AoO.PROP.name, name);
+        /* couches d'objets : la classe portée par la tuile de palette est
+           héritée par les objets insérés depuis elle — un tp fraîchement
+           posé a directement sa classe et ses champs typés */
+        if (AoO.OBJECT_LAYERS.indexOf(layerName) !== -1) {
+            tile.className = name;
+        }
         var imagePath = images[layerName + '/' + name];
         if (imagePath) {
             tile.imageFileName = config.gameDir + '/' + imagePath;
