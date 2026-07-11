@@ -25,7 +25,7 @@ Les actions AoO vivent en bas du menu **Fichier** :
 |---|---|
 | AoO : Configuration… | dossier du dépôt + instances (écrit `config.json`) |
 | AoO : Connexion / changer d'instance… | formulaire compte + instance (local, test… ou « adresse personnalisée » pour saisir une URL à la volée) |
-| AoO : Pull un plan du jeu… | télécharge un plan (liste des plans affichée) |
+| AoO : Pull un plan du jeu… | télécharge un plan (liste déroulante des plans avec leurs niveaux z ; niveau z optionnel, vide = tous) |
 | AoO : Push la carte vers le jeu… | applique la carte ouverte à son instance d'origine |
 | AoO : Nouveau plan dans le jeu… | crée un plan vierge et l'ouvre |
 | AoO : Fond / ambiance du plan… | choisit le fond et le masque animé |

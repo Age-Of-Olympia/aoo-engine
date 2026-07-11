@@ -1210,15 +1210,16 @@ AoO.generateWorld = function(config, instance) {
     return { fileName: fileName, count: maps.length };
 };
 
-/* Liste « plan (z...) » des plans existants, pour guider le pull */
-AoO.describePlans = function(config, instance) {
+/* Plans existants triés par nom, avec leurs niveaux z : [{ name, zLevels }] */
+AoO.listPlans = function(config, instance) {
     var data = AoO.api(config, instance, 'GET', '/api/admin/map/plans.php');
 
-    var lines = [];
+    var plans = [];
     for (var plan in data.plans) {
-        lines.push(plan + ' (z ' + data.plans[plan].zLevels.join(', ') + ')');
+        plans.push({ name: plan, zLevels: data.plans[plan].zLevels });
     }
-    return lines;
+    plans.sort(function(a, b) { return a.name < b.name ? -1 : 1; });
+    return plans;
 };
 
 /* registerAction + garde d'erreur uniforme : toute exception du handler
@@ -1277,19 +1278,41 @@ AoO.registerSafeAction('AoOConnect', 'AoO : Connexion / changer d\'instance…',
 AoO.registerSafeAction('AoOPull', 'AoO : Pull un plan du jeu…', 'AoO — Pull', function() {
     var config = AoO.loadConfig();
     var instance = AoO.currentInstance(config);
-    var plans = AoO.describePlans(config, instance);
+    var plans = AoO.listPlans(config, instance);
+    if (!plans.length) {
+        throw new Error('Aucun plan sur « ' + instance + ' ».');
+    }
 
-    var spec = tiled.prompt(
-        'Instance : ' + instance + ' (' + AoO.instanceBaseUrl(config, instance) + ')\n\n' +
-        'Plans existants :\n  ' + plans.join('\n  ') +
-        '\n\nPlan à récupérer (« plan » = tous les niveaux, « plan:z » = un seul) :',
-        'gaia', 'AoO — Pull');
-    if (!spec) {
+    /* liste déroulante « plan — z … » : scrollable quel que soit le nombre de
+       plans, là où l'ancien prompt les empilait tous et débordait de l'écran */
+    var labels = [];
+    var planByLabel = {};
+    var defaultLabel = null;
+    for (var i = 0; i < plans.length; i++) {
+        var label = plans[i].name + ' — z ' + plans[i].zLevels.join(', ');
+        labels.push(label);
+        planByLabel[label] = plans[i].name;
+        if (plans[i].name === 'gaia') {
+            defaultLabel = label;
+        }
+    }
+
+    var values = AoO.showFormDialog('AoO — Pull (' + instance + ')', [
+        { key: 'plan', label: 'Plan :', type: 'combo', options: labels, value: defaultLabel || labels[0] },
+        { key: 'z', label: 'Niveau z (vide = tous les niveaux) :', type: 'text', value: '' }
+    ]);
+    if (!values || !values.plan) {
         return;
     }
-    var parts = spec.split(':');
-    var plan = parts[0].trim();
-    var z = parts.length > 1 ? (parseInt(parts[1], 10) || 0) : null;
+
+    /* le repli en prompts de showFormDialog laisse taper un nom nu ('gaia')
+       au lieu d'un libellé de la liste — les deux formes sont acceptées */
+    var plan = planByLabel[values.plan] || String(values.plan).split(' — ')[0].trim();
+    var zText = String(values.z || '').trim();
+    var z = zText === '' ? null : parseInt(zText, 10);
+    if (zText !== '' && isNaN(z)) {
+        throw new Error('Niveau z invalide : « ' + zText + ' »');
+    }
 
     var fileName = AoO.pullAndOpen(plan, z);
     tiled.log('AoO : plan « ' + plan + ' » ouvert depuis ' + fileName);
