@@ -123,13 +123,37 @@ sur la carte du monde), `player_visibility` (`true`/`false`),
 validé et appliqué au push ; le rapport remonte le bilan de santé du
 plan (`PlanJsonValidator` : biomes en doublon, ressources inconnues…).
 
-Raccourci pour le fond et le masque animé : **Fichier → AoO : Fond /
-ambiance du plan…** liste les grandes images disponibles (celles justement
-absentes de la palette).
-
 Les **bornes visibles des niveaux z** (`z_levels`) ne se maintiennent plus
 à la main : à chaque push, elles sont recalées sur l'étendue réelle du
 niveau (sauf niveau marqué `MapUnavailable`).
+
+#### Le fond et l'ambiance (Fichier → AoO : Fond / ambiance du plan…)
+
+Le fond et l'ambiance ne sont **pas des tuiles** : ce sont des images
+plein écran affichées sous et par-dessus la carte, stockées comme clés du
+JSON de plan. Comme ce sont de grandes images (500×500, bandes de
+2848×862…), elles sont volontairement absentes de la palette ; cette action
+les liste dans deux menus déroulants :
+
+- **Fond (`bg`)** : l'image affichée **sous** les tuiles, à la place du fond
+  par défaut (`img/tiles/<plan>.webp`). C'est la texture du territoire —
+  sable, herbe, pierre… Choisir « (aucun / défaut) » pour revenir au fond
+  automatique.
+- **Masque animé (`mask`)** : une image semi-transparente affichée
+  **par-dessus** la carte, qui défile en boucle — brume, nuages, tempête de
+  sable, pluie de cendres. C'est l'effet d'ambiance météo.
+
+Deux réglages du masque se font dans les propriétés `aooPlan_*` (panneau
+Propriétés) plutôt que dans ce menu :
+
+- **`scrollingMask`** : la durée d'un cycle de défilement en secondes (petit
+  = rapide, grand = lent). Vide = masque fixe.
+- **`verticalScrolling`** : `true` pour un défilement vertical (pluie,
+  chutes) au lieu d'horizontal (nuages poussés par le vent).
+
+Le choix est mémorisé sur la carte et écrit dans le JSON de plan au push.
+Note : Tiled n'affiche pas ces images dans l'éditeur (seule leur valeur est
+visible en propriété) — l'effet se voit en jeu après le push.
 
 ### Le pinceau Terrain (transitions automatiques)
 
