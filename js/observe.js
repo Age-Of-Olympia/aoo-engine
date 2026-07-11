@@ -67,9 +67,21 @@ $(document).ready(function(){
          * d'origine, le résultat remplace le texte de la carte. */
         let diceHtml = '<div class="action-details"><i><span class="ra ra-perspective-dice-random"></span> Lancé de dés...</i></div>';
 
+        /* Dés peints (img/ui/paper, icônes en réserve) visibles
+         * SEULEMENT quand l'action jette vraiment les dés — signature
+         * « Jet X = … » des conditions dans la réponse. Pendant la
+         * requête : état neutre. Sans jet (repos, erreur, plus assez
+         * d'actions…) : résultat direct. Avec jet : les dés tiennent
+         * l'écran ROLL_TOTAL_MS depuis le clic, REQUÊTE COMPRISE —
+         * lente, elle ne rajoute rien, avec un plancher pour que les
+         * dés restent perceptibles. */
+        let ROLL_TOTAL_MS = 600;
+        let ROLL_FLOOR_MS = 250;
+        let actionStart = Date.now();
+
         if(window.hudShowActionResult){
 
-            window.hudShowActionResult(diceHtml);
+            window.hudShowActionResult('<div class="hud-dice-roll"><i>…</i></div>');
         }
         else{
 
@@ -87,13 +99,30 @@ $(document).ready(function(){
 
                     /* true = résultat FINAL : le HUD rafraîchit pilules,
                      * cible observée et flux d'évènements. */
-                    window.hudShowActionResult(data, true);
-                }
-                else{
+                    if(!/Jet [^=]*=/.test(data)){
 
-                    let $action = $('<div>'+ data +'</div>').hide();
-                    $('.card-text').html('').addClass('action-text').append($action.fadeIn());
+                        window.hudShowActionResult(data, true);
+                        $('.action').prop('disabled', false);
+                        return;
+                    }
+
+                    window.hudShowActionResult(
+                        '<div class="hud-dice-roll">'
+                        + '<img src="img/ui/paper/icon-caracs.png" alt="" />'
+                        + '<i>Lancé de dés…</i>'
+                        + '</div>'
+                    );
+
+                    setTimeout(function(){
+
+                        window.hudShowActionResult(data, true);
+                        $('.action').prop('disabled', false);
+                    }, Math.max(ROLL_FLOOR_MS, ROLL_TOTAL_MS - (Date.now() - actionStart)));
+                    return;
                 }
+
+                let $action = $('<div>'+ data +'</div>').hide();
+                $('.card-text').html('').addClass('action-text').append($action.fadeIn());
                 $('.action').prop('disabled', false);
             }
         });
