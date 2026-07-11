@@ -1185,15 +1185,25 @@ AoO.generateWorld = function(config, instance) {
         }
     }
 
-    /* 3. pull de chaque plan + entrée .world (offset pixel = case − contenu local) */
+    /* 3. pull de chaque plan + entrée .world (offset pixel = case − contenu local).
+       Un plan qui échoue est écarté et signalé, il ne condamne pas le monde. */
     var maps = [];
+    var skipped = (data.ignored || []).map(function(name) {
+        return name + ' — nom de plan invalide (résidu en base)';
+    });
     for (var k = 0; k < names.length; k++) {
         var plan = names[k];
         var ext = extentOf(plan);
         var cellX = placement[plan].col * cell;
         var cellY = placement[plan].row * cell;
 
-        AoO.pullAndSave(plan); /* garantit maps/<instance>/<plan>.tmj */
+        try {
+            AoO.pullAndSave(plan); /* garantit maps/<instance>/<plan>.tmj */
+        } catch (error) {
+            skipped.push(plan + ' — ' + error);
+            tiled.log('AoO : monde — plan « ' + plan + ' » écarté : ' + error);
+            continue;
+        }
 
         maps.push({
             fileName: plan + '.tmj',
@@ -1207,7 +1217,7 @@ AoO.generateWorld = function(config, instance) {
     var fileName = config.gameDir + '/tools/tiled/maps/' + instance + '/' + instance + '.world';
     AoO.writeJsonFile(fileName, world);
 
-    return { fileName: fileName, count: maps.length };
+    return { fileName: fileName, count: maps.length, skipped: skipped };
 };
 
 /* Plans existants triés par nom, avec leurs niveaux z : [{ name, zLevels }] */
@@ -1356,8 +1366,12 @@ AoO.registerSafeAction('AoOWorld', 'AoO : Générer le monde (tous les plans)…
     }
 
     var result = AoO.generateWorld(config, instance);
-    tiled.alert(result.count + ' plans positionnés.\n\nMonde écrit : ' + result.fileName +
-        '\n\nOuvrir via le menu Carte → « Charger le monde… » (Load World).', 'AoO — Monde');
+    var message = result.count + ' plans positionnés.\n\nMonde écrit : ' + result.fileName +
+        '\n\nOuvrir via le menu Carte → « Charger le monde… » (Load World).';
+    if (result.skipped.length) {
+        message += '\n\nPlans écartés (' + result.skipped.length + ') :\n  ' + result.skipped.join('\n  ');
+    }
+    tiled.alert(message, 'AoO — Monde');
 });
 
 AoO.registerSafeAction('AoOBiomes', 'AoO : Biomes (ressources) du plan…', 'AoO — Biomes', function() {

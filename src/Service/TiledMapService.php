@@ -136,11 +136,16 @@ class TiledMapService
      * les plans vers lesquels ses déclencheurs `tp` mènent (graphe de liens,
      * pour placer les plans hors grille et signaler les liens cassés).
      *
-     * @return array{tileSize: int, plans: array<string, array<string, mixed>>}
+     * Les plans dont le nom ne respecte pas PLAN_NAME_PATTERN (résidus
+     * historiques de la table coords) sont écartés — export.php les
+     * refuserait — et listés dans `ignored` pour être signalés à l'admin.
+     *
+     * @return array{tileSize: int, plans: array<string, array<string, mixed>>, ignored: string[]}
      */
     public function worldLayout(): array
     {
         $plans = [];
+        $ignored = [];
 
         // Étendue du contenu par (plan, z)
         $res = $this->db->exe(
@@ -149,6 +154,10 @@ class TiledMapService
         );
         while ($row = $res->fetch_assoc()) {
             $plan = $row['plan'];
+            if (!preg_match(self::PLAN_NAME_PATTERN, $plan)) {
+                $ignored[$plan] = true;
+                continue;
+            }
             $z = (int) $row['z'];
             $plans[$plan]['zLevels'][] = $z;
             $plans[$plan]['bounds'][$z] = [
@@ -179,16 +188,24 @@ class TiledMapService
             $data['links'] = array_keys($links[$plan] ?? []);
         }
 
-        return ['tileSize' => self::TILE_SIZE, 'plans' => $plans];
+        return ['tileSize' => self::TILE_SIZE, 'plans' => $plans, 'ignored' => array_keys($ignored)];
     }
 
-    /** @return array<string, array{zLevels: int[], coords: int}> plans existants */
+    /**
+     * Plans existants — mêmes résidus écartés que worldLayout(), un plan
+     * listé ici doit toujours être pullable via export.php.
+     *
+     * @return array<string, array{zLevels: int[], coords: int}>
+     */
     public function listPlans(): array
     {
         $res = $this->db->exe('SELECT plan, z, COUNT(*) AS n FROM coords GROUP BY plan, z ORDER BY plan, z');
 
         $plans = [];
         while ($row = $res->fetch_assoc()) {
+            if (!preg_match(self::PLAN_NAME_PATTERN, $row['plan'])) {
+                continue;
+            }
             $plans[$row['plan']]['zLevels'][] = (int) $row['z'];
             $plans[$row['plan']]['coords'] = ((int) ($plans[$row['plan']]['coords'] ?? 0)) + (int) $row['n'];
         }
