@@ -147,6 +147,11 @@ class PlanJsonValidator
 
         $wallsPv = defined('WALLS_PV') ? WALLS_PV : [];
 
+        // Suivi des walls déjà rencontrés pour signaler les doublons : au runtime,
+        // ResourceService indexe les biomes par wall ($biomes[$wall] = $ressource),
+        // donc une seconde entrée pour le même wall écrase silencieusement la première.
+        $seenWalls = [];
+
         foreach ($planData->biomes as $i => $biome) {
             // Valeurs brutes pour la logique (lookups WALLS_PV / requête items),
             // valeurs échappées pour l'affichage (les messages sont rendus en HTML).
@@ -163,6 +168,13 @@ class PlanJsonValidator
             if (trim((string) $wallName) === '' && trim((string) $ressourceName) === '') {
                 $warnings[] = "{$label} : biome vide (placeholder), sans effet, à supprimer";
                 continue;
+            }
+
+            // Wall dupliqué : le runtime ne garde que la dernière ressource associée.
+            if ($wallName && isset($seenWalls[$wallName])) {
+                $warnings[] = "{$label} : wall '{$wallEsc}' déjà déclaré au biome #" . ($seenWalls[$wallName] + 1) . " → seule la dernière ressource est prise en compte à la récolte";
+            } elseif ($wallName) {
+                $seenWalls[$wallName] = $i;
             }
 
             // Vérifier le wall dans WALLS_PV (doit exister ET valoir -1 = récoltable)
