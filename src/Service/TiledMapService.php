@@ -80,7 +80,79 @@ class TiledMapService
             'catalog'    => $catalog,
             'images'     => $images,
             'composites' => $this->buildComposites(),
+            'planConfig' => $this->readPlanConfig($plan),
         ];
+    }
+
+    /**
+     * Configuration de plan éditable depuis Tiled : le fond/ambiance (clé
+     * « bg » du JSON de plan, cf. Classes/View.php) et les images
+     * candidates — les grandes images de img/tiles (fonds, météo), justement
+     * celles écartées du catalogue de tuiles posables.
+     *
+     * @return array{bg: ?string, bgChoices: string[]}
+     */
+    private function readPlanConfig(string $plan): array
+    {
+        $json = @json_decode((string) @file_get_contents($this->planJsonPath($plan)), true);
+
+        $choices = [];
+        $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/tiles';
+        foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
+            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            if (!in_array($ext, self::IMAGE_EXTENSIONS, true)) {
+                continue;
+            }
+            $size = @getimagesize($dir . '/' . $fileName);
+            if ($size && ($size[0] > self::TILE_SIZE * 1.2 || $size[1] > self::TILE_SIZE * 1.2)) {
+                $choices[] = 'img/tiles/' . $fileName;
+            }
+        }
+        sort($choices);
+
+        return [
+            'bg'        => is_array($json) ? ($json['bg'] ?? null) : null,
+            'bgChoices' => $choices,
+        ];
+    }
+
+    /**
+     * Écrit la clé « bg » du JSON de plan ('' = retirer, retour au fond par
+     * défaut img/tiles/<plan>.webp). Crée le JSON minimal si absent.
+     *
+     * @throws RuntimeException code 400 si la valeur n'est pas une image connue
+     */
+    public function writePlanBg(string $plan, string $bg): void
+    {
+        if ($bg !== ''
+            && (!preg_match('#^img/tiles/[a-zA-Z0-9_.-]+$#', $bg)
+                || !file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $bg))
+        ) {
+            throw new RuntimeException('Fond de plan invalide : ' . $bg, 400);
+        }
+
+        $path = $this->planJsonPath($plan);
+        $json = @json_decode((string) @file_get_contents($path), true);
+        if (!is_array($json)) {
+            $json = ['name' => $plan];
+        }
+
+        if ($bg === '') {
+            unset($json['bg']);
+        } else {
+            $json['bg'] = $bg;
+        }
+
+        if (!is_dir(dirname($path))) {
+            throw new RuntimeException('Répertoire des plans introuvable : ' . dirname($path), 500);
+        }
+
+        file_put_contents($path, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+    }
+
+    private function planJsonPath(string $plan): string
+    {
+        return $_SERVER['DOCUMENT_ROOT'] . '/datas/private/plans/' . $plan . '.json';
     }
 
     /**
@@ -98,6 +170,11 @@ class TiledMapService
         $composites = [];
 
         foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
+            // Le sol reste strictement 50x50 : les structures multi-tuiles
+            // appartiennent aux couches de décor (foregrounds, elements…)
+            if ($layer === 'tiles') {
+                continue;
+            }
             $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
 
             foreach (is_dir($dir) ? scandir($dir) : [] as $base) {

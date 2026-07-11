@@ -108,7 +108,17 @@ séparés — c'est normal, le rendu est identique.
 Convention pour créer une nouvelle structure : déposer l'image entière dans
 `img/<couche>/<base>/<base>.png` (dimensions multiples de 50) et ses
 morceaux `<base>-NN.png` (numérotés ligne par ligne depuis le coin
-haut-gauche) à la racine de `img/<couche>/`, puis re-puller.
+haut-gauche) à la racine de `img/<couche>/`, puis re-puller. Les tuiles de
+sol (`tiles`) restent strictement 50x50 : pas de structures sur cette
+couche, le décor multi-tuiles vit en `foregrounds`/`elements`.
+
+### Le fond / l'ambiance du plan
+
+Le fond du plan (et les ambiances type brume, tempête…) n'est pas une
+tuile : c'est la clé `bg` du JSON de plan. **Fichier → AoO : Fond /
+ambiance du plan…** liste les grandes images disponibles (celles justement
+absentes de la palette) ; le choix est mémorisé sur la carte et appliqué au
+prochain push.
 
 ### Le pinceau Terrain (transitions automatiques)
 

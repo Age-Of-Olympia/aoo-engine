@@ -35,7 +35,15 @@ if (!tiledValidPlanName($plan) || $version === '' || !is_array($layers)) {
 $z = (int) ($body['z'] ?? 0);
 
 try {
-    $result = (new TiledMapService())->importPlan($plan, $z, $layers, $version);
+    $service = new TiledMapService();
+    $result = $service->importPlan($plan, $z, $layers, $version);
+
+    // Fond/ambiance du plan (clé bg du JSON de plan), '' = retirer.
+    // Hors du contrôle de version : configuration de plan, pas du contenu.
+    if (isset($body['bg']) && is_string($body['bg'])) {
+        $service->writePlanBg($plan, $body['bg']);
+        $result['bg'] = $body['bg'];
+    }
 } catch (\RuntimeException $e) {
     tiledFail(tiledHttpCode($e), $e->getMessage());
 }

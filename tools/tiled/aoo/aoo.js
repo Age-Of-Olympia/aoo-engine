@@ -39,6 +39,8 @@ AoO.PROP = {
     playerBuilt: 'aooPlayerBuilt', /* couche : constructions des joueurs, hors push */
     plan: 'aooPlan',            /* carte : nom du plan */
     instance: 'aooInstance',    /* carte : instance d'origine — le push y est verrouillé */
+    bg: 'aooBg',                /* carte : fond/ambiance du plan (clé bg du JSON de plan) */
+    bgChoices: 'aooBgChoices',  /* carte : images candidates (info, alimenté au pull) */
     z: 'aooZ',                  /* groupe : niveau z */
     version: 'aooVersion'       /* groupe : version d'édition du niveau */
 };
@@ -577,6 +579,13 @@ AoO.pull = function(plan, zSpec, config) {
     map.setProperty(AoO.PROP.plan, plan);
     map.setProperty(AoO.PROP.instance, instance);
 
+    /* fond/ambiance du plan (clé bg du JSON de plan) — modifiable via
+       l'action « Fond / ambiance du plan… », appliqué au push */
+    if (firstData.planConfig) {
+        map.setProperty(AoO.PROP.bg, firstData.planConfig.bg || '');
+        map.setProperty(AoO.PROP.bgChoices, JSON.stringify(firstData.planConfig.bgChoices || []));
+    }
+
     var registry = {};
 
     for (var i = 0; i < zLevels.length; i++) {
@@ -833,6 +842,11 @@ AoO.push = function(map) {
             layers: AoO.serializeContainer(group, map.tileWidth)
         };
 
+        /* le fond du plan est global : envoyé avec le premier niveau */
+        if (reports.length === 0 && map.property(AoO.PROP.bg) !== undefined) {
+            payload.bg = String(map.property(AoO.PROP.bg));
+        }
+
         try {
             var data = AoO.api(config, instance, 'POST', '/api/admin/map/import.php', payload);
         } catch (error) {
@@ -923,6 +937,52 @@ tiled.registerAction('AoOPull', function() {
     }
 }).text = 'AoO : Pull un plan du jeu…';
 
+tiled.registerAction('AoOBg', function() {
+    var map = tiled.activeAsset;
+    if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
+        tiled.alert('Ouvrir d\'abord une carte pullée du jeu.', 'AoO — Fond du plan');
+        return;
+    }
+
+    try {
+        var choices = JSON.parse(String(map.property(AoO.PROP.bgChoices) || '[]'));
+        var current = String(map.property(AoO.PROP.bg) || '');
+        var NONE = '(défaut : img/tiles/' + map.property(AoO.PROP.plan) + '.webp)';
+        var options = [NONE].concat(choices);
+        var picked = null;
+
+        if (typeof Dialog !== 'undefined') {
+            try {
+                var dialog = new Dialog('AoO — Fond / ambiance du plan');
+                var combo = dialog.addComboBox('Fond :', options);
+                combo.currentIndex = Math.max(0, options.indexOf(current));
+                dialog.addNewRow();
+                dialog.addButton('OK').clicked.connect(function() {
+                    picked = options[combo.currentIndex];
+                    dialog.accept();
+                });
+                dialog.addButton('Annuler').clicked.connect(function() { dialog.reject(); });
+                dialog.exec();
+            } catch (dialogError) {
+                picked = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
+                    current, 'AoO — Fond du plan');
+            }
+        } else {
+            picked = tiled.prompt('Fond du plan (vide = défaut) :\n  ' + choices.join('\n  '),
+                current, 'AoO — Fond du plan');
+        }
+
+        if (picked === null) {
+            return;
+        }
+
+        map.setProperty(AoO.PROP.bg, picked === NONE ? '' : picked.trim());
+        tiled.log('AoO : fond du plan « ' + (picked === NONE ? '(défaut)' : picked) + ' » — appliqué au prochain push');
+    } catch (error) {
+        tiled.alert(String(error), 'AoO — Fond du plan');
+    }
+}).text = 'AoO : Fond / ambiance du plan…';
+
 tiled.registerAction('AoONew', function() {
     try {
         var config = AoO.loadConfig();
@@ -980,7 +1040,8 @@ try {
         { action: 'AoOConnect' },
         { action: 'AoOPull' },
         { action: 'AoOPush' },
-        { action: 'AoONew' }
+        { action: 'AoONew' },
+        { action: 'AoOBg' }
     ]);
     tiled.log('AoO : extension chargée, actions dans le menu Fichier');
 } catch (error) {
