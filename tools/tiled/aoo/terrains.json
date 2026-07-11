@@ -12,7 +12,15 @@
     "tiles": {
         "name": "Biomes",
         "type": "corner",
-        "colors": ["carreaux", "caverne", "desert", "eryn_dolen", "falaise", "pit", "route"],
+        "colors": [
+            "carreaux",
+            "caverne",
+            "desert",
+            "eryn_dolen",
+            "falaise",
+            "pit",
+            "route"
+        ],
         "tiles": {
             "carreaux": "carreaux",
             "caverne": "caverne",
@@ -20,7 +28,147 @@
             "eryn_dolen": "eryn_dolen",
             "falaise": "falaise",
             "pit": "pit",
-            "route": "route"
+            "route": "route",
+            "trans_carreaux_desert_de_l_egeon_aaab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                3,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_aaba": [
+                0,
+                1,
+                0,
+                3,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_aabb": [
+                0,
+                1,
+                0,
+                3,
+                0,
+                3,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_abaa": [
+                0,
+                3,
+                0,
+                1,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_abab": [
+                0,
+                3,
+                0,
+                1,
+                0,
+                3,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_abba": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                1,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_abbb": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                3,
+                0,
+                1
+            ],
+            "trans_carreaux_desert_de_l_egeon_baaa": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                1,
+                0,
+                3
+            ],
+            "trans_carreaux_desert_de_l_egeon_baab": [
+                0,
+                1,
+                0,
+                1,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_carreaux_desert_de_l_egeon_baba": [
+                0,
+                1,
+                0,
+                3,
+                0,
+                1,
+                0,
+                3
+            ],
+            "trans_carreaux_desert_de_l_egeon_babb": [
+                0,
+                1,
+                0,
+                3,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_carreaux_desert_de_l_egeon_bbaa": [
+                0,
+                3,
+                0,
+                1,
+                0,
+                1,
+                0,
+                3
+            ],
+            "trans_carreaux_desert_de_l_egeon_bbab": [
+                0,
+                3,
+                0,
+                1,
+                0,
+                3,
+                0,
+                3
+            ],
+            "trans_carreaux_desert_de_l_egeon_bbba": [
+                0,
+                3,
+                0,
+                3,
+                0,
+                1,
+                0,
+                3
+            ]
         }
     }
 }

@@ -112,11 +112,16 @@ Fait :
   wangId explicites). Set « Biomes » de départ sur les tuiles de sol. Pure
   métadonnée d'éditeur : le push est inchangé.
 
+- Art de transition : `tools/tiled/generate_transitions.php <couche> <A> <B>`
+  génère les 14 tuiles de fondu entre deux biomes (GD, interpolation
+  bilinéaire des coins) et déclare leurs wangId dans `terrains.json` —
+  le pinceau Terrain fait alors de vraies transitions douces. Fait pour
+  carreaux ↔ desert ; relancer le script par paire de biomes utile.
+  ⚠ `img/` n'est pas versionné : reporter les PNG générés dans la source
+  d'assets déployée. Les tuiles générées sont remplaçables par de l'art
+  dessiné à la main (mêmes noms).
+
 Reste :
-- **Art de transition** pour rendre le pinceau Terrain vraiment utile :
-  générer (ImageMagick, masques alpha) ou dessiner les ~12-16 tuiles de
-  transition par paire de biomes (eau/sable, route/…), puis les déclarer
-  dans `terrains.json` avec leurs wangId.
 - Bibliothèque de structures : tampons Tiled partagés dans le dépôt
   (`tools/tiled/stamps/`).
 
@@ -144,8 +149,8 @@ Les cas particuliers de l'ancien éditeur sont de vrais objets typés :
 | Déclencheurs `need` | params `item:name:n,spell:...` | ✅ champ conditions |
 | `forbidden`, `rez`, `altar`, `enter`, `exit` | sans params | ✅ classes colorées |
 | Dialogs `question` | params = id de dialogue | ✅ champ dialog |
-| Murs ressources | `damages` -1/-2, WALLS_PV | défaut -1 à l'insertion — OK ; mode récolte à revoir |
-| Éléments temporaires | `endTime` | préservé sur lignes conservées ; création avec endTime à définir |
+| Murs ressources | `damages` -1/-2, WALLS_PV | défaut -1 à l'insertion — OK ; l'état de récolte (-2 épuisé) est du **runtime**, non authorable depuis Tiled (préservé sur les lignes conservées ; l'outil faux de `tiled.php` reste l'outil de retouche en jeu) |
+| Éléments temporaires | `endTime` | ✅ rien à faire : insertion sans endTime = défaut 0 = permanent (le cron `delete_elements` ne supprime que `endTime != 0`) ; préservé sur lignes conservées |
 | Plantes | params (croissance) | params dans la clé d'identité — à valider en jeu |
 
 ### Phase 3 — Industrialisation
