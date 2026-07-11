@@ -1,0 +1,26 @@
+{
+    "_doc": [
+        "Sets de terrain construits par l'extension au pull, par couche.",
+        "colors : liste des terrains du set (l'ordre définit les indices).",
+        "tiles : nomDeTuile → soit un nom de couleur (tuile pleine de ce",
+        "terrain), soit un wangId explicite [8 entiers] pour les tuiles de",
+        "transition — ordre Tiled : [haut, haut-droite, droite, bas-droite,",
+        "bas, bas-gauche, gauche, haut-gauche], indices 1-based dans colors,",
+        "0 = non assigné. type : corner (défaut), edge ou mixed.",
+        "Purement côté éditeur : le jeu ne voit que des noms de tuiles."
+    ],
+    "tiles": {
+        "name": "Biomes",
+        "type": "corner",
+        "colors": ["carreaux", "caverne", "desert", "eryn_dolen", "falaise", "pit", "route"],
+        "tiles": {
+            "carreaux": "carreaux",
+            "caverne": "caverne",
+            "desert_de_l_egeon": "desert",
+            "eryn_dolen": "eryn_dolen",
+            "falaise": "falaise",
+            "pit": "pit",
+            "route": "route"
+        }
+    }
+}

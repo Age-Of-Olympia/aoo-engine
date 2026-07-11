@@ -65,6 +65,8 @@ class TiledMapService
             return null;
         }
 
+        $images = $this->resolveImages($layers);
+
         return [
             'plan'     => $plan,
             'z'        => $z,
@@ -72,8 +74,76 @@ class TiledMapService
             'tileSize' => self::TILE_SIZE,
             'version'  => $this->computeVersion($layers),
             'layers'   => $layers,
-            'images'   => $this->resolveImages($layers),
+            'catalog'  => $this->buildCatalog($images),
+            'images'   => $images,
         ];
+    }
+
+    /** @return array<string, array{zLevels: int[], coords: int}> plans existants */
+    public function listPlans(): array
+    {
+        $res = $this->db->exe('SELECT plan, z, COUNT(*) AS n FROM coords GROUP BY plan, z ORDER BY plan, z');
+
+        $plans = [];
+        while ($row = $res->fetch_assoc()) {
+            $plans[$row['plan']]['zLevels'][] = (int) $row['z'];
+            $plans[$row['plan']]['coords'] = ((int) ($plans[$row['plan']]['coords'] ?? 0)) + (int) $row['n'];
+        }
+
+        return $plans;
+    }
+
+    /** @throws RuntimeException code 409 si le plan existe déjà */
+    public function createPlan(string $plan): void
+    {
+        if ($this->planZLevels($plan) !== []) {
+            throw new RuntimeException('Le plan existe déjà : ' . $plan, 409);
+        }
+
+        // Une coordonnée d'amorce suffit : le plan existe, l'import créera
+        // les autres coords au fil des éditions
+        $coordsId = View::get_coords_id((object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => $plan]);
+
+        if (!$coordsId) {
+            throw new RuntimeException('Création du plan impossible : ' . $plan, 500);
+        }
+    }
+
+    /**
+     * Catalogue complet des images disponibles par couche (pas seulement
+     * celles déjà posées) : palette entière dans l'éditeur, indispensable
+     * pour les plans neufs. Complète $images au passage.
+     *
+     * @return array<string, string[]>
+     */
+    private function buildCatalog(array &$images): array
+    {
+        $catalog = [];
+
+        foreach (array_keys(self::AUTHORABLE_LAYERS) as $layer) {
+            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
+            $names = [];
+
+            foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
+                $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                $name = pathinfo($fileName, PATHINFO_FILENAME);
+
+                if (!in_array($ext, self::IMAGE_EXTENSIONS, true)
+                    || !preg_match('/^[a-zA-Z0-9_.-]+$/', $name)
+                    || isset($names[$name])
+                ) {
+                    continue;
+                }
+
+                $names[$name] = true;
+                $images[$layer . '/' . $name] ??= 'img/' . $layer . '/' . $fileName;
+            }
+
+            $catalog[$layer] = array_keys($names);
+            sort($catalog[$layer]);
+        }
+
+        return $catalog;
     }
 
     /** @return int[] niveaux z existants du plan, croissants */

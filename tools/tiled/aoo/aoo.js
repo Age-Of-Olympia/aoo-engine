@@ -225,32 +225,94 @@ AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
     }
 };
 
-/* Construit les couches d'un niveau z dans un conteneur (groupe) */
+/*
+ * Construit les couches d'un niveau z dans un conteneur (groupe).
+ * Les couches vides sont créées aussi : structure identique partout,
+ * et un plan neuf est peignable immédiatement.
+ */
 AoO.buildLevel = function(map, container, data, registry, config) {
     var i, layerName, rows;
 
     for (i = 0; i < AoO.TILE_LAYERS.length; i++) {
         layerName = AoO.TILE_LAYERS[i];
         rows = data.layers[layerName] || [];
-        if (rows.length === 0) {
-            continue;
-        }
         for (var j = 0; j < rows.length; j++) {
             AoO.tileFor(map, registry, layerName, rows[j].name, data.images, config);
         }
-        AoO.buildSplitTileLayers(container, layerName, rows, registry[layerName].byName);
+        AoO.buildSplitTileLayers(container, layerName, rows,
+            registry[layerName] ? registry[layerName].byName : {});
     }
 
     for (i = 0; i < AoO.OBJECT_LAYERS.length; i++) {
         layerName = AoO.OBJECT_LAYERS[i];
         rows = data.layers[layerName] || [];
-        if (rows.length === 0) {
-            continue;
-        }
         for (var k = 0; k < rows.length; k++) {
             AoO.tileFor(map, registry, layerName, rows[k].name, data.images, config);
         }
-        AoO.buildObjectLayer(container, layerName, rows, registry[layerName].byName, data.tileSize);
+        AoO.buildObjectLayer(container, layerName, rows,
+            registry[layerName] ? registry[layerName].byName : {}, data.tileSize);
+    }
+};
+
+/*
+ * Sets de terrain (autotiling) déclarés dans terrains.json : construits
+ * sur les tilesets générés, ils alimentent l'onglet « Terrain Sets » et le
+ * pinceau Terrain. Métadonnées d'éditeur uniquement — le jeu ne voit que
+ * des noms de tuiles, le push est inchangé. Fichier optionnel.
+ */
+AoO.applyTerrains = function(registry, config) {
+    var terrains;
+    try {
+        terrains = AoO.readJsonFile(config.gameDir + '/tools/tiled/aoo/terrains.json');
+    } catch (error) {
+        return;
+    }
+
+    var types = { corner: WangSet.Corner, edge: WangSet.Edge, mixed: WangSet.Mixed };
+
+    for (var layerName in terrains) {
+        if (layerName.charAt(0) === '_' || !registry[layerName]) {
+            continue;
+        }
+
+        var cfg = terrains[layerName];
+        var entry = registry[layerName];
+
+        var wangSet = entry.tileset.addWangSet(cfg.name || 'Terrains',
+            types[cfg.type] !== undefined ? types[cfg.type] : WangSet.Corner);
+        wangSet.colorCount = cfg.colors.length;
+
+        if (typeof wangSet.setColorName === 'function') {
+            for (var c = 0; c < cfg.colors.length; c++) {
+                wangSet.setColorName(c + 1, cfg.colors[c]);
+            }
+        }
+
+        for (var name in cfg.tiles) {
+            var tile = entry.byName[name];
+            if (!tile) {
+                continue; /* tuile absente de ce plan */
+            }
+
+            var spec = cfg.tiles[name];
+            var wangId;
+
+            if (typeof spec === 'string') {
+                var color = cfg.colors.indexOf(spec) + 1;
+                if (color === 0) {
+                    tiled.log('AoO : couleur inconnue « ' + spec + ' » pour la tuile ' + name);
+                    continue;
+                }
+                /* tuile pleine : bords pour un set edge, coins sinon */
+                wangId = (cfg.type === 'edge')
+                    ? [color, 0, color, 0, color, 0, color, 0]
+                    : [0, color, 0, color, 0, color, 0, color];
+            } else {
+                wangId = spec;
+            }
+
+            wangSet.setWangId(tile, wangId);
+        }
     }
 };
 
@@ -293,7 +355,27 @@ AoO.pull = function(plan, zSpec) {
         AoO.buildLevel(map, group, data, registry, config);
     }
 
+    AoO.addCatalogTiles(map, firstData, registry, config);
+    AoO.applyTerrains(registry, config);
+
     return map;
+};
+
+/*
+ * Complète les tilesets avec tout le catalogue d'images du jeu (pas
+ * seulement les tuiles déjà posées sur ce plan) : indispensable pour
+ * poser de nouveaux types de tuiles ou remplir un plan neuf.
+ */
+AoO.addCatalogTiles = function(map, data, registry, config) {
+    if (!data.catalog) {
+        return;
+    }
+    for (var layerName in data.catalog) {
+        var names = data.catalog[layerName];
+        for (var i = 0; i < names.length; i++) {
+            AoO.tileFor(map, registry, layerName, names[i], data.images, config);
+        }
+    }
 };
 
 /* Pull + sauvegarde en .tmj ; utilisable sans éditeur (tests headless) */
@@ -468,22 +550,59 @@ AoO.formatReport = function(reports) {
 /* Actions et menus                                                    */
 /* ------------------------------------------------------------------ */
 
-tiled.registerAction('AoOPull', function() {
-    var spec = tiled.prompt('Plan à récupérer (« plan » = tous les niveaux, « plan:z » = un seul) :', 'gaia', 'AoO — Pull');
-    if (!spec) {
-        return;
-    }
-    var parts = spec.split(':');
-    var plan = parts[0].trim();
-    var z = parts.length > 1 ? (parseInt(parts[1], 10) || 0) : null;
+/* Liste « plan (z...) » des plans existants, pour guider le pull */
+AoO.describePlans = function(config) {
+    var data = AoO.api(config, 'GET', '/api/admin/map/plans.php');
 
+    var lines = [];
+    for (var plan in data.plans) {
+        lines.push(plan + ' (z ' + data.plans[plan].zLevels.join(', ') + ')');
+    }
+    return lines;
+};
+
+tiled.registerAction('AoOPull', function() {
     try {
+        var config = AoO.loadConfig();
+        var plans = AoO.describePlans(config);
+
+        var spec = tiled.prompt(
+            'Plans existants :\n  ' + plans.join('\n  ') +
+            '\n\nPlan à récupérer (« plan » = tous les niveaux, « plan:z » = un seul) :',
+            'gaia', 'AoO — Pull');
+        if (!spec) {
+            return;
+        }
+        var parts = spec.split(':');
+        var plan = parts[0].trim();
+        var z = parts.length > 1 ? (parseInt(parts[1], 10) || 0) : null;
+
         var fileName = AoO.pullAndOpen(plan, z);
         tiled.log('AoO : plan « ' + plan + ' » ouvert depuis ' + fileName);
     } catch (error) {
         tiled.alert(String(error), 'AoO — Pull');
     }
 }).text = 'AoO : Pull un plan du jeu…';
+
+tiled.registerAction('AoONew', function() {
+    try {
+        var config = AoO.loadConfig();
+        var plan = tiled.prompt('Nom du nouveau plan (minuscules, chiffres, _ et -) :', '', 'AoO — Nouveau plan');
+        if (!plan) {
+            return;
+        }
+        plan = plan.trim();
+
+        AoO.api(config, 'POST', '/api/admin/map/create.php', { plan: plan });
+
+        /* le plan vierge existe : le pull ramène une carte vide avec la
+           palette complète (catalogue) prête à peindre */
+        var fileName = AoO.pullAndOpen(plan);
+        tiled.log('AoO : plan « ' + plan + ' » créé et ouvert depuis ' + fileName);
+    } catch (error) {
+        tiled.alert(String(error), 'AoO — Nouveau plan');
+    }
+}).text = 'AoO : Nouveau plan dans le jeu…';
 
 tiled.registerAction('AoOPush', function() {
     var map = tiled.activeAsset;
@@ -518,7 +637,8 @@ try {
     tiled.extendMenu('File', [
         { separator: true },
         { action: 'AoOPull' },
-        { action: 'AoOPush' }
+        { action: 'AoOPush' },
+        { action: 'AoONew' }
     ]);
     tiled.log('AoO : extension chargée, actions dans le menu Fichier');
 } catch (error) {

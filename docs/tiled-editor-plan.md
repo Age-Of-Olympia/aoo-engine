@@ -95,16 +95,50 @@ dans `tools/tiled/aoo/session.json` (gitignoré).
 - Gestion des niveaux z : un (plan, z) par carte (« plan:z » au pull),
   arcadia a par exemple un sous-sol en z=-1.
 
-### Phase 2 — Confort d'édition
+### Phase 2 — Confort d'édition (partiellement faite)
 
-- Script de génération des tilesets `.tsj` (une collection par répertoire
-  d'images, propriétés par tuile : nom, type, params par défaut).
-- Conventions triggers/dialogs en calque d'objets avec formulaire de
-  propriétés.
-- Bibliothèque de structures : les tampons Tiled (stamps) sauvegardés dans le
-  dépôt (`tools/tiled/stamps/`) pour partager les préfabriqués entre admins.
-- Dialogue de connexion (URL du jeu + token) via la classe `Dialog` de Tiled,
-  config mémorisée.
+Fait :
+- Vue multi-niveaux : tous les z d'un plan dans une carte (groupe « z=N »
+  par niveau, version d'édition par groupe, push par niveau).
+- Catalogue complet : les tilesets contiennent toutes les images de `img/`
+  par couche, pas seulement les tuiles déjà posées — palette entière, plans
+  neufs remplissables.
+- Liste des plans existants au pull (`plans.php`) et création d'un plan
+  vierge depuis l'éditeur (`create.php`, action « Nouveau plan »). Le JSON
+  de plan (`datas/private/plans/<plan>.json` — fond, biomes,
+  player_visibility) reste à créer à la main si besoin.
+- Sets de terrain (onglet « Terrain Sets ») : construits au pull depuis
+  `tools/tiled/aoo/terrains.json` (déclaratif : couleurs + tuiles pleines ou
+  wangId explicites). Set « Biomes » de départ sur les tuiles de sol. Pure
+  métadonnée d'éditeur : le push est inchangé.
+
+Reste :
+- **Art de transition** pour rendre le pinceau Terrain vraiment utile :
+  générer (ImageMagick, masques alpha) ou dessiner les ~12-16 tuiles de
+  transition par paire de biomes (eau/sable, route/…), puis les déclarer
+  dans `terrains.json` avec leurs wangId.
+- Bibliothèque de structures : tampons Tiled partagés dans le dépôt
+  (`tools/tiled/stamps/`).
+
+### Phase 2b — Spécificités du jeu (à faire)
+
+L'ancien éditeur expose des cas particuliers qui doivent devenir de vrais
+objets typés dans Tiled. Inventaire (palette de `scripts/tiled/`) :
+
+| Cas | Données | Dans Tiled |
+|---|---|---|
+| Déclencheurs `tp` | params `x,y,z,plan` | objet trigger, params — OK, à typer |
+| Déclencheurs `need` | params `item:name:n,spell:...` | objet trigger, params — OK, à typer |
+| `forbidden`, `rez`, `altar`, `enter`, `exit` | sans params | objets triggers — OK |
+| Dialogs `question` | params = id de dialogue | objet dialog, params — OK, à typer |
+| Murs ressources | `damages` -1/-2, WALLS_PV | défaut -1 à l'insertion — OK ; mode récolte à revoir |
+| Éléments temporaires | `endTime` | préservé sur lignes conservées ; création avec endTime à définir |
+| Plantes | params (croissance) | params dans la clé d'identité — à valider en jeu |
+
+Piste principale : un fichier projet Tiled (`aoo.tiled-project`) avec des
+**types d'objets** (propertyTypes) par déclencheur — champs typés (x, y, z,
+plan pour un tp ; item/n pour un need…) au lieu d'un params libre, avec
+sérialisation params ↔ champs dans l'extension. À concevoir en phase 2b.
 
 ### Phase 3 — Industrialisation
 
