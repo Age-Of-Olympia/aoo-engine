@@ -6,18 +6,21 @@
  * (Édition > Préférences > Plugins > Ouvrir le dossier d'extensions), puis
  * copier config.json.exemple en config.json et le remplir.
  *
- * Authentification : compte du jeu avec l'option isAdmin. L'extension
- * demande les identifiants au premier appel et met le jeton en cache dans
- * session.json (gitignoré, expire côté serveur).
+ * Authentification : compte du jeu avec l'option isAdmin (lui-même ou l'un
+ * de ses PNJ). L'extension demande les identifiants au premier appel et met
+ * le jeton en cache dans session.json (gitignoré, expire côté serveur).
  *
  * Conventions :
- *  - un (plan, z) du jeu = une carte infinie Tiled, tuiles 50x50 ;
+ *  - un plan du jeu = une carte infinie Tiled, tuiles 50x50, avec un calque
+ *    de groupe « z=N » par niveau (version d'édition portée par le groupe) ;
+ *    « plan » au pull ramène tous les niveaux, « plan:z » un seul ;
  *  - le y du jeu monte vers le nord, celui de Tiled descend → tiledY = -gameY ;
  *  - couches de tuiles : tiles, routes, plants, walls, elements, foregrounds ;
  *  - couches d'objets : triggers, dialogs (params par instance) ;
  *  - map_items (état runtime) n'est jamais exporté ni importé ;
- *  - au push, les lignes posées par des joueurs (player_id) sont intouchables
- *    et l'état runtime (damages, endTime) des lignes inchangées survit.
+ *  - au push, les lignes posées par des joueurs (player_id, couches
+ *    verrouillées « xxx (joueurs) ») sont intouchables et l'état runtime
+ *    (damages, endTime) des lignes inchangées survit.
  */
 
 var AoO = {};
@@ -117,7 +120,9 @@ AoO.api = function(config, method, path, body) {
 
     var data = JSON.parse(xhr.responseText);
     if (!data.success) {
-        throw new Error('API (' + xhr.status + ') : ' + data.error);
+        var error = new Error('API (' + xhr.status + ') : ' + data.error);
+        error.httpStatus = xhr.status;
+        throw error;
     }
     return data;
 };
@@ -127,60 +132,46 @@ AoO.api = function(config, method, path, body) {
 /* ------------------------------------------------------------------ */
 
 /*
- * Construit un tileset « collection d'images » par couche : une tuile par
- * nom distinct, image individuelle du dépôt (pas d'atlas à générer).
+ * Tilesets « collection d'images », un par couche, partagés entre les
+ * niveaux z : une tuile par nom distinct, image individuelle du dépôt.
  */
-AoO.buildTilesets = function(map, data, config) {
-    var tilesByLayerAndName = {};
+AoO.tileFor = function(map, registry, layerName, name, images, config) {
+    var entry = registry[layerName];
 
-    var allLayers = AoO.TILE_LAYERS.concat(AoO.OBJECT_LAYERS);
-
-    for (var i = 0; i < allLayers.length; i++) {
-        var layerName = allLayers[i];
-        var rows = data.layers[layerName] || [];
-        if (rows.length === 0) {
-            continue;
-        }
-
-        var names = {};
-        for (var j = 0; j < rows.length; j++) {
-            names[rows[j].name] = true;
-        }
-
+    if (!entry) {
         var tileset = new Tileset('aoo-' + layerName);
         tileset.setProperty('aooLayer', layerName);
-        var byName = {};
-
-        for (var name in names) {
-            var tile = tileset.addTile();
-            tile.setProperty('aooName', name);
-            var imagePath = data.images[layerName + '/' + name];
-            if (imagePath) {
-                tile.imageFileName = config.gameDir + '/' + imagePath;
-            }
-            byName[name] = tile;
-        }
-
         map.addTileset(tileset);
-        tilesByLayerAndName[layerName] = byName;
+        entry = registry[layerName] = { tileset: tileset, byName: {} };
     }
 
-    return tilesByLayerAndName;
+    var tile = entry.byName[name];
+    if (!tile) {
+        tile = entry.tileset.addTile();
+        tile.setProperty('aooName', name);
+        var imagePath = images[layerName + '/' + name];
+        if (imagePath) {
+            tile.imageFileName = config.gameDir + '/' + imagePath;
+        }
+        entry.byName[name] = tile;
+    }
+
+    return tile;
 };
 
 AoO.isPlayerRow = function(row) {
     return Boolean(row.player_id && parseInt(row.player_id, 10) !== 0);
 };
 
-AoO.buildTileLayer = function(map, layerName, rows, tilesByName) {
+AoO.buildTileLayer = function(container, layerName, rows, tiles) {
     var layer = new TileLayer(layerName);
-    map.addLayer(layer);
+    container.addLayer(layer);
 
     var edit = layer.edit();
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         /* y inversé : le jeu monte, Tiled descend */
-        edit.setTile(row.x, -row.y, tilesByName[row.name]);
+        edit.setTile(row.x, -row.y, tiles[row.name]);
     }
     edit.apply();
 
@@ -192,7 +183,7 @@ AoO.buildTileLayer = function(map, layerName, rows, tilesByName) {
  * éditables : couche verrouillée, ignorée au push (nom inconnu du
  * serveur), jamais touchée par l'import côté serveur non plus.
  */
-AoO.buildSplitTileLayers = function(map, layerName, rows, tilesByName) {
+AoO.buildSplitTileLayers = function(container, layerName, rows, tiles) {
     var authored = [];
     var playerBuilt = [];
 
@@ -201,23 +192,23 @@ AoO.buildSplitTileLayers = function(map, layerName, rows, tilesByName) {
     }
 
     if (authored.length > 0 || playerBuilt.length === 0) {
-        AoO.buildTileLayer(map, layerName, authored, tilesByName);
+        AoO.buildTileLayer(container, layerName, authored, tiles);
     }
 
     if (playerBuilt.length > 0) {
-        var lockedLayer = AoO.buildTileLayer(map, layerName + ' (joueurs)', playerBuilt, tilesByName);
+        var lockedLayer = AoO.buildTileLayer(container, layerName + ' (joueurs)', playerBuilt, tiles);
         lockedLayer.locked = true;
     }
 };
 
-AoO.buildObjectLayer = function(map, layerName, rows, tilesByName, tileSize) {
+AoO.buildObjectLayer = function(container, layerName, rows, tiles, tileSize) {
     var group = new ObjectGroup(layerName);
-    map.addLayer(group);
+    container.addLayer(group);
 
     for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         var object = new MapObject(row.name);
-        var tile = tilesByName ? tilesByName[row.name] : null;
+        var tile = tiles ? tiles[row.name] : null;
 
         object.x = row.x * tileSize;
         /* objet-tuile : ancré en bas à gauche ; rectangle nu : en haut à gauche */
@@ -234,47 +225,83 @@ AoO.buildObjectLayer = function(map, layerName, rows, tilesByName, tileSize) {
     }
 };
 
-/* Télécharge un (plan, z) du jeu et le reconstruit en TileMap Tiled */
-AoO.pull = function(plan, z) {
+/* Construit les couches d'un niveau z dans un conteneur (groupe) */
+AoO.buildLevel = function(map, container, data, registry, config) {
+    var i, layerName, rows;
+
+    for (i = 0; i < AoO.TILE_LAYERS.length; i++) {
+        layerName = AoO.TILE_LAYERS[i];
+        rows = data.layers[layerName] || [];
+        if (rows.length === 0) {
+            continue;
+        }
+        for (var j = 0; j < rows.length; j++) {
+            AoO.tileFor(map, registry, layerName, rows[j].name, data.images, config);
+        }
+        AoO.buildSplitTileLayers(container, layerName, rows, registry[layerName].byName);
+    }
+
+    for (i = 0; i < AoO.OBJECT_LAYERS.length; i++) {
+        layerName = AoO.OBJECT_LAYERS[i];
+        rows = data.layers[layerName] || [];
+        if (rows.length === 0) {
+            continue;
+        }
+        for (var k = 0; k < rows.length; k++) {
+            AoO.tileFor(map, registry, layerName, rows[k].name, data.images, config);
+        }
+        AoO.buildObjectLayer(container, layerName, rows, registry[layerName].byName, data.tileSize);
+    }
+};
+
+/*
+ * Télécharge un plan et le reconstruit : un groupe « z=N » par niveau
+ * (z croissant de bas en haut de la pile → les niveaux hauts se rendent
+ * au-dessus), seul le niveau le plus haut visible au départ. zSpec
+ * restreint à un seul niveau.
+ */
+AoO.pull = function(plan, zSpec) {
     var config = AoO.loadConfig();
-    var data = AoO.api(config, 'GET', '/api/admin/map/export.php?plan=' + plan + '&z=' + z);
+
+    var singleZ = (zSpec !== undefined && zSpec !== null);
+    var firstZ = singleZ ? zSpec : 0;
+    var firstData = AoO.api(config, 'GET', '/api/admin/map/export.php?plan=' + plan + '&z=' + firstZ);
+
+    var zLevels = singleZ ? [zSpec] : (firstData.zLevels || [0]);
+    zLevels.sort(function(a, b) { return a - b; });
+    var topZ = zLevels[zLevels.length - 1];
 
     var map = new TileMap();
     map.orientation = TileMap.Orthogonal;
-    map.setTileSize(data.tileSize, data.tileSize);
+    map.setTileSize(firstData.tileSize, firstData.tileSize);
     map.infinite = true;
     map.setProperty('aooPlan', plan);
-    map.setProperty('aooZ', z);
-    map.setProperty('aooVersion', data.version);
 
-    var tilesets = AoO.buildTilesets(map, data, config);
+    var registry = {};
 
-    for (var i = 0; i < AoO.TILE_LAYERS.length; i++) {
-        var layerName = AoO.TILE_LAYERS[i];
-        var rows = data.layers[layerName] || [];
-        if (rows.length > 0) {
-            AoO.buildSplitTileLayers(map, layerName, rows, tilesets[layerName]);
-        }
-    }
+    for (var i = 0; i < zLevels.length; i++) {
+        var z = zLevels[i];
+        var data = (z === firstZ) ? firstData
+            : AoO.api(config, 'GET', '/api/admin/map/export.php?plan=' + plan + '&z=' + z);
 
-    for (var k = 0; k < AoO.OBJECT_LAYERS.length; k++) {
-        var objectLayerName = AoO.OBJECT_LAYERS[k];
-        var objectRows = data.layers[objectLayerName] || [];
-        if (objectRows.length > 0) {
-            AoO.buildObjectLayer(map, objectLayerName, objectRows,
-                tilesets[objectLayerName], data.tileSize);
-        }
+        var group = new GroupLayer('z=' + z);
+        map.addLayer(group);
+        group.setProperty('aooZ', z);
+        group.setProperty('aooVersion', data.version);
+        group.visible = (z === topZ);
+
+        AoO.buildLevel(map, group, data, registry, config);
     }
 
     return map;
 };
 
 /* Pull + sauvegarde en .tmj ; utilisable sans éditeur (tests headless) */
-AoO.pullAndSave = function(plan, z) {
+AoO.pullAndSave = function(plan, zSpec) {
     var config = AoO.loadConfig();
-    var map = AoO.pull(plan, z);
+    var map = AoO.pull(plan, zSpec);
 
-    var suffix = z ? ('_z' + z) : '';
+    var suffix = (zSpec !== undefined && zSpec !== null) ? ('_z' + zSpec) : '';
     var fileName = config.gameDir + '/tools/tiled/maps/' + plan + suffix + '.tmj';
     File.makePath(config.gameDir + '/tools/tiled/maps');
     var format = tiled.mapFormat('json');
@@ -283,8 +310,8 @@ AoO.pullAndSave = function(plan, z) {
     return fileName;
 };
 
-AoO.pullAndOpen = function(plan, z) {
-    var fileName = AoO.pullAndSave(plan, z);
+AoO.pullAndOpen = function(plan, zSpec) {
+    var fileName = AoO.pullAndSave(plan, zSpec);
     tiled.open(fileName);
     return fileName;
 };
@@ -352,53 +379,88 @@ AoO.serializeObjectLayer = function(layer, tileSize) {
     return rows;
 };
 
-AoO.serializeMap = function(map) {
+/* Sérialise les couches AoO d'un conteneur (groupe de niveau) */
+AoO.serializeContainer = function(container, tileSize) {
     var layers = {};
 
-    for (var i = 0; i < map.layerCount; i++) {
-        var layer = map.layerAt(i);
+    for (var i = 0; i < container.layerCount; i++) {
+        var layer = container.layerAt(i);
 
         if (layer.isTileLayer && AoO.TILE_LAYERS.indexOf(layer.name) !== -1) {
             layers[layer.name] = AoO.serializeTileLayer(layer);
         } else if (layer.isObjectLayer && AoO.OBJECT_LAYERS.indexOf(layer.name) !== -1) {
-            layers[layer.name] = AoO.serializeObjectLayer(layer, map.tileWidth);
+            layers[layer.name] = AoO.serializeObjectLayer(layer, tileSize);
         } else {
-            tiled.log('AoO : couche « ' + layer.name + ' » ignorée au push (nom inconnu)');
+            tiled.log('AoO : couche « ' + layer.name + ' » ignorée au push');
         }
     }
 
     return layers;
 };
 
-/* Pousse la carte vers le jeu ; retourne le rapport de l'API */
+/*
+ * Pousse la carte vers le jeu, un import transactionnel par niveau z.
+ * Retourne [{z, layers}] ; en cas d'échec sur un niveau, les niveaux
+ * déjà appliqués le restent (leurs versions locales sont à jour).
+ */
 AoO.push = function(map) {
     if (!map || !map.property('aooPlan')) {
         throw new Error('Cette carte ne vient pas du jeu (propriété aooPlan absente) — faire un pull d\'abord');
     }
 
     var config = AoO.loadConfig();
-    var payload = {
-        plan: map.property('aooPlan'),
-        z: map.property('aooZ') || 0,
-        version: map.property('aooVersion'),
-        layers: AoO.serializeMap(map)
-    };
+    var plan = map.property('aooPlan');
+    var reports = [];
 
-    var data = AoO.api(config, 'POST', '/api/admin/map/import.php', payload);
-    map.setProperty('aooVersion', data.newVersion);
-    return data;
+    for (var i = 0; i < map.layerCount; i++) {
+        var group = map.layerAt(i);
+        if (!group.isGroupLayer || group.property('aooZ') === undefined) {
+            continue;
+        }
+
+        var z = group.property('aooZ');
+        var payload = {
+            plan: plan,
+            z: z,
+            version: group.property('aooVersion'),
+            layers: AoO.serializeContainer(group, map.tileWidth)
+        };
+
+        try {
+            var data = AoO.api(config, 'POST', '/api/admin/map/import.php', payload);
+        } catch (error) {
+            error.message = 'z=' + z + ' : ' + error.message +
+                (reports.length ? '\n(niveaux déjà appliqués : ' +
+                    reports.map(function(r) { return 'z=' + r.z; }).join(', ') + ')' : '');
+            throw error;
+        }
+
+        group.setProperty('aooVersion', data.newVersion);
+        reports.push({ z: z, layers: data.layers });
+    }
+
+    if (reports.length === 0) {
+        throw new Error('Aucun groupe « z=N » trouvé dans cette carte — re-puller le plan (ancien format ?)');
+    }
+
+    return reports;
 };
 
-AoO.formatReport = function(data) {
+AoO.formatReport = function(reports) {
     var lines = [];
-    for (var layer in data.layers) {
-        var r = data.layers[layer];
-        if (r.inserted || r.deleted || r.kept || r.protected) {
-            lines.push(layer + ' : +' + r.inserted + ' / -' + r.deleted +
-                ' / ' + r.kept + ' conservés' +
-                (r.protected ? ' / ' + r.protected + ' protégés (joueurs)' : ''));
+
+    for (var i = 0; i < reports.length; i++) {
+        var report = reports[i];
+        for (var layer in report.layers) {
+            var r = report.layers[layer];
+            if (r.inserted || r.deleted || r.kept || r.protected) {
+                lines.push('z=' + report.z + ' ' + layer + ' : +' + r.inserted + ' / -' + r.deleted +
+                    ' / ' + r.kept + ' conservés' +
+                    (r.protected ? ' / ' + r.protected + ' protégés (joueurs)' : ''));
+            }
         }
     }
+
     return lines.length ? lines.join('\n') : 'Aucun changement.';
 };
 
@@ -407,17 +469,17 @@ AoO.formatReport = function(data) {
 /* ------------------------------------------------------------------ */
 
 tiled.registerAction('AoOPull', function() {
-    var spec = tiled.prompt('Plan à récupérer (« plan » ou « plan:z ») :', 'gaia', 'AoO — Pull');
+    var spec = tiled.prompt('Plan à récupérer (« plan » = tous les niveaux, « plan:z » = un seul) :', 'gaia', 'AoO — Pull');
     if (!spec) {
         return;
     }
     var parts = spec.split(':');
     var plan = parts[0].trim();
-    var z = parts.length > 1 ? parseInt(parts[1], 10) || 0 : 0;
+    var z = parts.length > 1 ? (parseInt(parts[1], 10) || 0) : null;
 
     try {
         var fileName = AoO.pullAndOpen(plan, z);
-        tiled.log('AoO : plan « ' + plan + ' » (z=' + z + ') ouvert depuis ' + fileName);
+        tiled.log('AoO : plan « ' + plan + ' » ouvert depuis ' + fileName);
     } catch (error) {
         tiled.alert(String(error), 'AoO — Pull');
     }
@@ -436,14 +498,14 @@ tiled.registerAction('AoOPush', function() {
             throw new Error('Cette carte ne vient pas du jeu (propriété aooPlan absente)');
         }
 
-        var question = 'Pousser « ' + plan + ' » (z=' + (map.property('aooZ') || 0) +
-            ') vers le jeu ?\n\nLes cases construites par des joueurs et les objets au sol ne seront pas touchés.';
+        var question = 'Pousser « ' + plan + ' » vers le jeu (tous les niveaux z de la carte) ?\n\n' +
+            'Les cases construites par des joueurs et les objets au sol ne seront pas touchés.';
         if (typeof tiled.confirm === 'function' && !tiled.confirm(question, 'AoO — Push')) {
             return;
         }
 
-        var data = AoO.push(map);
-        tiled.alert('Plan appliqué au jeu.\n\n' + AoO.formatReport(data), 'AoO — Push');
+        var reports = AoO.push(map);
+        tiled.alert('Plan appliqué au jeu.\n\n' + AoO.formatReport(reports), 'AoO — Push');
     } catch (error) {
         tiled.alert(String(error), 'AoO — Push');
     }

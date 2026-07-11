@@ -54,23 +54,46 @@ class TiledMapService
         $this->db = new Db();
     }
 
-    /** @return array|null null si le plan/z ne contient rien */
+    /** @return array|null null si le (plan, z) n'a ni contenu ni coordonnées */
     public function exportPlan(string $plan, int $z): ?array
     {
         $layers = $this->fetchLayers($plan, $z);
 
-        if (array_sum(array_map('count', $layers)) === 0) {
+        // Un niveau vide mais existant (coords sans contenu) reste pullable :
+        // l'extension multi-z doit pouvoir l'afficher et le remplir
+        if (array_sum(array_map('count', $layers)) === 0 && !$this->hasCoords($plan, $z)) {
             return null;
         }
 
         return [
             'plan'     => $plan,
             'z'        => $z,
+            'zLevels'  => $this->planZLevels($plan),
             'tileSize' => self::TILE_SIZE,
             'version'  => $this->computeVersion($layers),
             'layers'   => $layers,
             'images'   => $this->resolveImages($layers),
         ];
+    }
+
+    /** @return int[] niveaux z existants du plan, croissants */
+    private function planZLevels(string $plan): array
+    {
+        $res = $this->db->exe('SELECT DISTINCT z FROM coords WHERE plan = ? ORDER BY z', array($plan));
+
+        $zLevels = [];
+        while ($row = $res->fetch_assoc()) {
+            $zLevels[] = (int) $row['z'];
+        }
+
+        return $zLevels;
+    }
+
+    private function hasCoords(string $plan, int $z): bool
+    {
+        $res = $this->db->exe('SELECT 1 FROM coords WHERE plan = ? AND z = ? LIMIT 1', array($plan, $z));
+
+        return $res->num_rows > 0;
     }
 
     /**
