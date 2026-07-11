@@ -7,6 +7,71 @@ use App\Service\CsrfProtectionService;
 use App\Service\ViewService;
 use App\Service\PlanJsonValidator;
 
+/**
+ * Rend un groupe de validation (erreurs / avertissements / OK) sous forme
+ * d'accordéon <details> coloré. Partagé entre la vue d'ensemble et le détail
+ * d'un plan pour un rendu cohérent (DRY). Un groupe vide n'affiche rien.
+ *
+ * @param string[] $items Messages déjà prêts à l'affichage (parties dynamiques échappées par PlanJsonValidator)
+ */
+function render_validation_group(array $items, string $variant, string $icon, string $color, string $label, bool $open): void
+{
+    if (empty($items)) {
+        return;
+    }
+    $openAttr   = $open ? ' open' : '';
+    $badgeStyle = 'background-color:' . $color . ';color:#fff;';
+    echo '<details class="alert alert-' . $variant . ' mb-2" style="padding:0;"' . $openAttr . '>';
+    echo   '<summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;">';
+    echo     '<i class="fas ' . $icon . '"></i> ' . e($label);
+    echo     ' <span class="badge" style="' . $badgeStyle . '">' . count($items) . '</span>';
+    echo   '</summary>';
+    echo   '<ul class="mb-0" style="padding:.25rem .75rem .75rem 2.2rem;font-size:13px;line-height:1.6;">';
+    foreach ($items as $msg) {
+        echo '<li>' . $msg . '</li>';
+    }
+    echo   '</ul>';
+    echo '</details>';
+}
+
+/**
+ * Rend les groupes de validation en distinguant les domaines « niveaux Z » et
+ * « biomes » : erreurs (Z puis biomes), avertissements (Z puis biomes), puis
+ * (optionnel) les validations OK. Chaque groupe vide est ignoré.
+ *
+ * @param array{z: array{errors: string[], warnings: string[], ok: string[]}, biome: array{errors: string[], warnings: string[], ok: string[]}} $validation
+ */
+function render_validation_report(array $validation, bool $includeOk = true): void
+{
+    $z = $validation['z'];
+    $b = $validation['biome'];
+
+    render_validation_group($z['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (niveaux Z)', true);
+    render_validation_group($b['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (biomes)',    true);
+    render_validation_group($z['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (niveaux Z)', true);
+    render_validation_group($b['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (biomes)',    true);
+    if ($includeOk) {
+        render_validation_group($z['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (niveaux Z)', false);
+        render_validation_group($b['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (biomes)',    false);
+    }
+}
+
+/**
+ * Plans hors « _s2 » qui font tout de même partie de la saison 2 :
+ * la map globale (olympia) et les enfers. Sert à restreindre la vue
+ * d'ensemble aux seuls plans réellement en jeu en saison 2.
+ */
+const SEASON2_EXTRA_PLANS = ['olympia', 'enfers'];
+
+/**
+ * Un plan relève-t-il de la saison 2 ? Vrai pour tout id « _s2 » et pour
+ * les plans hors-saison listés dans SEASON2_EXTRA_PLANS.
+ */
+function is_season2_plan(object $plan): bool
+{
+    return $plan->isS2 || in_array($plan->id, SEASON2_EXTRA_PLANS, true);
+}
+
 // Clear any world map layers when loading local maps
 if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['generated_layers']), 'world_') !== false) {
     unset($_SESSION['generated_layers']);
@@ -117,16 +182,123 @@ ob_start();
 <div class="container">
     <h3>Gestion des cartes locales</h3>
 
+    <?= renderFlashMessage() ?>
+
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
         <strong>Qu'est-ce qu'une carte locale ?</strong>
         Elle est constituée de deux éléments qui doivent être cohérents :
         <ul class="mb-1 mt-1">
-            <li><strong>Un fichier JSON</strong> (<code style="display:inline;white-space:nowrap">private/plans/&lt;id&gt;.json</code>) — nom, niveaux Z, bornes visibles, biomes…</li>
-            <li><strong>Des coordonnées en base</strong> — chaque case dans la table <code style="display:inline;white-space:nowrap">coords</code> (tiles, éléments, murs…)</li>
+            <li><strong>Un fichier JSON</strong> (<code style="display:inline;white-space:nowrap">private/plans/&lt;id&gt;.json</code>) : nom, niveaux Z, bornes visibles, biomes…</li>
+            <li><strong>Des coordonnées en base</strong> : chaque case dans la table <code style="display:inline;white-space:nowrap">coords</code> (tiles, éléments, murs…)</li>
         </ul>
-        Un niveau Z peut exister en base sans être déclaré dans le JSON (et inversement) — la validation ci-dessous détecte ces incohérences.
+        Un niveau Z peut exister en base sans être déclaré dans le JSON (et inversement) : la validation ci-dessous détecte ces incohérences.
         Si un niveau n'a volontairement pas de carte, déclarez-le avec <code style="display:inline;white-space:nowrap">"MapUnavailable": true</code> dans le JSON.
     </div>
+
+    <?php if (!$selectedPlan):
+        // Vue d'ensemble : santé des plans de la saison 2, tant qu'aucun n'est sélectionné.
+        // Les noms d'items sont préchargés une seule fois pour éviter une requête
+        // par biome (sinon des centaines de requêtes sur l'ensemble des plans).
+        $knownItemNames = [];
+        $itemRows = $database->exe("SELECT name FROM items");
+        if ($itemRows) {
+            while ($ir = $itemRows->fetch_object()) {
+                $knownItemNames[] = $ir->name;
+            }
+        }
+
+        // Vue d'ensemble restreinte aux plans de la saison 2 (« _s2 » + map globale + enfers).
+        $overviewPlans = array_values(array_filter($allPlans, 'is_season2_plan'));
+
+        $plansWithIssues = [];
+        $okCount = 0;
+        foreach ($overviewPlans as $p) {
+            $raw = json()->decode('plans', $p->id);
+            if ($raw === null || $raw === false) {
+                // JSON vide/invalide : problème de plan (ni Z ni biome), rendu à part.
+                $plansWithIssues[] = [
+                    'plan' => $p, 'errCount' => 1, 'warnCount' => 0, 'v' => null,
+                    'emptyMsg' => 'Fichier JSON du plan vide ou invalide, aucune récolte possible sur ce plan.',
+                ];
+                continue;
+            }
+            $v = PlanJsonValidator::validate($raw, $p->id, $database, $knownItemNames);
+            $errCount  = count($v['errors']);
+            $warnCount = count($v['warnings']);
+            if ($errCount > 0 || $warnCount > 0) {
+                $plansWithIssues[] = ['plan' => $p, 'errCount' => $errCount, 'warnCount' => $warnCount, 'v' => $v, 'emptyMsg' => null];
+            } else {
+                $okCount++;
+            }
+        }
+
+        // Tri : plans en erreur d'abord (par nombre décroissant), puis avertissements seuls.
+        usort($plansWithIssues, function ($a, $b) {
+            return ($b['errCount'] <=> $a['errCount']) ?: ($b['warnCount'] <=> $a['warnCount']);
+        });
+
+        $errPlanCount  = count(array_filter($plansWithIssues, fn($x) => $x['errCount'] > 0));
+        $warnPlanCount = count($plansWithIssues) - $errPlanCount;
+        $totalPlans    = count($overviewPlans);
+    ?>
+    <details class="card mt-3">
+        <summary class="card-body" style="cursor:pointer;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <h5 class="card-title mb-0">Vue d'ensemble : santé des plans (saison 2)</h5>
+            <span class="badge" style="background-color:#dc3545;color:#fff;"><?= $errPlanCount ?> avec erreurs</span>
+            <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $warnPlanCount ?> avec avertissements seuls</span>
+            <span class="badge" style="background-color:#198754;color:#fff;"><?= $okCount ?> sans problème</span>
+            <small class="text-muted">sur <?= $totalPlans ?> plans</small>
+        </summary>
+        <div class="card-body" style="border-top:1px solid #e5e5e5;">
+            <p class="text-muted small mb-3">Tous les problèmes détectés sur les plans de la saison 2 (plans « _s2 », map globale et enfers), sans avoir à les ouvrir un par un. Cliquez sur « Ouvrir » pour aller au plan concerné.</p>
+
+            <?php if (empty($plansWithIssues)): ?>
+                <div class="alert alert-success mb-0"><i class="fas fa-check-circle"></i> Aucun problème détecté sur les <?= $totalPlans ?> plans.</div>
+            <?php else: ?>
+                <?php foreach ($plansWithIssues as $x):
+                    $p = $x['plan'];
+                    $variant = $x['errCount'] > 0 ? 'danger' : 'warning';
+                    $season  = $p->isS2 ? 'S2' : 'S1';
+                ?>
+                    <details class="alert alert-<?= $variant ?> mb-2" style="padding:0;">
+                        <summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                            <span><?= e($p->name) ?> <small class="text-muted">(<?= e($p->id) ?>) · <?= $season ?></small></span>
+                            <?php if ($x['errCount'] > 0): ?>
+                                <span class="badge" style="background-color:#dc3545;color:#fff;"><?= $x['errCount'] ?> erreur<?= $x['errCount'] > 1 ? 's' : '' ?></span>
+                            <?php endif; ?>
+                            <?php if ($x['warnCount'] > 0): ?>
+                                <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $x['warnCount'] ?> avert.</span>
+                            <?php endif; ?>
+                            <a href="#" onclick="event.stopPropagation();selectLocalPlan(<?= e(json_encode($p->id)) ?>);return false;" class="btn btn-secondary btn-sm" style="margin-left:auto;">
+                                <i class="fas fa-arrow-right"></i> Ouvrir
+                            </a>
+                        </summary>
+                        <div style="padding:.25rem .5rem .5rem;">
+                            <?php
+                            if ($x['v'] === null) {
+                                render_validation_group([$x['emptyMsg']], 'danger', 'fa-times-circle', '#dc3545', 'Erreur', true);
+                            } else {
+                                render_validation_report($x['v'], false);
+                            }
+                            ?>
+                        </div>
+                    </details>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </details>
+
+    <script>
+    /* Sélectionne un plan depuis la vue d'ensemble et soumet le formulaire de choix. */
+    function selectLocalPlan(id) {
+        var select = document.getElementById('planSelect');
+        if (select) {
+            select.value = id;
+            document.getElementById('planForm').submit();
+        }
+    }
+    </script>
+    <?php endif; ?>
 
     <div class="card mt-3">
         <div class="card-body">
@@ -161,7 +333,7 @@ ob_start();
             </form>
             
             <?php if ($selectedPlan): ?>
-                <div class="alert alert-success mt-4">
+                <div class="mt-4" style="padding:1rem;border:1px solid #d6d8db;border-radius:.375rem;background:#fff;">
                     <?php
                         $selectedPlanData = array_filter($allPlans, fn($p) => $p->id === $selectedPlan);
                         $plan = reset($selectedPlanData);
@@ -171,7 +343,7 @@ ob_start();
                         <div>
                             <strong>Plan sélectionné : <?= e($plan->name) ?> (<?= e($plan->id) ?>)<?= $seasonBadge ?></strong>
                             <?php if ($plan->hasZLevels ?? false): ?>
-                                <small class="text-muted ms-2">— <?= count($plan->fullData->z_levels ?? []) ?> niveau(x) Z</small>
+                                <small class="text-muted ms-2"><?= count($plan->fullData->z_levels ?? []) ?> niveau(x) Z</small>
                             <?php endif; ?>
                         </div>
                         <a href="/tools.php?edit&dir=private&subDir=plans&finalDir=<?= urlencode($plan->id) ?>" class="btn btn-secondary btn-sm" target="_blank">
@@ -182,21 +354,22 @@ ob_start();
                     <?php
                     // Validation du JSON du plan
                     $rawPlanData = json()->decode('plans', $plan->id);
-                    if ($rawPlanData) {
+                    if ($rawPlanData === null || $rawPlanData === false) {
+                        // JSON vide (0 octet) ou invalide → décodage null/false : aucun biome
+                        // chargé, donc aucune récolte possible. On le signale explicitement
+                        // plutôt que d'ignorer silencieusement le bloc de validation.
+                        echo '<div class="alert alert-danger mt-3 py-1 my-1"><i class="fas fa-times-circle"></i> Fichier JSON du plan vide ou invalide, aucune récolte possible sur ce plan.</div>';
+                    } else {
                         $validation = PlanJsonValidator::validate($rawPlanData, $plan->id, $database);
-                        if (!empty($validation['errors']) || !empty($validation['warnings']) || !empty($validation['ok'])) {
+
+                        // Rendu groupé en accordéons repliables (un bloc par sévérité)
+                        // plutôt qu'une alerte par ligne : la liste des « OK » peut compter
+                        // des dizaines d'entrées. <details>/<summary> natifs (aucun JS
+                        // Bootstrap n'est chargé côté admin). Erreurs/avertissements ouverts,
+                        // OK replié. Voir render_validation_report() en tête de fichier.
+                        if (count($validation['errors']) + count($validation['warnings']) + count($validation['ok']) > 0) {
                             echo '<div class="mt-3">';
-
-                            foreach ($validation['errors'] as $err) {
-                                echo '<div class="alert alert-danger py-1 my-1"><i class="fas fa-times-circle"></i> ' . e($err) . '</div>';
-                            }
-                            foreach ($validation['warnings'] as $warn) {
-                                echo '<div class="alert alert-warning py-1 my-1"><i class="fas fa-exclamation-triangle"></i> ' . e($warn) . '</div>';
-                            }
-                            foreach ($validation['ok'] as $msg) {
-                                echo '<div class="alert alert-success py-1 my-1"><i class="fas fa-check-circle"></i> ' . e($msg) . '</div>';
-                            }
-
+                            render_validation_report($validation, true);
                             echo '</div>';
                         }
                     }
