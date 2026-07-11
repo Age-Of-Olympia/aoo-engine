@@ -440,6 +440,53 @@ AoO.login = function(config, fixedInstance) {
     return data.token;
 };
 
+/* ------------------------------------------------------------------ */
+/* Base64 — les images transitent en base64 dans le JSON de l'API      */
+/* (pas d'atob/btoa dans le moteur JS de Tiled)                        */
+/* ------------------------------------------------------------------ */
+
+AoO.B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+AoO.B64_LOOKUP = (function() {
+    var lookup = {};
+    for (var i = 0; i < AoO.B64.length; i++) {
+        lookup[AoO.B64[i]] = i;
+    }
+    return lookup;
+})();
+
+AoO.base64Encode = function(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var out = [];
+    for (var i = 0; i < bytes.length; i += 3) {
+        var b0 = bytes[i];
+        var b1 = i + 1 < bytes.length ? bytes[i + 1] : null;
+        var b2 = i + 2 < bytes.length ? bytes[i + 2] : null;
+        out.push(AoO.B64[b0 >> 2]);
+        out.push(AoO.B64[((b0 & 3) << 4) | (b1 === null ? 0 : b1 >> 4)]);
+        out.push(b1 === null ? '=' : AoO.B64[((b1 & 15) << 2) | (b2 === null ? 0 : b2 >> 6)]);
+        out.push(b2 === null ? '=' : AoO.B64[b2 & 63]);
+    }
+    return out.join('');
+};
+
+AoO.base64Decode = function(text) {
+    var clean = String(text).replace(/[^A-Za-z0-9+\/]/g, '');
+    var bytes = new Uint8Array(Math.floor(clean.length * 3 / 4));
+    var p = 0;
+    var buffer = 0;
+    var bits = 0;
+    for (var i = 0; i < clean.length; i++) {
+        buffer = (buffer << 6) | AoO.B64_LOOKUP[clean[i]];
+        bits += 6;
+        if (bits >= 8) {
+            bits -= 8;
+            bytes[p++] = (buffer >> bits) & 255;
+        }
+    }
+    return bytes.buffer;
+};
+
 /* Appel API authentifié sur une instance ; redemande les identifiants une fois sur 401 */
 AoO.api = function(config, instance, method, path, body) {
     var token = AoO.cachedToken(instance) || AoO.login(config, instance);
@@ -888,7 +935,17 @@ AoO.pullAndSave = function(plan, zSpec) {
 
 AoO.pullAndOpen = function(plan, zSpec) {
     var fileName = AoO.pullAndSave(plan, zSpec);
-    tiled.open(fileName);
+    var map = tiled.open(fileName);
+
+    /* art absent du dépôt local (img/ n'est pas versionné) : le signaler
+       tout de suite plutôt que de laisser des tuiles invisibles */
+    var missing = map && map.isTileMap ? AoO.countMissingImages(map) : 0;
+    if (missing) {
+        tiled.alert(missing + ' tuile(s) de la palette n\'ont pas leur image dans le dépôt local.\n\n' +
+            'Utiliser « AoO : Pull les images du jeu… » pour les télécharger, puis re-puller le plan.',
+            'AoO — Images manquantes');
+    }
+
     return fileName;
 };
 
@@ -1220,6 +1277,75 @@ AoO.generateWorld = function(config, instance) {
     return { fileName: fileName, count: maps.length, skipped: skipped };
 };
 
+/* ------------------------------------------------------------------ */
+/* Synchronisation des images (img/<couche>/…)                         */
+/* ------------------------------------------------------------------ */
+
+/* Télécharge une image de l'instance vers le dépôt local */
+AoO.downloadImage = function(config, instance, path) {
+    var data = AoO.api(config, instance, 'GET',
+        '/api/admin/map/images.php?path=' + encodeURIComponent(path));
+
+    var local = config.gameDir + '/' + path;
+    File.makePath(local.substring(0, local.lastIndexOf('/')));
+    var file = new BinaryFile(local, BinaryFile.WriteOnly);
+    file.write(AoO.base64Decode(data.data));
+    file.commit();
+};
+
+/* Envoie une image du dépôt local vers l'instance */
+AoO.uploadImage = function(config, instance, path) {
+    var file = new BinaryFile(config.gameDir + '/' + path, BinaryFile.ReadOnly);
+    var bytes = file.readAll();
+    file.close();
+
+    AoO.api(config, instance, 'POST', '/api/admin/map/images.php',
+        { path: path, data: AoO.base64Encode(bytes) });
+};
+
+/*
+ * Images du dépôt local, mêmes règles que le serveur : fichiers image à la
+ * racine de chaque img/<couche>, plus l'originale <base>/<base>.png des
+ * structures composites.
+ */
+AoO.listLocalImages = function(config, layers) {
+    var found = [];
+    var isImage = /\.(png|webp|gif)$/i;
+
+    for (var l = 0; l < layers.length; l++) {
+        var dir = config.gameDir + '/img/' + layers[l];
+        var entries = File.exists(dir) ? File.directoryEntries(dir) : [];
+
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            if (entry === '.' || entry === '..') {
+                continue;
+            }
+            if (isImage.test(entry)) {
+                found.push('img/' + layers[l] + '/' + entry);
+            } else if (File.exists(dir + '/' + entry + '/' + entry + '.png')) {
+                found.push('img/' + layers[l] + '/' + entry + '/' + entry + '.png');
+            }
+        }
+    }
+
+    return found;
+};
+
+/* Combien de tuiles de la carte pointent une image absente du dépôt local ? */
+AoO.countMissingImages = function(map) {
+    var missing = 0;
+    for (var t = 0; t < map.tilesets.length; t++) {
+        var tiles = map.tilesets[t].tiles;
+        for (var i = 0; i < tiles.length; i++) {
+            if (tiles[i].imageFileName && !File.exists(tiles[i].imageFileName)) {
+                missing++;
+            }
+        }
+    }
+    return missing;
+};
+
 /* Plans existants triés par nom, avec leurs niveaux z : [{ name, zLevels }] */
 AoO.listPlans = function(config, instance) {
     var data = AoO.api(config, instance, 'GET', '/api/admin/map/plans.php');
@@ -1374,6 +1500,75 @@ AoO.registerSafeAction('AoOWorld', 'AoO : Générer le monde (tous les plans)…
     tiled.alert(message, 'AoO — Monde');
 });
 
+AoO.registerSafeAction('AoOPullImages', 'AoO : Pull les images du jeu…', 'AoO — Images', function() {
+    var config = AoO.loadConfig();
+    var instance = AoO.currentInstance(config);
+    var remote = AoO.api(config, instance, 'GET', '/api/admin/map/images.php').images;
+
+    var missing = [];
+    for (var i = 0; i < remote.length; i++) {
+        if (!File.exists(config.gameDir + '/' + remote[i])) {
+            missing.push(remote[i]);
+        }
+    }
+    if (!missing.length) {
+        tiled.alert('Rien à télécharger : les ' + remote.length + ' images de « ' + instance +
+            ' » sont déjà toutes présentes en local.', 'AoO — Images');
+        return;
+    }
+    if (typeof tiled.confirm === 'function' &&
+        !tiled.confirm('Télécharger ' + missing.length + ' image(s) manquante(s) depuis « ' + instance +
+            ' » vers ' + config.gameDir + '/img ?', 'AoO — Images')) {
+        return;
+    }
+
+    for (var j = 0; j < missing.length; j++) {
+        AoO.downloadImage(config, instance, missing[j]);
+        if ((j + 1) % 25 === 0) {
+            tiled.log('AoO : images — ' + (j + 1) + '/' + missing.length);
+        }
+    }
+
+    tiled.alert(missing.length + ' image(s) téléchargée(s) dans ' + config.gameDir + '/img.\n\n' +
+        'Re-puller le plan pour que les tuiles retrouvent leur image.', 'AoO — Images');
+});
+
+AoO.registerSafeAction('AoOPushImages', 'AoO : Push les nouvelles images…', 'AoO — Images', function() {
+    var config = AoO.loadConfig();
+    var instance = AoO.currentInstance(config);
+    var data = AoO.api(config, instance, 'GET', '/api/admin/map/images.php');
+
+    var remote = {};
+    for (var i = 0; i < data.images.length; i++) {
+        remote[data.images[i]] = true;
+    }
+
+    /* nouvel art local uniquement : une image déjà sur l'instance n'est
+       jamais écrasée d'ici (l'art existant se gère via le dépôt d'assets) */
+    var news = AoO.listLocalImages(config, data.layers).filter(function(path) {
+        return !remote[path];
+    });
+    if (!news.length) {
+        tiled.alert('Aucune nouvelle image locale : « ' + instance +
+            ' » connaît déjà tout le contenu de ' + config.gameDir + '/img.', 'AoO — Images');
+        return;
+    }
+
+    var preview = news.slice(0, 30).join('\n  ') + (news.length > 30 ? '\n  …' : '');
+    if (typeof tiled.confirm === 'function' &&
+        !tiled.confirm('Envoyer ' + news.length + ' nouvelle(s) image(s) vers « ' + instance + ' » ?\n\n  ' +
+            preview, 'AoO — Images')) {
+        return;
+    }
+
+    for (var j = 0; j < news.length; j++) {
+        AoO.uploadImage(config, instance, news[j]);
+    }
+
+    tiled.alert(news.length + ' image(s) envoyée(s) vers « ' + instance + ' ».\n\n' +
+        'Elles apparaissent dans la palette au prochain pull du plan.', 'AoO — Images');
+});
+
 AoO.registerSafeAction('AoOBiomes', 'AoO : Biomes (ressources) du plan…', 'AoO — Biomes', function() {
     var map = tiled.activeAsset;
     if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
@@ -1451,6 +1646,8 @@ try {
         { action: 'AoOConnect' },
         { action: 'AoOPull' },
         { action: 'AoOPush' },
+        { action: 'AoOPullImages' },
+        { action: 'AoOPushImages' },
         { action: 'AoONew' },
         { action: 'AoOBg' },
         { action: 'AoOBiomes' },

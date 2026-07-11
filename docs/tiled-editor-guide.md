@@ -27,6 +27,8 @@ Les actions AoO vivent en bas du menu **Fichier** :
 | AoO : Connexion / changer d'instance… | formulaire compte + instance (local, test… ou « adresse personnalisée » pour saisir une URL à la volée) |
 | AoO : Pull un plan du jeu… | télécharge un plan (liste déroulante des plans avec leurs niveaux z ; niveau z optionnel, vide = tous) |
 | AoO : Push la carte vers le jeu… | applique la carte ouverte à son instance d'origine |
+| AoO : Pull les images du jeu… | télécharge dans `img/` local les images de tuiles absentes (l'`img/` du dépôt n'est pas versionné) |
+| AoO : Push les nouvelles images… | envoie vers l'instance le nouvel art local (jamais d'écrasement : l'art existant se gère via le dépôt d'assets) |
 | AoO : Nouveau plan dans le jeu… | crée un plan vierge et l'ouvre |
 | AoO : Fond / ambiance du plan… | choisit le fond et le masque animé |
 | AoO : Biomes (ressources) du plan… | édite les ressources récoltables (formulaire, sans JSON) |
