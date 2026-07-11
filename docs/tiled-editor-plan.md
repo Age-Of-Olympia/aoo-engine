@@ -168,6 +168,39 @@ Les cas particuliers de l'ancien éditeur sont de vrais objets typés :
 | Éléments temporaires | `endTime` | ✅ rien à faire : insertion sans endTime = défaut 0 = permanent (le cron `delete_elements` ne supprime que `endTime != 0`) ; préservé sur lignes conservées |
 | Plantes | params (croissance) | params dans la clé d'identité — à valider en jeu |
 
+### Phase 2c — Propriétés de plan (inventaire, à faire)
+
+Toutes les clés du JSON de plan lues par le code, et leur état côté Tiled :
+
+| Clé | Consommateurs | Rôle | Tiled |
+|---|---|---|---|
+| `bg` | `Classes/View.php:96` | fond/ambiance de la vue | ✅ action dédiée |
+| `name` | map.php, local.php… (13 usages) | nom affiché du territoire | ❌ |
+| `shortName` | ViewService (carte du monde) | nom court | ❌ |
+| `x`, `y` | ViewService:1069 | position du territoire sur la carte du monde | ❌ |
+| `player_visibility` | View/go/observe (isolation tutoriel) | masquer les autres joueurs | ❌ |
+| `pnj` | local.php, local_map.php | PNJ gardien du territoire | ❌ |
+| `war` | local.php | bandeau « territoire en guerre » | ❌ |
+| `size` | local.php | largeur de la carte locale | ❌ |
+| `mask` | View.php:655 | image de masque par-dessus la vue | ❌ (même liste d'images que bg) |
+| `scrollingMask` | View.php:658 | vitesse d'animation du masque (s) | ❌ |
+| `verticalScrolling` | View.php:678 | sens de défilement du masque | ❌ |
+| `exits` | travel.php | sorties directionnelles vers d'autres plans | ❌ (structuré) |
+| `biomes` | ResourceService, cron refresh_resources, ResourceOutcomeInstruction | ressources : mur → ressource, exhaust/regrow | ❌ (structuré) |
+| `z_levels` | map.php, ViewService, PlanJsonValidator | nom + bornes visibles par niveau (ou MapUnavailable) | ❌ (bornes dérivables du contenu poussé !) |
+| `id`, `fromCoords` | injectés au runtime par map.php | — | n/a (jamais stockés) |
+
+Lots proposés :
+1. **Scalaires simples** (name, shortName, x, y, player_visibility, pnj,
+   war, size, mask, scrollingMask, verticalScrolling) : exposés en
+   propriétés de carte `aooPlan_*` au pull, réécrits génériquement au push —
+   même mécanique que `bg`.
+2. **z_levels** : calculer automatiquement les bornes visibles depuis le
+   contenu poussé (min/max des coords par niveau) et valider via le
+   `PlanJsonValidator` existant — supprime une maintenance manuelle.
+3. **biomes / exits** : structurés, à concevoir (édition JSON assistée ou
+   objets typés dédiés).
+
 ### Phase 3 — Industrialisation
 
 - Documentation admin (`docs/tiled-editor-guide.md`) : installation de Tiled,
