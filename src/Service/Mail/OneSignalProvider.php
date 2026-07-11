@@ -20,6 +20,14 @@ class OneSignalProvider implements MailContactProviderInterface
     private const ALIAS_EXTERNAL_ID = 'external_id';
     private const SUBSCRIPTION_EMAIL = 'Email';
 
+    /*
+     * Bornes réseau : upsertContact est appelé en synchrone sur le chemin
+     * d'inscription (register.php). Sans timeout, Guzzle attend indéfiniment
+     * et une API OneSignal qui ne répond pas gèlerait les inscriptions.
+     */
+    private const CONNECT_TIMEOUT_SECONDS = 2;
+    private const REQUEST_TIMEOUT_SECONDS = 3;
+
     private string $appId;
     private DefaultApi $api;
 
@@ -28,7 +36,10 @@ class OneSignalProvider implements MailContactProviderInterface
     {
         $this->appId = $appId;
         $this->api = $api ?? new DefaultApi(
-            new Client(),
+            new Client([
+                'connect_timeout' => self::CONNECT_TIMEOUT_SECONDS,
+                'timeout' => self::REQUEST_TIMEOUT_SECONDS,
+            ]),
             (new Configuration())->setRestApiKeyToken($apiKey)
         );
     }
