@@ -5,15 +5,14 @@ via git : bâtiments, formations, décors récurrents à poser en un geste.
 
 ## Utiliser cette bibliothèque
 
-Tiled range les tampons dans un dossier global (préférence, pas par projet) :
+1. Ouvrir le panneau **Tampons** : menu **Affichage → Vues et barres
+   d'outils → Tampons** (*View → Views and Toolbars → Tile Stamps*).
+2. Dans ce panneau, bouton **« Définir le dossier des tampons »**
+   (*Set Stamps Folder*) → pointer sur ce répertoire du dépôt :
+   `<dépôt>/tools/tiled/stamps`.
 
-1. Édition → Préférences → onglet **Général** (ou **Général/Interface**
-   selon la version) → **Dossier des tampons** (« Stamps directory »).
-2. Pointer ce dossier sur `tools/tiled/aoo/../stamps` du dépôt, c'est-à-dire
-   ce répertoire : `<dépôt>/tools/tiled/stamps`.
-
-Les tampons enregistrés (panneau **Tampons** / *Tile Stamps*) atterrissent
-alors ici et sont versionnés — tous les admins les partagent.
+Les tampons enregistrés atterrissent alors ici et sont versionnés — tous les
+admins les partagent.
 
 ## Créer un tampon
 
