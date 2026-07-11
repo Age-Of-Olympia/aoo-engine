@@ -49,12 +49,6 @@ parameters:
 			path: classements.php
 
 		-
-			message: '#^Variable \$first might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: classements.php
-
-		-
 			message: '#^Static property App\\Action\\ActionFactory\:\:\$actionClasses is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
