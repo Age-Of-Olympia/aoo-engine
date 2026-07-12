@@ -107,6 +107,16 @@ EOT);
 
         list($x, $y, $z, $plan) = $coordsTbl;
 
+        // Un plan inconnu créerait des coords fantômes au premier go()
+        // (plans « créés par erreur » en base) : refuser la faute de frappe
+        // plutôt que d'inventer le plan.
+        $db = new Db();
+        $res = $db->exe('SELECT 1 FROM coords WHERE plan = ? LIMIT 1', $plan);
+        if (!$res->fetch_row()) {
+            return '<font color="red">plan inconnu : '. htmlspecialchars($plan)
+                .' — « tp list-plans » pour la liste</font>';
+        }
+
         // clean function outputs
         ob_start();
 
@@ -119,7 +129,7 @@ EOT);
 
 
             $goX = (!is_numeric($x)) ? $player->coords->x : $x;
-            $goY = (!is_numeric($z)) ? $player->coords->y : $y;
+            $goY = (!is_numeric($y)) ? $player->coords->y : $y;
             $goZ = (!is_numeric($z)) ? $player->coords->z : $z;
 
 
