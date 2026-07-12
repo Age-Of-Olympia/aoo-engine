@@ -262,6 +262,18 @@ parameters:
 			path: src/Entity/EntityManagerFactory.php
 
 		-
+			message: '#^Property App\\Entity\\Faction\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Faction.php
+
+		-
+			message: '#^Property App\\Entity\\FactionRole\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/FactionRole.php
+
+		-
 			message: '#^Property App\\Entity\\Race\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
 			identifier: property.unusedType
 			count: 1
