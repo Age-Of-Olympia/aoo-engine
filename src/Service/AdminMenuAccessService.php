@@ -40,6 +40,7 @@ class AdminMenuAccessService
         'world_map.php'            => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
         'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
         'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
+        'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
         'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
 
         'upload_image.php'         => ['Importer images', 'Médias', self::LEVEL_ADMIN],
