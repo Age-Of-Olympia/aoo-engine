@@ -16,6 +16,13 @@ $csrf = new CsrfProtectionService();
 $viewService = new ViewService($database, 0, 0, 0, 0, 'olympia');
 $allPlans = $viewService->getAllPlans('all');
 
+// Filtre de saison partagé de la section « Cartes » (défaut : s2)
+$seasonFilter = current_season_filter();
+$filteredPlans = array_values(array_filter(
+    $allPlans,
+    fn(object $p) => plan_matches_season_filter($p, $seasonFilter)
+));
+
 $selectedPlanId = stringWithDefault('plan_id', '');
 $selectedX      = intWithDefault('x', 0);
 $selectedY      = intWithDefault('y', 0);
@@ -62,19 +69,28 @@ ob_start();
         <div class="alert alert-danger"><?= e($error) ?></div>
     <?php endif; ?>
 
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <?= render_season_filter($seasonFilter) ?>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <form method="post">
                 <?= $csrf->renderTokenField() ?>
                 <div class="form-group">
-                    <label for="plan_id">Plan :</label>
+                    <label for="plan_id">Plan (<?= e(season_filter_label($seasonFilter)) ?>) :</label>
                     <select class="form-control" id="plan_id" name="plan_id" required>
-                    <?php foreach ($allPlans as $plan): ?>
+                    <?php foreach ($filteredPlans as $plan): ?>
                         <option value="<?= e($plan->id) ?>" <?= selected($selectedPlanId === (string)$plan->id) ?>>
                             <?= e($plan->name) ?> (<?= e($plan->id) ?>)
                         </option>
                     <?php endforeach; ?>
                     </select>
+                    <?php if (empty($filteredPlans)): ?>
+                        <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
+                    <?php endif; ?>
                 </div>
 
                 <div class="row">

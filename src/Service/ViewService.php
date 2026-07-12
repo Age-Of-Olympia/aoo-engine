@@ -1075,7 +1075,11 @@ class ViewService {
         $jsonHelper = new Json();
         $allPlans = [];
 
-        foreach ($jsonHelper->get_all('plans', true) as $planId => $planData) {
+        // Tous les plans, toutes saisons : le second paramètre de get_all
+        // restreindrait aux seuls fichiers *_s2.json (excluant même olympia
+        // et enfers). Le filtrage par saison est l'affaire des pages admin
+        // (admin/helpers.php : plan_matches_season_filter, défaut s2).
+        foreach ($jsonHelper->get_all('plans') as $planId => $planData) {
             $fullPlanData = $this->getPlanData($planId);
             $isS2 = strpos($planId, '_s2') !== false;
             $seasonName = $isS2 ? 'S2' : 'S1';

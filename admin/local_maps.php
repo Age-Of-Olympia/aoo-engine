@@ -4,6 +4,7 @@ require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 use Classes\Db;
 use App\Service\CsrfProtectionService;
+use App\Service\TerrainTransitionService;
 use App\Service\ViewService;
 use App\Service\PlanJsonValidator;
 
@@ -56,21 +57,8 @@ function render_validation_report(array $validation, bool $includeOk = true): vo
     }
 }
 
-/**
- * Plans hors « _s2 » qui font tout de même partie de la saison 2 :
- * la map globale (olympia) et les enfers. Sert à restreindre la vue
- * d'ensemble aux seuls plans réellement en jeu en saison 2.
- */
-const SEASON2_EXTRA_PLANS = ['olympia', 'enfers'];
-
-/**
- * Un plan relève-t-il de la saison 2 ? Vrai pour tout id « _s2 » et pour
- * les plans hors-saison listés dans SEASON2_EXTRA_PLANS.
- */
-function is_season2_plan(object $plan): bool
-{
-    return $plan->isS2 || in_array($plan->id, SEASON2_EXTRA_PLANS, true);
-}
+// SEASON2_EXTRA_PLANS / is_season2_plan / filtre de saison : admin/helpers.php
+// (partagés avec les autres pages de la section « Cartes »)
 
 // Clear any world map layers when loading local maps
 if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['generated_layers']), 'world_') !== false) {
@@ -87,7 +75,7 @@ $selectedPlan   = optionalString('selected_plan');
 $selectedZLevel = optionalString('selected_z_level');
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
-    && (isset($_POST['cleanup_local']) || isset($_POST['generate_local']));
+    && (isset($_POST['cleanup_local']) || isset($_POST['generate_local']) || isset($_POST['generate_transitions']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -107,6 +95,15 @@ usort($allPlans, function($a, $b) {
 
     return strcasecmp($nameA, $nameB);
 });
+
+// Filtre de saison (défaut : saison courante s2) — vue d'ensemble et liste
+// déroulante ; $allPlans reste complet pour les traitements internes
+// (nettoyage des PNG, plan sélectionné).
+$seasonFilter = current_season_filter();
+$filteredPlans = array_values(array_filter(
+    $allPlans,
+    fn(object $p) => plan_matches_season_filter($p, $seasonFilter)
+));
 
 // Cleanup button at top
 if (isset($_POST['cleanup_local'])) {
@@ -176,6 +173,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_local'])) {
     }
 }
 
+// Génération des transitions de terrain (autotiling Tiled) du plan sélectionné.
+// Le rapport est rendu dans la carte « Transitions de terrain » plus bas —
+// même requête, pas de redirection (même schéma que generate_local).
+$transitionReport = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_transitions']) && $selectedPlan) {
+    try {
+        set_time_limit(600); // gros plans : des centaines de fondus PNG à écrire
+        $transitionReport = (new TerrainTransitionService($database))->generateForPlan($selectedPlan);
+        setFlash('success', $transitionReport['generatedCount'] . ' tuile(s) de transition générée(s) pour '
+            . $selectedPlan . ' — re-puller le plan dans Tiled pour recharger les tilesets.');
+    } catch (Throwable $e) {
+        setFlash('danger', 'Erreur lors de la génération des transitions : ' . $e->getMessage());
+    }
+}
+
 ob_start();
 ?>
 
@@ -195,10 +207,17 @@ ob_start();
         Si un niveau n'a volontairement pas de carte, déclarez-le avec <code style="display:inline;white-space:nowrap">"MapUnavailable": true</code> dans le JSON.
     </div>
 
+    <div class="card mt-3">
+        <div class="card-body py-2">
+            <?= render_season_filter($seasonFilter) ?>
+        </div>
+    </div>
+
     <?php if (!$selectedPlan):
-        // Vue d'ensemble : santé des plans de la saison 2, tant qu'aucun n'est sélectionné.
-        // Les noms d'items sont préchargés une seule fois pour éviter une requête
-        // par biome (sinon des centaines de requêtes sur l'ensemble des plans).
+        // Vue d'ensemble : santé des plans de la saison filtrée, tant qu'aucun
+        // n'est sélectionné. Les noms d'items sont préchargés une seule fois
+        // pour éviter une requête par biome (sinon des centaines de requêtes
+        // sur l'ensemble des plans).
         $knownItemNames = [];
         $itemRows = $database->exe("SELECT name FROM items");
         if ($itemRows) {
@@ -207,8 +226,8 @@ ob_start();
             }
         }
 
-        // Vue d'ensemble restreinte aux plans de la saison 2 (« _s2 » + map globale + enfers).
-        $overviewPlans = array_values(array_filter($allPlans, 'is_season2_plan'));
+        // Vue d'ensemble restreinte aux plans du filtre de saison courant.
+        $overviewPlans = $filteredPlans;
 
         $plansWithIssues = [];
         $okCount = 0;
@@ -243,14 +262,14 @@ ob_start();
     ?>
     <details class="card mt-3">
         <summary class="card-body" style="cursor:pointer;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
-            <h5 class="card-title mb-0">Vue d'ensemble : santé des plans (saison 2)</h5>
+            <h5 class="card-title mb-0">Vue d'ensemble : santé des plans (<?= e(season_filter_label($seasonFilter)) ?>)</h5>
             <span class="badge" style="background-color:#dc3545;color:#fff;"><?= $errPlanCount ?> avec erreurs</span>
             <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $warnPlanCount ?> avec avertissements seuls</span>
             <span class="badge" style="background-color:#198754;color:#fff;"><?= $okCount ?> sans problème</span>
             <small class="text-muted">sur <?= $totalPlans ?> plans</small>
         </summary>
         <div class="card-body" style="border-top:1px solid #e5e5e5;">
-            <p class="text-muted small mb-3">Tous les problèmes détectés sur les plans de la saison 2 (plans « _s2 », map globale et enfers), sans avoir à les ouvrir un par un. Cliquez sur « Ouvrir » pour aller au plan concerné.</p>
+            <p class="text-muted small mb-3">Tous les problèmes détectés sur les plans affichés (filtre de saison ci-dessus), sans avoir à les ouvrir un par un. Cliquez sur « Ouvrir » pour aller au plan concerné.</p>
 
             <?php if (empty($plansWithIssues)): ?>
                 <div class="alert alert-success mb-0"><i class="fas fa-check-circle"></i> Aucun problème détecté sur les <?= $totalPlans ?> plans.</div>
@@ -322,13 +341,16 @@ ob_start();
                 <div class="form-group">
                     <label for="planSelect">Choisir un plan :</label>
                     <select class="form-control" id="planSelect" name="selected_plan" onchange="this.form.submit()">
-                        <option value="">-- Sélectionner un plan --</option>
-                        <?php foreach ($allPlans as $plan): ?>
+                        <option value="">-- Sélectionner un plan (<?= e(season_filter_label($seasonFilter)) ?>) --</option>
+                        <?php foreach ($filteredPlans as $plan): ?>
                             <option value="<?= e($plan->id) ?>" <?= selected($selectedPlan === $plan->id) ?>>
                                 <?= e($plan->name) ?> (<?= e($plan->id) ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <?php if (empty($filteredPlans)): ?>
+                        <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
+                    <?php endif; ?>
                 </div>
             </form>
             
@@ -553,6 +575,116 @@ ob_start();
             <?php endif; ?>
         </div>
     </div>
+
+    <?php if ($selectedPlan): ?>
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Transitions de terrain (pinceau Terrain de Tiled)</h5>
+            <p class="text-muted mb-2" style="font-size:13px;line-height:1.5;">
+                À chaque point de la carte où 2 à 4 biomes se rencontrent, le pinceau Terrain de
+                l'éditeur Tiled a besoin d'une tuile de fondu exacte — sinon il pose la tuile la plus
+                proche, qui peut contenir un autre biome. Cette analyse recense les frontières du plan
+                (toutes couches Z, couche <code style="display:inline">tiles</code>) et génère les fondus manquants dans
+                <code style="display:inline">img/tiles/</code> + <code style="display:inline">tools/tiled/aoo/terrains.json</code>.
+            </p>
+            <?php
+            try {
+                // Toujours ré-auditer au rendu : après une génération, l'état
+                // affiché est celui d'après écriture (normalement complet)
+                $terrainAudit = (new TerrainTransitionService($database))->auditPlan($selectedPlan);
+            ?>
+                <?php if (empty($terrainAudit['zLevels'])): ?>
+                    <div class="alert alert-info mb-0">Aucune tuile de sol en base pour ce plan.</div>
+                <?php else: ?>
+                    <table class="table table-sm mb-2" style="font-size:13px;max-width:520px;">
+                        <thead><tr><th>Niveau Z</th><th>Cases</th><th>Paires</th><th>Trios</th><th>Quatuors</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($terrainAudit['zLevels'] as $z => $zStats): ?>
+                            <tr>
+                                <td>z=<?= e($z) ?></td>
+                                <td><?= $zStats['cells'] ?></td>
+                                <td><?= $zStats['pairs'] ?></td>
+                                <td><?= $zStats['trios'] ?></td>
+                                <td><?= $zStats['quads'] ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+
+                    <?php if (!empty($terrainAudit['ignored'])): ?>
+                        <p class="text-muted mb-2" style="font-size:12px;">
+                            Tuiles hors terrain ignorées : <?= e(implode(', ', $terrainAudit['ignored'])) ?>
+                        </p>
+                    <?php endif; ?>
+
+                    <?php
+                    $incompleteSets = array_filter($terrainAudit['sets'], fn(array $s) => $s['missing'] > 0);
+                    $conflictSets   = array_filter($terrainAudit['sets'], fn(array $s) => $s['conflict']);
+                    ?>
+
+                    <?php if (!empty($conflictSets)): ?>
+                        <div class="alert alert-warning py-1" style="font-size:13px;">
+                            <i class="fas fa-exclamation-triangle"></i> Ensembles ignorés (biomes de même couleur) :
+                            <?= e(implode(' ; ', array_map(fn(array $s) => implode(' / ', $s['tiles']), $conflictSets))) ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($terrainAudit['missingTiles'] > 0): ?>
+                        <details class="alert alert-warning mb-2" style="padding:0;">
+                            <summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <?= count($incompleteSets) ?> ensemble(s) incomplet(s)
+                                <span class="badge" style="background-color:#f0ad4e;color:#fff;"><?= $terrainAudit['missingTiles'] ?> tuiles à générer</span>
+                            </summary>
+                            <ul class="mb-0" style="padding:.25rem .75rem .75rem 2.2rem;font-size:13px;line-height:1.6;">
+                                <?php foreach ($incompleteSets as $set): ?>
+                                    <li><?= e(implode(' / ', $set['tiles'])) ?> — <?= $set['missing'] ?>/<?= $set['total'] ?> manquantes</li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </details>
+                        <form method="post" class="d-flex align-items-center gap-3">
+                            <?= $csrf->renderTokenField() ?>
+                            <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
+                            <button type="submit" name="generate_transitions" class="btn btn-primary btn-sm">
+                                <i class="fas fa-fill-drip"></i> Générer les <?= $terrainAudit['missingTiles'] ?> tuiles manquantes
+                            </button>
+                            <small class="text-muted">Écrit les PNG dans img/tiles/ et déclare leurs wangId — peut prendre une minute sur un gros plan.</small>
+                        </form>
+                    <?php else: ?>
+                        <div class="alert alert-success py-1 mb-0" style="font-size:13px;">
+                            <i class="fas fa-check-circle"></i>
+                            Toutes les transitions requises existent (<?= count($terrainAudit['sets']) ?> ensembles de biomes).
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if ($transitionReport !== null && !empty($transitionReport['generated'])): ?>
+                    <div class="mt-3">
+                        <h6 class="text-muted">Tuiles générées — vérifier les fondus :</h6>
+                        <?php foreach ($transitionReport['generated'] as $setLabel => $names): ?>
+                            <details class="mb-2" style="border:1px solid #e5e5e5;border-radius:.375rem;">
+                                <summary style="cursor:pointer;padding:.4rem .75rem;font-size:13px;font-weight:600;">
+                                    <?= e($setLabel) ?> <span class="badge bg-secondary"><?= count($names) ?> tuiles</span>
+                                </summary>
+                                <div style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:4px;">
+                                    <?php foreach ($names as $name): ?>
+                                        <img src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
+                                             title="<?= e($name) ?>" loading="lazy"
+                                             style="image-rendering:pixelated;border:1px solid #ddd;">
+                                    <?php endforeach; ?>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            <?php
+            } catch (Throwable $terrainError) {
+                echo '<div class="alert alert-danger mb-0">Analyse impossible : ' . e($terrainError->getMessage()) . '</div>';
+            }
+            ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <?php

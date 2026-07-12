@@ -258,3 +258,93 @@ function renderDatalist(string $id, array $options): string
     $html .= '</datalist>';
     return $html;
 }
+
+/* ------------------------------------------------------------------ */
+/* Filtre de saison des plans (section « Cartes »)                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Plans hors « _s2 » qui font tout de même partie de la saison 2 :
+ * la map globale (olympia) et les enfers.
+ */
+const SEASON2_EXTRA_PLANS = ['olympia', 'enfers'];
+
+/**
+ * Un plan relève-t-il de la saison 2 ? Vrai pour tout id « _s2 » et pour
+ * les plans hors-saison listés dans SEASON2_EXTRA_PLANS.
+ *
+ * @param object $plan Plan issu de ViewService::getAllPlans()
+ */
+function is_season2_plan(object $plan): bool
+{
+    return $plan->isS2 || in_array($plan->id, SEASON2_EXTRA_PLANS, true);
+}
+
+/**
+ * Filtre de saison courant des pages « Cartes » : « s2 » (saison en cours,
+ * défaut), « s1 » (plans sans suffixe _s2) ou « all ». Le choix, posté via
+ * season_filter, persiste en session pour survivre à la navigation par
+ * formulaires POST et s'appliquer à toutes les pages de la section.
+ */
+function current_season_filter(): string
+{
+    $valid = ['s2', 's1', 'all'];
+
+    $requested = $_REQUEST['season_filter'] ?? null;
+    if (is_string($requested) && in_array($requested, $valid, true)) {
+        $_SESSION['admin_season_filter'] = $requested;
+    }
+
+    $current = $_SESSION['admin_season_filter'] ?? 's2';
+    return in_array($current, $valid, true) ? $current : 's2';
+}
+
+/**
+ * Un plan passe-t-il le filtre de saison ? « s1 » = plans sans _s2 (la map
+ * globale et les enfers, jouables dans les deux saisons, y figurent aussi).
+ *
+ * @param object $plan Plan issu de ViewService::getAllPlans()
+ */
+function plan_matches_season_filter(object $plan, string $filter): bool
+{
+    return match ($filter) {
+        's2'    => is_season2_plan($plan),
+        's1'    => !$plan->isS2,
+        default => true,
+    };
+}
+
+/** Libellé humain d'un filtre de saison (titres de sections). */
+function season_filter_label(string $filter): string
+{
+    return match ($filter) {
+        's2'    => 'saison 2',
+        's1'    => 'saison 1',
+        default => 'toutes saisons',
+    };
+}
+
+/**
+ * Sélecteur de saison auto-soumis (radios inline). Formulaire POST sans
+ * autre champ : changer de saison réinitialise volontairement la sélection
+ * de plan, qui peut ne plus correspondre au nouveau filtre. Pas de jeton
+ * CSRF : aucun état serveur modifié hormis la préférence d'affichage.
+ */
+function render_season_filter(string $current): string
+{
+    $choices = ['s2' => 'Saison 2 (courante)', 's1' => 'Saison 1', 'all' => 'Toutes'];
+
+    $html = '<form method="post" class="d-flex align-items-center gap-3 flex-wrap" style="font-size:13px;">';
+    $html .= '<span class="text-muted"><i class="fas fa-filter"></i> Plans affichés :</span>';
+    foreach ($choices as $value => $label) {
+        $html .= '<label class="mb-0" style="cursor:pointer;">'
+            . '<input type="radio" name="season_filter" value="' . e($value) . '"'
+            . checked($current === $value)
+            . ' onchange="this.form.submit()"> '
+            . e($label)
+            . '</label>';
+    }
+    $html .= '</form>';
+
+    return $html;
+}
