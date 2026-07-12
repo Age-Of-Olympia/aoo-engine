@@ -30,6 +30,12 @@ class TerrainTransitionServiceTest extends TestCase
         }
         rmdir($this->root . '/img/tiles');
         rmdir($this->root . '/img');
+        if (is_dir($this->root . '/tools')) {
+            @unlink($this->root . '/tools/tiled/aoo/terrains.json');
+            rmdir($this->root . '/tools/tiled/aoo');
+            rmdir($this->root . '/tools/tiled');
+            rmdir($this->root . '/tools');
+        }
         rmdir($this->root);
     }
 
@@ -116,6 +122,38 @@ class TerrainTransitionServiceTest extends TestCase
             $this->service->existingWangKeys($cfg));
 
         $this->assertSame([], $again, 'les 14 affectations existent déjà, même déclarées dans l\'autre ordre');
+    }
+
+    public function testClassifyTilesKeepsColorIndicesStableAndProtectsTransitions(): void
+    {
+        mkdir($this->root . '/tools/tiled/aoo', 0777, true);
+        $this->writeSolidTile('rouge', 255, 0, 0);
+        $this->writeSolidTile('bleu', 0, 0, 255);
+
+        // Un set existant avec des fondus dont les wangId pointent les
+        // couleurs par index : la classification ne doit jamais les décaler
+        $terrains = $this->service->loadTerrains();
+        $cfg = &$this->service->layerConfig($terrains, 'tiles');
+        $cfg['colors'] = ['rouge', 'bleu'];
+        $cfg['tiles'] = ['rouge' => 'rouge', 'bleu' => 'bleu'];
+        $this->service->generateSet($cfg, 'tiles', ['rouge', 'bleu']);
+        $this->service->saveTerrains($terrains);
+
+        // Déclasser rouge, déclarer vert ; les fondus sont intouchables
+        $this->writeSolidTile('vert', 0, 255, 0);
+        $result = $this->service->classifyTiles('tiles', ['vert', 'trans_rouge_bleu_baaa'], ['rouge']);
+
+        $this->assertSame(['vert'], $result['declared'], 'un fondu ne se déclare pas comme terrain');
+        $this->assertSame(['rouge'], $result['undeclared']);
+
+        $saved = $this->service->loadTerrains()['tiles'];
+        $this->assertSame(['rouge', 'bleu', 'vert'], $saved['colors'],
+            'couleur orpheline conservée, nouvelle couleur en fin : indices stables');
+        $this->assertArrayNotHasKey('rouge', array_filter($saved['tiles'], 'is_string'),
+            'rouge n\'est plus une tuile pleine');
+        $this->assertSame([0, 1, 0, 1, 0, 1, 0, 2], $saved['tiles']['trans_rouge_bleu_baaa'],
+            'les wangId existants sont intacts');
+        $this->assertSame('vert', $saved['tiles']['vert']);
     }
 
     public function testGenerateSetRefusesBiomesSharingAColor(): void

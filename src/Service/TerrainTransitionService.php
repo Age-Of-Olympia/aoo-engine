@@ -156,8 +156,13 @@ class TerrainTransitionService
             if ($name === null) {
                 return null;
             }
-            if (!is_string($cfg['tiles'][$name] ?? null)) {
-                $ignored[$name] = true;
+            $spec = $cfg['tiles'][$name] ?? null;
+            if (!is_string($spec)) {
+                // Un fondu déjà posé (déclaré par wangId) n'est pas « hors
+                // terrain » : sa frontière est déjà fondue, rien à signaler
+                if (!is_array($spec)) {
+                    $ignored[$name] = true;
+                }
                 return null;
             }
             return $name;
@@ -316,12 +321,96 @@ class TerrainTransitionService
     }
 
     /**
+     * Classification des tuiles du sol d'un plan : chaque nom distinct posé
+     * (tous niveaux z), avec son statut terrain (tuile pleine déclarée dans
+     * terrains.json) et son nombre d'occurrences. Les fondus générés
+     * (déclarés par wangId) sont signalés à part : ils ne se classent pas.
+     *
+     * @return list<array{name: string, isTerrain: bool, isTransition: bool, count: int}>
+     */
+    public function planTileClassification(string $plan, string $layer = self::GROUND_LAYER): array
+    {
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+
+        $counts = [];
+        foreach ($this->gridsForPlan($plan, $layer) as $grid) {
+            foreach ($grid as $name) {
+                $counts[$name] = ($counts[$name] ?? 0) + 1;
+            }
+        }
+        ksort($counts);
+
+        $classification = [];
+        foreach ($counts as $name => $count) {
+            $classification[] = [
+                'name'         => $name,
+                'isTerrain'    => is_string($cfg['tiles'][$name] ?? null),
+                'isTransition' => is_array($cfg['tiles'][$name] ?? null),
+                'count'        => $count,
+            ];
+        }
+
+        return $classification;
+    }
+
+    /**
+     * Classe des tuiles comme terrain / hors terrain et sauvegarde
+     * terrains.json. Déclarer = tuile pleine de sa propre couleur (ajoutée
+     * en FIN de liste : les wangId des fondus existants référencent les
+     * couleurs par index, l'ordre ne doit jamais bouger). Déclasser =
+     * retirer le mapping de tuile pleine SANS toucher à la liste des
+     * couleurs ni aux fondus (une couleur orpheline est inoffensive, un
+     * index décalé corromprait tous les wangId).
+     *
+     * Les entrées de fondus (trans_*, wangId) ne sont jamais modifiées.
+     *
+     * @param list<string> $terrainNames    tuiles à déclarer comme terrain
+     * @param list<string> $nonTerrainNames tuiles à déclasser
+     * @return array{declared: list<string>, undeclared: list<string>}
+     */
+    public function classifyTiles(string $layer, array $terrainNames, array $nonTerrainNames): array
+    {
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+
+        $declared = [];
+        foreach ($terrainNames as $name) {
+            if (!preg_match(TileCatalogService::ASSET_NAME_PATTERN, $name)
+                || is_array($cfg['tiles'][$name] ?? null)   // fondu : intouchable
+                || is_string($cfg['tiles'][$name] ?? null)  // déjà terrain
+            ) {
+                continue;
+            }
+            if (!in_array($name, $cfg['colors'], true)) {
+                $cfg['colors'][] = $name;
+            }
+            $cfg['tiles'][$name] = $name;
+            $declared[] = $name;
+        }
+
+        $undeclared = [];
+        foreach ($nonTerrainNames as $name) {
+            if (is_string($cfg['tiles'][$name] ?? null)) {
+                unset($cfg['tiles'][$name]);
+                $undeclared[] = $name;
+            }
+        }
+
+        if ($declared !== [] || $undeclared !== []) {
+            $this->saveTerrains($terrains);
+        }
+
+        return ['declared' => $declared, 'undeclared' => $undeclared];
+    }
+
+    /**
      * Visibilité des tuiles de transition pour un plan : vraie pour celles
      * dont tous les biomes sont présents sur le sol du plan — restreint au
      * seul niveau $z s'il est fourni (un fondu ne traverse jamais deux
      * niveaux). Sert à l'éditeur web (scripts/tiled) pour ne pas noyer la
      * palette sous les milliers de fondus générés : poser un nouveau biome
-     * puis générer ses transitions (admin/local_maps.php) les fait
+     * puis générer ses transitions (admin/terrain-transitions.php) les fait
      * apparaître au rechargement de l'éditeur.
      *
      * @return array<string, bool> tuile trans_* déclarée => pertinente pour ce plan
