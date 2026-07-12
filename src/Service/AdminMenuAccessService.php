@@ -43,7 +43,7 @@ class AdminMenuAccessService
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
         'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
 
-        'upload_image.php'         => ['Importer images', 'Médias', self::LEVEL_ADMIN],
+        'avatars-portraits.php'    => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
 
         'actions.php'              => ['Actions · Liste', 'Actions', self::LEVEL_SUPERADMIN],
         'action-workbench.php'     => ['Actions · Configuration', 'Actions', self::LEVEL_SUPERADMIN],
@@ -65,6 +65,7 @@ class AdminMenuAccessService
      * via layout.php but not themselves nav entries.
      */
     private const ALIASES = [
+        'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
         'player-skills.php'          => 'players.php',

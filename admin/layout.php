@@ -75,7 +75,7 @@ function admin_layout($title, $content, array $assets = []) {
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
-                    'pnjs.php'];
+                    'pnjs.php', 'avatars-portraits.php'];
     $racePages = ['races.php', 'race-seed.php'];
 
     // array_filter drops links/groups the viewer cannot access.
@@ -94,7 +94,6 @@ function admin_layout($title, $content, array $assets = []) {
             ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
             ['screenshots.php', 'Captures', '/admin/screenshots.php'],
         ], $mapPages),
-        $navLink('upload_image.php', 'Importer images', '/admin/upload_image.php'),
         $navGroup('Actions', [
             ['actions.php', 'Liste', '/admin/actions.php'],
             ['action-workbench.php', 'Configuration actions', '/admin/action-workbench.php'],
@@ -105,6 +104,7 @@ function admin_layout($title, $content, array $assets = []) {
         $navGroup('Joueurs', [
             ['players.php', 'Compétences', '/admin/players.php'],
             ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
+            ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
             ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
