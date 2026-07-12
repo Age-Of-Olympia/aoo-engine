@@ -13,7 +13,11 @@ enum ImageType: string
     public function dimensions(): array
     {
         return match ($this) {
-            self::PORTRAIT => [210, 320],
+            // 330 : la totalité du stock (143 portraits) et l'affichage en
+            // jeu (height=330) — l'ancien 320 était une coquille qui
+            // écrasait les portraits envoyés par l'API ; la miniature 50×79
+            // ne colle d'ailleurs qu'au ratio 210/330.
+            self::PORTRAIT => [210, 330],
             self::AVATAR   => [50, 50],
         };
     }
