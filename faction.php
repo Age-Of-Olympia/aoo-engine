@@ -1,6 +1,7 @@
 <?php
 
 use App\Factory\PlayerFactory;
+use App\Service\FactionService;
 use App\View\FactionView;
 use Classes\Ui;
 use Classes\Db;
@@ -10,7 +11,7 @@ require_once('config.php');
 
 if(!empty($_GET['faction'])){
 
-    $facJson = json()->decode('factions', $_GET['faction']);
+    $facJson = (new FactionService())->getFactionData($_GET['faction']);
 
 
     if(!$facJson){

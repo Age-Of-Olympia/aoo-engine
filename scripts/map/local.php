@@ -146,9 +146,11 @@ echo '
 
 
 
+$factionService = new \App\Service\FactionService();
+
 foreach ($data as $k => $e) {
-    $factionJson = json()->decode('factions', $k);
-    echo '<td>' . $factionJson->name . '</td>';
+    $factionJson = $factionService->getFactionData($k);
+    echo '<td>' . ($factionJson->name ?? $k) . '</td>';
 }
 
 echo '

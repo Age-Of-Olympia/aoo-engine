@@ -4,6 +4,7 @@ use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Service\FactionService;
 use App\Service\RaceService;
 use App\Service\Action\ActionTargeting;
 use App\Factory\PlayerFactory;
@@ -402,7 +403,7 @@ if($res->num_rows){
             : 100;
 
 
-        $factionJson = json()->decode('factions', $target->data->faction);
+        $factionJson = (new FactionService())->getFactionData($target->data->faction);
 
         $faction = '';
         if ($factionJson && isset($factionJson->raFont)) {
@@ -415,7 +416,7 @@ if($res->num_rows){
             $target->data->secretFaction == $player->data->secretFaction
         ){
 
-            $secretJson = json()->decode('factions', $target->data->secretFaction);
+            $secretJson = (new FactionService())->getFactionData($target->data->secretFaction);
 
             if ($secretJson) {
                 $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';

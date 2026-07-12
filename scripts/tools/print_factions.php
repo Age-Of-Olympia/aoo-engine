@@ -1,28 +1,27 @@
 <?php
-use Classes\File;
+use App\Service\FactionService;
 use Classes\Ui;
 
 $ui = new Ui('Print Factions');
 
 
-foreach(File::scan_dir('datas/public/factions/', without:'.json') as $k=>$e){
+foreach((new FactionService())->getAllFactions() as $faction){
 
+    $code = $faction->getCode();
 
-    $facJson = json()->decode('factions', $e);
-
-    if(!isset($facJson->raFont)){
+    if($faction->getRaFont() === ''){
 
         continue;
     }
 
 
-    echo '<div id="fac-'. $e .'" style="background: white; width: 150px;">';
+    echo '<div id="fac-'. $code .'" style="background: white; width: 150px;">';
 
-    echo '<span style="font-size: 800%;" class="ra '. $facJson->raFont .'"></span>';
+    echo '<span style="font-size: 800%;" class="ra '. $faction->getRaFont() .'"></span>';
 
     echo '</div>';
 
-    echo '<button class="save" data-faction="'. $e .'">Save '. $e .'.png</button>';
+    echo '<button class="save" data-faction="'. $code .'">Save '. $code .'.png</button>';
 }
 
 

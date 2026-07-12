@@ -58,6 +58,7 @@ class AdminMenuAccessService
 
         'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
         'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
+        'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
     ];
 
     /**
@@ -68,6 +69,10 @@ class AdminMenuAccessService
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
+        'factions-save.php'          => 'factions.php',
+        'faction-seed.php'           => 'factions.php',
+        'faction-members.php'        => 'factions.php',
+        'faction-members-save.php'   => 'factions.php',
         'player-skills.php'          => 'players.php',
         'skill-owners.php'           => 'players.php',
         'tutorial-step-editor.php'   => 'tutorial.php',

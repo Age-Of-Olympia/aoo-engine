@@ -7,6 +7,7 @@ use Classes\Db;
 use Classes\Ui;
 use Classes\bbcode;
 use Classes\Str;
+use App\Service\FactionService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
 use App\View\InfosView;
@@ -105,6 +106,7 @@ class TopicView
 
 
         $raceService = new RaceService();
+        $factionService = new FactionService();
 
         foreach ($topJson->posts as $postN => $post) {
 
@@ -162,11 +164,11 @@ class TopicView
 
 
             if (isset($forumJson->factions) && in_array($author->data->secretFaction, $forumJson->factions)) {
-                $factionJson = json()->decode('factions', $author->data->secretFaction);
+                $factionJson = $factionService->getFactionData($author->data->secretFaction);
                 echo '<div style="font-size: 88%;"><a href="faction.php?faction=' . $author->data->secretFaction . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$author->data->secretFactionRole]->name . '</i>)</div>';
             } else {
 
-                $factionJson = json()->decode('factions', $author->data->faction);
+                $factionJson = $factionService->getFactionData($author->data->faction);
 
                 echo '<div style="font-size: 88%;"><a href="faction.php?faction=' . $author->data->faction . '">' . $factionJson->name . '</a> <span style="font-size: 1.3em" class="ra ' . $factionJson->raFont . '"></span> (<i>' . $factionJson->role[$author->data->factionRole]->name . '</i>)</div>';
             }

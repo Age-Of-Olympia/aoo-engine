@@ -1,4 +1,5 @@
 <?php
+use App\Service\FactionService;
 use Classes\Log;
 use Classes\View;
 
@@ -8,7 +9,7 @@ use Classes\View;
 // complete/skip/cancel endpoints. This trigger now only handles the
 // faction-respawn teleport (underworld exit).
 
-$factionJson = json()->decode('factions', $player->data->faction);
+$factionJson = (new FactionService())->getFactionData($player->data->faction);
 
 
 $spawnPlan = $factionJson->respawnPlan??"olympia";

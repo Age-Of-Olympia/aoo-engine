@@ -3,6 +3,7 @@
 namespace App\View\Forum;
 
 use App\Factory\PlayerFactory;
+use App\Service\FactionService;
 use App\Service\PlayerService;
 use App\Service\RaceService;
 use Classes\Db;
@@ -143,7 +144,7 @@ class MissiveView
             }
         }
 
-        $factionJson = json()->decode('factions', $player->data->faction);
+        $factionJson = (new FactionService())->getFactionData($player->data->faction);
 
         echo '<option value="all_faction_' . $player->data->faction . '">' . ($factionJson?->name ?? $player->data->faction) . ' (tous les membres)</option>';
 
@@ -159,7 +160,7 @@ class MissiveView
         if ($player->data->secretFaction != '') {
 
 
-            $secretJson = json()->decode('factions', $player->data->secretFaction);
+            $secretJson = (new FactionService())->getFactionData($player->data->secretFaction);
 
             echo '<option value="all_faction_' . $player->data->secretFaction . '">' . ($secretJson?->name ?? $player->data->secretFaction) . ' (tous les membres)</option>';
 

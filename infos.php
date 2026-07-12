@@ -1,5 +1,6 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\Service\FactionService;
 use App\Service\RaceService;
 use Classes\Item;
 use Classes\Ui;
@@ -151,13 +152,13 @@ echo '
             echo '<div>'. $raceJson->name . $pnjText . $inactifText .' - <a href="infos.php?targetId='. $targetEntity->getId() .'&reputation">'. Str::get_reput(floor($targetEntity->getPr()/COEFFICIENT_PR)) .'</a> Rang '. $targetEntity->getRank() .'</div>';
 
 
-            $factionJson = json()->decode('factions', $targetEntity->getFaction());
+            $factionJson = (new FactionService())->getFactionData($targetEntity->getFaction());
 
             echo '<div><a href="faction.php?faction='. $targetEntity->getFaction() .'">'. $factionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $factionJson->raFont .'"></span> (<i>'.$factionJson->role[$targetEntity->getFactionRole()]->name.'</i>) </div>';
 
             $targetSecretFaction = $targetEntity->getSecretFaction();
             if (!empty($targetSecretFaction) && ($player->data->secretFaction == $targetSecretFaction || $player->have_option('isAdmin'))) {
-                $secretFactionJson = json()->decode('factions', $targetSecretFaction);
+                $secretFactionJson = (new FactionService())->getFactionData($targetSecretFaction);
 
                 echo '<div class="secret-faction"><a href="faction.php?faction='. $targetSecretFaction .'">'. $secretFactionJson->name .'</a> <span style="font-size: 1.3em" class="ra '. $secretFactionJson->raFont .'"></span> (<i>'.$secretFactionJson->role[$targetEntity->getSecretFactionRole()]->name.'</i>) </div>';
             }

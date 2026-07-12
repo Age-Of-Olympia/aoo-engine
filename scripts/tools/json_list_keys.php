@@ -67,7 +67,7 @@ foreach(array('plans','players','dialogs','races') as $e){
     echo "\n";
 }
 
-foreach(array('items','actions','factions',) as $e){
+foreach(array('items','actions',) as $e){
 
 
 

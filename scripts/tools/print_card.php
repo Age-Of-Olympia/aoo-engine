@@ -1,6 +1,7 @@
 <?php
 use Classes\Player;
 use Classes\Ui;
+use App\Service\FactionService;
 use App\Service\RaceService;
 
 if(!isset($_GET['playerId'])){
@@ -38,7 +39,7 @@ $dataName = '<a href="infos.php?targetId='. $player->id .'">'. $player->data->na
 
 $raceJson = (new RaceService())->getRaceData($player->data->race);
 
-$factionJson = json()->decode('factions', $player->data->faction);
+$factionJson = (new FactionService())->getFactionData($player->data->faction);
 
 
 $data = (object) array(

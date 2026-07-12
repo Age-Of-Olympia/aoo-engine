@@ -298,7 +298,7 @@ class TutorialHelper
             return;
         }
 
-        $factionJson = json()->decode('factions', $player->data->faction);
+        $factionJson = (new \App\Service\FactionService())->getFactionData($player->data->faction);
         $respawnPlan = isset($factionJson->respawnPlan) ? $factionJson->respawnPlan : 'olympia';
 
         $goCoords = (object) array('x' => 0, 'y' => 0, 'z' => 0, 'plan' => $respawnPlan);

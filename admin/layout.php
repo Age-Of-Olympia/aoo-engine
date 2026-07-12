@@ -77,6 +77,7 @@ function admin_layout($title, $content, array $assets = []) {
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
                     'pnjs.php', 'avatars-portraits.php'];
     $racePages = ['races.php', 'race-seed.php'];
+    $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
 
     // array_filter drops links/groups the viewer cannot access.
     $navParts = array_filter([
@@ -113,6 +114,11 @@ function admin_layout($title, $content, array $assets = []) {
             ['races.php', 'Liste', '/admin/races.php'],
             ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
         ], $racePages),
+        $navGroup('Factions', [
+            ['factions.php', 'Liste', '/admin/factions.php'],
+            ['faction-members.php', 'Membres', '/admin/faction-members.php'],
+            ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
+        ], $factionPages),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
     ]);
