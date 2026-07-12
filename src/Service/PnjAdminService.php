@@ -22,27 +22,16 @@ use Classes\View;
 class PnjAdminService
 {
     /**
-     * Races offerable when creating/editing a PNJ: RACES_EXT filtered to those
-     * that actually have a race JSON with a faction. put_player derefs
-     * $raceJson->faction and the faction column is NOT NULL, so a race without a
-     * JSON (e.g. geant, humain) would blow up creation — this is the single
+     * Races offerable when creating/editing a PNJ: every race in the DB
+     * (races table). All rows carry a faction ('' when none), so PNJ creation
+     * can no longer blow up on a missing definition — this is the single
      * source of truth both the dropdown and the server-side whitelist use.
      *
      * @return array<int, string>
      */
     public function availableRaces(): array
     {
-        $races = defined('RACES_EXT') ? RACES_EXT : (defined('RACES') ? RACES : []);
-
-        $valid = [];
-        foreach ($races as $race) {
-            $raceJson = \json()->decode('races', (string) $race);
-            if ($raceJson && isset($raceJson->faction)) {
-                $valid[] = (string) $race;
-            }
-        }
-
-        return $valid;
+        return (new RaceService())->getAllRaceNames();
     }
 
     /**
@@ -166,12 +155,12 @@ class PnjAdminService
     /**
      * Rename a PNJ and/or change its race. Race change keeps avatar and faction
      * consistent, mirroring the derivation in Player::put_player. faction is
-     * coerced to '' when the race JSON has none (the column is NOT NULL).
+     * coerced to '' when the race has none (the column is NOT NULL).
      */
     public function updatePnj(int $pnjId, string $name, string $race): void
     {
-        $raceJson = \json()->decode('races', $race);
-        $faction = isset($raceJson->faction) ? (string) $raceJson->faction : '';
+        $raceEntity = (new RaceService())->getRaceByName($race);
+        $faction = $raceEntity ? $raceEntity->getFaction() : '';
 
         (new Db())->exe(
             "UPDATE players

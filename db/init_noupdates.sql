@@ -340,6 +340,29 @@ INSERT INTO `actions` VALUES (91,'bousculade','ra-falling','technique','Bouscula
 /*!40000 ALTER TABLE `actions` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
+
+--
+-- Per-menu admin access overrides (see Version20260709120000_AddAdminMenuAccess
+-- and AdminMenuAccessService). Absence of a row means the menu tracks its
+-- registry default.
+--
+CREATE TABLE IF NOT EXISTS `admin_menu_access` (
+  `page` varchar(64) NOT NULL,
+  `required_level` varchar(16) NOT NULL,
+  PRIMARY KEY (`page`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Key/value store for admin-configurable settings (see
+-- Version20260709130000_AddAdminSettings and AdminSettingsService).
+--
+CREATE TABLE IF NOT EXISTS `admin_settings` (
+  `name` varchar(64) NOT NULL,
+  `value` varchar(255) NOT NULL,
+  PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT IGNORE INTO `admin_settings` (`name`,`value`) VALUES ('pnj_retire_plan','pnjs');
+
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `audit` (

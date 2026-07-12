@@ -3,6 +3,7 @@
 namespace App\View\Merchant;
 
 use App\Service\ActionService;
+use App\Service\RaceService;
 use Classes\Item;
 use Classes\Player;
 use Classes\Str;
@@ -62,7 +63,7 @@ class SpellsView
         }
 
 
-        $raceJson = json()->decode('races', $target->data->race);
+        $raceJson = (new RaceService())->getRaceData($target->data->race);
 
 
         echo '<h2>Sorts proposés</h2>';

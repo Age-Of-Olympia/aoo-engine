@@ -196,13 +196,14 @@ class ViewService {
         }
     }
     
-    private function getColorForType($name) {
-        if (isset($this->colors[$name])) {
-            $rgb = $this->colors[$name];
-            return imagecolorallocate($this->image, $rgb[0], $rgb[1], $rgb[2]);
-        }
+    private array $tileColorCache = [];
 
-        $rgb = $this->colors['default'];
+    private function getColorForType($name) {
+        // Résout aussi les tuiles de transition générées (trans_A_B_code)
+        // en mélangeant les couleurs des deux biomes ; mémoïsé — les tuiles
+        // arrivent triées par nom, chaque nom se recalculerait des
+        // centaines de fois sinon
+        $rgb = $this->tileColorCache[$name] ??= ColorService::colorFor($name, $this->colors);
         return imagecolorallocate($this->image, $rgb[0], $rgb[1], $rgb[2]);
     }
     
@@ -738,24 +739,10 @@ class ViewService {
             : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
         $mapType = "local";
 
-        $raceColors = [
-            'default' => '#ffffff',
-            'elfe' => '#008000',
-            'geant' => '#661414',
-            'hs' => '#2e6650',
-            'nain' => '#FF0000',
-            'olympien' => '#ff9933',
-            'animal' => '#D2B48C',
-            'lutin' => '#ffffff',
-            'humain' => '#0000ff',
-            'dieu' => '#000000',
-            'protocole' => '#0000ff',
-            'redoraan' => '#D2B48C',
-            'saurien' => '#661414',
-            'triton' => '#661414',
-            'troglodyte' => '#661414',
-            'trotile' => '#D2B48C',
-        ];
+        $raceColors = array_merge(
+            ['default' => '#ffffff'],
+            $this->raceService->getBgColorMap()
+        );
     
         $sql = "
             SELECT c.x, c.y, p.race, p.name as player_name, p.lastLoginTime
@@ -805,18 +792,11 @@ class ViewService {
         $layer = $this->createLayer();
         $mapType = "global";
         
-        // Définit les couleurs pour les races
-        $raceColors = [
-            'default' => '#000000',
-            'elfe' => '#008000',
-            'geant' => '#661414',
-            'hs' => '#2e6650',
-            'nain' => '#FF0000',
-            'olympien' => '#ff9933',
-            'animal' => '#D2B48C',
-            'lutin' => '#ffffff',
-            'humain' => '#0000ff',
-        ];
+        // Couleurs des races depuis la table races
+        $raceColors = array_merge(
+            ['default' => '#000000'],
+            $this->raceService->getBgColorMap()
+        );
         
         // Récupère tous les joueurs avec des coordonnées
         $sql = "
@@ -1139,7 +1119,11 @@ class ViewService {
         $jsonHelper = new Json();
         $allPlans = [];
 
-        foreach ($jsonHelper->get_all('plans', true) as $planId => $planData) {
+        // Tous les plans, toutes saisons : le second paramètre de get_all
+        // restreindrait aux seuls fichiers *_s2.json (excluant même olympia
+        // et enfers). Le filtrage par saison est l'affaire des pages admin
+        // (admin/helpers.php : plan_matches_season_filter, défaut s2).
+        foreach ($jsonHelper->get_all('plans') as $planId => $planData) {
             $fullPlanData = $this->getPlanData($planId);
             $isS2 = strpos($planId, '_s2') !== false;
             $seasonName = $isS2 ? 'S2' : 'S1';

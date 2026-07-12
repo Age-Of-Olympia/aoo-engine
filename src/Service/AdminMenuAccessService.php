@@ -39,9 +39,11 @@ class AdminMenuAccessService
 
         'world_map.php'            => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
         'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
+        'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
+        'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
         'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
 
-        'upload_image.php'         => ['Importer images', 'Médias', self::LEVEL_ADMIN],
+        'avatars-portraits.php'    => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
 
         'actions.php'              => ['Actions · Liste', 'Actions', self::LEVEL_SUPERADMIN],
         'action-workbench.php'     => ['Actions · Configuration', 'Actions', self::LEVEL_SUPERADMIN],
@@ -55,6 +57,7 @@ class AdminMenuAccessService
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
         'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
+        'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
     ];
 
     /**
@@ -62,6 +65,9 @@ class AdminMenuAccessService
      * via layout.php but not themselves nav entries.
      */
     private const ALIASES = [
+        'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
+        'races-save.php'             => 'races.php',
+        'race-seed.php'              => 'races.php',
         'player-skills.php'          => 'players.php',
         'skill-owners.php'           => 'players.php',
         'tutorial-step-editor.php'   => 'tutorial.php',

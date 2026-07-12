@@ -24,8 +24,10 @@ use Classes\Db;
  * enables globally. The characterization test pins this.
  *
  * addAction also carries the ortType branch: names registered in the
- * `actions` table with ormType 'spell' or 'technique' persist with
- * `type='sort'` instead of the default empty string. 'attaquer' is a
+ * `actions` table with a learned-skill ormType (spell / technique /
+ * buff / heal) persist with `type='sort'` instead of the default empty
+ * string — defensive spells (buff/heal) included, else they vanish from
+ * the owned-spells page and dodge the cap (#264). 'attaquer' is a
  * hot-path short-circuit that skips the ActionService lookup — the
  * black-box outcome is identical (attaquer is ormType='melee', so
  * neither branch sets 'sort'), but the optimization avoids one DB
@@ -60,8 +62,9 @@ class PlayerActionsService
      * (mysqli_sql_exception under strict mode).
      *
      * For non-'attaquer' names, looks up the action's ormType via
-     * ActionService; spell/technique entries persist with
-     * `type='sort'` to satisfy the caster UI branches downstream.
+     * ActionService; learned combat skills (spell/technique/buff/heal)
+     * persist with `type='sort'` to satisfy the caster UI branches
+     * downstream (owned-spells list + NUMBER_MAX_COMP cap).
      */
     public function addAction(int $playerId, string $name): void
     {
@@ -73,12 +76,41 @@ class PlayerActionsService
         if ($name !== 'attaquer') {
             $actionService = new ActionService();
             $action = $actionService->getActionByName($name);
-            if ($action !== null && in_array($action->getOrmType(), ['spell', 'technique'], true)) {
+            // 'sort' marks a learned combat skill (shows on the owned-spells page
+            // and counts toward NUMBER_MAX_COMP). Defensive spells are buff/heal
+            // classes, not just spell/technique — without them the owned heals were
+            // invisible and uncapped (#264).
+            if ($action !== null && in_array($action->getOrmType(), ['spell', 'technique', 'buff', 'heal'], true)) {
                 $values['type'] = 'sort';
             }
         }
 
         (new Db())->insert('players_actions', $values);
+    }
+
+    /**
+     * Grant a race's starter actions (race_starter_actions list),
+     * idempotently. Used at player creation and when a tutorial
+     * finishes/aborts. A failure on one action is logged and the rest
+     * still process — granting must never block creation or tutorial
+     * completion.
+     */
+    public function grantRaceStarterPack(int $playerId, string $race): void
+    {
+        $raceEntity = (new RaceService())->getRaceByName($race);
+        if ($raceEntity === null) {
+            return;
+        }
+
+        foreach ($raceEntity->getStarterActionNames() as $name) {
+            try {
+                if (!$this->hasAction($playerId, $name)) {
+                    $this->addAction($playerId, $name);
+                }
+            } catch (\Throwable $e) {
+                error_log("[grantRaceStarterPack] could not add action '{$name}' to player {$playerId}: " . $e->getMessage());
+            }
+        }
     }
 
     /**

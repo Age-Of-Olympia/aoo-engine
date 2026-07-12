@@ -62,7 +62,7 @@ $errors = [];
 if ($role === '') $errors[] = 'Rôle requis.';
 if (!in_array($spawnMode, ['template', 'dynamic'], true)) $errors[] = 'Mode de spawn invalide.';
 if ($name === '') $errors[] = 'Nom requis.';
-if ($race === '' || (defined('RACES_EXT') && !in_array($race, RACES_EXT, true))) {
+if ($race === '' || (new \App\Service\RaceService())->getRaceByName($race) === null) {
     $errors[] = 'Race invalide.';
 }
 if ($avatar === '') $errors[] = 'Avatar requis.';

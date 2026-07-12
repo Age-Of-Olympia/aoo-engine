@@ -5,6 +5,7 @@ namespace App\View\Classement;
 use App\Entity\PlayerEntity;
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
+use App\Service\RaceService;
 use Classes\Str;
 
 class BourrinsView
@@ -139,6 +140,8 @@ class BourrinsView
         $i = 1;
 
 
+        $raceService = new RaceService();
+
         foreach ($tbl as $k => $e) {
 
 
@@ -148,7 +151,7 @@ class BourrinsView
             foreach ($playerTbl as $e) {
 
                 /** @var PlayerEntity $e */
-                $raceJson = json()->decode('races', $e->getRace());
+                $raceJson = $raceService->getRaceData($e->getRace());
 
 
 

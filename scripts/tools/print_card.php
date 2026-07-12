@@ -1,6 +1,7 @@
 <?php
 use Classes\Player;
 use Classes\Ui;
+use App\Service\RaceService;
 
 if(!isset($_GET['playerId'])){
 
@@ -35,7 +36,7 @@ $ui = new Ui('Carte de '. $player->data->name);
 $dataName = '<a href="infos.php?targetId='. $player->id .'">'. $player->data->name .'</a>';
 
 
-$raceJson = json()->decode('races', $player->data->race);
+$raceJson = (new RaceService())->getRaceData($player->data->race);
 
 $factionJson = json()->decode('factions', $player->data->faction);
 

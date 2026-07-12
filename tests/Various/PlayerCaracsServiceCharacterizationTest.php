@@ -28,9 +28,9 @@ use PHPUnit\Framework\TestCase;
  * follow-up MR without behaviour change.
  *
  * Skips cleanly when the DB is unreachable. Uses aoo4 (not aoo4_test)
- * because legacy `Player::get_caracs` traverses
- * `datas/public/races/*.json` files, which the devcontainer aoo4 has
- * populated but aoo4_test doesn't guarantee.
+ * because legacy `Player::get_caracs` reads race definitions from the
+ * seeded `races` table, which the devcontainer aoo4 has populated but
+ * aoo4_test doesn't guarantee.
  */
 class PlayerCaracsServiceCharacterizationTest extends TestCase
 {

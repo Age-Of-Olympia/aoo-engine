@@ -1,0 +1,14 @@
+<?php
+/**
+ * Secret de signature des jetons des endpoints admin Tiled (api/admin/map/*).
+ *
+ * L'extension Tiled se connecte avec un compte admin du jeu (auth.php) et
+ * reçoit un jeton HMAC signé avec ce secret. Le secret ne quitte jamais le
+ * serveur.
+ *
+ * Copier ce fichier en tiled_constants.php (gitignoré) et générer un secret :
+ *   openssl rand -hex 32
+ *
+ * Un secret vide désactive les endpoints (403).
+ */
+define('TILED_HMAC_SECRET', '');

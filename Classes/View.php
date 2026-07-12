@@ -344,17 +344,17 @@ class View{
                     if(in_array('raceHint', $this->options)){
 
 
-                        $raceJson = json()->decode('races', $player->data->race);
+                        $raceBgColor = \App\Service\RaceService::getRaceColor($player->data->race);
 
 
                         if(in_array('raceHintMax', $this->options)){
 
-                            $style = 'fill: '. $raceJson->bgColor;
+                            $style = 'fill: '. $raceBgColor;
                         }
 
                         else{
 
-                            $style = 'fill: transparent; stroke-width: 5; stroke: '. $raceJson->bgColor;
+                            $style = 'fill: transparent; stroke-width: 5; stroke: '. $raceBgColor;
                         }
 
 

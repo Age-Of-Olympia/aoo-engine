@@ -2,6 +2,7 @@
 
 use App\Factory\PlayerFactory;
 use App\Service\PlayerPnjService;
+use App\Service\RaceService;
 use App\Service\PlayerEffectService;
 use Classes\Db;
 use Classes\Str;
@@ -16,6 +17,7 @@ use Classes\Ui;
 
 
 $playerPnjService = new PlayerPnjService();
+$raceService = new RaceService();
 
 
 $main = PlayerFactory::legacy($_SESSION['mainPlayerId']);
@@ -92,7 +94,7 @@ foreach($playersTbl as $pnj){
         $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span> <sup>'. $endTime .'</sup>';
     }
     
-    $raceJson = json()->decode('races', $pnj->data->race);
+    $raceJson = $raceService->getRaceData($pnj->data->race);
 
 
     $mails = isset($allMails[$pnj->id]) ? $allMails[$pnj->id] : 0;
@@ -146,7 +148,7 @@ echo '
 }
 foreach($hiddenPnjs as $hiddenPnj){
     $hiddenPnj->get_data();
-    $raceJson = json()->decode('races', $hiddenPnj->data->race);  
+    $raceJson = $raceService->getRaceData($hiddenPnj->data->race);
     $mails = isset($allMails[$hiddenPnj->id]) ? $allMails[$hiddenPnj->id] : 0;
 
     if($mails){

@@ -325,26 +325,13 @@ class TutorialHelper
     }
 
     /**
-     * Grant the race's starter actions, idempotently. have_action() guards
-     * against duplicates on replay/partial completion; a Doctrine hiccup on
-     * one action is logged and the rest still process.
+     * Grant the race's starter actions, idempotently (shared logic in
+     * PlayerActionsService::grantRaceStarterPack).
      */
     private static function grantRaceActions(\Classes\Player $player): void
     {
-        $raceJson = json()->decode('races', $player->data->race);
-        if (!$raceJson || empty($raceJson->actions)) {
-            return;
-        }
-
-        foreach ($raceJson->actions as $actionName) {
-            try {
-                if (!$player->have_action($actionName)) {
-                    $player->add_action($actionName);
-                }
-            } catch (\Exception $e) {
-                error_log("[TutorialHelper] Warning - could not check/add action '{$actionName}': " . $e->getMessage());
-            }
-        }
+        (new \App\Service\PlayerActionsService())
+            ->grantRaceStarterPack($player->id, $player->data->race);
     }
 
     /**

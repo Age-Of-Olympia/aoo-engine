@@ -479,12 +479,7 @@ class TutorialContext
         }
 
         $race = $player->data->race ?? 'nain';
-        $raceJson = (new \Classes\Json())->decode('races', $race);
 
-        if ($raceJson && isset($raceJson->mvt)) {
-            return (int) $raceJson->mvt;
-        }
-
-        return 4;
+        return (new \App\Service\RaceService())->getRaceMaxMvt($race);
     }
 }

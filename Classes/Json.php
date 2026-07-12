@@ -60,6 +60,18 @@ class Json{
         return json_last_error() === JSON_ERROR_NONE;
     }
 
+    /**
+     * Invalide le cache de décodage d'un fichier — à appeler après l'avoir
+     * réécrit dans la même requête, sinon decode() rend l'ancien contenu.
+     */
+    public function forget($type, $name){
+
+        foreach(['public', 'private'] as $visibility){
+
+            unset($this->paths[dirname(__FILE__) .'/../datas/'. $visibility .'/'. $type .'/'. $name .'.json']);
+        }
+    }
+
 
     public static function create_json($path){
         // A simulation must not touch the filesystem (see SimulationGuard / Db::exe).

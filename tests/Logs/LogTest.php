@@ -7,6 +7,7 @@ use Tests\Logs\Mock\TestDatabase;
 use Tests\Logs\Mock\ViewMock;
 use Tests\Logs\Mock\JsonMock;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Classes\Log;
 
 class LogTest extends TestCase
@@ -316,5 +317,87 @@ class LogTest extends TestCase
         $result = Log::get($this->player);
         $this->assertCount(1, $result);
         $this->assertEquals($customTime, $result[0]->time);
+    }
+
+    public static function selfTargetedEventTypeProvider(): array
+    {
+        return [
+            'destroy' => ['destroy'],
+            'build' => ['build'],
+        ];
+    }
+
+    #[Group('log-get')]
+    #[DataProvider('selfTargetedEventTypeProvider')]
+    public function testActorSeesOwnEventOnce(string $type): void
+    {
+        $this->testDb->insertLog([
+            'type' => $type,
+            'text' => 'Self event',
+            'player_id' => $this->player->id,
+            'target_id' => $this->player->id,
+            'coords_computed' => '5_5_0_test_plan'
+        ]);
+        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+
+        $result = Log::get($this->player);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals($type, $result[0]->type);
+    }
+
+    #[Group('log-get')]
+    #[DataProvider('selfTargetedEventTypeProvider')]
+    public function testActorSeesOwnEventOnceOutsidePerception(string $type): void
+    {
+        $this->testDb->insertLog([
+            'type' => $type,
+            'text' => 'Self event',
+            'player_id' => $this->player->id,
+            'target_id' => $this->player->id,
+            'coords_computed' => '100_100_0_test_plan'
+        ]);
+        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+
+        $result = Log::get($this->player);
+
+        $this->assertCount(1, $result);
+    }
+
+    #[Group('log-get')]
+    #[DataProvider('selfTargetedEventTypeProvider')]
+    public function testWitnessSeesEventWithinPerception(string $type): void
+    {
+        $this->testDb->insertLog([
+            'type' => $type,
+            'text' => 'Witnessed event',
+            'player_id' => 2,
+            'target_id' => 3,
+            'coords_computed' => '5_5_0_test_plan'
+        ]);
+        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+
+        $result = Log::get($this->player);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals($type, $result[0]->type);
+    }
+
+    #[Group('log-get')]
+    #[DataProvider('selfTargetedEventTypeProvider')]
+    public function testWitnessDoesNotSeeEventOutOfPerception(string $type): void
+    {
+        $this->testDb->insertLog([
+            'type' => $type,
+            'text' => 'Far event',
+            'player_id' => 2,
+            'target_id' => 3,
+            'coords_computed' => '100_100_0_test_plan'
+        ]);
+        ViewMock::setCoordsAroundResult(['5_5_0_test_plan']);
+
+        $result = Log::get($this->player);
+
+        $this->assertEmpty($result);
     }
 }

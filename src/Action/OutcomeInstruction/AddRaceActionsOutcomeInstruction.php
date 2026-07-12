@@ -20,11 +20,8 @@ class AddRaceActionsOutcomeInstruction extends OutcomeInstruction implements Has
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
-        $raceJson = json()->decode('races', $actor->data->race);
-
-        foreach($raceJson->actions as $e){
-            $actor->add_action($e);
-        }
+        (new \App\Service\PlayerActionsService())
+            ->grantRaceStarterPack($actor->id, $actor->data->race);
 
         return new OutcomeResult(true, array(), array());
     }

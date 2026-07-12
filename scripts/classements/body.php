@@ -1,5 +1,6 @@
 <?php
 
+use App\Service\RaceService;
 use App\View\Classement\BourrinsView;
 use App\View\Classement\PlayersTableView;
 use App\View\Classement\FortunesView;
@@ -88,22 +89,33 @@ else{
 
 
     if (!empty($playerList)) {
+        // Même règle que Player::refresh_list : les personnages d'une race
+        // cachée ne fournissent pas le « premier joueur » affiché.
+        $raceService = new RaceService();
+        $first = null;
         foreach($playerList as $e){
+
+            $race = $raceService->getRaceByName($e->race);
+            if($race !== null && $race->getHidden()){
+                continue;
+            }
 
             $first = $e;
             break;
         }
 
 
-        $data = '
-        ~'. count($playerList) .' joueurs actifs<br />
-        <a href="infos.php?targetId='. $first->id .'">'. $first->name .'</a> domine le <a href="classements.php">classement</a>!
-        ';
+        if ($first !== null) {
+            $data = '
+            ~'. count($playerList) .' joueurs actifs<br />
+            <a href="infos.php?targetId='. $first->id .'">'. $first->name .'</a> domine le <a href="classements.php">classement</a>!
+            ';
 
-        $path = 'datas/public/classements/stats.html';
+            $path = 'datas/public/classements/stats.html';
 
-        $myfile = fopen($path, "w") or die("Unable to open file!");
-        fwrite($myfile, $data);
-        fclose($myfile);
+            $myfile = fopen($path, "w") or die("Unable to open file!");
+            fwrite($myfile, $data);
+            fclose($myfile);
+        }
     }
 }

@@ -7,6 +7,7 @@ use App\Entity\PlayerEntity;
 use App\Entity\RealPlayer;
 use App\Service\PlayerEffectService;
 use App\Service\PlayerService;
+use App\Service\RaceService;
 use Classes\Item;
 use Classes\Player;
 use Classes\Str;
@@ -140,7 +141,7 @@ final class InfosSheetView
         echo '<h1>' . $targetEntity->getName() . '</h1>';
 
 
-        $raceJson = json()->decode('races', $targetEntity->getRace());
+        $raceJson = (new RaceService())->getRaceData($targetEntity->getRace());
 
         $pnjText = $targetEntity->getId() < 0 ? ' - PNJ' : '';
         // isInactive is runtime-computed (RealPlayer domain method from !384).

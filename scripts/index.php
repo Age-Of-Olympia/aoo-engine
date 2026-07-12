@@ -41,7 +41,7 @@ echo '
     echo '<div class="menu-sep"></div>';
 
 
-    $raceBg = RACES[0];
+    $raceBg = (new \App\Service\RaceService())->getPlayableRaceNames()[0] ?? 'nain';
 
     echo '
     <div id="index-login">

@@ -3,6 +3,7 @@
 namespace App\View\Hud;
 
 use App\Service\PlayerEffectService;
+use App\Service\RaceService;
 use Classes\Player;
 use Classes\Str;
 
@@ -30,7 +31,7 @@ final class TopBarView
         $turnJson = $player->get_turnJson();
         $coords = $player->getCoords();
 
-        $raceJson = json()->decode('races', $player->data->race);
+        $raceJson = (new RaceService())->getRaceData($player->data->race);
         $raceName = is_object($raceJson) ? $raceJson->name : $player->data->race;
 
         $planJson = json()->decode('plans', $coords->plan);

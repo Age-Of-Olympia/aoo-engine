@@ -2,6 +2,8 @@
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
+use App\Entity\EntityManagerFactory;
+use App\Entity\Race;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionPassiveCatalogService;
 use App\Service\AdminAuthorizationService;
@@ -32,6 +34,7 @@ if ($id > 0) {
     $object = match ($type) {
         'action' => (new ActionCatalogService())->getActionById($id),
         'passive' => (new ActionPassiveCatalogService())->getById($id),
+        'race' => EntityManagerFactory::getEntityManager()->find(Race::class, $id),
         default => null,
     };
     if ($object === null) {

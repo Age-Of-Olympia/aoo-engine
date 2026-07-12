@@ -1,6 +1,7 @@
 <?php
 
 use App\Service\PlayerService;
+use App\Service\RaceService;
 use App\View\QuestsView;
 use Classes\Log;
 use Classes\Str;
@@ -21,6 +22,7 @@ if ($debug) {
 }
 
 $playerService = new PlayerService($_SESSION['playerId']);
+$raceService = new RaceService();
 $player = $playerService->GetPlayer($_SESSION['playerId']);
 
 $displayAllCondition = $player->have_option('isAdmin') || $player->id <= 1;
@@ -111,7 +113,7 @@ echo '
 
         $player = $playerService->GetPlayer($e->player_id);
         $player->get_data(false);
-        $playerRaceJson = json()->decode('races', $player->data->race);
+        $playerRaceJson = $raceService->getRaceData($player->data->race);
 
 
         $hiddenText = '';
@@ -131,7 +133,7 @@ echo '
 
             $target = $playerService->GetPlayer($e->target_id);
             $target->get_data(false);
-            $targetRaceJson = json()->decode('races', $target->data->race);
+            $targetRaceJson = $raceService->getRaceData($target->data->race);
         }
 
 

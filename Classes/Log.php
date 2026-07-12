@@ -26,6 +26,74 @@ class Log{
     private static function getViewClass(): string { return self::$viewClass ?? 'Classes\View'; }
     private static function json() { return self::$jsonInstance ?? json(); }
 
+    private static function getPerception(ActorInterface $player)
+    {
+        $caracsJson = self::json()->decode('players', $player->id .'.caracs');
+        if (!$caracsJson) {
+            $player->get_caracs();
+            return $player->caracs->p;
+        }
+        return $caracsJson->p;
+    }
+
+    /**
+     * Decide whether a fetched log row is visible to $player.
+     * Returns the row when it should be displayed, null otherwise.
+     * Shared by get() and get2() so the visibility rules stay in one place.
+     */
+    private static function isRowVisibleTo(object $row, ActorInterface $player, $perception, string $type): ?object
+    {
+        if ($row->type == "move" && $type == "light") {
+            return null;
+        }
+
+        if ($row->plan == "birdland") {
+            return null;
+        }
+
+        // If the event is about the player, as doer or as target, it is displayed once
+        if ($row->player_id == $player->id) {
+            return $row->type != "hidden_action_other_player" ? $row : null;
+        }
+
+        if ($row->target_id == $player->id) {
+            return $row->type != "hidden_action" ? $row : null;
+        }
+
+        // Otherwise, display only if it happened within the player's perception radius
+        $jsonInstance = self::json();
+
+        $last_player_coords = (object) array(
+            'x'=>$row->movement_x,
+            'y'=>$row->movement_y,
+            'z'=>$row->movement_z,
+            'plan'=>$row->movement_plan
+        );
+
+        $viewClass = self::getViewClass();
+        $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $perception, CoordType::XYZPLAN, separator:'_');
+
+        $planJson = $jsonInstance->decode('plans', $row->plan);
+
+        // For PNJs, check if event is in their current plan
+        if ($player->id <= 0) {
+            if ($row->plan != $player->coords->plan) {
+                return null;
+            }
+        }
+        // For normal players, use explicit visibility conditions
+        else {
+            $planRequestsHideCharacters = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
+            $isAlwaysVisibleCharacter = $row->player_id <= 0; // PNJ actions are always visible
+
+            if ($planRequestsHideCharacters && !$isAlwaysVisibleCharacter) {
+                return null;
+            }
+        }
+
+        return in_array($row->coords_computed, $arrayCoordsId) ? $row : null;
+    }
+
     // STATIC
 
     public static function get(ActorInterface $player,$maxLogAge=THREE_DAYS,$type='', ?array& $steps=null){
@@ -91,81 +159,10 @@ class Log{
         if(is_array($steps)) {
             $steps[] = array("executeQuery",microtime(true));
         }
+        $perception = self::getPerception($player);
         while($row = $res->fetch_object()){
-
-            if ($row->type == "move" && $type == "light") {
-                continue;
-            }
-
-            if ($row->plan == "birdland") {
-                continue;
-            }
-
-            // If the event is about player, either as doer or as target, event is displayed
-            if ($row->player_id == $player->id) {
-                if ($row->type != "hidden_action_other_player")
-                {
-                    $return[] = $row;
-                }
-                if ($row->type != "destroy") {
-                    continue;
-                }
-            }
-
-            if ($row->target_id == $player->id) {
-                if ($row->type != "hidden_action")
-                {
-                    $return[] = $row;
-                }
-                if ($row->type != "destroy") {
-                    continue;
-                }
-            }
-
-            // Get Perception
-            $jsonInstance = self::json();
-            $caracsJson = $jsonInstance->decode('players', $player->id .'.caracs');
-            if(!$caracsJson){
-                $player->get_caracs();
-                $p = $player->caracs->p;
-            }
-            else{
-                $p = $caracsJson->p;
-            }
-
-            // Create coord object to call get_coords_id_arround
-            $last_player_coords = (object) array(
-                'x'=>$row->movement_x,
-                'y'=>$row->movement_y,
-                'z'=>$row->movement_z,
-                'plan'=>$row->movement_plan
-            );
-            
-            // Computing coords
-            $viewClass = self::getViewClass();
-            $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $p, CoordType::XYZPLAN, separator:'_');
-
-            $planJson = $jsonInstance->decode('plans', $row->plan);
-
-            // For PNJs, check if event is in their current plan
-            if ($player->id <= 0) {
-                if ($row->plan != $player->coords->plan) {
-                    continue;
-                }
-            }
-            // For normal players, use explicit visibility conditions
-            else {
-                $planRequestsHideCharacters = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
-                $isAlwaysVisibleCharacter = $row->player_id <= 0; // PNJ actions are always visible
-
-                if ($planRequestsHideCharacters && !$isAlwaysVisibleCharacter) {
-                    continue;
-                }
-            }
-
-            if (in_array($row->coords_computed, $arrayCoordsId)) {
+            if (self::isRowVisibleTo($row, $player, $perception, $type) !== null) {
                 $return[] = $row;
-                continue;
             }
         }
         if(is_array($steps)) {
@@ -250,22 +247,7 @@ class Log{
             $steps[] = array("executeQuery",microtime(true));
         }
 
-        // Get Perception
-        $jsonInstance = self::json();
-        $caracsJson = $jsonInstance->decode('players', $player->id .'.caracs');
-        if(!$caracsJson){
-            $player->get_caracs();
-            $p = $player->caracs->p;
-        } else {
-            $p = $caracsJson->p;
-        }
-
-        $last_player_coords = (object) array(
-            'x'=>0,
-            'y'=>0,
-            'z'=>0,
-            'plan'=>""
-        );
+        $perception = self::getPerception($player);
 
         if(is_array($steps)) {
             $steps[] = array("prep carac",microtime(true));
@@ -273,65 +255,8 @@ class Log{
 
         while($row = $result->fetchAssociative()) {
             $row = (object) $row; // Convert array to object for compatibility
-
-            if ($row->type == "move" && $type == "light") {
-                continue;
-            }
-
-            if ($row->plan == "birdland") {
-                continue;
-            }
-
-            // If the event is about player, either as doer or as target, event is displayed
-            if ($row->player_id == $player->id) {
-                if ($row->type != "hidden_action_other_player") {
-                    $return[] = $row;
-                }
-                if ($row->type != "destroy") {
-                    continue;
-                }
-            }
-
-            if ($row->target_id == $player->id) {
-                if ($row->type != "hidden_action") {
-                    $return[] = $row;
-                }
-                if ($row->type != "destroy") {
-                    continue;
-                }
-            }
-
-            // Create coord object to call get_coords_id_arround
-            $last_player_coords->x = $row->movement_x;
-            $last_player_coords->y = $row->movement_y;
-            $last_player_coords->z = $row->movement_z;
-            $last_player_coords->plan = $row->movement_plan;
-            
-            // Computing coords
-            $viewClass = self::getViewClass();
-            $arrayCoordsId = $viewClass::get_coords_arround($last_player_coords, $p, CoordType::XYZPLAN, separator:'_');
-
-            $planJson = $jsonInstance->decode('plans', $row->plan);
-
-            // For PNJs, check if event is in their current plan
-            if ($player->id <= 0) {
-                if ($row->plan != $player->coords->plan) {
-                    continue;
-                }
-            }
-            // For normal players, use explicit visibility conditions
-            else {
-                $planRequestsHideCharacters = !$planJson || (isset($planJson->player_visibility) && $planJson->player_visibility === false);
-                $isAlwaysVisibleCharacter = $row->player_id <= 0; // PNJ actions are always visible
-
-                if ($planRequestsHideCharacters && !$isAlwaysVisibleCharacter) {
-                    continue;
-                }
-            }
-
-            if (in_array($row->coords_computed, $arrayCoordsId)) {
+            if (self::isRowVisibleTo($row, $player, $perception, $type) !== null) {
                 $return[] = $row;
-                continue;
             }
         }
 

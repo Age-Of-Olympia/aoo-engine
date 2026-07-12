@@ -1,19 +1,9 @@
 <?php
 use Classes\Player;
 use Classes\Db;
+use App\Service\RaceService;
 
 echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a><a href="map.php"><button>Monde</button></a><a href="map.php?local"><button>'. $planJson->name .'</button></a></div>';
-
-
-// plan at war
-$colored = '';
-
-if(!empty($planJson->war)){
-
-    $colored = 'colored-red';
-
-    echo '<font color="red">Ce territoire est en guerre!</font>';
-}
 
 
 echo '<h1><font style="font-family: goudy">'. $planJson->name .'</font></h1>';
@@ -79,11 +69,13 @@ echo '
     >
     ';
 
+    $raceService = new RaceService();
+
     while($row = $res->fetch_object()){
         if($row->id != $player->id && isset($incognitos[$row->id])){
             continue;
         }
-        $raceJson = json()->decode('races', $row->race);
+        $raceJson = $raceService->getRaceData($row->race);
 
 
         $x = ($row->x + $width) * 5;
@@ -209,7 +201,7 @@ if(!empty($planJson->pnj)){
 
     $pnj->get_data();
 
-    $raceJson = json()->decode('races', $pnj->data->race);
+    $raceJson = $raceService->getRaceData($pnj->data->race);
 
     echo '
     <h2>PNJ</h2>
@@ -230,47 +222,4 @@ if(!empty($planJson->pnj)){
 else{
 
     echo '<p><font color="red">Il n\'y a pas de PNJ assigné à ce Territoire.</font></p>';
-}
-
-
-
-$sql = '
-SELECT x,y,z,m2.params,m3.name
-FROM coords
-INNER JOIN map_elements AS m1
-INNER JOIN map_triggers AS m2
-INNER JOIN map_tiles AS m3
-ON m1.coords_id = coords.id
-AND m1.coords_id = m2.coords_id
-AND m1.coords_id = m3.coords_id
-WHERE
-m1.name = "flag_red"
-AND
-plan = ?
-GROUP BY m2.params
-';
-
-$res = $db->exe($sql, $player->coords->plan);
-
-if(!$res->num_rows){
-
-    echo '<p><font color="red">Impossible de voyager <b>depuis</b> ce Territoire.</font></p>';
-}
-else{
-
-
-    echo '<h2>Routes</h2>';
-
-    echo '<table border="1" class="marbre" align="center">';
-
-    echo '<tr><th></th><th>Direction</th><th>Position</th></tr>';
-
-    while($row = $res->fetch_object()){
-
-
-        echo '<tr><td><img style="background: url(img/tiles/'. $row->name .'.png);" src="img/elements/flag_red.webp" width="35" /></td><td align="center">'. strtoupper($row->params) .'<td>'. $row->x .','. $row->y .','. $row->z .'</td></tr>';
-    }
-
-
-    echo '</table>';
 }

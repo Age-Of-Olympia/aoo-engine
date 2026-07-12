@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260701p';
+const ADMIN_ASSET_VERSION = '20260713b';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -71,11 +71,12 @@ function admin_layout($title, $content, array $assets = []) {
 
     $tutorialPages = ['tutorial-catalog.php', 'tutorial.php', 'tutorial-step-editor.php',
                       'tutorial-npcs.php', 'tutorial-settings.php'];
-    $mapPages = ['world_map.php', 'local_maps.php', 'screenshots.php'];
+    $mapPages = ['world_map.php', 'local_maps.php', 'terrain-transitions.php', 'tile-assets.php', 'screenshots.php'];
     $actionPages = ['action-workbench.php', 'action-type-defaults.php', 'actions.php', 'passive-workbench.php',
                     'action-import.php', 'action-import-preview.php'];
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
-                    'pnjs.php'];
+                    'pnjs.php', 'avatars-portraits.php'];
+    $racePages = ['races.php', 'race-seed.php'];
 
     // array_filter drops links/groups the viewer cannot access.
     $navParts = array_filter([
@@ -89,9 +90,10 @@ function admin_layout($title, $content, array $assets = []) {
         $navGroup('Cartes', [
             ['world_map.php', 'Carte monde', '/admin/world_map.php'],
             ['local_maps.php', 'Cartes locales', '/admin/local_maps.php'],
+            ['terrain-transitions.php', 'Transitions de terrain', '/admin/terrain-transitions.php'],
+            ['tile-assets.php', 'Tuiles &amp; images', '/admin/tile-assets.php'],
             ['screenshots.php', 'Captures', '/admin/screenshots.php'],
         ], $mapPages),
-        $navLink('upload_image.php', 'Importer images', '/admin/upload_image.php'),
         $navGroup('Actions', [
             ['actions.php', 'Liste', '/admin/actions.php'],
             ['action-workbench.php', 'Configuration actions', '/admin/action-workbench.php'],
@@ -102,10 +104,15 @@ function admin_layout($title, $content, array $assets = []) {
         $navGroup('Joueurs', [
             ['players.php', 'Compétences', '/admin/players.php'],
             ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
+            ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
             ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
         $navLink('view_recipes.php', 'Recettes', '/admin/view_recipes.php'),
+        $navGroup('Races', [
+            ['races.php', 'Liste', '/admin/races.php'],
+            ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
+        ], $racePages),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
     ]);
@@ -135,6 +142,7 @@ function admin_layout($title, $content, array $assets = []) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/admin/css/admin.css?v=$version">
     <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">$styleLinks
+    <script src="/admin/js/admin-list.js?v=$version" defer></script>
 </head>
 <body>
     <div class="admin-layout">

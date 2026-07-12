@@ -46,8 +46,8 @@ class TutorialManager
      *
      * @param string $version Catalog version (scenario identifier).
      * @param string|null $raceOverride Run the tutorial as this race instead of the
-     *                                  real player's. Must be in RACES_EXT. Null
-     *                                  (default) keeps the real player's race.
+     *                                  real player's. Must exist in the races table.
+     *                                  Null (default) keeps the real player's race.
      */
     public function startTutorial(string $version = '1.0.0', ?string $raceOverride = null): array
     {
@@ -380,19 +380,11 @@ class TutorialManager
             $realPlayer = PlayerFactory::legacy($realPlayerId);
             $realPlayer->end_option('invisibleMode');
 
-            try {
-                $realPlayer->get_data();
-                $raceJson = json()->decode('races', $realPlayer->data->race);
-
-                if ($raceJson && !empty($raceJson->actions)) {
-                    foreach($raceJson->actions as $actionName) {
-                        $realPlayer->add_action($actionName);
-                    }
-                }
-            } catch (\Exception $e) {
-                // Race-action seeding is best-effort; tutorial completion must
-                // not block on it.
-            }
+            // Race-action seeding is best-effort; tutorial completion must
+            // not block on it (grantRaceStarterPack logs failures and continues).
+            $realPlayer->get_data();
+            (new \App\Service\PlayerActionsService())
+                ->grantRaceStarterPack($realPlayer->id, $realPlayer->data->race);
         }
 
         if ($this->tutorialPlayer) {

@@ -2,6 +2,7 @@
 
 namespace App\View\Classement;
 
+use App\Service\RaceService;
 use Classes\Str;
 
 /**
@@ -44,10 +45,11 @@ final class PlayersTableView
         ';
 
         $n = 1;
+        $raceService = new RaceService();
 
         foreach($list as $player){
 
-            $raceJson = json()->decode('races', $player->race);
+            $raceJson = $raceService->getRaceData($player->race);
 
             $reput = Str::get_reput(floor($player->pr/COEFFICIENT_PR));
 

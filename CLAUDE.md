@@ -917,9 +917,11 @@ The tutorial adapts to the player's race for movement points:
 ```
 
 **Races**:
-- Defined in `RACES` constant
-- Each race has faction, starting stats, portrait/avatar paths
-- Examples: 'Humain', 'Elfe', 'Nain'
+- Defined in the **database** (`races` + `race_starter_actions` + `race_spells` tables), edited via the admin page `admin/races.php`
+- Single gateway: `App\Service\RaceService` — `getRaceData($name)` (JSON-shaped read model), `getPlayableRaceNames()` (ex-`RACES` constant), `getAllRaceNames()` (ex-`RACES_EXT`), `getRaceColor()`, `getRaceMaxMvt()`
+- `races.name` is the lowercase code stored in `players.race` ('nain', 'hs'…); `races.label` is the display name ('Nain')
+- Each race has faction, starting stats (16 CARACS columns), colors, starter actions and learnable spells
+- Migrated from `datas/*/races/*.json` by `Version20260710120000_RacesFromJson` (the JSON files are no longer read)
 
 ### Frontend Map System
 

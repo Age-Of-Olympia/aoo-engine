@@ -78,7 +78,7 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
 
     $item->add_item($player, -1);
 
-    Log::put($player, $player, $player->data->name." a construit ".$item->data->name. " en ".$coordsTbl[0].",".$coordsTbl[1].",".$player->coords->z, "action", '',  time());
+    Log::put($player, $player, $player->data->name." a construit ".$item->data->name. " en ".$coordsTbl[0].",".$coordsTbl[1].",".$player->coords->z, "build", '',  time());
 
     $player->putBonus(['a'=>-1]);
 

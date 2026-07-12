@@ -112,13 +112,49 @@ class ActionService
     public function getActionsByCategory(string $category): array
     {
         $query = $this->entityManager->createQuery(
-        'SELECT a FROM App\Entity\Action a 
-         WHERE a.category LIKE :cat 
+        'SELECT a FROM App\Entity\Action a
+         WHERE a.category LIKE :cat
          ORDER BY a.level ASC, a.name ASC'
         )
         ->setParameter('cat', $category . '%');
 
         return $query->getResult();
+    }
+
+    /**
+     * Every action name the game knows, for admin pickers/autocomplete:
+     * the configured actions (with their type as label) plus the legacy
+     * names that only exist as granted rows or race-list entries (e.g.
+     * 'attaquer', which has no `actions` row).
+     *
+     * Merged in PHP: the four tables carry mixed collations, a SQL UNION
+     * on them throws.
+     *
+     * @return array<string, string> name => type label ('' when unknown)
+     */
+    public function getKnownActionNames(): array
+    {
+        $connection = $this->entityManager->getConnection();
+
+        $names = [];
+        foreach ($connection->fetchAllAssociative('SELECT name, type FROM actions') as $row) {
+            $names[$row['name']] = (string) $row['type'];
+        }
+
+        $legacySources = [
+            'SELECT DISTINCT name FROM players_actions',
+            'SELECT DISTINCT name FROM race_starter_actions',
+            'SELECT DISTINCT name FROM race_spells',
+        ];
+        foreach ($legacySources as $sql) {
+            foreach ($connection->fetchFirstColumn($sql) as $name) {
+                $names[$name] ??= '';
+            }
+        }
+
+        ksort($names);
+
+        return $names;
     }
 
 }
