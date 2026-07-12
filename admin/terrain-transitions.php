@@ -48,7 +48,8 @@ $selectedPlan = optionalString('selected_plan')
         ? trim($_GET['selected_plan']) : null);
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
-    && (isset($_POST['classify_tiles']) || isset($_POST['generate_transitions']));
+    && (isset($_POST['classify_tiles']) || isset($_POST['generate_transitions'])
+        || isset($_POST['regenerate_transitions']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -81,6 +82,22 @@ if ($isStateChangingPost && isset($_POST['classify_tiles']) && $selectedPlan) {
             : 'Classification enregistrée : ' . implode(' ; ', $summary) . '.');
     } catch (Throwable $e) {
         setFlash('danger', 'Échec du classement : ' . $e->getMessage());
+    }
+}
+
+// Réécriture des PNG de tous les fondus déclarés depuis les images de base
+// actuelles (art modifié, fondus corrompus) — wangId inchangés
+if ($isStateChangingPost && isset($_POST['regenerate_transitions'])) {
+    try {
+        set_time_limit(600);
+        $result = (new TerrainTransitionService($database))
+            ->regenerateTransitionImages(TerrainTransitionService::GROUND_LAYER);
+        $notice = $result['unparsed'] === [] ? ''
+            : ' ⚠ Noms indéchiffrables ignorés : ' . implode(', ', array_slice($result['unparsed'], 0, 10))
+                . (count($result['unparsed']) > 10 ? '…' : '') . '.';
+        setFlash('success', $result['regenerated'] . ' fondu(s) réécrit(s) depuis les images de base actuelles.' . $notice);
+    } catch (Throwable $e) {
+        setFlash('danger', 'Échec de la régénération : ' . $e->getMessage());
     }
 }
 
@@ -271,6 +288,17 @@ ob_start();
                             Toutes les transitions requises existent (<?= count($terrainAudit['sets']) ?> ensembles de biomes).
                         </div>
                     <?php endif; ?>
+
+                    <form method="post" class="d-flex align-items-center gap-3 mt-3"
+                          onsubmit="return confirm('Réécrire tous les PNG de fondus depuis les images de base actuelles ?');">
+                        <?= $csrf->renderTokenField() ?>
+                        <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
+                        <button type="submit" name="regenerate_transitions" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-sync"></i> Régénérer les fondus existants
+                        </button>
+                        <small class="text-muted">Réécrit tous les PNG trans_* de la couche depuis les images de base
+                            actuelles (art d'un biome modifié, fondus corrompus). Les wangId ne changent pas.</small>
+                    </form>
                 <?php endif; ?>
 
                 <?php if ($transitionReport !== null && !empty($transitionReport['generated'])): ?>

@@ -157,6 +157,53 @@ class TerrainTransitionServiceTest extends TestCase
         $this->assertSame('vert', $saved['tiles']['vert']);
     }
 
+    public function testPaletteSourceBlendsLikeTruecolor(): void
+    {
+        // PNG à palette : imagecolorat y renvoie l'index, pas la couleur —
+        // sans conversion truecolor le fondu tirait vers le noir (bug vécu
+        // sur le serveur de test, dont le GD ne convertit pas au resize)
+        $palette = imagecreate(50, 50);
+        imagecolorallocate($palette, 10, 10, 10);   // index 0 : leurre sombre
+        $grey = imagecolorallocate($palette, 174, 174, 174);
+        imagefilledrectangle($palette, 0, 0, 49, 49, $grey);
+        imagepng($palette, $this->root . '/img/tiles/gris_palette.png');
+        $this->writeSolidTile('rouge', 255, 0, 0);
+
+        $cfg = $this->config(['rouge' => 'rouge', 'gris_palette' => 'gris_palette']);
+        $this->service->generateSet($cfg, 'tiles', ['rouge', 'gris_palette']);
+
+        // bbbb n'existe pas (14 combos) : prendre abbb, coin BR ≈ pur gris
+        $png = imagecreatefrompng($this->root . '/img/tiles/trans_rouge_gris_palette_abbb.png');
+        $corner = imagecolorsforindex($png, imagecolorat($png, 49, 49));
+        $this->assertEqualsWithDelta(174, $corner['red'], 2, 'le gris de la palette, pas son index');
+        $this->assertEqualsWithDelta(174, $corner['green'], 2);
+    }
+
+    public function testRegenerateTransitionImagesRepairsCorruptedPngs(): void
+    {
+        mkdir($this->root . '/tools/tiled/aoo', 0777, true);
+        $this->writeSolidTile('rouge', 255, 0, 0);
+        $this->writeSolidTile('bleu', 0, 0, 255);
+
+        $terrains = $this->service->loadTerrains();
+        $cfg = &$this->service->layerConfig($terrains, 'tiles');
+        $cfg['colors'] = ['rouge', 'bleu'];
+        $cfg['tiles'] = ['rouge' => 'rouge', 'bleu' => 'bleu'];
+        $this->service->generateSet($cfg, 'tiles', ['rouge', 'bleu']);
+        $this->service->saveTerrains($terrains);
+
+        // Corrompre un fondu (tout noir), comme les blends palette du serveur
+        $this->writeSolidTile('trans_rouge_bleu_baaa', 0, 0, 0);
+
+        $result = $this->service->regenerateTransitionImages('tiles');
+
+        $this->assertSame(14, $result['regenerated']);
+        $this->assertSame([], $result['unparsed']);
+        $png = imagecreatefrompng($this->root . '/img/tiles/trans_rouge_bleu_baaa.png');
+        $corner = imagecolorsforindex($png, imagecolorat($png, 49, 49));
+        $this->assertGreaterThan(250, $corner['red'], 'le coin BR (rouge) est restauré');
+    }
+
     public function testGenerateSetRefusesBiomesSharingAColor(): void
     {
         $this->writeSolidTile('lac', 0, 0, 255);

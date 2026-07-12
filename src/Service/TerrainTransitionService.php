@@ -464,6 +464,123 @@ class TerrainTransitionService
         return $visibility;
     }
 
+    /**
+     * Réécrit les PNG de tous les fondus déclarés de la couche depuis les
+     * images de base ACTUELLES, sans toucher aux wangId. À utiliser après un
+     * changement d'art d'un biome, ou pour réparer des fondus corrompus —
+     * cas vécu : blends tirant vers le noir, générés depuis des PNG à
+     * palette avant le correctif imagepalettetotruecolor de loadTile.
+     *
+     * Chaque nom est re-décomposé en tuiles composantes + code de coins,
+     * et la décomposition est validée contre le wangId stocké (les noms de
+     * tuiles peuvent contenir des underscores : seule la coupure dont les
+     * couleurs correspondent est la bonne).
+     *
+     * @return array{regenerated: int, unparsed: list<string>}
+     */
+    public function regenerateTransitionImages(string $layer = self::GROUND_LAYER): array
+    {
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+        $imgDir = $this->root . '/img/' . $layer;
+
+        $fullNames = array_keys(array_filter($cfg['tiles'], 'is_string'));
+
+        $regenerated = 0;
+        $unparsed = [];
+
+        foreach ($cfg['tiles'] as $name => $spec) {
+            if (!is_array($spec)) {
+                continue;
+            }
+
+            $parsed = $this->parseTransitionName((string) $name, $fullNames, $spec, $cfg);
+            if ($parsed === null) {
+                $unparsed[] = (string) $name;
+                continue;
+            }
+            [$tileNames, $code] = $parsed;
+
+            $images = array_map(fn(string $tile) => $this->loadTile($imgDir, $tile), $tileNames);
+            $tuple = array_map(fn(string $letter) => ord($letter) - ord('a'), str_split($code));
+            $blend = $this->blendCorners(array_map(fn(int $i) => $images[$i], $tuple));
+
+            if (!imagepng($blend, $imgDir . '/' . $name . '.png')) {
+                throw new RuntimeException('Écriture impossible : ' . $imgDir . '/' . $name . '.png');
+            }
+            $regenerated++;
+        }
+
+        return ['regenerated' => $regenerated, 'unparsed' => $unparsed];
+    }
+
+    /**
+     * Décompose un nom de fondu (trans_<A>_<B>[_<C>[_<D>]]_<code>) en tuiles
+     * composantes, dans l'ordre des lettres du code. Toutes les coupures
+     * possibles en noms de tuiles pleines connus sont essayées ; celle dont
+     * les couleurs reproduisent le wangId stocké gagne.
+     *
+     * @param list<string> $fullNames tuiles pleines déclarées
+     * @param list<int> $wangId wangId stocké, la référence
+     * @param array{colors: list<string>, tiles: array<string, mixed>} $cfg
+     * @return array{list<string>, string}|null [tuiles, code] ou null
+     */
+    private function parseTransitionName(string $name, array $fullNames, array $wangId, array $cfg): ?array
+    {
+        if (!preg_match('/^trans_(.+)_([a-d]{4})$/', $name, $matches)) {
+            return null;
+        }
+        $code = $matches[2];
+
+        $letters = array_unique(str_split($code));
+        sort($letters);
+        $count = count($letters);
+        if ($letters !== array_slice(['a', 'b', 'c', 'd'], 0, $count)) {
+            return null;
+        }
+
+        $tuple = array_map(fn(string $letter) => ord($letter) - ord('a'), str_split($code));
+
+        foreach ($this->tileNameSplits(explode('_', $matches[1]), $count, array_flip($fullNames)) as $tileNames) {
+            $probe = $cfg;
+            $indexes = array_map(fn(string $tile) => $this->colorIndexOf($probe, $tile), $tileNames);
+            if ($this->tupleWangId($tuple, $indexes) === $wangId) {
+                return [$tileNames, $code];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Toutes les coupures de morceaux d'un nom composé en $count noms de
+     * tuiles connus (backtracking).
+     *
+     * @param list<string> $parts
+     * @param array<string, int> $known noms de tuiles pleines (clés)
+     * @return list<list<string>>
+     */
+    private function tileNameSplits(array $parts, int $count, array $known): array
+    {
+        if ($count === 1) {
+            $name = implode('_', $parts);
+            return isset($known[$name]) ? [[$name]] : [];
+        }
+
+        $splits = [];
+        for ($i = 1; $i <= count($parts) - ($count - 1); $i++) {
+            $head = implode('_', array_slice($parts, 0, $i));
+            if (!isset($known[$head])) {
+                continue;
+            }
+            foreach ($this->tileNameSplits(array_slice($parts, $i), $count - 1, $known) as $tail) {
+                $splits[] = [$head, ...$tail];
+            }
+        }
+
+        return $splits;
+    }
+
     /* ------------------------------------------------------------------ */
     /* Génération                                                          */
     /* ------------------------------------------------------------------ */
@@ -663,6 +780,13 @@ class TerrainTransitionService
                 'gif' => imagecreatefromgif($path),
             };
             if (!$image) {
+                break;
+            }
+            // PNG/GIF à palette : imagecolorat y renvoie l'INDEX de palette,
+            // pas la couleur — le fondu tirait vers le noir sur les serveurs
+            // dont le GD ne convertit pas en vraies couleurs au redimension-
+            // nement (taille inchangée). Conversion explicite, partout.
+            if (!imageistruecolor($image) && !imagepalettetotruecolor($image)) {
                 break;
             }
             $scaled = imagescale($image, $size, $size);
