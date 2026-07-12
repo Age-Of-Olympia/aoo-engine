@@ -465,32 +465,72 @@ class TerrainTransitionService
     }
 
     /**
-     * Réécrit les PNG de tous les fondus déclarés de la couche depuis les
-     * images de base ACTUELLES, sans toucher aux wangId. À utiliser après un
-     * changement d'art d'un biome, ou pour réparer des fondus corrompus —
-     * cas vécu : blends tirant vers le noir, générés depuis des PNG à
-     * palette avant le correctif imagepalettetotruecolor de loadTile.
+     * Fondus déclarés pertinents pour un plan (tous ses biomes présents,
+     * tous niveaux z), groupés par ensemble de biomes — la vue « voir et
+     * choisir quoi régénérer » de la page admin.
+     *
+     * @return array<string, list<string>> "couleurA / couleurB[ / …]" => noms de fondus
+     */
+    public function planTransitionsBySet(string $plan, string $layer = self::GROUND_LAYER): array
+    {
+        $terrains = $this->loadTerrains();
+        $cfg = &$this->layerConfig($terrains, $layer);
+        $visibility = $this->transitionVisibilityForPlan($plan, null, $layer);
+
+        $bySet = [];
+        foreach ($cfg['tiles'] as $name => $spec) {
+            if (!is_array($spec) || empty($visibility[$name])) {
+                continue;
+            }
+            $colorIndexes = array_values(array_unique(array_filter($spec)));
+            sort($colorIndexes);
+            $label = implode(' / ', array_map(
+                fn(int $index) => $cfg['colors'][$index - 1] ?? ('#' . $index),
+                $colorIndexes
+            ));
+            $bySet[$label][] = (string) $name;
+        }
+        ksort($bySet);
+        foreach ($bySet as &$names) {
+            sort($names);
+        }
+
+        return $bySet;
+    }
+
+    /**
+     * Réécrit les PNG de fondus déclarés depuis les images de base
+     * ACTUELLES, sans toucher aux wangId. À utiliser après un changement
+     * d'art d'un biome, ou pour réparer des fondus corrompus — cas vécu :
+     * blends tirant vers le noir, générés depuis des PNG à palette avant le
+     * correctif imagepalettetotruecolor de loadTile.
+     *
+     * $names restreint aux fondus voulus (la page admin passe la sélection
+     * de l'utilisateur, jamais tout le catalogue : des milliers de fichiers) ;
+     * null = tous les fondus déclarés de la couche.
      *
      * Chaque nom est re-décomposé en tuiles composantes + code de coins,
      * et la décomposition est validée contre le wangId stocké (les noms de
      * tuiles peuvent contenir des underscores : seule la coupure dont les
      * couleurs correspondent est la bonne).
      *
+     * @param list<string>|null $names
      * @return array{regenerated: int, unparsed: list<string>}
      */
-    public function regenerateTransitionImages(string $layer = self::GROUND_LAYER): array
+    public function regenerateTransitionImages(string $layer = self::GROUND_LAYER, ?array $names = null): array
     {
         $terrains = $this->loadTerrains();
         $cfg = &$this->layerConfig($terrains, $layer);
         $imgDir = $this->root . '/img/' . $layer;
 
         $fullNames = array_keys(array_filter($cfg['tiles'], 'is_string'));
+        $wanted = $names === null ? null : array_fill_keys($names, true);
 
         $regenerated = 0;
         $unparsed = [];
 
         foreach ($cfg['tiles'] as $name => $spec) {
-            if (!is_array($spec)) {
+            if (!is_array($spec) || ($wanted !== null && !isset($wanted[$name]))) {
                 continue;
             }
 

@@ -85,17 +85,35 @@ if ($isStateChangingPost && isset($_POST['classify_tiles']) && $selectedPlan) {
     }
 }
 
-// Réécriture des PNG de tous les fondus déclarés depuis les images de base
-// actuelles (art modifié, fondus corrompus) — wangId inchangés
-if ($isStateChangingPost && isset($_POST['regenerate_transitions'])) {
+// Réécriture des PNG des fondus SÉLECTIONNÉS (par ensemble de biomes)
+// depuis les images de base actuelles — wangId inchangés. La sélection
+// arrive en libellés d'ensembles ; les noms sont recalculés côté serveur.
+if ($isStateChangingPost && isset($_POST['regenerate_transitions']) && $selectedPlan) {
     try {
         set_time_limit(600);
-        $result = (new TerrainTransitionService($database))
-            ->regenerateTransitionImages(TerrainTransitionService::GROUND_LAYER);
-        $notice = $result['unparsed'] === [] ? ''
-            : ' ⚠ Noms indéchiffrables ignorés : ' . implode(', ', array_slice($result['unparsed'], 0, 10))
-                . (count($result['unparsed']) > 10 ? '…' : '') . '.';
-        setFlash('success', $result['regenerated'] . ' fondu(s) réécrit(s) depuis les images de base actuelles.' . $notice);
+        $service = new TerrainTransitionService($database);
+        $bySet = $service->planTransitionsBySet($selectedPlan);
+
+        $chosenSets = array_filter((array) ($_POST['regenerate_sets'] ?? []), 'is_string');
+        if (!empty($_POST['regenerate_all_plan'])) { // champ caché rempli par le bouton « Tout le plan »
+            $chosenSets = array_keys($bySet);
+        }
+
+        $names = [];
+        foreach ($chosenSets as $setLabel) {
+            $names = array_merge($names, $bySet[$setLabel] ?? []);
+        }
+
+        if ($names === []) {
+            setFlash('warning', 'Aucun ensemble sélectionné — cochez les fondus à réécrire.');
+        } else {
+            $result = $service->regenerateTransitionImages(TerrainTransitionService::GROUND_LAYER, $names);
+            $notice = $result['unparsed'] === [] ? ''
+                : ' ⚠ Noms indéchiffrables ignorés : ' . implode(', ', array_slice($result['unparsed'], 0, 10))
+                    . (count($result['unparsed']) > 10 ? '…' : '') . '.';
+            setFlash('success', $result['regenerated'] . ' fondu(s) réécrit(s) ('
+                . count($chosenSets) . ' ensemble(s)) depuis les images de base actuelles.' . $notice);
+        }
     } catch (Throwable $e) {
         setFlash('danger', 'Échec de la régénération : ' . $e->getMessage());
     }
@@ -289,15 +307,48 @@ ob_start();
                         </div>
                     <?php endif; ?>
 
-                    <form method="post" class="d-flex align-items-center gap-3 mt-3"
-                          onsubmit="return confirm('Réécrire tous les PNG de fondus depuis les images de base actuelles ?');">
+                <?php endif; ?>
+
+                <?php $transitionsBySet = $terrainService->planTransitionsBySet($selectedPlan); ?>
+                <?php if ($transitionsBySet !== []): ?>
+                    <hr>
+                    <h6 class="text-muted">Fondus existants du plan — vérifier et régénérer</h6>
+                    <p class="text-muted mb-2" style="font-size:12px;">
+                        Aperçu des fondus tels que le jeu les rend sur CE serveur. Un ensemble aux couleurs
+                        fausses (fondu vers le noir, art d'un biome modifié…) se réécrit depuis les images de
+                        base actuelles — les wangId ne changent pas.
+                    </p>
+                    <form method="post">
                         <?= $csrf->renderTokenField() ?>
                         <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
-                        <button type="submit" name="regenerate_transitions" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-sync"></i> Régénérer les fondus existants
-                        </button>
-                        <small class="text-muted">Réécrit tous les PNG trans_* de la couche depuis les images de base
-                            actuelles (art d'un biome modifié, fondus corrompus). Les wangId ne changent pas.</small>
+                        <?php foreach ($transitionsBySet as $setLabel => $names): ?>
+                            <details class="mb-2" style="border:1px solid #e5e5e5;border-radius:.375rem;">
+                                <summary style="cursor:pointer;padding:.4rem .75rem;font-size:13px;font-weight:600;">
+                                    <input type="checkbox" name="regenerate_sets[]" value="<?= e($setLabel) ?>"
+                                           onclick="event.stopPropagation();">
+                                    <?= e($setLabel) ?> <span class="badge bg-secondary"><?= count($names) ?> tuiles</span>
+                                </summary>
+                                <div style="padding:.5rem .75rem;display:flex;flex-wrap:wrap;gap:4px;">
+                                    <?php foreach ($names as $name): ?>
+                                        <img src="/img/tiles/<?= e($name) ?>.png" width="50" height="50"
+                                             title="<?= e($name) ?>" loading="lazy"
+                                             style="image-rendering:pixelated;border:1px solid #ddd;">
+                                    <?php endforeach; ?>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                        <div class="d-flex align-items-center gap-3 mt-2 flex-wrap">
+                            <button type="submit" name="regenerate_transitions" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-sync"></i> Régénérer la sélection
+                            </button>
+                            <button type="submit" name="regenerate_transitions" class="btn btn-outline-secondary btn-sm"
+                                    onclick="this.form.regenerate_all_plan.value=1;"
+                                    formnovalidate>
+                                <i class="fas fa-sync"></i> Tout le plan (<?= array_sum(array_map('count', $transitionsBySet)) ?> fondus)
+                            </button>
+                            <input type="hidden" name="regenerate_all_plan" value="">
+                            <small class="text-muted">Seuls les fondus des biomes de ce plan sont concernés.</small>
+                        </div>
                     </form>
                 <?php endif; ?>
 
