@@ -838,14 +838,77 @@ AoO.applyBackgroundPreview = function(map, config) {
 };
 
 /*
+ * Filtre des fondus de transition du catalogue : une tuile trans_* n'entre
+ * dans la palette que si tous ses biomes (les couleurs de son wangId dans
+ * terrains.json) sont déjà posés sur le plan pullé — un pull mono-niveau ne
+ * voit que les biomes de son z, comme l'éditeur web. Poser un nouveau
+ * biome, générer ses transitions (admin/local_maps.php ou
+ * generate_transitions.php) puis re-puller les fait apparaître. Sans
+ * terrains.json : aucun filtrage. Les fondus déjà posés sur la carte
+ * restent enregistrés quoi qu'il arrive (buildLevel les tient des lignes
+ * du plan, pas du catalogue).
+ */
+AoO.transitionFilter = function(registry, config) {
+    var terrains;
+    try {
+        terrains = AoO.readJsonFile(config.gameDir + '/tools/tiled/aoo/terrains.json');
+    } catch (error) {
+        return function() { return true; };
+    }
+
+    /* couleurs présentes par couche : celles des tuiles pleines déjà posées */
+    var presentByLayer = {};
+    for (var layerName in terrains) {
+        if (layerName.charAt(0) === '_' || !registry[layerName]) {
+            continue;
+        }
+        var cfg = terrains[layerName];
+        var present = presentByLayer[layerName] = {};
+        for (var name in registry[layerName].byName) {
+            var color = cfg.tiles[name];
+            if (typeof color === 'string') {
+                var index = cfg.colors.indexOf(color);
+                if (index !== -1) {
+                    present[index + 1] = true;
+                }
+            }
+        }
+    }
+
+    return function(layerName, name) {
+        if (name.indexOf('trans_') !== 0) {
+            return true;
+        }
+        var cfg = terrains[layerName];
+        if (!cfg) {
+            return true; /* couche sans set de terrain : ne pas filtrer */
+        }
+        var spec = cfg.tiles[name];
+        if (!Array.isArray(spec)) {
+            return false; /* fondu orphelin, absent de terrains.json */
+        }
+        var present = presentByLayer[layerName] || {};
+        for (var i = 0; i < spec.length; i++) {
+            if (spec[i] !== 0 && !present[spec[i]]) {
+                return false;
+            }
+        }
+        return true;
+    };
+};
+
+/*
  * Complète les tilesets avec tout le catalogue d'images du jeu (pas
  * seulement les tuiles déjà posées sur ce plan) : indispensable pour
- * poser de nouveaux types de tuiles ou remplir un plan neuf.
+ * poser de nouveaux types de tuiles ou remplir un plan neuf. Les fondus
+ * de transition sont limités aux biomes du plan (AoO.transitionFilter).
  */
 AoO.addCatalogTiles = function(map, data, registry, config) {
     if (!data.catalog) {
         return;
     }
+
+    var isRelevant = AoO.transitionFilter(registry, config);
 
     /* les morceaux des structures (olympia-00…) n'encombrent pas la
        palette : on pose la structure entière (addCompositeTiles) ; ils ne
@@ -862,9 +925,14 @@ AoO.addCatalogTiles = function(map, data, registry, config) {
 
     for (var layerName in data.catalog) {
         var names = data.catalog[layerName];
-        for (var i = 0; i < names.length; i++) {
-            if (!pieceNames[layerName + '/' + names[i]]) {
-                AoO.tileFor(map, registry, layerName, names[i], data.images, config);
+        /* les tuiles de transition retenues passent en fin de palette :
+           les tuiles réelles restent visibles en tête, le pinceau Terrain
+           retrouve les transitions par wangId quelle que soit leur position */
+        var sorted = names.filter(function(n) { return n.indexOf('trans_') !== 0; })
+            .concat(names.filter(function(n) { return n.indexOf('trans_') === 0; }));
+        for (var i = 0; i < sorted.length; i++) {
+            if (!pieceNames[layerName + '/' + sorted[i]] && isRelevant(layerName, sorted[i])) {
+                AoO.tileFor(map, registry, layerName, sorted[i], data.images, config);
             }
         }
     }
