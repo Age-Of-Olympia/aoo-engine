@@ -31,18 +31,22 @@ class ColorServiceTransitionTest extends TestCase
         $this->assertSame([100, 100, 100], ColorService::colorFor('tuile_inconnue', self::COLORS));
     }
 
-    public function testTransitionBlendsWeightedByCornerCount(): void
+    public function testTransitionColorIsConstantPerBiomePair(): void
     {
-        // 2 coins « b » sur 4 → mélange 50/50
+        // Toujours le mélange 50/50, quel que soit le code de coins : la
+        // frontière entre deux biomes forme une bande d'une seule couleur
+        // sur la carte, pas un dégradé patchwork
         $this->assertSame(
             [100, 50, 20],
             ColorService::colorFor('trans_carreaux_caverne_aabb', self::COLORS)
         );
-
-        // 3 coins « b » sur 4 → 75 % caverne
         $this->assertSame(
-            [50, 25, 10],
+            ColorService::colorFor('trans_carreaux_caverne_aabb', self::COLORS),
             ColorService::colorFor('trans_carreaux_caverne_abbb', self::COLORS)
+        );
+        $this->assertSame(
+            ColorService::colorFor('trans_carreaux_caverne_aabb', self::COLORS),
+            ColorService::colorFor('trans_carreaux_caverne_baaa', self::COLORS)
         );
     }
 
@@ -64,12 +68,16 @@ class ColorServiceTransitionTest extends TestCase
         );
     }
 
-    public function testThreeBiomeTransitionBlendsPerCorner(): void
+    public function testThreeBiomeTransitionUsesEqualParts(): void
     {
-        // Jonction à 3 biomes : 2 coins carreaux, 1 caverne, 1 terre
+        // Jonction à 3 biomes : un tiers chacun, quel que soit le code
         $this->assertSame(
-            [110, 55, 45],
+            [80, 40, 47],
             ColorService::colorFor('trans_carreaux_caverne_terre_aabc', self::COLORS)
+        );
+        $this->assertSame(
+            ColorService::colorFor('trans_carreaux_caverne_terre_aabc', self::COLORS),
+            ColorService::colorFor('trans_carreaux_caverne_terre_abcc', self::COLORS)
         );
     }
 
@@ -78,12 +86,12 @@ class ColorServiceTransitionTest extends TestCase
         // desert_de_l_egeon au milieu du nom : le backtracking doit trouver
         // la seule coupure en 3 tuiles connues
         $this->assertSame(
-            [180, 140, 125],
+            [160, 113, 107],
             ColorService::colorFor('trans_carreaux_desert_de_l_egeon_terre_abbc', self::COLORS)
         );
     }
 
-    public function testFourBiomeTransitionBlendsPerCorner(): void
+    public function testFourBiomeTransitionUsesEqualParts(): void
     {
         $this->assertSame(
             [120, 85, 80],

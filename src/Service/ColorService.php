@@ -5,11 +5,11 @@ namespace App\Service;
 class ColorService {
 
     /**
-     * Couleur carte d'une tuile, y compris les tuiles de transition générées
-     * par tools/tiled/generate_transitions.php
-     * (« trans_<A>_<B>[_<C>[_<D>]]_<code> ») : mélange des couleurs des 2 à 4
-     * biomes, pondéré par le nombre de coins de chacun dans le code (une
-     * lettre a-d par coin). Inconnue → couleur « default ».
+     * Couleur carte d'une tuile, y compris les tuiles de transition
+     * (« trans_<A>_<B>[_<C>[_<D>]]_<code> ») : moyenne à parts égales des
+     * couleurs des 2 à 4 biomes du nom — la même pour toutes les tuiles d'un
+     * ensemble, pour que la frontière forme une bande d'une seule couleur
+     * sur la carte générée. Inconnue → couleur « default ».
      *
      * @param array<string, array{int, int, int}> $colors table name => RGB
      * @return array{int, int, int}
@@ -58,11 +58,15 @@ class ColorService {
             return null;
         }
 
+        // Couleur CONSTANTE par ensemble de biomes (parts égales), quel que
+        // soit le code de coins : sur la carte générée, la frontière entre
+        // deux biomes est une bande d'une seule couleur — un dégradé par
+        // nombre de coins produisait un patchwork illisible.
         $blended = [0.0, 0.0, 0.0];
-        foreach (str_split($matches[2]) as $letter) {
-            $rgb = $colors[$names[ord($letter) - ord('a')]];
+        foreach ($names as $biome) {
+            $rgb = $colors[$biome];
             for ($channel = 0; $channel < 3; $channel++) {
-                $blended[$channel] += $rgb[$channel] / 4;
+                $blended[$channel] += $rgb[$channel] / $count;
             }
         }
 
