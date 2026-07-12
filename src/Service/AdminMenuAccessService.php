@@ -64,6 +64,7 @@ class AdminMenuAccessService
      */
     private const ALIASES = [
         'races-save.php'             => 'races.php',
+        'race-seed.php'              => 'races.php',
         'player-skills.php'          => 'players.php',
         'skill-owners.php'           => 'players.php',
         'tutorial-step-editor.php'   => 'tutorial.php',
