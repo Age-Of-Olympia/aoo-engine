@@ -104,7 +104,7 @@ function race_render_list(array $races): string
         . '<i class="fas fa-upload"></i> Importer</a>'
         . '<a class="btn btn-primary" href="/admin/races.php?action=new">+ Nouvelle race</a>'
         . '</div></div>'
-        . '<table class="table table-striped table-sm"><thead><tr>'
+        . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
         . '<th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
         . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';

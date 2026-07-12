@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260710a';
+const ADMIN_ASSET_VERSION = '20260713b';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -141,6 +141,7 @@ function admin_layout($title, $content, array $assets = []) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="/admin/css/admin.css?v=$version">
     <link rel="stylesheet" href="/admin/css/admin-design-system.css?v=$version">$styleLinks
+    <script src="/admin/js/admin-list.js?v=$version" defer></script>
 </head>
 <body>
     <div class="admin-layout">
