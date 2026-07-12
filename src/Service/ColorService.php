@@ -6,9 +6,10 @@ class ColorService {
 
     /**
      * Couleur carte d'une tuile, y compris les tuiles de transition générées
-     * par tools/tiled/generate_transitions.php (« trans_<A>_<B>_<code> ») :
-     * mélange des couleurs des deux biomes, pondéré par le nombre de coins du
-     * second dans le code (1 à 3 sur 4). Inconnue → couleur « default ».
+     * par tools/tiled/generate_transitions.php
+     * (« trans_<A>_<B>[_<C>[_<D>]]_<code> ») : mélange des couleurs des 2 à 4
+     * biomes, pondéré par le nombre de coins de chacun dans le code (une
+     * lettre a-d par coin). Inconnue → couleur « default ».
      *
      * @param array<string, array{int, int, int}> $colors table name => RGB
      * @return array{int, int, int}
@@ -24,35 +25,72 @@ class ColorService {
      * Nom d'une tuile de transition — le pendant constructeur du parseur
      * transitionBlend ci-dessous, pour que la convention vive en un seul
      * endroit (le générateur tools/tiled/generate_transitions.php l'appelle).
+     *
+     * @param list<string> $tiles biomes dans l'ordre des lettres du code
      */
-    public static function transitionTileName(string $tileA, string $tileB, string $cornerCode): string
+    public static function transitionTileName(array $tiles, string $cornerCode): string
     {
-        return 'trans_' . $tileA . '_' . $tileB . '_' . $cornerCode;
+        return 'trans_' . implode('_', $tiles) . '_' . $cornerCode;
     }
 
     /** @return array{int, int, int}|null */
     private static function transitionBlend(string $name, array $colors): ?array
     {
-        if (!preg_match('/^trans_(.+)_([ab]{4})$/', $name, $matches)) {
+        if (!preg_match('/^trans_(.+)_([a-d]{4})$/', $name, $matches)) {
             return null;
         }
 
-        // Les deux noms de biomes peuvent contenir des underscores
-        // (desert_de_l_egeon) : on cherche la coupure où les deux côtés
-        // sont des tuiles connues de la table
-        $parts = explode('_', $matches[1]);
-        $weight = substr_count($matches[2], 'b') / 4;
+        // Le code référence ses biomes par lettre : « a » = premier nom,
+        // « b » = deuxième… Le générateur garantit que chaque lettre utilisée
+        // est présente et que les lettres partent de « a » sans trou.
+        $letters = array_unique(str_split($matches[2]));
+        sort($letters);
+        $count = count($letters);
+        if ($letters !== array_slice(['a', 'b', 'c', 'd'], 0, $count)) {
+            return null;
+        }
 
-        for ($i = 1; $i < count($parts); $i++) {
-            $nameA = implode('_', array_slice($parts, 0, $i));
-            $nameB = implode('_', array_slice($parts, $i));
+        // Les noms de biomes peuvent contenir des underscores
+        // (desert_de_l_egeon) : on cherche la coupure où chaque morceau
+        // est une tuile connue de la table
+        $names = self::splitBiomes(explode('_', $matches[1]), $count, $colors);
+        if ($names === null) {
+            return null;
+        }
 
-            if (isset($colors[$nameA], $colors[$nameB])) {
-                return [
-                    (int) round($colors[$nameA][0] + ($colors[$nameB][0] - $colors[$nameA][0]) * $weight),
-                    (int) round($colors[$nameA][1] + ($colors[$nameB][1] - $colors[$nameA][1]) * $weight),
-                    (int) round($colors[$nameA][2] + ($colors[$nameB][2] - $colors[$nameA][2]) * $weight),
-                ];
+        $blended = [0.0, 0.0, 0.0];
+        foreach (str_split($matches[2]) as $letter) {
+            $rgb = $colors[$names[ord($letter) - ord('a')]];
+            for ($channel = 0; $channel < 3; $channel++) {
+                $blended[$channel] += $rgb[$channel] / 4;
+            }
+        }
+
+        return [(int) round($blended[0]), (int) round($blended[1]), (int) round($blended[2])];
+    }
+
+    /**
+     * Coupe les morceaux d'un nom composé en $count noms de biomes connus de
+     * la table (première coupure valide trouvée, par backtracking).
+     *
+     * @param list<string> $parts
+     * @return list<string>|null
+     */
+    private static function splitBiomes(array $parts, int $count, array $colors): ?array
+    {
+        if ($count === 1) {
+            $name = implode('_', $parts);
+            return isset($colors[$name]) ? [$name] : null;
+        }
+
+        for ($i = 1; $i <= count($parts) - ($count - 1); $i++) {
+            $head = implode('_', array_slice($parts, 0, $i));
+            if (!isset($colors[$head])) {
+                continue;
+            }
+            $tail = self::splitBiomes(array_slice($parts, $i), $count - 1, $colors);
+            if ($tail !== null) {
+                return [$head, ...$tail];
             }
         }
 

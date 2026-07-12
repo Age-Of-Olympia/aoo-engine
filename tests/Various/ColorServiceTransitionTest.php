@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Couleur carte des tuiles de transition générées
  * (tools/tiled/generate_transitions.php) : ColorService::colorFor doit
- * mélanger les couleurs des deux biomes, y compris quand leurs noms
+ * mélanger les couleurs des 2 à 4 biomes du nom, y compris quand ceux-ci
  * contiennent des underscores.
  */
 class ColorServiceTransitionTest extends TestCase
@@ -17,6 +17,7 @@ class ColorServiceTransitionTest extends TestCase
         'carreaux'          => [200, 100, 40],
         'desert_de_l_egeon' => [240, 220, 180],
         'caverne'           => [0, 0, 0],
+        'terre'             => [40, 20, 100],
         'default'           => [100, 100, 100],
     ];
 
@@ -60,6 +61,51 @@ class ColorServiceTransitionTest extends TestCase
         $this->assertSame(
             [100, 100, 100],
             ColorService::colorFor('trans_carreaux_biome_fantome_aabb', self::COLORS)
+        );
+    }
+
+    public function testThreeBiomeTransitionBlendsPerCorner(): void
+    {
+        // Jonction à 3 biomes : 2 coins carreaux, 1 caverne, 1 terre
+        $this->assertSame(
+            [110, 55, 45],
+            ColorService::colorFor('trans_carreaux_caverne_terre_aabc', self::COLORS)
+        );
+    }
+
+    public function testThreeBiomeTransitionResolvesUnderscoredNames(): void
+    {
+        // desert_de_l_egeon au milieu du nom : le backtracking doit trouver
+        // la seule coupure en 3 tuiles connues
+        $this->assertSame(
+            [180, 140, 125],
+            ColorService::colorFor('trans_carreaux_desert_de_l_egeon_terre_abbc', self::COLORS)
+        );
+    }
+
+    public function testFourBiomeTransitionBlendsPerCorner(): void
+    {
+        $this->assertSame(
+            [120, 85, 80],
+            ColorService::colorFor('trans_carreaux_desert_de_l_egeon_caverne_terre_abcd', self::COLORS)
+        );
+    }
+
+    public function testCodeSkippingALetterFallsBackToDefault(): void
+    {
+        // « b » absent alors que « c » est utilisé : jamais produit par le
+        // générateur, ne doit pas être interprété
+        $this->assertSame(
+            [100, 100, 100],
+            ColorService::colorFor('trans_carreaux_caverne_aacc', self::COLORS)
+        );
+    }
+
+    public function testTransitionNameRoundTrip(): void
+    {
+        $this->assertSame(
+            'trans_carreaux_caverne_terre_aabc',
+            ColorService::transitionTileName(['carreaux', 'caverne', 'terre'], 'aabc')
         );
     }
 }
