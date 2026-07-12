@@ -193,6 +193,23 @@
     font-weight: 600;
 }
 
+.tt-chip--owners {
+    background: #e8f5ec;
+    color: #2c7a44;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.tt-chip--owners:hover {
+    background: #d6ecdd;
+    color: #205c33;
+    text-decoration: none;
+}
+
+.tt-chip--noowner {
+    opacity: 0.55;
+}
+
 .tt-leaf-actions {
     flex: 0 0 auto;
     display: flex;

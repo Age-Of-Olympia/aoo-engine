@@ -22,7 +22,7 @@ class ActionTreeListViewTest extends TestCase
         $this->assertStringContainsString('tt-leaf-slug">attaquer</code>', $html);
         $this->assertStringContainsString('niv. 1', $html);
         $this->assertStringContainsString('href="/admin/action-workbench.php?id=7"', $html);
-        $this->assertStringContainsString('/admin/action-export.php?id=7', $html); // single export
+        $this->assertStringContainsString('/admin/action-export.php?type=action&id=7', $html); // single export
         $this->assertStringContainsString('/admin/action-export.php"', $html);      // export all
     }
 
@@ -48,6 +48,22 @@ class ActionTreeListViewTest extends TestCase
 
         $this->assertStringContainsString('3 action(s)', $html);
         $this->assertMatchesRegularExpression('/tt-badge">2</', $html); // melee count
+    }
+
+    public function testLinksOwnerCountsToTheSkillOwnersPage(): void
+    {
+        $owned = $this->action(MeleeAction::class, 1, 'attaquer', 'Attaquer', 1);
+        $orphan = $this->action(RestAction::class, 2, 'repos', 'Repos', 1);
+
+        $html = (new ActionTreeListView())->render(
+            $this->tree(),
+            ['melee' => [$owned], 'rest' => [$orphan]],
+            ['attaquer' => 3]
+        );
+
+        $this->assertStringContainsString('href="/admin/skill-owners.php?type=action&amp;name=attaquer"', $html);
+        $this->assertStringContainsString('3 joueurs', $html);
+        $this->assertStringContainsString('tt-chip--noowner">0 joueur<', $html);
     }
 
     public function testTypeNodesAreHeadersNotLinks(): void

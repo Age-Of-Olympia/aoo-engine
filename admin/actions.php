@@ -4,10 +4,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionTypeRegistry;
+use App\Service\SkillOwnershipService;
 use App\View\Action\ActionTreeListView;
 
 $registry = new ActionTypeRegistry();
 $actions = (new ActionCatalogService())->listActions();
+$ownerCounts = (new SkillOwnershipService())->actionOwnerCounts();
 
 // Group each action under its concrete type key (the closest type in its
 // ancestry), so the list nests beneath the inheritance tree.
@@ -17,7 +19,7 @@ foreach ($actions as $action) {
     $actionsByType[$key][] = $action;
 }
 
-$body = (new ActionTreeListView())->render($registry->tree(), $actionsByType);
+$body = (new ActionTreeListView())->render($registry->tree(), $actionsByType, $ownerCounts);
 
 echo admin_layout('Actions', renderFlashMessage() . $body, [
     'styles' => ['/admin/css/action-type-tree.css'],

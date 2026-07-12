@@ -25,8 +25,9 @@ final class ActionTreeListView
     /**
      * @param array<int, ActionTypeNode>        $tree          the full type tree
      * @param array<string, array<int, Action>> $actionsByType concrete type key => its actions
+     * @param array<string, int>                $ownerCounts   action name => number of players owning it
      */
-    public function render(array $tree, array $actionsByType): string
+    public function render(array $tree, array $actionsByType, array $ownerCounts = []): string
     {
         $total = 0;
         $counts = [];
@@ -36,7 +37,7 @@ final class ActionTreeListView
             $total += count($actions);
             $rows = '';
             foreach ($actions as $action) {
-                $rows .= $this->row($action);
+                $rows .= $this->row($action, $ownerCounts[$action->getName()] ?? 0);
             }
             $nodeBody[(string) $typeKey] = $rows;
         }
@@ -69,7 +70,7 @@ final class ActionTreeListView
         return $kept;
     }
 
-    private function row(Action $action): string
+    private function row(Action $action, int $owners): string
     {
         $id = (int) $action->getId();
         $workbench = '/admin/action-workbench.php?id=' . $id;
@@ -82,8 +83,21 @@ final class ActionTreeListView
             . '<span class="tt-chip tt-chip--lvl">niv. ' . (int) $action->getLevel() . '</span>'
             . '<span class="tt-chip" title="conditions · outcomes">'
             . $action->getConditions()->count() . 'c · ' . $action->getOutcomes()->count() . 'o</span>'
+            . $this->ownersChip($action->getName(), $owners)
             . '<span class="tt-leaf-actions">' . $this->exportButton->single($id, 'Exporter') . '</span>'
             . '</li>';
+    }
+
+    /** "Qui a ça ?" — a chip linking to the owners page, muted when nobody has it. */
+    private function ownersChip(string $actionName, int $owners): string
+    {
+        if ($owners === 0) {
+            return '<span class="tt-chip tt-chip--noowner">0 joueur</span>';
+        }
+
+        return '<a class="tt-chip tt-chip--owners" title="Qui a ça ?"'
+            . ' href="/admin/skill-owners.php?type=action&amp;name=' . urlencode($actionName) . '">'
+            . $owners . ' joueur' . ($owners > 1 ? 's' : '') . '</a>';
     }
 
     private function esc(string $value): string
