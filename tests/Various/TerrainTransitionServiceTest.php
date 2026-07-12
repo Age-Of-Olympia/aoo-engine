@@ -126,7 +126,8 @@ class TerrainTransitionServiceTest extends TestCase
 
     public function testClassifyTilesKeepsColorIndicesStableAndProtectsTransitions(): void
     {
-        mkdir($this->root . '/tools/tiled/aoo', 0777, true);
+        // Pas de mkdir : sur un serveur déployé tools/ n'existe pas,
+        // saveTerrains doit créer l'arborescence à la première écriture
         $this->writeSolidTile('rouge', 255, 0, 0);
         $this->writeSolidTile('bleu', 0, 0, 255);
 

@@ -74,6 +74,14 @@ class TerrainTransitionService
     /** @param array<string, mixed> $terrains */
     public function saveTerrains(array $terrains): void
     {
+        // Sur un serveur déployé, tools/ n'est pas copié (deploy_code.sh) :
+        // terrains.json y est un état runtime, créé à la première écriture
+        // (classification ou génération depuis le panneau admin).
+        $dir = dirname($this->terrainsPath());
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            throw new RuntimeException('Impossible de créer ' . $dir);
+        }
+
         $written = file_put_contents(
             $this->terrainsPath(),
             json_encode($terrains, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
