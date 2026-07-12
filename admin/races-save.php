@@ -2,8 +2,9 @@
 /**
  * Race management — mutations (POST only). Companion to admin/races.php.
  *
- * Routed on ?action: create | update. No delete: players.race references race
- * names; retiring a race = uncheck "jouable" + check "cachée".
+ * Routed on ?action: create | update | delete. Delete is guarded: refused as
+ * long as any character (player or PNJ) still has players.race = name —
+ * retiring a race in use = uncheck "jouable" + check "cachée" instead.
  *
  * CSRF-validated; enforces the same access level as the races menu so a
  * direct POST can't bypass it. Redirects back (PRG) with a flash.
@@ -34,6 +35,25 @@ try {
 $service = new RaceService();
 $action = $_GET['action'] ?? '';
 $name = strtolower(trim((string) ($_POST['name'] ?? '')));
+
+// La suppression ne porte que le nom : traitée avant la validation des
+// champs du formulaire (absents d'un POST de suppression).
+if ($action === 'delete') {
+    $race = $service->getRaceByName($name);
+    if ($race === null) {
+        setFlash('warning', 'Race introuvable.');
+        redirectTo('/admin/races.php');
+    }
+
+    try {
+        $service->deleteRace($race);
+        setFlash('success', "Race « {$name} » supprimée (listes d'actions et de sorts comprises).");
+    } catch (\RuntimeException $e) {
+        setFlash('warning', $e->getMessage());
+        redirectTo('/admin/races.php?action=edit&name=' . urlencode($name));
+    }
+    redirectTo('/admin/races.php');
+}
 
 /**
  * Validate the shared form fields; returns an error message or null.

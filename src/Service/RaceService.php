@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
+use RuntimeException;
 
 /**
  * Single gateway to race definitions, now stored in the DB (races,
@@ -210,6 +211,78 @@ class RaceService
     public function save(Race $race): void
     {
         $this->entityManager->persist($race);
+        $this->entityManager->flush();
+        self::clearCache();
+    }
+
+    /**
+     * Nombre de personnages (joueurs ET PNJ, ids négatifs compris) dont
+     * players.race référence cette race — le garde-fou de la suppression.
+     */
+    public function countPlayersUsingRace(string $name): int
+    {
+        return (int) $this->entityManager->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM players WHERE race = ?',
+            [strtolower($name)]
+        );
+    }
+
+    /**
+     * Personnages par race en une requête (la liste admin l'affiche pour
+     * toutes les races sans une requête par ligne), ventilés joueurs réels /
+     * PNJ (player_type), avec le sous-compte des joueurs inactifs — même
+     * seuil que partout ailleurs : pas de connexion depuis INACTIVE_TIME
+     * (PlayerService::isInactiveSince, SkillStatsService).
+     *
+     * @return array<string, array{players: int, inactive: int, npcs: int}>
+     */
+    public function countCharactersByRaceName(): array
+    {
+        // Seuil calculé ici (jamais une entrée utilisateur) : inlinable
+        $cutoff = time() - INACTIVE_TIME;
+
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT race,
+                    COALESCE(SUM(player_type = 'real'), 0) AS players,
+                    COALESCE(SUM(player_type = 'real' AND lastLoginTime < {$cutoff}), 0) AS inactive,
+                    COALESCE(SUM(player_type = 'npc'), 0) AS npcs
+             FROM players GROUP BY race"
+        );
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(string) $row['race']] = [
+                'players'  => (int) $row['players'],
+                'inactive' => (int) $row['inactive'],
+                'npcs'     => (int) $row['npcs'],
+            ];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Supprime une race qu'aucun personnage ne référence. players.race étant
+     * une colonne texte sans contrainte, une suppression avec des personnages
+     * restants les laisserait avec une race fantôme (stats nulles, couleurs
+     * par défaut) — refusée. Les listes (race_starter_actions, race_spells)
+     * partent en cascade ; les tables de jointure race_actions/race_recipes
+     * sont nettoyées par l'ORM (côté propriétaire).
+     *
+     * @throws RuntimeException quand des personnages utilisent encore la race
+     */
+    public function deleteRace(Race $race): void
+    {
+        $players = $this->countPlayersUsingRace($race->getName());
+        if ($players > 0) {
+            throw new RuntimeException(sprintf(
+                'La race « %s » est encore utilisée par %d personnage(s) — retirez-les ou masquez la race au lieu de la supprimer.',
+                $race->getName(),
+                $players
+            ));
+        }
+
+        $this->entityManager->remove($race);
         $this->entityManager->flush();
         self::clearCache();
     }

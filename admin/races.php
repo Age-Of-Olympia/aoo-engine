@@ -11,8 +11,9 @@
  *
  * Races were migrated from datas/*\/races/*.json to the DB
  * (Version20260710120000_RacesFromJson); this page is the editing surface
- * that replaces hand-editing those files. No delete: players.race references
- * race names, and a race with no players left can simply stay hidden.
+ * that replaces hand-editing those files. Delete is guarded: refused while
+ * any character still has players.race = name (retire a race in use by
+ * unchecking "jouable" + checking "cachée" instead).
  *
  * All mutations POST to races-save.php (CSRF-validated, PRG). This page only
  * renders. Access enforced by layout.php via AdminMenuAccessService.
@@ -34,12 +35,43 @@ function race_flag_badge(bool $on, string $labelOn, string $labelOff): string
 }
 
 /**
+ * Cellule « Personnages » : joueurs réels (avec le sous-compte inactifs,
+ * seuil INACTIVE_TIME) et PNJ, distingués — un total brut mélangerait des
+ * populations que l'admin gère différemment.
+ *
+ * @param array{players: int, inactive: int, npcs: int} $counts
+ */
+function race_character_counts(array $counts): string
+{
+    if ($counts['players'] === 0 && $counts['npcs'] === 0) {
+        return '<span class="text-muted">—</span>';
+    }
+
+    $parts = [];
+    if ($counts['players'] > 0) {
+        $parts[] = '<strong>' . $counts['players'] . ' joueur' . ($counts['players'] > 1 ? 's' : '') . '</strong>'
+            . ($counts['inactive'] > 0
+                ? ' <span class="text-muted">(dont ' . $counts['inactive'] . ' inactif'
+                    . ($counts['inactive'] > 1 ? 's' : '') . ')</span>'
+                : '');
+    }
+    if ($counts['npcs'] > 0) {
+        $parts[] = $counts['npcs'] . ' PNJ';
+    }
+
+    return implode(' · ', $parts);
+}
+
+/**
  * @param Race[] $races
  */
 function race_render_list(array $races): string
 {
+    $charactersByRace = (new RaceService())->countCharactersByRaceName();
+
     $rows = '';
     foreach ($races as $race) {
+        $characters = $charactersByRace[$race->getName()] ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
         $rows .= '<tr>'
             . '<td><code>' . e($race->getName()) . '</code></td>'
             . '<td>' . e($race->getLabel()) . '</td>'
@@ -53,17 +85,28 @@ function race_render_list(array $races): string
             . (int) $race->getCarac('a') . ' A</td>'
             . '<td>' . count($race->getStarterActionNames()) . ' actions, '
             . count($race->getSpellNames()) . ' sorts</td>'
+            . '<td>' . race_character_counts($characters) . '</td>'
             . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/races.php?action=edit&amp;name='
-            . e(urlencode($race->getName())) . '">Éditer</a></td>'
+            . e(urlencode($race->getName())) . '">Éditer</a> '
+            . '<a class="btn btn-sm btn-outline-secondary" title="Exporter cette race (bundle JSON)"'
+            . ' href="/admin/action-export.php?type=race&amp;id=' . (int) $race->getId() . '">JSON</a></td>'
             . '</tr>';
     }
 
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">Races</h1>'
-        . '<a class="btn btn-primary" href="/admin/races.php?action=new">+ Nouvelle race</a></div>'
+        . '<div class="d-flex gap-2">'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=race"'
+        . ' title="Télécharger toutes les races en bundle JSON, ré-importable ici ou sur un autre environnement">'
+        . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
+        . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
+        . '<i class="fas fa-upload"></i> Importer</a>'
+        . '<a class="btn btn-primary" href="/admin/races.php?action=new">+ Nouvelle race</a>'
+        . '</div></div>'
         . '<table class="table table-striped table-sm"><thead><tr>'
         . '<th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
-        . '<th>Stats clés</th><th>Listes</th><th></th>'
+        . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
 }
 
@@ -207,8 +250,39 @@ HTML;
 
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer la race') . '</button>'
         . '</form>'
+        . ($isEdit ? race_render_delete_zone($race, $csrfToken) : '')
         . $catalog
         . $pickerScript;
+}
+
+/**
+ * Zone de suppression du formulaire d'édition. Le garde-fou côté serveur
+ * (RaceService::deleteRace) refuse tant que players.race référence la race ;
+ * ici on adapte juste l'UI : bouton actif + confirmation, ou explication.
+ */
+function race_render_delete_zone(Race $race, string $csrfToken): string
+{
+    $service = new RaceService();
+    $players = $service->countPlayersUsingRace($race->getName());
+    $counts = $service->countCharactersByRaceName()[$race->getName()]
+        ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
+
+    $body = $players > 0
+        ? '<p class="mb-0 text-muted">Suppression impossible : cette race est encore utilisée par '
+            . race_character_counts($counts) . '. Pour la retirer du jeu, décochez'
+            . ' « Jouable » et cochez « Cachée ».</p>'
+        : '<form method="post" action="/admin/races-save.php?action=delete" class="d-flex align-items-center gap-3"'
+            . ' onsubmit="return confirm(\'Supprimer définitivement la race « '
+            . e($race->getName()) . ' » et ses listes d\\\'actions/sorts ?\');">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
+            . '<button type="submit" class="btn btn-outline-danger">Supprimer la race</button>'
+            . '<small class="text-muted">Aucun personnage n\'utilise cette race. Supprime aussi ses listes'
+            . ' d\'actions et de sorts — pensez à exporter un bundle JSON avant, pour pouvoir la restaurer.</small>'
+            . '</form>';
+
+    return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
+        . '<div class="card-body">' . $body . '</div></div>';
 }
 
 /* -------------------------------------------------------------------------
