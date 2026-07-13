@@ -77,6 +77,7 @@ function admin_layout($title, $content, array $assets = []) {
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
                     'pnjs.php', 'avatars-portraits.php'];
     $racePages = ['races.php', 'race-seed.php'];
+    $dialogPages = ['dialogs.php', 'dialog-seed.php'];
 
     // array_filter drops links/groups the viewer cannot access.
     $navParts = array_filter([
@@ -110,6 +111,10 @@ function admin_layout($title, $content, array $assets = []) {
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
         $navLink('view_recipes.php', 'Recettes', '/admin/view_recipes.php'),
+        $navGroup('Dialogues', [
+            ['dialogs.php', 'Liste', '/admin/dialogs.php'],
+            ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
+        ], $dialogPages),
         $navGroup('Races', [
             ['races.php', 'Liste', '/admin/races.php'],
             ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
