@@ -767,10 +767,10 @@ const FEATURES = [
     player:"Les animateurs créent et ajustent les objets/bâtiments depuis une interface.",
     enables:['admin-team-autonomy'] },
 
-  { id:'faction-race-split', title:"Séparation factions / races", category:'faction-race', status:'planned',
-    quarter:7.2, date:'2027-Q1',
-    tech:"Séparation définitive des deux concepts ; race et faction deviennent des entités indépendantes en BDD. Suppression des derniers JSON.",
-    player:"Un Nain peut changer de faction sans changer de race. Bases d'un modèle politique plus riche.",
+  { id:'faction-race-split', title:"Séparation factions / races", category:'faction-race', status:'progress',
+    quarter:6.15, date:'2026-Q3',
+    tech:"Entités Faction/FactionRole + FactionService (tables factions, faction_roles), seed depuis les JSON legacy, pages admin (CRUD, rôles ordonnés, membres, export/import). La race ne garde qu'un pointeur « faction de départ » optionnel ; plus aucun JSON lu au runtime.",
+    player:"Les factions ne sont plus soudées aux races : une faction peut accueillir plusieurs peuples, et les animateurs gèrent factions, rôles et membres depuis l'admin. Bases d'un modèle politique plus riche.",
     enables:[] },
 
   { id:'plans-no-json', title:"Plans & cartes éditables en admin", category:'map-tiles', status:'planned',
