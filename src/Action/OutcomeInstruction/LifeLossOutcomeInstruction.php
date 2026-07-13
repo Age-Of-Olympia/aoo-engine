@@ -265,7 +265,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $encaisse = false;
         foreach ($target->playerPassiveService->getPassivesByPlayerId($target->getId()) as $targetPassive) {
             if (in_array($targetTraitDamagesTaken, $targetPassive->getTraits()) && ($targetPassive->getType() == "def" || $targetPassive->getType() == "mixte" ) && $target->playerPassiveService->checkPassiveConditionsByPlayerById($target,$targetPassive,$conditionObject)) {
-                if($targetPassive->getName() === "encaisser"){
+                if($targetPassive->getName() === "dur_cuire"){
                     if($target->getRemaining('pv') <= $target->playerPassiveService->getComputedValueByPlayerIdById($target->id,$targetPassive->getId())){
                         $encaisse = true;
                     }
