@@ -3,6 +3,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\EntityManagerFactory;
+use App\Entity\Faction;
 use App\Entity\Race;
 use App\Service\Action\ActionCatalogService;
 use App\Service\Action\ActionPassiveCatalogService;
@@ -35,6 +36,7 @@ if ($id > 0) {
         'action' => (new ActionCatalogService())->getActionById($id),
         'passive' => (new ActionPassiveCatalogService())->getById($id),
         'race' => EntityManagerFactory::getEntityManager()->find(Race::class, $id),
+        'faction' => EntityManagerFactory::getEntityManager()->find(Faction::class, $id),
         default => null,
     };
     if ($object === null) {
@@ -43,7 +45,11 @@ if ($id > 0) {
         exit;
     }
     $objects = [$exporter->toArray($object)];
-    $filename = BundleDownload::filename($type, $object->getName());
+    // Factions: filename from the stable code, not the display name (accents, &…).
+    $filename = BundleDownload::filename(
+        $type,
+        $object instanceof Faction ? $object->getCode() : $object->getName()
+    );
 } else {
     $objects = $exporter->exportAll();
     $filename = BundleDownload::filename($type);
