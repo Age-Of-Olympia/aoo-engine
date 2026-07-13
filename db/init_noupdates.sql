@@ -2098,6 +2098,28 @@ COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `dialogs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `npc_name` varchar(100) NOT NULL DEFAULT 'TARGET_NAME',
+  `type` varchar(20) NOT NULL DEFAULT 'pnj',
+  `custom` varchar(255) NOT NULL DEFAULT '',
+  `dialog_data` longtext NOT NULL CHECK (json_valid(`dialog_data`)),
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_dialog_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
+/*!40000 ALTER TABLE `dialogs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `dialogs` ENABLE KEYS */;
+COMMIT;
+SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `craft_recipes_results` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `count` int(11) NOT NULL DEFAULT 1,

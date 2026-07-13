@@ -399,7 +399,10 @@ class Ui{
                 if(!empty($options['dialog'])){
 
 
-                    $dialogJson = json()->decode('dialogs', $options['dialog']);
+                    /* Passerelle unique (table dialogs, repli fichier) ; le
+                       cache par requête évite la double lecture avec le
+                       new Dialog() du rendu ci-dessous */
+                    $dialogJson = (new \App\Service\DialogService())->loadDialog($options['dialog']);
 
                     if(!$dialogJson){
 
