@@ -11,6 +11,8 @@ use App\Service\AdminAuthorizationService;
 use App\Service\ImportExport\BundleDownload;
 use App\Service\ImportExport\BundleEnvelope;
 use App\Service\ImportExport\ExporterRegistry;
+use App\Service\ImportExport\PlanExporter;
+use App\Service\TiledMapService;
 
 AdminAuthorizationService::DoAdminCheck();
 
@@ -29,7 +31,20 @@ if ($exporter === null) {
 
 $id = (int) ($_GET['id'] ?? 0);
 
-if ($id > 0) {
+// Les plans sont à clé naturelle chaîne (pas d'entité, pas d'id entier) :
+// l'export unitaire passe par ?plan=<id> et PlanExporter::exportOne().
+$planId = trim((string) ($_GET['plan'] ?? ''));
+
+if ($type === 'plan' && $planId !== '') {
+    if (!preg_match(TiledMapService::PLAN_NAME_PATTERN, $planId)) {
+        setFlash('warning', 'Nom de plan invalide.');
+        header('Location: /admin/plans.php');
+        exit;
+    }
+    /** @var PlanExporter $exporter */
+    $objects = [$exporter->exportOne($planId)];
+    $filename = BundleDownload::filename($type, $planId);
+} elseif ($id > 0) {
     // Single-object export. The generic exporter has no by-id lookup, so we resolve
     // the one entity per family here, then hand it to the matching exporter.
     $object = match ($type) {

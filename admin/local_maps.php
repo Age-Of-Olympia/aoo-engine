@@ -7,57 +7,9 @@ use App\Service\CsrfProtectionService;
 use App\Service\ViewService;
 use App\Service\PlanJsonValidator;
 
-/**
- * Rend un groupe de validation (erreurs / avertissements / OK) sous forme
- * d'accordéon <details> coloré. Partagé entre la vue d'ensemble et le détail
- * d'un plan pour un rendu cohérent (DRY). Un groupe vide n'affiche rien.
- *
- * @param string[] $items Messages déjà prêts à l'affichage (parties dynamiques échappées par PlanJsonValidator)
- */
-function render_validation_group(array $items, string $variant, string $icon, string $color, string $label, bool $open): void
-{
-    if (empty($items)) {
-        return;
-    }
-    $openAttr   = $open ? ' open' : '';
-    $badgeStyle = 'background-color:' . $color . ';color:#fff;';
-    echo '<details class="alert alert-' . $variant . ' mb-2" style="padding:0;"' . $openAttr . '>';
-    echo   '<summary style="cursor:pointer;padding:.5rem .75rem;font-weight:600;">';
-    echo     '<i class="fas ' . $icon . '"></i> ' . e($label);
-    echo     ' <span class="badge" style="' . $badgeStyle . '">' . count($items) . '</span>';
-    echo   '</summary>';
-    echo   '<ul class="mb-0" style="padding:.25rem .75rem .75rem 2.2rem;font-size:13px;line-height:1.6;">';
-    foreach ($items as $msg) {
-        echo '<li>' . $msg . '</li>';
-    }
-    echo   '</ul>';
-    echo '</details>';
-}
-
-/**
- * Rend les groupes de validation en distinguant les domaines « niveaux Z » et
- * « biomes » : erreurs (Z puis biomes), avertissements (Z puis biomes), puis
- * (optionnel) les validations OK. Chaque groupe vide est ignoré.
- *
- * @param array{z: array{errors: string[], warnings: string[], ok: string[]}, biome: array{errors: string[], warnings: string[], ok: string[]}} $validation
- */
-function render_validation_report(array $validation, bool $includeOk = true): void
-{
-    $z = $validation['z'];
-    $b = $validation['biome'];
-
-    render_validation_group($z['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (niveaux Z)', true);
-    render_validation_group($b['errors'],   'danger',  'fa-times-circle',        '#dc3545', 'Erreurs (biomes)',    true);
-    render_validation_group($z['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (niveaux Z)', true);
-    render_validation_group($b['warnings'], 'warning', 'fa-exclamation-triangle', '#f0ad4e', 'Avertissements (biomes)',    true);
-    if ($includeOk) {
-        render_validation_group($z['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (niveaux Z)', false);
-        render_validation_group($b['ok'], 'success', 'fa-check-circle', '#198754', 'Validations OK (biomes)',    false);
-    }
-}
-
-// SEASON2_EXTRA_PLANS / is_season2_plan / filtre de saison : admin/helpers.php
-// (partagés avec les autres pages de la section « Cartes »)
+// render_validation_group / render_validation_report : admin/helpers.php
+// (partagés avec admin/plans.php), comme SEASON2_EXTRA_PLANS / is_season2_plan
+// et le filtre de saison
 
 // Clear any world map layers when loading local maps
 if (isset($_SESSION['generated_layers']) && strpos(json_encode($_SESSION['generated_layers']), 'world_') !== false) {
@@ -335,6 +287,7 @@ ob_start();
                     <?php if (empty($filteredPlans)): ?>
                         <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
                     <?php endif; ?>
+                    <small class="text-muted d-block mt-1">Plan manquant ? <a href="/admin/plans.php?action=new">+ Créer un plan</a> (vierge ou par clonage).</small>
                 </div>
             </form>
             
@@ -352,8 +305,8 @@ ob_start();
                                 <small class="text-muted ms-2"><?= count($plan->fullData->z_levels ?? []) ?> niveau(x) Z</small>
                             <?php endif; ?>
                         </div>
-                        <a href="/tools.php?edit&dir=private&subDir=plans&finalDir=<?= urlencode($plan->id) ?>" class="btn btn-secondary btn-sm" target="_blank">
-                            <i class="fas fa-edit"></i> Voir/éditer le JSON du plan
+                        <a href="/admin/plans.php?action=edit&plan=<?= urlencode($plan->id) ?>" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-edit"></i> Configurer le plan
                         </a>
                     </div>
 

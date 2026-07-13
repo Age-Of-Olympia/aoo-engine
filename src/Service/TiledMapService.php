@@ -280,6 +280,51 @@ class TiledMapService
         ];
     }
 
+    /**
+     * Couches authorables d'un plan entier (tous z), sous forme portable :
+     * pas d'id de base, lignes et colonne player_id exclues (mêmes règles
+     * que l'empreinte de version), endTime exclu (état runtime — damages
+     * reste : il encode l'intention d'auteur, -1 = récoltable). Alimente
+     * l'export de bundle ({@see \App\Service\ImportExport\PlanExporter}).
+     *
+     * @return array<string, list<array<string, mixed>>> couche => lignes {x, y, z, name, …}
+     */
+    public function exportAllLayers(string $plan): array
+    {
+        $layers = [];
+
+        foreach (self::AUTHORABLE_LAYERS as $layer => $spec) {
+            $columns = 'm.name, c.x, c.y, c.z';
+            $hasPlayerId = in_array('player_id', $spec['columns'], true);
+            foreach ($spec['columns'] as $column) {
+                if ($column !== 'player_id' && $column !== 'endTime') {
+                    $columns .= ', m.`' . $column . '`';
+                }
+            }
+
+            $res = $this->db->exe(
+                'SELECT ' . $columns . '
+                 FROM map_' . $layer . ' m
+                 JOIN coords c ON c.id = m.coords_id
+                 WHERE c.plan = ?' . ($hasPlayerId ? ' AND (m.player_id IS NULL OR m.player_id = 0)' : '') . '
+                 ORDER BY c.z, c.y, c.x, m.id',
+                array($plan)
+            );
+
+            $rows = [];
+            while ($row = $res->fetch_assoc()) {
+                $row['x'] = (int) $row['x'];
+                $row['y'] = (int) $row['y'];
+                $row['z'] = (int) $row['z'];
+                $rows[] = $row;
+            }
+
+            $layers[$layer] = $rows;
+        }
+
+        return $layers;
+    }
+
     /** @return array<string, array> toutes les couches authorables du (plan, z) */
     private function fetchLayers(string $plan, int $z): array
     {
@@ -426,7 +471,7 @@ class TiledMapService
         $toInsert = [];
 
         foreach ($incomingRows as $row) {
-            $this->validateIncomingRow($layer, $row);
+            self::validateIncomingRow($layer, $row);
 
             $key = $this->rowKey($layer, $row);
 
@@ -457,7 +502,13 @@ class TiledMapService
         ];
     }
 
-    private function validateIncomingRow(string $layer, mixed $row): void
+    /**
+     * Point de contrôle unique de la validité d'une ligne authorée — partagé
+     * entre le push Tiled et l'import de bundle (PlanImporter).
+     *
+     * @throws RuntimeException code 400
+     */
+    public static function validateIncomingRow(string $layer, mixed $row): void
     {
         if (!is_array($row)
             || !isset($row['x'], $row['y'], $row['name'])

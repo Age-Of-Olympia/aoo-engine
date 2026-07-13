@@ -17,6 +17,9 @@ use Classes\Db;
  * Architecture:
  * - Template map: plan='tutorial' (source, never modified)
  * - Instance maps: plan='tut_{first-10-of-uuid}' (per session, deleted on completion)
+ *
+ * @see \App\Service\PlanAdminService admin-side plan cloning/deletion (set-based
+ *      SQL, no NPC spawning) — a future cleanup may migrate this class onto it.
  */
 class TutorialMapInstance
 {
