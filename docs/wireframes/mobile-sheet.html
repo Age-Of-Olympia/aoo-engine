@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AoO — Wireframe : Mobile sous-pages en bottom-sheet</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+    <div class="wf-page">
+        <header class="wf-header">
+            <h1>Mobile — Sous-pages en bottom-sheet</h1>
+            <span class="crumb"><a href="index.html">← Retour</a> · mobile-sheet.html</span>
+        </header>
+
+        <p class="wf-intro">
+            Sur mobile, toute sous-page monte depuis le bas en <b>bottom-sheet</b>
+            couvrant ~85% de la hauteur. Les <b>pills A / MVT / PV restent
+            visibles</b> au-dessus de la sheet. Les deux exemples ci-dessous
+            illustrent les <i>nouveaux</i> contenus déclenchés : <b>Chat</b> (via
+            l'onglet ou la pastille overlay) et <b>fiche personnage</b> (via le
+            player chip). Les autres pages (Inventaire, Banque, Forum, Marchand,
+            Compte, Journal) suivent exactement le même chrome.
+        </p>
+
+        <div class="callout">
+            <b>Pourquoi pas un plein-écran ?</b> · En plein-écran, le joueur perd
+            la vue de ses A / MVT / PV. AoO étant turn-based avec consultation
+            fréquente des sous-pages, garder l'état de jeu visible est non-négociable.
+        </div>
+
+        <div class="stage wf-stage">
+
+            <!-- Phone 1: Chat sheet -->
+            <div>
+                <div class="wf-stage-label">Chat — sheet à 85%</div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="mobile-topbar">
+                            <button class="mobile-hamburger"><i></i></button>
+                            <span class="mobile-player-chip" data-race="nain">
+                                <span class="pc-portrait">C</span>
+                            </span>
+                            <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span></span>
+                            <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span></span>
+                            <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span></span>
+                            <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span></span>
+                            <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span></span>
+                            <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span></span>
+                        </div>
+
+                        <div class="mobile-map" style="opacity: 0.30; filter: blur(1px);">
+                            <div class="map-grid">
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-carousel" style="opacity: 0;"></div>
+
+                        <div class="bottom-sheet">
+                            <div class="sheet-handle"></div>
+                            <header class="sheet-header">
+                                <i class="ra ra-speech-bubbles" style="font-size: 22px; color: var(--accent-gold-2);"></i>
+                                <h2>Chat</h2>
+                                <button class="subpage-close" style="width: 28px; height: 28px; font-size: 16px;">×</button>
+                            </header>
+                            <div style="display: flex; gap: 2px; padding: 6px 14px 0; border-bottom: 1px solid var(--border-soft);">
+                                <button style="background: var(--bg-parchment); border: 1px solid var(--border-mid); border-bottom-color: var(--bg-parchment); color: var(--accent-burgundy); padding: 4px 10px; border-radius: 4px 4px 0 0; font-size: 11px; font-family: var(--font-ui); margin-bottom: -1px; font-weight: 600;">Général</button>
+                                <button style="background: transparent; border: 1px solid transparent; color: var(--text-3); padding: 4px 10px; font-size: 11px; font-family: var(--font-ui);">Événements <span style="background: var(--accent-gold); color: #1a1a1a; border-radius: 6px; padding: 0 4px; font-size: 9px; font-family: var(--font-mono); margin-left: 2px;">3</span></button>
+                            </div>
+                            <div class="sheet-body" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div class="chat-msg system"><span class="time">14:02</span> Vous avez un nouveau tour disponible</div>
+                                <div class="chat-msg" data-race="elfe"><span class="time">14:03</span><span class="author">Thyrias :</span> Quelqu'un sait où trouver de la pierre par ici ?</div>
+                                <div class="chat-msg" data-race="nain"><span class="time">14:05</span><span class="author">Dorna :</span> Au sud-est de la rivière, plein de filons.</div>
+                                <div class="chat-msg" data-race="elfe"><span class="time">14:06</span><span class="author">Thyrias :</span> Merci ! J'y file.</div>
+                                <div class="chat-msg self"><span class="time">14:10</span><span class="author">Vous :</span> Je rentre au campement.</div>
+                                <div class="chat-msg system"><span class="time">14:12</span> Dorna a quitté la zone</div>
+                                <div class="chat-msg" data-race="hs"><span class="time">14:18</span><span class="author">Krug :</span> Attention ennemis à l'est !</div>
+                            </div>
+                            <div class="chat-input">
+                                <input type="text" placeholder="Écrire un message…" />
+                                <button>Env.</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone 2: Player Card sheet -->
+            <div>
+                <div class="wf-stage-label">Fiche personnage — sheet à 85%</div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="mobile-topbar">
+                            <button class="mobile-hamburger"><i></i></button>
+                            <span class="mobile-player-chip" data-race="nain" style="box-shadow: 0 0 0 2px var(--accent-gold-2);">
+                                <span class="pc-portrait">C</span>
+                            </span>
+                            <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span></span>
+                            <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span></span>
+                            <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span></span>
+                            <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span></span>
+                            <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span></span>
+                            <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span></span>
+                        </div>
+
+                        <div class="mobile-map" style="opacity: 0.30; filter: blur(1px);">
+                            <div class="map-grid">
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-carousel" style="opacity: 0;"></div>
+
+                        <div class="bottom-sheet">
+                            <div class="sheet-handle"></div>
+                            <header class="sheet-header">
+                                <i class="ra ra-player" style="font-size: 22px; color: var(--accent-gold-2);"></i>
+                                <h2>Cradek</h2>
+                                <button class="subpage-close" style="width: 28px; height: 28px; font-size: 16px;">×</button>
+                            </header>
+                            <div class="sheet-body">
+                                <div class="pcard-hero" data-race="nain" style="padding: 10px; gap: 10px; margin-bottom: 10px;">
+                                    <div class="portrait" style="width: 56px; height: 56px; font-size: 28px;">C</div>
+                                    <div class="body">
+                                        <div class="name" style="font-size: 16px;">Cradek</div>
+                                        <div class="race" style="font-size: 11px;">Nain · Faction <b>Forge</b></div>
+                                        <div class="level" style="font-size: 11px;">Rang 4 · Niv. 18</div>
+                                        <div class="xp-bar" style="margin-top: 4px; height: 4px;"><i style="width: 62%;"></i></div>
+                                        <div class="xp-text" style="font-size: 9px;">1 240 / 2 000 XP</div>
+                                    </div>
+                                </div>
+
+                                <div class="pcard-section-title" style="font-size: 11px; margin-top: 8px;">Caractéristiques</div>
+                                <div class="pcard-caracs" style="gap: 4px;">
+                                    <div class="pcard-carac" style="padding: 4px 8px; font-size: 11px;"><span>PV</span><b>42/50</b></div>
+                                    <div class="pcard-carac" style="padding: 4px 8px; font-size: 11px;"><span>A</span><b>6/8</b></div>
+                                    <div class="pcard-carac" style="padding: 4px 8px; font-size: 11px;"><span>MVT</span><b>4</b></div>
+                                    <div class="pcard-carac" style="padding: 4px 8px; font-size: 11px;"><span>PM</span><b>8/12</b></div>
+                                    <div class="pcard-carac" style="padding: 4px 8px; font-size: 11px;"><span>PF</span><b>3/5</b></div>
+                                    <div class="pcard-carac" style="padding: 4px 8px; font-size: 11px;"><span>Force</span><b>14</b></div>
+                                </div>
+
+                                <div class="pcard-section-title" style="font-size: 11px;">Affiliations &amp; progression</div>
+                                <div class="pcard-access" style="grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                                    <button class="access-btn" style="padding: 8px 4px; font-size: 10px;">
+                                        <i class="ra ra-castle-flag"></i>Faction<span class="sub" style="font-size: 9px;">Forge</span>
+                                    </button>
+                                    <button class="access-btn" style="padding: 8px 4px; font-size: 10px;">
+                                        <i class="ra ra-arena"></i>École<span class="sub" style="font-size: 9px;">Rang 2</span>
+                                    </button>
+                                    <button class="access-btn" style="padding: 8px 4px; font-size: 10px;">
+                                        <i class="ra ra-perspective-dice-six"></i>Compét.<span class="sub" style="font-size: 9px;">7 acquises</span>
+                                    </button>
+                                    <button class="access-btn" style="padding: 8px 4px; font-size: 10px;">
+                                        <i class="ra ra-book"></i>Logs<span class="sub" style="font-size: 9px;">23 entrées</span>
+                                    </button>
+                                    <button class="access-btn" style="padding: 8px 4px; font-size: 10px;">
+                                        <i class="ra ra-helmet"></i>Équipt.<span class="sub" style="font-size: 9px;">3/4</span>
+                                    </button>
+                                    <button class="access-btn coming" style="padding: 8px 4px; font-size: 10px;">
+                                        <i class="ra ra-trophy"></i>Hts faits<span class="sub" style="font-size: 9px;">à venir</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone 3: Drawer (left slide-in) -->
+            <div>
+                <div class="wf-stage-label">Drawer (menu gauche)</div>
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="mobile-topbar">
+                            <button class="mobile-hamburger" style="box-shadow: 0 0 0 2px var(--accent-gold-2);"><i></i></button>
+                            <span class="mobile-player-chip" data-race="nain">
+                                <span class="pc-portrait">C</span>
+                            </span>
+                            <span class="stat-pill pa"><i class="ra ra-lightning-bolt"></i><span class="num">6</span></span>
+                            <span class="stat-pill mvt"><i class="ra ra-boot-stomp"></i><span class="num">3</span></span>
+                            <span class="stat-pill pv"><i class="ra ra-health"></i><span class="num">42</span></span>
+                            <span class="stat-pill pm"><i class="ra ra-crystal-ball"></i><span class="num">8</span></span>
+                            <span class="stat-pill pf"><i class="ra ra-ankh"></i><span class="num">3</span></span>
+                            <span class="stat-pill en"><i class="ra ra-energise"></i><span class="num">5</span></span>
+                        </div>
+
+                        <div class="mobile-map" style="opacity: 0.30; filter: blur(1px);">
+                            <div class="map-grid">
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile forest has-tree"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile water"></div>
+                                <div class="map-tile grass"></div><div class="map-tile stone has-stone"></div><div class="map-tile path"></div><div class="map-tile grass has-enemy"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile path has-player"></div><div class="map-tile path"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                                <div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile stone has-stone"></div>
+                                <div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile path"></div><div class="map-tile grass"></div><div class="map-tile grass"></div><div class="map-tile forest has-tree"></div><div class="map-tile grass"></div>
+                            </div>
+                        </div>
+
+                        <div class="mobile-carousel" style="opacity: 0;"></div>
+
+                        <aside class="mobile-drawer">
+                            <div class="drawer-item"><i class="ra ra-player"></i>Personnage</div>
+                            <div class="drawer-item"><i class="ra ra-mountains"></i>Carte (monde / locale)</div>
+                            <div class="drawer-item"><i class="ra ra-ammo-bag"></i>Inventaire / Banque</div>
+                            <div class="drawer-item"><i class="ra ra-anvil"></i>Craft</div>
+                            <div class="drawer-item"><i class="ra ra-perspective-dice-six"></i>Caractéristiques</div>
+                            <div class="drawer-item"><i class="ra ra-fire"></i>Sorts / Techniques</div>
+                            <div class="drawer-item"><i class="ra ra-speech-bubbles"></i>Forum</div>
+                            <div class="drawer-item"><i class="ra ra-cog-wheel"></i>Paramètres</div>
+                            <div class="drawer-divider"></div>
+                            <div class="drawer-item"><i class="ra ra-cycle"></i>Changer de personnage</div>
+                            <div class="drawer-item"><i class="ra ra-podium"></i>Classements</div>
+                            <div class="drawer-item"><i class="ra ra-help"></i>Aide</div>
+                        </aside>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

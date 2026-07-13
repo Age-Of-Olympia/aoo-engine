@@ -9,7 +9,7 @@ if($uploadedN >= $uploadMax){
     echo '
     <div id="drop_file_zone" style="display: none;">
         <sup>Vous avez atteinds '. $uploadMax .'/'. $uploadMax .' images uploadées<br />
-        <a href="account.php?uploaded=1" OnClick="if(confirm(\'Quitter la page?\')) return true; return false;">Besoin de plus?</a>
+        <a href="account.php?uploaded=1" OnClick="aooConfirm(\'Quitter la page?\').then(function(ok){ if(ok){ document.location = \'account.php?uploaded=1\'; } }); return false;">Besoin de plus?</a>
         </sup>
     </div>
     ';

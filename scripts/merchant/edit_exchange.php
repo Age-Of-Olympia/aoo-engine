@@ -61,7 +61,7 @@ $otherPlayer->get_data();
     </a>
   </div>
 </div>
-<script src="js/progressive_loader.js"></script>
+<script src="js/progressive_loader.js?v=20260716"></script>
 <script>
   $(function() {
     var objects = <?php echo json_encode($objects); ?>;
@@ -100,7 +100,7 @@ $otherPlayer->get_data();
         })
         .catch((error) => {
           console.error('Error:', error);
-          location.reload();
+          aooReload();
         });
       });
       
@@ -112,23 +112,22 @@ $otherPlayer->get_data();
       $('.delete').click(deleteObject);
       $('.action').click(function(e){
         e.preventDefault();
-          var n = 0;
-          n = prompt('Combien?', window.n);
+        aooPrompt('Combien?', window.n).then(function(n){
           if(n == null){
-            return false;
+            return;
           }
           var objectId= window.id;
           let allreadyInTrade =0;
           var existingObjectIndefaults = defaultobjects.find(obj => obj.id === objectId);
-          if (existingObjectIndefaults) 
+          if (existingObjectIndefaults)
               allreadyInTrade = existingObjectIndefaults.n;
 
           if(n == '' || n < 1 || n > (window.n+allreadyInTrade)){
-            alert('Nombre invalide!');
-            return false;
+            aooAlert('Nombre invalide!');
+            return;
           }
           var objectName = window.name;
-          
+
           var objectCount  = n;
           var existingObject = objects.find(obj => obj.id === objectId);
           if (existingObject) {
@@ -140,6 +139,7 @@ $otherPlayer->get_data();
 
             $('#validate-button').prop('disabled', false);
 
+        });
       })
     function updateObjectList() {
         $('#object-list').empty(); 

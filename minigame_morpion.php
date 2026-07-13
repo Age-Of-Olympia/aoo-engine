@@ -106,7 +106,6 @@ if(!empty($_POST['caseName'])){
 
 
 // reset game
-printr($_SESSION['coups']);
 unset($_SESSION['coups']);
 
 

@@ -35,9 +35,9 @@ class Ui{
                 <title>Age of Olympia - ' . $title . '</title>
                 <link rel="icon" type="image/x-icon" href="/img/ui/favicons/favicon.png">
                 <script src="js/jquery.js"></script>
-                <script src="js/main.js?v=20250516"></script>
+                <script src="js/main.js?v=20260716"></script>
                 <script src="js/console.js?v=20260614"></script>
-                <link href="css/main.min.css?v=20260711" rel="stylesheet">
+                <link href="css/main.min.css?v=20260714" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct
@@ -49,6 +49,20 @@ class Ui{
             echo '<style>body{background-image:url(\'' . $appBg . '\')}</style>';
         }
 
+        /* Thème papier & encre des pages autonomes : chargé UNIQUEMENT
+         * quand le joueur (réel, pas le personnage de tutoriel) a
+         * l'option newHud — l'habillage hérité ne change pas d'un
+         * pixel pour les autres. have_option est mémoïsé, le test est
+         * gratuit. Filigrane « aootest » hors prod, comme le HUD. */
+        if (self::usesPaperTheme()) {
+            echo '<link href="css/paper-app.css?v=20260715a" rel="stylesheet">';
+
+            $paperBg = function_exists('aoo_paper_background') ? aoo_paper_background() : '/img/ui/paper/paper.jpg';
+            if ($paperBg !== '/img/ui/paper/paper.jpg') {
+                echo '<style>body{background-image:url(\'' . $paperBg . '\')}</style>';
+            }
+        }
+
         if($loadJQueryUi){
             echo ' <script src="js/jquery-ui.min.js"></script>
                 <link rel="stylesheet" href="css/jquery-ui.min.css" />
@@ -56,11 +70,11 @@ class Ui{
         }
 
         // Tutorial System (feature-flagged for specific players)
-        $tutorialVersion = '20260515a';
+        $tutorialVersion = '20260705a';
         echo '
                 <!-- Modal System -->
-                <link href="css/modal.css?v=20260418" rel="stylesheet">
-                <script src="js/modal.js?v=20251112"></script>
+                <link href="css/modal.css?v=20260715" rel="stylesheet">
+                <script src="js/modal.js?v=20260715"></script>
 
                 <!-- Tutorial System -->
                 <link href="css/tutorial/tutorial.css?v=' . $tutorialVersion . '" rel="stylesheet">
@@ -113,6 +127,31 @@ class Ui{
 
 
     // STATIC
+
+    /**
+     * Le joueur courant voit-il le thème papier (option newHud) ?
+     *
+     * Lue sur le joueur RÉEL — pendant le tutoriel, le personnage
+     * temporaire n'a pas d'options mais l'interface choisie par le
+     * joueur doit rester la même (même logique qu'index.php).
+     */
+    public static function usesPaperTheme(): bool
+    {
+        /* Surface publique (inscription, connexion, reset) : papier
+         * pour tout le monde — l'accueil l'est déjà. */
+        if (empty($_SESSION['playerId'])) {
+            return true;
+        }
+
+        try {
+            $mainPlayerId = \App\Tutorial\TutorialHelper::getMainPlayerId();
+            $optionPlayerId = $mainPlayerId > 0 ? $mainPlayerId : (int) $_SESSION['playerId'];
+
+            return (bool) \App\Factory\PlayerFactory::legacy($optionPlayerId)->have_option('newHud');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 
     public static function get_card($data) : string{
 
@@ -197,11 +236,29 @@ class Ui{
     }
 
 
-    public static function print_inventory($itemList){
+    /**
+     * @param string|null $aeInfo     compteur d'Actions d'Équipement (HUD)
+     * @param bool        $rowActions boutons Utiliser/Jeter/Artisanat sur
+     *                                chaque ligne (panneau inventaire du
+     *                                HUD) — ils délèguent aux boutons de
+     *                                l'aperçu via js/inventory.js, la
+     *                                logique d'état reste unique.
+     * @param int|null    $aeLeft     Ae restantes ce tour : grise les
+     *                                boutons de ligne qui en coûtent
+     *                                (équiper, parchemins) — mêmes règles
+     *                                qu'InventoryService::useItem.
+     * @param int|null    $aLeft      Actions restantes : grise Utiliser
+     *                                des consommables/structures.
+     */
+    public static function print_inventory($itemList, ?string $aeInfo = null, bool $rowActions = false, ?int $aeLeft = null, ?int $aLeft = null){
 
 
         $defaultItem = new Item(1);
         $defaultItem->get_data();
+
+        /* Liste vide (ex. artisanat sans matériaux) : l'objet par
+         * défaut n'y figure pas, l'aperçu affiche alors x0. */
+        $defaultItemN = isset($itemList[$defaultItem->id]) ? $itemList[$defaultItem->id]->n : 0;
 
         ob_start();
 
@@ -220,7 +277,7 @@ class Ui{
         echo '
             <div class="inventory-preview">
 
-                <div class="preview-n">x'. $itemList[$defaultItem->id]->n .'</div>
+                <div class="preview-n">x'. $defaultItemN .'</div>
 
                 <div class="preview-img">
                     <img
@@ -244,6 +301,11 @@ class Ui{
         <tr>
         <td align="right">
             ';
+
+            if($aeInfo !== null){
+
+                echo $aeInfo;
+            }
 
             echo '<input type="text" value="chercher" id="item-search" style="opacity: 0.5;" class="desaturate" />';
 
@@ -316,6 +378,77 @@ class Ui{
                 <td width="50">
                     x'. $row->n .'
                 </td>
+                ';
+
+            if($rowActions){
+
+                /* Mêmes règles de coût qu'InventoryService::useItem et
+                 * js/inventUi.js : déséquiper est gratuit ; équiper et
+                 * lire un parchemin coûtent 1 Ae ; consommer coûte 1 A.
+                 * Sans le point requis, le bouton est grisé et
+                 * l'infobulle dit pourquoi. */
+                $isEquipped = !empty($row->equiped);
+
+                if($isEquipped){
+
+                    $usable = true;
+                    $useTitle = 'Déséquiper';
+                }
+                elseif($type == 'equipement'){
+
+                    $usable = ($aeLeft === null || $aeLeft > 0);
+                    $useTitle = $usable ? 'Équiper (1 Ae)' : 'Équiper (1 Ae) — plus d\'Action d\'Équipement ce tour';
+                }
+                elseif($type == 'parchemin' || $emp != ''){
+
+                    $usable = ($aeLeft === null || $aeLeft > 0);
+                    $useTitle = $usable ? 'Utiliser (1 Ae)' : 'Utiliser (1 Ae) — plus d\'Action d\'Équipement ce tour';
+                }
+                elseif($type == 'consommable' || $type == 'structure'){
+
+                    $usable = ($aLeft === null || $aLeft > 0);
+                    $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
+                }
+                else{
+
+                    $usable = false;
+                    $useTitle = 'Utiliser';
+                }
+
+                /* Porté : bouton « rendre » plein (nuit) — impossible à
+                 * confondre avec « équiper ». Une icône par geste :
+                 * équiper ≠ consommer ≠ lire (retours joueurs juillet
+                 * 2026 — la même main pour tout prêtait à confusion). */
+                if($isEquipped){
+                    $useIcon = 'ra-reverse';
+                }
+                elseif($type == 'equipement'){
+                    $useIcon = 'ra-vest';
+                }
+                elseif($type == 'parchemin'){
+                    $useIcon = 'ra-scroll-unfurled';
+                }
+                elseif($type == 'consommable'){
+                    $useIcon = 'ra-potion';
+                }
+                elseif($type == 'structure'){
+                    $useIcon = 'ra-hammer';
+                }
+                else{
+                    $useIcon = 'ra-hand';
+                }
+                $wornClass = $isEquipped ? ' row-action--worn' : '';
+
+                echo '
+                <td class="item-actions">
+                    <button class="row-action'. $wornClass .'" data-action="use" title="'. $useTitle .'" '. ($usable ? '' : 'disabled') .'><span class="ra '. $useIcon .'"></span></button>
+                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
+                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>
+                </td>
+                ';
+            }
+
+            echo '
             </tr>
             ';
         }
@@ -340,14 +473,35 @@ class Ui{
         <script>
         window.id = <?php echo $defaultItem->row->id ?>;
         window.name = "<?php echo $defaultItem->row->name ?>";
-        window.type = "<?php echo $type ?>";
-        window.n =    <?php echo $itemList[$defaultItem->row->id]->n ?>;
+        window.type = "<?php echo $type ?? '' ?>";
+        window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
         <script src="js/inventUi.js?v=20260220"></script>
         <?php
 
         return Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Voile de sang sur un portrait : la part manquante de PV monte
+     * depuis le bas (même lecture que le filtre rouge de la carte de
+     * sélection ci-dessus). Chaîne vide si indemne. Styles en ligne :
+     * utilisable dans l'habillage hérité comme dans le HUD sans
+     * toucher aux pipelines CSS. Le parent doit être en
+     * position:relative ; pointer-events:none laisse cliquer au
+     * travers (cartes de personnages secondaires).
+     */
+    public static function get_pv_veil(int $pvPct): string
+    {
+        if ($pvPct >= 100) {
+
+            return '';
+        }
+
+        $height = min(100 - $pvPct, 100);
+
+        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(119, 0, 1, 0.35); border-top: 2px solid rgba(119, 0, 1, 0.7); pointer-events: none;"></div>';
     }
 
    #
@@ -461,7 +615,7 @@ class Ui{
         // $dialogCssVersion = filemtime('css/dialog.min.css');
 
         echo '
-        <script src="js/dialog.js"></script>
+        <script src="js/dialog.js?v=20260716"></script>
         <link rel="stylesheet" href="css/dialog.min.css">
         ';
 

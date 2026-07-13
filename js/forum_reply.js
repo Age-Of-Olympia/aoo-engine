@@ -31,15 +31,24 @@ $(document).ready(function(e){
                     let response = JSON.parse(data);
                     if(response.error){
                         alert(response.error);
+                        $('.submit').prop('disabled', false);
                     }
                     else{
+                        /* HUD : rouvrir le fil (dernière page) dans le
+                         * panneau au lieu de naviguer vers la page
+                         * héritée. */
+                        if(window.hudOpenPanel){
+
+                            window.hudOpenPanel('load_forum.php?topic='+ topic +'&page='+ window.pagesN, 'Missives');
+                            return;
+                        }
+
                         document.location = 'forum.php?topic='+ topic +'&page='+ window.pagesN +'#'+ response.result;
                     }
                 } catch (error) {
                     alert(data);
+                    $('.submit').prop('disabled', false);
                 }
-                // alert(data);
-                
             }
         });
     });

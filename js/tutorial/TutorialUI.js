@@ -337,9 +337,65 @@ class TutorialUI {
     }
 
     /**
+     * Adaptation au nouveau HUD (option newHud), transition Phase 1.
+     *
+     * Les sélecteurs des steps sont seedés en base pour le layout
+     * hérité ; quand la grille #hud est présente, certains éléments ont
+     * un équivalent mieux placé (les compteurs A/MVT vivent en
+     * pastilles permanentes dans la barre de statut — plus besoin
+     * d'ouvrir le panneau de caracs, l'auto-ouverture de
+     * ensureElementVisible ne se déclenche plus car la cible mappée
+     * n'est pas dans caracsPanelTargets).
+     *
+     * Mutation en place : toutes les consommations aval (tooltip,
+     * highlighter, validation, interactions) voient les sélecteurs
+     * traduits. La vraie migration des sélecteurs en base se fera
+     * quand le HUD deviendra le layout par défaut.
+     */
+    adaptStepForHud(stepData) {
+        if (!stepData || !document.getElementById('hud')) {
+            return stepData;
+        }
+
+        const map = {
+            '#mvt-counter': '#hud-pill-mvt',
+            '#action-counter': '#hud-pill-a'
+        };
+        const translate = (sel) => (sel && map[sel]) ? map[sel] : sel;
+
+        stepData.target_selector = translate(stepData.target_selector);
+
+        if (stepData.config) {
+            stepData.config.target_selector = translate(stepData.config.target_selector);
+            stepData.config.highlight_selector = translate(stepData.config.highlight_selector);
+
+            if (Array.isArray(stepData.config.additional_highlights)) {
+                stepData.config.additional_highlights = stepData.config.additional_highlights.map(entry => {
+                    if (typeof entry === 'string') {
+                        return translate(entry);
+                    }
+                    if (entry && entry.selector) {
+                        return Object.assign({}, entry, { selector: translate(entry.selector) });
+                    }
+                    return entry;
+                });
+            }
+
+            if (Array.isArray(stepData.config.allowed_interactions)) {
+                stepData.config.allowed_interactions = stepData.config.allowed_interactions.map(translate);
+            }
+        }
+
+        return stepData;
+    }
+
+    /**
      * Render tutorial step
      */
     async renderStep(stepData) {
+
+        // Traduire les sélecteurs hérités vers le nouveau HUD si actif
+        stepData = this.adaptStepForHud(stepData);
 
         // Store stepData for external access (e.g., E2E tests)
         this.stepData = stepData;

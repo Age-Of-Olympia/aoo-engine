@@ -1,0 +1,128 @@
+<?php
+
+namespace App\View\Hud;
+
+use App\Service\PlayerService;
+use Classes\Log;
+use Classes\Player;
+use Classes\Str;
+
+/**
+ * Rendu des flux du panneau latéral du HUD (option newHud).
+ *
+ * Phase 1 : lecture seule, aucune nouvelle donnée — le flux « Général »
+ * réutilise les messages du jour (players_logs, type mdj) et le flux
+ * « Événements » la perception (type light), exactement comme logs.php.
+ * Le vrai chat (saisie, transport) viendra dans une phase ultérieure.
+ */
+final class FeedRenderer
+{
+    public static function renderMdj(Player $player): string
+    {
+        $player->getCoords();
+        $logs = Log::get($player, THREE_DAYS, 'mdj');
+
+        if (empty($logs)) {
+            return '<p class="hud-feed-empty">Aucun message du jour récent.</p>';
+        }
+
+        $playerService = new PlayerService($player->id);
+
+        ob_start();
+        foreach ($logs as $e) {
+            /* Le contenu du mdj vit dans hiddenText, enrobé d'un
+             * div.action-details — classe masquée globalement, donc on
+             * la remplace pour afficher le texte dans le flux. */
+            $text = str_replace('class="action-details"', 'class="hud-mdj-text"', (string) $e->hiddenText);
+
+            echo '<div class="hud-feed-item hud-feed-item--mdj">'
+                . '<strong>' . self::authorName($playerService, (int) $e->player_id) . '</strong>'
+                . $text
+                . '<div class="hud-feed-meta">' . self::humanDate((int) $e->time) . '</div>'
+                . '</div>';
+        }
+
+        return Str::minify(ob_get_clean());
+    }
+
+    public static function renderEvents(Player $player): string
+    {
+        $player->getCoords();
+        $logs = Log::get($player, THREE_DAYS, 'light');
+
+        if (empty($logs)) {
+            return '<p class="hud-feed-empty">Aucun évènement récent.</p>';
+        }
+
+        $playerService = new PlayerService($player->id);
+
+        ob_start();
+        foreach ($logs as $e) {
+            $planJson = json()->decode('plans', $e->plan);
+            $planName = is_object($planJson) ? $planJson->name : '?';
+
+            /* data-time : js/hud.js s'en sert pour le compteur d'évènements
+             * non lus (comparaison au dernier passage, localStorage).
+             * data-own : nos propres actions ne comptent pas comme non
+             * lues — seul ce que les autres nous font mérite le badge. */
+            $own = ((int) $e->player_id === (int) $player->id) ? ' data-own="1"' : '';
+
+            echo '<div class="hud-feed-item' . self::outcomeClass((string) $e->hiddenText) . '" data-time="' . (int) $e->time . '"' . $own . '>'
+                . '<span class="log-' . $e->type . '">' . $e->text . '</span>'
+                . '<div class="hud-feed-meta">'
+                . self::authorName($playerService, (int) $e->player_id)
+                . ' · ' . self::humanDate((int) $e->time)
+                . ' · ' . $planName
+                . '</div>'
+                . '</div>';
+        }
+
+        return Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Teinte réussite / échec : le détail d'action (hiddenText)
+     * commence par le verdict — l'entrée du flux prend un lavis aux
+     * couleurs de l'affichage historique (bleu réussite, rouge échec,
+     * orangé impossible).
+     */
+    private static function outcomeClass(string $hiddenText): string
+    {
+        if ($hiddenText === '') {
+            return '';
+        }
+        if (strpos($hiddenText, 'Réussite') !== false) {
+            return ' hud-feed-item--ok';
+        }
+        if (strpos($hiddenText, 'Echec') !== false || strpos($hiddenText, 'Échec') !== false) {
+            return ' hud-feed-item--ko';
+        }
+        if (strpos($hiddenText, 'Impossible') !== false) {
+            return ' hud-feed-item--na';
+        }
+
+        return '';
+    }
+
+    private static function authorName(PlayerService $playerService, int $playerId): string
+    {
+        $author = $playerService->GetPlayer($playerId);
+        $author->get_data(false);
+
+        return '<a href="infos.php?targetId=' . $author->id . '">' . $author->data->name . '</a>';
+    }
+
+    /** Même humanisation de date que logs.php (Aujourd'hui / Hier / d/m/Y). */
+    private static function humanDate(int $time): string
+    {
+        $date = date('d/m/Y', $time);
+
+        if ($date == date('d/m/Y', time())) {
+            $date = 'Aujourd\'hui';
+        } elseif ($date == date('d/m/Y', time() - 86400)) {
+            $date = 'Hier';
+        }
+
+        return $date . ' à ' . date('H:i', $time);
+    }
+}

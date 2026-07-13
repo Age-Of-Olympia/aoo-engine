@@ -43,12 +43,6 @@ parameters:
 			path: api/tutorial/jump-to-step.php
 
 		-
-			message: '#^Right side of && is always true\.$#'
-			identifier: booleanAnd.rightAlwaysTrue
-			count: 1
-			path: classements.php
-
-		-
 			message: '#^Static property App\\Action\\ActionFactory\:\:\$actionClasses is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1

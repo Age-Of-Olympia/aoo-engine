@@ -18,21 +18,25 @@ if($('.go[x="'+ i +'"][y="'+ j +'"]')[0] != null){
 
     $('#destroy-rect').click(function(e){
 
-        if(!confirm("Détruire ce mur? (1A)")){
-            return false;
-        }
+        aooConfirm("Détruire ce mur? (1A)").then(function(ok){
 
-        var wallId = $wall.attr('id');
-
-        $.ajax({
-            type: "POST",
-            url: 'destroy.php',
-            data: {'wallId':wallId}, // serializes the form's elements.
-            success: function(data)
-            {
-                alert(data);
-                document.location.reload();
+            if(!ok){
+                return;
             }
+
+            var wallId = $wall.attr('id');
+
+            $.ajax({
+                type: "POST",
+                url: 'destroy.php',
+                data: {'wallId':wallId}, // serializes the form's elements.
+                success: function(data)
+                {
+                    aooAlert(data).then(function(){
+                        document.location.reload();
+                    });
+                }
+            });
         });
     });
 }

@@ -26,7 +26,7 @@ $player = PlayerFactory::active();
 if($player->getRemaining('mvt') < 1){
 
 
-    echo '<script>alert("Pas assez de Mouvements.");document.location.reload();</script>';
+    echo '<script>aooAlert("Pas assez de Mouvements.").then(function(){document.location.reload();});</script>';
     exit();
 }
 
@@ -102,7 +102,7 @@ $row = $res->fetch_object();
 if($row->n){
 
 
-    echo '<script>alert("Quelque chose obstrue ton chemin.");document.location.reload();</script>';
+    echo '<script>aooAlert("Quelque chose obstrue ton chemin.").then(function(){document.location.reload();});</script>';
 
     exit();
 }
@@ -195,7 +195,34 @@ if($goCoords->z < 0){
         if($player->getRemaining('a') < 1){
 
 
-            echo '<script>alert("Pas assez d\'Actions.");document.location.reload();</script>';
+            echo '<script>aooAlert("Pas assez d\'Actions.").then(function(){document.location.reload();});</script>';
+            exit();
+        }
+
+
+        /* Creuser sans Pioche inflige un malus : confirmation AVANT
+         * de dépenser quoi que ce soit — annuler ne creuse pas. La
+         * confirmation re-poste le même déplacement avec le drapeau. */
+        if($player->emplacements->main1->data->name != 'Pioche' && empty($_POST['digConfirmed'])){
+
+            $digCoords = addslashes($_POST['coords']);
+
+            echo '<script>
+            aooConfirm("Vous n\'avez pas de Pioche en main : creuser à mains nues fatigue (malus).\n\nCreuser quand même ?").then(function(ok){
+                if(!ok){
+                    /* view.js a déjà montré l\'engrenage et débranché la
+                     * flèche : restaurer l\'état cliquable sans recharger. */
+                    $("#go-img").attr("href", "img/ui/view/arrow.webp");
+                    if(typeof window.bindMapView === "function"){ window.bindMapView(); }
+                    return;
+                }
+                $.post("go.php", {"coords": "'. $digCoords .'", "digConfirmed": 1}, function(data){
+                    if($.trim(data) !== ""){ $("#ajax-data").html(data); return; }
+                    if(typeof window.hudRefreshAfterMove === "function"){ window.hudRefreshAfterMove(); }
+                    else{ document.location.reload(); }
+                });
+            });
+            </script>';
             exit();
         }
 
@@ -210,8 +237,8 @@ if($goCoords->z < 0){
 
 
             $player->put_malus(MALUS_PER_MINE);
-            
-            echo '<script>alert("Creuser sans Pioche, qu\'est-ce que ça fatigue !");document.location.reload();</script>';
+
+            echo '<script>aooAlert("Creuser sans Pioche, qu\'est-ce que ça fatigue !").then(function(){document.location.reload();});</script>';
         }
 
 
@@ -243,7 +270,7 @@ elseif($goCoords->z > 0){
 
     if(!$row->n && !$player->have_effect('vol')){
 
-        echo '<script>alert("Il faut pouvoir voler pour accéder à ce lieu."); document.location.reload();</script>';
+        echo '<script>aooAlert("Il faut pouvoir voler pour accéder à ce lieu.").then(function(){document.location.reload();});</script>';
 
         exit();
     }

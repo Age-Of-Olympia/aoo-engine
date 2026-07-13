@@ -61,7 +61,7 @@ class CraftView
                     display: none;
                 }
             </style>
-            <script src="js/progressive_loader.js"></script>
+            <script src="js/progressive_loader.js?v=20260716"></script>
             <script>
                 $(document).ready(function() {
 
@@ -71,6 +71,14 @@ class CraftView
                     $('.item-case').click(function(e) {
 
                         e.preventDefault();
+
+                        /* HUD : rester dans le panneau Artisanat ;
+                         * habillage hérité : pleine page. */
+                        if(window.hudOpenPanel){
+
+                            window.hudOpenPanel('load_inventory.php?craft&itemId=' + $(this).data('id'), 'Artisanat');
+                            return;
+                        }
 
                         document.location = 'inventory.php?craft&itemId=' + $(this).data('id');
                     });
@@ -273,7 +281,7 @@ class CraftView
         echo Str::minify(ob_get_clean());
 
         ?>
-        <script src="js/progressive_loader.js"></script>
+        <script src="js/progressive_loader.js?v=20260716"></script>
         <script>
             $('input[type="button"]').click(function(e) {
 
@@ -289,7 +297,23 @@ class CraftView
                 aooFetch('api/player/craft_item.php', {
                         'craft_id': artId
                     }, null)
-                    .then(autoModal)
+                    .then(function(data) {
+
+                        /* Panneau HUD : message + rechargement du
+                         * panneau — le redirect inventory.php de l'API
+                         * renvoyait sur la page héritée (retours
+                         * joueurs juillet 2026). */
+                        if (window.hudReloadPanels && data.result) {
+
+                            if (data.result.message) {
+                                aooAlert(data.result.message);
+                            }
+                            aooReload();
+                            return;
+                        }
+
+                        autoModal(data);
+                    })
                     .catch(autoError());
             });
         </script>

@@ -57,29 +57,81 @@ function aooFetch(url,  payload = null, method = null,autoProcess = true) {
 
 function autoModal(data) {
     if (data.error) {
-        alert(data.error);
+        aooAlert(data.error);
     }
     else if (data.result) {
+        if (data.result.message && data.result.redirect) {
+            /* Message PUIS redirection : l'alerte modale n'est pas bloquante */
+            aooAlert(data.result.message).then(function () {
+                document.location = data.result.redirect;
+            });
+            return;
+        }
         if (data.result.message)
-            alert(data.result.message);
+            aooAlert(data.result.message);
         if (data.result.redirect)
             document.location = data.result.redirect;
     }
 }
 
-function autoError(log=true,alert=true,reload=true) {
+/* NB : le paramètre s'appelait « alert » et masquait window.alert —
+ * l'appeler levait TypeError et le reload n'arrivait jamais. */
+function autoError(log=true,showAlert=true,reload=true) {
     return function (error) {
-        console.error('Error:', error);
         if (log) {
             console.error('Error:', error);
         }
-        if (alert) {
-            alert('Une erreur est survenue, veuillez réessayer.');
+        if (showAlert) {
+            aooAlert('Une erreur est survenue, veuillez réessayer.').then(function () {
+                if (reload) {
+                    location.reload();
+                }
+            });
+            return;
         }
         if (reload) {
             location.reload();
         }
     }
+}
+
+/* Paramètre d'URL de la vue courante : dans un panneau HUD, l'URL de
+ * la page (index.php) ne porte pas les paramètres du fragment — le
+ * routeur (js/hud.js) les expose dans window.hudPanelQuery. Les
+ * scripts partagés (marché, contrats…) doivent lire targetId ici
+ * plutôt que dans window.location.search. */
+function aooViewParam(name) {
+
+    if (window.hudPanelQuery) {
+
+        var value = new URLSearchParams(window.hudPanelQuery).get(name);
+        if (value !== null) {
+            return value;
+        }
+    }
+
+    return new URLSearchParams(window.location.search).get(name);
+}
+
+/* Recharge la vue après une action (achat, apprentissage, échange,
+ * équipement…) : dans le HUD, recharge le panneau ouvert et les
+ * valeurs vivantes du bandeau sans toucher à la page — un reload
+ * fermait le panneau (retours joueurs juillet 2026) ; dans
+ * l'habillage hérité, reload classique. Point unique : tous les
+ * scripts d'action doivent passer par ici plutôt que par
+ * document.location.reload(). */
+function aooReload() {
+
+    if (window.hudReloadPanels) {
+
+        window.hudReloadPanels();
+        if (window.hudRefreshAfterAction) {
+            window.hudRefreshAfterAction();
+        }
+        return;
+    }
+
+    document.location.reload();
 }
 
 // preload img
@@ -197,6 +249,15 @@ $(document).ready(function(){
                 popupOtherCharacter.text(otherCharactersNewMails);
                 popupOtherCharacter.toggle(otherCharactersNewMails > 0);
 
+                /* Mobile (HUD) : le rail vit dans le tiroir fermé — écho
+                 * du badge missives sur le bouton burger. */
+                let burgerBadge = $('#hud-burger-mails');
+                if (!burgerBadge.length && $('#hud-burger').length)
+                    burgerBadge = $('<span id="hud-burger-mails" class="cartouche bulle blink" style="pointer-events: none; display:none;"></span>').appendTo('#hud-burger');
+
+                burgerBadge.text(currentCharacterNewMails);
+                burgerBadge.toggle(currentCharacterNewMails > 0);
+
                 // change favicon
                 $("link[rel*='icon']").attr("href", totalNewMails > 0 ? "img/ui/favicons/favicon_alert.png" : "img/ui/favicons/favicon.png");
 
@@ -211,9 +272,17 @@ $(document).ready(function(){
                 console.error('Error:', error);
             });
 
-        setTimeout(checkMailFunction, 60000);
+        /* Ré-armement à tir unique : un appel manuel (lecture de
+         * missive en panneau) ne doit pas empiler une seconde chaîne
+         * de polls parallèle. */
+        clearTimeout(window.checkMailTimer);
+        window.checkMailTimer = setTimeout(checkMailFunction, 60000);
 
     }
+
+    /* Exposée : lire une missive en panneau HUD (sans rechargement)
+     * doit rafraîchir les badges sans attendre le poll de 60 s. */
+    window.refreshMailBadges = checkMailFunction;
 
     if($('#player-avatar')[0] != null){
 

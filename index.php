@@ -1,6 +1,7 @@
 <?php
 use Classes\Ui;
 use Classes\Str;
+use App\View\Hud\HudLayoutView;
 use App\View\InfosView;
 use App\View\MainView;
 use App\View\MenuView;
@@ -267,17 +268,18 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
                          "Tu recevras seulement " + skipXP + " XP/PI\n" +
                          "au lieu de " + totalXP + " XP/PI du tutoriel complet.";
 
-            if (confirm(message)) {
+            aooConfirm(message).then(function(ok) {
+                if (!ok) { return; }
                 $.post("api/tutorial/skip.php", {}, function(response) {
                     if (response.success) {
                         window.location.reload();
                     } else {
-                        alert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
+                        aooAlert("Erreur: " + (response.error || "Impossible de passer le tutoriel"));
                     }
                 }, "json").fail(function() {
-                    alert("Erreur de connexion au serveur");
+                    aooAlert("Erreur de connexion au serveur");
                 });
-            }
+            });
         });
 
         // Block all clicks outside modal
@@ -296,26 +298,45 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
 }
 
 // Note: Auto-start tutorial logic has been moved earlier (before modal check)
+
+// Nouveau HUD (Phase 1, opt-in) : option joueur newHud, avec surcharge
+// ponctuelle ?hud=1 / ?hud=0 pour tester sans toucher à l'option.
+// L'option est lue sur le joueur RÉEL : pendant le tutoriel, $player
+// est le personnage temporaire (sans options) mais l'interface choisie
+// par le joueur doit rester la même.
+$hudOptionPlayer = $player;
+$mainPlayerId = TutorialHelper::getMainPlayerId();
+if ($player->id !== $mainPlayerId && $mainPlayerId > 0) {
+    $hudOptionPlayer = PlayerFactory::legacy($mainPlayerId);
+}
+$useNewHud = $hudOptionPlayer->have_option('newHud');
+if (isset($_GET['hud'])) {
+    $useNewHud = $_GET['hud'] === '1';
+}
 ?>
 <div id="new-turn"><?php NewTurnView::renderNewTurn($player) ?></div>
+
+<?php if ($useNewHud) { ?>
+
+<?php HudLayoutView::render($player); ?>
+
+<?php } else { ?>
 
 <div id="infos"><?php InfosView::renderInfos($player);?></div>
 
 <div id="menu"><?php MenuView::renderMenu(); ?></div>
+
+<?php MainView::render($player) ?>
+
+<?php } ?>
 
 <?php
 // Clear auto-start flag after menu is rendered (JavaScript will pick it up)
 if (isset($_SESSION['auto_start_tutorial'])) {
     unset($_SESSION['auto_start_tutorial']);
 }
-?>
 
-<?php MainView::render($player) ?>
-
-
-<?php
-
-echo '<div style="color: red;">';
+echo '<div id="debug-flags" style="color: red;">';
 
 if(!CACHED_INVENT) echo 'CACHED_INVENT = false<br />';
 if(!CACHED_KILLS) echo 'CACHED_KILLS = false<br />';

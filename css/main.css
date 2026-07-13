@@ -677,10 +677,46 @@ img {
  */
 
 
+/* Les couleurs de race arrivent en variables CSS posées sur la
+ * cellule (logs.php) : l'habillage hérité les consomme en fond de
+ * cellule pleine, le thème papier (paper-app.css) en chip compacte. */
 .log-td{
 
     font-size: 88%;
-    color: #333;
+    color: var(--race-fg, #333);
+    background-color: var(--race-bg, transparent);
+}
+
+.log-td a{
+
+    color: var(--race-fg, #17337e);
+}
+
+.logs-hidden{
+
+    background: black;
+    color: gray;
+    padding: 5px;
+    font-size: 88%;
+}
+
+
+/*
+ * missives
+ */
+
+
+.missive-hint{
+
+    color: blue;
+    text-align: left;
+    font-size: 88%;
+    margin: 10px;
+}
+
+.missive-hint-warning{
+
+    color: red;
 }
 
 .log-rez, .log-kill{

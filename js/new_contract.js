@@ -13,8 +13,8 @@ $(document).ready(function () {
             url: 'merchant.php?targetId=' + window.targetId + '&bids&hideMenu&itemId=' + itemId,
             data: {}, // serializes the form's elements.
             success: function (data) {
-                // alert(data);
-                $('#ajax-data').html(data);
+                /* voir new_contract.php : id propre au contrat */
+                $('#contract-preview').html(data);
             }
         });
     });
@@ -25,50 +25,53 @@ $(document).ready(function () {
 
         var itemId = window.itemId;
 
-        var n = prompt('Quantité?', 1);
+        aooPrompt('Quantité?', 1).then(function (n) {
 
-        if (n == null) {
+            if (n == null) {
 
-            return false;
-        }
+                return;
+            }
 
-        if (n == '' || n < 1) {
+            if (n == '' || n < 1) {
 
-            alert('Nombre invalide!');
-            return false;
-        }
-
-
-        let basePrice = window.basePrice || 0;
+                aooAlert('Nombre invalide!');
+                return;
+            }
 
 
-        var price = prompt('Prix à l\'unité?', basePrice);
-
-        if (price == null) {
-
-            return false;
-        }
-
-        if (price == '' || price < 1) {
-
-            alert('Nombre invalide!');
-            return false;
-        }
+            let basePrice = window.basePrice || 0;
 
 
+            aooPrompt('Prix à l\'unité?', basePrice).then(function (price) {
 
-        const urlParams = new URLSearchParams(window.location.search);
-        targetId = urlParams.get('targetId');
-        let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
-        let payload = {
-            'action': 'create',
-            'type': 'asks',
-            'item_id': itemId,
-            'quantity': n,
-            'price': price
-        };
-        aooFetch(url, payload, null)
-            .then(autoModal)
-            .catch(autoError());
+                if (price == null) {
+
+                    return;
+                }
+
+                if (price == '' || price < 1) {
+
+                    aooAlert('Nombre invalide!');
+                    return;
+                }
+
+
+
+                /* Panneau HUD : les paramètres sont ceux du
+                 * fragment, pas de la page (main.js). */
+                targetId = aooViewParam('targetId');
+                let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
+                let payload = {
+                    'action': 'create',
+                    'type': 'asks',
+                    'item_id': itemId,
+                    'quantity': n,
+                    'price': price
+                };
+                aooFetch(url, payload, null)
+                    .then(autoModal)
+                    .catch(autoError());
+            });
+        });
     });
 });

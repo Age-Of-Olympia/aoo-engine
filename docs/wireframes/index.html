@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AoO — UI/UX Redesign Wireframes</title>
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+    <div class="wf-page">
+        <header class="wf-header">
+            <h1>Age of Olympia — Refonte UI/UX</h1>
+            <span class="crumb">/docs/wireframes/index.html</span>
+        </header>
+
+        <p class="wf-intro">
+            Proposition de refonte complète de l'interface d'Age of Olympia : barre
+            haute avec player chip + caracs persistants, rail vertical gauche pour
+            la navigation, map central avec le personnage <i>au centre</i>, chat
+            persistant sur le bord droit, et zone basse en trois parties (minimap ·
+            tuile sélectionnée · actions). Adapté mobile via un carrousel à la
+            place des trois zones du bas et des bottom-sheets pour les sous-pages.
+        </p>
+
+        <div class="callout">
+            <b>Décision-clé :</b> les clics sur les tuiles conservent le comportement
+            actuel (<code>observe.php</code> alimente la zone "tuile sélectionnée").
+            La refonte est <i>visuelle</i> — l'ensemble du gameplay reste intact,
+            pas de réécriture du back-end.
+        </div>
+
+        <h2 class="wf-section-title">Wireframes</h2>
+
+        <div style="background: var(--bg-parchment) url('../../img/ui/bg/perchment.gif') center/cover; border: 2px solid var(--accent-red); border-left: 6px solid var(--accent-red); border-radius: var(--r-md); padding: 14px 18px; margin: 8px 0 16px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 10px #0003;">
+            <i class="ra ra-hand" style="font-size: 36px; color: var(--accent-red); flex-shrink: 0; animation: wfPoint 1.4s ease-in-out infinite;"></i>
+            <div>
+                <div style="font-family: var(--font-fantasy); font-size: 24px; color: var(--accent-red); line-height: 1.2; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                    Cliquez sur une vignette pour ouvrir le wireframe&nbsp;!
+                </div>
+                <div style="font-size: 13px; color: var(--text-1); margin-top: 6px;">
+                    Vous pourrez y basculer entre les différents états (rien de sélectionné / arbre / autre joueur, panneau fiche / inventaire / journal, etc.) via les boutons en haut de chaque page.
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes wfPoint {
+                0%, 100% { transform: translateX(0); }
+                50%      { transform: translateX(6px); }
+            }
+        </style>
+
+        <div class="wf-card-grid">
+            <a href="desktop-main.html" class="wf-card">
+                <div class="preview">
+                    <svg viewBox="0 0 220 130" width="100%" height="100%">
+                        <!-- Stone background -->
+                        <rect x="0" y="0" width="220" height="130" fill="#c4c2bd"/>
+                        <!-- Burgundy top bar -->
+                        <rect x="0" y="0" width="220" height="13" fill="#5a1f1f"/>
+                        <!-- Marble rail -->
+                        <rect x="0" y="13" width="12" height="117" fill="#a8a7a3"/>
+                        <!-- Dark square map (game world) -->
+                        <rect x="12" y="13" width="158" height="78" fill="#2a2825"/>
+                        <!-- Parchment chat panel -->
+                        <rect x="170" y="13" width="50" height="78" fill="#e8d8b5"/>
+                        <rect x="170" y="13" width="50" height="9" fill="#5a1f1f"/>
+                        <!-- Marble bottom row -->
+                        <rect x="12" y="91" width="69" height="39" fill="#d8d6d1"/>
+                        <rect x="82" y="91" width="61" height="39" fill="#d8d6d1"/>
+                        <rect x="144" y="91" width="76" height="39" fill="#d8d6d1"/>
+                        <!-- Player chip + 5 pills on top bar -->
+                        <rect x="2" y="3" width="34" height="7" rx="2" fill="#ebe9e3" stroke="#8a4a10" stroke-width="0.6"/>
+                        <rect x="40" y="3" width="12" height="7" rx="3" fill="#ebe9e3"/>
+                        <rect x="54" y="3" width="12" height="7" rx="3" fill="#ebe9e3"/>
+                        <rect x="68" y="3" width="12" height="7" rx="3" fill="#ebe9e3"/>
+                        <rect x="82" y="3" width="12" height="7" rx="3" fill="#ebe9e3"/>
+                        <rect x="96" y="3" width="12" height="7" rx="3" fill="#ebe9e3"/>
+                        <!-- 3 top-right icon buttons -->
+                        <rect x="178" y="3" width="7" height="7" rx="1.5" fill="#ebe9e3"/>
+                        <rect x="187" y="3" width="7" height="7" rx="1.5" fill="#ebe9e3"/>
+                        <rect x="196" y="3" width="7" height="7" rx="1.5" fill="#ebe9e3"/>
+                        <!-- Player dot at center of square map -->
+                        <circle cx="91" cy="52" r="3" fill="#efd477" stroke="#fff" stroke-width="0.6"/>
+                        <!-- 2 chat tabs visible (Général + Événements) -->
+                        <rect x="173" y="24" width="20" height="3" fill="#5a1f1f"/>
+                        <rect x="195" y="24" width="22" height="3" fill="#8a7d68"/>
+                        <rect x="173" y="32" width="44" height="2" fill="#8a7d68"/>
+                        <rect x="173" y="37" width="38" height="2" fill="#8a7d68"/>
+                        <rect x="173" y="42" width="42" height="2" fill="#8a7d68"/>
+                        <text x="195" y="85" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">CHAT</text>
+                        <text x="46" y="115" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">MINIMAP</text>
+                        <text x="112" y="115" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">SÉLECT.</text>
+                        <text x="182" y="115" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">ACTIONS</text>
+                    </svg>
+                </div>
+                <h3>Desktop — Écran principal</h3>
+                <p>Player chip (avatar + race) en haut. A / MVT / PV. Chat panel persistant à droite.
+                Zone basse 3 colonnes. Trois états : neutre, ressource sélectionnée, autre joueur (PvP).</p>
+            </a>
+
+            <a href="desktop-panel.html" class="wf-card">
+                <div class="preview">
+                    <svg viewBox="0 0 220 130" width="100%" height="100%">
+                        <!-- Same desktop layout as main, with a panel sliding in from the LEFT -->
+                        <rect x="0" y="0" width="220" height="130" fill="#c4c2bd"/>
+                        <rect x="0" y="0" width="220" height="13" fill="#5a1f1f"/>
+                        <rect x="0" y="13" width="12" height="117" fill="#a8a7a3"/>
+                        <!-- Panel from left (after rail) -->
+                        <rect x="12" y="13" width="60" height="117" fill="#e8d8b5" stroke="#5a1f1f" stroke-width="1"/>
+                        <rect x="12" y="13" width="60" height="11" fill="#5a1f1f"/>
+                        <text x="42" y="21" text-anchor="middle" fill="#efd477" font-size="6" font-family="serif">Cradek</text>
+                        <!-- Map shifted to remaining visible area -->
+                        <rect x="72" y="13" width="98" height="78" fill="#2a2825"/>
+                        <circle cx="121" cy="52" r="3" fill="#efd477" stroke="#fff" stroke-width="0.6"/>
+                        <!-- Chat still visible on right -->
+                        <rect x="170" y="13" width="50" height="78" fill="#e8d8b5"/>
+                        <rect x="170" y="13" width="50" height="9" fill="#5a1f1f"/>
+                        <!-- Bottom row -->
+                        <rect x="72" y="91" width="148" height="39" fill="#d8d6d1"/>
+                        <!-- Affiliation icons on player card -->
+                        <circle cx="24" cy="40" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <circle cx="36" cy="40" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <circle cx="48" cy="40" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <circle cx="60" cy="40" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <circle cx="24" cy="52" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <circle cx="36" cy="52" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <circle cx="48" cy="52" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        <text x="195" y="55" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">chat</text>
+                    </svg>
+                </div>
+                <h3>Desktop — Sous-pages en panneau</h3>
+                <p>Trois panneaux illustrés : <b>fiche personnage</b> (avec icônes Faction, École de guerre, Compétences…), <b>inventaire</b>, et <b>journal d'événements</b>. Pattern unique pour toutes les pages.</p>
+            </a>
+
+            <a href="mobile-main.html" class="wf-card">
+                <div class="preview">
+                    <svg viewBox="0 0 220 130" width="100%" height="100%">
+                        <rect x="0" y="0" width="220" height="130" fill="#c4c2bd"/>
+                        <g>
+                            <!-- Phone 1: hamburger top-left, no tabbar -->
+                            <rect x="10"  y="13" width="55" height="104" rx="8" fill="#d8d6d1" stroke="#555" stroke-width="0.5"/>
+                            <rect x="13"  y="20" width="49" height="9" fill="#5a1f1f"/>
+                            <rect x="14"  y="22" width="6" height="5" rx="1" fill="#ebe9e3"/>
+                            <rect x="22"  y="22" width="6" height="5" rx="1" fill="#ebe9e3"/>
+                            <rect x="29"  y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="35"  y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="41"  y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="47"  y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="53"  y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="13"  y="29" width="49" height="50" fill="#2a2825"/>
+                            <rect x="15"  y="32" width="38" height="6" rx="1" fill="#e8d8b5" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <rect x="13"  y="79" width="49" height="38" fill="#d8d6d1"/>
+                            <text x="38" y="103" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">MINIMAP</text>
+
+                            <!-- Phone 2 (default) -->
+                            <rect x="82"  y="13" width="55" height="104" rx="8" fill="#d8d6d1" stroke="#5a1f1f" stroke-width="1"/>
+                            <rect x="85"  y="20" width="49" height="9" fill="#5a1f1f"/>
+                            <rect x="86"  y="22" width="6" height="5" rx="1" fill="#ebe9e3"/>
+                            <rect x="94"  y="22" width="6" height="5" rx="1" fill="#ebe9e3"/>
+                            <rect x="101" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="107" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="113" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="119" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="125" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="85"  y="29" width="49" height="50" fill="#2a2825"/>
+                            <rect x="87"  y="32" width="38" height="6" rx="1" fill="#e8d8b5" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <rect x="85"  y="79" width="49" height="38" fill="#d8d6d1"/>
+                            <text x="110" y="103" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">SÉLECT.</text>
+
+                            <!-- Phone 3 -->
+                            <rect x="154" y="13" width="55" height="104" rx="8" fill="#d8d6d1" stroke="#555" stroke-width="0.5"/>
+                            <rect x="157" y="20" width="49" height="9" fill="#5a1f1f"/>
+                            <rect x="158" y="22" width="6" height="5" rx="1" fill="#ebe9e3"/>
+                            <rect x="166" y="22" width="6" height="5" rx="1" fill="#ebe9e3"/>
+                            <rect x="173" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="179" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="185" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="191" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="197" y="22" width="5" height="5" rx="1.5" fill="#ebe9e3"/>
+                            <rect x="157" y="29" width="49" height="50" fill="#2a2825"/>
+                            <rect x="159" y="32" width="38" height="6" rx="1" fill="#e8d8b5" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <rect x="157" y="79" width="49" height="38" fill="#d8d6d1"/>
+                            <text x="182" y="103" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="monospace">ACTIONS</text>
+                        </g>
+                    </svg>
+                </div>
+                <h3>Mobile — Écran principal (carrousel)</h3>
+                <p>Carrousel 3 panneaux : minimap ↔ sélection ↔ actions. Hamburger top-left ouvre le drawer de navigation, player chip compact, pastille chat overlay sur le map. Pas de tab-bar.</p>
+            </a>
+
+            <a href="mobile-sheet.html" class="wf-card">
+                <div class="preview">
+                    <svg viewBox="0 0 220 130" width="100%" height="100%">
+                        <rect x="0" y="0" width="220" height="130" fill="#c4c2bd"/>
+                        <g>
+                            <rect x="20" y="8" width="80" height="118" rx="9" fill="#d8d6d1" stroke="#555"/>
+                            <rect x="23" y="15" width="74" height="7" fill="#5a1f1f"/>
+                            <rect x="23" y="22" width="74" height="20" fill="#2a2825" opacity="0.4"/>
+                            <rect x="23" y="42" width="74" height="78" rx="6" fill="#e8d8b5" stroke="#5a1f1f" stroke-width="0.6"/>
+                            <rect x="23" y="42" width="74" height="9" fill="#5a1f1f"/>
+                            <text x="60" y="58" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="serif">Chat</text>
+                            <rect x="28" y="65" width="60" height="2" fill="#8a4a10"/>
+                            <rect x="28" y="70" width="50" height="2" fill="#2a6e2a"/>
+                            <rect x="28" y="75" width="55" height="2" fill="#8a4a10"/>
+
+                            <rect x="115" y="8" width="80" height="118" rx="9" fill="#d8d6d1" stroke="#555"/>
+                            <rect x="118" y="15" width="74" height="7" fill="#5a1f1f"/>
+                            <rect x="118" y="22" width="74" height="20" fill="#2a2825" opacity="0.4"/>
+                            <rect x="118" y="42" width="74" height="78" rx="6" fill="#e8d8b5" stroke="#5a1f1f" stroke-width="0.6"/>
+                            <rect x="118" y="42" width="74" height="9" fill="#5a1f1f"/>
+                            <text x="155" y="58" text-anchor="middle" fill="#5a1f1f" font-size="5" font-family="serif">Cradek</text>
+                            <circle cx="128" cy="80" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <circle cx="140" cy="80" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <circle cx="152" cy="80" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <circle cx="164" cy="80" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <circle cx="128" cy="92" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                            <circle cx="140" cy="92" r="3" fill="#fff" stroke="#5a1f1f" stroke-width="0.4"/>
+                        </g>
+                    </svg>
+                </div>
+                <h3>Mobile — Bottom-sheets</h3>
+                <p>Deux exemples : <b>Chat</b> et <b>Fiche personnage</b>. Pills A / MVT / PV restent visibles au-dessus de la sheet. Chrome identique aux panneaux desktop.</p>
+            </a>
+        </div>
+
+        <h2 class="wf-section-title">Propositions</h2>
+
+        <table class="decision-table">
+            <tr>
+                <th style="width: 24%;">Sujet</th>
+                <th style="width: 38%;">Décision</th>
+                <th>Conséquence</th>
+            </tr>
+            <tr>
+                <td><b>Layout HUD</b></td>
+                <td>Top bar persistante · rail gauche · map central (joueur au centre) · chat persistant à droite · zone basse 3-colonnes</td>
+                <td>Référence visuelle claire, hiérarchie d'information stable</td>
+            </tr>
+            <tr>
+                <td><b>Clic sur tuile</b></td>
+                <td>Comportement actuel conservé (<code>observe.php</code>)</td>
+                <td><b>Zéro changement back-end</b> — refonte ≈ 100% CSS/HTML</td>
+            </tr>
+            <tr>
+                <td><b>Sous-pages</b></td>
+                <td>Panneau glissant intégré (desktop) · bottom-sheet (mobile) · même HTML</td>
+                <td>Refactor de chaque page comme un panneau (gros chantier, page-par-page)</td>
+            </tr>
+            <tr>
+                <td><b>Priorité de design</b></td>
+                <td>Mobile-first, puis extension desktop</td>
+                <td>Force la priorisation des infos essentielles</td>
+            </tr>
+            <tr>
+                <td><b>Carrousel mobile</b></td>
+                <td>3 panneaux swipeables : minimap · sélection+actions · grille d'actions</td>
+                <td>Position par défaut au milieu, dots de pagination</td>
+            </tr>
+            <tr>
+                <td><b>Top bar</b></td>
+                <td>Player chip + 6 pills (A · MVT · PV · PM · PF · EN) + plan/lieu + Tour suivant + 3 boutons (changer-perso · classements · aide)</td>
+                <td>Identité, caracs visibles en permanence, prochain tour, accès rapides</td>
+            </tr>
+            <tr>
+                <td><b>Tour suivant</b></td>
+                <td>Horaire informatif (HH:MM), pas de countdown — 18 h pour jouer</td>
+                <td>Aucune urgence visuelle, pas d'animations alarmistes</td>
+            </tr>
+            <tr>
+                <td><b>Player chip → Fiche perso</b></td>
+                <td>Clic sur le chip = ouvre la fiche en panneau / sheet. Contient les icônes d'accès à <b>Faction</b>, <b>École de guerre</b>, <b>Compétences</b>, etc.</td>
+                <td>Faction / War School deviendront plus tard des <i>bâtiments visitables</i> sur la carte</td>
+            </tr>
+            <tr>
+                <td><b>Chat &amp; événements</b></td>
+                <td>Anciens "messages du jour" promus en chat persistant — panneau droit desktop · pastille overlay + sheet mobile · onglets <i>Général</i> et <i>Événements</i></td>
+                <td>Le journal des événements vit dans l'onglet « Événements » (badge non-lus) — pas de sous-page dédiée. Source = <code>players_logs</code></td>
+            </tr>
+            <tr>
+                <td><b>Navigation</b></td>
+                <td>Rail vertical gauche desktop · drawer hamburger (depuis la gauche) sur mobile</td>
+                <td>7 items + Paramètres : Personnage · Carte (monde / locale) · Inventaire / Banque · Craft · Caractéristiques · Sorts / Techniques · Forum · Paramètres (en bas)</td>
+            </tr>
+            <tr>
+                <td><b>Minimap</b></td>
+                <td>Réutilise l'existant : <i>tactical</i> = local map déjà rendue ; <i>orientation</i> = image du monde (ou absence de map pour les plans comme les Enfers)</td>
+                <td>Pas de nouveau code de rendu nécessaire</td>
+            </tr>
+            <tr>
+                <td><b>Tutorial</b></td>
+                <td>Pas de wireframe dédié — l'overlay tutoriel s'affiche par-dessus le HUD réel</td>
+                <td>Mettre à jour les <code>target_selector</code> des steps existants</td>
+            </tr>
+        </table>
+
+        <h2 class="wf-section-title">À discuter</h2>
+
+        <ul class="wf-annot-list">
+            <li>
+                <b>Phasage</b>
+                MVP HUD seul d'abord (80% du gain visuel pour 20% du travail), puis chat, puis sous-pages-en-panneau, puis mobile ? Ou tout d'un bloc ?
+            </li>
+            <li>
+                <b>Chat — moderation &amp; persistance</b>
+                Historique stocké côté serveur sur quelle durée ? Filtre anti-spam ? Commandes (/whisper, /faction…) ?
+            </li>
+            <li>
+                <b>Tablette</b>
+                Breakpoint intermédiaire (~768 px) — desktop allégé, ou mobile élargi avec les 3 panneaux côte à côte ?
+            </li>
+            <li>
+                <b>Forum &amp; classements</b>
+                Restent en pleine page (contenu long) ou deviennent panneaux ?
+            </li>
+        </ul>
+
+        <h2 class="wf-section-title">Notes pour les devs</h2>
+
+        <ul class="wf-annot-list">
+            <li>
+                <b>Source des données</b>
+                Player chip + caracs = <code>CaracsPanelRenderer</code>. Zone sélectionnée = <code>observe.php</code>. Actions = <code>#ui-card</code> actuel. Tour suivant = <code>players.nextTurnTime</code>. Journal = <code>players_logs</code>. Chat = anciens messages du jour.
+            </li>
+            <li>
+                <b>Net-new components</b>
+                Chat persistant (front + WS/polling), carrousel mobile (JS), panel-router pour les sous-pages glissantes, player card view. (La minimap réutilise les vues map existantes.)
+            </li>
+            <li>
+                <b>Police &amp; icônes</b>
+                Réutilise <code>goudy.ttf</code> et <code>rpg-awesome</code> déjà présents.
+            </li>
+            <li>
+                <b>Cache-busting</b>
+                Penser à incrémenter <code>?v=YYYYMMDD</code> sur les fichiers JS/CSS modifiés.
+            </li>
+        </ul>
+
+        <p style="color: var(--text-3); font-size: 12px; margin-top: var(--sp-7); text-align: center;">
+            Wireframes statiques · Ouvrez les fichiers dans un navigateur · Redimensionnez la fenêtre pour voir le breakpoint mobile
+        </p>
+    </div>
+</body>
+</html>

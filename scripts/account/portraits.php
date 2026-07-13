@@ -64,7 +64,7 @@ echo '</div>';
 
 
 ?>
-<script src="js/progressive_loader.js"></script>
+<script src="js/progressive_loader.js?v=20260716"></script>
 <script>
 $(document).ready(function(){
 
@@ -78,6 +78,14 @@ $(document).ready(function(){
             data: {'img':img}, // serializes the form's elements.
             success: function(data)
             {
+                /* Panneau HUD : retour au Profil sans navigation */
+                if(window.hudOpenPanel){
+
+                    aooAlert('Portrait changé avec succès!');
+                    window.hudOpenPanel('load_account.php', 'Profil');
+                    return;
+                }
+
                 alert('Portrait changé avec succès!');
                 document.location = 'account.php';
             }

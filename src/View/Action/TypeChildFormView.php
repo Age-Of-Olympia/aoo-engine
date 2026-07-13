@@ -81,7 +81,7 @@ final class TypeChildFormView
     {
         return '<button type="submit" class="wb-remove-btn" name="' . $this->esc($idName) . '" value="' . $id . '"'
             . ' formaction="' . $this->esc($removeAction) . '" formnovalidate'
-            . ' onclick="return confirm(\'' . $this->esc($confirm) . '\');" title="Retirer">&times;</button>';
+            . ' onclick="var b=this; aooConfirm(\'' . $this->esc($confirm) . '\').then(function(ok){ if(ok){ b.form.requestSubmit(b); } }); return false;" title="Retirer">&times;</button>';
     }
 
     /**

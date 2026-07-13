@@ -4,7 +4,7 @@ from csscompressor import compress
 # pip3 install csscompressor
 
 # Liste des fichiers à minifier
-files = ["main.css", "dialog.css"]
+files = ["main.css", "dialog.css", "hud.css"]
 
 # Fonction pour minifier un fichier CSS
 def minify_css(file_path):

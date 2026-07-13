@@ -1,51 +1,12 @@
 <?php
 use App\Factory\PlayerFactory;
+use App\View\UpgradesView;
 use Classes\Ui;
 use Classes\Str;
 
 require_once('config.php');
 
 ob_start();
-
-// caracs trio
-$trio['pv'] = array(4,2,1);
-$trio['ct'] = array(110,50,30);
-$trio['f'] = array(120,55,30);
-$trio['agi'] = array(95,45,25);
-$trio['e'] = array(120,55,30);
-$trio['pm'] = array(5,3,1);
-$trio['fm'] = array(100,50,30);
-$trio['m'] = array(110,55,35);
-$trio['a'] = array(800,200,100);
-$trio['mvt'] = array(100,50,30);
-$trio['r'] = array(40,30,15);
-$trio['rm'] = array(50,40,20);
-$trio['cc'] = array(100,50,30);
-$trio['p'] = array(110,85,78);
-$trio['spd'] = array(400,100,50);
-
-
-// return cost
-function return_cost( $progress, $upgraded ){
-
-    $next = $upgraded + 1;
-
-    $total = $progress[0];
-
-    for( $i = 1; $i < $next; $i++ ){
-
-        if( $i < 3 ){
-
-            $total = $total + $progress[1];
-        }
-        elseif( $i >= 3 ){
-
-            $total = $total + $progress[2];
-        }
-    }
-
-    return $total;
-}
 
 
 $player = PlayerFactory::legacy($_SESSION['playerId']);
@@ -70,7 +31,7 @@ if( !empty($_GET['caracTables']) ){
     foreach( CARACS as $e=>$k ){
 
 
-        if(!isset($trio[$e])){
+        if(!isset(UpgradesView::TRIO[$e])){
 
             continue;
         }
@@ -83,7 +44,7 @@ if( !empty($_GET['caracTables']) ){
 
 
         echo '
-        ^    ^ '. implode('/', $trio[ $e ]) .' ^^<br />
+        ^    ^ '. implode('/', UpgradesView::TRIO[$e]) .' ^^<br />
         ^ Augm. ^ Coût ^ Coût total ^<br />
         ';
 
@@ -95,7 +56,7 @@ if( !empty($_GET['caracTables']) ){
 
             $n = $i - 1;
 
-            $cost = return_cost( $trio[ $e ], $n );
+            $cost = UpgradesView::returnCost( UpgradesView::TRIO[$e], $n );
             $total += $cost;
 
             echo '
@@ -133,131 +94,6 @@ if(isset($_GET['spells'])){
 }
 
 
-echo '
-<table class="box-shadow marbre" border="1" align="center" style="position:relative; margin-top: 60px;">';
-
-
-echo '<tr><th>Carac.</th><th>Valeur</th><th>Équipé</th><th>Reste</th><th>Coût</th><th><span class="ra ra-archery-target"></span></th></tr>';
-
-function getTooltip($key)
-{
-    if (!isset(CARACS_TXT_LONG[$key])) {
-
-        return '';
-    }
-    return 'tooltip="' . CARACS_TXT_LONG[$key] . '"';
-}
-
-foreach(CARACS as $k=>$e){
-
-
-    if($k == 'ae' || $k == 'spd'){
-
-        continue;
-    }
-
-
-    $cost = return_cost($trio[$k], $player->upgrades->$k);
-
-
-    $color = 'green';
-    $disabled = '';
-
-
-    if($cost > $player->row->pi){
-
-        $color =  'red';
-        $disabled = 'disabled';
-    }
-
-
-    $carac = '';
-
-    if($player->caracs->$k > $player->nude->$k){
-
-
-        $carac = '<font color="blue">'. $player->caracs->$k .'</font>';
-    }
-    elseif($player->caracs->$k < $player->nude->$k){
-
-
-        $carac = '<font color="red">'. $player->caracs->$k .'</font>';
-    }
-
-
-    $turn = '';
-
-    if(isset($player->turn->$k)){
-
-        $turn =  $player->turn->$k;
-    }
-
-    if(is_numeric($turn) && $turn < 1){
-
-        $turn = '<font color="red">'. $turn .'</font>';
-    }
-    elseif(is_numeric($turn) && $turn == $carac){
-
-        $turn = '<font color="blue">'. $turn .'</font>';
-    }
-
-
-    $debuff = '';
-
-    if(!empty($player->debuffs->$k)){
-
-        $debuff = '<span class="ra '. EFFECTS_RA_FONT[$player->debuffs->$k] .'"></span>';
-    }
-
-
-    echo '
-    <tr>
-        <th '. getTooltip($k) .'>
-            '. $e .'
-        </th>
-        <td>
-            '. $player->nude->$k .'
-        </td>
-        <td>
-            '. $carac . $debuff .'
-        </td>
-        <td>
-            '. $turn .'
-        </td>
-        <td>
-            <font color="'. $color .'">'. $cost .'Pi</font>
-        </td>
-        <td>
-            ';
-
-            echo '
-            <button
-                data-carac="'. $k .'"
-                data-carac-name="'. CARACS[$k] .'"
-                '. $disabled .'
-                class="upgrade"
-                >
-                +1
-            </button>
-            ';
-
-            echo '
-        </td>
-    </tr>
-    ';
-}
-
-echo '
-</table><br/>
-';
-
-
-echo $player->row->pi .' Points d\'investissement (Pi)<br/>';
-echo 'Familiarisez-vous avec les règles du jeu dans le <a href="https://age-of-olympia.net/wiki/doku.php?id=regles:combat" target="_blank">wiki</a>.<br/>';
-
-?>
-<script src="js/upgrades.js"></script>
-<?php
-
+UpgradesView::render($player);
 
 echo Str::minify(ob_get_clean());

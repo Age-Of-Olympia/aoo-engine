@@ -25,7 +25,14 @@ $(document).ready(function(e){
             }, // serializes the form's elements.
             success: function(data)
             {
-                // alert(data);
+                /* HUD : rouvrir le fil dans le panneau au lieu de
+                 * naviguer vers la page héritée. */
+                if(window.hudOpenPanel){
+
+                    window.hudOpenPanel('load_forum.php?topic='+ window.topId +'&page='+ window.pagesN, 'Missives');
+                    return;
+                }
+
                 document.location = 'forum.php?topic='+ window.topId +'&page='+ window.pagesN +'#'+ data.trim();
             }
         });

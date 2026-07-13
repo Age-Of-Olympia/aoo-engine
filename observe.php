@@ -287,6 +287,7 @@ if($res->num_rows){
     }
 
     $card="";
+    $equipStrip="";
     $raceService = new RaceService();
     while($row = $res->fetch_object()){
 
@@ -369,14 +370,16 @@ if($res->num_rows){
         }
 
 
+        /* class="action" comme Missive : sans elle, la grille d'actions
+         * du HUD ignore ces boutons (nom toujours affiché, taille libre). */
         if($target->have_option('isMerchant')){
 
-            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
+            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
         }
 
         if($target->have_option('isTrainer')){
 
-            $dataImg .= '<a href="warschool.php?targetId='. $target->id .'"><button><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
+            $dataImg .= '<a href="warschool.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
         }
 
 
@@ -435,6 +438,15 @@ if($res->num_rows){
         );
 
         $card .= Ui::get_card($data);
+
+        /* Équipement porté par le personnage observé — alvéoles pour
+         * la vue de sélection du HUD papier, visibles sur écrans
+         * larges seulement (js/hud.js + css/hud.css). L'habillage
+         * hérité garde sa carte telle quelle. */
+        if (Ui::usesPaperTheme()) {
+
+            $equipStrip = \App\View\EquipmentSlotsView::render($target->id);
+        }
     }
 }
 
@@ -534,8 +546,9 @@ else{
                                 data-url="worship.php"
                                 data-action="worship"
                                 data-target-id="'. $row->id .'"
-                            ><span class="ra ra-candle"></span> Vénérer
-                            </button>';
+                            ><span class="ra ra-candle"></span>
+                            <span class="action-name">Vénérer</span>
+                            </button><br/>';
 
                             $dataText = "Vénérez ce Dieu pour pouvoir lui adresser vos prières.";
                         }
@@ -568,7 +581,7 @@ else{
         var x = <?php echo $x ?>;
         var y = <?php echo $y ?>;
         </script>
-        <script src="js/observe_destroy.js?v=31102024"></script>
+        <script src="js/observe_destroy.js?v=20260715"></script>
         <?php
 
     }
@@ -669,8 +682,13 @@ if(!empty($card)){
 
     echo $card;
 
+    if(!empty($equipStrip)){
+
+        echo $equipStrip;
+    }
+
     ?>
-    <script src="js/observe.js?20"></script>
+    <script src="js/observe.js?v=20260717c"></script>
     <?php
 }
 

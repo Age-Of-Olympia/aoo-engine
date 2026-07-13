@@ -2,6 +2,14 @@ $(document).ready(function(e){
 
     $('.reply').click(function(e){
 
+        /* HUD : le formulaire de réponse s'ouvre dans le panneau
+         * (le fil reste dans la pile de retour) ; habillage hérité :
+         * pleine page. */
+        if(window.hudOpenPanel){
+
+            window.hudOpenPanel('load_forum.php?reply='+ $(this).data('topic'), 'Répondre');
+            return;
+        }
 
         document.location = 'forum.php?reply='+ $(this).data('topic');
     });
@@ -36,7 +44,11 @@ $(document).ready(function(e){
         });
     });
 
-    $(document).on('click', 'img.give-cookie:not(.disable)', function() {
+    /* Handler délégué NAMESPACÉ : le script est ré-exécuté à chaque
+     * chargement du fil en panneau HUD (load_forum.php) — sans le
+     * .off, chaque ouverture empilerait un handler de plus (cookies
+     * donnés en double). */
+    $(document).off('click.forumCookie').on('click.forumCookie', 'img.give-cookie:not(.disable)', function() {
         var $this = $(this);
     
         if( !$this.hasClass("disable")) {

@@ -17,3 +17,31 @@
 }
 .modal h3 { margin-top: 0; }
 .modal button { margin-top: 10px; }
+/* ---------- Boîtes de dialogue mutualisées (js/modal.js) ---------- */
+.aoo-dialog {
+  min-width: 260px;
+  max-width: min(480px, 90vw);
+  text-align: center;
+}
+.aoo-dialog-text {
+  white-space: pre-line;
+  line-height: 1.45;
+}
+.aoo-dialog-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12px;
+  padding: 6px 9px;
+  text-align: center;
+}
+.aoo-dialog-buttons {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.aoo-dialog-buttons button {
+  min-width: 90px;
+  cursor: pointer;
+}

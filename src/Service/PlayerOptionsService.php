@@ -28,6 +28,26 @@ use Classes\Db;
 class PlayerOptionsService
 {
     /**
+     * Cache par requête HTTP des compteurs d'options par joueur : la
+     * page de jeu appelait have_option() 5+ fois (5+ COUNT). Un seul
+     * SELECT GROUP BY par joueur ; invalidé par addOption/endOption et
+     * resetCache() (pour les écritures directes hors service).
+     *
+     * @var array<int, array<string, int>>
+     */
+    private static array $optionCountsByPlayer = [];
+
+    /** Invalide le cache (un joueur, ou tout si null). */
+    public static function resetCache(?int $playerId = null): void
+    {
+        if ($playerId === null) {
+            self::$optionCountsByPlayer = [];
+        } else {
+            unset(self::$optionCountsByPlayer[$playerId]);
+        }
+    }
+
+    /**
      * The canonical set of admin-toggleable option names. Single source of truth
      * shared by the admin options manager (admin/admin-access*.php) and the
      * `option` console command (Classes/console-commands/optioncmd.php), so the
@@ -52,17 +72,25 @@ class PlayerOptionsService
      */
     public function hasOption(int $playerId, string $name): int
     {
-        $db = new Db();
+        if (!isset(self::$optionCountsByPlayer[$playerId])) {
+            $db = new Db();
 
-        $sql = '
-        SELECT COUNT(*) AS n
-        FROM players_options
-        WHERE player_id = ? AND name = ?';
+            $sql = '
+            SELECT name, COUNT(*) AS n
+            FROM players_options
+            WHERE player_id = ?
+            GROUP BY name';
 
-        $res = $db->exe($sql, [$playerId, $name]);
-        $row = $res->fetch_assoc();
+            $res = $db->exe($sql, [$playerId]);
 
-        return (int) $row['n'];
+            $counts = [];
+            while ($row = $res->fetch_assoc()) {
+                $counts[$row['name']] = (int) $row['n'];
+            }
+            self::$optionCountsByPlayer[$playerId] = $counts;
+        }
+
+        return self::$optionCountsByPlayer[$playerId][$name] ?? 0;
     }
 
     /**
@@ -78,6 +106,8 @@ class PlayerOptionsService
             'player_id' => $playerId,
             'name'      => $name,
         ]);
+
+        self::resetCache($playerId);
     }
 
     /**
@@ -92,6 +122,8 @@ class PlayerOptionsService
             'player_id' => $playerId,
             'name'      => $name,
         ]);
+
+        self::resetCache($playerId);
     }
 
     /**

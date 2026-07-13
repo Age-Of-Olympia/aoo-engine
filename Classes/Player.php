@@ -53,7 +53,10 @@ class Player implements ActorInterface {
         $this->playerBonusService = new PlayerBonusService();
         $this->actionPassiveService = new ActionPassiveService();
 
-        $this->playerPassiveService->setEsquivePlayer($this);
+        /* L'esquive est calculée en fin de get_caracs() — la calculer
+         * ici forçait le chargement complet des caracs (4+ requêtes) à
+         * CHAQUE instanciation, y compris pour un simple avatar sur le
+         * damier (~40 requêtes par affichage de la vue). */
     }
 
     public function getId(): int {
@@ -333,6 +336,11 @@ class Player implements ActorInterface {
         }
 
 
+        /* Esquive (passifs à trait « esquive ») : fait partie des
+         * caracs — calculée ici, elle est présente dès que les caracs
+         * le sont, et part dans le cache .caracs.json. */
+        $this->playerPassiveService->setEsquivePlayer($this);
+
         // save .caracs
         $data = Json::encode($this->caracs);
         Json::write_json('datas/private/players/'. $this->id .'.caracs.json', $data);
@@ -418,7 +426,13 @@ class Player implements ActorInterface {
         return (bool) (new MapService())->getTileTypeAtCoord($type, (int) $this->data->coords_id)->n;
     }
 
-    public function getCoords(bool $refresh = true): object{
+    /**
+     * Mémoïsé par défaut : la barre de statut, la minimap et la vue
+     * relisaient chacune les coordonnées (3 requêtes par page). go()
+     * invalide le memo après déplacement ; $refresh=true force la
+     * relecture.
+     */
+    public function getCoords(bool $refresh = false): object{
 
 
         if (!$refresh && isset($this->coords)) {
@@ -728,6 +742,10 @@ class Player implements ActorInterface {
         $this->move_followers($coordsId);
 
 
+        /* getCoords() est mémoïsé : $this->coords garde volontairement
+         * les ANCIENNES coordonnées jusqu'à la fin de go() (le
+         * rafraîchissement SVG de l'ancien plan en dépend), puis go()
+         * pose lui-même les nouvelles ($this->coords = $goCoords). */
         $sql = 'UPDATE players SET coords_id = ? WHERE id = ?';
 
         $db = new Db();

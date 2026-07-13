@@ -1,0 +1,2592 @@
+/* ============================================================
+ * Nouveau HUD (option newHud) — Phase 1 desktop
+ *
+ * Chargé uniquement par HudLayoutView : toutes les règles sont
+ * scopées sous #hud ou body:has(#hud) pour ne rien changer à la
+ * mise en page héritée ni aux autres pages.
+ *
+ * Grille : topbar / rail | minimap | carte | panneau latéral,
+ * bandeau bas = #ajax-data (sélection + actions d'observe.php).
+ * ============================================================ */
+
+/* ---------- Typographies de la maquette (auto-hébergées) ----------
+ * Gloock : titres et noms ; DM Serif Display : parole des personnages
+ * (italique) ; Seaweed Script : accents manuscrits. Sous-ensemble
+ * latin (accents français inclus). */
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display-italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Seaweed Script';
+    src: url('fonts/seaweed-script.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+/* ---------- Jetons de design ----------
+ * Univers papier & encre de la maquette graphiste (olympia-tests.psd) :
+ * papier vieilli en fond de scène, cellules en voile crème translucide
+ * (le grain du papier reste visible), encre presque noire, bronze du
+ * parchemin brûlé pour la structure, parole sur parchemin clair, sang
+ * pour les blessures. */
+body:has(#hud) {
+    --hud-ink: #1d1c1b;
+    --hud-ink-soft: rgba(29, 28, 27, 0.6);
+    --hud-bronze: #8d6839;
+    --hud-bronze-bright: #b98a1c;
+    --hud-line: rgba(93, 74, 42, 0.55);
+    --hud-line-soft: rgba(93, 74, 42, 0.3);
+    --hud-parchment: #f7e7c9;
+    --hud-night: #241d15;
+    --hud-blood: #770001;
+    --hud-veil: rgba(252, 248, 238, 0.55);
+    --hud-display: 'Gloock', goudy, serif;
+    --hud-speech: 'DM Serif Display', serif;
+}
+
+body:has(#hud) {
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    text-align: left;
+    color: var(--hud-ink);
+    /* La feuille de papier entière, bords déchirés aux bords de
+     * l'écran : tout le jeu est posé sur une seule feuille. */
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat fixed;
+}
+
+/* Ornements de ferronnerie aux coins hauts DU DAMIER : les deux
+ * pseudo-éléments sont des items de grille superposés à la cellule
+ * de la carte (même grid-area que #game-map) — décor pur, jamais
+ * cliquable. Le gauche est le miroir du droit. */
+#hud::before,
+#hud::after {
+    content: "";
+    grid-area: 2 / 2 / 3 / 4;
+    z-index: 1;
+    margin: 9px;
+    background: url('../img/ui/paper/ornament.png') top right / clamp(110px, 16vw, 210px) no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+#hud::before {
+    transform: scaleX(-1);
+}
+
+/* En revanche, les ornements de coin de la FEUILLE (paper-app.css,
+ * body::before/::after, communs aux pages papier autonomes) sont de
+ * trop sur la page de jeu — retirés ici, gardés ailleurs (retour
+ * testeur). */
+body:has(#hud)::before,
+body:has(#hud)::after {
+    content: none;
+}
+
+#hud {
+    display: grid;
+    grid-template-columns: 64px 220px minmax(0, 1fr) 340px;
+    grid-template-rows: 64px minmax(0, 1fr) 220px;
+    gap: 8px;
+    box-sizing: border-box;
+    height: 100vh;
+    padding: 8px;
+}
+
+/* ---------- Barre de statut ---------- */
+
+#hud-topbar {
+    grid-area: 1 / 1 / 2 / 5;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 10px;
+    background: var(--hud-veil);
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+#hud-topbar .hud-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* #player-avatar reste l'hôte de la pastille .bulle (js/main.js) */
+#hud-topbar #player-avatar {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+#hud-topbar #player-avatar img {
+    height: 48px;
+    width: 48px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #333;
+    display: block;
+}
+
+#hud-topbar .hud-chip-id {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+#hud-topbar .hud-chip-id a {
+    font-weight: bold;
+}
+
+.hud-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.hud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border: 1px solid var(--hud-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    font-size: 85%;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.hud-pill-label {
+    font-weight: bold;
+    opacity: 0.7;
+}
+
+/* Jauge intégrée (A, Mvt, PV, PM) : la part MANQUANTE teinte le fond
+ * de la pilule depuis la droite — pleine, la pilule reste papier
+ * vierge ; entamée, l'encre (dépense) ou le sang (PV) gagne du
+ * terrain. --hud-missing est posé par TopBarView et rafraîchi avec
+ * les pilules après chaque action (retours joueurs juillet 2026). */
+.hud-pill--gauge {
+    background:
+        linear-gradient(
+            to left,
+            var(--hud-gauge-tint, rgba(29, 28, 27, 0.13)) var(--hud-missing, 0%),
+            rgba(255, 255, 255, 0) var(--hud-missing, 0%)
+        ),
+        rgba(255, 255, 255, 0.75);
+}
+
+/* PV : la part manquante est du sang perdu */
+#hud-pill-pv.hud-pill--gauge {
+    --hud-gauge-tint: rgba(119, 0, 1, 0.22);
+}
+
+/* A et Mvt : l'orange des évènements « action » (.hud-feed-item--na) */
+#hud-pill-a.hud-pill--gauge,
+#hud-pill-mvt.hud-pill--gauge {
+    --hud-gauge-tint: rgba(210, 140, 25, 0.28);
+}
+
+/* PM : le bleu des évènements « réussite » (.hud-feed-item--ok) */
+#hud-pill-pm.hud-pill--gauge {
+    --hud-gauge-tint: rgba(80, 170, 220, 0.3);
+}
+
+.hud-pill--warn {
+    border-color: #a33;
+    color: #a00;
+    background: rgba(255, 230, 230, 0.85);
+}
+
+/* Effets actifs (TopBarView::effectChips) : pastilles d'icônes après
+ * les caracs, détail (valeur, temps restant) dans l'infobulle. Le
+ * conteneur est transparent pour la rangée flex. */
+#hud-effects {
+    display: contents;
+}
+
+.hud-pill--effect {
+    padding: 3px 7px;
+    cursor: help;
+    font-size: 100%;
+}
+
+.hud-pill--bonus {
+    border-color: #36a;
+    color: #226;
+}
+
+.hud-place {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+#hud-location {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hud-quick {
+    flex: 0 0 auto;
+}
+
+.hud-quick {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Accès discret (Classements) : icône seule, bronze */
+.hud-quick .hud-quick-icon .ra {
+    font-size: 16px;
+    color: var(--hud-bronze);
+}
+
+/* ---------- Rail de navigation gauche ---------- */
+
+/* La sortie de MenuView est inchangée : le CSS la passe simplement
+ * en colonne de boutons-icônes (les title existants font tooltip). */
+#hud-rail {
+    grid-area: 2 / 1 / 4 / 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    background: var(--hud-veil);
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    overflow: visible;
+}
+
+#hud-rail #menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+#hud-rail #menu > a > button,
+#hud-rail #menu > button {
+    font-size: 0;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    position: relative;
+}
+
+/* Centrage absolu du glyphe : les libellés résiduels des boutons
+ * (« Caractéristiques »… à font-size 0) et les métriques de ligne
+ * disparates de rpg-awesome décalaient chaque icône ailleurs — en
+ * absolu, seul le glyphe compte. */
+#hud-rail #menu .ra {
+    font-size: 22px;
+    line-height: 1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Icônes plates, une teinte de métier par entrée (retours joueurs
+ * juillet 2026 : les objets peints faisaient vieux — les PNG restent
+ * en réserve dans img/ui/paper/ pour d'autres usages : dé au lancer,
+ * carte sur l'écran carte…). Même recette que la forge : couleur
+ * sourde + reflet clair. */
+#hud-rail #show-craft .ra {
+    color: #7a4a21;
+    text-shadow: 0 1px 0 rgba(255, 214, 130, 0.55);
+}
+
+#hud-rail #show-bank .ra {
+    color: #a8790f;
+    text-shadow: 0 1px 0 rgba(255, 230, 150, 0.6);
+}
+
+#hud-rail #show-caracs .ra {
+    color: #8d4a3a;
+    text-shadow: 0 1px 0 rgba(255, 200, 180, 0.5);
+}
+
+#hud-rail #show-inventory .ra {
+    color: #6b4a2b;
+    text-shadow: 0 1px 0 rgba(230, 200, 150, 0.55);
+}
+
+#hud-rail #show-spells .ra {
+    color: #5d4a7a;
+    text-shadow: 0 1px 0 rgba(215, 195, 255, 0.5);
+}
+
+#hud-rail #menu > a[href="map.php"] > button .ra {
+    color: var(--hud-bronze);
+    text-shadow: 0 1px 0 rgba(255, 230, 170, 0.5);
+}
+
+#hud-rail #missive-btn .ra {
+    color: #3a4a6b;
+    text-shadow: 0 1px 0 rgba(190, 210, 245, 0.5);
+}
+
+#hud-rail #menu > a[href="account.php"] > button .ra {
+    color: #55524c;
+    text-shadow: 0 1px 0 rgba(230, 225, 215, 0.55);
+}
+
+/* Pastille missives : l'hôte doit être positionné */
+#hud-rail #missive-btn {
+    position: relative;
+}
+
+/* « Vue » est retirée par js/hud.js ; ceinture CSS si le JS tarde. */
+#hud-rail #show-damier {
+    display: none;
+}
+
+/* Lancer de dés (modale de résultat, js/observe.js) : les dés peints
+ * de la maquette reprennent du service — le fond papier de la
+ * découpe disparaît en multiply sur le parchemin, petit balancement
+ * le temps du jet. */
+.hud-dice-roll {
+    text-align: center;
+    padding: 8px 0;
+}
+
+.hud-dice-roll img {
+    display: block;
+    width: 96px;
+    margin: 0 auto 4px;
+    mix-blend-mode: multiply;
+    animation: hud-dice-wobble 0.5s ease-in-out infinite;
+}
+
+.hud-dice-roll i {
+    font-style: italic;
+    opacity: 0.75;
+}
+
+@keyframes hud-dice-wobble {
+    0%, 100% { transform: rotate(-6deg); }
+    50% { transform: rotate(6deg); }
+}
+
+/* Clones mobiles des raccourcis du bandeau haut (js/hud.js
+ * initMobile) : réservés au tiroir — jamais sur le rail desktop. */
+@media (min-width: 1024px) {
+
+    #hud-rail .hud-quick-clone {
+        display: none;
+    }
+}
+
+/* Séparateurs de groupes (posés par js/hud.js) : la vue / le
+ * personnage / le monde / le compte */
+#hud-rail .hud-rail-sep {
+    width: 28px;
+    height: 1px;
+    flex: 0 0 auto;
+    background: var(--hud-line-soft);
+    margin: 3px 0;
+}
+
+/* Panneau de caracs : flyout à droite du rail. Le contenu
+ * (CaracsPanelRenderer, ids #mvt-counter / #action-counter) et le
+ * cookie caracs_panel_open sont inchangés. */
+body:has(#hud) #load-caracs {
+    position: fixed;
+    left: 76px;
+    top: 80px;
+    z-index: 60;
+    max-width: calc(100vw - 100px);
+    max-height: calc(100vh - 100px);
+    overflow: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Carte (sortie MainView re-parentée) ---------- */
+
+#hud-main {
+    display: contents;
+}
+
+#hud #game-map {
+    grid-area: 2 / 2 / 3 / 4;
+    overflow: auto;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    /* Pincement : le plateau zoome SEUL (js/hud.js initPinchZoom) —
+     * pan à un doigt conservé, mais le navigateur ne démarre pas de
+     * zoom de PAGE depuis le plateau. Ailleurs, zoom natif intact. */
+    touch-action: pan-x pan-y;
+    /* Cadre de planche cartographique : double filet bronze, puis un
+     * filet gravé en retrait (l'outline reste collée à la boîte, elle
+     * ne défile pas avec la carte). Les ornements de ferronnerie
+     * complètent les coins hauts. */
+    border: 4px double var(--hud-bronze);
+    outline: 1px solid var(--hud-line-soft);
+    outline-offset: -9px;
+    border-radius: 6px;
+    /* Le damier est une feuille : la même image de papier, entière,
+     * avec ses bords déchirés pour cadre. */
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat;
+}
+
+/* Le damier s'adapte à son cadre, comme il s'adapte à l'écran en
+ * mobile : le SVG (viewBox carré, width 100%) est piloté par la
+ * hauteur de la cellule — une perception élevée reste visible en
+ * entier, sans défilement. Le max-width inline hérité (650px,
+ * Classes/View.php) doit céder, d'où le !important. */
+#hud #view {
+    overflow: visible;
+    height: 100%;
+    box-sizing: border-box;
+    padding-bottom: 0;
+}
+
+#hud #view #svg-container {
+    display: block;
+    height: 100%;
+    text-align: center;
+}
+
+/* La taille exacte (carré ajusté à la hauteur du cadre) est posée en
+ * inline par js/hud.js (fitDamier) — l'attribut width="100%" hérité
+ * du SVG ne peut pas être battu proprement en CSS seul. En display
+ * block : en inline, la ligne de base décalait le SVG vers le haut
+ * (bord gradué rogné en haut, jour en bas). */
+#hud #svg-view {
+    display: block;
+    margin: 0 auto;
+}
+
+/* ⛔ des cases infranchissables (blocked-tiles.js, option
+ * showBlockedTiles) : le z-index 9999 hérité du spotlight tutoriel
+ * les faisait passer AU-DESSUS des panneaux latéraux — dans le HUD
+ * ils restent dans le plan de la carte. */
+body:has(#hud) #svg-container .blocked-tile-marker {
+    z-index: 1;
+}
+
+/* Coordonnées en bordure du damier (js/hud.js : <text> SVG dans la
+ * marge du viewBox) — elles font partie de la planche et bougent
+ * avec elle. */
+/* Zoom du damier : deux médaillons au coin bas-droit du cadre,
+ * superposés à la cellule de la carte (js/hud.js). */
+#hud-zoom {
+    grid-area: 2 / 2 / 3 / 4;
+    justify-self: end;
+    align-self: end;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 22px 22px 0;
+}
+
+/* Police système (Gloock n'a pas de « − » net), fond parchemin
+ * opaque : lisible au-dessus des tuiles. */
+#hud-zoom button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--hud-ink);
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+#hud-zoom button:hover:not(:disabled) {
+    background: var(--hud-parchment);
+}
+
+#hud-zoom button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* Calques d'affichage de la carte : médaillon boussole au-dessus du
+ * zoom, popover papier de bascules (façon appli de cartographie). */
+#hud-layers {
+    grid-area: 2 / 2 / 3 / 4;
+    justify-self: end;
+    align-self: end;
+    position: relative;
+    z-index: 3;
+    margin: 0 22px 132px 0;
+}
+
+#hud-layers-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    position: relative;
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+#hud-layers-btn::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    background: url('../img/ui/paper/icon-carte.png') center / contain no-repeat;
+    mix-blend-mode: multiply;
+}
+
+#hud-layers-pop {
+    position: absolute;
+    right: 38px;
+    bottom: 0;
+    width: 235px;
+    /* main.css clampe tous les div à 100% du parent (30px ici) */
+    max-width: none;
+    padding: 8px;
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat;
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    box-shadow: 2px 3px 12px rgba(0, 0, 0, 0.35);
+    text-align: left;
+}
+
+#hud-layers-pop[hidden] {
+    display: none;
+}
+
+.hud-layers-title {
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--hud-line-soft);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
+.hud-layer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 6px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    box-shadow: none;
+    color: var(--hud-ink);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hud-layer:hover {
+    background: var(--hud-veil);
+}
+
+/* Mini-interrupteur : gaine parchemin, bouton bronze quand actif */
+.hud-layer-dot {
+    flex: 0 0 auto;
+    position: relative;
+    width: 24px;
+    height: 13px;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 999px;
+    background: var(--hud-parchment);
+    transition: background 0.15s ease;
+}
+
+.hud-layer-dot::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--hud-bronze);
+    opacity: 0.55;
+    transition: left 0.15s ease, opacity 0.15s ease;
+}
+
+.hud-layer--on .hud-layer-dot {
+    background: var(--hud-bronze);
+}
+
+.hud-layer--on .hud-layer-dot::after {
+    left: 12px;
+    background: var(--hud-parchment);
+    opacity: 1;
+}
+
+/* Bandes sombres de la bordure graduée */
+#hud #svg-view .hud-svg-coord-band {
+    fill: var(--hud-night);
+    opacity: 0.82;
+    pointer-events: none;
+}
+
+#hud #svg-view .hud-svg-coord {
+    /* Unités du viewBox : la planche est affichée réduite (~0.6),
+     * 13 unités rendent ~8px lisibles. */
+    font-size: 13px;
+    font-weight: bold;
+    fill: var(--hud-parchment);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Message d'arrivée : overlay centré au-dessus de la carte */
+body:has(#hud) #view-landing-wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Bandeau bas : sélection (#ajax-data) + actions ---------- */
+
+/* observe.php continue d'injecter .case-infos + #ui-card ici (cellule
+ * sélection) ; js/hud.js déplace ensuite la .card-actions vers le
+ * panneau #hud-actions voisin. Zéro changement back-end. */
+#hud #ajax-data {
+    grid-area: 3 / 3 / 4 / 4;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    background: var(--hud-veil);
+    /* ancre des #case-coords épinglés en bas à droite (réponses non
+     * recomposées : case vide sans .hud-sel) */
+    position: relative;
+}
+
+#hud #ajax-data:empty::before {
+    content: "Cliquez sur une case pour l'observer.";
+    margin: auto;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Zone de sélection au repos (js/hud.js) : le lieu en majesté */
+#hud #ajax-data .hud-sel-idle {
+    margin: auto;
+    text-align: center;
+}
+
+#hud #ajax-data .hud-sel-idle-name {
+    font-family: var(--hud-display);
+    font-size: 1.6em;
+    letter-spacing: 1px;
+}
+
+#hud #ajax-data .hud-sel-idle-hint {
+    margin-top: 4px;
+    font-style: italic;
+    font-size: 88%;
+    opacity: 0.6;
+}
+
+/* Réponses non composées (texte brut de go.php, erreurs) : le flex
+ * de base suffit ; les observations sont recomposées en .hud-sel par
+ * js/hud.js — voir la section zone de sélection. */
+#hud #ajax-data .case-infos {
+    flex: 0 0 auto;
+}
+
+/* ----- Zone de sélection recomposée (wireframe, bandeau bas) -----
+ * js/hud.js (composeSelection) réorganise la réponse d'observe.php en
+ * une vue unique qui occupe TOUT le bandeau : portrait à gauche (voile
+ * de blessures conservé), nom + statut + effets + description au
+ * centre, contenu de la case et coordonnées à droite.
+ *
+ * IMPORTANT : tout est scopé #hud #ajax-data (2 ids) pour battre les
+ * règles de carte héritées de main.css (#ui-card .card-image 220×230,
+ * portrait en absolu, .case-infos 300px…) qui gagnaient sinon la
+ * cascade et cassaient portrait, voile et colonne de case. */
+#hud #ajax-data .hud-sel {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr) minmax(200px, 34%);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 4px 14px;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    /* ancre des #case-coords épinglés en bas à droite */
+    position: relative;
+}
+
+/* La coquille #ui-card reste (« Fermer » la masque) mais est
+ * transparente pour la grille : ses deux sections se placent seules. */
+#hud #ajax-data .hud-sel #ui-card {
+    display: contents;
+    position: static;
+    pointer-events: auto;
+    color: inherit;
+}
+
+#hud #ajax-data .hud-sel-left {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    align-self: stretch;
+}
+
+#hud #ajax-data .hud-sel-left .card-image {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+#hud #ajax-data .hud-sel-left .card-portrait {
+    position: static;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    border: 2px solid rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+}
+
+/* Voile de blessures : #red-filter converti en pourcentage par
+ * js/hud.js — au-dessus du portrait quel que soit l'empilement */
+#hud #ajax-data .hud-pv-lost {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    top: auto;
+    z-index: 2;
+    background: var(--hud-blood);
+    opacity: 0.5;
+    pointer-events: none;
+    transition: height 0.2s linear;
+}
+
+#hud #ajax-data .hud-sel-main {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+    text-align: left;
+}
+
+#hud #ajax-data .hud-sel-main .card-name {
+    margin: 0;
+    position: static;
+    font-family: var(--hud-display);
+    font-size: 1.25em;
+    letter-spacing: 1px;
+    text-align: left;
+    color: var(--hud-ink);
+    text-shadow: none;
+}
+
+/* main.css blanchit le nom (pensé pour les cartes sombres) :
+ * sur papier, encre. */
+#hud #ajax-data .hud-sel-main .card-name a {
+    font-family: var(--hud-display);
+    color: var(--hud-ink);
+    text-shadow: none;
+}
+
+#hud #ajax-data .hud-sel-main .card-name .effects {
+    position: static;
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+#hud #ajax-data .hud-sel-main .card-type,
+#hud #ajax-data .hud-sel-main .card-faction {
+    position: static;
+    display: inline;
+    margin: 0;
+    font-size: 88%;
+    opacity: 0.85;
+    text-shadow: none;
+    color: inherit;
+    text-align: left;
+}
+
+/* Médaillon de faction : main.css blanchit les glyphes (pensés pour
+ * les cartes sombres) — sur papier, on les pose sur une pastille
+ * nuit pour qu'ils restent lisibles. */
+#hud #ajax-data .hud-sel-main .card-faction a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--hud-night);
+    vertical-align: middle;
+}
+
+/* ----- Plaque de parole (signature) -----
+ * Ce que dit le personnage est la monnaie sociale du jeu : la parole
+ * passe du noir illisible hérité (main.css, 225×125 fixes) à une
+ * plaque parchemin citée — guillemet Goudy surdimensionné, filet
+ * bronze. Même traitement desktop et mobile. */
+#hud #ajax-data .hud-sel-main .card-text {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    height: auto;
+    margin: 6px 0 0 0;
+    width: auto;
+    box-sizing: border-box;
+    position: relative;
+    padding: 7px 12px 7px 34px;
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-line-soft);
+    border-left: 3px solid var(--hud-bronze);
+    border-radius: 0 4px 4px 0;
+    color: var(--hud-ink);
+    font-family: var(--hud-speech);
+    font-style: italic;
+    font-size: 98%;
+    line-height: 1.45;
+    text-align: left;
+}
+
+#hud #ajax-data .hud-sel-main .card-text::before {
+    content: "\201C";
+    position: absolute;
+    left: 9px;
+    top: -3px;
+    font-family: var(--hud-display);
+    font-size: 32px;
+    font-style: normal;
+    line-height: 1.2;
+    color: var(--hud-bronze);
+    opacity: 0.85;
+}
+
+/* Contenu hérité de la plaque : liens cyan et textes blancs pensés
+ * pour le fond noir — repassés à l'encre sur parchemin. */
+#hud #ajax-data #ui-card .card-text a {
+    color: var(--hud-bronze);
+    font-weight: bold;
+}
+
+#hud #ajax-data #ui-card .card-text textarea {
+    color: var(--hud-ink);
+    font-style: italic;
+}
+
+#hud #ajax-data #ui-card .action-text {
+    color: var(--hud-ink);
+}
+
+#hud #ajax-data #ui-card .card-text .action-details {
+    color: var(--hud-ink-soft);
+}
+
+/* Contenu de la case (éléments, murs, objets au sol) : neutralise la
+ * largeur fixe 300px et les floats hérités de main.css */
+#hud #ajax-data .hud-sel-tile {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
+    border-left: 1px solid var(--hud-line-soft);
+    padding-left: 10px;
+    /* réserve le coin bas-droit aux coordonnées épinglées */
+    padding-bottom: 24px;
+    text-align: left;
+}
+
+/* Titre de section gravé : petites capitales espacées + filet,
+ * comme une inscription — sobre, la plaque garde le premier rôle. */
+#hud #ajax-data .hud-sel-tile-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
+#hud #ajax-data .hud-sel-tile-title::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--hud-line-soft);
+}
+
+#hud #ajax-data .hud-sel-tile .case-infos {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#hud #ajax-data .hud-sel-tile .case-infos img {
+    float: none;
+    margin: 0;
+    max-width: 44px;
+    max-height: 44px;
+    flex: 0 0 auto;
+}
+
+/* Coordonnées : ÉPINGLÉES au coin bas-droit du bandeau — en absolu,
+ * pour que leur place ne dépende plus de la composition (fiche seule,
+ * contenu de case, case vide sans .hud-sel…). Le mobile garde son
+ * flux en grille (media query plus bas, qui rend la position à la
+ * grille). */
+#hud #ajax-data #case-coords {
+    position: absolute;
+    right: 6px;
+    bottom: 4px;
+    margin: 0;
+    padding-left: 10px;
+}
+
+/* Sans personnage sélectionné, le contenu de la case prend tout */
+#hud #ajax-data .hud-sel--nocard .hud-sel-tile {
+    grid-column: 1 / span 3;
+    border-left: none;
+    padding-left: 0;
+}
+
+/* ---------- Équipement porté : alvéoles parchemin ----------
+ * Tuiles fixes de 46px « creusées » dans la feuille (ombre interne),
+ * comme des logements taillés pour les objets, sous un titre gravé en
+ * petites capitales filetées (même inscription que « Sur la case »).
+ * Partagé entre le panneau Personnage (load_infos.php) et la vue de
+ * sélection sur écrans larges (observe.php + js/hud.js). */
+#hud .equip-strip {
+    text-align: left;
+}
+
+#hud .equip-strip-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
+#hud .equip-strip-title::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--hud-line-soft);
+}
+
+#hud .equip-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#hud .equip-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    box-sizing: border-box;
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-line-soft);
+    border-radius: 4px;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+
+#hud .equip-slot:hover {
+    border-color: var(--hud-bronze-bright);
+}
+
+#hud .equip-slot img {
+    display: block;
+    max-width: 38px;
+    max-height: 38px;
+}
+
+/* Panneau Personnage : l'alvéolier remplace la table marbre pleine
+ * largeur, dans la même cellule de la fiche. */
+#hud .hud-panel .equip-strip {
+    margin: 6px 0;
+}
+
+/* ---------- Inventaire : boutons d'action par ligne ----------
+ * (panneau HUD seulement, Ui::print_inventory rowActions) — icônes
+ * carrées discrètes en fin de ligne : agir sur l'objet sans passer
+ * par l'aperçu, comme le bouton Améliorer par ligne des caracs. */
+#hud .hud-panel .item-actions {
+    white-space: nowrap;
+}
+
+#hud .hud-panel .item-actions .row-action {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    margin: 0 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#hud .hud-panel .item-actions .row-action .ra {
+    font-size: 14px;
+    line-height: 1;
+}
+
+#hud .hud-panel .item-actions .row-action[disabled] {
+    opacity: 0.35;
+}
+
+/* Objet porté : bouton « rendre » plein — encre nuit, glyphe
+ * parchemin — l'état équipé se lit sans ouvrir l'infobulle. */
+#hud .hud-panel .item-actions .row-action--worn {
+    background: var(--hud-night);
+    border-color: var(--hud-night);
+    color: var(--hud-parchment);
+}
+
+/* Vue de sélection : colonne dédiée de la grille, seulement quand la
+ * place est là (dès les écrans de portable courants) — en dessous, le
+ * bandeau garde ses trois zones et la fiche complète reste à un clic
+ * (panneau). */
+#hud #ajax-data .hud-sel .equip-strip {
+    display: none;
+}
+
+@media (min-width: 1200px) {
+
+    #hud #ajax-data .hud-sel:has(.equip-strip) {
+        grid-template-columns: 130px minmax(0, 1fr) auto minmax(200px, 30%);
+    }
+
+    #hud #ajax-data .hud-sel .equip-strip {
+        display: flex;
+        flex-direction: column;
+        grid-column: 3;
+        grid-row: 1 / span 2;
+        max-width: 170px;
+        min-height: 0;
+        overflow-y: auto;
+        border-left: 1px solid var(--hud-line-soft);
+        padding-left: 10px;
+    }
+
+    #hud #ajax-data .hud-sel:has(.equip-strip) .hud-sel-tile {
+        grid-column: 4;
+    }
+}
+
+/* ---------- Panneau d'actions (sous le panneau latéral) ---------- */
+
+#hud-actions {
+    grid-area: 3 / 4 / 4 / 5;
+    position: relative;
+    overflow: auto;
+    padding: 8px;
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    background: var(--hud-veil);
+}
+
+#hud-actions:empty::before {
+    content: "Aucune action — sélectionnez une cible.";
+    display: block;
+    margin-top: 2em;
+    text-align: center;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Rappel de la cible en tête du volet Actions (js/hud.js) : utile en
+ * mobile où le volet occupe l'écran seul ; en desktop la sélection
+ * est visible juste à côté, le rappel serait du bruit. */
+.hud-actions-target {
+    display: none;
+}
+
+/* ---------- Modale de résultat d'action ----------
+ * Par-dessus le damier, la fiche de la cible reste intacte : le
+ * résultat est un évènement ponctuel, pas une description. */
+#hud-action-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 85;
+    display: grid;
+    place-items: center;
+    background: rgba(36, 29, 21, 0.35);
+}
+
+.hud-action-modal-sheet {
+    position: relative;
+    /* border-box : sans lui, 92vw + marges internes + double filet
+     * débordent l'écran mobile (croix de fermeture inatteignable) */
+    box-sizing: border-box;
+    width: min(480px, 92vw);
+    max-height: 70vh;
+    overflow: auto;
+    padding: 20px 24px;
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 4px double var(--hud-bronze);
+    border-radius: 8px;
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+    text-align: left;
+}
+
+.hud-action-modal-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Les détails de calcul étaient gris-sur-noir dans la carte héritée :
+ * sur papier, encre assourdie. */
+.hud-action-modal-body .action-details {
+    color: var(--hud-ink);
+    opacity: 0.75;
+    font-size: 92%;
+}
+
+/* Titre gravé du panneau, même inscription que « Sur la case » */
+#hud-actions:not(:empty)::before {
+    content: "Actions";
+    display: block;
+    margin-bottom: 8px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--hud-line-soft);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--hud-ink-soft);
+}
+
+/* Grille de boutons carrés (wireframe) : icône seule, nom au survol
+ * (title posé par js/hud.js, appui long sur mobile). Le bouton
+ * « Fermer » disparaît — changer de sélection suffit. */
+#hud-actions .card-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 52px);
+    justify-content: space-between;
+    align-content: start;
+    gap: 6px;
+}
+
+#hud-actions .card-actions br,
+#hud-actions .action.close-card {
+    display: none;
+}
+
+/* Les liens enveloppants (Missive…) deviennent transparents pour la
+ * grille : tous les boutons se rangent uniformément. */
+#hud-actions .card-actions a {
+    display: contents;
+}
+
+#hud-actions .action {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#hud-actions .action .ra {
+    font-size: 22px;
+    line-height: 1;
+}
+
+#hud-actions .action .action-name {
+    display: none;
+}
+
+/* Bouton armé (premier clic) : il RESTE À SA PLACE (transform ne
+ * réagence pas la grille) — léger agrandissement + anneau de
+ * confirmation + badge annuler sur le coin ; le nom s'affiche dans le
+ * bandeau bas du panneau. Second clic : exécution. */
+#hud-actions .action {
+    position: relative;
+}
+
+#hud-actions .hud-action--armed {
+    transform: scale(1.12);
+    z-index: 3;
+    box-shadow: 0 0 0 2px var(--hud-bronze-bright), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+#hud-actions .hud-action-cancel {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #222;
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    z-index: 4;
+}
+
+/* Nom de l'action (armement, appui long mobile) : bandeau posé par
+ * js/hud.js en bas du panneau — nuit + bronze, le nom en Goudy pour
+ * que la confirmation soit l'évidence du panneau, pas une ligne
+ * grise noyée. */
+#hud-action-hint {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: rgba(36, 29, 21, 0.92);
+    border: 1px solid var(--hud-bronze-bright);
+    color: var(--hud-parchment);
+    text-align: center;
+    pointer-events: none;
+}
+
+#hud-action-hint .hud-action-hint-name {
+    display: block;
+    font-family: var(--hud-display);
+    font-size: 105%;
+    letter-spacing: 0.8px;
+}
+
+#hud-action-hint .hud-action-hint-tip {
+    display: block;
+    font-size: 75%;
+    opacity: 0.75;
+}
+
+/* ---------- Minimap ---------- */
+
+#hud-minimap {
+    grid-area: 3 / 2 / 4 / 3;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    background: var(--hud-veil);
+}
+
+/* Le wrapper est dimensionné par js/hud.js (fitMinimap) au ratio
+ * exact de l'image : les pourcentages du marqueur tombent juste,
+ * sans letterbox object-fit. */
+#hud-minimap .hud-minimap-map {
+    display: block;
+    position: relative;
+}
+
+#hud-minimap .hud-minimap-map img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Marqueur « vous êtes ici » — pulsation douce, pas d'urgence */
+.hud-minimap-me {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    background: #e0218a;
+    border: 1px solid #fff;
+    box-shadow: 0 0 4px rgba(224, 33, 138, 0.9);
+    animation: hud-minimap-pulse 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes hud-minimap-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
+}
+
+#hud-minimap .hud-minimap-placeholder {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    font-family: var(--hud-display);
+    font-size: 120%;
+}
+
+/* ---------- Panneau latéral : Général / Événements ---------- */
+
+#hud-side {
+    grid-area: 2 / 4 / 3 / 5;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    background: var(--hud-veil);
+    overflow: hidden;
+}
+
+#hud-side .hud-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-bottom: 1px solid var(--hud-line);
+}
+
+#hud-side .hud-tab {
+    flex: 1 1 auto;
+    opacity: 0.6;
+}
+
+#hud-side .hud-tab--active {
+    opacity: 1;
+    font-weight: bold;
+    box-shadow: inset 0 -2px 0 var(--hud-bronze);
+}
+
+#hud-side #hud-feed-refresh {
+    flex: 0 0 auto;
+}
+
+/* Pastille d'évènements non lus sur l'onglet */
+.hud-badge {
+    display: inline-block;
+    min-width: 16px;
+    padding: 1px 4px;
+    margin-left: 5px;
+    border-radius: 999px;
+    background: var(--hud-blood);
+    color: #fff;
+    font-size: 75%;
+    line-height: 1.4;
+    text-align: center;
+    vertical-align: text-top;
+}
+
+.hud-feed {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 8px;
+    font-size: 88%;
+    text-align: left;
+}
+
+.hud-feed-item {
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--hud-line-soft);
+}
+
+.hud-feed-meta {
+    font-size: 85%;
+    opacity: 0.65;
+    margin-top: 2px;
+}
+
+.hud-mdj-text {
+    margin-top: 2px;
+    white-space: pre-line;
+}
+
+.hud-feed-empty {
+    opacity: 0.6;
+    font-style: italic;
+    text-align: center;
+}
+
+/* Saisie du message du jour, façon chat (onglet Général) — c'est de
+ * la parole : même matériau parchemin que la plaque et la bulle. */
+#hud-mdj-form {
+    display: flex;
+    gap: 4px;
+    flex: 0 0 auto;
+    padding: 6px;
+    border-top: 1px solid var(--hud-line);
+}
+
+#hud-mdj-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 5px 8px;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 4px;
+    background: var(--hud-parchment);
+    color: var(--hud-ink);
+    font-style: italic;
+}
+
+#hud-mdj-form button {
+    flex: 0 0 auto;
+}
+
+/* ---------- Panneau glissant (sous-pages, Phase 2) ---------- */
+
+/* Glisse depuis la gauche (côté rail) par-dessus la carte ; barre de
+ * statut, chat et bandeau bas restent visibles. Un seul panneau à la
+ * fois : ouvrir une autre entrée remplace le contenu courant. */
+.hud-panel {
+    position: fixed;
+    top: 80px;
+    left: 80px;
+    bottom: 8px;
+    width: min(640px, calc(100vw - 460px));
+    z-index: 55;
+    display: flex;
+    flex-direction: column;
+    background: var(--hud-veil);
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    box-shadow: 4px 4px 18px rgba(0, 0, 0, 0.5);
+    transform: translateX(calc(-100% - 700px));
+    transition: transform 0.25s ease;
+    visibility: hidden;
+}
+
+.hud-panel.hud-panel--open {
+    transform: none;
+    visibility: visible;
+}
+
+.hud-panel .hud-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--hud-line);
+}
+
+.hud-panel .hud-panel-title {
+    font-family: var(--hud-display);
+    font-size: 130%;
+    /* le titre occupe l'espace entre retour (optionnel) et fermer */
+    flex: 1 1 auto;
+    text-align: left;
+}
+
+/* Retour au panneau remplacé (pile tenue par js/hud.js) */
+.hud-panel .hud-panel-back {
+    flex: 0 0 auto;
+    margin-right: 8px;
+}
+
+/* « Agrandir » : bascule hud--panel-wide (js/hud.js) */
+.hud-panel .hud-panel-fullpage {
+    flex: 0 0 auto;
+    margin-right: 6px;
+}
+
+/* Panneau agrandi : toute la largeur disponible, sans quitter le
+ * plateau (retours joueurs juillet 2026). */
+#hud.hud--panel-wide .hud-panel {
+    width: auto;
+    right: 8px;
+}
+
+/* Tirer pour rafraîchir (mobile, js/hud.js initPullToRefresh) :
+ * pastille parchemin sous le bandeau, même glyphe que le bouton de
+ * rafraîchissement du flux ; armée (seuil atteint), elle se retourne
+ * — relâcher recharge la page. */
+#hud-ptr {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--hud-line);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    color: var(--hud-bronze);
+    font-size: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -16px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#hud-ptr.hud-ptr--visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+#hud-ptr.hud-ptr--armed {
+    color: var(--hud-ink);
+    transform: translate(-50%, 8px) rotate(180deg);
+}
+
+.hud-panel .hud-panel-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 10px;
+}
+
+/* Boutons « Retour » hérités des corps de pages (fiche, profil…) :
+ * sans objet dans un panneau — la croix, Échap et le clic extérieur
+ * ferment déjà. Tout lien vers index.php est de la navigation de
+ * page, jamais une fonctionnalité du panneau. */
+.hud-panel-content a[href="index.php"] {
+    display: none;
+}
+
+/* Progression d'XP en tête du panneau Caractéristiques */
+.hud-xp-progress {
+    margin: 0 0 12px;
+}
+
+.hud-xp-progress .hud-xp-pi {
+    margin-top: 5px;
+    text-align: center;
+    font-size: 88%;
+    opacity: 0.8;
+}
+
+/* Titre compact des fragments (fil de missive, nom du plan…) : le
+ * panneau porte déjà son titre de rubrique dans sa barre. */
+.hud-panel-topic-title {
+    margin: 0 0 10px;
+    font-size: 20px;
+    text-align: center;
+}
+
+/* Fragment carte (load_map.php) : couches PNG empilées, pleine
+ * largeur de panneau — même matière que la minimap. */
+.hud-map-stack {
+    position: relative;
+    width: 100%;
+}
+
+.hud-map-stack img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hud-map-stack img:first-child {
+    position: static;
+    height: auto;
+}
+
+.hud-map-fragment-links {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 88%;
+}
+
+/* ========== Intérieurs de panneaux : thème papier ==========
+ * Les contenus des panneaux glissants et du volet de caracs sont des
+ * fragments hérités (inventory.php, upgrades.php, account.php…)
+ * pensés pour l'habillage sombre : on les repose sur papier — encre,
+ * filets bronze, chips parchemin — sans toucher à leur markup. */
+
+/* Chaque panneau est une feuille à part entière, bords déchirés
+ * compris : opaque, la carte ne transparaît plus au travers. */
+.hud-panel,
+body:has(#hud) #load-caracs {
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / 100% 100% no-repeat;
+}
+
+body:has(#hud) #load-caracs {
+    border: 1px solid var(--hud-line);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+/* Tables héritées : filets bronze doux, plus de gris ni de marbre */
+.hud-panel-content table,
+.hud-panel-content table td,
+.hud-panel-content table th,
+body:has(#hud) #load-caracs table,
+body:has(#hud) #load-caracs td,
+body:has(#hud) #load-caracs th {
+    border-color: var(--hud-line-soft);
+}
+
+.hud-panel-content .marbre,
+.hud-panel-content .tr-cat,
+.hud-panel-content .section,
+.hud-panel-content .tr-topic1,
+.hud-panel-content .tr-topic2 {
+    background: var(--hud-veil);
+}
+
+/* Boutons et champs : chips parchemin, encre */
+.hud-panel-content button,
+.hud-panel-content input[type="button"],
+.hud-panel-content select,
+body:has(#hud) #load-caracs button {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 4px;
+    color: var(--hud-ink);
+    box-shadow: none;
+}
+
+.hud-panel-content button:hover:not(:disabled),
+body:has(#hud) #load-caracs button:hover:not(:disabled) {
+    background: #fdf6e5;
+}
+
+.hud-panel-content button:disabled {
+    opacity: 0.45;
+    border-color: var(--hud-line-soft);
+}
+
+.hud-panel-content input[type="text"],
+.hud-panel-content input[type="password"],
+.hud-panel-content input[type="number"],
+.hud-panel-content textarea {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-line-soft);
+    border-radius: 4px;
+    color: var(--hud-ink);
+}
+
+/* Barre d'Xp : bronze au lieu du dégradé bleu */
+.hud-panel-content .progress-bar .bar,
+body:has(#hud) #load-caracs .progress-bar .bar {
+    background: linear-gradient(to right, var(--hud-bronze-bright), var(--hud-bronze));
+}
+
+/* Cadre de la jauge d'Xp : sans lui les joueurs ne la lisaient pas
+ * comme une barre de progression (retours juillet 2026) — creux
+ * encré dans le papier, filet bronze, la barre reste dedans. */
+.hud-panel-content .progress-bar,
+body:has(#hud) #load-caracs .progress-bar {
+    border: 1px solid var(--hud-line);
+    border-radius: 4px;
+    background: rgba(29, 28, 27, 0.07);
+    box-shadow: inset 0 1px 3px rgba(29, 28, 27, 0.2);
+    overflow: hidden;
+}
+
+/* « Points de Réputation » : le dégradé or en texte transparent de
+ * la page héritée (scripts/infos/reputation.php) est illisible sur
+ * le papier et sa pulsation .glow fatigue l'œil — encre bronze
+ * pleine, corps ramené à la largeur du panneau. La page complète
+ * (fond sombre) garde son style d'origine. */
+.hud-panel-content #pr-wrapper {
+    background-image: none;
+    -webkit-background-clip: initial;
+    background-clip: initial;
+    color: var(--hud-bronze);
+    font-size: 48px;
+    animation: none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Même gabarit pour tous les panneaux : les largeurs fixes héritées
+ * (inventaire 350px, table de craft 600px, tables de caracs au plus
+ * juste) laissaient chaque panneau composer sa propre colonne — tout
+ * s'étire désormais sur la largeur du panneau. */
+.hud-panel-content .inventory-container,
+.hud-panel-content .item-list,
+.hud-panel-content .item-list table,
+.hud-panel-content #craft-wrapper table,
+.hud-panel-content > table,
+.hud-panel-content table.marbre {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+body:has(#hud) #load-caracs table {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Ascenseurs : le track noir hérité de la console jure sur papier */
+body:has(#hud) ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+body:has(#hud) ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body:has(#hud) ::-webkit-scrollbar-thumb {
+    background: var(--hud-line);
+    border-radius: 4px;
+}
+
+/* ---------- Conteneur carrousel (neutre en desktop) ---------- */
+
+/* js/hud.js déplace minimap / #ajax-data / #hud-actions dedans une
+ * fois pour toutes ; en desktop il est transparent pour la grille. */
+#hud-carousel {
+    display: contents;
+}
+
+/* Widgets mobile — invisibles en desktop */
+#hud-burger,
+#hud-dots,
+#hud-backdrop {
+    display: none;
+}
+
+/* ---------- Divers ---------- */
+
+/* Outil de coordonnées admin (admin-tools.js écrit dedans) */
+body:has(#hud) #admin-coords {
+    position: fixed;
+    bottom: 6px;
+    left: 76px;
+    z-index: 70;
+}
+
+/* Drapeaux de debug (index.php) : visibles malgré overflow:hidden */
+body:has(#hud) #debug-flags {
+    position: fixed;
+    top: 70px;
+    right: 6px;
+    z-index: 100;
+    text-align: right;
+}
+
+/* ---------- Mobile < 1024px (Phase 3, wireframe mobile-main) ----------
+ * Barre compacte · carte plein écran · carrousel bas 3 positions ·
+ * tiroir de navigation · bulle de chat → sheet · panneaux en
+ * bottom-sheet (85 %) avec la barre de stats toujours visible. */
+@media (max-width: 1023px) {
+
+    body:has(#hud) {
+        overflow: hidden;
+    }
+
+    #hud {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        height: 100dvh;
+        padding: 4px;
+        gap: 4px;
+    }
+
+    /* Les ornements, le zoom et les calques sont des items de la
+     * grille desktop : en colonne flex ils deviendraient des enfants
+     * parasites (le zoom mobile reste le pincement natif ; les
+     * calques restent accessibles via le Profil). */
+    #hud::before,
+    #hud::after,
+    #hud-zoom,
+    #hud-layers {
+        display: none;
+    }
+
+    /* --- Barre compacte : grille deux rangées ---
+     * Rangée 1 : burger · avatar · prochain tour ; rangée 2 : les
+     * pastilles pleine largeur. Fini les chevauchements avatar/pilules
+     * du flex enveloppant. Tout reste visible, aucun défilement. */
+    #hud-topbar {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: auto auto 1fr auto;
+        grid-template-rows: auto auto;
+        align-items: center;
+        gap: 4px 8px;
+        padding: 4px 6px;
+    }
+
+    #hud-topbar .hud-chip-id sup,
+    #hud-topbar .hud-quick {
+        display: none;
+    }
+
+    #hud-topbar .hud-chip {
+        grid-area: 1 / 2;
+    }
+
+    /* Prochain tour visible (horaire informatif, cf. wireframe) ;
+     * la localisation détaillée reste réservée au desktop. */
+    #hud-topbar .hud-place {
+        grid-area: 1 / 4;
+        margin-left: 0;
+        flex: 0 0 auto;
+        font-size: 88%;
+    }
+
+    #hud-topbar .hud-place #hud-location {
+        display: none;
+    }
+
+    #hud-topbar #player-avatar img {
+        height: 32px;
+        width: 32px;
+    }
+
+    /* Pastilles compactes sur deux lignes maximum : tout reste
+     * visible, pas de défilement horizontal déroutant. */
+    .hud-pills {
+        grid-area: 2 / 1 / 3 / 5;
+        min-width: 0;
+        flex-wrap: wrap;
+        gap: 3px;
+    }
+
+    .hud-pill {
+        padding: 1px 6px;
+        font-size: 72%;
+        gap: 3px;
+    }
+
+    /* Effets : trop pour le bandeau mobile — ils restent sur la
+     * fiche, à un tap de l'avatar. */
+    .hud-pill--effect {
+        display: none;
+    }
+
+    #hud-burger {
+        display: block;
+        grid-area: 1 / 1;
+        flex: 0 0 auto;
+        font-size: 20px;
+        padding: 4px 8px;
+    }
+
+    /* --- Tiroir de navigation (rail off-canvas) --- */
+    #hud-rail {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 220px;
+        z-index: 80;
+        border-radius: 0 6px 6px 0;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        overflow-y: auto;
+    }
+
+    #hud.hud--drawer-open #hud-rail {
+        transform: none;
+    }
+
+    /* Dans le tiroir, boutons avec libellés (title recopié inutile :
+     * on rend juste les boutons pleine largeur, icône + texte natif).
+     * border-box : sans lui le rembourrage droit — où débordent les
+     * pastilles — passait DERRIÈRE le bord du tiroir ; 12px pour que
+     * les pastilles (débord de 7px) respirent des deux côtés. */
+    #hud-rail #menu {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 12px;
+    }
+
+    #hud-rail #menu > a {
+        width: 100%;
+    }
+
+    /* Cible rappelée en tête du volet Actions du carrousel */
+    .hud-actions-target {
+        display: block;
+        text-align: center;
+        font-family: var(--hud-display);
+        font-size: 15px;
+        margin: 0 0 8px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid var(--hud-line-soft);
+    }
+
+    /* Toutes les entrées sur la même ligne verticale : icône (peinte
+     * ou glyphe) dans la bande 8-36px, libellé à 44px — avant, les
+     * paddings variaient selon la spécificité des sélecteurs d'icônes
+     * peintes, d'où des libellés tantôt à gauche tantôt « centrés »
+     * (retour testeur). */
+    #hud-rail #menu > a > button,
+    #hud-rail #menu > button {
+        width: 100%;
+        height: 44px;
+        font-size: 100%;
+        text-align: left;
+        padding: 0 10px 0 44px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    #hud-rail #menu .ra {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        margin: 0;
+        line-height: 1;
+        text-align: center;
+    }
+
+    /* Le glyphe invisible des entrées peintes garde sa largeur en
+     * flex : libellés décalés d'un cran par rapport aux autres
+     * (retour testeur « certains titres centrés »). Dans le tiroir il
+     * sort du flux — l'icône peinte (::before, absolue) suffit. */
+    #hud-rail #show-damier button .ra,
+    #hud-rail #show-caracs button .ra,
+    #hud-rail #show-inventory button .ra,
+    #hud-rail #show-spells button .ra,
+    #hud-rail #menu > a[href="map.php"] > button .ra,
+    #hud-rail #missive-btn .ra,
+    #hud-rail #menu > a[href="account.php"] > button .ra {
+        display: none;
+    }
+
+    #hud-rail .hud-rail-sep {
+        width: 80%;
+    }
+
+    /* Icônes peintes dans le tiroir : vignette fixe à gauche, le
+     * libellé se décale pour ne pas passer dessous. */
+    #hud-rail #show-damier button::before,
+    #hud-rail #show-caracs button::before,
+    #hud-rail #show-inventory button::before,
+    #hud-rail #show-spells button::before,
+    #hud-rail #menu > a[href="map.php"] > button::before,
+    #hud-rail #missive-btn::before,
+    #hud-rail #menu > a[href="account.php"] > button::before {
+        inset: auto;
+        left: 8px;
+        top: 8px;
+        width: 28px;
+        height: 28px;
+    }
+
+    #hud-rail #show-damier button,
+    #hud-rail #show-caracs button,
+    #hud-rail #show-inventory button,
+    #hud-rail #show-spells button,
+    #hud-rail #menu > a[href="map.php"] > button,
+    #hud-rail #missive-btn,
+    #hud-rail #menu > a[href="account.php"] > button {
+        padding-left: 44px;
+    }
+
+    #hud.hud--drawer-open #hud-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        background: rgba(0, 0, 0, 0.45);
+    }
+
+    /* --- Carte : prend l'espace restant --- */
+    #hud #game-map {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    /* --- Carrousel bas : 3 positions scroll-snap --- */
+    #hud-carousel {
+        display: flex;
+        flex: 0 0 32vh;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        gap: 4px;
+    }
+
+    #hud-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    #hud-carousel > * {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        min-width: 100%;
+        overflow: auto;
+        /* border-box : rembourrage et filet COMPRIS dans les 100 % —
+         * sans lui, chaque volet débordait de ~18px à droite
+         * (coordonnées, boutons d'action coupés — retour testeur). */
+        box-sizing: border-box;
+    }
+
+    #hud #ajax-data:empty::before {
+        content: "Cliquez sur une case pour l'observer.";
+    }
+
+    /* --- Fiche de sélection mobile : la parole d'abord ---
+     * La grille desktop 3 colonnes (portrait 130px | centre | case 34%)
+     * écrasait tout dans la cellule du carrousel : la plaque de parole
+     * devenait une languette illisible. Ici : vignette 64px + identité
+     * côte à côte, plaque pleine largeur dessous, contenu de la case en
+     * pied avec les coordonnées dans le filet du titre. */
+    #hud #ajax-data {
+        padding: 8px 10px;
+    }
+
+    #hud #ajax-data .hud-sel {
+        grid-template-columns: 48px minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+        gap: 6px 10px;
+        height: auto;
+        min-height: 100%;
+        align-content: start;
+    }
+
+    #hud #ajax-data .hud-sel-left {
+        grid-column: 1;
+        grid-row: 1;
+        width: 48px;
+        height: 48px;
+        align-self: start;
+        border-radius: 6px;
+    }
+
+    /* Identité à droite de la vignette (nom ~21px + statut ~17px ≈
+     * 42px), plaque pleine largeur dessous : la marge négative la
+     * ramène au bord de la vignette, la marge haute (10px) garantit
+     * qu'elle démarre sous les 48px de portrait — jamais dessus. */
+    #hud #ajax-data .hud-sel-main {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        min-width: 0;
+    }
+
+    #hud #ajax-data .hud-sel-main .card-name {
+        font-size: 1.05em;
+    }
+
+    #hud #ajax-data .hud-sel-main .card-text {
+        margin-left: -58px;
+        margin-top: 10px;
+        max-height: 108px;
+        flex: 0 1 auto;
+    }
+
+    #hud #ajax-data .hud-sel-tile {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        border-left: none;
+        padding-left: 0;
+        /* pas de coordonnées épinglées en mobile : pas de réserve */
+        padding-bottom: 0;
+        overflow: visible;
+    }
+
+    #hud #ajax-data #case-coords {
+        grid-column: 2;
+        grid-row: 3;
+        align-self: start;
+        justify-self: end;
+        padding-left: 0;
+        font-size: 80%;
+        opacity: 0.7;
+        /* retour au flux (grille ou brut) : neutralise l'épinglage
+         * absolu bas-droit du desktop */
+        position: relative;
+        right: auto;
+        bottom: auto;
+        z-index: 1;
+    }
+
+    #hud #ajax-data .hud-sel--nocard .hud-sel-tile,
+    #hud #ajax-data .hud-sel--nocard #case-coords {
+        grid-column: 1 / span 2;
+    }
+
+    #hud #ajax-data .hud-sel--nocard .hud-sel-tile {
+        grid-row: 1;
+    }
+
+    #hud #ajax-data .hud-sel--nocard #case-coords {
+        grid-row: 2;
+    }
+
+    /* --- Panneau d'actions : cibles tactiles 60px, rangées centrées --- */
+    #hud-carousel #hud-actions .card-actions {
+        grid-template-columns: repeat(auto-fit, 60px);
+        justify-content: center;
+        gap: 10px;
+        padding-top: 4px;
+    }
+
+    #hud-carousel #hud-actions .action {
+        width: 60px;
+        height: 60px;
+    }
+
+    #hud-carousel #hud-actions .action .ra {
+        font-size: 26px;
+    }
+
+    #hud-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex: 0 0 auto;
+        padding: 2px 0;
+    }
+
+    .hud-dot {
+        width: 10px;
+        height: 10px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid var(--hud-line);
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .hud-dot--active {
+        background: var(--hud-bronze);
+    }
+
+    /* --- Panneau latéral : volet « Discussions » du carrousel ---
+     * (plus de sheet flottante ni de bulle : retour testeur.)
+     * Feuille OPAQUE : le voile translucide pose sur le damier en
+     * mobile, illisible. Même papier que la page, cadré au volet. */
+    #hud-carousel #hud-side {
+        background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* La minimap n'a plus de volet : la carte vit dans le panneau
+     * Carte (tiroir) — son bloc de grille desktop disparaît. */
+    #hud-minimap {
+        display: none;
+    }
+
+    /* Tiroir de navigation : même exigence d'opacité que les volets */
+    #hud-rail {
+        background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
+        box-shadow: 8px 0 28px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Badge du point « Discussions » : évènements non lus */
+    .hud-dot--badge {
+        position: relative;
+    }
+
+    .hud-dot--badge::after {
+        content: "";
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--hud-blood);
+        border: 1px solid #fff;
+    }
+
+    /* --- Panneau glissant : bottom-sheet 85 %, stats visibles --- */
+    .hud-panel {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: 15vh;
+        width: auto;
+        border-radius: 12px 12px 0 0;
+        transform: translateY(105%);
+    }
+
+    .hud-panel.hud-panel--open {
+        transform: none;
+    }
+
+    /* Déjà pleine largeur en bottom-sheet : « Agrandir » sans objet */
+    #hud.hud--panel-wide .hud-panel {
+        right: 0;
+    }
+
+    .hud-panel .hud-panel-fullpage {
+        display: none;
+    }
+
+    /* --- Flyout caracs (tutoriel) : plein écran utilisable --- */
+    body:has(#hud) #load-caracs {
+        left: 4px;
+        right: 4px;
+        max-width: none;
+    }
+
+    /* --- Divers --- */
+    body:has(#hud) #admin-coords {
+        left: 4px;
+        bottom: 2px;
+    }
+}
+
+/* ---------- Dialogues mutualisés (js/modal.js) : feuille papier ----------
+ * Le HUD ne charge pas paper-app.css : mêmes matériaux, portée body#hud. */
+body:has(#hud) .aoo-dialog {
+    /* border-box : 90vw + rembourrage + double filet débordaient
+     * l'écran mobile (boutons Ok/Annuler tronqués à droite) */
+    box-sizing: border-box;
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 4px double var(--hud-bronze);
+    border-radius: 8px;
+    color: var(--hud-ink);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+}
+
+body:has(#hud) .aoo-dialog-input,
+body:has(#hud) .aoo-dialog-buttons button {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 6px;
+    color: var(--hud-ink);
+    padding: 6px 12px;
+}
+
+body:has(#hud) .aoo-dialog-buttons button:hover {
+    background: #fdf6e5;
+}
+
+/* ---------- Badge missives (personnage courant) ----------
+ * main.js le pose sur #missive-btn : les boutons du rail sont en
+ * font-size:0, le badge fixe la sienne — coin haut-droit de l'icône. */
+#hud-rail #missive-btn .bulle {
+    font-size: 11px;
+    line-height: 1.4;
+    left: auto;
+    right: -5px;
+    top: -5px;
+}
+
+/* Badge forum (sujets non lus, TopBarView) : orange — la légende des
+ * pastilles : rouge = missives du personnage, bleu = missives des
+ * autres personnages, orange = forum. Coin haut-droit du bouton
+ * Forum, bandeau haut comme clone du tiroir mobile. */
+.hud-quick a > button,
+#hud-rail .hud-quick-clone > button {
+    position: relative;
+}
+
+#forum-unread-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    left: auto;
+    background: #d9720f;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* Écho du badge missives sur le burger mobile (main.js) */
+#hud-burger {
+    position: relative;
+}
+
+#hud-burger #hud-burger-mails {
+    position: absolute;
+    top: -4px;
+    right: -6px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* ============================================================
+ * Mode théâtre — le plateau seul en scène (desktop)
+ * ============================================================
+ * Une classe sur #hud : rail, minimap et bandeaux disparaissent. La
+ * scène devient trois colonnes SYMÉTRIQUES : 1fr | plateau | 1fr —
+ * la colonne centrale est dimensionnée par le plateau (carré, calé
+ * sur la hauteur), les coulisses vivent dans les colonnes latérales.
+ * Le damier ne bouge JAMAIS : les colonnes existent qu'elles soient
+ * vides ou pleines. À gauche, sélection puis actions (même largeur,
+ * empilées) ; à droite, les discussions dans tout l'espace restant —
+ * la grille rend le chevauchement impossible. */
+
+@media (min-width: 1024px) {
+
+    #hud.hud--theater {
+        grid-template-columns: 64px minmax(0, 1fr) auto minmax(0, 1fr);
+        grid-template-rows: 64px minmax(0, 1fr) auto;
+    }
+
+    #hud.hud--theater #hud-topbar {
+        grid-area: 1 / 1 / 2 / 5;
+    }
+
+    /* Le rail de navigation reste en scène, à sa place habituelle */
+    #hud.hud--theater #hud-rail {
+        grid-area: 2 / 1 / 4 / 2;
+    }
+
+    #hud.hud--theater #hud-side,
+    #hud.hud--theater #hud-minimap {
+        display: none;
+    }
+
+    #hud.hud--theater #game-map,
+    #hud.hud--theater::before,
+    #hud.hud--theater::after,
+    #hud.hud--theater #hud-zoom,
+    #hud.hud--theater #hud-layers {
+        grid-area: 2 / 3 / 4 / 4;
+    }
+
+    /* Même matière pour les trois coulisses : un seul meuble. */
+    #hud.hud--theater #ajax-data,
+    #hud.hud--theater.hud--theater-chat #hud-side,
+    #hud.hud--theater #hud-actions {
+        z-index: 5;
+        background: #f2e8d3 url('../img/ui/paper/paper.jpg') center / cover;
+        border: 1px solid var(--hud-line);
+        border-radius: 8px;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
+        box-sizing: border-box;
+    }
+
+    /* Coulisse gauche, haut : la sélection (personnage / contenu de
+     * case), seulement quand une vraie sélection existe. */
+    #hud.hud--theater #ajax-data {
+        grid-area: 2 / 2 / 3 / 3;
+        justify-self: stretch;
+        /* Toute la hauteur disponible jusqu'aux actions : la feuille
+         * occupe sa ligne 1fr, le contenu s'aligne en haut. */
+        align-self: stretch;
+        display: none;
+        min-height: 0;
+        overflow: auto;
+        padding: 12px;
+    }
+
+    #hud.hud--theater #ajax-data:has(.hud-sel) {
+        display: block;
+    }
+
+    /* Dans cette coulisse étroite, la sélection s'empile : portrait,
+     * identité, contenu de la case. */
+    #hud.hud--theater #ajax-data .hud-sel {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: auto;
+    }
+
+    #hud.hud--theater #ajax-data .hud-sel-left {
+        width: 150px;
+        align-self: center;
+    }
+
+    /* Coulisse gauche, bas : les actions, même largeur, juste sous la
+     * sélection (la ligne AUTO de la grille les emboîte). */
+    #hud.hud--theater #hud-actions {
+        grid-area: 3 / 2 / 4 / 3;
+        justify-self: stretch;
+        align-self: end;
+        display: none;
+        max-height: 32vh;
+        overflow: auto;
+        padding: 8px;
+    }
+
+    #hud.hud--theater #hud-actions:not(:empty) {
+        display: block;
+    }
+
+    /* Une bande est RÉSERVÉE en bas de la coulisse pour le rappel
+     * d'action armée (ancré en absolu, règle de base) : il apparaît
+     * dans cette zone sans jamais recouvrir ni déplacer un bouton —
+     * un bouton ne bouge pas sous un clic. */
+    #hud.hud--theater #hud-actions {
+        padding-bottom: 74px;
+    }
+
+    /* Coulisse droite : les discussions occupent TOUT l'espace
+     * restant — jamais par-dessus le plateau. */
+    #hud.hud--theater.hud--theater-chat #hud-side {
+        display: flex;
+        grid-area: 2 / 4 / 4 / 5;
+        justify-self: stretch;
+        align-self: stretch;
+        z-index: 4;
+        min-height: 0;
+    }
+
+    /* Poignée du volet discussions : dans la pile de médaillons du
+     * plateau, avec le théâtre et le zoom. */
+    #hud.hud--theater #hud-theater-chat-btn {
+        display: block;
+    }
+
+    /* Le nom du personnage coiffe le portrait dans la coulisse :
+     * .hud-sel-main éclate (display: contents), ses enfants
+     * deviennent des éléments de la pile et le nom remonte en tête. */
+    #hud.hud--theater #ajax-data .hud-sel-main {
+        display: contents;
+    }
+
+    #hud.hud--theater #ajax-data .hud-sel-main .card-name {
+        order: -1;
+        text-align: center;
+        margin: 0;
+    }
+
+    /* La pile de médaillons gagne la poignée discussions : la
+     * boussole monte d'un cran. */
+    #hud.hud--theater #hud-layers {
+        margin-bottom: 166px;
+    }
+}
+
+/* Bouton théâtre : même matière que les médaillons de zoom */
+#hud-theater-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    color: var(--hud-ink);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#hud-theater-btn:hover {
+    background: #fdf6e5;
+}
+
+/* Poignée discussions du mode théâtre : même matière que les
+ * médaillons, masquée hors théâtre. */
+#hud-theater-chat-btn {
+    display: none;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 50%;
+    background: var(--hud-parchment);
+    color: var(--hud-bronze);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#hud-theater-chat-btn:hover {
+    background: #fdf6e5;
+}
+
+/* ---------- Lavis réussite / échec du flux d'évènements ----------
+ * Couleurs de l'affichage historique, en transparence sur le papier :
+ * bleu réussite, rouge échec, orangé action impossible. */
+.hud-feed-item--ok,
+.hud-feed-item--ko,
+.hud-feed-item--na {
+    border-left: 3px solid transparent;
+    padding-left: 7px;
+}
+
+.hud-feed-item--ok { background: rgba(102, 204, 255, 0.07); border-left-color: rgba(80, 170, 220, 0.55); }
+.hud-feed-item--ko { background: rgba(200, 40, 30, 0.06); border-left-color: rgba(180, 40, 30, 0.55); }
+.hud-feed-item--na { background: rgba(235, 160, 30, 0.07); border-left-color: rgba(210, 140, 25, 0.55); }
+
+/* ---------- Outil de coordonnées (clic droit sur une case) ----------
+ * Feuille papier posée à l'endroit du clic (js/view.js), boutons
+ * parchemin — la boîte blanche héritée reste aux autres habillages. */
+body:has(#hud) #admin-coords {
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 1px solid var(--hud-bronze);
+    border-radius: 8px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+    color: var(--hud-ink);
+    padding: 24px 12px 10px;
+}
+
+body:has(#hud) #admin-coords button {
+    background: var(--hud-parchment);
+    border: 1px solid var(--hud-bronze);
+    border-radius: 6px;
+    color: var(--hud-ink);
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+body:has(#hud) #admin-coords button:hover {
+    background: #fdf6e5;
+}
+
+body:has(#hud) #admin-coords #admin-coords-close {
+    background: none;
+    border: none;
+    color: var(--hud-ink);
+    padding: 0;
+    width: 20px;
+    height: 20px;
+}

@@ -15,7 +15,7 @@ if($k == 'spd'){
 }
 
 
-$cost = return_cost($trio[$k], $player->upgrades->$k);
+$cost = \App\View\UpgradesView::returnCost(\App\View\UpgradesView::TRIO[$k], $player->upgrades->$k);
 
 
 if($player->row->pi < $cost){

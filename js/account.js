@@ -9,33 +9,33 @@ $(document).ready(function(){
             return false;
         }
 
-        var name = prompt('Nouveau nom:');
+        aooPrompt('Nouveau nom:').then(function(name){
 
+            if(name == null || name.trim() == ''){
 
-        if(name == null || name.trim() == ''){
-
-            return false;
-        }
-
-
-        var oldName = window.oldName;
-
-        if(name == oldName){
-
-            alert('Le nouveau nom est identique à l\'ancien nom.');
-
-            return false;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: 'account.php',
-            data: {'changeName': name}, // serializes the form's elements.
-            success: function(data)
-            {
-                htmlContent = $('<div>').html(data).find('#data').html();
-                alert(htmlContent);
+                return;
             }
+
+
+            var oldName = window.oldName;
+
+            if(name == oldName){
+
+                aooAlert('Le nouveau nom est identique à l\'ancien nom.');
+
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: 'account.php',
+                data: {'changeName': name}, // serializes the form's elements.
+                success: function(data)
+                {
+                    htmlContent = $('<div>').html(data).find('#data').html();
+                    aooAlert($('<div>').html(htmlContent).text());
+                }
+            });
         });
     });
 
@@ -71,11 +71,20 @@ $(document).ready(function(){
             }, // serializes the form's elements.
             success: function(data)
             {
+                $box.prop('checked', !$box.prop('checked'));
+
+                /* Option de plateau basculée depuis le panneau Profil
+                 * (HUD) : le plateau se rafraîchit comme depuis le
+                 * popover de calques — à chaud ou par rechargement,
+                 * qui vaut confirmation. Habillage hérité (ou option
+                 * sans rapport avec le plateau) : alerte d'origine. */
+                if(window.hudApplyBoardOption && window.hudApplyBoardOption($box.data('option'), $box.prop('checked'))){
+
+                    return;
+                }
 
                 // alert(data);
                 alert('Changement effectué.');
-
-                $box.prop('checked', !$box.prop('checked'));
             }
         });
     });

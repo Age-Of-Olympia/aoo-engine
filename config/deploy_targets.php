@@ -114,3 +114,36 @@ if (!function_exists('aoo_app_background')) {
         return $default;
     }
 }
+
+if (!function_exists('aoo_paper_background')) {
+
+    /**
+     * Resolve the paper background of the new HUD for the current environment.
+     *
+     * Mirror of aoo_app_background() for the paper skin: prod always uses
+     * paper.jpg; non-prod envs prefer paper_<env>.jpg, then the generic
+     * paper_test.jpg (diagonal "aootest" watermark), so it stays obvious at a
+     * glance that you're not on prod under the new HUD too.
+     *
+     * @return string Absolute URL path of the paper background image.
+     */
+    function aoo_paper_background(?string $host = null): string
+    {
+        $dir     = '/img/ui/paper';
+        $default = $dir . '/paper.jpg';
+
+        $env = aoo_deploy_env($host ?? ($_SERVER['HTTP_HOST'] ?? null));
+        if ($env['is_prod']) {
+            return $default;
+        }
+
+        $docroot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+        foreach (["{$dir}/paper_{$env['env']}.jpg", "{$dir}/paper_test.jpg"] as $candidate) {
+            if ($docroot !== '' && is_file($docroot . $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $default;
+    }
+}

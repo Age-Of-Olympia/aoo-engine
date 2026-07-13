@@ -76,13 +76,15 @@ elseif(isset($_GET['asks'])){
     echo '<button id="submit">Créer une Demande d\'Achat</button>';
 
 
-    echo '<div id="ajax-data"></div>';
+    /* id propre : #ajax-data existe déjà dans le HUD (bandeau de
+     * sélection) — un doublon détournait l'aperçu du contrat. */
+    echo '<div id="contract-preview"></div>';
 
     ?>
     <script>
     window.targetId = <?php echo $target->id ?>;
     </script>
-    <script src="js/new_contract.js?20250516"></script>
+    <script src="js/new_contract.js?v=20260716"></script>
     <?php
 
 

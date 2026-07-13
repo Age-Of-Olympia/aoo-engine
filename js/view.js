@@ -90,6 +90,16 @@ $(document).ready(function(){
 
         $('#admin-coords').html(html);
 
+        /* La boîte se pose à l'endroit du clic (bornée aux bords de
+         * l'écran), plus au coin fixe de la page. */
+        var box = document.getElementById('admin-coords');
+        box.style.right = 'auto';
+        box.style.bottom = 'auto';
+        var bx = Math.min(e.clientX + 10, window.innerWidth - box.offsetWidth - 12);
+        var by = Math.min(e.clientY + 10, window.innerHeight - box.offsetHeight - 12);
+        box.style.left = Math.max(6, bx) + 'px';
+        box.style.top = Math.max(6, by) + 'px';
+
         // Bind close button
         $('#admin-coords-close').off('click').on('click', function(e) {
             e.stopPropagation();
@@ -99,7 +109,16 @@ $(document).ready(function(){
 
 
 
-    $('.case').click(function(e){
+    /**
+     * Map bindings live on the SVG's own nodes (.case tiles, #go-rect),
+     * so they die whenever the map markup is replaced. Exposed as
+     * window.bindMapView so the HUD can rebind after an AJAX view swap
+     * (js/hud.js hudRefreshAfterMove) — legacy full reloads simply call
+     * it once at ready.
+     */
+    window.bindMapView = function(){
+
+    $('.case').off('click').on('click', function(e){
 
         // Block clicks if tutorial overlay is in blocking mode
         if ($('#tutorial-overlay').hasClass('blocking')) {
@@ -170,7 +189,7 @@ $(document).ready(function(){
     });
 
 
-    $('#go-rect').click(function(e){
+    $('#go-rect').off('click').on('click', function(e){
 
         var coords = $(this).data('coords');
 
@@ -217,11 +236,19 @@ $(document).ready(function(){
                     setTimeout(function() {
                         document.location.reload();
                     }, 100);
+                } else if (typeof window.hudRefreshAfterMove === 'function') {
+                    // HUD: the view refreshes over AJAX (js/hud.js) —
+                    // zoom and scroll of the damier are untouched.
+                    window.hudRefreshAfterMove();
                 } else {
-                    // No tutorial active, reload immediately
+                    // Legacy layout: reload the page
                     document.location.reload();
                 }
             }
         });
     });
+
+    }; // end window.bindMapView
+
+    window.bindMapView();
 });

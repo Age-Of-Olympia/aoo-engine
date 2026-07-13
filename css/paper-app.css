@@ -1,0 +1,397 @@
+/* ============================================================
+ * Thème papier & encre des PAGES AUTONOMES (forum, carte monde,
+ * classements, marchand, école de guerre, fiches…).
+ *
+ * Chargé par Classes/Ui.php UNIQUEMENT quand le joueur a l'option
+ * newHud : les joueurs de l'habillage hérité ne voient rien changer.
+ * Pas de scope : le chargement conditionnel EST le scope.
+ * Mêmes matériaux que css/hud.css (maquette olympia-tests.psd).
+ * ============================================================ */
+
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    --pa-ink: #1d1c1b;
+    --pa-ink-soft: rgba(29, 28, 27, 0.6);
+    --pa-bronze: #8d6839;
+    --pa-line: rgba(93, 74, 42, 0.55);
+    --pa-line-soft: rgba(93, 74, 42, 0.3);
+    --pa-parchment: #f7e7c9;
+    --pa-veil: rgba(252, 248, 238, 0.55);
+    background: #e7ded0 url('../img/ui/paper/paper.jpg') center / cover fixed;
+    color: var(--pa-ink);
+}
+
+/* Ornements de ferronnerie aux coins hauts — décor pur */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    width: min(200px, 20vw);
+    height: 176px;
+    z-index: 0;
+    background: url('../img/ui/paper/ornament.png') top right / contain no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+body::after {
+    right: 0;
+}
+
+body::before {
+    left: 0;
+    transform: scaleX(-1);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+}
+
+/* Fonds hérités : marbre et rayures grises → voiles crème */
+.marbre,
+.tr-cat {
+    background: var(--pa-veil);
+}
+
+.tr-topic1,
+.tr-topic2 {
+    background: rgba(252, 248, 238, 0.35);
+}
+
+.tr-topic2 {
+    background: rgba(240, 230, 210, 0.45);
+}
+
+.section {
+    background: var(--pa-veil);
+}
+
+/* Filets de tables : bronze doux au lieu des gris */
+.marbre table {
+    border-color: var(--pa-line-soft);
+}
+
+.marbre td,
+.marbre th {
+    border-color: var(--pa-line-soft);
+}
+
+/* Boutons, champs et selects : chips parchemin */
+button,
+input[type="button"],
+select {
+    background: var(--pa-parchment);
+    border: 1px solid var(--pa-bronze);
+    border-radius: 4px;
+    color: var(--pa-ink);
+    box-shadow: none;
+}
+
+button:hover:not(:disabled),
+input[type="button"]:hover,
+select:hover {
+    background: #fdf6e5;
+}
+
+button:disabled {
+    opacity: 0.45;
+    border-color: var(--pa-line-soft);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea {
+    background: var(--pa-parchment);
+    border: 1px solid var(--pa-line-soft);
+    border-radius: 4px;
+    color: var(--pa-ink);
+}
+
+/* Citations et code : parchemin plutôt que gris */
+blockquote {
+    background: var(--pa-veil);
+    border-left: 4px solid var(--pa-bronze);
+}
+
+code {
+    background: var(--pa-veil);
+}
+
+/* Ascenseurs : plus de track noir de console */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--pa-line);
+    border-radius: 4px;
+}
+
+/* Barres de progression : bronze */
+.progress-bar .bar {
+    background: linear-gradient(to right, #b98a1c, var(--pa-bronze));
+}
+
+/* Onglet « Menu » : la languette sombre héritée devient l'onglet
+ * papier de la maquette. L'image grise disparaît, le libellé Gloock
+ * la remplace. */
+#top-menu-button {
+    height: auto;
+    margin: 0 0 4px;
+    padding: 3px 28px 6px;
+    background: var(--pa-veil);
+    border: 1px solid var(--pa-line-soft);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    font-family: 'Gloock', goudy, serif;
+    font-size: 16px;
+    color: var(--pa-ink);
+}
+
+#top-menu-button img {
+    display: none;
+}
+
+#top-menu-button::after {
+    content: "Menu";
+}
+
+/* ============================================================
+ * Évènements (logs.php) — la table de perception en papier & encre
+ * ============================================================ */
+
+/* Filets d'encre discrets au lieu du quadrillage gris/blanc hérité */
+.logs-table,
+.logs-table td,
+.logs-table th {
+    border: 0;
+}
+
+.logs-table {
+    border-collapse: collapse;
+}
+
+.logs-table td,
+.logs-table th {
+    border-bottom: 1px solid var(--pa-line-soft);
+    padding: 8px 10px;
+}
+
+.logs-table th {
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--pa-line);
+}
+
+/* Acteurs : la couleur de race quitte la cellule pleine (rouge
+ * criard sur parchemin) pour une chip compacte qui garde l'identité */
+.logs-table .log-td {
+    background: transparent;
+    color: var(--pa-ink);
+}
+
+.logs-table .log-actor {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--race-bg, transparent);
+    color: var(--race-fg, inherit);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: 95%;
+    line-height: 1.35;
+}
+
+.logs-table .log-actor a {
+    color: inherit;
+}
+
+/* Détails d'action : plaque d'encre posée sur le papier plutôt que
+ * boîte noire brute — les couleurs internes (réussite, échec, jets)
+ * sont conçues pour fond sombre, la nuit brune les garde lisibles. */
+.logs-table .logs-hidden {
+    background: #241d15;
+    color: #b6a88f;
+    padding: 6px 10px;
+    margin-top: 4px;
+    border-radius: 6px;
+}
+
+/* Types d'évènements : la palette hérité (bleu/vert/rouge purs)
+ * rejoint l'encrier — mêmes distinctions, teintes assourdies. */
+.logs-table .log-kill,
+.logs-table .log-break {
+    color: #770001;
+}
+
+.logs-table .log-fishing {
+    color: #33536b;
+}
+
+.logs-table .log-harvest {
+    color: #3f6b3f;
+}
+
+.logs-table .log-travel {
+    color: #6b4a2f;
+}
+
+/* ============================================================
+ * Carte du monde (map.php) — couches en mini-interrupteurs
+ * ============================================================ */
+
+/* Les cases à cocher brutes deviennent les mêmes interrupteurs que
+ * les couches de la carte du HUD (esprit « applis de cartes »). */
+.layer-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 3px 6px;
+    padding: 4px 12px;
+    background: var(--pa-veil);
+    border: 1px solid var(--pa-line-soft);
+    border-radius: 999px;
+    font-size: 88%;
+    cursor: pointer;
+    user-select: none;
+}
+
+.layer-controls input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    width: 24px;
+    height: 13px;
+    margin: 0;
+    border: 1px solid var(--pa-bronze);
+    border-radius: 999px;
+    background: var(--pa-parchment);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.layer-controls input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--pa-bronze);
+    opacity: 0.55;
+    transition: left 0.15s ease, opacity 0.15s ease;
+}
+
+.layer-controls input[type="checkbox"]:checked {
+    background: var(--pa-bronze);
+}
+
+.layer-controls input[type="checkbox"]:checked::after {
+    left: 12px;
+    background: var(--pa-parchment);
+    opacity: 1;
+}
+
+.layer-controls input[type="checkbox"]:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* ============================================================
+ * Encres communes — liens et consignes des pages autonomes
+ * ============================================================ */
+
+/* Le bleu hypertexte hérité rejoint l'encrier : brun-bronze foncé,
+ * souligné au survol seulement (les filets restent aux tables). */
+a {
+    color: #7a5230;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Les liens posés sur plaques sombres (détails d'action des logs)
+ * gardent une teinte claire lisible sur la nuit brune. */
+.logs-hidden a {
+    color: #cfa96a;
+}
+
+/* Consignes des missives : encre assourdie, avertissement sang */
+.missive-hint {
+    color: var(--pa-ink-soft);
+}
+
+.missive-hint-warning {
+    color: #770001;
+}
+
+/* ============================================================
+ * Mobile — le papier cadré à l'écran
+ * ============================================================ */
+
+/* background-attachment: fixed est ignoré/dégradé sur mobile (iOS
+ * surtout) : cover se calcule alors sur TOUTE la hauteur de page et
+ * la feuille devient un zoom flou (retour testeur). Cadrage à la
+ * hauteur d'écran, texture répétée verticalement. */
+@media (max-width: 1023px) {
+    body {
+        background-attachment: scroll;
+        background-size: auto 100vh;
+        background-position: center top;
+    }
+
+    /* Tables larges (évènements…) : défilement horizontal contenu
+     * plutôt que page compressée. */
+    .logs-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+/* ============================================================
+ * Dialogues mutualisés (js/modal.js) : feuille papier
+ * ============================================================ */
+.aoo-dialog {
+    background: #f6ecd8 url('../img/ui/paper/paper.jpg') center / cover;
+    border: 4px double var(--pa-bronze);
+    border-radius: 8px;
+    color: var(--pa-ink);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+}
+
+.aoo-dialog-input {
+    background: var(--pa-parchment);
+    border: 1px solid var(--pa-line-soft);
+    border-radius: 4px;
+    color: var(--pa-ink);
+}

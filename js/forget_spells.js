@@ -19,25 +19,29 @@ $(document).ready(function(){
             targetUrl = 'upgrades.php?spells&forget';
         }
 
-        if(!confirm('Oublier '+ name +'?')){
+        aooConfirm('Oublier '+ name +'?').then(function(ok){
 
-            $('.forget').prop('disabled', false);
-            return false;
-        }
+            if(!ok){
 
-        $.ajax({
-            type: "POST",
-            url: targetUrl,
-            data: postData,
-            success: function(data)
-            {
-                // alert(data);
-                document.location.reload();
-            },
-            error: function() {
-                alert("Erreur lors de la suppression.");
                 $('.forget').prop('disabled', false);
+                return;
             }
+
+            $.ajax({
+                type: "POST",
+                url: targetUrl,
+                data: postData,
+                success: function(data)
+                {
+                    /* Panneau HUD ou page : la vue « oublier » se
+                     * recharge avec la liste à jour (main.js). */
+                    aooReload();
+                },
+                error: function() {
+                    aooAlert("Erreur lors de la suppression.");
+                    $('.forget').prop('disabled', false);
+                }
+            });
         });
     });
 });

@@ -122,11 +122,11 @@ class ExchangesView
                             alert(data.message);
                         }
                         //console.log('Success:', data);
-                        location.reload();
+                        aooReload();
                     })
                     .catch((error) => {
                         console.error('Error:', error);
-                        location.reload();
+                        aooReload();
                     });
             });
         </script>

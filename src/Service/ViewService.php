@@ -127,6 +127,50 @@ class ViewService {
     {
         return $this->localBoundsAvailable;
     }
+
+    public function isWorldPlan(): bool
+    {
+        return $this->currentPlan === $this->worldPlan;
+    }
+
+    /**
+     * Position du joueur en pourcentages de l'image de carte (monde ou
+     * locale selon le plan courant) — permet de poser un marqueur CSS
+     * par-dessus les couches PNG sans générer de couche GD à chaque
+     * affichage (cf. MinimapView du HUD).
+     *
+     * @return array{x: float, y: float}|null null si aucune carte n'est
+     *                                        configurée pour ce plan/niveau
+     */
+    public function getPositionPercent(): ?array
+    {
+        if ($this->playerX === null || $this->playerY === null) {
+            return null;
+        }
+
+        if ($this->isWorldPlan()) {
+            if (empty($this->scaleX) || empty($this->scaleY)) {
+                return null;
+            }
+            $px = $this->transformX($this->playerX, 'global');
+            $py = $this->transformY($this->playerY, 'global');
+            $w = $this->width;
+            $h = $this->height;
+        } else {
+            if (!$this->localBoundsAvailable || empty($this->localMapWidth) || empty($this->localMapHeight)) {
+                return null;
+            }
+            $px = $this->transformX($this->playerX, 'local');
+            $py = $this->transformY($this->playerY, 'local');
+            $w = $this->localMapWidth;
+            $h = $this->localMapHeight;
+        }
+
+        return [
+            'x' => max(0.0, min(100.0, $px / $w * 100)),
+            'y' => max(0.0, min(100.0, $py / $h * 100)),
+        ];
+    }
     
     private function transformX($x, $mapType = "global") {
         if ($mapType === "global") {

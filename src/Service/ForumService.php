@@ -15,6 +15,56 @@ class ForumService
         $this->entityManager = EntityManagerFactory::getEntityManager();
     }
 
+    /**
+     * Nombre de sujets de forum non lus (catégories RP / Privés / HRP,
+     * hors Missives). Le décompte lit tous les JSONs de sujets : cache
+     * de session, invalidé par Forum::put_view dès qu'un sujet est lu
+     * et au bout d'une minute (nouveaux posts d'autres joueurs).
+     * Consommé par la pastille orange (TopBarView, check_forum.php).
+     */
+    public function GetUnreadCount(Player $player): int
+    {
+        $cache = $_SESSION['forumUnreadCache'] ?? null;
+
+        if (is_array($cache) && $cache['playerId'] === $player->id && $cache['time'] > time() - 60) {
+
+            return $cache['n'];
+        }
+
+        try {
+            $n = count($this->GetAllUnreadTopics($player));
+        } catch (\Throwable $e) {
+            $n = 0;
+        }
+
+        $_SESSION['forumUnreadCache'] = ['playerId' => $player->id, 'time' => time(), 'n' => $n];
+
+        return $n;
+    }
+
+    /**
+     * Sujets non lus groupés par forum : nom du forum => nombre.
+     * Alimente les pastilles par forum de l'accueil (ForumHomeView).
+     *
+     * @return array<string, int>
+     */
+    public function GetUnreadCountByForum(Player $player): array
+    {
+        $byForum = [];
+
+        try {
+            foreach ($this->GetAllUnreadTopics($player) as $entry) {
+
+                $name = $entry['forumJson']->name;
+                $byForum[$name] = ($byForum[$name] ?? 0) + 1;
+            }
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        return $byForum;
+    }
+
     public function GetAllUnreadTopics(Player $player): array
     {
         if (!empty($player->data->registerTime)) {
@@ -75,7 +125,9 @@ class ForumService
                         continue;
                     }
 
-                    if(is_array($topJson->views))//old way
+                    /* Un sujet jamais ouvert n'a pas de propriété views :
+                     * il est non lu, pas une erreur. */
+                    if (isset($topJson->views) && is_array($topJson->views))//old way
                     {
                         if (in_array($player->id, $topJson->views)) {
                             continue;

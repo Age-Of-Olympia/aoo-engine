@@ -1,0 +1,390 @@
+/* ============================================================
+ * Page d'accueil — habillage papier & encre de la maquette
+ * graphiste (olympia-tests.psd). Chargé uniquement par
+ * scripts/index.php (accueil déconnecté et menu principal).
+ *
+ * Le DOM existant est conservé : #index-menu, .index-button et le
+ * formulaire de connexion gardent leurs ids/classes (main.js les
+ * pilote) — seule la matière change : planète en héros, titre
+ * Gloock, entrées en encre séparées par des fleurons.
+ * ============================================================ */
+
+@font-face {
+    font-family: 'Gloock';
+    src: url('fonts/gloock.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Serif Display';
+    src: url('fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    --lp-ink: #1d1c1b;
+    --lp-bronze: #8d6839;
+    --lp-line-soft: rgba(93, 74, 42, 0.3);
+    --lp-veil: rgba(252, 248, 238, 0.6);
+    /* Fond de la maquette composité tel quel (papier + dessin
+     * d'architecture pleine largeur, opacité du calque respectée) :
+     * une seule image cohérente, comme dans le PSD. */
+    background: #e7ded0 url('../img/ui/paper/landing-bg.jpg?v=20260711') center / cover fixed;
+    color: var(--lp-ink);
+}
+
+/* Ornements de ferronnerie aux coins hauts */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    top: 14px;
+    width: min(180px, 17vw);
+    height: 158px;
+    z-index: 0;
+    background: url('../img/ui/paper/ornament.png') top right / contain no-repeat;
+    mix-blend-mode: multiply;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+body::after {
+    right: 16px;
+}
+
+body::before {
+    left: 16px;
+    transform: scaleX(-1);
+}
+
+/* ---------- Héros : planète + titre ---------- */
+
+/* La composition tient dans l'écran : planète et carte se partagent
+ * la hauteur (unités vh), la carte tombe dans le portail du dessin —
+ * l'ouverture entre les deux piliers, au centre de l'image. */
+#landing-hero {
+    position: relative;
+    display: grid;
+    place-items: center;
+    margin: 2.5vh auto 0;
+}
+
+#landing-hero img {
+    display: block;
+    width: min(52vw, 30vh, 300px);
+    filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.35));
+}
+
+#landing-hero h1 {
+    position: absolute;
+    margin: 0;
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    font-size: clamp(1.6rem, min(5.6vw, 4.4vh), 3.2rem);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+    /* La planète recomposée est sombre : le blanc porte, l'ombre
+     * assoit le contraste sur les bords qui débordent sur le papier */
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.55);
+    white-space: nowrap;
+}
+
+/* ---------- Carte de menu ---------- */
+
+/* La carte épouse le portail du dessin (l'ouverture entre les deux
+ * piliers, ~12.5% de la largeur de l'image). Le portail est centré
+ * DANS l'image de fond (asset recadré) : carte centrée = carte dans
+ * le portail, alignée avec la planète, sur tous les écrans. */
+#index-menu {
+    background: var(--lp-veil);
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 10px;
+    width: clamp(190px, 13.5vw, 264px);
+    padding: 8px 14px;
+    margin: 3.5vh auto 2vh;
+    animation: none;
+}
+
+#index-menu .text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 95%;
+}
+
+/* Entrées : plaques parchemin — clairement cliquables, plus des
+ * lignes de texte (retour joueur), l'esprit gravé reste. */
+#index-menu .index-button {
+    background: #f7e7c9;
+    width: 100%;
+    height: clamp(34px, 4.6vh, 42px);
+    margin: 4px 0;
+    color: var(--lp-ink);
+    font-family: 'Gloock', goudy, serif;
+    font-size: clamp(0.95em, 2.1vh, 1.15em);
+    letter-spacing: 0.03em;
+    border: 1px solid var(--lp-bronze);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#index-menu .index-button:hover,
+#index-menu .index-button:focus {
+    background: #fdf6e5;
+    color: var(--lp-bronze);
+}
+
+#index-menu .index-button:active {
+    background: #efe0bd;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+#index-menu button.index-button {
+    margin: 10px auto;
+}
+
+/* Fleurons gravés entre les entrées (calque alpha de la maquette) */
+.menu-sep {
+    width: 110px;
+    height: 13px;
+    margin: 0 auto;
+    background: url('../img/ui/paper/flourish-sep.png') center / contain no-repeat;
+    opacity: 0.85;
+}
+
+/* Écrans courts (portables 768p) : héros légèrement resserré pour
+ * que logo partenaire + pastille tiennent au bas du premier écran. */
+@media (max-height: 820px) {
+    #landing-hero {
+        margin-top: 1.5vh;
+    }
+
+    #landing-hero img {
+        width: min(52vw, 26vh, 300px);
+    }
+
+    #index-menu {
+        margin: 2vh auto 1.5vh;
+    }
+}
+
+/* ---------- Devise sous la planète ---------- */
+
+#landing-tagline {
+    margin: 2px 0 0;
+    text-align: center;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: clamp(0.95em, 2vh, 1.1em);
+    color: var(--lp-ink);
+    opacity: 0.75;
+}
+
+#landing-tagline::after {
+    content: "";
+    display: block;
+    width: 130px;
+    height: 1px;
+    margin: 9px auto 0;
+    background: var(--lp-line-soft);
+}
+
+/* ---------- Formulaire de connexion ---------- */
+
+#index-login input[type="text"],
+#index-login input[type="password"] {
+    background: #f7e7c9;
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 4px;
+    color: var(--lp-ink);
+    padding: 7px 10px;
+    width: 200px;
+    box-sizing: border-box;
+}
+
+#index-login td {
+    padding: 3px 0;
+}
+
+/* ---------- Statistiques (bas de carte) ---------- */
+
+#index-menu .text {
+    font-size: 80%;
+    color: var(--lp-ink);
+    opacity: 0.8;
+}
+
+#index-menu .text a {
+    color: var(--lp-bronze);
+    font-weight: bold;
+}
+
+/* ---------- Partenaires : bandeaux fondus dans le papier ---------- */
+
+/* Premier écran : colonne pleine hauteur — héros et carte en tête,
+ * le premier logo partenaire épinglé en bas du pli comme amorce de
+ * la suite, le repère « Partenaires » (fixe) juste dessous. */
+#landing-fold {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+#index-partenaires {
+    /* Poussé au bas du premier écran, la pastille suit dans le flux */
+    margin-top: auto;
+    padding-top: 4px;
+    line-height: 0;
+}
+
+/* Logo compact pour tenir dans la bande du pli, même en 768 de haut */
+#index-partenaires img {
+    max-height: 46px;
+    width: auto;
+}
+
+#index-partenaires img,
+body > a > img[src*="partenaires"] {
+    filter: sepia(0.35) saturate(0.8);
+    opacity: 0.75;
+    transition: filter 0.15s ease, opacity 0.15s ease;
+}
+
+#index-partenaires a:hover img,
+body > a:hover > img[src*="partenaires"] {
+    filter: none;
+    opacity: 1;
+}
+
+/* ---------- Entrée en scène, sobre ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+    #landing-hero,
+    #landing-tagline,
+    #index-menu {
+        animation: lp-rise 0.6s ease-out both;
+    }
+
+    #landing-tagline {
+        animation-delay: 0.1s;
+    }
+
+    #index-menu {
+        animation-delay: 0.18s;
+    }
+
+    @keyframes lp-rise {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+    }
+}
+
+/* ---------- Mobile : les chips quittent le coin du héros ---------- */
+
+/* fixed + cover se dégrade en zoom flou sur mobile (iOS ignore
+ * fixed) : la composition défile avec la page, cadrée à l'écran. */
+@media (max-width: 1023px) {
+    body {
+        background-attachment: scroll;
+        background-size: auto 100vh;
+        background-position: center top;
+        background-repeat: no-repeat;
+    }
+}
+
+@media (max-width: 700px) {
+    #index-changelog {
+        position: static;
+        margin: 8px auto 0;
+        text-align: center;
+    }
+
+    /* Le cadrage cover recadre le dessin sur téléphone : le portail
+     * n'est plus un repère, la carte reprend une largeur confortable. */
+    #index-menu {
+        width: min(76vw, 300px);
+    }
+}
+
+/* ---------- Indice de défilement vers les partenaires ---------- */
+
+/* Les partenaires vivent sous la ligne de flottaison : petit repère
+ * fixe en bas d'écran, dans l'esprit gravé (devise + chevron), qui
+ * s'efface dès que le joueur descend (JS scripts/index.php). */
+/* Pastille parchemin dans le flux, sous le premier logo partenaire :
+ * elle défile avec la page, aucun recouvrement possible. */
+#landing-scroll-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    align-self: center;
+    margin: 4px auto 6px;
+    padding: 4px 14px;
+    background: #f6ecd8;
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 999px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 0.85em;
+    color: var(--lp-ink);
+    text-decoration: none;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+#landing-scroll-hint:hover {
+    opacity: 1;
+    color: var(--lp-bronze);
+}
+
+/* Chevron gravé (bordures pivotées : pas d'asset, encre pure) */
+#landing-scroll-hint::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-top: -4px;
+    border-right: 2px solid var(--lp-bronze);
+    border-bottom: 2px solid var(--lp-bronze);
+    transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    #landing-scroll-hint::after {
+        animation: lp-bob 2s ease-in-out infinite;
+    }
+
+    @keyframes lp-bob {
+        0%, 100% { transform: rotate(45deg) translate(0, 0); }
+        50% { transform: rotate(45deg) translate(3px, 3px); }
+    }
+}
+
+/* Le clic sur le repère glisse jusqu'aux partenaires */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Changelog : chip papier discrète au lieu du bandeau noir monospace,
+ * au-dessus de l'ornement du coin droit. Le Discord a rejoint la
+ * carte de menu (entrée après le wiki). */
+#index-changelog {
+    z-index: 1;
+}
+
+#index-changelog .install-app {
+    background: var(--lp-veil);
+    color: var(--lp-ink);
+    font-family: inherit;
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 999px;
+}

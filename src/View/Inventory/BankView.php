@@ -74,7 +74,7 @@ class BankView
 
 
 ?>
-        <script src="js/progressive_loader.js"></script>
+        <script src="js/progressive_loader.js?v=20260716"></script>
         <?php
         if ($market->HasTarget()) {
         ?>
@@ -90,32 +90,33 @@ class BankView
 
 
                         var action = $(this).data('action');
-                        var n = 0;
 
-                        n = prompt('Combien?', window.n);
+                        aooPrompt('Combien?', window.n).then(function(n) {
 
-                        if (n == null) {
+                            if (n == null) {
 
-                            return false;
-                        }
-                        if (n == '' || n < 1 || n > window.n) {
-
-                            alert('Nombre invalide!');
-                            return false;
-                        }
-
-                        $.ajax({
-                            type: "POST",
-                            url: 'merchant.php?targetId=<?php echo isset($target) ? $target->id : "0" ?>&bank', // 0 allow valid link even if code should not be used in that case 
-                            data: {
-                                'action': action,
-                                'itemId': window.id,
-                                'n': n
-                            }, // serializes the form's elements.
-                            success: function(data) {
-                                // alert(data);
-                                document.location.reload();
+                                return;
                             }
+                            if (n == '' || n < 1 || n > window.n) {
+
+                                aooAlert('Nombre invalide!');
+                                return;
+                            }
+
+                            $.ajax({
+                                type: "POST",
+                                url: 'merchant.php?targetId=<?php echo isset($target) ? $target->id : "0" ?>&bank', /* 0 allow valid link even if code should not be used in that case */
+                                data: {
+                                    'action': action,
+                                    'itemId': window.id,
+                                    'n': n
+                                },
+                                success: function(data) {
+
+                                    /* Panneau HUD ou page (main.js) */
+                                    aooReload();
+                                }
+                            });
                         });
                     });
                 });
