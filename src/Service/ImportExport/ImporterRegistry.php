@@ -17,7 +17,7 @@ final class ImporterRegistry
      */
     public function __construct(?array $importers = null)
     {
-        foreach ($importers ?? [new ActionImporter(), new PassiveImporter(), new ActionTypeConfigImporter(), new RaceImporter(), new PlanImporter()] as $importer) {
+        foreach ($importers ?? [new ActionImporter(), new PassiveImporter(), new ActionTypeConfigImporter(), new RaceImporter(), new PlanImporter(), new DialogImporter()] as $importer) {
             $this->register($importer);
         }
     }
