@@ -38,6 +38,9 @@ class AdminMenuAccessService
         'tutorial-settings.php'    => ['Tutoriel · Options', 'Tutoriel', self::LEVEL_ADMIN],
 
         'world_map.php'            => ['Cartes · Carte monde', 'Cartes', self::LEVEL_ADMIN],
+        // Plans : superadmin par défaut — création/suppression destructives,
+        // même politique que races/factions (ajustable via access-control.php)
+        'plans.php'                => ['Cartes · Plans', 'Cartes', self::LEVEL_SUPERADMIN],
         'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
         'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
@@ -66,6 +69,7 @@ class AdminMenuAccessService
      */
     private const ALIASES = [
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
+        'plans-save.php'             => 'plans.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
         'player-skills.php'          => 'players.php',
