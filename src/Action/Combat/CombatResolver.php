@@ -23,7 +23,14 @@ class CombatResolver
 
         if (($advantage || $disadvantage) && !($advantage && $disadvantage)) {
             $secondRoll = $dice->roll($traitValue);
-            $roll = $advantage ? max($roll, $secondRoll) : min($roll, $secondRoll);
+            $sum1 = array_sum($roll);
+            $sum2 = array_sum($secondRoll);
+
+            if ($advantage) {
+                $roll = ($sum1 >= $sum2) ? $roll : $secondRoll;
+            } else {
+                $roll = ($sum1 <= $sum2) ? $roll : $secondRoll;
+            }
         }
 
         return $roll;
