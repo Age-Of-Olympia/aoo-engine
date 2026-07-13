@@ -110,6 +110,45 @@ class PlanConfigService
     }
 
     /**
+     * Fichier JSON complet du plan (y compris z_levels, exits… hors clés
+     * éditables), ou null s'il n'existe pas / est invalide. Pendant de
+     * replace() pour l'export de bundle.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function readFull(string $plan): ?array
+    {
+        $data = json()->decode('plans', $plan);
+
+        return is_object($data) ? json_decode(json_encode($data), true) : null;
+    }
+
+    /**
+     * Copie le JSON d'un plan vers un autre, avec surcharges (name,
+     * shortName…). Une source sans fichier retombe sur le minimum de load()
+     * — le clone d'un plan « coords seulement » produit un JSON minimal.
+     * Utilisé par le clonage admin ({@see PlanAdminService::clonePlan}).
+     *
+     * @param array<string, mixed> $overrides clé => valeur écrite telle quelle
+     */
+    public function copy(string $sourcePlan, string $targetPlan, array $overrides = []): void
+    {
+        $this->save($targetPlan, array_merge($this->load($sourcePlan), $overrides));
+    }
+
+    /**
+     * Remplace le fichier JSON entier d'un plan (import de bundle : le
+     * payload porte tout le fichier, contrairement au diff par clés de
+     * write()).
+     *
+     * @param array<string, mixed> $json
+     */
+    public function replace(string $plan, array $json): void
+    {
+        $this->save($plan, $json);
+    }
+
+    /**
      * Recale les bornes visibles d'un niveau z (sauf niveau marqué
      * MapUnavailable). Crée l'entrée z_levels manquante — plus de bornes à
      * maintenir à la main.
@@ -117,10 +156,10 @@ class PlanConfigService
      * @param array{minX: int, maxX: int, minY: int, maxY: int} $bounds
      */
     /**
-     * Configuration d'un niveau z pour l'éditeur : nom affiché et drapeau
-     * « pas de carte » (le reste — les bornes — est recalculé au push).
+     * Configuration d'un niveau z pour l'éditeur : nom affiché, drapeau
+     * « pas de carte » et bornes visibles (« auto » quand recalculées au push).
      *
-     * @return array{name: string, mapUnavailable: string}
+     * @return array{name: string, mapUnavailable: string, bounds: string}
      */
     public function readZLevel(string $plan, int $z): array
     {
