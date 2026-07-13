@@ -25,6 +25,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Entity\Race;
 use App\Service\ActionService;
 use App\Service\CsrfProtectionService;
+use App\Service\FactionService;
 use App\Service\RaceService;
 
 function race_flag_badge(bool $on, string $labelOn, string $labelOff): string
@@ -108,6 +109,27 @@ function race_render_list(array $races): string
         . '<th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
         . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+}
+
+/**
+ * <select> de la faction de départ, depuis le catalogue (admin/factions.php).
+ * Une valeur hors catalogue (faction supprimée) reste proposée, marquée ⚠,
+ * pour ne pas être écrasée silencieusement en rouvrant le formulaire.
+ */
+function race_faction_select(string $current): string
+{
+    $factionNames = (new FactionService())->getFactionNames();
+
+    $options = '<option value="">— aucune —</option>';
+    foreach ($factionNames as $code => $name) {
+        $options .= '<option value="' . e($code) . '"' . ($current === $code ? ' selected' : '') . '>'
+            . e($name) . ' (' . e($code) . ')</option>';
+    }
+    if ($current !== '' && !isset($factionNames[$current])) {
+        $options .= '<option value="' . e($current) . '" selected>⚠ ' . e($current) . ' (inconnue)</option>';
+    }
+
+    return '<select class="form-control" name="faction">' . $options . '</select>';
 }
 
 function race_render_form(?Race $race, string $csrfToken): string
@@ -220,8 +242,9 @@ HTML;
         . '<input type="text" class="form-control" name="color" value="'
         . e($isEdit ? $race->getColor() : 'black') . '"></div>'
         . '<div class="form-group col-md-3"><label>Faction de départ</label>'
-        . '<input type="text" class="form-control" name="faction" value="'
-        . e($isEdit ? $race->getFaction() : '') . '"></div>'
+        . race_faction_select($isEdit ? $race->getFaction() : '')
+        . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'
+        . ' Plusieurs races peuvent partager une faction.</small></div>'
         . '<div class="form-group col-md-3"><label>Plan d\'origine</label>'
         . '<input type="text" class="form-control" name="plan" value="'
         . e($isEdit ? $race->getPlan() : '') . '"></div>'

@@ -17,6 +17,7 @@ use App\Entity\Race;
 use App\Service\ActionService;
 use App\Service\AdminMenuAccessService;
 use App\Service\CsrfProtectionService;
+use App\Service\FactionService;
 use App\Service\RaceService;
 
 (new AdminMenuAccessService())->enforce('races.php');
@@ -74,21 +75,38 @@ $validate = static function (): ?string {
     return null;
 };
 
-/** Apply every form field onto the entity (shared by create and update). */
-$applyForm = static function (Race $race): void {
+/**
+ * Apply every form field onto the entity (shared by create and update).
+ * Returns a notice appended to the success flash ('' when all clean).
+ */
+$applyForm = static function (Race $race): string {
+    $notice = '';
+
     $race->setLabel(trim((string) $_POST['label']));
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
     $race->setPlayable(booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);
     $race->setColor(stringWithDefault('color', 'black'));
-    $race->setFaction(trim((string) ($_POST['faction'] ?? '')));
+
+    // Faction de départ : validée contre le catalogue (admin/factions.php).
+    // Une valeur orpheline est conservée seulement si elle ne change pas
+    // (option ⚠ du select) — jamais introduite.
+    $faction = strtolower(trim((string) ($_POST['faction'] ?? '')));
+    if ($faction === '' || $faction === $race->getFaction()
+        || (new FactionService())->getFactionByCode($faction) !== null) {
+        $race->setFaction($faction);
+    } else {
+        $notice = " ⚠ Faction « {$faction} » inconnue du catalogue — champ inchangé.";
+    }
     $race->setPlan(trim((string) ($_POST['plan'] ?? '')));
     $race->setAnimateurId(optionalInt('animateurId'));
 
     foreach (array_keys(CARACS) as $key) {
         $race->setCarac($key, (int) $_POST['carac'][$key]);
     }
+
+    return $notice;
 };
 
 /** One name per non-empty line. */
@@ -127,7 +145,7 @@ if ($action === 'create') {
     $race = new Race();
     $race->setName($name);
     $race->setCode(strtoupper($name));
-    $applyForm($race);
+    $factionNotice = $applyForm($race);
     $service->save($race);
     $starterActions = $linesToNames('starter_actions');
     $spells = $linesToNames('spells');
@@ -136,7 +154,7 @@ if ($action === 'create') {
     $notice = $unknownNamesNotice(array_merge($starterActions, $spells));
     $service->replaceNameLists($race, $starterActions, $spells);
 
-    setFlash('success', "Race « {$name} » créée." . $notice);
+    setFlash('success', "Race « {$name} » créée." . $factionNotice . $notice);
     redirectTo('/admin/races.php');
 }
 
@@ -147,7 +165,7 @@ if ($action === 'update') {
         redirectTo('/admin/races.php');
     }
 
-    $applyForm($race);
+    $factionNotice = $applyForm($race);
     $service->save($race);
     $starterActions = $linesToNames('starter_actions');
     $spells = $linesToNames('spells');
@@ -156,7 +174,7 @@ if ($action === 'update') {
     $notice = $unknownNamesNotice(array_merge($starterActions, $spells));
     $service->replaceNameLists($race, $starterActions, $spells);
 
-    setFlash('success', 'Race « ' . $race->getLabel() . ' » enregistrée.' . $notice);
+    setFlash('success', 'Race « ' . $race->getLabel() . ' » enregistrée.' . $factionNotice . $notice);
     redirectTo('/admin/races.php?action=edit&name=' . urlencode($name));
 }
 

@@ -5,6 +5,7 @@ namespace App\Service\ImportExport;
 use App\Entity\EntityManagerFactory;
 use App\Entity\Race;
 use App\Service\ActionService;
+use App\Service\FactionService;
 use App\Service\RaceService;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -54,6 +55,7 @@ final class RaceImporter extends AbstractObjectImporter
         }
 
         $this->warnOnUnknownActionNames($report, $name, $object);
+        $this->warnOnUnknownFaction($report, $name, $object);
 
         return $object;
     }
@@ -152,6 +154,23 @@ final class RaceImporter extends AbstractObjectImporter
         if ($unknown !== []) {
             $report->warn($name, 'Noms inconnus du jeu (vérifiez l\'orthographe) : '
                 . implode(', ', array_unique($unknown)) . '.');
+        }
+    }
+
+    /**
+     * Compat ascendante : les bundles peuvent porter des codes de faction
+     * antérieurs au catalogue (ou destinés à un autre environnement) — ils
+     * sont importés tels quels mais signalés, comme le fait le formulaire
+     * races-save.php.
+     *
+     * @param array<string, mixed> $object
+     */
+    private function warnOnUnknownFaction(ImportReport $report, string $name, array $object): void
+    {
+        $faction = strtolower(trim((string) ($object['faction'] ?? '')));
+        if ($faction !== '' && (new FactionService())->getFactionByCode($faction) === null) {
+            $report->warn($name, "Faction « {$faction} » inconnue du catalogue"
+                . ' (créez-la dans admin/factions.php ou importez son bundle).');
         }
     }
 
