@@ -1,6 +1,8 @@
 <?php
 namespace App\Action\Condition;
 
+use App\Action\Combat\CombatResolver;
+use App\Action\Combat\RollDetailView;
 use Classes\View;
 
 class DistancePureComputeCondition extends ComputePureCondition
@@ -28,28 +30,20 @@ class DistancePureComputeCondition extends ComputePureCondition
             }
         }
         
-        $targetRoll = $dice->roll($targetRollTraitValue);
-        if($conditionObject->getTargetAdvantage() && $conditionObject->getTargetDisadvantage()){
-            // Do nothing if advantage and disadvantage
-        }
-        elseif($conditionObject->getTargetAdvantage() || $conditionObject->getTargetDisadvantage()){
-            $targetRoll2 = $dice->roll($targetRollTraitValue);
-            if($conditionObject->getTargetAdvantage()){
-                $targetRoll = max($targetRoll,$targetRoll2);
-            }   
-            else{
-                $targetRoll = min($targetRoll,$targetRoll2);
-            }
-        }
+        $targetRoll = (new CombatResolver($dice))->rollDetailed(
+            (int) $targetRollTraitValue,
+            (bool) $conditionObject->getTargetAdvantage(),
+            (bool) $conditionObject->getTargetDisadvantage()
+        );
         $bonus = $conditionObject->getTargetRollBonus();
-        $targetTotal = array_sum($targetRoll) + $bonus;
+        $targetTotal = array_sum($targetRoll->roll) + $bonus;
         $tooltipOtherTxt = !empty($bonus) ? 'Bonus de compétence : ' . $conditionObject->getTargetRollBonus() . ' ' : '';
-        $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>) = ' . (array_sum($targetRoll) + $bonus) . ' (Jet pur)' : ' (Jet pur)';
-        $targetTxt = 'Jet '. $target->data->name .' = '. array_sum($targetRoll) . $targetOtherTxt;
+        $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>) = ' . (array_sum($targetRoll->roll) + $bonus) . ' (Jet pur)' : ' (Jet pur)';
+        $targetTxt = 'Jet '. $target->data->name .' = '. RollDetailView::advantageWrap(array_sum($targetRoll->roll), $targetRoll) . $targetOtherTxt;
 
         $conditionObject->setTargetRoll($targetTotal);
-        
-        return array($targetRoll, $targetTotal, $targetTxt);
+
+        return array($targetRoll->roll, $targetTotal, $targetTxt);
     }
 
     protected function checkDistanceCondition(int $actorTotal): bool {

@@ -52,7 +52,7 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
             }
         }
 
-        $targetRoll = (new CombatResolver($dice))->roll(
+        $targetRoll = (new CombatResolver($dice))->rollDetailed(
             (int) $targetRollTraitValue,
             (bool) $conditionObject->getTargetAdvantage(),
             (bool) $conditionObject->getTargetDisadvantage()
@@ -62,22 +62,23 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
         $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
         $esquive = (int) ($target->caracs->esquive ?? 0);
         $malus = (int) $target->data->malus;
-        $total = array_sum($targetRoll) - $malus + $bonus + $protection - $vulnerabilite + $esquive;
+        $total = array_sum($targetRoll->roll) - $malus + $bonus + $protection - $vulnerabilite + $esquive;
 
         $detail = new RollDetail(
             name: $target->data->name,
-            rollSum: array_sum($targetRoll),
+            rollSum: array_sum($targetRoll->roll),
             bonus: $bonus,
             positiveEffect: $protection,
             negativeEffect: $vulnerabilite,
             malus: $malus,
             esquive: $esquive,
             total: $total,
+            advantage: $targetRoll,
         );
 
         $conditionObject->setTargetRoll($total);
 
-        return array($targetRoll, $total, (new RollDetailView())->renderTarget($detail));
+        return array($targetRoll->roll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
     protected function checkDistanceCondition(int $actorTotal): bool {
