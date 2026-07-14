@@ -32,7 +32,7 @@ final class SchemaSimulationInputs
             }
 
             $value = $params[$field->key] ?? null;
-            // A bonus can be a [trait, divisor] pair (e.g. ["m", 3] = caracs.m / 3);
+            // A bonus can be a [trait, divisor] pair (e.g. ["pui", 3] = caracs.pui / 3);
             // the carac it reads is the first element.
             if (is_array($value)) {
                 $value = $value[0] ?? null;

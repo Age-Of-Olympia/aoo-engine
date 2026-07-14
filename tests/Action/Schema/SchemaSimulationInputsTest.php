@@ -34,9 +34,9 @@ class SchemaSimulationInputsTest extends TestCase
             new ParameterField('divisor', FieldType::INT, 'Diviseur'),
         );
 
-        $map = $this->bySide(SchemaSimulationInputs::derive($schema, ['atk' => 'f', 'def' => 'e', 'bonus' => 'm']));
+        $map = $this->bySide(SchemaSimulationInputs::derive($schema, ['atk' => 'f', 'def' => 'e', 'bonus' => 'pui']));
 
-        $this->assertSame(['f' => 'actor', 'e' => 'target', 'm' => 'actor'], $map);
+        $this->assertSame(['f' => 'actor', 'e' => 'target', 'pui' => 'actor'], $map);
     }
 
     public function testFixedNumericTraitOrIntReadsNothingAndIsSkipped(): void
@@ -49,10 +49,10 @@ class SchemaSimulationInputsTest extends TestCase
 
     public function testTraitDivisorPairExposesTheTrait(): void
     {
-        // e.g. jet_infuse bonusDamagesTrait ["m", 3] = caracs.m / 3.
+        // e.g. jet_infuse bonusDamagesTrait ["pui", 3] = caracs.pui / 3.
         $schema = new ParameterSchema(new ParameterField('bonus', FieldType::TRAIT_OR_INT, 'Bonus'));
 
-        $this->assertSame(['m' => 'actor'], $this->bySide(SchemaSimulationInputs::derive($schema, ['bonus' => ['m', 3]])));
+        $this->assertSame(['pui' => 'actor'], $this->bySide(SchemaSimulationInputs::derive($schema, ['bonus' => ['pui', 3]])));
     }
 
     public function testSlashSeparatedRollTypeSplitsIntoEachCarac(): void

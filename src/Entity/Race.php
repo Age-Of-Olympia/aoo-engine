@@ -6,7 +6,6 @@ use App\Interface\ObstructsInterface;
 use App\Interface\OwnsCaracsInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -45,7 +44,14 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
      * The 16 stat keys, one DB column each — alias de la source unique
      * {@see \App\Enum\Caracs::KEYS} (CARACS garde les libellés UI).
      */
+<<<<<<< HEAD
     public const CARAC_KEYS = \App\Enum\Caracs::KEYS;
+=======
+    public const CARAC_KEYS = [
+        'a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e',
+        'agi', 'pm', 'fm', 'pui', 'res', 'r', 'rm', 'spd', 'ae',
+    ];
+>>>>>>> 41e092ff (Premier jet remplacement M -> Pui/Res)
 
     public const FAMILY_CHARACTER = 'character';
     public const FAMILY_BUILDING = 'building';
@@ -233,7 +239,10 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
     private int $fm = 0;
 
     #[ORM\Column(type: "integer", options: ["default" => 0])]
-    private int $m = 0;
+    private int $pui = 0;
+
+    #[ORM\Column(type: "integer", options: ["default" => 0])]
+    private int $res = 0;
 
     #[ORM\Column(type: "integer", options: ["default" => 0])]
     private int $r = 0;

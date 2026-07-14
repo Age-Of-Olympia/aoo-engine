@@ -15,7 +15,7 @@ use Classes\Player;
 class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParameterSchemaInterface
 {
     // The simulator derives its input from this schema: `value` is TRAIT_OR_INT,
-    // so lossType=carac (value="m") surfaces the actor's M, while fixed/lifeloss/
+    // so lossType=carac (value="pui") surfaces the actor's M, while fixed/lifeloss/
     // difference (numeric or absent value) surface nothing — no custom code needed.
     public static function parameterSchema(): ParameterSchema
     {
@@ -33,7 +33,7 @@ class ManaLossOutcomeInstruction extends OutcomeInstruction implements HasParame
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
-        // e.g. { "lossType": "carac", "value":"m", "typeDivisor":2 }
+        // e.g. { "lossType": "carac", "value":"pui", "typeDivisor":2 }
         // e.g. { "lossType": "fixed", "value":5 }
         // e.g. { "lossType": "lifeloss" }
         // e.g. { "lossType": "difference" }

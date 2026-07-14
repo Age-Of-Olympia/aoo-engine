@@ -27,8 +27,8 @@ class BourrinsView
 
             'pm' => "Leur magie est inépuisable!",
             'fm' => "Leur esprit est une forteresse!",
-            'm' => "Les plus puissants magiciens!",
-
+            'pui' => "Les plus puissants magiciens!",
+            'res' => "Les sorts leurs rebondissent dessus!",
             'r' => "Les plus résistants!",
             'rm' => "Des mineurs de mana"
         ));

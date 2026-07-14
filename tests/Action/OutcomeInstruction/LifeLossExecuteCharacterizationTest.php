@@ -23,7 +23,7 @@ class LifeLossExecuteCharacterizationTest extends TestCase
     protected function setUp(): void
     {
         if (!defined('CARACS')) {
-            define('CARACS', ['f' => 'F', 'e' => 'E', 'm' => 'M', 'cc' => 'CC', 'agi' => 'Agi', 'pm' => 'PM']);
+            define('CARACS', ['f' => 'F', 'e' => 'E', 'pui' => 'Pui', 'res' => 'Res', 'cc' => 'CC', 'agi' => 'Agi', 'pm' => 'PM']);
         }
         if (!defined('DMG_CRIT')) {
             define('DMG_CRIT', 5);

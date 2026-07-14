@@ -83,7 +83,7 @@ if (!defined('CARACS')) {
     define('CARACS', [
         'a' => 'A', 'mvt' => 'Mvt', 'p' => 'P', 'pv' => 'PV', 'cc' => 'CC',
         'ct' => 'CT', 'f' => 'F', 'e' => 'E', 'agi' => 'Agi', 'pm' => 'PM',
-        'fm' => 'FM', 'm' => 'M', 'r' => 'R', 'rm' => 'RM', 'spd' => 'Spd', 'ae' => 'Ae',
+        'fm' => 'FM', 'pui' => 'Pui', 'res' => 'Res', 'r' => 'R', 'rm' => 'RM', 'spd' => 'Spd', 'ae' => 'Ae',
     ]);
 }
 if (!defined('ONE_DAY')) {

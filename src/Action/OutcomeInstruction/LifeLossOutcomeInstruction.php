@@ -39,7 +39,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
 
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
 
-        // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "m", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
+        // e.g. { "actorDamagesTrait": "f", "targetDamagesTrait": "e", "bonusDamagesTrait" : "pui", "distance" : true, "autoCrit": true, "targetIgnore": ["tronc"], "actorIgnore": false }
         
         // Initialisation des paramètres
         $totalDamages = 0;
