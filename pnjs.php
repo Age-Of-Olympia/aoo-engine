@@ -76,19 +76,8 @@ foreach($playersTbl as $pnj){
     $playerEffects = $playerEffectService->getEffectsByPlayerId($pnj->id);
     
     foreach ($playerEffects as $effect){
-        
-        $endTime = '(reposez-vous)';
 
-        if(time() < $effect->getEndTime()){
-
-            $endTime = Str::convert_time($effect->getEndTime()- time());
-        }
-
-
-        if(!$effect->getEndTime()){
-
-            $endTime = '∞';
-        }
+        $endTime = $effect->getEndTime() . ' tour(s)';
 
         $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span> <sup>'. $endTime .'</sup>';
     }

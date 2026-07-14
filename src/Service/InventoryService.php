@@ -138,7 +138,7 @@ class InventoryService
                                     $player->add_effect($effet, 0);
                                 } else {
 
-                                    $player->add_effect($effet, ONE_DAY);
+                                    $player->add_effect($effet, 1);
                                 }
                             }
                         }

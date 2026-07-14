@@ -9,7 +9,7 @@ class EffectCmd extends Command
         parent::setDescription(<<<EOT
 Ajout ou suppression d'un effet à un joueur (si il a l'option, ça lui enlève s'il ne l'a pas ça a ajoute).
 Exemple:
-> effect [matricule ou nom] [nom effet] [secondes]
+> effect [matricule ou nom] [nom effet] [tours]
 > effect 1 adrenaline
 EOT);
     }

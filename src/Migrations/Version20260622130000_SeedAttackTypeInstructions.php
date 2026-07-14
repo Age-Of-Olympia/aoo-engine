@@ -33,7 +33,7 @@ final class Version20260622130000_SeedAttackTypeInstructions extends AbstractMig
         $this->addSql(
             'INSERT INTO action_type_instructions (type_key, instruction_type, parameters, order_index) '
             . "VALUES ('attack', 'applystatus', :params, 0)",
-            ['params' => '{"adrenaline":true,"duration":172800}']
+            ['params' => '{"adrenaline":true,"duration":3}']
         );
         $this->addSql(
             'INSERT INTO action_type_instructions (type_key, instruction_type, parameters, order_index) '

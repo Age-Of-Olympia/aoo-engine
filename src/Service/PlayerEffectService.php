@@ -82,10 +82,10 @@ class PlayerEffectService
                 }
             } 
             else{
-                if($existingEffect->getValue() < $value){
+                if($existingEffect->getValue() <= $value){
                     $existingEffect->setValue($value);
+                    $existingEffect->setEndTime($endTime);
                 }
-                $existingEffect->setEndTime($endTime);
             }
 
             $this->entityManager->persist($existingEffect);

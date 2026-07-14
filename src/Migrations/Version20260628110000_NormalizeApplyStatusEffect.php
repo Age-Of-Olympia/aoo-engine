@@ -11,8 +11,8 @@ use Doctrine\Migrations\AbstractMigration;
  * Reshape applystatus instruction params so the effect is a normal field instead
  * of the first param key.
  *
- *   legacy: {"feu": true, "player": "target", "duration": 172800}
- *   new:    {"effect": "feu", "apply": true, "player": "target", "duration": 172800}
+ *   legacy: {"feu": true, "player": "target", "duration": 3}
+ *   new:    {"effect": "feu", "apply": true, "player": "target", "duration": 3}
  *
  * This lets the schema model the effect as a FieldType::EFFECT field (so both the
  * action editor and the type-defaults editor render a dropdown). Covers BOTH

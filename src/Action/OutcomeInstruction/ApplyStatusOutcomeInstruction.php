@@ -20,7 +20,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         return new ParameterSchema(
             new ParameterField('effect', FieldType::EFFECT, 'Effet', required: true),
             new ParameterField('apply', FieldType::BOOL, 'Appliquer (sinon retirer)', default: true),
-            new ParameterField('duration', FieldType::INT, 'Durée (secondes)', default: 1, help: '1 = jusqu\'au prochain tour'),
+            new ParameterField('duration', FieldType::INT, 'Durée (tours)', default: 1, help: '0 = jusqu\'au prochain tour'),
             new ParameterField('player', FieldType::ENUM, 'Appliquer à', default: 'both', options: [
                 'actor' => 'Acteur',
                 'target' => 'Cible',
@@ -59,7 +59,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         }
         $duration = $params['duration'] ?? 1;
         $timeMessage = 'pour ' . Str::displaySeconds($duration);
-        if ($duration == 1) {
+        if ($duration == 0) {
             $timeMessage = 'jusqu\'au prochain tour';
         }
         $player = $params['player'] ?? 'both';

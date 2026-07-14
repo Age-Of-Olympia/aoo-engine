@@ -96,19 +96,7 @@ echo '
                         ||
                         $targetEntity->getSecretFaction() == $player->data->secretFaction
                     ){
-
-                        $endTime = '(reposez-vous)';
-
-                        if(time() < $effect->getEndTime()){
-
-                            $endTime = Str::convert_time($effect->getEndTime() - time());
-                        }
-
-
-                        if(!$effect->getEndTime()){
-
-                            $endTime = '∞';
-                        }
+                        $endTime = $effect->getEndTime() . ' tour(s)';
                     }
                     else{
 

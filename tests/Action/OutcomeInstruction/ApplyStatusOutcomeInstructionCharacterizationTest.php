@@ -29,7 +29,7 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction->setParameters([
             'adrenaline' => true,
             'player' => 'actor',
-            'duration' => 1,
+            'duration' => 0,
             'value' => 2,
             'stackable' => false,
         ]);
@@ -55,7 +55,7 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction = new ApplyStatusOutcomeInstruction();
         $instruction->setParameters([
             'effect' => 'adrenaline', 'apply' => true, 'player' => 'actor',
-            'duration' => 1, 'value' => 2, 'stackable' => false,
+            'duration' => 0, 'value' => 2, 'stackable' => false,
         ]);
 
         $actor = $this->createMock(Player::class);
@@ -89,7 +89,7 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $instruction->setParameters([
             $payload => true,
             'player' => 'actor',
-            'duration' => 1,
+            'duration' => 0,
             'value' => 2,
         ]);
 

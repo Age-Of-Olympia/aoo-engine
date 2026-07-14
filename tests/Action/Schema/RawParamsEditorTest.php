@@ -30,13 +30,13 @@ class RawParamsEditorTest extends TestCase
 
     public function testSkipsReservedKeysAndKeepsTheDynamicOne(): void
     {
-        $params = ['adrenaline' => true, 'duration' => 86400, 'player' => 'actor'];
+        $params = ['adrenaline' => true, 'duration' => 1, 'player' => 'actor'];
 
         $html = $this->editor->render('inst_raw[7]', $params, ['duration', 'player', 'value', 'stackable']);
 
         $this->assertStringContainsString('value="adrenaline"', $html);
         $this->assertStringContainsString('value="true"', $html);
-        $this->assertStringNotContainsString('value="86400"', $html);
+        $this->assertStringNotContainsString('value="1"', $html);
     }
 
     public function testDisplaysArrayValuesAsJson(): void

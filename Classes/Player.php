@@ -599,20 +599,9 @@ class Player implements ActorInterface {
         return $this->playerEffectService->hasEffectByPlayerIdByEffectName($this->id,$name);
     }
 
-    public function add_effect($name, $duration=0, int $value=1, bool $stackable=false): void{
+    public function add_effect($name, $duration=1, int $value=1, bool $stackable=false): void{
 
-        // duration (0 is unlimited)
-        if($duration == 0){
-
-            $endTime = 0;
-        }
-
-        else{
-
-            $endTime = time() + $duration;
-        }
-
-        $this->playerEffectService->addEffectByPlayerId($this->id,$name,$endTime,$value, $stackable);
+        $this->playerEffectService->addEffectByPlayerId($this->id,$name,$duration,$value, $stackable);
 
         // effect exists
         if(!isset(EFFECTS_RA_FONT[$name])){
@@ -669,10 +658,7 @@ class Player implements ActorInterface {
         WHERE
         player_id = ?
         AND
-        endTime <=  '. time() .'
-        AND
-        endTime > 0
-        ';
+        endTime =  0';
 
         $db = new Db();
 
@@ -690,10 +676,7 @@ class Player implements ActorInterface {
         WHERE
         player_id = ?
         AND
-        endTime <=  '. time() .'
-        AND
-        endTime > 0
-        ';
+        endTime = 0';
 
         $db = new Db();
 
@@ -789,7 +772,7 @@ class Player implements ActorInterface {
             }
 
 
-            $this->add_effect($row->name, ONE_DAY);
+            $this->add_effect($row->name, 1);
         }
 
 

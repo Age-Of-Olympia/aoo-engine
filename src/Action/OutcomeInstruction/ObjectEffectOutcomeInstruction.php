@@ -30,7 +30,7 @@ class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasPa
             if(!empty($itemJson->addEffects)){
                 foreach($itemJson->addEffects as $e){
                     $duration = $e->duration ?? 0;
-                    $timeMessage = 'pour ' . Str::displaySeconds($duration);
+                    $timeMessage = 'pour ' . $duration . 'tour(s).';
                     if ($duration == 0) {
                         $timeMessage = 'jusqu\'au prochain tour';
                     }

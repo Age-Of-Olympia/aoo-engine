@@ -221,32 +221,33 @@ class NewTurnView
                     // Retire les effets de camouflage
                     $player->playerService->playerUpdateVisible(NULL);
 
-
-                        // end effects
-                        $sql = '
-                    SELECT COUNT(*) AS n
-                    FROM players_effects
-                    WHERE
-                    endTime <= ?
-                    AND
-                    endTime != 0
-                    AND
-                    player_id = ?
+                    // On compte les effets qui doivent expirer (endTime = nombre de tours restants)
+                    $sqlCountExpired = '
+                        SELECT COUNT(*) AS n
+                        FROM players_effects
+                        WHERE player_id = ?
+                        AND endTime < 1
                     ';
 
-
-                    $res = $db->exe($sql, array($time, $player->id));
-
+                    $res = $db->exe($sqlCountExpired, array($player->id));
                     $row = $res->fetch_object();
 
-                    if ($row->n) {
-
-                        $player->purge_effects();
+                    if ($row->n > 0) {
+                        $player->purge_effects(); 
 
                         echo '<tr><td>Effets terminés</td><td align="right">' . $row->n . '</td></tr>';
                     }
 
+                    // On réduit le endTime de tous les Effets restants du joueur de 1 tour
+                    $sqlUpdateRemaining = '
+                        UPDATE players_effects
+                        SET endTime = endTime - 1
+                        WHERE player_id = ?
+                        AND endTime >= 1
+                    ';
 
+                    $db->exe($sqlUpdateRemaining, array($player->id));
+                    
                     echo '</table>';
 
                     echo '<br /><a href="index.php"><button>Jouer</button></a>';

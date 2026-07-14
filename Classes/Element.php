@@ -4,7 +4,7 @@ namespace Classes;
 class Element{
 
 
-    public static function put($name, $coords, $duration=THREE_DAYS){
+    public static function put($name, $coords, $duration=4){
 
 
         if(!isset(EFFECTS_RA_FONT[$name])){
@@ -13,7 +13,7 @@ class Element{
         }
 
 
-        $endTime = time() + $duration;
+        $endTime = $duration;
 
         if(is_numeric($coords)){
 

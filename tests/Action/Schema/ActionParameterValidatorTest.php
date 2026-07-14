@@ -143,7 +143,7 @@ class ActionParameterValidatorTest extends TestCase
     {
         $result = $this->validator->coerceRaw([
             ['k' => 'adrenaline', 'v' => 'true'],
-            ['k' => 'duration', 'v' => '86400'],
+            ['k' => 'duration', 'v' => '1'],
         ], ['duration', 'player', 'value', 'stackable']);
 
         $this->assertSame(['adrenaline' => true], $result);
