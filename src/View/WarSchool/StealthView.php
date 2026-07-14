@@ -241,52 +241,7 @@ class StealthView
     echo Str::minify(ob_get_clean());
 
     ?>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
-            $(document).ready(function() {
-                $('.buy-skill-btn').click(function() {
-                    var btn = $(this);
-                    var skillId = btn.data('id');
-                    var type = btn.data('type'); // 'active' ou 'passive'
-
-                    aooConfirm('Voulez-vous vraiment apprendre cette compétence ?').then(function(ok) {
-                        if (!ok) return;
-
-                        btn.prop('disabled', true);
-
-                        var postData = {};
-                        if (type === 'passive') {
-                            postData = { 'buyPassiveId': skillId };
-                        } else {
-                            postData = { 'buySkillId': skillId };
-                        }
-
-                        $.ajax({
-                            type: "POST",
-                            url: window.location.href,
-                            data: postData,
-                            success: function(response) {
-                                /* On cherche la div #data dans la réponse brute */
-                                var message = $(response).find('#data').html() || $(response).filter('#data').html();
-
-                                if (!message) {
-                                    message = "Réponse serveur : " + response.replace(/<[^>]*>?/gm, '');
-                                }
-
-                                /* Message PUIS rechargement : l'alerte modale n'est pas bloquante */
-                                aooAlert($('<div>').html(message).text()).then(function() {
-                                    aooReload();
-                                });
-                            },
-                            error: function(xhr) {
-                                aooAlert("Erreur réseau : " + xhr.status);
-                                btn.prop('disabled', false);
-                            }
-                        });
-                    });
-                });
-            });
-        </script>
+        <script src="js/warschool.js?v=20260714"></script>
         <?php
 
     }
