@@ -29,6 +29,10 @@ body {
     --lp-bronze: #8d6839;
     --lp-line-soft: rgba(93, 74, 42, 0.3);
     --lp-veil: rgba(252, 248, 238, 0.6);
+    /* La colonne héritée (main.css : max-width 60%) étranglait la
+     * composition — l'accueil occupe tout l'écran, les sections
+     * éditoriales vivent dans les vraies marges. */
+    max-width: none;
     /* Fond de la maquette composité tel quel (papier + dessin
      * d'architecture pleine largeur, opacité du calque respectée) :
      * une seule image cohérente, comme dans le PSD. */
@@ -69,12 +73,14 @@ body::before {
     position: relative;
     display: grid;
     place-items: center;
-    margin: 2.5vh auto 0;
+    margin: 1vh auto 0;
 }
 
+/* Planète resserrée : les sections éditoriales partagent le premier
+ * écran avec le héros, tout doit tenir sans défiler. */
 #landing-hero img {
     display: block;
-    width: min(52vw, 30vh, 300px);
+    width: min(48vw, 19vh, 210px);
     filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.35));
 }
 
@@ -105,7 +111,7 @@ body::before {
     border-radius: 10px;
     width: clamp(190px, 13.5vw, 264px);
     padding: 8px 14px;
-    margin: 3.5vh auto 2vh;
+    margin: 2vh auto 2vh;
     animation: none;
 }
 
@@ -149,13 +155,20 @@ body::before {
     margin: 10px auto;
 }
 
-/* Fleurons gravés entre les entrées (calque alpha de la maquette) */
+/* Fleurons gravés entre les entrées (calque alpha de la maquette).
+ * Retour joueur juillet 2026 : répétés à pleine encre ils pèsent —
+ * le premier reste un fleuron (accent sous « Jouer »), atténué ;
+ * les suivants deviennent de simples filets. */
 .menu-sep {
     width: 110px;
     height: 13px;
     margin: 0 auto;
     background: url('../img/ui/paper/flourish-sep.png') center / contain no-repeat;
-    opacity: 0.85;
+    opacity: 0.4;
+}
+
+#index-menu .menu-sep ~ .menu-sep {
+    background: linear-gradient(var(--lp-line-soft), var(--lp-line-soft)) center / 90px 1px no-repeat;
 }
 
 /* Écrans courts (portables 768p) : héros légèrement resserré pour
@@ -228,8 +241,8 @@ body::before {
 /* ---------- Partenaires : bandeaux fondus dans le papier ---------- */
 
 /* Premier écran : colonne pleine hauteur — héros et carte en tête,
- * le premier logo partenaire épinglé en bas du pli comme amorce de
- * la suite, le repère « Partenaires » (fixe) juste dessous. */
+ * le chevron de défilement épinglé en bas du pli pour montrer que
+ * la page continue (sections éditoriales puis partenaires). */
 #landing-fold {
     display: flex;
     flex-direction: column;
@@ -237,30 +250,54 @@ body::before {
     min-height: 100dvh;
 }
 
-#index-partenaires {
-    /* Poussé au bas du premier écran, la pastille suit dans le flux */
-    margin-top: auto;
-    padding-top: 4px;
-    line-height: 0;
+/* Repère textuel simple : les bannières sont cliquables, pas lui —
+ * aucun habillage de bouton (retour joueur juillet 2026). */
+#landing-partners-label {
+    margin: 5vh 0 8px;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 0.95em;
+    color: var(--lp-ink);
+    opacity: 0.75;
 }
 
-/* Logo compact pour tenir dans la bande du pli, même en 768 de haut */
-#index-partenaires img {
+#landing-partners {
+    padding-bottom: 3vh;
+}
+
+/* Bannières en rangées centrées et aérées ; Âme JDR seule en tête */
+.partners-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 22px;
+    margin: 10px auto;
+    max-width: min(860px, 92vw);
+}
+
+#landing-partners .partners-lead img {
+    max-height: 64px;
+}
+
+#landing-partners img {
     max-height: 46px;
+    max-width: min(320px, 86vw);
     width: auto;
-}
-
-#index-partenaires img,
-body > a > img[src*="partenaires"] {
     filter: sepia(0.35) saturate(0.8);
     opacity: 0.75;
     transition: filter 0.15s ease, opacity 0.15s ease;
 }
 
-#index-partenaires a:hover img,
-body > a:hover > img[src*="partenaires"] {
+#landing-partners a:hover img {
     filter: none;
     opacity: 1;
+}
+
+.partners-vote {
+    margin: 6px auto;
+    font-size: 75%;
+    color: #333;
 }
 
 /* ---------- Entrée en scène, sobre ---------- */
@@ -313,46 +350,51 @@ body > a:hover > img[src*="partenaires"] {
     #index-menu {
         width: min(76vw, 300px);
     }
+
+    /* Même rapport titre/planète que sur grand écran : le titre
+     * déborde de la planète (52vw) au lieu de tenir dedans
+     * (retour joueur juillet 2026). */
+    #landing-hero h1 {
+        font-size: clamp(1.9rem, 9vw, 2.6rem);
+    }
 }
 
-/* ---------- Indice de défilement vers les partenaires ---------- */
+/* ---------- Indice de défilement ---------- */
 
-/* Les partenaires vivent sous la ligne de flottaison : petit repère
- * fixe en bas d'écran, dans l'esprit gravé (devise + chevron), qui
- * s'efface dès que le joueur descend (JS scripts/index.php). */
-/* Pastille parchemin dans le flux, sous le premier logo partenaire :
- * elle défile avec la page, aucun recouvrement possible. */
+/* Chevron gravé seul, discret : un signe que la page continue — pas
+ * une pastille-bouton (retour joueur juillet 2026 : elle se lisait
+ * comme un bouton alors que ce sont les bannières partenaires qui se
+ * cliquent). Fixé au bas de l'ÉCRAN, pas du pli : sur les portables
+ * courts le pli déborde et un chevron dans le flux serait invisible ;
+ * il s'efface dès qu'on défile (JS scripts/index.php). */
 #landing-scroll-hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    align-self: center;
-    margin: 4px auto 6px;
-    padding: 4px 14px;
-    background: #f6ecd8;
-    border: 1px solid var(--lp-line-soft);
-    border-radius: 999px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    font-family: 'DM Serif Display', serif;
-    font-style: italic;
-    font-size: 0.85em;
-    color: var(--lp-ink);
-    text-decoration: none;
-    opacity: 0.9;
+    display: grid;
+    place-items: center;
+    position: fixed;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 8px 26px 10px;
+    opacity: 0.55;
     transition: opacity 0.3s ease;
 }
 
-#landing-scroll-hint:hover {
+#landing-scroll-hint:hover,
+#landing-scroll-hint:focus-visible {
     opacity: 1;
-    color: var(--lp-bronze);
 }
 
-/* Chevron gravé (bordures pivotées : pas d'asset, encre pure) */
+#landing-scroll-hint.hint-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Chevron en bordures pivotées : encre pure, pas d'asset */
 #landing-scroll-hint::after {
     content: "";
-    width: 7px;
-    height: 7px;
-    margin-top: -4px;
+    width: 10px;
+    height: 10px;
     border-right: 2px solid var(--lp-bronze);
     border-bottom: 2px solid var(--lp-bronze);
     transform: rotate(45deg);
@@ -360,7 +402,7 @@ body > a:hover > img[src*="partenaires"] {
 
 @media (prefers-reduced-motion: no-preference) {
     #landing-scroll-hint::after {
-        animation: lp-bob 2s ease-in-out infinite;
+        animation: lp-bob 2.4s ease-in-out infinite;
     }
 
     @keyframes lp-bob {
@@ -369,7 +411,6 @@ body > a:hover > img[src*="partenaires"] {
     }
 }
 
-/* Le clic sur le repère glisse jusqu'aux partenaires */
 html {
     scroll-behavior: smooth;
 }
@@ -387,4 +428,366 @@ html {
     font-family: inherit;
     border: 1px solid var(--lp-line-soft);
     border-radius: 999px;
+}
+
+/* ---------- Sections éditoriales (présentation, chroniques, galerie) ---------- */
+
+/* Contenu en base (landing_sections/news/images), rendu par
+ * App\View\LandingSectionsView SUR le premier écran (retour joueur
+ * juillet 2026 : visibles sans défiler) — présentation et chroniques
+ * dans les marges de part et d'autre de la carte de menu, galerie en
+ * bandeau dessous. Même langage papier & encre : titres Gloock avec
+ * fleuron (ici il accentue au lieu de rythmer), corps DM Serif sur
+ * voile lisible. */
+#landing-columns {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: clamp(20px, 3vw, 48px);
+    align-items: start;
+    width: min(1340px, 95vw);
+    margin: 0 auto;
+}
+
+/* Les colonnes latérales laissent respirer le dessin : contenu
+ * plafonné et poussé vers la carte. */
+#landing-col-left,
+#landing-col-right {
+    max-width: 360px;
+    margin-top: 1.5vh;
+}
+
+#landing-col-left {
+    justify-self: end;
+}
+
+#landing-col-right {
+    justify-self: start;
+}
+
+/* Galerie dans la colonne gauche, sous la présentation */
+#landing-galerie {
+    margin-top: 1.5vh;
+}
+
+.landing-section {
+    margin: 0 0 2vh;
+}
+
+.landing-section h2 {
+    margin: 0 0 4px;
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    font-size: clamp(1.05rem, 2.2vh, 1.3rem);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--lp-ink);
+    text-align: center;
+}
+
+/* Le fleuron souligne chaque titre de section */
+.landing-section h2::after {
+    content: "";
+    display: block;
+    width: 110px;
+    height: 13px;
+    margin: 4px auto 10px;
+    background: url('../img/ui/paper/flourish-sep.png') center / contain no-repeat;
+    opacity: 0.5;
+}
+
+.landing-section-body {
+    background: var(--lp-veil);
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 10px;
+    padding: 4px 20px;
+    font-family: 'DM Serif Display', serif;
+    font-size: 0.95em;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* Chroniques : une seule colonne de gazette — les entrées se suivent
+ * sous des filets d'encre, pas trois cartes web empilées. */
+.landing-news {
+    list-style: none;
+    margin: 0;
+    padding: 2px 0;
+    background: var(--lp-veil);
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 10px;
+}
+
+.landing-news li {
+    padding: 9px 20px 11px;
+    text-align: left;
+    font-size: 0.92em;
+}
+
+.landing-news li + li {
+    border-top: 1px solid var(--lp-line-soft);
+}
+
+.landing-news time {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 0.85em;
+    color: var(--lp-bronze);
+}
+
+.landing-news h3 {
+    margin: 2px 0 6px;
+    font-family: 'Gloock', goudy, serif;
+    font-weight: 400;
+    font-size: 1.05em;
+    color: var(--lp-ink);
+}
+
+.landing-news p {
+    margin: 0;
+    font-family: 'DM Serif Display', serif;
+    line-height: 1.5;
+}
+
+/* Galerie : des planches gravées posées sur le papier — cadre de
+ * vélin, légende « Pl. I — … » sous l'image, inclinaisons alternées
+ * comme des gravures étalées sur un bureau. Sépia au repos (comme
+ * les bannières partenaires), pleine couleur et planche redressée
+ * au survol. */
+/* minmax(0, …) : sans plancher à zéro, une image à grande largeur
+ * intrinsèque gonfle les pistes 1fr et fait déborder la colonne
+ * (constaté avec des captures d'écran de plusieurs milliers de px). */
+.landing-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+    padding: 4px 2px;
+}
+
+.landing-gallery figure {
+    margin: 0;
+    padding: 6px 6px 3px;
+    background: #fbf5e8;
+    border: 1px solid var(--lp-line-soft);
+    border-radius: 2px;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Chaque planche a sa propre inclinaison, légère et alternée */
+.landing-gallery figure:nth-child(4n + 1) { transform: rotate(-2deg); }
+.landing-gallery figure:nth-child(4n + 2) { transform: rotate(1.6deg); }
+.landing-gallery figure:nth-child(4n + 3) { transform: rotate(1.2deg); }
+.landing-gallery figure:nth-child(4n + 4) { transform: rotate(-1.4deg); }
+
+.landing-gallery figure:hover {
+    transform: rotate(0deg) scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    z-index: 1;
+    position: relative;
+}
+
+/* Cadrage panoramique : les planches restent basses pour que les
+ * deux rangées tiennent dans le premier écran. */
+.landing-gallery img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2.1 / 1;
+    object-fit: cover;
+    border: 1px solid rgba(93, 74, 42, 0.35);
+    filter: sepia(0.3) saturate(0.85);
+    transition: filter 0.2s ease;
+}
+
+.landing-gallery figure:hover img {
+    filter: none;
+}
+
+.landing-gallery figcaption {
+    padding: 3px 2px 2px;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 0.72em;
+    text-align: center;
+    color: var(--lp-ink);
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-gallery figure,
+    .landing-gallery img {
+        transition: none;
+    }
+}
+
+.landing-gallery figure {
+    cursor: pointer;
+}
+
+.landing-gallery figure:focus-visible {
+    outline: 2px solid var(--lp-bronze);
+    outline-offset: 2px;
+}
+
+/* ---------- Carrousel plein écran (js/landing_gallery.js) ---------- */
+
+/* Voile d'encre ; la planche s'y présente en grand, cadre de vélin
+ * et légende comme dans la marge, chevrons gravés pour naviguer.
+ * La scène a une taille FIXE et l'image s'y loge (contain) : cadre et
+ * chevrons ne bougent pas d'une image à l'autre. */
+#landing-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 16, 10, 0.92);
+}
+
+#landing-lightbox.lightbox-open {
+    display: flex;
+}
+
+/* Le cadre ÉPOUSE chaque image (liseré de vélin constant) au lieu
+ * d'une scène pleine largeur : plus de grandes marges claires sur les
+ * images étroites. Les chevrons restent ancrés à l'écran, donc
+ * immobiles même quand le cadre change de format. */
+#landing-lightbox figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 12px 12px 6px;
+    background: #fbf5e8;
+    border-radius: 2px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    max-width: min(84vw, 1200px);
+}
+
+#landing-lightbox img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    /* Hauteur du pli moins cadre et légende : l'image dicte le reste */
+    max-height: calc(min(84vh, 860px) - 60px);
+    border: 1px solid rgba(93, 74, 42, 0.35);
+}
+
+#landing-lightbox figcaption {
+    padding: 7px 4px 4px;
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    text-align: center;
+    color: var(--lp-ink);
+}
+
+#landing-lightbox button {
+    background: none;
+    border: none;
+    padding: 18px;
+    cursor: pointer;
+}
+
+/* Chevrons ancrés aux bords de l'ÉCRAN : mêmes positions quelle que
+ * soit l'image affichée. */
+.lightbox-prev,
+.lightbox-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.lightbox-prev {
+    left: max(6px, calc((100vw - min(84vw, 1200px)) / 2 - 62px));
+}
+
+.lightbox-next {
+    right: max(6px, calc((100vw - min(84vw, 1200px)) / 2 - 62px));
+}
+
+#landing-lightbox button:focus-visible {
+    outline: 2px solid #f6ecd8;
+    outline-offset: 2px;
+}
+
+/* Chevrons gravés (bordures pivotées, pas d'asset) */
+.lightbox-prev::after,
+.lightbox-next::after {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-right: 3px solid #f6ecd8;
+    border-bottom: 3px solid #f6ecd8;
+    opacity: 0.85;
+}
+
+.lightbox-prev::after {
+    transform: rotate(135deg);
+}
+
+.lightbox-next::after {
+    transform: rotate(-45deg);
+}
+
+.lightbox-prev:hover::after,
+.lightbox-next:hover::after {
+    opacity: 1;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    color: #f6ecd8;
+    font-size: 2.2em;
+    line-height: 1;
+    opacity: 0.85;
+}
+
+.lightbox-close:hover {
+    opacity: 1;
+}
+
+@media (max-width: 700px) {
+    #landing-lightbox figure {
+        max-width: 94vw;
+    }
+
+    #landing-lightbox img {
+        max-height: calc(70vh - 60px);
+    }
+
+    .lightbox-prev { left: 0; }
+    .lightbox-next { right: 0; }
+}
+
+/* Sous 1024px les marges disparaissent : les colonnes s'empilent,
+ * la carte de menu (connexion) reprend la première place. */
+@media (max-width: 1023px) {
+    #landing-columns {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #landing-col-center {
+        order: -1;
+    }
+
+    #landing-col-left,
+    #landing-col-right {
+        justify-self: auto;
+        max-width: min(480px, 92vw);
+        margin-top: 2vh;
+    }
+
+    .landing-gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

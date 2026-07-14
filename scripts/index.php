@@ -9,7 +9,7 @@ if(isset($_GET['resetPsw'])){
 
 /* Habillage papier & encre de la maquette graphiste : la bannière
  * cède la place au héros planète + titre Gloock (css/landing.css). */
-echo '<link rel="stylesheet" href="css/landing.css?v=20260711m" />';
+echo '<link rel="stylesheet" href="css/landing.css?v=20260715b" />';
 
 /* Fond filigrané « aootest » hors prod (variante _test du fond
  * composité de la maquette). */
@@ -32,6 +32,21 @@ echo '<a href="index.php" id="landing-hero">'
 /* Devise sous la planète (composition de la maquette) — plus de
  * doublon « Age of Olympia » dans la carte de menu. */
 echo '<p id="landing-tagline">JDR gratuit au tour-par-tour.</p>';
+
+/* Sections éditoriales SUR le premier écran (retour joueur juillet
+ * 2026 : visibles sans défiler) : présentation à gauche de la carte,
+ * chroniques à droite, galerie en bandeau dessous. Contenu en base,
+ * éditable depuis l'admin ; colonne vide = carte centrée, comme avant. */
+$landingSections = new \App\View\LandingSectionsView();
+
+echo '<div id="landing-columns">';
+
+echo '<div class="landing-col" id="landing-col-left">';
+$landingSections->renderSections();
+$landingSections->renderGallery();
+echo '</div>';
+
+echo '<div class="landing-col" id="landing-col-center">';
 
 echo '
 <div id="index-menu" class="box-shadow scrolling-bg">
@@ -167,37 +182,59 @@ echo '
 </div>
 ';
 
+echo '</div>'; /* /#landing-col-center */
 
+echo '<div class="landing-col" id="landing-col-right">';
+$landingSections->renderNews();
+echo '</div>';
 
+echo '</div>'; /* /#landing-columns */
 
-
-/* Bas du premier écran : le premier logo partenaire amorce la suite
- * de la page, le repère « Partenaires » juste dessous — dans le flux,
- * il défile avec le contenu, aucun recouvrement possible. */
-echo '
-<div id="index-partenaires">
-    <a href="https://ame-jdr.net"><img src="img/ui/partenaires/ame-jdr.net.webp" /></a>
-</div>
-';
-
-echo '<a id="landing-scroll-hint" href="#index-partenaires">Partenaires</a>';
+/* Chevron gravé seul, fixé au bas de l'écran : signale que la page
+ * continue (partenaires) sans se déguiser en bouton — la pastille
+ * « Partenaires » d'avant se lisait comme un bouton (retour joueur
+ * juillet 2026). Il s'efface dès que le joueur descend. */
+echo '<a id="landing-scroll-hint" href="#landing-partners-label" aria-label="Voir la suite de la page"></a>';
+?>
+<script>
+$(window).on('scroll', function() {
+    $('#landing-scroll-hint').toggleClass('hint-hidden', $(window).scrollTop() > 60);
+});
+</script>
+<?php
 
 echo '</div>'; /* /#landing-fold */
 
+/* Partenaires : un repère textuel simple au-dessus des bannières —
+ * ce sont elles qui sont cliquables, pas le repère. */
+echo '<div id="landing-partners-label">Partenaires :</div>';
 
+echo '<div id="landing-partners">';
+
+/* Âme JDR garde sa place d'honneur, seul en tête de la liste */
+echo '<div class="partners-row partners-lead">';
+echo '<a href="https://ame-jdr.net" title="Âme JDR"><img src="img/ui/partenaires/ame-jdr.net.webp" /></a>';
+echo '</div>';
+
+echo '<div class="partners-row">';
 echo '<a href="https://aufonddutrou.fr/" title="Au fond du trou"><img src="img/ui/partenaires/afdt.gif" /></a>';
 echo '<a href="https://www.jdr.alandara.net/" title="Alandara"><img src="img/ui/partenaires/alandara.gif" /></a>';
 echo '<a href="https://ideo-lejeu.com/" title="IDEO"><img src="img/ui/partenaires/ideo.gif" /></a>';
 echo '<a href="https://www.mountyhall.com/" title="Mounty Hall"><img src="img/ui/partenaires/mountyhall.png" /></a>';
 echo '<a href="https://www.tourdejeu.net/annu/fichejeu.php?id=14616" title="Tour de jeu"><img src="img/ui/partenaires/tdj.gif" /></a>';
+echo '</div>';
 
-echo '<br />';
+echo '<div class="partners-row">';
+echo '<a href="https://www.les12singes.com/84-les-oublies"><img src="img/ui/partenaires/les_oublies.jpeg" /></a>';
+echo '</div>';
 
-echo '<a href="https://www.les12singes.com/84-les-oublies"><img src="img/ui/partenaires/les_oublies.jpeg" /></a><br />';
+echo '<div class="partners-vote"><a href="https://votezpourmoi.com/">Votez Pour Moi</a>, Jeu de simulation de campagne électorale! (<a href="https://votezpourmoi.com/jeu-politique/but-jeu.php">en savoir plus</a>)</div>';
 
-echo '<div style="font-size: 75%; color: #333;"><a href="https://votezpourmoi.com/">Votez Pour Moi</a>, Jeu de simulation de campagne électorale! (<a href="https://votezpourmoi.com/jeu-politique/but-jeu.php">en savoir plus</a>)</div>';
-
+echo '<div class="partners-row">';
 echo '<a href="https://www.qtg.fr/" title="Qu\'est-ce que tu Geekes ?"><img src="img/ui/partenaires/qtg.gif" /></a>';
+echo '</div>';
+
+echo '</div>'; /* /#landing-partners */
 
 
 $annonceJson = json()->decode('', 'annonce');
