@@ -2,22 +2,43 @@
 
 namespace App\Service;
 
-use Classes\Dialog;
-use Classes\Player;
 use Classes\Db;
+use Classes\Dialog;
+use Classes\Json;
+use Classes\Player;
+use RuntimeException;
 
 /**
- * Reusable dialog service for both game and tutorial
+ * Passerelle unique des dialogues, jeu et tutoriel.
  *
- * KEY DIFFERENCE:
- * - Tutorial mode: Loads dialogs from DATABASE (tutorial_dialogs table)
- * - Game mode: Loads dialogs from JSON files (existing behavior)
+ *  - Mode tutoriel : table `tutorial_dialogs` (versionnée par tutoriel) —
+ *    inchangé.
+ *  - Mode jeu : table `dialogs` d'abord (source de vérité depuis
+ *    Version20260713150000_DialogsFromJson), REPLI sur les fichiers JSON
+ *    legacy (datas/[public|private]/dialogs/*.json) tant que la ligne
+ *    n'existe pas — le seed se lance depuis admin/dialog-seed.php. Le repli
+ *    disparaîtra une fois toutes les lignes seedées.
  *
- * This service provides a unified interface while maintaining
- * backward compatibility with the legacy Dialog class.
+ * Le read model reste celui des fichiers : stdClass {id, name, type,
+ * custom, dialog: [nœuds]} — les consommateurs (Classes\Dialog, Classes\Ui)
+ * ne voient pas la différence. Cache par requête : un dialogue est lu deux
+ * fois par affichage (test d'existence Ui puis rendu Dialog).
+ *
+ * Cas particulier : le dialogue `register` est RÉÉCRIT à chaud à chaque
+ * inscription (options de races avec compteurs d'âmes/bonus) —
+ * {@see refreshRegisterDialog()}.
  */
 class DialogService
 {
+    /** Règle unique des codes de dialogue (fichier / dialogs.name). */
+    public const DIALOG_NAME_PATTERN = '/^[a-z0-9_-]{1,100}$/';
+
+    /** Dialogue réécrit par le code du jeu — jamais supprimable en admin. */
+    public const REGISTER_DIALOG = 'register';
+
+    /** @var array<string, object|null> cache par requête des dialogues de jeu */
+    private static array $gameCache = [];
+
     private bool $isTutorialMode;
     private Db $db;
 
@@ -27,28 +48,312 @@ class DialogService
         $this->db = new Db();
     }
 
+    /** À appeler après toute écriture hors instance (tests, seed). */
+    public static function clearCache(): void
+    {
+        self::$gameCache = [];
+    }
+
     /**
      * Load dialog by name
      *
-     * @param string $dialogName Dialog identifier (e.g., 'gaia_welcome', 'marchand')
+     * @param string $dialogName Dialog identifier (e.g., 'gaia', 'marchand')
      * @param string $version Tutorial version (default: '1.0.0')
      * @return object|null Dialog data object
      */
     public function loadDialog(string $dialogName, string $version = '1.0.0'): ?object
     {
-        // Tutorial mode: Load from DATABASE
         if ($this->isTutorialMode) {
-            return $this->loadDialogFromDatabase($dialogName, $version);
+            return $this->loadTutorialDialog($dialogName, $version);
         }
 
-        // Game mode: Load from JSON files (existing behavior)
-        return $this->loadDialogFromFiles($dialogName);
+        if (!array_key_exists($dialogName, self::$gameCache)) {
+            self::$gameCache[$dialogName] = $this->loadGameDialogFromDatabase($dialogName)
+                ?? $this->loadDialogFromFile($dialogName);
+        }
+
+        return self::$gameCache[$dialogName];
     }
 
     /**
-     * Load dialog from database (tutorial mode)
+     * Lignes de la table `dialogs` pour l'admin et l'export, par nom.
+     *
+     * @return array<string, array{name: string, npc_name: string, type: string, custom: string,
+     *                             is_active: bool, nodes: array, updated_at: ?string}>
      */
-    private function loadDialogFromDatabase(string $dialogId, string $version): ?object
+    public function listGameDialogs(): array
+    {
+        $res = $this->db->exe('SELECT name, npc_name, type, custom, dialog_data, is_active, updated_at FROM dialogs ORDER BY name');
+
+        $dialogs = [];
+        while ($row = $res->fetch_assoc()) {
+            $dialogs[$row['name']] = [
+                'name'       => $row['name'],
+                'npc_name'   => $row['npc_name'],
+                'type'       => $row['type'],
+                'custom'     => $row['custom'],
+                'is_active'  => (bool) $row['is_active'],
+                'nodes'      => (array) json_decode($row['dialog_data'], true),
+                'updated_at' => $row['updated_at'],
+            ];
+        }
+
+        return $dialogs;
+    }
+
+    /** La ligne `dialogs` existe-t-elle (active ou non) ? */
+    public function gameDialogExists(string $name): bool
+    {
+        $res = $this->db->exe('SELECT 1 FROM dialogs WHERE name = ? LIMIT 1', array($name));
+
+        return $res->fetch_row() !== null;
+    }
+
+    /**
+     * Upsert d'un dialogue de jeu (admin, seed, import). Valide nom et
+     * nœuds avant toute écriture.
+     *
+     * @param array{npc_name?: string, type?: string, custom?: string, is_active?: bool} $fields
+     * @param array<int, mixed> $nodes les nœuds (clé "dialog" du read model)
+     * @throws RuntimeException code 400
+     */
+    public function saveGameDialog(string $name, array $nodes, array $fields = []): void
+    {
+        $this->assertValidDialogName($name);
+        $nodes = self::assertValidDialogData($nodes);
+
+        $this->db->exe(
+            'INSERT INTO dialogs (name, npc_name, type, custom, dialog_data, is_active)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                npc_name = VALUES(npc_name), type = VALUES(type), custom = VALUES(custom),
+                dialog_data = VALUES(dialog_data), is_active = VALUES(is_active)',
+            array(
+                $name,
+                (string) ($fields['npc_name'] ?? 'TARGET_NAME'),
+                (string) ($fields['type'] ?? 'pnj'),
+                (string) ($fields['custom'] ?? ''),
+                json_encode($nodes, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                (int) ($fields['is_active'] ?? true),
+            )
+        );
+
+        unset(self::$gameCache[$name]);
+    }
+
+    /**
+     * Suppression d'un dialogue de jeu. Garde-fous : `register` (réécrit par
+     * le code à chaque inscription) et les dialogues encore référencés par
+     * des déclencheurs map_dialogs.
+     *
+     * @throws RuntimeException code 404 ou 409
+     */
+    public function deleteGameDialog(string $name): void
+    {
+        if ($name === self::REGISTER_DIALOG) {
+            throw new RuntimeException(
+                'Le dialogue « register » est réécrit par le jeu à chaque inscription — désactivez-le plutôt.',
+                409
+            );
+        }
+        if (!$this->gameDialogExists($name)) {
+            throw new RuntimeException('Dialogue introuvable : ' . $name, 404);
+        }
+
+        $references = $this->countMapDialogReferences($name);
+        if ($references > 0) {
+            throw new RuntimeException(
+                'Suppression impossible : ' . $references . ' déclencheur(s) map_dialogs référencent « '
+                    . $name . ' » — retirez-les d\'abord (éditeur Tiled).',
+                409
+            );
+        }
+
+        $this->db->exe('DELETE FROM dialogs WHERE name = ?', array($name));
+        unset(self::$gameCache[$name]);
+    }
+
+    /**
+     * Déclencheurs map_dialogs par dialogue référencé. params est un CSV
+     * « nom,avatar,dialogue » (ou une valeur unique répétée) — cf.
+     * observe.php ; table petite, décodage en PHP.
+     *
+     * @return array<string, int> code de dialogue => nombre de déclencheurs
+     */
+    public function mapDialogReferenceCounts(): array
+    {
+        $res = $this->db->exe('SELECT params FROM map_dialogs');
+
+        $counts = [];
+        while ($row = $res->fetch_assoc()) {
+            $params = (string) $row['params'];
+            if ($params === '' || $params[0] === '"') {
+                continue; // alerte brute, pas un dialogue
+            }
+            $parts = array_map('trim', explode(',', $params));
+            $dialogId = $parts[2] ?? $parts[0];
+            if ($dialogId !== '') {
+                $counts[$dialogId] = ($counts[$dialogId] ?? 0) + 1;
+            }
+        }
+
+        return $counts;
+    }
+
+    /** Déclencheurs map_dialogs pointant CE dialogue. */
+    public function countMapDialogReferences(string $name): int
+    {
+        return $this->mapDialogReferenceCounts()[$name] ?? 0;
+    }
+
+    /**
+     * Régénère les options du dialogue d'inscription (races jouables avec
+     * compteurs d'âmes et bonus de rattrapage) — reprend la logique
+     * historique de Dialog::refresh_register_dialog(), qui délègue ici.
+     *
+     * Écrit la ligne `dialogs` quand elle existe (post-seed) ; sinon repli
+     * historique : réécriture du fichier register.json.
+     */
+    public function refreshRegisterDialog(): void
+    {
+        $options = [];
+        $raceService = new RaceService();
+        foreach (Dialog::get_race_n() as $raceName => $label) {
+            $race = $raceService->getRaceByName($raceName);
+            if ($race) {
+                $options[] = ['go' => $raceName, 'text' => $race->getLabel() . ' ' . $label];
+            }
+        }
+
+        if ($this->gameDialogExists(self::REGISTER_DIALOG)) {
+            $current = $this->loadGameDialogFromDatabase(self::REGISTER_DIALOG, false);
+            if ($current === null || empty($current->dialog)) {
+                return; // ligne vide/inactive et illisible : ne rien casser
+            }
+
+            $nodes = json_decode(json_encode($current->dialog), true);
+            $nodes[0]['options'] = $options;
+
+            $this->saveGameDialog(self::REGISTER_DIALOG, $nodes, [
+                'npc_name'  => $current->name,
+                'type'      => $current->type,
+                'custom'    => (string) ($current->custom ?? ''),
+                'is_active' => true,
+            ]);
+
+            return;
+        }
+
+        // Repli pré-seed : comportement historique sur le fichier
+        $regJson = json()->decode('dialogs', self::REGISTER_DIALOG);
+        if (!is_object($regJson) || empty($regJson->dialog)) {
+            return;
+        }
+        $regJson->dialog[0]->options = json_decode(json_encode($options));
+        Json::write_json('datas/public/dialogs/register.json', Json::encode($regJson));
+        json()->forget('dialogs', self::REGISTER_DIALOG);
+        unset(self::$gameCache[self::REGISTER_DIALOG]);
+    }
+
+    /**
+     * Valide et normalise des nœuds de dialogue : liste non vide de nœuds
+     * {id, text, options}, chaque option portant un texte et une cible
+     * (go / url / set). Clés inconnues conservées (shuffle, avatar, type…).
+     *
+     * @param mixed $nodes
+     * @return array<int, array<string, mixed>> nœuds normalisés en tableaux
+     * @throws RuntimeException code 400, message français
+     */
+    public static function assertValidDialogData(mixed $nodes): array
+    {
+        // Normalise objets/tableaux mélangés (JSON décodé en objets ou assoc)
+        $nodes = json_decode((string) json_encode($nodes), true);
+
+        if (!is_array($nodes) || !array_is_list($nodes) || $nodes === []) {
+            throw new RuntimeException('Les nœuds doivent être une liste non vide (clé "dialog" du fichier).', 400);
+        }
+
+        foreach ($nodes as $i => $node) {
+            if (!is_array($node)) {
+                throw new RuntimeException('Nœud #' . $i . ' invalide : objet attendu.', 400);
+            }
+            if (!isset($node['id']) || !is_string($node['id']) || trim($node['id']) === '') {
+                throw new RuntimeException('Nœud #' . $i . ' : « id » manquant ou vide.', 400);
+            }
+            if (!isset($node['text']) || !is_string($node['text'])) {
+                throw new RuntimeException('Nœud « ' . $node['id'] . ' » : « text » manquant.', 400);
+            }
+            $options = $node['options'] ?? [];
+            if (!is_array($options) || !array_is_list($options)) {
+                throw new RuntimeException('Nœud « ' . $node['id'] . ' » : « options » doit être une liste.', 400);
+            }
+            foreach ($options as $j => $option) {
+                if (!is_array($option) || !isset($option['text']) || !is_string($option['text'])) {
+                    throw new RuntimeException('Nœud « ' . $node['id'] . ' », option #' . $j . ' : « text » manquant.', 400);
+                }
+                if (empty($option['go']) && empty($option['url']) && empty($option['set'])) {
+                    throw new RuntimeException(
+                        'Nœud « ' . $node['id'] . ' », option #' . $j . ' : cible manquante (« go », « url » ou « set »).',
+                        400
+                    );
+                }
+            }
+        }
+
+        return $nodes;
+    }
+
+    /** @throws RuntimeException code 400 */
+    private function assertValidDialogName(string $name): void
+    {
+        if (!preg_match(self::DIALOG_NAME_PATTERN, $name)) {
+            throw new RuntimeException(
+                'Code de dialogue invalide (minuscules, chiffres, _ ou -, 100 max) : ' . $name,
+                400
+            );
+        }
+    }
+
+    /** Ligne `dialogs` → read model fichier {id, name, type, custom, dialog}. */
+    private function loadGameDialogFromDatabase(string $name, bool $activeOnly = true): ?object
+    {
+        $res = $this->db->exe(
+            'SELECT name, npc_name, type, custom, dialog_data, is_active FROM dialogs WHERE name = ?'
+                . ($activeOnly ? ' AND is_active = 1' : ''),
+            array($name)
+        );
+        $row = $res->fetch_assoc();
+        if ($row === null) {
+            return null;
+        }
+
+        $nodes = json_decode($row['dialog_data']);
+        if (!is_array($nodes)) {
+            return null;
+        }
+
+        return (object) [
+            'id'     => $row['name'],
+            'name'   => $row['npc_name'],
+            'type'   => $row['type'],
+            'custom' => $row['custom'],
+            'dialog' => $nodes,
+        ];
+    }
+
+    /**
+     * Repli fichier legacy, via json() (chemins indépendants du cwd, parse
+     * tolérant, cache) — même lecture que l'historique Classes\Dialog.
+     */
+    private function loadDialogFromFile(string $dialogName): ?object
+    {
+        $decoded = json()->decode('dialogs', $dialogName);
+
+        return is_object($decoded) ? $decoded : null;
+    }
+
+    /** Load dialog from database (tutorial mode) — inchangé. */
+    private function loadTutorialDialog(string $dialogId, string $version): ?object
     {
         $sql = 'SELECT dialog_data FROM tutorial_dialogs
                 WHERE dialog_id = ? AND version = ? AND is_active = 1';
@@ -61,7 +366,6 @@ class DialogService
 
             if (json_last_error() === JSON_ERROR_NONE) {
                 return $dialogData;
-            } else {
             }
         }
 
@@ -69,66 +373,19 @@ class DialogService
     }
 
     /**
-     * Load dialog from JSON files (game mode)
-     */
-    private function loadDialogFromFiles(string $dialogName): ?object
-    {
-        // Try private dialogs first
-        $privatePath = 'datas/private/dialogs/' . $dialogName . '.json';
-        if (file_exists($privatePath)) {
-            return $this->loadDialogFromFile($privatePath);
-        }
-
-        // Try public dialogs
-        $publicPath = 'datas/public/dialogs/' . $dialogName . '.json';
-        if (file_exists($publicPath)) {
-            return $this->loadDialogFromFile($publicPath);
-        }
-
-        return null;
-    }
-
-    /**
-     * Load dialog from file
-     */
-    private function loadDialogFromFile(string $path): ?object
-    {
-        $content = file_get_contents($path);
-        if (!$content) {
-            return null;
-        }
-
-        $decoded = json_decode($content);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return null;
-        }
-
-        return $decoded;
-    }
-
-    /**
      * Render dialog with legacy Dialog class
-     *
-     * @param string $dialogName
-     * @param Player|null $player
-     * @param Player|null $target
-     * @return string HTML output
      */
     public function renderDialog(
         string $dialogName,
         ?Player $player = null,
         ?Player $target = null
     ): string {
-        // Load dialog data first
         $dialogData = $this->loadDialog($dialogName);
 
         if (!$dialogData) {
             return '<p>Dialog not found: ' . htmlspecialchars($dialogName) . '</p>';
         }
 
-        // Use existing Dialog class for rendering (maintains compatibility)
-        // We'll need to temporarily write this to a variable or pass it differently
-        // For now, let's use the legacy system
         $dialog = new Dialog($dialogName, $player, $target);
 
         ob_start();
@@ -139,10 +396,6 @@ class DialogService
     /**
      * Get dialog data without rendering (for API)
      *
-     * @param string $dialogName
-     * @param Player|null $player
-     * @param Player|null $target
-     * @param string $version Tutorial version
      * @return array
      */
     public function getDialogData(
@@ -267,13 +520,9 @@ class DialogService
     }
 
     /**
-     * Save or update dialog in database (admin tool)
+     * Save or update dialog in database — variante tutoriel historique.
      *
-     * @param string $dialogId
-     * @param string $npcName
      * @param array $dialogData
-     * @param string $version
-     * @return bool
      */
     public function saveDialog(
         string $dialogId,

@@ -61,7 +61,7 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
 
     protected function computeActor($actor, $dice, $conditionObject)
     {
-        $actorRoll = (new CombatResolver($dice))->roll(
+        $actorRoll = (new CombatResolver($dice))->rollDetailed(
             (int) $actor->caracs->{$this->actorRollTrait},
             (bool) $conditionObject->getActorAdvantage(),
             (bool) $conditionObject->getActorDisadvantage()
@@ -71,21 +71,22 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
         $dexterite = (int) ($actor->getEffectValue("dexterite") ?: 0);
         $maladresse = (int) ($actor->getEffectValue("maladresse") ?: 0);
         $distanceMalus = $this->getDistanceMalus();
-        $total = array_sum($actorRoll) + $bonus + $dexterite - $maladresse - $distanceMalus;
+        $total = array_sum($actorRoll->roll) + $bonus + $dexterite - $maladresse - $distanceMalus;
 
         $detail = new RollDetail(
             name: $actor->data->name,
-            rollSum: array_sum($actorRoll),
+            rollSum: array_sum($actorRoll->roll),
             bonus: $bonus,
             positiveEffect: $dexterite,
             negativeEffect: $maladresse,
             distanceMalus: $distanceMalus,
             total: $total,
+            advantage: $actorRoll,
         );
 
         $conditionObject->setActorRoll($total);
 
-        return array($actorRoll, $total, (new RollDetailView())->renderActor($detail));
+        return array($actorRoll->roll, $total, (new RollDetailView())->renderActor($detail));
     }
 
     protected function computeTarget($target, $dice, $conditionObject)
@@ -102,7 +103,7 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
             return array(0, 0, "Impossible de calculer, erreur de paramétrage.");
         }
         
-        $targetRoll = (new CombatResolver($dice))->roll(
+        $targetRoll = (new CombatResolver($dice))->rollDetailed(
             (int) $targetRollTraitValue,
             (bool) $conditionObject->getTargetAdvantage(),
             (bool) $conditionObject->getTargetDisadvantage()
@@ -111,21 +112,22 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
         $protection = (int) ($target->getEffectValue("protection") ?: 0);
         $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
         $malus = (int) $target->data->malus;
-        $total = array_sum($targetRoll) - $malus + $bonus + $protection - $vulnerabilite;
+        $total = array_sum($targetRoll->roll) - $malus + $bonus + $protection - $vulnerabilite;
 
         $detail = new RollDetail(
             name: $target->data->name,
-            rollSum: array_sum($targetRoll),
+            rollSum: array_sum($targetRoll->roll),
             bonus: $bonus,
             positiveEffect: $protection,
             negativeEffect: $vulnerabilite,
             malus: $malus,
             total: $total,
+            advantage: $targetRoll,
         );
 
         $conditionObject->setTargetRoll($total);
 
-        return array($targetRoll, $total, (new RollDetailView())->renderTarget($detail));
+        return array($targetRoll->roll, $total, (new RollDetailView())->renderTarget($detail));
     }
 
 }

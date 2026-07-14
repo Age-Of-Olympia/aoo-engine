@@ -24,7 +24,9 @@ class Dialog{
         }
 
 
-        $this->dialogJson = json()->decode('dialogs', $dialog);
+        // Passerelle unique des dialogues : table `dialogs` d'abord, repli
+        // fichier JSON legacy tant que la ligne n'est pas seedée
+        $this->dialogJson = (new \App\Service\DialogService())->loadDialog($dialog);
 
 
         if(!$this->dialogJson){
@@ -282,27 +284,8 @@ class Dialog{
 
     public static function refresh_register_dialog(){
 
-
-        $options = array();
-
-
-        $raceService = new \App\Service\RaceService();
-        foreach(self::get_race_n() as $k=>$e){
-
-
-            $race = $raceService->getRaceByName($k);
-            if ($race) {
-                $options[] = (object) array('go'=>$k, 'text'=>$race->getLabel() .' '. $e);
-            }
-        }
-
-
-        $regJson = json()->decode('dialogs', 'register');
-
-        $regJson->dialog[0]->options = $options;
-
-        $data = Json::encode($regJson);
-
-        Json::write_json('datas/public/dialogs/register.json', $data);
+        // Logique déplacée dans la passerelle : écrit la ligne `dialogs`
+        // (ou le fichier legacy tant que la table n'est pas seedée)
+        (new \App\Service\DialogService())->refreshRegisterDialog();
     }
 }

@@ -60,6 +60,9 @@ class AdminMenuAccessService
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
         'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
+        // Dialogues : superadmin par défaut — même politique que races
+        // (contenu de jeu éditable, suppression possible)
+        'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
         'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
         'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
     ];
@@ -71,6 +74,8 @@ class AdminMenuAccessService
     private const ALIASES = [
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
         'plans-save.php'             => 'plans.php',
+        'dialogs-save.php'           => 'dialogs.php',
+        'dialog-seed.php'            => 'dialogs.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
         'factions-save.php'          => 'factions.php',

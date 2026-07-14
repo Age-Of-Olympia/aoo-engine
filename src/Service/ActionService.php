@@ -79,7 +79,7 @@ class ActionService
             if ($conditionType == 'RequiresTraitValue') {
                 $conditionParameters = $condition->getParameters();
                 foreach ($conditionParameters as $key => $value) {
-                    if ($key == "energie") {
+                    if ($key == "energie" || !is_numeric($value) || !isset(CARACS[$key])) {
                         continue;
                     }
                     array_push($costArray, $value . CARACS[$key]);

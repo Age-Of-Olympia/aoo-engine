@@ -10,6 +10,8 @@ use App\Service\Action\ActionPassiveCatalogService;
 use App\Service\AdminAuthorizationService;
 use App\Service\ImportExport\BundleDownload;
 use App\Service\ImportExport\BundleEnvelope;
+use App\Service\DialogService;
+use App\Service\ImportExport\DialogExporter;
 use App\Service\ImportExport\ExporterRegistry;
 use App\Service\ImportExport\PlanExporter;
 use App\Service\TiledMapService;
@@ -35,6 +37,9 @@ $id = (int) ($_GET['id'] ?? 0);
 // l'export unitaire passe par ?plan=<id> et PlanExporter::exportOne().
 $planId = trim((string) ($_GET['plan'] ?? ''));
 
+// Les dialogues aussi (table dialogs, clé `name`) : ?dialog=<name>.
+$dialogName = trim((string) ($_GET['dialog'] ?? ''));
+
 if ($type === 'plan' && $planId !== '') {
     if (!preg_match(TiledMapService::PLAN_NAME_PATTERN, $planId)) {
         setFlash('warning', 'Nom de plan invalide.');
@@ -44,6 +49,17 @@ if ($type === 'plan' && $planId !== '') {
     /** @var PlanExporter $exporter */
     $objects = [$exporter->exportOne($planId)];
     $filename = BundleDownload::filename($type, $planId);
+} elseif ($type === 'dialog' && $dialogName !== '') {
+    if (!preg_match(DialogService::DIALOG_NAME_PATTERN, $dialogName)
+        || !(new DialogService())->gameDialogExists($dialogName)
+    ) {
+        setFlash('warning', 'Dialogue introuvable.');
+        header('Location: /admin/dialogs.php');
+        exit;
+    }
+    /** @var DialogExporter $exporter */
+    $objects = [$exporter->exportOne($dialogName)];
+    $filename = BundleDownload::filename($type, $dialogName);
 } elseif ($id > 0) {
     // Single-object export. The generic exporter has no by-id lookup, so we resolve
     // the one entity per family here, then hand it to the matching exporter.

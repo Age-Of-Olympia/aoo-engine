@@ -2,6 +2,7 @@
 
 namespace Tests\Action\Combat;
 
+use App\Action\Combat\AdvantageRoll;
 use App\Action\Combat\RollDetail;
 use App\Action\Combat\RollDetailView;
 use PHPUnit\Framework\Attributes\Group;
@@ -60,6 +61,47 @@ class RollDetailViewTest extends TestCase
     public function testRenderTargetWithNoModifiers(): void
     {
         $detail = new RollDetail(name: 'Target', rollSum: 6, total: 6);
+
+        $this->assertSame('Jet Target = 6', $this->view->renderTarget($detail));
+    }
+
+    public function testRenderActorPutsAdvantageInTotalTooltip(): void
+    {
+        $advantage = new AdvantageRoll([12], AdvantageRoll::MODE_ADVANTAGE, 12, 7);
+        $detail = new RollDetail(name: 'Actor', rollSum: 12, total: 12, advantage: $advantage);
+
+        $this->assertSame(
+            'Jet Actor = <span style="text-decoration: underline;" flow="up" tooltip="Avantage : jets 12 et 7, 12 retenu">12</span>',
+            $this->view->renderActor($detail)
+        );
+    }
+
+    public function testRenderActorAppendsAdvantageAfterModifiers(): void
+    {
+        $advantage = new AdvantageRoll([10], AdvantageRoll::MODE_ADVANTAGE, 10, 4);
+        $detail = new RollDetail(name: 'Actor', rollSum: 10, bonus: 2, total: 12, advantage: $advantage);
+
+        $this->assertSame(
+            'Jet Actor = <span style="text-decoration: underline;" flow="up" tooltip="Bonus de compétence : 2 Avantage : jets 10 et 4, 10 retenu">12</span>',
+            $this->view->renderActor($detail)
+        );
+    }
+
+    public function testRenderTargetWrapsRollSumInDisadvantageTooltip(): void
+    {
+        $disadvantage = new AdvantageRoll([4], AdvantageRoll::MODE_DISADVANTAGE, 4, 15);
+        $detail = new RollDetail(name: 'Target', rollSum: 4, total: 4, advantage: $disadvantage);
+
+        $this->assertSame(
+            'Jet Target = <span style="text-decoration: underline;" flow="up" tooltip="Désavantage : jets 4 et 15, 4 retenu">4</span>',
+            $this->view->renderTarget($detail)
+        );
+    }
+
+    public function testRenderIgnoresUnmodifiedAdvantageRoll(): void
+    {
+        $unmodified = new AdvantageRoll([6], null, 6, null);
+        $detail = new RollDetail(name: 'Target', rollSum: 6, total: 6, advantage: $unmodified);
 
         $this->assertSame('Jet Target = 6', $this->view->renderTarget($detail));
     }

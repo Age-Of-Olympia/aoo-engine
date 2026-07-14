@@ -20,6 +20,7 @@ final class RollDetail
         public readonly int $malus = 0,
         public readonly int $esquive = 0,
         public readonly int $total = 0,
+        public readonly ?AdvantageRoll $advantage = null,
     ) {
     }
 }

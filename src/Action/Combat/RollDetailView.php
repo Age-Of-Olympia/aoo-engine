@@ -13,7 +13,7 @@ final class RollDetailView
     {
         $other = $this->effectsTooltip($detail->positiveEffect, $detail->negativeEffect) . $this->bonusTooltip($detail->bonus);
         $distance = $detail->distanceMalus ? ' - ' . $detail->distanceMalus . ' (Distance)' : '';
-        $tooltip = $distance . ($distance ? ', ' . $other : $other);
+        $tooltip = $distance . ($distance ? ', ' . $other : $other) . self::advantageTooltip($detail->advantage);
 
         return 'Jet ' . $detail->name . ' = '
             . '<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltip . '">' . $detail->total . '</span>';
@@ -35,7 +35,18 @@ final class RollDetailView
         $malus = ($detail->malus != 0) ? ' - ' . $detail->malus . ' (Malus)' : '';
         $totalTxt = $detail->malus ? ' = ' . $detail->total : '';
 
-        return 'Jet ' . $detail->name . ' = ' . $detail->rollSum . $other . $malus . $totalTxt;
+        $advantage = self::advantageTooltip($detail->advantage);
+        $rollSum = $advantage === ''
+            ? (string) $detail->rollSum
+            : '<span style="text-decoration: underline;" flow="up" tooltip="' . $advantage . '">' . $detail->rollSum . '</span>';
+
+        return 'Jet ' . $detail->name . ' = ' . $rollSum . $other . $malus . $totalTxt;
+    }
+
+    /** Contenu de tooltip avantage/désavantage à concaténer, vide si rien n'a joué. */
+    public static function advantageTooltip(?AdvantageRoll $roll): string
+    {
+        return ($roll !== null && $roll->isModified()) ? $roll->describe() : '';
     }
 
     private function effectsTooltip(int $positive, int $negative): string
