@@ -1,6 +1,7 @@
 <?php
 
 use App\Service\ActionService;
+use App\View\Action\ActionCostView;
 use App\Service\OutcomeInstructionService;
 use Classes\Str;
 
@@ -64,6 +65,7 @@ if(isset($_GET['forget'])){
 echo '</tr>';
 
 $actionService = new ActionService();
+$costView = new ActionCostView($actionService);
 foreach($spellList as $e){
     $spell = $actionService->getActionByName($e);
 
@@ -74,7 +76,7 @@ foreach($spellList as $e){
 
     $img = (file_exists('img/spells/'.$e.'.jpeg') ? 'img/spells/'. $e .'.jpeg' : 'img/spells/todo.jpeg');
 
-    $cost = $spell->getCost();
+    $cost = $costView->forAction($spell);
 
     $outcomes = $spell->getOnSuccessOutcomes();
 

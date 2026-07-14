@@ -8,12 +8,14 @@ use Classes\Item;
 use App\Service\ActionService;
 use App\Service\ActionPassiveService;
 use App\Service\RaceService;
+use App\View\Action\ActionCostView;
 
 class SpellView
 {
     public static function render(Player $player, Player $target): void
     {
         $actionService = new ActionService();
+        $costView = new ActionCostView($actionService);
         $actionPassiveService = new ActionPassiveService();
         $actions = $actionService->getActionsByCategory('spell');
 
@@ -124,7 +126,7 @@ class SpellView
                 echo '<i>' . htmlspecialchars($action->getText()) . '</i>';
                 echo '</td>';
 
-                echo '<td align="center"><strong>' . $action->getCost() . '</strong></td>';
+                echo '<td align="center"><strong>' . $costView->forAction($action) . '</strong></td>';
 
                 echo '<td align="center"><strong style="color: ' . $raceColor . ';">' . $raceTxt . '</strong></td>';
 
