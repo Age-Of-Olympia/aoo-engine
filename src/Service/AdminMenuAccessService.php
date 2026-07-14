@@ -60,6 +60,9 @@ class AdminMenuAccessService
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
         'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
+        // Accueil : contenu éditorial de la page d'accueil (présentation,
+        // chroniques, galerie) — pas de logique de jeu, niveau admin
+        'landing.php'              => ['Page d\'accueil', 'Divers', self::LEVEL_ADMIN],
         // Dialogues : superadmin par défaut — même politique que races
         // (contenu de jeu éditable, suppression possible)
         'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
@@ -86,6 +89,8 @@ class AdminMenuAccessService
         'skill-owners.php'           => 'players.php',
         'tutorial-step-editor.php'   => 'tutorial.php',
         'action-import-preview.php'  => 'action-import.php',
+        'landing-save.php'           => 'landing.php',
+        'landing-seed.php'           => 'landing.php',
     ];
 
     /** @var array<string,string>|null cached DB overrides (page => level) */

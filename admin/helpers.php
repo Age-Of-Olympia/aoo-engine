@@ -18,6 +18,15 @@ function e($value): string
 }
 
 /**
+ * Human-readable French label for a php.ini shorthand size ("16M" → "16 Mo").
+ * Used to surface upload limits in forms and error messages.
+ */
+function iniSizeLabel(string $iniValue): string
+{
+    return str_replace(['K', 'M', 'G'], [' Ko', ' Mo', ' Go'], strtoupper(trim($iniValue)));
+}
+
+/**
  * Short type label for an Action / instruction entity: its class short name
  * without the trailing "Action" suffix, lowercased (e.g. MeleeAction → "melee").
  *
