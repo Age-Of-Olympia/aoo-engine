@@ -35,7 +35,10 @@ final class RollDetailView
         $malus = ($detail->malus != 0) ? ' - ' . $detail->malus . ' (Malus)' : '';
         $totalTxt = $detail->malus ? ' = ' . $detail->total : '';
 
-        $rollSum = self::advantageWrap($detail->rollSum, $detail->advantage);
+        $advantage = self::advantageTooltip($detail->advantage);
+        $rollSum = $advantage === ''
+            ? (string) $detail->rollSum
+            : '<span style="text-decoration: underline;" flow="up" tooltip="' . $advantage . '">' . $detail->rollSum . '</span>';
 
         return 'Jet ' . $detail->name . ' = ' . $rollSum . $other . $malus . $totalTxt;
     }
@@ -44,17 +47,6 @@ final class RollDetailView
     public static function advantageTooltip(?AdvantageRoll $roll): string
     {
         return ($roll !== null && $roll->isModified()) ? $roll->describe() : '';
-    }
-
-    /** Enveloppe le nombre dans un span à tooltip avantage/désavantage, ou le renvoie brut. */
-    public static function advantageWrap(int|string $number, ?AdvantageRoll $roll): string
-    {
-        $tooltip = self::advantageTooltip($roll);
-        if ($tooltip === '') {
-            return (string) $number;
-        }
-
-        return '<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltip . '">' . $number . '</span>';
     }
 
     private function effectsTooltip(int $positive, int $negative): string

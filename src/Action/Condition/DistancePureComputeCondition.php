@@ -39,7 +39,11 @@ class DistancePureComputeCondition extends ComputePureCondition
         $targetTotal = array_sum($targetRoll->roll) + $bonus;
         $tooltipOtherTxt = !empty($bonus) ? 'Bonus de compétence : ' . $conditionObject->getTargetRollBonus() . ' ' : '';
         $targetOtherTxt = ($bonus != 0) ? ($bonus < 0 ? ' - '.abs($bonus) : $bonus) . ' (<span style="text-decoration: underline;" flow="up" tooltip="' . $tooltipOtherTxt . '">Autre</span>) = ' . (array_sum($targetRoll->roll) + $bonus) . ' (Jet pur)' : ' (Jet pur)';
-        $targetTxt = 'Jet '. $target->data->name .' = '. RollDetailView::advantageWrap(array_sum($targetRoll->roll), $targetRoll) . $targetOtherTxt;
+        $advantage = RollDetailView::advantageTooltip($targetRoll);
+        $rollSumTxt = $advantage === ''
+            ? (string) array_sum($targetRoll->roll)
+            : '<span style="text-decoration: underline;" flow="up" tooltip="' . $advantage . '">' . array_sum($targetRoll->roll) . '</span>';
+        $targetTxt = 'Jet '. $target->data->name .' = '. $rollSumTxt . $targetOtherTxt;
 
         $conditionObject->setTargetRoll($targetTotal);
 
