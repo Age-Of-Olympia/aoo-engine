@@ -94,21 +94,12 @@ class ActionResultsView
     private function renderConditionMessages(): string
     {
         $html = '';
-        $conditionsDetails = array();
         foreach ($this->actionResults->getConditionsResultsArray() as $conditionResult) {
-            if ($this->actionResults->isSuccess()) {
-                array_push($conditionsDetails, $conditionResult->getConditionSuccessMessages());
-            } else {
-                array_push($conditionsDetails, $conditionResult->getConditionFailureMessages());
-            }
-            if ($conditionsDetails != null) {
-                foreach ($conditionsDetails as $messages) {
-                    if ($messages != null) {
-                        foreach ($messages as $message) {
-                            $html .= $message . "<br>";
-                        }
-                    }
-                }
+            $messages = $this->actionResults->isSuccess()
+                ? $conditionResult->getConditionSuccessMessages()
+                : $conditionResult->getConditionFailureMessages();
+            foreach ($messages as $message) {
+                $html .= $message . "<br>";
             }
         }
 
