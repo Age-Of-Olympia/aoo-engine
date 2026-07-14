@@ -344,7 +344,7 @@ if($res->num_rows){
                     if ($actionData == null) {
                         continue;
                     }
-                    $dataImg .= buildActionToDisplay($target, $actionData, "attaquer");
+                    $dataImg .= buildActionToDisplay($target, $actionData, $actionService, "attaquer");
                 }
                 continue;
             }
@@ -363,7 +363,7 @@ if($res->num_rows){
                 ? $actionTargeting->canTargetSelf($actionData)
                 : $actionTargeting->canTargetOther($actionData);
             if ($allowed) {
-                $dataImg .= buildActionToDisplay($target, $actionData);
+                $dataImg .= buildActionToDisplay($target, $actionData, $actionService);
             }
         }
 
@@ -676,35 +676,26 @@ if(!empty($card)){
 
 echo Str::minify(ob_get_clean());
 
-function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ?string $nameOverride = null) : string {
-        $res = '<button
-                class="action"
-                data-coords-x="'.$target->getCoords()->x.'"
-                data-coords-y="'.$target->getCoords(refresh:false)->y.'"
-                data-coords-z="'.$target->getCoords(refresh:false)->z.'"
-                data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
-                data-target-id="'. $target->getId() .'"
-                data-action="'. $action->getName() .'"
-                >
-                '. (new \App\View\Action\ActionIconView())->forAction($action, 'span') .'
-                <span class="action-name">'. $action->getDisplayName() .'</span>
-                </button><br/>';
-
-        if ($nameOverride != null) {
-            $res = '<button
-                class="action"
-                data-coords-x="'.$target->getCoords()->x.'"
-                data-coords-y="'.$target->getCoords(refresh:false)->y.'"
-                data-coords-z="'.$target->getCoords(refresh:false)->z.'"
-                data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
-                data-target-id="'. $target->getId() .'"
-                data-action="'. $nameOverride .'"
-                >
-                '. (new \App\View\Action\ActionIconView())->forAction($action, 'span') .'
-                <span class="action-name">'. ucfirst($nameOverride) .'</span>
-                </button><br/>';
+function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ActionService $actionService, ?string $nameOverride = null) : string {
+        $icon = (new \App\View\Action\ActionIconView())->forAction($action, 'span');
+        $costs = $actionService->getCostsArray(null, $action);
+        if ($costs !== []) {
+            $icon = '<span flow="up" tooltip="Coût : '. implode(', ', $costs) .'">'. $icon .'</span>';
         }
 
-        return $res;
+        $name = $nameOverride ?? $action->getName();
+        $label = $nameOverride !== null ? ucfirst($nameOverride) : $action->getDisplayName();
 
+        return '<button
+                class="action"
+                data-coords-x="'.$target->getCoords()->x.'"
+                data-coords-y="'.$target->getCoords(refresh:false)->y.'"
+                data-coords-z="'.$target->getCoords(refresh:false)->z.'"
+                data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
+                data-target-id="'. $target->getId() .'"
+                data-action="'. $name .'"
+                >
+                '. $icon .'
+                <span class="action-name">'. $label .'</span>
+                </button><br/>';
 }
