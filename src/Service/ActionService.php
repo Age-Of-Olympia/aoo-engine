@@ -69,25 +69,65 @@ class ActionService
     }
 
     public function getCostsArray(?string $actionName, ?ActionInterface $action) : array {
+        return array_map(
+            fn(array $part) => $part['text'],
+            $this->getCostParts($actionName, $action)
+        );
+    }
+
+    /**
+     * The action's cost, derived from its RequiresTraitValue condition — the
+     * same parameters the executor actually charges, so the display can never
+     * drift from the real cost. Each entry is ['trait' => carac key,
+     * 'text' => label], e.g. ['trait' => 'pm', 'text' => '10 PM'].
+     *
+     * Mirrors the parameter shapes of RequiresTraitValueCondition:
+     * - numeric ({"pm":10}): flat cost
+     * - "remaining" ({"remaining":"a"}): spends everything left
+     * - "imposture" ({"imposture":[pm,mvt]}): base scaled by the actor's
+     *   imposture stacks + 1, shown as a multiplier; such parts carry
+     *   'effect' => 'imposture' so HTML renderers can show the effect icon
+     *
+     * @return array<int, array{trait: string, text: string, effect?: string}>
+     */
+    public function getCostParts(?string $actionName, ?ActionInterface $action) : array {
         if (!isset($action)) {
             $action = $this->getActionByName($actionName);
         }
-        $conditions = $action->getConditions();
-        $costArray = array();
-        foreach($conditions as $condition) {
-            $conditionType = $condition->getConditionType();
-            if ($conditionType == 'RequiresTraitValue') {
-                $conditionParameters = $condition->getParameters();
-                foreach ($conditionParameters as $key => $value) {
-                    if ($key == "energie" || !is_numeric($value) || !isset(CARACS[$key])) {
-                        continue;
-                    }
-                    array_push($costArray, $value . CARACS[$key]);
-                }
-                break;
+        foreach ($action->getConditions() as $condition) {
+            if ($condition->getConditionType() != 'RequiresTraitValue') {
+                continue;
             }
+            $parts = array();
+            foreach ($condition->getParameters() as $key => $value) {
+                if ($key == "energie") {
+                    continue;
+                }
+                if ($key == "remaining" && isset(CARACS[$value])) {
+                    $parts[] = ['trait' => $value, 'text' => 'Toutes les ' . CARACS[$value] . ' restantes'];
+                } elseif ($key == "imposture" && is_array($value)) {
+                    $parts[] = ['trait' => 'pm', 'text' => $this->formatMultiplier($value[0]) . 'x(+1) PM', 'effect' => 'imposture'];
+                    $parts[] = ['trait' => 'mvt', 'text' => $this->formatMultiplier($value[1]) . 'x(+1) Mvt', 'effect' => 'imposture'];
+                } elseif (is_numeric($value) && isset(CARACS[$key])) {
+                    $parts[] = ['trait' => $key, 'text' => $value . ' ' . CARACS[$key]];
+                }
+            }
+            return $parts;
         }
-        return $costArray;
+        return array();
+    }
+
+    /**
+     * "2" for 2, "1/2" for 0.5 — matches how the imposture-scaled stealth
+     * costs have always been shown to players.
+     */
+    private function formatMultiplier(float $value): string
+    {
+        if ($value > 0 && $value < 1) {
+            return '1/' . (int) round(1 / $value);
+        }
+
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
     }
 
     public function getPrice($level) : int
