@@ -37,6 +37,16 @@ $player = new Player($_SESSION['playerId']);
 $player->get_data(false);
 $player->get_caracs();
 
+// one reschedule per turn cycle — the flag is cleared on turn refresh
+if (!empty($player->data->nextTurnRescheduled)) {
+    http_response_code(400);
+    echo json_encode(array(
+        'success' => false,
+        'error' => 'Vous avez déjà décalé votre prochain tour pour ce cycle.',
+    ));
+    exit;
+}
+
 $candidate = $date->getTimestamp();
 $window = TurnScheduleService::rescheduleWindow($player->data->nextTurnTime, $player->caracs->spd);
 

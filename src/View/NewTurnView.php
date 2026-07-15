@@ -252,6 +252,7 @@ class NewTurnView
                     players
                     SET
                     nextTurnTime = ?,
+                    nextTurnRescheduled = 0,
                     lastActionTime = 0,
                     antiBerserkTime = ?,
                     malus = malus - ?,

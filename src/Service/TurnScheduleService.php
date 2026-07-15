@@ -67,6 +67,9 @@ class TurnScheduleService
     /**
      * Persist a new next-turn time. Callers must have validated the value
      * with isWithinRescheduleWindow() first.
+     *
+     * Raises nextTurnRescheduled in the same statement: one reschedule per
+     * turn cycle, the flag is cleared when the turn refreshes (NewTurnView).
      */
     public function reschedule(int $playerId, int $newNextTurnTime): void
     {
@@ -74,7 +77,8 @@ class TurnScheduleService
 
         $sql = '
         UPDATE players
-        SET nextTurnTime = ?
+        SET nextTurnTime = ?,
+        nextTurnRescheduled = 1
         WHERE id = ?
         ';
 

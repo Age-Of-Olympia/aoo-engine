@@ -84,7 +84,9 @@ $options = array(
     'showActionDetails'=>"Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
     'noTrain'=>"Interdire les entraînements<br />",
     'nextTurn'=>"Décaler le prochain tour<br /><sup>Actuellement le ". date('d/m à H:i', $player->data->nextTurnTime)
-        ." — déplaçable jusqu'au ". date('d/m à H:i', $nextTurnWindow['max']) ."</sup>",
+        .(!empty($player->data->nextTurnRescheduled)
+            ? " — déjà décalé pour ce cycle"
+            : " — déplaçable jusqu'au ". date('d/m à H:i', $nextTurnWindow['max'])) ."</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
@@ -283,13 +285,20 @@ foreach(OPTIONS as $k=>$e){
             }
             elseif($k == 'nextTurn'){
 
-                echo '
-                <input type="datetime-local" id="next-turn-input"
-                    min="'. date('Y-m-d\TH:i', $nextTurnWindow['min']) .'"
-                    max="'. date('Y-m-d\TH:i', $nextTurnWindow['max']) .'"
-                    value="'. date('Y-m-d\TH:i', $nextTurnWindow['min']) .'" />
-                <button id="next-turn-apply">Appliquer</button>
-                ';
+                if(!empty($player->data->nextTurnRescheduled)){
+
+                    echo '<sup>À nouveau disponible après votre prochain tour</sup>';
+                }
+                else{
+
+                    echo '
+                    <input type="datetime-local" id="next-turn-input"
+                        min="'. date('Y-m-d\TH:i', $nextTurnWindow['min']) .'"
+                        max="'. date('Y-m-d\TH:i', $nextTurnWindow['max']) .'"
+                        value="'. date('Y-m-d\TH:i', $nextTurnWindow['min']) .'" />
+                    <button id="next-turn-apply">Appliquer</button>
+                    ';
+                }
             }
             elseif($k == 'changeMail'){
                 // Disable email change for PNJs
