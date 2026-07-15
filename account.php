@@ -1,6 +1,7 @@
 <?php
 use App\Factory\PlayerFactory;
 use App\Service\AccountDeletionService;
+use App\Service\TurnScheduleService;
 use Classes\Ui;
 use Classes\Str;
 use Classes\File;
@@ -62,6 +63,10 @@ if(isset($_POST['changeName'])){
     exit();
 }
 
+// Reschedule window for the next turn (replaces the old "DLA glissante")
+$player->get_caracs();
+$nextTurnWindow = TurnScheduleService::rescheduleWindow($player->data->nextTurnTime, $player->caracs->spd);
+
 // Build options array dynamically
 $options = array(
     'changeMail'=>"Changer Mail<br /><sup>" .
@@ -78,7 +83,8 @@ $options = array(
     'noMask'=>"Désactiver les masques<br /><sup>Les effets de brumes et de pluie ne s'afficheront plus</sup>",
     'showActionDetails'=>"Afficher les détails des Actions<br /><sup>Affiche les calculs et les jets</sup>",
     'noTrain'=>"Interdire les entraînements<br />",
-    'dlag'=>"DLA glissante<br /><sup>Décale l'heure du prochain tour</sup>",
+    'nextTurn'=>"Décaler le prochain tour<br /><sup>Actuellement le ". date('d/m à H:i', $player->data->nextTurnTime)
+        ." — déplaçable jusqu'au ". date('d/m à H:i', $nextTurnWindow['max']) ."</sup>",
     'deleteAccount'=>"Demander la suppression du compte<br /><sup>Votre compte sera supprimé sous 7 jours</sup>",
     'reloadView'=>"Rafraichir la Vue<br /><sup>Si cette dernière est buguée</sup>",
     'incognitoMode'=>"Mode Incognito (PNJ)<br /><sup>Invisible sur la carte et dans les évènements</sup>",
@@ -115,6 +121,13 @@ if(!empty($_POST['option'])){
     {
        if($player->id>=0)
            exit('error option for pnj');
+    }
+
+    /* nextTurn is not a toggleable option: it is handled by
+       api/player/set_next_turn.php. */
+    if($_POST['option']=='nextTurn'){
+
+        exit('error option');
     }
 
     $player->refresh_view();
@@ -268,6 +281,16 @@ foreach(OPTIONS as $k=>$e){
                     ';
                 }
             }
+            elseif($k == 'nextTurn'){
+
+                echo '
+                <input type="datetime-local" id="next-turn-input"
+                    min="'. date('Y-m-d\TH:i', $nextTurnWindow['min']) .'"
+                    max="'. date('Y-m-d\TH:i', $nextTurnWindow['max']) .'"
+                    value="'. date('Y-m-d\TH:i', $nextTurnWindow['min']) .'" />
+                <button id="next-turn-apply">Appliquer</button>
+                ';
+            }
             elseif($k == 'changeMail'){
                 // Disable email change for PNJs
                 if($player->id > 0) {
@@ -313,7 +336,7 @@ echo '
     window.alreadyChanged = <?php if($player->have_option('alreadyChanged')) echo 1; else echo 0; ?>;
     window.oldName = "<?php echo $player->data->name ?>";
 </script>
-<script src="js/account.js"></script>
+<script src="js/account.js?v=20260715"></script>
 
 
 <?php

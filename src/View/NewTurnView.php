@@ -3,6 +3,7 @@
 namespace App\View;
 
 use App\Service\Action\EnergieRule;
+use App\Service\TurnScheduleService;
 use App\Tutorial\TutorialHelper;
 use Classes\Db;
 use Classes\Player;
@@ -61,30 +62,16 @@ class NewTurnView
                     $player->get_caracs();
 
 
-                    // player turn
-                    $playerTurn = 86400 - (($player->caracs->spd - 10) * 3600);
+                    // player turn — fixed schedule; players shift it manually
+                    // via api/player/set_next_turn.php (ex "DLA glissante")
+                    $playerTurn = TurnScheduleService::turnDurationSeconds($player->caracs->spd);
 
-
-
-                    // NO dlag
-                    if (!$player->have_option('dlag')) {
-
-
-                        $nextTurnTime = $player->data->nextTurnTime + $playerTurn;
-                    }
-
-                    // DLAG
-                    else {
-
-
-                        $nextTurnTime = $time + $playerTurn;
-                    }
-
+                    $nextTurnTime = $player->data->nextTurnTime + $playerTurn;
 
                     // adjust time
                     while ($nextTurnTime <= $time) {
 
-                        $nextTurnTime += 86400 - (($player->caracs->spd - 10) * 3600);
+                        $nextTurnTime += $playerTurn;
                     }
 
                     echo '<br />Prochain Tour le ' . date('d/m/Y à H:i', $nextTurnTime) . '.';

@@ -36,7 +36,7 @@ class PlayerOptionsService
     public const MANAGEABLE_OPTIONS = [
         'isSuperAdmin', 'isAdmin', 'isMerchant', 'isTrainer', 'showActionDetails',
         'alreadyFished', 'incognitoMode', 'invisibleMode', 'showBlockedTiles',
-        'doubleUpload', 'alreadyChanged', 'dlag',
+        'doubleUpload', 'alreadyChanged',
     ];
 
     /** Options that carry admin authority — highlighted / guarded in the UI. */
