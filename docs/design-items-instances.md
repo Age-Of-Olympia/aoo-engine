@@ -102,15 +102,23 @@ recipe elements back — a proto-usure), `DropWeapon` (disarm),
 CREATE TABLE item_instances (
   id             INT AUTO_INCREMENT PRIMARY KEY,
   item_id        INT NOT NULL,              -- FK items.id (the catalog kind)
-  durability     INT NOT NULL DEFAULT 100,
-  durability_max INT NOT NULL DEFAULT 100,
+  durability     INT NOT NULL DEFAULT 100,  -- 0 = brisé (réparable), < 0 = détruit
+  durability_max INT NOT NULL DEFAULT 100,  -- altérations move it (Béni +50, Maudit -50)
   quality        INT NOT NULL DEFAULT 0,
-  custom_name    VARCHAR(255) NOT NULL DEFAULT '',
-  params         LONGTEXT NULL,             -- enchantments, provenance…
+  custom_name    VARCHAR(255) NOT NULL DEFAULT '',  -- set at creation ONLY (service rule)
+  params         LONGTEXT NULL,             -- altérations/enchantments (Enflammé, Béni…)
+  creator_id     INT NULL,                  -- FK players.id, provenance (not displayed)
   created_at     INT NOT NULL,
+  destroyed      TINYINT(1) NOT NULL DEFAULT 0,  -- soft-delete: history survives
   CONSTRAINT fk_item_instances_item FOREIGN KEY (item_id) REFERENCES items (id)
 );
 ```
+
+Durability thresholds carry the whole state story (équipe review
+2026-07): `0` = brisé (repairable), `< 0` = détruit — no separate state
+column. Destruction is a soft-delete (`destroyed` flag), keeping
+creator/date traceability; a thrown weapon that vanishes is the same
+flag through a consume-on-use action cost.
 
 Ownership/location of an instance is exactly ONE of:
 - `players_items_instances (player_id, instance_id, equiped)` — in a bag
@@ -202,13 +210,36 @@ Each step releasable; `staging` shippable at every commit.
 
 ---
 
+## 5b. Requirements traceability — team review (Discord, 2026-07)
+
+The team's object requirements, checked against this design:
+
+| Demande | Verdict |
+|---|---|
+| Nom custom à la création uniquement (Labrys → « Dette de Thétis ») | ✅ `custom_name`, exposed by the service only at creation |
+| Tracer créateur + date, non affiché | ✅ `creator_id` + `created_at` |
+| Usure = PV qui montent/descendent | ✅ `durability` / `durability_max` |
+| 0 = brisé (réparable), négatif = détruit — pas de colonne d'état | ✅ adopted (§3.2) |
+| Destruction définitive après action (arme de jet) | ✅ consume-on-use via G1; soft-delete (`destroyed`) per the team's « on garde tout à -1 » |
+| Altérations (Enflammé, Gelé, Béni +50, Maudit −50…) | ✅ `params` + **G3**: generalize the existing `Enchant` instruction into `AlterInstance` (data-driven action piece) |
+| Stacker les uniques identiques, différencier par usure (schéma de l'équipe) | ✅ display concern: inventory groups instances by (catalogue + empreinte d'état) — no schema impact |
+| Deux tables, templates + instances ; « pas les PO » | ✅ literally §3.1 — `items` catalog + `item_instances`; gold stays `kind = stackable` |
+| Emplacements (main att/def, 2 mains, tête, torse, cape, pieds, doigt, munition) | ✅ ITEM_EMPLACEMENT_FORMAT has 14 slots (main1/main2/deuxmains…) ; renames = config |
+| Type d'objet (mêlée, tir, distance, jet, bouclier, consommable, anneau, **mur, décoration, route**) | ✅ catalog column (items JSON→DB); mur/décoration/route are build.php's subtypes — G2 turns them into real placements |
+| Encombrement/poids, taux de drop | ✅ catalog columns; enforcement mechanics to write (model-compatible) |
+| Non stockable en banque | ✅ exists today (`items.is_bankable`) |
+| Coffre : stocker, **casser**, ouvrir avec clé | ✅ chest = UniqueObject → owns `players_items` (zero schema) and is attackable **today by construction**; « ouvrir avec clé » = action TargetType ['structure'] + G1 `RequiresItem {clé}` |
+| Coffre PORTABLE (instance contenant des instances) | ⚠ the one genuinely open design — not blocked, but needs its own decision (open question #6) |
+
 ## 6. Open Questions
 
 1. **Conversion policy**: equipped-only at migration + lazy on touch —
    or bulk-convert every instance-kind stack? (Lazy keeps the migration
    tiny; bulk is simpler to reason about.)
-2. **Durability semantics**: wear on use (per attack?), on time (cron?),
-   on damage taken? Interacts with the global usure design.
+2. ~~**Durability semantics — state column?**~~ RESOLVED (équipe,
+   2026-07): thresholds on durability — 0 = brisé, < 0 = détruit, no
+   state column. Remaining: wear TRIGGERS (per use? per damage taken?
+   per turn?) — interacts with the global usure design.
 3. **Catalog flags** `enchanted` / `cursed` / `vorpal`: move to
    instance params, keep at catalog for inherently-cursed kinds, or
    both?
@@ -217,3 +248,7 @@ Each step releasable; `staging` shippable at every commit.
 5. **Market/exchanges of instances**: sellable? (an ask/bid references
    a specific instance, not a quantity) — or instance-kind items are
    simply not marketable at first?
+6. **Portable containers** (a chest INSTANCE holding instances, not a
+   map UniqueObject): instance-to-instance ownership is a new
+   relationship — worth it, or are containers always map/bank-anchored
+   unique objects?

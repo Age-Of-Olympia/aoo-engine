@@ -499,3 +499,25 @@ compatible:
 - **Buildings acting later is a non-issue by construction**: a tower that
   shoots = structure-kind race with a > 0 + rows in players_actions, pilotable
   through the same incarnation mechanism as NPCs. Nothing to redesign.
+
+### Requirements traceability — team review (Discord, 2026-07)
+
+The team's building requirements, checked against what is built:
+
+| Demande | Verdict |
+|---|---|
+| Propriétaire faction OU user, + plan | ✅ shipped — buildings.owner_id (user) + faction (code) + coords/plan |
+| PV, casser/réparer | ✅ shipped — attack pipeline, action `reparer`, admin restore |
+| Attaquer de loin | ✅ works today — the `distance` action carries TargetType ['character','structure'] |
+| Réduction de dégâts physiques/magiques | ✅ works today by catalog stats — the type's races row carries e / r / rm, LifeLoss already computes att − def |
+| Voir à l'emplacement (P « comme un PNJ immobile ») — tours de guet | ✅ by construction (races row has `p`, building is a players row) ; the vision-SHARING with the owner is the new mechanic to design |
+| Coût de construction + main d'œuvre | ✅ expressible — action *construire* = G1 RequiresItem (matériaux) + RequiresTraitValue (A/énergie) ; build_state 'construction' is reserved for multi-turn builds |
+| Accès autorisé/interdit par faction | 🔨 component to add — `building_access` satellite (1:N, house pattern) + check in go.php/interactions |
+| Comportements selon faction/race (taxes, interdiction d'utiliser) | 🔨 conditions data-driven sur les actions d'interaction (condition FactionRelation à créer) + le composant d'accès |
+| Pré-requis (« une Forge avant un Magasin », « Elfe seulement ») | 🔨 conditions sur *construire* — race gating existe ; « possède un bâtiment X » = nouvelle condition G4 `RequiresBuilding` (petite, data-driven) |
+| Niveaux + aperçu du niveau suivant | 🔨 choix de design : colonne level sur le satellite VS une ligne catalogue par niveau (upgrade = changement de type, aperçu = stats de la ligne suivante) — aucun bloqueur |
+| Confort | ✅ colonne satellite le jour où son gameplay est défini |
+| Ressources récoltables par bâtiment | 🔨 tick de production (cron) + config ; bonus : un bâtiment possède DÉJÀ son propre inventaire (players_items sur son id) — une mine peut accumuler chez elle |
+
+No requirement contradicts the architecture. New generic action pieces
+identified: G3 `AlterInstance` (items doc §5b) and G4 `RequiresBuilding`.
