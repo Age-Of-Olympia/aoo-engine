@@ -116,6 +116,26 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Flip the building to its destroyed state (build_state = 'ruin').
+     * The players row STAYS: logs keep their FK targets and the ruin
+     * still occupies the tile. Death-path callers only — admin removal
+     * is remove().
+     */
+    public function markDestroyed(int $playerId): bool
+    {
+        $affected = $this->entityManager->getConnection()->executeStatement(
+            'UPDATE buildings SET build_state = ? WHERE player_id = ?',
+            [BuildingDetails::STATE_RUIN, $playerId]
+        );
+
+        if ($affected > 0) {
+            $this->addAuditLog("BuildingService::markDestroyed #{$playerId}");
+        }
+
+        return $affected > 0;
+    }
+
+    /**
      * Remove a building: satellite row + players row. Wounds and other
      * component rows are deleted first so no FK is left dangling. The
      * destruction GAME flow (drop materials, ruin state…) is the death-path

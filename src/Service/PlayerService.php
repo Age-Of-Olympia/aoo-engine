@@ -154,6 +154,14 @@ class PlayerService
             exit('error not dead');
         }
 
+        // Une structure ne meurt pas comme un personnage : pas de partage
+        // d'XP (elle n'en porte pas), pas de compteurs de kills, pas d'âme.
+        // Branche destruction du plan bâtiments (§4.7).
+        if (($target->data->player_type ?? 'real') === 'building') {
+            self::processBuildingDestruction($player, $target);
+            return;
+        }
+
 
         $timestamp = time();
         $text = $player->data->name . ' a tué ' . $target->data->name . '.';
@@ -207,6 +215,35 @@ class PlayerService
 
         $target->death();
 
+
+        OnHideReloadView::render($player);
+    }
+
+    /**
+     * Branche destruction du chemin de mort pour les bâtiments
+     * (docs/design-buildings-entities.md §4.7).
+     *
+     * V1 volontairement minimale : journalise la destruction des deux
+     * côtés puis bascule build_state à 'ruin' — la ligne players reste
+     * (les logs qui la référencent gardent leur FK, la ruine occupe la
+     * case). Le butin de matériaux et la mécanique de ruine
+     * (pillage, réparation, usure) sont la question ouverte n°4 du
+     * plan ; ils se grefferont ici sans retoucher le chemin de mort
+     * des personnages.
+     */
+    private static function processBuildingDestruction(Player $player, Player $target): void
+    {
+        $timestamp = time();
+
+        $text = $player->data->name . ' a détruit ' . $target->data->name . '.';
+        Log::put($player, $target, $text, type: "kill", hiddenText: '', logTime: $timestamp);
+
+        $text = $target->data->name . ' a été détruit par ' . $player->data->name . '.';
+        Log::put($target, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);
+
+        (new BuildingService())->markDestroyed($target->id);
+
+        echo '<b><font color="red">Vous détruisez la structure.</font></b>';
 
         OnHideReloadView::render($player);
     }

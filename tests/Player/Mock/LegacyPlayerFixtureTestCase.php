@@ -48,6 +48,12 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     protected function setUp(): void
     {
         $this->link = $this->bootstrapLegacyOrSkip();
+
+        // Fixture rows are deleted through DBAL, invisible to the shared
+        // EntityManager: when a later test reuses a freed id, stale
+        // identity-map entries (e.g. a PlayerEffect from a previous attack)
+        // collide with the new rows. Start every test with a clean map.
+        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
     }
 
     protected function tearDown(): void
