@@ -9,9 +9,9 @@ use Doctrine\ORM\Mapping as ORM;
  * (component pattern, docs/design-buildings-entities.md §4.5; same
  * shape as players_pnjs / tutorial_players).
  *
- * - archetype: the building kind ('palissade', 'tour', 'entrepot'…).
- *   Also the name of the non-playable pseudo-race carrying its base
- *   stats (races.playable = false), kept equal by BuildingService.
+ * The building's TYPE lives in players.race (a races row of kind
+ * 'structure') — not duplicated here.
+ *
  * - owner_id: FK players.id of the owning character, nullable — a
  *   building can be faction-held or ownerless (quest/admin placed).
  * - faction: faction CODE from the factions catalog (same convention
@@ -35,9 +35,6 @@ class BuildingDetails
     #[ORM\Column(type: "integer")]
     private int $player_id;
 
-    #[ORM\Column(type: "string", length: 64)]
-    private string $archetype = '';
-
     #[ORM\Column(type: "integer", nullable: true)]
     private ?int $owner_id = null;
 
@@ -55,17 +52,6 @@ class BuildingDetails
     public function setPlayerId(int $player_id): self
     {
         $this->player_id = $player_id;
-        return $this;
-    }
-
-    public function getArchetype(): string
-    {
-        return $this->archetype;
-    }
-
-    public function setArchetype(string $archetype): self
-    {
-        $this->archetype = $archetype;
         return $this;
     }
 

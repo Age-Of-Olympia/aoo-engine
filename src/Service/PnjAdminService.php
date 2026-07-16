@@ -22,16 +22,18 @@ use Classes\View;
 class PnjAdminService
 {
     /**
-     * Races offerable when creating/editing a PNJ: every race in the DB
-     * (races table). All rows carry a faction ('' when none), so PNJ creation
-     * can no longer blow up on a missing definition — this is the single
-     * source of truth both the dropdown and the server-side whitelist use.
+     * Races offerable when creating/editing a PNJ: every CHARACTER-kind race
+     * in the DB — the races table also carries structure types (palissade…)
+     * that must never become a PNJ. All rows carry a faction ('' when none),
+     * so PNJ creation can no longer blow up on a missing definition — this is
+     * the single source of truth both the dropdown and the server-side
+     * whitelist use.
      *
      * @return array<int, string>
      */
     public function availableRaces(): array
     {
-        return (new RaceService())->getAllRaceNames();
+        return (new RaceService())->getCharacterRaceNames();
     }
 
     /**

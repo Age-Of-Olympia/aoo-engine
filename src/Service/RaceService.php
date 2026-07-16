@@ -161,6 +161,32 @@ class RaceService
     }
 
     /**
+     * Rows of the given GameEntity branch (races.kind): 'character' for
+     * player/PNJ races, 'structure' for building/unique-object types.
+     *
+     * @return Race[]
+     */
+    public function getRacesByKind(string $kind): array
+    {
+        return $this->entityManager->getRepository(Race::class)
+            ->findBy(['kind' => $kind], ['name' => 'ASC']);
+    }
+
+    /**
+     * @return string[] Lowercase names of character-kind races — what PNJ
+     *                  creation and other character flows must list instead
+     *                  of getAllRaceNames() now that structure types share
+     *                  the table.
+     */
+    public function getCharacterRaceNames(): array
+    {
+        return array_map(
+            static fn (Race $race): string => $race->getName(),
+            $this->getRacesByKind(\App\Enum\EntityCategory::Character->value)
+        );
+    }
+
+    /**
      * @return array<string, string> race name => bgColor, for every race.
      *                               Used by map layer rendering (one query
      *                               instead of one per player row).

@@ -8,7 +8,7 @@ class BuildingCmd extends AdminCommand
     public function __construct() {
         parent::__construct("building", [
             new Argument('action', true),
-            new Argument('archetype', true),
+            new Argument('type', true),
             new Argument('x', true),
             new Argument('y', true),
             new Argument('plan', true),
@@ -16,7 +16,7 @@ class BuildingCmd extends AdminCommand
         parent::setDescription(<<<EOT
 Pose ou retire un bâtiment (ligne players de type 'building', PV portés par sa pseudo-race).
 Exemple:
-> building place [archetype] [x] [y] [plan]  (plan par défaut : gaia)
+> building place [type] [x] [y] [plan]  (plan par défaut : gaia)
 > building place palissade 3 -2
 > building remove [id]
 EOT);
@@ -34,13 +34,13 @@ EOT);
             return $this->remove($argumentValues);
         }
 
-        return "Action inconnue. Utiliser : building place [archetype] [x] [y] [plan] | building remove [id]";
+        return "Action inconnue. Utiliser : building place [type] [x] [y] [plan] | building remove [id]";
     }
 
     private function place(array $argumentValues): string
     {
         if (!isset($argumentValues[1], $argumentValues[2], $argumentValues[3])) {
-            return 'Arguments manquants : building place [archetype] [x] [y] [plan]';
+            return 'Arguments manquants : building place [type] [x] [y] [plan]';
         }
 
         $goCoords = (object) [

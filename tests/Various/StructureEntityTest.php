@@ -84,8 +84,8 @@ class StructureEntityTest extends TestCase
                 [$id, $coordsId, time()]
             );
             $conn->executeStatement(
-                'INSERT INTO buildings (player_id, archetype, build_state) VALUES (?, ?, ?)',
-                [$id, 'palissade', BuildingDetails::STATE_BUILT]
+                'INSERT INTO buildings (player_id, build_state) VALUES (?, ?)',
+                [$id, BuildingDetails::STATE_BUILT]
             );
 
             $asEntity = $em->find(GameEntity::class, $id);
@@ -102,7 +102,6 @@ class StructureEntityTest extends TestCase
 
             $details = $em->find(BuildingDetails::class, $id);
             $this->assertInstanceOf(BuildingDetails::class, $details);
-            $this->assertSame('palissade', $details->getArchetype());
             $this->assertSame(BuildingDetails::STATE_BUILT, $details->getBuildState());
             $this->assertNull($details->getOwnerId());
         } finally {

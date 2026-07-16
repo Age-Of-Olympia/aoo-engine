@@ -33,7 +33,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('action-combat')]
 class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
-    private const ARCHETYPE = 'palissade';
+    private const TYPE = 'palissade';
 
     protected function setUp(): void
     {
@@ -45,16 +45,16 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
             $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
         }
 
-        $race = (new \App\Service\RaceService())->getRaceByName(self::ARCHETYPE);
-        if ($race === null || $race->getPlayable()) {
-            $this->markTestSkipped("pseudo-race 'palissade' not seeded (run migrations).");
+        $race = (new \App\Service\RaceService())->getRaceByName(self::TYPE);
+        if ($race === null || !$race->isStructureKind()) {
+            $this->markTestSkipped("structure type 'palissade' not seeded (run migrations).");
         }
     }
 
     private function placePalissadeAt(int $x, int $y): int
     {
         $id = (new BuildingService())->place(
-            self::ARCHETYPE,
+            self::TYPE,
             (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
         );
         $this->trackEntityId($id);

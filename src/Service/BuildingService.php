@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * (docs/design-buildings-entities.md §4.7).
  *
  * Mirrors Player::put_player(): reserved id range, display id, coords
- * row reuse. The building's max PV comes from its archetype's
+ * row reuse. The building's max PV comes from its type's
  * non-playable pseudo-race (§4.6) through the untouched caracs
  * pipeline, so damage works with zero new code
  * (putBonus / getRemaining on the legacy Player).
@@ -21,7 +21,7 @@ use Doctrine\ORM\EntityManagerInterface;
 class BuildingService extends BaseService
 {
     /**
-     * Tile/portrait image used when the archetype has no dedicated asset
+     * Tile/portrait image used when the type has no dedicated asset
      * yet — an existing wall sprite, so a freshly placed building renders
      * on the damier without any art step.
      */
@@ -36,36 +36,39 @@ class BuildingService extends BaseService
     }
 
     /**
-     * Place a building of the given archetype on the map.
+     * Place a building of the given type on the map.
      *
-     * @param string      $archetype non-playable race name carrying the base
-     *                               stats ('palissade', …)
-     * @param object      $goCoords  stdClass {x, y, z, plan} — the target tile
-     * @param int|null    $ownerId   players.id of the owning character, if any
-     * @param string      $faction   faction CODE from the catalog, '' = neutral
-     * @param string|null $name      display name; defaults to the race label
+     * The type is a races row of kind 'structure' (the races table is the
+     * catalog of entity base stats); it lands in players.race like any
+     * entity — no duplicate "archetype" storage.
+     *
+     * @param string      $type     structure-kind race name ('palissade', …)
+     * @param object      $goCoords stdClass {x, y, z, plan} — the target tile
+     * @param int|null    $ownerId  players.id of the owning character, if any
+     * @param string      $faction  faction CODE from the catalog, '' = neutral
+     * @param string|null $name     display name; defaults to the race label
      *
      * @return int the new building's players.id (ENTITY_ID_RANGES['building'])
      *
-     * @throws \InvalidArgumentException on unknown/playable archetype,
+     * @throws \InvalidArgumentException on unknown/non-structure type,
      *                                   unknown faction code or unknown owner
      */
     public function place(
-        string $archetype,
+        string $type,
         object $goCoords,
         ?int $ownerId = null,
         string $faction = '',
         ?string $name = null
     ): int {
-        $race = (new RaceService())->getRaceByName($archetype);
+        $race = (new RaceService())->getRaceByName($type);
         if ($race === null) {
             throw new \InvalidArgumentException(
-                "Archétype inconnu : '{$archetype}' (aucune race de ce nom)."
+                "Type inconnu : '{$type}' (aucune entrée de ce nom au catalogue races)."
             );
         }
-        if ($race->getPlayable()) {
+        if (!$race->isStructureKind()) {
             throw new \InvalidArgumentException(
-                "L'archétype '{$archetype}' est une race jouable — un bâtiment exige une pseudo-race non jouable."
+                "'{$type}' n'est pas un type de structure (races.kind) — une race de personnage ne peut pas être posée en bâtiment."
             );
         }
 
@@ -86,9 +89,9 @@ class BuildingService extends BaseService
         $displayId = getNextDisplayId('building');
         $coordsId = View::get_coords_id($goCoords);
 
-        // Archetype-specific art when it exists, working placeholder otherwise
+        // Type-specific art when it exists, working placeholder otherwise
         // (View.php renders players.avatar directly as the tile image).
-        $avatar = 'img/avatars/' . $archetype . '.webp';
+        $avatar = 'img/avatars/' . $type . '.webp';
         if (!is_file(dirname(__DIR__, 2) . '/' . $avatar)) {
             $avatar = self::DEFAULT_IMAGE;
         }
@@ -102,7 +105,7 @@ class BuildingService extends BaseService
                 'building',
                 $displayId,
                 $name ?? $race->getLabel(),
-                $archetype,
+                $type,
                 $avatar,
                 $avatar,
                 $coordsId,
@@ -111,9 +114,9 @@ class BuildingService extends BaseService
         );
 
         $conn->executeStatement(
-            'INSERT INTO buildings (player_id, archetype, owner_id, faction, build_state)
-             VALUES (?, ?, ?, ?, ?)',
-            [$id, $archetype, $ownerId, $faction, BuildingDetails::STATE_BUILT]
+            'INSERT INTO buildings (player_id, owner_id, faction, build_state)
+             VALUES (?, ?, ?, ?)',
+            [$id, $ownerId, $faction, BuildingDetails::STATE_BUILT]
         );
 
         // Le damier de chaque joueur est un SVG caché : invalider le
@@ -121,7 +124,7 @@ class BuildingService extends BaseService
         // déplacement.
         View::refresh_players_svg($goCoords);
 
-        $this->addAuditLog("BuildingService::place {$archetype} #{$id} at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
+        $this->addAuditLog("BuildingService::place {$type} #{$id} at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
 
         return $id;
     }
@@ -139,7 +142,7 @@ class BuildingService extends BaseService
      * dashboard. Current PV = pseudo-race max + the players_bonus 'pv'
      * ledger (buildings have no upgrades/items, so the race base IS max).
      *
-     * @return array<int, array{id:int, name:string, archetype:string, build_state:string,
+     * @return array<int, array{id:int, name:string, type:string, build_state:string,
      *                          faction:string, owner_id:?int, owner_name:?string,
      *                          x:int, y:int, plan:string, max_pv:int, current_pv:int}>
      */
@@ -149,7 +152,7 @@ class BuildingService extends BaseService
         // created under a newer default collation than players and a SQL
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.race, b.archetype, b.build_state, b.faction, b.owner_id,
+            "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id,
                     o.name AS owner_name, c.x, c.y, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus
              FROM buildings b
@@ -169,7 +172,7 @@ class BuildingService extends BaseService
             return [
                 'id' => (int) $row['id'],
                 'name' => (string) $row['name'],
-                'archetype' => (string) $row['archetype'],
+                'type' => (string) $row['race'],
                 'build_state' => (string) $row['build_state'],
                 'faction' => (string) $row['faction'],
                 'owner_id' => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,

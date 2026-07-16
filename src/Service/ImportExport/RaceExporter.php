@@ -53,6 +53,7 @@ final class RaceExporter implements ObjectExporter
             'description'    => $entity->getDescription(),
             'playable'       => $entity->getPlayable(),
             'hidden'         => $entity->getHidden(),
+            'kind'           => $entity->getKind(),
             'bgColor'        => $entity->getBgColor(),
             'color'          => $entity->getColor(),
             'faction'        => $entity->getFaction(),

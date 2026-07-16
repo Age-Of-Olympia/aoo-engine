@@ -26,7 +26,7 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 #[Group('entities-structure')]
 class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
-    private const ARCHETYPE = 'palissade';
+    private const TYPE = 'palissade';
 
     protected function setUp(): void
     {
@@ -38,16 +38,16 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
             $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
         }
 
-        $race = (new \App\Service\RaceService())->getRaceByName(self::ARCHETYPE);
-        if ($race === null || $race->getPlayable()) {
-            $this->markTestSkipped("pseudo-race 'palissade' not seeded (run migrations).");
+        $race = (new \App\Service\RaceService())->getRaceByName(self::TYPE);
+        if ($race === null || !$race->isStructureKind()) {
+            $this->markTestSkipped("structure type 'palissade' not seeded (run migrations).");
         }
     }
 
     private function placePalissade(): int
     {
         $id = (new BuildingService())->place(
-            self::ARCHETYPE,
+            self::TYPE,
             (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia']
         );
         $this->trackEntityId($id);
@@ -61,7 +61,7 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $building = PlayerFactory::legacy($id);
         $building->get_data();
-        $this->assertSame(self::ARCHETYPE, (string) $building->data->race);
+        $this->assertSame(self::TYPE, (string) $building->data->race);
 
         $building->get_caracs();
         $this->assertSame(100, (int) $building->caracs->pv, 'palissade base PV must come from the pseudo-race');
@@ -97,23 +97,23 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    public function testPlaceRejectsUnknownAndPlayableArchetypes(): void
+    public function testPlaceRejectsUnknownAndCharacterKindTypes(): void
     {
         $service = new BuildingService();
         $coords = (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'];
 
         try {
             $service->place('race_inexistante_' . bin2hex(random_bytes(3)), $coords);
-            $this->fail('unknown archetype must be rejected');
+            $this->fail('unknown type must be rejected');
         } catch (\InvalidArgumentException $e) {
-            $this->assertStringContainsString('Archétype inconnu', $e->getMessage());
+            $this->assertStringContainsString('Type inconnu', $e->getMessage());
         }
 
         try {
             $service->place('nain', $coords);
-            $this->fail('a playable race must be rejected as archetype');
+            $this->fail('a character race must be rejected as structure type');
         } catch (\InvalidArgumentException $e) {
-            $this->assertStringContainsString('race jouable', $e->getMessage());
+            $this->assertStringContainsString('type de structure', $e->getMessage());
         }
     }
 
@@ -145,7 +145,7 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         $owner = $this->createRealPlayer('GmOwner');
         $id = (new BuildingService())->place(
-            self::ARCHETYPE,
+            self::TYPE,
             (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'],
             $owner->id
         );
@@ -163,7 +163,7 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertCount(1, $rows, 'the placed building must appear in the admin roster');
 
         $row = $rows[0];
-        $this->assertSame(self::ARCHETYPE, $row['archetype']);
+        $this->assertSame(self::TYPE, $row['type']);
         $this->assertSame('built', $row['build_state']);
         $this->assertSame(['x' => 0, 'y' => 3, 'plan' => 'gaia'], ['x' => $row['x'], 'y' => $row['y'], 'plan' => $row['plan']]);
         $this->assertSame(100, $row['max_pv']);

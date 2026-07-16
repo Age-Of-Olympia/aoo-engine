@@ -27,14 +27,6 @@ use App\Action\Schema\ParameterSchema;
  */
 class TargetTypeCondition extends BaseCondition implements HasParameterSchema
 {
-    private const CATEGORY_BY_PLAYER_TYPE = [
-        'real'     => 'character',
-        'tutorial' => 'character',
-        'npc'      => 'character',
-        'building' => 'structure',
-        'unique'   => 'structure',
-    ];
-
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
@@ -44,7 +36,7 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchema
                 'Catégories de cibles autorisées',
                 default: ['character'],
                 multiple: true,
-                options: ['character' => 'Personnage', 'structure' => 'Structure'],
+                options: \App\Enum\EntityCategory::options(),
             ),
         );
     }
@@ -56,8 +48,7 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchema
             ? $params['allowed']
             : ['character'];
 
-        $playerType = (string) ($target->data->player_type ?? 'real');
-        $category = self::CATEGORY_BY_PLAYER_TYPE[$playerType] ?? 'character';
+        $category = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real')->value;
 
         if (in_array($category, $allowed, true)) {
             return new ConditionResult(true, array(), array());

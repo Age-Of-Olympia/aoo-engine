@@ -47,6 +47,14 @@ class Race
     #[ORM\Column(type: "boolean")]
     private bool $hidden;
 
+    /**
+     * Branch of the GameEntity tree this row provides base stats for:
+     * 'character' (joueurs, PNJ) or 'structure' (bâtiments, objets
+     * uniques). See App\Enum\EntityCategory.
+     */
+    #[ORM\Column(type: "string", length: 20, options: ["default" => "character"])]
+    private string $kind = 'character';
+
     #[ORM\Column(type: "string", length: 20, options: ["default" => "#FFFFFF"])]
     private string $bgColor = '#FFFFFF';
 
@@ -211,6 +219,21 @@ class Race
     public function setHidden(bool $hidden): void
     {
         $this->hidden = $hidden;
+    }
+
+    public function getKind(): string
+    {
+        return $this->kind;
+    }
+
+    public function setKind(string $kind): void
+    {
+        $this->kind = $kind;
+    }
+
+    public function isStructureKind(): bool
+    {
+        return $this->kind === \App\Enum\EntityCategory::Structure->value;
     }
 
     public function getBgColor(): string

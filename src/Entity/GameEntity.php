@@ -50,7 +50,7 @@ abstract class GameEntity
     /**
      * Pointer into the `races` catalog — the base-stats row of this entity.
      * Characters use playable races; structures will use non-playable
-     * pseudo-races (races.playable = false) as their PV archetype.
+     * pseudo-races (races.kind = structure) as their PV source.
      */
     #[ORM\Column(type: "string", length: 255)]
     protected string $race = '';

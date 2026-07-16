@@ -8,8 +8,9 @@ use Doctrine\ORM\Mapping as ORM;
  * UniqueObjectDetails — 1:1 satellite row of a UniqueObject's `players`
  * row (component pattern, docs/design-buildings-entities.md §4.5).
  *
- * - archetype: the object kind ('cristal', 'porte'…). Also the name of
- *   the non-playable pseudo-race carrying its base stats.
+ * The object's TYPE lives in players.race (a races row of kind
+ * 'structure') — not duplicated here.
+ *
  * - interaction: free JSON for interaction config (dialog id, trigger,
  *   loot table ref…) — deliberately schemaless while the unique-object
  *   semantics are settled (plan open question #6).
@@ -22,9 +23,6 @@ class UniqueObjectDetails
     #[ORM\Column(type: "integer")]
     private int $player_id;
 
-    #[ORM\Column(type: "string", length: 64)]
-    private string $archetype = '';
-
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $interaction = null;
 
@@ -36,17 +34,6 @@ class UniqueObjectDetails
     public function setPlayerId(int $player_id): self
     {
         $this->player_id = $player_id;
-        return $this;
-    }
-
-    public function getArchetype(): string
-    {
-        return $this->archetype;
-    }
-
-    public function setArchetype(string $archetype): self
-    {
-        $this->archetype = $archetype;
         return $this;
     }
 

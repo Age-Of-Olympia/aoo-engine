@@ -28,6 +28,15 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
             ]),
             new ParameterField('value', FieldType::TRAIT_OR_INT, 'Valeur', default: 1),
             new ParameterField('stackable', FieldType::BOOL, 'Cumulable', default: false),
+            new ParameterField(
+                'targets',
+                FieldType::ENUM,
+                'Catégories pouvant recevoir l\'effet',
+                default: ['character'],
+                multiple: true,
+                options: \App\Enum\EntityCategory::options(),
+                help: 'Un bâtiment ne prend pas d\'adrénaline — mais peut prendre feu si l\'action le déclare.',
+            ),
         );
     }
 
@@ -97,20 +106,24 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
                     if ($res > 0) {
                         $outcomeSuccessMessages[0] = $res .' effet(s) terminé(s).';
                     }
-                } else {
+                } elseif ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
                     $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $actor->data->name;
                 }
                 break;
             case 'target':
-                $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                if ($this->mayReceiveEffect($target, $params, $apply)) {
+                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
+                    $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                }
                 break;
             default:
-                $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+                if ($this->mayReceiveEffect($actor, $params, $apply)) {
+                    $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
+                    $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+                }
 
-            if ($target->data->name !== $actor->data->name) {
+            if ($target->data->name !== $actor->data->name && $this->mayReceiveEffect($target, $params, $apply)) {
                 $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
                 $outcomeSuccessMessages[1] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
             }
@@ -125,6 +138,31 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
             $player->add_effect($effectName, $duration, $value, $stackable);
         } else {
             $player->end_effect($effectName);
-        } 
+        }
+    }
+
+    /**
+     * Category gate (docs/design-buildings-entities.md, retours 2026-07-16) :
+     * un effet ne s'APPLIQUE qu'aux catégories d'entités que l'instruction
+     * déclare — par défaut les personnages seuls, donc jamais d'adrénaline
+     * sur une palissade ; une action de siège peut déclarer ['character',
+     * 'structure'] pour mettre le feu à un bâtiment. Le RETRAIT d'un effet
+     * (apply=false, purge) reste toujours permis : c'est du nettoyage.
+     *
+     * @param array<string, mixed> $params
+     */
+    private function mayReceiveEffect(Player $player, array $params, bool $apply): bool
+    {
+        if (!$apply) {
+            return true;
+        }
+
+        $allowed = is_array($params['targets'] ?? null) && $params['targets'] !== []
+            ? $params['targets']
+            : [\App\Enum\EntityCategory::Character->value];
+
+        $category = \App\Enum\EntityCategory::fromPlayerType($player->data->player_type ?? 'real');
+
+        return in_array($category->value, $allowed, true);
     }
 }

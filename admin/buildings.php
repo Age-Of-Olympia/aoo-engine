@@ -7,7 +7,7 @@
  * command `building place|remove` — same BuildingService underneath
  * (docs/design-buildings-entities.md §4.7).
  *
- * Archetypes are non-playable pseudo-races (races.playable = 0) created in
+ * Structure types are races rows of kind 'structure' created in
  * admin/races.php; their pv column is the building's max PV.
  *
  * All mutations POST to buildings-save.php (CSRF-validated, PRG). This page
@@ -24,18 +24,17 @@ use App\Service\PnjAdminService;
 use App\Service\RaceService;
 
 /**
- * Archetype options: every non-playable race, name => label. Playable races
- * are excluded for the same reason BuildingService::place() refuses them.
+ * Structure-type options: races rows of kind 'structure', name => label —
+ * the same rule BuildingService::place() enforces. Character races
+ * (playable or PNJ) never appear here.
  *
  * @return array<string,string>
  */
-function building_archetype_options(): array
+function building_type_options(): array
 {
     $out = [];
-    foreach ((new RaceService())->getAllRaces() as $race) {
-        if (!$race->getPlayable()) {
-            $out[$race->getName()] = $race->getLabel();
-        }
+    foreach ((new RaceService())->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+        $out[$race->getName()] = $race->getLabel();
     }
     ksort($out);
     return $out;
@@ -85,7 +84,7 @@ function building_render_list(array $buildings, string $csrfToken): string
         $rows .= '<tr>'
             . '<td>' . (int) $b['id'] . '</td>'
             . '<td>' . e($b['name']) . '</td>'
-            . '<td>' . e($b['archetype']) . '</td>'
+            . '<td>' . e($b['type']) . '</td>'
             . '<td>' . building_state_badge($b['build_state']) . '</td>'
             . '<td>' . $pvCell . '</td>'
             . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ') · ' . e($b['plan']) . '</td>'
@@ -96,26 +95,26 @@ function building_render_list(array $buildings, string $csrfToken): string
     }
 
     return '<div class="table-responsive"><table class="table table-sm table-striped align-middle">'
-        . '<thead><tr><th>#</th><th>Nom</th><th>Archétype</th><th>État</th><th>PV</th>'
+        . '<thead><tr><th>#</th><th>Nom</th><th>Type</th><th>État</th><th>PV</th>'
         . '<th>Position</th><th>Propriétaire</th><th>Faction</th><th>Actions</th></tr></thead>'
         . '<tbody>' . $rows . '</tbody></table></div>';
 }
 
 /**
- * @param array<string,string> $archetypes
+ * @param array<string,string> $types
  * @param array<int,string>    $plans
  * @param array<string,string> $factions code => name
  */
-function building_render_place_form(array $archetypes, array $plans, array $factions, string $csrfToken): string
+function building_render_place_form(array $types, array $plans, array $factions, string $csrfToken): string
 {
-    if ($archetypes === []) {
-        return '<div class="alert alert-warning">Aucune pseudo-race non jouable disponible : créez-en une'
-            . ' dans <a href="/admin/races.php">Races</a> (décochez « Jouable », renseignez ses PV).</div>';
+    if ($types === []) {
+        return '<div class="alert alert-warning">Aucun type de structure disponible : créez-en un'
+            . ' dans <a href="/admin/races.php">Races</a> (sorte « Structure », renseignez ses PV).</div>';
     }
 
-    $archetypeOptions = '';
-    foreach ($archetypes as $name => $label) {
-        $archetypeOptions .= '<option value="' . e($name) . '">' . e($label) . ' (' . e($name) . ')</option>';
+    $typeOptions = '';
+    foreach ($types as $name => $label) {
+        $typeOptions .= '<option value="' . e($name) . '">' . e($label) . ' (' . e($name) . ')</option>';
     }
 
     $planOptions = '';
@@ -131,9 +130,9 @@ function building_render_place_form(array $archetypes, array $plans, array $fact
 
     $body = '<form method="post" action="/admin/buildings-save.php?action=place" class="row g-2">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-        . '<div class="col-md-3"><label class="form-label">Archétype</label>'
-        . '<select name="archetype" class="form-control" required>' . $archetypeOptions . '</select>'
-        . '<small class="text-muted">Pseudo-race non jouable — ses PV = PV max du bâtiment.</small></div>'
+        . '<div class="col-md-3"><label class="form-label">Type</label>'
+        . '<select name="type" class="form-control" required>' . $typeOptions . '</select>'
+        . '<small class="text-muted">Entrée du catalogue races (sorte « Structure ») — ses PV = PV max du bâtiment.</small></div>'
         . '<div class="col-md-3"><label class="form-label">Nom (optionnel)</label>'
         . '<input type="text" name="name" class="form-control" maxlength="255" placeholder="Libellé de la race par défaut"></div>'
         . '<div class="col-md-1"><label class="form-label">X</label>'
@@ -165,7 +164,7 @@ foreach ((new FactionService())->getAllFactions() as $faction) {
 }
 
 $content = building_render_place_form(
-    building_archetype_options(),
+    building_type_options(),
     (new PnjAdminService())->listPlans(),
     $factions,
     $csrfToken

@@ -84,7 +84,11 @@ $applyForm = static function (Race $race): string {
 
     $race->setLabel(trim((string) $_POST['label']));
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
-    $race->setPlayable(booleanCheckbox('playable'));
+    // Sorte : personnage (défaut) ou structure. Une structure n'est jamais
+    // proposée à l'inscription, quel que soit l'état de la case Jouable.
+    $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
+    $race->setKind($kind);
+    $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);
     $race->setColor(stringWithDefault('color', 'black'));

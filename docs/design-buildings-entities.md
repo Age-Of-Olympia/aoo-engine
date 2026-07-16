@@ -477,3 +477,25 @@ compatible:
 - Keep archetype configuration (max PV via pseudo-race, drop tables, future
   wear rates) **in DB, editable via admin pages** — consistent with the
   project-wide JSON→DB strategy.
+
+### Decisions from the 2026-07-16 review
+
+- **One name for the type concept.** `buildings.archetype` duplicated
+  `players.race`; dropped. The structure's type IS its races row, labelled
+  « Type » in the UI. The races table is the catalog of entity base stats.
+- **`races.kind` ('character' | 'structure')** separates PNJ races from
+  structure types — `playable` alone couldn't (both are non-playable).
+  PNJ creation lists kind='character'; building placement lists
+  kind='structure'; a structure kind is never registrable.
+- **Repair = heal.** No parallel repair pipeline: healing a structure is
+  `putBonus(['pv' => +x])` like a character. The in-game repair ACTION will
+  be a heal-type action gated by TargetType ['structure'] — distinct action
+  in game terms (open question #5), same machinery. Admin « Restaurer » is
+  a reset (PV ledger purge + build_state 'built'), not a game mechanic.
+- **Effects are category-gated at the instruction** (App\Enum\EntityCategory):
+  ApplyStatus applies only to declared categories, default ['character'] —
+  no adrenaline on a palissade; a siege action may declare
+  ['character','structure'] to set a building on fire. Removal never gated.
+- **Buildings acting later is a non-issue by construction**: a tower that
+  shoots = structure-kind race with a > 0 + rows in players_actions, pilotable
+  through the same incarnation mechanism as NPCs. Nothing to redesign.

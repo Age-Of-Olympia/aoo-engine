@@ -6,7 +6,7 @@
  * Routed on ?action: place | repair | remove. Every branch is
  * CSRF-validated and enforces the same menu level as buildings.php so a
  * direct POST can't bypass the dashboard gate. Redirects back (PRG) with a
- * flash. Business validation (archetype non jouable, faction du catalogue,
+ * flash. Business validation (type de structure au catalogue, faction du catalogue,
  * propriétaire existant) lives in BuildingService, shared with the console
  * command.
  */
@@ -64,7 +64,7 @@ if ($action === 'place') {
 
     try {
         $id = $service->place(
-            trim((string) ($_POST['archetype'] ?? '')),
+            trim((string) ($_POST['type'] ?? '')),
             $goCoords,
             $ownerId,
             trim((string) ($_POST['faction'] ?? '')),
