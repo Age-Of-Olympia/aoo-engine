@@ -89,6 +89,41 @@ $(document).ready(function(){
         });
     });
 
+    $('#next-turn-apply').click(function(e){
+
+        e.preventDefault();
+
+        var value = $('#next-turn-input').val();
+
+        if(!value){
+
+            alert('Choisissez une date et une heure.');
+
+            return false;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: 'api/player/set_next_turn.php',
+            data: {'nextTurn': value},
+            dataType: 'json',
+            success: function(data)
+            {
+                alert('Prochain tour déplacé au ' + data.formatted + '.');
+
+                /* reload so the reschedule window (min/max) is recomputed
+                   from the new next turn time */
+                window.location.reload();
+            },
+            error: function(xhr)
+            {
+                var data = xhr.responseJSON;
+
+                alert((data && data.error) || 'Erreur lors du changement de tour.');
+            }
+        });
+    });
+
     $('.change-mail').click(function(e){
         e.preventDefault();
 

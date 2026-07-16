@@ -112,6 +112,9 @@ abstract class PlayerEntity
     #[ORM\Column(type: "integer")]
     protected int $nextTurnTime = 0;
 
+    #[ORM\Column(type: "boolean")]
+    protected bool $nextTurnRescheduled = false;
+
     #[ORM\Column(type: "integer")]
     protected int $registerTime = 0;
 
@@ -434,6 +437,17 @@ abstract class PlayerEntity
     public function setNextTurnTime(int $nextTurnTime): self
     {
         $this->nextTurnTime = $nextTurnTime;
+        return $this;
+    }
+
+    public function isNextTurnRescheduled(): bool
+    {
+        return $this->nextTurnRescheduled;
+    }
+
+    public function setNextTurnRescheduled(bool $nextTurnRescheduled): self
+    {
+        $this->nextTurnRescheduled = $nextTurnRescheduled;
         return $this;
     }
 

@@ -37,8 +37,9 @@ echo '
 <div id="index-menu" class="box-shadow scrolling-bg">
     ';
 
-    echo '<a href="index.php" action="login" id="index-button-play", class="index-button">Jouer</a>';
-    echo '<div class="menu-sep"></div>';
+    echo '<div class="text"><b>Age of Olympia,<br />JDR gratuit au tour-par-tour.</b></div>';
+
+    echo '<a href="index.php" action="login" id="index-button-play" class="index-button">Jouer</a>';
 
 
     $raceBg = (new \App\Service\RaceService())->getPlayableRaceNames()[0] ?? 'nain';
