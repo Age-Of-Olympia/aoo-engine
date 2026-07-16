@@ -87,7 +87,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             // Purge every per-entity file cache: .json is the get_data()
             // cache, .svg the board render — a recycled id would otherwise
             // resurrect the previous fixture's identity.
-            foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
+            foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
                 @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);
             }
         }
