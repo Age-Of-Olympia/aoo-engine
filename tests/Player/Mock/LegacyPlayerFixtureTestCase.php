@@ -57,6 +57,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         }
 
         foreach ($this->createdPlayerIds as $id) {
+            $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$id]);
             foreach ([
                 'players_bonus',
                 'players_effects',
@@ -122,6 +123,15 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         $this->createdPlayerIds[] = $id;
 
         return new Player($id);
+    }
+
+    /**
+     * Register an entity id created OUTSIDE createRealPlayer() (e.g. a
+     * building placed via BuildingService) for the same row cleanup.
+     */
+    protected function trackEntityId(int $id): void
+    {
+        $this->createdPlayerIds[] = $id;
     }
 
     /**
