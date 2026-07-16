@@ -11,6 +11,7 @@ define('ENTITY_ID_RANGES', [
     'real' => ['start' => 1, 'end' => 9999999],
     'tutorial' => ['start' => 10000000, 'end' => 19999999],
     'building' => ['start' => 20000000, 'end' => 29999999],
+    'unique' => ['start' => 30000000, 'end' => 39999999],
     'npc' => ['start' => PHP_INT_MIN, 'end' => -1],
 ]);
 
