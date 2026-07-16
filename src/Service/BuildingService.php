@@ -20,6 +20,13 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class BuildingService extends BaseService
 {
+    /**
+     * Tile/portrait image used when the archetype has no dedicated asset
+     * yet — an existing wall sprite, so a freshly placed building renders
+     * on the damier without any art step.
+     */
+    public const DEFAULT_IMAGE = 'img/walls/barricade.png';
+
     private EntityManagerInterface $entityManager;
 
     public function __construct()
@@ -79,6 +86,13 @@ class BuildingService extends BaseService
         $displayId = getNextDisplayId('building');
         $coordsId = View::get_coords_id($goCoords);
 
+        // Archetype-specific art when it exists, working placeholder otherwise
+        // (View.php renders players.avatar directly as the tile image).
+        $avatar = 'img/avatars/' . $archetype . '.webp';
+        if (!is_file(dirname(__DIR__, 2) . '/' . $avatar)) {
+            $avatar = self::DEFAULT_IMAGE;
+        }
+
         $conn->executeStatement(
             'INSERT INTO players
                 (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime)
@@ -89,8 +103,8 @@ class BuildingService extends BaseService
                 $displayId,
                 $name ?? $race->getLabel(),
                 $archetype,
-                'img/avatars/' . $archetype . '.webp',
-                'img/portraits/' . $archetype . '.jpeg',
+                $avatar,
+                $avatar,
                 $coordsId,
                 time(),
             ]
@@ -101,6 +115,11 @@ class BuildingService extends BaseService
              VALUES (?, ?, ?, ?, ?)',
             [$id, $archetype, $ownerId, $faction, BuildingDetails::STATE_BUILT]
         );
+
+        // Le damier de chaque joueur est un SVG caché : invalider le
+        // voisinage pour que le bâtiment apparaisse sans attendre un
+        // déplacement.
+        View::refresh_players_svg($goCoords);
 
         $this->addAuditLog("BuildingService::place {$archetype} #{$id} at ({$goCoords->x},{$goCoords->y},{$goCoords->plan})");
 
@@ -113,6 +132,92 @@ class BuildingService extends BaseService
     public function getDetails(int $playerId): ?BuildingDetails
     {
         return $this->entityManager->find(BuildingDetails::class, $playerId);
+    }
+
+    /**
+     * Every building with its position, state, owner and PV, for the admin
+     * dashboard. Current PV = pseudo-race max + the players_bonus 'pv'
+     * ledger (buildings have no upgrades/items, so the race base IS max).
+     *
+     * @return array<int, array{id:int, name:string, archetype:string, build_state:string,
+     *                          faction:string, owner_id:?int, owner_name:?string,
+     *                          x:int, y:int, plan:string, max_pv:int, current_pv:int}>
+     */
+    public function listBuildings(): array
+    {
+        // races is joined in PHP via the cached RaceService: the table was
+        // created under a newer default collation than players and a SQL
+        // join on r.name = p.race trips "illegal mix of collations".
+        $rows = $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT p.id, p.name, p.race, b.archetype, b.build_state, b.faction, b.owner_id,
+                    o.name AS owner_name, c.x, c.y, c.plan,
+                    COALESCE(pb.n, 0) AS pv_bonus
+             FROM buildings b
+             JOIN players p ON p.id = b.player_id
+             JOIN coords c ON c.id = p.coords_id
+             LEFT JOIN players o ON o.id = b.owner_id
+             LEFT JOIN players_bonus pb ON pb.player_id = p.id AND pb.name = 'pv'
+             ORDER BY c.plan, p.id"
+        );
+
+        $raceService = new RaceService();
+
+        return array_map(static function (array $row) use ($raceService): array {
+            $race = $raceService->getRaceByName((string) $row['race']);
+            $maxPv = $race !== null ? $race->getCarac('pv') : 0;
+
+            return [
+                'id' => (int) $row['id'],
+                'name' => (string) $row['name'],
+                'archetype' => (string) $row['archetype'],
+                'build_state' => (string) $row['build_state'],
+                'faction' => (string) $row['faction'],
+                'owner_id' => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,
+                'owner_name' => $row['owner_name'] !== null ? (string) $row['owner_name'] : null,
+                'x' => (int) $row['x'],
+                'y' => (int) $row['y'],
+                'plan' => (string) $row['plan'],
+                'max_pv' => $maxPv,
+                'current_pv' => $maxPv + (int) $row['pv_bonus'],
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Admin full-restore of any STRUCTURE (building or unique object):
+     * clear the PV wound ledger and, for buildings, flip build_state back
+     * to 'built'.
+     *
+     * NOT the future in-game repair: PV restoration is the HEAL mechanic
+     * (putBonus(['pv' => +x]) works on structures like on characters), so
+     * the player-facing action will be a heal-type action gated by
+     * TargetType ['structure'] — no parallel pipeline.
+     */
+    public function restore(int $playerId): bool
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $isStructure = $conn->fetchOne(
+            "SELECT id FROM players WHERE id = ? AND player_type IN ('building', 'unique')",
+            [$playerId]
+        );
+        if ($isStructure === false) {
+            return false;
+        }
+
+        $conn->executeStatement(
+            "DELETE FROM players_bonus WHERE player_id = ? AND name = 'pv'",
+            [$playerId]
+        );
+        // No-op for unique objects: only buildings carry a lifecycle state.
+        $conn->executeStatement(
+            'UPDATE buildings SET build_state = ? WHERE player_id = ?',
+            [BuildingDetails::STATE_BUILT, $playerId]
+        );
+
+        $this->addAuditLog("BuildingService::restore #{$playerId}");
+
+        return true;
     }
 
     /**
@@ -154,12 +259,28 @@ class BuildingService extends BaseService
             return false;
         }
 
+        $goCoords = $conn->fetchAssociative(
+            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
+            [$playerId]
+        );
+
         $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
         foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
             $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
         }
         $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$playerId, $playerId]);
         $conn->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
+
+        if ($goCoords !== false) {
+            View::refresh_players_svg((object) $goCoords);
+        }
+
+        // refresh_players_svg ne balaie que les lignes ENCORE présentes :
+        // purger explicitement les caches du bâtiment supprimé, sinon un id
+        // recyclé ressert le vieux SVG.
+        foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
+            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . $suffix);
+        }
 
         $this->addAuditLog("BuildingService::remove #{$playerId}");
 

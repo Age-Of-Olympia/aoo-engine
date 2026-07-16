@@ -321,13 +321,18 @@ class View{
                     $player = PlayerFactory::legacy((int) $row->id);
                     $player->get_data();
 
+                    // Les structures (bâtiments, objets uniques) font partie du
+                    // décor, comme les murs : toujours visibles, même quand la
+                    // visibilité des joueurs est coupée (plans isolés, tutoriel).
+                    $isStructure = in_array($player->data->player_type ?? 'real', ['building', 'unique'], true);
+
                     // Skip invisible players (except when viewing your own character)
-                    if ($row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
+                    if (!$isStructure && $row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
                         continue;
                     }
 
                     // Les joueurs normaux sont soumis aux règles de visibilité
-                    if ($this->playerId > 0) {
+                    if (!$isStructure && $this->playerId > 0) {
                         // Masquer les autres joueurs si :
                         // 1. Le JSON du plan n'existe pas OU
                         // 2. Le JSON du plan existe et player_visibility est explicitement défini sur false

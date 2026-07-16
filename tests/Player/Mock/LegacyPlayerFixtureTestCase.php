@@ -62,8 +62,10 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             return;
         }
 
-        foreach ($this->createdPlayerIds as $id) {
-            $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$id]);
+        // Reverse creation order: a building placed after its owner
+        // references it via buildings.owner_id and must go first.
+        foreach (array_reverse($this->createdPlayerIds) as $id) {
+            $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ? OR owner_id = ?', [$id, $id]);
             foreach ([
                 'players_bonus',
                 'players_effects',
@@ -82,8 +84,12 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             }
             $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$id]);
 
-            @unlink(__DIR__ . '/../../../datas/private/players/' . $id . '.turn.json');
-            @unlink(__DIR__ . '/../../../datas/private/players/' . $id . '.caracs.json');
+            // Purge every per-entity file cache: .json is the get_data()
+            // cache, .svg the board render — a recycled id would otherwise
+            // resurrect the previous fixture's identity.
+            foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
+                @unlink(__DIR__ . '/../../../datas/private/players/' . $id . $suffix);
+            }
         }
 
         // Restore the map_elements 'sang' rows the exercised putBonus() calls

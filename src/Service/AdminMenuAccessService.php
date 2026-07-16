@@ -68,6 +68,9 @@ class AdminMenuAccessService
         'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
         'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
         'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
+        // Bâtiments : pose/retrait sur la carte — travail d'animation, même
+        // niveau que les PNJ
+        'buildings.php'            => ['Bâtiments', 'Divers', self::LEVEL_ADMIN],
     ];
 
     /**
@@ -91,6 +94,7 @@ class AdminMenuAccessService
         'action-import-preview.php'  => 'action-import.php',
         'landing-save.php'           => 'landing.php',
         'landing-seed.php'           => 'landing.php',
+        'buildings-save.php'         => 'buildings.php',
     ];
 
     /** @var array<string,string>|null cached DB overrides (page => level) */

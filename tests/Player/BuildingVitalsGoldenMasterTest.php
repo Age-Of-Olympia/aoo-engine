@@ -141,6 +141,83 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    public function testListBuildingsReportsPositionStateAndCurrentPv(): void
+    {
+        $owner = $this->createRealPlayer('GmOwner');
+        $id = (new BuildingService())->place(
+            self::ARCHETYPE,
+            (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia'],
+            $owner->id
+        );
+        $this->trackEntityId($id);
+
+        $building = PlayerFactory::legacy($id);
+        $building->get_caracs();
+        $this->snapshotBloodAt((int) $building->data->coords_id);
+        $building->putBonus(['pv' => -40]);
+
+        $rows = array_values(array_filter(
+            (new BuildingService())->listBuildings(),
+            static fn (array $row): bool => $row['id'] === $id
+        ));
+        $this->assertCount(1, $rows, 'the placed building must appear in the admin roster');
+
+        $row = $rows[0];
+        $this->assertSame(self::ARCHETYPE, $row['archetype']);
+        $this->assertSame('built', $row['build_state']);
+        $this->assertSame(['x' => 0, 'y' => 3, 'plan' => 'gaia'], ['x' => $row['x'], 'y' => $row['y'], 'plan' => $row['plan']]);
+        $this->assertSame(100, $row['max_pv']);
+        $this->assertSame(60, $row['current_pv'], 'current PV must reflect the players_bonus ledger');
+        $this->assertSame($owner->id, $row['owner_id']);
+    }
+
+    public function testRestoreResetsPvAndBuiltState(): void
+    {
+        $id = $this->placePalissade();
+        $building = PlayerFactory::legacy($id);
+        $building->get_caracs();
+        $this->snapshotBloodAt((int) $building->data->coords_id);
+        $building->putBonus(['pv' => -100]);
+        $this->link->executeStatement(
+            "UPDATE buildings SET build_state = 'ruin' WHERE player_id = ?",
+            [$id]
+        );
+
+        $this->assertTrue((new BuildingService())->restore($id));
+
+        $this->assertSame(100, PlayerFactory::legacy($id)->getRemaining('pv'), 'restore must reset full PV');
+        $this->assertSame(
+            'built',
+            $this->link->fetchOne('SELECT build_state FROM buildings WHERE player_id = ?', [$id]),
+            'restore must flip the state back to built'
+        );
+
+        $realPlayer = $this->createRealPlayer('GmNotABuilding');
+        $this->assertFalse(
+            (new BuildingService())->restore($realPlayer->id),
+            'restore() must refuse character rows — healing players is the heal mechanic, not an admin reset'
+        );
+    }
+
+    public function testHealingAStructureIsJustPutBonus(): void
+    {
+        // The user-facing "repair" concept IS the heal mechanic: a positive
+        // pv bonus restores a wounded structure through the same ledger as a
+        // character, clamped at the pseudo-race max. Pin it so the future
+        // heal-type repair action needs zero new plumbing.
+        $id = $this->placePalissade();
+        $building = PlayerFactory::legacy($id);
+        $building->get_caracs();
+        $this->snapshotBloodAt((int) $building->data->coords_id);
+
+        $building->putBonus(['pv' => -30]);
+        $building->putBonus(['pv' => 10]);
+        $this->assertSame(80, PlayerFactory::legacy($id)->getRemaining('pv'), 'partial heal');
+
+        $building->putBonus(['pv' => 999]);
+        $this->assertSame(100, PlayerFactory::legacy($id)->getRemaining('pv'), 'overheal clamps at the pseudo-race max');
+    }
+
     public function testRemoveRefusesNonBuildingRows(): void
     {
         $player = $this->createRealPlayer('GmNotABuilding');
