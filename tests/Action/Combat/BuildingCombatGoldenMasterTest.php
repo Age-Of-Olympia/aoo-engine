@@ -141,6 +141,78 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertTrue($result->isSuccess(), "['character'] must accept a real-player target");
     }
 
+    public function testHealActionIsBlockedOnABuildingByTheCatalogTargetType(): void
+    {
+        $actor = $this->createRealPlayer('GmMedic');
+        $buildingId = $this->placePalissadeAt(0, 1);
+        $building = PlayerFactory::legacy($buildingId);
+        $actor->getCoords();
+        $building->getCoords();
+        $actor->get_caracs();
+        $building->get_caracs();
+
+        $action = ActionFactory::getAction('soins/barbier');
+        if ($action === null) {
+            $this->markTestSkipped("actions catalog not seeded (no 'soins/barbier' row).");
+        }
+
+        $results = (new ActionExecutorService($action, $actor, $building))->executeAction();
+
+        $this->assertTrue(
+            $results->isBlocked(),
+            'a heal action must be blocked on a structure by its catalog TargetType condition'
+        );
+        $this->assertFalse(
+            $this->link->fetchOne(
+                'SELECT n FROM players_bonus WHERE player_id = ? AND name = "pv"',
+                [$buildingId]
+            ) !== false,
+            'a blocked heal must not touch the building PV ledger'
+        );
+    }
+
+    public function testReparerHealsAWoundedBuildingAndRefusesCharacters(): void
+    {
+        $actor = $this->createRealPlayer('GmMason');
+        $buildingId = $this->placePalissadeAt(0, 1);
+        $building = PlayerFactory::legacy($buildingId);
+        $actor->getCoords();
+        $building->getCoords();
+        $actor->get_caracs();
+        $building->get_caracs();
+        $this->snapshotBloodAt((int) $building->data->coords_id);
+
+        $action = ActionFactory::getAction('reparer');
+        if ($action === null) {
+            $this->markTestSkipped("actions catalog not seeded (no 'reparer' row).");
+        }
+
+        $building->putBonus(['pv' => -30]);
+
+        $results = (new ActionExecutorService($action, $actor, $building))->executeAction();
+
+        $this->assertFalse($results->isBlocked(), 'reparer must accept an adjacent structure target');
+        $this->assertTrue($results->isSuccess(), 'reparer has no dice: passing conditions means success');
+
+        // healing {actorHealingTrait: f} — repaired PV = 70 + F, clamped at max.
+        $expected = min(100, 70 + (int) $actor->caracs->f);
+        $this->assertSame(
+            $expected,
+            PlayerFactory::legacy($buildingId)->getRemaining('pv'),
+            'reparer must heal the structure through the standard healing instruction'
+        );
+
+        // The same action on a character must be refused by its TargetType.
+        $victim = $this->createRealPlayer('GmPatient');
+        $victim->getCoords();
+        $victim->get_caracs();
+        $onCharacter = (new ActionExecutorService($action, $actor, $victim))->executeAction();
+        $this->assertTrue(
+            $onCharacter->isBlocked(),
+            'reparer must refuse a character target — soigner les personnages est une autre action'
+        );
+    }
+
     public function testDeathPathFlipsTheBuildingToRuinWithoutCharacterDeathMachinery(): void
     {
         $attacker = $this->createRealPlayer('GmSapper');

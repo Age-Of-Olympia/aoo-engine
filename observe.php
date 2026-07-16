@@ -364,6 +364,13 @@ if($res->num_rows){
             $allowed = $observingSelf
                 ? $actionTargeting->canTargetSelf($actionData)
                 : $actionTargeting->canTargetOther($actionData);
+
+            // And only when the action's TargetType accepts the entity branch
+            // of the selection — no Barbier button on a palissade, no Réparer
+            // button on a character (the executor would block them anyway).
+            $targetCategory = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real');
+            $allowed = $allowed && $actionTargeting->canTargetCategory($actionData, $targetCategory);
+
             if ($allowed) {
                 $dataImg .= buildActionToDisplay($target, $actionData, $actionService);
             }
