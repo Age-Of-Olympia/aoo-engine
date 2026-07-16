@@ -37,6 +37,9 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
     /** @var string|null previous ini value for error_log */
     private ?string $previousErrorLog = null;
 
+    /** @var mixed $GLOBALS['link'] as found in setUp, restored in tearDown */
+    private mixed $previousLink = null;
+
     protected function setUp(): void
     {
         // Push our buffer BEFORE parent::setUp(): if the test DB is
@@ -62,6 +65,7 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         // Point db() at the test harness connection BEFORE loading
         // constants.php — its getTutorialRewards() fallback instantiates
         // Classes\Db on first load, which exits if $link is unset.
+        $this->previousLink = $GLOBALS['link'] ?? null;
         $GLOBALS['link'] = $this->conn;
         require_once __DIR__ . '/../../config/constants.php';
 
@@ -85,6 +89,10 @@ class MovementStepDbBranchesTest extends TutorialIntegrationTestCase
         ob_end_clean();
         $_SESSION = [];
         ini_set('error_log', $this->previousErrorLog ?? '');
+        // Restore whatever db() was pointing at — leaving the aoo4_test
+        // connection in $GLOBALS['link'] poisons every later legacy-stack test.
+        $GLOBALS['link'] = $this->previousLink;
+        $this->previousLink = null;
         parent::tearDown();
     }
 

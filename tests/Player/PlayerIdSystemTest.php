@@ -18,6 +18,9 @@ class PlayerIdSystemTest extends TestCase
 {
     private TestDatabase $testDb;
 
+    /** @var mixed $GLOBALS['link'] as found in setUp, restored in tearDown */
+    private mixed $previousLink = null;
+
     protected function setUp(): void
     {
         // Pre-define the tutorial reward constants so the bottom of
@@ -33,6 +36,7 @@ class PlayerIdSystemTest extends TestCase
         require_once __DIR__ . '/../../config/functions.php';
         require_once __DIR__ . '/../../config/constants.php';
 
+        $this->previousLink = $GLOBALS['link'] ?? null;
         $this->testDb = new TestDatabase();
         $GLOBALS['link'] = $this->testDb;
     }
@@ -41,6 +45,10 @@ class PlayerIdSystemTest extends TestCase
     {
         $this->testDb->clearPlayers();
         TestDatabase::reset();
+        // Restore whatever db() was pointing at — leaving the SQLite double
+        // in $GLOBALS['link'] poisons every later legacy-stack test.
+        $GLOBALS['link'] = $this->previousLink;
+        $this->previousLink = null;
     }
 
     #[Group('player-id')]
