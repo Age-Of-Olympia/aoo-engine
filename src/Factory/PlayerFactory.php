@@ -3,7 +3,7 @@
 namespace App\Factory;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\PlayerEntity;
+use App\Entity\Character;
 use App\Tutorial\TutorialHelper;
 use Classes\Player;
 
@@ -12,7 +12,7 @@ use Classes\Player;
  *
  * Returns either:
  *  - the legacy `Classes\Player` (drop-in for `new \Classes\Player($id)`),
- *  - a modern `PlayerEntity` (`RealPlayer` / `TutorialPlayer` / `NonPlayerCharacter`)
+ *  - a modern `Character` entity (`RealPlayer` / `TutorialPlayer` / `NonPlayerCharacter`)
  *    for read-only paths.
  *
  * Coexistence model: legacy and modern objects are PARALLEL representations of
@@ -76,9 +76,9 @@ final class PlayerFactory
      * Modern Doctrine entity for a given id, or null if the row doesn't exist.
      * Use for READ-ONLY paths (rankings, profile pages, admin lists).
      */
-    public static function entity(int $playerId): ?PlayerEntity
+    public static function entity(int $playerId): ?Character
     {
-        return EntityManagerFactory::getEntityManager()->find(PlayerEntity::class, $playerId);
+        return EntityManagerFactory::getEntityManager()->find(Character::class, $playerId);
     }
 
     /**
@@ -125,7 +125,7 @@ final class PlayerFactory
     /**
      * Modern entity for the active player (tutorial-aware).
      */
-    public static function activeEntity(): ?PlayerEntity
+    public static function activeEntity(): ?Character
     {
         return self::entity(self::activeId());
     }

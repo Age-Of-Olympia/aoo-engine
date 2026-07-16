@@ -3,7 +3,7 @@
 namespace App\View;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\PlayerEntity;
+use App\Entity\Character;
 use App\Entity\RealPlayer;
 use App\Service\FactionService;
 use App\Service\PlayerEffectService;
@@ -28,7 +28,7 @@ final class InfosSheetView
      *                       au lieu de la table marbre pleine largeur.
      *                       La page complète (infos.php) est inchangée.
      */
-    public static function render(Player $player, PlayerEntity $targetEntity, bool $hudPanel = false): void
+    public static function render(Player $player, Character $targetEntity, bool $hudPanel = false): void
     {
         $playerEffectService = new PlayerEffectService();
 

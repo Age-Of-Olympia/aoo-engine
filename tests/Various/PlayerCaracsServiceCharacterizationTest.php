@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\PlayerEntity;
+
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
 use Classes\Player;
@@ -101,7 +101,7 @@ class PlayerCaracsServiceCharacterizationTest extends TestCase
     #[Group('phase-3-4b')]
     public function testEntityDelegatesToServiceWithOwnIdAndRace(): void
     {
-        // Bridge pin: PlayerEntity::getNudeCaracs delegates 1:1 to the
+        // Bridge pin: GameEntity::getNudeCaracs delegates 1:1 to the
         // service. Uses a synthetic non-hydrated entity so the test
         // doesn't need the aoo4 DB to carry every entity-column (the
         // hydration test in Phase 3.1 is where schema drift gets
@@ -125,7 +125,7 @@ class PlayerCaracsServiceCharacterizationTest extends TestCase
 
     /**
      * Sets a protected property via reflection — used to seed a
-     * PlayerEntity without running the full Doctrine hydration path.
+     * entity without running the full Doctrine hydration path.
      */
     private function setProtectedProperty(object $instance, string $name, mixed $value): void
     {

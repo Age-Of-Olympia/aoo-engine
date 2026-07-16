@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\PlayerEntity;
+use App\Entity\Character;
 use App\Entity\RealPlayer;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Phase 3.1 smoke test — ensures Doctrine can actually hydrate a
- * PlayerEntity against the live `players` schema.
+ * GameEntity (ex-PlayerEntity) against the live `players` schema.
  *
  * Rationale: the Phase 3 schema audit found two blocking mismatches
  * that would have silently failed on first use:
@@ -61,9 +61,9 @@ class PlayerEntityHydrationTest extends TestCase
     #[Group('phase-3-1')]
     public function testEntityHydratesAsRealPlayer(): void
     {
-        $entity = $this->em->find(PlayerEntity::class, $this->playerId);
+        $entity = $this->em->find(Character::class, $this->playerId);
 
-        $this->assertInstanceOf(PlayerEntity::class, $entity);
+        $this->assertInstanceOf(Character::class, $entity);
         $this->assertInstanceOf(RealPlayer::class, $entity);
         $this->assertSame($this->playerId, $entity->getId());
     }
@@ -78,7 +78,7 @@ class PlayerEntityHydrationTest extends TestCase
         // testEntityHydratesAsRealPlayer) or the getter returns a
         // default/zero that masks the mismatch. We don't assert
         // values — just that nothing throws.
-        $entity = $this->em->find(PlayerEntity::class, $this->playerId);
+        $entity = $this->em->find(Character::class, $this->playerId);
         $this->assertNotNull($entity);
 
         // Exercise every getter — if any ORM\Column declaration points

@@ -3,7 +3,7 @@
 namespace Tests\Tutorial;
 
 use App\Entity\NonPlayerCharacter;
-use App\Entity\PlayerEntity;
+use App\Entity\GameEntity;
 use App\Entity\RealPlayer;
 use App\Entity\TutorialPlayer;
 use App\Factory\PlayerFactory;
@@ -32,7 +32,7 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
     public function testEntityByNameRepositoryTargetsRealPlayerSubclass(): void
     {
         // entityByName() must query the RealPlayer repository (STI
-        // subclass), not the abstract PlayerEntity base — otherwise it
+        // subclass), not the abstract GameEntity base — otherwise it
         // would match tutorial / npc rows with the same name. Locked
         // via source inspection because exercising the path requires
         // committing fixtures to the live DB, which the test suite
@@ -44,7 +44,7 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         $this->assertStringContainsString(
             'RealPlayer::class',
             $entityByName,
-            'entityByName() must scope to RealPlayer, not PlayerEntity (STI leak risk)'
+            'entityByName() must scope to RealPlayer, not GameEntity (STI leak risk)'
         );
     }
 
@@ -55,10 +55,10 @@ class TutorialIsolationInvariantsTest extends TutorialIntegrationTestCase
         // expected subclasses. If a future edit drops or renames an
         // entry, Doctrine will silently hydrate the abstract base and
         // blow up elsewhere — catch it here.
-        $attrs = (new ReflectionClass(PlayerEntity::class))
+        $attrs = (new ReflectionClass(GameEntity::class))
             ->getAttributes(\Doctrine\ORM\Mapping\DiscriminatorMap::class);
 
-        $this->assertCount(1, $attrs, 'PlayerEntity must declare a DiscriminatorMap');
+        $this->assertCount(1, $attrs, 'GameEntity must declare a DiscriminatorMap');
 
         $map = $attrs[0]->newInstance()->value;
         $this->assertSame(RealPlayer::class,         $map['real']     ?? null);

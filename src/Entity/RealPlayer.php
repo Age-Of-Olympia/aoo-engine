@@ -14,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  * - Are visible to other players
  */
 #[ORM\Entity]
-class RealPlayer extends PlayerEntity
+class RealPlayer extends Character
 {
     /**
      * Real players are the actual game participants
@@ -62,7 +62,7 @@ class RealPlayer extends PlayerEntity
      *
      * Only meaningful for real players: tutorial characters are
      * ephemeral and NPCs never "log in" in the user sense. Keeping
-     * this on RealPlayer (not PlayerEntity) prevents accidental
+     * this on RealPlayer (not the shared base) prevents accidental
      * misuse on the other subclasses.
      */
     public function isInactive(\App\Service\PlayerService $playerService): bool

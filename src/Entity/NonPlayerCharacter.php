@@ -20,7 +20,7 @@ use Doctrine\ORM\Mapping as ORM;
  * in the -100,000+ range and are tracked separately.
  */
 #[ORM\Entity]
-class NonPlayerCharacter extends PlayerEntity
+class NonPlayerCharacter extends Character
 {
     /**
      * NPCs are not players

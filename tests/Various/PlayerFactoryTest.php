@@ -146,7 +146,7 @@ class PlayerFactoryTest extends TestCase
 
         // An id high enough to never collide with seeded rows. The
         // STI-narrow lookup must produce null, just like find() on the
-        // parent PlayerEntity would, not throw.
+        // parent Character would, not throw.
         $this->assertNull(PlayerFactory::realPlayerById(999999999));
     }
 

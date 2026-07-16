@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
  * to the real player on completion. Discriminator: `player_type = 'tutorial'`.
  */
 #[ORM\Entity]
-class TutorialPlayer extends PlayerEntity
+class TutorialPlayer extends Character
 {
     #[ORM\Column(type: "string", length: 36, name: "tutorial_session_id", nullable: true)]
     protected ?string $tutorialSessionId = null;

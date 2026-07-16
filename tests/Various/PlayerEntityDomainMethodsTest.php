@@ -2,7 +2,7 @@
 
 namespace Tests\Various;
 
-use App\Entity\PlayerEntity;
+use App\Entity\GameEntity;
 use App\Entity\RealPlayer;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerService;
@@ -15,11 +15,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Phase 3.2 — tests the three domain methods added to the
- * PlayerEntity / RealPlayer hierarchy so Phase 3.3's read-path SAR
+ * GameEntity / RealPlayer hierarchy so Phase 3.3's read-path SAR
  * can be mechanical:
  *
- *   PlayerEntity::hasOption(PlayerOptionsService, string)
- *   PlayerEntity::getCoordsPlan(Connection)
+ *   GameEntity::hasOption(PlayerOptionsService, string)
+ *   GameEntity::getCoordsPlan(Connection)
  *   RealPlayer::isInactive(PlayerService)
  *
  * Same DB-gated pattern as PlayerEntityHydrationTest: builds a
@@ -59,8 +59,8 @@ class PlayerEntityDomainMethodsTest extends TestCase
     #[Group('phase-3-2')]
     public function testHasOptionReturnsFalseWhenOptionAbsent(): void
     {
-        $entity = $this->em->find(PlayerEntity::class, $this->playerId);
-        $this->assertInstanceOf(PlayerEntity::class, $entity);
+        $entity = $this->em->find(GameEntity::class, $this->playerId);
+        $this->assertInstanceOf(GameEntity::class, $entity);
 
         $options = new PlayerOptionsService();
 
@@ -83,8 +83,8 @@ class PlayerEntityDomainMethodsTest extends TestCase
         ]);
 
         try {
-            $entity = $this->em->find(PlayerEntity::class, $this->playerId);
-            $this->assertInstanceOf(PlayerEntity::class, $entity);
+            $entity = $this->em->find(GameEntity::class, $this->playerId);
+            $this->assertInstanceOf(GameEntity::class, $entity);
 
             $options = new PlayerOptionsService();
 
@@ -101,8 +101,8 @@ class PlayerEntityDomainMethodsTest extends TestCase
     #[Group('phase-3-2')]
     public function testGetCoordsPlanReturnsPlanForValidCoordsId(): void
     {
-        $entity = $this->em->find(PlayerEntity::class, $this->playerId);
-        $this->assertInstanceOf(PlayerEntity::class, $entity);
+        $entity = $this->em->find(GameEntity::class, $this->playerId);
+        $this->assertInstanceOf(GameEntity::class, $entity);
 
         // Expected value: read plan directly from coords, compare
         // against the method's output. Any drift (typo'd table name,
@@ -132,8 +132,8 @@ class PlayerEntityDomainMethodsTest extends TestCase
     #[Group('phase-3-4')]
     public function testGetCoordsReturnsValueObjectMatchingDbRow(): void
     {
-        $entity = $this->em->find(PlayerEntity::class, $this->playerId);
-        $this->assertInstanceOf(PlayerEntity::class, $entity);
+        $entity = $this->em->find(GameEntity::class, $this->playerId);
+        $this->assertInstanceOf(GameEntity::class, $entity);
 
         $expected = $this->conn->fetchAssociative(
             'SELECT x, y, z, plan FROM coords WHERE id = ?',
@@ -178,8 +178,8 @@ class PlayerEntityDomainMethodsTest extends TestCase
         ]);
 
         try {
-            $entity = $this->em->find(PlayerEntity::class, $this->playerId);
-            $this->assertInstanceOf(PlayerEntity::class, $entity);
+            $entity = $this->em->find(GameEntity::class, $this->playerId);
+            $this->assertInstanceOf(GameEntity::class, $entity);
 
             $options = new PlayerOptionsService();
             $result = $entity->getOptions($options);
