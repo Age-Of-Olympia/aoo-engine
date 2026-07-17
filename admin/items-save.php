@@ -60,16 +60,15 @@ if ($action === 'create') {
     $name = $res->fetch_object()->name;
 }
 
-// Déclencheurs d'usure : whitelist stricte.
-$allowedTriggers = ['attack', 'defense', 'move', 'usage'];
+// Déclencheurs d'usure : whitelist stricte (source unique).
 $triggers = array_values(array_intersect(
-    $allowedTriggers,
+    \Classes\Item::WEAR_TRIGGERS,
     array_map('strval', (array) ($_POST['wear_triggers'] ?? []))
 ));
 
 // Colonnes JSON : validées ou refusées — jamais de JSON cassé en base.
 $jsonColumns = [];
-foreach (['add_effects', 'forbid', 'extra'] as $col) {
+foreach (\Classes\Item::JSON_COLUMNS as $col) {
     $raw = trim((string) ($_POST[$col] ?? ''));
     if ($raw === '') {
         $jsonColumns[$col] = null;
@@ -85,23 +84,23 @@ foreach (['add_effects', 'forbid', 'extra'] as $col) {
 // Munitions : liste de noms d'objets, stockée en JSON.
 $munitions = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['munitions'] ?? '')))));
 
-$caracKeys = \App\Enum\Caracs::KEYS;
-$specialKeys = ['esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage', 'demolition', 'craftedByN', 'lootChance'];
+$set = [];
+$params = [];
 
-$set = [
-    'cursed = ?', 'enchanted = ?', 'vorpal = ?', 'is_bankable = ?', 'is_deprecated = ?',
+// Flags booléens — mêmes clés que les cases du formulaire (Item::FLAG_KEYS).
+foreach (\Classes\Item::FLAG_KEYS as $flag) {
+    $set[] = "`{$flag}` = ?";
+    $params[] = (int) !empty($_POST[$flag]);
+}
+
+$set = array_merge($set, [
     'element = ?', 'spell = ?', 'exotique = ?',
     'wear_triggers = ?', 'wear_rate = ?',
     'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
     'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
     'stats_in_db = 1',
-];
-$params = [
-    (int) !empty($_POST['cursed']),
-    (int) !empty($_POST['enchanted']),
-    (int) !empty($_POST['vorpal']),
-    (int) !empty($_POST['is_bankable']),
-    (int) !empty($_POST['is_deprecated']),
+]);
+$params = array_merge($params, [
     trim((string) ($_POST['element'] ?? '')),
     trim((string) ($_POST['spell'] ?? '')),
     trim((string) ($_POST['exotique'] ?? '')),
@@ -117,9 +116,9 @@ $params = [
     $jsonColumns['add_effects'],
     $jsonColumns['forbid'],
     $jsonColumns['extra'],
-];
+]);
 
-foreach (array_merge($caracKeys, $specialKeys) as $key) {
+foreach (array_merge(\App\Enum\Caracs::KEYS, \Classes\Item::SPECIAL_KEYS) as $key) {
     $set[] = "`{$key}` = ?";
     $params[] = (int) ($_POST[$key] ?? 0);
 }

@@ -2,66 +2,28 @@
 
 namespace App\Service\ImportExport;
 
-use App\Entity\EntityManagerFactory;
 use App\Service\ItemStatsSeeder;
 use Doctrine\DBAL\Connection;
 
 /**
  * Importe des bundles d'objets ({@see ItemExporter}) en
- * create-or-update par clé naturelle (`name`), tout-ou-rien.
+ * create-or-update par clé naturelle (`name`), tout-ou-rien
+ * (squelette {@see AbstractDbalImporter}).
  */
-final class ItemImporter implements ObjectImporter
+final class ItemImporter extends AbstractDbalImporter
 {
-    private ?Connection $connection;
-
-    public function __construct(?Connection $connection = null)
-    {
-        $this->connection = $connection;
-    }
-
     public function objectType(): string
     {
         return 'item';
-    }
-
-    public function preview(array $objects): ImportReport
-    {
-        $report = new ImportReport();
-        $this->collect($objects, $report);
-
-        return $report;
-    }
-
-    public function import(array $objects): ImportReport
-    {
-        $report = new ImportReport();
-        $payloads = $this->collect($objects, $report);
-
-        if ($report->hasRejections()) {
-            return $report;
-        }
-
-        $conn = $this->connection ??= EntityManagerFactory::getEntityManager()->getConnection();
-
-        // Un échec d'écriture REMONTE (rollback fait) — convention de la
-        // famille : le rapport ne doit jamais lister des créés/à-jour ET
-        // un rejet en même temps.
-        $conn->transactional(function (Connection $conn) use ($payloads): void {
-            foreach ($payloads as $payload) {
-                $this->apply($conn, $payload);
-            }
-        });
-
-        return $report;
     }
 
     /**
      * @param array<int, mixed> $objects
      * @return array<int, array<string, mixed>>
      */
-    private function collect(array $objects, ImportReport $report): array
+    protected function collect(array $objects, ImportReport $report): array
     {
-        $conn = $this->connection ??= EntityManagerFactory::getEntityManager()->getConnection();
+        $conn = $this->connection();
         $payloads = [];
         $seen = [];
 
@@ -93,7 +55,7 @@ final class ItemImporter implements ObjectImporter
     /**
      * @param array<string, mixed> $payload
      */
-    private function apply(Connection $conn, array $payload): void
+    protected function apply(Connection $conn, array $payload): void
     {
         $name = (string) $payload['name'];
 

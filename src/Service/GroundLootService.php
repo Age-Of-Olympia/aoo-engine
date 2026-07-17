@@ -16,6 +16,48 @@ use Classes\Player;
 class GroundLootService
 {
     /**
+     * Contenu au sol d'une case, côté LECTURE (panneau d'observation) :
+     * piles map_items et instances — le pendant read-only de collect(),
+     * même périmètre.
+     *
+     * @return array{stacks: array<int, object>, instances: array<int, object>}
+     */
+    public function listAt(int $x, int $y, int $z, string $plan): array
+    {
+        $db = new Db();
+
+        $stacks = [];
+        $res = $db->exe(
+            'SELECT mi.n, i.id AS item_id, i.name
+             FROM map_items AS mi
+             INNER JOIN coords AS c ON mi.coords_id = c.id
+             INNER JOIN items AS i ON i.id = mi.item_id
+             WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?
+             ORDER BY i.name',
+            [$x, $y, $z, $plan]
+        );
+        while ($row = $res->fetch_object()) {
+            $stacks[] = $row;
+        }
+
+        $instances = [];
+        $res = $db->exe(
+            'SELECT i.id, i.custom_name, i.durability, i.durability_max, it.name
+             FROM map_items_instances AS g
+             INNER JOIN coords AS c ON g.coords_id = c.id
+             INNER JOIN item_instances AS i ON i.id = g.instance_id
+             INNER JOIN items AS it ON it.id = i.item_id
+             WHERE c.x = ? AND c.y = ? AND c.z = ? AND c.plan = ?',
+            [$x, $y, $z, $plan]
+        );
+        while ($row = $res->fetch_object()) {
+            $instances[] = $row;
+        }
+
+        return ['stacks' => $stacks, 'instances' => $instances];
+    }
+
+    /**
      * Collect everything on the tile into the player's inventory,
      * write the loot log, refresh the inventory cache.
      *

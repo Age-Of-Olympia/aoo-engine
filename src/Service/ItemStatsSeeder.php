@@ -24,8 +24,7 @@ class ItemStatsSeeder
     /** Colonnes scalaires seedées 1:1 depuis la clé JSON homonyme. */
     public const SCALAR_KEYS = [
         'text', 'price', 'emplacement', 'type', 'subtype', 'race',
-        'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
-        'demolition', 'craftedByN', 'lootChance',
+        ...\Classes\Item::SPECIAL_KEYS,
         ...\App\Enum\Caracs::KEYS,
     ];
 

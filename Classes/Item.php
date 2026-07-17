@@ -16,6 +16,19 @@ class Item{
     public const TYPE_CONSTRUCTIBLE = 'constructible';
     public const TYPE_STRUCTURE = 'structure';
 
+    /**
+     * Groupes de colonnes du catalogue items — sources uniques (revue
+     * ménage n°2) : l'admin (formulaire + save), le seeder et les
+     * bundles dérivent d'ICI, jamais de listes littérales.
+     */
+    public const SPECIAL_KEYS = [
+        'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
+        'demolition', 'craftedByN', 'lootChance',
+    ];
+    public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated'];
+    public const WEAR_TRIGGERS = ['attack', 'defense', 'move', 'usage'];
+    public const JSON_COLUMNS = ['add_effects', 'forbid', 'extra'];
+
     public $id;
     public $row;
     public $data;

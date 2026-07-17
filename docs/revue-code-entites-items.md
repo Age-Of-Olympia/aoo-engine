@@ -111,15 +111,15 @@ Par ordre de valeur estimée :
    structure. La fenêtre est désormais millimétrique (BuildSite valide
    juste avant, place() verrouille), mais le vrai fix est un mécanisme
    de non-paiement/remboursement au niveau exécuteur.
-2. **Base commune d'importeurs DBAL** — ItemImporter/RecipeImporter
-   (et DialogImporter) partagent le squelette
-   collect/dedup/transactional ; une `AbstractDbalImporter` alignerait
-   la famille (l'`AbstractObjectImporter` existant est lié à l'EM).
-3. **`observe.php` : listing de bourse → service + vue** — ~90 lignes
-   de SQL+HTML dans le contrôleur ; extraire `GroundLootService::
-   listAt()` + petite vue, ce qui absorbe aussi le repli d'icône mini
-   dupliqué et l'inline-JS du bouton Ramasser (à déplacer dans
-   `js/observe.js`).
+2. ~~Base commune d'importeurs DBAL~~ — FAIT (ménage n°2) :
+   `AbstractDbalImporter`, ItemImporter/RecipeImporter dessus
+   (DialogImporter, EM/mysqli, reste à aligner un jour).
+3. ~~observe.php : listing de bourse → service + vue~~ — FAIT
+   (ménage n°2) : le contrôleur est réduit au routage (352 lignes au
+   lieu de 937) — EntityCardView / WallCardView / TileDialogView /
+   GroundLootView (+ `GroundLootService::listAt`, repli d'icône
+   unifié, bouton Ramasser délégué dans js/observe.js), sortie
+   prouvée identique par diff HTTP sur 8 cas.
 4. **Équiper UNE instance précise** — les lignes d'inventaire
    d'instance portent maintenant `data-instance-id`/id DOM `i{id}`,
    mais le flux use/equip vise toujours le catalogue

@@ -19,11 +19,21 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 use App\Service\CsrfProtectionService;
 use Classes\Item;
 
-const ITEM_WEAR_TRIGGERS = [
+/** Libellés UI des déclencheurs — les CLÉS viennent de Item::WEAR_TRIGGERS. */
+const ITEM_WEAR_TRIGGER_LABELS = [
     'attack'  => 'Attaque (porter un coup)',
     'defense' => 'Défense (encaisser un coup)',
     'move'    => 'Déplacement',
     'usage'   => 'Utilisation',
+];
+
+/** Libellés UI des flags — les CLÉS viennent de Item::FLAG_KEYS. */
+const ITEM_FLAG_LABELS = [
+    'cursed' => 'Maudit (ne se lâche ni se déséquipe)',
+    'enchanted' => 'Enchanté (ne casse pas)',
+    'vorpal' => 'Vorpal',
+    'is_bankable' => 'Stockable en banque',
+    'is_deprecated' => 'Déprécié',
 ];
 
 /** @return array<int, object> catalog rows ordered by name */
@@ -124,21 +134,15 @@ function items_render_edit(object $row, string $csrfToken): string
     $triggers = array_filter(array_map('trim', explode(',', (string) $row->wear_triggers)));
 
     $triggerBoxes = '';
-    foreach (ITEM_WEAR_TRIGGERS as $key => $label) {
+    foreach (Item::WEAR_TRIGGERS as $key) {
         $triggerBoxes .= '<label class="mr-3"><input type="checkbox" name="wear_triggers[]" value="' . $key . '" '
-            . checked(in_array($key, $triggers, true)) . '> ' . $label . '</label> ';
+            . checked(in_array($key, $triggers, true)) . '> ' . ITEM_WEAR_TRIGGER_LABELS[$key] . '</label> ';
     }
 
     $flagBoxes = '';
-    foreach ([
-        'cursed' => 'Maudit (ne se lâche ni se déséquipe)',
-        'enchanted' => 'Enchanté (ne casse pas)',
-        'vorpal' => 'Vorpal',
-        'is_bankable' => 'Stockable en banque',
-        'is_deprecated' => 'Déprécié',
-    ] as $col => $label) {
+    foreach (Item::FLAG_KEYS as $col) {
         $flagBoxes .= '<label class="d-block"><input type="checkbox" name="' . $col . '" '
-            . checked(!empty($row->$col)) . '> ' . $label . '</label>';
+            . checked(!empty($row->$col)) . '> ' . ITEM_FLAG_LABELS[$col] . '</label>';
     }
 
     // Stats — pleinement éditables depuis la migration JSON→DB.
@@ -160,13 +164,14 @@ function items_render_edit(object $row, string $csrfToken): string
             . '<input type="number" class="form-control form-control-sm" name="' . $k . '" value="' . (int) ($row->$k ?? 0) . '"></div>';
     }
 
-    $specialInputs = '';
-    foreach ([
+    $specialLabels = [
         'esquive' => 'Esquive', 'pr' => 'PR', 'pf' => 'PF', 'malus' => 'Malus',
         'spellMalus' => 'Malus de sort', 'fixedF' => 'F fixée', 'mDamage' => 'Dégâts magiques',
         'demolition' => 'Démolition', 'craftedByN' => 'Craft (n)', 'lootChance' => 'Chance de loot (%)',
-    ] as $col => $label) {
-        $specialInputs .= '<div class="col-4 form-group"><label>' . $label . '</label>'
+    ];
+    $specialInputs = '';
+    foreach (Item::SPECIAL_KEYS as $col) {
+        $specialInputs .= '<div class="col-4 form-group"><label>' . $specialLabels[$col] . '</label>'
             . '<input type="number" class="form-control form-control-sm" name="' . $col . '" value="' . (int) ($row->$col ?? 0) . '"></div>';
     }
 
@@ -275,13 +280,15 @@ $csrfToken = (new CsrfProtectionService())->generateToken();
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'new') {
-    $blank = (object) array_fill_keys(
-        ['name','element','spell','exotique','wear_triggers','text','emplacement','type','subtype','race',
-         'munitions','add_effects','forbid','extra'], ''
-    );
+    $blank = (object) array_fill_keys(array_merge(
+        ['name', 'element', 'spell', 'exotique', 'wear_triggers', 'munitions'],
+        \App\Service\ItemStatsSeeder::STRING_KEYS,
+        Item::JSON_COLUMNS
+    ), '');
     foreach (array_merge(
-        ['id','cursed','enchanted','vorpal','is_deprecated','wear_rate','price','stats_in_db',
-         'esquive','pr','pf','malus','spellMalus','fixedF','mDamage','demolition','craftedByN','lootChance'],
+        ['id', 'wear_rate', 'price', 'stats_in_db'],
+        Item::FLAG_KEYS,
+        Item::SPECIAL_KEYS,
         \App\Enum\Caracs::KEYS
     ) as $k) {
         $blank->$k = 0;
