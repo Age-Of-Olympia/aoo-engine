@@ -98,17 +98,26 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
     ☐ Un gladius neuf apparaît en (3,3), ramassable, attaquable
     (25 PV — le détruire le laisse en entité à 0 PV, boucle de
     destruction d'objets à affiner en équilibrage).
+21. **Bourses au sol (objets NON instanciés)** — deux piles map_items
+    classiques sont posées près de vous : **1 bois en (-1,0)** et
+    **8 pierres en (-1,-1)**.
+    ☐ Les deux s'affichent en **bourse** (sprite loot), objet seul
+    comme pile — la représentation héritée est intacte à côté des
+    objets uniques ;
+    ☐ marcher sur la case ramasse le contenu (comportement hérité de
+    go.php), quantités correctes en inventaire (le bois s'ajoute à
+    votre pile existante).
 
 ## F. Garde-fous (non-régression)
 
-21. ☐ Se déplacer, attaquer un PNJ, se soigner, fouiller : comme avant.
-22. ☐ Le tutoriel démarre et se déroule normalement (isolation intacte).
-23. ☐ Munitions : équiper un carquois l'équipe EN BLOC (pas une
+22. ☐ Se déplacer, attaquer un PNJ, se soigner, fouiller : comme avant.
+23. ☐ Le tutoriel démarre et se déroule normalement (isolation intacte).
+24. ☐ Munitions : équiper un carquois l'équipe EN BLOC (pas une
     instance par flèche) ; tirer consomme normalement.
-24. ☐ Banque / marché / échanges : fonctionnent sur les piles ; les
+25. ☐ Banque / marché / échanges : fonctionnent sur les piles ; les
     lignes d'instances ne s'y risquent pas encore (assumé, phase
     suivante).
-25. ☐ `make test` : 846 verts ; `make phpstan` : OK.
+26. ☐ `make test` : 846 verts ; `make phpstan` : OK.
 
 ---
 
