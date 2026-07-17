@@ -678,7 +678,22 @@ AND c.plan = ?
 ORDER BY i.name
 ';
 $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
-if($res->num_rows){
+
+// Instances au sol : même bourse, avec nom propre et état.
+$sqlInstances = '
+SELECT i.id, i.custom_name, i.durability, i.durability_max, it.name
+FROM map_items_instances AS g
+INNER JOIN coords AS c ON g.coords_id = c.id
+INNER JOIN item_instances AS i ON i.id = g.instance_id
+INNER JOIN items AS it ON it.id = i.item_id
+WHERE c.x = ?
+AND c.y = ?
+AND c.z = ?
+AND c.plan = ?
+';
+$resInstances = $db->exe($sqlInstances, array($x, $y, $coords->z, $coords->plan));
+
+if($res->num_rows || $resInstances->num_rows){
 
     echo '<div class="case-infos">';
     echo '<img src="img/tiles/loot.png" title="Bourse" />';
@@ -697,6 +712,26 @@ if($res->num_rows){
 
         echo '<img src="'. $mini .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
             . $groundItem->data->name .' x'. (int) $row->n .'<br />';
+    }
+
+    while($row = $resInstances->fetch_object()){
+
+        $label = $row->custom_name !== ''
+            ? '« '. htmlspecialchars($row->custom_name, ENT_QUOTES, 'UTF-8') .' » ('. ucfirst($row->name) .')'
+            : ucfirst($row->name);
+
+        $state = ((int) $row->durability <= 0)
+            ? ' — <font color="red"><b>brisé</b></font>'
+            : ' — durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
+
+        $mini = 'img/items/'. $row->name .'_mini.webp';
+        if(!is_file($mini)){
+
+            $mini = 'img/items/'. $row->name .'.webp';
+        }
+
+        echo '<img src="'. $mini .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
+            . $label . $state .'<br />';
     }
 
     echo '<sup>Marchez sur la case pour ramasser.</sup></div></div>';

@@ -261,6 +261,77 @@ class ItemInstanceService extends BaseService
     }
 
     /**
+     * Drop an owned, unequipped instance on the ground: it becomes part
+     * of the tile's BOURSE (rendered like any loot, collected by walking
+     * on it — retour de revue 2026-07-17). Identity travels with it.
+     *
+     * @throws \InvalidArgumentException when the instance is not owned,
+     *         destroyed, or still equipped
+     */
+    public function dropAt(int $instanceId, int $coordsId): void
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $conn->transactional(function ($conn) use ($instanceId, $coordsId): void {
+            $row = $conn->fetchAssociative(
+                'SELECT l.equiped, i.destroyed
+                 FROM players_items_instances l
+                 JOIN item_instances i ON i.id = l.instance_id
+                 WHERE l.instance_id = ? FOR UPDATE',
+                [$instanceId]
+            );
+            if ($row === false || (int) $row['destroyed'] === 1) {
+                throw new \InvalidArgumentException("Instance #{$instanceId} non possédée ou détruite.");
+            }
+            if ((string) $row['equiped'] !== '') {
+                throw new \InvalidArgumentException("Instance #{$instanceId} encore équipée — déséquiper d'abord.");
+            }
+
+            $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
+            $conn->executeStatement(
+                'INSERT INTO map_items_instances (instance_id, coords_id) VALUES (?, ?)',
+                [$instanceId, $coordsId]
+            );
+        });
+    }
+
+    /**
+     * Walk-on pickup: every ground instance of the tile joins the
+     * walker's inventory. Returns display labels for the loot recap.
+     *
+     * @return string[]
+     */
+    public function collectAt(int $coordsId, int $playerId): array
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $rows = $conn->fetchAllAssociative(
+            'SELECT g.instance_id, i.custom_name, it.name AS catalog_name
+             FROM map_items_instances g
+             JOIN item_instances i ON i.id = g.instance_id
+             JOIN items it ON it.id = i.item_id
+             WHERE g.coords_id = ?',
+            [$coordsId]
+        );
+
+        $labels = [];
+        foreach ($rows as $row) {
+            $conn->transactional(function ($conn) use ($row, $playerId): void {
+                $conn->executeStatement('DELETE FROM map_items_instances WHERE instance_id = ?', [(int) $row['instance_id']]);
+                $conn->executeStatement(
+                    'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
+                    [$playerId, (int) $row['instance_id']]
+                );
+            });
+            $labels[] = $row['custom_name'] !== ''
+                ? '« ' . $row['custom_name'] . ' »'
+                : ucfirst((string) $row['catalog_name']);
+        }
+
+        return $labels;
+    }
+
+    /**
      * All of a player's instances with their catalog name, worn first.
      *
      * @return array<int, array<string, mixed>>

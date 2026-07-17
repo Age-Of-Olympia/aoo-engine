@@ -2,25 +2,22 @@
 
 namespace Tests\Player;
 
-use App\Action\ActionFactory;
-use App\Factory\PlayerFactory;
-use App\Service\ActionExecutorService;
+use App\Service\ItemInstanceService;
 use App\Service\UniqueObjectService;
 use Classes\Item;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * Items Phase 3 golden masters (docs/design-items-instances.md §3.3) —
- * the map bridge round trip:
+ * Items Phase 3 golden masters — the ground bridge, revised after
+ * review (2026-07-17): an instance ON THE GROUND is part of the tile's
+ * BOURSE like any loot — dropped via dropAt(), collected by WALKING on
+ * the tile (collectAt(), wired in go.php). No dedicated action.
+ * Identity — wear, name, provenance — survives the round trip.
  *
- *   worn instance → placeInstance() → a 'unique' players row (race
- *   objet, observable, attackable) wrapping it → the real 'ramasser'
- *   action through the untouched executor → the instance is back in
- *   the taker's inventory WITH ITS WEAR — identity survives.
- *
- * Also pins: placing refuses a still-equipped instance, and ramasser
- * on a structure that wraps nothing (a palissade) fails cleanly.
+ * The ENTITY wrapper (UniqueObjectService, unique_objects.
+ * item_instance_id) remains available for future animator-placed
+ * attackable artifacts/chests; its invariants stay pinned here.
  */
 #[Group('items-golden-master')]
 #[Group('entities-structure')]
@@ -31,10 +28,28 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
         parent::setUp();
 
         try {
-            $this->link->executeQuery('SELECT item_instance_id FROM unique_objects LIMIT 1');
+            $this->link->executeQuery('SELECT instance_id FROM map_items_instances LIMIT 1');
         } catch (\Throwable $e) {
-            $this->markTestSkipped('unique_objects bridge unavailable (run migrations): ' . $e->getMessage());
+            $this->markTestSkipped('map_items_instances unavailable (run migrations): ' . $e->getMessage());
         }
+    }
+
+    protected function tearDown(): void
+    {
+        // Ground instances left by a failed test: unlink then orphan rows.
+        if ($this->link !== null) {
+            $ids = $this->link->fetchFirstColumn(
+                'SELECT g.instance_id FROM map_items_instances g
+                 JOIN item_instances i ON i.id = g.instance_id
+                 WHERE i.creator_id IS NULL OR i.creator_id IN (SELECT id FROM players WHERE name LIKE "Gm%")'
+            );
+            if ($ids !== []) {
+                $in = implode(',', array_map('intval', $ids));
+                $this->link->executeStatement("DELETE FROM map_items_instances WHERE instance_id IN ({$in})");
+                $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
+            }
+        }
+        parent::tearDown();
     }
 
     /** @return array{0:\Classes\Player,1:Item,2:int} player, gladius, worn unequipped instance id */
@@ -62,7 +77,7 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
         return [$player, $item, $instanceId];
     }
 
-    public function testPlaceRefusesAnEquippedInstance(): void
+    public function testDropAtRefusesAnEquippedInstance(): void
     {
         $item = Item::get_item_by_name('gladius');
         if ($item === false || $item === null) {
@@ -76,65 +91,38 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $instanceId = (int) $this->link->fetchOne(
             'SELECT instance_id FROM players_items_instances WHERE player_id = ?', [$player->id]
         );
+        $coordsId = (int) $this->link->fetchOne("SELECT id FROM coords WHERE x = 0 AND y = 0 AND z = 0 AND plan = 'gaia'");
 
         $this->expectException(\InvalidArgumentException::class);
-        (new UniqueObjectService())->placeInstance($instanceId, (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']);
+        (new ItemInstanceService())->dropAt($instanceId, $coordsId);
     }
 
-    public function testWornInstanceRoundTripsThroughTheMapWithItsIdentity(): void
+    public function testWornInstanceRoundTripsThroughTheGroundWithItsIdentity(): void
     {
         [$player, , $instanceId] = $this->playerWithWornGladius();
+        $coordsId = (int) $this->link->fetchOne("SELECT id FROM coords WHERE x = 0 AND y = 0 AND z = 0 AND plan = 'gaia'");
 
-        // View::get_coords_id echoes when it creates a missing tile —
-        // swallow it so a fresh DB doesn't turn the test risky.
-        ob_start();
-        try {
-            $uniqueId = (new UniqueObjectService())->placeInstance(
-                $instanceId,
-                (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
-            );
-            $this->movePlayerTo($player->id, 0, 4);
-        } finally {
-            ob_end_clean();
-        }
-        $this->trackEntityId($uniqueId);
+        $service = new ItemInstanceService();
+        $service->dropAt($instanceId, $coordsId);
 
         $this->assertSame(
-            'unique',
-            $this->link->fetchOne('SELECT player_type FROM players WHERE id = ?', [$uniqueId]),
-            'the placed item is a unique map entity'
-        );
-        $this->assertSame(
-            $instanceId,
-            (int) $this->link->fetchOne('SELECT item_instance_id FROM unique_objects WHERE player_id = ?', [$uniqueId]),
-            'the entity wraps the instance'
+            $coordsId,
+            (int) $this->link->fetchOne('SELECT coords_id FROM map_items_instances WHERE instance_id = ?', [$instanceId]),
+            'the instance is part of the tile bourse'
         );
         $this->assertFalse(
             $this->link->fetchOne('SELECT 1 FROM players_items_instances WHERE instance_id = ?', [$instanceId]),
-            'the owner link is released — the map IS the location'
+            'the owner link is released — the ground IS the location'
         );
 
-        // Ramasser, through the real action and executor.
-        $player = PlayerFactory::legacy($player->id);
-        $player->getCoords();
-        $player->get_caracs();
-        $wrapped = PlayerFactory::legacy($uniqueId);
-        $wrapped->getCoords();
-        $wrapped->get_caracs();
+        // Walking on the tile collects it (the go.php path calls collectAt).
+        $labels = $service->collectAt($coordsId, $player->id);
 
-        $action = ActionFactory::getAction('ramasser');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'ramasser' row).");
-        }
-        $results = (new ActionExecutorService($action, $player, $wrapped))->executeAction();
-
-        $this->assertFalse($results->isBlocked(), 'adjacent ramasser must pass its conditions');
-        $this->assertTrue($results->isSuccess());
-
+        $this->assertSame(['Gladius'], $labels, 'the loot recap names the instance');
         $this->assertSame(
             $player->id,
             (int) $this->link->fetchOne('SELECT player_id FROM players_items_instances WHERE instance_id = ?', [$instanceId]),
-            'the instance is back in the taker inventory'
+            'the instance is back in the walker inventory'
         );
         $this->assertSame(
             60,
@@ -142,36 +130,41 @@ class UniqueObjectBridgeGoldenMasterTest extends LegacyPlayerFixtureTestCase
             'identity — the wear — survived the round trip'
         );
         $this->assertFalse(
-            $this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [$uniqueId]),
-            'the map entity is gone'
+            $this->link->fetchOne('SELECT 1 FROM map_items_instances WHERE instance_id = ?', [$instanceId]),
+            'the ground row is gone'
         );
     }
 
-    public function testRamasserOnAStructureWrappingNothingFailsCleanly(): void
+    public function testEntityWrapperStillWorksForAnimatorArtifacts(): void
     {
-        $player = $this->createRealPlayer('GmLooter');
-        $buildingId = (new \App\Service\BuildingService())->place(
-            'palissade',
-            (object) ['x' => 0, 'y' => 1, 'z' => 0, 'plan' => 'gaia']
-        );
-        $this->trackEntityId($buildingId);
+        // The UniqueObject ENTITY path stays available (attackable artifact):
+        // place, verify wrap + release, take back — service level.
+        [$player, , $instanceId] = $this->playerWithWornGladius();
 
-        $player->getCoords();
-        $player->get_caracs();
-        $building = PlayerFactory::legacy($buildingId);
-        $building->getCoords();
-        $building->get_caracs();
-
-        $action = ActionFactory::getAction('ramasser');
-        if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'ramasser' row).");
+        ob_start();
+        try {
+            $uniqueId = (new UniqueObjectService())->placeInstance(
+                $instanceId,
+                (object) ['x' => 0, 'y' => 5, 'z' => 0, 'plan' => 'gaia']
+            );
+        } finally {
+            ob_end_clean();
         }
-        $results = (new ActionExecutorService($action, $player, $building))->executeAction();
+        $this->trackEntityId($uniqueId);
 
-        $this->assertFalse($results->isBlocked(), 'conditions pass — a palissade IS a structure');
-        $this->assertNotFalse(
-            $this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [$buildingId]),
-            'the palissade must still be there — nothing was taken'
+        $this->assertSame('unique', $this->link->fetchOne('SELECT player_type FROM players WHERE id = ?', [$uniqueId]));
+        $this->assertSame(
+            $instanceId,
+            (int) $this->link->fetchOne('SELECT item_instance_id FROM unique_objects WHERE player_id = ?', [$uniqueId])
         );
+
+        $taken = (new UniqueObjectService())->takeInstance($uniqueId, $player->id);
+        $this->assertSame($instanceId, $taken);
+        $this->assertSame(
+            60,
+            (int) $this->link->fetchOne('SELECT durability FROM item_instances WHERE id = ?', [$instanceId]),
+            'identity survives the entity round trip too'
+        );
+        $this->assertFalse($this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [$uniqueId]));
     }
 }

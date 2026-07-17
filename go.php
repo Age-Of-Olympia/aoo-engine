@@ -285,10 +285,14 @@ SELECT * FROM map_items WHERE coords_id = ?
 
 $res = $db->exe($sql, $coordsId);
 
-if($res->num_rows){
+// Instances au sol (Phase 3) : elles se ramassent en marchant, comme
+// toute bourse — l'identité (usure, nom) suit.
+$instanceLoot = (new \App\Service\ItemInstanceService())->collectAt((int) $coordsId, (int) $player->id);
+
+if($res->num_rows || count($instanceLoot)){
 
 
-    $lootList = array();
+    $lootList = $instanceLoot;
 
     while($row = $res->fetch_object()){
 
@@ -309,6 +313,12 @@ if($res->num_rows){
 
     $db->delete('map_items', $values);
 
+
+    // add_item invalide le cache pour les piles ; les instances ramassées
+    // doivent aussi apparaître dès l'ouverture de l'inventaire.
+    if(count($instanceLoot)){
+        $player->refresh_invent();
+    }
 
     $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
     $coordBackup = $player->coords;

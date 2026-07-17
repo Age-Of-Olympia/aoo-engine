@@ -217,6 +217,18 @@ class View{
             UNION
 
             SELECT
+            instance_id AS id, "bourse" AS name, coords_id,
+            "items" AS whichTable,
+            96 AS tableOrder
+            FROM
+            map_items_instances
+            WHERE
+            coords_id IN ('. $inSightIdImploded .')
+            GROUP BY coords_id
+
+            UNION
+
+            SELECT
             id, name, coords_id,
             "elements" AS whichTable,
             97 AS tableOrder

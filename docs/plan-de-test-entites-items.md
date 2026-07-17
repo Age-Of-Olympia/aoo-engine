@@ -91,17 +91,18 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 ## E. Objets uniques — le pont carte
 
 18. **« Dette de Thétis »** — un gladius NOMMÉ, usé 55/100, est posé
-    en **(2,0)**, à deux cases de vous.
-    ☐ Visible sur le damier (sprite gladius) ; l'observer montre
-    « Dette de Thétis » avec Attaquer + **Ramasser**.
-19. **Le ramasser** — venir adjacent, action Ramasser (gratuite).
-    ☐ « Vous ramassez Dette de Thétis. » ; l'objet disparaît de la
-    carte ; votre inventaire gagne une ligne gladius **avec ses
-    55/100** — l'identité a survécu.
+    en **bourse** en **(2,0)**, à deux cases de vous (retour de revue :
+    une instance au sol se comporte comme tout loot).
+    ☐ Sprite **bourse** sur le damier, comme les autres ; cliquer la
+    case liste « Au sol : « Dette de Thétis » (Gladius) — durabilité
+    55/100 ».
+19. **La ramasser en MARCHANT dessus** — pas d'action dédiée.
+    ☐ Récap de ramassage ; la bourse disparaît ; votre inventaire
+    gagne la ligne « Dette de Thétis » (Gladius) **avec ses 55/100**
+    — l'identité a survécu à l'aller-retour.
 20. **Console** — `objet place gladius 3 3 arcadia`.
-    ☐ Un gladius neuf apparaît en (3,3), ramassable, attaquable
-    (25 PV — le détruire le laisse en entité à 0 PV, boucle de
-    destruction d'objets à affiner en équilibrage).
+    ☐ Une bourse apparaît en (3,3) ; marcher dessus ramasse le gladius
+    (instance neuve, créateur tracé).
 21. **Bourses au sol (objets NON instanciés)** — trois bourses
     map_items classiques sont posées près de vous : **1 bois en
     (-1,0)**, **8 pierres en (-1,-1)** et une **bourse mixte en (1,0)**

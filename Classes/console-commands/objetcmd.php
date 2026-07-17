@@ -1,6 +1,5 @@
 <?php
 use App\Service\ItemInstanceService;
-use App\Service\UniqueObjectService;
 use Classes\AdminCommand;
 use Classes\Argument;
 use Classes\Item;
@@ -16,7 +15,7 @@ class ObjetCmd extends AdminCommand
             new Argument('plan', true),
         ]);
         parent::setDescription(<<<EOT
-Pose un objet unique sur la carte (instance neuve enveloppée dans une entité 'unique' — observable, ramassable, destructible).
+Pose une instance d'objet au sol (bourse : ramassée en marchant dessus, identité préservée).
 Exemple:
 > objet place [nom objet] [x] [y] [plan]  (plan par défaut : gaia)
 > objet place gladius 2 -1
@@ -43,16 +42,20 @@ EOT);
 
         $admin = parent::getPlayer($_SESSION['playerId'] ?? 0);
 
-        // Instance neuve créée au nom de l'admin puis posée aussitôt.
-        $instanceId = (new ItemInstanceService())->create($admin->id, (int) $item->id, $admin->id);
+        // Instance neuve créée au nom de l'admin puis posée au sol (bourse).
+        $service = new ItemInstanceService();
+        $instanceId = $service->create($admin->id, (int) $item->id, $admin->id);
 
         try {
-            $id = (new UniqueObjectService())->placeInstance($instanceId, $goCoords);
+            $coordsId = (int) \Classes\View::get_coords_id($goCoords);
+            $service->dropAt($instanceId, $coordsId);
         } catch (\InvalidArgumentException $e) {
             return 'Erreur : ' . $e->getMessage();
         }
 
-        return 'Objet ' . $argumentValues[1] . ' posé (#' . $id . ', instance #' . $instanceId . ') en ('
+        \Classes\View::refresh_players_svg($goCoords);
+
+        return 'Objet ' . $argumentValues[1] . ' (instance #' . $instanceId . ') posé en bourse en ('
             . $goCoords->x . ',' . $goCoords->y . ') sur ' . $goCoords->plan . '.';
     }
 }
