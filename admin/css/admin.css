@@ -17,8 +17,11 @@ body {
 }
 
 .admin-sidebar {
-    width: 180px;
-    min-width: 180px;
+    /* border-box (pied épinglé) : 200px incluent le padding 2×10px —
+       l'équivalent des 180px content-box d'origine, pour que .admin-main
+       (margin-left 204px) reste collé à la barre comme avant. */
+    width: 200px;
+    min-width: 200px;
     background: #2c3e50;
     padding: 15px 10px;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
