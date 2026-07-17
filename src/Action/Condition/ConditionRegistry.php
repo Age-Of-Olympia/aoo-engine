@@ -24,6 +24,7 @@ class ConditionRegistry
             'RequiresAmmo' => new RequiresAmmoCondition(),
             'RequiresResource' => new RequiresResourceCondition(),
             'RequiresItem' => new RequiresItemCondition(),
+            'BuildSite' => new BuildSiteCondition(),
             'TargetType' => new TargetTypeCondition(),
 
             'Compute' => new ComputeCondition(),

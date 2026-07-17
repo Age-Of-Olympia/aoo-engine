@@ -56,7 +56,30 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
         }
 
         $goCoords = clone $actor->coords;
-        View::get_free_coords_id_arround($goCoords, 1);
+
+        /* Case CHOISIE par le joueur (mode choix de case, build_picker) :
+         * validée strictement — adjacente ET libre, exactement les cases
+         * .go que le masque a proposées. Sinon : première case libre
+         * adjacente, rayon croissant (ancien comportement). */
+        if (isset($_POST['buildX'], $_POST['buildY'])) {
+            $requested = ((int) $_POST['buildX']) . ',' . ((int) $_POST['buildY']);
+
+            $around = View::get_coords_arround(clone $actor->coords, 1);
+            $taken = View::get_coords_taken(clone $actor->coords);
+
+            if (!in_array($requested, $around, true) || in_array($requested, $taken, true)) {
+                return new OutcomeResult(
+                    false,
+                    outcomeSuccessMessages: array(),
+                    outcomeFailureMessages: ['Impossible de construire là — la case doit être adjacente et libre.']
+                );
+            }
+
+            $goCoords->x = (int) $_POST['buildX'];
+            $goCoords->y = (int) $_POST['buildY'];
+        } else {
+            View::get_free_coords_id_arround($goCoords, 1);
+        }
 
         try {
             $id = (new BuildingService())->place(

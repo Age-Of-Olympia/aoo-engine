@@ -69,33 +69,18 @@ $(document).ready(function(){
             return false;
         }
 
-        /* Constructibles (nouveau système) : bâtir DEPUIS l'objet — l'action
-           construire_{objet} est la mécanique, la case libre adjacente est
-           choisie automatiquement. */
+        /* Constructibles (nouveau système) : bâtir DEPUIS l'objet — retour
+           au damier en mode choix de case (spotlight du tutoriel, voir
+           js/build_picker.js) ; l'action construire_{objet} est la
+           mécanique. */
         if(action == 'use' && window.type == 'constructible'){
 
-            aooConfirm('Construire ' + window.name + ' sur une case libre adjacente ? (1 A)').then(function(ok){
+            sessionStorage.setItem('pendingBuild', JSON.stringify({
+                'action': window.buildAction,
+                'name': window.name
+            }));
 
-                if(!ok){
-                    return;
-                }
-
-                $.ajax({
-                    type: 'POST',
-                    url: 'action.php',
-                    data: {'action': window.buildAction},
-                    success: function(data){
-
-                        var text = $('<div></div>').html(
-                            data.replace(/<script[\s\S]*?<\/script>/gi, '')
-                                .replace(/<style[\s\S]*?<\/style>/gi, '')
-                        ).text().replace(/\s+/g, ' ').trim();
-
-                        aooAlert(text).then(aooReload);
-                    }
-                });
-            });
-
+            document.location = 'index.php';
             return false;
         }
 

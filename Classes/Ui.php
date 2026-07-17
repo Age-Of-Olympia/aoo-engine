@@ -84,6 +84,9 @@ class Ui{
                 <script src="js/tutorial/TutorialHighlighter.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialGameIntegration.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
+
+                <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
+                <script src="js/build_picker.js?v=20260717"></script>
         ';
 
         echo '    </head>
