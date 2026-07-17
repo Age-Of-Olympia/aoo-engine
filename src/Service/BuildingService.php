@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\BuildingDetails;
 use App\Entity\EntityManagerFactory;
+use App\Service\DialogService;
 use Classes\View;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -156,12 +157,37 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Attache un dialogue au bâtiment ('' pour le détacher). Le code doit
+     * exister dans le catalogue `dialogs` — le lien vit sur l'entité et la
+     * suit (ruine = muet, suppression = lien disparu), contrairement aux
+     * déclencheurs map_dialogs qui restent collés à la case.
+     *
+     * @throws \InvalidArgumentException id non-bâtiment ou dialogue inconnu
+     */
+    public function setDialog(int $playerId, string $dialogName): void
+    {
+        $details = $this->getDetails($playerId);
+        if ($details === null) {
+            throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
+        }
+
+        if ($dialogName !== '' && !(new DialogService())->gameDialogExists($dialogName)) {
+            throw new \InvalidArgumentException("Dialogue inconnu : « {$dialogName} ».");
+        }
+
+        $details->setDialog($dialogName);
+        $this->entityManager->flush();
+
+        $this->addAuditLog("BuildingService::setDialog #{$playerId} '{$dialogName}'");
+    }
+
+    /**
      * Every building with its position, state, owner and PV, for the admin
      * dashboard. Current PV = pseudo-race max + the players_bonus 'pv'
      * ledger (buildings have no upgrades/items, so the race base IS max).
      *
      * @return array<int, array{id:int, name:string, type:string, build_state:string,
-     *                          faction:string, owner_id:?int, owner_name:?string,
+     *                          dialog:string, faction:string, owner_id:?int, owner_name:?string,
      *                          x:int, y:int, plan:string, max_pv:int, current_pv:int}>
      */
     public function listBuildings(): array
@@ -170,7 +196,7 @@ class BuildingService extends BaseService
         // created under a newer default collation than players and a SQL
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id,
+            "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id, b.dialog,
                     o.name AS owner_name, c.x, c.y, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus
              FROM buildings b
@@ -192,6 +218,7 @@ class BuildingService extends BaseService
                 'name' => (string) $row['name'],
                 'type' => (string) $row['race'],
                 'build_state' => (string) $row['build_state'],
+                'dialog' => (string) $row['dialog'],
                 'faction' => (string) $row['faction'],
                 'owner_id' => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,
                 'owner_name' => $row['owner_name'] !== null ? (string) $row['owner_name'] : null,

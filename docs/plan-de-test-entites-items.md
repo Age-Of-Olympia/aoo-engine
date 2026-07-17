@@ -31,6 +31,19 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    ☐ Roster (type, état, PV, position, propriétaire) ; **Restaurer**
    remet PV au max + état « Construit » ; **Retirer** supprime ;
    **poser** une nouvelle palissade via le formulaire (case libre !).
+6b. **Dialogue porté par un bâtiment** (buildings.dialog — ce qui était
+   sur des PNJ peut passer sur des bâtiments).
+   ☐ Admin → Bâtiments : colonne « Dialogue » (sélecteur par ligne +
+   OK) et champ optionnel du formulaire de pose. Démo prête : la
+   palissade #20000000 en (1,-1) arcadia porte le dialogue `gaia`.
+   ☐ En jeu, cliquer la case de la palissade : sa carte s'affiche AVEC
+   le panneau de dialogue (mêmes nœuds/options que les dialogues de
+   PNJ). Passer le bâtiment en ruine (l'attaquer à 0 PV ou SQL) → la
+   carte s'affiche mais le bâtiment est MUET ; restauré, il reparle.
+   ☐ Admin → Dialogues : la liste compte les bâtiments porteurs dans
+   la colonne références ; supprimer un dialogue porté par un bâtiment
+   est refusé (« détachez-les d'abord ») — même garde que les
+   déclencheurs map_dialogs.
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.

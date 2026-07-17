@@ -3,7 +3,7 @@
  * Building management — mutations (POST only). Companion to
  * admin/buildings.php.
  *
- * Routed on ?action: place | repair | remove. Every branch is
+ * Routed on ?action: place | restore | remove | dialog. Every branch is
  * CSRF-validated and enforces the same menu level as buildings.php so a
  * direct POST can't bypass the dashboard gate. Redirects back (PRG) with a
  * flash. Business validation (type de structure au catalogue, faction du catalogue,
@@ -75,7 +75,36 @@ if ($action === 'place') {
         redirectTo('/admin/buildings.php');
     }
 
+    // Dialogue optionnel du formulaire de pose — même validation que le
+    // sélecteur par ligne (catalogue dialogs), après création de la ligne.
+    $dialog = trim((string) ($_POST['dialog'] ?? ''));
+    if ($dialog !== '') {
+        try {
+            $service->setDialog($id, $dialog);
+        } catch (\InvalidArgumentException $e) {
+            setFlash('warning', "Bâtiment #{$id} posé, mais dialogue non attaché : " . $e->getMessage());
+            redirectTo('/admin/buildings.php');
+        }
+    }
+
     setFlash('success', "Bâtiment #{$id} posé en ({$goCoords->x}, {$goCoords->y}) sur {$goCoords->plan}.");
+    redirectTo('/admin/buildings.php');
+}
+
+if ($action === 'dialog') {
+    $id = (int) ($_POST['id'] ?? 0);
+    $dialog = trim((string) ($_POST['dialog'] ?? ''));
+
+    try {
+        $service->setDialog($id, $dialog);
+    } catch (\InvalidArgumentException $e) {
+        setFlash('warning', $e->getMessage());
+        redirectTo('/admin/buildings.php');
+    }
+
+    setFlash('success', $dialog !== ''
+        ? "Dialogue « {$dialog} » attaché au bâtiment #{$id}."
+        : "Dialogue détaché du bâtiment #{$id}.");
     redirectTo('/admin/buildings.php');
 }
 

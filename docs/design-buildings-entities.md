@@ -451,6 +451,14 @@ themselves through other chantiers:
 - **Open question #6 — new hook available**: dialogs are now DB-backed
   (`dialogs` table + admin pages on staging), giving unique objects a
   ready-made interactability channel.
+  **2026-07-18 — implemented for buildings**: `buildings.dialog` porte le
+  code du dialogue (clé naturelle `dialogs.name`, sans FK). Le lien vit
+  sur l'ENTITÉ et suit son cycle de vie (construction/ruine = muet),
+  contrairement aux déclencheurs `map_dialogs` collés à la case. Rendu
+  dans la carte d'observation (observe.php, même panneau `Ui::get_dialog`
+  que les PNJ), édition dans admin → Bâtiments, garde de suppression dans
+  `DialogService::deleteGameDialog`. Ce qui était porté par des PNJ
+  (marchand, lore) peut migrer sur des bâtiments.
 - **Phase 0 — partially exists**: `LifeLossExecuteCharacterizationTest` and
   the combat-simulation tests already pin part of the attack path; golden
   masters for `get_caracs()` / `getRemaining()` / `putBonus()` remain to do.

@@ -1,9 +1,11 @@
 <?php
 
+use App\Entity\BuildingDetails;
 use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Service\BuildingService;
 use App\Service\FactionService;
 use App\Service\RaceService;
 use App\Service\Action\ActionTargeting;
@@ -445,6 +447,29 @@ if($res->num_rows){
         );
 
         $card .= Ui::get_card($data);
+
+        /* Dialogue porté par l'entité bâtiment (buildings.dialog) : même
+         * panneau flottant que les déclencheurs map_dialogs, mais le lien
+         * vit sur l'entité et suit son cycle de vie — un bâtiment en
+         * construction ou en ruine est muet. */
+        if (($target->data->player_type ?? '') === 'building') {
+
+            $buildingDetails = (new BuildingService())->getDetails($target->id);
+
+            if ($buildingDetails !== null
+                && $buildingDetails->getDialog() !== ''
+                && $buildingDetails->getBuildState() === BuildingDetails::STATE_BUILT) {
+
+                $card .= '<div class="view-dialog">' . Ui::get_dialog($player, array(
+                    'name' => $target->data->name,
+                    'avatar' => $target->data->portrait,
+                    'dialog' => $buildingDetails->getDialog(),
+                    'text' => '',
+                    'player' => $player,
+                    'target' => $target,
+                )) . '</div>';
+            }
+        }
 
         /* Équipement porté par le personnage observé — alvéoles pour
          * la vue de sélection du HUD papier, visibles sur écrans

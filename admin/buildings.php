@@ -19,6 +19,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
+use App\Service\DialogService;
 use App\Service\FactionService;
 use App\Service\PnjAdminService;
 use App\Service\RaceService;
@@ -40,6 +41,23 @@ function building_type_options(): array
     return $out;
 }
 
+/**
+ * Options <select> des dialogues du catalogue, '' = aucun.
+ *
+ * @param array<int, string> $dialogNames
+ */
+function building_dialog_select(string $fieldName, string $selected, array $dialogNames): string
+{
+    $options = '<option value="">— aucun —</option>';
+    foreach ($dialogNames as $name) {
+        $options .= '<option value="' . e($name) . '"' . ($name === $selected ? ' selected' : '') . '>'
+            . e($name) . '</option>';
+    }
+
+    return '<select name="' . $fieldName . '" class="form-control form-control-sm d-inline-block" style="width:auto">'
+        . $options . '</select>';
+}
+
 function building_state_badge(string $state): string
 {
     return match ($state) {
@@ -52,8 +70,9 @@ function building_state_badge(string $state): string
 
 /**
  * @param array<int, array<string, mixed>> $buildings BuildingService::listBuildings() rows
+ * @param array<int, string>               $dialogNames
  */
-function building_render_list(array $buildings, string $csrfToken): string
+function building_render_list(array $buildings, array $dialogNames, string $csrfToken): string
 {
     if ($buildings === []) {
         return '<p class="text-muted">Aucun bâtiment posé pour le moment.</p>';
@@ -90,13 +109,20 @@ function building_render_list(array $buildings, string $csrfToken): string
             . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ') · ' . e($b['plan']) . '</td>'
             . '<td>' . ($b['owner_name'] !== null ? e($b['owner_name']) . ' <small class="text-muted">#' . (int) $b['owner_id'] . '</small>' : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($b['faction'] !== '' ? e($b['faction']) : '<span class="text-muted">—</span>') . '</td>'
+            . '<td class="text-nowrap"><form method="post" action="/admin/buildings-save.php?action=dialog" class="d-inline">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
+            . building_dialog_select('dialog', (string) $b['dialog'], $dialogNames)
+            . ' <button class="btn btn-sm btn-outline-primary" type="submit"'
+            . ' title="Dialogue porté par le bâtiment — muet en construction ou en ruine">OK</button>'
+            . '</form></td>'
             . '<td class="text-nowrap">' . $actions . '</td>'
             . '</tr>';
     }
 
     return '<div class="table-responsive"><table class="table table-sm table-striped align-middle">'
         . '<thead><tr><th>#</th><th>Nom</th><th>Type</th><th>État</th><th>PV</th>'
-        . '<th>Position</th><th>Propriétaire</th><th>Faction</th><th>Actions</th></tr></thead>'
+        . '<th>Position</th><th>Propriétaire</th><th>Faction</th><th>Dialogue</th><th>Actions</th></tr></thead>'
         . '<tbody>' . $rows . '</tbody></table></div>';
 }
 
@@ -104,8 +130,9 @@ function building_render_list(array $buildings, string $csrfToken): string
  * @param array<string,string> $types
  * @param array<int,string>    $plans
  * @param array<string,string> $factions code => name
+ * @param array<int,string>    $dialogNames
  */
-function building_render_place_form(array $types, array $plans, array $factions, string $csrfToken): string
+function building_render_place_form(array $types, array $plans, array $factions, array $dialogNames, string $csrfToken): string
 {
     if ($types === []) {
         return '<div class="alert alert-warning">Aucun type de structure disponible : créez-en un'
@@ -145,6 +172,9 @@ function building_render_place_form(array $types, array $plans, array $factions,
         . '<input type="text" name="owner" class="form-control" placeholder="matricule ou nom"></div>'
         . '<div class="col-md-2"><label class="form-label">Faction (optionnel)</label>'
         . '<select name="faction" class="form-control">' . $factionOptions . '</select></div>'
+        . '<div class="col-md-2"><label class="form-label">Dialogue (optionnel)</label>'
+        . building_dialog_select('dialog', '', $dialogNames)
+        . '<small class="text-muted d-block">Porté par le bâtiment — muet en ruine.</small></div>'
         . '<div class="col-12"><button class="btn btn-primary" type="submit">Poser le bâtiment</button></div>'
         . '</form>';
 
@@ -163,11 +193,14 @@ foreach ((new FactionService())->getAllFactions() as $faction) {
     $factions[$faction->getCode()] = $faction->getName();
 }
 
+$dialogNames = array_keys((new DialogService())->listGameDialogs());
+
 $content = building_render_place_form(
     building_type_options(),
     (new PnjAdminService())->listPlans(),
     $factions,
+    $dialogNames,
     $csrfToken
-) . building_render_list($service->listBuildings(), $csrfToken);
+) . building_render_list($service->listBuildings(), $dialogNames, $csrfToken);
 
 echo admin_layout('Bâtiments', renderFlashMessage() . $content);

@@ -22,6 +22,9 @@ use Doctrine\ORM\Mapping as ORM;
  *   mechanics (construction progressive, usure/dégradation, ruine)
  *   can add states without schema changes. Current values:
  *   'construction' | 'built' | 'ruin'.
+ * - dialog: code du dialogue porté par le bâtiment (clé naturelle
+ *   dialogs.name, '' = aucun) — le lien vit sur l'entité, pas sur la
+ *   case (contrairement aux déclencheurs map_dialogs). Muet en ruine.
  */
 #[ORM\Entity]
 #[ORM\Table(name: "buildings")]
@@ -43,6 +46,9 @@ class BuildingDetails
 
     #[ORM\Column(type: "string", length: 20, options: ["default" => self::STATE_BUILT])]
     private string $build_state = self::STATE_BUILT;
+
+    #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
+    private string $dialog = '';
 
     public function getPlayerId(): int
     {
@@ -85,6 +91,17 @@ class BuildingDetails
     public function setBuildState(string $build_state): self
     {
         $this->build_state = $build_state;
+        return $this;
+    }
+
+    public function getDialog(): string
+    {
+        return $this->dialog;
+    }
+
+    public function setDialog(string $dialog): self
+    {
+        $this->dialog = $dialog;
         return $this;
     }
 }
