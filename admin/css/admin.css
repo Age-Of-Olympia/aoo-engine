@@ -401,11 +401,15 @@ select.form-control {
 
 /* Retour au jeu : ÉPINGLÉ en bas de la barre latérale — la colonne
  * devient une flexbox dont seul le nav scrolle ; un menu déplié qui
- * déborde passe SOUS le lien (le pied opaque le recouvre). */
+ * déborde passe SOUS le lien (le pied opaque le recouvre).
+ * box-sizing : la règle de base (height:100vh + padding 15px) déborde
+ * de 30px sous l'écran en content-box — le pied était sous la barre
+ * des tâches. */
 .admin-sidebar {
     display: flex;
     flex-direction: column;
     overflow-y: hidden;
+    box-sizing: border-box;
 }
 
 .admin-sidebar .vertical-nav {
