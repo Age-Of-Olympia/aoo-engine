@@ -36,6 +36,29 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Sprite of a structure type, in fallback order: dedicated avatar
+     * (img/avatars/{type}.webp) → the map-wall sprite of the same name
+     * (img/walls/{type}.png — a built mur_bois looks like a mur_bois) →
+     * the generic placeholder. View.php renders players.avatar directly.
+     */
+    public static function resolveAvatar(string $type, bool $broken = false): string
+    {
+        $root = dirname(__DIR__, 2);
+        $suffix = $broken ? '_broken' : '';
+
+        foreach ([
+            'img/avatars/' . $type . $suffix . '.webp',
+            'img/walls/' . $type . $suffix . '.png',
+        ] as $candidate) {
+            if (is_file($root . '/' . $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $broken ? self::resolveAvatar($type) : self::DEFAULT_IMAGE;
+    }
+
+    /**
      * Place a building of the given type on the map.
      *
      * The type is a races row of kind 'structure' (the races table is the
@@ -89,12 +112,7 @@ class BuildingService extends BaseService
         $displayId = getNextDisplayId('building');
         $coordsId = View::get_coords_id($goCoords);
 
-        // Type-specific art when it exists, working placeholder otherwise
-        // (View.php renders players.avatar directly as the tile image).
-        $avatar = 'img/avatars/' . $type . '.webp';
-        if (!is_file(dirname(__DIR__, 2) . '/' . $avatar)) {
-            $avatar = self::DEFAULT_IMAGE;
-        }
+        $avatar = self::resolveAvatar($type);
 
         $conn->executeStatement(
             'INSERT INTO players
@@ -217,6 +235,7 @@ class BuildingService extends BaseService
             'UPDATE buildings SET build_state = ? WHERE player_id = ?',
             [BuildingDetails::STATE_BUILT, $playerId]
         );
+        $this->swapAvatar($playerId, broken: false);
 
         $this->addAuditLog("BuildingService::restore #{$playerId}");
 
@@ -231,16 +250,51 @@ class BuildingService extends BaseService
      */
     public function markDestroyed(int $playerId): bool
     {
-        $affected = $this->entityManager->getConnection()->executeStatement(
+        $conn = $this->entityManager->getConnection();
+
+        $affected = $conn->executeStatement(
             'UPDATE buildings SET build_state = ? WHERE player_id = ?',
             [BuildingDetails::STATE_RUIN, $playerId]
         );
 
         if ($affected > 0) {
+            // Bascule visuelle : la ruine prend le sprite _broken de son type
+            // quand il existe (même mécanisme que les murs de carte).
+            $this->swapAvatar($playerId, broken: true);
             $this->addAuditLog("BuildingService::markDestroyed #{$playerId}");
         }
 
         return $affected > 0;
+    }
+
+    /**
+     * Point the entity's avatar at its type sprite (broken variant or
+     * base) and refresh the neighbourhood render.
+     */
+    private function swapAvatar(int $playerId, bool $broken): void
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $race = $conn->fetchOne('SELECT race FROM players WHERE id = ?', [$playerId]);
+        if ($race === false) {
+            return;
+        }
+
+        $avatar = self::resolveAvatar((string) $race, $broken);
+        $conn->executeStatement(
+            'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
+            [$avatar, $avatar, $playerId]
+        );
+        @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . '.json');
+
+        $goCoords = $conn->fetchAssociative(
+            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
+            [$playerId]
+        );
+        if ($goCoords !== false) {
+            View::refresh_players_svg((object) $goCoords);
+        }
+        @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . '.svg');
     }
 
     /**

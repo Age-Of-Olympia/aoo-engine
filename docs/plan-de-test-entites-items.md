@@ -136,9 +136,21 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 
 ## E2. Structures de carte héritées — image « brisé »
 
-21b. **Mur cassé de démo** — un `mur_bois` frappé sous la moitié de ses
-    PV est en **(0,-1)** : il affiche son image **brisée**
-    (mur_bois_broken).
+21a. **Mur de bois CONSTRUCTIBLE (nouveau système)** — vous avez
+    l'action « Construire un mur de bois » + 1 objet mur_bois (recette :
+    15 bois à l'artisanat).
+    ☐ Construire → l'ENTITÉ apparaît avec le sprite du mur ; elle
+    s'ATTAQUE (melee) et se RÉPARE (action Réparer) comme la palissade ;
+    détruite, elle passe au sprite **brisé** (mur_bois_broken) en état
+    Ruine ; restaurée (admin), elle reprend son sprite.
+21b. **Mur cassé LEGACY (ancien système)** — un `mur_bois` de carte
+    frappé sous la moitié de ses PV est en **(0,-1)** : image brisée.
+    ⚠ Un mur legacy ne s'attaque PAS par l'action Attaquer ni ne se
+    répare — il se détruit par l'ICÔNE de destruction qui apparaît SUR
+    la case après clic, en étant ADJACENT (1 A, arme de mêlée). C'est
+    la frontière actuelle : les murs BÂTIS par les joueurs sont des
+    entités complètes, les murs de carte historiques migreront avec le
+    chantier murs→structures.
     ☐ Le CLIQUER ouvre la MÊME carte que la palissade (Ui::get_card) :
     nom « Mur bois — brisé », portrait avec voile de dégâts rouge,
     type Structure, état Destructible — le principe « posé = bourse,

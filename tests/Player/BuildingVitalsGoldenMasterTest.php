@@ -218,6 +218,41 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(100, PlayerFactory::legacy($id)->getRemaining('pv'), 'overheal clamps at the pseudo-race max');
     }
 
+    public function testRuinSwapsToTheBrokenSpriteAndRestoreSwapsBack(): void
+    {
+        // Un mur_bois bâti porte le sprite du mur ; en ruine il porte le
+        // sprite _broken (même bascule visuelle que les murs de carte) ;
+        // restauré, il reprend son sprite de base.
+        $race = (new \App\Service\RaceService())->getRaceByName('mur_bois');
+        if ($race === null || !$race->isStructureKind()) {
+            $this->markTestSkipped("structure type 'mur_bois' not seeded (run migrations).");
+        }
+
+        $service = new BuildingService();
+        $id = $service->place('mur_bois', (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia']);
+        $this->trackEntityId($id);
+
+        $this->assertSame(
+            'img/walls/mur_bois.png',
+            $this->link->fetchOne('SELECT avatar FROM players WHERE id = ?', [$id]),
+            'a built mur_bois wears the wall sprite'
+        );
+
+        $service->markDestroyed($id);
+        $this->assertSame(
+            'img/walls/mur_bois_broken.png',
+            $this->link->fetchOne('SELECT avatar FROM players WHERE id = ?', [$id]),
+            'a ruined mur_bois wears the broken sprite'
+        );
+
+        $service->restore($id);
+        $this->assertSame(
+            'img/walls/mur_bois.png',
+            $this->link->fetchOne('SELECT avatar FROM players WHERE id = ?', [$id]),
+            'restore swaps the base sprite back'
+        );
+    }
+
     public function testRemoveRefusesNonBuildingRows(): void
     {
         $player = $this->createRealPlayer('GmNotABuilding');
