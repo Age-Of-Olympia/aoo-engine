@@ -66,6 +66,25 @@ function race_character_counts(array $counts): string
 /**
  * @param Race[] $races
  */
+/**
+ * Éléments de carte utilisables comme saignement : image dans
+ * img/elements + entrée EFFECTS_RA_FONT (exigence d'Element::put).
+ *
+ * @return array<string, string>
+ */
+function bleed_options(): array
+{
+    $out = [];
+    foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
+        $name = pathinfo($file, PATHINFO_FILENAME);
+        if (isset(EFFECTS_RA_FONT[$name])) {
+            $out[$name] = $name;
+        }
+    }
+    ksort($out);
+    return $out;
+}
+
 /** Sortes d'entités — valeurs de la source unique EntityCategory. */
 function kind_select(bool $isStructure): string
 {
@@ -239,6 +258,16 @@ HTML;
         . '<div class="form-group col-md-4"><label>Flags</label><div>'
         . '<label class="mr-3">Sorte '
         . kind_select($isEdit && $race->isStructureKind())
+        . '</label> '
+        . '<label class="mr-3">Saignement '
+        . formSelect(
+            'bleeds',
+            bleed_options(),
+            $isEdit && $race->getBleeds() !== '' ? $race->getBleeds() : null,
+            '— rien —',
+            'class="form-control form-control-sm d-inline-block" style="width:auto"'
+            . ' title="Élément versé au sol quand l\'entité est blessée — rien : un mur ne saigne pas."'
+        )
         . '</label> '
         . '<label class="mr-3">Nature '
         . '<select name="structure_nature" class="form-control form-control-sm d-inline-block" style="width:auto"'

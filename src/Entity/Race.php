@@ -62,6 +62,13 @@ class Race
     #[ORM\Column(type: "string", length: 20, name: "structure_nature", options: ["default" => "edifice"])]
     private string $structureNature = 'edifice';
 
+    /**
+     * Élément de carte versé au sol quand l'entité est blessée
+     * ('sang' pour les personnages, '' = rien — un mur ne saigne pas).
+     */
+    #[ORM\Column(type: "string", length: 50, options: ["default" => "sang"])]
+    private string $bleeds = 'sang';
+
     #[ORM\Column(type: "string", length: 20, options: ["default" => "#FFFFFF"])]
     private string $bgColor = '#FFFFFF';
 
@@ -257,6 +264,16 @@ class Race
     public function isEdifice(): bool
     {
         return $this->isStructureKind() && $this->structureNature === 'edifice';
+    }
+
+    public function getBleeds(): string
+    {
+        return $this->bleeds;
+    }
+
+    public function setBleeds(string $bleeds): void
+    {
+        $this->bleeds = $bleeds;
     }
 
     public function getBgColor(): string

@@ -1141,8 +1141,15 @@ class Player implements ActorInterface {
 
                 if($val < 0){
 
-                    // add blood on floor
-                    Element::put('sang', $this->data->coords_id);
+                    /* Ce que l'entité VERSE au sol en cas de blessure :
+                     * configurable par race (races.bleeds) — '' = rien,
+                     * un mur ne saigne pas. */
+                    $bleeds = (new RaceService())->getRaceByName((string) ($this->data->race ?? ''))?->getBleeds() ?? '';
+
+                    if($bleeds !== ''){
+
+                        Element::put($bleeds, $this->data->coords_id);
+                    }
                 }
 
                 elseif($val > 0){

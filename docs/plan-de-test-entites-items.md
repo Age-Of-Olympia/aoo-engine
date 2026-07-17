@@ -18,8 +18,11 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    **Réparer** (pas de Barbier, pas de vol — les autres actions sont
    masquées par leur garde TargetType).
 3. **L'attaquer** — Attaquer, plusieurs fois si besoin.
-   ☐ Jets de dés, dégâts, PV qui baissent ; 1 A par attaque ; du sang
-   sur la case (comportement hérité, connu).
+   ☐ Jets de dés, dégâts, PV qui baissent ; 1 A par attaque ; AUCUN
+   sang sur la case — une structure ne saigne pas (races.bleeds vide
+   pour la sorte Structure ; un personnage blessé verse toujours du
+   sang, et le saignement se règle par race dans admin → Races :
+   sang, feu, boue… ou rien — la valeur voyage dans les bundles).
 4. **La réparer** — action **Réparer** sur la palissade blessée.
    ☐ PV remontent de +F (clampé au max) ; Réparer refuse un personnage
    (le bouton n'apparaît d'ailleurs pas sur un joueur).
