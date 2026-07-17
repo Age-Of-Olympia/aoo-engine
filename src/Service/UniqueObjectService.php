@@ -63,6 +63,10 @@ class UniqueObjectService extends BaseService
         $name = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);
 
         $id = getNextEntityId('unique');
+        // Id recyclé : purge des caches par-entité, sinon l'objet posé
+        // ressert l'identité de l'ancienne entité (même garde que
+        // BuildingService::place).
+        BuildingService::purgeEntityCaches($id);
         $displayId = getNextDisplayId('unique');
         $coordsId = View::get_coords_id($goCoords);
 

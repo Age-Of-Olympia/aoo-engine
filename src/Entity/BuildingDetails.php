@@ -25,6 +25,9 @@ use Doctrine\ORM\Mapping as ORM;
  * - dialog: code du dialogue porté par le bâtiment (clé naturelle
  *   dialogs.name, '' = aucun) — le lien vit sur l'entité, pas sur la
  *   case (contrairement aux déclencheurs map_dialogs). Muet en ruine.
+ * - is_open: fermeture VOLONTAIRE (admin, un jour le propriétaire).
+ *   L'ouverture effective combine ce drapeau et l'état — règle unique
+ *   dans BuildingService::closureReason().
  */
 #[ORM\Entity]
 #[ORM\Table(name: "buildings")]
@@ -49,6 +52,9 @@ class BuildingDetails
 
     #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
     private string $dialog = '';
+
+    #[ORM\Column(type: "boolean", options: ["default" => true])]
+    private bool $is_open = true;
 
     public function getPlayerId(): int
     {
@@ -102,6 +108,17 @@ class BuildingDetails
     public function setDialog(string $dialog): self
     {
         $this->dialog = $dialog;
+        return $this;
+    }
+
+    public function isOpen(): bool
+    {
+        return $this->is_open;
+    }
+
+    public function setIsOpen(bool $is_open): self
+    {
+        $this->is_open = $is_open;
         return $this;
     }
 }

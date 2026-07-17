@@ -2424,8 +2424,13 @@ class Player implements ActorInterface {
 
         $this->data = $playerJson;
 
-        // Set inactive status using playerService
-        $this->data->isInactive = $this->id > 0 ? $this->playerService->isInactive($this->data->lastLoginTime) : false;
+        // L'inactivité n'a de sens que pour un JOUEUR RÉEL (dernière
+        // connexion) : jamais pour un PNJ, un personnage de tutoriel ou
+        // une entité structure (bâtiment/objet unique, lastLoginTime 0
+        // — ils ressortaient « inactifs »).
+        $this->data->isInactive = ($this->id > 0 && ($this->data->player_type ?? 'real') === 'real')
+            ? $this->playerService->isInactive($this->data->lastLoginTime)
+            : false;
 
        
 

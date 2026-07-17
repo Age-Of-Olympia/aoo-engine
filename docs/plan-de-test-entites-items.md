@@ -34,16 +34,32 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 6b. **Dialogue porté par un bâtiment** (buildings.dialog — ce qui était
    sur des PNJ peut passer sur des bâtiments).
    ☐ Admin → Bâtiments : colonne « Dialogue » (sélecteur par ligne +
-   OK) et champ optionnel du formulaire de pose. Démo prête : la
-   palissade #20000000 en (1,-1) arcadia porte le dialogue `gaia`.
-   ☐ En jeu, cliquer la case de la palissade : sa carte s'affiche AVEC
-   le panneau de dialogue (mêmes nœuds/options que les dialogues de
-   PNJ). Passer le bâtiment en ruine (l'attaquer à 0 PV ou SQL) → la
-   carte s'affiche mais le bâtiment est MUET ; restauré, il reparle.
+   OK) et champ optionnel du formulaire de pose.
    ☐ Admin → Dialogues : la liste compte les bâtiments porteurs dans
    la colonne références ; supprimer un dialogue porté par un bâtiment
    est refusé (« détachez-les d'abord ») — même garde que les
    déclencheurs map_dialogs.
+6c. **Édifices, porte Ouvert/Fermé et intégration HUD** — démo prête :
+   « Taverne du Sanglier » #20000004 en (2,-2) arcadia (type édifice
+   `taverne`, 150 PV) porte le dialogue `gaia`.
+   ☐ En jeu (HUD) : cliquer la taverne → la zone de sélection montre
+   la pastille « OUVERT · Construit · PV 100% » ET le panneau de
+   dialogue intégré (colonne dédiée entre la fiche et « Sur la
+   case ») ; les options du dialogue se naviguent. Habillage hérité :
+   pastille sous la carte + panneau classique.
+   ☐ L'endommager sous 50% des PV → « FERMÉ (endommagé) », le
+   dialogue disparaît ; restaurée, elle rouvre.
+   ☐ Admin → Bâtiments : bouton « Fermer » (édifices seulement) →
+   « FERMÉ » en jeu, dialogue tu ; « Ouvrir » le rétablit. Ruine et
+   construction ferment aussi d'office.
+   ☐ La palissade (obstacle, races.structure_nature) n'a NI porte NI
+   mention « Fermé » : seulement « Construit · PV x% ». Un mur n'est
+   pas un édifice — son is_open signifiera un jour la passabilité
+   (système à mutualiser avec les coffres).
+   ☐ Admin → Races : sélecteur « Nature » (Édifice/Obstacle) sur les
+   sortes Structure ; la nature voyage dans les bundles de races.
+   ☐ Une structure ne s'affiche jamais « (inactif) » — l'inactivité
+   est réservée aux joueurs réels.
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.

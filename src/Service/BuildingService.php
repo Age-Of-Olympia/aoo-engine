@@ -60,6 +60,19 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Purge every per-entity file cache of an id (.json = get_data,
+     * .svg = damier, .turn/.caracs/.invent) — appelée à la POSE (id
+     * recyclé) comme au retrait, sinon la nouvelle entité ressert
+     * l'identité de l'ancienne.
+     */
+    public static function purgeEntityCaches(int $playerId): void
+    {
+        foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
+            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . $suffix);
+        }
+    }
+
+    /**
      * Place a building of the given type on the map.
      *
      * The type is a races row of kind 'structure' (the races table is the
@@ -112,6 +125,12 @@ class BuildingService extends BaseService
         $id = getNextEntityId('building');
         $displayId = getNextDisplayId('building');
         $coordsId = View::get_coords_id($goCoords);
+
+        // Un id recyclé (fixture de test, entité retirée hors remove())
+        // peut laisser de vieux caches par-entité : sans purge, le
+        // nouveau bâtiment ressert l'IDENTITÉ du précédent (get_data lit
+        // le .json avant la base).
+        self::purgeEntityCaches($id);
 
         $avatar = self::resolveAvatar($type);
 
@@ -176,6 +195,57 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Seuil de fermeture sur dégâts, en % de PV restants : en dessous, le
+     * bâtiment est fermé (dialogue tu) — aligné sur le seuil du sprite
+     * « brisé » des murs legacy (moitié des PV).
+     */
+    public const CLOSED_BELOW_PV_PCT = 50;
+
+    /**
+     * Pourquoi ce bâtiment est-il fermé — ou null s'il est OUVERT.
+     * Source unique de la règle d'ouverture (observe, HUD, admin) :
+     * un bâtiment fermé tait son dialogue.
+     *
+     * @param int $pvPct PV restants en % (l'appelant les a déjà —
+     *                   observe.php les calcule pour le voile de dégâts)
+     */
+    public function closureReason(BuildingDetails $details, int $pvPct): ?string
+    {
+        if ($details->getBuildState() === BuildingDetails::STATE_RUIN) {
+            return 'en ruine';
+        }
+        if ($details->getBuildState() === BuildingDetails::STATE_CONSTRUCTION) {
+            return 'en construction';
+        }
+        if ($pvPct < self::CLOSED_BELOW_PV_PCT) {
+            return 'endommagé';
+        }
+        if (!$details->isOpen()) {
+            return 'fermé volontairement';
+        }
+
+        return null;
+    }
+
+    /**
+     * Fermeture/ouverture volontaire (admin — un jour le propriétaire).
+     *
+     * @throws \InvalidArgumentException id non-bâtiment
+     */
+    public function setOpen(int $playerId, bool $open): void
+    {
+        $details = $this->getDetails($playerId);
+        if ($details === null) {
+            throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
+        }
+
+        $details->setIsOpen($open);
+        $this->entityManager->flush();
+
+        $this->addAuditLog('BuildingService::setOpen #' . $playerId . ' ' . ($open ? 'ouvert' : 'fermé'));
+    }
+
+    /**
      * Attache un dialogue au bâtiment ('' pour le détacher). Le code doit
      * exister dans le catalogue `dialogs` — le lien vit sur l'entité et la
      * suit (ruine = muet, suppression = lien disparu), contrairement aux
@@ -206,8 +276,9 @@ class BuildingService extends BaseService
      * ledger (buildings have no upgrades/items, so the race base IS max).
      *
      * @return array<int, array{id:int, name:string, type:string, build_state:string,
-     *                          dialog:string, faction:string, owner_id:?int, owner_name:?string,
-     *                          x:int, y:int, plan:string, max_pv:int, current_pv:int}>
+     *                          dialog:string, is_open:bool, faction:string, owner_id:?int,
+     *                          owner_name:?string, x:int, y:int, plan:string,
+     *                          max_pv:int, current_pv:int}>
      */
     public function listBuildings(): array
     {
@@ -215,7 +286,7 @@ class BuildingService extends BaseService
         // created under a newer default collation than players and a SQL
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id, b.dialog,
+            "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id, b.dialog, b.is_open,
                     o.name AS owner_name, c.x, c.y, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus
              FROM buildings b
@@ -238,6 +309,7 @@ class BuildingService extends BaseService
                 'type' => (string) $row['race'],
                 'build_state' => (string) $row['build_state'],
                 'dialog' => (string) $row['dialog'],
+                'is_open' => (bool) $row['is_open'],
                 'faction' => (string) $row['faction'],
                 'owner_id' => $row['owner_id'] !== null ? (int) $row['owner_id'] : null,
                 'owner_name' => $row['owner_name'] !== null ? (string) $row['owner_name'] : null,

@@ -78,6 +78,8 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
         return '<p class="text-muted">Aucun bâtiment posé pour le moment.</p>';
     }
 
+    $raceService = new RaceService();
+
     $rows = '';
     foreach ($buildings as $b) {
         $pvCell = $b['current_pv'] . ' / ' . $b['max_pv'];
@@ -85,7 +87,21 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
             $pvCell = '<span class="text-danger">' . $pvCell . '</span>';
         }
 
+        // La porte est le propre des ÉDIFICES ; un mur construit n'en a
+        // pas (son is_open = future passabilité, pas de bascule ici).
+        $isEdifice = (bool) $raceService->getRaceByName((string) $b['type'])?->isEdifice();
+
         $actions = '';
+        if ($isEdifice) {
+            $actions .= '<form method="post" action="/admin/buildings-save.php?action=toggle-open" class="d-inline">'
+                . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+                . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
+                . '<input type="hidden" name="open" value="' . ($b['is_open'] ? 0 : 1) . '">'
+                . '<button class="btn btn-sm btn-outline-' . ($b['is_open'] ? 'secondary' : 'success') . '" type="submit"'
+                . ' title="Fermeture volontaire : le bâtiment tait son dialogue (il ferme aussi d\'office endommagé, en construction ou en ruine)">'
+                . ($b['is_open'] ? 'Fermer' : 'Ouvrir') . '</button>'
+                . '</form> ';
+        }
         if ($b['current_pv'] < $b['max_pv'] || $b['build_state'] !== 'built') {
             $actions .= '<form method="post" action="/admin/buildings-save.php?action=restore" class="d-inline">'
                 . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
@@ -104,7 +120,8 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
             . '<td>' . (int) $b['id'] . '</td>'
             . '<td>' . e($b['name']) . '</td>'
             . '<td>' . e($b['type']) . '</td>'
-            . '<td>' . building_state_badge($b['build_state']) . '</td>'
+            . '<td>' . building_state_badge($b['build_state'])
+            . ($isEdifice && !$b['is_open'] ? ' <span class="badge badge-dark" title="Fermeture volontaire — le dialogue se tait">Fermé</span>' : '') . '</td>'
             . '<td>' . $pvCell . '</td>'
             . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ') · ' . e($b['plan']) . '</td>'
             . '<td>' . ($b['owner_name'] !== null ? e($b['owner_name']) . ' <small class="text-muted">#' . (int) $b['owner_id'] . '</small>' : '<span class="text-muted">—</span>') . '</td>'

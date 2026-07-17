@@ -114,6 +114,23 @@ if ($action === 'dialog') {
     redirectTo('/admin/buildings.php');
 }
 
+if ($action === 'toggle-open') {
+    $id = (int) ($_POST['id'] ?? 0);
+    $open = !empty($_POST['open']);
+
+    try {
+        $service->setOpen($id, $open);
+    } catch (\InvalidArgumentException $e) {
+        setFlash('warning', $e->getMessage());
+        redirectTo('/admin/buildings.php');
+    }
+
+    setFlash('success', $open
+        ? "Bâtiment #{$id} ouvert."
+        : "Bâtiment #{$id} fermé — son dialogue se tait.");
+    redirectTo('/admin/buildings.php');
+}
+
 if ($action === 'restore') {
     $id = (int) ($_POST['id'] ?? 0);
     if ($service->restore($id)) {

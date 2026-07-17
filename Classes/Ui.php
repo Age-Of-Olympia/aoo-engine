@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20260716"></script>
                 <script src="js/console.js?v=20260614"></script>
-                <link href="css/main.min.css?v=20260714" rel="stylesheet">
+                <link href="css/main.min.css?v=20260718" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct

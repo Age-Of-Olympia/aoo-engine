@@ -1955,3 +1955,27 @@ blockquote{
 #admin-coords-close:hover {
     color: red;
 }
+
+/* Pastille d'état d'un bâtiment sélectionné (observe.php) — habillage
+ * hérité : ligne centrée sous la carte ; le HUD la recompose autrement
+ * (css/hud.css). */
+.building-status {
+    text-align: center;
+    margin: 6px auto;
+    font-size: 13px;
+}
+
+.building-status-door {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 8px;
+}
+
+.building-status-door--open {
+    color: #3a6b35;
+}
+
+.building-status-door--closed {
+    color: #810303;
+}

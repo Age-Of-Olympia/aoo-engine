@@ -1017,6 +1017,9 @@
                 $w.children('.card-name'),
                 $type,
                 $faction.parent().hasClass('card-type') ? $() : $faction,
+                /* Bâtiment : pastille d'état (Ouvert/Fermé + PV) sous la
+                 * ligne de type — émise par observe.php à côté de la carte. */
+                $d.find('.building-status'),
                 $w.children('.card-text')
             );
             $card.empty().append($left, $main);
@@ -1036,6 +1039,15 @@
         /* Équipement porté (observe.php, personnage sélectionné) :
          * colonne dédiée de la grille, écrans larges seulement (CSS). */
         $sel.append($d.children('.equip-strip'));
+
+        /* Dialogue porté par un bâtiment OUVERT (observe.php n'émet
+         * .view-dialog que dans ce cas) : cellule dédiée de la zone de
+         * sélection — le dialogue prend la place, l'état reste en
+         * pastille compacte dans .hud-sel-main. */
+        var $dialog = $d.children('.view-dialog');
+        if ($dialog.length) {
+            $sel.addClass('hud-sel--dialog').append($dialog);
+        }
 
         $sel.append($d.children('#case-coords'));
 

@@ -88,6 +88,8 @@ $applyForm = static function (Race $race): string {
     // proposée à l'inscription, quel que soit l'état de la case Jouable.
     $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
     $race->setKind($kind);
+    // Nature (structures seulement) : édifice (porte) ou obstacle (mur).
+    $race->setStructureNature(($_POST['structure_nature'] ?? 'edifice') === 'obstacle' ? 'obstacle' : 'edifice');
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);

@@ -448,26 +448,57 @@ if($res->num_rows){
 
         $card .= Ui::get_card($data);
 
-        /* Dialogue porté par l'entité bâtiment (buildings.dialog) : même
-         * panneau flottant que les déclencheurs map_dialogs, mais le lien
-         * vit sur l'entité et suit son cycle de vie — un bâtiment en
-         * construction ou en ruine est muet. */
+        /* Bâtiment sélectionné : pastille d'ÉTAT (toujours), porte
+         * Ouvert/Fermé pour tout ÉDIFICE (races.structure_nature — un
+         * mur construit n'a pas de porte ; son is_open signifiera un
+         * jour la passabilité), et le dialogue seulement si le bâtiment
+         * est OUVERT — endommagé sous le seuil, en construction, en
+         * ruine ou fermé volontairement, il se tait
+         * (BuildingService::closureReason, source unique). */
         if (($target->data->player_type ?? '') === 'building') {
 
-            $buildingDetails = (new BuildingService())->getDetails($target->id);
+            $buildingService = new BuildingService();
+            $buildingDetails = $buildingService->getDetails($target->id);
 
-            if ($buildingDetails !== null
-                && $buildingDetails->getDialog() !== ''
-                && $buildingDetails->getBuildState() === BuildingDetails::STATE_BUILT) {
+            if ($buildingDetails !== null) {
 
-                $card .= '<div class="view-dialog">' . Ui::get_dialog($player, array(
-                    'name' => $target->data->name,
-                    'avatar' => $target->data->portrait,
-                    'dialog' => $buildingDetails->getDialog(),
-                    'text' => '',
-                    'player' => $player,
-                    'target' => $target,
-                )) . '</div>';
+                $closure = $buildingService->closureReason($buildingDetails, (int) $pvPct);
+
+                $stateLabels = array(
+                    BuildingDetails::STATE_BUILT => 'Construit',
+                    BuildingDetails::STATE_CONSTRUCTION => 'En construction',
+                    BuildingDetails::STATE_RUIN => 'Ruine',
+                );
+                $stateLabel = $stateLabels[$buildingDetails->getBuildState()] ?? ucfirst($buildingDetails->getBuildState());
+
+                $hasDialog = $buildingDetails->getDialog() !== '';
+                $isEdifice = (bool) $raceService->getRaceByName((string) $target->data->race)?->isEdifice();
+
+                $door = '';
+                if ($isEdifice) {
+                    $door = $closure === null
+                        ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
+                        : '<span class="building-status-door building-status-door--closed">Fermé'
+                            . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
+                }
+
+                $card .= '<div class="building-status'
+                    . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">'
+                    . $door
+                    . '<span class="building-status-state">' . $stateLabel . ' · PV ' . (int) $pvPct . '%</span>'
+                    . '</div>';
+
+                if ($hasDialog && $closure === null) {
+
+                    $card .= '<div class="view-dialog">' . Ui::get_dialog($player, array(
+                        'name' => $target->data->name,
+                        'avatar' => $target->data->portrait,
+                        'dialog' => $buildingDetails->getDialog(),
+                        'text' => '',
+                        'player' => $player,
+                        'target' => $target,
+                    )) . '</div>';
+                }
             }
         }
 

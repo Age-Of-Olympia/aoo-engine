@@ -459,6 +459,27 @@ themselves through other chantiers:
   que les PNJ), édition dans admin → Bâtiments, garde de suppression dans
   `DialogService::deleteGameDialog`. Ce qui était porté par des PNJ
   (marchand, lore) peut migrer sur des bâtiments.
+
+  **2026-07-18 — porte, nature et HUD.** Décisions :
+  - `races.structure_nature` sépare les **édifices** (vrais bâtiments —
+    ont une PORTE, toujours ouvrable/fermable) des **obstacles** (murs
+    construits — pas de porte). Une palissade n'est pas un bâtiment.
+  - `buildings.is_open` = fermeture volontaire (admin, un jour le
+    propriétaire). Ouverture effective : `BuildingService::
+    closureReason` (source unique) — fermé d'office en ruine, en
+    construction ou endommagé sous `CLOSED_BELOW_PV_PCT` (50 %, aligné
+    sur le seuil du sprite brisé). **Un bâtiment fermé tait son
+    dialogue** (et fermera ses services).
+  - Pour les OBSTACLES et les futurs coffres, le même drapeau signifiera
+    verrouillé / laisse passer (passabilité) — système d'ouverture à
+    MUTUALISER, pas un mécanisme par famille. Non implémenté (go.php ne
+    lit pas is_open).
+  - HUD : la zone de sélection intègre la pastille d'état (porte + état
+    + PV, `.building-status` rangée par composeSelection) et le panneau
+    de dialogue en colonne dédiée (`.hud-sel--dialog`, gabarit 500×500
+    de dialog.css neutralisé — le portrait vit déjà dans la fiche).
+  - L'inactivité (« inactif ») est réservée aux joueurs RÉELS — jamais
+    PNJ, tutoriel ou structures (corrigé à la source, Player::get_data).
 - **Phase 0 — partially exists**: `LifeLossExecuteCharacterizationTest` and
   the combat-simulation tests already pin part of the attack path; golden
   masters for `get_caracs()` / `getRemaining()` / `putBonus()` remain to do.

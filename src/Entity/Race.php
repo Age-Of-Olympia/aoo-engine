@@ -55,6 +55,16 @@ class Race
     #[ORM\Column(type: "string", length: 20, options: ["default" => "character"])]
     private string $kind = 'character';
 
+    /**
+     * Nature d'un type de STRUCTURE : 'edifice' (vrai bâtiment — a une
+     * porte, toujours ouvrable/fermable) ou 'obstacle' (objet construit
+     * type mur — pas de porte ; is_open y signifiera un jour la
+     * passabilité, mutualisé avec les coffres). Ignoré pour les races
+     * de personnages.
+     */
+    #[ORM\Column(type: "string", length: 20, options: ["default" => "edifice"])]
+    private string $structure_nature = 'edifice';
+
     #[ORM\Column(type: "string", length: 20, options: ["default" => "#FFFFFF"])]
     private string $bgColor = '#FFFFFF';
 
@@ -234,6 +244,22 @@ class Race
     public function isStructureKind(): bool
     {
         return $this->kind === \App\Enum\EntityCategory::Structure->value;
+    }
+
+    public function getStructureNature(): string
+    {
+        return $this->structure_nature;
+    }
+
+    public function setStructureNature(string $structure_nature): void
+    {
+        $this->structure_nature = $structure_nature;
+    }
+
+    /** Vrai bâtiment (porte Ouvert/Fermé) — par opposition aux murs construits. */
+    public function isEdifice(): bool
+    {
+        return $this->isStructureKind() && $this->structure_nature === 'edifice';
     }
 
     public function getBgColor(): string
