@@ -140,14 +140,54 @@ destroys the UniqueObject row and puts the instance back in the
 inventory — identity survives the round trip. Ground STACKS of
 fungibles stay `map_items` untouched.
 
-### 3.4 Usure lands here
+### 3.4 Usure lands here — wear model (decided 2026-07-17)
 
-`durability` decrement evolves the existing `DamageObject` instruction
-(chance-based instant break → gradual wear, break at 0 keeps the
-recipe-elements-back behavior). Repair of ITEMS is a durability
-mutation (merchant service or action with a `RequiresItem` material
-cost) — distinct from structure repair (PV heal), same philosophy:
-distinct actions, shared machinery.
+**Per-object triggers, per-turn decay.** Each catalog item declares
+which events arm its wear and how fast it wears (columns shipped with
+the items JSON→DB move):
+
+- `wear_triggers` — set of {`attack`, `defense`, `move`, `usage`}:
+  a sword arms on attack, an armor when its wearer takes a hit, boots
+  on movement, a tool on usage. Empty = never wears (gold, trophies).
+- `wear_rate` — durability points lost **per turn** in which at least
+  one armed trigger fired.
+
+**The unit of decay is the TURN**: events during a turn only FLAG the
+instance (`worn_this_turn` / last-armed timestamp); the decrement is
+applied once, at new-turn processing — the same pass that refreshes
+PA/MVT. Ten attacks in one turn wear the sword once. This keeps wear
+predictable, cheap (one pass), and turn-native like everything else in
+AoO. The new-turn recap logs it (« Votre gladius s'use (−2) »).
+
+A wear trigger on a still-stacked unit promotes it first (§5c) — in
+practice equip already promoted weapons/armor, movement wear concerns
+equipped boots, usage promotes tools on first use.
+
+`DamageObject` (crits, corruption) stays as bigger, immediate
+decrements on top. Repair of ITEMS is a durability mutation (merchant
+service or action with a `RequiresItem` material cost) — distinct from
+structure repair (PV heal), same philosophy: distinct actions, shared
+machinery.
+
+### 3.5 HUD figuration of wear
+
+Where the player sees durability, consistent with the paper & ink HUD:
+
+- **Bandeau d'équipement** (EquipmentSlotsView, top bar + fiche): a
+  thin gauge under each equipped item's icon — same visual language as
+  the existing `.hud-xp-progress` bar; neutral ≥ 50 %, encre orangée
+  < 50 %, rouge < 20 %.
+- **Brisé (0)**: icon grayed with a fissure overlay + « brisé » badge;
+  a broken item stops contributing its caracs (applyItemCaracs skips
+  it) — that IS the gameplay meaning of brisé.
+- **Inventaire**: identical pristine units stay one stacked line;
+  instances with differing wear render as separate lines each with its
+  gauge (the team's schema) — grouping key = catalogue + empreinte
+  d'état (§5b). Tooltip shows « durabilité 37/100 » + altérations.
+- **Nouveau tour**: wear applied that turn is listed in the recap /
+  events feed, so decay is visible when it happens, not discovered.
+- **Objets uniques posés** (map): the selection zone already shows a
+  state line for structures; a wrapped instance shows its gauge there.
 
 ---
 
@@ -278,13 +318,10 @@ instance state equals pristine.
 
 1. ~~**Conversion policy**~~ RESOLVED (2026-07-17): lazy promotion —
    §5c.
-2. ~~**Durability semantics — state column?**~~ RESOLVED: thresholds —
-   0 = brisé, < 0 = détruit. Remaining sub-question, WEAR TRIGGERS,
-   proposed model (to confirm): **wear on use** — a weapon loses
-   durability on each attack it lands, armor when its wearer takes
-   damage, both through the existing DamageObject/combat pipeline
-   (no time-based decay for carried items; buildings may weather
-   separately). Corruption effects and crits stay bigger decrements.
+2. ~~**Durability semantics**~~ FULLY RESOLVED (2026-07-17): thresholds
+   (0 = brisé, < 0 = détruit) + per-object triggers
+   (attack/defense/move/usage, settable per catalog item) + **the turn
+   as the unit of decay** — see §3.4, HUD figuration §3.5.
 3. ~~**Catalog flags**~~ RESOLVED (2026-07-17): **both** — catalog
    flags remain for inherently-cursed/enchanted KINDS; instance params
    carry per-instance altérations.
