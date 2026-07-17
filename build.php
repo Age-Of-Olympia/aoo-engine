@@ -59,7 +59,10 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
     $item->get_data();
 
 
-    if(!$item->get_n($player)){
+    /* Pile uniquement : le mur legacy consomme une unité de pile — une
+     * instance (objet usé/nommé) ne doit ni passer la garde ni être
+     * "consommée" pour rien. */
+    if(!$item->get_n($player, includeInstances: false)){
 
         exit('error item n');
     }
@@ -73,10 +76,14 @@ if(!empty($_POST['itemId']) && !empty($_POST['coords'])){
         $table = $item->data->subtype;
     }
 
+    /* Décrément AVANT la pose, retour vérifié : si la pile ne couvre pas
+     * l'unité, aucun mur gratuit. */
+    if(!$item->add_item($player, -1)){
+
+        exit('error item n');
+    }
+
     View::put($table, $item->row->name, $coords);
-
-
-    $item->add_item($player, -1);
 
     Log::put($player, $player, $player->data->name." a construit ".$item->data->name. " en ".$coordsTbl[0].",".$coordsTbl[1].",".$player->coords->z, "build", '',  time());
 
@@ -111,7 +118,8 @@ $view = new View($player->coords, p:1);
 echo '<h1>Construire</h1>';
 
 
-$itemN = $item->get_n($player);
+/* Même règle que la garde : seule la pile est constructible. */
+$itemN = $item->get_n($player, includeInstances: false);
 
 $nText = (!$itemN) ? '<font color="red">x'. $itemN .'</font>' : 'x'. $itemN ;
 

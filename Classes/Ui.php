@@ -86,7 +86,7 @@ class Ui{
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
-                <script src="js/build_picker.js?v=20260717"></script>
+                <script src="js/build_picker.js?v=20260718"></script>
         ';
 
         echo '    </head>
@@ -380,11 +380,19 @@ class Ui{
 
             $emp = (!empty($item->data->emplacement)) ? $item->data->emplacement : '';
 
+            /* Ligne d'INSTANCE (objet individualisé) vs ligne de pile :
+             * id DOM distinct (i{instanceId} — deux lignes du même objet
+             * catalogue ne doivent pas partager un id), et attribut dédié
+             * pour les flux qui devront viser l'individu. */
+            $isInstance = isset($row->instance_id);
+            $domId = $isInstance ? 'i'. (int) $row->instance_id : $row->id;
+
             echo '
             <tr
                 class="item-case"
-                id="'. $row->id .'"
+                id="'. $domId .'"
                 data-id="'. $row->id .'"
+                data-instance-id="'. ($isInstance ? (int) $row->instance_id : '') .'"
                 data-name="'. $itemName .'"
                 data-n="'. $row->n .'"
                 data-text="'. $item->data->text .'"
@@ -483,11 +491,21 @@ class Ui{
                 }
                 $wornClass = $isEquipped ? ' row-action--worn' : '';
 
+                /* Jeter/Artisanat opèrent sur la PILE (drop → map_items,
+                 * craft → décrément de pile) : sur une ligne d'instance ils
+                 * dupliqueraient l'objet à partir de rien — masqués tant que
+                 * le flux de dépôt d'instance (dropAt) n'est pas câblé ici. */
+                $stackActions = '';
+                if(!$isInstance){
+
+                    $stackActions = '
+                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
+                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>';
+                }
+
                 echo '
                 <td class="item-actions">
-                    <button class="row-action'. $wornClass .'" data-action="use" title="'. $useTitle .'" '. ($usable ? '' : 'disabled') .'><span class="ra '. $useIcon .'"></span></button>
-                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
-                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>
+                    <button class="row-action'. $wornClass .'" data-action="use" title="'. $useTitle .'" '. ($usable ? '' : 'disabled') .'><span class="ra '. $useIcon .'"></span></button>'. $stackActions .'
                 </td>
                 ';
             }

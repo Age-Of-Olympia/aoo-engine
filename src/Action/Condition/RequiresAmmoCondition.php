@@ -26,6 +26,11 @@ class RequiresAmmoCondition extends BaseCondition implements HasParameterSchema
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
+        /* Remise à zéro : l'instance est partagée entre occurrences d'une
+         * même action, un échec ne doit pas hériter du toRemove d'une
+         * occurrence précédente (même garde que RequiresItemCondition). */
+        $this->toRemove = false;
+
         $result = new ConditionResult(true, array(), array());
         $details = array();
         $costIsAffordable = false;

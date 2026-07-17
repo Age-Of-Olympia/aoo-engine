@@ -115,28 +115,47 @@ class BuildingService extends BaseService
 
         $avatar = self::resolveAvatar($type);
 
-        $conn->executeStatement(
-            'INSERT INTO players
-                (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
-            [
-                $id,
-                'building',
-                $displayId,
-                $name ?? $race->getLabel(),
-                $type,
-                $avatar,
-                $avatar,
-                $coordsId,
-                time(),
-            ]
-        );
+        // Une seule transaction pour la paire players + buildings : un échec
+        // du satellite ne doit pas laisser une ligne players orpheline qui
+        // occupe la case sans apparaître dans listBuildings(). La case doit
+        // être LIBRE (ni entité, ni mur) — vérifié ici, source unique de la
+        // règle, sous verrou pour resserrer la fenêtre concurrente.
+        $conn->transactional(function ($conn) use ($id, $displayId, $name, $race, $type, $avatar, $coordsId, $ownerId, $faction, $goCoords): void {
+            $occupant = $conn->fetchOne('SELECT id FROM players WHERE coords_id = ? FOR UPDATE', [$coordsId]);
+            if ($occupant !== false) {
+                throw new \InvalidArgumentException(
+                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par l'entité #{$occupant}."
+                );
+            }
+            if ($conn->fetchOne('SELECT coords_id FROM map_walls WHERE coords_id = ?', [$coordsId]) !== false) {
+                throw new \InvalidArgumentException(
+                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un mur."
+                );
+            }
 
-        $conn->executeStatement(
-            'INSERT INTO buildings (player_id, owner_id, faction, build_state)
-             VALUES (?, ?, ?, ?)',
-            [$id, $ownerId, $faction, BuildingDetails::STATE_BUILT]
-        );
+            $conn->executeStatement(
+                'INSERT INTO players
+                    (id, player_type, display_id, name, race, avatar, portrait, coords_id, nextTurnTime, registerTime)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
+                [
+                    $id,
+                    'building',
+                    $displayId,
+                    $name ?? $race->getLabel(),
+                    $type,
+                    $avatar,
+                    $avatar,
+                    $coordsId,
+                    time(),
+                ]
+            );
+
+            $conn->executeStatement(
+                'INSERT INTO buildings (player_id, owner_id, faction, build_state)
+                 VALUES (?, ?, ?, ?)',
+                [$id, $ownerId, $faction, BuildingDetails::STATE_BUILT]
+            );
+        });
 
         // Le damier de chaque joueur est un SVG caché : invalider le
         // voisinage pour que le bâtiment apparaisse sans attendre un
@@ -348,12 +367,16 @@ class BuildingService extends BaseService
             [$playerId]
         );
 
-        $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
-        foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
-            $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
-        }
-        $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$playerId, $playerId]);
-        $conn->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
+        // Même hygiène transactionnelle que takeInstance() : la séquence de
+        // DELETE est tout-ou-rien, pas de démontage à moitié fait.
+        $conn->transactional(function ($conn) use ($playerId): void {
+            $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
+            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
+            }
+            $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$playerId, $playerId]);
+            $conn->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
+        });
 
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);

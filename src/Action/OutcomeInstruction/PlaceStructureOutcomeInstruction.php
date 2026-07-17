@@ -3,6 +3,7 @@
 namespace App\Action\OutcomeInstruction;
 
 use App\Entity\OutcomeInstruction;
+use App\Action\Condition\BuildSitePick;
 use App\Action\Condition\ConditionObject;
 use App\Action\Schema\FieldType;
 use App\Action\Schema\HasParameterSchema;
@@ -21,10 +22,11 @@ use Doctrine\ORM\Mapping as ORM;
  * joueur a des PV, s'attaque et se répare.
  *
  * L'acteur devient propriétaire, sa faction est reprise sur le
- * satellite. La case est choisie automatiquement (première case libre
- * autour, rayon croissant) — le choix explicite de la case viendra
- * avec l'UI dédiée, l'instruction acceptera alors des coordonnées
- * fournies par l'appelant.
+ * satellite. Deux modes de choix de case :
+ * - case CHOISIE (build_picker.js → buildX/buildY) : validée par
+ *   BuildSiteCondition et transmise via ConditionObject::getBuildCoords
+ *   ({@see \App\Action\Condition\BuildSitePick}, source unique) ;
+ * - sinon, automatique : première case libre adjacente, rayon 1.
  */
 #[ORM\Entity]
 class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements HasParameterSchema
@@ -57,26 +59,21 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
 
         $goCoords = clone $actor->coords;
 
-        /* Case CHOISIE par le joueur (mode choix de case, build_picker) :
-         * validée strictement — adjacente ET libre, exactement les cases
-         * .go que le masque a proposées. Sinon : première case libre
-         * adjacente, rayon croissant (ancien comportement). */
-        if (isset($_POST['buildX'], $_POST['buildY'])) {
-            $requested = ((int) $_POST['buildX']) . ',' . ((int) $_POST['buildY']);
+        if (BuildSitePick::requested()) {
+            /* Priorité au résultat déposé par BuildSiteCondition (déjà
+             * validé, avant tout paiement) ; repli sur le résolveur
+             * partagé pour une action sans la condition attachée. */
+            $picked = $conditionObject->getBuildCoords() ?? BuildSitePick::resolve($actor->coords);
 
-            $around = View::get_coords_arround(clone $actor->coords, 1);
-            $taken = View::get_coords_taken(clone $actor->coords);
-
-            if (!in_array($requested, $around, true) || in_array($requested, $taken, true)) {
+            if ($picked === null) {
                 return new OutcomeResult(
                     false,
                     outcomeSuccessMessages: array(),
-                    outcomeFailureMessages: ['Impossible de construire là — la case doit être adjacente et libre.']
+                    outcomeFailureMessages: [BuildSitePick::REFUSAL]
                 );
             }
 
-            $goCoords->x = (int) $_POST['buildX'];
-            $goCoords->y = (int) $_POST['buildY'];
+            $goCoords = $picked;
         } else {
             View::get_free_coords_id_arround($goCoords, 1);
         }

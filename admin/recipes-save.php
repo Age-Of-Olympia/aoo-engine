@@ -34,8 +34,12 @@ if ($action === 'delete') {
     foreach (['craft_recipes_ingredients', 'craft_recipes_results', 'race_recipes'] as $table) {
         $db->exe("DELETE FROM {$table} WHERE recipe_id = ?", $id);
     }
-    $db->exe('DELETE FROM craft_recipes WHERE id = ?', $id);
-    setFlash('success', 'Recette supprimée.');
+    $affected = $db->exe('DELETE FROM craft_recipes WHERE id = ?', $id, false, true);
+    if ($affected > 0) {
+        setFlash('success', 'Recette supprimée.');
+    } else {
+        setFlash('warning', "Aucune recette #{$id}.");
+    }
     redirectTo('/admin/recipes.php');
 }
 
@@ -77,9 +81,15 @@ if ($ingredients === [] || $results === []) {
 }
 
 if ($action === 'create') {
+    // Unicité par nom (clé naturelle des bundles export/import) : un
+    // doublon rendrait l'export « ?name= » ambigu.
+    $dup = $db->exe('SELECT id FROM craft_recipes WHERE name = ?', $name);
+    if ($dup->num_rows) {
+        setFlash('warning', "Une recette « {$name} » existe déjà.");
+        redirectTo('/admin/recipes.php?action=new');
+    }
     $db->exe('INSERT INTO craft_recipes (name) VALUES (?)', $name);
-    $res = $db->exe('SELECT id FROM craft_recipes WHERE name = ? ORDER BY id DESC LIMIT 1', $name);
-    $id = (int) $res->fetch_object()->id;
+    $id = $db->insertId();
 } else {
     $id = (int) ($_POST['id'] ?? 0);
     $exists = $db->exe('SELECT id FROM craft_recipes WHERE id = ?', $id);

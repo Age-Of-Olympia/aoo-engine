@@ -66,9 +66,9 @@ function recipe_render_list(string $csrfToken): string
             . '<td class="text-nowrap">'
             . '<a class="btn btn-sm btn-outline-primary" href="/admin/recipes.php?action=edit&id=' . (int) $r->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
-            . ' href="/admin/action-export.php?type=recipe&name=' . e($r->name) . '">JSON</a> '
+            . ' href="/admin/action-export.php?type=recipe&name=' . e(urlencode($r->name)) . '">JSON</a> '
             . '<form method="post" action="/admin/recipes-save.php?action=delete" class="d-inline"'
-            . ' onsubmit="return confirm(\'Supprimer la recette ' . e($r->name) . ' ?\');">'
+            . ' onsubmit="return confirm(' . e(json_encode('Supprimer la recette ' . $r->name . ' ?', JSON_UNESCAPED_UNICODE)) . ');">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="id" value="' . (int) $r->id . '">'
             . '<button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button></form>'
@@ -108,8 +108,14 @@ function recipe_render_form(?object $recipe, string $csrfToken): string
         }
     }
 
+    /* Toujours au moins un slot vide de plus que l'existant : la
+     * sauvegarde est remplace-tout, un formulaire plus court que la
+     * recette perdrait silencieusement les lignes excédentaires. */
+    $ingredientSlots = max(RECIPE_INGREDIENT_SLOTS, count($ingredients) + 1);
+    $resultSlots = max(RECIPE_RESULT_SLOTS, count($results) + 1);
+
     $ingredientRows = '';
-    for ($i = 0; $i < RECIPE_INGREDIENT_SLOTS; $i++) {
+    for ($i = 0; $i < $ingredientSlots; $i++) {
         $sel = isset($ingredients[$i]) ? (int) $ingredients[$i]->item_id : 0;
         $count = isset($ingredients[$i]) ? (int) $ingredients[$i]->count : 1;
         $ingredientRows .= '<div class="mb-1">' . recipe_item_select("ing_item[{$i}]", $sel, $items)
@@ -118,7 +124,7 @@ function recipe_render_form(?object $recipe, string $csrfToken): string
     }
 
     $resultRows = '';
-    for ($i = 0; $i < RECIPE_RESULT_SLOTS; $i++) {
+    for ($i = 0; $i < $resultSlots; $i++) {
         $sel = isset($results[$i]) ? (int) $results[$i]->item_id : 0;
         $count = isset($results[$i]) ? (int) $results[$i]->count : 1;
         $resultRows .= '<div class="mb-1">' . recipe_item_select("res_item[{$i}]", $sel, $items)

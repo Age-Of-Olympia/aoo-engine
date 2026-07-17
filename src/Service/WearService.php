@@ -84,8 +84,7 @@ class WearService extends BaseService
                 [$after, (int) $row['id']]
             );
 
-            $label = $row['custom_name'] !== '' ? $row['custom_name'] : ucfirst((string) $row['catalog_name']);
-            $label = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+            $label = ItemInstanceService::label($row['custom_name'], (string) $row['catalog_name']);
 
             if ($after === 0 && $before > 0) {
                 $recap[] = $label . ' <span class="ra ra-shattered-sword"></span> s\'est <b>brisé</b> !';

@@ -30,11 +30,7 @@ class ItemPipelineGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
     private function gladiusOrSkip(): Item
     {
-        $item = Item::get_item_by_name('gladius');
-        if ($item === false || $item === null) {
-            $this->markTestSkipped("items catalog not seeded (no 'gladius' row).");
-        }
-        $item->get_data();
+        $item = $this->itemOrSkip('gladius');
         if (($item->data->emplacement ?? '') !== 'main1') {
             $this->markTestSkipped('gladius is not a main1 weapon in this catalog.');
         }

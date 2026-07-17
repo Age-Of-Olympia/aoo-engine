@@ -5,7 +5,6 @@ namespace App\Service\ImportExport;
 use App\Entity\EntityManagerFactory;
 use App\Service\ItemStatsSeeder;
 use Doctrine\DBAL\Connection;
-use Throwable;
 
 /**
  * Importe des bundles d'objets ({@see ItemExporter}) en
@@ -44,15 +43,14 @@ final class ItemImporter implements ObjectImporter
 
         $conn = $this->connection ??= EntityManagerFactory::getEntityManager()->getConnection();
 
-        try {
-            $conn->transactional(function (Connection $conn) use ($payloads): void {
-                foreach ($payloads as $payload) {
-                    $this->apply($conn, $payload);
-                }
-            });
-        } catch (Throwable $e) {
-            $report->reject('lot', 'écriture échouée : ' . $e->getMessage());
-        }
+        // Un échec d'écriture REMONTE (rollback fait) — convention de la
+        // famille : le rapport ne doit jamais lister des créés/à-jour ET
+        // un rejet en même temps.
+        $conn->transactional(function (Connection $conn) use ($payloads): void {
+            foreach ($payloads as $payload) {
+                $this->apply($conn, $payload);
+            }
+        });
 
         return $report;
     }
@@ -123,7 +121,7 @@ final class ItemImporter implements ObjectImporter
         }
         foreach (ItemStatsSeeder::SCALAR_KEYS as $key) {
             $set[] = "`{$key}` = ?";
-            $value = $payload[$key] ?? (in_array($key, ['text', 'emplacement', 'type', 'subtype', 'race'], true) ? '' : 0);
+            $value = $payload[$key] ?? (in_array($key, ItemStatsSeeder::STRING_KEYS, true) ? '' : 0);
             $params[] = is_numeric($value) ? $value : (string) $value;
         }
         foreach (['munitions' => 'munitions', 'addEffects' => 'add_effects', 'forbid' => 'forbid', 'extra' => 'extra'] as $key => $col) {

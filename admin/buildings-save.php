@@ -37,9 +37,15 @@ $action = $_GET['action'] ?? '';
 $service = new BuildingService();
 
 if ($action === 'place') {
+    // Coordonnées obligatoires : un POST malformé ne doit pas poser le
+    // bâtiment en (0,0) avec un flash de succès.
+    if (!is_numeric($_POST['x'] ?? null) || !is_numeric($_POST['y'] ?? null)) {
+        setFlash('warning', 'Coordonnées X/Y requises.');
+        redirectTo('/admin/buildings.php');
+    }
     $goCoords = (object) [
-        'x' => (int) ($_POST['x'] ?? 0),
-        'y' => (int) ($_POST['y'] ?? 0),
+        'x' => (int) $_POST['x'],
+        'y' => (int) $_POST['y'],
         'z' => 0,
         'plan' => trim((string) ($_POST['plan'] ?? 'gaia')),
     ];

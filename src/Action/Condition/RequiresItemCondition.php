@@ -36,6 +36,11 @@ class RequiresItemCondition extends BaseCondition implements HasParameterSchema
 
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
+        // L'instance de condition est partagée entre les occurrences d'une
+        // même action : sans remise à zéro, un échec NON bloquant hériterait
+        // du toRemove d'une occurrence précédente et serait payé quand même.
+        $this->toRemove = false;
+
         $params = $condition->getParameters();
         $itemId = $params['item'] ?? null;
         $n = max(1, (int) ($params['n'] ?? 1));

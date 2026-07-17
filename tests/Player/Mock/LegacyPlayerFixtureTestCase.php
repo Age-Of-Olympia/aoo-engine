@@ -2,7 +2,9 @@
 
 namespace Tests\Player\Mock;
 
+use App\Service\BuildingService;
 use App\Service\RaceService;
+use Classes\Item;
 use Classes\Player;
 use Classes\View;
 use Doctrine\DBAL\Connection;
@@ -155,6 +157,48 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
     protected function trackEntityId(int $id): void
     {
         $this->createdPlayerIds[] = $id;
+    }
+
+    /** Skip proprement quand les tables structures ne sont pas migrées. */
+    protected function requireBuildingsOrSkip(): void
+    {
+        try {
+            $this->link->executeQuery('SELECT 1 FROM buildings LIMIT 1');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
+        }
+    }
+
+    /** Objet du catalogue, données chargées — skip si non seedé. */
+    protected function itemOrSkip(string $name): Item
+    {
+        $item = Item::get_item_by_name($name);
+        if ($item === false || $item === null) {
+            $this->markTestSkipped("items catalog not seeded (no '{$name}' row).");
+        }
+        $item->get_data();
+
+        return $item;
+    }
+
+    /**
+     * Pose une structure jetable via BuildingService (skip si le type
+     * n'est pas seedé), trackée pour le teardown du harnais.
+     */
+    protected function placeStructure(string $type, int $x, int $y, string $plan = 'gaia'): int
+    {
+        $race = (new RaceService())->getRaceByName($type);
+        if ($race === null || !$race->isStructureKind()) {
+            $this->markTestSkipped("structure type '{$type}' not seeded (run migrations).");
+        }
+
+        $id = (new BuildingService())->place(
+            $type,
+            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]
+        );
+        $this->trackEntityId($id);
+
+        return $id;
     }
 
     /**

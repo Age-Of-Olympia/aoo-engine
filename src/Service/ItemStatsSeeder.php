@@ -30,6 +30,13 @@ class ItemStatsSeeder
         'fm', 'm', 'r', 'rm', 'spd', 'ae',
     ];
 
+    /**
+     * Sous-ensemble de SCALAR_KEYS typé chaîne (défaut '' au lieu de 0)
+     * — déclaré ICI pour qu'une future colonne texte ne soit pas
+     * silencieusement défaut-ée à 0 par les consommateurs (ItemImporter).
+     */
+    public const STRING_KEYS = ['text', 'emplacement', 'type', 'subtype', 'race'];
+
     /** Clés complexes stockées en colonnes JSON dédiées. */
     public const JSON_KEYS = ['munitions', 'addEffects', 'forbid'];
 

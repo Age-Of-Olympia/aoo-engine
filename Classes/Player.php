@@ -1288,6 +1288,15 @@ class Player implements ActorInterface {
             $this->get_data();
         }
 
+        /* Décrémenter la PILE d'abord et vérifier le retour : add_item
+         * refuse quand la pile ne couvre pas n (possession en instances
+         * seulement) — poser la bourse au sol AVANT créerait l'objet à
+         * partir de rien (duplication au ramassage). */
+        if(!$item->add_item($this, -$n)){
+
+            exit('error drop n');
+        }
+
         $values = array(
             'item_id'=>$item->id,
             'coords_id'=>$this->data->coords_id,
@@ -1297,9 +1306,6 @@ class Player implements ActorInterface {
         $db = new Db();
 
         $db->insert('map_items', $values);
-
-
-        $item->add_item($this, -$n);
     }
 
 
@@ -1674,6 +1680,19 @@ class Player implements ActorInterface {
             }
 
 
+            // Disponibilité AVANT toute mutation : un échec du chemin
+            // instance APRÈS la libération des emplacements laisserait des
+            // objets déséquipés en base alors que l'appelant croit qu'il ne
+            // s'est rien passé (l'objet visé n'est pas équipé ici — la
+            // branche UNEQUIP l'aurait intercepté — donc libérer des
+            // emplacements ne peut pas le rendre disponible).
+            $instanceService = new \App\Service\ItemInstanceService();
+            if($item->data->emplacement != 'munition' && $item->data->emplacement != 'trophee'
+                && !$instanceService->hasEquippableUnit($this->id, (int) $item->id)){
+
+                return EquipResult::DoNothing;
+            }
+
             // Phase 1c : libérer les emplacements des deux représentations —
             // piles héritées (SQL) et instances (service, avec retour en pile
             // des instances encore vierges).
@@ -1699,7 +1718,6 @@ class Player implements ActorInterface {
 
             $db->exe($sql, array_merge(array($this->id), $emplacementsToClear));
 
-            $instanceService = new \App\Service\ItemInstanceService();
             $instanceService->unequipEmplacements($this->id, $emplacementsToClear);
 
             if($item->data->emplacement == 'munition' || $item->data->emplacement == 'trophee'){

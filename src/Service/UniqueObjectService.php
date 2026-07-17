@@ -32,22 +32,29 @@ class UniqueObjectService extends BaseService
      * @return int the new unique object's players.id
      *
      * @throws \InvalidArgumentException when the instance doesn't exist,
-     *         is destroyed, or is still equipped
+     *         is destroyed, is still equipped, or is not held by a player
+     *         (already on the ground or already wrapped — an instance has
+     *         exactly UNE localisation)
      */
     public function placeInstance(int $instanceId, object $goCoords): int
     {
         $conn = $this->entityManager->getConnection();
 
+        // INNER JOIN sur le lien de possession : une instance déjà au sol
+        // (map_items_instances) ou déjà enveloppée (unique_objects) n'a
+        // pas de ligne ici et ne peut pas gagner une seconde localisation.
         $row = $conn->fetchAssociative(
             "SELECT i.id, i.custom_name, i.destroyed, it.name AS catalog_name, l.equiped
              FROM item_instances i
              JOIN items it ON it.id = i.item_id
-             LEFT JOIN players_items_instances l ON l.instance_id = i.id
+             JOIN players_items_instances l ON l.instance_id = i.id
              WHERE i.id = ?",
             [$instanceId]
         );
         if ($row === false || (int) $row['destroyed'] === 1) {
-            throw new \InvalidArgumentException("Instance #{$instanceId} introuvable ou détruite.");
+            throw new \InvalidArgumentException(
+                "Instance #{$instanceId} introuvable, détruite ou non portée par un joueur."
+            );
         }
         if (($row['equiped'] ?? '') !== '') {
             throw new \InvalidArgumentException("Instance #{$instanceId} encore équipée — déséquiper d'abord.");
@@ -133,6 +140,63 @@ class UniqueObjectService extends BaseService
         }
 
         $this->addAuditLog("UniqueObjectService::takeInstance unique #{$uniqueId} -> player #{$takerId}");
+
+        return (int) $instanceId;
+    }
+
+    /**
+     * Destruction en jeu (0 PV) : l'entité disparaît de la carte et
+     * l'instance enveloppée tombe BRISÉE au sol (durabilité 0, bourse)
+     * — l'identité survit et reste réparable, cohérent avec les deux
+     * états posé/construit.
+     *
+     * @return int|null the broken instance id, null when the target wraps nothing
+     */
+    public function destroyToGround(int $uniqueId): ?int
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $instanceId = $conn->fetchOne(
+            "SELECT u.item_instance_id
+             FROM unique_objects u JOIN players p ON p.id = u.player_id
+             WHERE u.player_id = ? AND p.player_type = 'unique'",
+            [$uniqueId]
+        );
+        if ($instanceId === false || $instanceId === null) {
+            return null;
+        }
+
+        $coordsId = $conn->fetchOne('SELECT coords_id FROM players WHERE id = ?', [$uniqueId]);
+        $goCoords = $conn->fetchAssociative(
+            'SELECT x, y, z, plan FROM coords WHERE id = ?',
+            [(int) $coordsId]
+        );
+
+        $conn->transactional(function ($conn) use ($uniqueId, $instanceId, $coordsId): void {
+            $conn->executeStatement(
+                'UPDATE item_instances SET durability = 0 WHERE id = ? AND durability > 0',
+                [(int) $instanceId]
+            );
+            $conn->executeStatement(
+                'INSERT INTO map_items_instances (coords_id, instance_id) VALUES (?, ?)',
+                [(int) $coordsId, (int) $instanceId]
+            );
+            $conn->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$uniqueId]);
+            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$uniqueId]);
+            }
+            $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$uniqueId, $uniqueId]);
+            $conn->executeStatement('DELETE FROM players WHERE id = ?', [$uniqueId]);
+        });
+
+        foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
+            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $uniqueId . $suffix);
+        }
+        if ($goCoords !== false) {
+            View::refresh_players_svg((object) $goCoords);
+        }
+
+        $this->addAuditLog("UniqueObjectService::destroyToGround unique #{$uniqueId} instance #{$instanceId}");
 
         return (int) $instanceId;
     }

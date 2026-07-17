@@ -31,22 +31,7 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         parent::setUp();
 
-        try {
-            $this->link->executeQuery('SELECT 1 FROM buildings LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
-        }
-    }
-
-    private function boisOrSkip(): Item
-    {
-        $item = Item::get_item_by_name('bois');
-        if ($item === false || $item === null) {
-            $this->markTestSkipped("items catalog not seeded (no 'bois' row).");
-        }
-        $item->get_data();
-
-        return $item;
+        $this->requireBuildingsOrSkip();
     }
 
     private function actionOrSkip(): \App\Interface\ActionInterface
@@ -59,24 +44,13 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         return $action;
     }
 
-    private function palissadeItemOrSkip(): Item
-    {
-        $item = Item::get_item_by_name('palissade');
-        if ($item === false || $item === null) {
-            $this->markTestSkipped("items catalog not seeded (no 'palissade' buildable).");
-        }
-        $item->get_data();
-
-        return $item;
-    }
-
     public function testWithoutThePalissadeObjectTheActionBlocksAndBuildsNothing(): void
     {
         $builder = $this->createRealPlayer('GmCarpenter');
         $builder->getCoords();
         $builder->get_caracs();
         $maxA = (int) $builder->caracs->a;
-        $this->palissadeItemOrSkip();
+        $this->itemOrSkip('palissade');
 
         $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
 
@@ -103,8 +77,8 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $builder->get_caracs();
         $maxA = (int) $builder->caracs->a;
 
-        $bois = $this->boisOrSkip();
-        $palissadeItem = $this->palissadeItemOrSkip();
+        $bois = $this->itemOrSkip('bois');
+        $palissadeItem = $this->itemOrSkip('palissade');
         $bois->add_item($builder, 10);
 
         // Craft par le vrai service de recettes.

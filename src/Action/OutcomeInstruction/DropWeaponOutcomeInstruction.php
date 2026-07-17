@@ -43,14 +43,22 @@ class DropWeaponOutcomeInstruction extends OutcomeInstruction implements HasPara
             if (!$target->isSimulated() && !empty($item->row->instance_id)) {
                 $instanceId = (int) $item->row->instance_id;
                 $service = new \App\Service\ItemInstanceService();
-                $service->unequipInstance($instanceId);
+                /* Branche sur le RÉSULTAT de la démotion, pas sur une
+                 * exception de dropAt : celle-ci couvre aussi une instance
+                 * détruite, qu'il ne faut surtout pas re-matérialiser en
+                 * pile neuve au sol. */
+                $demoted = $service->unequipInstance($instanceId);
                 $target->getCoords();
-                try {
-                    $coordsId = (int) \Classes\View::get_coords_id(clone $target->coords);
-                    $service->dropAt($instanceId, $coordsId);
-                } catch (\InvalidArgumentException) {
+                if ($demoted) {
                     // Redevenue pile au déséquipement (instance vierge) : ancien chemin.
                     $target->drop($item, 1);
+                } else {
+                    try {
+                        $coordsId = (int) \Classes\View::get_coords_id(clone $target->coords);
+                        $service->dropAt($instanceId, $coordsId);
+                    } catch (\InvalidArgumentException) {
+                        // Instance détruite ou introuvable : rien ne tombe.
+                    }
                 }
                 $target->refresh_invent();
                 $target->refresh_caracs();

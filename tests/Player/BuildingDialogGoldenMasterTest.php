@@ -33,11 +33,6 @@ class BuildingDialogGoldenMasterTest extends LegacyPlayerFixtureTestCase
             $this->markTestSkipped('buildings.dialog unavailable (run migrations): ' . $e->getMessage());
         }
 
-        $race = (new \App\Service\RaceService())->getRaceByName(self::TYPE);
-        if ($race === null || !$race->isStructureKind()) {
-            $this->markTestSkipped("structure type 'palissade' not seeded (run migrations).");
-        }
-
         // Dialogue jetable du catalogue — un nœud minimal valide.
         (new DialogService())->saveGameDialog(
             self::DIALOG,
@@ -59,13 +54,7 @@ class BuildingDialogGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     private function placePalissade(): int
     {
-        $id = (new BuildingService())->place(
-            self::TYPE,
-            (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia']
-        );
-        $this->trackEntityId($id);
-
-        return $id;
+        return $this->placeStructure(self::TYPE, 0, 3);
     }
 
     public function testSetDialogAttachesValidatesAndDetaches(): void

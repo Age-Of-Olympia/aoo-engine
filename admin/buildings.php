@@ -94,7 +94,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
                 . '</form> ';
         }
         $actions .= '<form method="post" action="/admin/buildings-save.php?action=remove" class="d-inline"'
-            . ' onsubmit="return confirm(\'Retirer définitivement ' . e($b['name']) . ' #' . (int) $b['id'] . ' ?\');">'
+            . ' onsubmit="return confirm(' . e(json_encode('Retirer définitivement ' . $b['name'] . ' #' . (int) $b['id'] . ' ?', JSON_UNESCAPED_UNICODE)) . ');">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
             . '<button class="btn btn-sm btn-outline-danger" type="submit">Retirer</button>'

@@ -39,11 +39,7 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         parent::setUp();
 
-        try {
-            $this->link->executeQuery('SELECT 1 FROM buildings LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
-        }
+        $this->requireBuildingsOrSkip();
 
         $race = (new \App\Service\RaceService())->getRaceByName(self::TYPE);
         if ($race === null || !$race->isStructureKind()) {
@@ -53,13 +49,7 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     private function placePalissadeAt(int $x, int $y): int
     {
-        $id = (new BuildingService())->place(
-            self::TYPE,
-            (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => 'gaia']
-        );
-        $this->trackEntityId($id);
-
-        return $id;
+        return $this->placeStructure('palissade', $x, $y);
     }
 
     public function testMeleeAttackOnBuildingResolvesEndToEnd(): void

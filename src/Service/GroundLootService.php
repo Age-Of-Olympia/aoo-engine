@@ -53,10 +53,16 @@ class GroundLootService
         }
 
         $text = $player->data->name . ' a ramassé des objets: ' . implode(', ', $lootList) . '.';
+        // Log::put lit les coords sur l'objet joueur : substitution
+        // temporaire, restaurée QUOI QU'IL ARRIVE — une exception ne doit
+        // pas laisser l'objet partagé corrompu pour la suite de la requête.
         $coordBackup = $player->coords ?? null;
         $player->coords = $logCoords;
-        Log::put($player, $player, $text, type: 'loot');
-        $player->coords = $coordBackup;
+        try {
+            Log::put($player, $player, $text, type: 'loot');
+        } finally {
+            $player->coords = $coordBackup;
+        }
 
         return $lootList;
     }

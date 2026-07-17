@@ -4,7 +4,6 @@ namespace App\Service\ImportExport;
 
 use App\Entity\EntityManagerFactory;
 use Doctrine\DBAL\Connection;
-use Throwable;
 
 /**
  * Importe des bundles de recettes ({@see RecipeExporter}) en
@@ -46,15 +45,14 @@ final class RecipeImporter implements ObjectImporter
 
         $conn = $this->connection ??= EntityManagerFactory::getEntityManager()->getConnection();
 
-        try {
-            $conn->transactional(function (Connection $conn) use ($payloads): void {
-                foreach ($payloads as $payload) {
-                    $this->apply($conn, $payload);
-                }
-            });
-        } catch (Throwable $e) {
-            $report->reject('lot', 'écriture échouée : ' . $e->getMessage());
-        }
+        // Un échec d'écriture REMONTE (rollback fait) — convention de la
+        // famille : le rapport ne doit jamais lister des créés/à-jour ET
+        // un rejet en même temps.
+        $conn->transactional(function (Connection $conn) use ($payloads): void {
+            foreach ($payloads as $payload) {
+                $this->apply($conn, $payload);
+            }
+        });
 
         return $report;
     }
@@ -74,7 +72,10 @@ final class RecipeImporter implements ObjectImporter
                 $report->reject('recette #' . $index, 'payload sans nom');
                 continue;
             }
-            $name = trim((string) $object['name']);
+            // Normalisation comme ItemImporter : la colonne est comparée en
+            // casse-insensible (utf8mb4_general_ci), « Potion » et « potion »
+            // entreraient en collision à l'écriture sans ceci.
+            $name = mb_strtolower(trim((string) $object['name']));
             if (isset($seen[$name])) {
                 $report->reject($name, 'doublon dans le bundle');
                 continue;

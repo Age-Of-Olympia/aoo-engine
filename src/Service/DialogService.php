@@ -233,10 +233,12 @@ class DialogService
         return $counts;
     }
 
-    /** Bâtiments portant CE dialogue. */
+    /** Bâtiments portant CE dialogue — requête directe, pas de scan. */
     public function countBuildingDialogReferences(string $name): int
     {
-        return $this->buildingDialogReferenceCounts()[$name] ?? 0;
+        $res = $this->db->exe('SELECT COUNT(*) AS n FROM buildings WHERE dialog = ?', array($name));
+
+        return (int) $res->fetch_object()->n;
     }
 
     /**

@@ -30,7 +30,8 @@ $player->get_caracs();
 
 // target — absent : action sur soi-même (constructibles depuis
 // l'inventaire, et toute action self déclenchée hors panneau de case)
-if(!isset($_POST['targetId'])){
+$selfDefaulted = !isset($_POST['targetId']);
+if($selfDefaulted){
 
     $_POST['targetId'] = $player->id;
 }
@@ -53,9 +54,14 @@ if ($_POST['action'] != 'attaquer') {
     }
 }
 
-// Garde anti-cible-déplacée : seulement quand l'appelant a fourni les
-// coordonnées observées (panneau de case). Une action sur SOI depuis
-// l'inventaire (constructibles) n'en a pas — soi-même ne s'enfuit pas.
+// Garde anti-cible-déplacée : une action sur SOI depuis l'inventaire
+// (constructibles) n'a pas de coordonnées observées — soi-même ne
+// s'enfuit pas. Pour toute VRAIE cible, les coordonnées restent
+// obligatoires : les omettre ne contourne pas la garde.
+if (!$selfDefaulted && !isset($_POST['coordsX'])) {
+
+    exit('error coords');
+}
 if (isset($_POST['coordsX'])
     && (($_POST['coordsX'] != $target->getCoords()->x)
     ||($_POST['coordsY'] != $target->getCoords(refresh:false)->y)

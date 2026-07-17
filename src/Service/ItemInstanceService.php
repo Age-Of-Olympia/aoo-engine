@@ -186,15 +186,19 @@ class ItemInstanceService extends BaseService
      * Unequip an instance; a still-pristine one silently returns to its
      * stack (the invisible round trip that keeps data lean), a diverged
      * one stays as an unequipped instance line.
+     *
+     * @return bool true quand l'instance est redevenue une unité de PILE
+     *              (démotion) — l'appelant qui veut ensuite la déposer au
+     *              sol doit alors passer par le chemin pile, pas dropAt().
      */
-    public function unequipInstance(int $instanceId): void
+    public function unequipInstance(int $instanceId): bool
     {
         $this->entityManager->getConnection()->executeStatement(
             "UPDATE players_items_instances SET equiped = '' WHERE instance_id = ?",
             [$instanceId]
         );
 
-        $this->demote($instanceId);
+        return $this->demote($instanceId);
     }
 
     /**
@@ -316,19 +320,45 @@ class ItemInstanceService extends BaseService
 
         $labels = [];
         foreach ($rows as $row) {
-            $conn->transactional(function ($conn) use ($row, $playerId): void {
-                $conn->executeStatement('DELETE FROM map_items_instances WHERE instance_id = ?', [(int) $row['instance_id']]);
+            $taken = false;
+            $conn->transactional(function ($conn) use ($row, $playerId, &$taken): void {
+                // Deux marcheurs simultanés : seul celui dont le DELETE
+                // emporte la ligne sol ramasse — l'autre passe son chemin
+                // au lieu de violer la PK du lien de possession.
+                $affected = $conn->executeStatement(
+                    'DELETE FROM map_items_instances WHERE instance_id = ?',
+                    [(int) $row['instance_id']]
+                );
+                if ($affected === 0) {
+                    return;
+                }
                 $conn->executeStatement(
                     'INSERT INTO players_items_instances (player_id, instance_id) VALUES (?, ?)',
                     [$playerId, (int) $row['instance_id']]
                 );
+                $taken = true;
             });
-            $labels[] = $row['custom_name'] !== ''
-                ? '« ' . $row['custom_name'] . ' »'
-                : ucfirst((string) $row['catalog_name']);
+            if ($taken) {
+                $labels[] = self::label($row['custom_name'], (string) $row['catalog_name']);
+            }
         }
 
         return $labels;
+    }
+
+    /**
+     * Libellé d'affichage d'une instance pour les journaux et récaps :
+     * le nom personnalisé prime (échappé — il vient d'une saisie), sinon
+     * le nom catalogue capitalisé. Source unique de la règle, partagée
+     * avec WearService.
+     */
+    public static function label(?string $customName, string $catalogName): string
+    {
+        $customName = (string) $customName;
+
+        return $customName !== ''
+            ? '« ' . htmlspecialchars($customName, ENT_QUOTES, 'UTF-8') . ' »'
+            : ucfirst($catalogName);
     }
 
     /**
@@ -355,6 +385,34 @@ class ItemInstanceService extends BaseService
      * dual-read shim for Item::get_n() — pinned by tests now so the
      * switch is a drop-in.
      */
+    /**
+     * Une unité ÉQUIPABLE existe-t-elle : pile non vide, ou instance
+     * vivante non équipée ? Miroir exact des deux chemins de
+     * equipCatalogItem() — la garde à passer AVANT toute mutation
+     * d'emplacements (Player::equip).
+     */
+    public function hasEquippableUnit(int $playerId, int $itemId): bool
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $free = $conn->fetchOne(
+            "SELECT l.instance_id
+             FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
+             LIMIT 1",
+            [$playerId, $itemId]
+        );
+        if ($free !== false) {
+            return true;
+        }
+
+        return (int) ($conn->fetchOne(
+            'SELECT n FROM players_items WHERE player_id = ? AND item_id = ?',
+            [$playerId, $itemId]
+        ) ?: 0) > 0;
+    }
+
     public function countOwned(int $playerId, int $itemId): int
     {
         $conn = $this->entityManager->getConnection();

@@ -20,9 +20,19 @@ $(document).ready(function(){
         return;
     }
 
+    /* Charge utile complète exigée : un pendingBuild tronqué armerait un
+       POST action=undefined. */
+    if(!pending || typeof pending.action !== 'string' || typeof pending.name !== 'string'){
+        sessionStorage.removeItem('pendingBuild');
+        return;
+    }
+
     /* Seulement sur le damier, et seulement si la machinerie du
-       tutoriel est là (chargée partout par Ui). */
+       tutoriel est là (chargée partout par Ui). La demande ne survit PAS
+       à une page inapte : sinon le picker se ré-armerait des jours plus
+       tard, sur une visite sans rapport. */
     if(!$('#current-player-avatar').length || typeof TutorialHighlighter === 'undefined'){
+        sessionStorage.removeItem('pendingBuild');
         return;
     }
 

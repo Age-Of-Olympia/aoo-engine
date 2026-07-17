@@ -22,9 +22,14 @@ enum EntityCategory: string
 
     public static function fromPlayerType(?string $playerType): self
     {
+        // null = legacy rows created before the discriminator existed.
+        // Any OTHER unknown value throws : un sixième player_type ajouté
+        // sans étendre ce mapping doit échouer bruyamment, pas passer
+        // silencieusement toutes les portes « character ».
         return match ($playerType) {
             'building', 'unique' => self::Structure,
-            default => self::Character,
+            'real', 'tutorial', 'npc', null => self::Character,
+            default => throw new \ValueError("player_type inconnu : « {$playerType} » — étendre EntityCategory::fromPlayerType."),
         };
     }
 

@@ -25,38 +25,15 @@ class ItemInstanceServiceGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
     private function boisOrSkip(): Item
     {
-        $item = Item::get_item_by_name('bois');
-        if ($item === false || $item === null) {
-            $this->markTestSkipped("items catalog not seeded (no 'bois' row).");
-        }
-        $item->get_data();
-
+        // Le nettoyage des instances des joueurs jetables est porté par le
+        // teardown du harnais (liens puis lignes orphelines, par id tracké).
         try {
             $this->link->executeQuery('SELECT 1 FROM item_instances LIMIT 1');
         } catch (\Throwable $e) {
             $this->markTestSkipped('item_instances table unavailable (run migrations): ' . $e->getMessage());
         }
 
-        return $item;
-    }
-
-    protected function tearDown(): void
-    {
-        // Instances of fixture players: links first (FK), then the
-        // now-orphaned instance rows.
-        if ($this->link !== null) {
-            $ids = $this->link->fetchFirstColumn(
-                'SELECT l.instance_id FROM players_items_instances l
-                 JOIN players p ON p.id = l.player_id
-                 WHERE p.name LIKE "Gm%"'
-            );
-            if ($ids !== []) {
-                $in = implode(',', array_map('intval', $ids));
-                $this->link->executeStatement("DELETE FROM players_items_instances WHERE instance_id IN ({$in})");
-                $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
-            }
-        }
-        parent::tearDown();
+        return $this->itemOrSkip('bois');
     }
 
     public function testPromoteMovesOneUnitFromStackToInstance(): void

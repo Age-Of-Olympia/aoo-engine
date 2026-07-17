@@ -98,7 +98,7 @@ function items_render_list(array $items): string
             . '<td>' . item_wear_cell($row) . '</td>'
             . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
-            . ' href="/admin/action-export.php?type=item&name=' . e($row->name) . '">JSON</a></td>'
+            . ' href="/admin/action-export.php?type=item&name=' . e(urlencode($row->name)) . '">JSON</a></td>'
             . '</tr>';
     }
 

@@ -31,28 +31,12 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        try {
-            $this->link->executeQuery('SELECT 1 FROM buildings LIMIT 1');
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('buildings table unavailable (run migrations): ' . $e->getMessage());
-        }
-
-        $race = (new \App\Service\RaceService())->getRaceByName(self::TYPE);
-        if ($race === null || !$race->isStructureKind()) {
-            $this->markTestSkipped("structure type 'palissade' not seeded (run migrations).");
-        }
+        $this->requireBuildingsOrSkip();
     }
 
     private function placePalissade(): int
     {
-        $id = (new BuildingService())->place(
-            self::TYPE,
-            (object) ['x' => 0, 'y' => 3, 'z' => 0, 'plan' => 'gaia']
-        );
-        $this->trackEntityId($id);
-
-        return $id;
+        return $this->placeStructure(self::TYPE, 0, 3);
     }
 
     public function testBuildingCaracsAreThePseudoRaceBase(): void
