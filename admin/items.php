@@ -74,11 +74,18 @@ function item_wear_cell(object $row): string
 /** @param array<int, object> $items */
 function items_render_list(array $items): string
 {
+    $inDb = 0;
     $rows = '';
     foreach ($items as $row) {
+        $statsBadge = !empty($row->stats_in_db)
+            ? '<span class="badge badge-success" title="Stats en base — édition complète">BDD</span>'
+            : '<span class="badge badge-secondary" title="Stats encore dans le JSON legacy — seed à rejouer, ou enregistrer ici pour basculer">JSON</span>';
+        $inDb += !empty($row->stats_in_db) ? 1 : 0;
+
         $rows .= '<tr>'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code></td>'
+            . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
             . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
@@ -87,13 +94,16 @@ function items_render_list(array $items): string
             . '</tr>';
     }
 
-    return '<p class="text-muted">Les stats de jeu (emplacement, caracs, prix, texte…) vivent encore dans'
-        . ' <code>datas/*/items/*.json</code> — leur migration en base (comme les races) débloquera leur édition ici.</p>'
+    return '<p class="text-muted"><b>' . $inDb . '</b>/' . count($items) . ' objets ont leurs stats en base'
+        . ' (édition complète ici). Les autres attendent leur JSON — sur cet environnement seuls les fichiers'
+        . ' présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
+        . ' <a href="/admin/item-seed.php">rejouer le seed</a> les basculera tous.'
+        . ' Enregistrer un objet « JSON » depuis cette page fait aussi de la base sa source.</p>'
         . '<input type="text" class="form-control mb-2" id="items-filter" placeholder="filtrer…"'
         . ' onkeyup="var q=this.value.toLowerCase();document.querySelectorAll(\'#items-table tbody tr\').forEach('
         . 'function(tr){tr.style.display = tr.textContent.toLowerCase().indexOf(q) === -1 ? \'none\' : \'\';});">'
         . '<div class="table-responsive"><table class="table table-sm table-striped align-middle" id="items-table">'
-        . '<thead><tr><th>Objet</th><th>Flags</th><th>Élément</th><th>Sort lié</th><th>Usure</th><th></th></tr></thead>'
+        . '<thead><tr><th>Objet</th><th>Stats</th><th>Flags</th><th>Élément</th><th>Sort lié</th><th>Usure</th><th></th></tr></thead>'
         . '<tbody>' . $rows . '</tbody></table></div>';
 }
 
