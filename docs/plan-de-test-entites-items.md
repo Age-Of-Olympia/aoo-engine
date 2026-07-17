@@ -34,7 +34,13 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.
-8. **Admin → Races** — éditer « palissade ».
+8. **Admin → Objets** — nouvelle entrée du menu.
+   ☐ Catalogue complet listé (flags, élément, sort lié, usure) avec
+   filtre ; Éditer un objet permet de régler flags ET usure
+   (déclencheurs + points/tour) — les stats JSON sont en lecture seule
+   (leur migration en base est le chantier suivant) ; le bâton montre
+   « −2/tour sur attack », le gladius « −3/tour ».
+8b. **Admin → Races** — éditer « palissade ».
    ☐ Sorte « Structure » affichée ; créer une nouvelle sorte structure
    (ex. tour, PV 200) → elle apparaît dans le formulaire de pose ;
    elle n'apparaît PAS dans la création de PNJ ni à l'inscription.
@@ -114,7 +120,11 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
     sol : … » avec vignettes et quantités, les trois lignes pour la
     mixte) ; une case vide n'affiche rien ;
     ☐ marcher sur la case ramasse le contenu (comportement hérité de
-    go.php), quantités correctes en inventaire.
+    go.php), quantités correctes en inventaire ;
+    ☐ **SA PROPRE case** : lâcher un objet (Lâcher dans l'inventaire)
+    puis cliquer sa case → le panneau liste l'objet ET propose un
+    bouton **Ramasser** (pas besoin de sortir/revenir) ; sur les autres
+    cases, le rappel « marchez dessus » reste.
 
 ## F. Garde-fous (non-régression)
 

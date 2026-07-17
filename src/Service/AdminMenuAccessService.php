@@ -71,6 +71,8 @@ class AdminMenuAccessService
         // Bâtiments : pose/retrait sur la carte — travail d'animation, même
         // niveau que les PNJ
         'buildings.php'            => ['Bâtiments', 'Divers', self::LEVEL_ADMIN],
+        // Objets : flags et réglages d'usure — même politique que races
+        'items.php'                => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
     ];
 
     /**
@@ -95,6 +97,7 @@ class AdminMenuAccessService
         'landing-save.php'           => 'landing.php',
         'landing-seed.php'           => 'landing.php',
         'buildings-save.php'         => 'buildings.php',
+        'items-save.php'             => 'items.php',
     ];
 
     /** @var array<string,string>|null cached DB overrides (page => level) */

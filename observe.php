@@ -734,7 +734,22 @@ if($res->num_rows || $resInstances->num_rows){
             . $label . $state .'<br />';
     }
 
-    echo '<sup>Marchez sur la case pour ramasser.</sup></div></div>';
+    /* Sa propre case : on est déjà dessus, marcher n'est pas une option —
+     * bouton de ramassage direct (drop accidentel, plus besoin de sortir
+     * puis revenir). Ailleurs : le rappel marche-dessus. */
+    if((int) $x === (int) $player->coords->x && (int) $y === (int) $player->coords->y){
+
+        echo '<button class="action" onclick="var b=this;b.disabled=true;'
+            . 'fetch(\'pickup.php\',{method:\'POST\'}).then(function(r){return r.text();})'
+            . '.then(function(t){aooAlert(t).then(function(){document.location.reload();});});">'
+            . '<span class="ra ra-hand"></span> <span class="action-name">Ramasser</span></button>';
+    }
+    else{
+
+        echo '<sup>Marchez sur la case pour ramasser.</sup>';
+    }
+
+    echo '</div></div>';
 }
 
 

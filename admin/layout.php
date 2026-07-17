@@ -127,6 +127,7 @@ function admin_layout($title, $content, array $assets = []) {
             ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
         ], $factionPages),
         $navLink('buildings.php', 'Bâtiments', '/admin/buildings.php'),
+        $navLink('items.php', 'Objets', '/admin/items.php'),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
     ]);

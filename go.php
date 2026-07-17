@@ -278,54 +278,9 @@ elseif($goCoords->z > 0){
 
 
 
-// loots
-$sql = '
-SELECT * FROM map_items WHERE coords_id = ?
-';
-
-$res = $db->exe($sql, $coordsId);
-
-// Instances au sol (Phase 3) : elles se ramassent en marchant, comme
-// toute bourse — l'identité (usure, nom) suit.
-$instanceLoot = (new \App\Service\ItemInstanceService())->collectAt((int) $coordsId, (int) $player->id);
-
-if($res->num_rows || count($instanceLoot)){
-
-
-    $lootList = $instanceLoot;
-
-    while($row = $res->fetch_object()){
-
-
-        $item = new Item($row->item_id);
-
-        $item->get_data();
-
-        $item->add_item($player, $row->n);
-
-        $lootList[] = $item->data->name .' x'. $row->n;
-    }
-
-
-    $values = array(
-        'coords_id'=>$coordsId
-    );
-
-    $db->delete('map_items', $values);
-
-
-    // add_item invalide le cache pour les piles ; les instances ramassées
-    // doivent aussi apparaître dès l'ouverture de l'inventaire.
-    if(count($instanceLoot)){
-        $player->refresh_invent();
-    }
-
-    $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
-    $coordBackup = $player->coords;
-    $player->coords = $goCoords;
-    Log::put($player, $player, $text, type:"loot");
-    $player->coords = $coordBackup;
-}
+// loots — piles ET instances au sol, via le service partagé avec
+// pickup.php (ramasser sa propre case).
+(new \App\Service\GroundLootService())->collect($player, (int) $coordsId, $goCoords);
 
 
 
