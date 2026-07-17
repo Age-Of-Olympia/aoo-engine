@@ -136,6 +136,11 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 21b. **Mur cassé de démo** — un `mur_bois` frappé sous la moitié de ses
     PV est en **(0,-1)** : il affiche son image **brisée**
     (mur_bois_broken).
+    ☐ Le CLIQUER ouvre la MÊME carte que la palissade (Ui::get_card) :
+    nom « Mur bois — brisé », portrait avec voile de dégâts rouge,
+    type Structure, état Destructible — le principe « posé = bourse,
+    construit = entité » est visible côte à côte avec les bourses
+    voisines.
     ☐ Continuer à le frapper (action destruction, arme de mêlée) le
     détruit à 100 dégâts ; un mur SANS image _broken (ou sans entrée
     WALLS_PV _broken) garde son image d'origine — repli vérifié.

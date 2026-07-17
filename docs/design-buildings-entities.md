@@ -522,6 +522,25 @@ The team's building requirements, checked against what is built:
 No requirement contradicts the architecture. New generic action pieces
 identified: G3 `AlterInstance` (items doc §5b) and G4 `RequiresBuilding`.
 
+### Principle settled 2026-07-17 — the two states of an item in the world
+
+An item in the world has exactly TWO presentations, decided by its
+state, not its kind:
+
+1. **Posé (« on the map »)** — a loose item, stack or instance, is a
+   **bourse** : loot sprite, contents listed on tile click, collected
+   by walking on it (or the Ramasser button on one's own tile).
+2. **Construit (« built »)** — a built thing (palissade via the
+   construire action, legacy walls via build.php) is an **entity-style
+   presentation** : its own sprite on the board, and the SHARED
+   Ui::get_card in the selection zone — name, portrait, damage veil
+   (pvPct), état brisé, description. The palissade gets it through the
+   players-row path; legacy map_walls now fill the same card, so the
+   presentation is already unified BEFORE the data migration.
+
+The walls→structures migration below completes the story by unifying
+the DATA too (real PV pipeline instead of `damages`).
+
 ### Next design discussion — walls as structures, plants as a derivation
 
 Raised 2026-07-17, TO BE DESIGNED TOGETHER before any code: the §4.8
