@@ -59,7 +59,7 @@ class AdminMenuAccessService
         'skill-stats.php'          => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
-        'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
+        'recipes.php'              => ['Objets · Recettes', 'Divers', self::LEVEL_SUPERADMIN],
         // Accueil : contenu éditorial de la page d'accueil (présentation,
         // chroniques, galerie) — pas de logique de jeu, niveau admin
         'landing.php'              => ['Page d\'accueil', 'Divers', self::LEVEL_ADMIN],
@@ -99,6 +99,8 @@ class AdminMenuAccessService
         'buildings-save.php'         => 'buildings.php',
         'items-save.php'             => 'items.php',
         'item-seed.php'              => 'items.php',
+        'recipes-save.php'           => 'recipes.php',
+        'view_recipes.php'           => 'recipes.php',
     ];
 
     /** @var array<string,string>|null cached DB overrides (page => level) */

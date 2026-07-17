@@ -34,7 +34,13 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.
-8. **Admin → Objets** — nouvelle entrée du menu, ÉDITION COMPLÈTE.
+8. **Admin → Objets → Recettes** — l'artisanat en panneau d'admin.
+   ☐ Liste des recettes (ingrédients, résultats, races — « toutes »
+   sans restriction) ; créer/éditer : nom, 5 emplacements d'ingrédients
+   (objet × quantité), 2 de résultats, cases races ; supprimer avec
+   confirmation. Modifier la recette mur_bois (12 bois), vérifier à
+   l'Artisanat en jeu, remettre 15.
+8b. **Admin → Objets** — nouvelle entrée du menu, ÉDITION COMPLÈTE.
    ☐ Catalogue complet listé (flags, élément, sort lié, usure) avec
    filtre ; Éditer un objet règle TOUT : description, prix,
    emplacement, type/sous-type, race, les 16 caracs, les spéciaux
@@ -58,11 +64,13 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    est disponible ; vous avez 18 bois — craftez-en une. L'objet
    palissade est dans l'inventaire : empilable, bancable, échangeable
    (vous en avez déjà une autre, fournie).
-   ☐ **Construire DEPUIS L'INVENTAIRE** (retour de revue : pas un
-   bouton d'action par type de mur !) : cliquer l'objet palissade (ou
-   mur_bois) dans l'inventaire → bouton « Construire (1 A) » →
-   confirmation → l'entité apparaît sur une case libre adjacente, à
-   VOTRE nom, et le résultat s'affiche (réussite, coûts, XP).
+   ☐ **Construire DEPUIS L'INVENTAIRE, avec CHOIX DE LA CASE** :
+   cliquer l'objet palissade (ou mur_bois) → « Construire (1 A) » →
+   retour au damier en mode choix : le MASQUE du tutoriel (voile troué
+   autour de vous, croix sur les cases non-praticables) n'éclaire que
+   les cases libres adjacentes — cliquer l'une d'elles construit LÀ ;
+   Échap ou Annuler pour sortir ; une case volée entre l'affichage et
+   le clic est refusée SANS consommer l'objet.
    ☐ Sans Action restante : bouton grisé avec l'explication ; sans
    l'objet : il n'y a simplement pas de ligne à cliquer.
    ☐ Le panneau de votre case ne montre AUCUN bouton construire_* —

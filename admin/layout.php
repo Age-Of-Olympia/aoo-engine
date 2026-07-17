@@ -77,7 +77,7 @@ function admin_layout($title, $content, array $assets = []) {
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
                     'pnjs.php', 'avatars-portraits.php'];
     $racePages = ['races.php', 'race-seed.php'];
-    $itemPages = ['items.php', 'item-seed.php'];
+    $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
 
@@ -112,7 +112,6 @@ function admin_layout($title, $content, array $assets = []) {
             ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
-        $navLink('view_recipes.php', 'Recettes', '/admin/view_recipes.php'),
         $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
         $navGroup('Dialogues', [
             ['dialogs.php', 'Liste', '/admin/dialogs.php'],
@@ -130,6 +129,7 @@ function admin_layout($title, $content, array $assets = []) {
         $navLink('buildings.php', 'Bâtiments', '/admin/buildings.php'),
         $navGroup('Objets', [
             ['items.php', 'Liste', '/admin/items.php'],
+            ['recipes.php', 'Recettes', '/admin/recipes.php'],
             ['item-seed.php', 'Seed JSON legacy', '/admin/item-seed.php'],
         ], $itemPages),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
