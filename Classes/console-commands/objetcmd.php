@@ -17,7 +17,7 @@ class ObjetCmd extends AdminCommand
         parent::setDescription(<<<EOT
 Pose une instance d'objet au sol (bourse : ramassée en marchant dessus, identité préservée).
 Exemple:
-> objet place [nom objet] [x] [y] [plan]  (plan par défaut : gaia)
+> objet place [nom objet] [x] [y] [z] [plan]  (z par défaut : 0, plan : gaia)
 > objet place gladius 2 -1
 EOT);
     }
@@ -25,7 +25,7 @@ EOT);
     public function execute(array $argumentValues): string
     {
         if (($argumentValues[0] ?? '') !== 'place' || !isset($argumentValues[1], $argumentValues[2], $argumentValues[3])) {
-            return 'Utiliser : objet place [nom objet] [x] [y] [plan] [z]';
+            return 'Utiliser : objet place [nom objet] [x] [y] [z] [plan]';
         }
 
         $item = Item::get_item_by_name($argumentValues[1]);
@@ -36,8 +36,8 @@ EOT);
         $goCoords = (object) [
             'x' => (int) $argumentValues[2],
             'y' => (int) $argumentValues[3],
-            'z' => (int) ($argumentValues[5] ?? 0),
-            'plan' => $argumentValues[4] ?? 'gaia',
+            'z' => (int) ($argumentValues[4] ?? 0),
+            'plan' => $argumentValues[5] ?? 'gaia',
         ];
 
         $admin = parent::getPlayer($_SESSION['playerId'] ?? 0);
