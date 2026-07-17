@@ -152,6 +152,11 @@ the items JSON→DB move):
 - `wear_rate` — durability points lost **per turn** in which at least
   one armed trigger fired.
 
+Everything about wear is CONFIGURABLE per object and defaults to « ne
+s'use pas » (`wear_rate` 0, no triggers) : the engine ships inert, and
+WHICH objects wear at WHAT rate is admin/balance content tuned later —
+deliberately not decided now (décision 2026-07-17).
+
 **The unit of decay is the TURN**: events during a turn only FLAG the
 instance (`worn_this_turn` / last-armed timestamp); the decrement is
 applied once, at new-turn processing — the same pass that refreshes
