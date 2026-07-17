@@ -1,6 +1,8 @@
 <?php
+use App\Entity\Structure;
 use App\Factory\PlayerFactory;
 use App\View\InfosSheetView;
+use App\View\StructureSheetView;
 
 require_once('config.php');
 
@@ -32,9 +34,14 @@ if (isset($_GET['reputation']) || isset($_GET['rewards'])) {
     exit();
 }
 
-$targetEntity = PlayerFactory::entity((int) $_GET['targetId']);
+// Racine STI : personnage OU structure — chacun sa fiche.
+$targetEntity = PlayerFactory::gameEntity((int) $_GET['targetId']);
 if ($targetEntity === null) {
     exit('error target id');
 }
 
-InfosSheetView::render($player, $targetEntity, hudPanel: true);
+if ($targetEntity instanceof Structure) {
+    StructureSheetView::render($player, $targetEntity, hudPanel: true);
+} else {
+    InfosSheetView::render($player, $targetEntity, hudPanel: true);
+}

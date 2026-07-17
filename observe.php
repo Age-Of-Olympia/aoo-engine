@@ -415,6 +415,29 @@ if($res->num_rows){
             : 100;
 
 
+        /* Bâtiment : satellite + raison de fermeture calculés ICI, avant
+         * la carte — le bouton « Parler » (ouvre la fiche, comme
+         * « Marchander » chez les PNJ) doit entrer dans $dataImg, et la
+         * pastille d'état après la carte réutilise les mêmes valeurs. */
+        $buildingDetails = null;
+        $buildingClosure = null;
+        if (($target->data->player_type ?? '') === 'building') {
+
+            $buildingService = new BuildingService();
+            $buildingDetails = $buildingService->getDetails($target->id);
+
+            if ($buildingDetails !== null) {
+
+                $buildingClosure = $buildingService->closureReason($buildingDetails, (int) $pvPct);
+
+                if ($buildingDetails->getDialog() !== '' && $buildingClosure === null) {
+
+                    $dataImg .= '<a href="infos.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-speech-bubble"></span> <span class="action-name">Parler</span></button></a>';
+                }
+            }
+        }
+
+
         $factionJson = (new FactionService())->getFactionData($target->data->faction);
 
         $faction = '';
@@ -451,55 +474,33 @@ if($res->num_rows){
         /* Bâtiment sélectionné : pastille d'ÉTAT (toujours), porte
          * Ouvert/Fermé pour tout ÉDIFICE (races.structure_nature — un
          * mur construit n'a pas de porte ; son is_open signifiera un
-         * jour la passabilité), et le dialogue seulement si le bâtiment
-         * est OUVERT — endommagé sous le seuil, en construction, en
-         * ruine ou fermé volontairement, il se tait
-         * (BuildingService::closureReason, source unique). */
-        if (($target->data->player_type ?? '') === 'building') {
+         * jour la passabilité). La CONVERSATION vit dans la fiche
+         * (StructureSheetView, façon marchand, garde d'adjacence côté
+         * serveur) — le bouton « Parler » ci-dessus l'ouvre. */
+        if ($buildingDetails !== null) {
 
-            $buildingService = new BuildingService();
-            $buildingDetails = $buildingService->getDetails($target->id);
+            $stateLabels = array(
+                BuildingDetails::STATE_BUILT => 'Construit',
+                BuildingDetails::STATE_CONSTRUCTION => 'En construction',
+                BuildingDetails::STATE_RUIN => 'Ruine',
+            );
+            $stateLabel = $stateLabels[$buildingDetails->getBuildState()] ?? ucfirst($buildingDetails->getBuildState());
 
-            if ($buildingDetails !== null) {
+            $isEdifice = (bool) $raceService->getRaceByName((string) $target->data->race)?->isEdifice();
 
-                $closure = $buildingService->closureReason($buildingDetails, (int) $pvPct);
-
-                $stateLabels = array(
-                    BuildingDetails::STATE_BUILT => 'Construit',
-                    BuildingDetails::STATE_CONSTRUCTION => 'En construction',
-                    BuildingDetails::STATE_RUIN => 'Ruine',
-                );
-                $stateLabel = $stateLabels[$buildingDetails->getBuildState()] ?? ucfirst($buildingDetails->getBuildState());
-
-                $hasDialog = $buildingDetails->getDialog() !== '';
-                $isEdifice = (bool) $raceService->getRaceByName((string) $target->data->race)?->isEdifice();
-
-                $door = '';
-                if ($isEdifice) {
-                    $door = $closure === null
-                        ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
-                        : '<span class="building-status-door building-status-door--closed">Fermé'
-                            . ($closure !== 'fermé volontairement' ? ' (' . $closure . ')' : '') . '</span>';
-                }
-
-                $card .= '<div class="building-status'
-                    . ($isEdifice && $closure !== null ? ' building-status--closed' : '') . '">'
-                    . $door
-                    . '<span class="building-status-state">' . $stateLabel . ' · PV ' . (int) $pvPct . '%</span>'
-                    . '</div>';
-
-                if ($hasDialog && $closure === null) {
-
-                    $card .= '<div class="view-dialog">' . Ui::get_dialog($player, array(
-                        'name' => $target->data->name,
-                        'avatar' => $target->data->portrait,
-                        'dialog' => $buildingDetails->getDialog(),
-                        'text' => '',
-                        'player' => $player,
-                        'target' => $target,
-                    )) . '</div>';
-                }
+            $door = '';
+            if ($isEdifice) {
+                $door = $buildingClosure === null
+                    ? '<span class="building-status-door building-status-door--open">Ouvert</span>'
+                    : '<span class="building-status-door building-status-door--closed">Fermé'
+                        . ($buildingClosure !== 'fermé volontairement' ? ' (' . $buildingClosure . ')' : '') . '</span>';
             }
+
+            $card .= '<div class="building-status'
+                . ($isEdifice && $buildingClosure !== null ? ' building-status--closed' : '') . '">'
+                . $door
+                . '<span class="building-status-state">' . $stateLabel . ' · PV ' . (int) $pvPct . '%</span>'
+                . '</div>';
         }
 
         /* Équipement porté par le personnage observé — alvéoles pour

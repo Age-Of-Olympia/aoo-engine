@@ -126,14 +126,10 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
             . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan']) . '</td>'
             . '<td>' . ($b['owner_name'] !== null ? e($b['owner_name']) . ' <small class="text-muted">#' . (int) $b['owner_id'] . '</small>' : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($b['faction'] !== '' ? e($b['faction']) : '<span class="text-muted">—</span>') . '</td>'
-            . '<td class="text-nowrap"><form method="post" action="/admin/buildings-save.php?action=dialog" class="d-inline">'
-            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-            . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
-            . building_dialog_select('dialog', (string) $b['dialog'], $dialogNames)
-            . ' <button class="btn btn-sm btn-outline-primary" type="submit"'
-            . ' title="Dialogue porté par le bâtiment — muet en construction ou en ruine">OK</button>'
-            . '</form></td>'
-            . '<td class="text-nowrap">' . $actions . '</td>'
+            . '<td>' . ($b['dialog'] !== '' ? '<code>' . e($b['dialog']) . '</code>' : '<span class="text-muted">—</span>') . '</td>'
+            . '<td class="text-nowrap">'
+            . '<a class="btn btn-sm btn-outline-primary" href="/admin/buildings.php?action=edit&id=' . (int) $b['id'] . '">Éditer</a> '
+            . $actions . '</td>'
             . '</tr>';
     }
 
@@ -202,6 +198,61 @@ function building_render_place_form(array $types, array $plans, array $factions,
         . '<div class="card-body">' . $body . '</div></div>';
 }
 
+/**
+ * Formulaire d'édition d'un bâtiment posé : nom, description (le
+ * « message du jour » du bâtiment), dialogue, porte, propriétaire,
+ * faction. L'état (PV, build_state) reste géré par les boutons de la
+ * liste (Restaurer) — ici on édite l'IDENTITÉ.
+ *
+ * @param array<string, mixed>  $b           ligne de listBuildings()
+ * @param array<string, string> $factions    code => nom
+ * @param array<int, string>    $dialogNames
+ */
+function building_render_edit(array $b, string $description, array $factions, array $dialogNames, bool $isEdifice, string $csrfToken): string
+{
+    $factionOptions = '<option value="">— neutre —</option>';
+    foreach ($factions as $code => $label) {
+        $factionOptions .= '<option value="' . e($code) . '"' . ($code === $b['faction'] ? ' selected' : '') . '>'
+            . e($label) . '</option>';
+    }
+
+    $body = '<form method="post" action="/admin/buildings-save.php?action=edit">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="id" value="' . (int) $b['id'] . '">'
+        . '<div class="row">'
+        . '<div class="form-group col-md-4"><label>Nom affiché</label>'
+        . '<input type="text" class="form-control" name="name" maxlength="255" value="' . e($b['name']) . '"'
+        . ' placeholder="Libellé du type par défaut"></div>'
+        . '<div class="form-group col-md-4"><label>Propriétaire</label>'
+        . '<input type="text" class="form-control" name="owner" placeholder="matricule ou nom — vide : aucun"'
+        . ' value="' . ($b['owner_id'] !== null ? (int) $b['owner_id'] : '') . '"></div>'
+        . '<div class="form-group col-md-4"><label>Faction</label>'
+        . '<select name="faction" class="form-control">' . $factionOptions . '</select></div>'
+        . '</div>'
+        . '<div class="form-group"><label>Description</label>'
+        . '<textarea class="form-control" name="text" rows="4" placeholder="Visible sur la carte et la fiche — l\'équivalent du message du jour.">'
+        . e($description) . '</textarea></div>'
+        . '<div class="row">'
+        . '<div class="form-group col-md-4"><label>Dialogue</label><div>'
+        . building_dialog_select('dialog', (string) $b['dialog'], $dialogNames)
+        . '</div><small class="text-muted">Porté par le bâtiment — muet quand il est fermé.</small></div>'
+        . ($isEdifice
+            ? '<div class="form-group col-md-4"><label>Porte</label>'
+                . '<input type="hidden" name="has_door" value="1">'
+                . '<div><label><input type="checkbox" name="is_open" ' . checked((bool) $b['is_open']) . '> Ouvert</label></div>'
+                . '<small class="text-muted">Fermé volontairement, le bâtiment tait son dialogue (il ferme aussi'
+                . ' d\'office endommagé, en construction ou en ruine).</small></div>'
+            : '')
+        . '</div>'
+        . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
+        . '<a class="btn btn-secondary" href="/admin/buildings.php">Retour</a>'
+        . '</form>';
+
+    return '<div class="card"><div class="card-header">' . e($b['name']) . ' <code>#' . (int) $b['id'] . '</code>'
+        . ' — ' . e($b['type']) . ' en (' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan'])
+        . '</div><div class="card-body">' . $body . '</div></div>';
+}
+
 /* -------------------------------------------------------------------------
  * Route
  * ---------------------------------------------------------------------- */
@@ -214,6 +265,28 @@ foreach ((new FactionService())->getAllFactions() as $faction) {
 }
 
 $dialogNames = array_keys((new DialogService())->listGameDialogs());
+
+if (($_GET['action'] ?? '') === 'edit') {
+    $editId = (int) ($_GET['id'] ?? 0);
+    $row = null;
+    foreach ($service->listBuildings() as $b) {
+        if ($b['id'] === $editId) {
+            $row = $b;
+            break;
+        }
+    }
+    if ($row === null) {
+        setFlash('warning', "Aucun bâtiment #{$editId}.");
+        redirectTo('/admin/buildings.php');
+    }
+    $description = (string) (new \Classes\Db())
+        ->exe('SELECT text FROM players WHERE id = ?', $editId)->fetch_object()->text;
+    $isEdifice = (bool) (new RaceService())->getRaceByName((string) $row['type'])?->isEdifice();
+
+    echo admin_layout('Bâtiments', renderFlashMessage()
+        . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken));
+    exit();
+}
 
 $content = building_render_place_form(
     building_type_options(),

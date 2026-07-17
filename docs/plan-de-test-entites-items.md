@@ -43,10 +43,19 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    « Taverne du Sanglier » #20000004 en (2,-2) arcadia (type édifice
    `taverne`, 150 PV) porte le dialogue `gaia`.
    ☐ En jeu (HUD) : cliquer la taverne → la zone de sélection montre
-   la pastille « OUVERT · Construit · PV 100% » ET le panneau de
-   dialogue intégré (colonne dédiée entre la fiche et « Sur la
-   case ») ; les options du dialogue se naviguent. Habillage hérité :
-   pastille sous la carte + panneau classique.
+   la pastille « OUVERT · Construit · PV 100% » et un bouton
+   « Parler » (comme « Marchander » chez les PNJ). Le bouton — ou le
+   nom — ouvre la FICHE du bâtiment dans le panneau « Personnage »
+   (qui sortait « error target id » sur les structures) : portrait,
+   état, propriétaire, description, et la conversation FAÇON MARCHAND.
+   ☐ PORTÉE : la conversation exige d'être sur une case ADJACENTE au
+   bâtiment — sinon la fiche affiche « Il faut être directement à
+   côté du bâtiment pour pouvoir parler au tenancier » (garde côté
+   serveur, même mécanisme que le MDJ limité à la Perception).
+   ☐ Admin → Bâtiments → Éditer : nom, DESCRIPTION (l'équivalent du
+   message du jour — visible sur la carte et la fiche), dialogue,
+   porte, propriétaire, faction. Le sélecteur de dialogue par ligne a
+   déménagé dans cette page.
    ☐ L'endommager sous 50% des PV → « FERMÉ (endommagé) », le
    dialogue disparaît ; restaurée, elle rouvre.
    ☐ Admin → Bâtiments : bouton « Fermer » (édifices seulement) →

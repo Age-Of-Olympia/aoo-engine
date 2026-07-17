@@ -4,6 +4,7 @@ namespace App\Factory;
 
 use App\Entity\EntityManagerFactory;
 use App\Entity\Character;
+use App\Entity\GameEntity;
 use App\Tutorial\TutorialHelper;
 use Classes\Player;
 
@@ -79,6 +80,17 @@ final class PlayerFactory
     public static function entity(int $playerId): ?Character
     {
         return EntityManagerFactory::getEntityManager()->find(Character::class, $playerId);
+    }
+
+    /**
+     * Comme entity(), mais sur la RACINE de l'arbre STI : accepte toute
+     * entité (personnage OU structure — bâtiment, objet unique). Pour
+     * les chemins qui présentent une fiche quel que soit le type de la
+     * cible (infos.php / load_infos.php).
+     */
+    public static function gameEntity(int $playerId): ?GameEntity
+    {
+        return EntityManagerFactory::getEntityManager()->find(GameEntity::class, $playerId);
     }
 
     /**

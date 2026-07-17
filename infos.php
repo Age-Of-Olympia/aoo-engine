@@ -1,6 +1,8 @@
 <?php
+use App\Entity\Structure;
 use App\Factory\PlayerFactory;
 use App\View\InfosSheetView;
+use App\View\StructureSheetView;
 use Classes\Ui;
 
 require_once('config.php');
@@ -41,11 +43,17 @@ if(isset($_GET['rewards'])){
 // read paths. The legacy object stays for anything downstream code
 // or the included sub-scripts still rely on (->coords, ->get_caracs,
 // Item::get_equiped_list). The entity powers every pure data read.
-$targetEntity = PlayerFactory::entity((int) $target->id);
+// Racine STI : la cible peut être un personnage OU une structure
+// (bâtiment, objet unique) — chacun sa fiche.
+$targetEntity = PlayerFactory::gameEntity((int) $target->id);
 if ($targetEntity === null) {
     exit('error target id');
 }
 
 $ui = new Ui($targetEntity->getName());
 
-InfosSheetView::render($player, $targetEntity);
+if ($targetEntity instanceof Structure) {
+    StructureSheetView::render($player, $targetEntity);
+} else {
+    InfosSheetView::render($player, $targetEntity);
+}

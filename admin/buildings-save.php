@@ -3,7 +3,8 @@
  * Building management — mutations (POST only). Companion to
  * admin/buildings.php.
  *
- * Routed on ?action: place | restore | remove | dialog. Every branch is
+ * Routed on ?action: place | edit | toggle-open | restore | remove.
+ * Every branch is
  * CSRF-validated and enforces the same menu level as buildings.php so a
  * direct POST can't bypass the dashboard gate. Redirects back (PRG) with a
  * flash. Business validation (type de structure au catalogue, faction du catalogue,
@@ -97,21 +98,46 @@ if ($action === 'place') {
     redirectTo('/admin/buildings.php');
 }
 
-if ($action === 'dialog') {
+if ($action === 'edit') {
     $id = (int) ($_POST['id'] ?? 0);
-    $dialog = trim((string) ($_POST['dialog'] ?? ''));
 
-    try {
-        $service->setDialog($id, $dialog);
-    } catch (\InvalidArgumentException $e) {
-        setFlash('warning', $e->getMessage());
-        redirectTo('/admin/buildings.php');
+    // Propriétaire : matricule ou nom exact, vide = aucun.
+    $ownerId = null;
+    $ownerInput = trim((string) ($_POST['owner'] ?? ''));
+    if ($ownerInput !== '') {
+        if (ctype_digit($ownerInput)) {
+            $ownerId = (int) $ownerInput;
+        } else {
+            $owner = PlayerFactory::entityByName($ownerInput);
+            if ($owner === null) {
+                setFlash('warning', "Propriétaire introuvable : « {$ownerInput} ».");
+                redirectTo('/admin/buildings.php?action=edit&id=' . $id);
+            }
+            $ownerId = (int) $owner->getId();
+        }
     }
 
-    setFlash('success', $dialog !== ''
-        ? "Dialogue « {$dialog} » attaché au bâtiment #{$id}."
-        : "Dialogue détaché du bâtiment #{$id}.");
-    redirectTo('/admin/buildings.php');
+    try {
+        $service->updateInfo(
+            $id,
+            trim((string) ($_POST['name'] ?? '')),
+            trim((string) ($_POST['text'] ?? '')),
+            $ownerId,
+            trim((string) ($_POST['faction'] ?? ''))
+        );
+        $service->setDialog($id, trim((string) ($_POST['dialog'] ?? '')));
+        // La porte n'est proposée que pour les édifices : le champ absent
+        // (obstacle) ne doit pas fermer silencieusement.
+        if (isset($_POST['has_door'])) {
+            $service->setOpen($id, !empty($_POST['is_open']));
+        }
+    } catch (\InvalidArgumentException $e) {
+        setFlash('warning', $e->getMessage());
+        redirectTo('/admin/buildings.php?action=edit&id=' . $id);
+    }
+
+    setFlash('success', "Bâtiment #{$id} enregistré.");
+    redirectTo('/admin/buildings.php?action=edit&id=' . $id);
 }
 
 if ($action === 'toggle-open') {

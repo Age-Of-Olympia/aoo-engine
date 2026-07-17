@@ -228,6 +228,54 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Édition d'identité d'un bâtiment posé (admin → Bâtiments →
+     * Éditer) : nom affiché, description (l'équivalent du « message du
+     * jour » des joueurs — players.text, visible sur la carte et la
+     * fiche), propriétaire et faction. Les mêmes validations que
+     * place() ; le cache par-entité est purgé (get_data lit le .json).
+     *
+     * @throws \InvalidArgumentException id non-bâtiment, faction ou
+     *                                   propriétaire inconnus
+     */
+    public function updateInfo(int $playerId, string $name, string $text, ?int $ownerId, string $faction): void
+    {
+        $details = $this->getDetails($playerId);
+        if ($details === null) {
+            throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
+        }
+
+        if ($faction !== '' && (new FactionService())->getFactionByCode($faction) === null) {
+            throw new \InvalidArgumentException("Faction inconnue : '{$faction}'.");
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        if ($ownerId !== null
+            && $conn->fetchOne('SELECT id FROM players WHERE id = ?', [$ownerId]) === false) {
+            throw new \InvalidArgumentException("Propriétaire inconnu : joueur #{$ownerId}.");
+        }
+
+        if ($name === '') {
+            $race = (new RaceService())->getRaceByName(
+                (string) $conn->fetchOne('SELECT race FROM players WHERE id = ?', [$playerId])
+            );
+            $name = $race !== null ? $race->getLabel() : "Bâtiment #{$playerId}";
+        }
+
+        $conn->executeStatement('UPDATE players SET name = ?, text = ? WHERE id = ?', [$name, $text, $playerId]);
+
+        $details->setOwnerId($ownerId);
+        $details->setFaction($faction);
+        $this->entityManager->flush();
+
+        // Seul le cache de données (.json, lu par get_data) est concerné —
+        // pas le .svg du damier, que rien ne re-générerait ici.
+        @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . '.json');
+
+        $this->addAuditLog("BuildingService::updateInfo #{$playerId} '{$name}'");
+    }
+
+    /**
      * Fermeture/ouverture volontaire (admin — un jour le propriétaire).
      *
      * @throws \InvalidArgumentException id non-bâtiment
