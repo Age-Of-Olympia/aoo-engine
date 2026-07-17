@@ -39,6 +39,19 @@ référence outillage/process).
 - **Règle d'ouverture d'un bâtiment** :
   `BuildingService::closureReason()` — unique.
 
+## Commentaires
+
+- Un commentaire explique ce que le code ne PEUT PAS dire (une
+  contrainte, un ordre d'opérations critique, un pourquoi) — si le
+  code est bon, il n'a généralement pas besoin de commentaire :
+  préférer un meilleur nom ou une extraction à un commentaire.
+- JAMAIS de commentaires d'avancement : « Phase 1c », « TODO chantier »,
+  « nouveau depuis la revue », références aux MR/étapes de dev — ils
+  parlent au relecteur d'un jour, pas au lecteur de dans six mois.
+  L'historique vit dans git et les design docs, pas dans le code.
+- Les mentions « Phase … » héritées du chantier entités/objets sont à
+  purger au fil des ménages.
+
 ## Pages d'admin
 
 - Pattern : la page **rend** (GET), son compagnon `-save.php` **mute**
