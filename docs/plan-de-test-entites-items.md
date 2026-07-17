@@ -131,6 +131,20 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
     bouton **Ramasser** (pas besoin de sortir/revenir) ; sur les autres
     cases, le rappel « marchez dessus » reste.
 
+## E2. Structures de carte héritées — image « brisé »
+
+21b. **Mur cassé de démo** — un `mur_bois` frappé sous la moitié de ses
+    PV est en **(0,-1)** : il affiche son image **brisée**
+    (mur_bois_broken).
+    ☐ Continuer à le frapper (action destruction, arme de mêlée) le
+    détruit à 100 dégâts ; un mur SANS image _broken (ou sans entrée
+    WALLS_PV _broken) garde son image d'origine — repli vérifié.
+21c. **Admin → Objets** : éditer `mur_bois`.
+    ☐ Le panneau **Images** montre les quatre représentations (objet,
+    vignette, carte, carte-brisé) avec « manquante » pour celles qui
+    n'existent pas ; la liste affiche les mini-vignettes carte à côté
+    du nom.
+
 ## F. Garde-fous (non-régression)
 
 22. ☐ Se déplacer, attaquer un PNJ, se soigner, fouiller : comme avant.

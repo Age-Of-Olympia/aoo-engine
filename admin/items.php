@@ -82,9 +82,19 @@ function items_render_list(array $items): string
             : '<span class="badge badge-secondary" title="Stats encore dans le JSON legacy — seed à rejouer, ou enregistrer ici pour basculer">JSON</span>';
         $inDb += !empty($row->stats_in_db) ? 1 : 0;
 
+        // Vignettes carte (mur / mur brisé) quand elles existent — repérage
+        // rapide des structures constructibles et de leur état visuel.
+        $mapThumbs = '';
+        foreach (['' => '', '_broken' => 'brisé'] as $suffix => $title) {
+            $wallPath = 'img/walls/' . $row->name . $suffix . '.png';
+            if (is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $wallPath)) {
+                $mapThumbs .= ' <img src="/' . e($wallPath) . '" style="max-height:20px" title="carte ' . $title . '" alt="">';
+            }
+        }
+
         $rows .= '<tr>'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
-            . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code></td>'
+            . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
             . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
             . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
@@ -163,10 +173,33 @@ function items_render_edit(object $row, string $csrfToken): string
 
     $munitions = !empty($row->munitions) ? implode(', ', (array) json_decode((string) $row->munitions, true)) : '';
 
+    // Toutes les représentations visuelles de l'objet, manquantes incluses —
+    // dont l'image « brisé » des structures de carte (bascule à mi-PV,
+    // destroy.php) : voir d'un coup d'œil ce qui existe et ce qui manque.
+    $imagesPanel = '';
+    foreach ([
+        'img/items/' . $row->name . '.webp' => 'Objet',
+        'img/items/' . $row->name . '_mini.webp' => 'Vignette',
+        'img/walls/' . $row->name . '.png' => 'Sur la carte',
+        'img/walls/' . $row->name . '_broken.png' => 'Sur la carte — brisé',
+    ] as $path => $label) {
+        $exists = is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $path);
+        $imagesPanel .= '<div class="text-center d-inline-block m-1" style="width:110px;vertical-align:top;">'
+            . ($exists
+                ? '<img src="/' . e($path) . '" style="max-width:100px;max-height:80px;" alt="">'
+                : '<div style="width:100px;height:80px;display:inline-flex;align-items:center;justify-content:center;'
+                  . 'border:1px dashed #bbb;color:#999;font-size:11px;">manquante</div>')
+            . '<div><small>' . $label . ($exists ? '' : ' <span class="text-muted">(repli : image par défaut)</span>') . '</small></div>'
+            . '</div>';
+    }
+    $imagesPanel = '<div class="card mb-3"><div class="card-header">Images</div>'
+        . '<div class="card-body py-2">' . $imagesPanel . '</div></div>';
+
     $body = '<form method="post" action="/admin/items-save.php?action=update">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="id" value="' . (int) $row->id . '">'
         . $notInDb
+        . $imagesPanel
         . '<div class="row">'
 
         . '<div class="col-md-3"><h5>Identité</h5>'
