@@ -35,7 +35,25 @@ class DropWeaponOutcomeInstruction extends OutcomeInstruction implements HasPara
         $item = $target->emplacements->{$targetLocation};
         
         if(rand(1,100) <= $dropChance){
-            $target->drop($item, 1);
+            /* Phase 3 : une arme INSTANCIÉE tombe en gardant son identité —
+             * elle devient un objet unique sur la case de sa victime
+             * (déséquipée d'abord : la pose refuse une instance équipée).
+             * Une arme de pile héritée garde l'ancien chemin map_items. */
+            if (!$target->isSimulated() && !empty($item->row->instance_id)) {
+                $instanceId = (int) $item->row->instance_id;
+                (new \App\Service\ItemInstanceService())->unequipInstance($instanceId);
+                $target->getCoords();
+                try {
+                    (new \App\Service\UniqueObjectService())->placeInstance($instanceId, clone $target->coords);
+                } catch (\InvalidArgumentException) {
+                    // Redevenue pile au déséquipement (instance vierge) : ancien chemin.
+                    $target->drop($item, 1);
+                }
+                $target->refresh_invent();
+                $target->refresh_caracs();
+            } else {
+                $target->drop($item, 1);
+            }
             $resultText = "L'arme de votre adversaire tombe au sol.";
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $resultText;
             $result = true;

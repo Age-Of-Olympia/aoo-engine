@@ -76,6 +76,7 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
                 $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
             }
             $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ? OR owner_id = ?', [$id, $id]);
+            $this->link->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$id]);
             foreach ([
                 'players_bonus',
                 'players_effects',
