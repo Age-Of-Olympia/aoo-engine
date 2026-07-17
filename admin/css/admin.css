@@ -426,7 +426,22 @@ select.form-control {
     background: #2c3e50;
 }
 
-.admin-sidebar .sidebar-footer .nav-back-to-game {
+/* Hors de .vertical-nav, le lien retombait sur les couleurs
+ * navigateur (bleu, violet visité — illisibles sur le fond sombre) :
+ * mêmes couleurs que les .nav-link du menu, :visited compris. */
+.admin-sidebar .sidebar-footer .nav-back-to-game,
+.admin-sidebar .sidebar-footer .nav-back-to-game:visited {
     display: block;
+    padding: 8px 12px;
+    color: #bdc3c7;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
     opacity: 0.85;
+}
+
+.admin-sidebar .sidebar-footer .nav-back-to-game:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #4a90e2;
+    opacity: 1;
 }
