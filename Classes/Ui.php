@@ -353,7 +353,7 @@ class Ui{
                 $d = (int) $row->durability;
                 $dMax = (int) $row->durability_max;
 
-                if($d <= 0){
+                if(\App\Service\ItemInstanceService::isBroken($d)){
 
                     $stateLine = '<br /><font color="red"><b>Brisé</b></font>';
                     $stateAttr = 'Brisé — ne contribue plus ses caractéristiques.';

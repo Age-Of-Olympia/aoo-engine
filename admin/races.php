@@ -66,6 +66,21 @@ function race_character_counts(array $counts): string
 /**
  * @param Race[] $races
  */
+/** Sortes d'entités — valeurs de la source unique EntityCategory. */
+function kind_select(bool $isStructure): string
+{
+    $labels = \App\Enum\EntityCategory::options();
+    $labels[\App\Enum\EntityCategory::Structure->value] .= ' (bâtiment, objet unique)';
+
+    return formSelect(
+        'kind',
+        $labels,
+        $isStructure ? \App\Enum\EntityCategory::Structure->value : \App\Enum\EntityCategory::Character->value,
+        null,
+        'class="form-control form-control-sm d-inline-block" style="width:auto"'
+    );
+}
+
 function race_render_list(array $races): string
 {
     $charactersByRace = (new RaceService())->countCharactersByRaceName();
@@ -223,10 +238,8 @@ HTML;
         . e($isEdit ? $race->getLabel() : '') . '"></div>'
         . '<div class="form-group col-md-4"><label>Flags</label><div>'
         . '<label class="mr-3">Sorte '
-        . '<select name="kind" class="form-control form-control-sm d-inline-block" style="width:auto">'
-        . '<option value="character"' . ($isEdit && $race->isStructureKind() ? '' : ' selected') . '>Personnage</option>'
-        . '<option value="structure"' . ($isEdit && $race->isStructureKind() ? ' selected' : '') . '>Structure (bâtiment, objet unique)</option>'
-        . '</select></label> '
+        . kind_select($isEdit && $race->isStructureKind())
+        . '</label> '
         . '<label class="mr-3">Nature '
         . '<select name="structure_nature" class="form-control form-control-sm d-inline-block" style="width:auto"'
         . ' title="Structures seulement — Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité).">'

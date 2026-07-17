@@ -4,15 +4,15 @@ namespace App\View\Observe;
 
 use App\Factory\PlayerFactory;
 use Classes\Db;
+use Classes\Item;
 use Classes\Player;
 use Classes\Str;
 use Classes\Ui;
 
 /**
  * Carte d'un MUR de carte (map_walls) ou d'un AUTEL pour le panneau
- * d'observation — extrait tel quel d'observe.php (ménage n°2). Les
- * murs legacy gardent leur présentation mutualisée (Ui::get_card,
- * état brisé, statut destructible) jusqu'à la migration
+ * d'observation. Les murs legacy gardent leur présentation mutualisée
+ * (Ui::get_card, état brisé, statut destructible) jusqu'à la migration
  * murs→structures ; l'autel garde la priorité quand il pose sa carte.
  */
 final class WallCardView
@@ -26,156 +26,156 @@ final class WallCardView
      */
     public static function render(Player $player, \mysqli_result $res, $x, $y): string
     {
-        $db = new Db();
         $card = '';
         $wallId = 0;
 
-        while($row = $res->fetch_object()){
-
-
+        while ($row = $res->fetch_object()) {
             $wallId = $row->id;
-
-            /* Le bloc altar réassigne $row plus bas : figer les champs du
-             * mur pour la carte mutualisée construite après le bloc. */
-            $wallName = $row->name;
-            $wallDamages = (int) $row->damages;
-
 
             echo '
             <div class="case-infos">
-                <img src="img/walls/'. $row->name .'.png" title="#'. $row->id .'"/>
+                <img src="img/walls/' . $row->name . '.png" title="#' . $row->id . '"/>
 
                 <div class="text">
                     Structure non-passable.<br />
                     ';
 
-                    if(!empty(WALLS_PV[$row->name]) && WALLS_PV[$row->name] > 0){
+            echo self::wallStatus($row->name, (int) $row->damages);
+            echo '<br />';
+            echo self::resourceStatus((int) $row->damages);
 
-                        echo 'Destructible ('. Str::get_status($row->damages, WALLS_PV[$row->name]) .').';
-                    }
-                    else{
+            $altarCard = self::altarCard($player, (int) $row->coords_id);
 
-                        echo 'Indestructible.';
-                    }
-
-                    echo '<br />';
-
-                    // Affichage si la ressource est épuisée ou non
-                    if($row->damages == -1){
-                        echo '<br /><span class="resource-status resource-harvestable" style="color:green;"><b>Récoltable.</b></span> <br />';
-                    }
-                    if($row->damages == -2){
-                        echo '<br /><span class="resource-status resource-exhausted" style="color:red;"><b>Épuisée.</b></span> <br />';
-                    }
-
-                    // altar
-
-                    $sql = 'SELECT * FROM map_triggers WHERE name = "altar" AND coords_id= ?';
-
-                    $resAltar = $db->exe($sql, $row->coords_id);
-
-                    if($resAltar->num_rows){
-
-                        $row = $resAltar->fetch_object();
-
-                        $god = PlayerFactory::legacy($row->params);
-
-                        $god->get_data();
-
-                        echo 'Altar du Dieu '. $god->data->name .'.';
-
-                        $actions = '';
-
-                        $dataText = "Vous vénérez déjà ce Dieu.";
-
-                        if($god->id != $player->data->godId){
-
-                            $actions = '
-                            <button
-                                class="action"
-                                data-url="worship.php"
-                                data-action="worship"
-                                data-target-id="'. $row->id .'"
-                            ><span class="ra ra-candle"></span>
-                            <span class="action-name">Vénérer</span>
-                            </button><br/>';
-
-                            $dataText = "Vénérez ce Dieu pour pouvoir lui adresser vos prières.";
-                        }
-
-                        $dataName = '<a href="infos.php?targetId='. $god->id .'">Altar du Dieu '. $god->data->name .'</a>';
-
-                        $data = (object) array(
-                            'bg'=>$god->data->portrait,
-                            'name'=>$dataName,
-                            'img'=>$actions,
-                            'type'=>'Altar',
-                            'race'=>'dieu',
-                            'text'=>$dataText
-                        );
-
-                        $card = Ui::get_card($data);
-                    }
-
-                    echo '
+            echo '
                 </div>
             </div>
             ';
 
-            /* Carte mutualisée (Ui::get_card — LE composant de la palissade
-             * et de l'autel) : nom du catalogue, portrait avec voile de
-             * dégâts, état brisé, description. L'autel garde la priorité
-             * quand il a déjà posé sa carte. */
-            if(empty($card)){
-
-                $wallBaseName = str_replace('_broken', '', $wallName);
-                $isBroken = strpos($wallName, '_broken') !== false;
-
-                $wallLabel = ucfirst(str_replace('_', ' ', $wallBaseName));
-                $wallText = '';
-                $wallCatalogItem = \Classes\Item::get_item_by_name($wallBaseName);
-                if($wallCatalogItem){
-
-                    $wallCatalogItem->get_data();
-                    $wallLabel = ucfirst(str_replace('_', ' ', $wallCatalogItem->data->name));
-                    $wallText = (string) ($wallCatalogItem->data->text ?? '');
-                }
-
-                $wallPvMax = (!empty(WALLS_PV[$wallName]) && WALLS_PV[$wallName] > 0) ? (int) WALLS_PV[$wallName] : 0;
-
-                $wallStatus = ($wallPvMax > 0)
-                    ? 'Destructible ('. Str::get_status($wallDamages, $wallPvMax) .').'
-                    : 'Indestructible.';
-
-                $data = (object) array(
-                    'bg' => 'img/walls/'. $wallName .'.png',
-                    'name' => $wallLabel . ($isBroken ? ' — <font color="red">brisé</font>' : ''),
-                    'img' => '',
-                    'type' => 'Structure',
-                    'race' => 'common',
-                    'text' => $wallStatus . ($wallText !== '' ? '<br /><sup>'. $wallText .'</sup>' : ''),
-                );
-
-                if($wallPvMax > 0){
-
-                    $data->pvPct = max(0, (int) floor(($wallPvMax - $wallDamages) / $wallPvMax * 100));
-                }
-
-                $card = Ui::get_card($data);
+            // L'autel garde la priorité ; sinon la première carte posée reste.
+            if ($altarCard !== '') {
+                $card = $altarCard;
+            } elseif ($card === '') {
+                $card = self::wallCard($row->name, (int) $row->damages);
             }
         }
 
-
-        // show destroy button
         echo '
         <script>
-        var $wall = $(\'#walls'. $wallId .'\');
-        var x = '. $x .';
-        var y = '. $y .';
+        var $wall = $(\'#walls' . $wallId . '\');
+        var x = ' . $x . ';
+        var y = ' . $y . ';
         </script>
         <script src="js/observe_destroy.js?v=20260715"></script>
         ';
 
         return $card;
+    }
+
+    /** « Destructible (état). » ou « Indestructible. » selon WALLS_PV. */
+    private static function wallStatus(string $wallName, int $damages): string
+    {
+        if (!empty(WALLS_PV[$wallName]) && WALLS_PV[$wallName] > 0) {
+            return 'Destructible (' . Str::get_status($damages, WALLS_PV[$wallName]) . ').';
+        }
+
+        return 'Indestructible.';
+    }
+
+    /** État de ressource : -1 = récoltable, -2 = épuisée, sinon rien. */
+    private static function resourceStatus(int $damages): string
+    {
+        if ($damages == -1) {
+            return '<br /><span class="resource-status resource-harvestable" style="color:green;"><b>Récoltable.</b></span> <br />';
+        }
+        if ($damages == -2) {
+            return '<br /><span class="resource-status resource-exhausted" style="color:red;"><b>Épuisée.</b></span> <br />';
+        }
+
+        return '';
+    }
+
+    /**
+     * L'autel de la case, s'il y en a un : ligne dans le texte (échouée)
+     * + sa carte avec le bouton Vénérer.
+     *
+     * @return string la carte de l'autel ('' si pas d'autel)
+     */
+    private static function altarCard(Player $player, int $coordsId): string
+    {
+        $res = (new Db())->exe('SELECT * FROM map_triggers WHERE name = "altar" AND coords_id= ?', $coordsId);
+        if (!$res->num_rows) {
+            return '';
+        }
+
+        $row = $res->fetch_object();
+
+        $god = PlayerFactory::legacy($row->params);
+        $god->get_data();
+
+        echo 'Altar du Dieu ' . $god->data->name . '.';
+
+        $actions = '';
+        $dataText = 'Vous vénérez déjà ce Dieu.';
+
+        if ($god->id != $player->data->godId) {
+            $actions = '
+            <button
+                class="action"
+                data-url="worship.php"
+                data-action="worship"
+                data-target-id="' . $row->id . '"
+            ><span class="ra ra-candle"></span>
+            <span class="action-name">Vénérer</span>
+            </button><br/>';
+
+            $dataText = 'Vénérez ce Dieu pour pouvoir lui adresser vos prières.';
+        }
+
+        return Ui::get_card((object) [
+            'bg' => $god->data->portrait,
+            'name' => '<a href="infos.php?targetId=' . $god->id . '">Altar du Dieu ' . $god->data->name . '</a>',
+            'img' => $actions,
+            'type' => 'Altar',
+            'race' => 'dieu',
+            'text' => $dataText,
+        ]);
+    }
+
+    /**
+     * La carte mutualisée du mur (Ui::get_card — LE composant de la
+     * palissade et de l'autel) : nom du catalogue, voile de dégâts,
+     * état brisé, description.
+     */
+    private static function wallCard(string $wallName, int $wallDamages): string
+    {
+        $wallBaseName = str_replace('_broken', '', $wallName);
+        $isBroken = strpos($wallName, '_broken') !== false;
+
+        $wallLabel = ucfirst(str_replace('_', ' ', $wallBaseName));
+        $wallText = '';
+        $wallCatalogItem = Item::get_item_by_name($wallBaseName);
+        if ($wallCatalogItem) {
+            $wallCatalogItem->get_data();
+            $wallLabel = ucfirst(str_replace('_', ' ', $wallCatalogItem->data->name));
+            $wallText = (string) ($wallCatalogItem->data->text ?? '');
+        }
+
+        $wallPvMax = (!empty(WALLS_PV[$wallName]) && WALLS_PV[$wallName] > 0) ? (int) WALLS_PV[$wallName] : 0;
+
+        $data = (object) [
+            'bg' => 'img/walls/' . $wallName . '.png',
+            'name' => $wallLabel . ($isBroken ? ' — <font color="red">brisé</font>' : ''),
+            'img' => '',
+            'type' => 'Structure',
+            'race' => 'common',
+            'text' => self::wallStatus($wallName, $wallDamages)
+                . ($wallText !== '' ? '<br /><sup>' . $wallText . '</sup>' : ''),
+        ];
+
+        if ($wallPvMax > 0) {
+            $data->pvPct = max(0, (int) floor(($wallPvMax - $wallDamages) / $wallPvMax * 100));
+        }
+
+        return Ui::get_card($data);
     }
 }

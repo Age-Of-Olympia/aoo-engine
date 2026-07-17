@@ -6,7 +6,7 @@ use App\Entity\EntityManagerFactory;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Items Phase 2 — the wear engine (docs/design-items-instances.md §3.4):
+ * Moteur d'usure (docs/design-items-instances.md §3.4) :
  * « le tour est l'unité d'usure ».
  *
  * Events during a turn only ARM (arm(): wear_pending = 1 on the

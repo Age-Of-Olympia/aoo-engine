@@ -38,7 +38,7 @@ class ResetPasswordView
         
 
 
-        // Phase 3.3 — entity-layer lookup. Both branches must resolve
+        // Entity-layer lookup. Both branches must resolve
         // to ?RealPlayer so caller branches meet at the same null
         // check (and NPC/TutorialPlayer ids cannot silently hydrate
         // and reach the rest of the reset flow).

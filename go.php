@@ -308,7 +308,7 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);
 
-    // Usure (Phase 2) : un déplacement ARME les objets équipés à
+    // Usure : un déplacement ARME les objets équipés à
     // déclencheur « move » (bottes…) — le décrément tombe au tour.
     (new \App\Service\WearService())->arm($player->id, 'move');
 

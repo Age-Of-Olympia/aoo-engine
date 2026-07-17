@@ -20,7 +20,6 @@ final class GroundLootView
         $loot = (new GroundLootService())->listAt($x, $y, (int) $coords->z, (string) $coords->plan);
 
         if ($loot['stacks'] === [] && $loot['instances'] === []) {
-
             return;
         }
 
@@ -43,7 +42,7 @@ final class GroundLootView
                 ? '« '. htmlspecialchars($row->custom_name, ENT_QUOTES, 'UTF-8') .' » ('. ucfirst($row->name) .')'
                 : ucfirst($row->name);
 
-            $state = ((int) $row->durability <= 0)
+            $state = \App\Service\ItemInstanceService::isBroken((int) $row->durability)
                 ? ' — <font color="red"><b>brisé</b></font>'
                 : ' — durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
 
@@ -54,13 +53,10 @@ final class GroundLootView
         /* Sa propre case : on est déjà dessus, marcher n'est pas une option —
          * bouton de ramassage direct (drop accidentel, plus besoin de sortir
          * puis revenir). Ailleurs : le rappel marche-dessus. */
-        if($x === (int) $player->coords->x && $y === (int) $player->coords->y){
-
+        if ($x === (int) $player->coords->x && $y === (int) $player->coords->y) {
             echo '<button class="action" id="pickup-own-tile">'
                 . '<span class="ra ra-hand"></span> <span class="action-name">Ramasser</span></button>';
-        }
-        else{
-
+        } else {
             echo '<sup>Marchez sur la case pour ramasser.</sup>';
         }
 
@@ -75,10 +71,9 @@ final class GroundLootView
     private static function mini(string $name, string $preferred): string
     {
         if ($preferred !== '' && is_file($preferred)) {
-
             return $preferred;
         }
 
-        return 'img/items/'. $name .'.webp';
+        return 'img/items/' . $name . '.webp';
     }
 }

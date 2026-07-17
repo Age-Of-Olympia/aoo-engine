@@ -29,11 +29,35 @@ class BuildingService extends BaseService
     public const DEFAULT_IMAGE = 'img/walls/barricade.png';
 
     private EntityManagerInterface $entityManager;
+    private RaceService $raceService;
+    private FactionService $factionService;
+    private DialogService $dialogService;
 
-    public function __construct()
-    {
+    public function __construct(
+        ?RaceService $raceService = null,
+        ?FactionService $factionService = null,
+        ?DialogService $dialogService = null,
+    ) {
         parent::__construct();
         $this->entityManager = EntityManagerFactory::getEntityManager();
+        $this->raceService = $raceService ?? new RaceService();
+        $this->factionService = $factionService ?? new FactionService();
+        $this->dialogService = $dialogService ?? new DialogService();
+    }
+
+    /**
+     * Démontage COMPLET d'une ligne d'entité : composants, logs (les
+     * deux sens de la FK), puis la ligne players — appelé DANS la
+     * transaction du site (retrait de bâtiment, reprise/destruction
+     * d'objet unique : trois sites, une seule séquence).
+     */
+    public static function deleteEntityRows(\Doctrine\DBAL\Connection $conn, int $playerId): void
+    {
+        foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+            $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
+        }
+        $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$playerId, $playerId]);
+        $conn->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
     }
 
     /**
@@ -97,7 +121,7 @@ class BuildingService extends BaseService
         string $faction = '',
         ?string $name = null
     ): int {
-        $race = (new RaceService())->getRaceByName($type);
+        $race = $this->raceService->getRaceByName($type);
         if ($race === null) {
             throw new \InvalidArgumentException(
                 "Type inconnu : '{$type}' (aucune entrée de ce nom au catalogue races)."
@@ -109,7 +133,7 @@ class BuildingService extends BaseService
             );
         }
 
-        if ($faction !== '' && (new FactionService())->getFactionByCode($faction) === null) {
+        if ($faction !== '' && $this->factionService->getFactionByCode($faction) === null) {
             throw new \InvalidArgumentException("Faction inconnue : '{$faction}'.");
         }
 
@@ -244,7 +268,7 @@ class BuildingService extends BaseService
             throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
         }
 
-        if ($faction !== '' && (new FactionService())->getFactionByCode($faction) === null) {
+        if ($faction !== '' && $this->factionService->getFactionByCode($faction) === null) {
             throw new \InvalidArgumentException("Faction inconnue : '{$faction}'.");
         }
 
@@ -256,7 +280,7 @@ class BuildingService extends BaseService
         }
 
         if ($name === '') {
-            $race = (new RaceService())->getRaceByName(
+            $race = $this->raceService->getRaceByName(
                 (string) $conn->fetchOne('SELECT race FROM players WHERE id = ?', [$playerId])
             );
             $name = $race !== null ? $race->getLabel() : "Bâtiment #{$playerId}";
@@ -308,7 +332,7 @@ class BuildingService extends BaseService
             throw new \InvalidArgumentException("#{$playerId} n'est pas un bâtiment.");
         }
 
-        if ($dialogName !== '' && !(new DialogService())->gameDialogExists($dialogName)) {
+        if ($dialogName !== '' && !$this->dialogService->gameDialogExists($dialogName)) {
             throw new \InvalidArgumentException("Dialogue inconnu : « {$dialogName} ».");
         }
 
@@ -345,7 +369,7 @@ class BuildingService extends BaseService
              ORDER BY c.plan, p.id"
         );
 
-        $raceService = new RaceService();
+        $raceService = $this->raceService;
 
         return array_map(static function (array $row) use ($raceService): array {
             $race = $raceService->getRaceByName((string) $row['race']);
@@ -492,11 +516,7 @@ class BuildingService extends BaseService
         // DELETE est tout-ou-rien, pas de démontage à moitié fait.
         $conn->transactional(function ($conn) use ($playerId): void {
             $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
-            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
-                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
-            }
-            $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$playerId, $playerId]);
-            $conn->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
+            self::deleteEntityRows($conn, $playerId);
         });
 
         if ($goCoords !== false) {

@@ -64,7 +64,7 @@ final class EquipmentSlotsView
                 $title .= ' (' . $row->equiped . ')';
             }
 
-            /* Usure (Phase 2, §3.5) : jauge fine sous l'icône dès que la
+            /* Usure (docs/design-items-instances.md §3.5) : jauge fine sous l'icône dès que la
              * ligne est une instance — brisé = fissure, caracs coupées. */
             $wearGauge = '';
             $slotClass = 'equip-slot';

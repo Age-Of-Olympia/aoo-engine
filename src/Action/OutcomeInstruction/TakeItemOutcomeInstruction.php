@@ -11,7 +11,7 @@ use Classes\Player;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Items Phase 3 (docs/design-items-instances.md §3.3) : le débouché de
+ * Pont carte des objets (docs/design-items-instances.md §3.3) : le débouché de
  * l'action « ramasser » — la cible est un UniqueObject enveloppant une
  * instance ; l'instance rejoint l'inventaire de l'acteur, l'entité de
  * carte disparaît. L'identité (usure, nom, provenance) survit à

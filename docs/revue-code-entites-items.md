@@ -125,21 +125,22 @@ Par ordre de valeur estimée :
    mais le flux use/equip vise toujours le catalogue
    (`equipCatalogItem` prend la plus ancienne) ; câbler l'id
    d'instance de bout en bout.
-5. **Démontage d'entité partagé** — la séquence delete
-   composants/logs/players + purge caches existe en trois
-   exemplaires (BuildingService::remove, UniqueObjectService::
-   takeInstance/destroyToGround) ; extraire un helper.
-6. **Injection de dépendances dans BuildingService** — RaceService/
-   FactionService/DialogService instanciés dans les méthodes ;
-   paramètres de constructeur optionnels comme les importeurs.
-7. **`NewTurnView` : l'usure s'applique dans le rendu** — déplacer
-   `applyNewTurnWear` dans le chemin de commit du tour et ne passer à
-   la vue que le récap.
-8. **Divers** : sortes de races via `EntityCategory::options()` dans
-   admin/races.php ; seuil « brisé » en constante partagée
-   (`isBroken()`) ; type d'objet `constructible` découvrable dans le
-   formulaire admin (datalist) et centralisé ; `RecipeExporter::
-   exportAll` en une requête ; munitions validées au save ; scoper le
+5. ~~Démontage d'entité partagé~~ — FAIT (ménage n°3) :
+   `BuildingService::deleteEntityRows()`, appelé dans les trois
+   transactions.
+6. ~~Injection de dépendances dans BuildingService~~ — FAIT
+   (ménage n°3) : Race/Faction/DialogService en paramètres de
+   constructeur optionnels.
+7. **`NewTurnView` : l'usure s'applique dans le rendu** — requalifié :
+   cette vue EST le moteur de tour legacy (purge_effects et les autres
+   mutations y vivent déjà) ; sortir la seule usure n'améliorerait pas
+   la SRP. Le vrai chantier est l'extraction d'un
+   `TurnProcessingService` complet (strangler) — hors ménage.
+8. **Divers** : ~~sortes de races via EntityCategory::options()~~,
+   ~~seuil « brisé » partagé (ItemInstanceService::isBroken)~~,
+   ~~type constructible découvrable (datalist)~~,
+   ~~RecipeExporter::exportAll sans re-résolution d'id~~ — FAITS
+   (ménage n°3) ; munitions validées au save ; scoper le
    `down()` de 20260716150000 ; retirer la condition TargetType morte
    des seeds construire ; `map_items_instances` dans la vue damier
    sous `ONLY_FULL_GROUP_BY` (MIN + une seule bourse par case) ;

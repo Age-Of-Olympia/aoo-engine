@@ -94,10 +94,10 @@ class TutorialPlayerCleanup
     public function deleteTutorialPlayer(int $tutorialPlayersId, int $actualPlayerId): void
     {
         try {
-            // Phase 1: Soft delete in tutorial_players table
+            // Soft delete in tutorial_players table
             $this->softDeleteInTutorialPlayersTable($tutorialPlayersId);
 
-            // Phase 2: Hard delete from players table and related tables
+            // Hard delete from players table and related tables
             $this->hardDeleteFromPlayersTable($actualPlayerId);
 
             $this->logger->info("Tutorial player deleted successfully", [
@@ -228,7 +228,7 @@ class TutorialPlayerCleanup
     {
         try {
             // Find all active tutorial players for this real player.
-            // Phase 4.5: link is on players.real_player_id_ref; the old
+            // Link is on players.real_player_id_ref; the old
             // tutorial_players.real_player_id column has been dropped.
             $sql = 'SELECT tp.id, tp.player_id
                     FROM tutorial_players tp

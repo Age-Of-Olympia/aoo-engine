@@ -89,7 +89,7 @@ if (!(int) ($catalog['is_active'] ?? 0)) {
 }
 
 try {
-    // Phase 4: Cleanup is now handled by TutorialManager.startTutorial()
+    // Cleanup is handled by TutorialManager.startTutorial()
     // via TutorialResourceManager.cleanupPrevious() in correct order
     // No need for manual cleanup here
 

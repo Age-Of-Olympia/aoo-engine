@@ -48,7 +48,7 @@ final class InfosSheetView
 
         $player->getCoords();
 
-        // Target coords via entity (Phase 4.3d). Shape-compatible with
+        // Target coords via entity. Shape-compatible with
         // View::get_distance which only reads ->x / ->y / ->plan.
         $conn = EntityManagerFactory::getEntityManager()->getConnection();
         $targetCoords = $targetEntity->getCoords($conn);

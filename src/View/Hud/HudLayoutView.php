@@ -7,7 +7,7 @@ use App\View\MenuView;
 use Classes\Player;
 
 /**
- * Orchestrateur du nouveau HUD (option newHud) — Phase 1 desktop.
+ * Orchestrateur du nouveau HUD (option newHud).
  *
  * Émet la grille CSS (css/hud.css) et y place les vues EXISTANTES sans
  * les modifier : MenuView devient le rail gauche par pur CSS, et la

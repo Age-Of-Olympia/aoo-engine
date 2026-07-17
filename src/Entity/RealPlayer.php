@@ -56,7 +56,7 @@ class RealPlayer extends Character
     /**
      * Has this player's last login passed the INACTIVE_TIME threshold?
      *
-     * Phase 3.2 domain method — replaces legacy `$player->data->isInactive`
+     * Domain method — replaces legacy `$player->data->isInactive`
      * for entity callers (e.g. infos.php). Delegates to
      * PlayerService::isInactive so the rule lives in ONE place.
      *

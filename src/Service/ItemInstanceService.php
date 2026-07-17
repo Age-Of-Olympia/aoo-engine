@@ -7,7 +7,7 @@ use Classes\Item;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Items Phase 1a (docs/design-items-instances.md §5c) — the lifecycle
+ * Cycle de vie des instances (docs/design-items-instances.md §5c) — the lifecycle
  * of item INSTANCES under the lazy-promotion policy:
  *
  *   - promote(): a pristine unit leaves its stack and becomes an
@@ -18,7 +18,7 @@ use Doctrine\ORM\EntityManagerInterface;
  *     custom name — the only moment a name can be set).
  *   - demote(): the ROLLBACK path — an instance whose state is still
  *     pristine returns to its stack. This is what makes the whole
- *     Phase 1 reversible while nothing has diverged.
+ *     conversion reversible while nothing has diverged.
  *
  * Invariant owned here: an instance has exactly ONE location (the
  * players_items_instances link for now; map/bank come with later
@@ -27,6 +27,18 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 class ItemInstanceService extends BaseService
 {
+    /**
+     * Seuils d'état d'une instance : brisée à 0 (réparable, ne
+     * contribue plus ses caracs), détruite en dessous — LA règle,
+     * partout où l'état est testé ou affiché.
+     */
+    public const BROKEN_AT = 0;
+
+    public static function isBroken(int $durability): bool
+    {
+        return $durability <= self::BROKEN_AT;
+    }
+
     private EntityManagerInterface $entityManager;
 
     public function __construct()
@@ -153,7 +165,7 @@ class ItemInstanceService extends BaseService
     }
 
     /**
-     * Equip a catalog item through the instance path (Phase 1c): reuse
+     * Equip a catalog item through the instance path: reuse
      * the player's OLDEST unequipped live instance of that item, else
      * promote one unit from the stack. Returns the equipped instance id.
      *
@@ -227,7 +239,7 @@ class ItemInstanceService extends BaseService
 
     /**
      * Instance rows shaped for Item::get_item_list()'s dual-read
-     * (Phase 1b): catalog columns + n=1 + the instance meta.
+     * : catalog columns + n=1 + the instance meta.
      *
      * @return array<int, array<string, mixed>>
      */

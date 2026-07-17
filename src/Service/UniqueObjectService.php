@@ -7,7 +7,7 @@ use Classes\View;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Items Phase 3 (docs/design-items-instances.md §3.3) — the map bridge:
+ * Pont carte des objets (docs/design-items-instances.md §3.3) — the map bridge:
  * a UniqueObject wraps an item INSTANCE. The location invariant moves
  * with it: placing releases the owner link (the instance's location IS
  * the map), taking re-links it to the taker and removes the map entity.
@@ -129,11 +129,7 @@ class UniqueObjectService extends BaseService
                 [$takerId, (int) $instanceId]
             );
             $conn->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$uniqueId]);
-            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
-                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$uniqueId]);
-            }
-            $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$uniqueId, $uniqueId]);
-            $conn->executeStatement('DELETE FROM players WHERE id = ?', [$uniqueId]);
+            BuildingService::deleteEntityRows($conn, $uniqueId);
         });
 
         foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
@@ -186,11 +182,7 @@ class UniqueObjectService extends BaseService
                 [(int) $coordsId, (int) $instanceId]
             );
             $conn->executeStatement('DELETE FROM unique_objects WHERE player_id = ?', [$uniqueId]);
-            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
-                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$uniqueId]);
-            }
-            $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$uniqueId, $uniqueId]);
-            $conn->executeStatement('DELETE FROM players WHERE id = ?', [$uniqueId]);
+            BuildingService::deleteEntityRows($conn, $uniqueId);
         });
 
         foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {

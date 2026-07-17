@@ -182,10 +182,10 @@ abstract class GameEntity
     /**
      * Does this entity have the given row in players_options?
      *
-     * Phase 3.2 domain method — replaces legacy
+     * Domain method — replaces legacy
      * `$legacyPlayer->have_option('X')` for entity callers. Backed by
      * the same PlayerOptionsService the legacy shim delegates to
-     * (post-Phase 2), so the result matches byte-for-byte.
+     * so the result matches byte-for-byte.
      *
      * Returns true when hasOption() reports a positive count; the
      * legacy method returns int (duplicate rows push the count above 1)
@@ -200,7 +200,7 @@ abstract class GameEntity
      * Plan (map layer) name for this entity's current coordinates.
      *
      * One SELECT against `coords` by `coords_id`. Kept as a method
-     * rather than a Doctrine relationship so Phase 3 doesn't have to
+     * rather than a Doctrine relationship so read-path callers don't have to
      * ship a Coords entity — that's a separate mini-phase's concern.
      * Returns null if coords_id points at a non-existent row, which
      * shouldn't happen for real players but is possible for orphaned
@@ -220,9 +220,9 @@ abstract class GameEntity
      * Full coords snapshot (x, y, z, plan) as a value object.
      *
      * Matches the shape of legacy `$player->coords`: a stdClass with
-     * int `x`, `y`, `z` and string `plan`. Phase 3.4 deliberately
+     * int `x`, `y`, `z` and string `plan`. Deliberately
      * avoids introducing a Coords Doctrine entity — that's a larger
-     * design decision, and every Phase 3 caller that touches
+     * design decision, and every caller that touches
      * `->coords->X` is read-only. Returns null when `coords_id` points
      * at a non-existent row.
      */
@@ -248,7 +248,7 @@ abstract class GameEntity
     /**
      * Ascending-sorted list of option names for this entity.
      *
-     * Delegates to PlayerOptionsService (the Phase 2 extraction).
+     * Delegates to PlayerOptionsService.
      * Replaces legacy `$player->get_options()` on the entity side.
      *
      * @return array<int, string>

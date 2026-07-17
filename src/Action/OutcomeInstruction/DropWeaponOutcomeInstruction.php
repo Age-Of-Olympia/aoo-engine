@@ -35,7 +35,7 @@ class DropWeaponOutcomeInstruction extends OutcomeInstruction implements HasPara
         $item = $target->emplacements->{$targetLocation};
         
         if(rand(1,100) <= $dropChance){
-            /* Phase 3 : une arme INSTANCIÉE tombe en gardant son identité —
+            /* Une arme INSTANCIÉE tombe en gardant son identité —
              * elle rejoint la BOURSE de la case de sa victime (ramassée en
              * marchant, comme tout loot). Une instance redevenue vierge au
              * déséquipement reprend l'ancien chemin map_items ; les piles

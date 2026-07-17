@@ -39,7 +39,7 @@ if(isset($_GET['rewards'])){
 }
 
 
-// Phase 4.3d — hydrate an entity alongside the legacy $target for
+// Hydrate an entity alongside the legacy $target for
 // read paths. The legacy object stays for anything downstream code
 // or the included sub-scripts still rely on (->coords, ->get_caracs,
 // Item::get_equiped_list). The entity powers every pure data read.

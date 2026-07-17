@@ -10,7 +10,7 @@ use Classes\Str;
 /**
  * Rendu des flux du panneau latéral du HUD (option newHud).
  *
- * Phase 1 : lecture seule, aucune nouvelle donnée — le flux « Général »
+ * Lecture seule, aucune nouvelle donnée — le flux « Général »
  * réutilise les messages du jour (players_logs, type mdj) et le flux
  * « Événements » la perception (type light), exactement comme logs.php.
  * Le vrai chat (saisie, transport) viendra dans une phase ultérieure.

@@ -124,7 +124,7 @@ final class PlayerFactory
      * `Player::get_player_by_name()`'s WHERE clause.
      *
      * Use for read-only name-lookup flows (password reset, missive
-     * recipient checks, admin search-by-name) after Phase 3.x
+     * recipient checks, admin search-by-name) after the read-path migration
      * migration.
      */
     public static function entityByName(string $name): ?\App\Entity\RealPlayer

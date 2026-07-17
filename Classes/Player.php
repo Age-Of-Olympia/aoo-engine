@@ -256,10 +256,10 @@ class Player implements ActorInterface {
 
             $this->emplacements->{$row->equiped} = $item;
 
-            /* Un objet BRISÉ (durabilité <= 0, seuils décidés en revue) reste
+            /* Un objet BRISÉ (ItemInstanceService::BROKEN_AT) reste
              * porté — visible à l'emplacement — mais ne contribue plus ses
              * caracs : c'est le sens gameplay de « brisé ». */
-            if(isset($row->durability) && (int) $row->durability <= 0){
+            if(isset($row->durability) && \App\Service\ItemInstanceService::isBroken((int) $row->durability)){
 
                 continue;
             }
@@ -533,7 +533,7 @@ class Player implements ActorInterface {
     }
 
 
-    // options shortcuts — delegate to PlayerOptionsService (Phase 2).
+    // options shortcuts — delegate to PlayerOptionsService.
     // The isMerchant → marchand follower hook stays here because the
     // follower methods live on Player; the service owns table access only.
     public function add_option($name){
@@ -547,7 +547,7 @@ class Player implements ActorInterface {
     }
     public function get_options(){ return (new PlayerOptionsService())->getOptions($this->id); }
 
-    // actions shortcuts — delegate to PlayerActionsService (Phase 2b).
+    // actions shortcuts — delegate to PlayerActionsService.
     // The spell/technique → type='sort' branch and the 'attaquer'
     // short-circuit live inside the service; see addAction().
     public function add_action($name){ (new PlayerActionsService())->addAction($this->id, $name); }
@@ -1595,7 +1595,7 @@ class Player implements ActorInterface {
 
             if (!empty($itemList[$item->id]->instance_id)) {
 
-                // Phase 1c : l'objet équipé est une instance — la déséquiper
+                // L'objet équipé est une instance — la déséquiper
                 // (une instance encore vierge retourne silencieusement en pile).
                 (new \App\Service\ItemInstanceService())
                     ->unequipInstance((int) $itemList[$item->id]->instance_id);
@@ -1655,7 +1655,7 @@ class Player implements ActorInterface {
             }
 
 
-            // cursed emp — piles héritées ET instances (Phase 1b)
+            // cursed emp — piles héritées ET instances
             $sql = '
             SELECT
             (SELECT COUNT(*) FROM items AS i
@@ -1693,7 +1693,7 @@ class Player implements ActorInterface {
                 return EquipResult::DoNothing;
             }
 
-            // Phase 1c : libérer les emplacements des deux représentations —
+            // Libérer les emplacements des deux représentations —
             // piles héritées (SQL) et instances (service, avec retour en pile
             // des instances encore vierges).
             $emplacementsToClear = [$item->data->emplacement];
@@ -1744,7 +1744,7 @@ class Player implements ActorInterface {
             }
             else{
 
-                // Phase 1c : équiper crée (ou réutilise) une INSTANCE — l'objet
+                // Équiper crée (ou réutilise) une INSTANCE — l'objet
                 // commence à exister individuellement au moment où il est porté.
                 try {
                     $instanceService->equipCatalogItem($this->id, (int) $item->id, $item->data->emplacement);
@@ -2237,7 +2237,7 @@ class Player implements ActorInterface {
      * creation must go through `App\Tutorial\TutorialPlayerFactory::create()`,
      * which is the only writer that sets `player_type='tutorial'` and both
      * FK columns atomically. Calling `put_player()` for a tutorial row would
-     * leave it orphaned from its owning real player (Phase 4.6 FK guardrail).
+     * leave it orphaned from its owning real player (FK guardrail).
      */
     public static function put_player($name, $race, $pnj=false, $type='real') : int{
 

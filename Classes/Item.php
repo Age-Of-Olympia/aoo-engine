@@ -211,7 +211,7 @@ class Item{
 
 
     /**
-     * @param bool $includeInstances Phase 1b : compter aussi les objets
+     * @param bool $includeInstances compter aussi les objets
      *        individualisés (défaut). Les MUTATEURS de piles (add_item,
      *        coûts consommés) doivent passer false : leur garde porte sur
      *        ce qu'ils peuvent réellement décrémenter — compter les
@@ -251,7 +251,7 @@ class Item{
             $stackN = (int) $res->fetch_object()->n;
         }
 
-        // Phase 1b — double comptage : les instances vivantes comptent
+        // Double comptage : les instances vivantes comptent
         // avec les piles (contrat pinné par ItemInstanceService::countOwned).
         if (!$bank && $includeInstances) {
             $stackN += (new \App\Service\ItemInstanceService())
@@ -534,7 +534,7 @@ class Item{
         }
 
 
-        /* Phase 1b (docs/design-items-instances.md §5c P2) — double
+        /* Double lecture (docs/design-items-instances.md §5c P2) — double
          * lecture : les objets individualisés (item_instances) rejoignent
          * la liste, façonnés comme des lignes de pile (n=1) + méta
          * d'instance. Clés : par id catalogue quand on liste l'ÉQUIPÉ
@@ -763,7 +763,7 @@ class Item{
         }
 
 
-        // count emplacements — piles héritées ET instances (Phase 1b)
+        // count emplacements — piles héritées ET instances
         $sql = '
         SELECT
         (SELECT COUNT(*) FROM players_items

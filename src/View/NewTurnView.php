@@ -250,7 +250,7 @@ class NewTurnView
 
                     echo '</table>';
 
-                    /* Usure (Phase 2) : le tour est l'unité de décrément —
+                    /* Usure : le tour est l'unité de décrément —
                      * appliquer ici ce que les événements du tour ont armé,
                      * et le montrer au joueur au moment où ça arrive. */
                     $wearRecap = (new \App\Service\WearService())->applyNewTurnWear($player->id);

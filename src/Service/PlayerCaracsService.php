@@ -8,7 +8,7 @@ use Classes\Db;
  * Computes a player's "nude" caracs — base stats built from the race's
  * ability profile plus their bought upgrades.
  *
- * This is the scope the Phase 3 audit flagged as the BourrinsView /
+ * This is the scope the read-path audit flagged as the BourrinsView /
  * infos.php blocker: entity-side callers need caracs without going
  * through legacy
  * Classes\Player::get_caracs(), which bundles item bonuses, effects,

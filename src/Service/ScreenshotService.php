@@ -114,7 +114,7 @@ class ScreenshotService
      */
     public function generateAutomaticScreenshot(Player $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
     {
-        // Internal upgrade to entity for read-only lookups (Phase 4.3c).
+        // Internal upgrade to entity for read-only lookups.
         // Callers still pass legacy Player (ActorInterface), but the
         // read paths inside this method use the entity layer. The
         // screenshot-PNJ mutation paths below (move_player, get_caracs)

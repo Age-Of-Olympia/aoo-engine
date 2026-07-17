@@ -299,7 +299,7 @@ if ($isInvisible && !$isAdmin && !$inTutorial && !$isBrandNew && !$autoStarting)
 
 // Note: Auto-start tutorial logic has been moved earlier (before modal check)
 
-// Nouveau HUD (Phase 1, opt-in) : option joueur newHud, avec surcharge
+// Nouveau HUD (opt-in) : option joueur newHud, avec surcharge
 // ponctuelle ?hud=1 / ?hud=0 pour tester sans toucher à l'option.
 // L'option est lue sur le joueur RÉEL : pendant le tutoriel, $player
 // est le personnage temporaire (sans options) mais l'interface choisie

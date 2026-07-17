@@ -27,36 +27,45 @@ final class RecipeExporter implements ObjectExporter
 
     public function exportAll(): array
     {
-        $names = $this->connection()->fetchFirstColumn('SELECT name FROM craft_recipes ORDER BY name');
+        $rows = $this->connection()->fetchAllAssociative('SELECT id, name FROM craft_recipes ORDER BY name');
 
-        return array_map(fn (string $name): array => $this->exportOne($name), $names);
+        return array_map(
+            fn (array $row): array => $this->exportRow((int) $row['id'], (string) $row['name']),
+            $rows
+        );
     }
 
     public function exportOne(string $name): array
     {
-        $conn = $this->connection();
-
-        $id = $conn->fetchOne('SELECT id FROM craft_recipes WHERE name = ?', [$name]);
+        $id = $this->connection()->fetchOne('SELECT id FROM craft_recipes WHERE name = ?', [$name]);
         if ($id === false) {
             throw new InvalidArgumentException("Recette inconnue : « {$name} ».");
         }
+
+        return $this->exportRow((int) $id, $name);
+    }
+
+    /** @return array<string, mixed> */
+    private function exportRow(int $id, string $name): array
+    {
+        $conn = $this->connection();
 
         return [
             'name' => $name,
             'ingredients' => $conn->fetchAllAssociative(
                 'SELECT i.name AS item, ri.count FROM craft_recipes_ingredients ri
                  JOIN items i ON i.id = ri.item_id WHERE ri.recipe_id = ? ORDER BY i.name',
-                [(int) $id]
+                [$id]
             ),
             'results' => $conn->fetchAllAssociative(
                 'SELECT i.name AS item, rr.count FROM craft_recipes_results rr
                  JOIN items i ON i.id = rr.item_id WHERE rr.recipe_id = ? ORDER BY i.name',
-                [(int) $id]
+                [$id]
             ),
             'races' => $conn->fetchFirstColumn(
                 'SELECT ra.name FROM race_recipes r JOIN races ra ON ra.id = r.race_id
                  WHERE r.recipe_id = ? ORDER BY ra.name',
-                [(int) $id]
+                [$id]
             ),
         ];
     }

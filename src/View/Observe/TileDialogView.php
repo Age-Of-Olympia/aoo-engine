@@ -17,44 +17,29 @@ final class TileDialogView
     /** @param \mysqli_result $res lignes map_dialogs de la case */
     public static function render(Player $player, \mysqli_result $res): void
     {
-        if(!$res->num_rows){
-
+        if (!$res->num_rows) {
             return;
         }
 
-        $row = $res->fetch_object();
+        $params = (string) $res->fetch_object()->params;
 
-
-        if($row->params[0] == '"'){
-
-
-            $alert = str_replace('"', '', $row->params);
-
-            echo '<script>alert("'. $alert .'");</script>';
+        // Alerte brute : params entre guillemets, pas un dialogue.
+        if ($params[0] == '"') {
+            echo '<script>alert("' . str_replace('"', '', $params) . '");</script>';
+            return;
         }
 
-        else{
-
-
-            $paramsTbl = explode(',', $row->params);
-
-
-            if(count($paramsTbl) == 1){
-
-                $paramsTbl[] = $paramsTbl[0];
-                $paramsTbl[] = $paramsTbl[0];
-                $paramsTbl[] = $paramsTbl[0];
-            }
-
-
-            $options = array(
-            'name'=>$paramsTbl[0],
-            'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.webp',
-            'dialog'=>$paramsTbl[2],
-            'text'=>''
-            );
-
-            echo '<div class="view-dialog">'. Ui::get_dialog($player, $options) .'</div>';
+        // CSV « nom,avatar,dialogue » — une valeur unique vaut pour les trois.
+        $paramsTbl = explode(',', $params);
+        if (count($paramsTbl) == 1) {
+            $paramsTbl = [$paramsTbl[0], $paramsTbl[0], $paramsTbl[0]];
         }
+
+        echo '<div class="view-dialog">' . Ui::get_dialog($player, [
+            'name' => $paramsTbl[0],
+            'avatar' => 'img/dialogs/bg/' . $paramsTbl[1] . '.webp',
+            'dialog' => $paramsTbl[2],
+            'text' => '',
+        ]) . '</div>';
     }
 }
