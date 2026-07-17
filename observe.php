@@ -348,6 +348,9 @@ if($res->num_rows){
                     if ($actionData == null) {
                         continue;
                     }
+                    if (!$actionTargeting->matchesDisplayContext($actionData, $player, $target)) {
+                        continue;
+                    }
                     $dataImg .= buildActionToDisplay($target, $actionData, $actionService, "attaquer");
                 }
                 continue;
@@ -372,6 +375,12 @@ if($res->num_rows){
             // button on a character (the executor would block them anyway).
             $targetCategory = \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real');
             $allowed = $allowed && $actionTargeting->canTargetCategory($actionData, $targetCategory);
+
+            /* Contexte d'affichage : les conditions marquées
+             * display_context au workbench sont évaluées ici — le bouton
+             * n'apparaît que si elles passent (ex. RequiresDistance
+             * contextuelle = visible seulement à portée). */
+            $allowed = $allowed && $actionTargeting->matchesDisplayContext($actionData, $player, $target);
 
             if ($allowed) {
                 $dataImg .= buildActionToDisplay($target, $actionData, $actionService);
@@ -430,7 +439,15 @@ if($res->num_rows){
 
                 $buildingClosure = $buildingService->closureReason($buildingDetails, (int) $pvPct);
 
-                if ($buildingDetails->getDialog() !== '' && $buildingClosure === null) {
+                /* Adjacent seulement — même règle que la garde serveur de
+                 * la fiche : plus loin, pas d'affordance qui mène à un
+                 * « il faut être à côté ». */
+                $obsDistance = \Classes\View::get_distance(
+                    $player->getCoords(),
+                    (object) array('x' => $x, 'y' => $y, 'z' => $coords->z, 'plan' => $coords->plan)
+                );
+
+                if ($buildingDetails->getDialog() !== '' && $buildingClosure === null && $obsDistance <= 1) {
 
                     $dataImg .= '<a href="infos.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-speech-bubble"></span> <span class="action-name">Parler</span></button></a>';
                 }

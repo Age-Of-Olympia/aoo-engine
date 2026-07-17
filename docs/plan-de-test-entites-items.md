@@ -69,6 +69,19 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    sortes Structure ; la nature voyage dans les bundles de races.
    ☐ Une structure ne s'affiche jamais « (inactif) » — l'inactivité
    est réservée aux joueurs réels.
+6d. **Boutons d'action CONTEXTUELS** (action_conditions.display_context).
+   ☐ Workbench (admin → Actions → Configuration) : chaque condition a
+   une case « Contextuelle — le bouton ne s'affiche que si la
+   condition passe » (+ badge « contextuelle » dans l'en-tête). Sans
+   la case : comportement historique, le bouton s'affiche et
+   l'exécuteur refuse au clic.
+   ☐ Démo : la RequiresDistance (max 1) de « reparer » est marquée
+   contextuelle — le bouton Réparer n'apparaît sur une structure que
+   depuis une case ADJACENTE ; « attaquer » (non flaggée) s'affiche à
+   toute distance et refuse au clic, comme avant.
+   ☐ Le bouton « Parler » (navigation, pas une action) suit la même
+   règle d'adjacence en dur — pas d'affordance qui mène à « il faut
+   être à côté ».
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.

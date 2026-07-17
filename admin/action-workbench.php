@@ -177,9 +177,17 @@ if ($action === null) {
         echo '<div class="wb-block">';
         echo '<div class="wb-block-head">' . e($condition->getConditionType())
             . ($condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '')
+            . ($condition->isDisplayContext() ? ' <span class="badge badge-info">contextuelle</span>' : '')
             . $conditionEditor->removeButton((int) $condition->getId()) . '</div>';
         echo '<div class="wb-block-body">';
         echo $renderParams($schema, $params, 'cond[' . (int) $condition->getId() . ']', 'cond_raw[' . (int) $condition->getId() . ']');
+        /* Contexte d'affichage : le bouton du panneau n'apparaît que si
+         * cette condition passe (évaluée au rendu, en plus du refus à
+         * l'exécution). */
+        echo '<label class="wb-field"><span>Contextuelle</span>'
+            . '<span><input type="checkbox" name="cond_ctx[' . (int) $condition->getId() . ']" value="1" '
+            . ($condition->isDisplayContext() ? 'checked' : '') . '>'
+            . ' le bouton ne s\'affiche que si la condition passe</span></label>';
         echo '</div></div>';
     }
     echo '</div>';

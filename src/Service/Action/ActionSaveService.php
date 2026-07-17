@@ -45,6 +45,7 @@ final class ActionSaveService
         array $instructionParams,
         array $conditionRaw = [],
         array $instructionRaw = [],
+        array $conditionContext = [],
     ): void {
         $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
 
@@ -60,6 +61,9 @@ final class ActionSaveService
                 if ($merged !== null) {
                     $condition->setParameters($merged);
                 }
+                // Case décochée absente du POST : le formulaire de save
+                // porte TOUTES les conditions, l'absence vaut false.
+                $condition->setDisplayContext(!empty($conditionContext[$condition->getId()]));
             }
 
             foreach ($action->getOutcomes() as $outcome) {

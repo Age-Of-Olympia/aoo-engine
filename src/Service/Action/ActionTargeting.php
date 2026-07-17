@@ -101,6 +101,50 @@ final class ActionTargeting
         return true;
     }
 
+    /**
+     * Contexte d'affichage : les conditions marquées display_context au
+     * workbench sont évaluées AU RENDU du panneau — le bouton n'apparaît
+     * que si elles passent (ex. RequiresDistance contextuelle = bouton
+     * visible seulement à portée). Les autres conditions restent des
+     * refus à l'exécution, comme avant.
+     *
+     * En cas d'erreur d'évaluation, on AFFICHE (fail open) : un bouton
+     * de trop est refusé par l'exécuteur, un bouton manquant est un
+     * gameplay cassé silencieusement.
+     */
+    public function matchesDisplayContext(
+        Action $action,
+        \App\Interface\ActorInterface $actor,
+        ?\App\Interface\ActorInterface $target
+    ): bool {
+        $registry = new \App\Action\Condition\ConditionRegistry();
+
+        foreach ($action->getConditions() as $condition) {
+            if (!$condition->isDisplayContext()) {
+                continue;
+            }
+
+            $impl = $registry->getCondition($condition->getConditionType());
+            if ($impl === null) {
+                continue;
+            }
+
+            try {
+                $result = $impl->check($actor, $target, $condition, new \App\Action\Condition\ConditionObject());
+            } catch (\Throwable $e) {
+                error_log('[ActionTargeting] display context eval failed for '
+                    . $action->getName() . '/' . $condition->getConditionType() . ': ' . $e->getMessage());
+                continue;
+            }
+
+            if (!$result->isSuccess()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /** Friendly French label for the config UI. */
     public function label(Action $action): string
     {
