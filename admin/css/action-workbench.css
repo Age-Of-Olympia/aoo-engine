@@ -222,11 +222,10 @@
 /* Type-defaults editor tabs (Instructions / Expérience / Journal) */
 .wb-tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--rule); margin: -2px 0 14px; flex-wrap: wrap; }
 .wb-tab {
-    appearance: none; border: 0; background: none; cursor: pointer; font: inherit;
+    appearance: none; border: 0; background: none; font: inherit;
     padding: 9px 16px; margin-bottom: -2px; color: var(--mute); font-weight: 600; font-size: 13px;
     border-bottom: 2px solid transparent; border-radius: 6px 6px 0 0;
 }
-.wb-tab:hover { color: var(--ink); background: var(--bronze-wash); }
 .wb-tab--active { color: var(--ink); border-bottom-color: var(--bronze-bright); }
 .wb-tabpanel[hidden] { display: none; }
 /* The first section title inside a panel is redundant with the tab label. */
