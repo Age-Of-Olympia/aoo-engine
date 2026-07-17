@@ -207,6 +207,7 @@ class ScreenshotService
             $data = str_replace('img/', $baseUrl . 'img/', $data);
         }
 
+        //$data = $this->convertImagesToBase64($data);
         $data = $this->removeScreenshotPlayerFromSvg($data, $player);
 
         return $data ?: null;
@@ -259,6 +260,96 @@ class ScreenshotService
         return $svgData;
     }
 
+
+
+    /* ------------------------------------------------------------------
+     * Incorporation base64 des captures — FONCTIONNALITÉ EN SOMMEIL,
+     * gardée sur décision d'équipe (2026-07-18) : rend le SVG autonome
+     * (images incluses) le jour où l'appel commenté de generateSvgData()
+     * est réactivé. PHPStan les voit inutilisées : ignores ciblés.
+     * ---------------------------------------------------------------- */
+    /**
+     * Convert all external images in SVG to base64 data URIs
+     * Handles both regular images and background images
+     */
+    // @phpstan-ignore method.unused (en sommeil, voir note ci-dessus)
+    private function convertImagesToBase64(string $svgData, int $zValue = 0): string
+    {
+        if (preg_match('/<svg[^>]*style="[^"]*background:\s*url\(\'([^\']+)\'\)/i', $svgData, $bgMatches)) {
+            $bgUrl = $bgMatches[1];
+            $bgPath = $this->resolveImagePath($bgUrl);
+            $bgBase64 = $this->imageToBase64($bgPath);
+            
+            if ($bgBase64) {
+                $svgData = str_replace(
+                    $bgUrl, 
+                    $bgBase64, 
+                    $svgData
+                );
+            }
+        }
+
+        $pattern = '/<image[^>]*href=[\'"]([^\'"]+)[\'"][^>]*>/i';
+        
+        return preg_replace_callback($pattern, function($matches) {
+            $fullImageTag = $matches[0];
+            $imageUrl = $matches[1];
+            
+            if (empty($imageUrl) || strpos($imageUrl, 'data:') === 0) {
+                return $fullImageTag;
+            }
+            
+            $imagePath = $this->resolveImagePath($imageUrl);
+            $base64Data = $this->imageToBase64($imagePath);
+            
+            if ($base64Data) {
+                return str_replace($imageUrl, $base64Data, $fullImageTag);
+            }
+            
+            return $fullImageTag;
+        }, $svgData);
+    }
+
+    /**
+     * Convert image to base64 data URL
+     */
+    private function imageToBase64(string $imagePath): ?string
+    {
+        if (!file_exists($imagePath)) {
+            return null;
+        }
+
+        $mimeType = mime_content_type($imagePath);
+        if (!$mimeType) {
+            $mimeType = 'image/png';
+        }
+
+        $imageData = file_get_contents($imagePath);
+        if ($imageData === false) {
+            return null;
+        }
+
+        return 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+    }
+
+    /**
+     * Resolve image URL to local file path
+     */
+    private function resolveImagePath(string $imageUrl): string
+    {
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $baseUrl = 'http://' . $_SERVER['HTTP_HOST'] . '/';
+            if (strpos($imageUrl, $baseUrl) === 0) {
+                $imageUrl = substr($imageUrl, strlen($baseUrl));
+            }
+        }
+        
+        if (strpos($imageUrl, '/') === 0) {
+            return $_SERVER['DOCUMENT_ROOT'] . $imageUrl;
+        } else {
+            return $_SERVER['DOCUMENT_ROOT'] . '/' . $imageUrl;
+        }
+    }
 
     /**
      * Save screenshot data to file
