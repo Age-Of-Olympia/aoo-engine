@@ -28,10 +28,11 @@ $player = PlayerFactory::active();
 $player->get_data();
 $player->get_caracs();
 
-// target
+// target — absent : action sur soi-même (constructibles depuis
+// l'inventaire, et toute action self déclenchée hors panneau de case)
 if(!isset($_POST['targetId'])){
 
-    exit('error targetId');
+    $_POST['targetId'] = $player->id;
 }
 
 $target = PlayerFactory::legacy($_POST['targetId']);
@@ -52,10 +53,14 @@ if ($_POST['action'] != 'attaquer') {
     }
 }
 
-if (($_POST['coordsX'] != $target->getCoords()->x)
+// Garde anti-cible-déplacée : seulement quand l'appelant a fourni les
+// coordonnées observées (panneau de case). Une action sur SOI depuis
+// l'inventaire (constructibles) n'en a pas — soi-même ne s'enfuit pas.
+if (isset($_POST['coordsX'])
+    && (($_POST['coordsX'] != $target->getCoords()->x)
     ||($_POST['coordsY'] != $target->getCoords(refresh:false)->y)
     ||($_POST['coordsZ'] != $target->getCoords(refresh:false)->z)
-    ||($_POST['coordsPlan'] != $target->getCoords(refresh:false)->plan)) {
+    ||($_POST['coordsPlan'] != $target->getCoords(refresh:false)->plan))) {
     exit('Votre cible s\'est déplacée.');
 }
 

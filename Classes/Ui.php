@@ -390,6 +390,7 @@ class Ui{
                 data-type="'. $type .'"
                 data-bankable="'. $item->row->is_bankable .'"
                 data-state="'. $stateAttr .'"
+                data-build-action="'. ($type == 'constructible' ? 'construire_'. $item->row->name : '') .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
@@ -425,6 +426,14 @@ class Ui{
 
                     $usable = true;
                     $useTitle = 'Déséquiper';
+                }
+                elseif($type == 'constructible'){
+
+                    /* Un objet constructible se bâtit DEPUIS l'inventaire —
+                     * un bouton par objet possédé, pas un bouton d'action
+                     * par type dans le panneau de case. */
+                    $usable = ($aLeft === null || $aLeft > 0);
+                    $useTitle = $usable ? 'Construire (1 A)' : 'Construire (1 A) — plus d\'Action ce tour';
                 }
                 elseif($type == 'equipement'){
 
@@ -509,7 +518,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260717"></script>
+        <script src="js/inventUi.js?v=20260717b"></script>
         <?php
 
         return Str::minify(ob_get_clean());

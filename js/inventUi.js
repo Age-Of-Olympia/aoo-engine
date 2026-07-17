@@ -18,6 +18,7 @@ $(document).ready(function(){
         window.n =     $item.data("n");
         let text =  $item.data("text");
         window.price = $item.data("price");
+        window.buildAction = $item.data("build-action");
         let infos = $item.data("infos");
         let img =   $item.data("img");
         let bankable = $item.data("bankable") ;
@@ -61,6 +62,13 @@ $(document).ready(function(){
 
                 $('.action[data-action="use"]')
                 .html('Utiliser (1 A)')
+                .prop('disabled', (window.aLeft <= 0));
+            }
+            else if(window.type == 'constructible'){
+
+                /* Bâtir depuis l'objet : un bouton par objet possédé. */
+                $('.action[data-action="use"]')
+                .html('Construire (1 A)')
                 .prop('disabled', (window.aLeft <= 0));
             }
             else{

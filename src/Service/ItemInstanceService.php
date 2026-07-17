@@ -232,7 +232,7 @@ class ItemInstanceService extends BaseService
         $equipedFilter = $equipedOnly ? "AND l.equiped != ''" : '';
 
         return $this->entityManager->getConnection()->fetchAllAssociative(
-            "SELECT it.*, i.id AS instance_id, i.durability, i.durability_max, i.quality,
+            "SELECT it.*, i.item_id, i.id AS instance_id, i.durability, i.durability_max, i.quality,
                     i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
                     l.equiped, 1 AS n
              FROM players_items_instances l

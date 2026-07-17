@@ -69,6 +69,36 @@ $(document).ready(function(){
             return false;
         }
 
+        /* Constructibles (nouveau système) : bâtir DEPUIS l'objet — l'action
+           construire_{objet} est la mécanique, la case libre adjacente est
+           choisie automatiquement. */
+        if(action == 'use' && window.type == 'constructible'){
+
+            aooConfirm('Construire ' + window.name + ' sur une case libre adjacente ? (1 A)').then(function(ok){
+
+                if(!ok){
+                    return;
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: 'action.php',
+                    data: {'action': window.buildAction},
+                    success: function(data){
+
+                        var text = $('<div></div>').html(
+                            data.replace(/<script[\s\S]*?<\/script>/gi, '')
+                                .replace(/<style[\s\S]*?<\/style>/gi, '')
+                        ).text().replace(/\s+/g, ' ').trim();
+
+                        aooAlert(text).then(aooReload);
+                    }
+                });
+            });
+
+            return false;
+        }
+
         var isMarket = (action == "newAsk" || action == "newBid");
         var needsN = (action == 'drop' || action == "store" || isMarket);
 

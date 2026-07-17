@@ -58,12 +58,15 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    est disponible ; vous avez 18 bois — craftez-en une. L'objet
    palissade est dans l'inventaire : empilable, bancable, échangeable
    (vous en avez déjà une autre, fournie).
-   ☐ **Construire** : sur votre case, l'action « Construire une
-   palissade » consomme 1 OBJET palissade (−1 A) → une VRAIE palissade
-   apparaît sur une case libre adjacente, à VOTRE nom (admin →
-   Bâtiments : propriétaire Cradek, faction reprise).
-   ☐ Sans objet palissade : bloquée, « Il vous faut 1 × Palissade… »,
-   rien dépensé.
+   ☐ **Construire DEPUIS L'INVENTAIRE** (retour de revue : pas un
+   bouton d'action par type de mur !) : cliquer l'objet palissade (ou
+   mur_bois) dans l'inventaire → bouton « Construire (1 A) » →
+   confirmation → l'entité apparaît sur une case libre adjacente, à
+   VOTRE nom, et le résultat s'affiche (réussite, coûts, XP).
+   ☐ Sans Action restante : bouton grisé avec l'explication ; sans
+   l'objet : il n'y a simplement pas de ligne à cliquer.
+   ☐ Le panneau de votre case ne montre AUCUN bouton construire_* —
+   l'objet est l'entrée unique.
 10. **La boucle complète** — attaquer votre propre palissade, la
     réparer, la détruire.
     ☐ Tout fonctionne comme en A.

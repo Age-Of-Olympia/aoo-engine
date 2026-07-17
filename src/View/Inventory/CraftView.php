@@ -92,20 +92,16 @@ class CraftView
 
         function get_json_item($item)
         {
+            /* Passe par la passerelle Item::get_data() — un objet dont les
+             * stats sont en base (stats_in_db, ex. les constructibles créés
+             * sans fichier JSON) est servi comme les autres ; le repli JSON
+             * hérité reste couvert par get_data() elle-même. */
+            $legacy = new Item((int) $item->getId());
+            $legacy->get_data();
 
-            $return = (object) array('data', 'id');
-            $return->data = json()->decode('items', $item->getName());
-            $return->id = $item->getId();
-
-            // Unknown item — the JSON file for this item name does not
-            // exist. Return early with a null data payload; the caller
-            // renders a fallback row.
-            if (!$return->data) {
-                echo 'error ' . $item->getName();
-                return $return;
-            }
-
+            $return = (object) array('data' => $legacy->data, 'id' => (int) $item->getId());
             $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
+
             return $return;
         }
 
@@ -173,7 +169,10 @@ class CraftView
         $itemList = Item::get_item_list($player->id);
 
         foreach ($itemList as $playerItem) {
-            $playerItemN[$playerItem->item_id] = $playerItem->n;
+            /* Lignes d'instances et ligne « or » : l'id catalogue fait foi
+             * (les instances comptent chacune pour 1 exemplaire). */
+            $catalogId = $playerItem->item_id ?? $playerItem->id;
+            $playerItemN[$catalogId] = ($playerItemN[$catalogId] ?? 0) + (int) $playerItem->n;
         }
 
         $recipeList = $recipeService->getRecipes($player, fromItemId: $item->id);
