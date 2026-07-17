@@ -3,28 +3,24 @@
 namespace App\Service\ImportExport;
 
 use App\Service\DialogService;
-use Classes\Db;
+use Doctrine\DBAL\Connection;
 use RuntimeException;
-use Throwable;
 
 /**
  * Importe des bundles de dialogues ({@see DialogExporter}) en
- * create-or-update par clé naturelle (`name`), tout-ou-rien.
- *
- * Implémente ObjectImporter directement plutôt que d'étendre
- * AbstractObjectImporter : les écritures passent par Classes\Db (mysqli) via
- * DialogService — la transaction doit vivre sur la même connexion (même
- * raison que PlanImporter).
+ * create-or-update par clé naturelle (`name`), tout-ou-rien
+ * (squelette {@see AbstractDbalImporter} — Classes\Db enveloppe la
+ * MÊME connexion native que DBAL, la transaction du lot couvre donc
+ * les écritures de DialogService).
  */
-final class DialogImporter implements ObjectImporter
+final class DialogImporter extends AbstractDbalImporter
 {
-    private ?Db $db;
     private ?DialogService $dialogs;
 
-    public function __construct(?Db $db = null, ?DialogService $dialogs = null)
+    public function __construct(?Connection $connection = null, ?DialogService $dialogs = null)
     {
+        parent::__construct($connection);
         // Lazy : l'instanciation ne doit pas ouvrir de connexion DB
-        $this->db = $db;
         $this->dialogs = $dialogs;
     }
 
@@ -33,46 +29,19 @@ final class DialogImporter implements ObjectImporter
         return 'dialog';
     }
 
-    public function preview(array $objects): ImportReport
+    protected function apply(Connection $conn, array $payload): void
     {
-        $report = new ImportReport();
-        $this->collect($objects, $report);
-
-        return $report;
+        ($this->dialogs ??= new DialogService())->saveGameDialog($payload['name'], $payload['nodes'], [
+            'npc_name'  => $payload['npcName'],
+            'type'      => $payload['type'],
+            'custom'    => $payload['custom'],
+            'is_active' => $payload['active'],
+        ]);
     }
 
-    public function import(array $objects): ImportReport
+    protected function afterImport(): void
     {
-        $report = new ImportReport();
-        $payloads = $this->collect($objects, $report);
-
-        // Tout-ou-rien : un seul rejet et le lot entier reste non écrit
-        if ($report->hasRejections()) {
-            return $report;
-        }
-
-        $db = $this->db ??= new Db();
-        $dialogs = $this->dialogs ??= new DialogService();
-
-        $db->beginTransaction();
-        try {
-            foreach ($payloads as $payload) {
-                $dialogs->saveGameDialog($payload['name'], $payload['nodes'], [
-                    'npc_name'  => $payload['npcName'],
-                    'type'      => $payload['type'],
-                    'custom'    => $payload['custom'],
-                    'is_active' => $payload['active'],
-                ]);
-            }
-            $db->commit();
-        } catch (Throwable $exception) {
-            $db->rollBack();
-            throw $exception;
-        }
-
         DialogService::clearCache();
-
-        return $report;
     }
 
     /**
@@ -82,7 +51,7 @@ final class DialogImporter implements ObjectImporter
      * @param array<int, mixed> $objects
      * @return list<array{name: string, npcName: string, type: string, custom: string, active: bool, nodes: array}>
      */
-    private function collect(array $objects, ImportReport $report): array
+    protected function collect(array $objects, ImportReport $report): array
     {
         $payloads = [];
         $seen = [];

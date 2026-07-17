@@ -48,6 +48,9 @@ class ResourceOutcomeInstruction extends OutcomeInstruction implements HasParame
         }
 
         $outcomeSuccessMessages = array();
+        // Nombre d'unités récoltées au dernier tirage : borne l'épuisement
+        // plus bas — 0 quand il n'y avait rien à récolter.
+        $rand = 0;
 
         foreach($ressources as $k=>$v){
             $max = $v;

@@ -4,6 +4,10 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/helpers.php';
 
+/* Sans génération : pas d'aperçu — la vue plus bas teste ces deux-là. */
+$imageUrl = '';
+$showPreview = false;
+
 use Classes\Db;
 use App\Service\CsrfProtectionService;
 use App\Service\ViewService;
@@ -133,7 +137,7 @@ ob_start();
         </div>
     </div>
     
-    <?php if (isset($showPreview) && $showPreview): ?>
+    <?php if ($showPreview): ?>
     <div class="card mt-4">
         <div class="card-header">
             <h3>Aperçu de la capture</h3>

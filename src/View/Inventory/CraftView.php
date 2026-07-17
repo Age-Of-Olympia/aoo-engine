@@ -90,22 +90,6 @@ class CraftView
         }
 
 
-        function get_json_item($item)
-        {
-            /* Passe par la passerelle Item::get_data() — un objet dont les
-             * stats sont en base (stats_in_db, ex. les constructibles créés
-             * sans fichier JSON) est servi comme les autres ; le repli JSON
-             * hérité reste couvert par get_data() elle-même. */
-            $legacy = new Item((int) $item->getId());
-            $legacy->get_data();
-
-            $return = (object) array('data' => $legacy->data, 'id' => (int) $item->getId());
-            $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
-
-            return $return;
-        }
-
-
         $item = new Item($_GET['itemId'], false);
 
         $item->get_data();
@@ -137,7 +121,7 @@ class CraftView
 
                 foreach ($recipeList[0]->getRecipeIngredients() as $ingredientItem) {
 
-                    $ingredient = get_json_item($ingredientItem->GetItem());
+                    $ingredient = self::itemReadModel($ingredientItem->GetItem());
 
                     echo '
                 <img src="' . $ingredient->data->mini . '" /> x' . $ingredientItem->getCount() . '
@@ -197,7 +181,7 @@ class CraftView
 
             $recipeName = $recipe->GetName();
             $recipeId = $recipe->getId();
-            $artItem = get_json_item($recipe->getRecipeResults()[0]->GetItem());
+            $artItem = self::itemReadModel($recipe->getRecipeResults()[0]->GetItem());
 
             // print
             echo '
@@ -223,7 +207,7 @@ class CraftView
             foreach ($recipe->GetRecipeIngredients() as $ingredient) {
 
                 $ingredientItemEntity = $ingredient->GetItem();
-                $ingredientItem = get_json_item($ingredientItemEntity);
+                $ingredientItem = self::itemReadModel($ingredientItemEntity);
                 $ingredentItemId = $ingredientItemEntity->getId();
 
                 // color
@@ -317,5 +301,23 @@ class CraftView
             });
         </script>
 <?php
+    }
+
+    /**
+     * Read model d'un objet pour l'artisanat, via la passerelle
+     * Item::get_data() — un objet dont les stats sont en base
+     * (stats_in_db, ex. les constructibles créés sans fichier JSON) est
+     * servi comme les autres ; le repli JSON hérité reste couvert par
+     * get_data() elle-même.
+     */
+    private static function itemReadModel(object $item): object
+    {
+        $legacy = new Item((int) $item->getId());
+        $legacy->get_data();
+
+        $return = (object) array('data' => $legacy->data, 'id' => (int) $item->getId());
+        $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
+
+        return $return;
     }
 }

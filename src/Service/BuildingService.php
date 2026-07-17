@@ -92,8 +92,9 @@ class BuildingService extends BaseService
     public static function purgeEntityCaches(int $playerId): void
     {
         foreach (['.json', '.svg', '.turn.json', '.caracs.json', '.invent.html'] as $suffix) {
-            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . $suffix);
+            @unlink(\Classes\Player::cachePath($playerId, $suffix));
         }
+        json()->forget('players', (string) $playerId);
     }
 
     /**
@@ -294,7 +295,8 @@ class BuildingService extends BaseService
 
         // Seul le cache de données (.json, lu par get_data) est concerné —
         // pas le .svg du damier, que rien ne re-générerait ici.
-        @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . '.json');
+        @unlink(\Classes\Player::cachePath($playerId, '.json'));
+        json()->forget('players', (string) $playerId);
 
         $this->addAuditLog("BuildingService::updateInfo #{$playerId} '{$name}'");
     }
@@ -476,7 +478,8 @@ class BuildingService extends BaseService
             'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
             [$avatar, $avatar, $playerId]
         );
-        @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . '.json');
+        @unlink(\Classes\Player::cachePath($playerId, '.json'));
+        json()->forget('players', (string) $playerId);
 
         $goCoords = $conn->fetchAssociative(
             'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
@@ -485,7 +488,7 @@ class BuildingService extends BaseService
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);
         }
-        @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . '.svg');
+        @unlink(\Classes\Player::cachePath($playerId, '.svg'));
     }
 
     /**
@@ -526,9 +529,7 @@ class BuildingService extends BaseService
         // refresh_players_svg ne balaie que les lignes ENCORE présentes :
         // purger explicitement les caches du bâtiment supprimé, sinon un id
         // recyclé ressert le vieux SVG.
-        foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
-            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $playerId . $suffix);
-        }
+        self::purgeEntityCaches($playerId);
 
         $this->addAuditLog("BuildingService::remove #{$playerId}");
 

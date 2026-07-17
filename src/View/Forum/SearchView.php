@@ -21,11 +21,7 @@ class SearchView
         echo '<div><a href="forum.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
 
-        if (!empty($_POST['keywords'])) {
-
-
-            $search = Forum::search($_POST['keywords']);
-        }
+        $search = !empty($_POST['keywords']) ? Forum::search($_POST['keywords']) : [];
 
 
         echo '

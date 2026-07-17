@@ -131,7 +131,7 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             }
 
             if($encaisse){
-                $beforeEncaisseDmg = $totalDamages ?? 0;
+                $beforeEncaisseDmg = $totalDamages;
                 $totalDamages = $this->computeDamageTaken((int) $totalDamages);
             }
             $target->putBonus(array('pv'=>-$totalDamages));

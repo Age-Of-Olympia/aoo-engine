@@ -19,12 +19,6 @@ parameters:
 			path: admin/screenshots.php
 
 		-
-			message: '#^Variable \$imageUrl might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: admin/screenshots.php
-
-		-
 			message: '#^Dead catch \- Exception is never thrown in the try block\.$#'
 			identifier: catch.neverThrown
 			count: 1
@@ -220,24 +214,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
 
 		-
-			message: '#^Variable \$totalDamages on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$gain might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/OutcomeInstruction/ObjectOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$rand might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/OutcomeInstruction/ResourceOutcomeInstruction.php
-
-		-
 			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions in isset\(\) is not nullable nor uninitialized\.$#'
 			identifier: isset.initializedProperty
 			count: 3
@@ -309,24 +285,6 @@ parameters:
 			count: 1
 			path: src/Service/PlantsService.php
 
-		-
-			message: '#^Variable \$growTo might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Service/PlantsService.php
-
-
-		-
-			message: '#^Method App\\Service\\ScreenshotService\:\:convertImagesToBase64\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ScreenshotService.php
-
-		-
-			message: '#^Method App\\Service\\ScreenshotService\:\:savePlayerPosition\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ScreenshotService.php
 
 		-
 			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
@@ -345,36 +303,6 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Service/TutorialStepValidationService.php
-
-		-
-			message: '#^Method App\\Service\\ViewService\:\:saveImage\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$baseName might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$bgKey on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$x might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$y might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/Service/ViewService.php
 
 		-
 			message: '#^Call to function method_exists\(\) with \$this\(App\\Tutorial\\Steps\\AbstractStep\) and ''getValidationHint'' will always evaluate to true\.$#'
@@ -467,12 +395,6 @@ parameters:
 			path: src/Tutorial/TutorialPlayerFactory.php
 
 		-
-			message: '#^Variable \$contextChanges on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Tutorial/TutorialStepRepository.php
-
-		-
 			message: '#^Right side of && is always true\.$#'
 			identifier: booleanAnd.rightAlwaysTrue
 			count: 1
@@ -521,12 +443,6 @@ parameters:
 			path: src/View/Forum/MissiveView.php
 
 		-
-			message: '#^Variable \$search might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/View/Forum/SearchView.php
-
-		-
 			message: '#^Right side of \|\| is always true\.$#'
 			identifier: booleanOr.rightAlwaysTrue
 			count: 1
@@ -544,102 +460,12 @@ parameters:
 			count: 1
 			path: src/View/InfosView.php
 
-		-
-			message: '#^Function get_json_item not found\.$#'
-			identifier: function.notFound
-			count: 3
-			path: src/View/Inventory/CraftView.php
-
-		-
-			message: '#^Inner named functions are not supported by PHPStan\. Consider refactoring to an anonymous function, class method, or a top\-level\-defined function\. See issue \#165 \(https\://github\.com/phpstan/phpstan/issues/165\) for more details\.$#'
-			identifier: function.inner
-			count: 1
-			path: src/View/Inventory/CraftView.php
-
 
 		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 1
 			path: src/View/QuestsView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Variable \$isFull might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Variable \$isFull might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/View/WarSchool/MeleeView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$isFull might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$passives in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/WarSchoolUtils.php
 
 
 		-

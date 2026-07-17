@@ -53,7 +53,14 @@ abstract class AbstractDbalImporter implements ObjectImporter
             }
         });
 
+        $this->afterImport();
+
         return $report;
+    }
+
+    /** Hook post-transaction (invalidation de caches…) — no-op par défaut. */
+    protected function afterImport(): void
+    {
     }
 
     /**

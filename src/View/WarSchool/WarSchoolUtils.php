@@ -81,10 +81,9 @@ class WarSchoolUtils
 
         echo '<div class="section">';
         echo '<h2>Compétences passives</h2>';
-        if (empty($passives)) {
+        // Pas de passives dans cette vue pour l'instant : placeholder constant
+        // (l'ancien if testait une variable jamais remplie).
         echo '<p>Aucune compétence passive de magie disponible.</p>';
-        } else {
-        }
         echo '</div>';
 
     echo Str::minify(ob_get_clean());

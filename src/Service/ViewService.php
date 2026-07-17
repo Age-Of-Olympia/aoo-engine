@@ -892,6 +892,12 @@ class ViewService {
         // Create a layer with adjusted size
         $layer = $this->createLayer($bounds['width'], $bounds['height']);
         
+        // Position du marqueur : l'emplacement du plan courant sur la carte
+        // monde, sinon la position du joueur — et (0,0) assumé quand le plan
+        // n'a pas d'emplacement déclaré (le marqueur sort simplement du cadre,
+        // avant c'était une variable indéfinie).
+        $x = 0;
+        $y = 0;
         if ($this->currentPlan !== 'olympia') {
             $location = $this->getLocationFromPlan($this->currentPlan);
             if (isset($location[0]) && is_array($location[0])) {
@@ -977,13 +983,10 @@ class ViewService {
             mkdir('img/maps', 0777, true);
         }
         
+        $baseName = $mapType === "global" ? 'global_map' : 'local_map';
+
         // Prefix the filename with the player's ID if provided
         if ($playerId !== null) {
-            if ($mapType === "global") {
-                $baseName = 'global_map';
-            } else {
-                $baseName = 'local_map';
-            }
             $fileName = 'player_' . $playerId . '_' . $fileName;
         }
         
@@ -994,27 +997,6 @@ class ViewService {
         return $filePath;
     }
 
-    private function saveImage($mapType = null) {
-        if (!file_exists('img/maps')) {
-            mkdir('img/maps', 0777, true);
-        }
-
-        // Generate base filename based on map type
-        if ($mapType === "global") {
-            $baseName = 'global_map';
-        } else {
-            $formattedPlanName = str_replace(' ', '_', strtolower($this->currentPlan));
-            $baseName = 'local_' . $formattedPlanName;
-        }
-
-        $layerKey = implode('-', array_keys($this->layers));
-        $cachePath = 'img/maps/' . $baseName . '_' . md5($layerKey) . '.png';
-
-        imagepng($this->image, $cachePath);
-        imagedestroy($this->image);
-        
-        return $cachePath;
-    }
 
     private function getBoundsFromPlan($planName) {
         $jsonHelper = new Json();
@@ -1218,7 +1200,7 @@ class ViewService {
                 }
             } else {
                 $bgKey = pathinfo($planData->bg, PATHINFO_FILENAME);
-                $bgColor = $this->getColorForType($bgKey ?? 'default');
+                $bgColor = $this->getColorForType($bgKey);
     
                 if ($bgColor) {
                     imagefilledrectangle(

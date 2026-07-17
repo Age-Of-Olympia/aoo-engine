@@ -132,9 +132,7 @@ class UniqueObjectService extends BaseService
             BuildingService::deleteEntityRows($conn, $uniqueId);
         });
 
-        foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
-            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $uniqueId . $suffix);
-        }
+        BuildingService::purgeEntityCaches($uniqueId);
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);
         }
@@ -185,9 +183,7 @@ class UniqueObjectService extends BaseService
             BuildingService::deleteEntityRows($conn, $uniqueId);
         });
 
-        foreach (['.json', '.svg', '.turn.json', '.caracs.json'] as $suffix) {
-            @unlink(dirname(__DIR__, 2) . '/datas/private/players/' . $uniqueId . $suffix);
-        }
+        BuildingService::purgeEntityCaches($uniqueId);
         if ($goCoords !== false) {
             View::refresh_players_svg((object) $goCoords);
         }

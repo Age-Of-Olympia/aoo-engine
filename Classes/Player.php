@@ -986,21 +986,37 @@ class Player implements ActorInterface {
 
 
     public function refresh_view(){
-        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.svg';
+        $file = self::cachePath((int) $this->id, '.svg');
         if (is_file($file)) {
             unlink($file); // Delete the file
         }
+    }
+
+    /**
+     * Chemin d'un cache par-entité ({id}{suffix}) — résolu depuis la
+     * racine du projet, PAS depuis DOCUMENT_ROOT : vide en CLI, il
+     * rendait les refresh_*() muets hors web (caches fantômes dans les
+     * tests et les scripts).
+     */
+    public static function cachePath(int $playerId, string $suffix): string
+    {
+        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') !== '' ? $_SERVER['DOCUMENT_ROOT'] : dirname(__DIR__);
+
+        return $root . '/datas/private/players/' . $playerId . $suffix;
     }
 
     public function refresh_data(){
-        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.json';
+        $file = self::cachePath((int) $this->id, '.json');
         if (is_file($file)) {
-            unlink($file); // Delete the file
+            unlink($file);
         }
+        // Le décodeur JSON garde un cache mémoire par process : sans cet
+        // oubli, un process long (tests, scripts) ressert l'ancien état.
+        json()->forget('players', (string) $this->id);
     }
 
     public function refresh_invent(){
-        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.invent.html';
+        $file = self::cachePath((int) $this->id, '.invent.html');
         if(file_exists($file)){
             unlink($file);
         }
@@ -2399,9 +2415,9 @@ class Player implements ActorInterface {
             return $this->data;
         }
         // first create dir
-        if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/')){
+        if(!file_exists(dirname(self::cachePath(0, '')))){
 
-            mkdir($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/');
+            mkdir(dirname(self::cachePath(0, '')));
         }
 
         $playerJson = json()->decode('players', $this->id);
