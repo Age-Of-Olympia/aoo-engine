@@ -46,7 +46,7 @@ if ($action === 'place') {
     $goCoords = (object) [
         'x' => (int) $_POST['x'],
         'y' => (int) $_POST['y'],
-        'z' => 0,
+        'z' => is_numeric($_POST['z'] ?? null) ? (int) $_POST['z'] : 0,
         'plan' => trim((string) ($_POST['plan'] ?? 'gaia')),
     ];
 
@@ -93,7 +93,7 @@ if ($action === 'place') {
         }
     }
 
-    setFlash('success', "Bâtiment #{$id} posé en ({$goCoords->x}, {$goCoords->y}) sur {$goCoords->plan}.");
+    setFlash('success', "Bâtiment #{$id} posé en ({$goCoords->x}, {$goCoords->y}, {$goCoords->z}) sur {$goCoords->plan}.");
     redirectTo('/admin/buildings.php');
 }
 

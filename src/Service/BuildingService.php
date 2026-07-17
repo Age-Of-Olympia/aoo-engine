@@ -277,7 +277,7 @@ class BuildingService extends BaseService
      *
      * @return array<int, array{id:int, name:string, type:string, build_state:string,
      *                          dialog:string, is_open:bool, faction:string, owner_id:?int,
-     *                          owner_name:?string, x:int, y:int, plan:string,
+     *                          owner_name:?string, x:int, y:int, z:int, plan:string,
      *                          max_pv:int, current_pv:int}>
      */
     public function listBuildings(): array
@@ -287,7 +287,7 @@ class BuildingService extends BaseService
         // join on r.name = p.race trips "illegal mix of collations".
         $rows = $this->entityManager->getConnection()->fetchAllAssociative(
             "SELECT p.id, p.name, p.race, b.build_state, b.faction, b.owner_id, b.dialog, b.is_open,
-                    o.name AS owner_name, c.x, c.y, c.plan,
+                    o.name AS owner_name, c.x, c.y, c.z, c.plan,
                     COALESCE(pb.n, 0) AS pv_bonus
              FROM buildings b
              JOIN players p ON p.id = b.player_id
@@ -315,6 +315,7 @@ class BuildingService extends BaseService
                 'owner_name' => $row['owner_name'] !== null ? (string) $row['owner_name'] : null,
                 'x' => (int) $row['x'],
                 'y' => (int) $row['y'],
+                'z' => (int) $row['z'],
                 'plan' => (string) $row['plan'],
                 'max_pv' => $maxPv,
                 'current_pv' => $maxPv + (int) $row['pv_bonus'],

@@ -123,7 +123,7 @@ function building_render_list(array $buildings, array $dialogNames, string $csrf
             . '<td>' . building_state_badge($b['build_state'])
             . ($isEdifice && !$b['is_open'] ? ' <span class="badge badge-dark" title="Fermeture volontaire — le dialogue se tait">Fermé</span>' : '') . '</td>'
             . '<td>' . $pvCell . '</td>'
-            . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ') · ' . e($b['plan']) . '</td>'
+            . '<td>(' . (int) $b['x'] . ', ' . (int) $b['y'] . ', ' . (int) $b['z'] . ') · ' . e($b['plan']) . '</td>'
             . '<td>' . ($b['owner_name'] !== null ? e($b['owner_name']) . ' <small class="text-muted">#' . (int) $b['owner_id'] . '</small>' : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($b['faction'] !== '' ? e($b['faction']) : '<span class="text-muted">—</span>') . '</td>'
             . '<td class="text-nowrap"><form method="post" action="/admin/buildings-save.php?action=dialog" class="d-inline">'
@@ -183,6 +183,9 @@ function building_render_place_form(array $types, array $plans, array $factions,
         . '<input type="number" name="x" class="form-control" required></div>'
         . '<div class="col-md-1"><label class="form-label">Y</label>'
         . '<input type="number" name="y" class="form-control" required></div>'
+        . '<div class="col-md-1"><label class="form-label">Z</label>'
+        . '<input type="number" name="z" class="form-control" required value="0"'
+        . ' title="Niveau : 0 = surface, négatif = souterrains, positif = étages"></div>'
         . '<div class="col-md-2"><label class="form-label">Plan</label>'
         . '<select name="plan" class="form-control">' . $planOptions . '</select></div>'
         . '<div class="col-md-2"><label class="form-label">Propriétaire (optionnel)</label>'

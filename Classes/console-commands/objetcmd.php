@@ -25,7 +25,7 @@ EOT);
     public function execute(array $argumentValues): string
     {
         if (($argumentValues[0] ?? '') !== 'place' || !isset($argumentValues[1], $argumentValues[2], $argumentValues[3])) {
-            return 'Utiliser : objet place [nom objet] [x] [y] [plan]';
+            return 'Utiliser : objet place [nom objet] [x] [y] [plan] [z]';
         }
 
         $item = Item::get_item_by_name($argumentValues[1]);
@@ -36,7 +36,7 @@ EOT);
         $goCoords = (object) [
             'x' => (int) $argumentValues[2],
             'y' => (int) $argumentValues[3],
-            'z' => 0,
+            'z' => (int) ($argumentValues[5] ?? 0),
             'plan' => $argumentValues[4] ?? 'gaia',
         ];
 

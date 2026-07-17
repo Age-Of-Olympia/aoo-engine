@@ -34,19 +34,19 @@ EOT);
             return $this->remove($argumentValues);
         }
 
-        return "Action inconnue. Utiliser : building place [type] [x] [y] [plan] | building remove [id]";
+        return "Action inconnue. Utiliser : building place [type] [x] [y] [plan] [z] | building remove [id]";
     }
 
     private function place(array $argumentValues): string
     {
         if (!isset($argumentValues[1], $argumentValues[2], $argumentValues[3])) {
-            return 'Arguments manquants : building place [type] [x] [y] [plan]';
+            return 'Arguments manquants : building place [type] [x] [y] [plan] [z]';
         }
 
         $goCoords = (object) [
             'x' => (int) $argumentValues[2],
             'y' => (int) $argumentValues[3],
-            'z' => 0,
+            'z' => (int) ($argumentValues[5] ?? 0),
             'plan' => $argumentValues[4] ?? 'gaia',
         ];
 
