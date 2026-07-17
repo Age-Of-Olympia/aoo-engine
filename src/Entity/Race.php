@@ -11,13 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
 class Race
 {
     /**
-     * The 16 stat keys, one DB column each (same keys as the CARACS constant,
-     * which config/constants.php defines with UI labels).
+     * The 16 stat keys, one DB column each — alias de la source unique
+     * {@see \App\Enum\Caracs::KEYS} (CARACS garde les libellés UI).
      */
-    public const CARAC_KEYS = [
-        'a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e',
-        'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae',
-    ];
+    public const CARAC_KEYS = \App\Enum\Caracs::KEYS;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

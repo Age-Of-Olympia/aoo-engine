@@ -85,7 +85,7 @@ foreach (['add_effects', 'forbid', 'extra'] as $col) {
 // Munitions : liste de noms d'objets, stockée en JSON.
 $munitions = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['munitions'] ?? '')))));
 
-$caracKeys = ['a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e', 'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae'];
+$caracKeys = \App\Enum\Caracs::KEYS;
 $specialKeys = ['esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage', 'demolition', 'craftedByN', 'lootChance'];
 
 $set = [

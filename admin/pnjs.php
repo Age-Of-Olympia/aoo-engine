@@ -18,12 +18,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
-use App\Service\PnjAdminService;
+use App\Service\NpcAdminService;
 use Classes\Player;
 
 /**
  * Race options for the create/edit dropdowns — only races that can actually be
- * created (JSON + faction present), from the one source PnjAdminService owns and
+ * created (JSON + faction present), from the one source NpcAdminService owns and
  * the save endpoint validates against.
  *
  * @return array<string,string>
@@ -31,7 +31,7 @@ use Classes\Player;
 function pnj_race_options(): array
 {
     $out = [];
-    foreach ((new PnjAdminService())->availableRaces() as $race) {
+    foreach ((new NpcAdminService())->availableRaces() as $race) {
         $out[$race] = ucfirst($race);
     }
     return $out;
@@ -94,7 +94,7 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
         . '</div>';
 
     // Settings: the plan retired PNJs are parked on (configurable, not hardcoded).
-    $service = new PnjAdminService();
+    $service = new NpcAdminService();
     $currentPlan = $service->getRetirePlan();
     $planOptions = '';
     foreach ($service->listPlans() as $plan) {
@@ -228,7 +228,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
         . '<li>le <strong>désassigne</strong> de tous les joueurs qui le contrôlent ;</li>'
         . '<li>le passe en <strong>incognito</strong> (invisible sur la carte et dans les évènements) ;</li>'
         . '<li>le passe en <strong>anonyme</strong> (introuvable dans les recherches de destinataires) ;</li>'
-        . '<li>le <strong>déplace sur le plan « ' . e((new PnjAdminService())->getRetirePlan()) . ' »</strong> (case libre), hors du monde vivant.</li>'
+        . '<li>le <strong>déplace sur le plan « ' . e((new NpcAdminService())->getRetirePlan()) . ' »</strong> (case libre), hors du monde vivant.</li>'
         . '</ul>'
         . '<p class="text-muted">Réversible : réassignez-le à un joueur pour le réactiver.</p>'
         . '<form method="post" action="/admin/pnjs-save.php?action=retire"'
@@ -249,7 +249,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
  * ---------------------------------------------------------------------- */
 $csrf = new CsrfProtectionService();
 $csrfToken = $csrf->generateToken();
-$service = new PnjAdminService();
+$service = new NpcAdminService();
 
 $action = $_GET['action'] ?? 'list';
 

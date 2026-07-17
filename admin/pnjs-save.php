@@ -17,7 +17,7 @@ use App\Service\CsrfProtectionService;
 use App\Service\PlayerLookupService;
 use App\Service\PlayerOptionsService;
 use App\Service\PlayerPnjService;
-use App\Service\PnjAdminService;
+use App\Service\NpcAdminService;
 
 // Enforce the same level as the PNJ menu, so a direct POST can't bypass a
 // superadmin-only setting on that menu.
@@ -36,7 +36,7 @@ try {
 }
 
 $action = $_GET['action'] ?? '';
-$service = new PnjAdminService();
+$service = new NpcAdminService();
 
 /**
  * Load an existing PNJ and enforce the super-admin guard, or flash + redirect.

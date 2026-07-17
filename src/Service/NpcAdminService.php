@@ -19,7 +19,7 @@ use Classes\View;
  * roster and clears it on retire. Character creation delegates to
  * Player::put_player, the canonical creation path shared with registration.
  */
-class PnjAdminService
+class NpcAdminService
 {
     /**
      * Races offerable when creating/editing a PNJ: every CHARACTER-kind race

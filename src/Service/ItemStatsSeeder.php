@@ -26,8 +26,7 @@ class ItemStatsSeeder
         'text', 'price', 'emplacement', 'type', 'subtype', 'race',
         'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
         'demolition', 'craftedByN', 'lootChance',
-        'a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e', 'agi', 'pm',
-        'fm', 'm', 'r', 'rm', 'spd', 'ae',
+        ...\App\Enum\Caracs::KEYS,
     ];
 
     /**

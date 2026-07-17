@@ -148,14 +148,14 @@ function items_render_edit(object $row, string $csrfToken): string
           . ' En prod, rejouer le seed : <a href="/admin/item-seed.php">item-seed</a>.</div>'
         : '';
 
-    $emplacementOptions = '<option value="">— aucun —</option>';
-    foreach (ITEM_EMPLACEMENT_FORMAT as $emp) {
-        $emplacementOptions .= '<option value="' . e($emp) . '"'
-            . (((string) ($row->emplacement ?? '')) === $emp ? ' selected' : '') . '>' . e($emp) . '</option>';
-    }
+    $emplacementOptions = renderSelectOptions(
+        array_combine(ITEM_EMPLACEMENT_FORMAT, ITEM_EMPLACEMENT_FORMAT),
+        ((string) ($row->emplacement ?? '')) !== '' ? (string) $row->emplacement : null,
+        '— aucun —'
+    );
 
     $caracInputs = '';
-    foreach (['a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e', 'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae'] as $k) {
+    foreach (\App\Enum\Caracs::KEYS as $k) {
         $caracInputs .= '<div class="col-3 form-group"><label>' . strtoupper($k) . '</label>'
             . '<input type="number" class="form-control form-control-sm" name="' . $k . '" value="' . (int) ($row->$k ?? 0) . '"></div>';
     }
@@ -279,9 +279,11 @@ if ($action === 'new') {
         ['name','element','spell','exotique','wear_triggers','text','emplacement','type','subtype','race',
          'munitions','add_effects','forbid','extra'], ''
     );
-    foreach (['id','cursed','enchanted','vorpal','is_deprecated','wear_rate','price','stats_in_db',
-              'esquive','pr','pf','malus','spellMalus','fixedF','mDamage','demolition','craftedByN','lootChance',
-              'a','mvt','p','pv','cc','ct','f','e','agi','pm','fm','m','r','rm','spd','ae'] as $k) {
+    foreach (array_merge(
+        ['id','cursed','enchanted','vorpal','is_deprecated','wear_rate','price','stats_in_db',
+         'esquive','pr','pf','malus','spellMalus','fixedF','mDamage','demolition','craftedByN','lootChance'],
+        \App\Enum\Caracs::KEYS
+    ) as $k) {
         $blank->$k = 0;
     }
     $blank->is_bankable = 1;

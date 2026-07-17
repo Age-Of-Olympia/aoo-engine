@@ -56,9 +56,9 @@ function recipe_render_list(string $csrfToken): string
          FROM craft_recipes r ORDER BY r.name'
     );
 
-    $rows = '';
+    $rows = [];
     while ($r = $res->fetch_object()) {
-        $rows .= '<tr>'
+        $rows[] = '<tr>'
             . '<td><code>' . e($r->name) . '</code></td>'
             . '<td>' . e((string) ($r->ingredients ?? '—')) . '</td>'
             . '<td>' . e((string) ($r->results ?? '—')) . '</td>'
@@ -78,18 +78,18 @@ function recipe_render_list(string $csrfToken): string
     return '<p><a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=recipe">Exporter tout (JSON)</a> '
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>'
-        . '<div class="table-responsive"><table class="table table-sm table-striped align-middle">'
-        . '<thead><tr><th>Recette</th><th>Ingrédients</th><th>Résultats</th><th>Races</th><th></th></tr></thead>'
-        . '<tbody>' . $rows . '</tbody></table></div>';
+        . renderTable(['Recette', 'Ingrédients', 'Résultats', 'Races', ''], $rows);
 }
 
 function recipe_item_select(string $name, int $selected, array $items): string
 {
-    $options = '<option value="0">—</option>';
-    foreach ($items as $id => $label) {
-        $options .= '<option value="' . $id . '"' . ($id === $selected ? ' selected' : '') . '>' . e($label) . '</option>';
-    }
-    return '<select name="' . $name . '" class="form-control form-control-sm d-inline-block" style="width:auto">' . $options . '</select>';
+    return formSelect(
+        $name,
+        array_map('strval', $items),
+        $selected > 0 ? (string) $selected : null,
+        '—',
+        'class="form-control form-control-sm d-inline-block" style="width:auto"'
+    );
 }
 
 function recipe_render_form(?object $recipe, string $csrfToken): string

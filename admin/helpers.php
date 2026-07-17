@@ -411,3 +411,53 @@ function render_season_filter(string $current): string
 
     return $html;
 }
+
+/**
+ * Champ de formulaire Bootstrap : label + contrôle dans une cellule de
+ * grille — le composant de base des pages d'admin (revue 2026-07-18 :
+ * mutualiser plutôt que concaténer le même HTML dans chaque page).
+ */
+function formField(string $label, string $controlHtml, string $colClass = 'form-group', string $help = ''): string
+{
+    return '<div class="' . $colClass . '"><label>' . e($label) . '</label>'
+        . $controlHtml
+        . ($help !== '' ? '<small class="form-text text-muted">' . $help . '</small>' : '')
+        . '</div>';
+}
+
+/**
+ * <select> complet nommé, options via renderSelectOptions (source
+ * unique de l'échappement et de la sélection courante).
+ *
+ * @param array<int|string, string> $options value => label
+ */
+function formSelect(string $name, array $options, ?string $current = null, ?string $placeholder = null, string $attrs = ''): string
+{
+    // Une classe fournie dans $attrs REMPLACE la classe par défaut
+    // (deux attributs class seraient invalides, le premier gagnerait).
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="form-control"';
+
+    return '<select name="' . e($name) . '"' . $classAttr . ($attrs !== '' ? ' ' . $attrs : '') . '>'
+        . renderSelectOptions($options, $current, $placeholder)
+        . '</select>';
+}
+
+/**
+ * Table Bootstrap compacte : en-têtes + lignes déjà rendues (les
+ * cellules restent la responsabilité de l'appelant — échappement par
+ * e() à la source).
+ *
+ * @param array<int, string> $headers libellés (échappés ici)
+ * @param array<int, string> $rows    chaînes '<tr>…</tr>' complètes
+ */
+function renderTable(array $headers, array $rows): string
+{
+    $head = '';
+    foreach ($headers as $header) {
+        $head .= '<th>' . e($header) . '</th>';
+    }
+
+    return '<div class="table-responsive"><table class="table table-sm table-striped align-middle">'
+        . '<thead><tr>' . $head . '</tr></thead>'
+        . '<tbody>' . implode('', $rows) . '</tbody></table></div>';
+}

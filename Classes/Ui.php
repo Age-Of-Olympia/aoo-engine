@@ -401,7 +401,7 @@ class Ui{
                 data-type="'. $type .'"
                 data-bankable="'. $item->row->is_bankable .'"
                 data-state="'. $stateAttr .'"
-                data-build-action="'. ($type == 'constructible' ? 'construire_'. $item->row->name : '') .'"
+                data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire_'. $item->row->name : '') .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
@@ -438,7 +438,7 @@ class Ui{
                     $usable = true;
                     $useTitle = 'Déséquiper';
                 }
-                elseif($type == 'constructible'){
+                elseif($type == Item::TYPE_CONSTRUCTIBLE){
 
                     /* Un objet constructible se bâtit DEPUIS l'inventaire —
                      * un bouton par objet possédé, pas un bouton d'action
@@ -456,7 +456,7 @@ class Ui{
                     $usable = ($aeLeft === null || $aeLeft > 0);
                     $useTitle = $usable ? 'Utiliser (1 Ae)' : 'Utiliser (1 Ae) — plus d\'Action d\'Équipement ce tour';
                 }
-                elseif($type == 'consommable' || $type == 'structure'){
+                elseif($type == 'consommable' || $type == Item::TYPE_STRUCTURE){
 
                     $usable = ($aLeft === null || $aLeft > 0);
                     $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
@@ -483,7 +483,7 @@ class Ui{
                 elseif($type == 'consommable'){
                     $useIcon = 'ra-potion';
                 }
-                elseif($type == 'structure'){
+                elseif($type == Item::TYPE_STRUCTURE){
                     $useIcon = 'ra-hammer';
                 }
                 else{

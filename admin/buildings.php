@@ -21,7 +21,7 @@ use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
 use App\Service\DialogService;
 use App\Service\FactionService;
-use App\Service\PnjAdminService;
+use App\Service\NpcAdminService;
 use App\Service\RaceService;
 
 /**
@@ -48,14 +48,13 @@ function building_type_options(): array
  */
 function building_dialog_select(string $fieldName, string $selected, array $dialogNames): string
 {
-    $options = '<option value="">— aucun —</option>';
-    foreach ($dialogNames as $name) {
-        $options .= '<option value="' . e($name) . '"' . ($name === $selected ? ' selected' : '') . '>'
-            . e($name) . '</option>';
-    }
-
-    return '<select name="' . $fieldName . '" class="form-control form-control-sm d-inline-block" style="width:auto">'
-        . $options . '</select>';
+    return formSelect(
+        $fieldName,
+        array_combine($dialogNames, $dialogNames),
+        $selected !== '' ? $selected : null,
+        '— aucun —',
+        'class="form-control form-control-sm d-inline-block" style="width:auto"'
+    );
 }
 
 function building_state_badge(string $state): string
@@ -152,21 +151,13 @@ function building_render_place_form(array $types, array $plans, array $factions,
             . ' dans <a href="/admin/races.php">Races</a> (sorte « Structure », renseignez ses PV).</div>';
     }
 
-    $typeOptions = '';
+    $typeLabels = [];
     foreach ($types as $name => $label) {
-        $typeOptions .= '<option value="' . e($name) . '">' . e($label) . ' (' . e($name) . ')</option>';
+        $typeLabels[$name] = $label . ' (' . $name . ')';
     }
-
-    $planOptions = '';
-    foreach ($plans as $plan) {
-        $selected = $plan === 'gaia' ? ' selected' : '';
-        $planOptions .= '<option value="' . e($plan) . '"' . $selected . '>' . e($plan) . '</option>';
-    }
-
-    $factionOptions = '<option value="">— neutre —</option>';
-    foreach ($factions as $code => $label) {
-        $factionOptions .= '<option value="' . e($code) . '">' . e($label) . '</option>';
-    }
+    $typeOptions = renderSelectOptions($typeLabels);
+    $planOptions = renderSelectOptions(array_combine($plans, $plans), 'gaia');
+    $factionOptions = renderSelectOptions($factions, null, '— neutre —');
 
     $body = '<form method="post" action="/admin/buildings-save.php?action=place" class="row g-2">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
@@ -210,11 +201,7 @@ function building_render_place_form(array $types, array $plans, array $factions,
  */
 function building_render_edit(array $b, string $description, array $factions, array $dialogNames, bool $isEdifice, string $csrfToken): string
 {
-    $factionOptions = '<option value="">— neutre —</option>';
-    foreach ($factions as $code => $label) {
-        $factionOptions .= '<option value="' . e($code) . '"' . ($code === $b['faction'] ? ' selected' : '') . '>'
-            . e($label) . '</option>';
-    }
+    $factionOptions = renderSelectOptions($factions, $b['faction'] !== '' ? (string) $b['faction'] : null, '— neutre —');
 
     $body = '<form method="post" action="/admin/buildings-save.php?action=edit">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
@@ -290,7 +277,7 @@ if (($_GET['action'] ?? '') === 'edit') {
 
 $content = building_render_place_form(
     building_type_options(),
-    (new PnjAdminService())->listPlans(),
+    (new NpcAdminService())->listPlans(),
     $factions,
     $dialogNames,
     $csrfToken
