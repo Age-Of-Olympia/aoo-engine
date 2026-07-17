@@ -2,10 +2,11 @@
 /**
  * Items catalog — mutations (POST only). Companion to admin/items.php.
  *
- * Routed on ?action: update. CSRF-validated, same menu level as
- * items.php (a direct POST can't bypass the dashboard gate), PRG with
- * a flash. Only the DB-backed columns are writable — flags and wear
- * config; the JSON stats stay read-only until their migration.
+ * Routed on ?action: create | update. CSRF-validated, same menu level
+ * as items.php (a direct POST can't bypass the dashboard gate), PRG
+ * with a flash. `create` insère la ligne par son nom (clé naturelle,
+ * unique) puis partage le chemin d'update complet — l'objet créé est
+ * d'emblée stats_in_db=1, la base est sa source.
  */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/config.php');
@@ -28,20 +29,36 @@ try {
     redirectTo('/admin/items.php');
 }
 
-if (($_GET['action'] ?? '') !== 'update') {
+$action = $_GET['action'] ?? '';
+if ($action !== 'update' && $action !== 'create') {
     setFlash('warning', 'Action inconnue.');
     redirectTo('/admin/items.php');
 }
 
-$id = (int) ($_POST['id'] ?? 0);
 $db = new Db();
 
-$res = $db->exe('SELECT id, name FROM items WHERE id = ?', $id);
-if (!$res->num_rows) {
-    setFlash('warning', 'Objet introuvable.');
-    redirectTo('/admin/items.php');
+if ($action === 'create') {
+    $name = strtolower(trim((string) ($_POST['new_name'] ?? '')));
+    if ($name === '' || !preg_match('/^[a-z0-9_\/-]+$/', $name)) {
+        setFlash('warning', 'Nom d\'objet requis (minuscules, chiffres, _ / -).');
+        redirectTo('/admin/items.php?action=new');
+    }
+    $exists = $db->exe('SELECT id FROM items WHERE name = ?', $name);
+    if ($exists->num_rows) {
+        setFlash('warning', "Un objet « {$name} » existe déjà.");
+        redirectTo('/admin/items.php?action=new');
+    }
+    $db->exe('INSERT INTO items (name) VALUES (?)', $name);
+    $id = (int) $db->exe('SELECT id FROM items WHERE name = ?', $name)->fetch_object()->id;
+} else {
+    $id = (int) ($_POST['id'] ?? 0);
+    $res = $db->exe('SELECT id, name FROM items WHERE id = ?', $id);
+    if (!$res->num_rows) {
+        setFlash('warning', 'Objet introuvable.');
+        redirectTo('/admin/items.php');
+    }
+    $name = $res->fetch_object()->name;
 }
-$name = $res->fetch_object()->name;
 
 // Déclencheurs d'usure : whitelist stricte.
 $allowedTriggers = ['attack', 'defense', 'move', 'usage'];

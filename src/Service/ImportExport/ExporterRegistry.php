@@ -17,7 +17,7 @@ final class ExporterRegistry
      */
     public function __construct(?array $exporters = null)
     {
-        foreach ($exporters ?? [new ActionExporter(), new PassiveExporter(), new ActionTypeConfigExporter(), new RaceExporter(), new FactionExporter(), new PlanExporter(), new DialogExporter()] as $exporter) {
+        foreach ($exporters ?? [new ActionExporter(), new PassiveExporter(), new ActionTypeConfigExporter(), new RaceExporter(), new FactionExporter(), new PlanExporter(), new DialogExporter(), new ItemExporter(), new RecipeExporter()] as $exporter) {
             $this->register($exporter);
         }
     }

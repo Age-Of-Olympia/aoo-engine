@@ -1,16 +1,12 @@
 <?php
 /**
- * Items catalog management (admin dashboard → Objets) — v1.
+ * Items catalog management (admin dashboard → Objets).
  *
- * Lists the whole catalog and edits the DB-BACKED columns: gameplay
- * flags (maudit, enchanté, vorpal, élément, sort lié, banque, exotique,
- * déprécié) and the WEAR configuration (déclencheurs + rythme par
- * tour) — the balance lever of items Phase 2, inert by default.
- *
- * Item STATS (emplacement, caracs, prix, texte…) still live in
- * datas/*\/items/*.json and are shown read-only here; their JSON→DB
- * migration (same move as races) is the follow-up that unlocks full
- * editing.
+ * CRUD complet sur le catalogue : création (?action=new), édition de
+ * toutes les colonnes (flags, usure, stats, caracs, JSON), export
+ * bundle JSON par objet ou global (action-export.php?type=item) et
+ * import via action-import.php — même cycle de vie que races,
+ * factions, dialogues et plans.
  *
  * All mutations POST to items-save.php (CSRF-validated, PRG). This
  * page only renders. Access enforced by layout.php via
@@ -100,11 +96,17 @@ function items_render_list(array $items): string
             . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . item_wear_cell($row) . '</td>'
-            . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a></td>'
+            . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a> '
+            . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
+            . ' href="/admin/action-export.php?type=item&name=' . e($row->name) . '">JSON</a></td>'
             . '</tr>';
     }
 
-    return '<p class="text-muted"><b>' . $inDb . '</b>/' . count($items) . ' objets ont leurs stats en base'
+    $toolbar = '<p><a class="btn btn-primary" href="/admin/items.php?action=new">Nouvel objet</a> '
+        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=item">Exporter tout (JSON)</a> '
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>';
+
+    return $toolbar . '<p class="text-muted"><b>' . $inDb . '</b>/' . count($items) . ' objets ont leurs stats en base'
         . ' (édition complète ici). Les autres attendent leur JSON — sur cet environnement seuls les fichiers'
         . ' présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
         . ' <a href="/admin/item-seed.php">rejouer le seed</a> les basculera tous.'
@@ -119,9 +121,6 @@ function items_render_list(array $items): string
 
 function items_render_edit(object $row, string $csrfToken): string
 {
-    $item = new Item((int) $row->id, $row);
-    $item->get_data();
-
     $triggers = array_filter(array_map('trim', explode(',', (string) $row->wear_triggers)));
 
     $triggerBoxes = '';
@@ -195,11 +194,21 @@ function items_render_edit(object $row, string $csrfToken): string
     $imagesPanel = '<div class="card mb-3"><div class="card-header">Images</div>'
         . '<div class="card-body py-2">' . $imagesPanel . '</div></div>';
 
-    $body = '<form method="post" action="/admin/items-save.php?action=update">'
+    // Création : pas encore de ligne en base — champ nom éditable,
+    // POST vers action=create, pas de panneau d'images (elles portent le nom).
+    $isNew = (int) $row->id === 0;
+    $nameField = $isNew
+        ? '<div class="form-group"><label>Nom technique</label>'
+          . '<input type="text" class="form-control" name="new_name" required maxlength="255"'
+          . ' pattern="[a-z0-9_/-]+" placeholder="ex : hache_de_guerre">'
+          . '<small class="text-muted">Minuscules, chiffres, _ / - ; sert de clé pour les images'
+          . ' (img/items/{nom}_mini.webp) et les bundles.</small></div>'
+        : '<input type="hidden" name="id" value="' . (int) $row->id . '">';
+
+    $body = '<form method="post" action="/admin/items-save.php?action=' . ($isNew ? 'create' : 'update') . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-        . '<input type="hidden" name="id" value="' . (int) $row->id . '">'
-        . $notInDb
-        . $imagesPanel
+        . $nameField
+        . ($isNew ? '' : $notInDb . $imagesPanel)
         . '<div class="row">'
 
         . '<div class="col-md-3"><h5>Identité</h5>'
@@ -251,7 +260,11 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'
         . '</form>';
 
-    return '<div class="card"><div class="card-header">' . e(ucfirst($row->name)) . ' <code>#' . (int) $row->id . '</code></div>'
+    $header = $isNew
+        ? 'Nouvel objet'
+        : e(ucfirst($row->name)) . ' <code>#' . (int) $row->id . '</code>';
+
+    return '<div class="card"><div class="card-header">' . $header . '</div>'
         . '<div class="card-body">' . $body . '</div></div>';
 }
 
@@ -261,7 +274,20 @@ function items_render_edit(object $row, string $csrfToken): string
 $csrfToken = (new CsrfProtectionService())->generateToken();
 $action = $_GET['action'] ?? 'list';
 
-if ($action === 'edit') {
+if ($action === 'new') {
+    $blank = (object) array_fill_keys(
+        ['name','element','spell','exotique','wear_triggers','text','emplacement','type','subtype','race',
+         'munitions','add_effects','forbid','extra'], ''
+    );
+    foreach (['id','cursed','enchanted','vorpal','is_deprecated','wear_rate','price','stats_in_db',
+              'esquive','pr','pf','malus','spellMalus','fixedF','mDamage','demolition','craftedByN','lootChance',
+              'a','mvt','p','pv','cc','ct','f','e','agi','pm','fm','m','r','rm','spd','ae'] as $k) {
+        $blank->$k = 0;
+    }
+    $blank->is_bankable = 1;
+    $blank->price = 1;
+    $content = items_render_edit($blank, $csrfToken);
+} elseif ($action === 'edit') {
     $id = (int) ($_GET['id'] ?? 0);
     $res = (new \Classes\Db())->exe('SELECT * FROM items WHERE id = ?', $id);
     $row = $res->num_rows ? $res->fetch_object() : null;

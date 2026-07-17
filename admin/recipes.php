@@ -65,6 +65,8 @@ function recipe_render_list(string $csrfToken): string
             . '<td>' . ($r->races ? e($r->races) : '<span class="text-muted">toutes</span>') . '</td>'
             . '<td class="text-nowrap">'
             . '<a class="btn btn-sm btn-outline-primary" href="/admin/recipes.php?action=edit&id=' . (int) $r->id . '">Éditer</a> '
+            . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
+            . ' href="/admin/action-export.php?type=recipe&name=' . e($r->name) . '">JSON</a> '
             . '<form method="post" action="/admin/recipes-save.php?action=delete" class="d-inline"'
             . ' onsubmit="return confirm(\'Supprimer la recette ' . e($r->name) . ' ?\');">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
@@ -73,7 +75,9 @@ function recipe_render_list(string $csrfToken): string
             . '</td></tr>';
     }
 
-    return '<p><a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a></p>'
+    return '<p><a class="btn btn-primary" href="/admin/recipes.php?action=new">Nouvelle recette</a> '
+        . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=recipe">Exporter tout (JSON)</a> '
+        . '<a class="btn btn-outline-secondary" href="/admin/action-import.php">Importer</a></p>'
         . '<div class="table-responsive"><table class="table table-sm table-striped align-middle">'
         . '<thead><tr><th>Recette</th><th>Ingrédients</th><th>Résultats</th><th>Races</th><th></th></tr></thead>'
         . '<tbody>' . $rows . '</tbody></table></div>';

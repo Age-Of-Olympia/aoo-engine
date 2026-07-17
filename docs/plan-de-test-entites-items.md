@@ -51,6 +51,21 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    les caracs en jeu suivent immédiatement ; remettre +1.
    ☐ En prod : admin → item-seed rejoue le seed pour les objets sans
    stats (92 en dev faute de JSON locaux).
+8c. **Admin → Objets — création & bundles JSON** (cycle de vie complet,
+   comme races/factions/dialogues/plans).
+   ☐ « Nouvel objet » : nom technique (minuscules/chiffres/_-, unique)
+   + tout le formulaire d'édition → l'objet créé est d'emblée sourcé
+   en base (badge BDD) ; nom en doublon ou invalide → refus avec
+   message, rien n'est écrit.
+   ☐ Bouton « JSON » sur une ligne → télécharge le bundle de l'objet ;
+   « Exporter tout (JSON) » → bundle des 122+ objets ; « Importer » →
+   action-import.php, aperçu créations/mises à jour avant écriture.
+   Un objet importé passe toujours `stats_in_db=1` (la base devient sa
+   source), même si le payload ne portait pas la clé.
+   ☐ Recettes : mêmes boutons JSON / Exporter tout / Importer ; les
+   ingrédients, résultats et races voyagent par NOMS — importer une
+   recette dont un objet n'existe pas ici est REJETÉ avec le message
+   « importer d'abord le bundle d'objets », sans rien écrire.
 8b. **Admin → Races** — éditer « palissade ».
    ☐ Sorte « Structure » affichée ; créer une nouvelle sorte structure
    (ex. tour, PV 200) → elle apparaît dans le formulaire de pose ;
