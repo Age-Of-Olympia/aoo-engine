@@ -38,43 +38,43 @@ class BuildingDetails
     public const STATE_RUIN = 'ruin';
 
     #[ORM\Id]
-    #[ORM\Column(type: "integer")]
-    private int $player_id;
+    #[ORM\Column(type: "integer", name: "player_id")]
+    private int $playerId;
 
-    #[ORM\Column(type: "integer", nullable: true)]
-    private ?int $owner_id = null;
+    #[ORM\Column(type: "integer", name: "owner_id", nullable: true)]
+    private ?int $ownerId = null;
 
     #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
     private string $faction = '';
 
-    #[ORM\Column(type: "string", length: 20, options: ["default" => self::STATE_BUILT])]
-    private string $build_state = self::STATE_BUILT;
+    #[ORM\Column(type: "string", length: 20, name: "build_state", options: ["default" => self::STATE_BUILT])]
+    private string $buildState = self::STATE_BUILT;
 
     #[ORM\Column(type: "string", length: 100, options: ["default" => ""])]
     private string $dialog = '';
 
-    #[ORM\Column(type: "boolean", options: ["default" => true])]
-    private bool $is_open = true;
+    #[ORM\Column(type: "boolean", name: "is_open", options: ["default" => true])]
+    private bool $isOpen = true;
 
     public function getPlayerId(): int
     {
-        return $this->player_id;
+        return $this->playerId;
     }
 
-    public function setPlayerId(int $player_id): self
+    public function setPlayerId(int $playerId): self
     {
-        $this->player_id = $player_id;
+        $this->playerId = $playerId;
         return $this;
     }
 
     public function getOwnerId(): ?int
     {
-        return $this->owner_id;
+        return $this->ownerId;
     }
 
-    public function setOwnerId(?int $owner_id): self
+    public function setOwnerId(?int $ownerId): self
     {
-        $this->owner_id = $owner_id;
+        $this->ownerId = $ownerId;
         return $this;
     }
 
@@ -91,12 +91,12 @@ class BuildingDetails
 
     public function getBuildState(): string
     {
-        return $this->build_state;
+        return $this->buildState;
     }
 
-    public function setBuildState(string $build_state): self
+    public function setBuildState(string $buildState): self
     {
-        $this->build_state = $build_state;
+        $this->buildState = $buildState;
         return $this;
     }
 
@@ -113,12 +113,12 @@ class BuildingDetails
 
     public function isOpen(): bool
     {
-        return $this->is_open;
+        return $this->isOpen;
     }
 
-    public function setIsOpen(bool $is_open): self
+    public function setIsOpen(bool $isOpen): self
     {
-        $this->is_open = $is_open;
+        $this->isOpen = $isOpen;
         return $this;
     }
 }

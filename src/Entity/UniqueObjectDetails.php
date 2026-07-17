@@ -20,20 +20,20 @@ use Doctrine\ORM\Mapping as ORM;
 class UniqueObjectDetails
 {
     #[ORM\Id]
-    #[ORM\Column(type: "integer")]
-    private int $player_id;
+    #[ORM\Column(type: "integer", name: "player_id")]
+    private int $playerId;
 
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $interaction = null;
 
     public function getPlayerId(): int
     {
-        return $this->player_id;
+        return $this->playerId;
     }
 
-    public function setPlayerId(int $player_id): self
+    public function setPlayerId(int $playerId): self
     {
-        $this->player_id = $player_id;
+        $this->playerId = $playerId;
         return $this;
     }
 

@@ -205,7 +205,7 @@ class View{
             UNION
 
             SELECT
-            id, name, coords_id,
+            MIN(id) AS id, MIN(name) AS name, coords_id,
             "items" AS whichTable,
             96 AS tableOrder
             FROM
@@ -217,7 +217,7 @@ class View{
             UNION
 
             SELECT
-            instance_id AS id, "bourse" AS name, coords_id,
+            MIN(instance_id) AS id, "bourse" AS name, coords_id,
             "items" AS whichTable,
             96 AS tableOrder
             FROM

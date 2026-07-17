@@ -81,8 +81,15 @@ foreach (\Classes\Item::JSON_COLUMNS as $col) {
     $jsonColumns[$col] = $raw;
 }
 
-// Munitions : liste de noms d'objets, stockée en JSON.
+// Munitions : liste de noms d'objets, stockée en JSON — chaque nom doit
+// exister au catalogue (une faute de frappe rendrait l'arme muette).
 $munitions = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['munitions'] ?? '')))));
+foreach ($munitions as $munition) {
+    if (!$db->exe('SELECT id FROM items WHERE name = ?', $munition)->num_rows) {
+        setFlash('warning', "Munition inconnue au catalogue : « {$munition} » — rien n'a été enregistré.");
+        redirectTo('/admin/items.php?action=edit&id=' . $id);
+    }
+}
 
 $set = [];
 $params = [];

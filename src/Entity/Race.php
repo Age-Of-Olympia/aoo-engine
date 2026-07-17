@@ -59,8 +59,8 @@ class Race
      * passabilité, mutualisé avec les coffres). Ignoré pour les races
      * de personnages.
      */
-    #[ORM\Column(type: "string", length: 20, options: ["default" => "edifice"])]
-    private string $structure_nature = 'edifice';
+    #[ORM\Column(type: "string", length: 20, name: "structure_nature", options: ["default" => "edifice"])]
+    private string $structureNature = 'edifice';
 
     #[ORM\Column(type: "string", length: 20, options: ["default" => "#FFFFFF"])]
     private string $bgColor = '#FFFFFF';
@@ -245,18 +245,18 @@ class Race
 
     public function getStructureNature(): string
     {
-        return $this->structure_nature;
+        return $this->structureNature;
     }
 
-    public function setStructureNature(string $structure_nature): void
+    public function setStructureNature(string $structureNature): void
     {
-        $this->structure_nature = $structure_nature;
+        $this->structureNature = $structureNature;
     }
 
     /** Vrai bâtiment (porte Ouvert/Fermé) — par opposition aux murs construits. */
     public function isEdifice(): bool
     {
-        return $this->isStructureKind() && $this->structure_nature === 'edifice';
+        return $this->isStructureKind() && $this->structureNature === 'edifice';
     }
 
     public function getBgColor(): string

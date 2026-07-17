@@ -27,10 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             EntityManagerFactory::getEntityManager()->getConnection(),
             rtrim($_SERVER['DOCUMENT_ROOT'], '/')
         );
-        $content .= '<div class="alert alert-success">Seed terminé : <b>' . $result['seeded'] . '</b> objets recopiés, '
-            . $result['missing'] . ' sans fichier JSON, ' . $result['kept'] . ' déjà en base (préservés).</div>';
+        setFlash('success', 'Seed terminé : <b>' . $result['seeded'] . '</b> objets recopiés, '
+            . $result['missing'] . ' sans fichier JSON, ' . $result['kept'] . ' déjà en base (préservés).');
     } catch (\Throwable $e) {
-        $content .= '<div class="alert alert-danger">Échec : ' . e($e->getMessage()) . '</div>';
+        setFlash('warning', 'Échec : ' . e($e->getMessage()));
     }
 }
 
