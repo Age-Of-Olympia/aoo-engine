@@ -343,6 +343,10 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);
 
+    // Usure (Phase 2) : un déplacement ARME les objets équipés à
+    // déclencheur « move » (bottes…) — le décrément tombe au tour.
+    (new \App\Service\WearService())->arm($player->id, 'move');
+
     // CRITICAL: Regenerate JSON cache after consuming movement
     // This ensures load_caracs.php shows correct movement count
     $player->get_caracs();

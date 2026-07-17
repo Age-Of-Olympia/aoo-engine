@@ -2590,3 +2590,57 @@ body:has(#hud) #admin-coords #admin-coords-close {
     width: 20px;
     height: 20px;
 }
+
+/* ---------------------------------------------------------------------
+ * Usure (items Phase 2, design-items-instances.md §3.5) : jauge fine
+ * sous l'icône d'un emplacement d'équipement. Neutre >= 50 %, encre
+ * orangée < 50 %, rouge < 20 % ; brisé = alvéole ternie.
+ * ------------------------------------------------------------------ */
+.equip-slot {
+    position: relative;
+}
+
+.equip-wear {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 2px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.equip-wear-fill {
+    display: block;
+    height: 100%;
+    background: var(--hud-bronze-bright, #b55300);
+    border-radius: 2px;
+}
+
+.equip-wear--mid .equip-wear-fill {
+    background: #c77b1e;
+}
+
+.equip-wear--low .equip-wear-fill {
+    background: #a41f1f;
+}
+
+.equip-slot--broken img {
+    filter: grayscale(1) contrast(0.8);
+    opacity: 0.55;
+}
+
+.equip-slot--broken::after {
+    content: '✕';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a41f1f;
+    font-weight: bold;
+    font-size: 20px;
+    pointer-events: none;
+}

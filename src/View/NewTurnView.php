@@ -5,6 +5,7 @@ namespace App\View;
 use App\Service\Action\EnergieRule;
 use App\Tutorial\TutorialHelper;
 use Classes\Db;
+use Classes\Log;
 use Classes\Player;
 use Classes\View;
 
@@ -248,6 +249,20 @@ class NewTurnView
 
 
                     echo '</table>';
+
+                    /* Usure (Phase 2) : le tour est l'unité de décrément —
+                     * appliquer ici ce que les événements du tour ont armé,
+                     * et le montrer au joueur au moment où ça arrive. */
+                    $wearRecap = (new \App\Service\WearService())->applyNewTurnWear($player->id);
+                    if ($wearRecap !== []) {
+                        echo '<div class="new-turn-wear">';
+                        foreach ($wearRecap as $line) {
+                            echo '<div>' . $line . '</div>';
+                        }
+                        echo '</div>';
+                        Log::put($player, $player, 'Usure : ' . strip_tags(implode(' ', $wearRecap)), type: 'use', hiddenText: '', logTime: time());
+                        $player->refresh_invent();
+                    }
 
                     echo '<br /><a href="index.php"><button>Jouer</button></a>';
 

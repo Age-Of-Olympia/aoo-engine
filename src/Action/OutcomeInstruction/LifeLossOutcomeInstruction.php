@@ -136,6 +136,17 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
             }
             $target->putBonus(array('pv'=>-$totalDamages));
 
+            /* Usure (Phase 2) : porter un coup ARME l'arme de l'attaquant
+             * (déclencheur « attack »), l'encaisser ARME les protections de
+             * la cible (« defense ») — le décrément tombe au passage de
+             * tour. WearService n'est pas intercepté par le SimulationGuard,
+             * la garde est ici. */
+            if (!$actor->isSimulated() && !$target->isSimulated()) {
+                $wear = new \App\Service\WearService();
+                $wear->arm($actor->id, 'attack');
+                $wear->arm($target->id, 'defense');
+            }
+
             // Gestion des logs
             $bonusDamagesText = '';
             $othersDamagesText = '';
