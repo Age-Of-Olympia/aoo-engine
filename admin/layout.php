@@ -84,6 +84,7 @@ function admin_layout($title, $content, array $assets = []) {
     // array_filter drops links/groups the viewer cannot access.
     $navParts = array_filter([
         $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
+        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
         $navGroup('Tutoriel', [
             ['tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php'],
             ['tutorial.php', 'Étapes', '/admin/tutorial.php'],
@@ -105,14 +106,13 @@ function admin_layout($title, $content, array $assets = []) {
             ['action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php'],
             ['action-import.php', 'Importer', '/admin/action-import.php'],
         ], $actionPages),
-        $navGroup('Joueurs', [
+        $navGroup('Personnages', [
             ['players.php', 'Compétences', '/admin/players.php'],
             ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
             ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
             ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
-        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
         $navGroup('Dialogues', [
             ['dialogs.php', 'Liste', '/admin/dialogs.php'],
             ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
@@ -126,7 +126,9 @@ function admin_layout($title, $content, array $assets = []) {
             ['faction-members.php', 'Membres', '/admin/faction-members.php'],
             ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
         ], $factionPages),
-        $navLink('buildings.php', 'Bâtiments', '/admin/buildings.php'),
+        $navGroup('Bâtiments', [
+            ['buildings.php', 'Liste', '/admin/buildings.php'],
+        ], ['buildings.php']),
         $navGroup('Objets', [
             ['items.php', 'Liste', '/admin/items.php'],
             ['recipes.php', 'Recettes', '/admin/recipes.php'],
