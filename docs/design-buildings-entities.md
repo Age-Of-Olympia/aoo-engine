@@ -522,6 +522,28 @@ The team's building requirements, checked against what is built:
 No requirement contradicts the architecture. New generic action pieces
 identified: G3 `AlterInstance` (items doc §5b) and G4 `RequiresBuilding`.
 
+### Next design discussion — walls as structures, plants as a derivation
+
+Raised 2026-07-17, TO BE DESIGNED TOGETHER before any code: the §4.8
+boundary should move — `map_walls` should behave like buildings
+(structure entities: PV via the catalog, the real combat pipeline
+instead of the parallel `damages` system), with a **derivation for
+plants** (today's harvestable walls — arbre1, pierre1, damages −1/−2 —
+becoming their own branch with harvest/regrow behavior).
+
+Points the design must answer before starting:
+- **Volume**: map_walls covers entire maps — thousands of rows. One
+  players row per wall segment would explode the entity table; likely
+  shape = walls stay a MAP layer for rendering/blocking, but DAMAGEABLE
+  wall segments get promoted to entities on demand (lazy, like item
+  instances), or walls reference a structure-type catalog without
+  individual rows until first damaged.
+- **Plants**: harvest (fouiller/Resource instruction), exhaust/regrow
+  cycles (plan JSON biomes today) — a `kind = 'plant'`? or structure
+  types with harvest config? Interacts with the resource economy.
+- **Migration of WALLS_PV / plan biomes JSON** into the catalog (same
+  JSON→DB move as everything else).
+
 ### Decisions from the 2026-07-17 review
 
 - **Niveaux de bâtiments = le rang des personnages, même notion.** A
