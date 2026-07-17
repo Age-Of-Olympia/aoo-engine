@@ -477,6 +477,17 @@ class Item{
             }
         }
 
+        /* Tri final : les ÉQUIPÉS d'abord (piles héritées comme
+         * instances — le SQL ne couvre que les piles), puis par nom.
+         * uasort préserve les clés (contrat des consommateurs). */
+        uasort($return, static function ($a, $b): int {
+            $aEquiped = !empty($a->equiped);
+            $bEquiped = !empty($b->equiped);
+            if ($aEquiped !== $bEquiped) {
+                return $aEquiped ? -1 : 1;
+            }
+            return strcasecmp((string) ($a->name ?? ''), (string) ($b->name ?? ''));
+        });
 
         return $return;
     }

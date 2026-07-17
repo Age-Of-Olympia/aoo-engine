@@ -287,6 +287,7 @@ class Ui{
                         height="150"
                     />
                 </div>
+                <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 <div class="preview-text">
                     '. $defaultItem->data->text .'
                 </div>
@@ -333,6 +334,36 @@ class Ui{
 
             $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
 
+            /* Instance nommée à la création : son nom prime, le type
+             * catalogue reste entre parenthèses. */
+            if(!empty($row->custom_name)){
+
+                $itemName = '« '. htmlspecialchars($row->custom_name, ENT_QUOTES, 'UTF-8') .' » ('. $itemName .')';
+            }
+
+            /* État d'une instance (usure, seuils décidés en revue) :
+             * ligne colorée sous les caracs + data-state pour l'aperçu. */
+            $stateLine = '';
+            $stateAttr = '';
+            if(isset($row->durability, $row->durability_max) && (int) $row->durability_max > 0){
+
+                $d = (int) $row->durability;
+                $dMax = (int) $row->durability_max;
+
+                if($d <= 0){
+
+                    $stateLine = '<br /><font color="red"><b>Brisé</b></font>';
+                    $stateAttr = 'Brisé — ne contribue plus ses caractéristiques.';
+                }
+                else{
+
+                    $pct = (int) round($d / $dMax * 100);
+                    $color = $pct < 20 ? 'red' : ($pct < 50 ? 'orange' : 'green');
+                    $stateLine = '<br /><font color="'. $color .'">Durabilité '. $d .'/'. $dMax .'</font>';
+                    $stateAttr = 'Durabilité '. $d .'/'. $dMax;
+                }
+            }
+
 
             $emplacement = '';
 
@@ -358,6 +389,7 @@ class Ui{
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
                 data-bankable="'. $item->row->is_bankable .'"
+                data-state="'. $stateAttr .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
@@ -371,7 +403,7 @@ class Ui{
                 </td>
                 <td align="left" class="item-name">
                     '. $itemName .'<br />
-                    '. implode(', ', $caracs) .'
+                    '. implode(', ', $caracs) . $stateLine .'
 
                     '. $emplacement .'
                 </td>
@@ -477,7 +509,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260220"></script>
+        <script src="js/inventUi.js?v=20260717"></script>
         <?php
 
         return Str::minify(ob_get_clean());

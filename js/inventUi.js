@@ -72,6 +72,9 @@ $(document).ready(function(){
         }
 
         $(".preview-n").text('x'+ n);
+        /* État d'une instance (durabilité / brisé) : rempli seulement
+           quand la ligne en porte un, vidé sinon. */
+        $(".preview-state").text($item.data("state") || '');
         $(".preview-text").text(text);
 
         preload(img, $previewImg);

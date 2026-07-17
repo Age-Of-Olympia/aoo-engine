@@ -57,12 +57,16 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 ## C. Instances d'objets — équipement
 
 11. **Inventaire** — ouvrir l'inventaire.
-    ☐ Votre bâton de marche : une ligne équipée (l'instance) + une
-    pile x4 ; le casque : sa ligne d'instance équipée. Les totaux
-    sont bons.
+    ☐ Les ÉQUIPÉS sont triés EN TÊTE : bâton (instance, sa durabilité
+    affichée sous les caracs), casque, flèches — puis le reste par nom
+    (dont la pile bâton x4). Les totaux sont bons.
+    ☐ Cliquer une ligne d'instance affiche son ÉTAT dans l'aperçu
+    (« Durabilité 35/100 », « Brisé » le cas échéant) ; cliquer une
+    pile n'affiche pas d'état.
 12. **Bandeau d'équipement** — observer votre case (ou la fiche).
-    ☐ Sous l'icône du bâton : **jauge orangée à 37 %**, tooltip
-    « durabilité 37/100 » ; casque : jauge neutre pleine.
+    ☐ Sous l'icône du bâton : **jauge orangée** (~35 % — la valeur vit
+    au rythme des tours, l'usure du bâton est active en dev), tooltip
+    « durabilité X/100 » ; casque : jauge neutre pleine.
 13. **Déséquiper / rééquiper le casque** (100/100, vierge).
     ☐ Déséquipé, il **retourne dans la pile** (aller-retour
     invisible) ; rééquipé, tout est normal, caracs correctes.
@@ -98,15 +102,18 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
     ☐ Un gladius neuf apparaît en (3,3), ramassable, attaquable
     (25 PV — le détruire le laisse en entité à 0 PV, boucle de
     destruction d'objets à affiner en équilibrage).
-21. **Bourses au sol (objets NON instanciés)** — deux piles map_items
-    classiques sont posées près de vous : **1 bois en (-1,0)** et
-    **8 pierres en (-1,-1)**.
-    ☐ Les deux s'affichent en **bourse** (sprite loot), objet seul
-    comme pile — la représentation héritée est intacte à côté des
-    objets uniques ;
+21. **Bourses au sol (objets NON instanciés)** — trois bourses
+    map_items classiques sont posées près de vous : **1 bois en
+    (-1,0)**, **8 pierres en (-1,-1)** et une **bourse mixte en (1,0)**
+    (bois x3, pierre x2, cuir x5).
+    ☐ Les trois s'affichent en **bourse** (sprite loot), objet seul,
+    pile, ou mélange — la représentation héritée est intacte à côté
+    des objets uniques ;
+    ☐ CLIQUER une bourse liste son contenu dans le panneau (« Au
+    sol : … » avec vignettes et quantités, les trois lignes pour la
+    mixte) ; une case vide n'affiche rien ;
     ☐ marcher sur la case ramasse le contenu (comportement hérité de
-    go.php), quantités correctes en inventaire (le bois s'ajoute à
-    votre pile existante).
+    go.php), quantités correctes en inventaire.
 
 ## F. Garde-fous (non-régression)
 
