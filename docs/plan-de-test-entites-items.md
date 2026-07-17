@@ -50,17 +50,20 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    (ex. tour, PV 200) → elle apparaît dans le formulaire de pose ;
    elle n'apparaît PAS dans la création de PNJ ni à l'inscription.
 
-## B. Construire par l'action (10 bois + 1 A)
+## B. La palissade, objet constructible (craft → porter → construire)
 
-9. **Sa propre case** — cliquer votre case : l'action **« Construire
-   une palissade »** est là (vous avez ~11 bois restants après mes
-   tests ; console `item bois 20` au besoin — vérifier la syntaxe avec
-   `help item`).
-   ☐ Avec ≥ 10 bois : succès, −10 bois, −1 A, une VRAIE palissade
+9. **La boucle objet constructible** — décision de revue : la palissade
+   N'EST PAS un « type de bâtiment », c'est un OBJET du catalogue.
+   ☐ **Artisanat** : la recette « palissade » (10 bois → 1 palissade)
+   est disponible ; vous avez 18 bois — craftez-en une. L'objet
+   palissade est dans l'inventaire : empilable, bancable, échangeable
+   (vous en avez déjà une autre, fournie).
+   ☐ **Construire** : sur votre case, l'action « Construire une
+   palissade » consomme 1 OBJET palissade (−1 A) → une VRAIE palissade
    apparaît sur une case libre adjacente, à VOTRE nom (admin →
    Bâtiments : propriétaire Cradek, faction reprise).
-   ☐ Avec < 10 bois : bloquée, « Il vous faut 10 × Bois… », rien
-   dépensé.
+   ☐ Sans objet palissade : bloquée, « Il vous faut 1 × Palissade… »,
+   rien dépensé.
 10. **La boucle complète** — attaquer votre propre palissade, la
     réparer, la détruire.
     ☐ Tout fonctionne comme en A.

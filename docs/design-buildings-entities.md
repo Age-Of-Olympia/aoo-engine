@@ -522,6 +522,17 @@ The team's building requirements, checked against what is built:
 No requirement contradicts the architecture. New generic action pieces
 identified: G3 `AlterInstance` (items doc §5b) and G4 `RequiresBuilding`.
 
+### Principle settled 2026-07-17 — the buildable OBJECT is the authored concept
+
+« La palissade ne doit pas exister comme un bâtiment mais comme un
+objet constructible » : the authored concept lives in the ITEMS
+catalog — craftable (recette 10 bois), carriable (stackable,
+tradeable, bankable), and the *construire* action CONSUMES the object
+to produce the built entity. The structure-kind races row remains
+INTERNAL PLUMBING (it carries the built form's PV, hidden from
+authoring); the walls→structures migration may later derive those
+stats from the item's own columns, closing the loop entirely.
+
 ### Principle settled 2026-07-17 — the two states of an item in the world
 
 An item in the world has exactly TWO presentations, decided by its

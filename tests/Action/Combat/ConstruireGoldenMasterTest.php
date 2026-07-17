@@ -59,16 +59,28 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         return $action;
     }
 
-    public function testWithoutWoodTheActionBlocksAndBuildsNothing(): void
+    private function palissadeItemOrSkip(): Item
+    {
+        $item = Item::get_item_by_name('palissade');
+        if ($item === false || $item === null) {
+            $this->markTestSkipped("items catalog not seeded (no 'palissade' buildable).");
+        }
+        $item->get_data();
+
+        return $item;
+    }
+
+    public function testWithoutThePalissadeObjectTheActionBlocksAndBuildsNothing(): void
     {
         $builder = $this->createRealPlayer('GmCarpenter');
         $builder->getCoords();
         $builder->get_caracs();
         $maxA = (int) $builder->caracs->a;
+        $this->palissadeItemOrSkip();
 
         $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
 
-        $this->assertTrue($results->isBlocked(), 'no wood must block the action');
+        $this->assertTrue($results->isBlocked(), 'no palissade object must block the action');
         $this->assertSame(
             0,
             (int) $this->link->fetchOne('SELECT COUNT(*) FROM buildings b JOIN players p ON p.id = b.player_id WHERE b.owner_id = ?', [$builder->id]),
@@ -81,19 +93,36 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    public function testTenBoisAndOneABuildARealOwnedPalissadeNextToTheBuilder(): void
+    public function testCraftThenBuildTheFullBuildableObjectLoop(): void
     {
+        // Décision de revue : la palissade est un OBJET CONSTRUCTIBLE —
+        // la boucle complète : 10 bois → craft → objet palissade (portable,
+        // empilable) → construire la CONSOMME → l'entité bâtie apparaît.
         $builder = $this->createRealPlayer('GmCarpenter');
         $builder->getCoords();
         $builder->get_caracs();
         $maxA = (int) $builder->caracs->a;
 
         $bois = $this->boisOrSkip();
+        $palissadeItem = $this->palissadeItemOrSkip();
         $bois->add_item($builder, 10);
+
+        // Craft par le vrai service de recettes.
+        $recipes = (new \App\Service\RecipeService())->getRecipes($builder, forItemId: (int) $palissadeItem->id);
+        if ($recipes === []) {
+            $this->markTestSkipped('recette palissade absente.');
+        }
+        $message = '';
+        $this->assertTrue(
+            (new \App\Service\RecipeService())->TryCraftRecipe($recipes[0], $builder, $message),
+            'crafting the palissade from 10 bois must succeed: ' . $message
+        );
+        $this->assertSame(0, $bois->get_n(PlayerFactory::legacy($builder->id)), 'the 10 bois are consumed by the craft');
+        $this->assertSame(1, $palissadeItem->get_n(PlayerFactory::legacy($builder->id)), 'the palissade object is in the inventory');
 
         $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
 
-        $this->assertFalse($results->isBlocked(), 'with 10 bois the action must pass');
+        $this->assertFalse($results->isBlocked(), 'with the palissade object the action must pass');
         $this->assertTrue($results->isSuccess(), 'construire has no dice: passing conditions means success');
 
         $building = $this->link->fetchAssociative(
@@ -116,7 +145,7 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertGreaterThan(0, $distance, 'not on the builder tile');
         $this->assertLessThanOrEqual(2, $distance, 'on a free tile adjacent to the builder (diagonal = manhattan 2)');
 
-        $this->assertSame(0, $bois->get_n(PlayerFactory::legacy($builder->id)), 'the 10 bois are consumed');
+        $this->assertSame(0, $palissadeItem->get_n(PlayerFactory::legacy($builder->id)), 'the palissade object is consumed by construire');
         $this->assertSame(
             $maxA - 1,
             PlayerFactory::legacy($builder->id)->getRemaining('a'),
