@@ -664,6 +664,45 @@ else{
 }
 
 
+// Bourse au sol : lister le contenu de la case (map_items). L'objet seul
+// comme la pile s'affichent — marcher sur la case ramasse (go.php).
+$sql = '
+SELECT mi.n, i.id AS item_id, i.name
+FROM map_items AS mi
+INNER JOIN coords AS c ON mi.coords_id = c.id
+INNER JOIN items AS i ON i.id = mi.item_id
+WHERE c.x = ?
+AND c.y = ?
+AND c.z = ?
+AND c.plan = ?
+ORDER BY i.name
+';
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+if($res->num_rows){
+
+    echo '<div class="case-infos">';
+    echo '<img src="img/tiles/loot.png" title="Bourse" />';
+    echo '<div class="text"><b>Au sol :</b><br />';
+
+    while($row = $res->fetch_object()){
+
+        $groundItem = new \Classes\Item($row->item_id);
+        $groundItem->get_data();
+
+        $mini = $groundItem->data->mini;
+        if(!is_file($mini)){
+
+            $mini = 'img/items/'. $row->name .'.webp';
+        }
+
+        echo '<img src="'. $mini .'" style="max-height:22px;vertical-align:middle;" alt="" /> '
+            . $groundItem->data->name .' x'. (int) $row->n .'<br />';
+    }
+
+    echo '<sup>Marchez sur la case pour ramasser.</sup></div></div>';
+}
+
+
 // forbidden trigger
 $sql = '
 SELECT map_triggers.id
