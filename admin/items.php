@@ -122,39 +122,88 @@ function items_render_edit(object $row, string $csrfToken): string
             . checked(!empty($row->$col)) . '> ' . $label . '</label>';
     }
 
-    // Lecture seule : les stats JSON.
-    $jsonStats = [];
-    foreach (['emplacement', 'type', 'subtype', 'price'] as $k) {
-        if (!empty($item->data->$k)) {
-            $jsonStats[] = '<b>' . $k . '</b> : ' . e((string) $item->data->$k);
-        }
+    // Stats — pleinement éditables depuis la migration JSON→DB.
+    $notInDb = empty($row->stats_in_db)
+        ? '<div class="alert alert-warning">Stats pas encore migrées pour cet objet (JSON absent de cet'
+          . ' environnement) — <b>enregistrer les stats ici fera de la base sa source</b>.'
+          . ' En prod, rejouer le seed : <a href="/admin/item-seed.php">item-seed</a>.</div>'
+        : '';
+
+    $emplacementOptions = '<option value="">— aucun —</option>';
+    foreach (ITEM_EMPLACEMENT_FORMAT as $emp) {
+        $emplacementOptions .= '<option value="' . e($emp) . '"'
+            . (((string) ($row->emplacement ?? '')) === $emp ? ' selected' : '') . '>' . e($emp) . '</option>';
     }
-    $caracs = Item::get_item_carac($item->data);
-    if ($caracs !== []) {
-        $jsonStats[] = '<b>caracs</b> : ' . implode(', ', $caracs);
+
+    $caracInputs = '';
+    foreach (['a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e', 'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae'] as $k) {
+        $caracInputs .= '<div class="col-3 form-group"><label>' . strtoupper($k) . '</label>'
+            . '<input type="number" class="form-control form-control-sm" name="' . $k . '" value="' . (int) ($row->$k ?? 0) . '"></div>';
     }
+
+    $specialInputs = '';
+    foreach ([
+        'esquive' => 'Esquive', 'pr' => 'PR', 'pf' => 'PF', 'malus' => 'Malus',
+        'spellMalus' => 'Malus de sort', 'fixedF' => 'F fixée', 'mDamage' => 'Dégâts magiques',
+        'demolition' => 'Démolition', 'craftedByN' => 'Craft (n)', 'lootChance' => 'Chance de loot (%)',
+    ] as $col => $label) {
+        $specialInputs .= '<div class="col-4 form-group"><label>' . $label . '</label>'
+            . '<input type="number" class="form-control form-control-sm" name="' . $col . '" value="' . (int) ($row->$col ?? 0) . '"></div>';
+    }
+
+    $munitions = !empty($row->munitions) ? implode(', ', (array) json_decode((string) $row->munitions, true)) : '';
 
     $body = '<form method="post" action="/admin/items-save.php?action=update">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . '<input type="hidden" name="id" value="' . (int) $row->id . '">'
-        . '<div class="row"><div class="col-md-4"><h5>Flags</h5>' . $flagBoxes
+        . $notInDb
+        . '<div class="row">'
+
+        . '<div class="col-md-3"><h5>Identité</h5>'
+        . '<div class="form-group"><label>Description</label>'
+        . '<textarea class="form-control" name="text" rows="5">' . e((string) ($row->text ?? '')) . '</textarea></div>'
+        . '<div class="form-group"><label>Prix</label>'
+        . '<input type="number" min="0" class="form-control" name="price" value="' . (int) ($row->price ?? 1) . '"></div>'
+        . '<div class="form-group"><label>Emplacement</label>'
+        . '<select name="emplacement" class="form-control">' . $emplacementOptions . '</select></div>'
+        . '<div class="form-group"><label>Type</label>'
+        . '<input type="text" class="form-control" name="type" value="' . e((string) ($row->type ?? '')) . '"'
+        . ' placeholder="equipement, consommable, structure…"></div>'
+        . '<div class="form-group"><label>Sous-type</label>'
+        . '<input type="text" class="form-control" name="subtype" value="' . e((string) ($row->subtype ?? '')) . '"'
+        . ' placeholder="melee, tir, jet, walls, routes…"></div>'
+        . '<div class="form-group"><label>Race (objet racial)</label>'
+        . '<input type="text" class="form-control" name="race" value="' . e((string) ($row->race ?? '')) . '"></div>'
+        . '</div>'
+
+        . '<div class="col-md-3"><h5>Flags</h5>' . $flagBoxes
         . '<div class="form-group mt-2"><label>Élément</label>'
         . '<input type="text" class="form-control" name="element" value="' . e((string) $row->element) . '"></div>'
         . '<div class="form-group"><label>Sort lié (consommation)</label>'
         . '<input type="text" class="form-control" name="spell" value="' . e((string) $row->spell) . '"></div>'
         . '<div class="form-group"><label>Exotique (race)</label>'
         . '<input type="text" class="form-control" name="exotique" value="' . e((string) $row->exotique) . '"></div>'
-        . '</div>'
-        . '<div class="col-md-4"><h5>Usure <small class="text-muted">(par tour)</small></h5>'
+        . '<h5>Usure <small class="text-muted">(par tour)</small></h5>'
         . '<div class="form-group">' . $triggerBoxes . '</div>'
         . '<div class="form-group"><label>Points perdus par tour armé</label>'
         . '<input type="number" min="0" class="form-control" name="wear_rate" value="' . (int) $row->wear_rate . '">'
-        . '<small class="text-muted">0 = ne s\'use jamais. Les événements arment, le passage de tour applique.</small></div>'
+        . '<small class="text-muted">0 = ne s\'use jamais.</small></div>'
         . '</div>'
-        . '<div class="col-md-4"><h5>Stats (JSON, lecture seule)</h5>'
-        . '<div class="text-muted">' . ($jsonStats === [] ? 'aucune' : implode('<br>', $jsonStats)) . '</div>'
-        . '<div class="mt-2"><small>' . e((string) ($item->data->text ?? '')) . '</small></div>'
-        . '</div></div>'
+
+        . '<div class="col-md-3"><h5>Caractéristiques</h5><div class="row">' . $caracInputs . '</div></div>'
+
+        . '<div class="col-md-3"><h5>Spéciaux</h5><div class="row">' . $specialInputs . '</div>'
+        . '<div class="form-group"><label>Munitions (noms, séparés par des virgules)</label>'
+        . '<input type="text" class="form-control" name="munitions" value="' . e($munitions) . '"></div>'
+        . '<div class="form-group"><label>Effets ajoutés (JSON)</label>'
+        . '<textarea class="form-control" name="add_effects" rows="2">' . e((string) ($row->add_effects ?? '')) . '</textarea></div>'
+        . '<div class="form-group"><label>Interdits (JSON)</label>'
+        . '<textarea class="form-control" name="forbid" rows="2">' . e((string) ($row->forbid ?? '')) . '</textarea></div>'
+        . '<div class="form-group"><label>Extra (JSON, clés héritées — sans perte)</label>'
+        . '<textarea class="form-control" name="extra" rows="2">' . e((string) ($row->extra ?? '')) . '</textarea></div>'
+        . '</div>'
+
+        . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
         . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'
         . '</form>';

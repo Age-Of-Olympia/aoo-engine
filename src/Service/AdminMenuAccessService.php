@@ -98,6 +98,7 @@ class AdminMenuAccessService
         'landing-seed.php'           => 'landing.php',
         'buildings-save.php'         => 'buildings.php',
         'items-save.php'             => 'items.php',
+        'item-seed.php'              => 'items.php',
     ];
 
     /** @var array<string,string>|null cached DB overrides (page => level) */

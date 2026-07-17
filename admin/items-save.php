@@ -50,26 +50,65 @@ $triggers = array_values(array_intersect(
     array_map('strval', (array) ($_POST['wear_triggers'] ?? []))
 ));
 
-$db->exe(
-    'UPDATE items SET
-        cursed = ?, enchanted = ?, vorpal = ?, is_bankable = ?, is_deprecated = ?,
-        element = ?, spell = ?, exotique = ?,
-        wear_triggers = ?, wear_rate = ?
-     WHERE id = ?',
-    [
-        (int) !empty($_POST['cursed']),
-        (int) !empty($_POST['enchanted']),
-        (int) !empty($_POST['vorpal']),
-        (int) !empty($_POST['is_bankable']),
-        (int) !empty($_POST['is_deprecated']),
-        trim((string) ($_POST['element'] ?? '')),
-        trim((string) ($_POST['spell'] ?? '')),
-        trim((string) ($_POST['exotique'] ?? '')),
-        implode(',', $triggers),
-        max(0, (int) ($_POST['wear_rate'] ?? 0)),
-        $id,
-    ]
-);
+// Colonnes JSON : validées ou refusées — jamais de JSON cassé en base.
+$jsonColumns = [];
+foreach (['add_effects', 'forbid', 'extra'] as $col) {
+    $raw = trim((string) ($_POST[$col] ?? ''));
+    if ($raw === '') {
+        $jsonColumns[$col] = null;
+        continue;
+    }
+    if (json_decode($raw) === null && strtolower($raw) !== 'null') {
+        setFlash('warning', "Champ {$col} : JSON invalide, rien n'a été enregistré.");
+        redirectTo('/admin/items.php?action=edit&id=' . $id);
+    }
+    $jsonColumns[$col] = $raw;
+}
 
-setFlash('success', 'Objet « ' . $name . ' » enregistré.');
+// Munitions : liste de noms d'objets, stockée en JSON.
+$munitions = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['munitions'] ?? '')))));
+
+$caracKeys = ['a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e', 'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae'];
+$specialKeys = ['esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage', 'demolition', 'craftedByN', 'lootChance'];
+
+$set = [
+    'cursed = ?', 'enchanted = ?', 'vorpal = ?', 'is_bankable = ?', 'is_deprecated = ?',
+    'element = ?', 'spell = ?', 'exotique = ?',
+    'wear_triggers = ?', 'wear_rate = ?',
+    'text = ?', 'price = ?', 'emplacement = ?', 'type = ?', 'subtype = ?', 'race = ?',
+    'munitions = ?', 'add_effects = ?', 'forbid = ?', 'extra = ?',
+    'stats_in_db = 1',
+];
+$params = [
+    (int) !empty($_POST['cursed']),
+    (int) !empty($_POST['enchanted']),
+    (int) !empty($_POST['vorpal']),
+    (int) !empty($_POST['is_bankable']),
+    (int) !empty($_POST['is_deprecated']),
+    trim((string) ($_POST['element'] ?? '')),
+    trim((string) ($_POST['spell'] ?? '')),
+    trim((string) ($_POST['exotique'] ?? '')),
+    implode(',', $triggers),
+    max(0, (int) ($_POST['wear_rate'] ?? 0)),
+    trim((string) ($_POST['text'] ?? '')),
+    max(0, (int) ($_POST['price'] ?? 1)),
+    trim((string) ($_POST['emplacement'] ?? '')),
+    trim((string) ($_POST['type'] ?? '')),
+    trim((string) ($_POST['subtype'] ?? '')),
+    trim((string) ($_POST['race'] ?? '')),
+    $munitions === [] ? null : json_encode($munitions, JSON_UNESCAPED_UNICODE),
+    $jsonColumns['add_effects'],
+    $jsonColumns['forbid'],
+    $jsonColumns['extra'],
+];
+
+foreach (array_merge($caracKeys, $specialKeys) as $key) {
+    $set[] = "`{$key}` = ?";
+    $params[] = (int) ($_POST[$key] ?? 0);
+}
+
+$params[] = $id;
+$db->exe('UPDATE items SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
+
+setFlash('success', 'Objet « ' . $name . ' » enregistré — la base est sa source de vérité.');
 redirectTo('/admin/items.php?action=edit&id=' . $id);

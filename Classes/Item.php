@@ -36,7 +36,20 @@ class Item{
     public function get_data(){
 
 
-        $itemJson = json()->decode('items', $this->row->name);
+        /* Passerelle JSON→DB (Version20260717180000) : quand les stats
+         * sont en base (stats_in_db), l'objet data est reconstruit depuis
+         * les colonnes — même forme éparse que les JSON historiques (les
+         * clés à zéro/vides n'existent pas, applyItemCaracs et les
+         * consommateurs testent en !empty/isset) ; le fourre-tout `extra`
+         * est reservi verbatim. Sinon : chemin JSON hérité inchangé. */
+        if(!empty($this->row->stats_in_db)){
+
+            $itemJson = $this->buildDataFromRow();
+        }
+        else{
+
+            $itemJson = json()->decode('items', $this->row->name);
+        }
 
 
         // first player json
@@ -70,6 +83,56 @@ class Item{
         $this->data = $itemJson;
 
         return $itemJson;
+    }
+
+
+    /**
+     * Reconstruit l'objet data depuis les colonnes de la table items
+     * (stats_in_db = 1), au format éparse des JSON historiques : les
+     * scalaires vides/à zéro ne sont pas émis, les colonnes JSON
+     * (munitions, add_effects, forbid) sont décodées, `extra` est
+     * fusionné verbatim (garantie sans-perte du seed).
+     */
+    private function buildDataFromRow(): object {
+
+        $data = (object) array(
+            'id' => (int) $this->row->id,
+            'name' => $this->row->name,
+            'private' => (int) $this->row->private,
+            'price' => (int) $this->row->price,
+            'text' => (string) ($this->row->text ?? ''),
+        );
+
+        foreach (\App\Service\ItemStatsSeeder::SCALAR_KEYS as $key) {
+            if ($key === 'text' || $key === 'price') {
+                continue;
+            }
+            $value = $this->row->$key ?? null;
+            if ($value === null || $value === '' || (is_numeric($value) && (int) $value === 0)) {
+                continue;
+            }
+            $data->$key = is_numeric($value) ? (int) $value : $value;
+        }
+
+        foreach (['munitions' => 'munitions', 'add_effects' => 'addEffects', 'forbid' => 'forbid'] as $column => $key) {
+            if (!empty($this->row->$column)) {
+                $decoded = json_decode((string) $this->row->$column);
+                if ($decoded !== null) {
+                    $data->$key = $decoded;
+                }
+            }
+        }
+
+        if (!empty($this->row->extra)) {
+            $extra = json_decode((string) $this->row->extra);
+            if (is_object($extra)) {
+                foreach (get_object_vars($extra) as $key => $value) {
+                    $data->$key = $value;
+                }
+            }
+        }
+
+        return $data;
     }
 
 

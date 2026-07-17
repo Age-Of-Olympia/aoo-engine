@@ -34,12 +34,17 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.
-8. **Admin → Objets** — nouvelle entrée du menu.
+8. **Admin → Objets** — nouvelle entrée du menu, ÉDITION COMPLÈTE.
    ☐ Catalogue complet listé (flags, élément, sort lié, usure) avec
-   filtre ; Éditer un objet permet de régler flags ET usure
-   (déclencheurs + points/tour) — les stats JSON sont en lecture seule
-   (leur migration en base est le chantier suivant) ; le bâton montre
-   « −2/tour sur attack », le gladius « −3/tour ».
+   filtre ; Éditer un objet règle TOUT : description, prix,
+   emplacement, type/sous-type, race, les 16 caracs, les spéciaux
+   (esquive, PR, fixedF…), munitions, effets/interdits/extra (JSON
+   validé), flags et usure — la base est la source de vérité
+   (stats migrées des JSON, sans perte via `extra`).
+   ☐ Modifier le CC du gladius (+1 → +2), sauver, observer sa case :
+   les caracs en jeu suivent immédiatement ; remettre +1.
+   ☐ En prod : admin → item-seed rejoue le seed pour les objets sans
+   stats (92 en dev faute de JSON locaux).
 8b. **Admin → Races** — éditer « palissade ».
    ☐ Sorte « Structure » affichée ; créer une nouvelle sorte structure
    (ex. tour, PV 200) → elle apparaît dans le formulaire de pose ;
