@@ -304,3 +304,13 @@
 /* Nav labels may wrap to two lines in the narrow sidebar (e.g. "Configuration
    actions"); give them tidy spacing so the active highlight reads cleanly. */
 .admin-layout .vertical-nav .nav-link { line-height: 1.3; align-items: flex-start; }
+
+/* main.css (le CSS du jeu, chargé aussi dans l'admin) grise select et
+ * button au survol : sur un panneau d'édition dense en champs, le fond
+ * semble changer de couleur en promenant la souris. Neutralisé —
+ * :where() garde une spécificité minimale pour que les états de survol
+ * PROPRES à l'admin (.btn-*, .wb-*) gardent la main. */
+.admin-layout :where(select, button, input[type="button"]):hover,
+.admin-layout :where(select, button, input[type="button"]):focus {
+    background-color: #fff;
+}
