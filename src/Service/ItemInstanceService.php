@@ -153,6 +153,114 @@ class ItemInstanceService extends BaseService
     }
 
     /**
+     * Equip a catalog item through the instance path (Phase 1c): reuse
+     * the player's OLDEST unequipped live instance of that item, else
+     * promote one unit from the stack. Returns the equipped instance id.
+     *
+     * @throws \RuntimeException when the player owns no unit at all
+     */
+    public function equipCatalogItem(int $playerId, int $itemId, string $emplacement): int
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $existing = $conn->fetchOne(
+            "SELECT l.instance_id
+             FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
+             ORDER BY l.instance_id LIMIT 1",
+            [$playerId, $itemId]
+        );
+
+        $instanceId = $existing !== false ? (int) $existing : $this->promote($playerId, $itemId);
+
+        $conn->executeStatement(
+            'UPDATE players_items_instances SET equiped = ? WHERE instance_id = ?',
+            [$emplacement, $instanceId]
+        );
+
+        return $instanceId;
+    }
+
+    /**
+     * Unequip an instance; a still-pristine one silently returns to its
+     * stack (the invisible round trip that keeps data lean), a diverged
+     * one stays as an unequipped instance line.
+     */
+    public function unequipInstance(int $instanceId): void
+    {
+        $this->entityManager->getConnection()->executeStatement(
+            "UPDATE players_items_instances SET equiped = '' WHERE instance_id = ?",
+            [$instanceId]
+        );
+
+        $this->demote($instanceId);
+    }
+
+    /**
+     * Clear the given emplacements for a player on the INSTANCE side —
+     * the counterpart of Player::equip()'s legacy players_items clears
+     * (target emplacement, deuxmains ↔ mains).
+     *
+     * @param string[] $emplacements
+     */
+    public function unequipEmplacements(int $playerId, array $emplacements): void
+    {
+        if ($emplacements === []) {
+            return;
+        }
+
+        $ids = $this->entityManager->getConnection()->fetchFirstColumn(
+            'SELECT instance_id FROM players_items_instances
+             WHERE player_id = ? AND equiped IN (' . implode(',', array_fill(0, count($emplacements), '?')) . ')',
+            array_merge([$playerId], $emplacements)
+        );
+
+        foreach ($ids as $id) {
+            $this->unequipInstance((int) $id);
+        }
+    }
+
+    /**
+     * Instance rows shaped for Item::get_item_list()'s dual-read
+     * (Phase 1b): catalog columns + n=1 + the instance meta.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listForInventory(int $playerId, bool $equipedOnly): array
+    {
+        $equipedFilter = $equipedOnly ? "AND l.equiped != ''" : '';
+
+        return $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT it.*, i.id AS instance_id, i.durability, i.durability_max, i.quality,
+                    i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
+                    l.equiped, 1 AS n
+             FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             JOIN items it ON it.id = i.item_id
+             WHERE l.player_id = ? AND i.destroyed = 0 {$equipedFilter}
+             ORDER BY l.equiped DESC, i.id",
+            [$playerId]
+        );
+    }
+
+    /**
+     * Live instances a player owns of one catalog item (optionally only
+     * equipped ones) — the instance half of Item::get_n()'s dual count.
+     */
+    public function countInstances(int $playerId, int $itemId, bool $equipedOnly = false): int
+    {
+        $equipedFilter = $equipedOnly ? "AND l.equiped != ''" : '';
+
+        return (int) $this->entityManager->getConnection()->fetchOne(
+            "SELECT COUNT(*) FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             WHERE l.player_id = ? AND i.item_id = ? AND i.destroyed = 0 {$equipedFilter}",
+            [$playerId, $itemId]
+        );
+    }
+
+    /**
      * All of a player's instances with their catalog name, worn first.
      *
      * @return array<int, array<string, mixed>>

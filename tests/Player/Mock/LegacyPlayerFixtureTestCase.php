@@ -65,6 +65,16 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
         // Reverse creation order: a building placed after its owner
         // references it via buildings.owner_id and must go first.
         foreach (array_reverse($this->createdPlayerIds) as $id) {
+            // Item instances: links first (FK), then the orphaned rows.
+            $instanceIds = $this->link->fetchFirstColumn(
+                'SELECT instance_id FROM players_items_instances WHERE player_id = ?',
+                [$id]
+            );
+            if ($instanceIds !== []) {
+                $in = implode(',', array_map('intval', $instanceIds));
+                $this->link->executeStatement("DELETE FROM players_items_instances WHERE instance_id IN ({$in})");
+                $this->link->executeStatement("DELETE FROM item_instances WHERE id IN ({$in})");
+            }
             $this->link->executeStatement('DELETE FROM buildings WHERE player_id = ? OR owner_id = ?', [$id, $id]);
             foreach ([
                 'players_bonus',

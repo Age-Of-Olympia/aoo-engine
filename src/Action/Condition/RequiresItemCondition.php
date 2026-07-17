@@ -50,7 +50,9 @@ class RequiresItemCondition extends BaseCondition implements HasParameterSchema
         }
         $item->get_data();
 
-        $owned = $item->get_n($actor);
+        // Pile uniquement (règle P5) : les coûts consomment des unités de
+        // pile — une épée nommée ne part jamais silencieusement en matériau.
+        $owned = $item->get_n($actor, includeInstances: false);
         if ($owned < $n) {
             return new ConditionResult(
                 false,

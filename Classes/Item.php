@@ -85,7 +85,9 @@ class Item{
         }
 
         if ($n < 0) {
-            $available = $this->get_n($player, $bank);
+            // Garde STRICTEMENT sur la pile : add_item ne sait décrémenter
+            // que des piles, compter les instances ouvrirait une duplication.
+            $available = $this->get_n($player, $bank, includeInstances: false);
             if ($available + $n < 0) {
                 return false;
             }
@@ -121,7 +123,15 @@ class Item{
     }
 
 
-    public function get_n($player, bool $bank=false, bool $equiped=false): int {
+    /**
+     * @param bool $includeInstances Phase 1b : compter aussi les objets
+     *        individualisés (défaut). Les MUTATEURS de piles (add_item,
+     *        coûts consommés) doivent passer false : leur garde porte sur
+     *        ce qu'ils peuvent réellement décrémenter — compter les
+     *        instances y ouvrirait une duplication (retirer une unité de
+     *        pile inexistante pendant que l'instance survit).
+     */
+    public function get_n($player, bool $bank=false, bool $equiped=false, bool $includeInstances=true): int {
         if (!isset($this->row) || !isset($this->row->name)) {
             return 0;
         }
@@ -149,12 +159,19 @@ class Item{
         $db = new Db();
         $res = $db->exe($sql, array($playerId, $this->row->name));
 
-        if (!$res || !$res->num_rows) {
-            return 0;
+        $stackN = 0;
+        if ($res && $res->num_rows) {
+            $stackN = (int) $res->fetch_object()->n;
         }
 
-        $row = $res->fetch_object();
-        return (int)$row->n;
+        // Phase 1b — double comptage : les instances vivantes comptent
+        // avec les piles (contrat pinné par ItemInstanceService::countOwned).
+        if (!$bank && $includeInstances) {
+            $stackN += (new \App\Service\ItemInstanceService())
+                ->countInstances((int) $playerId, (int) $this->id, $equiped);
+        }
+
+        return $stackN;
     }
 
 
@@ -430,6 +447,25 @@ class Item{
         }
 
 
+        /* Phase 1b (docs/design-items-instances.md §5c P2) — double
+         * lecture : les objets individualisés (item_instances) rejoignent
+         * la liste, façonnés comme des lignes de pile (n=1) + méta
+         * d'instance. Clés : par id catalogue quand on liste l'ÉQUIPÉ
+         * (contrat des emplacements/caracs — au plus un par emplacement),
+         * par 'i{instanceId}' sinon (chaque individu = sa propre ligne). */
+        if(!$bank){
+
+            $instances = (new \App\Service\ItemInstanceService())
+                ->listForInventory($playerId, $equiped !== '');
+
+            foreach($instances as $instanceRow){
+
+                $row = (object) $instanceRow;
+                $key = ($equiped !== '') ? $row->id : 'i'. $row->instance_id;
+                $return[$key] = $row;
+            }
+        }
+
         // or
         if(!isset($return[1]) && !$equiped){
 
@@ -629,22 +665,22 @@ class Item{
         }
 
 
-        // count emplacements
+        // count emplacements — piles héritées ET instances (Phase 1b)
         $sql = '
-        SELECT COUNT(*) AS n
-        FROM
-        players_items
-        WHERE
-        player_id = ?
-        AND
-        equiped IN('. Db::print_in($values) .')
+        SELECT
+        (SELECT COUNT(*) FROM players_items
+         WHERE player_id = ? AND equiped IN('. Db::print_in($values) .'))
+        +
+        (SELECT COUNT(*) FROM players_items_instances
+         WHERE player_id = ? AND equiped IN('. Db::print_in($values) .'))
+        AS n
         ';
 
-        $values = array_merge(array($player->id), $values);
+        $params = array_merge(array($player->id), $values, array($player->id), $values);
 
         $db = new Db();
 
-        $res = $db->exe($sql, $values);
+        $res = $db->exe($sql, $params);
 
         $row = $res->fetch_object();
 

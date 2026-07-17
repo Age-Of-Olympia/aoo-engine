@@ -80,13 +80,24 @@ class ItemPipelineGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(EquipResult::Equip, $player->equip($item), 'first use equips');
 
+        // Phase 1c: equipping PROMOTES — the emplacement now lives on the
+        // instance link, and the promoted unit has left the stack.
         $this->assertSame(
             'main1',
             $this->link->fetchOne(
-                'SELECT equiped FROM players_items WHERE player_id = ? AND item_id = ?',
+                'SELECT l.equiped FROM players_items_instances l
+                 JOIN item_instances i ON i.id = l.instance_id
+                 WHERE l.player_id = ? AND i.item_id = ?',
                 [$player->id, $item->id]
             ),
-            'equipping must persist the emplacement on the stack row'
+            'equipping must create an equipped instance'
+        );
+        $this->assertFalse(
+            $this->link->fetchOne(
+                'SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ?',
+                [$player->id, $item->id]
+            ),
+            'the promoted unit must leave the stack'
         );
 
         $equipped = Item::get_equiped_list($player);
@@ -115,18 +126,65 @@ class ItemPipelineGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $this->assertSame(EquipResult::Unequip, $player->equip($item), 'second use unequips');
 
+        // Phase 1c: a PRISTINE instance silently returns to its stack —
+        // the invisible round trip that keeps data lean.
         $this->assertSame(
-            '',
-            $this->link->fetchOne(
-                'SELECT equiped FROM players_items WHERE player_id = ? AND item_id = ?',
+            1,
+            (int) $this->link->fetchOne(
+                'SELECT n FROM players_items WHERE player_id = ? AND item_id = ?',
                 [$player->id, $item->id]
             ),
-            'unequipping must clear the emplacement'
+            'the pristine unequipped unit must be back in the stack'
+        );
+        $this->assertFalse(
+            $this->link->fetchOne(
+                'SELECT 1 FROM players_items_instances l JOIN item_instances i ON i.id = l.instance_id
+                 WHERE l.player_id = ? AND i.item_id = ?',
+                [$player->id, $item->id]
+            ),
+            'no instance may linger after a pristine unequip'
         );
 
         $player->get_caracs();
         $this->assertSame($nudeCc, (int) $player->caracs->cc, 'caracs must return to the race base');
         $this->assertSame(0, $item->get_n($player, equiped: true));
+    }
+
+    public function testAWornInstanceSurvivesUnequipAndABrokenOneStopsContributing(): void
+    {
+        $player = $this->createRealPlayer('GmSquire');
+        $item = $this->gladiusOrSkip();
+        $item->add_item($player, 1);
+
+        $player->get_caracs();
+        $nudeCc = (int) $player->nude->cc;
+        $player->equip($item);
+
+        $instanceId = (int) $this->link->fetchOne(
+            'SELECT l.instance_id FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id WHERE l.player_id = ? AND i.item_id = ?',
+            [$player->id, $item->id]
+        );
+        $this->link->executeStatement('UPDATE item_instances SET durability = 40 WHERE id = ?', [$instanceId]);
+
+        $player->equip($item); // unequip
+
+        $this->assertNotFalse(
+            $this->link->fetchOne('SELECT 1 FROM item_instances WHERE id = ?', [$instanceId]),
+            'a WORN instance must survive unequip as its own line'
+        );
+        $this->assertFalse(
+            $this->link->fetchOne('SELECT 1 FROM players_items WHERE player_id = ? AND item_id = ?', [$player->id, $item->id]),
+            'a worn unit must NOT rejoin the stack'
+        );
+        $this->assertSame(1, $item->get_n($player), 'the worn instance still counts as owned');
+
+        // Re-equip reuses the worn instance; broken (<= 0) stops contributing caracs.
+        $player->equip($item);
+        $this->link->executeStatement('UPDATE item_instances SET durability = 0 WHERE id = ?', [$instanceId]);
+        $player->get_caracs();
+        $this->assertSame($nudeCc, (int) $player->caracs->cc, 'a broken weapon contributes no caracs');
+        $this->assertSame('gladius', (string) $player->emplacements->main1->row->name, 'but it is still worn/visible');
     }
 
     public function testGiveItemMovesTheStackBetweenPlayers(): void

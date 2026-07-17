@@ -256,6 +256,14 @@ class Player implements ActorInterface {
 
             $this->emplacements->{$row->equiped} = $item;
 
+            /* Un objet BRISÉ (durabilité <= 0, seuils décidés en revue) reste
+             * porté — visible à l'emplacement — mais ne contribue plus ses
+             * caracs : c'est le sens gameplay de « brisé ». */
+            if(isset($row->durability) && (int) $row->durability <= 0){
+
+                continue;
+            }
+
             self::applyItemCaracs($this->caracs, $item);
         }
 
@@ -1579,21 +1587,31 @@ class Player implements ActorInterface {
 
             // item is equiped : UNEQUIP
 
-            $sql = '
-            UPDATE
-            players_items
-            SET
-            equiped = ""
-            WHERE
-            player_id = ?
-            AND
-            item_id = ?
-            ';
+            if (!empty($itemList[$item->id]->instance_id)) {
 
-            $db->exe($sql, array(
-                $this->id,
-                $item->id
-            ));
+                // Phase 1c : l'objet équipé est une instance — la déséquiper
+                // (une instance encore vierge retourne silencieusement en pile).
+                (new \App\Service\ItemInstanceService())
+                    ->unequipInstance((int) $itemList[$item->id]->instance_id);
+            } else {
+
+                // Ligne de pile héritée (antérieure à la conversion 1d).
+                $sql = '
+                UPDATE
+                players_items
+                SET
+                equiped = ""
+                WHERE
+                player_id = ?
+                AND
+                item_id = ?
+                ';
+
+                $db->exe($sql, array(
+                    $this->id,
+                    $item->id
+                ));
+            }
 
             $this->applyUnequipItemBonus($item);
 
@@ -1631,18 +1649,21 @@ class Player implements ActorInterface {
             }
 
 
-            // cursed emp
+            // cursed emp — piles héritées ET instances (Phase 1b)
             $sql = '
-            SELECT COUNT(*) AS n
-            FROM items AS i
-            INNER JOIN players_items AS p
-            ON i.id = p.item_id
-            WHERE p.player_id = ?
-            AND p.equiped = ?
-            AND i.cursed = 1
+            SELECT
+            (SELECT COUNT(*) FROM items AS i
+             INNER JOIN players_items AS p ON i.id = p.item_id
+             WHERE p.player_id = ? AND p.equiped = ? AND i.cursed = 1)
+            +
+            (SELECT COUNT(*) FROM items AS i
+             INNER JOIN item_instances AS ii ON ii.item_id = i.id
+             INNER JOIN players_items_instances AS l ON l.instance_id = ii.id
+             WHERE l.player_id = ? AND l.equiped = ? AND i.cursed = 1)
+            AS n
             ';
 
-            $res = $db->exe($sql, array($this->id, $item->data->emplacement));
+            $res = $db->exe($sql, array($this->id, $item->data->emplacement, $this->id, $item->data->emplacement));
 
             $row = $res->fetch_object();
 
@@ -1653,7 +1674,18 @@ class Player implements ActorInterface {
             }
 
 
-            // unequip emplacement
+            // Phase 1c : libérer les emplacements des deux représentations —
+            // piles héritées (SQL) et instances (service, avec retour en pile
+            // des instances encore vierges).
+            $emplacementsToClear = [$item->data->emplacement];
+            if($item->data->emplacement == "deuxmains"){
+                $emplacementsToClear[] = 'main1';
+                $emplacementsToClear[] = 'main2';
+            }
+            elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
+                $emplacementsToClear[] = 'deuxmains';
+            }
+
             $sql = '
             UPDATE
             players_items
@@ -1662,63 +1694,47 @@ class Player implements ActorInterface {
             WHERE
             player_id = ?
             AND
-            equiped = ?
+            equiped IN('. Db::print_in($emplacementsToClear) .')
             ';
 
-            $db->exe($sql, array(
-                $this->id,
-                $item->data->emplacement,
-            ));
-            
-            // unequip main1 and main2 if item is 2mains
-            if($item->data->emplacement == "deuxmains"){
+            $db->exe($sql, array_merge(array($this->id), $emplacementsToClear));
+
+            $instanceService = new \App\Service\ItemInstanceService();
+            $instanceService->unequipEmplacements($this->id, $emplacementsToClear);
+
+            if($item->data->emplacement == 'munition' || $item->data->emplacement == 'trophee'){
+
+                // Sémantique de PILE conservée : tout le carquois est équipé
+                // d'un bloc et consommé unité par unité (RequiresAmmo) — une
+                // instance par flèche n'aurait aucun sens.
                 $sql = '
                 UPDATE
                 players_items
                 SET
-                equiped = ""
+                equiped = ?
                 WHERE
                 player_id = ?
                 AND
-                (equiped = "main1" OR equiped="main2")
+                item_id = ?
                 ';
 
-                $db->exe($sql, array($this->id));
-                }
-            
-            // unequip 2mains if item is main1 or main2
-            elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
-                $sql = '
-                UPDATE
-                players_items
-                SET
-                equiped = ""
-                WHERE
-                player_id = ?
-                AND
-                equiped = "deuxmains"
-                ';
+                $db->exe($sql, array(
+                    $item->data->emplacement,
+                    $this->id,
+                    $item->id
+                ));
+            }
+            else{
 
-                $db->exe($sql, array($this->id));
+                // Phase 1c : équiper crée (ou réutilise) une INSTANCE — l'objet
+                // commence à exister individuellement au moment où il est porté.
+                try {
+                    $instanceService->equipCatalogItem($this->id, (int) $item->id, $item->data->emplacement);
+                } catch (\RuntimeException) {
+                    return EquipResult::DoNothing;
                 }
-            
-            $sql = '
-            UPDATE
-            players_items
-            SET
-            equiped = ?
-            WHERE
-            player_id = ?
-            AND
-            item_id = ?
-            ';
+            }
 
-            $db->exe($sql, array(
-                $item->data->emplacement,
-                $this->id,
-                $item->id
-            ));
-            
             $this->applyEquipItemBonus($item);
 
             // equip munitions
