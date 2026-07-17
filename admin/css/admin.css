@@ -390,12 +390,39 @@ select.form-control {
         max-width: 100%;
         margin-left: 0;
     }
+
+    /* Barre en flux sur mobile : le pied suit le menu (pas d'épinglage),
+     * marges alignées sur le padding 15px. */
+    .admin-sidebar .sidebar-footer {
+        margin: 0 -15px -15px;
+        padding: 10px 15px 12px;
+    }
 }
 
-/* Retour au jeu : détaché du menu par un filet, toujours en dernier. */
-.vertical-nav .nav-back-to-game {
-    margin-top: 14px;
+/* Retour au jeu : ÉPINGLÉ en bas de la barre latérale — la colonne
+ * devient une flexbox dont seul le nav scrolle ; un menu déplié qui
+ * déborde passe SOUS le lien (le pied opaque le recouvre). */
+.admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+}
+
+.admin-sidebar .vertical-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.admin-sidebar .sidebar-footer {
+    flex: 0 0 auto;
+    margin: 0 -10px -15px;
+    padding: 10px 10px 12px;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
-    padding-top: 12px;
+    background: #2c3e50;
+}
+
+.admin-sidebar .sidebar-footer .nav-back-to-game {
+    display: block;
     opacity: 0.85;
 }
