@@ -391,3 +391,11 @@ select.form-control {
         margin-left: 0;
     }
 }
+
+/* Retour au jeu : détaché du menu par un filet, toujours en dernier. */
+.vertical-nav .nav-back-to-game {
+    margin-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 12px;
+    opacity: 0.85;
+}

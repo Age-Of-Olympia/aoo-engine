@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260713b';
+const ADMIN_ASSET_VERSION = '20260718';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -134,6 +134,9 @@ function admin_layout($title, $content, array $assets = []) {
         ], $itemPages),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
+        // Retour au jeu — toujours visible, hors contrôle d'accès (ce
+        // n'est pas une page d'admin).
+        '<a href="/index.php" class="nav-link nav-back-to-game">&larr; Retour au jeu</a>',
     ]);
 
     $navigation = implode("\n                ", $navParts);
