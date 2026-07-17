@@ -89,11 +89,13 @@ recipe elements back — a proto-usure), `DropWeapon` (disarm),
 
 | Decision | Choice | Rejected alternative |
 |---|---|---|
-| Catalog | `items` stays THE catalog (like `races` for entities), + `items.kind`: `stackable` \| `instance` | every item a players row (259 planches = 259 entities) |
+| Catalog | `items` stays THE catalog (like `races` for entities) | every item a players row (259 planches = 259 entities) |
 | Per-item state | new `item_instances` satellite table | new columns on players_items (stacks can't carry instance state) |
-| Fungibles | stacks stay exactly as they are | instancing everything |
+| Which items can instance | **ALL of them** (décision 2026-07-17) — no `kind` column: an instance is BORN FROM A STATE EVENT (craft with name, equip, enchant/alter, wear, map placement). Pristine quantities stay stack rows; gold never experiences those events so never instances | a hard stackable/instance split per catalog kind |
+| Fungibles | stacks stay exactly as they are until an event promotes a unit | instancing everything |
 | Map presence of a singular item | `UniqueObject` whose satellite references `item_instance_id` | separate "ground instance" system |
-| Containers (chests) | a UniqueObject already CAN own `players_items` rows (players.id FK) — zero schema | dedicated container tables |
+| Containers (chests) | a UniqueObject already CAN own `players_items` rows (players.id FK) — contents unrestricted: stacks AND instances (décision 2026-07-17) | dedicated container tables |
+| Market | asks/bids get a nullable `instance_id`: sell a stock of wood OR a specific sword (décision 2026-07-17) | instances non-marketable |
 | Item stats | migrate `datas/*/items/*.json` → items table columns + admin page (own sub-chantier, same move as races) | keep JSON |
 
 ### 3.2 Schema
@@ -194,13 +196,11 @@ Each step releasable; `staging` shippable at every commit.
 - **Phase 0 — golden masters** (this MR): pin stack arithmetic
   (`add_item`/`get_n`), equip/unequip + `applyItemCaracs` effect on
   caracs, `give_item` transfer. Guards every later step.
-- **Phase 1 — instances**: `items.kind` + `item_instances` +
-  `ItemInstanceService`; equipment references instances; data
-  migration converts currently-EQUIPPED rows only (unequipped stacks
-  convert lazily on first touch). The risky one: the 13 `equiped`
-  readers + inventory JS. ~1–2 weeks of PR-sized steps.
-  **⚠ needs review before code: the equipped-rows conversion is the
-  one hard-to-reverse data migration.**
+- **Phase 1 — instances** (policy DECIDED 2026-07-17: lazy promotion,
+  see §5c): `item_instances` + `ItemInstanceService`; equipment
+  references instances; the data migration converts currently-EQUIPPED
+  rows only. The risky one: the 13 `equiped` readers + inventory JS.
+  ~1–2 weeks of PR-sized steps.
 - **Phase 2 — usure**: durability on instances + `DamageObject`
   evolution + G1 for repair costs. Small once Phase 1 exists.
 - **Phase 3 — map bridge**: G2, UniqueObject ⇄ instance round trip,
@@ -231,24 +231,69 @@ The team's object requirements, checked against this design:
 | Coffre : stocker, **casser**, ouvrir avec clé | ✅ chest = UniqueObject → owns `players_items` (zero schema) and is attackable **today by construction**; « ouvrir avec clé » = action TargetType ['structure'] + G1 `RequiresItem {clé}` |
 | Coffre PORTABLE (instance contenant des instances) | ⚠ the one genuinely open design — not blocked, but needs its own decision (open question #6) |
 
+## 5c. Migration policy — lazy promotion (decided 2026-07-17)
+
+### The two candidate policies
+
+**A — bulk conversion**: one migration splits every stack of every
+item into N instance rows.
+
+Problems that killed it:
+- **Volume & lock time**: stacks reach 259; prod would create thousands
+  of rows in one transaction on the hottest inventory table.
+- **Big-bang switch**: all 31 raw `players_items` SQL statements, the
+  views and the inventory JS must understand instances on day one —
+  the exact opposite of the strangler rule (staging shippable at every
+  commit).
+- **No rollback**: once players have played, instance states diverge
+  and re-aggregating into stacks loses data. A bug found after one day
+  in prod cannot be rolled back cleanly.
+
+**B — lazy promotion (CHOSEN)**: nothing converts up front except
+currently-equipped rows. An instance is created only by a
+state-changing event:
+
+- craft (creator, date, custom name at creation),
+- equip (the item starts existing individually — it will wear),
+- enchant / altération,
+- placement on the map (UniqueObject),
+- wear applied by an action.
+
+A pristine unit in a stack has, by definition, no state to lose —
+promotion is exact, and demotion (rollback) is possible as long as the
+instance state equals pristine.
+
+### Known problems of the chosen policy — and their mitigations
+
+| # | Problem | Mitigation |
+|---|---|---|
+| P1 | **The `equiped`-on-stack wart**: today `equiped` sits ON the stack row — `(n=3, equiped='main1')` is legal, the whole stack is "equipped". The migration must SPLIT: 1 instance (equipped) + n−1 stack | one-shot in the Phase 1 migration; golden masters already pin `get_n(equiped)` behavior |
+| P2 | **Dual representation lives for a long time**: every read path must see stacks AND instance links, or counts go wrong (`get_n`, craft ingredients, market quantities) | funnel reads through `Item`/`ItemInstanceService` shims FIRST (query-gateway step), before any promotion exists; golden masters guard the totals |
+| P3 | **Promotion atomicity**: splitting a stack + creating the instance must be one transaction or a crash duplicates/loses a unit | `add_item` already runs transactions; promotion goes through the same `Db` transaction helper |
+| P4 | **Dual identifiers in the UI**: views/JS pass `item_id` today; instance paths need `instance_id`. Mixing them up equips/sells the wrong object | explicit separate parameter (`instanceId`), never overloading `itemId`; server rejects ambiguous requests |
+| P5 | **"Give me 1 gladius" ambiguity**: when a player owns 2 worn instances + a stack, transfers/sales must pick WHICH unit | rule: stack units first (pristine), instances only when explicitly selected (P4's `instanceId`) — matches the market decision (stock OR specific sword) |
+| P6 | **Bank/exchange/steal flows** move rows between tables; instance links must move with the same guarantees | the location invariant (§3.2: an instance has exactly ONE location) is enforced in ONE service; flows call it instead of writing SQL |
+
 ## 6. Open Questions
 
-1. **Conversion policy**: equipped-only at migration + lazy on touch —
-   or bulk-convert every instance-kind stack? (Lazy keeps the migration
-   tiny; bulk is simpler to reason about.)
-2. ~~**Durability semantics — state column?**~~ RESOLVED (équipe,
-   2026-07): thresholds on durability — 0 = brisé, < 0 = détruit, no
-   state column. Remaining: wear TRIGGERS (per use? per damage taken?
-   per turn?) — interacts with the global usure design.
-3. **Catalog flags** `enchanted` / `cursed` / `vorpal`: move to
-   instance params, keep at catalog for inherently-cursed kinds, or
-   both?
-4. **Which kinds become `instance`**: weapons + armor only at first?
-   Trophies? Quest items?
-5. **Market/exchanges of instances**: sellable? (an ask/bid references
-   a specific instance, not a quantity) — or instance-kind items are
-   simply not marketable at first?
-6. **Portable containers** (a chest INSTANCE holding instances, not a
-   map UniqueObject): instance-to-instance ownership is a new
-   relationship — worth it, or are containers always map/bank-anchored
-   unique objects?
+1. ~~**Conversion policy**~~ RESOLVED (2026-07-17): lazy promotion —
+   §5c.
+2. ~~**Durability semantics — state column?**~~ RESOLVED: thresholds —
+   0 = brisé, < 0 = détruit. Remaining sub-question, WEAR TRIGGERS,
+   proposed model (to confirm): **wear on use** — a weapon loses
+   durability on each attack it lands, armor when its wearer takes
+   damage, both through the existing DamageObject/combat pipeline
+   (no time-based decay for carried items; buildings may weather
+   separately). Corruption effects and crits stay bigger decrements.
+3. ~~**Catalog flags**~~ RESOLVED (2026-07-17): **both** — catalog
+   flags remain for inherently-cursed/enchanted KINDS; instance params
+   carry per-instance altérations.
+4. ~~**Which kinds become instance**~~ RESOLVED (2026-07-17): **all**
+   items may instance; there is no kind gate — the state EVENT creates
+   the instance (§3.1).
+5. ~~**Market of instances**~~ RESOLVED (2026-07-17): **both** — asks/
+   bids get a nullable `instance_id`; sell a stock of wood or one
+   specific sword.
+6. ~~**Containers**~~ RESOLVED (2026-07-17): a chest holds
+   **anything** — stacks and instances alike (contents unrestricted).
+   Portability of the chest itself stays map/bank-anchored for now.

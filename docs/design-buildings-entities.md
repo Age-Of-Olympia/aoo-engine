@@ -521,3 +521,24 @@ The team's building requirements, checked against what is built:
 
 No requirement contradicts the architecture. New generic action pieces
 identified: G3 `AlterInstance` (items doc §5b) and G4 `RequiresBuilding`.
+
+### Decisions from the 2026-07-17 review
+
+- **Niveaux de bâtiments = le rang des personnages, même notion.** A
+  building is a players row: its level lives in `players.rank`, is
+  displayed as symbols exactly like character ranks, and upgrades
+  increment it. Per-level stat growth can ride the existing
+  `players_upgrades` path — no new leveling system.
+- **Droits unifiés (accès + vision + …)**: one component,
+  `building_rights (building_id, right, subject_type, subject_ref)` —
+  `right` ∈ {access, vision, use…}, `subject_type` ∈ {faction, player}.
+  Covers « autoriser l'accès par faction OU par joueur » and « la tour
+  de guet partage sa vision à qui a le droit » with the same table.
+- **Butin de destruction = l'inventaire du bâtiment, via le chemin de
+  mort unifié.** `Player::death()` already drops the dying entity's own
+  inventory with per-item loot chances; extract that block into a
+  shared drop service and call it from `processBuildingDestruction`.
+  Construction costs get DEPOSITED into the building's own inventory
+  (players_items on its id — works today), so destroying a palissade
+  naturally returns part of its materials. No separate loot-table
+  system. Resolves open question #4.
