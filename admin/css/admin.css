@@ -99,13 +99,13 @@ body {
 
 .admin-main {
     flex: 1;
-    /* Generous left gutter so content clears the fixed sidebar instead of
-       crowding against it; symmetric breathing room top/right/bottom. */
+    /* Collé à la barre fixe (200px) — le padding gauche fait la
+       respiration, pas un interstice de fond de page. */
     padding: 28px 36px 36px;
     background: #ecf0f1;
     overflow-x: auto;
     font-size: 14px;
-    margin-left: 204px;
+    margin-left: 200px;
 }
 
 .admin-main h1 {
