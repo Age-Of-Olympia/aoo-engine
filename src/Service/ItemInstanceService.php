@@ -39,6 +39,14 @@ class ItemInstanceService extends BaseService
         return $durability <= self::BROKEN_AT;
     }
 
+    /** La vie de départ d'une instance : items.durability_max (catalogue). */
+    private static function catalogDurabilityMax($conn, int $itemId): int
+    {
+        $max = $conn->fetchOne('SELECT durability_max FROM items WHERE id = ?', [$itemId]);
+
+        return $max !== false ? (int) $max : 100;
+    }
+
     private EntityManagerInterface $entityManager;
 
     public function __construct()
@@ -79,9 +87,10 @@ class ItemInstanceService extends BaseService
                 [$playerId, $itemId]
             );
 
+            $durabilityMax = self::catalogDurabilityMax($conn, $itemId);
             $conn->executeStatement(
-                'INSERT INTO item_instances (item_id, created_at) VALUES (?, ?)',
-                [$itemId, time()]
+                'INSERT INTO item_instances (item_id, durability, durability_max, created_at) VALUES (?, ?, ?, ?)',
+                [$itemId, $durabilityMax, $durabilityMax, time()]
             );
             $instanceId = (int) $conn->lastInsertId();
 
@@ -103,9 +112,10 @@ class ItemInstanceService extends BaseService
         $conn = $this->entityManager->getConnection();
 
         return $conn->transactional(function ($conn) use ($playerId, $itemId, $creatorId, $customName): int {
+            $durabilityMax = self::catalogDurabilityMax($conn, $itemId);
             $conn->executeStatement(
-                'INSERT INTO item_instances (item_id, custom_name, creator_id, created_at) VALUES (?, ?, ?, ?)',
-                [$itemId, $customName, $creatorId, time()]
+                'INSERT INTO item_instances (item_id, custom_name, creator_id, durability, durability_max, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                [$itemId, $customName, $creatorId, $durabilityMax, $durabilityMax, time()]
             );
             $instanceId = (int) $conn->lastInsertId();
 

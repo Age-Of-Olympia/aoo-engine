@@ -249,6 +249,9 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<div class="form-group"><label>Points perdus par tour armé</label>'
         . '<input type="number" min="0" class="form-control" name="wear_rate" value="' . (int) $row->wear_rate . '">'
         . '<small class="text-muted">0 = ne s\'use jamais.</small></div>'
+        . '<div class="form-group"><label>Durabilité max (vie de l\'objet)</label>'
+        . '<input type="number" min="1" class="form-control" name="durability_max" value="' . (int) ($row->durability_max ?? 100) . '">'
+        . '<small class="text-muted">Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.</small></div>'
         . '</div>'
 
         . '<div class="col-md-3"><h5>Caractéristiques</h5><div class="row">' . $caracInputs . '</div></div>'
@@ -299,6 +302,7 @@ if ($action === 'new') {
     }
     $blank->is_bankable = 1;
     $blank->price = 1;
+    $blank->durability_max = 100;
     $content = items_render_edit($blank, $csrfToken);
 } elseif ($action === 'edit') {
     $id = (int) ($_GET['id'] ?? 0);

@@ -69,6 +69,7 @@ final class ItemExporter implements ObjectExporter
             'exotique' => (string) ($entity->exotique ?? ''),
             'wear_triggers' => (string) ($entity->wear_triggers ?? ''),
             'wear_rate' => (int) ($entity->wear_rate ?? 0),
+            'durability_max' => (int) ($entity->durability_max ?? 100),
             'stats_in_db' => (int) ($entity->stats_in_db ?? 0),
         ];
 

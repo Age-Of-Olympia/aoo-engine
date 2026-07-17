@@ -126,6 +126,13 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    ingrédients, résultats et races voyagent par NOMS — importer une
    recette dont un objet n'existe pas ici est REJETÉ avec le message
    « importer d'abord le bundle d'objets », sans rien écrire.
+8d. **Durabilité max par objet** (items.durability_max — la « vie »
+   propre de l'objet, distincte des modificateurs de caracs du
+   porteur).
+   ☐ Admin → Objets → Éditer, section Usure : champ « Durabilité max »
+   (défaut 100). Le régler à 80 sur un objet → toute NOUVELLE instance
+   (équiper, crafter, poser) naît à 80/80 ; les instances déjà nées
+   gardent la leur. La valeur voyage dans les bundles JSON.
 8b. **Admin → Races** — éditer « palissade ».
    ☐ Sorte « Structure » affichée ; créer une nouvelle sorte structure
    (ex. tour, PV 200) → elle apparaît dans le formulaire de pose ;
