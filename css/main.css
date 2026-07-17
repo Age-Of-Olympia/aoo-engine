@@ -1979,3 +1979,8 @@ blockquote{
 .building-status-door--closed {
     color: #810303;
 }
+
+/* Événement « Nouveau tour » dans les Évènements : doré discret. */
+.log-turn {
+    color: #8a6d1a;
+}

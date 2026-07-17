@@ -82,6 +82,15 @@ Stack concernée : !652 → !665 (base `integration/hud-redesign`).
    ☐ Le bouton « Parler » (navigation, pas une action) suit la même
    règle d'adjacence en dur — pas d'affordance qui mène à « il faut
    être à côté ».
+6e. **Événement « Nouveau tour »** (TurnProcessingService — le moteur
+   de tour extrait de la vue).
+   ☐ Au tour suivant : la page « Nouveau Tour » s'affiche comme avant
+   (mêmes lignes de récupération, usure comprise).
+   ☐ Évènements : une ligne dorée « Nouveau tour — Xp +…, PV +… …
+   Prochain tour le … » relisible après coup.
+   ☐ VISIBILITÉ : un AUTRE joueur à portée ne voit PAS votre événement
+   de tour (il est privé) ; la « Vue complète » admin (logs.php?admin)
+   le montre comme tout le reste.
 7. **Console `²`** — `building place palissade 4 4 arcadia` puis
    `building remove [id]`.
    ☐ Les deux marchent et le damier se rafraîchit.
