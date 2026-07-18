@@ -1265,6 +1265,14 @@ class Player implements ActorInterface {
 
     public function put_malus($malus): void {
 
+        // Une structure (bâtiment, objet unique) n'a pas de malus : il
+        // pénalise les jets de défense, et elle n'esquive jamais — même
+        // logique que le saignement (races.bleeds).
+        if (\App\Enum\EntityCategory::fromPlayerType($this->getPlayerType()) === \App\Enum\EntityCategory::Structure) {
+
+            return;
+        }
+
         $sql = 'UPDATE players SET malus = GREATEST(malus + ?, 0) WHERE id = ?';
 
         $db = new Db();
