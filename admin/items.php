@@ -129,6 +129,31 @@ function items_render_list(array $items): string
         . '<tbody>' . $rows . '</tbody></table></div>';
 }
 
+/**
+ * <select multiple> d'effets de consommation, options depuis le
+ * catalogue (admin → Effets). Une valeur enregistrée qui n'y est plus
+ * reste proposée, marquée ⚠, pour ne pas être écrasée en silence.
+ *
+ * @param string[] $selected
+ */
+function item_effect_multiselect(string $field, array $selected, string $label, string $hint): string
+{
+    $known = (new \App\Service\EffectService())->getGameplayEffectNames();
+
+    $options = '';
+    foreach (array_diff($selected, $known) as $orphan) {
+        $options .= '<option value="' . e($orphan) . '" selected>⚠ inconnue : ' . e($orphan) . '</option>';
+    }
+    foreach ($known as $effectName) {
+        $options .= '<option value="' . e($effectName) . '"'
+            . (in_array($effectName, $selected, true) ? ' selected' : '') . '>' . e($effectName) . '</option>';
+    }
+
+    return '<div class="form-group"><label>' . $label . '</label>'
+        . '<select name="' . $field . '[]" class="form-control" multiple size="5">' . $options . '</select>'
+        . '<small class="text-muted">' . $hint . '</small></div>';
+}
+
 function items_render_edit(object $row, string $csrfToken): string
 {
     $triggers = array_filter(array_map('trim', explode(',', (string) $row->wear_triggers)));
@@ -177,6 +202,24 @@ function items_render_edit(object $row, string $csrfToken): string
 
     $munitions = !empty($row->munitions) ? implode(', ', (array) json_decode((string) $row->munitions, true)) : '';
 
+    /* Effets de consommation : la clé `effet` d'extra, éclatée en deux
+     * sélecteurs (appliqués / retirés, le préfixe « - » historique) —
+     * le textarea Extra n'affiche plus cette clé, elle se recompose à
+     * l'enregistrement. */
+    $extraJson = json_decode((string) ($row->extra ?? ''));
+    $consumeEffects = (is_object($extraJson) && !empty($extraJson->effet)) ? array_map('strval', (array) $extraJson->effet) : [];
+    $effectsApplied = array_values(array_filter($consumeEffects, static fn (string $e): bool => !str_starts_with($e, '-')));
+    $effectsRemoved = array_values(array_map(
+        static fn (string $e): string => substr($e, 1),
+        array_filter($consumeEffects, static fn (string $e): bool => str_starts_with($e, '-'))
+    ));
+    if (is_object($extraJson)) {
+        unset($extraJson->effet);
+    }
+    $extraDisplay = (is_object($extraJson) && get_object_vars($extraJson) !== [])
+        ? json_encode($extraJson, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        : (is_object($extraJson) || $extraJson === null ? '' : (string) $row->extra);
+
     // Toutes les représentations visuelles de l'objet, manquantes incluses —
     // dont l'image « brisé » des structures de carte (bascule à mi-PV,
     // destroy.php) : voir d'un coup d'œil ce qui existe et ce qui manque.
@@ -218,32 +261,48 @@ function items_render_edit(object $row, string $csrfToken): string
 
         . '<div class="col-md-3"><h5>Identité</h5>'
         . '<div class="form-group"><label>Description</label>'
-        . '<textarea class="form-control" name="text" rows="5">' . e((string) ($row->text ?? '')) . '</textarea></div>'
+        . '<textarea class="form-control" name="text" rows="5">' . e((string) ($row->text ?? '')) . '</textarea>'
+        . '<small class="text-muted">Texte montré au joueur (aperçu d\'inventaire, marchand).</small></div>'
         . '<div class="form-group"><label>Prix</label>'
-        . '<input type="number" min="0" class="form-control" name="price" value="' . (int) ($row->price ?? 1) . '"></div>'
-        . '<div class="form-group"><label>Emplacement</label>'
-        . '<select name="emplacement" class="form-control">' . $emplacementOptions . '</select></div>'
+        . '<input type="number" min="0" class="form-control" name="price" value="' . (int) ($row->price ?? 1) . '">'
+        . '<small class="text-muted">Prix de référence du marchand et des contrats.</small></div>'
         . '<div class="form-group"><label>Type</label>'
         . '<input type="text" class="form-control" name="type" list="item-types" value="' . e((string) ($row->type ?? '')) . '"'
-        . ' placeholder="equipement, consommable, ' . Item::TYPE_CONSTRUCTIBLE . '…"></div>'
+        . ' placeholder="equipement, consommable, ' . Item::TYPE_CONSTRUCTIBLE . '…">'
+        . '<small class="text-muted">Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
+        . ' <b>consommable</b> se consomme (1 A),'
+        . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b>/<b>' . Item::TYPE_STRUCTURE . '</b> se bâtit sur la carte.'
+        . ' Un objet sans usage (matériau…) a son bouton grisé en jeu.</small></div>'
         . '<datalist id="item-types">'
         . '<option value="equipement"><option value="consommable">'
         . '<option value="' . Item::TYPE_CONSTRUCTIBLE . '"><option value="' . Item::TYPE_STRUCTURE . '">'
         . '</datalist>'
+        . '<div class="form-group"><label>Emplacement</label>'
+        . '<select name="emplacement" class="form-control">' . $emplacementOptions . '</select>'
+        . '<small class="text-muted">Où l\'objet se porte — tout objet AVEC emplacement devient équipable,'
+        . ' quel que soit son type.</small></div>'
         . '<div class="form-group"><label>Sous-type</label>'
         . '<input type="text" class="form-control" name="subtype" value="' . e((string) ($row->subtype ?? '')) . '"'
-        . ' placeholder="melee, tir, jet, walls, routes…"></div>'
+        . ' placeholder="melee, tir, jet, walls, routes…">'
+        . '<small class="text-muted">Catégorie d\'arme pour le combat (melee, tir, jet, bouclier)'
+        . ' ou de pose carte (walls, routes…).</small></div>'
         . '<div class="form-group"><label>Race (objet racial)</label>'
-        . '<input type="text" class="form-control" name="race" value="' . e((string) ($row->race ?? '')) . '"></div>'
+        . '<input type="text" class="form-control" name="race" value="' . e((string) ($row->race ?? '')) . '">'
+        . '<small class="text-muted">Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.</small></div>'
         . '</div>'
 
         . '<div class="col-md-3"><h5>Flags</h5>' . $flagBoxes
         . '<div class="form-group mt-2"><label>Élément</label>'
-        . '<input type="text" class="form-control" name="element" value="' . e((string) $row->element) . '"></div>'
-        . '<div class="form-group"><label>Sort lié (objet à sort intégré)</label>'
-        . '<input type="text" class="form-control" name="spell" value="' . e((string) $row->spell) . '"></div>'
+        . '<input type="text" class="form-control" name="element" value="' . e((string) $row->element) . '">'
+        . '<small class="text-muted">Élément porté par l\'objet (feu, eau…) — marque le nom et joue'
+        . ' avec les règles élémentaires.</small></div>'
+        . '<div class="form-group"><label>Sort lié</label>'
+        . '<input type="text" class="form-control" name="spell" value="' . e((string) $row->spell) . '">'
+        . '<small class="text-muted">Objet à sort intégré : le sort est affiché sur l\'objet'
+        . ' (l\'apprentissage des sorts passe par les écoles de guerre).</small></div>'
         . '<div class="form-group"><label>Exotique (race)</label>'
-        . '<input type="text" class="form-control" name="exotique" value="' . e((string) $row->exotique) . '"></div>'
+        . '<input type="text" class="form-control" name="exotique" value="' . e((string) $row->exotique) . '">'
+        . '<small class="text-muted">Code de race : SEULE cette race peut équiper l\'objet.</small></div>'
         . '<h5>Usure <small class="text-muted">(par tour)</small></h5>'
         . '<div class="form-group">' . $triggerBoxes . '</div>'
         . '<div class="form-group"><label>Points perdus par tour armé</label>'
@@ -254,17 +313,38 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<small class="text-muted">Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.</small></div>'
         . '</div>'
 
-        . '<div class="col-md-3"><h5>Caractéristiques</h5><div class="row">' . $caracInputs . '</div></div>'
+        . '<div class="col-md-3"><h5>Caractéristiques</h5>'
+        . '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
+        . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
+        . ' sur un <b>consommable</b>, quantités RENDUES à la consommation (PV, PM, MVT, A, AE).</p>'
+        . '<div class="row">' . $caracInputs . '</div></div>'
 
-        . '<div class="col-md-3"><h5>Spéciaux</h5><div class="row">' . $specialInputs . '</div>'
+        . '<div class="col-md-3"><h5>Spéciaux</h5>'
+        . '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
+        . ' PR / PF / Malus s\'appliquent aussi à la consommation.</p>'
+        . '<div class="row">' . $specialInputs . '</div>'
         . '<div class="form-group"><label>Munitions (noms, séparés par des virgules)</label>'
-        . '<input type="text" class="form-control" name="munitions" value="' . e($munitions) . '"></div>'
-        . '<div class="form-group"><label>Effets ajoutés (JSON)</label>'
-        . '<textarea class="form-control" name="add_effects" rows="2">' . e((string) ($row->add_effects ?? '')) . '</textarea></div>'
+        . '<input type="text" class="form-control" name="munitions" value="' . e($munitions) . '">'
+        . '<small class="text-muted">Arme de tir : les objets-munitions qu\'elle accepte.</small></div>'
+
+        . '<h5>À la consommation</h5>'
+        . item_effect_multiselect('effets_appliques', $effectsApplied, 'Effets appliqués',
+            'Posés sur le buveur à la consommation (potion de poison, de régénération…). Ctrl+clic pour plusieurs.')
+        . item_effect_multiselect('effets_retires', $effectsRemoved, 'Effets retirés',
+            'Purgés du buveur à la consommation (antidote…). Catalogue : admin → Effets.')
+
+        . '<h5>JSON avancé</h5>'
+        . '<div class="form-group"><label>Effets d\'arme au coup porté (JSON)</label>'
+        . '<textarea class="form-control" name="add_effects" rows="2">' . e((string) ($row->add_effects ?? '')) . '</textarea>'
+        . '<small class="text-muted">Arme équipée : effets posés quand le coup touche —'
+        . ' <code>[{"name":"poison","on":"target","duration":86400}]</code>.</small></div>'
         . '<div class="form-group"><label>Interdits (JSON)</label>'
-        . '<textarea class="form-control" name="forbid" rows="2">' . e((string) ($row->forbid ?? '')) . '</textarea></div>'
+        . '<textarea class="form-control" name="forbid" rows="2">' . e((string) ($row->forbid ?? '')) . '</textarea>'
+        . '<small class="text-muted"><code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).</small></div>'
         . '<div class="form-group"><label>Extra (JSON, clés héritées — sans perte)</label>'
-        . '<textarea class="form-control" name="extra" rows="2">' . e((string) ($row->extra ?? '')) . '</textarea></div>'
+        . '<textarea class="form-control" name="extra" rows="2">' . e($extraDisplay) . '</textarea>'
+        . '<small class="text-muted">Clés historiques diverses, conservées telles quelles. Les effets de'
+        . ' consommation s\'éditent au-dessus, plus dans cette zone.</small></div>'
         . '</div>'
 
         . '</div>'

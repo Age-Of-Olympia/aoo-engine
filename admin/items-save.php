@@ -81,6 +81,40 @@ foreach (\Classes\Item::JSON_COLUMNS as $col) {
     $jsonColumns[$col] = $raw;
 }
 
+// Effets de consommation : les deux sélecteurs (appliqués / retirés,
+// préfixe « - » historique), validés contre le catalogue des effets —
+// une faute de frappe rendait la potion silencieuse. Recomposés dans
+// extra.effet : le textarea Extra n'édite plus cette clé.
+$effectService = new \App\Service\EffectService();
+$consumeEffects = [];
+foreach ([['effets_appliques', ''], ['effets_retires', '-']] as [$field, $prefix]) {
+    foreach ((array) ($_POST[$field] ?? []) as $effectName) {
+        $effectName = strtolower(trim((string) $effectName));
+        if ($effectName === '') {
+            continue;
+        }
+        if (!$effectService->exists($effectName)) {
+            setFlash('warning', "Effet inconnu du catalogue : « {$effectName} » — rien n'a été enregistré.");
+            redirectTo('/admin/items.php?action=edit&id=' . $id);
+        }
+        $consumeEffects[] = $prefix . $effectName;
+    }
+}
+
+$extraObject = $jsonColumns['extra'] !== null ? json_decode($jsonColumns['extra']) : null;
+if ($extraObject !== null && !is_object($extraObject)) {
+    setFlash('warning', 'Champ extra : un objet JSON ({…}) est attendu — rien n\'a été enregistré.');
+    redirectTo('/admin/items.php?action=edit&id=' . $id);
+}
+$extraObject ??= new stdClass();
+unset($extraObject->effet);
+if ($consumeEffects !== []) {
+    $extraObject->effet = $consumeEffects;
+}
+$jsonColumns['extra'] = get_object_vars($extraObject) !== []
+    ? json_encode($extraObject, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    : null;
+
 // Munitions : liste de noms d'objets, stockée en JSON — chaque nom doit
 // exister au catalogue (une faute de frappe rendrait l'arme muette).
 $munitions = array_values(array_filter(array_map('trim', explode(',', (string) ($_POST['munitions'] ?? '')))));
