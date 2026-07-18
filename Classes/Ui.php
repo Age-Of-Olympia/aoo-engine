@@ -389,12 +389,17 @@ class Ui{
             $isInstance = isset($row->instance_id);
             $domId = $isInstance ? 'i'. (int) $row->instance_id : $row->id;
 
+            /* Ce que « Utiliser » ferait (source unique côté serveur) —
+             * vide : rien, le bouton doit rester grisé partout. */
+            $useKind = (string) \App\Service\InventoryService::useKind($item);
+
             echo '
             <tr
                 class="item-case"
                 id="'. $domId .'"
                 data-id="'. $row->id .'"
                 data-instance-id="'. ($isInstance ? (int) $row->instance_id : '') .'"
+                data-use-kind="'. $useKind .'"
                 data-name="'. $itemName .'"
                 data-n="'. $row->n .'"
                 data-text="'. $item->data->text .'"
@@ -430,9 +435,9 @@ class Ui{
 
                 /* Mêmes règles de coût qu'InventoryService::useItem et
                  * js/inventUi.js : déséquiper est gratuit ; équiper
-                 * coûte 1 Ae ; consommer coûte 1 A.
-                 * Sans le point requis, le bouton est grisé et
-                 * l'infobulle dit pourquoi. */
+                 * coûte 1 Ae ; consommer coûte 1 A. Sans le point
+                 * requis, le bouton est grisé et l'infobulle dit
+                 * pourquoi. */
                 $isEquipped = !empty($row->equiped);
 
                 if($isEquipped){
@@ -448,25 +453,30 @@ class Ui{
                     $usable = ($aLeft === null || $aLeft > 0);
                     $useTitle = $usable ? 'Construire (1 A)' : 'Construire (1 A) — plus d\'Action ce tour';
                 }
-                elseif($type == 'equipement'){
+                elseif($type == Item::TYPE_STRUCTURE){
+
+                    // Chemin legacy build.php (routé côté JS, pas useItem).
+                    $usable = ($aLeft === null || $aLeft > 0);
+                    $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
+                }
+                elseif($useKind === \App\Service\InventoryService::USE_EQUIP){
 
                     $usable = ($aeLeft === null || $aeLeft > 0);
-                    $useTitle = $usable ? 'Équiper (1 Ae)' : 'Équiper (1 Ae) — plus d\'Action d\'Équipement ce tour';
+                    $verb = $type == 'equipement' ? 'Équiper' : 'Utiliser';
+                    $useTitle = $usable ? $verb .' (1 Ae)' : $verb .' (1 Ae) — plus d\'Action d\'Équipement ce tour';
                 }
-                elseif($emp != ''){
-
-                    $usable = ($aeLeft === null || $aeLeft > 0);
-                    $useTitle = $usable ? 'Utiliser (1 Ae)' : 'Utiliser (1 Ae) — plus d\'Action d\'Équipement ce tour';
-                }
-                elseif($type == 'consommable' || $type == Item::TYPE_STRUCTURE){
+                elseif($useKind === \App\Service\InventoryService::USE_CONSUME){
 
                     $usable = ($aLeft === null || $aLeft > 0);
                     $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
                 }
                 else{
 
+                    /* Aucun usage réel (consommable sans bonus,
+                     * matériau…) : un clic ne ferait RIEN — bouton
+                     * grisé, et useItem refuserait de toute façon. */
                     $usable = false;
-                    $useTitle = 'Utiliser';
+                    $useTitle = 'Cet objet n\'a pas d\'usage direct';
                 }
 
                 /* Porté : bouton « rendre » plein (nuit) — impossible à
@@ -538,7 +548,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260717b"></script>
+        <script src="js/inventUi.js?v=20260720"></script>
         <?php
 
         return Str::minify(ob_get_clean());

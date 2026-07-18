@@ -31,8 +31,53 @@ class InventoryService
         Log::put($player, $player, $text, type: 'use');
     }
 
-    public static function useItem(Player $player, Item $item)
+    /** Un « Utiliser » peut équiper ou consommer. */
+    public const USE_EQUIP = 'equip';
+    public const USE_CONSUME = 'consume';
+
+    /**
+     * Ce que « Utiliser » ferait pour cet objet — null quand RIEN : un
+     * consommable sans aucun bonus, tout objet sans usage. Source unique
+     * du bouton (grisé, print_inventory et inventUi.js via
+     * data-use-kind) ET du refus serveur (useItem) : un clic qui ne fait
+     * rien n'existe plus.
+     */
+    public static function useKind(Item $item): ?string
     {
+        if (!empty($item->data->emplacement)) {
+            return self::USE_EQUIP;
+        }
+        if (($item->data->type ?? '') === 'consommable' && self::hasConsumablePayload($item->data)) {
+            return self::USE_CONSUME;
+        }
+
+        return null;
+    }
+
+    /** Au moins un bonus/effet que la consommation appliquerait. */
+    private static function hasConsumablePayload(object $data): bool
+    {
+        foreach (['pv', 'pm', 'mvt', 'a', 'ae', 'malus', 'pr', 'pf'] as $key) {
+            if (!empty($data->$key)) {
+                return true;
+            }
+        }
+
+        return !empty($data->effet);
+    }
+
+    /**
+     * @param int|null $instanceId instance PRÉCISE à équiper (clic sur
+     *        une ligne d'instance) — transmis jusqu'à
+     *        ItemInstanceService::equipCatalogItem
+     */
+    public static function useItem(Player $player, Item $item, ?int $instanceId = null)
+    {
+
+        if (self::useKind($item) === null) {
+
+            exit('Cet objet ne peut pas être utilisé.');
+        }
 
         $text = $player->data->name . ' a utilisé ' . $item->data->name . '.';
 
@@ -40,7 +85,7 @@ class InventoryService
         if (!empty($item->data->emplacement)) {
 
 
-            $return = $player->equip($item);
+            $return = $player->equip($item, instanceId: $instanceId);
 
             if ($return == EquipResult::Equip) {
 

@@ -175,26 +175,37 @@ class ItemInstanceService extends BaseService
     }
 
     /**
-     * Equip a catalog item through the instance path: reuse
-     * the player's OLDEST unequipped live instance of that item, else
-     * promote one unit from the stack. Returns the equipped instance id.
+     * Equip a catalog item through the instance path: the caller's
+     * chosen instance when given (a click on a SPECIFIC inventory
+     * line), else the player's OLDEST unequipped live instance of that
+     * item, else promote one unit from the stack. Returns the equipped
+     * instance id.
      *
-     * @throws \RuntimeException when the player owns no unit at all
+     * @throws \RuntimeException when the player owns no unit at all, or
+     *         when the requested instance is not equippable (absente,
+     *         détruite, déjà portée) — jamais de repli silencieux sur
+     *         une AUTRE instance que celle demandée
      */
-    public function equipCatalogItem(int $playerId, int $itemId, string $emplacement): int
+    public function equipCatalogItem(int $playerId, int $itemId, string $emplacement, ?int $instanceId = null): int
     {
         $conn = $this->entityManager->getConnection();
 
-        $existing = $conn->fetchOne(
-            "SELECT l.instance_id
-             FROM players_items_instances l
-             JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
-             ORDER BY l.instance_id LIMIT 1",
-            [$playerId, $itemId]
-        );
+        if ($instanceId !== null) {
+            if (!$this->isInstanceEquippable($playerId, $itemId, $instanceId)) {
+                throw new \RuntimeException("instance {$instanceId} non équipable pour le joueur {$playerId}");
+            }
+        } else {
+            $existing = $conn->fetchOne(
+                "SELECT l.instance_id
+                 FROM players_items_instances l
+                 JOIN item_instances i ON i.id = l.instance_id
+                 WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
+                 ORDER BY l.instance_id LIMIT 1",
+                [$playerId, $itemId]
+            );
 
-        $instanceId = $existing !== false ? (int) $existing : $this->promote($playerId, $itemId);
+            $instanceId = $existing !== false ? (int) $existing : $this->promote($playerId, $itemId);
+        }
 
         $conn->executeStatement(
             'UPDATE players_items_instances SET equiped = ? WHERE instance_id = ?',
@@ -202,6 +213,23 @@ class ItemInstanceService extends BaseService
         );
 
         return $instanceId;
+    }
+
+    /**
+     * La cible d'un équipement CHOISI est-elle valide : appartient au
+     * joueur, est bien une unité de ce catalogue, non portée, non
+     * détruite. Miroir instance-précise de hasEquippableUnit().
+     */
+    public function isInstanceEquippable(int $playerId, int $itemId, int $instanceId): bool
+    {
+        return (bool) $this->entityManager->getConnection()->fetchOne(
+            "SELECT 1
+             FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             WHERE l.instance_id = ? AND l.player_id = ? AND i.item_id = ?
+               AND l.equiped = '' AND i.destroyed = 0",
+            [$instanceId, $playerId, $itemId]
+        );
     }
 
     /**

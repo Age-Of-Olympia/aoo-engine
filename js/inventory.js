@@ -177,7 +177,7 @@ $(document).ready(function(){
                 $.ajax({
                     type: "POST",
                     url: 'inventory.php',
-                    data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
+                    data: {'action': action,'itemId': window.id,'instanceId': window.instanceId,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
                     success: function(data)
                     {
                         var contentData = $('<div></div>').html(data).find('#data');

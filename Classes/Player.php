@@ -1596,7 +1596,12 @@ class Player implements ActorInterface {
     
 
 
-    public function equip(Item $item, bool $doNotRefresh = false): EquipResult{
+    /**
+     * @param int|null $instanceId instance PRÉCISE à équiper (clic sur une
+     *        ligne d'instance de l'inventaire) — null : la plus ancienne
+     *        disponible, sinon promotion depuis la pile
+     */
+    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null): EquipResult{
 
         $db = new Db();
 
@@ -1722,8 +1727,11 @@ class Player implements ActorInterface {
             // branche UNEQUIP l'aurait intercepté — donc libérer des
             // emplacements ne peut pas le rendre disponible).
             $instanceService = new \App\Service\ItemInstanceService();
+            $available = $instanceId !== null
+                ? $instanceService->isInstanceEquippable($this->id, (int) $item->id, $instanceId)
+                : $instanceService->hasEquippableUnit($this->id, (int) $item->id);
             if($item->data->emplacement != 'munition' && $item->data->emplacement != 'trophee'
-                && !$instanceService->hasEquippableUnit($this->id, (int) $item->id)){
+                && !$available){
 
                 return EquipResult::DoNothing;
             }
@@ -1782,7 +1790,7 @@ class Player implements ActorInterface {
                 // Équiper crée (ou réutilise) une INSTANCE — l'objet
                 // commence à exister individuellement au moment où il est porté.
                 try {
-                    $instanceService->equipCatalogItem($this->id, (int) $item->id, $item->data->emplacement);
+                    $instanceService->equipCatalogItem($this->id, (int) $item->id, $item->data->emplacement, $instanceId);
                 } catch (\RuntimeException) {
                     return EquipResult::DoNothing;
                 }

@@ -12,6 +12,13 @@ $(document).ready(function(){
         var $item = $(this);
 
         window.id =  $item.data("id");
+        /* Instance PRÉCISE cliquée (ligne individualisée) — null sur une
+           ligne de pile, pour ne pas laisser fuiter la sélection
+           précédente. */
+        window.instanceId = $item.data("instance-id") || null;
+        /* Ce que « Utiliser » ferait, décidé par le serveur
+           (InventoryService::useKind) : equip | consume | vide. */
+        window.useKind = $item.data("use-kind") || '';
         window.name =  $item.data("name");
         window.type =  $item.data("type");
         window.emplacement =  $item.data("emplacement");
@@ -33,33 +40,9 @@ $(document).ready(function(){
         }
         else{
 
-            if(window.freeEmp && window.type == 'equipement'){
+            if(window.type == 'structure'){
 
-                $('.action[data-action="use"]')
-                .html('Équiper (1 Ae)')
-                .prop('disabled', (window.aeLeft <= 0));
-            }
-            else if(!window.freeEmp && window.type == 'equipement'){
-                if(window.emplacement == "munition" || window.emplacement == "doigt"){
-                    $('.action[data-action="use"]')
-                    .html('Équiper (1 Ae)')
-                    .prop('disabled', (window.aeLeft <= 0));
-                }
-                else{
-                    $('.action[data-action="use"]')
-                    .html('<font color="red">Équiper (Max.)</font>')
-                    .prop('disabled', (window.aeLeft <= 0));
-
-                }
-            }
-            else if(window.emplacement != ''){
-
-                $('.action[data-action="use"]')
-                .html('Utiliser (1 Ae)')
-                .prop('disabled', (window.aeLeft <= 0));
-            }
-            else if(window.type == 'consommable' || window.type == 'structure'){
-
+                /* Chemin legacy build.php (routé dans inventory.js). */
                 $('.action[data-action="use"]')
                 .html('Utiliser (1 A)')
                 .prop('disabled', (window.aLeft <= 0));
@@ -71,10 +54,31 @@ $(document).ready(function(){
                 .html('Construire (1 A)')
                 .prop('disabled', (window.aLeft <= 0));
             }
-            else{
+            else if(window.useKind == 'equip' && window.type == 'equipement' && !window.freeEmp
+                && window.emplacement != 'munition' && window.emplacement != 'doigt'){
 
                 $('.action[data-action="use"]')
-                .html('Utiliser')
+                .html('<font color="red">Équiper (Max.)</font>')
+                .prop('disabled', (window.aeLeft <= 0));
+            }
+            else if(window.useKind == 'equip'){
+
+                $('.action[data-action="use"]')
+                .html((window.type == 'equipement' ? 'Équiper' : 'Utiliser') + ' (1 Ae)')
+                .prop('disabled', (window.aeLeft <= 0));
+            }
+            else if(window.useKind == 'consume'){
+
+                $('.action[data-action="use"]')
+                .html('Utiliser (1 A)')
+                .prop('disabled', (window.aLeft <= 0));
+            }
+            else{
+
+                /* Aucun usage réel (décision serveur, data-use-kind vide) :
+                   plus jamais de « Utiliser » qui ne fait rien. */
+                $('.action[data-action="use"]')
+                .html('Sans usage')
                 .prop('disabled', true);
             }
         }
