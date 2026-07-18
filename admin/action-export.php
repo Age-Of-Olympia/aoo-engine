@@ -89,6 +89,7 @@ if ($type === 'plan' && $planId !== '') {
         'passive' => (new ActionPassiveCatalogService())->getById($id),
         'race' => EntityManagerFactory::getEntityManager()->find(Race::class, $id),
         'faction' => EntityManagerFactory::getEntityManager()->find(Faction::class, $id),
+        'effect' => EntityManagerFactory::getEntityManager()->find(\App\Entity\Effect::class, $id),
         default => null,
     };
     if ($object === null) {

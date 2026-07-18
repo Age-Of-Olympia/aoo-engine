@@ -36,7 +36,7 @@ class RegistryTest extends TestCase
     {
         // Default exporters are lazy (no DB at construction), so this is safe here.
         $this->assertSame(
-            ['action', 'passive', 'action-type', 'race', 'faction', 'plan', 'dialog', 'item', 'recipe'],
+            ['action', 'passive', 'action-type', 'race', 'faction', 'plan', 'dialog', 'item', 'recipe', 'effect'],
             (new ExporterRegistry())->objectTypes()
         );
     }
