@@ -60,35 +60,6 @@ class InventoryService
 
                 $text = $player->data->name . ' a déséquipé ' . $item->data->name . '.';
             }
-        } elseif ($item->row->spell != '') {
-
-
-            if ($player->getRemaining('ae') < 1) {
-
-                exit('error ae');
-            }
-
-            $raceData = (new RaceService())->getRaceData($player->data->race);
-
-            $charges = false;
-
-            if (!$raceData || empty($raceData->spells) || !in_array($item->row->spell, $raceData->spells)) {
-
-                $charges = 1;
-            }
-
-
-            if (!$item->add_item($player, -1)) {
-
-                exit('error add item');
-            }
-
-            $player->add_action($item->row->spell, $charges);
-
-
-            $text = $player->data->name . ' a lu ' . $item->data->name . '.';
-
-            $ae = 1;
         } elseif ($item->data->type == 'consommable') {
             //cas des objets consommables :
             //coûte 1A pour être consommés

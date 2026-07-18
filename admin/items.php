@@ -227,7 +227,7 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<input type="text" class="form-control" name="type" list="item-types" value="' . e((string) ($row->type ?? '')) . '"'
         . ' placeholder="equipement, consommable, ' . Item::TYPE_CONSTRUCTIBLE . '…"></div>'
         . '<datalist id="item-types">'
-        . '<option value="equipement"><option value="consommable"><option value="parchemin">'
+        . '<option value="equipement"><option value="consommable">'
         . '<option value="' . Item::TYPE_CONSTRUCTIBLE . '"><option value="' . Item::TYPE_STRUCTURE . '">'
         . '</datalist>'
         . '<div class="form-group"><label>Sous-type</label>'
@@ -240,7 +240,7 @@ function items_render_edit(object $row, string $csrfToken): string
         . '<div class="col-md-3"><h5>Flags</h5>' . $flagBoxes
         . '<div class="form-group mt-2"><label>Élément</label>'
         . '<input type="text" class="form-control" name="element" value="' . e((string) $row->element) . '"></div>'
-        . '<div class="form-group"><label>Sort lié (consommation)</label>'
+        . '<div class="form-group"><label>Sort lié (objet à sort intégré)</label>'
         . '<input type="text" class="form-control" name="spell" value="' . e((string) $row->spell) . '"></div>'
         . '<div class="form-group"><label>Exotique (race)</label>'
         . '<input type="text" class="form-control" name="exotique" value="' . e((string) $row->exotique) . '"></div>'

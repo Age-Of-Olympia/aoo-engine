@@ -250,7 +250,7 @@ class Ui{
      *                                logique d'état reste unique.
      * @param int|null    $aeLeft     Ae restantes ce tour : grise les
      *                                boutons de ligne qui en coûtent
-     *                                (équiper, parchemins) — mêmes règles
+     *                                (équiper) — mêmes règles
      *                                qu'InventoryService::useItem.
      * @param int|null    $aLeft      Actions restantes : grise Utiliser
      *                                des consommables/structures.
@@ -429,8 +429,8 @@ class Ui{
             if($rowActions){
 
                 /* Mêmes règles de coût qu'InventoryService::useItem et
-                 * js/inventUi.js : déséquiper est gratuit ; équiper et
-                 * lire un parchemin coûtent 1 Ae ; consommer coûte 1 A.
+                 * js/inventUi.js : déséquiper est gratuit ; équiper
+                 * coûte 1 Ae ; consommer coûte 1 A.
                  * Sans le point requis, le bouton est grisé et
                  * l'infobulle dit pourquoi. */
                 $isEquipped = !empty($row->equiped);
@@ -453,7 +453,7 @@ class Ui{
                     $usable = ($aeLeft === null || $aeLeft > 0);
                     $useTitle = $usable ? 'Équiper (1 Ae)' : 'Équiper (1 Ae) — plus d\'Action d\'Équipement ce tour';
                 }
-                elseif($type == 'parchemin' || $emp != ''){
+                elseif($emp != ''){
 
                     $usable = ($aeLeft === null || $aeLeft > 0);
                     $useTitle = $usable ? 'Utiliser (1 Ae)' : 'Utiliser (1 Ae) — plus d\'Action d\'Équipement ce tour';
@@ -478,9 +478,6 @@ class Ui{
                 }
                 elseif($type == 'equipement'){
                     $useIcon = 'ra-vest';
-                }
-                elseif($type == 'parchemin'){
-                    $useIcon = 'ra-scroll-unfurled';
                 }
                 elseif($type == 'consommable'){
                     $useIcon = 'ra-potion';

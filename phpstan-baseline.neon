@@ -280,12 +280,6 @@ parameters:
 			path: src/Service/ForumCookieService.php
 
 		-
-			message: '#^Method Classes\\Player\:\:add_action\(\) invoked with 2 parameters, 1 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/Service/InventoryService.php
-
-		-
 			message: '#^Left side of \|\| is always false\.$#'
 			identifier: booleanOr.leftAlwaysFalse
 			count: 1

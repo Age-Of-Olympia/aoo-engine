@@ -52,7 +52,7 @@ $(document).ready(function(){
 
                 }
             }
-            else if(window.type == 'parchemin' || window.emplacement != ''){
+            else if(window.emplacement != ''){
 
                 $('.action[data-action="use"]')
                 .html('Utiliser (1 Ae)')

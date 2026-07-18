@@ -614,7 +614,7 @@ class Item{
             $return[] = '<font color="red"><del>M</del></font>';
 
 
-        // parchemin sort
+        // objet à sort intégré (items.spell) — le sort s'affiche en bleu
         elseif(!empty($itemJson->spell)){
 
 
