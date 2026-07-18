@@ -18,13 +18,12 @@ function ajax_file_upload(file_obj) {
         var xhttp = new XMLHttpRequest();
         xhttp.open("POST", "upload_img.php", true);
         xhttp.onload = function(event) {
-            // oOutput = document.querySelector('.img-content');
-            if (xhttp.status == 200 && this.responseText != "error") {
-                $('#uploaded-table tr:last').after('<tr><td><a href="'+this.responseText.trim()+'">'+this.responseText.trim()+'</a></td><td><input type="button" value="Insérer" OnClick="insert_img(\''+this.responseText.trim()+'\');" /></td></tr>');
+            var response = this.responseText.trim();
+            if (xhttp.status == 200 && !response.startsWith('error')) {
+                $('#uploaded-table tr:last').after('<tr><td><a href="'+response+'">'+response+'</a></td><td><input type="button" value="Insérer" OnClick="insert_img(\''+response+'\');" /></td></tr>');
                 $('#uploaded-table').show();
-                // oOutput.innerHTML = "<img src='"+ this.responseText +"' alt='Image' />";
             } else {
-                oOutput.innerHTML = "Error occurred when trying to upload your file.";
+                alert("Echec de l'envoi du fichier. " + (response || ''));
             }
         }
 

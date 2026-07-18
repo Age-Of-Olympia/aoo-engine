@@ -1,11 +1,18 @@
 <?php
-session_start();
+define('NO_LOGIN', true);
+require_once(__DIR__.'/config.php');
 
-// Types MIME autorisés
-$arr_file_types = ['image/png', 'image/gif', 'image/jpg', 'image/jpeg', 'image/webp', 'image/webm', 'image/jfif', 'image/avif'];
+if (empty($_SESSION['playerId'])) {
+    echo "error: not authenticated";
+    die;
+}
+$playerId = $_SESSION['playerId'];
 
-// Extensions autorisées
-$arr_file_extensions = ['png', 'gif', 'jpg', 'jpeg', 'webp', 'webm', 'jfif', 'avif'];
+// Types MIME autorisés. Pas de webm : [img] rend un <img>, qui n'affiche pas de vidéo.
+$arr_file_types = ['image/png', 'image/gif', 'image/jpg', 'image/jpeg', 'image/webp', 'image/jfif', 'image/avif'];
+
+// Extensions autorisées (jfif est du jpeg : les navigateurs envoient image/jpeg)
+$arr_file_extensions = ['png', 'gif', 'jpg', 'jpeg', 'webp', 'jfif', 'avif'];
 
 // Vérification du type MIME
 if (!in_array($_FILES['file']['type'], $arr_file_types)) {
@@ -34,14 +41,14 @@ if (!file_exists('img/ui/forum/uploads')) {
     mkdir('img/ui/forum/uploads', 0777, true); // Création récursive des dossiers
 }
 
-if (!file_exists('img/ui/forum/uploads/' . $_SESSION['playerId'])) {
-    mkdir('img/ui/forum/uploads/' . $_SESSION['playerId'], 0777, true);
+if (!file_exists('img/ui/forum/uploads/' . $playerId)) {
+    mkdir('img/ui/forum/uploads/' . $playerId, 0777, true);
 }
 
 // Génération d'un nom de fichier unique
 $filename = md5_file($_FILES['file']['tmp_name']); // Nom de fichier basé sur le hash MD5
 
-$finalPath = 'img/ui/forum/uploads/' . $_SESSION['playerId'] . '/' . $filename . '.' . $file_extension;
+$finalPath = 'img/ui/forum/uploads/' . $playerId . '/' . $filename . '.' . $file_extension;
 
 // Vérification si le fichier existe déjà
 if (file_exists($finalPath)) {
