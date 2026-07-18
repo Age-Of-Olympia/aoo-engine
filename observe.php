@@ -117,6 +117,44 @@ if($res->num_rows){
 }
 
 
+/* Routes aménagées (map_routes) : visibles sur la carte, elles doivent
+ * aussi se lire dans le panneau de case — c'est là qu'on comprend
+ * pourquoi courir est possible ici. */
+$sql = '
+SELECT
+p.name
+FROM
+map_routes AS p
+INNER JOIN
+coords AS c
+ON
+p.coords_id = c.id
+WHERE
+c.x = ?
+AND
+c.y = ?
+AND
+c.z = ?
+AND
+c.plan = ?
+';
+
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+
+while($row = $res->fetch_object()){
+
+    echo '
+    <div class="case-infos">
+        <img src="img/routes/'. $row->name .'.png" />
+        <div class="text">
+            '. ucfirst($row->name) .' aménagée<br />
+            Courir y est possible.
+        </div>
+    </div>
+    ';
+}
+
+
 // plan exceptions
 $planJson = json()->decode('plans', $player->coords->plan);
 
