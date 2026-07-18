@@ -271,6 +271,82 @@ class EffectService
         return $matching;
     }
 
+    /**
+     * Postures de défense PORTÉES (dodge_scope non vide), dans l'ordre
+     * des effets portés — DodgeCondition les déclenche toutes si leurs
+     * conditions matchent, comme les branches historiques.
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     * @return Effect[]
+     */
+    public function carriedStances(iterable $carried): array
+    {
+        $stances = [];
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect !== null && $effect->getDodgeScope() !== '') {
+                $stances[] = $effect;
+            }
+        }
+
+        return $stances;
+    }
+
+    /**
+     * L'un des effets portés donne-t-il le vol (grants_flight) ?
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     */
+    public function grantsFlight(iterable $carried): bool
+    {
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect !== null && $effect->grantsFlight()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Multiplicateur des coûts déclarés « imposture » : 1 + la somme des
+     * valeurs portées des effets cost_multiplier (un seul effet porté à
+     * la valeur v → ×(v+1), la formule historique).
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     */
+    public function costMultiplier(iterable $carried): int
+    {
+        $multiplier = 1;
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect !== null && $effect->isCostMultiplier()) {
+                $multiplier += (int) ($playerEffect->getValue() ?? 1);
+            }
+        }
+
+        return $multiplier;
+    }
+
+    /**
+     * Premier effet porté qui bloque marchand/écoles (blocks_trading),
+     * ou null — son libellé sert au message de refus.
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     */
+    public function tradingBlocker(iterable $carried): ?Effect
+    {
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect !== null && $effect->blocksTrading()) {
+                return $effect;
+            }
+        }
+
+        return null;
+    }
+
     /** @return Effect[] The whole catalog, map markers included (admin list). */
     public function getAllEffects(): array
     {

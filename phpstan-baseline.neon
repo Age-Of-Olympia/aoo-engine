@@ -95,12 +95,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
 			identifier: property.notFound
-			count: 5
-			path: src/Action/Condition/DodgeCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
-			identifier: property.notFound
 			count: 2
 			path: src/Action/Condition/DodgeCondition.php
 
@@ -158,18 +152,6 @@ parameters:
 			identifier: arguments.count
 			count: 1
 			path: src/Action/Condition/RequiresResourceCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/RequiresTraitValueCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerEffectService\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/RequiresTraitValueCondition.php
 
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'

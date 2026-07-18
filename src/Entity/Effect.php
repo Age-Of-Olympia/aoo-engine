@@ -123,6 +123,60 @@ class Effect
     private bool $turnMvtMalus = false;
 
     /**
+     * Posture de défense : portée d'annulation d'une attaque subie —
+     * '' (pas une posture), 'spell', 'physical' ou 'any'. La posture
+     * est CONSOMMÉE quand elle se déclenche.
+     */
+    #[ORM\Column(type: "string", length: 10, options: ["default" => ""], name: "dodge_scope")]
+    private string $dodgeScope = '';
+
+    /** Arme exigée chez l'attaquant ('' ou 'melee'). */
+    #[ORM\Column(type: "string", length: 10, options: ["default" => ""], name: "dodge_attacker_weapon")]
+    private string $dodgeAttackerWeapon = '';
+
+    /** Arme exigée chez le défenseur ('', 'melee' ou 'poing'). */
+    #[ORM\Column(type: "string", length: 10, options: ["default" => ""], name: "dodge_defender_weapon")]
+    private string $dodgeDefenderWeapon = '';
+
+    /**
+     * Effet de bord au déclenchement : '', 'immobilize_attacker'
+     * (Mvt de l'attaquant à zéro), 'step_aside' (le défenseur se
+     * décale d'une case libre), 'delete_double' (efface le double).
+     */
+    #[ORM\Column(type: "string", length: 20, options: ["default" => ""], name: "dodge_reaction")]
+    private string $dodgeReaction = '';
+
+    /** Gabarit du message ({attacker}/{defender}), suffixé du nom + icône. */
+    #[ORM\Column(type: "string", length: 255, options: ["default" => ""], name: "dodge_message")]
+    private string $dodgeMessage = '';
+
+    /** Vol : traverse les obstacles au déplacement (go.php). */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "grants_flight")]
+    private bool $grantsFlight = false;
+
+    /**
+     * Multiplie les coûts des actions qui le déclarent (clé de coût
+     * historique « imposture ») : coût × (valeur portée + 1).
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "cost_multiplier")]
+    private bool $costMultiplier = false;
+
+    /**
+     * Bloque le marchand et les écoles de guerre, des deux côtés
+     * (ex-adrénaline). Le cron d'intérêts bancaires reste keyé sur le
+     * nom « adrenaline » en attendant sa refonte.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "blocks_trading")]
+    private bool $blocksTrading = false;
+
+    /**
+     * À la re-pose d'un effet EMPILABLE, rafraîchit aussi la durée
+     * (ex-cas particulier imposture de PlayerEffectService).
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "stack_refresh_duration")]
+    private bool $stackRefreshDuration = false;
+
+    /**
      * Map marker (trace_pas…) : transits through players_effects but is
      * no gameplay effect — excluded from admin dropdowns and sheets.
      */
@@ -333,6 +387,97 @@ class Effect
     public function setTurnMvtMalus(bool $turnMvtMalus): void
     {
         $this->turnMvtMalus = $turnMvtMalus;
+    }
+
+    public function getDodgeScope(): string
+    {
+        return $this->dodgeScope;
+    }
+
+    public function setDodgeScope(string $scope): void
+    {
+        $this->dodgeScope = in_array($scope, ['spell', 'physical', 'any'], true) ? $scope : '';
+    }
+
+    public function getDodgeAttackerWeapon(): string
+    {
+        return $this->dodgeAttackerWeapon;
+    }
+
+    public function setDodgeAttackerWeapon(string $weapon): void
+    {
+        $this->dodgeAttackerWeapon = $weapon === 'melee' ? 'melee' : '';
+    }
+
+    public function getDodgeDefenderWeapon(): string
+    {
+        return $this->dodgeDefenderWeapon;
+    }
+
+    public function setDodgeDefenderWeapon(string $weapon): void
+    {
+        $this->dodgeDefenderWeapon = in_array($weapon, ['melee', 'poing'], true) ? $weapon : '';
+    }
+
+    public function getDodgeReaction(): string
+    {
+        return $this->dodgeReaction;
+    }
+
+    public function setDodgeReaction(string $reaction): void
+    {
+        $this->dodgeReaction = in_array($reaction, ['immobilize_attacker', 'step_aside', 'delete_double'], true)
+            ? $reaction : '';
+    }
+
+    public function getDodgeMessage(): string
+    {
+        return $this->dodgeMessage;
+    }
+
+    public function setDodgeMessage(string $message): void
+    {
+        $this->dodgeMessage = $message;
+    }
+
+    public function grantsFlight(): bool
+    {
+        return $this->grantsFlight;
+    }
+
+    public function setGrantsFlight(bool $grantsFlight): void
+    {
+        $this->grantsFlight = $grantsFlight;
+    }
+
+    public function isCostMultiplier(): bool
+    {
+        return $this->costMultiplier;
+    }
+
+    public function setCostMultiplier(bool $costMultiplier): void
+    {
+        $this->costMultiplier = $costMultiplier;
+    }
+
+    public function blocksTrading(): bool
+    {
+        return $this->blocksTrading;
+    }
+
+    public function setBlocksTrading(bool $blocksTrading): void
+    {
+        $this->blocksTrading = $blocksTrading;
+    }
+
+    public function isStackRefreshDuration(): bool
+    {
+        return $this->stackRefreshDuration;
+    }
+
+    public function setStackRefreshDuration(bool $stackRefreshDuration): void
+    {
+        $this->stackRefreshDuration = $stackRefreshDuration;
     }
 
     public function isMapMarker(): bool

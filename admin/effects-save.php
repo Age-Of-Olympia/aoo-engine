@@ -103,6 +103,18 @@ $applyForm = static function (Effect $effect): void {
     $effect->setTurnRegen(booleanCheckbox('turn_regen'));
     $effect->setTurnMvtMalus(booleanCheckbox('turn_mvt_malus'));
 
+    // Posture de défense + présences — les setters valident les enums
+    // (valeur inconnue → champ vidé, jamais de valeur folle en base).
+    $effect->setDodgeScope(trim((string) ($_POST['dodge_scope'] ?? '')));
+    $effect->setDodgeAttackerWeapon(trim((string) ($_POST['dodge_attacker_weapon'] ?? '')));
+    $effect->setDodgeDefenderWeapon(trim((string) ($_POST['dodge_defender_weapon'] ?? '')));
+    $effect->setDodgeReaction(trim((string) ($_POST['dodge_reaction'] ?? '')));
+    $effect->setDodgeMessage(trim((string) ($_POST['dodge_message'] ?? '')));
+    $effect->setGrantsFlight(booleanCheckbox('grants_flight'));
+    $effect->setCostMultiplier(booleanCheckbox('cost_multiplier'));
+    $effect->setBlocksTrading(booleanCheckbox('blocks_trading'));
+    $effect->setStackRefreshDuration(booleanCheckbox('stack_refresh_duration'));
+
     $breakChance = trim((string) ($_POST['corruption_break_chance'] ?? ''));
     $effect->setCorruptionBreakChance($breakChance === '' ? null : (int) $breakChance);
 };

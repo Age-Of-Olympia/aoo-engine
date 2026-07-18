@@ -268,7 +268,7 @@ elseif($goCoords->z > 0){
 
     $row = $res->fetch_object();
 
-    if(!$row->n && !$player->have_effect('vol')){
+    if(!$row->n && !$player->effectService->grantsFlight($player->getEffects())){
 
         echo '<script>aooAlert("Il faut pouvoir voler pour accéder à ce lieu.").then(function(){document.location.reload();});</script>';
 
@@ -321,7 +321,8 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     }
 }
 
-if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode') && !$player->have_effect('vol'))
+if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode')
+    && !$player->effectService->grantsFlight($player->getEffects()))
 {
     $footstep='trace_pas_';
     if($originalGooCoords->y>$player->coords->y){

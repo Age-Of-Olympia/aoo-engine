@@ -14,6 +14,9 @@ interface ActorInterface
   public function end_effect(string $name): void;
   public function have_option(string $name): int;
   public function have_effects_to_purge(): bool;
+
+  /** @return list<\App\Entity\PlayerEffect> effets portés (catalogue via EffectService) */
+  public function getEffects(): array;
   public function get_caracs(bool $nude=false): bool;
   public function getCoords(bool $refresh = true): object;
   public function getRemaining(string $trait): int;

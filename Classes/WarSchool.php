@@ -43,12 +43,13 @@ class WarSchool
             return ERROR_DISTANCE;
         }
 
-        // états incompatibles
-        if ($player->have_effect('adrenaline')) {
-            return 'Vous ne pouvez pas vous apprendre de nouvelles techniques sous l’adrénaline du combat.';
+        // États incompatibles (catalogue : blocks_trading, ex-adrénaline)
+        $effectService = new \App\Service\EffectService();
+        if ($blocker = $effectService->tradingBlocker($player->getEffects())) {
+            return 'Vous ne pouvez pas apprendre de nouvelles techniques sous l’effet « ' . $blocker->getLabel() . ' ».';
         }
 
-        if ($potentialTrainer->have_effect('adrenaline')) {
+        if ($effectService->tradingBlocker($potentialTrainer->getEffects()) !== null) {
             return 'Cet entraîneur n’est pas en état d’enseigner.';
         }
 

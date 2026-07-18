@@ -347,15 +347,16 @@ class Market
             return ERROR_DISTANCE;
         }
 
-        // adré
-        if ($player->have_effect('adrenaline')) {
+        // Blocage marchand/écoles (catalogue : blocks_trading, ex-adrénaline)
+        $effectService = new \App\Service\EffectService();
+        if ($blocker = $effectService->tradingBlocker($player->getEffects())) {
 
-            return 'Vous ne pouvez pas marchander en ayant l\'Adrénaline du combat.';
+            return 'Vous ne pouvez pas marchander sous l\'effet « ' . $blocker->getLabel() . ' ».';
         }
 
-        if ($potentialMerchant->have_effect('adrenaline')) {
+        if ($blocker = $effectService->tradingBlocker($potentialMerchant->getEffects())) {
 
-            return 'Vous ne pouvez pas marchander avec un Marchand ayant l\'Adrénaline du combat.';
+            return 'Vous ne pouvez pas marchander avec un Marchand sous l\'effet « ' . $blocker->getLabel() . ' ».';
         }
         return null;
     }

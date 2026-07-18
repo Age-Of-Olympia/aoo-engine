@@ -88,6 +88,15 @@ final class EffectImporter extends AbstractObjectImporter
         $effect->setBlockRecovery((string) ($plan['blockRecovery'] ?? ''));
         $effect->setTurnRegen((bool) ($plan['turnRegen'] ?? false));
         $effect->setTurnMvtMalus((bool) ($plan['turnMvtMalus'] ?? false));
+        $effect->setDodgeScope((string) ($plan['dodgeScope'] ?? ''));
+        $effect->setDodgeAttackerWeapon((string) ($plan['dodgeAttackerWeapon'] ?? ''));
+        $effect->setDodgeDefenderWeapon((string) ($plan['dodgeDefenderWeapon'] ?? ''));
+        $effect->setDodgeReaction((string) ($plan['dodgeReaction'] ?? ''));
+        $effect->setDodgeMessage((string) ($plan['dodgeMessage'] ?? ''));
+        $effect->setGrantsFlight((bool) ($plan['grantsFlight'] ?? false));
+        $effect->setCostMultiplier((bool) ($plan['costMultiplier'] ?? false));
+        $effect->setBlocksTrading((bool) ($plan['blocksTrading'] ?? false));
+        $effect->setStackRefreshDuration((bool) ($plan['stackRefreshDuration'] ?? false));
         $effect->setCorruptionBreakChance(
             is_numeric($plan['corruptionBreakChance'] ?? null) ? (int) $plan['corruptionBreakChance'] : null
         );

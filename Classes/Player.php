@@ -670,7 +670,7 @@ class Player implements ActorInterface {
         }
     }
 
-    public function getEffects(){
+    public function getEffects(): array{
 
         return $this->playerEffectService->getEffectsByPlayerId($this->id);
     }

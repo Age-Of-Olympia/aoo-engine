@@ -77,6 +77,19 @@ function effect_modifiers(Effect $effect): string
     if ($effect->isTurnMvtMalus()) {
         $parts[] = '−valeur Mvt au tour';
     }
+    if ($effect->getDodgeScope() !== '') {
+        $scopes = ['any' => 'tout', 'physical' => 'physique', 'spell' => 'sorts'];
+        $parts[] = 'posture (' . ($scopes[$effect->getDodgeScope()] ?? $effect->getDodgeScope()) . ')';
+    }
+    if ($effect->grantsFlight()) {
+        $parts[] = 'vol';
+    }
+    if ($effect->isCostMultiplier()) {
+        $parts[] = '× coûts';
+    }
+    if ($effect->blocksTrading()) {
+        $parts[] = 'bloque échanges';
+    }
     if ($effect->getControlNames() !== []) {
         $parts[] = 'annule <code>' . implode('</code>, <code>', array_map('e', $effect->getControlNames())) . '</code>';
     }
@@ -241,6 +254,48 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             '1 = neutre ; 0.75 = encaisse (les facteurs portés se multiplient, minimum 1 dégât).')
         . '</div>';
 
+    $posture = '<div class="row">'
+        . formField('Annule les attaques',
+            formSelect('dodge_scope', [
+                'any' => 'Toutes', 'physical' => 'Physiques (hors sorts)', 'spell' => 'Sorts',
+            ], $isEdit && $effect->getDodgeScope() !== '' ? $effect->getDodgeScope() : null, '— pas une posture —'),
+            'form-group col-md-2',
+            'La posture est CONSOMMÉE quand elle se déclenche.')
+        . formField('Arme de l\'attaquant',
+            formSelect('dodge_attacker_weapon', ['melee' => 'Mêlée'],
+                $isEdit && $effect->getDodgeAttackerWeapon() !== '' ? $effect->getDodgeAttackerWeapon() : null,
+                '— indifférent —'),
+            'form-group col-md-2')
+        . formField('Arme du défenseur',
+            formSelect('dodge_defender_weapon', ['melee' => 'Mêlée', 'poing' => 'Mains nues (Poing)'],
+                $isEdit && $effect->getDodgeDefenderWeapon() !== '' ? $effect->getDodgeDefenderWeapon() : null,
+                '— indifférent —'),
+            'form-group col-md-2')
+        . formField('Réaction',
+            formSelect('dodge_reaction', [
+                'immobilize_attacker' => 'Immobilise l\'attaquant (Mvt à zéro)',
+                'step_aside' => 'Le défenseur se décale d\'une case',
+                'delete_double' => 'Efface le double (carte)',
+            ], $isEdit && $effect->getDodgeReaction() !== '' ? $effect->getDodgeReaction() : null, '— aucune —'),
+            'form-group col-md-3')
+        . formField('Message',
+            formInput('dodge_message', $isEdit ? $effect->getDodgeMessage() : '',
+                'placeholder="{defender} pare votre attaque !"'),
+            'form-group col-md-3',
+            '{attacker} et {defender} sont remplacés ; le nom et l\'icône de l\'effet sont ajoutés à la fin.')
+        . '</div>';
+
+    $auras = '<div class="row">'
+        . formField('Vol', '<div>' . formCheckbox('grants_flight', $isEdit && $effect->grantsFlight(),
+            'Traverse les obstacles au déplacement, ne laisse pas de traces') . '</div>', 'form-group col-md-4')
+        . formField('Multiplicateur de coût', '<div>' . formCheckbox('cost_multiplier', $isEdit && $effect->isCostMultiplier(),
+            'Les actions à coût « imposture » coûtent × (valeur portée + 1)') . '</div>', 'form-group col-md-4')
+        . formField('Bloque marchand & écoles', '<div>' . formCheckbox('blocks_trading', $isEdit && $effect->blocksTrading(),
+            'Ni marchander ni apprendre, des deux côtés (ex-adrénaline)') . '</div>', 'form-group col-md-4')
+        . formField('Empilement', '<div>' . formCheckbox('stack_refresh_duration', $isEdit && $effect->isStackRefreshDuration(),
+            'Re-poser un effet empilable rafraîchit aussi sa durée') . '</div>', 'form-group col-md-4')
+        . '</div>';
+
     $tour = '<div class="row">'
         . formField('Bloque la récupération',
             formSelect('block_recovery', ['pv' => 'PV (ex-poison)', 'pm' => 'PM (ex-poison magique)'],
@@ -280,6 +335,8 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . formCard('Identité', $identite)
         . formCard('Comportement', $comportement)
         . formCard('Combat', $combat)
+        . formCard('Défense (posture)', $posture)
+        . formCard('Présence (vol, coûts, échanges)', $auras)
         . formCard('Au nouveau tour', $tour)
         . formCard('Corruption', $corruption)
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer l\'effet') . '</button>'

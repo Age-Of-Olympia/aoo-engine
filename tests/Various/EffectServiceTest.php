@@ -131,6 +131,43 @@ class EffectServiceTest extends TestCase
         $this->assertCount(1, $this->service->turnEffects([$carry('ralentissement')], 'turn_mvt_malus'));
     }
 
+    public function testStancesFlightCostAndTradingBehaviors(): void
+    {
+        $carry = static function (string $name, int $value = 1): \App\Entity\PlayerEffect {
+            $entry = new \App\Entity\PlayerEffect();
+            $entry->setName($name);
+            $entry->setValue($value);
+            return $entry;
+        };
+
+        // Les cinq postures historiques, à l'identique de DodgeCondition.
+        $stances = $this->service->carriedStances([$carry('parade'), $carry('feu'), $carry('pas_de_cote')]);
+        $this->assertSame(['parade', 'pas_de_cote'], array_map(fn ($e) => $e->getName(), $stances));
+
+        $parade = $this->service->getEffectByName('parade');
+        $this->assertSame('any', $parade->getDodgeScope());
+        $this->assertSame('melee', $parade->getDodgeAttackerWeapon());
+        $this->assertSame('melee', $parade->getDodgeDefenderWeapon());
+        $this->assertSame('', $parade->getDodgeReaction());
+
+        $this->assertSame('spell', $this->service->getEffectByName('leurre')->getDodgeScope());
+        $this->assertSame('delete_double', $this->service->getEffectByName('dedoublement')->getDodgeReaction());
+        $cle = $this->service->getEffectByName('cle_de_bras');
+        $this->assertSame('poing', $cle->getDodgeDefenderWeapon());
+        $this->assertSame('immobilize_attacker', $cle->getDodgeReaction());
+        $pas = $this->service->getEffectByName('pas_de_cote');
+        $this->assertSame('physical', $pas->getDodgeScope());
+        $this->assertSame('step_aside', $pas->getDodgeReaction());
+
+        // Vol, multiplicateur de coût (×(valeur+1)), blocage échanges.
+        $this->assertTrue($this->service->grantsFlight([$carry('vol')]));
+        $this->assertFalse($this->service->grantsFlight([$carry('feu')]));
+        $this->assertSame(3, $this->service->costMultiplier([$carry('imposture', 2)]));
+        $this->assertSame(1, $this->service->costMultiplier([$carry('feu')]));
+        $this->assertSame('adrenaline', $this->service->tradingBlocker([$carry('adrenaline')])?->getName());
+        $this->assertNull($this->service->tradingBlocker([$carry('feu')]));
+    }
+
     public function testMapMarkersAreExcludedFromGameplayLists(): void
     {
         $names = $this->service->getGameplayEffectNames();
