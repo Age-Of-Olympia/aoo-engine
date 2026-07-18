@@ -61,6 +61,85 @@ class BuildingService extends BaseService
     }
 
     /**
+     * « statue_heroique » → « Statue heroique », « arbre1 » → « Arbre » :
+     * les map_walls n'ont pas de libellé en base, on humanise leur code
+     * pour le message de tir bloqué.
+     */
+    private static function humanizeWallName(string $name): string
+    {
+        return ucfirst(str_replace('_', ' ', rtrim($name, '0123456789')));
+    }
+
+    /**
+     * Ligne de tir entre deux points du même plan : les cases traversées
+     * (Bresenham, extrémités exclues) et le premier obstacle — une
+     * entité structure dont la race arrête les projectiles
+     * (races.blocks_projectiles), ou n'importe quel map_walls (arbre,
+     * pilier, statue… : tout ce qui bloque le pas bloque la flèche).
+     * Sert au refus du tir (DistanceCompute) et à l'affichage de la
+     * trajectoire sur le damier (observe).
+     *
+     * @return array{tiles: list<array{int,int}>, blocker: ?array{int,int}, blockerName: ?string}
+     */
+    public function lineOfFireReport(object $from, object $to): array
+    {
+        $tiles = \App\Action\Combat\LineOfFire::tilesBetween(
+            (int) $from->x, (int) $from->y, (int) $to->x, (int) $to->y
+        );
+
+        if ($tiles === [] || ($from->plan ?? '') !== ($to->plan ?? '') || (int) ($from->z ?? 0) !== (int) ($to->z ?? 0)) {
+            return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null];
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $pairs = [];
+        $tileParams = [(int) ($from->z ?? 0), (string) $from->plan];
+        foreach ($tiles as [$x, $y]) {
+            $pairs[] = '(c.x = ? AND c.y = ?)';
+            $tileParams[] = $x;
+            $tileParams[] = $y;
+        }
+        $tileFilter = 'c.z = ? AND c.plan = ? AND (' . implode(' OR ', $pairs) . ')';
+
+        $blockersByTile = [];
+
+        $blocking = $this->raceService->getProjectileBlockingStructureNames();
+        if ($blocking !== []) {
+            $rows = $conn->fetchAllAssociative(
+                'SELECT c.x, c.y, p.name
+                 FROM players p
+                 JOIN coords c ON c.id = p.coords_id
+                 WHERE p.player_type IN (\'building\', \'unique\')
+                   AND ' . $tileFilter . '
+                   AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
+                array_merge($tileParams, $blocking)
+            );
+            foreach ($rows as $row) {
+                $blockersByTile[$row['x'] . ',' . $row['y']] = (string) $row['name'];
+            }
+        }
+
+        foreach ($conn->fetchAllAssociative(
+            'SELECT c.x, c.y, w.name
+             FROM map_walls w
+             JOIN coords c ON c.id = w.coords_id
+             WHERE ' . $tileFilter,
+            $tileParams
+        ) as $row) {
+            $blockersByTile[$row['x'] . ',' . $row['y']] ??= self::humanizeWallName((string) $row['name']);
+        }
+
+        // Le PREMIER obstacle le long du trajet, pas un obstacle quelconque.
+        foreach ($tiles as $tile) {
+            if (isset($blockersByTile[$tile[0] . ',' . $tile[1]])) {
+                return ['tiles' => $tiles, 'blocker' => $tile, 'blockerName' => $blockersByTile[$tile[0] . ',' . $tile[1]]];
+            }
+        }
+
+        return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null];
+    }
+
+    /**
      * Sprite of a structure type, in fallback order: dedicated avatar
      * (img/avatars/{type}.webp) → the map-wall sprite of the same name
      * (img/walls/{type}.png — a built mur_bois looks like a mur_bois) →

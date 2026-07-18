@@ -576,7 +576,7 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     position: absolute;
     right: 38px;
     bottom: 0;
-    width: 235px;
+    width: 265px;
     /* main.css clampe tous les div à 100% du parent (30px ici) */
     max-width: none;
     padding: 8px;
@@ -614,6 +614,10 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     box-shadow: none;
     color: var(--hud-ink);
     font-size: 13px;
+    /* main.css force white-space nowrap sur tous les button : un
+       libellé long sortirait du popover au lieu de passer à la ligne */
+    white-space: normal;
+    line-height: 1.25;
     text-align: left;
     cursor: pointer;
 }

@@ -8,6 +8,30 @@ use App\Action\Schema\DeclaresSimulationInputs;
 
 class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
 {
+    /**
+     * Ligne de tir : une structure qui arrête les projectiles
+     * (races.blocks_projectiles — un mur, pas une table) entre le
+     * tireur et la cible fait échouer le tir. La flèche part quand
+     * même : l'échec suit le drapeau blocking de la condition, comme
+     * une esquive.
+     */
+    public function check(\App\Interface\ActorInterface $actor, ?\App\Interface\ActorInterface $target, \App\Entity\ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
+    {
+        if ($target !== null && !$actor->isSimulated() && !$target->isSimulated()) {
+            $report = (new \App\Service\BuildingService())
+                ->lineOfFireReport($actor->getCoords(), $target->getCoords());
+
+            if ($report['blocker'] !== null) {
+                return new ConditionResult(false, array(), [
+                    'Votre tir s\'écrase sur ' . htmlspecialchars((string) $report['blockerName'], ENT_QUOTES, 'UTF-8')
+                    . ' en (' . $report['blocker'][0] . ', ' . $report['blocker'][1] . ') !',
+                ]);
+            }
+        }
+
+        return parent::check($actor, $target, $condition, $conditionObject);
+    }
+
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));

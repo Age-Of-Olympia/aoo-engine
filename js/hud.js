@@ -467,7 +467,7 @@
 
     /* Options d'affichage du plateau — liste partagée entre le popover
      * de calques et les options du panneau Profil (js/account.js). */
-    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords'];
+    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords', 'hideLineOfFire'];
 
     /*
      * Applique côté client une option de plateau que le serveur vient
@@ -497,6 +497,17 @@
         /* Bordure graduée : dessinée côté client, bascule à chaud. */
         if (option === 'hideBoardCoords') {
             buildMapRulers();
+            return true;
+        }
+        /* Ligne de tir : le tracé vient du script de la réponse
+           observe — on purge le cache des cases (les réponses mémorisées
+           embarquent, ou non, le script selon l'ancien état) et on
+           efface le tracé courant quand on masque. */
+        if (option === 'hideLineOfFire') {
+            window.clickedCases = {};
+            if (isOn && typeof window.clearLineOfFire === 'function') {
+                window.clearLineOfFire();
+            }
             return true;
         }
         document.location.reload();
