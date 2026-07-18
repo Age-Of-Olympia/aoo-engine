@@ -108,7 +108,12 @@ abstract class AbstractComputeCondition extends BaseCondition
         list($actorRoll, $actorTotal, $actorTxt) = $this->computeActor($actor, $dice, $conditionObject);
         $conditionDetailsSuccess[0] = $actorTxt;
         list($targetRoll, $targetTotal, $targetTxt) = $this->computeTarget($target, $dice, $conditionObject);
-        $conditionDetailsSuccess[1] = $targetTxt;
+        // Le jet adverse existe mécaniquement même contre une structure,
+        // mais un bâtiment « n'esquive » pas aux yeux du joueur : sa
+        // ligne « Jet … » n'est pas affichée.
+        if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') !== \App\Enum\EntityCategory::Structure) {
+            $conditionDetailsSuccess[1] = $targetTxt;
+        }
 
         $checkAboveDistance = $this->checkDistanceCondition($actorTotal);
 
@@ -117,10 +122,9 @@ abstract class AbstractComputeCondition extends BaseCondition
 
         $conditionDetailsFailure = array();
         if (!$success) {
-            $conditionDetailsFailure[0] = $conditionDetailsSuccess[0];
-            $conditionDetailsFailure[1] = $conditionDetailsSuccess[1];
+            $conditionDetailsFailure = $conditionDetailsSuccess;
             if (!$checkAboveDistance) {
-                $conditionDetailsFailure[2] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
+                $conditionDetailsFailure[] = $this->throwName." n'atteint pas sa cible ! Il fallait un jet supérieur à ". $this->getDistanceTreshold() . ".";
             }
         }
 

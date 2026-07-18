@@ -209,15 +209,19 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
 
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
 
-            $recoverMalus = $this->computeRecoverMalus((int) $totalDamages);
+            // Une structure n'a pas de malus (elle n'esquive jamais) :
+            // ni écriture, ni ligne « subit/récupère X malus » au récap.
+            if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') !== \App\Enum\EntityCategory::Structure) {
+                $recoverMalus = $this->computeRecoverMalus((int) $totalDamages);
 
-            if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
-                $malusBonus--;
+                if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
+                    $malusBonus--;
+                }
+
+                $target->put_malus($malus-$recoverMalus+$malusBonus);
+                $malusText = ($malus - $recoverMalus + $malusBonus> 0) ? 'subit ' : ' récupère ';
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus+$malusBonus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . ', Bonus : ' . $malusBonus . '">malus</span>.';
             }
-
-            $target->put_malus($malus-$recoverMalus+$malusBonus);
-            $malusText = ($malus - $recoverMalus + $malusBonus> 0) ? 'subit ' : ' récupère ';
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus+$malusBonus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . ', Bonus : ' . $malusBonus . '">malus</span>.';
 
             $conditionObject->setLifeloss($totalDamages);
 
