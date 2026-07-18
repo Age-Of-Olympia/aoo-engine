@@ -130,6 +130,9 @@ function effect_render_list(array $effects): string
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
         . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
         . '<i class="fas fa-upload"></i> Importer</a>'
+        . '<a class="btn btn-outline-secondary" href="/admin/effects.php?action=wiki"'
+        . ' title="Markup DokuWiki de la page regles:effets, généré depuis le catalogue">'
+        . '<i class="fas fa-book"></i> Wiki</a>'
         . '<a class="btn btn-primary" href="/admin/effects.php?action=new">+ Nouvel effet</a>'
         . '</div></div>'
         . renderTable(
@@ -138,6 +141,117 @@ function effect_render_list(array $effects): string
             $rows,
             'class="table table-striped table-sm" data-admin-list data-page-size="30"'
         );
+}
+
+/**
+ * Lignes de règles auto-décrites depuis les colonnes de comportement —
+ * le wiki dit TOUJOURS ce que le moteur fait, l'admin n'écrit que le
+ * texte d'ambiance dans Description.
+ *
+ * @return string[] une puce DokuWiki par comportement
+ */
+function effect_wiki_rules(Effect $effect): array
+{
+    $rules = [];
+    $carac = static fn (?string $key): string => CARACS_TXT[$key] ?? strtoupper((string) $key);
+
+    if ($effect->getBuffCarac() !== null) {
+        $rules[] = 'Augmente ' . $carac($effect->getBuffCarac()) . ' de la valeur portée.';
+    }
+    if ($effect->getDebuffCarac() !== null) {
+        $rules[] = 'Diminue ' . $carac($effect->getDebuffCarac()) . ' de la valeur portée.';
+    }
+    foreach ([
+        'getRollAttackMod' => 'au jet d\'attaque', 'getRollDefenseMod' => 'au jet de défense',
+        'getDamageDealtMod' => 'aux dégâts infligés', 'getDamageTakenMod' => 'aux dégâts subis',
+        'getPushAttackMod' => 'aux poussées portées', 'getPushDefenseMod' => 'à la résistance aux poussées',
+    ] as $getter => $where) {
+        $mod = $effect->{$getter}();
+        if ($mod !== 0) {
+            $rules[] = ($mod > 0 ? '+' : '−') . 'valeur portée ' . $where . '.';
+        }
+    }
+    if ($effect->getDamageTakenFactor() != 1.0) {
+        $rules[] = 'Dégâts subis ×' . $effect->getDamageTakenFactor() . ' (minimum 1).';
+    }
+    if ($effect->getBlockRecovery() !== '') {
+        $rules[] = 'Bloque la récupération de ' . strtoupper($effect->getBlockRecovery())
+            . ' au nouveau tour, puis expire.';
+    }
+    if ($effect->isTurnRegen()) {
+        $rules[] = 'La récupération de PV du tour gagne +RM, puis expire.';
+    }
+    if ($effect->isTurnMvtMalus()) {
+        $rules[] = 'Retire sa valeur en Mouvements au tour suivant.';
+    }
+    if ($effect->getDodgeScope() !== '') {
+        $scopes = ['any' => 'toute attaque', 'physical' => 'toute attaque physique', 'spell' => 'tout sort offensif'];
+        $rule = 'Posture : annule ' . ($scopes[$effect->getDodgeScope()] ?? $effect->getDodgeScope());
+        if ($effect->getDodgeAttackerWeapon() === 'melee') {
+            $rule .= ' d\'un attaquant armé en mêlée';
+        }
+        if ($effect->getDodgeDefenderWeapon() === 'melee') {
+            $rule .= ' (arme de mêlée en main requise)';
+        } elseif ($effect->getDodgeDefenderWeapon() === 'poing') {
+            $rule .= ' (mains nues requises)';
+        }
+        $rule .= match ($effect->getDodgeReaction()) {
+            'immobilize_attacker' => ' et immobilise l\'attaquant',
+            'step_aside' => ' en se décalant d\'une case',
+            'delete_double' => ' — c\'était un double',
+            default => '',
+        };
+        $rules[] = $rule . '. Consommée au déclenchement.';
+    }
+    if ($effect->grantsFlight()) {
+        $rules[] = 'Permet de voler : traverse les obstacles, ne laisse pas de traces.';
+    }
+    if ($effect->isCostMultiplier()) {
+        $rules[] = 'Multiplie certains coûts d\'action par (valeur portée + 1).';
+    }
+    if ($effect->blocksTrading()) {
+        $rules[] = 'Interdit de marchander et d\'apprendre aux écoles, des deux côtés.';
+    }
+    if ($effect->getControlNames() !== []) {
+        $rules[] = 'Annule : ' . implode(', ', $effect->getControlNames()) . '.';
+    }
+    if ($effect->getCorruptionBreakChance() !== null) {
+        $rules[] = 'Corruption : fragilise le matériel contenant '
+            . implode(', ', $effect->getCorruptionMaterialNames()) . '.';
+    }
+
+    return $rules;
+}
+
+/** Markup DokuWiki complet de la page regles:effets, depuis le catalogue. */
+function effect_render_wiki(): string
+{
+    $effects = array_filter(
+        (new EffectService())->getAllEffects(),
+        static fn (Effect $effect): bool => !$effect->isMapMarker()
+    );
+    usort($effects, static fn (Effect $a, Effect $b): int => strcoll($a->getLabel(), $b->getLabel()));
+
+    $markup = '';
+    foreach ($effects as $effect) {
+        $markup .= "\n===== " . $effect->getLabel() . " =====\n";
+        if ($effect->getDescription() !== '') {
+            $markup .= $effect->getDescription() . "\n";
+        }
+        foreach (effect_wiki_rules($effect) as $rule) {
+            $markup .= '  * ' . $rule . "\n";
+        }
+    }
+
+    return '<div class="d-flex justify-content-between align-items-center mb-3">'
+        . '<h1 class="mb-0">Wiki des effets</h1>'
+        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/effects.php">← Retour à la liste</a></div>'
+        . '<p class="text-muted">Markup DokuWiki de la page <code>regles:effets</code>, généré depuis le'
+        . ' catalogue : les descriptions plus une règle par comportement configuré — le wiki ne peut pas'
+        . ' mentir sur les mécaniques. À coller tel quel dans l\'éditeur du wiki (les fiches de personnage'
+        . ' pointent vers les ancres <code>#nom_de_l_effet</code>).</p>'
+        . '<textarea class="form-control" rows="30" style="font-family:monospace;font-size:13px"'
+        . ' onclick="this.select()">' . e($markup) . '</textarea>';
 }
 
 /**
@@ -380,7 +494,9 @@ $service = new EffectService();
 
 $action = $_GET['action'] ?? 'list';
 
-if ($action === 'new') {
+if ($action === 'wiki') {
+    $content = effect_render_wiki();
+} elseif ($action === 'new') {
     $content = effect_render_form(null, $csrfToken);
 } elseif ($action === 'edit') {
     $effect = $service->getEffectByName((string) ($_GET['name'] ?? ''));
