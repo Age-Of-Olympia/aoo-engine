@@ -1,0 +1,11 @@
+{
+    "id": 76,
+    "name": "Coffre en Métal",
+    "private": 0,
+    "price": 100,
+    "race": "nain",
+    "type": "constructible",
+    "text": "Un coffre est un meuble fermé destiné à contenir ou protéger des objets, pouvant le cas échéant permettre leur transport.",
+    "img": "img/walls/coffre_metal.png",
+    "mini": "img/walls/coffre_metal.png"
+}

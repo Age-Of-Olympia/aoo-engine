@@ -453,12 +453,6 @@ class Ui{
                     $usable = ($aLeft === null || $aLeft > 0);
                     $useTitle = $usable ? 'Construire (1 A)' : 'Construire (1 A) — plus d\'Action ce tour';
                 }
-                elseif($type == Item::TYPE_STRUCTURE){
-
-                    // Chemin legacy build.php (routé côté JS, pas useItem).
-                    $usable = ($aLeft === null || $aLeft > 0);
-                    $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
-                }
                 elseif($useKind === \App\Service\InventoryService::USE_EQUIP){
 
                     $usable = ($aeLeft === null || $aeLeft > 0);
@@ -491,9 +485,6 @@ class Ui{
                 }
                 elseif($type == 'consommable'){
                     $useIcon = 'ra-potion';
-                }
-                elseif($type == Item::TYPE_STRUCTURE){
-                    $useIcon = 'ra-hammer';
                 }
                 else{
                     $useIcon = 'ra-hand';
@@ -548,7 +539,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260720"></script>
+        <script src="js/inventUi.js?v=20260720b"></script>
         <?php
 
         return Str::minify(ob_get_clean());

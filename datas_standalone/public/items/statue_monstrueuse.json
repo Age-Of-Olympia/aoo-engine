@@ -1,0 +1,11 @@
+{
+    "id": 74,
+    "name": "Statue Monstrueuse",
+    "private": 0,
+    "price": 50,
+    "race": "olympien",
+    "type": "constructible",
+    "text": "Une statue représentant une créature monstrueuse.",
+    "img": "img/walls/statue_monstrueuse.png",
+    "mini": "img/walls/statue_monstrueuse.png"
+}

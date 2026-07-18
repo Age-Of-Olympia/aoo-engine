@@ -366,6 +366,15 @@ class View{
                         $img = self::structureInitialsAvatar((string) $player->data->name);
                     }
 
+                    /* Structure passable (table…) : marquée pour que le
+                     * bouton Aller reste offert sur sa case (js/view.js). */
+                    $passableAttr = '';
+                    if($isStructure && in_array((string) $player->data->race,
+                        (new \App\Service\RaceService())->getPassableStructureNames(), true)){
+
+                        $passableAttr = 'data-passable="1"';
+                    }
+
 
                     if(in_array('raceHint', $this->options)){
 
@@ -492,7 +501,7 @@ class View{
                             y="'. floor($y) .'"
 
                             href="'. $img .'"
-
+                            '. ($passableAttr ?? '') .'
                             class="avatar-shadow"
                             />
                         ';
@@ -525,7 +534,7 @@ class View{
                         y="'. floor($y) .'"
 
                         href="'. $img .'"
-                        '. $avatarClassAttr .'
+                        '. ($row->whichTable == 'players' ? ($passableAttr ?? '') : '') .' '. $avatarClassAttr .'
                         />
                     ';
                 }

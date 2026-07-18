@@ -1,8 +1,7 @@
 {
     "id": 25,
     "name": "Mur de pierre",
-    "type": "structure",
-    "subtype": "walls",
+    "type": "constructible",
     "private": 0,
     "price": 100,
     "race": "common",

@@ -40,14 +40,7 @@ $(document).ready(function(){
         }
         else{
 
-            if(window.type == 'structure'){
-
-                /* Chemin legacy build.php (routé dans inventory.js). */
-                $('.action[data-action="use"]')
-                .html('Utiliser (1 A)')
-                .prop('disabled', (window.aLeft <= 0));
-            }
-            else if(window.type == 'constructible'){
+            if(window.type == 'constructible'){
 
                 /* Bâtir depuis l'objet : un bouton par objet possédé. */
                 $('.action[data-action="use"]')

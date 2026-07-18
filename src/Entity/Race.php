@@ -70,6 +70,22 @@ class Race
     private string $bleeds = 'sang';
 
     /**
+     * Une STRUCTURE de cette race bloque-t-elle le passage ? Un mur
+     * oui, une table non — on lui passe autour comme dessus. Ignoré
+     * pour les personnages.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => true], name: "blocks_passage")]
+    private bool $blocksPassage = true;
+
+    /**
+     * Une STRUCTURE de cette race arrête-t-elle les projectiles ? Un
+     * mur oui, une table non — la flèche passe au-dessus. Ignoré pour
+     * les personnages.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => true], name: "blocks_projectiles")]
+    private bool $blocksProjectiles = true;
+
+    /**
      * Teinte du voile de blessure (portrait, carte) : le rouge sang
      * historique par défaut, bronze pour une structure par exemple.
      */
@@ -281,6 +297,26 @@ class Race
     public function setBleeds(string $bleeds): void
     {
         $this->bleeds = $bleeds;
+    }
+
+    public function blocksPassage(): bool
+    {
+        return $this->blocksPassage;
+    }
+
+    public function setBlocksPassage(bool $blocksPassage): void
+    {
+        $this->blocksPassage = $blocksPassage;
+    }
+
+    public function blocksProjectiles(): bool
+    {
+        return $this->blocksProjectiles;
+    }
+
+    public function setBlocksProjectiles(bool $blocksProjectiles): void
+    {
+        $this->blocksProjectiles = $blocksProjectiles;
     }
 
     public function getWoundColor(): string

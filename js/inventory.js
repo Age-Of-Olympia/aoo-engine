@@ -63,12 +63,6 @@ $(document).ready(function(){
             return false;
         }
 
-        if(action == 'use' && window.type == 'structure'){
-
-            document.location = 'build.php?itemId='+ window.id;
-            return false;
-        }
-
         /* Constructibles (nouveau système) : bâtir DEPUIS l'objet — retour
            au damier en mode choix de case (spotlight du tutoriel, voir
            js/build_picker.js) ; l'action construire_{objet} est la

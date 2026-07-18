@@ -1,0 +1,11 @@
+{
+    "id": 1126,
+    "name": "Muret",
+    "private": 0,
+    "price": 80,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une protection de fortune constituée de quelques pierres.",
+    "img": "img/walls/muret.png",
+    "mini": "img/walls/muret.png"
+}

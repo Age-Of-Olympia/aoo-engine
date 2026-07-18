@@ -1,0 +1,11 @@
+{
+    "id": 1127,
+    "name": "Barricade",
+    "private": 0,
+    "price": 80,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une protection de fortune constituée de quelques planches.",
+    "img": "img/walls/barricade.png",
+    "mini": "img/walls/barricade.png"
+}

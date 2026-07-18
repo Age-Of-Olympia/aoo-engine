@@ -126,6 +126,40 @@ class RaceService
     }
 
     /**
+     * @return string[] Noms des races STRUCTURE qui ne bloquent pas le
+     *                  passage (table…) — le déplacement et le damier
+     *                  les laissent traverser.
+     */
+    public function getPassableStructureNames(): array
+    {
+        $names = [];
+        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+            if (!$race->blocksPassage()) {
+                $names[] = $race->getName();
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * @return string[] Noms des races STRUCTURE qui arrêtent les
+     *                  projectiles (murs…) — la ligne de tir les
+     *                  contourne ou échoue.
+     */
+    public function getProjectileBlockingStructureNames(): array
+    {
+        $names = [];
+        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+            if ($race->blocksProjectiles()) {
+                $names[] = $race->getName();
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Returns the max movement points for a race.
      */
     public function getRaceMaxMvt(string $raceName): int

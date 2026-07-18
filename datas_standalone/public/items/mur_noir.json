@@ -1,0 +1,11 @@
+{
+    "id": 144,
+    "name": "Mur noir",
+    "type": "constructible",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "text": "Un solide mur noir.",
+    "img": "img/walls/mur_noir.png",
+    "mini": "img/walls/mur_noir.png"
+}

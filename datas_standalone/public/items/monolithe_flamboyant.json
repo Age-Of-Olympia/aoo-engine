@@ -1,0 +1,11 @@
+{
+    "id": 611,
+    "name": "Monolithe flamboyant",
+    "private": 0,
+    "price": 30,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un monolithe gigantesque aux lettres flamboyantes.",
+    "img": "img/walls/monolithe_flamboyant.png",
+    "mini": "img/walls/monolithe_flamboyant.png"
+}

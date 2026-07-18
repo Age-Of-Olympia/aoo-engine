@@ -1,0 +1,11 @@
+{
+    "id": 14,
+    "name": "Coffre en Bois",
+    "private": 0,
+    "price": 50,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un coffre est un meuble fermé destiné à contenir ou protéger des objets, pouvant le cas échéant permettre leur transport.",
+    "img": "img/walls/coffre_bois.png",
+    "mini": "img/walls/coffre_bois.png"
+}

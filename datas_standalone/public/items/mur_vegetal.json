@@ -1,0 +1,11 @@
+{
+    "id": 709,
+    "name": "Mur Végétal",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un solide mur de bois. Il semble vivant.",
+    "img": "img/walls/mur_vegetal.png",
+    "mini": "img/walls/mur_vegetal.png"
+}

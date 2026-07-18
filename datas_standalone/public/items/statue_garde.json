@@ -1,0 +1,11 @@
+{
+    "id": 510,
+    "name": "Statue de garde",
+    "private": 0,
+    "price": 20,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une statue à la gloire de la fierté des Nains.",
+    "img": "img/walls/statue_garde.png",
+    "mini": "img/walls/statue_garde.png"
+}

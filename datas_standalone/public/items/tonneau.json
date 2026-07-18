@@ -1,0 +1,11 @@
+{
+    "id": 1123,
+    "name": "Tonneau",
+    "private": 0,
+    "price": 10,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un tonneau. Vide... malheureusement.",
+    "img": "img/walls/tonneau.png",
+    "mini": "img/walls/tonneau.png"
+}

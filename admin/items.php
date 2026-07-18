@@ -88,8 +88,6 @@ function item_type_badge(string $type): string
         'consommable' => ['Consommable', 'success', 'Se consomme (1 A)'],
         Item::TYPE_CONSTRUCTIBLE => ['Constructible', 'warning',
             'Système actuel : se bâtit depuis l\'inventaire en vraie entité bâtiment (PV, porte, fiche)'],
-        Item::TYPE_STRUCTURE => ['Structure (legacy)', 'warning',
-            'Chemin hérité build.php : pose un mur muet (map_walls) — coexiste jusqu\'à la migration murs→structures'],
         'matiere' => ['Matière', 'secondary', 'Matériau d\'artisanat, sans usage direct'],
     ];
     [$label, $style, $help] = $styles[$type] ?? [($type !== '' ? ucfirst($type) : '—'), 'light', ''];
@@ -334,11 +332,11 @@ function items_render_edit(object $row, string $csrfToken): string
             'form-group',
             'Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
             . ' <b>consommable</b> se consomme (1 A),'
-            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b>/<b>' . Item::TYPE_STRUCTURE . '</b> se bâtit sur la carte.'
+            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se bâtit sur la carte.'
             . ' Un objet sans usage (matériau…) a son bouton grisé en jeu.')
         . renderDatalist('item-types', [
             'equipement' => '', 'consommable' => '',
-            Item::TYPE_CONSTRUCTIBLE => '', Item::TYPE_STRUCTURE => '',
+            Item::TYPE_CONSTRUCTIBLE => '',
         ])
         . formField('Emplacement',
             formSelect('emplacement',

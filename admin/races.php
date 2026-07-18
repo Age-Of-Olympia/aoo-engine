@@ -275,6 +275,12 @@ HTML;
             . ' title="Structures seulement — Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
         )
         . '</label> '
+        . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
+        . checked(!$isEdit || $race->blocksPassage())
+        . ' title="Structures seulement — décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
+        . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
+        . checked(!$isEdit || $race->blocksProjectiles())
+        . ' title="Structures seulement — décoché : les tirs passent au-dessus (table, muret bas…)."> Bloque les tirs</label> '
         . '<label class="mr-3"><input type="checkbox" name="playable" '
         . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>'
         . '<label><input type="checkbox" name="hidden" '

@@ -1,0 +1,11 @@
+{
+    "id": 28,
+    "name": "Piédestal en Pierre",
+    "private": 0,
+    "price": 25,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un piédestal (pluriel: piédestaux) est un support isolé qui sert à recevoir un buste ou un grand objet d'art et d'ornement.",
+    "img": "img/walls/piedestal_pierre.png",
+    "mini": "img/walls/piedestal_pierre.png"
+}

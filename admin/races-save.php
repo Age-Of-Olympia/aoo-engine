@@ -96,6 +96,8 @@ $applyForm = static function (Race $race): string {
     // Saignement : un élément de carte connu, ou rien.
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
     $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
+    $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
+    $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);

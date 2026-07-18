@@ -67,6 +67,17 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $effectService = new \App\Service\EffectService();
         $dealtMods = $effectService->modifierContributions($actor->getEffects(), 'getDamageDealtMod');
         $takenMods = $effectService->modifierContributions($target->getEffects(), 'getDamageTakenMod');
+
+        // Démolition : le bonus anti-structure de l'arme (pioche, bélier…)
+        // s'ajoute aux dégâts quand la CIBLE est une structure — l'héritier
+        // de l'ex-destroy.php maintenant que les murs sont des entités.
+        if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') === \App\Enum\EntityCategory::Structure) {
+            $demolition = (int) ($actor->emplacements->main1->data->demolition ?? 0);
+            if ($demolition > 0) {
+                $dealtMods['pos'] += $demolition;
+                $dealtMods['posLabels'][] = 'Démolition';
+            }
+        }
         $actorEffetAgressivite = $dealtMods['pos'];
         $actorEffetFaiblesse = $dealtMods['neg'];
         $targetEffetFragilite = $takenMods['pos'];

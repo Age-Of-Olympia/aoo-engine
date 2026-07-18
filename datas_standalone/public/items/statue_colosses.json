@@ -1,0 +1,11 @@
+{
+    "id": 612,
+    "name": "Statue de colosses",
+    "private": 0,
+    "price": 30,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une statue à la gloire de la force des Géants.",
+    "img": "img/walls/statue_colosses.png",
+    "mini": "img/walls/statue_colosses.png"
+}

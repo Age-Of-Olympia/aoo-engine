@@ -71,12 +71,20 @@ if($planJson = json()->decode('plans', $player->coords->plan)){
     $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
     if ($playerVisibilityEnabled) {
+        /* Les structures PASSABLES (table…) ne bloquent pas la case —
+         * liste résolue en PHP, la jointure races/players est interdite
+         * par collation (cf. BuildingService). */
+        $passable = (new \App\Service\RaceService())->getPassableStructureNames();
+        $passableSql = $passable !== []
+            ? ' AND players.race NOT IN (' . implode(',', array_map(fn($r) => '"' . $r . '"', $passable)) . ')'
+            : '';
+
         $inPlayerSql = '
         OR
         id IN(
             SELECT coords_id FROM players
             LEFT JOIN players_options AS po ON po.player_id = players.id AND po.name = "invisibleMode"
-            WHERE coords_id = ? AND po.player_id IS NULL
+            WHERE coords_id = ? AND po.player_id IS NULL' . $passableSql . '
             )
         ';
 

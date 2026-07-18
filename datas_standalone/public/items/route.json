@@ -4,7 +4,6 @@
     "private": 0,
     "price": 10,
     "race": "common",
-    "type": "structure",
-    "subtype": "tiles",
+    "type": "constructible",
     "text": "Une surface de pierre qui facilite les déplacements."
 }

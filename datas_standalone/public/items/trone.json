@@ -1,0 +1,11 @@
+{
+    "id": 1125,
+    "name": "Trone",
+    "private": 0,
+    "price": 80,
+    "race": "common",
+    "type": "constructible",
+    "text": "Le siège d'un roi. Est-il de fer ?",
+    "img": "img/walls/trone.png",
+    "mini": "img/walls/trone.png"
+}
