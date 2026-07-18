@@ -67,6 +67,9 @@ $validate = static function (): ?string {
     if (!preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($_POST['bgColor'] ?? ''))) {
         return 'Couleur de fond invalide (format attendu : #RRGGBB).';
     }
+    if (!preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($_POST['wound_color'] ?? ''))) {
+        return 'Couleur de blessure invalide (format attendu : #RRGGBB).';
+    }
     foreach (array_keys(CARACS) as $key) {
         if (!isset($_POST['carac'][$key]) || !is_numeric($_POST['carac'][$key])) {
             return "Caractéristique manquante ou invalide : {$key}.";
@@ -97,6 +100,7 @@ $applyForm = static function (Race $race): string {
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);
     $race->setColor(stringWithDefault('color', 'black'));
+    $race->setWoundColor((string) $_POST['wound_color']);
 
     // Faction de départ : validée contre le catalogue (admin/factions.php).
     // Une valeur orpheline est conservée seulement si elle ne change pas

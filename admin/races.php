@@ -298,6 +298,10 @@ HTML;
         . '<div class="form-group col-md-2"><label>Couleur du texte</label>'
         . '<input type="text" class="form-control" name="color" value="'
         . e($isEdit ? $race->getColor() : 'black') . '"></div>'
+        . '<div class="form-group col-md-2"><label>Couleur de blessure</label>'
+        . '<input type="color" class="form-control" name="wound_color" value="'
+        . e($isEdit ? $race->getWoundColor() : \App\Service\RaceService::DEFAULT_WOUND_COLOR) . '">'
+        . '<small class="form-text text-muted">Voile des PV perdus (portrait, carte) — rouge sang par défaut, bronze pour une structure par exemple.</small></div>'
         . '<div class="form-group col-md-3"><label>Faction de départ</label>'
         . race_faction_select($isEdit ? $race->getFaction() : '')
         . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'

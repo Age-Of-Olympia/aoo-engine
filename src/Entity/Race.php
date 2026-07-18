@@ -69,6 +69,13 @@ class Race
     #[ORM\Column(type: "string", length: 50, options: ["default" => "sang"])]
     private string $bleeds = 'sang';
 
+    /**
+     * Teinte du voile de blessure (portrait, carte) : le rouge sang
+     * historique par défaut, bronze pour une structure par exemple.
+     */
+    #[ORM\Column(type: "string", length: 20, name: "wound_color", options: ["default" => "#770001"])]
+    private string $woundColor = '#770001';
+
     #[ORM\Column(type: "string", length: 20, options: ["default" => "#FFFFFF"])]
     private string $bgColor = '#FFFFFF';
 
@@ -274,6 +281,16 @@ class Race
     public function setBleeds(string $bleeds): void
     {
         $this->bleeds = $bleeds;
+    }
+
+    public function getWoundColor(): string
+    {
+        return $this->woundColor;
+    }
+
+    public function setWoundColor(string $woundColor): void
+    {
+        $this->woundColor = $woundColor;
     }
 
     public function getBgColor(): string

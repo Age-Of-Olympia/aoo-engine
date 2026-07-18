@@ -1066,13 +1066,21 @@
             return;
         }
 
-        var match = ($filter.attr('style') || '').match(/height:\s*([\d.]+)px/);
+        var styleAttr = $filter.attr('style') || '';
+        var match = styleAttr.match(/height:\s*([\d.]+)px/);
         var lostPct = match ? Math.min(100, Math.max(0, parseFloat(match[1]) / 225 * 100)) : 0;
+        /* La teinte vient du serveur (races.wound_color — bronze pour une
+           structure) : la conserver, --hud-blood n'est que le repli CSS. */
+        var colorMatch = styleAttr.match(/background:\s*([^;]+)/);
 
         $filter.removeAttr('style')
             .addClass('hud-pv-lost')
             .css('height', lostPct + '%')
             .appendTo($('#ajax-data .card-image'));
+
+        if (colorMatch) {
+            $filter.css('background', colorMatch[1].trim());
+        }
     }
 
     /*
@@ -1293,6 +1301,15 @@
                     ? url.slice(url.indexOf('?') + 1)
                     : '';
                 $content.html(data);
+
+                /* Le fragment peut imposer son titre — la fiche d'une
+                   STRUCTURE arrive par la même URL infos que celle d'un
+                   personnage, seul le contenu sait lequel des deux. */
+                var titleOverride = $content.find('[data-panel-title]').first().attr('data-panel-title');
+                if (titleOverride && openPanels[slot]) {
+                    openPanels[slot].title = titleOverride;
+                    syncPanels();
+                }
 
                 /* Ouvrir un fil le marque « vu » côté serveur
                  * (Forum::put_view au rendu) : pastilles missives ET

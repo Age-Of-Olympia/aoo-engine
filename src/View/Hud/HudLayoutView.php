@@ -20,7 +20,7 @@ use Classes\Player;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260718';
+    private const VERSION = '20260719b';
 
     public static function render(Player $player): void
     {

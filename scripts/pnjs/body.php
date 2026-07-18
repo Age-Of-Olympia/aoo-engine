@@ -119,7 +119,7 @@ foreach($playersTbl as $pnj){
         ? (int) floor($pnj->getRemaining('pv') / $pnj->caracs->pv * 100)
         : 100;
 
-    $pvVeil = Ui::get_pv_veil($pvPct);
+    $pvVeil = Ui::get_pv_veil($pvPct, $raceService->getRaceWoundColor($pnj->data->race ?? null));
 
     echo '
     <article class="pnj" style="cursor: pointer; position:relative;" data-id="'. $pnj->id .'">

@@ -19,6 +19,9 @@ class RaceService
     private const DEFAULT_BG_COLOR = '#FFFFFF';
     private const DEFAULT_MAX_MVT = 4;
 
+    /** Le rouge sang du voile de blessure historique. */
+    public const DEFAULT_WOUND_COLOR = '#770001';
+
     /** @var array<string, Race|null> Per-request cache, keyed by lowercase race name. */
     private static array $cache = [];
 
@@ -108,6 +111,18 @@ class RaceService
         $race = $this->getRaceByName($raceName);
 
         return $race ? $race->getBgColor() : self::DEFAULT_BG_COLOR;
+    }
+
+    /**
+     * Teinte du voile de blessure de la race (rouge sang par défaut,
+     * bronze pour un type structure par exemple). Race inconnue ou
+     * vide : le rouge historique.
+     */
+    public function getRaceWoundColor(?string $raceName): string
+    {
+        $race = $raceName !== null && $raceName !== '' ? $this->getRaceByName($raceName) : null;
+
+        return $race ? $race->getWoundColor() : self::DEFAULT_WOUND_COLOR;
     }
 
     /**

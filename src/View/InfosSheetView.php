@@ -74,7 +74,7 @@ final class InfosSheetView
                 ? (int) floor($target->getRemaining('pv') / $target->caracs->pv * 100)
                 : 100;
 
-            $pvVeil = \Classes\Ui::get_pv_veil($pvPct);
+            $pvVeil = \Classes\Ui::get_pv_veil($pvPct, (new \App\Service\RaceService())->getRaceWoundColor($target->data->race ?? null));
 
             echo '<div class="infos-effects">';
 

@@ -180,11 +180,13 @@ class Ui{
                     $height = floor((100 - $data->pvPct) * 225 / 100);
                     $height = min($height, 225);
 
-                    // life red filter
+                    // life filter, teinté par la race/le type (wound_color)
+                    $woundColor = (new \App\Service\RaceService())->getRaceWoundColor($data->race ?? null);
+
                     echo '
                     <div
                         id="red-filter"
-                        style="background: #770001; width: 210px; height: '. $height .'px; position: absolute; bottom: 176px; left: 29px; opacity: 0.5; transition: height 0.2s linear;"
+                        style="background: '. $woundColor .'; width: 210px; height: '. $height .'px; position: absolute; bottom: 176px; left: 29px; opacity: 0.5; transition: height 0.2s linear;"
                     >
                     </div>
                     ';
@@ -554,7 +556,11 @@ class Ui{
      * position:relative ; pointer-events:none laisse cliquer au
      * travers (cartes de personnages secondaires).
      */
-    public static function get_pv_veil(int $pvPct): string
+    /**
+     * @param string|null $woundColor teinte du voile (hex #RRGGBB),
+     *        races.wound_color — null/invalide : rouge sang historique
+     */
+    public static function get_pv_veil(int $pvPct, ?string $woundColor = null): string
     {
         if ($pvPct >= 100) {
 
@@ -562,8 +568,25 @@ class Ui{
         }
 
         $height = min(100 - $pvPct, 100);
+        $rgb = self::hexToRgb($woundColor);
 
-        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(119, 0, 1, 0.35); border-top: 2px solid rgba(119, 0, 1, 0.7); pointer-events: none;"></div>';
+        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(' . $rgb . ', 0.35); border-top: 2px solid rgba(' . $rgb . ', 0.7); pointer-events: none;"></div>';
+    }
+
+    /**
+     * '#RRGGBB' -> 'r, g, b' pour composer des rgba(). Toute entrée
+     * invalide retombe sur le rouge sang du voile historique.
+     */
+    private static function hexToRgb(?string $hex): string
+    {
+        $parsed = sscanf((string) $hex, '#%02x%02x%02x');
+
+        if (!is_array($parsed) || in_array(null, $parsed, true)) {
+
+            $parsed = [119, 0, 1];
+        }
+
+        return implode(', ', $parsed);
     }
 
    #

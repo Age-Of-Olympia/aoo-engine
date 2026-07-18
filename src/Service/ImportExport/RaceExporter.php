@@ -56,6 +56,7 @@ final class RaceExporter implements ObjectExporter
             'kind'           => $entity->getKind(),
             'structureNature' => $entity->getStructureNature(),
             'bleeds'         => $entity->getBleeds(),
+            'wound_color'    => $entity->getWoundColor(),
             'bgColor'        => $entity->getBgColor(),
             'color'          => $entity->getColor(),
             'faction'        => $entity->getFaction(),
