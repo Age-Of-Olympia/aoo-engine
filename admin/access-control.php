@@ -39,9 +39,8 @@ foreach ($rowsByGroup as $group => $rows) {
             ? '<span class="text-muted">(défaut : ' . e($levelOptions[$menu['default']]) . ')</span>'
             : '<span class="text-muted">défaut</span>';
 
-        $select = '<select name="level[' . e($menu['page']) . ']" class="form-control form-control-sm" style="max-width:12rem">'
-            . renderSelectOptions($levelOptions, $menu['level'])
-            . '</select>';
+        $select = formSelect('level[' . $menu['page'] . ']', $levelOptions, $menu['level'], null,
+            'class="form-control form-control-sm" style="max-width:12rem"');
 
         $trs .= '<tr>'
             . '<td>' . e($menu['label']) . '</td>'

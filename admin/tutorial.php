@@ -240,14 +240,15 @@ ob_start();
         <div class="card-body">
             <form method="GET" class="d-flex align-items-center" style="gap: 10px;">
                 <label for="version" style="margin: 0; white-space: nowrap;"><strong>Filtrer par tutoriel:</strong></label>
-                <select name="version" id="version" class="form-control" style="max-width: 300px;" onchange="this.form.submit()">
-                    <option value="">-- Tous les tutoriels --</option>
-                    <?php foreach ($availableVersions as $v): ?>
-                    <option value="<?= htmlspecialchars($v['version']) ?>" <?= $selectedVersion === $v['version'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($v['name']) ?> (<?= htmlspecialchars($v['version']) ?>)
-                    </option>
-                    <?php endforeach; ?>
-                </select>
+                <?php
+                $versionChoices = [];
+                foreach ($availableVersions as $v) {
+                    $versionChoices[$v['version']] = $v['name'] . ' (' . $v['version'] . ')';
+                }
+                echo formSelect('version', $versionChoices, $selectedVersion !== '' ? $selectedVersion : null,
+                    '-- Tous les tutoriels --',
+                    'id="version" class="form-control" style="max-width: 300px;" onchange="this.form.submit()"');
+                ?>
                 <?php if ($selectedVersion): ?>
                 <a href="?" class="btn btn-outline-secondary btn-sm">Effacer filtre</a>
                 <?php endif; ?>

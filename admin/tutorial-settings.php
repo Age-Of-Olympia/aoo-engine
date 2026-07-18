@@ -369,16 +369,17 @@ ob_start();
                     <form method="post" class="mb-3">
                         <?= $csrf->renderTokenField() ?>
                         <div class="d-flex" style="gap: 10px;">
-                            <select name="player_id" class="form-control" <?= $hasPlayerListOverride ? 'disabled' : '' ?>>
-                                <option value="">-- Select Player --</option>
-                                <?php foreach ($allPlayers as $player): ?>
-                                    <?php if (!in_array($player['id'], $whitelistedPlayers)): ?>
-                                        <option value="<?= $player['id'] ?>">
-                                            <?= e($player['name']) ?> (ID: <?= $player['id'] ?>, <?= e($player['race']) ?>)
-                                        </option>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            </select>
+                            <?php
+                            $playerChoices = [];
+                            foreach ($allPlayers as $player) {
+                                if (!in_array($player['id'], $whitelistedPlayers)) {
+                                    $playerChoices[(string) $player['id']] =
+                                        $player['name'] . ' (ID: ' . $player['id'] . ', ' . $player['race'] . ')';
+                                }
+                            }
+                            echo formSelect('player_id', $playerChoices, null, '-- Select Player --',
+                                'class="form-control"' . ($hasPlayerListOverride ? ' disabled' : ''));
+                            ?>
                             <button
                                 type="submit"
                                 name="add_player"

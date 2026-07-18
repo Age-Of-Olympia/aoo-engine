@@ -254,11 +254,11 @@ ob_start();
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Difficulté</label>
-                                <select name="difficulty" class="form-control">
-                                    <option value="beginner" <?= ($formData['difficulty'] ?? '') === 'beginner' ? 'selected' : '' ?>>Débutant</option>
-                                    <option value="intermediate" <?= ($formData['difficulty'] ?? '') === 'intermediate' ? 'selected' : '' ?>>Intermédiaire</option>
-                                    <option value="advanced" <?= ($formData['difficulty'] ?? '') === 'advanced' ? 'selected' : '' ?>>Avancé</option>
-                                </select>
+                                <?= formSelect('difficulty', [
+                                    'beginner' => 'Débutant',
+                                    'intermediate' => 'Intermédiaire',
+                                    'advanced' => 'Avancé',
+                                ], $formData['difficulty'] ?? null) ?>
                             </div>
                         </div>
                     </div>

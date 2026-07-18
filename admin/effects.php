@@ -91,10 +91,10 @@ function effect_render_list(array $effects): string
 {
     $carriersByEffect = (new EffectService())->countCarriersByEffectName();
 
-    $rows = '';
+    $rows = [];
     foreach ($effects as $effect) {
         $carriers = $carriersByEffect[$effect->getName()] ?? 0;
-        $rows .= '<tr>'
+        $rows[] = '<tr>'
             . '<td><span class="ra ' . e($effect->getIcon()) . '" title="' . e($effect->getIcon()) . '"></span></td>'
             . '<td><code>' . e($effect->getName()) . '</code></td>'
             . '<td>' . e($effect->getLabel()) . '</td>'
@@ -119,10 +119,12 @@ function effect_render_list(array $effects): string
         . '<i class="fas fa-upload"></i> Importer</a>'
         . '<a class="btn btn-primary" href="/admin/effects.php?action=new">+ Nouvel effet</a>'
         . '</div></div>'
-        . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
-        . '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Modificateurs</th>'
-        . '<th title="Personnages portant actuellement cet effet">Porteurs</th><th></th>'
-        . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+        . renderTable(
+            ['', 'Code', 'Nom', 'Statut', 'Modificateurs',
+             ['Porteurs', 'title="Personnages portant actuellement cet effet"'], ''],
+            $rows,
+            'class="table table-striped table-sm" data-admin-list data-page-size="30"'
+        );
 }
 
 /**
@@ -156,12 +158,15 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         : 'Nouvel effet';
 
     $nameField = $isEdit
-        ? '<input type="hidden" name="name" value="' . e($effect->getName()) . '">'
-            . '<input type="text" class="form-control" value="' . e($effect->getName()) . '" disabled>'
-            . '<small class="form-text text-muted">Le code est référencé par players_effects et les paramètres d\'actions — non modifiable.</small>'
-        : '<input type="text" class="form-control" name="name" required pattern="[a-z][a-z0-9_]*"'
-            . ' placeholder="ex: gel">'
-            . '<small class="form-text text-muted">Minuscules / chiffres / _ — stocké dans players_effects.name.</small>';
+        ? formField('Code',
+            '<input type="hidden" name="name" value="' . e($effect->getName()) . '">'
+            . formInput('', $effect->getName(), 'disabled'),
+            'form-group col-md-3',
+            'Le code est référencé par players_effects et les paramètres d\'actions — non modifiable.')
+        : formField('Code',
+            formInput('name', '', 'required pattern="[a-z][a-z0-9_]*" placeholder="ex: gel"'),
+            'form-group col-md-3',
+            'Minuscules / chiffres / _ — stocké dans players_effects.name.');
 
     // Annulations : tout le catalogue de gameplay sauf soi-même —
     // multi-sélection, un effet peut en annuler plusieurs.
@@ -183,54 +188,43 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
     $breakChance = $isEdit ? $effect->getCorruptionBreakChance() : null;
     $materials = $isEdit ? implode("\n", $effect->getCorruptionMaterialNames()) : '';
 
-    return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">' . $title . '</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/effects.php">← Retour à la liste</a></div>'
+    $identite = '<div class="row">'
+        . $nameField
+        . formField('Nom affiché', formInput('label', $isEdit ? $effect->getLabel() : '', 'required'), 'form-group col-md-3')
+        . formField('Icône',
+            '<div class="input-group">'
+            . '<div class="input-group-prepend"><span class="input-group-text"><span class="ra '
+            . e($isEdit ? $effect->getIcon() : EffectService::FALLBACK_ICON) . '"></span></span></div>'
+            . formInput('icon', $isEdit ? $effect->getIcon() : '',
+                'list="effect-icon-catalog" required pattern="ra-[a-z0-9-]+" placeholder="ra-…"')
+            . '</div>',
+            'form-group col-md-3',
+            'Classe RPG-Awesome, affichée sur les fiches et le HUD.')
+        . formField('Flags',
+            '<div>'
+            . formCheckbox('hidden', $isEdit && $effect->isHidden(), 'Caché',
+                'class="mr-3" title="Posture éphémère (parade, leurre…) : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches"')
+            . formCheckbox('is_map_marker', $isEdit && $effect->isMapMarker(), 'Marqueur de carte',
+                'title="Marqueur de carte (traces de pas…) : exclu des listes de gameplay (workbench, saignement)"')
+            . '</div>',
+            'form-group col-md-3')
+        . formField('Description', formTextarea('description', $isEdit ? $effect->getDescription() : ''),
+            'form-group col-12', 'Texte de règles (wiki des effets).')
+        . '</div>';
 
-        . '<form method="post" action="/admin/effects-save.php?action=' . $action . '">'
-        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+    $comportement = '<div class="row">'
+        . formField('Carac augmentée (+1)', effect_carac_select('buff_carac', $isEdit ? $effect->getBuffCarac() : null),
+            'form-group col-md-4')
+        . formField('Carac diminuée (−1)', effect_carac_select('debuff_carac', $isEdit ? $effect->getDebuffCarac() : null),
+            'form-group col-md-4', 'Appliquée tant que l\'effet dure (la valeur portée sert de multiplicateur).')
+        . formField('Annule les effets',
+            '<select name="controls[]" class="form-control" multiple size="6">' . $controlOptions . '</select>',
+            'form-group col-md-4',
+            'Poser cet effet retire chaque effet coché (eau éteint feu…) ; les deux tombent si la cible'
+            . ' porte déjà un effet qui annule celui-ci. Ctrl+clic pour en choisir plusieurs.')
+        . '</div>';
 
-        . '<div class="card mb-3"><div class="card-header">Identité</div><div class="card-body"><div class="row">'
-        . '<div class="form-group col-md-3"><label>Code</label>' . $nameField . '</div>'
-        . '<div class="form-group col-md-3"><label>Nom affiché</label>'
-        . '<input type="text" class="form-control" name="label" required value="'
-        . e($isEdit ? $effect->getLabel() : '') . '"></div>'
-        . '<div class="form-group col-md-3"><label>Icône</label>'
-        . '<div class="input-group">'
-        . '<div class="input-group-prepend"><span class="input-group-text"><span class="ra '
-        . e($isEdit ? $effect->getIcon() : EffectService::FALLBACK_ICON) . '"></span></span></div>'
-        . '<input type="text" class="form-control" name="icon" list="effect-icon-catalog" required'
-        . ' pattern="ra-[a-z0-9-]+" value="' . e($isEdit ? $effect->getIcon() : '') . '" placeholder="ra-…">'
-        . '</div>'
-        . '<small class="form-text text-muted">Classe RPG-Awesome, affichée sur les fiches et le HUD.</small></div>'
-        . '<div class="form-group col-md-3"><label>Flags</label><div>'
-        . '<label class="mr-3"><input type="checkbox" name="hidden" ' . checked($isEdit && $effect->isHidden())
-        . ' title="Posture éphémère (parade, leurre…) : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches"> Caché</label>'
-        . '<label><input type="checkbox" name="is_map_marker" ' . checked($isEdit && $effect->isMapMarker())
-        . ' title="Marqueur de carte (traces de pas…) : exclu des listes de gameplay (workbench, saignement)"> Marqueur de carte</label>'
-        . '</div></div>'
-        . '<div class="form-group col-12"><label>Description</label>'
-        . '<textarea class="form-control" name="description" rows="3">'
-        . e($isEdit ? $effect->getDescription() : '') . '</textarea>'
-        . '<small class="form-text text-muted">Texte de règles (wiki des effets).</small></div>'
-        . '</div></div></div>'
-
-        . '<div class="card mb-3"><div class="card-header">Comportement</div><div class="card-body"><div class="row">'
-        . '<div class="form-group col-md-4"><label>Carac augmentée (+1)</label>'
-        . effect_carac_select('buff_carac', $isEdit ? $effect->getBuffCarac() : null)
-        . '</div>'
-        . '<div class="form-group col-md-4"><label>Carac diminuée (−1)</label>'
-        . effect_carac_select('debuff_carac', $isEdit ? $effect->getDebuffCarac() : null)
-        . '<small class="form-text text-muted">Appliquée tant que l\'effet dure (la valeur portée sert de multiplicateur).</small></div>'
-        . '<div class="form-group col-md-4"><label>Annule les effets</label>'
-        . '<select name="controls[]" class="form-control" multiple size="6">' . $controlOptions . '</select>'
-        . '<small class="form-text text-muted">Poser cet effet retire chaque effet coché (eau éteint feu…) ;'
-        . ' les deux tombent si la cible porte déjà un effet qui annule celui-ci.'
-        . ' Ctrl+clic pour en choisir plusieurs.</small></div>'
-        . '</div></div></div>'
-
-        . '<div class="card mb-3"><div class="card-header">Combat</div><div class="card-body">'
-        . '<div class="row">'
+    $combat = '<div class="row">'
         . effect_mod_select('roll_attack_mod', 'Jet d\'attaque', $isEdit ? $effect->getRollAttackMod() : 0, 'Ex-dextérité (+1) / maladresse (−1)')
         . effect_mod_select('roll_defense_mod', 'Jet de défense', $isEdit ? $effect->getRollDefenseMod() : 0, 'Ex-protection (+1) / vulnérabilité (−1)')
         . effect_mod_select('damage_dealt_mod', 'Dégâts infligés', $isEdit ? $effect->getDamageDealtMod() : 0, 'Ex-agressivité (+1) / faiblesse (−1)')
@@ -239,38 +233,55 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . effect_mod_select('push_defense_mod', 'Poussée (déf.)', $isEdit ? $effect->getPushDefenseMod() : 0, 'Ex-stabilité (+1) / instabilité (−1)')
         . '</div>'
         . '<div class="row">'
-        . '<div class="form-group col-md-3"><label>Facteur sur les dégâts subis</label>'
-        . '<input type="number" class="form-control" name="damage_taken_factor" step="0.05" min="0.05" max="5" value="'
-        . e($isEdit ? rtrim(rtrim(number_format($effect->getDamageTakenFactor(), 2, '.', ''), '0'), '.') : '1') . '">'
-        . '<small class="form-text text-muted">1 = neutre ; 0.75 = encaisse (les facteurs portés se multiplient, minimum 1 dégât).</small></div>'
-        . '</div>'
-        . '</div></div>'
+        . formField('Facteur sur les dégâts subis',
+            formInput('damage_taken_factor',
+                $isEdit ? rtrim(rtrim(number_format($effect->getDamageTakenFactor(), 2, '.', ''), '0'), '.') : '1',
+                'type="number" step="0.05" min="0.05" max="5"'),
+            'form-group col-md-3',
+            '1 = neutre ; 0.75 = encaisse (les facteurs portés se multiplient, minimum 1 dégât).')
+        . '</div>';
 
-        . '<div class="card mb-3"><div class="card-header">Au nouveau tour</div><div class="card-body"><div class="row">'
-        . '<div class="form-group col-md-3"><label>Bloque la récupération</label>'
-        . formSelect('block_recovery', ['pv' => 'PV (ex-poison)', 'pm' => 'PM (ex-poison magique)'], $isEdit ? $effect->getBlockRecovery() : '', '— non —')
-        . '<small class="form-text text-muted">La récup de la carac tombe à zéro, l\'effet expire. Prime sur la régénération.</small></div>'
-        . '<div class="form-group col-md-3"><label>Régénération</label><div>'
-        . '<label><input type="checkbox" name="turn_regen" ' . checked($isEdit && $effect->isTurnRegen())
-        . '> La récup PV gagne +RM, l\'effet expire</label></div></div>'
-        . '<div class="form-group col-md-3"><label>Malus de mouvement</label><div>'
-        . '<label><input type="checkbox" name="turn_mvt_malus" ' . checked($isEdit && $effect->isTurnMvtMalus())
-        . '> Retire sa valeur en Mvt au tour suivant</label></div></div>'
-        . '</div></div></div>'
+    $tour = '<div class="row">'
+        . formField('Bloque la récupération',
+            formSelect('block_recovery', ['pv' => 'PV (ex-poison)', 'pm' => 'PM (ex-poison magique)'],
+                $isEdit ? $effect->getBlockRecovery() : '', '— non —'),
+            'form-group col-md-3',
+            'La récup de la carac tombe à zéro, l\'effet expire. Prime sur la régénération.')
+        . formField('Régénération',
+            '<div>' . formCheckbox('turn_regen', $isEdit && $effect->isTurnRegen(),
+                'La récup PV gagne +RM, l\'effet expire') . '</div>',
+            'form-group col-md-3')
+        . formField('Malus de mouvement',
+            '<div>' . formCheckbox('turn_mvt_malus', $isEdit && $effect->isTurnMvtMalus(),
+                'Retire sa valeur en Mvt au tour suivant') . '</div>',
+            'form-group col-md-3')
+        . '</div>';
 
-        . '<div class="card mb-3"><div class="card-header">Corruption</div><div class="card-body"><div class="row">'
-        . '<div class="form-group col-md-4"><label>Chance de casse supplémentaire (%)</label>'
-        . '<input type="number" class="form-control" name="corruption_break_chance" min="0" max="100" value="'
-        . e($breakChance === null ? '' : (string) $breakChance) . '">'
-        . '<small class="form-text text-muted">Vide = pas une corruption. S\'applique au matériel'
-        . ' fabriqué avec les matériaux ci-contre quand le porteur attaque ou défend.</small></div>'
-        . '<div class="form-group col-md-8"><label>Matériaux corruptibles (un par ligne)</label>'
-        . '<textarea class="form-control" name="corruption_materials" rows="4" spellcheck="false">'
-        . e($materials) . '</textarea>'
-        . '<small class="form-text text-muted">Noms d\'objets-matériaux (bronze, cuir…) — un matériau corrompu'
-        . ' n\'est pas restitué quand l\'objet casse.</small></div>'
-        . '</div></div></div>'
+    $corruption = '<div class="row">'
+        . formField('Chance de casse supplémentaire (%)',
+            formInput('corruption_break_chance', $breakChance === null ? '' : (string) $breakChance,
+                'type="number" min="0" max="100"'),
+            'form-group col-md-4',
+            'Vide = pas une corruption. S\'applique au matériel fabriqué avec les matériaux ci-contre'
+            . ' quand le porteur attaque ou défend.')
+        . formField('Matériaux corruptibles (un par ligne)',
+            formTextarea('corruption_materials', $materials, 4, 'spellcheck="false"'),
+            'form-group col-md-8',
+            'Noms d\'objets-matériaux (bronze, cuir…) — un matériau corrompu n\'est pas restitué'
+            . ' quand l\'objet casse.')
+        . '</div>';
 
+    return '<div class="d-flex justify-content-between align-items-center mb-3">'
+        . '<h1 class="mb-0">' . $title . '</h1>'
+        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/effects.php">← Retour à la liste</a></div>'
+
+        . '<form method="post" action="/admin/effects-save.php?action=' . $action . '">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . formCard('Identité', $identite)
+        . formCard('Comportement', $comportement)
+        . formCard('Combat', $combat)
+        . formCard('Au nouveau tour', $tour)
+        . formCard('Corruption', $corruption)
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer l\'effet') . '</button>'
         . '</form>'
         . ($isEdit ? effect_render_delete_zone($effect, $csrfToken) : '')

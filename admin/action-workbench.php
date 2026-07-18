@@ -140,18 +140,9 @@ if ($action === null) {
     };
 
     // Race restriction — the scalar `race` the runtime gates on (empty = all
-    // races). "—" clears it; an unknown stored value is kept selectable so a
-    // legacy/non-playable race survives a save. Mirrors the passive editor.
-    $raceOptions = ['' => '—'] + (new OptionCatalog())->races();
+    // races). "—" clears it; an unknown stored value survives a save via la
+    // sentinelle ⚠ de renderSelectOptions. Mirrors the passive editor.
     $currentRace = (string) $action->getRace();
-    if ($currentRace !== '' && !isset($raceOptions[$currentRace])) {
-        $raceOptions[$currentRace] = $currentRace;
-    }
-    $raceSelect = '';
-    foreach ($raceOptions as $value => $label) {
-        $raceSelect .= '<option value="' . e((string) $value) . '"'
-            . ((string) $value === $currentRace ? ' selected' : '') . '>' . e((string) $label) . '</option>';
-    }
 
     // Icon picker, level and race share one row — all small fields, no need for a
     // line each.
@@ -161,7 +152,8 @@ if ($action === null) {
         . '<input class="form-control" type="number" name="level" min="0" value="' . (int) $readProp('level') . '"'
         . ' title="Prérequis d\'achat (à venir)"></label>'
         . '<label class="wb-field"><span>Race</span>'
-        . '<select class="form-control" name="race" title="Restreint l\'action à une race ; — = toutes">' . $raceSelect . '</select></label>'
+        . formSelect('race', (new OptionCatalog())->races(), $currentRace !== '' ? $currentRace : null, '—',
+            'class="form-control" title="Restreint l\'action à une race ; — = toutes"') . '</label>'
         . '</div>';
     echo '<label class="wb-field wb-field--wide"><span>Description</span>'
         . '<textarea class="form-control" name="text" rows="3">' . e((string) $readProp('text')) . '</textarea></label>';

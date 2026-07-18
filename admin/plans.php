@@ -200,10 +200,10 @@ function plans_render_new_form(array $inventory, string $csrfToken): string
 {
     $templates = array_filter($inventory, fn(object $p) => $p->hasJson && $p->hasCoords);
 
-    $templateOptions = '';
+    $templateChoices = [];
     foreach ($templates as $p) {
-        $templateOptions .= '<option value="' . e($p->id) . '">' . e($p->name) . ' (' . e($p->id) . ', '
-            . number_format($p->coordsCount, 0, ',', ' ') . ' cases)</option>';
+        $templateChoices[$p->id] = $p->name . ' (' . $p->id . ', '
+            . number_format($p->coordsCount, 0, ',', ' ') . ' cases)';
     }
 
     $modeScript = <<<HTML
@@ -255,8 +255,7 @@ HTML;
         . ' ne sont jamais copiés.</label>'
         . '</div>'
         . '<div class="form-group col-md-6 px-0"><label>Plan modèle</label>'
-        . '<select class="form-control" name="template" disabled>'
-        . '<option value="">— choisir un plan modèle —</option>' . $templateOptions . '</select>'
+        . formSelect('template', $templateChoices, null, '— choisir un plan modèle —', 'class="form-control" disabled')
         . '<small class="form-text text-muted">Seuls les plans cohérents (JSON + coords) sont proposés.</small></div>'
         . '</div></div>'
 
@@ -299,11 +298,8 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
 
         $input = match ($type) {
             'int' => '<input type="number" step="1" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '">',
-            'bool' => '<select class="form-control" name="config[' . e($key) . ']">'
-                . '<option value=""' . selected($value === '') . '>(défaut — clé absente)</option>'
-                . '<option value="true"' . selected($value === 'true') . '>true</option>'
-                . '<option value="false"' . selected($value === 'false') . '>false</option>'
-                . '</select>',
+            'bool' => formSelect('config[' . $key . ']', ['true' => 'true', 'false' => 'false'],
+                $value !== '' ? $value : null, '(défaut — clé absente)'),
             'image' => '<input type="text" class="form-control" name="config[' . e($key) . ']" value="' . e($value) . '"'
                 . ' list="plans-bg-catalog" placeholder="img/tiles/…">',
             'json' => '<textarea class="form-control" name="config[' . e($key) . ']" rows="10" spellcheck="false"'

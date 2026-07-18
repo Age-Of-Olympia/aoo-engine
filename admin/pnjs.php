@@ -85,12 +85,10 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
     $filters = '<div class="d-flex flex-wrap mb-3" style="gap:.5rem">'
         . '<input type="search" id="pnj-filter" class="form-control" style="max-width:22rem"'
         . ' placeholder="Filtrer par nom ou matricule…" autocomplete="off">'
-        . '<select id="pnj-status" class="form-control" style="max-width:12rem">'
-        . '<option value="">Tous les statuts</option><option value="active">Actifs</option>'
-        . '<option value="inactive">Inactifs</option></select>'
-        . '<select id="pnj-assign" class="form-control" style="max-width:14rem">'
-        . '<option value="">Assignés + non</option><option value="1">Assignés</option>'
-        . '<option value="0">Non assignés</option></select>'
+        . formSelect('pnj-status', ['active' => 'Actifs', 'inactive' => 'Inactifs'], null,
+            'Tous les statuts', 'id="pnj-status" class="form-control" style="max-width:12rem"')
+        . formSelect('pnj-assign', ['1' => 'Assignés', '0' => 'Non assignés'], null,
+            'Assignés + non', 'id="pnj-assign" class="form-control" style="max-width:14rem"')
         . '</div>';
 
     // Settings: the plan retired PNJs are parked on (configurable, not hardcoded).
@@ -158,8 +156,6 @@ function pnj_list_script(): string
 
 function pnj_render_create_form(string $csrfToken): string
 {
-    $raceOptions = renderSelectOptions(pnj_race_options(), null, '— Choisir une race —');
-
     return '<h1 class="mb-3">Créer un PNJ</h1>'
         . '<a class="btn btn-sm btn-outline-secondary mb-3" href="/admin/pnjs.php">← Retour à la liste</a>'
         . '<form method="post" action="/admin/pnjs-save.php?action=create" class="card" style="max-width:32rem">'
@@ -168,7 +164,7 @@ function pnj_render_create_form(string $csrfToken): string
         . '<div class="mb-3"><label>Nom</label>'
         . '<input type="text" name="name" class="form-control" required maxlength="255" autofocus></div>'
         . '<div class="mb-3"><label>Race</label>'
-        . '<select name="race" class="form-control" required>' . $raceOptions . '</select></div>'
+        . formSelect('race', pnj_race_options(), null, '— Choisir une race —', 'class="form-control" required') . '</div>'
         . '<button type="submit" class="btn btn-primary">Créer le PNJ</button>'
         . '</div></form>';
 }
@@ -179,8 +175,6 @@ function pnj_render_create_form(string $csrfToken): string
  */
 function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): string
 {
-    $raceOptions = renderSelectOptions(pnj_race_options(), $pnj['race']);
-
     // --- Identity form (rename / change race) ---
     $identity = '<form method="post" action="/admin/pnjs-save.php?action=update" class="card mb-3" style="max-width:32rem">'
         . '<div class="card-header"><h3 class="card-title">Identité</h3></div>'
@@ -190,7 +184,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
         . '<div class="mb-3"><label>Nom</label>'
         . '<input type="text" name="name" class="form-control" required maxlength="255" value="' . e($pnj['name']) . '"></div>'
         . '<div class="mb-3"><label>Race</label>'
-        . '<select name="race" class="form-control" required>' . $raceOptions . '</select></div>'
+        . formSelect('race', pnj_race_options(), $pnj['race'], null, 'class="form-control" required') . '</div>'
         . '<button type="submit" class="btn btn-primary">Enregistrer</button>'
         . '</div></form>';
 

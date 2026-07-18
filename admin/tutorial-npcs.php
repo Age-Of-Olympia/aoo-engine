@@ -70,22 +70,18 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
      * keeps `</script>` from breaking out of the tag. */
     $stepsJson = json_encode($stepOptionsByVersion, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE);
 
-    $versionOpts = '';
-    $currentVersion = $val('version', '1.0.0');
-    foreach ($versions as $v) {
-        $sel = ($v === $currentVersion) ? ' selected' : '';
-        $versionOpts .= "<option value=\"{$h($v)}\"{$sel}>{$h($v)}</option>";
-    }
+    $versionSelect = formSelect('version',
+        array_combine($versions, $versions), (string) $val('version', '1.0.0'));
 
-    $raceOpts = '';
-    $currentRace = strtolower((string) $val('race', 'nain'));
-    foreach ($races as $r) {
-        $sel = ($r === $currentRace) ? ' selected' : '';
-        $raceOpts .= "<option value=\"{$h($r)}\"{$sel}>{$h(ucfirst($r))}</option>";
-    }
+    $raceSelect = formSelect('race',
+        array_combine($races, array_map('ucfirst', $races)),
+        strtolower((string) $val('race', 'nain')));
 
-    $modeTemplate = $val('spawn_mode') === 'template' ? ' selected' : '';
-    $modeDynamic  = $val('spawn_mode') === 'dynamic'  ? ' selected' : '';
+    $modeSelect = formSelect('spawn_mode', [
+        'template' => 'template (placé sur la carte au démarrage)',
+        'dynamic' => 'dynamic (spawn relatif au joueur)',
+    ], (string) $val('spawn_mode'), null, 'class="form-control" id="npc_spawn_mode" required');
+
     $isActive     = ((int) $val('is_active', 1)) === 1 ? ' checked' : '';
 
     $idHidden = $isEdit ? "<input type=\"hidden\" name=\"id\" value=\"{$h($npc['id'])}\">" : '';
@@ -101,7 +97,7 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
       <div class="row">
         <div class="col-md-3 form-group">
           <label>Version</label>
-          <select class="form-control" name="version">{$versionOpts}</select>
+          {$versionSelect}
         </div>
         <div class="col-md-3 form-group">
           <label>Rôle</label>
@@ -110,10 +106,7 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
         </div>
         <div class="col-md-3 form-group">
           <label>Mode de spawn</label>
-          <select class="form-control" name="spawn_mode" id="npc_spawn_mode" required>
-            <option value="template"{$modeTemplate}>template (placé sur la carte au démarrage)</option>
-            <option value="dynamic"{$modeDynamic}>dynamic (spawn relatif au joueur)</option>
-          </select>
+          {$modeSelect}
         </div>
         <div class="col-md-3 form-group">
           <label class="d-block">Actif</label>
@@ -136,7 +129,7 @@ function renderNpcForm(?array $npc, array $versions, array $stepsByVersion, arra
         </div>
         <div class="col-md-3 form-group">
           <label>Race</label>
-          <select class="form-control" name="race">{$raceOpts}</select>
+          {$raceSelect}
         </div>
       </div>
 

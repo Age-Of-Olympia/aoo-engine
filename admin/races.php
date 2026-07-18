@@ -151,23 +151,17 @@ function race_render_list(array $races): string
 
 /**
  * <select> de la faction de départ, depuis le catalogue (admin/factions.php).
- * Une valeur hors catalogue (faction supprimée) reste proposée, marquée ⚠,
- * pour ne pas être écrasée silencieusement en rouvrant le formulaire.
+ * Une valeur hors catalogue (faction supprimée) reste proposée, marquée ⚠
+ * par la sentinelle générique de renderSelectOptions.
  */
 function race_faction_select(string $current): string
 {
-    $factionNames = (new FactionService())->getFactionNames();
-
-    $options = '<option value="">— aucune —</option>';
-    foreach ($factionNames as $code => $name) {
-        $options .= '<option value="' . e($code) . '"' . ($current === $code ? ' selected' : '') . '>'
-            . e($name) . ' (' . e($code) . ')</option>';
-    }
-    if ($current !== '' && !isset($factionNames[$current])) {
-        $options .= '<option value="' . e($current) . '" selected>⚠ ' . e($current) . ' (inconnue)</option>';
+    $options = [];
+    foreach ((new FactionService())->getFactionNames() as $code => $name) {
+        $options[$code] = $name . ' (' . $code . ')';
     }
 
-    return '<select class="form-control" name="faction">' . $options . '</select>';
+    return formSelect('faction', $options, $current !== '' ? $current : null, '— aucune —');
 }
 
 function race_render_form(?Race $race, string $csrfToken): string
@@ -272,11 +266,15 @@ HTML;
         )
         . '</label> '
         . '<label class="mr-3">Nature '
-        . '<select name="structure_nature" class="form-control form-control-sm d-inline-block" style="width:auto"'
-        . ' title="Structures seulement — Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité).">'
-        . '<option value="edifice"' . ($isEdit && $race->getStructureNature() === 'obstacle' ? '' : ' selected') . '>Édifice (porte)</option>'
-        . '<option value="obstacle"' . ($isEdit && $race->getStructureNature() === 'obstacle' ? ' selected' : '') . '>Obstacle (mur)</option>'
-        . '</select></label> '
+        . formSelect(
+            'structure_nature',
+            ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
+            $isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice',
+            null,
+            'class="form-control form-control-sm d-inline-block" style="width:auto"'
+            . ' title="Structures seulement — Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
+        )
+        . '</label> '
         . '<label class="mr-3"><input type="checkbox" name="playable" '
         . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>'
         . '<label><input type="checkbox" name="hidden" '

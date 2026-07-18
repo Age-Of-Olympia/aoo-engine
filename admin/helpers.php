@@ -435,6 +435,47 @@ function formField(string $label, string $controlHtml, string $colClass = 'form-
 }
 
 /**
+ * <input> nommé, valeur échappée. $attrs porte le reste (type, min,
+ * pattern, placeholder…) — une classe fournie y REMPLACE la classe par
+ * défaut, même contrat que formSelect.
+ */
+function formInput(string $name, string $value = '', string $attrs = ''): string
+{
+    $typeAttr = str_contains($attrs, 'type=') ? '' : ' type="text"';
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="form-control"';
+
+    return '<input name="' . e($name) . '"' . $typeAttr . $classAttr
+        . ($attrs !== '' ? ' ' . $attrs : '') . ' value="' . e($value) . '">';
+}
+
+/** <textarea> nommé, contenu échappé. */
+function formTextarea(string $name, string $value = '', int $rows = 3, string $attrs = ''): string
+{
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="form-control"';
+
+    return '<textarea name="' . e($name) . '"' . $classAttr . ' rows="' . $rows . '"'
+        . ($attrs !== '' ? ' ' . $attrs : '') . '>' . e($value) . '</textarea>';
+}
+
+/**
+ * Case à cocher avec son libellé accolé (le libellé N'est PAS échappé :
+ * les appelants y mettent des précisions en gras — même contrat que les
+ * aides de formField).
+ */
+function formCheckbox(string $name, bool $checked, string $label, string $attrs = ''): string
+{
+    return '<label' . ($attrs !== '' ? ' ' . $attrs : '') . '><input type="checkbox" name="' . e($name) . '" '
+        . checked($checked) . '> ' . $label . '</label>';
+}
+
+/** Carte Bootstrap : en-tête (échappé) + corps déjà rendu. */
+function formCard(string $header, string $bodyHtml, string $cardClass = 'card mb-3'): string
+{
+    return '<div class="' . $cardClass . '"><div class="card-header">' . e($header) . '</div>'
+        . '<div class="card-body">' . $bodyHtml . '</div></div>';
+}
+
+/**
  * <select> complet nommé, options via renderSelectOptions (source
  * unique de l'échappement et de la sélection courante).
  *
@@ -456,17 +497,26 @@ function formSelect(string $name, array $options, ?string $current = null, ?stri
  * cellules restent la responsabilité de l'appelant — échappement par
  * e() à la source).
  *
- * @param array<int, string> $headers libellés (échappés ici)
- * @param array<int, string> $rows    chaînes '<tr>…</tr>' complètes
+ * @param array<int, string|array{0: string, 1: string}> $headers libellés
+ *        (échappés ici), ou [libellé, attrs] pour un th avec attributs
+ * @param array<int, string> $rows chaînes '<tr>…</tr>' complètes
  */
-function renderTable(array $headers, array $rows): string
+function renderTable(array $headers, array $rows, string $attrs = ''): string
 {
     $head = '';
     foreach ($headers as $header) {
-        $head .= '<th>' . e($header) . '</th>';
+        // Un en-tête peut porter ses attributs : [libellé, attrs]
+        // (ex. un title d'explication sur la colonne).
+        [$label, $thAttrs] = is_array($header) ? $header : [$header, ''];
+        $head .= '<th' . ($thAttrs !== '' ? ' ' . $thAttrs : '') . '>' . e($label) . '</th>';
     }
 
-    return '<div class="table-responsive"><table class="table table-sm table-striped align-middle">'
+    // Une classe fournie dans $attrs REMPLACE la classe par défaut —
+    // même contrat que formSelect/formInput. Les attributs data-* (ex.
+    // data-admin-list pour la pagination) passent tels quels.
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="table table-sm table-striped align-middle"';
+
+    return '<div class="table-responsive"><table' . $classAttr . ($attrs !== '' ? ' ' . $attrs : '') . '>'
         . '<thead><tr>' . $head . '</tr></thead>'
         . '<tbody>' . implode('', $rows) . '</tbody></table></div>';
 }

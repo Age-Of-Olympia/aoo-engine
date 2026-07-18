@@ -85,13 +85,15 @@ ob_start();
                 <?= $csrf->renderTokenField() ?>
                 <div class="form-group">
                     <label for="plan_id">Plan (<?= e(season_filter_label($seasonFilter)) ?>) :</label>
-                    <select class="form-control" id="plan_id" name="plan_id" required>
-                    <?php foreach ($filteredPlans as $plan): ?>
-                        <option value="<?= e($plan->id) ?>" <?= selected($selectedPlanId === (string)$plan->id) ?>>
-                            <?= e($plan->name) ?> (<?= e($plan->id) ?>)
-                        </option>
-                    <?php endforeach; ?>
-                    </select>
+                    <?php
+                    $planChoices = [];
+                    foreach ($filteredPlans as $plan) {
+                        $planChoices[$plan->id] = $plan->name . ' (' . $plan->id . ')';
+                    }
+                    echo formSelect('plan_id', $planChoices,
+                        $selectedPlanId !== '' ? $selectedPlanId : null, null,
+                        'class="form-control" id="plan_id" required');
+                    ?>
                     <?php if (empty($filteredPlans)): ?>
                         <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
                     <?php endif; ?>

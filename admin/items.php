@@ -77,12 +77,42 @@ function item_wear_cell(object $row): string
     return '<b>−' . (int) $row->wear_rate . '/tour</b> sur ' . e($row->wear_triggers);
 }
 
+/**
+ * Badge du type d'objet — le geste « Utiliser » qu'il implique se lit
+ * d'un coup d'œil dans la liste.
+ */
+function item_type_badge(string $type): string
+{
+    $styles = [
+        'equipement' => ['Équipement', 'primary', 'Se porte (1 Ae)'],
+        'consommable' => ['Consommable', 'success', 'Se consomme (1 A)'],
+        Item::TYPE_CONSTRUCTIBLE => ['Constructible', 'warning',
+            'Système actuel : se bâtit depuis l\'inventaire en vraie entité bâtiment (PV, porte, fiche)'],
+        Item::TYPE_STRUCTURE => ['Structure (legacy)', 'warning',
+            'Chemin hérité build.php : pose un mur muet (map_walls) — coexiste jusqu\'à la migration murs→structures'],
+        'matiere' => ['Matière', 'secondary', 'Matériau d\'artisanat, sans usage direct'],
+    ];
+    [$label, $style, $help] = $styles[$type] ?? [($type !== '' ? ucfirst($type) : '—'), 'light', ''];
+
+    return '<span class="badge badge-' . $style . '"' . ($help !== '' ? ' title="' . e($help) . '"' : '') . '>'
+        . e($label) . '</span>';
+}
+
 /** @param array<int, object> $items */
 function items_render_list(array $items): string
 {
     $inDb = 0;
-    $rows = '';
+    $typeCounts = [];
+    $rows = [];
     foreach ($items as $row) {
+        $type = (string) ($row->type ?? '');
+        if ($type === '' && empty($row->stats_in_db)) {
+            // Stats encore en JSON legacy : le type y dort — lecture
+            // directe (pas Item::get_data, dont le repli ÉCRIT un json).
+            $legacyJson = json()->decode('items', $row->name);
+            $type = is_object($legacyJson) ? (string) ($legacyJson->type ?? '') : '';
+        }
+        $typeCounts[$type] = ($typeCounts[$type] ?? 0) + 1;
         $statsBadge = !empty($row->stats_in_db)
             ? '<span class="badge badge-success" title="Stats en base — édition complète">BDD</span>'
             : '<span class="badge badge-secondary" title="Stats encore dans le JSON legacy — seed à rejouer, ou enregistrer ici pour basculer">JSON</span>';
@@ -98,9 +128,10 @@ function items_render_list(array $items): string
             }
         }
 
-        $rows .= '<tr>'
+        $rows[] = '<tr data-type="' . e($type) . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
+            . '<td>' . item_type_badge($type) . '</td>'
             . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
             . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
@@ -121,12 +152,58 @@ function items_render_list(array $items): string
         . ' présents dans <code>datas/*/items/</code> ont pu être recopiés ; en prod,'
         . ' <a href="/admin/item-seed.php">rejouer le seed</a> les basculera tous.'
         . ' Enregistrer un objet « JSON » depuis cette page fait aussi de la base sa source.</p>'
+        . items_type_filter_bar($typeCounts)
         . '<input type="text" class="form-control mb-2" id="items-filter" placeholder="filtrer…"'
-        . ' onkeyup="var q=this.value.toLowerCase();document.querySelectorAll(\'#items-table tbody tr\').forEach('
-        . 'function(tr){tr.style.display = tr.textContent.toLowerCase().indexOf(q) === -1 ? \'none\' : \'\';});">'
-        . '<div class="table-responsive"><table class="table table-sm table-striped align-middle" id="items-table">'
-        . '<thead><tr><th>Objet</th><th>Stats</th><th>Flags</th><th>Élément</th><th>Sort lié</th><th>Usure</th><th></th></tr></thead>'
-        . '<tbody>' . $rows . '</tbody></table></div>';
+        . ' onkeyup="itemsApplyFilters();">'
+        . renderTable(
+            ['Objet', 'Type', 'Stats', 'Flags', 'Élément', 'Sort lié', 'Usure', ''],
+            $rows,
+            'class="table table-sm table-striped align-middle" id="items-table"'
+        );
+}
+
+/**
+ * Barre de filtre par type : un bouton par type présent au catalogue
+ * (avec son compte), combinable avec la recherche texte — une seule
+ * fonction JS applique les deux critères.
+ *
+ * @param array<string, int> $typeCounts type => nombre d'objets
+ */
+function items_type_filter_bar(array $typeCounts): string
+{
+    ksort($typeCounts);
+
+    $buttons = '<button type="button" class="btn btn-sm btn-outline-dark active" data-type-filter="*">'
+        . 'Tous (' . array_sum($typeCounts) . ')</button>';
+    foreach ($typeCounts as $type => $count) {
+        // « Sans type » filtre sur la chaîne vide — distinct de « Tous » (*).
+        $buttons .= ' <button type="button" class="btn btn-sm btn-outline-dark" data-type-filter="' . e($type) . '">'
+            . ($type !== '' ? e(ucfirst($type)) : 'Sans type') . ' (' . $count . ')</button>';
+    }
+
+    $script = '<script>
+    /* Filtre combiné type + texte : chaque critère élimine, la ligne
+       survit si elle passe les deux. */
+    window.itemsTypeFilter = "*";
+    function itemsApplyFilters() {
+        var q = document.getElementById("items-filter").value.toLowerCase();
+        document.querySelectorAll("#items-table tbody tr").forEach(function (tr) {
+            var typeOk = window.itemsTypeFilter === "*" || tr.dataset.type === window.itemsTypeFilter;
+            var textOk = q === "" || tr.textContent.toLowerCase().indexOf(q) !== -1;
+            tr.style.display = (typeOk && textOk) ? "" : "none";
+        });
+    }
+    document.querySelectorAll("[data-type-filter]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            window.itemsTypeFilter = btn.dataset.typeFilter;
+            document.querySelectorAll("[data-type-filter]").forEach(function (b) { b.classList.remove("active"); });
+            btn.classList.add("active");
+            itemsApplyFilters();
+        });
+    });
+    </script>';
+
+    return '<div class="mb-2">' . $buttons . '</div>' . $script;
 }
 
 /**
@@ -176,12 +253,6 @@ function items_render_edit(object $row, string $csrfToken): string
           . ' environnement) — <b>enregistrer les stats ici fera de la base sa source</b>.'
           . ' En prod, rejouer le seed : <a href="/admin/item-seed.php">item-seed</a>.</div>'
         : '';
-
-    $emplacementOptions = renderSelectOptions(
-        array_combine(ITEM_EMPLACEMENT_FORMAT, ITEM_EMPLACEMENT_FORMAT),
-        ((string) ($row->emplacement ?? '')) !== '' ? (string) $row->emplacement : null,
-        '— aucun —'
-    );
 
     $caracInputs = '';
     foreach (\App\Enum\Caracs::KEYS as $k) {
@@ -246,86 +317,73 @@ function items_render_edit(object $row, string $csrfToken): string
     // POST vers action=create, pas de panneau d'images (elles portent le nom).
     $isNew = (int) $row->id === 0;
     $nameField = $isNew
-        ? '<div class="form-group"><label>Nom technique</label>'
-          . '<input type="text" class="form-control" name="new_name" required maxlength="255"'
-          . ' pattern="[a-z0-9_/-]+" placeholder="ex : hache_de_guerre">'
-          . '<small class="text-muted">Minuscules, chiffres, _ / - ; sert de clé pour les images'
-          . ' (img/items/{nom}_mini.webp) et les bundles.</small></div>'
+        ? formField('Nom technique',
+            formInput('new_name', '', 'required maxlength="255" pattern="[a-z0-9_/-]+" placeholder="ex : hache_de_guerre"'),
+            'form-group',
+            'Minuscules, chiffres, _ / - ; sert de clé pour les images (img/items/{nom}_mini.webp) et les bundles.')
         : '<input type="hidden" name="id" value="' . (int) $row->id . '">';
 
-    $body = '<form method="post" action="/admin/items-save.php?action=' . ($isNew ? 'create' : 'update') . '">'
-        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
-        . $nameField
-        . ($isNew ? '' : $notInDb . $imagesPanel)
-        . '<div class="row">'
+    $identite = '<h5>Identité</h5>'
+        . formField('Description', formTextarea('text', (string) ($row->text ?? ''), 5),
+            'form-group', 'Texte montré au joueur (aperçu d\'inventaire, marchand).')
+        . formField('Prix', formInput('price', (string) (int) ($row->price ?? 1), 'type="number" min="0"'),
+            'form-group', 'Prix de référence du marchand et des contrats.')
+        . formField('Type',
+            formInput('type', (string) ($row->type ?? ''),
+                'list="item-types" placeholder="equipement, consommable, ' . Item::TYPE_CONSTRUCTIBLE . '…"'),
+            'form-group',
+            'Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
+            . ' <b>consommable</b> se consomme (1 A),'
+            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b>/<b>' . Item::TYPE_STRUCTURE . '</b> se bâtit sur la carte.'
+            . ' Un objet sans usage (matériau…) a son bouton grisé en jeu.')
+        . renderDatalist('item-types', [
+            'equipement' => '', 'consommable' => '',
+            Item::TYPE_CONSTRUCTIBLE => '', Item::TYPE_STRUCTURE => '',
+        ])
+        . formField('Emplacement',
+            formSelect('emplacement',
+                array_combine(ITEM_EMPLACEMENT_FORMAT, ITEM_EMPLACEMENT_FORMAT),
+                ((string) ($row->emplacement ?? '')) !== '' ? (string) $row->emplacement : null,
+                '— aucun —'),
+            'form-group',
+            'Où l\'objet se porte — tout objet AVEC emplacement devient équipable, quel que soit son type.')
+        . formField('Sous-type',
+            formInput('subtype', (string) ($row->subtype ?? ''), 'placeholder="melee, tir, jet, walls, routes…"'),
+            'form-group',
+            'Catégorie d\'arme pour le combat (melee, tir, jet, bouclier) ou de pose carte (walls, routes…).')
+        . formField('Race (objet racial)', formInput('race', (string) ($row->race ?? '')),
+            'form-group', 'Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.');
 
-        . '<div class="col-md-3"><h5>Identité</h5>'
-        . '<div class="form-group"><label>Description</label>'
-        . '<textarea class="form-control" name="text" rows="5">' . e((string) ($row->text ?? '')) . '</textarea>'
-        . '<small class="text-muted">Texte montré au joueur (aperçu d\'inventaire, marchand).</small></div>'
-        . '<div class="form-group"><label>Prix</label>'
-        . '<input type="number" min="0" class="form-control" name="price" value="' . (int) ($row->price ?? 1) . '">'
-        . '<small class="text-muted">Prix de référence du marchand et des contrats.</small></div>'
-        . '<div class="form-group"><label>Type</label>'
-        . '<input type="text" class="form-control" name="type" list="item-types" value="' . e((string) ($row->type ?? '')) . '"'
-        . ' placeholder="equipement, consommable, ' . Item::TYPE_CONSTRUCTIBLE . '…">'
-        . '<small class="text-muted">Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
-        . ' <b>consommable</b> se consomme (1 A),'
-        . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b>/<b>' . Item::TYPE_STRUCTURE . '</b> se bâtit sur la carte.'
-        . ' Un objet sans usage (matériau…) a son bouton grisé en jeu.</small></div>'
-        . '<datalist id="item-types">'
-        . '<option value="equipement"><option value="consommable">'
-        . '<option value="' . Item::TYPE_CONSTRUCTIBLE . '"><option value="' . Item::TYPE_STRUCTURE . '">'
-        . '</datalist>'
-        . '<div class="form-group"><label>Emplacement</label>'
-        . '<select name="emplacement" class="form-control">' . $emplacementOptions . '</select>'
-        . '<small class="text-muted">Où l\'objet se porte — tout objet AVEC emplacement devient équipable,'
-        . ' quel que soit son type.</small></div>'
-        . '<div class="form-group"><label>Sous-type</label>'
-        . '<input type="text" class="form-control" name="subtype" value="' . e((string) ($row->subtype ?? '')) . '"'
-        . ' placeholder="melee, tir, jet, walls, routes…">'
-        . '<small class="text-muted">Catégorie d\'arme pour le combat (melee, tir, jet, bouclier)'
-        . ' ou de pose carte (walls, routes…).</small></div>'
-        . '<div class="form-group"><label>Race (objet racial)</label>'
-        . '<input type="text" class="form-control" name="race" value="' . e((string) ($row->race ?? '')) . '">'
-        . '<small class="text-muted">Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.</small></div>'
-        . '</div>'
-
-        . '<div class="col-md-3"><h5>Flags</h5>' . $flagBoxes
-        . '<div class="form-group mt-2"><label>Élément</label>'
-        . '<input type="text" class="form-control" name="element" value="' . e((string) $row->element) . '">'
-        . '<small class="text-muted">Élément porté par l\'objet (feu, eau…) — marque le nom et joue'
-        . ' avec les règles élémentaires.</small></div>'
-        . '<div class="form-group"><label>Sort lié</label>'
-        . '<input type="text" class="form-control" name="spell" value="' . e((string) $row->spell) . '">'
-        . '<small class="text-muted">Objet à sort intégré : le sort est affiché sur l\'objet'
-        . ' (l\'apprentissage des sorts passe par les écoles de guerre).</small></div>'
-        . '<div class="form-group"><label>Exotique (race)</label>'
-        . '<input type="text" class="form-control" name="exotique" value="' . e((string) $row->exotique) . '">'
-        . '<small class="text-muted">Code de race : SEULE cette race peut équiper l\'objet.</small></div>'
+    $flags = '<h5>Flags</h5>' . $flagBoxes
+        . formField('Élément', formInput('element', (string) $row->element),
+            'form-group mt-2', 'Élément porté par l\'objet (feu, eau…) — marque le nom et joue avec les règles élémentaires.')
+        . formField('Sort lié', formInput('spell', (string) $row->spell),
+            'form-group',
+            'Objet à sort intégré : le sort est affiché sur l\'objet'
+            . ' (l\'apprentissage des sorts passe par les écoles de guerre).')
+        . formField('Exotique (race)', formInput('exotique', (string) $row->exotique),
+            'form-group', 'Code de race : SEULE cette race peut équiper l\'objet.')
         . '<h5>Usure <small class="text-muted">(par tour)</small></h5>'
         . '<div class="form-group">' . $triggerBoxes . '</div>'
-        . '<div class="form-group"><label>Points perdus par tour armé</label>'
-        . '<input type="number" min="0" class="form-control" name="wear_rate" value="' . (int) $row->wear_rate . '">'
-        . '<small class="text-muted">0 = ne s\'use jamais.</small></div>'
-        . '<div class="form-group"><label>Durabilité max (vie de l\'objet)</label>'
-        . '<input type="number" min="1" class="form-control" name="durability_max" value="' . (int) ($row->durability_max ?? 100) . '">'
-        . '<small class="text-muted">Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.</small></div>'
-        . '</div>'
+        . formField('Points perdus par tour armé',
+            formInput('wear_rate', (string) (int) $row->wear_rate, 'type="number" min="0"'),
+            'form-group', '0 = ne s\'use jamais.')
+        . formField('Durabilité max (vie de l\'objet)',
+            formInput('durability_max', (string) (int) ($row->durability_max ?? 100), 'type="number" min="1"'),
+            'form-group', 'Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.');
 
-        . '<div class="col-md-3"><h5>Caractéristiques</h5>'
+    $caracsCol = '<h5>Caractéristiques</h5>'
         . '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
         . ' sur un <b>consommable</b>, quantités RENDUES à la consommation (PV, PM, MVT, A, AE).</p>'
-        . '<div class="row">' . $caracInputs . '</div></div>'
+        . '<div class="row">' . $caracInputs . '</div>';
 
-        . '<div class="col-md-3"><h5>Spéciaux</h5>'
+    $speciaux = '<h5>Spéciaux</h5>'
         . '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
         . ' PR / PF / Malus s\'appliquent aussi à la consommation.</p>'
         . '<div class="row">' . $specialInputs . '</div>'
-        . '<div class="form-group"><label>Munitions (noms, séparés par des virgules)</label>'
-        . '<input type="text" class="form-control" name="munitions" value="' . e($munitions) . '">'
-        . '<small class="text-muted">Arme de tir : les objets-munitions qu\'elle accepte.</small></div>'
+        . formField('Munitions (noms, séparés par des virgules)', formInput('munitions', $munitions),
+            'form-group', 'Arme de tir : les objets-munitions qu\'elle accepte.')
 
         . '<h5>À la consommation</h5>'
         . item_effect_multiselect('effets_appliques', $effectsApplied, 'Effets appliqués',
@@ -334,19 +392,27 @@ function items_render_edit(object $row, string $csrfToken): string
             'Purgés du buveur à la consommation (antidote…). Catalogue : admin → Effets.')
 
         . '<h5>JSON avancé</h5>'
-        . '<div class="form-group"><label>Effets d\'arme au coup porté (JSON)</label>'
-        . '<textarea class="form-control" name="add_effects" rows="2">' . e((string) ($row->add_effects ?? '')) . '</textarea>'
-        . '<small class="text-muted">Arme équipée : effets posés quand le coup touche —'
-        . ' <code>[{"name":"poison","on":"target","duration":86400}]</code>.</small></div>'
-        . '<div class="form-group"><label>Interdits (JSON)</label>'
-        . '<textarea class="form-control" name="forbid" rows="2">' . e((string) ($row->forbid ?? '')) . '</textarea>'
-        . '<small class="text-muted"><code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).</small></div>'
-        . '<div class="form-group"><label>Extra (JSON, clés héritées — sans perte)</label>'
-        . '<textarea class="form-control" name="extra" rows="2">' . e($extraDisplay) . '</textarea>'
-        . '<small class="text-muted">Clés historiques diverses, conservées telles quelles. Les effets de'
-        . ' consommation s\'éditent au-dessus, plus dans cette zone.</small></div>'
-        . '</div>'
+        . formField('Effets d\'arme au coup porté (JSON)',
+            formTextarea('add_effects', (string) ($row->add_effects ?? ''), 2),
+            'form-group',
+            'Arme équipée : effets posés quand le coup touche —'
+            . ' <code>[{"name":"poison","on":"target","duration":86400}]</code>.')
+        . formField('Interdits (JSON)', formTextarea('forbid', (string) ($row->forbid ?? ''), 2),
+            'form-group', '<code>{"market":1}</code> : invendable au marché et aux contrats (ex : l\'or).')
+        . formField('Extra (JSON, clés héritées — sans perte)', formTextarea('extra', $extraDisplay, 2),
+            'form-group',
+            'Clés historiques diverses, conservées telles quelles. Les effets de'
+            . ' consommation s\'éditent au-dessus, plus dans cette zone.');
 
+    $body = '<form method="post" action="/admin/items-save.php?action=' . ($isNew ? 'create' : 'update') . '">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . $nameField
+        . ($isNew ? '' : $notInDb . $imagesPanel)
+        . '<div class="row">'
+        . '<div class="col-md-3">' . $identite . '</div>'
+        . '<div class="col-md-3">' . $flags . '</div>'
+        . '<div class="col-md-3">' . $caracsCol . '</div>'
+        . '<div class="col-md-3">' . $speciaux . '</div>'
         . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
         . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'
