@@ -50,6 +50,20 @@ class PlayerMock implements ActorInterface
     return $this->effects[$name] ?? null;
   }
 
+  /** @return list<\App\Entity\PlayerEffect> même forme que Player::getEffects() */
+  public function getEffects(): array
+  {
+    $entries = [];
+    foreach ($this->effects as $name => $value) {
+      $entry = new \App\Entity\PlayerEffect();
+      $entry->setName((string) $name);
+      $entry->setValue((int) $value);
+      $entries[] = $entry;
+    }
+
+    return $entries;
+  }
+
   public function getId(): int {
     return $this->id;
   }

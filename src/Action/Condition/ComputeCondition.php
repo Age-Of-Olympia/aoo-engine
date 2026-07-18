@@ -68,17 +68,18 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
         );
 
         $bonus = (int) $conditionObject->getActorRollBonus();
-        $dexterite = (int) ($actor->getEffectValue("dexterite") ?: 0);
-        $maladresse = (int) ($actor->getEffectValue("maladresse") ?: 0);
+        // Modificateurs du jet d'attaque portés par les effets (catalogue :
+        // roll_attack_mod — ex-dexterite/maladresse codées en dur).
+        $mods = (new \App\Service\EffectService())->modifierContributions($actor->getEffects(), 'getRollAttackMod');
         $distanceMalus = $this->getDistanceMalus();
-        $total = array_sum($actorRoll->roll) + $bonus + $dexterite - $maladresse - $distanceMalus;
+        $total = array_sum($actorRoll->roll) + $bonus + $mods['pos'] - $mods['neg'] - $distanceMalus;
 
         $detail = new RollDetail(
             name: $actor->data->name,
             rollSum: array_sum($actorRoll->roll),
             bonus: $bonus,
-            positiveEffect: $dexterite,
-            negativeEffect: $maladresse,
+            positiveEffect: $mods['pos'],
+            negativeEffect: $mods['neg'],
             distanceMalus: $distanceMalus,
             total: $total,
             advantage: $actorRoll,
@@ -109,17 +110,18 @@ class ComputeCondition extends AbstractComputeCondition implements HasParameterS
             (bool) $conditionObject->getTargetDisadvantage()
         );
         $bonus = (int) $conditionObject->getTargetRollBonus();
-        $protection = (int) ($target->getEffectValue("protection") ?: 0);
-        $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
+        // Modificateurs du jet de défense portés par les effets (catalogue :
+        // roll_defense_mod — ex-protection/vulnerabilite codées en dur).
+        $mods = (new \App\Service\EffectService())->modifierContributions($target->getEffects(), 'getRollDefenseMod');
         $malus = (int) $target->data->malus;
-        $total = array_sum($targetRoll->roll) - $malus + $bonus + $protection - $vulnerabilite;
+        $total = array_sum($targetRoll->roll) - $malus + $bonus + $mods['pos'] - $mods['neg'];
 
         $detail = new RollDetail(
             name: $target->data->name,
             rollSum: array_sum($targetRoll->roll),
             bonus: $bonus,
-            positiveEffect: $protection,
-            negativeEffect: $vulnerabilite,
+            positiveEffect: $mods['pos'],
+            negativeEffect: $mods['neg'],
             malus: $malus,
             total: $total,
             advantage: $targetRoll,

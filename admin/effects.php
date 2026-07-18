@@ -43,7 +43,7 @@ function effect_flag_badges(Effect $effect): string
     return implode(' ', $badges);
 }
 
-/** Colonne « Modificateurs » : ±carac et contrôle élémentaire, compacts. */
+/** Colonne « Modificateurs » : caracs, combat, tour et annulations, compacts. */
 function effect_modifiers(Effect $effect): string
 {
     $parts = [];
@@ -52,6 +52,30 @@ function effect_modifiers(Effect $effect): string
     }
     if ($effect->getDebuffCarac() !== null) {
         $parts[] = '<span class="text-danger">−1 ' . e(strtoupper($effect->getDebuffCarac())) . '</span>';
+    }
+
+    foreach ([
+        'getRollAttackMod' => 'jet att.', 'getRollDefenseMod' => 'jet déf.',
+        'getDamageDealtMod' => 'dégâts', 'getDamageTakenMod' => 'dégâts subis',
+        'getPushAttackMod' => 'poussée', 'getPushDefenseMod' => 'poussée déf.',
+    ] as $getter => $short) {
+        $mod = $effect->{$getter}();
+        if ($mod !== 0) {
+            $parts[] = '<span class="' . ($mod > 0 ? 'text-success' : 'text-danger') . '">'
+                . ($mod > 0 ? '+' : '−') . 'valeur ' . e($short) . '</span>';
+        }
+    }
+    if ($effect->getDamageTakenFactor() != 1.0) {
+        $parts[] = '×' . e((string) $effect->getDamageTakenFactor()) . ' dégâts subis';
+    }
+    if ($effect->getBlockRecovery() !== '') {
+        $parts[] = 'bloque récup ' . e(strtoupper($effect->getBlockRecovery()));
+    }
+    if ($effect->isTurnRegen()) {
+        $parts[] = 'régén +RM';
+    }
+    if ($effect->isTurnMvtMalus()) {
+        $parts[] = '−valeur Mvt au tour';
     }
     if ($effect->getControlNames() !== []) {
         $parts[] = 'annule <code>' . implode('</code>, <code>', array_map('e', $effect->getControlNames())) . '</code>';
@@ -90,6 +114,17 @@ function effect_render_list(array $effects): string
         . '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Modificateurs</th>'
         . '<th title="Personnages portant actuellement cet effet">Porteurs</th><th></th>'
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
+}
+
+/**
+ * <select> d'un modificateur de combat (−1 / 0 / +1) : la contribution
+ * est multipliée par la valeur portée de l'effet.
+ */
+function effect_mod_select(string $fieldName, string $label, int $current, string $hint = ''): string
+{
+    return '<div class="form-group col-md-2 col-4"><label title="' . e($hint) . '">' . e($label) . '</label>'
+        . formSelect($fieldName, ['-1' => '−1 × valeur', '0' => '—', '1' => '+1 × valeur'], (string) $current)
+        . '</div>';
 }
 
 /** <select> d'une carac (buff/debuff), « — aucune — » compris. */
@@ -183,6 +218,35 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . '<small class="form-text text-muted">Poser cet effet retire chaque effet coché (eau éteint feu…) ;'
         . ' les deux tombent si la cible porte déjà un effet qui annule celui-ci.'
         . ' Ctrl+clic pour en choisir plusieurs.</small></div>'
+        . '</div></div></div>'
+
+        . '<div class="card mb-3"><div class="card-header">Combat</div><div class="card-body">'
+        . '<div class="row">'
+        . effect_mod_select('roll_attack_mod', 'Jet d\'attaque', $isEdit ? $effect->getRollAttackMod() : 0, 'Ex-dextérité (+1) / maladresse (−1)')
+        . effect_mod_select('roll_defense_mod', 'Jet de défense', $isEdit ? $effect->getRollDefenseMod() : 0, 'Ex-protection (+1) / vulnérabilité (−1)')
+        . effect_mod_select('damage_dealt_mod', 'Dégâts infligés', $isEdit ? $effect->getDamageDealtMod() : 0, 'Ex-agressivité (+1) / faiblesse (−1)')
+        . effect_mod_select('damage_taken_mod', 'Dégâts subis', $isEdit ? $effect->getDamageTakenMod() : 0, 'Ex-fragilité (+1) / armure (−1)')
+        . effect_mod_select('push_attack_mod', 'Poussée (att.)', $isEdit ? $effect->getPushAttackMod() : 0, 'Ex-renforcement (+1)')
+        . effect_mod_select('push_defense_mod', 'Poussée (déf.)', $isEdit ? $effect->getPushDefenseMod() : 0, 'Ex-stabilité (+1) / instabilité (−1)')
+        . '</div>'
+        . '<div class="row">'
+        . '<div class="form-group col-md-3"><label>Facteur sur les dégâts subis</label>'
+        . '<input type="number" class="form-control" name="damage_taken_factor" step="0.05" min="0.05" max="5" value="'
+        . e($isEdit ? rtrim(rtrim(number_format($effect->getDamageTakenFactor(), 2, '.', ''), '0'), '.') : '1') . '">'
+        . '<small class="form-text text-muted">1 = neutre ; 0.75 = encaisse (les facteurs portés se multiplient, minimum 1 dégât).</small></div>'
+        . '</div>'
+        . '</div></div>'
+
+        . '<div class="card mb-3"><div class="card-header">Au nouveau tour</div><div class="card-body"><div class="row">'
+        . '<div class="form-group col-md-3"><label>Bloque la récupération</label>'
+        . formSelect('block_recovery', ['pv' => 'PV (ex-poison)', 'pm' => 'PM (ex-poison magique)'], $isEdit ? $effect->getBlockRecovery() : '', '— non —')
+        . '<small class="form-text text-muted">La récup de la carac tombe à zéro, l\'effet expire. Prime sur la régénération.</small></div>'
+        . '<div class="form-group col-md-3"><label>Régénération</label><div>'
+        . '<label><input type="checkbox" name="turn_regen" ' . checked($isEdit && $effect->isTurnRegen())
+        . '> La récup PV gagne +RM, l\'effet expire</label></div></div>'
+        . '<div class="form-group col-md-3"><label>Malus de mouvement</label><div>'
+        . '<label><input type="checkbox" name="turn_mvt_malus" ' . checked($isEdit && $effect->isTurnMvtMalus())
+        . '> Retire sa valeur en Mvt au tour suivant</label></div></div>'
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Corruption</div><div class="card-body"><div class="row">'

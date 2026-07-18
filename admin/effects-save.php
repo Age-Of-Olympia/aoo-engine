@@ -92,6 +92,17 @@ $applyForm = static function (Effect $effect): void {
     $effect->setBuffCarac(trim((string) ($_POST['buff_carac'] ?? '')));
     $effect->setDebuffCarac(trim((string) ($_POST['debuff_carac'] ?? '')));
 
+    foreach (['setRollAttackMod' => 'roll_attack_mod', 'setRollDefenseMod' => 'roll_defense_mod',
+              'setDamageDealtMod' => 'damage_dealt_mod', 'setDamageTakenMod' => 'damage_taken_mod',
+              'setPushAttackMod' => 'push_attack_mod', 'setPushDefenseMod' => 'push_defense_mod'] as $setter => $field) {
+        $effect->{$setter}(max(-1, min(1, (int) ($_POST[$field] ?? 0))));
+    }
+    $factor = (float) ($_POST['damage_taken_factor'] ?? 1);
+    $effect->setDamageTakenFactor($factor > 0 ? $factor : 1.0);
+    $effect->setBlockRecovery(trim((string) ($_POST['block_recovery'] ?? '')));
+    $effect->setTurnRegen(booleanCheckbox('turn_regen'));
+    $effect->setTurnMvtMalus(booleanCheckbox('turn_mvt_malus'));
+
     $breakChance = trim((string) ($_POST['corruption_break_chance'] ?? ''));
     $effect->setCorruptionBreakChance($breakChance === '' ? null : (int) $breakChance);
 };

@@ -44,6 +44,9 @@ class LifeLossExecuteCharacterizationTest extends TestCase
         $player->playerPassiveService = new PassiveServiceStub();
         $player->method('getId')->willReturn($id);
         $player->method('getEffectValue')->willReturn(0);
+        $player->method('getEffects')->willReturn([]);
+        // Simulé : la garde d'usure (WearService, DB) doit rester inerte ici.
+        $player->method('isSimulated')->willReturn(true);
         $player->method('getRemaining')->willReturn(99);
         $player->method('putBonus')->willReturnCallback(function ($bonus) use (&$bonusCapture) {
             $bonusCapture[] = $bonus;

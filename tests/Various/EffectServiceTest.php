@@ -91,6 +91,46 @@ class EffectServiceTest extends TestCase
         $this->assertSame(array_keys($materials), array_keys($chances));
     }
 
+    public function testCombatAndTurnBehaviorsMatchTheOldHardcodedRules(): void
+    {
+        $carry = static function (string $name, int $value = 1): \App\Entity\PlayerEffect {
+            $entry = new \App\Entity\PlayerEffect();
+            $entry->setName($name);
+            $entry->setValue($value);
+            return $entry;
+        };
+
+        // Jets : ex-dexterite/maladresse (attaque), protection/vulnerabilite (défense).
+        $mods = $this->service->modifierContributions([$carry('dexterite', 2), $carry('maladresse', 1)], 'getRollAttackMod');
+        $this->assertSame(2, $mods['pos']);
+        $this->assertSame(1, $mods['neg']);
+        $this->assertSame(['Dextérité'], $mods['posLabels']);
+
+        $mods = $this->service->modifierContributions([$carry('protection', 3)], 'getRollDefenseMod');
+        $this->assertSame(3, $mods['pos']);
+
+        // Dégâts : ex-agressivite/faiblesse, fragilite/armure, encaisse ×0.75.
+        $mods = $this->service->modifierContributions([$carry('agressivite', 2)], 'getDamageDealtMod');
+        $this->assertSame(2, $mods['pos']);
+        $mods = $this->service->modifierContributions([$carry('armure', 2)], 'getDamageTakenMod');
+        $this->assertSame(2, $mods['neg']);
+        $this->assertSame(0.75, $this->service->damageTakenFactor([$carry('encaisse')]));
+        $this->assertSame(1.0, $this->service->damageTakenFactor([$carry('feu')]));
+
+        // Poussées : ex-renforcement / stabilite / instabilite.
+        $this->assertSame(1, $this->service->modifierContributions([$carry('renforcement')], 'getPushAttackMod')['pos']);
+        $this->assertSame(1, $this->service->modifierContributions([$carry('instabilite')], 'getPushDefenseMod')['neg']);
+
+        // Tour : poison bloque la récup PV, poison_magique la récup PM,
+        // regeneration régénère, ralentissement retire du Mvt.
+        $blockers = $this->service->turnEffects([$carry('poison'), $carry('regeneration')], 'block_recovery', 'pv');
+        $this->assertCount(1, $blockers);
+        $this->assertSame('poison', $blockers[0]->getName());
+        $this->assertSame([], $this->service->turnEffects([$carry('poison')], 'block_recovery', 'pm'));
+        $this->assertCount(1, $this->service->turnEffects([$carry('regeneration')], 'turn_regen'));
+        $this->assertCount(1, $this->service->turnEffects([$carry('ralentissement')], 'turn_mvt_malus'));
+    }
+
     public function testMapMarkersAreExcludedFromGameplayLists(): void
     {
         $names = $this->service->getGameplayEffectNames();

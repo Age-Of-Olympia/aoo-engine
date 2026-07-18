@@ -29,18 +29,18 @@ class MeleeComputeCondition extends ComputeCondition implements DeclaresSimulati
             (bool) $conditionObject->getTargetDisadvantage()
         );
         $bonus = (int) $conditionObject->getTargetRollBonus();
-        $protection = (int) ($target->getEffectValue("protection") ?: 0);
-        $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
+        // Modificateurs du jet de défense portés par les effets (catalogue).
+        $mods = (new \App\Service\EffectService())->modifierContributions($target->getEffects(), 'getRollDefenseMod');
         $esquive = (int) ($target->caracs->esquive ?? 0);
         $malus = (int) $target->data->malus;
-        $total = array_sum($targetRoll->roll) - $malus + $bonus + $protection - $vulnerabilite + $esquive;
+        $total = array_sum($targetRoll->roll) - $malus + $bonus + $mods['pos'] - $mods['neg'] + $esquive;
 
         $detail = new RollDetail(
             name: $target->data->name,
             rollSum: array_sum($targetRoll->roll),
             bonus: $bonus,
-            positiveEffect: $protection,
-            negativeEffect: $vulnerabilite,
+            positiveEffect: $mods['pos'],
+            negativeEffect: $mods['neg'],
             malus: $malus,
             esquive: $esquive,
             total: $total,

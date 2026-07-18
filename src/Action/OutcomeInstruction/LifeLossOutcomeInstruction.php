@@ -61,11 +61,16 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $actorIgnore = $params['actorIgnore'] ?? false;
         $autoCrit = $params['autoCrit'] ?? false;
 
-        // Récupération des Effets
-        $actorEffetFaiblesse = $actor->getEffectValue("faiblesse");
-        $actorEffetAgressivite = $actor->getEffectValue("agressivite");
-        $targetEffetFragilite = $target->getEffectValue("fragilite");
-        $targetEffetArmure = $target->getEffectValue("armure");
+        // Modificateurs de dégâts portés par les effets (catalogue :
+        // damage_dealt_mod côté attaquant — ex-agressivite/faiblesse —,
+        // damage_taken_mod côté cible — ex-fragilite/armure).
+        $effectService = new \App\Service\EffectService();
+        $dealtMods = $effectService->modifierContributions($actor->getEffects(), 'getDamageDealtMod');
+        $takenMods = $effectService->modifierContributions($target->getEffects(), 'getDamageTakenMod');
+        $actorEffetAgressivite = $dealtMods['pos'];
+        $actorEffetFaiblesse = $dealtMods['neg'];
+        $targetEffetFragilite = $takenMods['pos'];
+        $targetEffetArmure = $takenMods['neg'];
 
         if ($targetIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
@@ -125,14 +130,16 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                     $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = '<font color="red">Critique ! Dégâts augmentés ! +3 !</font>';
             }
     
-            //TANK ?
-            if($target->getEffectValue("encaisse") > 0){
-                $encaisse = true;
+            //TANK ? (facteur sur les dégâts subis — catalogue, ex-encaisse ;
+            // $encaisse peut déjà venir d'un PASSIF, qui garde son 0.75)
+            $takenFactor = $effectService->damageTakenFactor($target->getEffects());
+            $beforeEncaisseDmg = $totalDamages;
+            if($takenFactor >= 1 && $encaisse){
+                $takenFactor = 0.75;
             }
-
-            if($encaisse){
-                $beforeEncaisseDmg = $totalDamages;
-                $totalDamages = $this->computeDamageTaken((int) $totalDamages);
+            if($takenFactor < 1){
+                $encaisse = true;
+                $totalDamages = $this->computeDamageTaken((int) $totalDamages, $takenFactor);
             }
             $target->putBonus(array('pv'=>-$totalDamages));
 
@@ -188,16 +195,16 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                 $bonusDefenseText = ' + ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
             }
             if($actorEffetAgressivite > 0){
-                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agressivité)';
+                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (' . implode(' + ', $dealtMods['posLabels']) . ')';
             }
             if($actorEffetFaiblesse > 0){
-                $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (Faiblesse)';
+                $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (' . implode(' + ', $dealtMods['negLabels']) . ')';
             }
             if($targetEffetFragilite > 0){
-                $fragiliteDamagesText = ' + ' . $targetEffetFragilite . ' (Fragilité)';
+                $fragiliteDamagesText = ' + ' . $targetEffetFragilite . ' (' . implode(' + ', $takenMods['posLabels']) . ')';
             }
             if($targetEffetArmure > 0){
-                $armureDamagesText = ' - ' . $targetEffetArmure . ' (Armure)';
+                $armureDamagesText = ' - ' . $targetEffetArmure . ' (' . implode(' + ', $takenMods['negLabels']) . ')';
             }
             $distanceText = "";
             if ($distanceInfluence) {
@@ -294,9 +301,9 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         return [$othersDefense, $encaisse];
     }
 
-    public function computeDamageTaken(int $damage): int
+    public function computeDamageTaken(int $damage, float $factor = 0.75): int
     {
-        return max(1, (int) floor($damage * 0.75));
+        return max(1, (int) floor($damage * $factor));
     }
 
     public function computeRecoverMalus(int $damage): int

@@ -2565,9 +2565,11 @@ class Player implements ActorInterface {
         $att = $this->caracs->f;
         $def = max($target->caracs->e + 4,$target->caracs->agi);
         $pv = floor($target->getRemaining('pv')/10);
-        $renforcement = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($this->getId(),"renforcement");
-        $stabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"stabilite");
-        $instabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"instabilite");
-        return $att + $renforcement >= $def + $pv + $stabilite - $instabilite;
+        // Modificateurs de poussée portés par les effets (catalogue :
+        // push_attack_mod / push_defense_mod — ex-renforcement,
+        // stabilite, instabilite codés en dur).
+        $attMods = $this->effectService->modifierContributions($this->getEffects(), 'getPushAttackMod');
+        $defMods = $this->effectService->modifierContributions($target->getEffects(), 'getPushDefenseMod');
+        return $att + $attMods['pos'] - $attMods['neg'] >= $def + $pv + $defMods['pos'] - $defMods['neg'];
     }
 }

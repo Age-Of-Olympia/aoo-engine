@@ -185,6 +185,92 @@ class EffectService
         return $map;
     }
 
+    /**
+     * Contributions d'un modificateur de combat sur des effets PORTÉS
+     * (players_effects) : chaque effet contribue valeur × modificateur
+     * catalogue. Retourne les sommes positive et négative séparées avec
+     * les libellés contributeurs — le détail des jets et des dégâts les
+     * affiche de part et d'autre du calcul.
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     * @param string $getter getRollAttackMod | getRollDefenseMod |
+     *                       getDamageDealtMod | getDamageTakenMod |
+     *                       getPushAttackMod | getPushDefenseMod
+     * @return array{pos: int, neg: int, posLabels: string[], negLabels: string[]}
+     */
+    public function modifierContributions(iterable $carried, string $getter): array
+    {
+        $result = ['pos' => 0, 'neg' => 0, 'posLabels' => [], 'negLabels' => []];
+
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect === null) {
+                continue;
+            }
+
+            $contribution = $effect->{$getter}() * (int) ($playerEffect->getValue() ?? 1);
+            if ($contribution > 0) {
+                $result['pos'] += $contribution;
+                $result['posLabels'][] = $effect->getLabel();
+            } elseif ($contribution < 0) {
+                $result['neg'] += -$contribution;
+                $result['negLabels'][] = $effect->getLabel();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Facteur cumulé sur les dégâts subis (encaisse : ×0.75) — produit
+     * des facteurs des effets portés, 1.0 = neutre.
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     */
+    public function damageTakenFactor(iterable $carried): float
+    {
+        $factor = 1.0;
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect !== null) {
+                $factor *= $effect->getDamageTakenFactor();
+            }
+        }
+
+        return $factor;
+    }
+
+    /**
+     * Parmi des effets portés, ceux dont le comportement de tour matche —
+     * blocage de récupération d'une carac, régénération ou malus de
+     * mouvement (le moteur de tour les consomme).
+     *
+     * @param iterable<\App\Entity\PlayerEffect> $carried
+     * @return Effect[]
+     */
+    public function turnEffects(iterable $carried, string $behavior, string $carac = ''): array
+    {
+        $matching = [];
+        foreach ($carried as $playerEffect) {
+            $effect = $this->getEffectByName($playerEffect->getName());
+            if ($effect === null) {
+                continue;
+            }
+
+            $matches = match ($behavior) {
+                'block_recovery' => $effect->getBlockRecovery() === $carac,
+                'turn_regen' => $effect->isTurnRegen(),
+                'turn_mvt_malus' => $effect->isTurnMvtMalus(),
+                default => false,
+            };
+            if ($matches) {
+                $matching[] = $effect;
+            }
+        }
+
+        return $matching;
+    }
+
     /** @return Effect[] The whole catalog, map markers included (admin list). */
     public function getAllEffects(): array
     {

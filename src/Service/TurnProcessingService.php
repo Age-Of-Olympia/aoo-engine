@@ -127,11 +127,13 @@ class TurnProcessingService
         // Ae, A et Mvt repartent de zéro à chaque tour.
         $db->exe('DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","a","mvt")', $player->id);
 
-        if ($player->playerEffectService->hasEffectByPlayerIdByEffectName($player->id, 'ralentissement')) {
+        // Malus de mouvement au tour (catalogue : turn_mvt_malus,
+        // ex-ralentissement codé en dur) — la valeur portée fait le malus.
+        foreach ($player->effectService->turnEffects($player->getEffects(), 'turn_mvt_malus') as $effect) {
             $player->playerBonusService->setBonusByPlayerIdByName(
                 $player->id,
                 'mvt',
-                -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id, 'ralentissement')
+                -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id, $effect->getName())
             );
         }
 
@@ -194,24 +196,31 @@ class TurnProcessingService
     private function recoverCarac(Player $player, string $k, string $carac): ?array
     {
         $val = $player->caracs->$carac;
+        $carried = $player->getEffects();
 
-        if ($k == 'pm' && $player->have_effect('poison_magique')) {
-            $player->end_effect('poison_magique');
+        // Blocage de récupération (catalogue : block_recovery, ex-poison
+        // pour les PV / poison_magique pour les PM) : la récup tombe à
+        // zéro et l'effet expire. Le blocage PRIME sur la régénération.
+        if (in_array($k, ['pv', 'pm'], true)) {
+            foreach ($player->effectService->turnEffects($carried, 'block_recovery', $k) as $blocker) {
+                $player->end_effect($blocker->getName());
 
-            return [$k, CARACS[$k], '+0 (<span class="ra ' . $player->effectService->getIcon('poison_magique') . '"></span> Poison Magique)'];
+                // Le pv historique avait une espace après le + ('+ 0').
+                $plus = $k === 'pv' ? '+ 0' : '+0';
+
+                return [$k, CARACS[$k], $plus . ' (<span class="ra ' . $blocker->getIcon() . '"></span> ' . $blocker->getLabel() . ')'];
+            }
         }
 
-        if ($k == 'pv' && $player->have_effect('poison')) {
-            $player->end_effect('poison');
+        // Régénération (catalogue : turn_regen) : la récup PV du tour
+        // gagne +RM et l'effet expire.
+        if ($k == 'pv') {
+            foreach ($player->effectService->turnEffects($carried, 'turn_regen') as $regen) {
+                $player->end_effect($regen->getName());
+                $val += $player->caracs->rm;
 
-            return [$k, CARACS[$k], '+ 0 (<span class="ra ' . $player->effectService->getIcon('poison') . '"></span> Poison)'];
-        }
-
-        if ($k == 'pv' && $player->have_effect('regeneration')) {
-            $player->end_effect('regeneration');
-            $val += $player->caracs->rm;
-
-            return [$k, CARACS[$k], '+' . $val . ' (<span class="ra ' . $player->effectService->getIcon('regeneration') . '"></span> Régénération)'];
+                return [$k, CARACS[$k], '+' . $val . ' (<span class="ra ' . $regen->getIcon() . '"></span> ' . $regen->getLabel() . ')'];
+            }
         }
 
         if ($k == 'a') {

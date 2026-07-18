@@ -80,6 +80,49 @@ class Effect
     private ?int $corruptionBreakChance = null;
 
     /**
+     * Modificateurs de combat, multipliés par la VALEUR portée
+     * (players_effects.value) : dexterite(+2) ajoute 2 au jet d'attaque.
+     * -1, 0 ou +1.
+     */
+    #[ORM\Column(type: "smallint", options: ["default" => 0], name: "roll_attack_mod")]
+    private int $rollAttackMod = 0;
+
+    #[ORM\Column(type: "smallint", options: ["default" => 0], name: "roll_defense_mod")]
+    private int $rollDefenseMod = 0;
+
+    #[ORM\Column(type: "smallint", options: ["default" => 0], name: "damage_dealt_mod")]
+    private int $damageDealtMod = 0;
+
+    #[ORM\Column(type: "smallint", options: ["default" => 0], name: "damage_taken_mod")]
+    private int $damageTakenMod = 0;
+
+    #[ORM\Column(type: "smallint", options: ["default" => 0], name: "push_attack_mod")]
+    private int $pushAttackMod = 0;
+
+    #[ORM\Column(type: "smallint", options: ["default" => 0], name: "push_defense_mod")]
+    private int $pushDefenseMod = 0;
+
+    /** Facteur sur les dégâts subis (encaisse : 0.75) — 1 = neutre. */
+    #[ORM\Column(type: "float", options: ["default" => 1], name: "damage_taken_factor")]
+    private float $damageTakenFactor = 1.0;
+
+    /**
+     * Carac dont la récupération est bloquée au nouveau tour ('pv' pour
+     * le poison, 'pm' pour le poison magique) — l'effet expire en
+     * bloquant. '' = aucun blocage.
+     */
+    #[ORM\Column(type: "string", length: 4, options: ["default" => ""], name: "block_recovery")]
+    private string $blockRecovery = '';
+
+    /** Régénération : la récup PV du tour gagne +RM, l'effet expire. */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "turn_regen")]
+    private bool $turnRegen = false;
+
+    /** Au nouveau tour, retire sa valeur en mouvements (ralentissement). */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "turn_mvt_malus")]
+    private bool $turnMvtMalus = false;
+
+    /**
      * Map marker (trace_pas…) : transits through players_effects but is
      * no gameplay effect — excluded from admin dropdowns and sheets.
      */
@@ -190,6 +233,106 @@ class Effect
     public function setCorruptionBreakChance(?int $chance): void
     {
         $this->corruptionBreakChance = $chance;
+    }
+
+    public function getRollAttackMod(): int
+    {
+        return $this->rollAttackMod;
+    }
+
+    public function setRollAttackMod(int $mod): void
+    {
+        $this->rollAttackMod = $mod;
+    }
+
+    public function getRollDefenseMod(): int
+    {
+        return $this->rollDefenseMod;
+    }
+
+    public function setRollDefenseMod(int $mod): void
+    {
+        $this->rollDefenseMod = $mod;
+    }
+
+    public function getDamageDealtMod(): int
+    {
+        return $this->damageDealtMod;
+    }
+
+    public function setDamageDealtMod(int $mod): void
+    {
+        $this->damageDealtMod = $mod;
+    }
+
+    public function getDamageTakenMod(): int
+    {
+        return $this->damageTakenMod;
+    }
+
+    public function setDamageTakenMod(int $mod): void
+    {
+        $this->damageTakenMod = $mod;
+    }
+
+    public function getPushAttackMod(): int
+    {
+        return $this->pushAttackMod;
+    }
+
+    public function setPushAttackMod(int $mod): void
+    {
+        $this->pushAttackMod = $mod;
+    }
+
+    public function getPushDefenseMod(): int
+    {
+        return $this->pushDefenseMod;
+    }
+
+    public function setPushDefenseMod(int $mod): void
+    {
+        $this->pushDefenseMod = $mod;
+    }
+
+    public function getDamageTakenFactor(): float
+    {
+        return $this->damageTakenFactor;
+    }
+
+    public function setDamageTakenFactor(float $factor): void
+    {
+        $this->damageTakenFactor = $factor;
+    }
+
+    public function getBlockRecovery(): string
+    {
+        return $this->blockRecovery;
+    }
+
+    public function setBlockRecovery(string $carac): void
+    {
+        $this->blockRecovery = in_array($carac, ['pv', 'pm'], true) ? $carac : '';
+    }
+
+    public function isTurnRegen(): bool
+    {
+        return $this->turnRegen;
+    }
+
+    public function setTurnRegen(bool $turnRegen): void
+    {
+        $this->turnRegen = $turnRegen;
+    }
+
+    public function isTurnMvtMalus(): bool
+    {
+        return $this->turnMvtMalus;
+    }
+
+    public function setTurnMvtMalus(bool $turnMvtMalus): void
+    {
+        $this->turnMvtMalus = $turnMvtMalus;
     }
 
     public function isMapMarker(): bool
