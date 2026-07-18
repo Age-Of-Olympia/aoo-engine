@@ -2444,8 +2444,14 @@ class Player implements ActorInterface {
             unset($this->row->psw);
             unset($this->row->mail);
             unset($this->row->ip);
-            $pathInfo = pathinfo($this->row->portrait);
-            $this->row->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+            // Portrait vide (structure sans visuel, repli initiales au
+            // rendu) : pas de déclinaison _mini à dériver.
+            if ($this->row->portrait !== '' && $this->row->portrait !== null) {
+                $pathInfo = pathinfo($this->row->portrait);
+                $this->row->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+            } else {
+                $this->row->mini = '';
+            }
             $this->row->faction_img = 'img/factions/'. $this->row->faction .'.png';
             $this->row->faction_mini = 'img/factions/'. $this->row->faction .'_mini.png';
 

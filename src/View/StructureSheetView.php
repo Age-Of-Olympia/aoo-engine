@@ -57,6 +57,10 @@ final class StructureSheetView
 
         ob_start();
 
+        // Le HUD titre ses panneaux d'après l'URL (infos → « Personnage ») ;
+        // ce marqueur lui fait dire « Structure » pour cette fiche (js/hud.js).
+        echo '<div hidden data-panel-title="Structure"></div>';
+
         if (!$hudPanel) {
             echo '<div><a href="index.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
         }
@@ -66,8 +70,8 @@ final class StructureSheetView
         <tr>
             <td width="210" class="infos-portrait" valign="top">
                 <div style="position: relative; display: inline-block;">
-                    <img src="' . $entity->getPortrait() . '" style="max-width: 200px;" />
-                    ' . Ui::get_pv_veil($pvPct) . '
+                    <img src="' . self::portraitOrInitials($entity) . '" style="max-width: 200px;" />
+                    ' . Ui::get_pv_veil($pvPct, $race?->getWoundColor()) . '
                 </div>
             </td>
             <td valign="top" style="text-align: left; padding: 10px;">
@@ -146,7 +150,7 @@ final class StructureSheetView
             } else {
                 echo Ui::get_dialog($player, [
                     'name' => $entity->getName(),
-                    'avatar' => $entity->getPortrait(),
+                    'avatar' => self::portraitOrInitials($entity),
                     'dialog' => $details->getDialog(),
                     'text' => '',
                     'player' => $player,
@@ -156,5 +160,21 @@ final class StructureSheetView
         }
 
         echo \Classes\Str::minify(ob_get_clean());
+    }
+
+    /**
+     * Portrait de la structure, ou le même repli « initiales dans un
+     * cadre » que le damier quand elle n'a pas de visuel (SVG, propre
+     * à toute taille).
+     */
+    private static function portraitOrInitials(Structure $entity): string
+    {
+        $portrait = (string) $entity->getPortrait();
+
+        if ($portrait !== '' && file_exists($portrait)) {
+            return $portrait;
+        }
+
+        return \Classes\View::structureInitialsAvatar($entity->getName());
     }
 }

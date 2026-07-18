@@ -72,7 +72,7 @@ class UniqueObjectService extends BaseService
 
         $avatar = 'img/items/' . $row['catalog_name'] . '.webp';
         if (!is_file(dirname(__DIR__, 2) . '/' . $avatar)) {
-            $avatar = BuildingService::DEFAULT_IMAGE;
+            $avatar = BuildingService::NO_IMAGE;
         }
 
         $conn->transactional(function ($conn) use ($id, $displayId, $name, $avatar, $coordsId, $instanceId): void {

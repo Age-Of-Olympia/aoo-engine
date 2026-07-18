@@ -22,11 +22,11 @@ use Doctrine\ORM\EntityManagerInterface;
 class BuildingService extends BaseService
 {
     /**
-     * Tile/portrait image used when the type has no dedicated asset
-     * yet — an existing wall sprite, so a freshly placed building renders
-     * on the damier without any art step.
+     * Valeur d'avatar/portrait d'un type sans visuel dédié : vide — le
+     * rendu (View.php damier, StructureSheetView) dessine alors le repli
+     * « initiales dans un cadre » (View::structureInitialsAvatar).
      */
-    public const DEFAULT_IMAGE = 'img/walls/barricade.png';
+    public const NO_IMAGE = '';
 
     private EntityManagerInterface $entityManager;
     private RaceService $raceService;
@@ -80,7 +80,7 @@ class BuildingService extends BaseService
             }
         }
 
-        return $broken ? self::resolveAvatar($type) : self::DEFAULT_IMAGE;
+        return $broken ? self::resolveAvatar($type) : self::NO_IMAGE;
     }
 
     /**
