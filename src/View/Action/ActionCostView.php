@@ -33,10 +33,14 @@ final class ActionCostView
         foreach ($this->actionService->getCostParts(null, $action) as $part) {
             $text = htmlspecialchars($part['text'], ENT_QUOTES, 'UTF-8');
             $effect = $part['effect'] ?? null;
-            if ($effect !== null && isset(EFFECTS_RA_FONT[$effect])) {
+            if ($effect !== null && (new \App\Service\EffectService())->exists($effect)) {
                 // "(+1)" is the effect's stack count — show its icon, as the
                 // WarSchool legend does ("coûts basés sur l'Imposture").
-                $text = str_replace('(+1)', '(<i class="ra ' . EFFECTS_RA_FONT[$effect] . '"></i>+1)', $text);
+                $text = str_replace(
+                    '(+1)',
+                    '(<i class="ra ' . (new \App\Service\EffectService())->getIcon($effect) . '"></i>+1)',
+                    $text
+                );
             }
             $hex = self::TRAIT_COLORS[$part['trait']] ?? null;
             $spans[] = $hex !== null

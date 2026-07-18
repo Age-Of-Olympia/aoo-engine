@@ -81,6 +81,9 @@ class PlayerEntityDomainMethodsTest extends TestCase
             'player_id' => $this->playerId,
             'name'      => $name,
         ]);
+        // Le test « false » ci-dessus a déjà rempli le cache statique du
+        // service pour ce joueur — sans reset, le seed est invisible.
+        PlayerOptionsService::resetCache($this->playerId);
 
         try {
             $entity = $this->em->find(GameEntity::class, $this->playerId);
@@ -176,6 +179,7 @@ class PlayerEntityDomainMethodsTest extends TestCase
             'player_id' => $this->playerId,
             'name'      => $a,
         ]);
+        PlayerOptionsService::resetCache($this->playerId);
 
         try {
             $entity = $this->em->find(GameEntity::class, $this->playerId);
