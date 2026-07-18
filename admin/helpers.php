@@ -221,6 +221,12 @@ function selected(bool $condition): string
  * Pass $placeholder to prepend a disabled "-- Choose --" style option with
  * an empty value. $current is matched against keys (strict string compare).
  *
+ * Sentinelle : une valeur courante ABSENTE du catalogue d'options (entrée
+ * supprimée/renommée depuis l'enregistrement) est rendue comme option
+ * sélectionnée « ⚠ inconnue : x » au lieu de retomber en silence sur la
+ * première option — enregistrer sans toucher au champ n'écrase plus la
+ * valeur périmée, et l'admin la voit.
+ *
  * @param array<string,string> $options [value => label]
  * @param string|null $current Currently selected value (null = none)
  * @param string|null $placeholder Optional placeholder label (null = omit)
@@ -230,6 +236,9 @@ function renderSelectOptions(array $options, ?string $current = null, ?string $p
     $html = '';
     if ($placeholder !== null) {
         $html .= '<option value="">' . e($placeholder) . '</option>';
+    }
+    if ($current !== null && $current !== '' && !array_key_exists($current, $options)) {
+        $html .= '<option value="' . e($current) . '" selected>⚠ inconnue : ' . e($current) . '</option>';
     }
     foreach ($options as $value => $label) {
         $value = (string)$value;

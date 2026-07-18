@@ -67,6 +67,9 @@ class AdminMenuAccessService
         // (contenu de jeu éditable, suppression possible)
         'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
         'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
+        // Effets : catalogue de gameplay (icônes, buffs, corruptions) —
+        // même politique que races
+        'effects.php'              => ['Effets', 'Divers', self::LEVEL_SUPERADMIN],
         'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
         // Bâtiments : pose/retrait sur la carte — travail d'animation, même
         // niveau que les PNJ
@@ -86,6 +89,7 @@ class AdminMenuAccessService
         'dialog-seed.php'            => 'dialogs.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
+        'effects-save.php'           => 'effects.php',
         'factions-save.php'          => 'factions.php',
         'faction-seed.php'           => 'factions.php',
         'faction-members.php'        => 'factions.php',

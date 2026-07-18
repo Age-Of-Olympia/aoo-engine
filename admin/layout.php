@@ -121,6 +121,9 @@ function admin_layout($title, $content, array $assets = []) {
             ['races.php', 'Liste', '/admin/races.php'],
             ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
         ], $racePages),
+        $navGroup('Effets', [
+            ['effects.php', 'Liste', '/admin/effects.php'],
+        ], ['effects.php']),
         $navGroup('Factions', [
             ['factions.php', 'Liste', '/admin/factions.php'],
             ['faction-members.php', 'Membres', '/admin/faction-members.php'],
