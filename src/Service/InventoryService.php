@@ -133,7 +133,7 @@ class InventoryService
                             }
                             //ajout d'un effet
                             else {
-                                if (in_array($effet, EFFECTS_HIDDEN) || $effet == "poison" || $effet == "poison_magique") {
+                                if ($player->effectService->isHidden($effet) || $effet == "poison" || $effet == "poison_magique") {
 
                                     $player->add_effect($effet, 0);
                                 } else {

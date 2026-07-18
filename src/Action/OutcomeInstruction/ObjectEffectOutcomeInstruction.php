@@ -37,11 +37,11 @@ class ObjectEffectOutcomeInstruction extends OutcomeInstruction implements HasPa
                     switch ($e->on) {
                         case 'actor':
                             $actor->add_effect($e->name, $e->duration);
-                            $outcomeSuccessMessages[0] = 'L\'effet '.$e->name.' <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span> est appliqué '. $timeMessage.' à ' . $actor->data->name;
+                            $outcomeSuccessMessages[0] = 'L\'effet '.$e->name.' <span class="ra '. $actor->effectService->getIcon($e->name) .'"></span> est appliqué '. $timeMessage.' à ' . $actor->data->name;
                             break;
                         case 'target':
                             $target->add_effect($e->name, $e->duration);
-                            $outcomeSuccessMessages[0] = 'L\'effet '.$e->name.' <span class="ra '. EFFECTS_RA_FONT[$e->name] .'"></span> est appliqué '. $timeMessage.' à ' . $target->data->name;
+                            $outcomeSuccessMessages[0] = 'L\'effet '.$e->name.' <span class="ra '. $target->effectService->getIcon($e->name) .'"></span> est appliqué '. $timeMessage.' à ' . $target->data->name;
                             break;
                         
                         default:

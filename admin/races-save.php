@@ -92,7 +92,7 @@ $applyForm = static function (Race $race): string {
     $race->setStructureNature(($_POST['structure_nature'] ?? 'edifice') === 'obstacle' ? 'obstacle' : 'edifice');
     // Saignement : un élément de carte connu, ou rien.
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
-    $race->setBleeds($bleeds !== '' && isset(EFFECTS_RA_FONT[$bleeds]) ? $bleeds : '');
+    $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);

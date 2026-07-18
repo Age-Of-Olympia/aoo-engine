@@ -143,10 +143,11 @@ final class TopBarView
     private static function effectChips(Player $player): string
     {
         $chips = '';
+        $effectService = new \App\Service\EffectService();
 
         foreach ((new PlayerEffectService())->getEffectsByPlayerId($player->id) as $effect) {
 
-            if (in_array($effect->getName(), EFFECTS_HIDDEN)) {
+            if ($effectService->isHidden($effect->getName())) {
                 continue;
             }
 
@@ -160,7 +161,7 @@ final class TopBarView
             }
 
             $title = ucfirst($effect->getName()) . ' (' . $effect->getValue() . ') · ' . $endTime;
-            $icon = EFFECTS_RA_FONT[$effect->getName()] ?? 'ra-fairy-wand';
+            $icon = $effectService->getIcon($effect->getName());
 
             $chips .= '<span class="hud-pill hud-pill--effect" title="' . htmlspecialchars($title, ENT_QUOTES) . '">'
                 . '<span class="ra ' . $icon . '"></span>'

@@ -91,7 +91,7 @@ foreach($playersTbl as $pnj){
             $endTime = '∞';
         }
 
-        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span> <sup>'. $endTime .'</sup>';
+        $effectsTbl[] = '<span class="ra '. (new \App\Service\EffectService())->getIcon($effect->getName()) .'"></span> <sup>'. $endTime .'</sup>';
     }
     
     $raceJson = $raceService->getRaceData($pnj->data->race);

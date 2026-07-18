@@ -25,12 +25,6 @@ class ApplyStatusCategoryGateTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!defined('EFFECTS_HIDDEN')) {
-            define('EFFECTS_HIDDEN', []);
-        }
-        if (!defined('EFFECTS_RA_FONT')) {
-            define('EFFECTS_RA_FONT', ['adrenaline' => 'ra-lightning', 'feu' => 'ra-fire']);
-        }
         $this->applied = [];
         $this->ended = [];
     }

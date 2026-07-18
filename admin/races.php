@@ -68,16 +68,18 @@ function race_character_counts(array $counts): string
  */
 /**
  * Éléments de carte utilisables comme saignement : image dans
- * img/elements + entrée EFFECTS_RA_FONT (exigence d'Element::put).
+ * img/elements + entrée au catalogue des effets (exigence d'Element::put).
  *
  * @return array<string, string>
  */
 function bleed_options(): array
 {
+    $effectService = new \App\Service\EffectService();
+
     $out = [];
     foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
         $name = pathinfo($file, PATHINFO_FILENAME);
-        if (isset(EFFECTS_RA_FONT[$name])) {
+        if ($effectService->exists($name)) {
             $out[$name] = $name;
         }
     }

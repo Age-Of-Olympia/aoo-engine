@@ -11,6 +11,7 @@ use App\Service\PlayerService;
 use App\Service\MapService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
+use App\Service\EffectService;
 use App\Service\PlayerEffectService;
 use App\Service\PlayerBonusService;
 use App\Service\RaceService;
@@ -37,6 +38,7 @@ class Player implements ActorInterface {
     public $playerReductionPassiveService;
     public $playerPassiveService;
     public $playerEffectService;
+    public $effectService;
     public $playerBonusService;
     public $actionPassiveService;
     
@@ -50,6 +52,7 @@ class Player implements ActorInterface {
         $this->playerService = new PlayerService($playerId);
         $this->playerPassiveService = new PlayerPassiveService();
         $this->playerEffectService = new PlayerEffectService();
+        $this->effectService = new EffectService();
         $this->playerBonusService = new PlayerBonusService();
         $this->actionPassiveService = new ActionPassiveService();
 
@@ -279,23 +282,26 @@ class Player implements ActorInterface {
         $this->debuffs = (object) array();
         $this->buffs = (object) array();
 
+        $debuffCaracs = $this->effectService->getDebuffCaracs();
+        $buffCaracs = $this->effectService->getBuffCaracs();
+
         foreach($effectsList as $e){
 
 
-            if(!empty(ELE_DEBUFFS[$e->getName()])){
+            if(!empty($debuffCaracs[$e->getName()])){
 
 
-                $this->caracs->{ELE_DEBUFFS[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
+                $this->caracs->{$debuffCaracs[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
 
-                $this->debuffs->{ELE_DEBUFFS[$e->getName()]} = $e->getName();
+                $this->debuffs->{$debuffCaracs[$e->getName()]} = $e->getName();
             }
 
-            if(!empty(ELE_BUFFS[$e->getName()])){
+            if(!empty($buffCaracs[$e->getName()])){
 
 
-                $this->caracs->{ELE_BUFFS[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
+                $this->caracs->{$buffCaracs[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
 
-                $this->buffs->{ELE_BUFFS[$e->getName()]} = $e->getName();
+                $this->buffs->{$buffCaracs[$e->getName()]} = $e->getName();
             }
         }
 
@@ -637,31 +643,29 @@ class Player implements ActorInterface {
         $this->playerEffectService->addEffectByPlayerId($this->id,$name,$endTime,$value, $stackable);
 
         // effect exists
-        if(!isset(EFFECTS_RA_FONT[$name])){
+        if(!$this->effectService->exists($name)){
 
             exit('error effect name');
         }
 
-        // element control
-        if(!empty(ELE_CONTROLS[$name])){
+        // Annulations (ex-cycle élémentaire, désormais des listes) :
+        // poser cet effet retire chaque effet qu'il annule ; s'il porte
+        // déjà un effet qui L'annule, les deux tombent.
+        foreach($this->effectService->getControlledEffects($name) as $controlled){
 
-            if($this->have_effect(ELE_CONTROLS[$name])){
+            if($this->have_effect($controlled)){
 
-                $this->end_effect(ELE_CONTROLS[$name]);
-
-                // echo '<script>alert("'. ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'");document.location.reload();</script>';
+                $this->end_effect($controlled);
             }
+        }
 
-            if(!empty(ELE_IS_CONTROLED[$name])){
+        foreach($this->effectService->getControllersOf($name) as $controller){
 
+            if($this->have_effect($controller)){
 
-                if($this->have_effect(ELE_IS_CONTROLED[$name])){
-
-                    $this->end_effect(ELE_IS_CONTROLED[$name]);
-                    $this->end_effect($name);
-
-                    // echo '<script>alert("'. ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent!");document.location.reload();</script>';
-                }
+                $this->end_effect($controller);
+                $this->end_effect($name);
+                break;
             }
         }
     }

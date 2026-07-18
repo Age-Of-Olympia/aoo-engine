@@ -79,7 +79,7 @@ class TurnProcessingService
             $nextTurnTime += 86400 - (($player->caracs->spd - 10) * 3600);
         }
 
-        foreach (EFFECTS_HIDDEN as $effect) {
+        foreach ($player->effectService->getHiddenNames() as $effect) {
             $player->end_effect($effect);
         }
 
@@ -198,20 +198,20 @@ class TurnProcessingService
         if ($k == 'pm' && $player->have_effect('poison_magique')) {
             $player->end_effect('poison_magique');
 
-            return [$k, CARACS[$k], '+0 (<span class="ra ' . EFFECTS_RA_FONT['poison_magique'] . '"></span> Poison Magique)'];
+            return [$k, CARACS[$k], '+0 (<span class="ra ' . $player->effectService->getIcon('poison_magique') . '"></span> Poison Magique)'];
         }
 
         if ($k == 'pv' && $player->have_effect('poison')) {
             $player->end_effect('poison');
 
-            return [$k, CARACS[$k], '+ 0 (<span class="ra ' . EFFECTS_RA_FONT['poison'] . '"></span> Poison)'];
+            return [$k, CARACS[$k], '+ 0 (<span class="ra ' . $player->effectService->getIcon('poison') . '"></span> Poison)'];
         }
 
         if ($k == 'pv' && $player->have_effect('regeneration')) {
             $player->end_effect('regeneration');
             $val += $player->caracs->rm;
 
-            return [$k, CARACS[$k], '+' . $val . ' (<span class="ra ' . EFFECTS_RA_FONT['regeneration'] . '"></span> Régénération)'];
+            return [$k, CARACS[$k], '+' . $val . ' (<span class="ra ' . $player->effectService->getIcon('regeneration') . '"></span> Régénération)'];
         }
 
         if ($k == 'a') {

@@ -186,13 +186,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
-			count: 5
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Comparison operation "\<\=" between int\<1, 100\> and 0 is always false\.$#'
-			identifier: smallerOrEqual.alwaysFalse
-			count: 1
+			count: 4
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
@@ -230,6 +224,18 @@ parameters:
 			identifier: constant.notFound
 			count: 1
 			path: src/Entity/EntityManagerFactory.php
+
+		-
+			message: '#^Property App\\Entity\\Effect\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Effect.php
+
+		-
+			message: '#^Property App\\Entity\\EffectNameListEntry\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/EffectNameListEntry.php
 
 		-
 			message: '#^Property App\\Entity\\Faction\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'

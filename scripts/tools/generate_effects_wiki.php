@@ -2,17 +2,20 @@
 
 echo '<textarea style="width: 100vw; height: 50vw;">';
 
-$effects = EFFECTS_TXT;
+$effects = (new \App\Service\EffectService())->getAllEffects();
 
-sort($effects);
+usort($effects, static fn ($a, $b) => strcmp($a->getLabel(), $b->getLabel()));
 
-foreach($effects as $e){
+foreach($effects as $effect){
 
-    $txt = explode('<br />', $e);
+    if($effect->isMapMarker() || $effect->getDescription() === ''){
+
+        continue;
+    }
 
 echo '
-===== '. $txt[0] .' =====
-'. $txt[1] .'';
+===== '. $effect->getLabel() .' =====
+'. $effect->getDescription() .'';
 
 }
 

@@ -79,10 +79,11 @@ final class InfosSheetView
             echo '<div class="infos-effects">';
 
             $playerEffects = $playerEffectService->getEffectsByPlayerId($targetEntity->getId());
+            $effectService = new \App\Service\EffectService();
 
             foreach ($playerEffects as $effect) {
 
-                if (in_array($effect->getName(), EFFECTS_HIDDEN)) {
+                if ($effectService->isHidden($effect->getName())) {
 
                     continue;
                 }
@@ -112,7 +113,7 @@ final class InfosSheetView
                     $endTime = '';
                 }
 
-                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '"><span class="ra ' . EFFECTS_RA_FONT[$effect->getName()] . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . '</span></a><br />';
+                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '"><span class="ra ' . $effectService->getIcon($effect->getName()) . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . '</span></a><br />';
             }
 
             echo '</div>';

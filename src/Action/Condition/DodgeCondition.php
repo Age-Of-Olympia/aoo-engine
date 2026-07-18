@@ -30,6 +30,10 @@ class DodgeCondition extends BaseCondition implements HasParameterSchema
         $errorMessages = array();
         $successMessages = array();
 
+        // $target peut être un SimulatedPlayer (ActorInterface) : le
+        // catalogue se lit par un service local, pas via la propriété Player.
+        $effectService = new \App\Service\EffectService();
+
         if($target->have_effect('parade')){
             $targetEffectName = 'parade';
             if(
@@ -43,7 +47,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchema
                 && $actor->emplacements->main1->data->subtype == 'melee'
             ){
                 $target->end_effect($targetEffectName);
-                $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à sa technique ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
+                $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à sa technique ! ('.$targetEffectName.' <span class="ra '. $effectService->getIcon($targetEffectName) .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
@@ -54,7 +58,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchema
             ){
                 $targetEffectName = 'leurre';
                 $target->end_effect($targetEffectName);
-                $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à un sort ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
+                $errorMessages[sizeof($errorMessages)] = $target->data->name .' pare votre attaque grâce à un sort ! ('.$targetEffectName.' <span class="ra '. $effectService->getIcon($targetEffectName) .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
@@ -63,7 +67,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchema
             $targetEffectName = 'dedoublement';
             $target->end_effect($targetEffectName);
             View::delete_double($target);
-            $errorMessages[sizeof($errorMessages)] = 'Vous avez attaqué un double de '. $target->data->name .'! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .')"></span>' ;
+            $errorMessages[sizeof($errorMessages)] = 'Vous avez attaqué un double de '. $target->data->name .'! ('.$targetEffectName.' <span class="ra '. $effectService->getIcon($targetEffectName) .')"></span>' ;
             $result = new ConditionResult(false, $successMessages, $errorMessages);
             $this->shouldRefresh = true;
         }
@@ -77,7 +81,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchema
             ){
                 $target->end_effect($targetEffectName);
                 $actor->putBonus(array('mvt'=>-$actor->getRemaining('mvt')));
-                $errorMessages[sizeof($errorMessages)] = $target->data->name .' vous fait une clé de bras et vous immobilise ! ('.$targetEffectName.' <span class="ra '. EFFECTS_RA_FONT[$targetEffectName] .'"></span>)' ;
+                $errorMessages[sizeof($errorMessages)] = $target->data->name .' vous fait une clé de bras et vous immobilise ! ('.$targetEffectName.' <span class="ra '. $effectService->getIcon($targetEffectName) .'"></span>)' ;
                 $result = new ConditionResult(false, $successMessages, $errorMessages);
             }
         }
@@ -94,7 +98,7 @@ class DodgeCondition extends BaseCondition implements HasParameterSchema
 
                 $target->go($goCoords);
 
-                $errorMessages[sizeof($errorMessages)] = $target->data->name .' esquive votre attaque avec un pas de côté ! <span class="ra ' . EFFECTS_RA_FONT[$targetEffectName] . '"></span>';
+                $errorMessages[sizeof($errorMessages)] = $target->data->name .' esquive votre attaque avec un pas de côté ! <span class="ra ' . $effectService->getIcon($targetEffectName) . '"></span>';
                 $result = new ConditionResult(false, $successMessages, $errorMessages);        
                 $this->shouldRefresh = true;
             }

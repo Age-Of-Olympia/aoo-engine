@@ -140,153 +140,12 @@ define('DAYS_OF_WEEK', array(
 ));
 /*
  * effects, elements
+ *
+ * Le catalogue des effets (icônes, libellés, effets cachés, buffs/debuffs,
+ * cycle élémentaire, corruptions et matériaux corruptibles) vit en base :
+ * tables `effects` et `effect_corruption_materials`, servies par
+ * App\Service\EffectService et éditées via admin/effects.php.
  */
-
-define('EFFECTS_RA_FONT', array(
-
-    'adrenaline'=>'ra-horn-call',
-
-    'feu'=>'ra-small-fire',     // e - 1
-    'eau'=>'ra-water-drop',     // mvt -1
-    'ronce'=>'ra-vine-whip',    // agi -1
-    'boue'=>'ra-shoe-prints',   // f -1
-    'diamant'=>'ra-sapphire',   // m -1
-
-    'styx'=>'ra-water-drop',     // mvt -1
-    'sang'=>'ra-gloop',         // fm -1
-    'lave'=>'ra-fire-bomb',     // a -1
-
-    'regeneration'=>'ra-health-increase',
-    'poison'=>'ra-bone-bite',
-    'poison_magique'=>'ra-bone-bite',
-
-    'parade'=>'ra-sword',
-    'pas_de_cote'=>'ra-player-dodge',
-    'cle_de_bras'=>'ra-bear-trap',
-    'leurre'=>'ra-lava',
-    'dedoublement'=>'ra-double-team',
-
-    'armure_rayonnante'=>'ra-sunbeams',
-    'berserker'=>'ra-monster-skull',
-    'endiamante'=>'ra-diamond',
-    'golconda'=>'ra-aware',
-    'martyr'=>'ra-player-shot',
-
-    'corruption_du_metal'=>'ra-biohazard',
-    'corruption_du_bronze'=>'ra-biohazard',
-    'corruption_du_bois'=>'ra-biohazard',
-    'corruption_du_plantes'=>'ra-biohazard',
-    'corruption_du_cuir'=>'ra-biohazard',
-
-    'vol'=>'ra-feather-wing',
-
-    //nouveaux effets buffs
-    'acuite_visuelle' => 'ra-eyeball',
-    'agressivite' => 'ra-dinosaur',
-    'armure' => 'ra-vest',
-    'dexterite' => 'ra-plain-dagger',
-    'discretion' => 'ra-player',
-    'encaisse' => 'ra-muscle-fat',
-    'leger' => 'ra-player',
-    'protection' => 'ra-shield',
-    'stabilite' => 'ra-boot-stomp',
-    'renforcement' => 'ra-lion',
-
-    //nouveaux effets buffs
-    'aveuglement' => 'ra-bleeding-eye',
-    'brulure' => 'ra-fire',
-    'faiblesse' => 'ra-player-pain',
-    'fragilite' => 'ra-broken-bottle',
-    'imposture' => 'ra-player-teleport',
-    'maladresse' => 'ra-cut-palm',
-    'ralentissement' => 'ra-snail',
-    'vulnerabilite' => 'ra-broken-shield',
-    'instabilite' => 'ra-falling',
-
-    //non utilisé mais necceesaire
-    'trace_pas'=> 'ra-footprint',
-    'trace_pas_ne'=> 'ra-footprint',
-    'trace_pas_n'=> 'ra-footprint',
-    'trace_pas_no'=> 'ra-footprint',
-    'trace_pas_e'=> 'ra-footprint',
-    'trace_pas_o'=> 'ra-footprint',
-    'trace_pas_se'=> 'ra-footprint',
-    'trace_pas_s'=> 'ra-footprint',
-    'trace_pas_so'=> 'ra-footprint'
-));
-
-
-define('EFFECTS_TXT', array(
-    'adrenaline'=>"Adrénaline<br />Empêche d'intéragir avec un Marchand.",
-    'eau'=>"Eau<br />Diminue les Mouvements de 1.",
-    'ronce'=>"Ronce<br />Diminue l'Agilité de 1.",
-    'boue'=>"Boue<br />Diminue la Force de 1.",
-    'diamant'=>"Diamant<br />Diminue la Magie de 1.",
-    'sang'=>"Sang<br />Diminue Force Mentale de 1.",
-    'lave'=>"Lave<br />Diminue les Actions de 1.",
-
-    'regeneration'=>"Regénération<br />Effet du sort Regénération.",
-    'poison_magique'=>"Poison Magique<br />Empêche la récupération magique au prochain tour.",
-
-    'corruption_du_metal'=>'Corruption du métal<br />Augmente le risque que le matériel contenant du métal (Bronze, Nickel) se casse.',
-    'corruption_du_bronze'=>'Corruption du Bronze<br />Augmente le risque que le matériel contenant du Bronze se casse.',
-    'corruption_du_bois'=>'Corruption du Bois<br />Augmente le risque que le matériel contenant du Bois (ou du Bois Pétrifié) se casse.',
-    'corruption_du_plantes'=>'Corruption des plantes<br />Augmente le risque que le matériel contenant des plantes (Adonis) se casse.',
-    'corruption_du_cuir'=>'Corruption du Cuir<br />Augmente le risque que le matériel contenant du Cuir se casse.',
-
-    'vol'=>"Vol<br />Permet de se déplacer dans les airs."
-));
-
-
-define('EFFECTS_HIDDEN', array( // these effects will be ended at a new turn or when used
-    'parade',
-    'leurre',
-    'dedoublement',
-    'cle_de_bras',
-    'pas_de_cote'
-));
-
-
-define('ELE_DEBUFFS', array(
-    'feu'=>'e',
-    'eau'=>'mvt',
-    'ronce'=>'agi',
-    'boue'=>'f',
-    'diamant'=>'m',
-    'aveuglement' => 'p',
-
-    'styx'=>'mvt',
-    'sang'=>'fm',
-    'lave'=>'a',
-));
-
-define('ELE_BUFFS', array(
-    'acuite_visuelle' => 'p',
-));
-
-define('ELE_CONTROLS', array(
-    'eau'=>'feu',
-    'feu'=>'diamant',
-    'diamant'=>'ronce',
-    'ronce'=>'boue',
-    'boue'=>'eau'
-));
-
-define('ELE_IS_CONTROLED', array(
-    'feu'=>'eau',
-    'diamant'=>'feu',
-    'ronce'=>'diamant',
-    'boue'=>'ronce',
-    'eau'=>'boue'
-));
-
-define('ELE_PROD', array(
-    'eau'=>'ronce',
-    'feu'=>'boue',
-    'diamant'=>'bois',
-    'ronce'=>'feu',
-    'boue'=>'diamant'
-));
 
 
 /*
@@ -442,32 +301,7 @@ define('ITEM_BREAK', 0); // 1% de break sur une attaque ou une défense
 
 define('ITEM_LIMIT', 3);
 
-define('ITEM_PLANTS', array(
-    'adonis',
-    'cafe',
-    'astral',
-    'houblon',
-    'lichen_sacre',
-    'lotus_noir',
-    'menthe',
-    'pavot'
-));
-
-define('ITEM_CORRUPTIONS', array(
-    'corruption_du_metal'=>array('bronze','nickel'),
-    'corruption_du_bronze'=>array('bronze'),
-    'corruption_du_bois'=>array('bois','bois_petrifie'),
-    'corruption_des_plantes'=>ITEM_PLANTS,
-    'corruption_du_cuir'=>array('cuir')
-));
-
-define('ITEM_CORRUPT_BREAKCHANCES', array(
-    'corruption_du_metal'=>0,
-    'corruption_du_bronze'=>0,
-    'corruption_du_bois'=>0,
-    'corruption_des_plantes'=>0,
-    'corruption_du_cuir'=>0
-));
+/* ITEM_PLANTS, ITEM_CORRUPTIONS et ITEM_CORRUPT_BREAKCHANCES : en base (effects.corruption_break_chance, effect_corruption_materials). */
 
 define('ITEMS_OPT', array(
     'enchanted'=>'*',

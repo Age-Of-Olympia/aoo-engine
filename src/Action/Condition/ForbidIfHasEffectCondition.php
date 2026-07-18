@@ -62,7 +62,7 @@ class ForbidIfHasEffectCondition extends BaseCondition implements HasParameterSc
     private function checkEffect(ActorInterface $player, string $effectName)
     {
         if ($player && $player->have_effect($effectName)) {
-            $this->errorMessage[sizeof($this->errorMessage)] = 'Un effet empêche l\'action : ' .$effectName. ' <span class="ra '. EFFECTS_RA_FONT[$effectName] .'"></span>' ;
+            $this->errorMessage[sizeof($this->errorMessage)] = 'Un effet empêche l\'action : ' .$effectName. ' <span class="ra '. (new \App\Service\EffectService())->getIcon($effectName) .'"></span>' ;
         }
     }
 }

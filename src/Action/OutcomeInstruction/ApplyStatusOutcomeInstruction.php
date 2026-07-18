@@ -63,7 +63,8 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult {
         $params =$this->getParameters();
         [$status, $apply] = $this->resolveEffect($params);
-        if (in_array($status, EFFECTS_HIDDEN)) {
+        $effectService = new \App\Service\EffectService();
+        if ($effectService->isHidden($status)) {
             $this->getOutcome()->getAction()->setHideOnSuccess(true);
         }
         $duration = $params['duration'] ?? 1;
@@ -97,6 +98,7 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
         // editor could otherwise smuggle markup into every player's combat log.
         $statusLabel = htmlspecialchars((string) $status, ENT_QUOTES, 'UTF-8');
         $valueLabel = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        $statusIcon = $effectService->getIcon($status);
 
         $outcomeSuccessMessages = array();
         switch ($player) {
@@ -108,29 +110,35 @@ class ApplyStatusOutcomeInstruction extends OutcomeInstruction implements HasPar
                     }
                 } elseif ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $actor->data->name;
+                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor->data->name);
                 }
                 break;
             case 'target':
                 if ($this->mayReceiveEffect($target, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target->data->name);
                 }
                 break;
             default:
                 if ($this->mayReceiveEffect($actor, $params, $apply)) {
                     $this->applyEffect($apply, $status, $duration, $value, $stackable, $actor);
-                    $outcomeSuccessMessages[0] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $actor->data->name;
+                    $outcomeSuccessMessages[0] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $actor->data->name);
                 }
 
             if ($target->data->name !== $actor->data->name && $this->mayReceiveEffect($target, $params, $apply)) {
                 $this->applyEffect($apply, $status, $duration, $value, $stackable, $target);
-                $outcomeSuccessMessages[1] = 'L\'effet '.$statusLabel.' <span class="ra '. EFFECTS_RA_FONT[$status] .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage. ' à ' . $target->data->name;
+                $outcomeSuccessMessages[1] = $this->appliedMessage($statusLabel, $statusIcon, $stackable, $valueLabel, $timeMessage, $target->data->name);
             }
             break;
         }
 
         return new OutcomeResult(true, outcomeSuccessMessages:$outcomeSuccessMessages, outcomeFailureMessages: array());
+    }
+
+    /** Le même message de succès servait les quatre cibles (acteur, cible, les deux). */
+    private function appliedMessage(string $statusLabel, string $statusIcon, bool $stackable, string $valueLabel, string $timeMessage, string $playerName): string
+    {
+        return 'L\'effet '.$statusLabel.' <span class="ra '. $statusIcon .'"></span> (' . ($stackable ? '+' : 'x') . $valueLabel .') est appliqué '. $timeMessage.' à ' . $playerName;
     }
 
     private function applyEffect (bool $apply, string $effectName, int $duration, int $value, bool $stackable, Player $player){

@@ -112,11 +112,11 @@ final class EntityCardView
 
         $name .= '<div class="effects">';
         foreach ($target->getEffects() as $effect) {
-            if (in_array($effect->getName(), EFFECTS_HIDDEN)) {
+            if ($target->effectService->isHidden($effect->getName())) {
                 continue;
             }
             $name .= ' <a href="infos.php?targetId=' . $target->id . '"><span class="ra '
-                . EFFECTS_RA_FONT[$effect->getName()] . '"></span></a>';
+                . $target->effectService->getIcon($effect->getName()) . '"></span></a>';
         }
 
         return $name . '</div>';

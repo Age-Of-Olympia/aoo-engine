@@ -22,7 +22,7 @@ use Classes\Db;
  * What's NOT in the nude path (stays on legacy
  * `Classes\Player::get_caracs()` until a future mini-phase):
  *   - equipped item bonuses (Item::get_equiped_list loop)
- *   - buff/debuff effects (ELE_BUFFS / ELE_DEBUFFS)
+ *   - buff/debuff effects (EffectService::getBuffCaracs/getDebuffCaracs)
  *   - turn bonuses from `players_bonus`
  *   - JSON cache writes to `datas/private/players/*.caracs.json`
  *

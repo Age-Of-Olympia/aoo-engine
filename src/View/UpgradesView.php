@@ -127,7 +127,7 @@ final class UpgradesView
 
             if (!empty($player->debuffs->$k)) {
 
-                $debuff = '<span class="ra ' . EFFECTS_RA_FONT[$player->debuffs->$k] . '"></span>';
+                $debuff = '<span class="ra ' . $player->effectService->getIcon($player->debuffs->$k) . '"></span>';
             }
 
             if ($hudPanel) {

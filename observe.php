@@ -99,9 +99,9 @@ if($res->num_rows){
                 Élement ('. $row->name .')<br />
                 ';
 
-                if(!empty(EFFECTS_RA_FONT[$row->name])){
+                if((new \App\Service\EffectService())->exists($row->name)){
 
-                    echo 'Effet: <span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span>';
+                    echo 'Effet: <span class="ra '. (new \App\Service\EffectService())->getIcon($row->name) .'"></span>';
                 }
                 else{
 

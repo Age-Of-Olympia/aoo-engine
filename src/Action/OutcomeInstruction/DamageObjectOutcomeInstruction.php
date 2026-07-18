@@ -74,19 +74,8 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
             case 'ATTACK':
                 $object = $player->emplacements->main1;
                 if($object->data->name != 'Poing' && !$object->row->enchanted){
-                    $breakChance = ITEM_BREAK;
-                    $corruptions = ITEM_CORRUPTIONS;
-                    $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
-                
-                    foreach($corruptions as $k=>$e){
-                        if($player->have_effect($k)){
-                            if($player->emplacements->main1->is_crafted_with($e)){
-                                $breakChance = $corruptBreakChance[$k];
-                                break;
-                            }
-                        }
-                    }
-                
+                    $breakChance = $this->getBreakChance($player, 'main1');
+
                     if(rand(1,100) <= $breakChance || AUTO_BREAK){
                         $player->equip($object);
                         $object->add_item($player, -1);
@@ -117,8 +106,9 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
     private function getBreakChance(ActorInterface $player, $equipmentToDamage)
     {
         $breakChance = ITEM_BREAK;
-        $corruptions = ITEM_CORRUPTIONS;
-        $corruptBreakChance = ITEM_CORRUPT_BREAKCHANCES;
+        $effectService = new \App\Service\EffectService();
+        $corruptions = $effectService->getCorruptionMaterials();
+        $corruptBreakChance = $effectService->getCorruptionBreakChances();
         foreach($corruptions as $k => $e){
             if($player->have_effect($k)){
                 if($player->emplacements->{$equipmentToDamage}->is_crafted_with($e)){
@@ -151,7 +141,7 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
 
     private function getRecipeElementBack(ActorInterface $actor, $object): string {
         $corrupted = array();
-        $corruptions = ITEM_CORRUPTIONS;
+        $corruptions = (new \App\Service\EffectService())->getCorruptionMaterials();
     
         foreach($corruptions as $k=>$e){
             if($actor->have_effect($k)){
@@ -165,8 +155,12 @@ class DamageObjectOutcomeInstruction extends OutcomeInstruction implements HasPa
         $recup = array();
         $recipe = $object->get_recipe();
 
-        foreach($corrupted as $e){
-            unset($recipe[$e]);
+        // $corrupted contient des LISTES de matériaux (une par corruption
+        // active) : chaque matériau corrompu est perdu, pas restitué.
+        foreach($corrupted as $materials){
+            foreach((array) $materials as $material){
+                unset($recipe[$material]);
+            }
         }
 
         foreach($recipe as $k=>$e){
