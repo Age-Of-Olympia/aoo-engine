@@ -182,7 +182,8 @@ class MagicView
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = RaceService::getRaceColor($passive->getRace());
                 $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
-                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passive->getRace());
+                $passiveRace = $passive->getRace();
+                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passiveRace);
 
                 $pRace = $passive->getRace();
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';

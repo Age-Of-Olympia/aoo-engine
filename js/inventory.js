@@ -63,9 +63,18 @@ $(document).ready(function(){
             return false;
         }
 
-        if(action == 'use' && window.type == 'structure'){
+        /* Constructibles (nouveau système) : bâtir DEPUIS l'objet — retour
+           au damier en mode choix de case (spotlight du tutoriel, voir
+           js/build_picker.js) ; l'action construire_{objet} est la
+           mécanique. */
+        if(action == 'use' && window.type == 'constructible'){
 
-            document.location = 'build.php?itemId='+ window.id;
+            sessionStorage.setItem('pendingBuild', JSON.stringify({
+                'action': window.buildAction,
+                'name': window.name
+            }));
+
+            document.location = 'index.php';
             return false;
         }
 
@@ -162,7 +171,7 @@ $(document).ready(function(){
                 $.ajax({
                     type: "POST",
                     url: 'inventory.php',
-                    data: {'action': action,'itemId': window.id,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
+                    data: {'action': action,'itemId': window.id,'instanceId': window.instanceId,'item': window.name,'n': n, 'price': window.price}, // serializes the form's elements.
                     success: function(data)
                     {
                         var contentData = $('<div></div>').html(data).find('#data');

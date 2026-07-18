@@ -1,0 +1,11 @@
+{
+    "id": 51,
+    "name": "Coffre en Bois Pétrifié",
+    "private": 0,
+    "price": 75,
+    "race": "elfe",
+    "type": "constructible",
+    "text": "Un coffre est un meuble fermé destiné à contenir ou protéger des objets, pouvant le cas échéant permettre leur transport.",
+    "img": "img/walls/coffre_bois_petrifie.png",
+    "mini": "img/walls/coffre_bois_petrifie.png"
+}

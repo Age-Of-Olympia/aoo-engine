@@ -77,49 +77,52 @@ foreach ($service->getAllFactions() as $faction) {
     $rolesByFaction[$faction->getCode()] = $faction->getRoleNames();
 }
 
-/** <select> de faction (option vide = sans faction). */
+/**
+ * <select> de faction (option vide = sans faction). Un code orphelin
+ * (faction supprimée / jamais cataloguée) est proposé quand même, marqué
+ * ⚠ par la sentinelle générique de renderSelectOptions.
+ */
 function member_faction_select(string $field, string $current, array $factionNames): string
 {
-    $options = '<option value="">— aucune —</option>';
+    $options = [];
     foreach ($factionNames as $code => $name) {
-        $options .= '<option value="' . e($code) . '"' . ($current === $code ? ' selected' : '') . '>'
-            . e($name) . ' (' . e($code) . ')</option>';
-    }
-    // Code orphelin (faction supprimée / jamais cataloguée) : proposé quand
-    // même, marqué, pour ne pas l'écraser silencieusement en ouvrant la page.
-    if ($current !== '' && !isset($factionNames[$current])) {
-        $options .= '<option value="' . e($current) . '" selected>⚠ ' . e($current) . ' (inconnue)</option>';
+        $options[$code] = $name . ' (' . $code . ')';
     }
 
-    return '<select class="form-control form-control-sm member-faction" name="' . e($field) . '"'
-        . ' data-role-target="' . e($field) . 'Role">' . $options . '</select>';
+    return formSelect(
+        $field,
+        $options,
+        $current !== '' ? $current : null,
+        '— aucune —',
+        'class="form-control form-control-sm member-faction" data-role-target="' . e($field) . 'Role"'
+    );
 }
 
 /** <select> de rôle pour la faction courante (index positionnel). */
 function member_role_select(string $field, string $factionCode, int $current, array $rolesByFaction): string
 {
-    $roles = $rolesByFaction[$factionCode] ?? [];
-    $options = '';
-    foreach ($roles as $position => $roleName) {
-        $options .= '<option value="' . $position . '"' . ($current === $position ? ' selected' : '') . '>'
-            . $position . ' — ' . e($roleName) . '</option>';
-    }
-    if ($factionCode !== '' && !isset($roles[$current])) {
-        $options .= '<option value="' . $current . '" selected>⚠ ' . $current . ' (hors limites)</option>';
-    }
     if ($factionCode === '') {
-        $options = '<option value="0" selected>—</option>';
+        return formSelect($field, ['0' => '—'], '0', null, 'class="form-control form-control-sm"');
     }
 
-    return '<select class="form-control form-control-sm" name="' . e($field) . '">' . $options . '</select>';
+    $roles = $rolesByFaction[$factionCode] ?? [];
+    $options = [];
+    foreach ($roles as $position => $roleName) {
+        $options[(string) $position] = $position . ' — ' . $roleName;
+    }
+    if (!isset($roles[$current])) {
+        // Hors limites (liste de rôles raccourcie) : sentinelle explicite,
+        // le libellé générique « inconnue » cacherait la nature du problème.
+        $options[(string) $current] = '⚠ ' . $current . ' (hors limites)';
+    }
+
+    return formSelect($field, $options, (string) $current, null, 'class="form-control form-control-sm"');
 }
 
 /* ---- Rendu --------------------------------------------------------------- */
-$filterOptions = '<option value="">Choisir un filtre…</option>'
-    . '<option value="__none__"' . ($factionFilter === '__none__' ? ' selected' : '') . '>Sans faction</option>';
+$filterChoices = ['__none__' => 'Sans faction'];
 foreach ($factionNames as $code => $name) {
-    $filterOptions .= '<option value="' . e($code) . '"' . ($factionFilter === $code ? ' selected' : '') . '>'
-        . e($name) . ' (' . e($code) . ')</option>';
+    $filterChoices[$code] = $name . ' (' . $code . ')';
 }
 
 $rows = '';
@@ -172,7 +175,7 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . '<a class="btn btn-sm btn-outline-secondary" href="/admin/factions.php">← Factions</a></div>'
 
     . '<form method="get" class="form-inline mb-3" style="gap: 8px;">'
-    . '<select class="form-control" name="faction">' . $filterOptions . '</select>'
+    . formSelect('faction', $filterChoices, $factionFilter !== '' ? $factionFilter : null, 'Choisir un filtre…')
     . '<input type="text" class="form-control" name="q" value="' . e($query) . '"'
     . ' placeholder="Nom ou matricule…">'
     . '<button type="submit" class="btn btn-outline-primary">Filtrer</button>'

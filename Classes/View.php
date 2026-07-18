@@ -205,11 +205,23 @@ class View{
             UNION
 
             SELECT
-            id, name, coords_id,
+            MIN(id) AS id, MIN(name) AS name, coords_id,
             "items" AS whichTable,
             96 AS tableOrder
             FROM
             map_items
+            WHERE
+            coords_id IN ('. $inSightIdImploded .')
+            GROUP BY coords_id
+
+            UNION
+
+            SELECT
+            MIN(instance_id) AS id, "bourse" AS name, coords_id,
+            "items" AS whichTable,
+            96 AS tableOrder
+            FROM
+            map_items_instances
             WHERE
             coords_id IN ('. $inSightIdImploded .')
             GROUP BY coords_id
@@ -321,13 +333,18 @@ class View{
                     $player = PlayerFactory::legacy((int) $row->id);
                     $player->get_data();
 
+                    // Les structures (bâtiments, objets uniques) font partie du
+                    // décor, comme les murs : toujours visibles, même quand la
+                    // visibilité des joueurs est coupée (plans isolés, tutoriel).
+                    $isStructure = in_array($player->data->player_type ?? 'real', ['building', 'unique'], true);
+
                     // Skip invisible players (except when viewing your own character)
-                    if ($row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
+                    if (!$isStructure && $row->id != $this->playerId && isset($invisiblePlayers[$row->id])) {
                         continue;
                     }
 
                     // Les joueurs normaux sont soumis aux règles de visibilité
-                    if ($this->playerId > 0) {
+                    if (!$isStructure && $this->playerId > 0) {
                         // Masquer les autres joueurs si :
                         // 1. Le JSON du plan n'existe pas OU
                         // 2. Le JSON du plan existe et player_visibility est explicitement défini sur false
@@ -339,6 +356,24 @@ class View{
                     // Les PNJs peuvent voir tout le monde, sans restriction de visibilité
 
                     $img = $player->data->avatar;
+
+                    // Structure sans visuel dédié : ses initiales dans un
+                    // cadre, dessinées au rendu — l'avatar est figé en base
+                    // à la pose, donc le repli doit vivre ici pour couvrir
+                    // aussi les bâtiments déjà posés.
+                    if($isStructure && (empty($img) || !file_exists($img))){
+
+                        $img = self::structureInitialsAvatar((string) $player->data->name);
+                    }
+
+                    /* Structure passable (table…) : marquée pour que le
+                     * bouton Aller reste offert sur sa case (js/view.js). */
+                    $passableAttr = '';
+                    if($isStructure && in_array((string) $player->data->race,
+                        (new \App\Service\RaceService())->getPassableStructureNames(), true)){
+
+                        $passableAttr = 'data-passable="1"';
+                    }
 
 
                     if(in_array('raceHint', $this->options)){
@@ -466,7 +501,7 @@ class View{
                             y="'. floor($y) .'"
 
                             href="'. $img .'"
-
+                            '. ($passableAttr ?? '') .'
                             class="avatar-shadow"
                             />
                         ';
@@ -499,7 +534,7 @@ class View{
                         y="'. floor($y) .'"
 
                         href="'. $img .'"
-                        '. $avatarClassAttr .'
+                        '. ($row->whichTable == 'players' ? ($passableAttr ?? '') : '') .' '. $avatarClassAttr .'
                         />
                     ';
                 }
@@ -1160,6 +1195,34 @@ class View{
 
 
         self::refresh_players_svg($coords);
+    }
+
+
+    /**
+     * Avatar de repli d'une structure sans visuel : ses deux premières
+     * lettres dans un cadre, en SVG inline (data-URI). Rester une URL
+     * d'image garde tout l'aval intact — le damier émet le même
+     * <image data-table="players"> (bouton Aller de js/view.js, ombre
+     * .avatar-shadow), et la fiche peut l'afficher en grand.
+     */
+    public static function structureInitialsAvatar(string $name): string{
+
+        $name = trim($name);
+        $initials = mb_strtoupper(mb_substr($name, 0, 1), 'UTF-8')
+            . mb_strtolower(mb_substr($name, 1, 1), 'UTF-8');
+
+        // width/height : les dimensions intrinsèques sont OBLIGATOIRES —
+        // sans elles, un <img> dans un conteneur shrink-to-fit (fiche)
+        // s'effondre à 0. Vectoriel : le damier le rend à 50px sans perte.
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 50 50">'
+            . '<rect x="2.5" y="2.5" width="45" height="45" rx="7" fill="#efe3c4" stroke="#5b4322" stroke-width="3"/>'
+            . '<rect x="7" y="7" width="36" height="36" rx="4" fill="none" stroke="#b39767" stroke-width="1.5"/>'
+            . '<text x="25" y="27" text-anchor="middle" dominant-baseline="central"'
+            . ' font-family="Georgia,serif" font-size="19" font-weight="bold" fill="#4a3115">'
+            . htmlspecialchars($initials, ENT_QUOTES, 'UTF-8')
+            . '</text></svg>';
+
+        return 'data:image/svg+xml;charset=utf-8,' . rawurlencode($svg);
     }
 
 

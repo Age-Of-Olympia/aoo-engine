@@ -28,6 +28,15 @@ class ActionCondition
     #[ORM\Column(type: "boolean")]
     private bool $blocking = false;
 
+    /**
+     * Contexte d'affichage : la condition gate AUSSI l'affichage du
+     * bouton dans le panneau d'observation (évaluée au rendu par
+     * ActionTargeting::matchesDisplayContext) — ex. RequiresDistance
+     * contextuelle = bouton visible seulement à portée.
+     */
+    #[ORM\Column(type: "boolean", name: "display_context", options: ["default" => false])]
+    private bool $displayContext = false;
+
     // -------------------------
     // Getters & Setters
     // -------------------------
@@ -95,6 +104,17 @@ class ActionCondition
     public function setBlocking(bool $blocking): self
     {
         $this->blocking = $blocking;
+        return $this;
+    }
+
+    public function isDisplayContext(): bool
+    {
+        return $this->displayContext;
+    }
+
+    public function setDisplayContext(bool $displayContext): self
+    {
+        $this->displayContext = $displayContext;
         return $this;
     }
 }

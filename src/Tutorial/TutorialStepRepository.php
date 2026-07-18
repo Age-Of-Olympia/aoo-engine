@@ -517,7 +517,7 @@ class TutorialStepRepository
         $hasContextFlags = $row['consume_movements'] || $row['unlimited_mvt'] || $row['unlimited_pa'];
 
         if (!empty($contextChanges) || $hasContextFlags) {
-            $config['context_changes'] = $contextChanges ?? [];
+            $config['context_changes'] = $contextChanges;
 
             // Add boolean flags from prerequisites table ONLY if not already in context_changes
             // Context changes table takes precedence over prerequisites table

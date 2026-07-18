@@ -221,6 +221,12 @@ function selected(bool $condition): string
  * Pass $placeholder to prepend a disabled "-- Choose --" style option with
  * an empty value. $current is matched against keys (strict string compare).
  *
+ * Sentinelle : une valeur courante ABSENTE du catalogue d'options (entrée
+ * supprimée/renommée depuis l'enregistrement) est rendue comme option
+ * sélectionnée « ⚠ inconnue : x » au lieu de retomber en silence sur la
+ * première option — enregistrer sans toucher au champ n'écrase plus la
+ * valeur périmée, et l'admin la voit.
+ *
  * @param array<string,string> $options [value => label]
  * @param string|null $current Currently selected value (null = none)
  * @param string|null $placeholder Optional placeholder label (null = omit)
@@ -230,6 +236,9 @@ function renderSelectOptions(array $options, ?string $current = null, ?string $p
     $html = '';
     if ($placeholder !== null) {
         $html .= '<option value="">' . e($placeholder) . '</option>';
+    }
+    if ($current !== null && $current !== '' && !array_key_exists($current, $options)) {
+        $html .= '<option value="' . e($current) . '" selected>⚠ inconnue : ' . e($current) . '</option>';
     }
     foreach ($options as $value => $label) {
         $value = (string)$value;
@@ -410,4 +419,104 @@ function render_season_filter(string $current): string
     $html .= '</form>';
 
     return $html;
+}
+
+/**
+ * Champ de formulaire Bootstrap : label + contrôle dans une cellule de
+ * grille — le composant de base des pages d'admin (revue 2026-07-18 :
+ * mutualiser plutôt que concaténer le même HTML dans chaque page).
+ */
+function formField(string $label, string $controlHtml, string $colClass = 'form-group', string $help = ''): string
+{
+    return '<div class="' . $colClass . '"><label>' . e($label) . '</label>'
+        . $controlHtml
+        . ($help !== '' ? '<small class="form-text text-muted">' . $help . '</small>' : '')
+        . '</div>';
+}
+
+/**
+ * <input> nommé, valeur échappée. $attrs porte le reste (type, min,
+ * pattern, placeholder…) — une classe fournie y REMPLACE la classe par
+ * défaut, même contrat que formSelect.
+ */
+function formInput(string $name, string $value = '', string $attrs = ''): string
+{
+    $typeAttr = str_contains($attrs, 'type=') ? '' : ' type="text"';
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="form-control"';
+
+    return '<input name="' . e($name) . '"' . $typeAttr . $classAttr
+        . ($attrs !== '' ? ' ' . $attrs : '') . ' value="' . e($value) . '">';
+}
+
+/** <textarea> nommé, contenu échappé. */
+function formTextarea(string $name, string $value = '', int $rows = 3, string $attrs = ''): string
+{
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="form-control"';
+
+    return '<textarea name="' . e($name) . '"' . $classAttr . ' rows="' . $rows . '"'
+        . ($attrs !== '' ? ' ' . $attrs : '') . '>' . e($value) . '</textarea>';
+}
+
+/**
+ * Case à cocher avec son libellé accolé (le libellé N'est PAS échappé :
+ * les appelants y mettent des précisions en gras — même contrat que les
+ * aides de formField).
+ */
+function formCheckbox(string $name, bool $checked, string $label, string $attrs = ''): string
+{
+    return '<label' . ($attrs !== '' ? ' ' . $attrs : '') . '><input type="checkbox" name="' . e($name) . '" '
+        . checked($checked) . '> ' . $label . '</label>';
+}
+
+/** Carte Bootstrap : en-tête (échappé) + corps déjà rendu. */
+function formCard(string $header, string $bodyHtml, string $cardClass = 'card mb-3'): string
+{
+    return '<div class="' . $cardClass . '"><div class="card-header">' . e($header) . '</div>'
+        . '<div class="card-body">' . $bodyHtml . '</div></div>';
+}
+
+/**
+ * <select> complet nommé, options via renderSelectOptions (source
+ * unique de l'échappement et de la sélection courante).
+ *
+ * @param array<int|string, string> $options value => label
+ */
+function formSelect(string $name, array $options, ?string $current = null, ?string $placeholder = null, string $attrs = ''): string
+{
+    // Une classe fournie dans $attrs REMPLACE la classe par défaut
+    // (deux attributs class seraient invalides, le premier gagnerait).
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="form-control"';
+
+    return '<select name="' . e($name) . '"' . $classAttr . ($attrs !== '' ? ' ' . $attrs : '') . '>'
+        . renderSelectOptions($options, $current, $placeholder)
+        . '</select>';
+}
+
+/**
+ * Table Bootstrap compacte : en-têtes + lignes déjà rendues (les
+ * cellules restent la responsabilité de l'appelant — échappement par
+ * e() à la source).
+ *
+ * @param array<int, string|array{0: string, 1: string}> $headers libellés
+ *        (échappés ici), ou [libellé, attrs] pour un th avec attributs
+ * @param array<int, string> $rows chaînes '<tr>…</tr>' complètes
+ */
+function renderTable(array $headers, array $rows, string $attrs = ''): string
+{
+    $head = '';
+    foreach ($headers as $header) {
+        // Un en-tête peut porter ses attributs : [libellé, attrs]
+        // (ex. un title d'explication sur la colonne).
+        [$label, $thAttrs] = is_array($header) ? $header : [$header, ''];
+        $head .= '<th' . ($thAttrs !== '' ? ' ' . $thAttrs : '') . '>' . e($label) . '</th>';
+    }
+
+    // Une classe fournie dans $attrs REMPLACE la classe par défaut —
+    // même contrat que formSelect/formInput. Les attributs data-* (ex.
+    // data-admin-list pour la pagination) passent tels quels.
+    $classAttr = str_contains($attrs, 'class=') ? '' : ' class="table table-sm table-striped align-middle"';
+
+    return '<div class="table-responsive"><table' . $classAttr . ($attrs !== '' ? ' ' . $attrs : '') . '>'
+        . '<thead><tr>' . $head . '</tr></thead>'
+        . '<tbody>' . implode('', $rows) . '</tbody></table></div>';
 }

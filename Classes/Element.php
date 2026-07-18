@@ -7,7 +7,7 @@ class Element{
     public static function put($name, $coords, $duration=THREE_DAYS){
 
 
-        if(!isset(EFFECTS_RA_FONT[$name])){
+        if(!(new \App\Service\EffectService())->exists($name)){
 
             exit('error element '. $name);
         }

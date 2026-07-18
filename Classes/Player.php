@@ -11,6 +11,7 @@ use App\Service\PlayerService;
 use App\Service\MapService;
 use App\Service\PlayerReductionPassiveService;
 use App\Service\PlayerPassiveService;
+use App\Service\EffectService;
 use App\Service\PlayerEffectService;
 use App\Service\PlayerBonusService;
 use App\Service\RaceService;
@@ -37,6 +38,7 @@ class Player implements ActorInterface {
     public $playerReductionPassiveService;
     public $playerPassiveService;
     public $playerEffectService;
+    public $effectService;
     public $playerBonusService;
     public $actionPassiveService;
     
@@ -50,6 +52,7 @@ class Player implements ActorInterface {
         $this->playerService = new PlayerService($playerId);
         $this->playerPassiveService = new PlayerPassiveService();
         $this->playerEffectService = new PlayerEffectService();
+        $this->effectService = new EffectService();
         $this->playerBonusService = new PlayerBonusService();
         $this->actionPassiveService = new ActionPassiveService();
 
@@ -256,6 +259,14 @@ class Player implements ActorInterface {
 
             $this->emplacements->{$row->equiped} = $item;
 
+            /* Un objet BRISÉ (ItemInstanceService::BROKEN_AT) reste
+             * porté — visible à l'emplacement — mais ne contribue plus ses
+             * caracs : c'est le sens gameplay de « brisé ». */
+            if(isset($row->durability) && \App\Service\ItemInstanceService::isBroken((int) $row->durability)){
+
+                continue;
+            }
+
             self::applyItemCaracs($this->caracs, $item);
         }
 
@@ -271,23 +282,26 @@ class Player implements ActorInterface {
         $this->debuffs = (object) array();
         $this->buffs = (object) array();
 
+        $debuffCaracs = $this->effectService->getDebuffCaracs();
+        $buffCaracs = $this->effectService->getBuffCaracs();
+
         foreach($effectsList as $e){
 
 
-            if(!empty(ELE_DEBUFFS[$e->getName()])){
+            if(!empty($debuffCaracs[$e->getName()])){
 
 
-                $this->caracs->{ELE_DEBUFFS[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
+                $this->caracs->{$debuffCaracs[$e->getName()]} -= is_null($e->getValue()) ? 1 : $e->getValue();
 
-                $this->debuffs->{ELE_DEBUFFS[$e->getName()]} = $e->getName();
+                $this->debuffs->{$debuffCaracs[$e->getName()]} = $e->getName();
             }
 
-            if(!empty(ELE_BUFFS[$e->getName()])){
+            if(!empty($buffCaracs[$e->getName()])){
 
 
-                $this->caracs->{ELE_BUFFS[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
+                $this->caracs->{$buffCaracs[$e->getName()]} += is_null($e->getValue()) ? 1 : $e->getValue();
 
-                $this->buffs->{ELE_BUFFS[$e->getName()]} = $e->getName();
+                $this->buffs->{$buffCaracs[$e->getName()]} = $e->getName();
             }
         }
 
@@ -525,7 +539,7 @@ class Player implements ActorInterface {
     }
 
 
-    // options shortcuts — delegate to PlayerOptionsService (Phase 2).
+    // options shortcuts — delegate to PlayerOptionsService.
     // The isMerchant → marchand follower hook stays here because the
     // follower methods live on Player; the service owns table access only.
     public function add_option($name){
@@ -539,7 +553,7 @@ class Player implements ActorInterface {
     }
     public function get_options(){ return (new PlayerOptionsService())->getOptions($this->id); }
 
-    // actions shortcuts — delegate to PlayerActionsService (Phase 2b).
+    // actions shortcuts — delegate to PlayerActionsService.
     // The spell/technique → type='sort' branch and the 'attaquer'
     // short-circuit live inside the service; see addAction().
     public function add_action($name){ (new PlayerActionsService())->addAction($this->id, $name); }
@@ -629,36 +643,34 @@ class Player implements ActorInterface {
         $this->playerEffectService->addEffectByPlayerId($this->id,$name,$endTime,$value, $stackable);
 
         // effect exists
-        if(!isset(EFFECTS_RA_FONT[$name])){
+        if(!$this->effectService->exists($name)){
 
             exit('error effect name');
         }
 
-        // element control
-        if(!empty(ELE_CONTROLS[$name])){
+        // Annulations (ex-cycle élémentaire, désormais des listes) :
+        // poser cet effet retire chaque effet qu'il annule ; s'il porte
+        // déjà un effet qui L'annule, les deux tombent.
+        foreach($this->effectService->getControlledEffects($name) as $controlled){
 
-            if($this->have_effect(ELE_CONTROLS[$name])){
+            if($this->have_effect($controlled)){
 
-                $this->end_effect(ELE_CONTROLS[$name]);
-
-                // echo '<script>alert("'. ucfirst($name) .' annule '. ucfirst(ELE_CONTROLS[$name]) .'");document.location.reload();</script>';
+                $this->end_effect($controlled);
             }
+        }
 
-            if(!empty(ELE_IS_CONTROLED[$name])){
+        foreach($this->effectService->getControllersOf($name) as $controller){
 
+            if($this->have_effect($controller)){
 
-                if($this->have_effect(ELE_IS_CONTROLED[$name])){
-
-                    $this->end_effect(ELE_IS_CONTROLED[$name]);
-                    $this->end_effect($name);
-
-                    // echo '<script>alert("'. ucfirst(ELE_IS_CONTROLED[$name]) .' et '. ucfirst($name) .' s\'annulent!");document.location.reload();</script>';
-                }
+                $this->end_effect($controller);
+                $this->end_effect($name);
+                break;
             }
         }
     }
 
-    public function getEffects(){
+    public function getEffects(): array{
 
         return $this->playerEffectService->getEffectsByPlayerId($this->id);
     }
@@ -978,21 +990,37 @@ class Player implements ActorInterface {
 
 
     public function refresh_view(){
-        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.svg';
+        $file = self::cachePath((int) $this->id, '.svg');
         if (is_file($file)) {
             unlink($file); // Delete the file
         }
+    }
+
+    /**
+     * Chemin d'un cache par-entité ({id}{suffix}) — résolu depuis la
+     * racine du projet, PAS depuis DOCUMENT_ROOT : vide en CLI, il
+     * rendait les refresh_*() muets hors web (caches fantômes dans les
+     * tests et les scripts).
+     */
+    public static function cachePath(int $playerId, string $suffix): string
+    {
+        $root = ($_SERVER['DOCUMENT_ROOT'] ?? '') !== '' ? $_SERVER['DOCUMENT_ROOT'] : dirname(__DIR__);
+
+        return $root . '/datas/private/players/' . $playerId . $suffix;
     }
 
     public function refresh_data(){
-        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.json';
+        $file = self::cachePath((int) $this->id, '.json');
         if (is_file($file)) {
-            unlink($file); // Delete the file
+            unlink($file);
         }
+        // Le décodeur JSON garde un cache mémoire par process : sans cet
+        // oubli, un process long (tests, scripts) ressert l'ancien état.
+        json()->forget('players', (string) $this->id);
     }
 
     public function refresh_invent(){
-        $file = $_SERVER['DOCUMENT_ROOT'].'/datas/private/players/'. $this->id .'.invent.html';
+        $file = self::cachePath((int) $this->id, '.invent.html');
         if(file_exists($file)){
             unlink($file);
         }
@@ -1133,8 +1161,15 @@ class Player implements ActorInterface {
 
                 if($val < 0){
 
-                    // add blood on floor
-                    Element::put('sang', $this->data->coords_id);
+                    /* Ce que l'entité VERSE au sol en cas de blessure :
+                     * configurable par race (races.bleeds) — '' = rien,
+                     * un mur ne saigne pas. */
+                    $bleeds = (new RaceService())->getRaceByName((string) ($this->data->race ?? ''))?->getBleeds() ?? '';
+
+                    if($bleeds !== ''){
+
+                        Element::put($bleeds, $this->data->coords_id);
+                    }
                 }
 
                 elseif($val > 0){
@@ -1230,6 +1265,14 @@ class Player implements ActorInterface {
 
     public function put_malus($malus): void {
 
+        // Une structure (bâtiment, objet unique) n'a pas de malus : il
+        // pénalise les jets de défense, et elle n'esquive jamais — même
+        // logique que le saignement (races.bleeds).
+        if (\App\Enum\EntityCategory::fromPlayerType($this->getPlayerType()) === \App\Enum\EntityCategory::Structure) {
+
+            return;
+        }
+
         $sql = 'UPDATE players SET malus = GREATEST(malus + ?, 0) WHERE id = ?';
 
         $db = new Db();
@@ -1280,6 +1323,15 @@ class Player implements ActorInterface {
             $this->get_data();
         }
 
+        /* Décrémenter la PILE d'abord et vérifier le retour : add_item
+         * refuse quand la pile ne couvre pas n (possession en instances
+         * seulement) — poser la bourse au sol AVANT créerait l'objet à
+         * partir de rien (duplication au ramassage). */
+        if(!$item->add_item($this, -$n)){
+
+            exit('error drop n');
+        }
+
         $values = array(
             'item_id'=>$item->id,
             'coords_id'=>$this->data->coords_id,
@@ -1289,9 +1341,6 @@ class Player implements ActorInterface {
         $db = new Db();
 
         $db->insert('map_items', $values);
-
-
-        $item->add_item($this, -$n);
     }
 
 
@@ -1547,7 +1596,12 @@ class Player implements ActorInterface {
     
 
 
-    public function equip(Item $item, bool $doNotRefresh = false): EquipResult{
+    /**
+     * @param int|null $instanceId instance PRÉCISE à équiper (clic sur une
+     *        ligne d'instance de l'inventaire) — null : la plus ancienne
+     *        disponible, sinon promotion depuis la pile
+     */
+    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null): EquipResult{
 
         $db = new Db();
 
@@ -1579,21 +1633,31 @@ class Player implements ActorInterface {
 
             // item is equiped : UNEQUIP
 
-            $sql = '
-            UPDATE
-            players_items
-            SET
-            equiped = ""
-            WHERE
-            player_id = ?
-            AND
-            item_id = ?
-            ';
+            if (!empty($itemList[$item->id]->instance_id)) {
 
-            $db->exe($sql, array(
-                $this->id,
-                $item->id
-            ));
+                // L'objet équipé est une instance — la déséquiper
+                // (une instance encore vierge retourne silencieusement en pile).
+                (new \App\Service\ItemInstanceService())
+                    ->unequipInstance((int) $itemList[$item->id]->instance_id);
+            } else {
+
+                // Ligne de pile héritée (antérieure à la conversion 1d).
+                $sql = '
+                UPDATE
+                players_items
+                SET
+                equiped = ""
+                WHERE
+                player_id = ?
+                AND
+                item_id = ?
+                ';
+
+                $db->exe($sql, array(
+                    $this->id,
+                    $item->id
+                ));
+            }
 
             $this->applyUnequipItemBonus($item);
 
@@ -1631,18 +1695,21 @@ class Player implements ActorInterface {
             }
 
 
-            // cursed emp
+            // cursed emp — piles héritées ET instances
             $sql = '
-            SELECT COUNT(*) AS n
-            FROM items AS i
-            INNER JOIN players_items AS p
-            ON i.id = p.item_id
-            WHERE p.player_id = ?
-            AND p.equiped = ?
-            AND i.cursed = 1
+            SELECT
+            (SELECT COUNT(*) FROM items AS i
+             INNER JOIN players_items AS p ON i.id = p.item_id
+             WHERE p.player_id = ? AND p.equiped = ? AND i.cursed = 1)
+            +
+            (SELECT COUNT(*) FROM items AS i
+             INNER JOIN item_instances AS ii ON ii.item_id = i.id
+             INNER JOIN players_items_instances AS l ON l.instance_id = ii.id
+             WHERE l.player_id = ? AND l.equiped = ? AND i.cursed = 1)
+            AS n
             ';
 
-            $res = $db->exe($sql, array($this->id, $item->data->emplacement));
+            $res = $db->exe($sql, array($this->id, $item->data->emplacement, $this->id, $item->data->emplacement));
 
             $row = $res->fetch_object();
 
@@ -1653,7 +1720,34 @@ class Player implements ActorInterface {
             }
 
 
-            // unequip emplacement
+            // Disponibilité AVANT toute mutation : un échec du chemin
+            // instance APRÈS la libération des emplacements laisserait des
+            // objets déséquipés en base alors que l'appelant croit qu'il ne
+            // s'est rien passé (l'objet visé n'est pas équipé ici — la
+            // branche UNEQUIP l'aurait intercepté — donc libérer des
+            // emplacements ne peut pas le rendre disponible).
+            $instanceService = new \App\Service\ItemInstanceService();
+            $available = $instanceId !== null
+                ? $instanceService->isInstanceEquippable($this->id, (int) $item->id, $instanceId)
+                : $instanceService->hasEquippableUnit($this->id, (int) $item->id);
+            if($item->data->emplacement != 'munition' && $item->data->emplacement != 'trophee'
+                && !$available){
+
+                return EquipResult::DoNothing;
+            }
+
+            // Libérer les emplacements des deux représentations —
+            // piles héritées (SQL) et instances (service, avec retour en pile
+            // des instances encore vierges).
+            $emplacementsToClear = [$item->data->emplacement];
+            if($item->data->emplacement == "deuxmains"){
+                $emplacementsToClear[] = 'main1';
+                $emplacementsToClear[] = 'main2';
+            }
+            elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
+                $emplacementsToClear[] = 'deuxmains';
+            }
+
             $sql = '
             UPDATE
             players_items
@@ -1662,63 +1756,46 @@ class Player implements ActorInterface {
             WHERE
             player_id = ?
             AND
-            equiped = ?
+            equiped IN('. Db::print_in($emplacementsToClear) .')
             ';
 
-            $db->exe($sql, array(
-                $this->id,
-                $item->data->emplacement,
-            ));
-            
-            // unequip main1 and main2 if item is 2mains
-            if($item->data->emplacement == "deuxmains"){
+            $db->exe($sql, array_merge(array($this->id), $emplacementsToClear));
+
+            $instanceService->unequipEmplacements($this->id, $emplacementsToClear);
+
+            if($item->data->emplacement == 'munition' || $item->data->emplacement == 'trophee'){
+
+                // Sémantique de PILE conservée : tout le carquois est équipé
+                // d'un bloc et consommé unité par unité (RequiresAmmo) — une
+                // instance par flèche n'aurait aucun sens.
                 $sql = '
                 UPDATE
                 players_items
                 SET
-                equiped = ""
+                equiped = ?
                 WHERE
                 player_id = ?
                 AND
-                (equiped = "main1" OR equiped="main2")
+                item_id = ?
                 ';
 
-                $db->exe($sql, array($this->id));
-                }
-            
-            // unequip 2mains if item is main1 or main2
-            elseif($item->data->emplacement == "main1" || $item->data->emplacement == "main2"){
-                $sql = '
-                UPDATE
-                players_items
-                SET
-                equiped = ""
-                WHERE
-                player_id = ?
-                AND
-                equiped = "deuxmains"
-                ';
+                $db->exe($sql, array(
+                    $item->data->emplacement,
+                    $this->id,
+                    $item->id
+                ));
+            }
+            else{
 
-                $db->exe($sql, array($this->id));
+                // Équiper crée (ou réutilise) une INSTANCE — l'objet
+                // commence à exister individuellement au moment où il est porté.
+                try {
+                    $instanceService->equipCatalogItem($this->id, (int) $item->id, $item->data->emplacement, $instanceId);
+                } catch (\RuntimeException) {
+                    return EquipResult::DoNothing;
                 }
-            
-            $sql = '
-            UPDATE
-            players_items
-            SET
-            equiped = ?
-            WHERE
-            player_id = ?
-            AND
-            item_id = ?
-            ';
+            }
 
-            $db->exe($sql, array(
-                $item->data->emplacement,
-                $this->id,
-                $item->id
-            ));
-            
             $this->applyEquipItemBonus($item);
 
             // equip munitions
@@ -2203,7 +2280,7 @@ class Player implements ActorInterface {
      * creation must go through `App\Tutorial\TutorialPlayerFactory::create()`,
      * which is the only writer that sets `player_type='tutorial'` and both
      * FK columns atomically. Calling `put_player()` for a tutorial row would
-     * leave it orphaned from its owning real player (Phase 4.6 FK guardrail).
+     * leave it orphaned from its owning real player (FK guardrail).
      */
     public static function put_player($name, $race, $pnj=false, $type='real') : int{
 
@@ -2358,9 +2435,9 @@ class Player implements ActorInterface {
             return $this->data;
         }
         // first create dir
-        if(!file_exists($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/')){
+        if(!file_exists(dirname(self::cachePath(0, '')))){
 
-            mkdir($_SERVER['DOCUMENT_ROOT'].'/datas/private/players/');
+            mkdir(dirname(self::cachePath(0, '')));
         }
 
         $playerJson = json()->decode('players', $this->id);
@@ -2375,8 +2452,14 @@ class Player implements ActorInterface {
             unset($this->row->psw);
             unset($this->row->mail);
             unset($this->row->ip);
-            $pathInfo = pathinfo($this->row->portrait);
-            $this->row->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+            // Portrait vide (structure sans visuel, repli initiales au
+            // rendu) : pas de déclinaison _mini à dériver.
+            if ($this->row->portrait !== '' && $this->row->portrait !== null) {
+                $pathInfo = pathinfo($this->row->portrait);
+                $this->row->mini = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_mini.' . $pathInfo['extension'];
+            } else {
+                $this->row->mini = '';
+            }
             $this->row->faction_img = 'img/factions/'. $this->row->faction .'.png';
             $this->row->faction_mini = 'img/factions/'. $this->row->faction .'_mini.png';
 
@@ -2390,8 +2473,13 @@ class Player implements ActorInterface {
 
         $this->data = $playerJson;
 
-        // Set inactive status using playerService
-        $this->data->isInactive = $this->id > 0 ? $this->playerService->isInactive($this->data->lastLoginTime) : false;
+        // L'inactivité n'a de sens que pour un JOUEUR RÉEL (dernière
+        // connexion) : jamais pour un PNJ, un personnage de tutoriel ou
+        // une entité structure (bâtiment/objet unique, lastLoginTime 0
+        // — ils ressortaient « inactifs »).
+        $this->data->isInactive = ($this->id > 0 && ($this->data->player_type ?? 'real') === 'real')
+            ? $this->playerService->isInactive($this->data->lastLoginTime)
+            : false;
 
        
 
@@ -2485,9 +2573,11 @@ class Player implements ActorInterface {
         $att = $this->caracs->f;
         $def = max($target->caracs->e + 4,$target->caracs->agi);
         $pv = floor($target->getRemaining('pv')/10);
-        $renforcement = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($this->getId(),"renforcement");
-        $stabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"stabilite");
-        $instabilite = $this->playerEffectService->getEffectValueByPlayerIdByEffectName($target->getId(),"instabilite");
-        return $att + $renforcement >= $def + $pv + $stabilite - $instabilite;
+        // Modificateurs de poussée portés par les effets (catalogue :
+        // push_attack_mod / push_defense_mod — ex-renforcement,
+        // stabilite, instabilite codés en dur).
+        $attMods = $this->effectService->modifierContributions($this->getEffects(), 'getPushAttackMod');
+        $defMods = $this->effectService->modifierContributions($target->getEffects(), 'getPushDefenseMod');
+        return $att + $attMods['pos'] - $attMods['neg'] >= $def + $pv + $defMods['pos'] - $defMods['neg'];
     }
 }

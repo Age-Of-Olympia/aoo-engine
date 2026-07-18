@@ -167,7 +167,7 @@ class SimulatedPlayer extends Player
     {
     }
 
-    public function equip(Item $item, bool $doNotRefresh = false): EquipResult
+    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null): EquipResult
     {
         return EquipResult::DoNothing;
     }

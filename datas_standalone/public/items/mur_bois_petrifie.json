@@ -1,0 +1,11 @@
+{
+    "id": 24,
+    "name": "Mur en Bois Pétrifié",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une solide structure en Bois Pétrifié.",
+    "img": "img/walls/mur_bois_petrifie.png",
+    "mini": "img/walls/mur_bois_petrifie.png"
+}

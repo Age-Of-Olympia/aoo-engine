@@ -21,6 +21,7 @@ class MeleeView
         $passives = $actionPassiveService->getActionPassivesByCategory('melee');
 
         $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
+        $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
         $playerGold = $player->get_gold();
 
@@ -104,8 +105,6 @@ class MeleeView
                     </tr>
                   </thead>';
             echo '<tbody>';
-
-            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
             foreach ($actions as $action) {
                 $actionName = $action->getName();

@@ -52,7 +52,9 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 continue;
             }
             else if($key == "imposture"){
-                $impostureValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"imposture") + 1;
+                /* Clé de coût historique « imposture » = coût multiplié
+                   par les effets portés cost_multiplier (catalogue). */
+                $impostureValue = (new \App\Service\EffectService())->costMultiplier($actor->getEffects());
                 if($actor->getRemaining("pm") < (floor($value[0]*$impostureValue))){
                     array_push($details, "Pas assez de PM");
                     $costIsAffordable = false;
@@ -105,7 +107,7 @@ class RequiresTraitValueCondition extends BaseCondition implements HasParameterS
                 continue;
             }
             if ($key == "imposture") {
-                $impostureValue = $actor->playerEffectService->getEffectValueByPlayerIdByEffectName($actor->id,"imposture") + 1;
+                $impostureValue = (new \App\Service\EffectService())->costMultiplier($actor->getEffects());
                 $pmCost = floor($value[0]*$impostureValue);
                 $mvtCost = floor($value[1]*$impostureValue);
                 $actor->putBonus(["pm" => -$pmCost]);

@@ -1,0 +1,11 @@
+{
+    "id": 712,
+    "name": "Totem sauvage",
+    "private": 0,
+    "price": 30,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un totem au reflets magiques.",
+    "img": "img/walls/totem_magique.png",
+    "mini": "img/walls/totem_magique.png"
+}

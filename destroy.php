@@ -107,7 +107,16 @@ if(!empty($main1->data->demolition)){
 
 $name = $row->name;
 
-if(strpos($row->name, '_broken') !== false && file_exists('img/walls/'. $row->name .'_broken.png')){
+/* Bascule visuelle « brisé » (capacité restaurée — la condition était
+ * inversée et testait x_broken_broken.png, jamais vrai) : passé la
+ * moitié de ses PV, la structure affiche son image _broken quand elle
+ * existe. Double repli : pas d'image _broken OU pas d'entrée WALLS_PV
+ * pour le nom _broken (la garde du prochain coup en a besoin) → elle
+ * garde son image et son nom d'origine. */
+if(strpos($row->name, '_broken') === false
+    && ($row->damages + $damages) >= ceil($pvMax / 2)
+    && isset(WALLS_PV[$row->name .'_broken'])
+    && file_exists('img/walls/'. $row->name .'_broken.png')){
 
     $name = $row->name .'_broken';
 

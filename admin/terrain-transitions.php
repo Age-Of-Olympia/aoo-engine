@@ -160,14 +160,16 @@ ob_start();
             <form method="post" id="planForm">
                 <div class="form-group mb-0">
                     <label for="planSelect">Choisir un plan :</label>
-                    <select class="form-control" id="planSelect" name="selected_plan" onchange="this.form.submit()">
-                        <option value="">-- Sélectionner un plan (<?= e(season_filter_label($seasonFilter)) ?>) --</option>
-                        <?php foreach ($filteredPlans as $plan): ?>
-                            <option value="<?= e($plan->id) ?>" <?= selected($selectedPlan === $plan->id) ?>>
-                                <?= e($plan->name) ?> (<?= e($plan->id) ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php
+                    $planChoices = [];
+                    foreach ($filteredPlans as $plan) {
+                        $planChoices[$plan->id] = $plan->name . ' (' . $plan->id . ')';
+                    }
+                    echo formSelect('selected_plan', $planChoices,
+                        $selectedPlan !== '' ? $selectedPlan : null,
+                        '-- Sélectionner un plan (' . season_filter_label($seasonFilter) . ') --',
+                        'class="form-control" id="planSelect" onchange="this.form.submit()"');
+                    ?>
                     <?php if (empty($filteredPlans)): ?>
                         <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
                     <?php endif; ?>

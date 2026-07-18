@@ -2,7 +2,7 @@
 
 namespace App\View\Classement;
 
-use App\Entity\PlayerEntity;
+use App\Entity\Character;
 use App\Factory\PlayerFactory;
 use App\Service\PlayerCaracsService;
 use App\Service\RaceService;
@@ -150,7 +150,7 @@ class BourrinsView
 
             foreach ($playerTbl as $e) {
 
-                /** @var PlayerEntity $e */
+                /** @var Character $e */
                 $raceJson = $raceService->getRaceData($e->getRace());
 
 

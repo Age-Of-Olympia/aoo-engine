@@ -39,7 +39,12 @@ class InventoryView
                         InventoryService::dropItem($player, $item);
                         break;
                     case 'use':
-                        InventoryService::useItem($player, $item);
+                        // Instance précise cliquée (ligne d'instance) —
+                        // vide/absent sur une ligne de pile.
+                        $instanceId = !empty($_POST['instanceId']) && is_numeric($_POST['instanceId'])
+                            ? (int) $_POST['instanceId']
+                            : null;
+                        InventoryService::useItem($player, $item, $instanceId);
                         break;
                 };
 
@@ -95,7 +100,7 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
 ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
-        <script src="js/inventory.js?v=20260716c"></script>
+        <script src="js/inventory.js?v=20260720b"></script>
 <?php
     }
 }

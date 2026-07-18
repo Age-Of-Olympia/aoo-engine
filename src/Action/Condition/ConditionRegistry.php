@@ -23,7 +23,10 @@ class ConditionRegistry
             'ForbidOnEquipedObjectStatus' => new ForbidOnEquipedObjectStatusCondition(),
             'RequiresAmmo' => new RequiresAmmoCondition(),
             'RequiresResource' => new RequiresResourceCondition(),
-            
+            'RequiresItem' => new RequiresItemCondition(),
+            'BuildSite' => new BuildSiteCondition(),
+            'TargetType' => new TargetTypeCondition(),
+
             'Compute' => new ComputeCondition(),
             'ComputePure' => new ComputePureCondition(), // Jet pur, sans prise en compte des Malus ou des Effets
             'MeleeCompute' => new MeleeComputeCondition(), // include equipment effect ?

@@ -29,7 +29,7 @@ class TutorialResourceManager
         $this->conn = $em->getConnection();
     }
 
-    // Note: Phase 4.4 retired the legacy service-class methods
+    // Note: the legacy service-class methods were retired
     // (createTutorialPlayer, getTutorialPlayer, deleteTutorialPlayer
     // that took/returned App\Tutorial\TutorialPlayer). The *AsEntity
     // methods below are the only public surface now — they operate
@@ -235,7 +235,7 @@ class TutorialResourceManager
     {
         try {
             // Find all active tutorial players with their session IDs.
-            // Phase 4.5: link is on players.real_player_id_ref; tutorial_players
+            // Link is on players.real_player_id_ref; tutorial_players
             // keeps only id/session/activity bookkeeping.
             $sql = 'SELECT tp.id, tp.player_id, tp.tutorial_session_id
                     FROM tutorial_players tp
@@ -360,7 +360,7 @@ class TutorialResourceManager
      * resources: enemy NPC, players + tutorial_players rows + FK
      * cascade, and map instance (coords).
      *
-     * Phase 4.4 inlined path — no more service-class round-trip.
+     * Inlined path — no more service-class round-trip.
      * FK cascade still delegates to TutorialPlayerCleanup (unchanged,
      * covered by TutorialPlayerCleanupIntegrationTest from !376).
      */

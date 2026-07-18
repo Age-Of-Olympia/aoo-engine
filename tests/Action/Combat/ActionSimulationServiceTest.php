@@ -345,7 +345,7 @@ class ActionSimulationServiceTest extends TestCase
         $action->setName('drain');
         $action->setDisplayName('Drain');
         $action->addAutomaticOutcomeInstruction(
-            $this->lifeLoss(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi'])
+            $this->lifeLoss(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi', 'autoCrit' => true])
         );
         $input = new SimulationInput(
             actorCaracs: ['cc' => 20],
@@ -359,8 +359,9 @@ class ActionSimulationServiceTest extends TestCase
         foreach ($results->getOutcomesResultsArray() as $outcome) {
             $damage += (int) $outcome->getTotalDamages();
         }
-        // cc 20 - agi 2 = 18 (no modifiers); exact so a damage-math mutation fails.
-        $this->assertSame(18, $damage);
+        // cc 20 - agi 2 = 18, + forced crit 3 = 21; autoCrit pins the otherwise
+        // 5%-random crit roll so the exact assertion can't flake.
+        $this->assertSame(21, $damage);
     }
 
     public function testTypeLevelInstructionsAreRunByTheExecutor(): void
@@ -372,7 +373,7 @@ class ActionSimulationServiceTest extends TestCase
             ->setTypeKey('buff')
             ->setInstructionType('lifeloss')
             ->setOrderIndex(0)
-            ->setParameters(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi']);
+            ->setParameters(['actorDamagesTrait' => 'cc', 'targetDamagesTrait' => 'agi', 'autoCrit' => true]);
 
         $action = new BuffAction();
         $action->setName('drain');
@@ -385,8 +386,9 @@ class ActionSimulationServiceTest extends TestCase
         foreach ($results->getOutcomesResultsArray() as $outcome) {
             $damage += (int) $outcome->getTotalDamages();
         }
-        // cc 20 - agi 2 = 18 (no modifiers); exact so a damage-math mutation fails.
-        $this->assertSame(18, $damage);
+        // cc 20 - agi 2 = 18, + forced crit 3 = 21; autoCrit pins the otherwise
+        // 5%-random crit roll so the exact assertion can't flake.
+        $this->assertSame(21, $damage);
     }
 
     public function testTypeLevelAndDynamicAutomaticInstructionsBothRun(): void

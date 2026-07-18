@@ -64,7 +64,25 @@ final class EquipmentSlotsView
                 $title .= ' (' . $row->equiped . ')';
             }
 
-            echo '<span class="equip-slot">'
+            /* Usure (docs/design-items-instances.md §3.5) : jauge fine sous l'icône dès que la
+             * ligne est une instance — brisé = fissure, caracs coupées. */
+            $wearGauge = '';
+            $slotClass = 'equip-slot';
+            if (isset($row->durability, $row->durability_max) && (int) $row->durability_max > 0) {
+                $durability = (int) $row->durability;
+                $pct = max(0, min(100, (int) round($durability / (int) $row->durability_max * 100)));
+                $level = $durability <= 0 ? 'broken' : ($pct < 20 ? 'low' : ($pct < 50 ? 'mid' : 'ok'));
+                $title .= $durability <= 0
+                    ? ' — BRISÉ'
+                    : ' — durabilité ' . $durability . '/' . (int) $row->durability_max;
+                if ($durability <= 0) {
+                    $slotClass .= ' equip-slot--broken';
+                }
+                $wearGauge = '<span class="equip-wear equip-wear--' . $level . '">'
+                    . '<span class="equip-wear-fill" style="width:' . $pct . '%"></span></span>';
+            }
+
+            echo '<span class="' . $slotClass . '">'
                 . '<img
                     class="infos-item"
                     data-id="' . $row->id . '"
@@ -78,6 +96,7 @@ final class EquipmentSlotsView
                     title="' . htmlspecialchars($title, ENT_QUOTES) . '"
                     alt="' . htmlspecialchars(strip_tags($itemName), ENT_QUOTES) . '"
                     src="' . $img . '" />'
+                . $wearGauge
                 . '</span>';
         }
 

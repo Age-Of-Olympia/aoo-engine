@@ -71,12 +71,20 @@ if($planJson = json()->decode('plans', $player->coords->plan)){
     $playerVisibilityEnabled = !isset($planJson->player_visibility) || $planJson->player_visibility !== false;
 
     if ($playerVisibilityEnabled) {
+        /* Les structures PASSABLES (table…) ne bloquent pas la case —
+         * liste résolue en PHP, la jointure races/players est interdite
+         * par collation (cf. BuildingService). */
+        $passable = (new \App\Service\RaceService())->getPassableStructureNames();
+        $passableSql = $passable !== []
+            ? ' AND players.race NOT IN (' . implode(',', array_map(fn($r) => '"' . $r . '"', $passable)) . ')'
+            : '';
+
         $inPlayerSql = '
         OR
         id IN(
             SELECT coords_id FROM players
             LEFT JOIN players_options AS po ON po.player_id = players.id AND po.name = "invisibleMode"
-            WHERE coords_id = ? AND po.player_id IS NULL
+            WHERE coords_id = ? AND po.player_id IS NULL' . $passableSql . '
             )
         ';
 
@@ -268,7 +276,7 @@ elseif($goCoords->z > 0){
 
     $row = $res->fetch_object();
 
-    if(!$row->n && !$player->have_effect('vol')){
+    if(!$row->n && !$player->effectService->grantsFlight($player->getEffects())){
 
         echo '<script>aooAlert("Il faut pouvoir voler pour accéder à ce lieu.").then(function(){document.location.reload();});</script>';
 
@@ -278,44 +286,9 @@ elseif($goCoords->z > 0){
 
 
 
-// loots
-$sql = '
-SELECT * FROM map_items WHERE coords_id = ?
-';
-
-$res = $db->exe($sql, $coordsId);
-
-if($res->num_rows){
-
-
-    $lootList = array();
-
-    while($row = $res->fetch_object()){
-
-
-        $item = new Item($row->item_id);
-
-        $item->get_data();
-
-        $item->add_item($player, $row->n);
-
-        $lootList[] = $item->data->name .' x'. $row->n;
-    }
-
-
-    $values = array(
-        'coords_id'=>$coordsId
-    );
-
-    $db->delete('map_items', $values);
-
-
-    $text = $player->data->name .' a ramassé des objets: '. implode(', ', $lootList) .'.';
-    $coordBackup = $player->coords;
-    $player->coords = $goCoords;
-    Log::put($player, $player, $text, type:"loot");
-    $player->coords = $coordBackup;
-}
+// loots — piles ET instances au sol, via le service partagé avec
+// pickup.php (ramasser sa propre case).
+(new \App\Service\GroundLootService())->collect($player, (int) $coordsId, $goCoords);
 
 
 
@@ -343,6 +316,10 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     $bonus = array('mvt'=>-1);
     $player->putBonus($bonus);
 
+    // Usure : un déplacement ARME les objets équipés à
+    // déclencheur « move » (bottes…) — le décrément tombe au tour.
+    (new \App\Service\WearService())->arm($player->id, 'move');
+
     // CRITICAL: Regenerate JSON cache after consuming movement
     // This ensures load_caracs.php shows correct movement count
     $player->get_caracs();
@@ -352,7 +329,8 @@ if(($planJson && !$isTutorial) || $consumeMovement){
     }
 }
 
-if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode') && !$player->have_effect('vol'))
+if(!$player->have_option('incognitoMode') && !$player->have_option('invisibleMode')
+    && !$player->effectService->grantsFlight($player->getEffects()))
 {
     $footstep='trace_pas_';
     if($originalGooCoords->y>$player->coords->y){

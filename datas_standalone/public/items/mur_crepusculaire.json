@@ -1,0 +1,11 @@
+{
+    "id": 307,
+    "name": "Mur crépusculaire",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un solide mur aux reflets lunineux.",
+    "img": "img/walls/mur_crepusculaire.png",
+    "mini": "img/walls/mur_crepusculaire.png"
+}

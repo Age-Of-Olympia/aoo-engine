@@ -29,7 +29,9 @@ final class ParameterFieldRenderer
             FieldType::BOOL => $this->checkbox($name, (bool) $value),
             FieldType::INT => $this->input($name, 'number', $value),
             FieldType::STRING => $this->input($name, 'text', $value),
-            FieldType::ENUM => $this->select($name, $field->options, $value),
+            FieldType::ENUM => $field->multiple
+                ? $this->multiSelect($name, $field->options, $value)
+                : $this->select($name, $field->options, $value),
             FieldType::TRAIT => $this->select($name, $this->traitOptions(), $value),
             FieldType::TRAIT_OR_INT => $this->input($name, 'text', $value, 'caracs-options'),
             FieldType::LIST => $this->listInput($name, $value),
@@ -48,18 +50,30 @@ final class ParameterFieldRenderer
     private function catalogSelect(string $name, array $options, mixed $value, bool $multiple): string
     {
         if ($multiple) {
-            $selected = is_array($value) ? array_map('strval', $value) : [];
-            $html = '<select class="form-control" name="' . $this->escape($name) . '[]" multiple>';
-            foreach ($options as $optionValue => $optionLabel) {
-                $isSelected = in_array((string) $optionValue, $selected, true) ? ' selected' : '';
-                $html .= '<option value="' . $this->escape((string) $optionValue) . '"' . $isSelected . '>'
-                    . $this->escape($optionLabel) . '</option>';
-            }
-
-            return $html . '</select>';
+            return $this->multiSelect($name, $options, $value);
         }
 
         return $this->select($name, ['' => '—'] + $options, $value);
+    }
+
+    /**
+     * <select multiple> postant un tableau — partagé par les champs
+     * catalogue ET les ENUM à valeurs multiples (ex. les catégories de
+     * cibles de TargetType/ApplyStatus).
+     *
+     * @param array<string, string> $options
+     */
+    private function multiSelect(string $name, array $options, mixed $value): string
+    {
+        $selected = is_array($value) ? array_map('strval', $value) : [];
+        $html = '<select class="form-control" name="' . $this->escape($name) . '[]" multiple>';
+        foreach ($options as $optionValue => $optionLabel) {
+            $isSelected = in_array((string) $optionValue, $selected, true) ? ' selected' : '';
+            $html .= '<option value="' . $this->escape((string) $optionValue) . '"' . $isSelected . '>'
+                . $this->escape($optionLabel) . '</option>';
+        }
+
+        return $html . '</select>';
     }
 
     /**

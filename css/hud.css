@@ -576,7 +576,7 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     position: absolute;
     right: 38px;
     bottom: 0;
-    width: 235px;
+    width: 265px;
     /* main.css clampe tous les div à 100% du parent (30px ici) */
     max-width: none;
     padding: 8px;
@@ -614,6 +614,10 @@ body:has(#hud) #svg-container .blocked-tile-marker {
     box-shadow: none;
     color: var(--hud-ink);
     font-size: 13px;
+    /* main.css force white-space nowrap sur tous les button : un
+       libellé long sortirait du popover au lieu de passer à la ligne */
+    white-space: normal;
+    line-height: 1.25;
     text-align: left;
     cursor: pointer;
 }
@@ -1010,6 +1014,92 @@ body:has(#hud) #view-landing-wrapper {
     grid-column: 1 / span 3;
     border-left: none;
     padding-left: 0;
+}
+
+/* ---------- Bâtiment sélectionné : état + dialogue ----------
+ * observe.php émet .building-status (toujours, pour un bâtiment) et
+ * .view-dialog (bâtiment OUVERT porteur d'un dialogue seulement) ;
+ * composeSelection (js/hud.js) range la pastille dans .hud-sel-main et
+ * le dialogue dans une colonne dédiée. Bâtiment ouvert : le dialogue
+ * prend la place, l'état reste une pastille compacte. Fermé
+ * (endommagé, en construction, en ruine ou volontairement) : pas de
+ * dialogue, la pastille annonce « Fermé (raison) ». */
+#hud #ajax-data .hud-sel-main .building-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0;
+    font-size: 12px;
+}
+
+#hud .building-status-door {
+    flex: 0 0 auto;
+    padding: 1px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+#hud .building-status-door--open {
+    border: 1px solid #3a6b35;
+    color: #3a6b35;
+}
+
+#hud .building-status-door--closed {
+    border: 1px solid var(--hud-blood);
+    color: var(--hud-blood);
+}
+
+#hud .building-status-state {
+    color: var(--hud-ink-soft);
+}
+
+/* Le dialogue occupe une colonne entre la fiche et « Sur la case ». */
+#hud #ajax-data .hud-sel--dialog {
+    grid-template-columns: 130px minmax(0, 0.8fr) minmax(0, 1.2fr) minmax(160px, 24%);
+}
+
+#hud #ajax-data .hud-sel--dialog .view-dialog {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    min-height: 0;
+    overflow-y: auto;
+    border-left: 1px solid var(--hud-line-soft);
+    padding-left: 10px;
+    text-align: left;
+}
+
+#hud #ajax-data .hud-sel--dialog .hud-sel-tile {
+    grid-column: 4;
+}
+
+/* Neutralise le gabarit plein écran de dialog.css (500×500, avatar en
+ * fond, boîte en absolu) : dans le bandeau, le portrait vit déjà dans
+ * .hud-sel-left — seul le CONTENU du dialogue (texte + options)
+ * s'affiche, en flux. */
+#hud #ajax-data .view-dialog #ui-dialog {
+    display: block;
+}
+
+#hud #ajax-data .view-dialog .dialog-template {
+    display: block;
+    width: 100%;
+    height: auto;
+    box-shadow: none;
+}
+
+#hud #ajax-data .view-dialog .dialog-template-img,
+#hud #ajax-data .view-dialog .dialog-template-name {
+    display: none;
+}
+
+#hud #ajax-data .view-dialog .dialog-template-box {
+    position: static;
+    width: 100%;
+    border-radius: 6px;
+    background-color: rgba(29, 28, 27, 0.85);
 }
 
 /* ---------- Équipement porté : alvéoles parchemin ----------
@@ -2162,6 +2252,13 @@ body:has(#hud) #debug-flags {
         z-index: 1;
     }
 
+    #hud #ajax-data .hud-sel--dialog .view-dialog {
+        grid-column: 1 / span 2;
+        grid-row: 4;
+        border-left: none;
+        padding-left: 0;
+    }
+
     #hud #ajax-data .hud-sel--nocard .hud-sel-tile,
     #hud #ajax-data .hud-sel--nocard #case-coords {
         grid-column: 1 / span 2;
@@ -2589,4 +2686,58 @@ body:has(#hud) #admin-coords #admin-coords-close {
     padding: 0;
     width: 20px;
     height: 20px;
+}
+
+/* ---------------------------------------------------------------------
+ * Usure (items Phase 2, design-items-instances.md §3.5) : jauge fine
+ * sous l'icône d'un emplacement d'équipement. Neutre >= 50 %, encre
+ * orangée < 50 %, rouge < 20 % ; brisé = alvéole ternie.
+ * ------------------------------------------------------------------ */
+.equip-slot {
+    position: relative;
+}
+
+.equip-wear {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 2px;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 2px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.equip-wear-fill {
+    display: block;
+    height: 100%;
+    background: var(--hud-bronze-bright, #b55300);
+    border-radius: 2px;
+}
+
+.equip-wear--mid .equip-wear-fill {
+    background: #c77b1e;
+}
+
+.equip-wear--low .equip-wear-fill {
+    background: #a41f1f;
+}
+
+.equip-slot--broken img {
+    filter: grayscale(1) contrast(0.8);
+    opacity: 0.55;
+}
+
+.equip-slot--broken::after {
+    content: '✕';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a41f1f;
+    font-weight: bold;
+    font-size: 20px;
+    pointer-events: none;
 }

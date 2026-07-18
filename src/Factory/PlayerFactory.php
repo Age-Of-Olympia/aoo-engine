@@ -3,7 +3,8 @@
 namespace App\Factory;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\PlayerEntity;
+use App\Entity\Character;
+use App\Entity\GameEntity;
 use App\Tutorial\TutorialHelper;
 use Classes\Player;
 
@@ -12,7 +13,7 @@ use Classes\Player;
  *
  * Returns either:
  *  - the legacy `Classes\Player` (drop-in for `new \Classes\Player($id)`),
- *  - a modern `PlayerEntity` (`RealPlayer` / `TutorialPlayer` / `NonPlayerCharacter`)
+ *  - a modern `Character` entity (`RealPlayer` / `TutorialPlayer` / `NonPlayerCharacter`)
  *    for read-only paths.
  *
  * Coexistence model: legacy and modern objects are PARALLEL representations of
@@ -76,9 +77,20 @@ final class PlayerFactory
      * Modern Doctrine entity for a given id, or null if the row doesn't exist.
      * Use for READ-ONLY paths (rankings, profile pages, admin lists).
      */
-    public static function entity(int $playerId): ?PlayerEntity
+    public static function entity(int $playerId): ?Character
     {
-        return EntityManagerFactory::getEntityManager()->find(PlayerEntity::class, $playerId);
+        return EntityManagerFactory::getEntityManager()->find(Character::class, $playerId);
+    }
+
+    /**
+     * Comme entity(), mais sur la RACINE de l'arbre STI : accepte toute
+     * entité (personnage OU structure — bâtiment, objet unique). Pour
+     * les chemins qui présentent une fiche quel que soit le type de la
+     * cible (infos.php / load_infos.php).
+     */
+    public static function gameEntity(int $playerId): ?GameEntity
+    {
+        return EntityManagerFactory::getEntityManager()->find(GameEntity::class, $playerId);
     }
 
     /**
@@ -112,7 +124,7 @@ final class PlayerFactory
      * `Player::get_player_by_name()`'s WHERE clause.
      *
      * Use for read-only name-lookup flows (password reset, missive
-     * recipient checks, admin search-by-name) after Phase 3.x
+     * recipient checks, admin search-by-name) after the read-path migration
      * migration.
      */
     public static function entityByName(string $name): ?\App\Entity\RealPlayer
@@ -125,7 +137,7 @@ final class PlayerFactory
     /**
      * Modern entity for the active player (tutorial-aware).
      */
-    public static function activeEntity(): ?PlayerEntity
+    public static function activeEntity(): ?Character
     {
         return self::entity(self::activeId());
     }

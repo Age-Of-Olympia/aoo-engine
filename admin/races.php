@@ -66,6 +66,42 @@ function race_character_counts(array $counts): string
 /**
  * @param Race[] $races
  */
+/**
+ * Éléments de carte utilisables comme saignement : image dans
+ * img/elements + entrée au catalogue des effets (exigence d'Element::put).
+ *
+ * @return array<string, string>
+ */
+function bleed_options(): array
+{
+    $effectService = new \App\Service\EffectService();
+
+    $out = [];
+    foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/elements/*.{png,webp,gif}', GLOB_BRACE) ?: [] as $file) {
+        $name = pathinfo($file, PATHINFO_FILENAME);
+        if ($effectService->exists($name)) {
+            $out[$name] = $name;
+        }
+    }
+    ksort($out);
+    return $out;
+}
+
+/** Sortes d'entités — valeurs de la source unique EntityCategory. */
+function kind_select(bool $isStructure): string
+{
+    $labels = \App\Enum\EntityCategory::options();
+    $labels[\App\Enum\EntityCategory::Structure->value] .= ' (bâtiment, objet unique)';
+
+    return formSelect(
+        'kind',
+        $labels,
+        $isStructure ? \App\Enum\EntityCategory::Structure->value : \App\Enum\EntityCategory::Character->value,
+        null,
+        'class="form-control form-control-sm d-inline-block" style="width:auto"'
+    );
+}
+
 function race_render_list(array $races): string
 {
     $charactersByRace = (new RaceService())->countCharactersByRaceName();
@@ -76,7 +112,9 @@ function race_render_list(array $races): string
         $rows .= '<tr>'
             . '<td><code>' . e($race->getName()) . '</code></td>'
             . '<td>' . e($race->getLabel()) . '</td>'
-            . '<td>' . race_flag_badge($race->getPlayable(), 'Jouable', 'Non') . ' '
+            . '<td>' . ($race->isStructureKind()
+                ? '<span class="badge badge-info">Structure</span>'
+                : race_flag_badge($race->getPlayable(), 'Jouable', 'Non')) . ' '
             . race_flag_badge(!$race->getHidden(), 'Visible', 'Cachée') . '</td>'
             . '<td><span style="display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;'
             . 'border:1px solid #999;background:' . e($race->getBgColor()) . '"></span> '
@@ -113,23 +151,17 @@ function race_render_list(array $races): string
 
 /**
  * <select> de la faction de départ, depuis le catalogue (admin/factions.php).
- * Une valeur hors catalogue (faction supprimée) reste proposée, marquée ⚠,
- * pour ne pas être écrasée silencieusement en rouvrant le formulaire.
+ * Une valeur hors catalogue (faction supprimée) reste proposée, marquée ⚠
+ * par la sentinelle générique de renderSelectOptions.
  */
 function race_faction_select(string $current): string
 {
-    $factionNames = (new FactionService())->getFactionNames();
-
-    $options = '<option value="">— aucune —</option>';
-    foreach ($factionNames as $code => $name) {
-        $options .= '<option value="' . e($code) . '"' . ($current === $code ? ' selected' : '') . '>'
-            . e($name) . ' (' . e($code) . ')</option>';
-    }
-    if ($current !== '' && !isset($factionNames[$current])) {
-        $options .= '<option value="' . e($current) . '" selected>⚠ ' . e($current) . ' (inconnue)</option>';
+    $options = [];
+    foreach ((new FactionService())->getFactionNames() as $code => $name) {
+        $options[$code] = $name . ' (' . $code . ')';
     }
 
-    return '<select class="form-control" name="faction">' . $options . '</select>';
+    return formSelect('faction', $options, $current !== '' ? $current : null, '— aucune —');
 }
 
 function race_render_form(?Race $race, string $csrfToken): string
@@ -220,6 +252,35 @@ HTML;
         . '<input type="text" class="form-control" name="label" required value="'
         . e($isEdit ? $race->getLabel() : '') . '"></div>'
         . '<div class="form-group col-md-4"><label>Flags</label><div>'
+        . '<label class="mr-3">Sorte '
+        . kind_select($isEdit && $race->isStructureKind())
+        . '</label> '
+        . '<label class="mr-3">Saignement '
+        . formSelect(
+            'bleeds',
+            bleed_options(),
+            $isEdit && $race->getBleeds() !== '' ? $race->getBleeds() : null,
+            '— rien —',
+            'class="form-control form-control-sm d-inline-block" style="width:auto"'
+            . ' title="Élément versé au sol quand l\'entité est blessée — rien : un mur ne saigne pas."'
+        )
+        . '</label> '
+        . '<label class="mr-3">Nature '
+        . formSelect(
+            'structure_nature',
+            ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
+            $isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice',
+            null,
+            'class="form-control form-control-sm d-inline-block" style="width:auto"'
+            . ' title="Structures seulement — Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
+        )
+        . '</label> '
+        . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
+        . checked(!$isEdit || $race->blocksPassage())
+        . ' title="Structures seulement — décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
+        . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
+        . checked(!$isEdit || $race->blocksProjectiles())
+        . ' title="Structures seulement — décoché : les tirs passent au-dessus (table, muret bas…)."> Bloque les tirs</label> '
         . '<label class="mr-3"><input type="checkbox" name="playable" '
         . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>'
         . '<label><input type="checkbox" name="hidden" '
@@ -241,6 +302,10 @@ HTML;
         . '<div class="form-group col-md-2"><label>Couleur du texte</label>'
         . '<input type="text" class="form-control" name="color" value="'
         . e($isEdit ? $race->getColor() : 'black') . '"></div>'
+        . '<div class="form-group col-md-2"><label>Couleur de blessure</label>'
+        . '<input type="color" class="form-control" name="wound_color" value="'
+        . e($isEdit ? $race->getWoundColor() : \App\Service\RaceService::DEFAULT_WOUND_COLOR) . '">'
+        . '<small class="form-text text-muted">Voile des PV perdus (portrait, carte) — rouge sang par défaut, bronze pour une structure par exemple.</small></div>'
         . '<div class="form-group col-md-3"><label>Faction de départ</label>'
         . race_faction_select($isEdit ? $race->getFaction() : '')
         . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'

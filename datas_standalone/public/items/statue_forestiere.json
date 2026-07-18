@@ -1,0 +1,11 @@
+{
+    "id": 1130,
+    "name": "Statue forestière",
+    "private": 0,
+    "price": 50,
+    "race": "elfe",
+    "type": "constructible",
+    "text": "Une statue représentant le lien entre les Elfes et leur forêt.",
+    "img": "img/walls/statue_forestiere.png",
+    "mini": "img/walls/statue_forestiere.png"
+}

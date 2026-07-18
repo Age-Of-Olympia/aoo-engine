@@ -12,12 +12,20 @@ $(document).ready(function(){
         var $item = $(this);
 
         window.id =  $item.data("id");
+        /* Instance PRÉCISE cliquée (ligne individualisée) — null sur une
+           ligne de pile, pour ne pas laisser fuiter la sélection
+           précédente. */
+        window.instanceId = $item.data("instance-id") || null;
+        /* Ce que « Utiliser » ferait, décidé par le serveur
+           (InventoryService::useKind) : equip | consume | vide. */
+        window.useKind = $item.data("use-kind") || '';
         window.name =  $item.data("name");
         window.type =  $item.data("type");
         window.emplacement =  $item.data("emplacement");
         window.n =     $item.data("n");
         let text =  $item.data("text");
         window.price = $item.data("price");
+        window.buildAction = $item.data("build-action");
         let infos = $item.data("infos");
         let img =   $item.data("img");
         let bankable = $item.data("bankable") ;
@@ -32,32 +40,27 @@ $(document).ready(function(){
         }
         else{
 
-            if(window.freeEmp && window.type == 'equipement'){
+            if(window.type == 'constructible'){
+
+                /* Bâtir depuis l'objet : un bouton par objet possédé. */
+                $('.action[data-action="use"]')
+                .html('Construire (1 A)')
+                .prop('disabled', (window.aLeft <= 0));
+            }
+            else if(window.useKind == 'equip' && window.type == 'equipement' && !window.freeEmp
+                && window.emplacement != 'munition' && window.emplacement != 'doigt'){
 
                 $('.action[data-action="use"]')
-                .html('Équiper (1 Ae)')
+                .html('<font color="red">Équiper (Max.)</font>')
                 .prop('disabled', (window.aeLeft <= 0));
             }
-            else if(!window.freeEmp && window.type == 'equipement'){
-                if(window.emplacement == "munition" || window.emplacement == "doigt"){
-                    $('.action[data-action="use"]')
-                    .html('Équiper (1 Ae)')
-                    .prop('disabled', (window.aeLeft <= 0));
-                }
-                else{
-                    $('.action[data-action="use"]')
-                    .html('<font color="red">Équiper (Max.)</font>')
-                    .prop('disabled', (window.aeLeft <= 0));
-
-                }
-            }
-            else if(window.type == 'parchemin' || window.emplacement != ''){
+            else if(window.useKind == 'equip'){
 
                 $('.action[data-action="use"]')
-                .html('Utiliser (1 Ae)')
+                .html((window.type == 'equipement' ? 'Équiper' : 'Utiliser') + ' (1 Ae)')
                 .prop('disabled', (window.aeLeft <= 0));
             }
-            else if(window.type == 'consommable' || window.type == 'structure'){
+            else if(window.useKind == 'consume'){
 
                 $('.action[data-action="use"]')
                 .html('Utiliser (1 A)')
@@ -65,13 +68,18 @@ $(document).ready(function(){
             }
             else{
 
+                /* Aucun usage réel (décision serveur, data-use-kind vide) :
+                   plus jamais de « Utiliser » qui ne fait rien. */
                 $('.action[data-action="use"]')
-                .html('Utiliser')
+                .html('Sans usage')
                 .prop('disabled', true);
             }
         }
 
         $(".preview-n").text('x'+ n);
+        /* État d'une instance (durabilité / brisé) : rempli seulement
+           quand la ligne en porte un, vidé sinon. */
+        $(".preview-state").text($item.data("state") || '');
         $(".preview-text").text(text);
 
         preload(img, $previewImg);

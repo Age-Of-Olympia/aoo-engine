@@ -4,6 +4,6 @@
     "private": 0,
     "price": 10,
     "race": "common",
-    "type": "structure",
+    "type": "constructible",
     "text": "Une table en bois. Idéale pour jouer aux dés."
 }

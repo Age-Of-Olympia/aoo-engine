@@ -1,0 +1,11 @@
+{
+    "id": 70,
+    "name": "Piédestal",
+    "private": 0,
+    "price": 50,
+    "race": "olympien",
+    "type": "constructible",
+    "text": "Un piédestal (pluriel: piédestaux) est un support isolé qui sert à recevoir un buste ou un grand objet d'art et d'ornement.",
+    "img": "img/walls/piedestal.png",
+    "mini": "img/walls/piedestal.png"
+}

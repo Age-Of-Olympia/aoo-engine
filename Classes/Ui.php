@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20260716"></script>
                 <script src="js/console.js?v=20260614"></script>
-                <link href="css/main.min.css?v=20260714" rel="stylesheet">
+                <link href="css/main.min.css?v=20260718b" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct
@@ -84,6 +84,9 @@ class Ui{
                 <script src="js/tutorial/TutorialHighlighter.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialGameIntegration.js?v=' . $tutorialVersion . '"></script>
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
+
+                <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
+                <script src="js/build_picker.js?v=20260718"></script>
         ';
 
         echo '    </head>
@@ -177,11 +180,13 @@ class Ui{
                     $height = floor((100 - $data->pvPct) * 225 / 100);
                     $height = min($height, 225);
 
-                    // life red filter
+                    // life filter, teinté par la race/le type (wound_color)
+                    $woundColor = (new \App\Service\RaceService())->getRaceWoundColor($data->race ?? null);
+
                     echo '
                     <div
                         id="red-filter"
-                        style="background: #770001; width: 210px; height: '. $height .'px; position: absolute; bottom: 176px; left: 29px; opacity: 0.5; transition: height 0.2s linear;"
+                        style="background: '. $woundColor .'; width: 210px; height: '. $height .'px; position: absolute; bottom: 176px; left: 29px; opacity: 0.5; transition: height 0.2s linear;"
                     >
                     </div>
                     ';
@@ -245,7 +250,7 @@ class Ui{
      *                                logique d'état reste unique.
      * @param int|null    $aeLeft     Ae restantes ce tour : grise les
      *                                boutons de ligne qui en coûtent
-     *                                (équiper, parchemins) — mêmes règles
+     *                                (équiper) — mêmes règles
      *                                qu'InventoryService::useItem.
      * @param int|null    $aLeft      Actions restantes : grise Utiliser
      *                                des consommables/structures.
@@ -287,6 +292,7 @@ class Ui{
                         height="150"
                     />
                 </div>
+                <div class="preview-state" style="color:#7a4a12;font-weight:bold;"></div>
                 <div class="preview-text">
                     '. $defaultItem->data->text .'
                 </div>
@@ -333,6 +339,36 @@ class Ui{
 
             $itemName = Item::get_formatted_name(ucfirst($item->data->name), $row);
 
+            /* Instance nommée à la création : son nom prime, le type
+             * catalogue reste entre parenthèses. */
+            if(!empty($row->custom_name)){
+
+                $itemName = '« '. htmlspecialchars($row->custom_name, ENT_QUOTES, 'UTF-8') .' » ('. $itemName .')';
+            }
+
+            /* État d'une instance (usure, seuils décidés en revue) :
+             * ligne colorée sous les caracs + data-state pour l'aperçu. */
+            $stateLine = '';
+            $stateAttr = '';
+            if(isset($row->durability, $row->durability_max) && (int) $row->durability_max > 0){
+
+                $d = (int) $row->durability;
+                $dMax = (int) $row->durability_max;
+
+                if(\App\Service\ItemInstanceService::isBroken($d)){
+
+                    $stateLine = '<br /><font color="red"><b>Brisé</b></font>';
+                    $stateAttr = 'Brisé — ne contribue plus ses caractéristiques.';
+                }
+                else{
+
+                    $pct = (int) round($d / $dMax * 100);
+                    $color = $pct < 20 ? 'red' : ($pct < 50 ? 'orange' : 'green');
+                    $stateLine = '<br /><font color="'. $color .'">Durabilité '. $d .'/'. $dMax .'</font>';
+                    $stateAttr = 'Durabilité '. $d .'/'. $dMax;
+                }
+            }
+
 
             $emplacement = '';
 
@@ -346,11 +382,24 @@ class Ui{
 
             $emp = (!empty($item->data->emplacement)) ? $item->data->emplacement : '';
 
+            /* Ligne d'INSTANCE (objet individualisé) vs ligne de pile :
+             * id DOM distinct (i{instanceId} — deux lignes du même objet
+             * catalogue ne doivent pas partager un id), et attribut dédié
+             * pour les flux qui devront viser l'individu. */
+            $isInstance = isset($row->instance_id);
+            $domId = $isInstance ? 'i'. (int) $row->instance_id : $row->id;
+
+            /* Ce que « Utiliser » ferait (source unique côté serveur) —
+             * vide : rien, le bouton doit rester grisé partout. */
+            $useKind = (string) \App\Service\InventoryService::useKind($item);
+
             echo '
             <tr
                 class="item-case"
-                id="'. $row->id .'"
+                id="'. $domId .'"
                 data-id="'. $row->id .'"
+                data-instance-id="'. ($isInstance ? (int) $row->instance_id : '') .'"
+                data-use-kind="'. $useKind .'"
                 data-name="'. $itemName .'"
                 data-n="'. $row->n .'"
                 data-text="'. $item->data->text .'"
@@ -358,6 +407,8 @@ class Ui{
                 data-price="'. $item->data->price .'"
                 data-type="'. $type .'"
                 data-bankable="'. $item->row->is_bankable .'"
+                data-state="'. $stateAttr .'"
+                data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire_'. $item->row->name : '') .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">
@@ -371,7 +422,7 @@ class Ui{
                 </td>
                 <td align="left" class="item-name">
                     '. $itemName .'<br />
-                    '. implode(', ', $caracs) .'
+                    '. implode(', ', $caracs) . $stateLine .'
 
                     '. $emplacement .'
                 </td>
@@ -383,10 +434,10 @@ class Ui{
             if($rowActions){
 
                 /* Mêmes règles de coût qu'InventoryService::useItem et
-                 * js/inventUi.js : déséquiper est gratuit ; équiper et
-                 * lire un parchemin coûtent 1 Ae ; consommer coûte 1 A.
-                 * Sans le point requis, le bouton est grisé et
-                 * l'infobulle dit pourquoi. */
+                 * js/inventUi.js : déséquiper est gratuit ; équiper
+                 * coûte 1 Ae ; consommer coûte 1 A. Sans le point
+                 * requis, le bouton est grisé et l'infobulle dit
+                 * pourquoi. */
                 $isEquipped = !empty($row->equiped);
 
                 if($isEquipped){
@@ -394,25 +445,32 @@ class Ui{
                     $usable = true;
                     $useTitle = 'Déséquiper';
                 }
-                elseif($type == 'equipement'){
+                elseif($type == Item::TYPE_CONSTRUCTIBLE){
+
+                    /* Un objet constructible se bâtit DEPUIS l'inventaire —
+                     * un bouton par objet possédé, pas un bouton d'action
+                     * par type dans le panneau de case. */
+                    $usable = ($aLeft === null || $aLeft > 0);
+                    $useTitle = $usable ? 'Construire (1 A)' : 'Construire (1 A) — plus d\'Action ce tour';
+                }
+                elseif($useKind === \App\Service\InventoryService::USE_EQUIP){
 
                     $usable = ($aeLeft === null || $aeLeft > 0);
-                    $useTitle = $usable ? 'Équiper (1 Ae)' : 'Équiper (1 Ae) — plus d\'Action d\'Équipement ce tour';
+                    $verb = $type == 'equipement' ? 'Équiper' : 'Utiliser';
+                    $useTitle = $usable ? $verb .' (1 Ae)' : $verb .' (1 Ae) — plus d\'Action d\'Équipement ce tour';
                 }
-                elseif($type == 'parchemin' || $emp != ''){
-
-                    $usable = ($aeLeft === null || $aeLeft > 0);
-                    $useTitle = $usable ? 'Utiliser (1 Ae)' : 'Utiliser (1 Ae) — plus d\'Action d\'Équipement ce tour';
-                }
-                elseif($type == 'consommable' || $type == 'structure'){
+                elseif($useKind === \App\Service\InventoryService::USE_CONSUME){
 
                     $usable = ($aLeft === null || $aLeft > 0);
                     $useTitle = $usable ? 'Utiliser (1 A)' : 'Utiliser (1 A) — plus d\'Action ce tour';
                 }
                 else{
 
+                    /* Aucun usage réel (consommable sans bonus,
+                     * matériau…) : un clic ne ferait RIEN — bouton
+                     * grisé, et useItem refuserait de toute façon. */
                     $usable = false;
-                    $useTitle = 'Utiliser';
+                    $useTitle = 'Cet objet n\'a pas d\'usage direct';
                 }
 
                 /* Porté : bouton « rendre » plein (nuit) — impossible à
@@ -425,25 +483,29 @@ class Ui{
                 elseif($type == 'equipement'){
                     $useIcon = 'ra-vest';
                 }
-                elseif($type == 'parchemin'){
-                    $useIcon = 'ra-scroll-unfurled';
-                }
                 elseif($type == 'consommable'){
                     $useIcon = 'ra-potion';
-                }
-                elseif($type == 'structure'){
-                    $useIcon = 'ra-hammer';
                 }
                 else{
                     $useIcon = 'ra-hand';
                 }
                 $wornClass = $isEquipped ? ' row-action--worn' : '';
 
+                /* Jeter/Artisanat opèrent sur la PILE (drop → map_items,
+                 * craft → décrément de pile) : sur une ligne d'instance ils
+                 * dupliqueraient l'objet à partir de rien — masqués tant que
+                 * le flux de dépôt d'instance (dropAt) n'est pas câblé ici. */
+                $stackActions = '';
+                if(!$isInstance){
+
+                    $stackActions = '
+                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
+                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>';
+                }
+
                 echo '
                 <td class="item-actions">
-                    <button class="row-action'. $wornClass .'" data-action="use" title="'. $useTitle .'" '. ($usable ? '' : 'disabled') .'><span class="ra '. $useIcon .'"></span></button>
-                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
-                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>
+                    <button class="row-action'. $wornClass .'" data-action="use" title="'. $useTitle .'" '. ($usable ? '' : 'disabled') .'><span class="ra '. $useIcon .'"></span></button>'. $stackActions .'
                 </td>
                 ';
             }
@@ -477,7 +539,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260220"></script>
+        <script src="js/inventUi.js?v=20260720b"></script>
         <?php
 
         return Str::minify(ob_get_clean());
@@ -492,7 +554,11 @@ class Ui{
      * position:relative ; pointer-events:none laisse cliquer au
      * travers (cartes de personnages secondaires).
      */
-    public static function get_pv_veil(int $pvPct): string
+    /**
+     * @param string|null $woundColor teinte du voile (hex #RRGGBB),
+     *        races.wound_color — null/invalide : rouge sang historique
+     */
+    public static function get_pv_veil(int $pvPct, ?string $woundColor = null): string
     {
         if ($pvPct >= 100) {
 
@@ -500,8 +566,25 @@ class Ui{
         }
 
         $height = min(100 - $pvPct, 100);
+        $rgb = self::hexToRgb($woundColor);
 
-        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(119, 0, 1, 0.35); border-top: 2px solid rgba(119, 0, 1, 0.7); pointer-events: none;"></div>';
+        return '<div class="pv-veil" style="position: absolute; left: 0; bottom: 0; width: 100%; height: ' . $height . '%; background: rgba(' . $rgb . ', 0.35); border-top: 2px solid rgba(' . $rgb . ', 0.7); pointer-events: none;"></div>';
+    }
+
+    /**
+     * '#RRGGBB' -> 'r, g, b' pour composer des rgba(). Toute entrée
+     * invalide retombe sur le rouge sang du voile historique.
+     */
+    private static function hexToRgb(?string $hex): string
+    {
+        $parsed = sscanf((string) $hex, '#%02x%02x%02x');
+
+        if (!is_array($parsed) || in_array(null, $parsed, true)) {
+
+            $parsed = [119, 0, 1];
+        }
+
+        return implode(', ', $parsed);
     }
 
    #

@@ -136,3 +136,13 @@ $(document).ready(function(){
         // $(this).find('.action-name').hide();
     });
 });
+
+/* Bourse : Ramasser sa propre case (bouton injecté en AJAX — délégué). */
+$(document).on('click', '#pickup-own-tile', function(){
+
+    var b = this;
+    b.disabled = true;
+
+    fetch('pickup.php', {method: 'POST'}).then(function(r){ return r.text(); })
+        .then(function(t){ aooAlert(t).then(function(){ document.location.reload(); }); });
+});

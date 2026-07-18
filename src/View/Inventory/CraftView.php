@@ -90,26 +90,6 @@ class CraftView
         }
 
 
-        function get_json_item($item)
-        {
-
-            $return = (object) array('data', 'id');
-            $return->data = json()->decode('items', $item->getName());
-            $return->id = $item->getId();
-
-            // Unknown item — the JSON file for this item name does not
-            // exist. Return early with a null data payload; the caller
-            // renders a fallback row.
-            if (!$return->data) {
-                echo 'error ' . $item->getName();
-                return $return;
-            }
-
-            $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
-            return $return;
-        }
-
-
         $item = new Item($_GET['itemId'], false);
 
         $item->get_data();
@@ -141,7 +121,7 @@ class CraftView
 
                 foreach ($recipeList[0]->getRecipeIngredients() as $ingredientItem) {
 
-                    $ingredient = get_json_item($ingredientItem->GetItem());
+                    $ingredient = self::itemReadModel($ingredientItem->GetItem());
 
                     echo '
                 <img src="' . $ingredient->data->mini . '" /> x' . $ingredientItem->getCount() . '
@@ -173,7 +153,10 @@ class CraftView
         $itemList = Item::get_item_list($player->id);
 
         foreach ($itemList as $playerItem) {
-            $playerItemN[$playerItem->item_id] = $playerItem->n;
+            /* Lignes d'instances et ligne « or » : l'id catalogue fait foi
+             * (les instances comptent chacune pour 1 exemplaire). */
+            $catalogId = $playerItem->item_id ?? $playerItem->id;
+            $playerItemN[$catalogId] = ($playerItemN[$catalogId] ?? 0) + (int) $playerItem->n;
         }
 
         $recipeList = $recipeService->getRecipes($player, fromItemId: $item->id);
@@ -198,7 +181,7 @@ class CraftView
 
             $recipeName = $recipe->GetName();
             $recipeId = $recipe->getId();
-            $artItem = get_json_item($recipe->getRecipeResults()[0]->GetItem());
+            $artItem = self::itemReadModel($recipe->getRecipeResults()[0]->GetItem());
 
             // print
             echo '
@@ -224,7 +207,7 @@ class CraftView
             foreach ($recipe->GetRecipeIngredients() as $ingredient) {
 
                 $ingredientItemEntity = $ingredient->GetItem();
-                $ingredientItem = get_json_item($ingredientItemEntity);
+                $ingredientItem = self::itemReadModel($ingredientItemEntity);
                 $ingredentItemId = $ingredientItemEntity->getId();
 
                 // color
@@ -318,5 +301,23 @@ class CraftView
             });
         </script>
 <?php
+    }
+
+    /**
+     * Read model d'un objet pour l'artisanat, via la passerelle
+     * Item::get_data() — un objet dont les stats sont en base
+     * (stats_in_db, ex. les constructibles créés sans fichier JSON) est
+     * servi comme les autres ; le repli JSON hérité reste couvert par
+     * get_data() elle-même.
+     */
+    private static function itemReadModel(object $item): object
+    {
+        $legacy = new Item((int) $item->getId());
+        $legacy->get_data();
+
+        $return = (object) array('data' => $legacy->data, 'id' => (int) $item->getId());
+        $return->data->mini = 'img/items/' . $item->getName() . '_mini.webp';
+
+        return $return;
     }
 }

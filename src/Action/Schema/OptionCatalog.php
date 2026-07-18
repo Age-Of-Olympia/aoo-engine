@@ -16,11 +16,16 @@ final class OptionCatalog
 {
     private ?ActionPassiveService $passiveService;
     private ?RecipeService $recipeService;
+    private ?\App\Service\EffectService $effectService;
 
-    public function __construct(?ActionPassiveService $passiveService = null, ?RecipeService $recipeService = null)
-    {
+    public function __construct(
+        ?ActionPassiveService $passiveService = null,
+        ?RecipeService $recipeService = null,
+        ?\App\Service\EffectService $effectService = null
+    ) {
         $this->passiveService = $passiveService;
         $this->recipeService = $recipeService;
+        $this->effectService = $effectService;
     }
 
     /**
@@ -28,13 +33,16 @@ final class OptionCatalog
      */
     public function effects(): array
     {
-        if (!defined('EFFECTS_RA_FONT')) {
+        try {
+            $service = $this->effectService ??= new \App\Service\EffectService();
+            $names = $service->getGameplayEffectNames();
+        } catch (\Throwable) {
             return [];
         }
 
         $effects = [];
-        foreach (array_keys(EFFECTS_RA_FONT) as $name) {
-            $effects[(string) $name] = $this->humanize((string) $name);
+        foreach ($names as $name) {
+            $effects[$name] = $service->getLabel($name);
         }
         ksort($effects);
 

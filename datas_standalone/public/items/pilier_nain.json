@@ -1,0 +1,11 @@
+{
+    "id": 509,
+    "name": "Pilier Nain",
+    "private": 0,
+    "price": 20,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un beau pilié noir. Les Nains ont eu l'idée avec les Olympiens, bien sûr.",
+    "img": "img/walls/pilier_nain.png",
+    "mini": "img/walls/pilier_nain.png"
+}

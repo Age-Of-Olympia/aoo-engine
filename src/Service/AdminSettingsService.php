@@ -8,7 +8,7 @@ use Classes\Db;
  * Tiny key/value store for admin-configurable settings (admin_settings table).
  *
  * Reusable for any scalar admin setting; today it backs the PNJ retirement plan
- * (PnjAdminService). Degrades gracefully to the caller's default if the table
+ * (NpcAdminService). Degrades gracefully to the caller's default if the table
  * has not been created yet, and lazily creates it on write — same resilience
  * pattern as AdminMenuAccessService.
  */

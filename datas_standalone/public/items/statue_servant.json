@@ -1,0 +1,11 @@
+{
+    "id": 511,
+    "name": "Statue de servant",
+    "private": 0,
+    "price": 20,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une statue reprsentant le devoir.",
+    "img": "img/walls/statue_servant.png",
+    "mini": "img/walls/statue_servant.png"
+}

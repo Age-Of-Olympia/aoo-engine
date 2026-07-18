@@ -18,9 +18,22 @@ class ConditionObject
     protected ?bool $actorDisadvantage = null;
     protected ?bool $targetDisadvantage = null;
     protected ?int $lifeloss = null;
+    /** Case de construction validée par BuildSiteCondition (x/y/z/plan). */
+    protected ?object $buildCoords = null;
 
 
     public function __construct() {
+    }
+
+    public function getBuildCoords(): ?object
+    {
+        return $this->buildCoords;
+    }
+
+    public function setBuildCoords(object $buildCoords): self
+    {
+        $this->buildCoords = $buildCoords;
+        return $this;
     }
 
     public function getAction(): ?Action

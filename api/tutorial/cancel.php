@@ -48,7 +48,7 @@ try {
     $em = EntityManagerFactory::getEntityManager();
     $conn = $em->getConnection();
 
-    // Phase 4: Use TutorialResourceManager for proper cleanup order
+    // Use TutorialResourceManager for proper cleanup order
     $resourceManager = new \App\Tutorial\TutorialResourceManager();
     $sessionManager = new \App\Tutorial\TutorialSessionManager();
 
@@ -84,7 +84,7 @@ try {
             $conn->beginTransaction();
 
             try {
-                // Phase 4.3b — entity-aware adapters. Matches the path
+                // Entity-aware adapters. Matches the path
                 // TutorialManager uses since !393; keeps cancel + complete
                 // on the same abstraction.
                 $tutorialPlayer = $resourceManager->getTutorialPlayerAsEntity($sessionId);

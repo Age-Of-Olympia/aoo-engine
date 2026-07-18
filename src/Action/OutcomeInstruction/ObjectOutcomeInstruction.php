@@ -30,6 +30,7 @@ class ObjectOutcomeInstruction extends OutcomeInstruction implements HasParamete
         $object = $this->getParameters()['object'] ?? 1;
 
         $outcomeSuccessMessages = array();
+        $gain = 0;
         if(!empty($action)){
             $gold = new Item($object);
             $goldInTargetInventory = $gold->get_n($target);

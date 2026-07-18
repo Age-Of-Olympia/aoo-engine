@@ -1,0 +1,250 @@
+<?php
+
+namespace App\Service;
+
+use App\Service\Action\EnergieRule;
+use App\Service\TurnScheduleService;
+use App\Tutorial\TutorialHelper;
+use Classes\Db;
+use Classes\Log;
+use Classes\Player;
+use Classes\View;
+
+/**
+ * Moteur de tour : détecte le tour dû et applique TOUTES les mutations
+ * du rafraîchissement (récupération de caracs, XP, malus, effets,
+ * usure, énergie, nextTurnTime), extrait de NewTurnView — la vue ne
+ * fait plus que présenter le récapitulatif retourné.
+ *
+ * Le récap est aussi journalisé en ÉVÉNEMENT (players_logs, type
+ * 'turn') : affiché au début de tour comme avant, ET relisible dans
+ * les Évènements si on a oublié ce qui y était écrit (décision
+ * 2026-07-18). L'usure y est intégrée — plus de log séparé.
+ */
+class TurnProcessingService
+{
+    /**
+     * Traite le tour s'il est dû. Null si rien à faire (tutoriel,
+     * session admin « nonewturn », pas de session, tour pas encore dû,
+     * ou mort aux limbes).
+     *
+     * @return object|null récap présentable :
+     *   {nextTurnTime: int, rows: array<int, array{0: ?string, 1: string, 2: string}>,
+     *    wearRecap: string[], showMailPrompt: bool}
+     *   — rows = [cléTooltip|null, libellé, valeur (HTML léger)]
+     */
+    public function processIfDue(Player $player): ?object
+    {
+        if (TutorialHelper::isInTutorial()) {
+            return null;
+        }
+
+        if (isset($_SESSION['originalPlayerId']) && $_SESSION['playerId'] == $_SESSION['originalPlayerId']) {
+            $_SESSION['nonewturn'] = false;
+        }
+        if (!empty($_SESSION['nonewturn']) || empty($_SESSION['playerId'])) {
+            return null;
+        }
+
+        $time = time();
+        $player->get_data(false);
+
+        if ($player->data->nextTurnTime > $time) {
+            return null;
+        }
+
+        $player->getCoords();
+        if ($player->coords->plan == 'limbes') {
+            return null;
+        }
+
+        return $this->process($player, $time);
+    }
+
+    private function process(Player $player, int $time): object
+    {
+        $db = new Db();
+        $rows = [];
+
+        $player->get_caracs();
+
+        // Cadence fixe ancrée sur l'horaire du tour précédent ; le joueur
+        // décale lui-même son prochain tour via api/player/set_next_turn.php
+        // (ex « DLA glissante », remplacée par ce décalage manuel).
+        $playerTurn = TurnScheduleService::turnDurationSeconds($player->caracs->spd);
+        $nextTurnTime = $player->data->nextTurnTime + $playerTurn;
+
+        while ($nextTurnTime <= $time) {
+            $nextTurnTime += $playerTurn;
+        }
+
+        foreach ($player->effectService->getHiddenNames() as $effect) {
+            $player->end_effect($effect);
+        }
+
+        if (file_exists('img/foregrounds/doubles/' . $player->id . '.png')) {
+            View::delete_double($player);
+        }
+
+        // XP du tour, avec rattrapage sur le premier joueur (plafonné).
+        $firstPlayerXP = 0;
+        $firstPlayerData = Player::get_player_list();
+        if (isset($firstPlayerData->first)) {
+            $firstPlayerXP = $firstPlayerData->first->xp;
+        }
+
+        $gainXp = XP_PER_TURNS;
+        if ($player->data->xp + 250 <= $firstPlayerXP) {
+            $diff = $firstPlayerXP - ($player->data->xp + 250);
+            $gainXp += 1 + floor($diff / 50);
+            if ($player->id < 0 && $gainXp > 10) {
+                $gainXp = 10;
+            }
+        }
+
+        $gainXpTxt = '';
+        if ($gainXp > 25) {
+            $gainXpTxt = ' ( calculé:' . $gainXp . 'xp)';
+            $gainXp = 25;
+        }
+
+        $rows[] = ['xp', 'Xp', '+' . $gainXp . $gainXpTxt];
+        $rows[] = ['pi', 'Pi', '+' . $gainXp];
+
+        $recovMalus = min($player->data->malus, MALUS_PER_TURNS);
+        $rows[] = ['malus', 'Malus', '-' . $recovMalus];
+
+        $recovEnergie = EnergieRule::maxEnergieFor((int) $player->caracs->a);
+
+        foreach (CARACS_RECOVER as $k => $carac) {
+            $row = $this->recoverCarac($player, $k, $carac);
+            if ($row !== null) {
+                $rows[] = $row;
+            }
+        }
+
+        // Ae, A et Mvt repartent de zéro à chaque tour.
+        $db->exe('DELETE FROM players_bonus WHERE player_id = ? AND name IN("ae","a","mvt")', $player->id);
+
+        // Malus de mouvement au tour (catalogue : turn_mvt_malus,
+        // ex-ralentissement codé en dur) — la valeur portée fait le malus.
+        foreach ($player->effectService->turnEffects($player->getEffects(), 'turn_mvt_malus') as $effect) {
+            $player->playerBonusService->setBonusByPlayerIdByName(
+                $player->id,
+                'mvt',
+                -$player->playerEffectService->getEffectValueByPlayerIdByEffectName($player->id, $effect->getName())
+            );
+        }
+
+        $player->playerService->playerUpdateVisible(null);
+
+        $expired = (int) $db->exe(
+            'SELECT COUNT(*) AS n FROM players_effects WHERE endTime <= ? AND endTime != 0 AND player_id = ?',
+            [$time, $player->id]
+        )->fetch_object()->n;
+        if ($expired) {
+            $player->purge_effects();
+            $rows[] = [null, 'Effets terminés', (string) $expired];
+        }
+
+        // Usure : le tour est l'unité de décrément — appliquer ici ce que
+        // les événements du tour ont armé.
+        $wearRecap = (new WearService())->applyNewTurnWear($player->id);
+
+        $db->exe(
+            'UPDATE players
+             SET nextTurnTime = ?, nextTurnRescheduled = 0, lastActionTime = 0, antiBerserkTime = ?, malus = malus - ?, energie = ?
+             WHERE id = ?',
+            [
+                $nextTurnTime,
+                $player->data->lastActionTime + (0.25 * $playerTurn),
+                $recovMalus,
+                $recovEnergie,
+                $player->id,
+            ]
+        );
+
+        $player->put_xp($gainXp);
+
+        $recap = (object) [
+            'nextTurnTime' => $nextTurnTime,
+            'rows' => $rows,
+            'wearRecap' => $wearRecap,
+            'showMailPrompt' => $player->id > 0
+                && empty($player->data->plain_mail)
+                && !$player->data->email_bonus,
+        ];
+
+        // L'événement relisible dans les Évènements.
+        Log::put($player, $player, $this->eventText($recap), type: 'turn', hiddenText: '', logTime: $time);
+
+        $player->refresh_data();
+        $player->refresh_caracs();
+        $player->refresh_invent(); // for Ae
+
+        return $recap;
+    }
+
+    /**
+     * Une ligne de récupération de carac — les poisons annulent la
+     * récupération (et se terminent), la régénération l'augmente de RM,
+     * l'énergie se calcule à part (pas de ligne).
+     *
+     * @return array{0: ?string, 1: string, 2: string}|null [cléTooltip, libellé, valeur]
+     */
+    private function recoverCarac(Player $player, string $k, string $carac): ?array
+    {
+        $val = $player->caracs->$carac;
+        $carried = $player->getEffects();
+
+        // Blocage de récupération (catalogue : block_recovery, ex-poison
+        // pour les PV / poison_magique pour les PM) : la récup tombe à
+        // zéro et l'effet expire. Le blocage PRIME sur la régénération.
+        if (in_array($k, ['pv', 'pm'], true)) {
+            foreach ($player->effectService->turnEffects($carried, 'block_recovery', $k) as $blocker) {
+                $player->end_effect($blocker->getName());
+
+                // Le pv historique avait une espace après le + ('+ 0').
+                $plus = $k === 'pv' ? '+ 0' : '+0';
+
+                return [$k, CARACS[$k], $plus . ' (<span class="ra ' . $blocker->getIcon() . '"></span> ' . $blocker->getLabel() . ')'];
+            }
+        }
+
+        // Régénération (catalogue : turn_regen) : la récup PV du tour
+        // gagne +RM et l'effet expire.
+        if ($k == 'pv') {
+            foreach ($player->effectService->turnEffects($carried, 'turn_regen') as $regen) {
+                $player->end_effect($regen->getName());
+                $val += $player->caracs->rm;
+
+                return [$k, CARACS[$k], '+' . $val . ' (<span class="ra ' . $regen->getIcon() . '"></span> ' . $regen->getLabel() . ')'];
+            }
+        }
+
+        if ($k == 'a') {
+            return null;
+        }
+
+        if (!in_array($k, ['ae', 'a', 'mvt'])) {
+            $player->putBonus([$k => $val]);
+        }
+
+        return [$k, CARACS[$k], '+' . $val];
+    }
+
+    /** Le récap en texte lisible pour l'événement (sans HTML). */
+    private function eventText(object $recap): string
+    {
+        $parts = [];
+        foreach ($recap->rows as [$tooltipKey, $label, $value]) {
+            $parts[] = $label . ' ' . trim(strip_tags($value));
+        }
+        if ($recap->wearRecap !== []) {
+            $parts[] = 'Usure : ' . strip_tags(implode(' ', $recap->wearRecap));
+        }
+
+        return 'Nouveau tour — ' . implode(', ', $parts)
+            . '. Prochain tour le ' . date('d/m/Y à H:i', $recap->nextTurnTime) . '.';
+    }
+}

@@ -17,11 +17,20 @@ final class SimulatedEffectService
     }
 
     /**
-     * @return list<string> one entry per active effect (count is what callers use)
+     * @return list<\App\Entity\PlayerEffect> same shape as the real service —
+     *         the effect-modifier aggregation reads name AND value
      */
     public function getEffectsByPlayerId(int $playerId): array
     {
-        return array_keys($this->effects);
+        $entries = [];
+        foreach ($this->effects as $name => $value) {
+            $entry = new \App\Entity\PlayerEffect();
+            $entry->setName((string) $name);
+            $entry->setValue((int) $value);
+            $entries[] = $entry;
+        }
+
+        return $entries;
     }
 
     public function getEffectValueByPlayerIdByEffectName(int $playerId, string $name): int

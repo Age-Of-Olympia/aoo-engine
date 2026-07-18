@@ -32,10 +32,13 @@ class RegistryTest extends TestCase
         $this->assertSame(['action', 'passive'], $registry->objectTypes());
     }
 
-    public function testTheBuiltInExporterRegistryKnowsActionPassiveActionTypeRaceFactionPlanAndDialog(): void
+    public function testTheBuiltInExporterRegistryKnowsEveryBundledType(): void
     {
         // Default exporters are lazy (no DB at construction), so this is safe here.
-        $this->assertSame(['action', 'passive', 'action-type', 'race', 'faction', 'plan', 'dialog'], (new ExporterRegistry())->objectTypes());
+        $this->assertSame(
+            ['action', 'passive', 'action-type', 'race', 'faction', 'plan', 'dialog', 'item', 'recipe', 'effect'],
+            (new ExporterRegistry())->objectTypes()
+        );
     }
 
     public function testRegisterOverridesAnExistingType(): void

@@ -19,12 +19,6 @@ parameters:
 			path: admin/screenshots.php
 
 		-
-			message: '#^Variable \$imageUrl might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: admin/screenshots.php
-
-		-
 			message: '#^Dead catch \- Exception is never thrown in the try block\.$#'
 			identifier: catch.neverThrown
 			count: 1
@@ -101,12 +95,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$data\.$#'
 			identifier: property.notFound
-			count: 5
-			path: src/Action/Condition/DodgeCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
-			identifier: property.notFound
 			count: 2
 			path: src/Action/Condition/DodgeCondition.php
 
@@ -166,18 +154,6 @@ parameters:
 			path: src/Action/Condition/RequiresResourceCondition.php
 
 		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/RequiresTraitValueCondition.php
-
-		-
-			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$playerEffectService\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Action/Condition/RequiresTraitValueCondition.php
-
-		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
 			count: 1
@@ -192,13 +168,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Interface\\ActorInterface\:\:\$emplacements\.$#'
 			identifier: property.notFound
-			count: 5
-			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
-
-		-
-			message: '#^Comparison operation "\<\=" between int\<1, 100\> and 0 is always false\.$#'
-			identifier: smallerOrEqual.alwaysFalse
-			count: 1
+			count: 4
 			path: src/Action/OutcomeInstruction/DamageObjectOutcomeInstruction.php
 
 		-
@@ -220,24 +190,6 @@ parameters:
 			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
 
 		-
-			message: '#^Variable \$totalDamages on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Action/OutcomeInstruction/LifeLossOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$gain might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/OutcomeInstruction/ObjectOutcomeInstruction.php
-
-		-
-			message: '#^Variable \$rand might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Action/OutcomeInstruction/ResourceOutcomeInstruction.php
-
-		-
 			message: '#^Property App\\Entity\\Action\:\:\$automaticOutcomeInstructions in isset\(\) is not nullable nor uninitialized\.$#'
 			identifier: isset.initializedProperty
 			count: 3
@@ -254,6 +206,18 @@ parameters:
 			identifier: constant.notFound
 			count: 1
 			path: src/Entity/EntityManagerFactory.php
+
+		-
+			message: '#^Property App\\Entity\\Effect\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/Effect.php
+
+		-
+			message: '#^Property App\\Entity\\EffectNameListEntry\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: src/Entity/EffectNameListEntry.php
 
 		-
 			message: '#^Property App\\Entity\\Faction\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
@@ -298,35 +262,11 @@ parameters:
 			path: src/Service/ForumCookieService.php
 
 		-
-			message: '#^Method Classes\\Player\:\:add_action\(\) invoked with 2 parameters, 1 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/Service/InventoryService.php
-
-		-
 			message: '#^Left side of \|\| is always false\.$#'
 			identifier: booleanOr.leftAlwaysFalse
 			count: 1
 			path: src/Service/PlantsService.php
 
-		-
-			message: '#^Variable \$growTo might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Service/PlantsService.php
-
-
-		-
-			message: '#^Method App\\Service\\ScreenshotService\:\:convertImagesToBase64\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ScreenshotService.php
-
-		-
-			message: '#^Method App\\Service\\ScreenshotService\:\:savePlayerPosition\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ScreenshotService.php
 
 		-
 			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
@@ -345,36 +285,6 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Service/TutorialStepValidationService.php
-
-		-
-			message: '#^Method App\\Service\\ViewService\:\:saveImage\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$baseName might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$bgKey on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$x might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/Service/ViewService.php
-
-		-
-			message: '#^Variable \$y might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/Service/ViewService.php
 
 		-
 			message: '#^Call to function method_exists\(\) with \$this\(App\\Tutorial\\Steps\\AbstractStep\) and ''getValidationHint'' will always evaluate to true\.$#'
@@ -467,12 +377,6 @@ parameters:
 			path: src/Tutorial/TutorialPlayerFactory.php
 
 		-
-			message: '#^Variable \$contextChanges on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.variable
-			count: 1
-			path: src/Tutorial/TutorialStepRepository.php
-
-		-
 			message: '#^Right side of && is always true\.$#'
 			identifier: booleanAnd.rightAlwaysTrue
 			count: 1
@@ -521,12 +425,6 @@ parameters:
 			path: src/View/Forum/MissiveView.php
 
 		-
-			message: '#^Variable \$search might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/View/Forum/SearchView.php
-
-		-
 			message: '#^Right side of \|\| is always true\.$#'
 			identifier: booleanOr.rightAlwaysTrue
 			count: 1
@@ -544,119 +442,12 @@ parameters:
 			count: 1
 			path: src/View/InfosView.php
 
-		-
-			message: '#^Function get_json_item not found\.$#'
-			identifier: function.notFound
-			count: 3
-			path: src/View/Inventory/CraftView.php
-
-		-
-			message: '#^Inner named functions are not supported by PHPStan\. Consider refactoring to an anonymous function, class method, or a top\-level\-defined function\. See issue \#165 \(https\://github\.com/phpstan/phpstan/issues/165\) for more details\.$#'
-			identifier: function.inner
-			count: 1
-			path: src/View/Inventory/CraftView.php
-
-		-
-			message: '#^Function getTooltip not found\.$#'
-			identifier: function.notFound
-			count: 7
-			path: src/View/NewTurnView.php
-
-		-
-			message: '#^Inner named functions are not supported by PHPStan\. Consider refactoring to an anonymous function, class method, or a top\-level\-defined function\. See issue \#165 \(https\://github\.com/phpstan/phpstan/issues/165\) for more details\.$#'
-			identifier: function.inner
-			count: 1
-			path: src/View/NewTurnView.php
-
-		-
-			message: '#^Variable \$recovEnergie might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/View/NewTurnView.php
 
 		-
 			message: '#^Negated boolean expression is always false\.$#'
 			identifier: booleanNot.alwaysFalse
 			count: 1
 			path: src/View/QuestsView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Variable \$isFull might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/DistanceView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/MagicView.php
-
-		-
-			message: '#^Variable \$isFull might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/View/WarSchool/MeleeView.php
-
-		-
-			message: '#^Negated boolean expression is always false\.$#'
-			identifier: booleanNot.alwaysFalse
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Result of \|\| is always true\.$#'
-			identifier: booleanOr.alwaysTrue
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$isFull might not be defined\.$#'
-			identifier: variable.undefined
-			count: 2
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$passiveRace in empty\(\) is never defined\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/StealthView.php
-
-		-
-			message: '#^Variable \$passives in empty\(\) always exists and is always falsy\.$#'
-			identifier: empty.variable
-			count: 1
-			path: src/View/WarSchool/WarSchoolUtils.php
 
 
 		-

@@ -17,8 +17,11 @@ body {
 }
 
 .admin-sidebar {
-    width: 180px;
-    min-width: 180px;
+    /* border-box (pied épinglé) : 200px incluent le padding 2×10px —
+       l'équivalent des 180px content-box d'origine, pour que .admin-main
+       (margin-left 204px) reste collé à la barre comme avant. */
+    width: 200px;
+    min-width: 200px;
     background: #2c3e50;
     padding: 15px 10px;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -96,13 +99,13 @@ body {
 
 .admin-main {
     flex: 1;
-    /* Generous left gutter so content clears the fixed sidebar instead of
-       crowding against it; symmetric breathing room top/right/bottom. */
+    /* Collé à la barre fixe (200px) — le padding gauche fait la
+       respiration, pas un interstice de fond de page. */
     padding: 28px 36px 36px;
     background: #ecf0f1;
     overflow-x: auto;
     font-size: 14px;
-    margin-left: 204px;
+    margin-left: 200px;
 }
 
 .admin-main h1 {
@@ -390,4 +393,58 @@ select.form-control {
         max-width: 100%;
         margin-left: 0;
     }
+
+    /* Barre en flux sur mobile : le pied suit le menu (pas d'épinglage),
+     * marges alignées sur le padding 15px. */
+    .admin-sidebar .sidebar-footer {
+        margin: 0 -15px -15px;
+        padding: 10px 15px 12px;
+    }
+}
+
+/* Retour au jeu : ÉPINGLÉ en bas de la barre latérale — la colonne
+ * devient une flexbox dont seul le nav scrolle ; un menu déplié qui
+ * déborde passe SOUS le lien (le pied opaque le recouvre).
+ * box-sizing : la règle de base (height:100vh + padding 15px) déborde
+ * de 30px sous l'écran en content-box — le pied était sous la barre
+ * des tâches. */
+.admin-sidebar {
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden;
+    box-sizing: border-box;
+}
+
+.admin-sidebar .vertical-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.admin-sidebar .sidebar-footer {
+    flex: 0 0 auto;
+    margin: 0 -10px -15px;
+    padding: 10px 10px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    background: #2c3e50;
+}
+
+/* Hors de .vertical-nav, le lien retombait sur les couleurs
+ * navigateur (bleu, violet visité — illisibles sur le fond sombre) :
+ * mêmes couleurs que les .nav-link du menu, :visited compris. */
+.admin-sidebar .sidebar-footer .nav-back-to-game,
+.admin-sidebar .sidebar-footer .nav-back-to-game:visited {
+    display: block;
+    padding: 8px 12px;
+    color: #bdc3c7;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.admin-sidebar .sidebar-footer .nav-back-to-game:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #4a90e2;
+    opacity: 1;
 }

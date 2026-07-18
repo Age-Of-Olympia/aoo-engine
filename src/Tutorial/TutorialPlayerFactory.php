@@ -10,7 +10,7 @@ use Doctrine\DBAL\Connection;
  * TutorialPlayerFactory — creates a fresh tutorial character
  * for a session and returns it as a Doctrine TutorialPlayer.
  *
- * Phase 4.4 replacement for `App\Tutorial\TutorialPlayer::create()`.
+ * Replacement for `App\Tutorial\TutorialPlayer::create()`.
  * The original service-class static factory is retired; its logic
  * lives here unchanged except for the return type (entity instead
  * of the service class).
@@ -87,7 +87,7 @@ class TutorialPlayerFactory
         //
         // `tutorial_session_id` and `real_player_id_ref` on the
         // `players` row are what TutorialPlayer maps to via its
-        // STI-subclass ORM\Column attributes. Phase 4.5 made
+        // STI-subclass ORM\Column attributes. This made
         // `players.real_player_id_ref` the sole real↔tutorial link
         // (collapsing the parallel `tutorial_players.real_player_id`
         // column that predated the entity layer).
@@ -135,7 +135,7 @@ class TutorialPlayerFactory
         \App\Service\PlayerOptionsService::resetCache($actualPlayerId);
 
         // Step 10: Tutorial tracking entry.
-        // Phase 4.5 collapsed the real-player link onto players.real_player_id_ref
+        // The real-player link lives on players.real_player_id_ref
         // (written on the players row above); this table keeps only session
         // and activity bookkeeping.
         $conn->insert('tutorial_players', [

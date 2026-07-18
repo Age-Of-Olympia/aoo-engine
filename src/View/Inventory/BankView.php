@@ -45,7 +45,10 @@ class BankView
                 }
 
 
-                if (!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player)) {
+                /* Pile uniquement : le dépôt décrémente la pile — compter
+                 * les instances gonflerait la garde et ferait échouer le
+                 * add_item plus bas avec un message trompeur. */
+                if (!is_numeric($_POST['n']) || $_POST['n'] < 1 || $_POST['n'] > $item->get_n($player, includeInstances: false)) {
 
                     exit('error n');
                 }

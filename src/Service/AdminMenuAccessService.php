@@ -59,7 +59,7 @@ class AdminMenuAccessService
         'skill-stats.php'          => ['Joueurs · Statistiques', 'Joueurs', self::LEVEL_ADMIN],
         'admin-access.php'         => ['Joueurs · Accès & options', 'Joueurs', self::LEVEL_SUPERADMIN],
 
-        'view_recipes.php'         => ['Recettes', 'Divers', self::LEVEL_ADMIN],
+        'recipes.php'              => ['Objets · Recettes', 'Divers', self::LEVEL_SUPERADMIN],
         // Accueil : contenu éditorial de la page d'accueil (présentation,
         // chroniques, galerie) — pas de logique de jeu, niveau admin
         'landing.php'              => ['Page d\'accueil', 'Divers', self::LEVEL_ADMIN],
@@ -67,7 +67,15 @@ class AdminMenuAccessService
         // (contenu de jeu éditable, suppression possible)
         'dialogs.php'              => ['Dialogues', 'Divers', self::LEVEL_SUPERADMIN],
         'races.php'                => ['Races', 'Divers', self::LEVEL_SUPERADMIN],
+        // Effets : catalogue de gameplay (icônes, buffs, corruptions) —
+        // même politique que races
+        'effects.php'              => ['Effets', 'Divers', self::LEVEL_SUPERADMIN],
         'factions.php'             => ['Factions', 'Divers', self::LEVEL_SUPERADMIN],
+        // Bâtiments : pose/retrait sur la carte — travail d'animation, même
+        // niveau que les PNJ
+        'buildings.php'            => ['Bâtiments', 'Divers', self::LEVEL_ADMIN],
+        // Objets : flags et réglages d'usure — même politique que races
+        'items.php'                => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
     ];
 
     /**
@@ -81,6 +89,7 @@ class AdminMenuAccessService
         'dialog-seed.php'            => 'dialogs.php',
         'races-save.php'             => 'races.php',
         'race-seed.php'              => 'races.php',
+        'effects-save.php'           => 'effects.php',
         'factions-save.php'          => 'factions.php',
         'faction-seed.php'           => 'factions.php',
         'faction-members.php'        => 'factions.php',
@@ -91,6 +100,11 @@ class AdminMenuAccessService
         'action-import-preview.php'  => 'action-import.php',
         'landing-save.php'           => 'landing.php',
         'landing-seed.php'           => 'landing.php',
+        'buildings-save.php'         => 'buildings.php',
+        'items-save.php'             => 'items.php',
+        'item-seed.php'              => 'items.php',
+        'recipes-save.php'           => 'recipes.php',
+        'view_recipes.php'           => 'recipes.php',
     ];
 
     /** @var array<string,string>|null cached DB overrides (page => level) */

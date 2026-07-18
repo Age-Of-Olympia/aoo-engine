@@ -5,6 +5,27 @@ use Exception;
 
 class Item{
 
+    /**
+     * Types d'objets à comportement câblé (items.type) — source unique
+     * des littéraux, revue DRY 2026-07-18 :
+     * - TYPE_CONSTRUCTIBLE : se construit DEPUIS L'INVENTAIRE en vraie
+     *   entité bâtiment (action construire_{name}, choix de case).
+     */
+    public const TYPE_CONSTRUCTIBLE = 'constructible';
+
+    /**
+     * Groupes de colonnes du catalogue items — sources uniques (revue
+     * ménage n°2) : l'admin (formulaire + save), le seeder et les
+     * bundles dérivent d'ICI, jamais de listes littérales.
+     */
+    public const SPECIAL_KEYS = [
+        'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
+        'demolition', 'craftedByN', 'lootChance',
+    ];
+    public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated'];
+    public const WEAR_TRIGGERS = ['attack', 'defense', 'move', 'usage'];
+    public const JSON_COLUMNS = ['add_effects', 'forbid', 'extra'];
+
     public $id;
     public $row;
     public $data;
@@ -36,7 +57,20 @@ class Item{
     public function get_data(){
 
 
-        $itemJson = json()->decode('items', $this->row->name);
+        /* Passerelle JSON→DB (Version20260717180000) : quand les stats
+         * sont en base (stats_in_db), l'objet data est reconstruit depuis
+         * les colonnes — même forme éparse que les JSON historiques (les
+         * clés à zéro/vides n'existent pas, applyItemCaracs et les
+         * consommateurs testent en !empty/isset) ; le fourre-tout `extra`
+         * est reservi verbatim. Sinon : chemin JSON hérité inchangé. */
+        if(!empty($this->row->stats_in_db)){
+
+            $itemJson = $this->buildDataFromRow();
+        }
+        else{
+
+            $itemJson = json()->decode('items', $this->row->name);
+        }
 
 
         // first player json
@@ -73,6 +107,56 @@ class Item{
     }
 
 
+    /**
+     * Reconstruit l'objet data depuis les colonnes de la table items
+     * (stats_in_db = 1), au format éparse des JSON historiques : les
+     * scalaires vides/à zéro ne sont pas émis, les colonnes JSON
+     * (munitions, add_effects, forbid) sont décodées, `extra` est
+     * fusionné verbatim (garantie sans-perte du seed).
+     */
+    private function buildDataFromRow(): object {
+
+        $data = (object) array(
+            'id' => (int) $this->row->id,
+            'name' => $this->row->name,
+            'private' => (int) $this->row->private,
+            'price' => (int) $this->row->price,
+            'text' => (string) ($this->row->text ?? ''),
+        );
+
+        foreach (\App\Service\ItemStatsSeeder::SCALAR_KEYS as $key) {
+            if ($key === 'text' || $key === 'price') {
+                continue;
+            }
+            $value = $this->row->$key ?? null;
+            if ($value === null || $value === '' || (is_numeric($value) && (int) $value === 0)) {
+                continue;
+            }
+            $data->$key = is_numeric($value) ? (int) $value : $value;
+        }
+
+        foreach (['munitions' => 'munitions', 'add_effects' => 'addEffects', 'forbid' => 'forbid'] as $column => $key) {
+            if (!empty($this->row->$column)) {
+                $decoded = json_decode((string) $this->row->$column);
+                if ($decoded !== null) {
+                    $data->$key = $decoded;
+                }
+            }
+        }
+
+        if (!empty($this->row->extra)) {
+            $extra = json_decode((string) $this->row->extra);
+            if (is_object($extra)) {
+                foreach (get_object_vars($extra) as $key => $value) {
+                    $data->$key = $value;
+                }
+            }
+        }
+
+        return $data;
+    }
+
+
     public function add_item($player, int $n, bool $bank=false):bool {
         if(!is_numeric($n) || $n == 0){
             exit('error n '. $n);
@@ -85,7 +169,9 @@ class Item{
         }
 
         if ($n < 0) {
-            $available = $this->get_n($player, $bank);
+            // Garde STRICTEMENT sur la pile : add_item ne sait décrémenter
+            // que des piles, compter les instances ouvrirait une duplication.
+            $available = $this->get_n($player, $bank, includeInstances: false);
             if ($available + $n < 0) {
                 return false;
             }
@@ -121,7 +207,15 @@ class Item{
     }
 
 
-    public function get_n($player, bool $bank=false, bool $equiped=false): int {
+    /**
+     * @param bool $includeInstances compter aussi les objets
+     *        individualisés (défaut). Les MUTATEURS de piles (add_item,
+     *        coûts consommés) doivent passer false : leur garde porte sur
+     *        ce qu'ils peuvent réellement décrémenter — compter les
+     *        instances y ouvrirait une duplication (retirer une unité de
+     *        pile inexistante pendant que l'instance survit).
+     */
+    public function get_n($player, bool $bank=false, bool $equiped=false, bool $includeInstances=true): int {
         if (!isset($this->row) || !isset($this->row->name)) {
             return 0;
         }
@@ -149,12 +243,19 @@ class Item{
         $db = new Db();
         $res = $db->exe($sql, array($playerId, $this->row->name));
 
-        if (!$res || !$res->num_rows) {
-            return 0;
+        $stackN = 0;
+        if ($res && $res->num_rows) {
+            $stackN = (int) $res->fetch_object()->n;
         }
 
-        $row = $res->fetch_object();
-        return (int)$row->n;
+        // Double comptage : les instances vivantes comptent
+        // avec les piles (contrat pinné par ItemInstanceService::countOwned).
+        if (!$bank && $includeInstances) {
+            $stackN += (new \App\Service\ItemInstanceService())
+                ->countInstances((int) $playerId, (int) $this->id, $equiped);
+        }
+
+        return $stackN;
     }
 
 
@@ -430,6 +531,25 @@ class Item{
         }
 
 
+        /* Double lecture (docs/design-items-instances.md §5c P2) — double
+         * lecture : les objets individualisés (item_instances) rejoignent
+         * la liste, façonnés comme des lignes de pile (n=1) + méta
+         * d'instance. Clés : par id catalogue quand on liste l'ÉQUIPÉ
+         * (contrat des emplacements/caracs — au plus un par emplacement),
+         * par 'i{instanceId}' sinon (chaque individu = sa propre ligne). */
+        if(!$bank){
+
+            $instances = (new \App\Service\ItemInstanceService())
+                ->listForInventory($playerId, $equiped !== '');
+
+            foreach($instances as $instanceRow){
+
+                $row = (object) $instanceRow;
+                $key = ($equiped !== '') ? $row->id : 'i'. $row->instance_id;
+                $return[$key] = $row;
+            }
+        }
+
         // or
         if(!isset($return[1]) && !$equiped){
 
@@ -441,6 +561,17 @@ class Item{
             }
         }
 
+        /* Tri final : les ÉQUIPÉS d'abord (piles héritées comme
+         * instances — le SQL ne couvre que les piles), puis par nom.
+         * uasort préserve les clés (contrat des consommateurs). */
+        uasort($return, static function ($a, $b): int {
+            $aEquiped = !empty($a->equiped);
+            $bEquiped = !empty($b->equiped);
+            if ($aEquiped !== $bEquiped) {
+                return $aEquiped ? -1 : 1;
+            }
+            return strcasecmp((string) ($a->name ?? ''), (string) ($b->name ?? ''));
+        });
 
         return $return;
     }
@@ -480,7 +611,7 @@ class Item{
             $return[] = '<font color="red"><del>M</del></font>';
 
 
-        // parchemin sort
+        // objet à sort intégré (items.spell) — le sort s'affiche en bleu
         elseif(!empty($itemJson->spell)){
 
 
@@ -629,22 +760,22 @@ class Item{
         }
 
 
-        // count emplacements
+        // count emplacements — piles héritées ET instances
         $sql = '
-        SELECT COUNT(*) AS n
-        FROM
-        players_items
-        WHERE
-        player_id = ?
-        AND
-        equiped IN('. Db::print_in($values) .')
+        SELECT
+        (SELECT COUNT(*) FROM players_items
+         WHERE player_id = ? AND equiped IN('. Db::print_in($values) .'))
+        +
+        (SELECT COUNT(*) FROM players_items_instances
+         WHERE player_id = ? AND equiped IN('. Db::print_in($values) .'))
+        AS n
         ';
 
-        $values = array_merge(array($player->id), $values);
+        $params = array_merge(array($player->id), $values, array($player->id), $values);
 
         $db = new Db();
 
-        $res = $db->exe($sql, $values);
+        $res = $db->exe($sql, $params);
 
         $row = $res->fetch_object();
 

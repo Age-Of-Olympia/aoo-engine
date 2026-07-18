@@ -91,7 +91,7 @@ foreach($playersTbl as $pnj){
             $endTime = '∞';
         }
 
-        $effectsTbl[] = '<span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span> <sup>'. $endTime .'</sup>';
+        $effectsTbl[] = '<span class="ra '. (new \App\Service\EffectService())->getIcon($effect->getName()) .'"></span> <sup>'. $endTime .'</sup>';
     }
     
     $raceJson = $raceService->getRaceData($pnj->data->race);
@@ -119,7 +119,7 @@ foreach($playersTbl as $pnj){
         ? (int) floor($pnj->getRemaining('pv') / $pnj->caracs->pv * 100)
         : 100;
 
-    $pvVeil = Ui::get_pv_veil($pvPct);
+    $pvVeil = Ui::get_pv_veil($pvPct, $raceService->getRaceWoundColor($pnj->data->race ?? null));
 
     echo '
     <article class="pnj" style="cursor: pointer; position:relative;" data-id="'. $pnj->id .'">

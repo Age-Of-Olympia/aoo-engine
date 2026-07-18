@@ -1,0 +1,11 @@
+{
+    "id": 54,
+    "name": "Statue Ailée",
+    "private": 0,
+    "price": 50,
+    "race": "elfe",
+    "type": "constructible",
+    "text": "Une sculpture de pierre à l'effigie d'une Divinité.",
+    "img": "img/walls/statue_ailee.png",
+    "mini": "img/walls/statue_ailee.png"
+}

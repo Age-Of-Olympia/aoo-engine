@@ -25,6 +25,7 @@ try {
     $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
 
     $conditionParams = is_array($_POST['cond'] ?? null) ? $_POST['cond'] : [];
+    $conditionContext = is_array($_POST['cond_ctx'] ?? null) ? $_POST['cond_ctx'] : [];
     $instructionParams = is_array($_POST['inst'] ?? null) ? $_POST['inst'] : [];
     $conditionRaw = is_array($_POST['cond_raw'] ?? null) ? $_POST['cond_raw'] : [];
     $instructionRaw = is_array($_POST['inst_raw'] ?? null) ? $_POST['inst_raw'] : [];
@@ -43,7 +44,7 @@ try {
     if (array_key_exists('race', $_POST)) {
         $saveService->saveRace($actionId, (string) $_POST['race']);
     }
-    $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw);
+    $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw, $conditionContext);
     $saveService->saveOutcomeTargets($actionId, $outcomeTargets);
 
     setFlash('success', 'Paramètres enregistrés.');

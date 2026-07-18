@@ -8,6 +8,30 @@ use App\Action\Schema\DeclaresSimulationInputs;
 
 class DistanceComputeCondition extends ComputeCondition implements DeclaresSimulationInputs
 {
+    /**
+     * Ligne de tir : une structure qui arrête les projectiles
+     * (races.blocks_projectiles — un mur, pas une table) entre le
+     * tireur et la cible fait échouer le tir. La flèche part quand
+     * même : l'échec suit le drapeau blocking de la condition, comme
+     * une esquive.
+     */
+    public function check(\App\Interface\ActorInterface $actor, ?\App\Interface\ActorInterface $target, \App\Entity\ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
+    {
+        if ($target !== null && !$actor->isSimulated() && !$target->isSimulated()) {
+            $report = (new \App\Service\BuildingService())
+                ->lineOfFireReport($actor->getCoords(), $target->getCoords());
+
+            if ($report['blocker'] !== null) {
+                return new ConditionResult(false, array(), [
+                    'Votre tir s\'écrase sur ' . htmlspecialchars((string) $report['blockerName'], ENT_QUOTES, 'UTF-8')
+                    . ' en (' . $report['blocker'][0] . ', ' . $report['blocker'][1] . ') !',
+                ]);
+            }
+        }
+
+        return parent::check($actor, $target, $condition, $conditionObject);
+    }
+
     public static function targetDefenseValue(int $cc, int $agi): int
     {
         return (int) floor(max(3 / 4 * $cc + 1 / 4 * $agi, 1 / 4 * $cc + 3 / 4 * $agi));
@@ -58,18 +82,18 @@ class DistanceComputeCondition extends ComputeCondition implements DeclaresSimul
             (bool) $conditionObject->getTargetDisadvantage()
         );
         $bonus = (int) $conditionObject->getTargetRollBonus();
-        $protection = (int) ($target->getEffectValue("protection") ?: 0);
-        $vulnerabilite = (int) ($target->getEffectValue("vulnerabilite") ?: 0);
+        // Modificateurs du jet de défense portés par les effets (catalogue).
+        $mods = (new \App\Service\EffectService())->modifierContributions($target->getEffects(), 'getRollDefenseMod');
         $esquive = (int) ($target->caracs->esquive ?? 0);
         $malus = (int) $target->data->malus;
-        $total = array_sum($targetRoll->roll) - $malus + $bonus + $protection - $vulnerabilite + $esquive;
+        $total = array_sum($targetRoll->roll) - $malus + $bonus + $mods['pos'] - $mods['neg'] + $esquive;
 
         $detail = new RollDetail(
             name: $target->data->name,
             rollSum: array_sum($targetRoll->roll),
             bonus: $bonus,
-            positiveEffect: $protection,
-            negativeEffect: $vulnerabilite,
+            positiveEffect: $mods['pos'],
+            negativeEffect: $mods['neg'],
             malus: $malus,
             esquive: $esquive,
             total: $total,

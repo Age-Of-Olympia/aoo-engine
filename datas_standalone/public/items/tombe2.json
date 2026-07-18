@@ -1,0 +1,11 @@
+{
+    "id": 1128,
+    "name": "Tombe",
+    "private": 0,
+    "price": 20,
+    "race": "common",
+    "type": "constructible",
+    "text": "En souvenir de ceux qui sont partis.",
+    "img": "img/walls/tombe2.png",
+    "mini": "img/walls/tombe2.png"
+}

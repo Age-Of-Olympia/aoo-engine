@@ -5,7 +5,7 @@ namespace App\View\Hud;
 use Classes\Str;
 
 /**
- * Panneau glissant du HUD (Phase 2) : un slot unique dans lequel le
+ * Panneau glissant du HUD : un slot unique dans lequel le
  * routeur (js/hud.js) charge les sous-pages en fragments — ouvrir une
  * autre entrée REMPLACE le panneau courant (décision UX : deux
  * panneaux côte à côte étaient pénibles à manipuler). Le markup garde

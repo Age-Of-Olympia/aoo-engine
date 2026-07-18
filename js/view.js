@@ -116,9 +116,91 @@ $(document).ready(function(){
      * (js/hud.js hudRefreshAfterMove) — legacy full reloads simply call
      * it once at ready.
      */
+    /**
+     * Ligne de tir sur le damier : observe.php envoie la case du
+     * tireur, la case visée et l'éventuel premier obstacle. On trace
+     * une vraie ligne de centre à centre — verte tant que la
+     * trajectoire est libre, rouge à partir de l'obstacle (marqué d'un
+     * point). Effacée à chaque nouveau clic de case.
+     */
+    window.clearLineOfFire = function(){
+        $('.lof-mark').remove();
+    };
+
+    window.showLineOfFire = function(from, to, blocker){
+
+        window.clearLineOfFire();
+
+        /* Centre (pixels SVG) d'une case logique — null si hors damier. */
+        function tileCenter(tile){
+            var $case = $('.case[data-coords="'+ tile[0] +','+ tile[1] +'"]').first();
+            if(!$case.length){
+                return null;
+            }
+            return {
+                x: parseFloat($case.attr('x')) + 25,
+                y: parseFloat($case.attr('y')) + 25
+            };
+        }
+
+        var svg = $('.case').first().closest('svg');
+        var a = tileCenter(from);
+        var b = tileCenter(to);
+        if(!svg.length || !a || !b){
+            return;
+        }
+
+        function segment(p1, p2, color){
+            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('class', 'lof-mark');
+            line.setAttribute('x1', p1.x);
+            line.setAttribute('y1', p1.y);
+            line.setAttribute('x2', p2.x);
+            line.setAttribute('y2', p2.y);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '4');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('stroke-dasharray', '9 7');
+            line.setAttribute('pointer-events', 'none');
+            svg[0].appendChild(line);
+        }
+
+        var blockerCenter = blocker ? tileCenter(blocker) : null;
+
+        if(blockerCenter){
+            /* La trajectoire reste UNE droite (c'est elle que Bresenham
+               rasterise) : l'obstacle, qui peut être une case adjacente
+               à la droite, est projeté dessus pour placer le point
+               d'impact — pas de coude. */
+            var dx = b.x - a.x;
+            var dy = b.y - a.y;
+            var t = ((blockerCenter.x - a.x) * dx + (blockerCenter.y - a.y) * dy) / (dx * dx + dy * dy);
+            t = Math.max(0, Math.min(1, t));
+            var hit = {x: a.x + t * dx, y: a.y + t * dy};
+
+            segment(a, hit, 'rgba(60, 170, 60, 0.85)');
+            segment(hit, b, 'rgba(205, 40, 40, 0.85)');
+
+            /* Point d'impact */
+            var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('class', 'lof-mark');
+            dot.setAttribute('cx', hit.x);
+            dot.setAttribute('cy', hit.y);
+            dot.setAttribute('r', '6');
+            dot.setAttribute('fill', 'rgba(205, 40, 40, 0.9)');
+            dot.setAttribute('pointer-events', 'none');
+            svg[0].appendChild(dot);
+        }
+        else{
+            segment(a, b, 'rgba(60, 170, 60, 0.85)');
+        }
+    };
+
     window.bindMapView = function(){
 
     $('.case').off('click').on('click', function(e){
+
+        window.clearLineOfFire();
 
         // Block clicks if tutorial overlay is in blocking mode
         if ($('#tutorial-overlay').hasClass('blocking')) {
@@ -144,7 +226,9 @@ $(document).ready(function(){
 
 
         // show go button if applicable (no player standing on the case)
-        var hasPlayer = $('image[data-table="players"][x="'+ i +'"][y="'+ j +'"]').length > 0;
+        /* Les structures passables (data-passable, ex. une table) ne
+           confisquent pas le bouton Aller. */
+        var hasPlayer = $('image[data-table="players"][x="'+ i +'"][y="'+ j +'"]').not('[data-passable]').length > 0;
 
         if($case.hasClass('go') && !hasPlayer){
 

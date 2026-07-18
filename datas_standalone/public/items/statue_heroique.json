@@ -1,0 +1,11 @@
+{
+    "id": 73,
+    "name": "Statue Héroïque",
+    "private": 0,
+    "price": 50,
+    "race": "olympien",
+    "type": "constructible",
+    "text": "Une sculpture de pierre à l'effigie d'un Héro.",
+    "img": "img/walls/statue_heroique.png",
+    "mini": "img/walls/statue_heroique.png"
+}

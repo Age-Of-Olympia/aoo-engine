@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Enum\EntityCategory;
 use App\View\OnHideReloadView;
 use Classes\Db;
 use Classes\Player;
@@ -154,6 +155,15 @@ class PlayerService
             exit('error not dead');
         }
 
+        // Une structure ne meurt pas comme un personnage : pas de partage
+        // d'XP (elle n'en porte pas), pas de compteurs de kills, pas d'âme.
+        // Branche destruction du plan bâtiments (§4.7) — via EntityCategory
+        // pour couvrir TOUTE la branche structure (building ET unique).
+        if (EntityCategory::fromPlayerType($target->getPlayerType()) === EntityCategory::Structure) {
+            self::processStructureDestruction($player, $target);
+            return;
+        }
+
 
         $timestamp = time();
         $text = $player->data->name . ' a tué ' . $target->data->name . '.';
@@ -207,6 +217,47 @@ class PlayerService
 
         $target->death();
 
+
+        OnHideReloadView::render($player);
+    }
+
+    /**
+     * Branche destruction du chemin de mort pour les structures
+     * (docs/design-buildings-entities.md §4.7).
+     *
+     * Journalise la destruction des deux côtés puis :
+     * - bâtiment : build_state passe à 'ruin', la ligne players reste
+     *   (les logs gardent leur FK, la ruine occupe la case) ;
+     * - objet unique : l'entité disparaît et l'instance enveloppée tombe
+     *   BRISÉE au sol (bourse) — cohérent avec les deux états de la carte
+     *   et réparable un jour.
+     * Le butin de matériaux et la mécanique de ruine (pillage,
+     * réparation, usure) sont la question ouverte n°4 du plan ; ils se
+     * grefferont ici sans retoucher le chemin de mort des personnages.
+     */
+    private static function processStructureDestruction(Player $player, Player $target): void
+    {
+        $timestamp = time();
+
+        if ($target->getPlayerType() === 'unique') {
+            // L'entité disparaît (sa ligne players et ses logs avec) : on
+            // détruit d'abord, puis on journalise côté attaquant seulement
+            // — un log ciblant la ligne supprimée violerait la FK.
+            (new UniqueObjectService())->destroyToGround($target->id);
+
+            $text = $player->data->name . ' a détruit ' . $target->data->name . '.';
+            Log::put($player, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);
+        } else {
+            $text = $player->data->name . ' a détruit ' . $target->data->name . '.';
+            Log::put($player, $target, $text, type: "kill", hiddenText: '', logTime: $timestamp);
+
+            $text = $target->data->name . ' a été détruit par ' . $player->data->name . '.';
+            Log::put($target, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);
+
+            (new BuildingService())->markDestroyed($target->id);
+        }
+
+        echo '<b><font color="red">Vous détruisez la structure.</font></b>';
 
         OnHideReloadView::render($player);
     }

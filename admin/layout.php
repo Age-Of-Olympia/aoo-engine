@@ -10,7 +10,7 @@ use Classes\Player;
 (new AdminMenuAccessService())->enforce(basename($_SERVER['PHP_SELF']));
 
 /** Bump to bust the cache when admin CSS/JS changes. */
-const ADMIN_ASSET_VERSION = '20260713b';
+const ADMIN_ASSET_VERSION = '20260718h';
 
 /** Game-wide main stylesheet — its own deploy-driven cache-bust, separate from admin assets. */
 const MAIN_CSS_VERSION = '20260614';
@@ -77,12 +77,14 @@ function admin_layout($title, $content, array $assets = []) {
     $playerPages = ['players.php', 'player-skills.php', 'skill-stats.php', 'skill-owners.php', 'admin-access.php',
                     'pnjs.php', 'avatars-portraits.php'];
     $racePages = ['races.php', 'race-seed.php'];
+    $itemPages = ['items.php', 'item-seed.php', 'recipes.php'];
     $factionPages = ['factions.php', 'faction-members.php', 'faction-seed.php'];
     $dialogPages = ['dialogs.php', 'dialog-seed.php'];
 
     // array_filter drops links/groups the viewer cannot access.
     $navParts = array_filter([
         $navLink('index.php', 'Tableau de bord', '/admin/index.php'),
+        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
         $navGroup('Tutoriel', [
             ['tutorial-catalog.php', 'Catalogue', '/admin/tutorial-catalog.php'],
             ['tutorial.php', 'Étapes', '/admin/tutorial.php'],
@@ -104,15 +106,13 @@ function admin_layout($title, $content, array $assets = []) {
             ['action-type-defaults.php', 'Défauts par type', '/admin/action-type-defaults.php'],
             ['action-import.php', 'Importer', '/admin/action-import.php'],
         ], $actionPages),
-        $navGroup('Joueurs', [
+        $navGroup('Personnages', [
             ['players.php', 'Compétences', '/admin/players.php'],
             ['pnjs.php', 'PNJ', '/admin/pnjs.php'],
             ['avatars-portraits.php', 'Avatars &amp; portraits', '/admin/avatars-portraits.php'],
             ['skill-stats.php', 'Statistiques', '/admin/skill-stats.php'],
             ['admin-access.php', 'Accès &amp; options', '/admin/admin-access.php'],
         ], $playerPages),
-        $navLink('view_recipes.php', 'Recettes', '/admin/view_recipes.php'),
-        $navLink('landing.php', 'Page d\'accueil', '/admin/landing.php'),
         $navGroup('Dialogues', [
             ['dialogs.php', 'Liste', '/admin/dialogs.php'],
             ['dialog-seed.php', 'Seed JSON legacy', '/admin/dialog-seed.php'],
@@ -121,11 +121,22 @@ function admin_layout($title, $content, array $assets = []) {
             ['races.php', 'Liste', '/admin/races.php'],
             ['race-seed.php', 'Seed JSON legacy', '/admin/race-seed.php'],
         ], $racePages),
+        $navGroup('Effets', [
+            ['effects.php', 'Liste', '/admin/effects.php'],
+        ], ['effects.php']),
         $navGroup('Factions', [
             ['factions.php', 'Liste', '/admin/factions.php'],
             ['faction-members.php', 'Membres', '/admin/faction-members.php'],
             ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
         ], $factionPages),
+        $navGroup('Bâtiments', [
+            ['buildings.php', 'Liste', '/admin/buildings.php'],
+        ], ['buildings.php']),
+        $navGroup('Objets', [
+            ['items.php', 'Liste', '/admin/items.php'],
+            ['recipes.php', 'Recettes', '/admin/recipes.php'],
+            ['item-seed.php', 'Seed JSON legacy', '/admin/item-seed.php'],
+        ], $itemPages),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
     ]);
@@ -164,6 +175,9 @@ function admin_layout($title, $content, array $assets = []) {
             <nav class="vertical-nav">
                 $navigation
             </nav>
+            <div class="sidebar-footer">
+                <a href="/index.php" class="nav-link nav-back-to-game">&larr; Retour au jeu</a>
+            </div>
         </div>
 
         <div class="admin-main">

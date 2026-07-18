@@ -14,16 +14,24 @@ use PHPUnit\Framework\TestCase;
 #[Group('action-schema')]
 class OptionCatalogTest extends TestCase
 {
-    protected function setUp(): void
+    /**
+     * OptionCatalog branché sur un catalogue d'effets stub (le vrai vit
+     * en base, indisponible sous le bootstrap unitaire).
+     */
+    private function catalog(): OptionCatalog
     {
-        if (!defined('EFFECTS_RA_FONT')) {
-            define('EFFECTS_RA_FONT', ['maladresse' => 'ra-x', 'protection' => 'ra-y', 'adrenaline' => 'ra-z']);
-        }
+        $effectService = $this->createStub(\App\Service\EffectService::class);
+        $effectService->method('getGameplayEffectNames')->willReturn(['maladresse', 'protection', 'adrenaline']);
+        $effectService->method('getLabel')->willReturnCallback(
+            static fn (string $name): string => ucfirst(str_replace('_', ' ', $name))
+        );
+
+        return new OptionCatalog(effectService: $effectService);
     }
 
-    public function testEffectsAreDerivedFromTheRealEffectConstant(): void
+    public function testEffectsAreDerivedFromTheEffectCatalog(): void
     {
-        $effects = (new OptionCatalog())->effects();
+        $effects = $this->catalog()->effects();
 
         $this->assertArrayHasKey('maladresse', $effects);
         $this->assertArrayHasKey('protection', $effects);
@@ -39,7 +47,7 @@ class OptionCatalogTest extends TestCase
     public function testRendererBuildsACatalogMultiSelectWithSelectedValues(): void
     {
         $field = new ParameterField('actorEffects', FieldType::EFFECT, 'Effets', multiple: true);
-        $html = (new ParameterFieldRenderer(new OptionCatalog()))->render($field, 'cond[1][actorEffects]', ['protection']);
+        $html = (new ParameterFieldRenderer($this->catalog()))->render($field, 'cond[1][actorEffects]', ['protection']);
 
         $this->assertStringContainsString('name="cond[1][actorEffects][]" multiple', $html);
         $this->assertStringContainsString('<option value="protection" selected>', $html);
@@ -48,7 +56,7 @@ class OptionCatalogTest extends TestCase
 
     public function testValidatorRejectsAValueOutsideTheCatalog(): void
     {
-        $validator = new ActionParameterValidator(new OptionCatalog());
+        $validator = new ActionParameterValidator($this->catalog());
         $field = new ParameterField('actorEffect', FieldType::EFFECT, 'Effet');
 
         $this->expectException(InvalidArgumentException::class);

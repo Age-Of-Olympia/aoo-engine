@@ -193,11 +193,16 @@ ob_start();
                                             <?= $csrf->renderTokenField() ?>
                                             <input type="hidden" name="layer" value="<?= e($layer) ?>">
                                             <input type="hidden" name="name" value="<?= e($entry['name']) ?>">
-                                            <select name="target_layer" class="form-control form-control-sm" style="width:140px;">
-                                                <?php foreach ($service->layers() as $target): if ($target === $layer) continue; ?>
-                                                    <option value="<?= e($target) ?>"><?= e($target) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
+                                            <?php
+                                            $layerChoices = [];
+                                            foreach ($service->layers() as $target) {
+                                                if ($target !== $layer) {
+                                                    $layerChoices[$target] = $target;
+                                                }
+                                            }
+                                            echo formSelect('target_layer', $layerChoices, null, null,
+                                                'class="form-control form-control-sm" style="width:140px;"');
+                                            ?>
                                             <button type="submit" name="asset_move" value="1" class="btn btn-sm btn-primary">OK</button>
                                         </form>
                                     </details>

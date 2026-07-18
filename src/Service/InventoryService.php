@@ -31,8 +31,53 @@ class InventoryService
         Log::put($player, $player, $text, type: 'use');
     }
 
-    public static function useItem(Player $player, Item $item)
+    /** Un « Utiliser » peut équiper ou consommer. */
+    public const USE_EQUIP = 'equip';
+    public const USE_CONSUME = 'consume';
+
+    /**
+     * Ce que « Utiliser » ferait pour cet objet — null quand RIEN : un
+     * consommable sans aucun bonus, tout objet sans usage. Source unique
+     * du bouton (grisé, print_inventory et inventUi.js via
+     * data-use-kind) ET du refus serveur (useItem) : un clic qui ne fait
+     * rien n'existe plus.
+     */
+    public static function useKind(Item $item): ?string
     {
+        if (!empty($item->data->emplacement)) {
+            return self::USE_EQUIP;
+        }
+        if (($item->data->type ?? '') === 'consommable' && self::hasConsumablePayload($item->data)) {
+            return self::USE_CONSUME;
+        }
+
+        return null;
+    }
+
+    /** Au moins un bonus/effet que la consommation appliquerait. */
+    private static function hasConsumablePayload(object $data): bool
+    {
+        foreach (['pv', 'pm', 'mvt', 'a', 'ae', 'malus', 'pr', 'pf'] as $key) {
+            if (!empty($data->$key)) {
+                return true;
+            }
+        }
+
+        return !empty($data->effet);
+    }
+
+    /**
+     * @param int|null $instanceId instance PRÉCISE à équiper (clic sur
+     *        une ligne d'instance) — transmis jusqu'à
+     *        ItemInstanceService::equipCatalogItem
+     */
+    public static function useItem(Player $player, Item $item, ?int $instanceId = null)
+    {
+
+        if (self::useKind($item) === null) {
+
+            exit('Cet objet ne peut pas être utilisé.');
+        }
 
         $text = $player->data->name . ' a utilisé ' . $item->data->name . '.';
 
@@ -40,7 +85,7 @@ class InventoryService
         if (!empty($item->data->emplacement)) {
 
 
-            $return = $player->equip($item);
+            $return = $player->equip($item, instanceId: $instanceId);
 
             if ($return == EquipResult::Equip) {
 
@@ -60,35 +105,6 @@ class InventoryService
 
                 $text = $player->data->name . ' a déséquipé ' . $item->data->name . '.';
             }
-        } elseif ($item->row->spell != '') {
-
-
-            if ($player->getRemaining('ae') < 1) {
-
-                exit('error ae');
-            }
-
-            $raceData = (new RaceService())->getRaceData($player->data->race);
-
-            $charges = false;
-
-            if (!$raceData || empty($raceData->spells) || !in_array($item->row->spell, $raceData->spells)) {
-
-                $charges = 1;
-            }
-
-
-            if (!$item->add_item($player, -1)) {
-
-                exit('error add item');
-            }
-
-            $player->add_action($item->row->spell, $charges);
-
-
-            $text = $player->data->name . ' a lu ' . $item->data->name . '.';
-
-            $ae = 1;
         } elseif ($item->data->type == 'consommable') {
             //cas des objets consommables :
             //coûte 1A pour être consommés
@@ -133,7 +149,7 @@ class InventoryService
                             }
                             //ajout d'un effet
                             else {
-                                if (in_array($effet, EFFECTS_HIDDEN) || $effet == "poison" || $effet == "poison_magique") {
+                                if ($player->effectService->isHidden($effet) || $effet == "poison" || $effet == "poison_magique") {
 
                                     $player->add_effect($effet, 0);
                                 } else {

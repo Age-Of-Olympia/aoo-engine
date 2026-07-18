@@ -18,12 +18,12 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Service\CsrfProtectionService;
-use App\Service\PnjAdminService;
+use App\Service\NpcAdminService;
 use Classes\Player;
 
 /**
  * Race options for the create/edit dropdowns — only races that can actually be
- * created (JSON + faction present), from the one source PnjAdminService owns and
+ * created (JSON + faction present), from the one source NpcAdminService owns and
  * the save endpoint validates against.
  *
  * @return array<string,string>
@@ -31,7 +31,7 @@ use Classes\Player;
 function pnj_race_options(): array
 {
     $out = [];
-    foreach ((new PnjAdminService())->availableRaces() as $race) {
+    foreach ((new NpcAdminService())->availableRaces() as $race) {
         $out[$race] = ucfirst($race);
     }
     return $out;
@@ -85,16 +85,14 @@ function pnj_render_list(array $pnjs, string $csrfToken, bool $canEditRetirePlan
     $filters = '<div class="d-flex flex-wrap mb-3" style="gap:.5rem">'
         . '<input type="search" id="pnj-filter" class="form-control" style="max-width:22rem"'
         . ' placeholder="Filtrer par nom ou matricule…" autocomplete="off">'
-        . '<select id="pnj-status" class="form-control" style="max-width:12rem">'
-        . '<option value="">Tous les statuts</option><option value="active">Actifs</option>'
-        . '<option value="inactive">Inactifs</option></select>'
-        . '<select id="pnj-assign" class="form-control" style="max-width:14rem">'
-        . '<option value="">Assignés + non</option><option value="1">Assignés</option>'
-        . '<option value="0">Non assignés</option></select>'
+        . formSelect('pnj-status', ['active' => 'Actifs', 'inactive' => 'Inactifs'], null,
+            'Tous les statuts', 'id="pnj-status" class="form-control" style="max-width:12rem"')
+        . formSelect('pnj-assign', ['1' => 'Assignés', '0' => 'Non assignés'], null,
+            'Assignés + non', 'id="pnj-assign" class="form-control" style="max-width:14rem"')
         . '</div>';
 
     // Settings: the plan retired PNJs are parked on (configurable, not hardcoded).
-    $service = new PnjAdminService();
+    $service = new NpcAdminService();
     $currentPlan = $service->getRetirePlan();
     $planOptions = '';
     foreach ($service->listPlans() as $plan) {
@@ -158,8 +156,6 @@ function pnj_list_script(): string
 
 function pnj_render_create_form(string $csrfToken): string
 {
-    $raceOptions = renderSelectOptions(pnj_race_options(), null, '— Choisir une race —');
-
     return '<h1 class="mb-3">Créer un PNJ</h1>'
         . '<a class="btn btn-sm btn-outline-secondary mb-3" href="/admin/pnjs.php">← Retour à la liste</a>'
         . '<form method="post" action="/admin/pnjs-save.php?action=create" class="card" style="max-width:32rem">'
@@ -168,7 +164,7 @@ function pnj_render_create_form(string $csrfToken): string
         . '<div class="mb-3"><label>Nom</label>'
         . '<input type="text" name="name" class="form-control" required maxlength="255" autofocus></div>'
         . '<div class="mb-3"><label>Race</label>'
-        . '<select name="race" class="form-control" required>' . $raceOptions . '</select></div>'
+        . formSelect('race', pnj_race_options(), null, '— Choisir une race —', 'class="form-control" required') . '</div>'
         . '<button type="submit" class="btn btn-primary">Créer le PNJ</button>'
         . '</div></form>';
 }
@@ -179,8 +175,6 @@ function pnj_render_create_form(string $csrfToken): string
  */
 function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): string
 {
-    $raceOptions = renderSelectOptions(pnj_race_options(), $pnj['race']);
-
     // --- Identity form (rename / change race) ---
     $identity = '<form method="post" action="/admin/pnjs-save.php?action=update" class="card mb-3" style="max-width:32rem">'
         . '<div class="card-header"><h3 class="card-title">Identité</h3></div>'
@@ -190,7 +184,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
         . '<div class="mb-3"><label>Nom</label>'
         . '<input type="text" name="name" class="form-control" required maxlength="255" value="' . e($pnj['name']) . '"></div>'
         . '<div class="mb-3"><label>Race</label>'
-        . '<select name="race" class="form-control" required>' . $raceOptions . '</select></div>'
+        . formSelect('race', pnj_race_options(), $pnj['race'], null, 'class="form-control" required') . '</div>'
         . '<button type="submit" class="btn btn-primary">Enregistrer</button>'
         . '</div></form>';
 
@@ -228,7 +222,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
         . '<li>le <strong>désassigne</strong> de tous les joueurs qui le contrôlent ;</li>'
         . '<li>le passe en <strong>incognito</strong> (invisible sur la carte et dans les évènements) ;</li>'
         . '<li>le passe en <strong>anonyme</strong> (introuvable dans les recherches de destinataires) ;</li>'
-        . '<li>le <strong>déplace sur le plan « ' . e((new PnjAdminService())->getRetirePlan()) . ' »</strong> (case libre), hors du monde vivant.</li>'
+        . '<li>le <strong>déplace sur le plan « ' . e((new NpcAdminService())->getRetirePlan()) . ' »</strong> (case libre), hors du monde vivant.</li>'
         . '</ul>'
         . '<p class="text-muted">Réversible : réassignez-le à un joueur pour le réactiver.</p>'
         . '<form method="post" action="/admin/pnjs-save.php?action=retire"'
@@ -249,7 +243,7 @@ function pnj_render_edit_form(array $pnj, array $owners, string $csrfToken): str
  * ---------------------------------------------------------------------- */
 $csrf = new CsrfProtectionService();
 $csrfToken = $csrf->generateToken();
-$service = new PnjAdminService();
+$service = new NpcAdminService();
 
 $action = $_GET['action'] ?? 'list';
 

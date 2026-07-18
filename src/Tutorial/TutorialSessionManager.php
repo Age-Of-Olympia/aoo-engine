@@ -156,7 +156,7 @@ class TutorialSessionManager
     /**
      * Update session progress
      *
-     * Phase 4: Now accepts both array and string (JSON) for context data
+     * Accepts both array and string (JSON) for context data
      *
      * @param string $sessionId Tutorial session UUID
      * @param string $newStepId New current step ID

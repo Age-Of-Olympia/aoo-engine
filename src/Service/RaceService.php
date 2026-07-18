@@ -19,6 +19,9 @@ class RaceService
     private const DEFAULT_BG_COLOR = '#FFFFFF';
     private const DEFAULT_MAX_MVT = 4;
 
+    /** Le rouge sang du voile de blessure historique. */
+    public const DEFAULT_WOUND_COLOR = '#770001';
+
     /** @var array<string, Race|null> Per-request cache, keyed by lowercase race name. */
     private static array $cache = [];
 
@@ -111,6 +114,52 @@ class RaceService
     }
 
     /**
+     * Teinte du voile de blessure de la race (rouge sang par défaut,
+     * bronze pour un type structure par exemple). Race inconnue ou
+     * vide : le rouge historique.
+     */
+    public function getRaceWoundColor(?string $raceName): string
+    {
+        $race = $raceName !== null && $raceName !== '' ? $this->getRaceByName($raceName) : null;
+
+        return $race ? $race->getWoundColor() : self::DEFAULT_WOUND_COLOR;
+    }
+
+    /**
+     * @return string[] Noms des races STRUCTURE qui ne bloquent pas le
+     *                  passage (table…) — le déplacement et le damier
+     *                  les laissent traverser.
+     */
+    public function getPassableStructureNames(): array
+    {
+        $names = [];
+        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+            if (!$race->blocksPassage()) {
+                $names[] = $race->getName();
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * @return string[] Noms des races STRUCTURE qui arrêtent les
+     *                  projectiles (murs…) — la ligne de tir les
+     *                  contourne ou échoue.
+     */
+    public function getProjectileBlockingStructureNames(): array
+    {
+        $names = [];
+        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+            if ($race->blocksProjectiles()) {
+                $names[] = $race->getName();
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Returns the max movement points for a race.
      */
     public function getRaceMaxMvt(string $raceName): int
@@ -158,6 +207,32 @@ class RaceService
     public function getAllRaceNames(): array
     {
         return array_map(static fn (Race $race): string => $race->getName(), $this->getAllRaces());
+    }
+
+    /**
+     * Rows of the given GameEntity branch (races.kind): 'character' for
+     * player/PNJ races, 'structure' for building/unique-object types.
+     *
+     * @return Race[]
+     */
+    public function getRacesByKind(string $kind): array
+    {
+        return $this->entityManager->getRepository(Race::class)
+            ->findBy(['kind' => $kind], ['name' => 'ASC']);
+    }
+
+    /**
+     * @return string[] Lowercase names of character-kind races — what PNJ
+     *                  creation and other character flows must list instead
+     *                  of getAllRaceNames() now that structure types share
+     *                  the table.
+     */
+    public function getCharacterRaceNames(): array
+    {
+        return array_map(
+            static fn (Race $race): string => $race->getName(),
+            $this->getRacesByKind(\App\Enum\EntityCategory::Character->value)
+        );
     }
 
     /**

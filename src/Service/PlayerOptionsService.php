@@ -8,7 +8,7 @@ use Classes\Db;
  * SQL access for the `players_options` table.
  *
  * Extracted from the generic Classes\Player::have/add/end/get god-method
- * (Classes/Player.php:467-568) in Phase 2 of the Classes\Player
+ * (Classes/Player.php) during the Classes\Player
  * dismantling.
  *
  * The legacy Classes\Player shims (have_option / add_option / end_option

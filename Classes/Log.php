@@ -6,6 +6,9 @@ use App\Interface\ActorInterface;
 
 class Log{
 
+    /** Types d'événements visibles par leur seul propriétaire. */
+    public const PRIVATE_TYPES = ['turn'];
+
     // Propriétés pour l'injection de dépendances (tests)
     private static $dbInstance = null;
     private static $viewClass = null;
@@ -58,6 +61,14 @@ class Log{
 
         if ($row->target_id == $player->id) {
             return $row->type != "hidden_action" ? $row : null;
+        }
+
+        /* Événements PRIVÉS (récap de tour…) : visibles par leur SEUL
+         * propriétaire — jamais par proximité, un voisin ne lit pas vos
+         * gains de tour. La vue complète admin (getAllPlanEvents) ne
+         * passe pas par ce filtre et les montre comme le reste. */
+        if (in_array($row->type, self::PRIVATE_TYPES)) {
+            return null;
         }
 
         // Otherwise, display only if it happened within the player's perception radius

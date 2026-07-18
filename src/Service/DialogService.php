@@ -144,7 +144,7 @@ class DialogService
     /**
      * Suppression d'un dialogue de jeu. Garde-fous : `register` (réécrit par
      * le code à chaque inscription) et les dialogues encore référencés par
-     * des déclencheurs map_dialogs.
+     * des déclencheurs map_dialogs ou portés par des bâtiments.
      *
      * @throws RuntimeException code 404 ou 409
      */
@@ -165,6 +165,15 @@ class DialogService
             throw new RuntimeException(
                 'Suppression impossible : ' . $references . ' déclencheur(s) map_dialogs référencent « '
                     . $name . ' » — retirez-les d\'abord (éditeur Tiled).',
+                409
+            );
+        }
+
+        $buildingReferences = $this->countBuildingDialogReferences($name);
+        if ($buildingReferences > 0) {
+            throw new RuntimeException(
+                'Suppression impossible : ' . $buildingReferences . ' bâtiment(s) portent « '
+                    . $name . ' » — détachez-les d\'abord (admin → Bâtiments).',
                 409
             );
         }
@@ -204,6 +213,32 @@ class DialogService
     public function countMapDialogReferences(string $name): int
     {
         return $this->mapDialogReferenceCounts()[$name] ?? 0;
+    }
+
+    /**
+     * Bâtiments portant chaque dialogue (buildings.dialog) — deuxième
+     * famille de références, protégée par le même garde de suppression
+     * que les déclencheurs map_dialogs.
+     *
+     * @return array<string, int> code de dialogue => nombre de bâtiments
+     */
+    public function buildingDialogReferenceCounts(): array
+    {
+        $counts = [];
+        $res = $this->db->exe("SELECT dialog, COUNT(*) AS n FROM buildings WHERE dialog != '' GROUP BY dialog");
+        while ($row = $res->fetch_assoc()) {
+            $counts[(string) $row['dialog']] = (int) $row['n'];
+        }
+
+        return $counts;
+    }
+
+    /** Bâtiments portant CE dialogue — requête directe, pas de scan. */
+    public function countBuildingDialogReferences(string $name): int
+    {
+        $res = $this->db->exe('SELECT COUNT(*) AS n FROM buildings WHERE dialog = ?', array($name));
+
+        return (int) $res->fetch_object()->n;
     }
 
     /**

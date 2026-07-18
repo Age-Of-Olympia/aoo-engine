@@ -140,18 +140,9 @@ if ($action === null) {
     };
 
     // Race restriction — the scalar `race` the runtime gates on (empty = all
-    // races). "—" clears it; an unknown stored value is kept selectable so a
-    // legacy/non-playable race survives a save. Mirrors the passive editor.
-    $raceOptions = ['' => '—'] + (new OptionCatalog())->races();
+    // races). "—" clears it; an unknown stored value survives a save via la
+    // sentinelle ⚠ de renderSelectOptions. Mirrors the passive editor.
     $currentRace = (string) $action->getRace();
-    if ($currentRace !== '' && !isset($raceOptions[$currentRace])) {
-        $raceOptions[$currentRace] = $currentRace;
-    }
-    $raceSelect = '';
-    foreach ($raceOptions as $value => $label) {
-        $raceSelect .= '<option value="' . e((string) $value) . '"'
-            . ((string) $value === $currentRace ? ' selected' : '') . '>' . e((string) $label) . '</option>';
-    }
 
     // Icon picker, level and race share one row — all small fields, no need for a
     // line each.
@@ -161,7 +152,8 @@ if ($action === null) {
         . '<input class="form-control" type="number" name="level" min="0" value="' . (int) $readProp('level') . '"'
         . ' title="Prérequis d\'achat (à venir)"></label>'
         . '<label class="wb-field"><span>Race</span>'
-        . '<select class="form-control" name="race" title="Restreint l\'action à une race ; — = toutes">' . $raceSelect . '</select></label>'
+        . formSelect('race', (new OptionCatalog())->races(), $currentRace !== '' ? $currentRace : null, '—',
+            'class="form-control" title="Restreint l\'action à une race ; — = toutes"') . '</label>'
         . '</div>';
     echo '<label class="wb-field wb-field--wide"><span>Description</span>'
         . '<textarea class="form-control" name="text" rows="3">' . e((string) $readProp('text')) . '</textarea></label>';
@@ -177,9 +169,17 @@ if ($action === null) {
         echo '<div class="wb-block">';
         echo '<div class="wb-block-head">' . e($condition->getConditionType())
             . ($condition->isBlocking() ? ' <span class="badge badge-warning">bloquante</span>' : '')
+            . ($condition->isDisplayContext() ? ' <span class="badge badge-info">contextuelle</span>' : '')
             . $conditionEditor->removeButton((int) $condition->getId()) . '</div>';
         echo '<div class="wb-block-body">';
         echo $renderParams($schema, $params, 'cond[' . (int) $condition->getId() . ']', 'cond_raw[' . (int) $condition->getId() . ']');
+        /* Contexte d'affichage : le bouton du panneau n'apparaît que si
+         * cette condition passe (évaluée au rendu, en plus du refus à
+         * l'exécution). */
+        echo '<label class="wb-field"><span>Contextuelle</span>'
+            . '<span><input type="checkbox" name="cond_ctx[' . (int) $condition->getId() . ']" value="1" '
+            . ($condition->isDisplayContext() ? 'checked' : '') . '>'
+            . ' le bouton ne s\'affiche que si la condition passe</span></label>';
         echo '</div></div>';
     }
     echo '</div>';

@@ -38,14 +38,24 @@ function dialog_special_badge(string $name): string
 }
 
 /**
- * @param array<string, array> $dialogs   lignes de DialogService::listGameDialogs()
- * @param array<string, int>   $references code => nb de déclencheurs map_dialogs
+ * @param array<string, array> $dialogs      lignes de DialogService::listGameDialogs()
+ * @param array<string, int>   $references   code => nb de déclencheurs map_dialogs
+ * @param array<string, int>   $buildingRefs code => nb de bâtiments porteurs
  */
-function dialogs_render_list(array $dialogs, array $references): string
+function dialogs_render_list(array $dialogs, array $references, array $buildingRefs): string
 {
     $rows = '';
     foreach ($dialogs as $dialog) {
         $refs = $references[$dialog['name']] ?? 0;
+        $bRefs = $buildingRefs[$dialog['name']] ?? 0;
+
+        $refCell = [];
+        if ($refs > 0) {
+            $refCell[] = $refs . ' déclencheur' . ($refs > 1 ? 's' : '');
+        }
+        if ($bRefs > 0) {
+            $refCell[] = $bRefs . ' bâtiment' . ($bRefs > 1 ? 's' : '');
+        }
 
         $rows .= '<tr>'
             . '<td><code>' . e($dialog['name']) . '</code>' . dialog_special_badge($dialog['name']) . '</td>'
@@ -55,8 +65,8 @@ function dialogs_render_list(array $dialogs, array $references): string
             . '<td>' . ($dialog['is_active']
                 ? '<span class="badge badge-success">actif</span>'
                 : '<span class="badge badge-secondary">inactif</span>') . '</td>'
-            . '<td>' . ($refs > 0
-                ? $refs . ' déclencheur' . ($refs > 1 ? 's' : '')
+            . '<td>' . ($refCell !== []
+                ? e(implode(', ', $refCell))
                 : '<span class="text-muted">—</span>') . '</td>'
             . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/dialogs.php?action=edit&amp;name='
             . e(urlencode($dialog['name'])) . '">Éditer</a> '
@@ -193,6 +203,7 @@ function dialogs_render_delete_zone(string $name, string $csrfToken): string
 {
     $service = new DialogService();
     $references = $service->countMapDialogReferences($name);
+    $buildingReferences = $service->countBuildingDialogReferences($name);
 
     if ($name === DialogService::REGISTER_DIALOG) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : « register » est réécrit par le jeu à chaque'
@@ -200,6 +211,9 @@ function dialogs_render_delete_zone(string $name, string $csrfToken): string
     } elseif ($references > 0) {
         $body = '<p class="mb-0 text-muted">Suppression impossible : ' . $references . ' déclencheur(s)'
             . ' map_dialogs référencent ce dialogue — retirez-les d\'abord (éditeur Tiled).</p>';
+    } elseif ($buildingReferences > 0) {
+        $body = '<p class="mb-0 text-muted">Suppression impossible : ' . $buildingReferences . ' bâtiment(s)'
+            . ' portent ce dialogue — détachez-les d\'abord (<a href="/admin/buildings.php">Bâtiments</a>).</p>';
     } else {
         $body = '<form method="post" action="/admin/dialogs-save.php?action=delete" class="d-flex align-items-center gap-3"'
             . ' onsubmit="return confirm(\'Supprimer définitivement le dialogue « ' . e($name) . ' » ?\');">'
@@ -234,7 +248,11 @@ if ($action === 'new') {
     }
     $content = dialogs_render_form($dialogs[$name], $csrfToken);
 } else {
-    $content = dialogs_render_list($dialogs, $service->mapDialogReferenceCounts());
+    $content = dialogs_render_list(
+        $dialogs,
+        $service->mapDialogReferenceCounts(),
+        $service->buildingDialogReferenceCounts()
+    );
 }
 
 echo admin_layout('Dialogues', renderFlashMessage() . $content);

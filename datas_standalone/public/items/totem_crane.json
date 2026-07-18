@@ -1,0 +1,11 @@
+{
+    "id": 710,
+    "name": "Totem crane",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un totem terrifiant.",
+    "img": "img/walls/totem_crane.png",
+    "mini": "img/walls/totem_crane.png"
+}

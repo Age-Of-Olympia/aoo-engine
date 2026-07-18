@@ -467,7 +467,7 @@
 
     /* Options d'affichage du plateau — liste partagée entre le popover
      * de calques et les options du panneau Profil (js/account.js). */
-    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords'];
+    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords', 'hideLineOfFire'];
 
     /*
      * Applique côté client une option de plateau que le serveur vient
@@ -497,6 +497,17 @@
         /* Bordure graduée : dessinée côté client, bascule à chaud. */
         if (option === 'hideBoardCoords') {
             buildMapRulers();
+            return true;
+        }
+        /* Ligne de tir : le tracé vient du script de la réponse
+           observe — on purge le cache des cases (les réponses mémorisées
+           embarquent, ou non, le script selon l'ancien état) et on
+           efface le tracé courant quand on masque. */
+        if (option === 'hideLineOfFire') {
+            window.clickedCases = {};
+            if (isOn && typeof window.clearLineOfFire === 'function') {
+                window.clearLineOfFire();
+            }
             return true;
         }
         document.location.reload();
@@ -1017,6 +1028,9 @@
                 $w.children('.card-name'),
                 $type,
                 $faction.parent().hasClass('card-type') ? $() : $faction,
+                /* Bâtiment : pastille d'état (Ouvert/Fermé + PV) sous la
+                 * ligne de type — émise par observe.php à côté de la carte. */
+                $d.find('.building-status'),
                 $w.children('.card-text')
             );
             $card.empty().append($left, $main);
@@ -1037,6 +1051,15 @@
          * colonne dédiée de la grille, écrans larges seulement (CSS). */
         $sel.append($d.children('.equip-strip'));
 
+        /* Dialogue porté par un bâtiment OUVERT (observe.php n'émet
+         * .view-dialog que dans ce cas) : cellule dédiée de la zone de
+         * sélection — le dialogue prend la place, l'état reste en
+         * pastille compacte dans .hud-sel-main. */
+        var $dialog = $d.children('.view-dialog');
+        if ($dialog.length) {
+            $sel.addClass('hud-sel--dialog').append($dialog);
+        }
+
         $sel.append($d.children('#case-coords'));
 
         $d.prepend($sel);
@@ -1054,13 +1077,21 @@
             return;
         }
 
-        var match = ($filter.attr('style') || '').match(/height:\s*([\d.]+)px/);
+        var styleAttr = $filter.attr('style') || '';
+        var match = styleAttr.match(/height:\s*([\d.]+)px/);
         var lostPct = match ? Math.min(100, Math.max(0, parseFloat(match[1]) / 225 * 100)) : 0;
+        /* La teinte vient du serveur (races.wound_color — bronze pour une
+           structure) : la conserver, --hud-blood n'est que le repli CSS. */
+        var colorMatch = styleAttr.match(/background:\s*([^;]+)/);
 
         $filter.removeAttr('style')
             .addClass('hud-pv-lost')
             .css('height', lostPct + '%')
             .appendTo($('#ajax-data .card-image'));
+
+        if (colorMatch) {
+            $filter.css('background', colorMatch[1].trim());
+        }
     }
 
     /*
@@ -1281,6 +1312,15 @@
                     ? url.slice(url.indexOf('?') + 1)
                     : '';
                 $content.html(data);
+
+                /* Le fragment peut imposer son titre — la fiche d'une
+                   STRUCTURE arrive par la même URL infos que celle d'un
+                   personnage, seul le contenu sait lequel des deux. */
+                var titleOverride = $content.find('[data-panel-title]').first().attr('data-panel-title');
+                if (titleOverride && openPanels[slot]) {
+                    openPanels[slot].title = titleOverride;
+                    syncPanels();
+                }
 
                 /* Ouvrir un fil le marque « vu » côté serveur
                  * (Forum::put_view au rendu) : pastilles missives ET

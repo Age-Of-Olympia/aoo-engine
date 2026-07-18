@@ -1,0 +1,11 @@
+{
+    "id": 1129,
+    "name": "Roue à aubes",
+    "private": 0,
+    "price": 50,
+    "race": "elfe",
+    "type": "constructible",
+    "text": "Démonstration de l'ingéniosité des Elfes, ne n'a en réalité aucune utilité que la magie ne puisse remplacer.",
+    "img": "img/walls/roue_a_aubes.png",
+    "mini": "img/walls/roue_a_aubes.png"
+}

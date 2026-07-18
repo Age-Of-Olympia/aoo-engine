@@ -21,6 +21,7 @@ class DistanceView
         $passives = $actionPassiveService->getActionPassivesByCategory('distance');
 
         $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
+        $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
         $playerGold = $player->get_gold();
 
@@ -106,8 +107,6 @@ class DistanceView
                   </thead>';
             echo '<tbody>';
 
-            $isFull = ($nb_comp >= NUMBER_MAX_COMP);
-
             foreach ($actions as $action) {
                 $actionName = $action->getName();
                 $color = WarSchoolUtils::getColor($action->getCategory());
@@ -118,7 +117,6 @@ class DistanceView
                 $raceTxt = (!empty($actionRace)) ? ucfirst($actionRace) : 'Commun';
                 
                 $price = $actionService->getPrice($action->getLevel());
-                $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
                 $imagePath = 'img/spells/' . $actionName . '.jpeg';
                 $imageSrc = file_exists($imagePath) ? $actionName : 'todo';
@@ -188,7 +186,8 @@ class DistanceView
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = RaceService::getRaceColor($passive->getRace());
                 $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
-                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passive->getRace());
+                $passiveRace = $passive->getRace();
+                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passiveRace);
 
                 $pRace = $passive->getRace();
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';

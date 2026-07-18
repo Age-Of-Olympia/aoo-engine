@@ -11,18 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[Group('action-outcome')]
 class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!defined('EFFECTS_HIDDEN')) {
-            define('EFFECTS_HIDDEN', []);
-        }
-        if (!defined('EFFECTS_RA_FONT')) {
-            // Mirror the canonical test set (shared global constant) so this test
-            // doesn't poison OptionCatalog/effects-derived tests, whatever the order.
-            define('EFFECTS_RA_FONT', ['maladresse' => 'ra-x', 'protection' => 'ra-y', 'adrenaline' => 'ra-z']);
-        }
-    }
-
     public function testAppliesTheEffectToTheActorWithAMessage(): void
     {
         $instruction = new ApplyStatusOutcomeInstruction();
@@ -100,10 +88,10 @@ class ApplyStatusOutcomeInstructionCharacterizationTest extends TestCase
         $target = $this->createMock(Player::class);
         $target->data = (object) ['name' => 'Target'];
 
-        // An unknown effect name is not a key of EFFECTS_RA_FONT, which raises an
-        // expected "undefined array key" warning (orthogonal to the escaping); the
-        // point is that the name itself must not reach the HTML unescaped.
-        $message = @$instruction->execute($actor, $target, new ConditionObject())->getOutcomeSuccessMessages()[0];
+        // An unknown effect name gets the catalog's fallback icon (orthogonal to
+        // the escaping); the point is that the name itself must not reach the
+        // HTML unescaped.
+        $message = $instruction->execute($actor, $target, new ConditionObject())->getOutcomeSuccessMessages()[0];
 
         $this->assertStringNotContainsString('<img', $message);
         $this->assertStringContainsString('&lt;img', $message);

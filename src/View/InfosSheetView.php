@@ -3,7 +3,7 @@
 namespace App\View;
 
 use App\Entity\EntityManagerFactory;
-use App\Entity\PlayerEntity;
+use App\Entity\Character;
 use App\Entity\RealPlayer;
 use App\Service\FactionService;
 use App\Service\PlayerEffectService;
@@ -28,7 +28,7 @@ final class InfosSheetView
      *                       au lieu de la table marbre pleine largeur.
      *                       La page complète (infos.php) est inchangée.
      */
-    public static function render(Player $player, PlayerEntity $targetEntity, bool $hudPanel = false): void
+    public static function render(Player $player, Character $targetEntity, bool $hudPanel = false): void
     {
         $playerEffectService = new PlayerEffectService();
 
@@ -48,7 +48,7 @@ final class InfosSheetView
 
         $player->getCoords();
 
-        // Target coords via entity (Phase 4.3d). Shape-compatible with
+        // Target coords via entity. Shape-compatible with
         // View::get_distance which only reads ->x / ->y / ->plan.
         $conn = EntityManagerFactory::getEntityManager()->getConnection();
         $targetCoords = $targetEntity->getCoords($conn);
@@ -74,15 +74,16 @@ final class InfosSheetView
                 ? (int) floor($target->getRemaining('pv') / $target->caracs->pv * 100)
                 : 100;
 
-            $pvVeil = \Classes\Ui::get_pv_veil($pvPct);
+            $pvVeil = \Classes\Ui::get_pv_veil($pvPct, (new \App\Service\RaceService())->getRaceWoundColor($target->data->race ?? null));
 
             echo '<div class="infos-effects">';
 
             $playerEffects = $playerEffectService->getEffectsByPlayerId($targetEntity->getId());
+            $effectService = new \App\Service\EffectService();
 
             foreach ($playerEffects as $effect) {
 
-                if (in_array($effect->getName(), EFFECTS_HIDDEN)) {
+                if ($effectService->isHidden($effect->getName())) {
 
                     continue;
                 }
@@ -112,7 +113,7 @@ final class InfosSheetView
                     $endTime = '';
                 }
 
-                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '"><span class="ra ' . EFFECTS_RA_FONT[$effect->getName()] . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . '</span></a><br />';
+                echo '<a href="https://age-of-olympia.net/wiki/doku.php?id=regles:effets#' . $effect->getName() . '"><span class="ra ' . $effectService->getIcon($effect->getName()) . '"></span><span style="font-size: 88%;">(' . $effect->getValue() . ') ' . $endTime . '</span></a><br />';
             }
 
             echo '</div>';

@@ -8,7 +8,7 @@ use Classes\Db;
  * Computes a player's "nude" caracs — base stats built from the race's
  * ability profile plus their bought upgrades.
  *
- * This is the scope the Phase 3 audit flagged as the BourrinsView /
+ * This is the scope the read-path audit flagged as the BourrinsView /
  * infos.php blocker: entity-side callers need caracs without going
  * through legacy
  * Classes\Player::get_caracs(), which bundles item bonuses, effects,
@@ -22,7 +22,7 @@ use Classes\Db;
  * What's NOT in the nude path (stays on legacy
  * `Classes\Player::get_caracs()` until a future mini-phase):
  *   - equipped item bonuses (Item::get_equiped_list loop)
- *   - buff/debuff effects (ELE_BUFFS / ELE_DEBUFFS)
+ *   - buff/debuff effects (EffectService::getBuffCaracs/getDebuffCaracs)
  *   - turn bonuses from `players_bonus`
  *   - JSON cache writes to `datas/private/players/*.caracs.json`
  *

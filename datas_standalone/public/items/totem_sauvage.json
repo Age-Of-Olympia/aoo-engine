@@ -1,0 +1,11 @@
+{
+    "id": 711,
+    "name": "Totem sauvage",
+    "private": 0,
+    "price": 30,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un totem à l'air sauvage.",
+    "img": "img/walls/totem_sauvage.png",
+    "mini": "img/walls/totem_sauvage.png"
+}

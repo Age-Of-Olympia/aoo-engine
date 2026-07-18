@@ -1,0 +1,11 @@
+{
+    "id": 72,
+    "name": "Statue de Gisant",
+    "private": 0,
+    "price": 50,
+    "race": "olympien",
+    "type": "constructible",
+    "text": "Un tombeau à l'effigie d'un Héro disparu.",
+    "img": "img/walls/statue_gisant.png",
+    "mini": "img/walls/statue_gisant.png"
+}

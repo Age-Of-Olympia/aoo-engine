@@ -46,11 +46,14 @@ class PlantsService
     {
         //chaque plante a un pourcentage de chance de pousser (dans constant.php)
 
-        if(!empty(GROW_RATE[$plante])){
+        if(empty(GROW_RATE[$plante])){
 
-            $growTo = GROW_RATE[$plante];
-
+            // Plante inconnue du barème : elle ne pousse pas — avant,
+            // $growTo indéfini faisait un rand(1, null) imprévisible.
+            return;
         }
+
+        $growTo = GROW_RATE[$plante];
 
         //chance de 1/growTo
         if(AUTO_GROW || rand(1,$growTo) == 1)

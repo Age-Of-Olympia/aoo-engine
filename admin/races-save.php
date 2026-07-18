@@ -67,6 +67,9 @@ $validate = static function (): ?string {
     if (!preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($_POST['bgColor'] ?? ''))) {
         return 'Couleur de fond invalide (format attendu : #RRGGBB).';
     }
+    if (!preg_match('/^#[0-9a-fA-F]{6}$/', (string) ($_POST['wound_color'] ?? ''))) {
+        return 'Couleur de blessure invalide (format attendu : #RRGGBB).';
+    }
     foreach (array_keys(CARACS) as $key) {
         if (!isset($_POST['carac'][$key]) || !is_numeric($_POST['carac'][$key])) {
             return "Caractéristique manquante ou invalide : {$key}.";
@@ -84,10 +87,22 @@ $applyForm = static function (Race $race): string {
 
     $race->setLabel(trim((string) $_POST['label']));
     $race->setDescription(trim((string) ($_POST['description'] ?? '')));
-    $race->setPlayable(booleanCheckbox('playable'));
+    // Sorte : personnage (défaut) ou structure. Une structure n'est jamais
+    // proposée à l'inscription, quel que soit l'état de la case Jouable.
+    $kind = ($_POST['kind'] ?? 'character') === 'structure' ? 'structure' : 'character';
+    $race->setKind($kind);
+    // Nature (structures seulement) : édifice (porte) ou obstacle (mur).
+    $race->setStructureNature(($_POST['structure_nature'] ?? 'edifice') === 'obstacle' ? 'obstacle' : 'edifice');
+    // Saignement : un élément de carte connu, ou rien.
+    $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
+    $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
+    $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
+    $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
+    $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);
     $race->setColor(stringWithDefault('color', 'black'));
+    $race->setWoundColor((string) $_POST['wound_color']);
 
     // Faction de départ : validée contre le catalogue (admin/factions.php).
     // Une valeur orpheline est conservée seulement si elle ne change pas

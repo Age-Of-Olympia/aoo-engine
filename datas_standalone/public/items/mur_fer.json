@@ -1,0 +1,11 @@
+{
+    "id": 508,
+    "name": "Mur de fer",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "constructible",
+    "text": "Le mur le plus solide d'Olympia. Mais que mettent-ils dedans ?",
+    "img": "img/walls/mur_fer.png",
+    "mini": "img/walls/mur_fer.png"
+}

@@ -69,6 +69,37 @@ final class ActionParameterValidator
         return $result;
     }
 
+    /**
+     * ENUM à valeurs multiples : chaque valeur postée doit être une clé
+     * des options du champ ; vide + requis refuse, vide simple retombe
+     * sur le défaut du champ.
+     *
+     * @return array<int, string>
+     */
+    private function enumValues(ParameterField $field, mixed $raw): array
+    {
+        $values = array_values(array_filter(array_map(
+            static fn ($value): string => trim((string) $value),
+            is_array($raw) ? $raw : [$raw]
+        ), static fn (string $value): bool => $value !== ''));
+
+        foreach ($values as $value) {
+            if (!array_key_exists($value, $field->options)) {
+                throw new InvalidArgumentException("Valeur invalide pour « {$field->label} » : {$value}.");
+            }
+        }
+
+        if ($values === []) {
+            if ($field->required) {
+                throw new InvalidArgumentException("Le champ « {$field->label} » est requis.");
+            }
+
+            return (array) $field->default;
+        }
+
+        return $values;
+    }
+
     private function parseRawValue(string $value): mixed
     {
         $value = trim($value);
@@ -102,7 +133,9 @@ final class ActionParameterValidator
         return match ($field->type) {
             FieldType::INT => (int) $raw,
             FieldType::STRING => (string) $raw,
-            FieldType::ENUM => $this->enumValue($field, (string) $raw),
+            FieldType::ENUM => $field->multiple
+                ? $this->enumValues($field, $raw)
+                : $this->enumValue($field, (string) $raw),
             FieldType::TRAIT => $this->traitValue($field, (string) $raw),
             FieldType::TRAIT_OR_INT => $this->traitOrIntValue($field, (string) $raw),
             FieldType::LIST => $this->listValue($raw),

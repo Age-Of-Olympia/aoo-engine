@@ -76,8 +76,9 @@ class PlayerEffectService
         if ($existingEffect) {
             if ($stackable) {
                 $existingEffect->setValue($existingEffect->getValue() + $value);
-                // Update l'endtime dans le cas particulier de l'effet "imposture"
-                if($name == "imposture"){
+                // Certains effets empilables rafraîchissent aussi leur durée
+                // à la re-pose (catalogue : stack_refresh_duration, ex-imposture).
+                if ((new EffectService())->getEffectByName($name)?->isStackRefreshDuration()) {
                     $existingEffect->setEndTime($endTime);
                 }
             } 

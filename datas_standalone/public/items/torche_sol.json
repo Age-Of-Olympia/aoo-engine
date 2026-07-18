@@ -1,0 +1,11 @@
+{
+    "id": 1124,
+    "name": "Torche sur pied",
+    "private": 0,
+    "price": 20,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un torche permettant d'éclairer une pièce.",
+    "img": "img/walls/torche_sol.png",
+    "mini": "img/walls/torche_sol.png"
+}

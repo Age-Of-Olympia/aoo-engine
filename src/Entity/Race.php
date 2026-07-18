@@ -11,13 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
 class Race
 {
     /**
-     * The 16 stat keys, one DB column each (same keys as the CARACS constant,
-     * which config/constants.php defines with UI labels).
+     * The 16 stat keys, one DB column each — alias de la source unique
+     * {@see \App\Enum\Caracs::KEYS} (CARACS garde les libellés UI).
      */
-    public const CARAC_KEYS = [
-        'a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e',
-        'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae',
-    ];
+    public const CARAC_KEYS = \App\Enum\Caracs::KEYS;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -46,6 +43,54 @@ class Race
 
     #[ORM\Column(type: "boolean")]
     private bool $hidden;
+
+    /**
+     * Branch of the GameEntity tree this row provides base stats for:
+     * 'character' (joueurs, PNJ) or 'structure' (bâtiments, objets
+     * uniques). See App\Enum\EntityCategory.
+     */
+    #[ORM\Column(type: "string", length: 20, options: ["default" => "character"])]
+    private string $kind = 'character';
+
+    /**
+     * Nature d'un type de STRUCTURE : 'edifice' (vrai bâtiment — a une
+     * porte, toujours ouvrable/fermable) ou 'obstacle' (objet construit
+     * type mur — pas de porte ; is_open y signifiera un jour la
+     * passabilité, mutualisé avec les coffres). Ignoré pour les races
+     * de personnages.
+     */
+    #[ORM\Column(type: "string", length: 20, name: "structure_nature", options: ["default" => "edifice"])]
+    private string $structureNature = 'edifice';
+
+    /**
+     * Élément de carte versé au sol quand l'entité est blessée
+     * ('sang' pour les personnages, '' = rien — un mur ne saigne pas).
+     */
+    #[ORM\Column(type: "string", length: 50, options: ["default" => "sang"])]
+    private string $bleeds = 'sang';
+
+    /**
+     * Une STRUCTURE de cette race bloque-t-elle le passage ? Un mur
+     * oui, une table non — on lui passe autour comme dessus. Ignoré
+     * pour les personnages.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => true], name: "blocks_passage")]
+    private bool $blocksPassage = true;
+
+    /**
+     * Une STRUCTURE de cette race arrête-t-elle les projectiles ? Un
+     * mur oui, une table non — la flèche passe au-dessus. Ignoré pour
+     * les personnages.
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => true], name: "blocks_projectiles")]
+    private bool $blocksProjectiles = true;
+
+    /**
+     * Teinte du voile de blessure (portrait, carte) : le rouge sang
+     * historique par défaut, bronze pour une structure par exemple.
+     */
+    #[ORM\Column(type: "string", length: 20, name: "wound_color", options: ["default" => "#770001"])]
+    private string $woundColor = '#770001';
 
     #[ORM\Column(type: "string", length: 20, options: ["default" => "#FFFFFF"])]
     private string $bgColor = '#FFFFFF';
@@ -211,6 +256,77 @@ class Race
     public function setHidden(bool $hidden): void
     {
         $this->hidden = $hidden;
+    }
+
+    public function getKind(): string
+    {
+        return $this->kind;
+    }
+
+    public function setKind(string $kind): void
+    {
+        $this->kind = $kind;
+    }
+
+    public function isStructureKind(): bool
+    {
+        return $this->kind === \App\Enum\EntityCategory::Structure->value;
+    }
+
+    public function getStructureNature(): string
+    {
+        return $this->structureNature;
+    }
+
+    public function setStructureNature(string $structureNature): void
+    {
+        $this->structureNature = $structureNature;
+    }
+
+    /** Vrai bâtiment (porte Ouvert/Fermé) — par opposition aux murs construits. */
+    public function isEdifice(): bool
+    {
+        return $this->isStructureKind() && $this->structureNature === 'edifice';
+    }
+
+    public function getBleeds(): string
+    {
+        return $this->bleeds;
+    }
+
+    public function setBleeds(string $bleeds): void
+    {
+        $this->bleeds = $bleeds;
+    }
+
+    public function blocksPassage(): bool
+    {
+        return $this->blocksPassage;
+    }
+
+    public function setBlocksPassage(bool $blocksPassage): void
+    {
+        $this->blocksPassage = $blocksPassage;
+    }
+
+    public function blocksProjectiles(): bool
+    {
+        return $this->blocksProjectiles;
+    }
+
+    public function setBlocksProjectiles(bool $blocksProjectiles): void
+    {
+        $this->blocksProjectiles = $blocksProjectiles;
+    }
+
+    public function getWoundColor(): string
+    {
+        return $this->woundColor;
+    }
+
+    public function setWoundColor(string $woundColor): void
+    {
+        $this->woundColor = $woundColor;
     }
 
     public function getBgColor(): string

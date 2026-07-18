@@ -158,6 +158,16 @@ class Db{
         return $row['n'];
     }
 
+    /**
+     * Dernier id AUTO_INCREMENT inséré sur cette connexion — à lire juste
+     * après l'INSERT, jamais via un re-SELECT par nom (ambigu en cas de
+     * doublon ou d'écriture concurrente).
+     */
+    public function insertId(): int
+    {
+        return (int) $this->db->insert_id;
+    }
+
     public function insert($table, $values) : bool{
 
         $fields = $args = array();

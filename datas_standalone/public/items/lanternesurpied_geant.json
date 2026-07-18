@@ -1,0 +1,11 @@
+{
+    "id": 610,
+    "name": "Lanterne sur pied",
+    "private": 0,
+    "price": 30,
+    "race": "common",
+    "type": "constructible",
+    "text": "Un bel ouvrage accueillant le feu en son sein.",
+    "img": "img/walls/lanternesurpied_geant.png",
+    "mini": "img/walls/lanternesurpied_geant.png"
+}

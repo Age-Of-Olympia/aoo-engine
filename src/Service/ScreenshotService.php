@@ -114,7 +114,7 @@ class ScreenshotService
      */
     public function generateAutomaticScreenshot(Player $actor, string $actionName, ?array $coordsMin = array('x' => -7,'y' => -7,'z' => 0,'plan' => 'arene_s2'), ?array $coordsMax = array('x' => 7,'y' => 7,'z' => 0,'plan' => 'arene_s2')): array
     {
-        // Internal upgrade to entity for read-only lookups (Phase 4.3c).
+        // Internal upgrade to entity for read-only lookups.
         // Callers still pass legacy Player (ActorInterface), but the
         // read paths inside this method use the entity layer. The
         // screenshot-PNJ mutation paths below (move_player, get_caracs)
@@ -172,21 +172,6 @@ class ScreenshotService
 
         return ['valid' => true, 'error' => null];
     }
-
-    /**
-     * Save current player position for later restoration
-     */
-    private function savePlayerPosition(Player $player): array
-    {
-        $coords = $player->getCoords();
-        return [
-            'x' => $coords->x,
-            'y' => $coords->y,
-            'z' => $coords->z,
-            'plan' => $coords->plan
-        ];
-    }
-
     /**
      * Restore player to default position
      */
@@ -228,10 +213,66 @@ class ScreenshotService
         return $data ?: null;
     }
 
+
+    /**
+     * Remove the screenshot PNJ from the SVG output
+     * Post-processes the SVG to hide the player taking the screenshot
+     */
+    private function removeScreenshotPlayerFromSvg(string $svgData, Player $player): string
+    {
+        $playerId = $player->id;
+        $coordsPattern = '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*>/i';
+        $pnjX = null;
+        $pnjY = null;
+        
+        if (preg_match($coordsPattern, $svgData, $matches)) {
+            $pnjX = $matches[1];
+            $pnjY = $matches[2];
+        }
+        
+        $patterns = [
+            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*data-table="players"[^>]*>/i',
+            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*class="avatar-shadow"[^>]*>/i',
+            
+            '/<image[^>]*data-table="players"[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i',
+            '/<image[^>]*class="avatar-shadow"[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i',
+            
+            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i'
+        ];
+        
+        if ($pnjX !== null && $pnjY !== null) {
+            $patterns[] = '/<rect[^>]*class="case"[^>]*x="' . preg_quote($pnjX, '/') . '"[^>]*y="' . preg_quote($pnjY, '/') . '"[^>]*>/i';
+        }
+        
+        $originalLength = strlen($svgData);
+        
+        foreach ($patterns as $pattern) {
+            $svgData = preg_replace($pattern, '', $svgData);
+        }
+        
+        $newLength = strlen($svgData);
+        
+        if ($originalLength !== $newLength) {
+            $coordsInfo = ($pnjX !== null && $pnjY !== null) ? " at coordinates ({$pnjX},{$pnjY})" : "";
+        } else {
+        }
+        
+        return $svgData;
+    }
+
+
+
+    /* ------------------------------------------------------------------
+     * Incorporation base64 des captures — FONCTIONNALITÉ EN SOMMEIL,
+     * gardée sur décision d'équipe (2026-07-18) : rend le SVG autonome
+     * (images incluses) le jour où l'appel commenté de generateSvgData()
+     * est réactivé. PHPStan les voit inutilisées : ignores ciblés.
+     * ---------------------------------------------------------------- */
     /**
      * Convert all external images in SVG to base64 data URIs
      * Handles both regular images and background images
      */
+    // @phpstan-ignore method.unused (en sommeil, voir note ci-dessus)
     private function convertImagesToBase64(string $svgData, int $zValue = 0): string
     {
         if (preg_match('/<svg[^>]*style="[^"]*background:\s*url\(\'([^\']+)\'\)/i', $svgData, $bgMatches)) {
@@ -289,52 +330,6 @@ class ScreenshotService
         }
 
         return 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
-    }
-
-    /**
-     * Remove the screenshot PNJ from the SVG output
-     * Post-processes the SVG to hide the player taking the screenshot
-     */
-    private function removeScreenshotPlayerFromSvg(string $svgData, Player $player): string
-    {
-        $playerId = $player->id;
-        $coordsPattern = '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*x="(\d+)"[^>]*y="(\d+)"[^>]*>/i';
-        $pnjX = null;
-        $pnjY = null;
-        
-        if (preg_match($coordsPattern, $svgData, $matches)) {
-            $pnjX = $matches[1];
-            $pnjY = $matches[2];
-        }
-        
-        $patterns = [
-            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*data-table="players"[^>]*>/i',
-            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*class="avatar-shadow"[^>]*>/i',
-            
-            '/<image[^>]*data-table="players"[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i',
-            '/<image[^>]*class="avatar-shadow"[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i',
-            
-            '/<image[^>]*id="players' . preg_quote($playerId, '/') . '"[^>]*>/i'
-        ];
-        
-        if ($pnjX !== null && $pnjY !== null) {
-            $patterns[] = '/<rect[^>]*class="case"[^>]*x="' . preg_quote($pnjX, '/') . '"[^>]*y="' . preg_quote($pnjY, '/') . '"[^>]*>/i';
-        }
-        
-        $originalLength = strlen($svgData);
-        
-        foreach ($patterns as $pattern) {
-            $svgData = preg_replace($pattern, '', $svgData);
-        }
-        
-        $newLength = strlen($svgData);
-        
-        if ($originalLength !== $newLength) {
-            $coordsInfo = ($pnjX !== null && $pnjY !== null) ? " at coordinates ({$pnjX},{$pnjY})" : "";
-        } else {
-        }
-        
-        return $svgData;
     }
 
     /**

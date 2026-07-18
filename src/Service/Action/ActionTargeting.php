@@ -75,6 +75,76 @@ final class ActionTargeting
         return $scope === self::TARGET || $scope === self::BOTH;
     }
 
+    /**
+     * True when the action may target an entity of the given category
+     * (character / structure), mirroring what TargetTypeCondition will
+     * decide at execution time: an action WITHOUT a TargetType condition
+     * is unrestricted (legacy behavior), one WITH it only reaches the
+     * declared categories. Lets observe.php hide the Barbier button on a
+     * palissade instead of showing a button that can only block.
+     */
+    public function canTargetCategory(Action $action, \App\Enum\EntityCategory $category): bool
+    {
+        foreach ($action->getConditions() as $condition) {
+            if ($condition->getConditionType() !== 'TargetType') {
+                continue;
+            }
+
+            $params = $condition->getParameters();
+            $allowed = is_array($params['allowed'] ?? null) && $params['allowed'] !== []
+                ? $params['allowed']
+                : [\App\Enum\EntityCategory::Character->value];
+
+            return in_array($category->value, $allowed, true);
+        }
+
+        return true;
+    }
+
+    /**
+     * Contexte d'affichage : les conditions marquées display_context au
+     * workbench sont évaluées AU RENDU du panneau — le bouton n'apparaît
+     * que si elles passent (ex. RequiresDistance contextuelle = bouton
+     * visible seulement à portée). Les autres conditions restent des
+     * refus à l'exécution, comme avant.
+     *
+     * En cas d'erreur d'évaluation, on AFFICHE (fail open) : un bouton
+     * de trop est refusé par l'exécuteur, un bouton manquant est un
+     * gameplay cassé silencieusement.
+     */
+    public function matchesDisplayContext(
+        Action $action,
+        \App\Interface\ActorInterface $actor,
+        ?\App\Interface\ActorInterface $target
+    ): bool {
+        $registry = new \App\Action\Condition\ConditionRegistry();
+
+        foreach ($action->getConditions() as $condition) {
+            if (!$condition->isDisplayContext()) {
+                continue;
+            }
+
+            $impl = $registry->getCondition($condition->getConditionType());
+            if ($impl === null) {
+                continue;
+            }
+
+            try {
+                $result = $impl->check($actor, $target, $condition, new \App\Action\Condition\ConditionObject());
+            } catch (\Throwable $e) {
+                error_log('[ActionTargeting] display context eval failed for '
+                    . $action->getName() . '/' . $condition->getConditionType() . ': ' . $e->getMessage());
+                continue;
+            }
+
+            if (!$result->isSuccess()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /** Friendly French label for the config UI. */
     public function label(Action $action): string
     {

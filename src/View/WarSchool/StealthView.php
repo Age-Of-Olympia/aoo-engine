@@ -21,6 +21,7 @@ class StealthView
         $passives = $actionPassiveService->getActionPassivesByCategory('stealth');
 
         $nb_comp = $actionPassiveService->getActionPassiveCount($player->getId()) + $player->get_spells_count();
+        $isFull = ($nb_comp >= NUMBER_MAX_COMP);
 
         $playerGold = $player->get_gold();
 
@@ -189,7 +190,8 @@ class StealthView
                 $color = WarSchoolUtils::getColor($passive->getCategory());
                 $raceColor = RaceService::getRaceColor($passive->getRace());
                 $alreadyLearned = (bool)$player->have_action_passive($passive->getName());
-                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passive->getRace());
+                $passiveRace = $passive->getRace();
+                $isRaceLearnable = (empty($passiveRace) || $player->data->race == $passiveRace);
 
                 $pRace = $passive->getRace();
                 $raceTxt = (!empty($pRace)) ? ucfirst($pRace) : 'Commun';

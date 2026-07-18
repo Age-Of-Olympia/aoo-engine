@@ -1,0 +1,11 @@
+{
+    "id": 308,
+    "name": "Statue Noble",
+    "private": 0,
+    "price": 100,
+    "race": "common",
+    "type": "constructible",
+    "text": "Une statue d'un rare raffinement.",
+    "img": "img/walls/statue_noble.png",
+    "mini": "img/walls/statue_noble.png"
+}

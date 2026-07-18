@@ -276,14 +276,16 @@ ob_start();
                 <?= $csrf->renderTokenField() ?>
                 <div class="form-group">
                     <label for="planSelect">Choisir un plan :</label>
-                    <select class="form-control" id="planSelect" name="selected_plan" onchange="this.form.submit()">
-                        <option value="">-- Sélectionner un plan (<?= e(season_filter_label($seasonFilter)) ?>) --</option>
-                        <?php foreach ($filteredPlans as $plan): ?>
-                            <option value="<?= e($plan->id) ?>" <?= selected($selectedPlan === $plan->id) ?>>
-                                <?= e($plan->name) ?> (<?= e($plan->id) ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php
+                    $planChoices = [];
+                    foreach ($filteredPlans as $plan) {
+                        $planChoices[$plan->id] = $plan->name . ' (' . $plan->id . ')';
+                    }
+                    echo formSelect('selected_plan', $planChoices,
+                        $selectedPlan !== '' ? $selectedPlan : null,
+                        '-- Sélectionner un plan (' . season_filter_label($seasonFilter) . ') --',
+                        'class="form-control" id="planSelect" onchange="this.form.submit()"');
+                    ?>
                     <?php if (empty($filteredPlans)): ?>
                         <small class="text-muted">Aucun plan ne correspond au filtre « <?= e(season_filter_label($seasonFilter)) ?> » — élargir le filtre ci-dessus.</small>
                     <?php endif; ?>
@@ -341,14 +343,16 @@ ob_start();
                             <input type="hidden" name="selected_plan" value="<?= e($selectedPlan) ?>">
                             <div class="form-group">
                                 <label for="zLevelSelect">Sélectionner un niveau Z :</label>
-                                <select class="form-control" id="zLevelSelect" name="selected_z_level" onchange="this.form.submit()">
-                                    <option value="" <?= selected(empty($selectedZLevel)) ?>>-- Tous les niveaux --</option>
-                                    <?php foreach ($plan->fullData->z_levels as $z => $levelData): ?>
-                                        <option value="<?= e($z) ?>" <?= selected((string)$selectedZLevel === (string)$z) ?>>
-                                            <?= e($levelData->name) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <?php
+                                $zChoices = [];
+                                foreach ($plan->fullData->z_levels as $z => $levelData) {
+                                    $zChoices[(string) $z] = $levelData->name;
+                                }
+                                echo formSelect('selected_z_level', $zChoices,
+                                    ($selectedZLevel !== null && $selectedZLevel !== '') ? (string) $selectedZLevel : null,
+                                    '-- Tous les niveaux --',
+                                    'class="form-control" id="zLevelSelect" onchange="this.form.submit()"');
+                                ?>
                             </div>
                             <?php if ($selectedZLevel !== null && $selectedZLevel !== ''):
                                 $rawZ = json()->decode('plans', $selectedPlan);

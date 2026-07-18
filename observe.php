@@ -1,9 +1,11 @@
 <?php
 
+use App\Entity\BuildingDetails;
 use App\Entity\EntityManagerFactory;
 use App\Interface\ActionInterface;
 use App\Interface\ActorInterface;
 use App\Service\ActionService;
+use App\Service\BuildingService;
 use App\Service\FactionService;
 use App\Service\RaceService;
 use App\Service\Action\ActionTargeting;
@@ -97,9 +99,9 @@ if($res->num_rows){
                 Élement ('. $row->name .')<br />
                 ';
 
-                if(!empty(EFFECTS_RA_FONT[$row->name])){
+                if((new \App\Service\EffectService())->exists($row->name)){
 
-                    echo 'Effet: <span class="ra '. EFFECTS_RA_FONT[$row->name] .'"></span>';
+                    echo 'Effet: <span class="ra '. (new \App\Service\EffectService())->getIcon($row->name) .'"></span>';
                 }
                 else{
 
@@ -112,6 +114,44 @@ if($res->num_rows){
         ';
     }
 
+}
+
+
+/* Routes aménagées (map_routes) : visibles sur la carte, elles doivent
+ * aussi se lire dans le panneau de case — c'est là qu'on comprend
+ * pourquoi courir est possible ici. */
+$sql = '
+SELECT
+p.name
+FROM
+map_routes AS p
+INNER JOIN
+coords AS c
+ON
+p.coords_id = c.id
+WHERE
+c.x = ?
+AND
+c.y = ?
+AND
+c.z = ?
+AND
+c.plan = ?
+';
+
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+
+while($row = $res->fetch_object()){
+
+    echo '
+    <div class="case-infos">
+        <img src="img/routes/'. $row->name .'.png" />
+        <div class="text">
+            '. ucfirst($row->name) .' aménagée<br />
+            Courir y est possible.
+        </div>
+    </div>
+    ';
 }
 
 
@@ -230,224 +270,10 @@ elseif(!$planJson){
 
 if($res->num_rows){
 
-    /**
-     * Trie les actions par catégorie pour regrouper soins et offensives.
-     * Ordre: bases -> offensives (melee, distance, spell, technique) -> soins (heal) -> utilitaires
-     */
-    function sortActionsByCategory(array $actions, ActionService $actionService): array {
-        $basics = array(
-            "attaquer",
-            "courir",
-            "entrainement",
-            "fouiller",
-            "prier",
-            "repos",
-            "vol_a_la_tire"
-        );
-        $offensiveTypes = array('melee', 'distance', 'spell', 'technique');
-        $healType = 'heal';
-
-        $byCategory = array(
-            'basics' => array(),
-            'offensive' => array(),
-            'heal' => array(),
-            'utility' => array()
-        );
-
-        foreach ($actions as $actionName) {
-            if (in_array($actionName, $basics)) {
-                $byCategory['basics'][$actionName] = array_search($actionName, $basics);
-                continue;
-            }
-            $actionData = $actionService->getActionByName($actionName);
-            if ($actionData === null) {
-                $byCategory['utility'][] = $actionName;
-                continue;
-            }
-            $ormType = $actionData->getOrmType();
-            if ($ormType === $healType) {
-                $byCategory['heal'][] = $actionName;
-            } elseif (in_array($ormType, $offensiveTypes)) {
-                $byCategory['offensive'][] = $actionName;
-            } else {
-                $byCategory['utility'][] = $actionName;
-            }
-        }
-
-        $result = array();
-        foreach ($basics as $b) {
-            if (isset($byCategory['basics'][$b])) {
-                $result[] = $b;
-            }
-        }
-        sort($byCategory['offensive']);
-        sort($byCategory['heal']);
-        sort($byCategory['utility']);
-        return array_merge($result, $byCategory['offensive'], $byCategory['heal'], $byCategory['utility']);
-    }
-
-    $card="";
-    $equipStrip="";
-    $raceService = new RaceService();
-    while($row = $res->fetch_object()){
-
-
-        $target = PlayerFactory::legacy($row->id);
-
-        $target->get_data();
-
-        $target->get_caracs();
-        if(!empty($card)){
-            echo ' <div class="case-infos">  <div class="text"> autre joueur:  <a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a> ['.$target->getDisplayId().']</div> </div>';
-           continue;
-        }
-
-        $dataName = '<a href="infos.php?targetId='. $target->id .'">'. $target->data->name .'</a>';
-
-        $dataName .= '<div class="effects">';
-
-        foreach($target->getEffects() as $effect){
-
-
-            if(in_array($effect->getName(), EFFECTS_HIDDEN)){
-
-                continue;
-            }
-
-            $dataName .= ' <a href="infos.php?targetId='. $target->id .'"><span class="ra '. EFFECTS_RA_FONT[$effect->getName()] .'"></span></a>';
-        }
-
-        $dataName .= '</div>';
-
-
-        $dataImg = '';
-
-
-        if($player->check_missive_permission($target)){
-
-            $dataImg .= '<a href="forum.php?newTopic=Missives&targetId='. $target->id .'"><button
-                    class="action">
-                    <span class="ra ra-quill-ink"></span>
-                    <span class="action-name">Missive</span>
-                    </button></a><br/>';
-        }
-
-
-        $actions = $player->get_actions();
-        $actionService = new ActionService();
-        $actions = sortActionsByCategory($actions, $actionService);
-        $actionTargeting = new ActionTargeting();
-
-        foreach($actions as $actionName){
-            $entityManager = EntityManagerFactory::getEntityManager();
-            if ($actionName == "attaquer") {
-                if ($player->id != $target->id) {
-                    $actionData = $actionService->getActionByName("melee");
-                    if ($actionData == null) {
-                        continue;
-                    }
-                    $dataImg .= buildActionToDisplay($target, $actionData, $actionService, "attaquer");
-                }
-                continue;
-            }
-
-            $actionData = $actionService->getActionByName($actionName);
-            if ($actionData == null) {
-                continue;
-            }
-
-            // Show the action button only in the context its scope allows:
-            // self on yourself, target on someone else, both in either, none
-            // nowhere (a no-outcome action — e.g. a technique modifier — has no
-            // button here, as the old loop did).
-            $observingSelf = ($player->id == $target->id);
-            $allowed = $observingSelf
-                ? $actionTargeting->canTargetSelf($actionData)
-                : $actionTargeting->canTargetOther($actionData);
-            if ($allowed) {
-                $dataImg .= buildActionToDisplay($target, $actionData, $actionService);
-            }
-        }
-
-
-        /* class="action" comme Missive : sans elle, la grille d'actions
-         * du HUD ignore ces boutons (nom toujours affiché, taille libre). */
-        if($target->have_option('isMerchant')){
-
-            $dataImg .= '<a href="merchant.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-ammo-bag"></span> <span class="action-name">Marchander</span></button></a>';
-        }
-
-        if($target->have_option('isTrainer')){
-
-            $dataImg .= '<a href="warschool.php?targetId='. $target->id .'"><button class="action"><span class="ra ra-axe"></span> <span class="action-name">Apprendre</span></button></a>';
-        }
-
-
-        $raceJson = $raceService->getRaceData($target->data->race);
-
-        $pnjText = $target->id<0 ? ' - PNJ' : '';
-
-        // Handle missing race data
-        if (!$raceJson || !is_object($raceJson)) {
-            $dataType = ucfirst($target->data->race ?? 'inconnu') . $pnjText;
-        } else {
-            $dataType = $raceJson->name . $pnjText;
-        }
-
-        if ($target->id > 0 && !empty($target->data->isInactive)) {
-            $dataType .= ' (inactif)';
-        }
-
-        $text = $target->data->text;
-
-
-        $pvPct = ($target->caracs->pv > 0)
-            ? floor($target->getRemaining('pv') / $target->caracs->pv * 100)
-            : 100;
-
-
-        $factionJson = (new FactionService())->getFactionData($target->data->faction);
-
-        $faction = '';
-        if ($factionJson && isset($factionJson->raFont)) {
-            $faction = '<a href="faction.php?faction='. $target->data->faction .'"><span class="ra '. $factionJson->raFont .'"></span></a>';
-        }
-
-        if(
-            $target->data->secretFaction != ''
-            &&
-            $target->data->secretFaction == $player->data->secretFaction
-        ){
-
-            $secretJson = (new FactionService())->getFactionData($target->data->secretFaction);
-
-            if ($secretJson) {
-                $faction .= '<a href="faction.php?faction='. $target->data->secretFaction .'"><span class="ra '. $secretJson->raFont .'"></span></a>';
-            }
-        }
-
-        $data = (object) array(
-            'bg'=>$target->data->portrait,
-            'name'=>$dataName,
-            'img'=>$dataImg,
-            'pvPct'=>$pvPct,
-            'type'=>$dataType,
-            'text'=>$text,
-            'race'=>$target->data->race,
-            'faction'=>$faction
-        );
-
-        $card .= Ui::get_card($data);
-
-        /* Équipement porté par le personnage observé — alvéoles pour
-         * la vue de sélection du HUD papier, visibles sur écrans
-         * larges seulement (js/hud.js + css/hud.css). L'habillage
-         * hérité garde sa carte telle quelle. */
-        if (Ui::usesPaperTheme()) {
-
-            $equipStrip = \App\View\EquipmentSlotsView::render($target->id);
-        }
-    }
+    /* Une ENTITÉ occupe la case (personnage, PNJ, bâtiment, objet
+     * unique) : la vue par type rend la carte, les boutons filtrés et
+     * la pastille d'état — le contrôleur ne fait qu'assembler. */
+    [$card, $equipStrip] = \App\View\Observe\EntityCardView::render($player, $res, $x, $y, $coords);
 }
 
 else{
@@ -482,108 +308,8 @@ else{
 
     if($res->num_rows){
 
-
-        // structures
-
-        while($row = $res->fetch_object()){
-
-
-            $wallId = $row->id;
-
-
-            echo '
-            <div class="case-infos">
-                <img src="img/walls/'. $row->name .'.png" title="#'. $row->id .'"/>
-
-                <div class="text">
-                    Structure non-passable.<br />
-                    ';
-
-                    if(!empty(WALLS_PV[$row->name]) && WALLS_PV[$row->name] > 0){
-                        
-                        echo 'Destructible ('. Str::get_status($row->damages, WALLS_PV[$row->name]) .').';
-                    }
-                    else{
-
-                        echo 'Indestructible.';
-                    }
-
-                    echo '<br />';
-
-                    // Affichage si la ressource est épuisée ou non
-                    if($row->damages == -1){
-                        echo '<br /><span class="resource-status resource-harvestable" style="color:green;"><b>Récoltable.</b></span> <br />';
-                    }
-                    if($row->damages == -2){
-                        echo '<br /><span class="resource-status resource-exhausted" style="color:red;"><b>Épuisée.</b></span> <br />';
-                    }
-
-                    // altar
-
-                    $sql = 'SELECT * FROM map_triggers WHERE name = "altar" AND coords_id= ?';
-
-                    $res = $db->exe($sql, $row->coords_id);
-
-                    if($res->num_rows){
-
-                        $row = $res->fetch_object();
-
-                        $god = PlayerFactory::legacy($row->params);
-
-                        $god->get_data();
-
-                        echo 'Altar du Dieu '. $god->data->name .'.';
-
-                        $actions = '';
-
-                        $dataText = "Vous vénérez déjà ce Dieu.";
-
-                        if($god->id != $player->data->godId){
-
-                            $actions = '
-                            <button
-                                class="action"
-                                data-url="worship.php"
-                                data-action="worship"
-                                data-target-id="'. $row->id .'"
-                            ><span class="ra ra-candle"></span>
-                            <span class="action-name">Vénérer</span>
-                            </button><br/>';
-
-                            $dataText = "Vénérez ce Dieu pour pouvoir lui adresser vos prières.";
-                        }
-
-                        $dataName = '<a href="infos.php?targetId='. $god->id .'">Altar du Dieu '. $god->data->name .'</a>';
-
-                        $data = (object) array(
-                            'bg'=>$god->data->portrait,
-                            'name'=>$dataName,
-                            'img'=>$actions,
-                            'type'=>'Altar',
-                            'race'=>'dieu',
-                            'text'=>$dataText
-                        );
-
-                        $card = Ui::get_card($data);
-                    }
-
-                    echo '
-                </div>
-            </div>
-            ';
-        }
-
-
-        // show destroy button
-        ?>
-        <script>
-        var $wall = $('#walls<?php echo $wallId ?>');
-        var x = <?php echo $x ?>;
-        var y = <?php echo $y ?>;
-        </script>
-        <script src="js/observe_destroy.js?v=20260715"></script>
-        <?php
-
+        /* Murs de carte (et autel) : carte mutualisée + script destroy. */
+        $card = \App\View\Observe\WallCardView::render($player, $res, $x, $y);
     }
     else{
 
@@ -616,45 +342,13 @@ else{
 
     $res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
 
-    if($res->num_rows){
-
-
-        $row = $res->fetch_object();
-
-
-        if($row->params[0] == '"'){
-
-
-            $alert = str_replace('"', '', $row->params);
-
-            echo '<script>alert("'. $alert .'");</script>';
-        }
-
-        else{
-
-
-            $paramsTbl = explode(',', $row->params);
-
-
-            if(count($paramsTbl) == 1){
-
-                $paramsTbl[] = $paramsTbl[0];
-                $paramsTbl[] = $paramsTbl[0];
-                $paramsTbl[] = $paramsTbl[0];
-            }
-
-
-            $options = array(
-            'name'=>$paramsTbl[0],
-            'avatar'=>'img/dialogs/bg/'. $paramsTbl[1] .'.webp',
-            'dialog'=>$paramsTbl[2],
-            'text'=>''
-            );
-
-            echo '<div class="view-dialog">'. Ui::get_dialog($player, $options) .'</div>';
-        }
-    }
+    \App\View\Observe\TileDialogView::render($player, $res);
 }
+
+
+// Bourse au sol : piles + instances (GroundLootService::listAt),
+// marcher sur la case ramasse (go.php) — ou le bouton sur sa propre case.
+\App\View\Observe\GroundLootView::render($player, (int) $x, (int) $y, $coords);
 
 
 // forbidden trigger
@@ -674,6 +368,35 @@ if($res->num_rows){
 }
 
 
+/* Ligne de tir depuis le joueur vers la case observée : cases
+ * traversées + premier obstacle (structure blocks_projectiles ou
+ * map_walls). L'info du panneau est toujours donnée ; le dessin sur le
+ * damier (vert = dégagé, rouge = derrière l'obstacle) se désactive via
+ * l'option hideLineOfFire — les corps-à-corps s'en passent. view.js
+ * efface l'ancienne trajectoire à chaque clic. */
+$fireReport = (new BuildingService())->lineOfFireReport(
+    $coords,
+    (object) ['x' => (int) $x, 'y' => (int) $y, 'z' => $coords->z, 'plan' => $coords->plan]
+);
+
+if($fireReport['tiles'] !== []){
+
+    if($fireReport['blockerName'] !== null){
+
+        echo '<div class="case-infos"><div class="text">🏹 Ligne de tir bloquée par '
+            . htmlspecialchars($fireReport['blockerName'], ENT_QUOTES, 'UTF-8') .'.</div></div>';
+    }
+
+    if(!$player->have_option('hideLineOfFire')){
+
+        echo '<script>window.showLineOfFire && window.showLineOfFire('
+            . json_encode([(int) $coords->x, (int) $coords->y]) .', '
+            . json_encode([(int) $x, (int) $y]) .', '
+            . json_encode($fireReport['blocker']) .');</script>';
+    }
+}
+
+
 // coords
 echo '<div id="case-coords"><button OnClick="copyToClipboard(this);">x'. $x .',y'. $y .',z'. $coords->z .'</button></div>';
 
@@ -688,33 +411,9 @@ if(!empty($card)){
     }
 
     ?>
-    <script src="js/observe.js?v=20260717c"></script>
+    <script src="js/observe.js?v=20260718"></script>
     <?php
 }
 
 
 echo Str::minify(ob_get_clean());
-
-function buildActionToDisplay(ActorInterface $target, ActionInterface $action, ActionService $actionService, ?string $nameOverride = null) : string {
-        $icon = (new \App\View\Action\ActionIconView())->forAction($action, 'span');
-        $costs = $actionService->getCostsArray(null, $action);
-        if ($costs !== []) {
-            $icon = '<span flow="up" tooltip="Coût : '. implode(', ', $costs) .'">'. $icon .'</span>';
-        }
-
-        $name = $nameOverride ?? $action->getName();
-        $label = $nameOverride !== null ? ucfirst($nameOverride) : $action->getDisplayName();
-
-        return '<button
-                class="action"
-                data-coords-x="'.$target->getCoords()->x.'"
-                data-coords-y="'.$target->getCoords(refresh:false)->y.'"
-                data-coords-z="'.$target->getCoords(refresh:false)->z.'"
-                data-coords-plan="'.$target->getCoords(refresh:false)->plan.'"
-                data-target-id="'. $target->getId() .'"
-                data-action="'. $name .'"
-                >
-                '. $icon .'
-                <span class="action-name">'. $label .'</span>
-                </button><br/>';
-}

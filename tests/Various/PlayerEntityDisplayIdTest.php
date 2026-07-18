@@ -8,14 +8,14 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 /**
- * Characterization tests for the displayId field added to PlayerEntity.
+ * Characterization tests for the displayId field added to the entity base (now GameEntity).
  *
  * Pins the fallback contract: when display_id is unset (legacy rows where
  * the column was added later) or zero, getDisplayId() returns the raw id.
  * View code relies on this to never render "mat.0" for legacy players.
  *
  * RealPlayer is used as the concrete subclass; the field and its
- * getter/setter are inherited from PlayerEntity, so any subclass
+ * getter/setter are inherited from GameEntity, so any subclass
  * exercises the same code path.
  */
 class PlayerEntityDisplayIdTest extends TestCase

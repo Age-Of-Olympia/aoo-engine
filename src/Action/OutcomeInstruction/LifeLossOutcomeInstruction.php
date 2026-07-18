@@ -61,11 +61,27 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         $actorIgnore = $params['actorIgnore'] ?? false;
         $autoCrit = $params['autoCrit'] ?? false;
 
-        // Récupération des Effets
-        $actorEffetFaiblesse = $actor->getEffectValue("faiblesse");
-        $actorEffetAgressivite = $actor->getEffectValue("agressivite");
-        $targetEffetFragilite = $target->getEffectValue("fragilite");
-        $targetEffetArmure = $target->getEffectValue("armure");
+        // Modificateurs de dégâts portés par les effets (catalogue :
+        // damage_dealt_mod côté attaquant — ex-agressivite/faiblesse —,
+        // damage_taken_mod côté cible — ex-fragilite/armure).
+        $effectService = new \App\Service\EffectService();
+        $dealtMods = $effectService->modifierContributions($actor->getEffects(), 'getDamageDealtMod');
+        $takenMods = $effectService->modifierContributions($target->getEffects(), 'getDamageTakenMod');
+
+        // Démolition : le bonus anti-structure de l'arme (pioche, bélier…)
+        // s'ajoute aux dégâts quand la CIBLE est une structure — l'héritier
+        // de l'ex-destroy.php maintenant que les murs sont des entités.
+        if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') === \App\Enum\EntityCategory::Structure) {
+            $demolition = (int) ($actor->emplacements->main1->data->demolition ?? 0);
+            if ($demolition > 0) {
+                $dealtMods['pos'] += $demolition;
+                $dealtMods['posLabels'][] = 'Démolition';
+            }
+        }
+        $actorEffetAgressivite = $dealtMods['pos'];
+        $actorEffetFaiblesse = $dealtMods['neg'];
+        $targetEffetFragilite = $takenMods['pos'];
+        $targetEffetArmure = $takenMods['neg'];
 
         if ($targetIgnore != false) {
             $this->updatePlayerCaracsWithIgnores($targetIgnore, $target);
@@ -125,16 +141,29 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                     $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = '<font color="red">Critique ! Dégâts augmentés ! +3 !</font>';
             }
     
-            //TANK ?
-            if($target->getEffectValue("encaisse") > 0){
-                $encaisse = true;
+            //TANK ? (facteur sur les dégâts subis — catalogue, ex-encaisse ;
+            // $encaisse peut déjà venir d'un PASSIF, qui garde son 0.75)
+            $takenFactor = $effectService->damageTakenFactor($target->getEffects());
+            $beforeEncaisseDmg = $totalDamages;
+            if($takenFactor >= 1 && $encaisse){
+                $takenFactor = 0.75;
             }
-
-            if($encaisse){
-                $beforeEncaisseDmg = $totalDamages ?? 0;
-                $totalDamages = $this->computeDamageTaken((int) $totalDamages);
+            if($takenFactor < 1){
+                $encaisse = true;
+                $totalDamages = $this->computeDamageTaken((int) $totalDamages, $takenFactor);
             }
             $target->putBonus(array('pv'=>-$totalDamages));
+
+            /* Usure : porter un coup ARME l'arme de l'attaquant
+             * (déclencheur « attack »), l'encaisser ARME les protections de
+             * la cible (« defense ») — le décrément tombe au passage de
+             * tour. WearService n'est pas intercepté par le SimulationGuard,
+             * la garde est ici. */
+            if (!$actor->isSimulated() && !$target->isSimulated()) {
+                $wear = new \App\Service\WearService();
+                $wear->arm($actor->id, 'attack');
+                $wear->arm($target->id, 'defense');
+            }
 
             // Gestion des logs
             $bonusDamagesText = '';
@@ -177,16 +206,16 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
                 $bonusDefenseText = ' + ' . abs($bonusDefense). ' (Bonus défense'.$bonusText.')';
             }
             if($actorEffetAgressivite > 0){
-                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (Agressivité)';
+                $agresssiviteDamagesText = ' + ' . $actorEffetAgressivite . ' (' . implode(' + ', $dealtMods['posLabels']) . ')';
             }
             if($actorEffetFaiblesse > 0){
-                $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (Faiblesse)';
+                $faiblesseDamagesText = ' - ' . $actorEffetFaiblesse . ' (' . implode(' + ', $dealtMods['negLabels']) . ')';
             }
             if($targetEffetFragilite > 0){
-                $fragiliteDamagesText = ' + ' . $targetEffetFragilite . ' (Fragilité)';
+                $fragiliteDamagesText = ' + ' . $targetEffetFragilite . ' (' . implode(' + ', $takenMods['posLabels']) . ')';
             }
             if($targetEffetArmure > 0){
-                $armureDamagesText = ' - ' . $targetEffetArmure . ' (Armure)';
+                $armureDamagesText = ' - ' . $targetEffetArmure . ' (' . implode(' + ', $takenMods['negLabels']) . ')';
             }
             $distanceText = "";
             if ($distanceInfluence) {
@@ -198,15 +227,19 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
 
             $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = 'Vous infligez <span style="text-decoration: underline;" flow="up" tooltip="' . CARACS[$actorTraitDamages] .' vs '. CARACS[$targetTraitDamagesTaken] . ' : ' . $actorDamages . $bonusDamagesText . $agresssiviteDamagesText . $fragiliteDamagesText . $othersDamagesText .' - ' . $targetDefense . $bonusDefenseText . $faiblesseDamagesText . $armureDamagesText . $distanceText . (($encaisse) ? ' = ' . $beforeEncaisseDmg . ' - ' . ($beforeEncaisseDmg - $totalDamages) . ' (Encaisse)': '') . '">' . $totalDamages . '</span>' .' dégâts à '. $target->data->name.'.';
 
-            $recoverMalus = $this->computeRecoverMalus((int) $totalDamages);
+            // Une structure n'a pas de malus (elle n'esquive jamais) :
+            // ni écriture, ni ligne « subit/récupère X malus » au récap.
+            if (\App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') !== \App\Enum\EntityCategory::Structure) {
+                $recoverMalus = $this->computeRecoverMalus((int) $totalDamages);
 
-            if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
-                $malusBonus--;
+                if($target->playerPassiveService->hasPassiveByPlayerIdByName($target->getId(),"inepuisable")){
+                    $malusBonus--;
+                }
+
+                $target->put_malus($malus-$recoverMalus+$malusBonus);
+                $malusText = ($malus - $recoverMalus + $malusBonus> 0) ? 'subit ' : ' récupère ';
+                $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus+$malusBonus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . ', Bonus : ' . $malusBonus . '">malus</span>.';
             }
-
-            $target->put_malus($malus-$recoverMalus+$malusBonus);
-            $malusText = ($malus - $recoverMalus + $malusBonus> 0) ? 'subit ' : ' récupère ';
-            $outcomeSuccessMessages[sizeof($outcomeSuccessMessages)] = $target->data->name . ' ' . $malusText . abs($malus-$recoverMalus+$malusBonus) . ' <span style="text-decoration: underline;" flow="up" tooltip="Attaque : ' . $malus . ', Dégâts : -' . $recoverMalus . ', Bonus : ' . $malusBonus . '">malus</span>.';
 
             $conditionObject->setLifeloss($totalDamages);
 
@@ -279,9 +312,9 @@ class LifeLossOutcomeInstruction extends OutcomeInstruction implements HasParame
         return [$othersDefense, $encaisse];
     }
 
-    public function computeDamageTaken(int $damage): int
+    public function computeDamageTaken(int $damage, float $factor = 0.75): int
     {
-        return max(1, (int) floor($damage * 0.75));
+        return max(1, (int) floor($damage * $factor));
     }
 
     public function computeRecoverMalus(int $damage): int
