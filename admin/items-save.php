@@ -30,8 +30,21 @@ try {
 }
 
 $action = $_GET['action'] ?? '';
-if ($action !== 'update' && $action !== 'create') {
+if ($action !== 'update' && $action !== 'create' && $action !== 'migrate-structure') {
     setFlash('warning', 'Action inconnue.');
+    redirectTo('/admin/items.php');
+}
+
+// Migration d'un retardataire de l'ancien système de pose (type
+// « structure ») vers le système actuel — bouton « Migrer » de la liste.
+if ($action === 'migrate-structure') {
+    $name = strtolower(trim((string) ($_POST['name'] ?? '')));
+    try {
+        $recap = (new \App\Service\StructureConversionService())->convertItem($name);
+        setFlash('success', $recap);
+    } catch (\Throwable $e) {
+        setFlash('warning', 'Migration impossible : ' . $e->getMessage());
+    }
     redirectTo('/admin/items.php');
 }
 

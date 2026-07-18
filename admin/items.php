@@ -88,6 +88,8 @@ function item_type_badge(string $type): string
         'consommable' => ['Consommable', 'success', 'Se consomme (1 A)'],
         Item::TYPE_CONSTRUCTIBLE => ['Constructible', 'warning',
             'Système actuel : se bâtit depuis l\'inventaire en vraie entité bâtiment (PV, porte, fiche)'],
+        'structure' => ['Structure (ancien)', 'danger',
+            'Ancien système de pose (build.php, supprimé) — plus aucun usage en jeu : à migrer en Constructible'],
         'matiere' => ['Matière', 'secondary', 'Matériau d\'artisanat, sans usage direct'],
     ];
     [$label, $style, $help] = $styles[$type] ?? [($type !== '' ? ucfirst($type) : '—'), 'light', ''];
@@ -97,7 +99,7 @@ function item_type_badge(string $type): string
 }
 
 /** @param array<int, object> $items */
-function items_render_list(array $items): string
+function items_render_list(array $items, string $csrfToken): string
 {
     $inDb = 0;
     $typeCounts = [];
@@ -126,6 +128,20 @@ function items_render_list(array $items): string
             }
         }
 
+        // Retardataire de l'ancien système de pose : conversion en un clic
+        // (race structure + type constructible + action construire_*).
+        $migrateButton = '';
+        if ($type === 'structure') {
+            $migrateButton = ' <form method="post" style="display:inline"'
+                . ' action="/admin/items-save.php?action=migrate-structure"'
+                . ' onsubmit="return confirm(\'Migrer « ' . e($row->name) . ' » en constructible ?\');">'
+                . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+                . '<input type="hidden" name="name" value="' . e($row->name) . '">'
+                . '<button class="btn btn-sm btn-danger" title="Crée la race structure (défauts à affiner),'
+                . ' passe l\'objet en constructible et pose l\'action construire_' . e($row->name) . '">Migrer</button>'
+                . '</form>';
+        }
+
         $rows[] = '<tr data-type="' . e($type) . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
@@ -137,7 +153,8 @@ function items_render_list(array $items): string
             . '<td>' . item_wear_cell($row) . '</td>'
             . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
-            . ' href="/admin/action-export.php?type=item&name=' . e(urlencode($row->name)) . '">JSON</a></td>'
+            . ' href="/admin/action-export.php?type=item&name=' . e(urlencode($row->name)) . '">JSON</a>'
+            . $migrateButton . '</td>'
             . '</tr>';
     }
 
@@ -458,7 +475,7 @@ if ($action === 'new') {
     }
     $content = items_render_edit($row, $csrfToken);
 } else {
-    $content = items_render_list(items_catalog());
+    $content = items_render_list(items_catalog(), $csrfToken);
 }
 
 echo admin_layout('Objets', renderFlashMessage() . $content);
