@@ -44,6 +44,9 @@ class AdminMenuAccessService
         'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
         'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
+        // Éléments posés : pose case par case (boue, feu…) — travail
+        // d'animation, même niveau que la pose de bâtiments
+        'map-elements.php'         => ['Cartes · Éléments posés', 'Cartes', self::LEVEL_ADMIN],
         'screenshots.php'          => ['Cartes · Captures', 'Cartes', self::LEVEL_ADMIN],
 
         'avatars-portraits.php'    => ['Joueurs · Avatars & portraits', 'Joueurs', self::LEVEL_ADMIN],
