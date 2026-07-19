@@ -10,9 +10,10 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 
 /**
- * G1 + G2 end to end (docs/design-items-instances.md §4): the
- * 'construire_palissade' action, straight from the catalog, through the
- * untouched executor —
+ * G1 + G2 end to end (docs/design-items-instances.md §4, généralisé par
+ * docs/design-generic-item-actions.md) : l'action GÉNÉRIQUE 'construire'
+ * du catalogue, l'objet fourni à l'exécution (POST itemId → ItemPick),
+ * through the untouched executor —
  *
  *   - without wood: blocked by RequiresItem, nothing built, nothing
  *     spent;
@@ -36,12 +37,18 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
     private function actionOrSkip(): \App\Interface\ActionInterface
     {
-        $action = ActionFactory::getAction('construire_palissade');
+        $action = ActionFactory::getAction('construire');
         if ($action === null) {
-            $this->markTestSkipped("actions catalog not seeded (no 'construire_palissade' row).");
+            $this->markTestSkipped("actions catalog not seeded (no generic 'construire' row — run migrations).");
         }
 
         return $action;
+    }
+
+    protected function tearDown(): void
+    {
+        unset($_POST['itemId']);
+        parent::tearDown();
     }
 
     public function testWithoutThePalissadeObjectTheActionBlocksAndBuildsNothing(): void
@@ -50,11 +57,12 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $builder->getCoords();
         $builder->get_caracs();
         $maxA = (int) $builder->caracs->a;
-        $this->itemOrSkip('palissade');
+        $palissadeItem = $this->itemOrSkip('palissade');
+        $_POST['itemId'] = (string) $palissadeItem->id;
 
         $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
 
-        $this->assertTrue($results->isBlocked(), 'no palissade object must block the action');
+        $this->assertTrue($results->isBlocked(), 'no palissade object must block the action (ItemPick possession)');
         $this->assertSame(
             0,
             (int) $this->link->fetchOne('SELECT COUNT(*) FROM buildings b JOIN players p ON p.id = b.player_id WHERE b.owner_id = ?', [$builder->id]),
@@ -94,6 +102,7 @@ class ConstruireGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(0, $bois->get_n(PlayerFactory::legacy($builder->id)), 'the 10 bois are consumed by the craft');
         $this->assertSame(1, $palissadeItem->get_n(PlayerFactory::legacy($builder->id)), 'the palissade object is in the inventory');
 
+        $_POST['itemId'] = (string) $palissadeItem->id;
         $results = (new ActionExecutorService($this->actionOrSkip(), $builder, $builder))->executeAction();
 
         $this->assertFalse($results->isBlocked(), 'with the palissade object the action must pass');

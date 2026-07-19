@@ -118,77 +118,7 @@ class InventoryService
                 exit('error a');
             }
 
-            //ajout des bonus de l'objet consommé
-            //(en notant chaque effet pour le message de retour au joueur)
-            $details = [];
-
-            foreach ($item->data as $bonus => $qte) {
-
-                switch ($bonus) {
-                    case "pv":
-                    case "pm":
-                    case "mvt":
-                    case "a":
-                    case "ae":
-                        /* les colonnes à 0 (la fiche item les porte toutes)
-                         * ne font rien : ni bonus, ni ligne de message */
-                        if ((int) $qte === 0) {
-                            break;
-                        }
-                        $player->putBonus([$bonus => $qte]);
-                        $details[] = sprintf('%+d %s', $qte, $bonus === 'ae' ? 'Ae' : strtoupper($bonus));
-                        break;
-
-                    case "malus":
-                        if ((int) $qte === 0) {
-                            break;
-                        }
-                        $player->put_malus($qte);
-                        $details[] = sprintf('%+d malus', $qte);
-                        break;
-
-                    case "pr":
-                        if ((int) $qte === 0) {
-                            break;
-                        }
-                        $player->put_pr($qte*COEFFICIENT_PR);
-                        $details[] = sprintf('%+d PR', $qte*COEFFICIENT_PR);
-                        break;
-
-                    case "pf":
-                        if ((int) $qte === 0) {
-                            break;
-                        }
-                        $player->put_pf($qte);
-                        $details[] = sprintf('%+d PF', $qte);
-                        break;
-
-                    case "effet":
-                        //dans le json de l'objet, les effet sont dans un tableau du type ["-sang","poison"]
-                        foreach ($qte as $effet) {
-                            //supression d'un effet
-                            if (str_starts_with($effet, '-')) {
-
-                                $player->end_effect(str_replace("-", "", $effet));
-                                $details[] = 'dissipe ' . str_replace("-", "", $effet);
-                            }
-                            //ajout d'un effet
-                            else {
-                                if ($player->effectService->isHidden($effet) || $effet == "poison" || $effet == "poison_magique") {
-
-                                    $player->add_effect($effet, 0);
-                                } else {
-
-                                    $player->add_effect($effet, ONE_DAY);
-                                    /* les effets cachés (poison…) restent
-                                     * muets dans le message de retour */
-                                    $details[] = 'effet ' . $effet;
-                                }
-                            }
-                        }
-                        break;
-                }
-            }
+            $details = self::applyConsumablePayload($player, $item);
 
             //on enlève l'action utilisée
             $player->putBonus(array('a' => -1));
@@ -215,5 +145,89 @@ class InventoryService
 
 
         Log::put($player, $player, $text, type: 'use', hiddenText: $hiddenText);
+    }
+
+    /**
+     * Applique la CHARGE d'un consommable (bonus pv/pm/mvt/a/ae, malus,
+     * PR, PF, effets ±) sans toucher au coût ni à la pile — source unique
+     * partagée entre le geste d'inventaire (useItem) et l'action
+     * générique « consommer » (ApplyConsumableOutcomeInstruction).
+     *
+     * @return list<string> détail lisible de chaque effet appliqué
+     *                      (les effets cachés — poison… — restent muets)
+     */
+    public static function applyConsumablePayload(Player $player, Item $item): array
+    {
+        $details = [];
+
+        foreach ($item->data as $bonus => $qte) {
+
+            switch ($bonus) {
+                case "pv":
+                case "pm":
+                case "mvt":
+                case "a":
+                case "ae":
+                    /* les colonnes à 0 (la fiche item les porte toutes)
+                     * ne font rien : ni bonus, ni ligne de message */
+                    if ((int) $qte === 0) {
+                        break;
+                    }
+                    $player->putBonus([$bonus => $qte]);
+                    $details[] = sprintf('%+d %s', $qte, $bonus === 'ae' ? 'Ae' : strtoupper($bonus));
+                    break;
+
+                case "malus":
+                    if ((int) $qte === 0) {
+                        break;
+                    }
+                    $player->put_malus($qte);
+                    $details[] = sprintf('%+d malus', $qte);
+                    break;
+
+                case "pr":
+                    if ((int) $qte === 0) {
+                        break;
+                    }
+                    $player->put_pr($qte*COEFFICIENT_PR);
+                    $details[] = sprintf('%+d PR', $qte*COEFFICIENT_PR);
+                    break;
+
+                case "pf":
+                    if ((int) $qte === 0) {
+                        break;
+                    }
+                    $player->put_pf($qte);
+                    $details[] = sprintf('%+d PF', $qte);
+                    break;
+
+                case "effet":
+                    //dans le json de l'objet, les effet sont dans un tableau du type ["-sang","poison"]
+                    foreach ($qte as $effet) {
+                        //supression d'un effet
+                        if (str_starts_with($effet, '-')) {
+
+                            $player->end_effect(str_replace("-", "", $effet));
+                            $details[] = 'dissipe ' . str_replace("-", "", $effet);
+                        }
+                        //ajout d'un effet
+                        else {
+                            if ($player->effectService->isHidden($effet) || $effet == "poison" || $effet == "poison_magique") {
+
+                                $player->add_effect($effet, 0);
+                            } else {
+
+                                $player->add_effect($effet, ONE_DAY);
+                                /* les effets cachés (poison…) restent
+                                 * muets dans le message de retour */
+                                $details[] = 'effet ' . $effet;
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        return $details;
     }
 }

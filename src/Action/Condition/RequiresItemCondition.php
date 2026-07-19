@@ -25,10 +25,14 @@ class RequiresItemCondition extends BaseCondition implements HasParameterSchema
 {
     public bool $toRemove = false;
 
+    /** Objet résolu au check (statique OU déposé par ItemPick) — relu par applyCosts. */
+    private ?int $resolvedItemId = null;
+
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
-            new ParameterField('item', FieldType::ITEM, 'Objet requis', required: true),
+            new ParameterField('item', FieldType::ITEM, 'Objet requis', required: false,
+                help: 'Vide = l\'objet fourni à l\'exécution (condition ItemPick)'),
             new ParameterField('n', FieldType::INT, 'Quantité requise', default: 1),
             new ParameterField('consume', FieldType::BOOL, 'Consommer au paiement', default: true),
         );
@@ -40,13 +44,16 @@ class RequiresItemCondition extends BaseCondition implements HasParameterSchema
         // même action : sans remise à zéro, un échec NON bloquant hériterait
         // du toRemove d'une occurrence précédente et serait payé quand même.
         $this->toRemove = false;
+        $this->resolvedItemId = null;
 
         $params = $condition->getParameters();
-        $itemId = $params['item'] ?? null;
+        // Paramètre statique (coût de matériaux, clé de quête…), sinon
+        // l'objet du geste, déposé par ItemPick (actions génériques).
+        $itemId = $params['item'] ?? $conditionObject->getPickedItem()?->id;
         $n = max(1, (int) ($params['n'] ?? 1));
 
         if ($itemId === null) {
-            return new ConditionResult(false, array(), ['Condition RequiresItem mal configurée (objet manquant).']);
+            return new ConditionResult(false, array(), ['Condition RequiresItem mal configurée (objet manquant, ni statique ni fourni au geste).']);
         }
 
         $item = new Item((int) $itemId);
@@ -67,6 +74,7 @@ class RequiresItemCondition extends BaseCondition implements HasParameterSchema
         }
 
         $this->toRemove = (bool) ($params['consume'] ?? true);
+        $this->resolvedItemId = (int) $itemId;
 
         return new ConditionResult(true, array(), array());
     }
@@ -81,7 +89,14 @@ class RequiresItemCondition extends BaseCondition implements HasParameterSchema
         $params = $conditionToPay->getParameters();
         $n = max(1, (int) ($params['n'] ?? 1));
 
-        $item = new Item((int) $params['item']);
+        // applyCosts ne reçoit pas le ConditionObject : l'objet résolu au
+        // check (statique ou ItemPick) est porté par l'instance.
+        $itemId = (int) ($params['item'] ?? $this->resolvedItemId ?? 0);
+        if ($itemId === 0) {
+            return array();
+        }
+
+        $item = new Item($itemId);
         $item->get_data();
         $item->add_item($actor, -$n);
 

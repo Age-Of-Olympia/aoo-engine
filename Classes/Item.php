@@ -9,7 +9,7 @@ class Item{
      * Types d'objets à comportement câblé (items.type) — source unique
      * des littéraux, revue DRY 2026-07-18 :
      * - TYPE_CONSTRUCTIBLE : se construit DEPUIS L'INVENTAIRE en vraie
-     *   entité bâtiment (action construire_{name}, choix de case).
+     *   entité bâtiment (action générique construire, choix de case).
      */
     public const TYPE_CONSTRUCTIBLE = 'constructible';
 

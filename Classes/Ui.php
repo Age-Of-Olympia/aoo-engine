@@ -86,7 +86,7 @@ class Ui{
                 <script src="js/tutorial/TutorialInit.js?v=' . $tutorialVersion . '"></script>
 
                 <!-- Choix de case de construction (réutilise le spotlight tutoriel) -->
-                <script src="js/build_picker.js?v=20260718"></script>
+                <script src="js/build_picker.js?v=20260722"></script>
         ';
 
         echo '    </head>
@@ -429,7 +429,7 @@ class Ui{
                 data-type="'. $type .'"
                 data-bankable="'. $item->row->is_bankable .'"
                 data-state="'. $stateAttr .'"
-                data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire_'. $item->row->name : '') .'"
+                data-build-action="'. ($type == Item::TYPE_CONSTRUCTIBLE ? 'construire' : '') .'"
                 data-img="img/items/'. $item->row->name .'.webp"
             >
                 <td width="50">

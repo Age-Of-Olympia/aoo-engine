@@ -8,8 +8,8 @@ use RuntimeException;
 /**
  * Migre à la demande un objet de l'ANCIEN système de construction
  * (items type « structure », posés par feu build.php) vers le système
- * actuel : pseudo-race structure + type constructible + action
- * construire_{nom} (placestructure).
+ * actuel : pseudo-race structure + type constructible — l'action
+ * générique `construire` fait le reste (ItemPick, POST itemId).
  *
  * Même logique que la migration Version20260719190000 pour les 33
  * objets du catalogue historique — ce service couvre les retardataires
@@ -96,11 +96,9 @@ class StructureConversionService
         $done[] = 'type constructible';
 
         // --- 4. l'action de construction -----------------------------------
-        if ($this->createBuildAction($conn, $name, $label, (string) ($row['text'] ?? ''))) {
-            $done[] = "action construire_{$name} créée";
-        } else {
-            $done[] = 'action déjà en place';
-        }
+        // Plus d'action par type : l'action générique `construire` reçoit
+        // l'objet à l'exécution (ItemPick) — être `constructible` suffit.
+        $done[] = 'action générique construire (rien à créer)';
 
         // --- 5. le seed JSON suit la base ----------------------------------
         // La base est désormais la source ; le JSON historique reste comme
@@ -173,51 +171,4 @@ class StructureConversionService
         $conn->executeStatement('UPDATE items SET ' . implode(', ', $set) . ' WHERE id = ?', $params);
     }
 
-    /**
-     * Patron d'action « construire » de la migration murs→structures :
-     * TargetType/RequiresItem(consomme)/BuildSite/RequiresTraitValue +
-     * placestructure. Renvoie false si l'action existait déjà.
-     */
-    private function createBuildAction(\Doctrine\DBAL\Connection $conn, string $name, string $label, string $text): bool
-    {
-        $actionName = 'construire_' . $name;
-        if ($conn->fetchOne('SELECT id FROM actions WHERE name = ?', [$actionName]) !== false) {
-            return false;
-        }
-
-        $itemId = (int) $conn->fetchOne('SELECT id FROM items WHERE name = ?', [$name]);
-
-        $conn->executeStatement(
-            "INSERT INTO actions (name, icon, type, display_name, text, level) VALUES (?, 'ra-tower', 'buff', ?, ?, 1)",
-            [$actionName, 'Construire : ' . $label, $text !== '' ? $text : $label . ' s\'installe sur une case libre adjacente.']
-        );
-        foreach ([
-            ['TargetType', ['allowed' => ['character']], 0],
-            ['RequiresItem', ['item' => $itemId, 'n' => 1, 'consume' => true], 1],
-            // BuildSite valide la case choisie AVANT tout paiement — sans
-            // elle, une case volée consommerait l'objet pour rien.
-            ['BuildSite', [], 2],
-            ['RequiresTraitValue', ['a' => 1], 3],
-        ] as [$type, $params, $order]) {
-            $conn->executeStatement(
-                'INSERT INTO action_conditions (conditionType, parameters, action_id, execution_order, blocking)
-                 SELECT ?, ?, id, ?, 1 FROM actions WHERE name = ?',
-                [$type, json_encode($params), $order, $actionName]
-            );
-        }
-        $conn->executeStatement(
-            "INSERT INTO action_outcomes (apply_to, name, on_success, action_id)
-             SELECT 'self', 'construction', 1, id FROM actions WHERE name = ?",
-            [$actionName]
-        );
-        $conn->executeStatement(
-            'INSERT INTO outcome_instructions (type, parameters, orderIndex, outcome_id)
-             SELECT \'placestructure\', ?, 0, o.id
-             FROM action_outcomes o JOIN actions a ON a.id = o.action_id
-             WHERE a.name = ? AND o.name = \'construction\'',
-            [json_encode(['type' => $name]), $actionName]
-        );
-
-        return true;
-    }
 }

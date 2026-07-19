@@ -152,7 +152,7 @@ function items_render_list(array $items, string $csrfToken): string
         }
 
         // Retardataire de l'ancien système de pose : conversion en un clic
-        // (race structure + type constructible + action construire_*).
+        // (race structure + type constructible — l'action générique construire fait le reste).
         $migrateButton = '';
         if ($type === 'structure') {
             $migrateButton = ' <form method="post" style="display:inline"'
@@ -161,7 +161,7 @@ function items_render_list(array $items, string $csrfToken): string
                 . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
                 . '<input type="hidden" name="name" value="' . e($row->name) . '">'
                 . '<button class="btn btn-sm btn-danger" title="Crée la race structure (défauts à affiner),'
-                . ' passe l\'objet en constructible et pose l\'action construire_' . e($row->name) . '">Migrer</button>'
+                . ' passe l\'objet en constructible (l\'action générique construire fait le reste)">Migrer</button>'
                 . '</form>';
         }
 
