@@ -243,6 +243,17 @@ if($goCoords->z < 0){
 
         $digResults = (new \App\Service\ActionExecutorService($digAction, $player, $player))->executeAction();
 
+        /* Une action laisse TOUJOURS un événement, d'où qu'elle parte —
+         * ici du déplacement (récap détaillé : le même rendu
+         * qu'action.php, sans l'écho). */
+        \App\Service\Action\ActionEventLogger::write(
+            $digAction,
+            $digResults,
+            $player,
+            $player,
+            (new \App\View\ActionResultsView($digResults))->getActionResults()
+        );
+
         if($digResults->isBlocked() || !$digResults->isSuccess()){
 
             $reason = 'Impossible de creuser ici.';

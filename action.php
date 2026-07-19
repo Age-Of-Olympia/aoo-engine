@@ -124,33 +124,15 @@ try {
     // this make a "echo" needed while the huge action.php file exists
     $actionResultsView->displayActionResults();
 
-    $logDetails = $actionResultsView->getActionResults();
-    $actorMainLog = $actionResults->getLogsArray()["actor"];
-    if($target->id != $player->id) {
-        $targetMainLog = $actionResults->getLogsArray()["target"];
-    }
-    
-    $logTime = time();
-    $hideLogsCondition = ($actionResults->isSuccess() && $action->hideOnSuccess()) || $actionResults->isBlocked();
-    if(!empty($actorMainLog)) {
-        if ($hideLogsCondition) {
-            $type = "hidden_action";
-        } else {
-            $type = "action";
-        }
-        Log::put($player, $target, $actorMainLog, $type, $logDetails, $logTime);
-    }
-
-    if($target->id != $player->id) {
-        if(!empty($targetMainLog)){
-            if ($hideLogsCondition) {
-                $type = "hidden_action_other_player";
-            } else {
-                $type = "action_other_player";
-            }
-            Log::put($target, $player, $targetMainLog, $type, $logDetails, $logTime);
-        }
-    }
+    /* Événement de l'action : écriture mutualisée (ActionEventLogger) —
+     * la même que pour les actions démarrées par le déplacement. */
+    \App\Service\Action\ActionEventLogger::write(
+        $action,
+        $actionResults,
+        $player,
+        $target,
+        $actionResultsView->getActionResults()
+    );
 
     if ($action->refreshScreen()) {
         $file = 'datas/private/players/'. $_SESSION['playerId'] .'.svg';
