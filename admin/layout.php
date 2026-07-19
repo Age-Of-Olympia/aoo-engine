@@ -130,7 +130,10 @@ function admin_layout($title, $content, array $assets = []) {
             ['faction-seed.php', 'Seed JSON legacy', '/admin/faction-seed.php'],
         ], $factionPages),
         $navGroup('Bâtiments', [
-            ['buildings.php', 'Liste', '/admin/buildings.php'],
+            // Pas de « Liste » ici : partout ailleurs elle désigne le
+            // catalogue — le catalogue des bâtiments, ce sont les Types ;
+            // cette page-ci gère les instances posées dans le monde.
+            ['buildings.php', 'Posés', '/admin/buildings.php'],
             ['structure-types.php', 'Types', '/admin/structure-types.php'],
             ['structure-images.php', 'Images', '/admin/structure-images.php'],
         ], ['buildings.php', 'structure-types.php', 'structure-images.php']),

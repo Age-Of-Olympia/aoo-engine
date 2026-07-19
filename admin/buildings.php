@@ -270,7 +270,7 @@ if (($_GET['action'] ?? '') === 'edit') {
         ->exe('SELECT text FROM players WHERE id = ?', $editId)->fetch_object()->text;
     $isEdifice = (bool) (new RaceService())->getRaceByName((string) $row['type'])?->isEdifice();
 
-    echo admin_layout('Bâtiments', renderFlashMessage()
+    echo admin_layout('Bâtiments posés', renderFlashMessage()
         . building_render_edit($row, $description, $factions, $dialogNames, $isEdifice, $csrfToken));
     exit();
 }
@@ -283,4 +283,4 @@ $content = building_render_place_form(
     $csrfToken
 ) . building_render_list($service->listBuildings(), $dialogNames, $csrfToken);
 
-echo admin_layout('Bâtiments', renderFlashMessage() . $content);
+echo admin_layout('Bâtiments posés', renderFlashMessage() . $content);
