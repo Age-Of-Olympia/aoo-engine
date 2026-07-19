@@ -203,7 +203,7 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
-    public function testDeathPathFlipsTheBuildingToRuinWithoutCharacterDeathMachinery(): void
+    public function testDeathPathVanishesTheBuildingWithoutCharacterDeathMachinery(): void
     {
         $attacker = $this->createRealPlayer('GmSapper');
         $attacker->get_data();
@@ -228,14 +228,20 @@ class BuildingCombatGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         $this->assertStringContainsString('Vous détruisez la structure.', (string) $output);
 
-        $this->assertSame(
-            'ruin',
-            $this->link->fetchOne('SELECT build_state FROM buildings WHERE player_id = ?', [$buildingId]),
-            'destruction must flip build_state to ruin'
+        // Mort = disparition du plateau (BuildingService::vanish) : plus de
+        // satellite, mais la ligne players SURVIT hors-plateau — les logs
+        // gardent des FK vraies et l'id n'est jamais recyclé.
+        $this->assertFalse(
+            $this->link->fetchOne('SELECT 1 FROM buildings WHERE player_id = ?', [$buildingId]),
+            'destruction must drop the buildings satellite row'
         );
-        $this->assertNotFalse(
-            $this->link->fetchOne('SELECT 1 FROM players WHERE id = ?', [$buildingId]),
-            'the players row must survive destruction (log FKs, tile occupancy)'
+        $this->assertSame(
+            BuildingService::VANISHED_PLAN,
+            $this->link->fetchOne(
+                'SELECT c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
+                [$buildingId]
+            ),
+            'the players row must survive destruction, parked off-board (log FKs, id never recycled)'
         );
         $this->assertSame(
             2,

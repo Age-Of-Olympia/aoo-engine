@@ -1236,6 +1236,16 @@ class Player implements ActorInterface {
         $this->refresh_caracs();
 
 
+        /* Bascule visuelle des structures : sprite _broken sous la moitié
+         * des PV, sprite de base au-dessus — parité avec les murs de carte
+         * (destroy.php). Central ici : dégâts comme soins, tous les
+         * chemins passent par putBonus. */
+        if (array_key_exists('pv', (array) $bonus) && $this->getPlayerType() === 'building') {
+
+            (new \App\Service\BuildingService())->refreshWoundSprite($this->id);
+        }
+
+
         return true;
     }
 

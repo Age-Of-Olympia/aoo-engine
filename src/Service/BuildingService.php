@@ -547,6 +547,46 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Aligne le sprite d'un bâtiment sur son état de blessure : _broken
+     * sous la moitié des PV, sprite de base au-dessus — la bascule
+     * visuelle des murs de carte (destroy.php), portée aux entités.
+     * Appelée à chaque putBonus pv d'un bâtiment : no-op tant que le
+     * sprite affiché est déjà le bon.
+     */
+    public function refreshWoundSprite(int $playerId): void
+    {
+        $conn = $this->entityManager->getConnection();
+
+        // Pas de jointure races en SQL : les deux tables n'ont pas la même
+        // collation (utf8mb4_general_ci × uca1400) — le catalogue se lit
+        // par RaceService, comme partout.
+        $row = $conn->fetchAssociative(
+            "SELECT p.race, p.avatar, COALESCE(b.n, 0) AS wound
+             FROM players p
+             LEFT JOIN players_bonus b ON b.player_id = p.id AND b.name = 'pv'
+             WHERE p.id = ? AND p.player_type = 'building'",
+            [$playerId]
+        );
+        if ($row === false) {
+            return;
+        }
+
+        $maxPv = (int) ($this->raceService->getRaceByName((string) $row['race'])?->getCaracs()['pv'] ?? 0);
+        if ($maxPv <= 0) {
+            return;
+        }
+
+        $remaining = $maxPv + (int) $row['wound'];
+        $broken = $remaining <= $maxPv / 2;
+
+        if (self::resolveAvatar((string) $row['race'], $broken) === (string) $row['avatar']) {
+            return;
+        }
+
+        $this->swapAvatar($playerId, $broken);
+    }
+
+    /**
      * Point the entity's avatar at its type sprite (broken variant or
      * base) and refresh the neighbourhood render.
      */
