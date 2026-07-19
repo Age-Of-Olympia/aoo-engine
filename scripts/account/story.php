@@ -16,15 +16,17 @@ if(!empty($_POST['text'])){
 
 echo '<div><a href="account.php"><button><span class="ra ra-sideswipe"></span> Retour</button></a></div>';
 
-echo '<textarea rows="20" class="tr-topic1" style="width: 100%;">'. $player->data->story .'</textarea>';
+echo '<textarea id="story-text" rows="20" class="tr-topic1" style="width: 100%;">'. $player->data->story .'</textarea>';
 
-echo '<div><button>Valider</button></div>';
+echo '<div><button id="story-save">Valider</button></div>';
 
 ?>
 <script>
-$('button').click(function(e){
+/* Sélecteurs scopés : dans le HUD (SPA) le DOM persiste entre les panneaux,
+ * un binding global sur $('button') fuiterait sur Retour/précédent/fermer */
+$('#story-save').off('click').on('click', function(e){
 
-    let text = $('textarea').val();
+    let text = $('#story-text').val();
 
     $.ajax({
         type: "POST",
