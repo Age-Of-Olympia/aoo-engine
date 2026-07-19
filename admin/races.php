@@ -466,23 +466,39 @@ HTML;
 function race_render_delete_zone(Race $race, string $csrfToken): string
 {
     $service = new RaceService();
+    $structureMode = $race->isStructureKind();
     $players = $service->countPlayersUsingRace($race->getName());
-    $counts = $service->countCharactersByRaceName()[$race->getName()]
-        ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
 
-    $body = $players > 0
-        ? '<p class="mb-0 text-muted">Suppression impossible : cette race est encore utilisée par '
-            . race_character_counts($counts) . '. Pour la retirer du jeu, décochez'
-            . ' « Jouable » et cochez « Cachée ».</p>'
-        : '<form method="post" action="/admin/races-save.php?action=delete" class="d-flex align-items-center gap-3"'
-            . ' onsubmit="return confirm(\'Supprimer définitivement la race « '
-            . e($race->getName()) . ' » et ses listes d\\\'actions/sorts ?\');">'
+    if ($players > 0) {
+        // Deux vocabulaires : un type est bloqué par ses entités posées
+        // (ou remisées aux limbes), une race par ses personnages.
+        $guard = $structureMode
+            ? 'Suppression impossible : <strong>' . $players . '</strong> entité(s) de ce type existent'
+                . ' encore — posées sur le plateau ou remisées aux limbes. Retirez-les d\'abord'
+                . ' (Bâtiments → <a href="/admin/buildings.php">Posés</a>).'
+            : 'Suppression impossible : cette race est encore utilisée par '
+                . race_character_counts($service->countCharactersByRaceName()[$race->getName()]
+                    ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0])
+                . '. Pour la retirer du jeu, décochez « Jouable » et cochez « Cachée ».';
+        $body = '<p class="mb-0 text-muted">' . $guard . '</p>';
+    } else {
+        $noun = $structureMode ? 'le type de bâtiment' : 'la race';
+        $body = '<form method="post" action="/admin/races-save.php?action=delete" class="d-flex align-items-center gap-3"'
+            . ' onsubmit="return confirm(\'Supprimer définitivement ' . $noun . ' « '
+            . e($race->getName()) . ' »' . ($structureMode ? '' : ' et ses listes d\\\'actions/sorts') . ' ?\');">'
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
-            . '<button type="submit" class="btn btn-outline-danger">Supprimer la race</button>'
-            . '<small class="text-muted">Aucun personnage n\'utilise cette race. Supprime aussi ses listes'
-            . ' d\'actions et de sorts — pensez à exporter un bundle JSON avant, pour pouvoir la restaurer.</small>'
+            . ($structureMode ? '<input type="hidden" name="kind" value="structure">' : '')
+            . '<button type="submit" class="btn btn-outline-danger">Supprimer '
+            . ($structureMode ? 'le type' : 'la race') . '</button>'
+            . '<small class="text-muted">'
+            . ($structureMode
+                ? 'Aucune entité posée n\'utilise ce type.'
+                : 'Aucun personnage n\'utilise cette race. Supprime aussi ses listes d\'actions et de sorts')
+            . ' — pensez à exporter un bundle JSON avant, pour pouvoir '
+            . ($structureMode ? 'le' : 'la') . ' restaurer.</small>'
             . '</form>';
+    }
 
     return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
         . '<div class="card-body">' . $body . '</div></div>';

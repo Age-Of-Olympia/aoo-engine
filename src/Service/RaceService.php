@@ -350,11 +350,17 @@ class RaceService
     {
         $players = $this->countPlayersUsingRace($race->getName());
         if ($players > 0) {
-            throw new RuntimeException(sprintf(
-                'La race « %s » est encore utilisée par %d personnage(s) — retirez-les ou masquez la race au lieu de la supprimer.',
-                $race->getName(),
-                $players
-            ));
+            throw new RuntimeException($race->isStructureKind()
+                ? sprintf(
+                    'Le type « %s » est encore utilisé par %d entité(s) — posées sur le plateau ou remisées aux limbes — retirez-les avant de le supprimer.',
+                    $race->getName(),
+                    $players
+                )
+                : sprintf(
+                    'La race « %s » est encore utilisée par %d personnage(s) — retirez-les ou masquez la race au lieu de la supprimer.',
+                    $race->getName(),
+                    $players
+                ));
         }
 
         $this->entityManager->remove($race);

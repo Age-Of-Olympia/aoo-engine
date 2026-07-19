@@ -26,44 +26,48 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirectTo('/admin/races.php');
 }
 
+/* Deux sections, une table : les mutations d'une sorte « structure »
+ * renvoient vers Types de bâtiments, pas vers Races — messages compris
+ * (chaque formulaire, suppression incluse, poste son kind). */
+$structureMode = (($_POST['kind'] ?? '') === 'structure');
+$backPage = $structureMode ? '/admin/structure-types.php' : '/admin/races.php';
+
 try {
     (new CsrfProtectionService())->validateTokenOrFail($_POST['csrf_token'] ?? null);
 } catch (\Throwable $e) {
     setFlash('warning', 'Jeton de sécurité invalide ou expiré. Rechargez la page et réessayez.');
-    redirectTo('/admin/races.php');
+    redirectTo($backPage);
 }
 
 $service = new RaceService();
 $action = $_GET['action'] ?? '';
 $name = strtolower(trim((string) ($_POST['name'] ?? '')));
 
-// La suppression ne porte que le nom : traitée avant la validation des
-// champs du formulaire (absents d'un POST de suppression).
+// La suppression ne porte que le nom (et le kind) : traitée avant la
+// validation des champs du formulaire (absents d'un POST de suppression).
 if ($action === 'delete') {
     $race = $service->getRaceByName($name);
     if ($race === null) {
-        setFlash('warning', 'Race introuvable.');
-        redirectTo('/admin/races.php');
+        setFlash('warning', $structureMode ? 'Type introuvable.' : 'Race introuvable.');
+        redirectTo($backPage);
     }
 
     try {
         $service->deleteRace($race);
-        setFlash('success', "Race « {$name} » supprimée (listes d'actions et de sorts comprises).");
+        setFlash('success', $structureMode
+            ? "Type de bâtiment « {$name} » supprimé."
+            : "Race « {$name} » supprimée (listes d'actions et de sorts comprises).");
     } catch (\RuntimeException $e) {
         setFlash('warning', $e->getMessage());
-        redirectTo('/admin/races.php?action=edit&name=' . urlencode($name));
+        redirectTo($backPage . '?action=edit&name=' . urlencode($name));
     }
-    redirectTo('/admin/races.php');
+    redirectTo($backPage);
 }
 
 /**
  * Validate the shared form fields; returns an error message or null.
  * bgColor must stay hex: it feeds sscanf("#%02x%02x%02x") in the map layers.
  */
-/* Deux sections, une table : les mutations d'une sorte « structure »
- * renvoient vers Types de bâtiments, pas vers Races. */
-$backPage = (($_POST['kind'] ?? '') === 'structure') ? '/admin/structure-types.php' : '/admin/races.php';
-
 $validate = static function (): ?string {
     if (trim((string) ($_POST['label'] ?? '')) === '') {
         return 'Le nom affiché est requis.';
@@ -153,11 +157,13 @@ if ($error = $validate()) {
 
 if ($action === 'create') {
     if (!preg_match('/^[a-z][a-z0-9_]*$/', $name)) {
-        setFlash('warning', 'Code de race invalide (minuscules, chiffres, _).');
-        redirectTo('/admin/races.php?action=new');
+        setFlash('warning', ($structureMode ? 'Code de type' : 'Code de race') . ' invalide (minuscules, chiffres, _).');
+        redirectTo($backPage . '?action=new');
     }
     if ($service->getRaceByName($name) !== null) {
-        setFlash('warning', "La race « {$name} » existe déjà.");
+        setFlash('warning', $structureMode
+            ? "Le type « {$name} » existe déjà (ou une race porte déjà ce code)."
+            : "La race « {$name} » existe déjà.");
         redirectTo($backPage);
     }
 
@@ -173,14 +179,15 @@ if ($action === 'create') {
     $notice = $unknownNamesNotice(array_merge($starterActions, $spells));
     $service->replaceNameLists($race, $starterActions, $spells);
 
-    setFlash('success', "Race « {$name} » créée." . $factionNotice . $notice);
+    setFlash('success', ($structureMode ? "Type de bâtiment « {$name} » créé." : "Race « {$name} » créée.")
+        . $factionNotice . $notice);
     redirectTo($backPage);
 }
 
 if ($action === 'update') {
     $race = $service->getRaceByName($name);
     if ($race === null) {
-        setFlash('warning', 'Race introuvable.');
+        setFlash('warning', $structureMode ? 'Type introuvable.' : 'Race introuvable.');
         redirectTo($backPage);
     }
 
@@ -193,7 +200,8 @@ if ($action === 'update') {
     $notice = $unknownNamesNotice(array_merge($starterActions, $spells));
     $service->replaceNameLists($race, $starterActions, $spells);
 
-    setFlash('success', 'Race « ' . $race->getLabel() . ' » enregistrée.' . $factionNotice . $notice);
+    setFlash('success', ($structureMode ? 'Type « ' : 'Race « ') . $race->getLabel() . ' » enregistré'
+        . ($structureMode ? '' : 'e') . '.' . $factionNotice . $notice);
     redirectTo($backPage . '?action=edit&name=' . urlencode($name));
 }
 
