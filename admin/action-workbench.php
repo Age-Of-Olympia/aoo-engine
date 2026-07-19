@@ -153,7 +153,24 @@ if ($action === null) {
         . ' title="Prérequis d\'achat (à venir)"></label>'
         . '<label class="wb-field"><span>Race</span>'
         . formSelect('race', (new OptionCatalog())->races(), $currentRace !== '' ? $currentRace : null, '—',
-            'class="form-control" title="Restreint l\'action à une race ; — = toutes"') . '</label>'
+            'class="form-control" title="Restreint l\'action à une race ; — = toutes"') . '</label>';
+
+    // Catégorie — le regroupement des listes du jeu ; libre, avec datalist
+    // des catégories déjà en usage pour rester cohérent d'un clic.
+    $knownCategories = [];
+    foreach ($actions as $catalogAction) {
+        $categoryName = (string) $catalogAction->getCategory();
+        if ($categoryName !== '') {
+            $knownCategories[$categoryName] = $categoryName;
+        }
+    }
+    ksort($knownCategories);
+
+    echo '<label class="wb-field"><span>Catégorie</span>'
+        . formInput('category', (string) $action->getCategory(),
+            'list="wb-categories" title="Regroupement dans les listes ; vide = sans catégorie"')
+        . '</label>'
+        . renderDatalist('wb-categories', $knownCategories)
         . '</div>';
     echo '<label class="wb-field wb-field--wide"><span>Description</span>'
         . '<textarea class="form-control" name="text" rows="3">' . e((string) $readProp('text')) . '</textarea></label>';

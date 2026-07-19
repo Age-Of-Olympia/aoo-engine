@@ -44,6 +44,9 @@ try {
     if (array_key_exists('race', $_POST)) {
         $saveService->saveRace($actionId, (string) $_POST['race']);
     }
+    if (array_key_exists('category', $_POST)) {
+        $saveService->saveCategory($actionId, (string) $_POST['category']);
+    }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw, $conditionContext);
     $saveService->saveOutcomeTargets($actionId, $outcomeTargets);
 

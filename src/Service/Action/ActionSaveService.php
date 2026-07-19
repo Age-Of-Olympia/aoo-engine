@@ -169,6 +169,24 @@ final class ActionSaveService
     }
 
     /**
+     * Reclasse une action dans une autre catégorie (le regroupement des
+     * listes du jeu et du roster des compétences). Chaîne vide = sans
+     * catégorie. No-op si inchangée — même contrat que saveRace.
+     */
+    public function saveCategory(int $actionId, string $category): void
+    {
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
+
+        $category = trim($category);
+        if ($category === (string) $action->getCategory()) {
+            return;
+        }
+
+        $action->setCategory($category);
+        $this->entityManager->flush();
+    }
+
+    /**
      * Read a typed property, or null when a legacy NULL left it uninitialized.
      */
     private function current(Action $action, string $property): mixed
