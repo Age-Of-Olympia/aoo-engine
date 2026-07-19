@@ -226,14 +226,14 @@ class PlayerService
      * (docs/design-buildings-entities.md §4.7).
      *
      * Journalise la destruction des deux côtés puis :
-     * - bâtiment : build_state passe à 'ruin', la ligne players reste
-     *   (les logs gardent leur FK, la ruine occupe la case) ;
+     * - bâtiment : il DISPARAÎT du plateau (BuildingService::vanish) —
+     *   pas d'enfers, la ligne players est remisée hors-plateau pour que
+     *   les événements restent vrais et que l'id ne soit pas recyclé ;
      * - objet unique : l'entité disparaît et l'instance enveloppée tombe
      *   BRISÉE au sol (bourse) — cohérent avec les deux états de la carte
      *   et réparable un jour.
-     * Le butin de matériaux et la mécanique de ruine (pillage,
-     * réparation, usure) sont la question ouverte n°4 du plan ; ils se
-     * grefferont ici sans retoucher le chemin de mort des personnages.
+     * Le butin de matériaux est la question ouverte n°4 du plan ; il se
+     * greffera ici sans retoucher le chemin de mort des personnages.
      */
     private static function processStructureDestruction(Player $player, Player $target): void
     {
@@ -254,7 +254,7 @@ class PlayerService
             $text = $target->data->name . ' a été détruit par ' . $player->data->name . '.';
             Log::put($target, $player, $text, type: "kill", hiddenText: '', logTime: $timestamp);
 
-            (new BuildingService())->markDestroyed($target->id);
+            (new BuildingService())->vanish($target->id);
         }
 
         echo '<b><font color="red">Vous détruisez la structure.</font></b>';

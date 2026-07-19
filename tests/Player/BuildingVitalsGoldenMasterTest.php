@@ -237,6 +237,52 @@ class BuildingVitalsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         );
     }
 
+    public function testVanishTombstonesTheBuildingOffBoardAndKeepsItsLogs(): void
+    {
+        // La mort d'un bâtiment le fait DISPARAÎTRE du plateau — mais sa
+        // ligne players survit hors-plateau (limbes) : les événements qui
+        // le citent gardent une FK vraie et son id n'est jamais recyclé.
+        $service = new BuildingService();
+        $id = $this->placeStructure('palissade', 0, 3);
+
+        $this->link->executeStatement(
+            "INSERT INTO players_logs (player_id, target_id, text, hiddenText, type, plan, time, coords_id)
+             VALUES (?, ?, 'Un héros a détruit Palissade.', '', 'kill', 'gaia', ?, NULL)",
+            [$id, $id, time()]
+        );
+
+        $this->assertTrue($service->vanish($id), 'vanish() accepts a building row');
+
+        $this->assertFalse(
+            $this->link->fetchOne('SELECT 1 FROM buildings WHERE player_id = ?', [$id]),
+            'the buildings satellite row is gone'
+        );
+        $this->assertSame(
+            BuildingService::VANISHED_PLAN,
+            $this->link->fetchOne(
+                'SELECT c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
+                [$id]
+            ),
+            'the players row survives, parked off-board in the limbes'
+        );
+        $this->assertNotFalse(
+            $this->link->fetchOne('SELECT 1 FROM players_logs WHERE target_id = ?', [$id]),
+            'events citing the building are preserved'
+        );
+
+        $this->link->executeStatement('DELETE FROM players_logs WHERE player_id = ?', [$id]);
+    }
+
+    public function testVanishRefusesNonBuildingRows(): void
+    {
+        $player = $this->createRealPlayer('GmNotVanishable');
+
+        $this->assertFalse(
+            (new BuildingService())->vanish($player->id),
+            'vanish() must never tombstone a character row'
+        );
+    }
+
     public function testRemoveRefusesNonBuildingRows(): void
     {
         $player = $this->createRealPlayer('GmNotABuilding');

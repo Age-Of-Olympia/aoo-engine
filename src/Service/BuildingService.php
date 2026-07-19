@@ -578,6 +578,69 @@ class BuildingService extends BaseService
     }
 
     /**
+     * Plan hors-plateau où la ligne players d'un bâtiment détruit est
+     * remisée : elle SURVIT pour que les événements restent vrais (les
+     * FK de players_logs pointent toujours une ligne réelle) et pour que
+     * l'id ne soit jamais recyclé (getNextEntityId lit MAX(id)) — mais
+     * aucune requête de plateau (jointure coords) ne la voit plus.
+     */
+    public const VANISHED_PLAN = 'limbes_batiments';
+
+    /**
+     * Mort d'un bâtiment : il DISPARAÎT du plateau — pas d'enfers, c'est
+     * le chemin des personnages. Satellite et composants supprimés, la
+     * ligne players remisée sur VANISHED_PLAN (tombstone). Chemin de
+     * mort seulement — le retrait administratif complet est remove().
+     */
+    public function vanish(int $playerId): bool
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $isBuilding = $conn->fetchOne(
+            "SELECT id FROM players WHERE id = ? AND player_type = 'building'",
+            [$playerId]
+        );
+        if ($isBuilding === false) {
+            return false;
+        }
+
+        $goCoords = $conn->fetchAssociative(
+            'SELECT c.x, c.y, c.z, c.plan FROM coords c JOIN players p ON p.coords_id = c.id WHERE p.id = ?',
+            [$playerId]
+        );
+
+        $tombstoneCoordsId = View::get_coords_id(
+            (object) ['x' => 0, 'y' => 0, 'z' => 0, 'plan' => self::VANISHED_PLAN]
+        );
+        if ($tombstoneCoordsId === null) {
+            throw new \RuntimeException('Limbes des bâtiments inaccessibles (coords).');
+        }
+
+        $conn->transactional(function ($conn) use ($playerId, $tombstoneCoordsId): void {
+            $conn->executeStatement('DELETE FROM buildings WHERE player_id = ?', [$playerId]);
+            foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
+                $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
+            }
+            $conn->executeStatement(
+                'UPDATE players SET coords_id = ? WHERE id = ?',
+                [$tombstoneCoordsId, $playerId]
+            );
+        });
+
+        if ($goCoords !== false) {
+            View::refresh_players_svg((object) $goCoords);
+        }
+
+        // refresh_players_svg ne balaie que la case désormais vide : les
+        // caches par-entité du bâtiment disparu se purgent explicitement.
+        self::purgeEntityCaches($playerId);
+
+        $this->addAuditLog("BuildingService::vanish #{$playerId}");
+
+        return true;
+    }
+
+    /**
      * Remove a building: satellite row + players row. Wounds and other
      * component rows are deleted first so no FK is left dangling. The
      * destruction GAME flow (drop materials, ruin state…) is the death-path
