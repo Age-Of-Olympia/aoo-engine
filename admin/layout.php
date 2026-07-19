@@ -138,6 +138,7 @@ function admin_layout($title, $content, array $assets = []) {
             ['recipes.php', 'Recettes', '/admin/recipes.php'],
             ['item-seed.php', 'Seed JSON legacy', '/admin/item-seed.php'],
         ], $itemPages),
+        $navLink('wiki.php', 'Wiki', '/admin/wiki.php'),
         // Superadmin-only: self-hides for plain admins (defaults to superadmin).
         $navLink('access-control.php', 'Contrôle d\'accès', '/admin/access-control.php'),
     ]);

@@ -79,6 +79,8 @@ class AdminMenuAccessService
         'structure-types.php'      => ['Bâtiments · Types', 'Divers', self::LEVEL_SUPERADMIN],
         // Objets : flags et réglages d'usure — même politique que races
         'items.php'                => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
+        // Wiki : génération de fiches en lecture seule — niveau admin
+        'wiki.php'                 => ['Wiki', 'Divers', self::LEVEL_ADMIN],
     ];
 
     /**
