@@ -36,7 +36,7 @@ if (!in_array($race, $races, true)) {
 $backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode($race);
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
-    && (isset($_POST['image_upload']) || isset($_POST['image_delete']));
+    && (isset($_POST['image_upload']) || isset($_POST['image_delete']) || isset($_POST['image_adopt']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -55,6 +55,16 @@ if ($isStateChangingPost) {
             $created = $service->upload($type, $race, (string) $file['tmp_name']);
             setFlash('success', ucfirst($type->value) . " « {$created} » ajouté pour la race {$race}"
                 . ($type === ImageType::PORTRAIT ? ' (miniature générée)' : '') . '.');
+        } elseif (isset($_POST['image_adopt'])) {
+            // Copie le sprite hérité (mur du même nom, webp dédié) dans le
+            // stock — verbatim, pour garder transparence et pixels.
+            $inherited = \App\Service\BuildingService::resolveAvatar($race);
+            if ($inherited === '' || str_starts_with($inherited, 'img/avatars/' . $race . '/')) {
+                throw new RuntimeException('Rien à copier : le sprite vient déjà du stock (ou il n\'y en a pas).');
+            }
+            $created = $service->adopt($type, $race, $inherited);
+            setFlash('success', "Sprite hérité « {$inherited} » copié dans le stock : « {$created} »"
+                . ' — c\'est désormais lui qui fait foi sur le plateau.');
         } elseif (isset($_POST['image_delete'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $service->delete($type, $race, $name);
@@ -141,6 +151,17 @@ ob_start();
                 <img src="/<?= e($effective) ?>" height="40" style="object-fit:contain;border:1px solid #ddd;background:#fff;" alt="">
                 <code style="font-size:12px;"><?= e($effective) ?></code>
                 <small class="text-muted"><?= e($effectiveSource) ?></small>
+                <?php if (!str_starts_with($effective, 'img/avatars/' . $race . '/')): ?>
+                    <form method="post" class="d-inline mb-0">
+                        <?= $csrf->renderTokenField() ?>
+                        <input type="hidden" name="type" value="<?= e($type->value) ?>">
+                        <input type="hidden" name="race" value="<?= e($race) ?>">
+                        <button type="submit" name="image_adopt" value="1" class="btn btn-sm btn-outline-primary"
+                                title="Copie le fichier tel quel dans le stock du type — il devient l'image gérée ici">
+                            <i class="fas fa-download"></i> Copier dans le stock
+                        </button>
+                    </form>
+                <?php endif; ?>
             <?php else: ?>
                 <small class="text-muted">aucun — les entités posées affichent leurs initiales.</small>
             <?php endif; ?>

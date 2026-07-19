@@ -198,6 +198,46 @@ class RaceImageService
     }
 
     /**
+     * Adopte dans le stock une image HÉRITÉE (sprite de mur du même nom,
+     * webp dédié — bouton « Copier dans le stock » de Bâtiments → Images) :
+     * copie VERBATIM, numérotée par le compteur — pas le pipeline upload,
+     * dont le ré-encodage jpeg perdrait la transparence d'un sprite de
+     * plateau déjà au bon format.
+     *
+     * @param string $sourceRelPath chemin relatif au docroot (img/…)
+     * @return string nom de fichier créé
+     */
+    public function adopt(ImageType $type, string $raceName, string $sourceRelPath): string
+    {
+        $race = $this->em()->getRepository(Race::class)->findOneBy(['name' => $raceName]);
+        if ($race === null) {
+            throw new RuntimeException("Race inconnue : {$raceName}.");
+        }
+        if (str_contains($sourceRelPath, '..')
+            || !preg_match('#^img/[a-zA-Z0-9_/.-]+\.(png|jpe?g|webp|gif)$#', $sourceRelPath)
+            || !is_file($this->root . '/' . $sourceRelPath)) {
+            throw new RuntimeException('Image source introuvable : ' . $sourceRelPath);
+        }
+
+        $dir = $this->raceDir($type, $raceName);
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            throw new RuntimeException('Impossible de créer ' . $dir);
+        }
+
+        $number = $type === ImageType::PORTRAIT ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber();
+        $fileName = $number . '.' . strtolower(pathinfo($sourceRelPath, PATHINFO_EXTENSION));
+        if (!copy($this->root . '/' . $sourceRelPath, $dir . '/' . $fileName)) {
+            throw new RuntimeException('Copie impossible : ' . $dir . '/' . $fileName);
+        }
+
+        $type === ImageType::PORTRAIT ? $race->incrementPortraitNextNumber() : $race->incrementAvatarNextNumber();
+        $this->em()->persist($race);
+        $this->em()->flush();
+
+        return $fileName;
+    }
+
+    /**
      * Supprime une image (et sa miniature). Refus tant que des joueurs
      * l'ont comme avatar/portrait : ils se retrouveraient avec une image
      * cassée en jeu.
