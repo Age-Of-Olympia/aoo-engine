@@ -509,9 +509,14 @@ class Ui{
                 $stackActions = '';
                 if(!$isInstance){
 
+                    /* bouton Artisanat en sommeil tant que CRAFT_ENABLED est
+                     * à false (reviendra porté par un bâtiment dédié) */
+                    $craftAction = CRAFT_ENABLED
+                        ? '<button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>'
+                        : '';
+
                     $stackActions = '
-                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>
-                    <button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>';
+                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>'. $craftAction;
                 }
 
                 echo '

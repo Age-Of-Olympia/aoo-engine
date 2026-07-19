@@ -5,8 +5,15 @@ $(document).ready(function(){
 
     $actions
     .append('<button class="action" data-action="use" disabled="true">Utiliser</button><br />')
-    .append('<button class="action" data-action="drop">Jeter</button><br />')
-    .append('<button class="action" data-action="craft">Artisanat</button><br />');
+    .append('<button class="action" data-action="drop">Jeter</button><br />');
+
+    /* Artisanat en sommeil (CRAFT_ENABLED côté PHP) : le bouton d'aperçu
+     * ne s'ajoute que si une entrée craft est présente dans la page
+     * (onglet hérité ou #show-craft du rail HUD) */
+    if($('a[href^="inventory.php?craft"]').length){
+
+        $actions.append('<button class="action" data-action="craft">Artisanat</button><br />');
+    }
 
     /* Panneau HUD (boutons par ligne) : l'aperçu redevient une fiche de
      * lecture — ses boutons restent dans le DOM (les boutons de ligne

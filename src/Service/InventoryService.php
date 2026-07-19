@@ -71,8 +71,11 @@ class InventoryService
      *        une ligne d'instance) — transmis jusqu'à
      *        ItemInstanceService::equipCatalogItem
      */
-    public static function useItem(Player $player, Item $item, ?int $instanceId = null)
+    public static function useItem(Player $player, Item $item, ?int $instanceId = null): void
     {
+        /* détail de consommation : visible du seul buveur, via le
+         * hiddenText des événements */
+        $hiddenText = '';
 
         if (self::useKind($item) === null) {
 
@@ -116,6 +119,9 @@ class InventoryService
             }
 
             //ajout des bonus de l'objet consommé
+            //(en notant chaque effet pour le message de retour au joueur)
+            $details = [];
+
             foreach ($item->data as $bonus => $qte) {
 
                 switch ($bonus) {
@@ -124,19 +130,37 @@ class InventoryService
                     case "mvt":
                     case "a":
                     case "ae":
+                        /* les colonnes à 0 (la fiche item les porte toutes)
+                         * ne font rien : ni bonus, ni ligne de message */
+                        if ((int) $qte === 0) {
+                            break;
+                        }
                         $player->putBonus([$bonus => $qte]);
+                        $details[] = sprintf('%+d %s', $qte, $bonus === 'ae' ? 'Ae' : strtoupper($bonus));
                         break;
 
                     case "malus":
+                        if ((int) $qte === 0) {
+                            break;
+                        }
                         $player->put_malus($qte);
+                        $details[] = sprintf('%+d malus', $qte);
                         break;
 
                     case "pr":
+                        if ((int) $qte === 0) {
+                            break;
+                        }
                         $player->put_pr($qte*COEFFICIENT_PR);
+                        $details[] = sprintf('%+d PR', $qte*COEFFICIENT_PR);
                         break;
 
                     case "pf":
+                        if ((int) $qte === 0) {
+                            break;
+                        }
                         $player->put_pf($qte);
+                        $details[] = sprintf('%+d PF', $qte);
                         break;
 
                     case "effet":
@@ -146,6 +170,7 @@ class InventoryService
                             if (str_starts_with($effet, '-')) {
 
                                 $player->end_effect(str_replace("-", "", $effet));
+                                $details[] = 'dissipe ' . str_replace("-", "", $effet);
                             }
                             //ajout d'un effet
                             else {
@@ -155,6 +180,9 @@ class InventoryService
                                 } else {
 
                                     $player->add_effect($effet, ONE_DAY);
+                                    /* les effets cachés (poison…) restent
+                                     * muets dans le message de retour */
+                                    $details[] = 'effet ' . $effet;
                                 }
                             }
                         }
@@ -168,6 +196,12 @@ class InventoryService
             //on enlève un exemplaire de l'objet
             $item->add_item($player, -1);
 
+            $text = $player->data->name . ' a consommé ' . $item->data->name . '.';
+            if (!empty($details)) {
+
+                $hiddenText = 'Effet : ' . implode(', ', $details) . '.';
+            }
+
             //coût en Ae à 0
             $ae = 0;
         }
@@ -180,6 +214,6 @@ class InventoryService
         }
 
 
-        Log::put($player, $player, $text, type: 'use');
+        Log::put($player, $player, $text, type: 'use', hiddenText: $hiddenText);
     }
 }
