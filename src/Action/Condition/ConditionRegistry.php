@@ -26,6 +26,7 @@ class ConditionRegistry
             'RequiresItem' => new RequiresItemCondition(),
             'ItemPick' => new ItemPickCondition(),
             'BuildSite' => new BuildSiteCondition(),
+            'DigSite' => new DigSiteCondition(),
             'TargetType' => new TargetTypeCondition(),
 
             'Compute' => new ComputeCondition(),
