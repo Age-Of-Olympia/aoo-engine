@@ -64,7 +64,9 @@ final class PlayerSearchView
                 . '<td>' . $this->statusBadge($active) . '</td>'
                 . '<td>' . (int) $player['xp'] . '</td>'
                 . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/player-skills.php?id='
-                . (int) $player['id'] . '">Éditer les compétences</a></td>'
+                . (int) $player['id'] . '">Éditer les compétences</a> '
+                . '<a class="btn btn-sm btn-outline-secondary" href="/admin/player-edit.php?id='
+                . (int) $player['id'] . '">Éditer la fiche</a></td>'
                 . '</tr>';
         }
 

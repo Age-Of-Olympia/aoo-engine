@@ -95,6 +95,7 @@ class AdminMenuAccessService
         'faction-members.php'        => 'factions.php',
         'faction-members-save.php'   => 'factions.php',
         'player-skills.php'          => 'players.php',
+        'player-edit.php'            => 'players.php',
         'skill-owners.php'           => 'players.php',
         'tutorial-step-editor.php'   => 'tutorial.php',
         'action-import-preview.php'  => 'action-import.php',
