@@ -200,14 +200,6 @@ if($goCoords->z < 0){
         }
 
 
-        if($player->getRemaining('a') < 1){
-
-
-            echo '<script>aooAlert("Pas assez d\'Actions.").then(function(){document.location.reload();});</script>';
-            exit();
-        }
-
-
         /* Creuser sans Pioche inflige un malus : confirmation AVANT
          * de dépenser quoi que ce soit — annuler ne creuse pas. La
          * confirmation re-poste le même déplacement avec le drapeau. */
@@ -235,33 +227,40 @@ if($goCoords->z < 0){
         }
 
 
-        $bonus = array('a'=>-1);
-        $player->putBonus($bonus);
+        /* Le creusement est l'ACTION `creuser` du catalogue, démarrée
+         * par le déplacement (cadrage 2026-07-19 : le mouvement lance
+         * des actions) : coût 1 A, pierre, malus sans Pioche et galerie
+         * vivent dans ses conditions/instructions — go.php ne fait que
+         * fournir la case visée et raconter le résultat. */
+        $_POST['digX'] = (string) $goCoords->x;
+        $_POST['digY'] = (string) $goCoords->y;
 
-        $player->put_xp(XP_PER_MINE);
+        $digAction = \App\Action\ActionFactory::getAction('creuser');
+        if($digAction === null){
 
+            exit('error creuser action missing (run migrations)');
+        }
+
+        $digResults = (new \App\Service\ActionExecutorService($digAction, $player, $player))->executeAction();
+
+        if($digResults->isBlocked() || !$digResults->isSuccess()){
+
+            $reason = 'Impossible de creuser ici.';
+            foreach ($digResults->getConditionsResultsArray() as $conditionResult) {
+                foreach (($conditionResult->getConditionFailureMessages() ?? []) as $message) {
+                    $reason = $message;
+                    break 2;
+                }
+            }
+
+            echo '<script>aooAlert('. json_encode($reason) .').then(function(){document.location.reload();});</script>';
+            exit();
+        }
 
         if($player->emplacements->main1->data->name != 'Pioche'){
 
-
-            $player->put_malus(MALUS_PER_MINE);
-
             echo '<script>aooAlert("Creuser sans Pioche, qu\'est-ce que ça fatigue !").then(function(){document.location.reload();});</script>';
         }
-
-
-        $pierre = Item::get_item_by_name('pierre');
-        $pierre->add_item($player, 1);
-
-        $text = $player->data->name .' a creusé et a trouvé 1 pierre.';
-        Log::put($player, $player, $text, type:"loot");
-
-        $values = array(
-            'name'=>'caverne',
-            'coords_id'=>$coordsId
-        );
-
-        $db->insert('map_tiles', $values);
     }
 }
 
