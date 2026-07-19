@@ -60,6 +60,10 @@ if ($action === 'delete') {
  * Validate the shared form fields; returns an error message or null.
  * bgColor must stay hex: it feeds sscanf("#%02x%02x%02x") in the map layers.
  */
+/* Deux sections, une table : les mutations d'une sorte « structure »
+ * renvoient vers Types de bâtiments, pas vers Races. */
+$backPage = (($_POST['kind'] ?? '') === 'structure') ? '/admin/structure-types.php' : '/admin/races.php';
+
 $validate = static function (): ?string {
     if (trim((string) ($_POST['label'] ?? '')) === '') {
         return 'Le nom affiché est requis.';
@@ -144,7 +148,7 @@ $unknownNamesNotice = static function (array $names): string {
 
 if ($error = $validate()) {
     setFlash('warning', $error);
-    redirectTo('/admin/races.php');
+    redirectTo($backPage);
 }
 
 if ($action === 'create') {
@@ -154,7 +158,7 @@ if ($action === 'create') {
     }
     if ($service->getRaceByName($name) !== null) {
         setFlash('warning', "La race « {$name} » existe déjà.");
-        redirectTo('/admin/races.php');
+        redirectTo($backPage);
     }
 
     $race = new Race();
@@ -170,14 +174,14 @@ if ($action === 'create') {
     $service->replaceNameLists($race, $starterActions, $spells);
 
     setFlash('success', "Race « {$name} » créée." . $factionNotice . $notice);
-    redirectTo('/admin/races.php');
+    redirectTo($backPage);
 }
 
 if ($action === 'update') {
     $race = $service->getRaceByName($name);
     if ($race === null) {
         setFlash('warning', 'Race introuvable.');
-        redirectTo('/admin/races.php');
+        redirectTo($backPage);
     }
 
     $factionNotice = $applyForm($race);
@@ -190,8 +194,8 @@ if ($action === 'update') {
     $service->replaceNameLists($race, $starterActions, $spells);
 
     setFlash('success', 'Race « ' . $race->getLabel() . ' » enregistrée.' . $factionNotice . $notice);
-    redirectTo('/admin/races.php?action=edit&name=' . urlencode($name));
+    redirectTo($backPage . '?action=edit&name=' . urlencode($name));
 }
 
 setFlash('warning', 'Action inconnue.');
-redirectTo('/admin/races.php');
+redirectTo($backPage);

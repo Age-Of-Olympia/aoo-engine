@@ -102,50 +102,94 @@ function kind_select(bool $isStructure): string
     );
 }
 
-function race_render_list(array $races): string
+/**
+ * Même table races, deux VISAGES d'admin (décision du 2026-07-19) : les
+ * RACES (personnages) et les TYPES DE BÂTIMENTS (sorte structure) — deux
+ * sections séparées pour ne plus mélanger peuples et murs.
+ *
+ * @param Race[] $races déjà filtrées par sorte
+ */
+function race_render_list(array $races, bool $structureMode = false): string
 {
-    $charactersByRace = (new RaceService())->countCharactersByRaceName();
+    $selfPage = $structureMode ? '/admin/structure-types.php' : '/admin/races.php';
+
+    if ($structureMode) {
+        // « Posés » : entités de ce type actuellement dans le monde.
+        $placedByType = [];
+        $res = (new \Classes\Db())->exe(
+            "SELECT race, COUNT(*) AS n FROM players WHERE player_type IN ('building', 'unique') GROUP BY race"
+        );
+        while ($row = $res->fetch_object()) {
+            $placedByType[(string) $row->race] = (int) $row->n;
+        }
+    } else {
+        $charactersByRace = (new RaceService())->countCharactersByRaceName();
+    }
 
     $rows = '';
     foreach ($races as $race) {
-        $characters = $charactersByRace[$race->getName()] ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
         $rows .= '<tr>'
             . '<td><code>' . e($race->getName()) . '</code></td>'
-            . '<td>' . e($race->getLabel()) . '</td>'
-            . '<td>' . ($race->isStructureKind()
-                ? '<span class="badge badge-info">Structure</span>'
-                : race_flag_badge($race->getPlayable(), 'Jouable', 'Non')) . ' '
-            . race_flag_badge(!$race->getHidden(), 'Visible', 'Cachée') . '</td>'
-            . '<td><span style="display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;'
+            . '<td>' . e($race->getLabel()) . '</td>';
+
+        if ($structureMode) {
+            $rows .= '<td>' . ($race->getStructureNature() === 'obstacle'
+                    ? '<span class="badge badge-secondary">Obstacle</span>'
+                    : '<span class="badge badge-info">Édifice</span>') . ' '
+                . ($race->blocksPassage() ? '' : '<span class="badge badge-light" title="On marche sur sa case">passable</span> ')
+                . ($race->blocksProjectiles() ? '' : '<span class="badge badge-light" title="Les tirs passent au-dessus">tirs libres</span>')
+                . '</td>';
+        } else {
+            $rows .= '<td>' . race_flag_badge($race->getPlayable(), 'Jouable', 'Non') . ' '
+                . race_flag_badge(!$race->getHidden(), 'Visible', 'Cachée') . '</td>';
+        }
+
+        $rows .= '<td><span style="display:inline-block;width:1.2em;height:1.2em;vertical-align:middle;'
             . 'border:1px solid #999;background:' . e($race->getBgColor()) . '"></span> '
-            . e($race->getBgColor()) . '</td>'
-            . '<td>' . e($race->getFaction()) . '</td>'
-            . '<td>' . (int) $race->getCarac('pv') . ' PV / ' . (int) $race->getCarac('mvt') . ' Mvt / '
-            . (int) $race->getCarac('a') . ' A</td>'
-            . '<td>' . count($race->getStarterActionNames()) . ' actions, '
-            . count($race->getSpellNames()) . ' sorts</td>'
-            . '<td>' . race_character_counts($characters) . '</td>'
-            . '<td><a class="btn btn-sm btn-outline-primary" href="/admin/races.php?action=edit&amp;name='
+            . e($race->getBgColor()) . '</td>';
+
+        if ($structureMode) {
+            $rows .= '<td>' . (int) $race->getCarac('pv') . ' PV</td>'
+                . '<td>' . (($placedByType[$race->getName()] ?? 0) > 0
+                    ? '<strong>' . $placedByType[$race->getName()] . '</strong>'
+                    : '<span class="text-muted">—</span>') . '</td>';
+        } else {
+            $characters = $charactersByRace[$race->getName()] ?? ['players' => 0, 'inactive' => 0, 'npcs' => 0];
+            $rows .= '<td>' . e($race->getFaction()) . '</td>'
+                . '<td>' . (int) $race->getCarac('pv') . ' PV / ' . (int) $race->getCarac('mvt') . ' Mvt / '
+                . (int) $race->getCarac('a') . ' A</td>'
+                . '<td>' . count($race->getStarterActionNames()) . ' actions, '
+                . count($race->getSpellNames()) . ' sorts</td>'
+                . '<td>' . race_character_counts($characters) . '</td>';
+        }
+
+        $rows .= '<td><a class="btn btn-sm btn-outline-primary" href="' . $selfPage . '?action=edit&amp;name='
             . e(urlencode($race->getName())) . '">Éditer</a> '
-            . '<a class="btn btn-sm btn-outline-secondary" title="Exporter cette race (bundle JSON)"'
+            . '<a class="btn btn-sm btn-outline-secondary" title="Exporter (bundle JSON)"'
             . ' href="/admin/action-export.php?type=race&amp;id=' . (int) $race->getId() . '">JSON</a></td>'
             . '</tr>';
     }
 
+    $headers = $structureMode
+        ? '<th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th>'
+            . '<th title="Entités de ce type posées dans le monde">Posés</th><th></th>'
+        : '<th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
+            . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>';
+
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
-        . '<h1 class="mb-0">Races</h1>'
+        . '<h1 class="mb-0">' . ($structureMode ? 'Types de bâtiments' : 'Races') . '</h1>'
         . '<div class="d-flex gap-2">'
         . '<a class="btn btn-outline-secondary" href="/admin/action-export.php?type=race"'
-        . ' title="Télécharger toutes les races en bundle JSON, ré-importable ici ou sur un autre environnement">'
+        . ' title="Télécharger toutes les races et types en bundle JSON (famille commune race)">'
         . '<i class="fas fa-download"></i> Exporter (JSON)</a>'
         . '<a class="btn btn-outline-secondary" href="/admin/action-import.php"'
         . ' title="Importer un bundle JSON (avec prévisualisation avant application)">'
         . '<i class="fas fa-upload"></i> Importer</a>'
-        . '<a class="btn btn-primary" href="/admin/races.php?action=new">+ Nouvelle race</a>'
+        . '<a class="btn btn-primary" href="' . $selfPage . '?action=new">'
+        . ($structureMode ? '+ Nouveau type' : '+ Nouvelle race') . '</a>'
         . '</div></div>'
         . '<table class="table table-striped table-sm" data-admin-list data-page-size="30"><thead><tr>'
-        . '<th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
-        . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>'
+        . $headers
         . '</tr></thead><tbody>' . $rows . '</tbody></table>';
 }
 
@@ -164,13 +208,14 @@ function race_faction_select(string $current): string
     return formSelect('faction', $options, $current !== '' ? $current : null, '— aucune —');
 }
 
-function race_render_form(?Race $race, string $csrfToken): string
+function race_render_form(?Race $race, string $csrfToken, bool $structureMode = false): string
 {
     $isEdit = $race !== null;
     $action = $isEdit ? 'update' : 'create';
+    $noun = $structureMode ? 'Type de bâtiment' : 'Race';
     $title = $isEdit
-        ? 'Race : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
-        : 'Nouvelle race';
+        ? $noun . ' : ' . e($race->getLabel()) . ' <span class="text-muted">(' . e($race->getName()) . ')</span>'
+        : 'Nouveau ' . strtolower($noun);
 
     $nameField = $isEdit
         ? '<input type="hidden" name="name" value="' . e($race->getName()) . '">'
@@ -184,6 +229,14 @@ function race_render_form(?Race $race, string $csrfToken): string
     foreach (CARACS as $key => $short) {
         $label = CARACS_TXT[$key] ?? $short;
         $value = $isEdit ? $race->getCarac($key) : 0;
+
+        // Un type de bâtiment ne vit que par ses PV : les autres caracs
+        // restent postées (le save les exige toutes) mais invisibles.
+        if ($structureMode && $key !== 'pv') {
+            $caracInputs .= '<input type="hidden" name="carac[' . e($key) . ']" value="' . (int) $value . '">';
+            continue;
+        }
+
         $caracInputs .= '<div class="form-group col-md-3 col-6">'
             . '<label title="' . e($label) . '">' . e($short) . '</label>'
             . '<input type="number" class="form-control" name="carac[' . e($key) . ']"'
@@ -241,7 +294,9 @@ HTML;
 
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
         . '<h1 class="mb-0">' . $title . '</h1>'
-        . '<a class="btn btn-sm btn-outline-secondary" href="/admin/races.php">← Retour à la liste</a></div>'
+        . '<a class="btn btn-sm btn-outline-secondary" href="'
+        . ($structureMode ? '/admin/structure-types.php' : '/admin/races.php')
+        . '">← Retour à la liste</a></div>'
 
         . '<form method="post" action="/admin/races-save.php?action=' . $action . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
@@ -252,9 +307,9 @@ HTML;
         . '<input type="text" class="form-control" name="label" required value="'
         . e($isEdit ? $race->getLabel() : '') . '"></div>'
         . '<div class="form-group col-md-4"><label>Flags</label><div>'
-        . '<label class="mr-3">Sorte '
-        . kind_select($isEdit && $race->isStructureKind())
-        . '</label> '
+        . ($structureMode
+            ? '<input type="hidden" name="kind" value="structure">'
+            : '<label class="mr-3">Sorte ' . kind_select($isEdit && $race->isStructureKind()) . '</label> ')
         . '<label class="mr-3">Saignement '
         . formSelect(
             'bleeds',
@@ -281,8 +336,8 @@ HTML;
         . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
         . checked(!$isEdit || $race->blocksProjectiles())
         . ' title="Structures seulement — décoché : les tirs passent au-dessus (table, muret bas…)."> Bloque les tirs</label> '
-        . '<label class="mr-3"><input type="checkbox" name="playable" '
-        . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>'
+        . ($structureMode ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
+            . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
         . '<label><input type="checkbox" name="hidden" '
         . checked($isEdit && $race->getHidden()) . '> Cachée</label>'
         . '<small class="form-text text-muted">Cachée : les personnages de cette race ne définissent pas'
@@ -306,37 +361,45 @@ HTML;
         . '<input type="color" class="form-control" name="wound_color" value="'
         . e($isEdit ? $race->getWoundColor() : \App\Service\RaceService::DEFAULT_WOUND_COLOR) . '">'
         . '<small class="form-text text-muted">Voile des PV perdus (portrait, carte) — rouge sang par défaut, bronze pour une structure par exemple.</small></div>'
-        . '<div class="form-group col-md-3"><label>Faction de départ</label>'
-        . race_faction_select($isEdit ? $race->getFaction() : '')
-        . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'
-        . ' Plusieurs races peuvent partager une faction.</small></div>'
-        . '<div class="form-group col-md-3"><label>Plan d\'origine</label>'
-        . '<input type="text" class="form-control" name="plan" value="'
-        . e($isEdit ? $race->getPlan() : '') . '"></div>'
-        . '<div class="form-group col-md-2"><label>Animateur (id joueur)</label>'
-        . '<input type="number" class="form-control" name="animateurId" value="'
-        . e($isEdit ? (string) $race->getAnimateurId() : '') . '">'
-        . '<small class="form-text text-muted">Vide = aucun. Id négatif = PNJ.</small></div>'
+        . ($structureMode
+            ? '<input type="hidden" name="faction" value="' . e($isEdit ? $race->getFaction() : '') . '">'
+                . '<input type="hidden" name="plan" value="' . e($isEdit ? $race->getPlan() : '') . '">'
+                . '<input type="hidden" name="animateurId" value="' . e($isEdit ? (string) $race->getAnimateurId() : '') . '">'
+            : '<div class="form-group col-md-3"><label>Faction de départ</label>'
+                . race_faction_select($isEdit ? $race->getFaction() : '')
+                . '<small class="form-text text-muted">Copiée dans players.faction à la création du personnage.'
+                . ' Plusieurs races peuvent partager une faction.</small></div>'
+                . '<div class="form-group col-md-3"><label>Plan d\'origine</label>'
+                . '<input type="text" class="form-control" name="plan" value="'
+                . e($isEdit ? $race->getPlan() : '') . '"></div>'
+                . '<div class="form-group col-md-2"><label>Animateur (id joueur)</label>'
+                . '<input type="number" class="form-control" name="animateurId" value="'
+                . e($isEdit ? (string) $race->getAnimateurId() : '') . '">'
+                . '<small class="form-text text-muted">Vide = aucun. Id négatif = PNJ.</small></div>')
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Caractéristiques</div><div class="card-body"><div class="row">'
         . $caracInputs
         . '</div></div></div>'
 
-        . '<div class="card mb-3"><div class="card-header">Listes d\'actions</div><div class="card-body"><div class="row">'
-        . '<div class="form-group col-md-6"><label>Actions de départ (une par ligne)</label>'
-        . $picker('starter_actions')
-        . '<textarea class="form-control" name="starter_actions" rows="10" spellcheck="false">'
-        . e($starterActions) . '</textarea>'
-        . '<small class="form-text text-muted">Accordées à la création du personnage (ex: attaquer, dmg1/pic_de_pierre).</small></div>'
-        . '<div class="form-group col-md-6"><label>Sorts apprenables (un par ligne)</label>'
-        . $picker('spells')
-        . '<textarea class="form-control" name="spells" rows="10" spellcheck="false">'
-        . e($spells) . '</textarea>'
-        . '<small class="form-text text-muted">Conditionnent le marchand de sorts et les objets à sort intégré.</small></div>'
-        . '</div></div></div>'
+        . ($structureMode
+            ? '<textarea name="starter_actions" hidden>' . e($starterActions) . '</textarea>'
+                . '<textarea name="spells" hidden>' . e($spells) . '</textarea>'
+            : '<div class="card mb-3"><div class="card-header">Listes d\'actions</div><div class="card-body"><div class="row">'
+                . '<div class="form-group col-md-6"><label>Actions de départ (une par ligne)</label>'
+                . $picker('starter_actions')
+                . '<textarea class="form-control" name="starter_actions" rows="10" spellcheck="false">'
+                . e($starterActions) . '</textarea>'
+                . '<small class="form-text text-muted">Accordées à la création du personnage (ex: attaquer, dmg1/pic_de_pierre).</small></div>'
+                . '<div class="form-group col-md-6"><label>Sorts apprenables (un par ligne)</label>'
+                . $picker('spells')
+                . '<textarea class="form-control" name="spells" rows="10" spellcheck="false">'
+                . e($spells) . '</textarea>'
+                . '<small class="form-text text-muted">Conditionnent le marchand de sorts et les objets à sort intégré.</small></div>'
+                . '</div></div></div>')
 
-        . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer la race') . '</button>'
+        . '<button type="submit" class="btn btn-primary">'
+        . ($isEdit ? 'Enregistrer' : ($structureMode ? 'Créer le type' : 'Créer la race')) . '</button>'
         . '</form>'
         . ($isEdit ? race_render_delete_zone($race, $csrfToken) : '')
         . $catalog
@@ -381,17 +444,28 @@ $service = new RaceService();
 
 $action = $_GET['action'] ?? 'list';
 
+// Deux sections pour une même table (décision du 2026-07-19) : Races
+// (personnages) ici, Types de bâtiments via admin/structure-types.php
+// (wrapper qui pose ?kind=structure avant d'inclure cette page).
+$structureMode = (($_GET['kind'] ?? '') === 'structure');
+
 if ($action === 'new') {
-    $content = race_render_form(null, $csrfToken);
+    $content = race_render_form(null, $csrfToken, $structureMode);
 } elseif ($action === 'edit') {
     $race = $service->getRaceByName((string) ($_GET['name'] ?? ''));
     if ($race === null) {
         setFlash('warning', 'Race introuvable.');
-        redirectTo('/admin/races.php');
+        redirectTo($structureMode ? '/admin/structure-types.php' : '/admin/races.php');
     }
-    $content = race_render_form($race, $csrfToken);
+    // La sorte de la ligne fait foi : éditer une structure depuis
+    // n'importe où montre le visage « type de bâtiment ».
+    $content = race_render_form($race, $csrfToken, $structureMode || $race->isStructureKind());
 } else {
-    $content = race_render_list($service->getAllRaces());
+    $kept = array_values(array_filter(
+        $service->getAllRaces(),
+        static fn (Race $race): bool => $race->isStructureKind() === $structureMode
+    ));
+    $content = race_render_list($kept, $structureMode);
 }
 
-echo admin_layout('Races', renderFlashMessage() . $content);
+echo admin_layout($structureMode ? 'Types de bâtiments' : 'Races', renderFlashMessage() . $content);

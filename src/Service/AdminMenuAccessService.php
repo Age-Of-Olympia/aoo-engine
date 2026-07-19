@@ -74,6 +74,9 @@ class AdminMenuAccessService
         // Bâtiments : pose/retrait sur la carte — travail d'animation, même
         // niveau que les PNJ
         'buildings.php'            => ['Bâtiments', 'Divers', self::LEVEL_ADMIN],
+        // Types de bâtiments : second visage de la table races — même
+        // politique que races (contenu de gameplay, suppression possible)
+        'structure-types.php'      => ['Bâtiments · Types', 'Divers', self::LEVEL_SUPERADMIN],
         // Objets : flags et réglages d'usure — même politique que races
         'items.php'                => ['Objets', 'Divers', self::LEVEL_SUPERADMIN],
     ];
