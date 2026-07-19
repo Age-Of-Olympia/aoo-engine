@@ -22,6 +22,8 @@ class ConditionObject
     protected ?object $buildCoords = null;
     /** Objet du catalogue validé par ItemPickCondition (possession + admissibilité). */
     protected ?\Classes\Item $pickedItem = null;
+    /** Instance PRÉCISE désignée au geste (ligne d'instance cliquée), sinon null. */
+    protected ?int $pickedInstanceId = null;
 
 
     public function __construct() {
@@ -46,6 +48,17 @@ class ConditionObject
     public function setPickedItem(\Classes\Item $item): self
     {
         $this->pickedItem = $item;
+        return $this;
+    }
+
+    public function getPickedInstanceId(): ?int
+    {
+        return $this->pickedInstanceId;
+    }
+
+    public function setPickedInstanceId(?int $instanceId): self
+    {
+        $this->pickedInstanceId = $instanceId;
         return $this;
     }
 

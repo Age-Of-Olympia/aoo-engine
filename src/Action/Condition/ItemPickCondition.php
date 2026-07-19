@@ -26,12 +26,13 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchema
 {
     public const KIND_CONSTRUCTIBLE = 'constructible';
     public const KIND_CONSOMMABLE = 'consommable';
+    public const KIND_EQUIPEMENT = 'equipement';
 
     public static function parameterSchema(): ParameterSchema
     {
         return new ParameterSchema(
             new ParameterField('kind', FieldType::STRING, 'Nature exigée', required: true,
-                help: self::KIND_CONSTRUCTIBLE . ' | ' . self::KIND_CONSOMMABLE),
+                help: self::KIND_CONSTRUCTIBLE . ' | ' . self::KIND_CONSOMMABLE . ' | ' . self::KIND_EQUIPEMENT),
         );
     }
 
@@ -39,6 +40,14 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchema
     public static function requestedItemId(): ?int
     {
         $raw = $_POST['itemId'] ?? null;
+
+        return is_numeric($raw) ? (int) $raw : null;
+    }
+
+    /** L'instance précise désignée au geste (ligne d'instance cliquée), ou null. */
+    public static function requestedInstanceId(): ?int
+    {
+        $raw = $_POST['instanceId'] ?? null;
 
         return is_numeric($raw) ? (int) $raw : null;
     }
@@ -58,15 +67,20 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchema
         }
         $item->get_data();
 
-        // Possession : sur la pile, comme les coûts (RequiresItem, règle P5).
-        if ($item->get_n($actor, includeInstances: false) < 1) {
+        $kind = (string) ($condition->getParameters()['kind'] ?? '');
+
+        // Possession : sur la pile, comme les coûts (RequiresItem, règle
+        // P5) — SAUF l'équipement, où l'exemplaire peut être une instance
+        // individualisée (arme à durabilité) : instances comprises.
+        $owned = $item->get_n($actor, includeInstances: $kind === self::KIND_EQUIPEMENT);
+        if ($owned < 1) {
             return new ConditionResult(false, array(), ['Vous ne possédez pas ' . $item->data->name . '.']);
         }
 
-        $kind = (string) ($condition->getParameters()['kind'] ?? '');
         $admissible = match ($kind) {
             self::KIND_CONSTRUCTIBLE => ($item->data->type ?? '') === Item::TYPE_CONSTRUCTIBLE,
             self::KIND_CONSOMMABLE => InventoryService::useKind($item) === InventoryService::USE_CONSUME,
+            self::KIND_EQUIPEMENT => InventoryService::useKind($item) === InventoryService::USE_EQUIP,
             default => false,
         };
         if (!$admissible) {
@@ -74,6 +88,7 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchema
         }
 
         $conditionObject->setPickedItem($item);
+        $conditionObject->setPickedInstanceId(self::requestedInstanceId());
 
         return new ConditionResult(true, array(), array());
     }
