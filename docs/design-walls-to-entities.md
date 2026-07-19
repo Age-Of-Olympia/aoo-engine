@@ -75,8 +75,11 @@ convertir n'apporterait rien et casserait `ResourceService`. Décision :
    facultatif, promeut les visuels dédiés `img/avatars/*.webp` s'il y
    en a ; le self-heal du rendu (!706) couvre le reste.
 3. **Nettoyage du code** (même MR ou MR suivante) :
-   - `destroy.php` + `js/observe_destroy.js` + le chemin destroy de
-     `WallCardView` : SUPPRIMÉS — `attaquer` fait foi ;
+   - `destroy.php` + `js/observe_destroy.js` : SURVIVENT pour le seul
+     AUTEL (destructible, mécanique d'influence en cours de refonte) —
+     ils meurent avec la conversion des autels, pas avant : les
+     supprimer aujourd'hui rendrait les autels indestructibles en
+     silence. Pour tout le reste, `attaquer` fait foi ;
    - `WallCardView` ne garde que la carte des RESSOURCES (récoltable /
      épuisé) et de l'autel ;
    - `go.php` : le blocage map_walls reste (ressources infranchissables ?

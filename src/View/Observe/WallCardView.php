@@ -11,9 +11,11 @@ use Classes\Ui;
 
 /**
  * Carte d'un MUR de carte (map_walls) ou d'un AUTEL pour le panneau
- * d'observation. Les murs legacy gardent leur présentation mutualisée
- * (Ui::get_card, état brisé, statut destructible) jusqu'à la migration
- * murs→structures ; l'autel garde la priorité quand il pose sa carte.
+ * d'observation. Depuis la conversion murs→entités (2026-07-19), les
+ * map_walls restants sont les RESSOURCES (récoltable/épuisé,
+ * indestructibles ici), les murs de tutoriel et l'AUTEL — seul
+ * destructible restant (destroy.php ne vit plus que pour lui, il
+ * mourra avec la refonte des autels).
  */
 final class WallCardView
 {
