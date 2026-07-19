@@ -183,9 +183,29 @@ if($targetPvBefore != $targetPvAfter){
     $height = floor((100 - $pvPct) * 225 / 100);
     $height = min($height, 225);
 
+    /* Structure encore debout : son sprite a pu basculer (blessé/réparé,
+     * refreshWoundSprite) — patcher son <image> du damier en place, relu
+     * en base car le memo $target->data date d'avant le coup. À la mort,
+     * OnHideReloadView redessine déjà tout le plateau. */
+    $boardSpritePatch = '';
+    if ($targetPvAfter >= 1
+        && \App\Enum\EntityCategory::fromPlayerType($target->data->player_type ?? 'real') === \App\Enum\EntityCategory::Structure) {
+
+        $freshAvatar = (string) ((new Classes\Db())->exe(
+            'SELECT avatar FROM players WHERE id = ?', $target->id
+        )->fetch_object()->avatar ?? '');
+
+        if ($freshAvatar !== '') {
+            $boardSpritePatch = 'window.aooUpdateBoardSprite && aooUpdateBoardSprite('
+                . (int) $target->id . ', ' . json_encode($freshAvatar) . ');';
+        }
+    }
+
     ?>
     <script>
     $(document).ready(function(){
+        <?php echo $boardSpritePatch ?>
+
         var height = <?php echo $height ?>;
         if(height >= 225){
             $('.card-portrait').addClass('dead');

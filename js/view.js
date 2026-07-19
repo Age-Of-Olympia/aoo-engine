@@ -110,6 +110,23 @@ $(document).ready(function(){
 
 
     /**
+     * Rafraîchit le sprite d'UNE entité du damier en place (bascule
+     * blessé/réparé d'un bâtiment) : le plateau est un SVG inline chargé
+     * avec la page, patcher les deux nœuds <image> (avatar + ombre)
+     * évite de re-télécharger tout le plateau. Appelé par la réponse
+     * d'action.php quand la cible est une structure.
+     */
+    window.aooUpdateBoardSprite = function(id, href){
+        ['', '-shadow'].forEach(function(suffix){
+            var node = document.getElementById(String(id) + suffix);
+            if(node && node.tagName.toLowerCase() === 'image'){
+                node.setAttribute('href', href);
+                node.setAttribute('xlink:href', href);
+            }
+        });
+    };
+
+    /**
      * Map bindings live on the SVG's own nodes (.case tiles, #go-rect),
      * so they die whenever the map markup is replaced. Exposed as
      * window.bindMapView so the HUD can rebind after an AJAX view swap
