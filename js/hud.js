@@ -496,7 +496,7 @@
 
     /* Options d'affichage du plateau — liste partagée entre le popover
      * de calques et les options du panneau Profil (js/account.js). */
-    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords', 'hideLineOfFire'];
+    var BOARD_OPTIONS = ['raceHint', 'raceHintMax', 'showBlockedTiles', 'hideGrid', 'noMask', 'hideBoardCoords', 'hideLineOfFire', 'hideBuildingsLayer'];
 
     /*
      * Applique côté client une option de plateau que le serveur vient

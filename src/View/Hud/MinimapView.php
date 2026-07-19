@@ -20,8 +20,8 @@ use Classes\Str;
 final class MinimapView
 {
     /** Couches statiques empilées, dans l'ordre de dessin de map.php. */
-    private const LOCAL_LAYERS = ['tiles', 'elements', 'walls', 'routes'];
-    private const WORLD_LAYERS = ['tiles', 'elements', 'locations', 'routes'];
+    private const LOCAL_LAYERS = ['tiles', 'elements', 'walls', 'routes', 'buildings'];
+    private const WORLD_LAYERS = ['tiles', 'elements', 'locations', 'routes', 'buildings'];
 
     public static function render(Player $player): void
     {
@@ -56,6 +56,10 @@ final class MinimapView
                 if (!isset($mapResult['tiles'])) {
                     $viewService->generateGlobalMap($layers);
                     $mapResult = $viewService->getGlobalMap();
+                } elseif (!isset($mapResult['buildings'])) {
+                    // seule la nouvelle couche manque : ne régénérer qu'elle
+                    $viewService->generateGlobalMap(['buildings']);
+                    $mapResult = $viewService->getGlobalMap();
                 }
             } else {
                 $mapResult = $viewService->getLocalMap();
@@ -65,12 +69,23 @@ final class MinimapView
                 if (!isset($mapResult['tiles'])) {
                     $viewService->generateLocalMap($layers);
                     $mapResult = $viewService->getLocalMap();
+                } elseif (!isset($mapResult['buildings'])) {
+                    // seule la nouvelle couche manque : ne régénérer qu'elle
+                    $viewService->generateLocalMap(['buildings']);
+                    $mapResult = $viewService->getLocalMap();
                 }
             }
 
             $imgs = '';
             $aspect = '';
+            /* Calque bâtiments masquable (option hideBuildingsLayer,
+             * popover de calques du HUD) — décision du 2026-07-19. */
+            $hideBuildings = (bool) $player->have_option('hideBuildingsLayer');
+
             foreach ($layers as $layer) {
+                if ($layer === 'buildings' && $hideBuildings) {
+                    continue;
+                }
                 $imagePath = $mapResult[$layer]['imagePath'] ?? null;
                 if ($imagePath && file_exists($_SERVER['DOCUMENT_ROOT'] . $imagePath)) {
                     /* Ratio pris sur la première couche : le wrapper doit

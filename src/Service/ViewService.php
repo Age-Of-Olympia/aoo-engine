@@ -223,7 +223,7 @@ class ViewService {
     }
 
     public function generateLocalMap(?array $selectedLayers = null) {
-        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes'];
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'buildings'];
 
         // Crée l'image de base
         $this->image = $this->createLayer($this->localMapWidth, $this->localMapHeight);
@@ -277,6 +277,9 @@ class ViewService {
                 case 'routes':
                     $this->generateRoutesLayer($this->currentPlan);
                      break;
+                case 'buildings':
+                    $this->generateBuildingsLayer($this->currentPlan);
+                    break;
                 case 'players':
                     $this->generateLocalPlayersLayer();
                     break;
@@ -309,7 +312,7 @@ class ViewService {
 
     public function generateGlobalMap(?array $selectedLayers = null) {
         $this->image = $this->createLayer();
-        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'players', 'player'];
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'buildings', 'players', 'player'];
         $timestamp = (new DateTime('now', new DateTimeZone('UTC')))->format('Ymd-His');
         $outputDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
 
@@ -335,6 +338,9 @@ class ViewService {
                     break;
                 case 'routes':
                     $this->generateRoutesLayer($this->worldPlan);
+                    break;
+                case 'buildings':
+                    $this->generateBuildingsLayer($this->worldPlan);
                     break;
                 case 'players':
                     if ($this->playerX !== null && $this->playerY !== null) {
@@ -729,6 +735,69 @@ class ViewService {
         $this->layers['walls'] = $layer;
     }
 
+    /**
+     * Couche BÂTIMENTS des cartes : les entités structure (bâtiments,
+     * objets uniques) en carrés aux couleurs de leur pseudo-race —
+     * couche à part, masquable par l'option hideBuildingsLayer (calques
+     * du HUD). Décision du 2026-07-19 : les bâtiments n'appartiennent
+     * pas à la couche joueurs, mais méritent leur calque, local ET monde.
+     */
+    private function generateBuildingsLayer($plan) {
+        $layer = $this->createLayer();
+        $zCondition = $plan === $this->worldPlan
+            ? "AND c.z = 0"
+            : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
+        $mapType = $plan === $this->worldPlan ? "global" : "local";
+
+        $raceColors = array_merge(
+            ['default' => '#8a8a8a'],
+            $this->raceService->getBgColorMap()
+        );
+
+        // Bornes du BON référentiel (les couches murs/joueurs lisent les
+        // bornes monde même en local — fragile quand le plan monde n'est
+        // pas configuré) ; sans bornes, couche vide plutôt qu'un SQL cassé.
+        $minX = $mapType === 'global' ? $this->minX : $this->localMinX;
+        $maxX = $mapType === 'global' ? $this->maxX : $this->localMaxX;
+        $minY = $mapType === 'global' ? $this->minY : $this->localMinY;
+        $maxY = $mapType === 'global' ? $this->maxY : $this->localMaxY;
+        if (!is_numeric($minX) || !is_numeric($maxX) || !is_numeric($minY) || !is_numeric($maxY)) {
+            $this->layers['buildings'] = $layer;
+            return;
+        }
+
+        $sql = "SELECT c.x, c.y, p.race
+            FROM players p
+            JOIN coords c ON c.id = p.coords_id
+            WHERE c.plan = '" . $plan . "'
+            AND p.player_type IN ('building', 'unique')
+            AND c.x BETWEEN " . $minX . " AND " . $maxX . "
+            AND c.y BETWEEN " . $minY . " AND " . $maxY . "
+            $zCondition";
+
+        $result = $this->db->exe($sql);
+
+        while ($building = mysqli_fetch_assoc($result)) {
+            $x = $this->transformX($building['x'], $mapType);
+            $y = $this->transformY($building['y'], $mapType);
+
+            $raceColor = $raceColors[$building['race']] ?? $raceColors['default'];
+            list($r, $g, $b) = sscanf($raceColor, "#%02x%02x%02x");
+            $color = imagecolorallocate($layer, $r, $g, $b);
+
+            $tileSize = ($mapType === "global") ? 6 : $this->localScaleX;
+
+            imagefilledrectangle(
+                $layer,
+                (int)($x - ($tileSize/2)), (int)($y - ($tileSize/2)),
+                (int)($x + ($tileSize/2)), (int)($y + ($tileSize/2)),
+                $color
+            );
+        }
+
+        $this->layers['buildings'] = $layer;
+    }
+
     public function generateLocalPlayersLayer() {
         if (!$this->localBoundsAvailable) {
             return null; // Pas de carte configurée pour ce niveau Z
@@ -805,7 +874,7 @@ class ViewService {
             JOIN coords c ON c.id = p.coords_id
             WHERE c.x IS NOT NULL 
             AND c.y IS NOT NULL
-            AND c.y IS NOT NULL
+            AND p.player_type IN ('real', 'npc')
             AND c.plan = '" . $this->worldPlan . "'
         ";
         
@@ -1125,7 +1194,7 @@ class ViewService {
     }
 
     public function getGlobalMap(): array {
-        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'player'];
+        $layers = ['tiles', 'elements', 'coordinates', 'locations', 'routes', 'buildings', 'player'];
         $mapDir = $_SERVER['DOCUMENT_ROOT'].'/img/maps/world/';
         $results = [];
 
@@ -1151,7 +1220,7 @@ class ViewService {
 
     public function getLocalMap(): array
     {
-        $layers = ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+        $layers = ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'buildings', 'players', 'player'];
         $mapDir = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/';
         $results = [];
 
