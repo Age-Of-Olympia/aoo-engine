@@ -78,6 +78,13 @@ class PlaceLayerOutcomeInstruction extends OutcomeInstruction implements HasPara
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Il y a déjà cela ici.']);
         }
 
+        // Un élément (boue, feu, sang…) interdit l'aménagement — même
+        // règle que BuildingService::place pour les structures.
+        $element = $db->exe('SELECT id FROM map_elements WHERE coords_id = ?', $coordsId);
+        if ($element && $element->num_rows) {
+            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Un élément occupe cette case.']);
+        }
+
         $db->insert('map_' . $layer, [
             'name' => $name,
             'coords_id' => $coordsId,

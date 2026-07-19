@@ -14,6 +14,7 @@ class PlantsService
     public static function getTriggerGrow(): Object
     {
         //on recupère les triggers de type "grow" pour lesquels il n'y a pas de plants correspondant
+        //(ni élément ni route : une plante n'y pousse pas)
         $sql = "
         SELECT
         t.id AS id,
@@ -27,11 +28,17 @@ class PlantsService
         coords c
         ON
         t.coords_id = c.id
-        LEFT JOIN map_plants p 
+        LEFT JOIN map_plants p
         ON p.coords_id = c.id
+        LEFT JOIN map_elements e
+        ON e.coords_id = c.id
+        LEFT JOIN map_routes r
+        ON r.coords_id = c.id
         WHERE
         t.name = 'grow'
-        and p.id is null;
+        and p.id is null
+        and e.id is null
+        and r.id is null;
         ";
 
         $db = new Db();

@@ -255,6 +255,13 @@ class BuildingService extends BaseService
                     "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un mur."
                 );
             }
+            // Un élément (boue, feu, sang…) rend la case inconstructible :
+            // même règle que PlaceLayerOutcomeInstruction pour les routes.
+            if ($conn->fetchOne('SELECT coords_id FROM map_elements WHERE coords_id = ?', [$coordsId]) !== false) {
+                throw new \InvalidArgumentException(
+                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un élément."
+                );
+            }
 
             $conn->executeStatement(
                 'INSERT INTO players
