@@ -407,30 +407,19 @@ if($res->num_rows){
 
 /* Ligne de tir depuis le joueur vers la case observée : cases
  * traversées + premier obstacle (structure blocks_projectiles ou
- * map_walls). L'info du panneau est toujours donnée ; le dessin sur le
- * damier (vert = dégagé, rouge = derrière l'obstacle) se désactive via
- * l'option hideLineOfFire — les corps-à-corps s'en passent. view.js
- * efface l'ancienne trajectoire à chaque clic. */
+ * map_walls). Le panneau garde l'info de blocage ; le TRACÉ sur le
+ * damier n'est plus embarqué ici — il se demande explicitement par
+ * clic droit / appui long sur la case (js/view.js →
+ * api/map/line_of_fire.php), un clic gauche en dessinait trop. */
 $fireReport = (new BuildingService())->lineOfFireReport(
     $coords,
     (object) ['x' => (int) $x, 'y' => (int) $y, 'z' => $coords->z, 'plan' => $coords->plan]
 );
 
-if($fireReport['tiles'] !== []){
+if($fireReport['tiles'] !== [] && $fireReport['blockerName'] !== null){
 
-    if($fireReport['blockerName'] !== null){
-
-        echo '<div class="case-infos"><div class="text">🏹 Ligne de tir bloquée par '
-            . htmlspecialchars($fireReport['blockerName'], ENT_QUOTES, 'UTF-8') .'.</div></div>';
-    }
-
-    if(!$player->have_option('hideLineOfFire')){
-
-        echo '<script>window.showLineOfFire && window.showLineOfFire('
-            . json_encode([(int) $coords->x, (int) $coords->y]) .', '
-            . json_encode([(int) $x, (int) $y]) .', '
-            . json_encode($fireReport['blocker']) .');</script>';
-    }
+    echo '<div class="case-infos"><div class="text">🏹 Ligne de tir bloquée par '
+        . htmlspecialchars($fireReport['blockerName'], ENT_QUOTES, 'UTF-8') .'.</div></div>';
 }
 
 

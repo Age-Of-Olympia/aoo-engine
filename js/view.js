@@ -135,15 +135,43 @@ $(document).ready(function(){
      * it once at ready.
      */
     /**
-     * Ligne de tir sur le damier : observe.php envoie la case du
-     * tireur, la case visée et l'éventuel premier obstacle. On trace
-     * une vraie ligne de centre à centre — verte tant que la
+     * Ligne de tir sur le damier : demandée EXPLICITEMENT par clic
+     * droit (desktop) ou appui long (mobile) sur une case — un clic
+     * gauche en dessinait trop. api/map/line_of_fire.php renvoie la
+     * case du tireur, la case visée et l'éventuel premier obstacle. On
+     * trace une vraie ligne de centre à centre — verte tant que la
      * trajectoire est libre, rouge à partir de l'obstacle (marqué d'un
-     * point). Effacée à chaque nouveau clic de case.
+     * point). Redemander la même case efface (bascule) ; un clic
+     * gauche efface aussi.
      */
+    var lofShownFor = null;         /* data-coords de la case tracée */
+    var lofSuppressClickUntil = 0;  /* l'appui long ne doit pas cliquer */
+
     window.clearLineOfFire = function(){
+        lofShownFor = null;
         $('.lof-mark').remove();
     };
+
+    function requestLineOfFire($case){
+        var coords = $case.attr('data-coords');
+        if(!coords){
+            return;
+        }
+        if(lofShownFor === coords){
+            window.clearLineOfFire();
+            return;
+        }
+        var parts = coords.split(',');
+        $.getJSON('api/map/line_of_fire.php', {x: parts[0], y: parts[1]}, function(data){
+            /* tiles vide : case adjacente, ou option hideLineOfFire. */
+            if(!data || !data.tiles || !data.tiles.length){
+                window.clearLineOfFire();
+                return;
+            }
+            window.showLineOfFire(data.from, data.to, data.blocker);
+            lofShownFor = coords;
+        });
+    }
 
     window.showLineOfFire = function(from, to, blocker){
 
@@ -216,7 +244,36 @@ $(document).ready(function(){
 
     window.bindMapView = function(){
 
+    /* Ligne de tir à la demande : clic droit, ou appui long tactile
+       (500 ms sans bouger). L'appui long ne doit pas déclencher le
+       clic d'observation qui suivrait au relâcher — fenêtre de
+       suppression courte. */
+    $('.case').off('contextmenu.lof').on('contextmenu.lof', function(e){
+        e.preventDefault();
+        requestLineOfFire($(this));
+    });
+
+    var lofPressTimer = null;
+    $('.case').off('touchstart.lof touchend.lof touchmove.lof touchcancel.lof')
+        .on('touchstart.lof', function(){
+            var $case = $(this);
+            clearTimeout(lofPressTimer);
+            lofPressTimer = setTimeout(function(){
+                lofSuppressClickUntil = Date.now() + 800;
+                requestLineOfFire($case);
+            }, 500);
+        })
+        .on('touchend.lof touchmove.lof touchcancel.lof', function(){
+            clearTimeout(lofPressTimer);
+        });
+
     $('.case').off('click').on('click', function(e){
+
+        if(Date.now() < lofSuppressClickUntil){
+            /* Relâcher d'un appui long : le tracé vient d'être demandé,
+               ne pas ouvrir l'observation ni l'effacer. */
+            return false;
+        }
 
         window.clearLineOfFire();
 
