@@ -20,6 +20,9 @@
     --shipped: #27ae60;
     --shipped-bg: #d4edda;
     --shipped-border: #c3e6cb;
+    --testing: #16a085;
+    --testing-bg: #d1f2eb;
+    --testing-border: #a3e4d7;
     --progress: #f39c12;
     --progress-bg: #fff3cd;
     --progress-border: #ffeaa7;
@@ -263,6 +266,7 @@
     box-shadow: var(--shadow-card-hover);
     z-index: 7;
   }
+  .card.testing { background: var(--testing-bg); border-color: var(--testing-border); border-left-color: var(--testing); }
   .card.progress { background: var(--progress-bg); border-color: var(--progress-border); border-left-color: var(--progress); }
   .card.planned { background: var(--planned-bg); border-color: var(--planned-border); border-left-color: var(--planned); }
   .card.longterm {
@@ -411,6 +415,7 @@
     </div>
     <div class="legend">
       <span class="chip"><span class="swatch" style="background:var(--shipped-bg);border-color:var(--shipped)"></span>Livré</span>
+      <span class="chip" title="Terminé et fusionné sur la branche Saison 3, joué sur experimental — pas encore en production"><span class="swatch" style="background:var(--testing-bg);border-color:var(--testing)"></span>En test (préprod)</span>
       <span class="chip"><span class="swatch" style="background:var(--progress-bg);border-color:var(--progress)"></span>En cours</span>
       <span class="chip"><span class="swatch" style="background:var(--planned-bg);border-color:var(--planned)"></span>Planifié</span>
       <span class="chip"><span class="swatch" style="background:var(--longterm-bg);border-color:var(--longterm);border-style:dashed"></span>Long terme</span>
@@ -419,6 +424,7 @@
     <div class="filter" id="filter">
       <button data-status="all" class="active">Tout</button>
       <button data-status="future">À venir uniquement</button>
+      <button data-status="testing">En test uniquement</button>
       <button data-status="shipped">Livré uniquement</button>
     </div>
   </div>
@@ -462,7 +468,7 @@ const QUARTER_PX = 210; /* vertical pixels per unit-weight quarter */
 
 /* Per-quarter vertical weight. Long terme gets more room because it's
    the densest bucket. */
-const QUARTER_WEIGHTS = [1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 4]; /* 2026-Q2 widened: busiest period (prod deploy), needs room to avoid card overlap */
+const QUARTER_WEIGHTS = [1, 1, 1, 1, 1, 4, 4, 1, 1, 1, 4]; /* 2026-Q2 widened: busiest period (prod deploy), needs room to avoid card overlap */
 const TOTAL_WEIGHT = QUARTER_WEIGHTS.reduce((sum, w) => sum + w, 0);
 
 /* Cumulative weight up to quarter i, used for non-uniform vertical mapping. */
@@ -719,7 +725,7 @@ const FEATURES = [
     player:"Le cœur du combat a été refait sur des bases saines : calculs corrigés (dégâts additionnels, soins, malus, munitions) et équilibrages futurs beaucoup plus sûrs.",
     enables:['admin-actions','pf-aoe'] },
 
-  { id:'hud-refonte', title:"⭐ Refonte de l'interface (HUD papier & encre)", category:'ui-ux', status:'shipped',
+  { id:'hud-refonte', title:"⭐ Refonte de l'interface (HUD papier & encre)", category:'ui-ux', status:'testing',
     quarter:6.1, date:'Juil 2026 (S3)',
     tech:"Thème papier & encre complet (maquette graphiste) : grille HUD, rail, panneaux glissants avec pile retour, zone de sélection, mode théâtre, minimap, badges live, mobile (carrousel, tiroir, sheets, pinch zoom, pull-to-refresh), confirmation par armement des actions, dés peints. Sur la branche Saison 3 — en jeu à l'ouverture (septembre).",
     player:"Une nouvelle interface de jeu : vos points toujours visibles, navigation latérale, sous-pages en panneaux sans quitter la carte, vraie version mobile. Arrive avec la Saison 3.",
@@ -731,7 +737,7 @@ const FEATURES = [
     player:"La Magie n'est plus une seule stat globale : elle se décompose en deux pour permettre des combinaisons plus riches. Les races et quelques objets sont rééquilibrés en même temps.",
     enables:[] },
 
-  { id:'no-js-confirms', title:"Suppression des alert/confirm JS", category:'ui-ux', status:'shipped',
+  { id:'no-js-confirms', title:"Suppression des alert/confirm JS", category:'ui-ux', status:'testing',
     quarter:6.0, date:'Juil 2026 (S3)',
     tech:"Remplacement de tous les window.alert/confirm/prompt par un système de modales/toasts custom.",
     player:"Plus de popups système moches qui bloquent tout. Confirmations cohérentes avec le reste du jeu.",
@@ -749,25 +755,25 @@ const FEATURES = [
     player:"Continuité d'ajouts des compétences/passifs/sorts prévus. Ajout des conditions d'utilisations/achat des compétences pour former un arbre de compétences.",
     enables:[] },
 
-  { id:'dialogue-refonte', title:"Refonte du système de dialogues + admin", category:'dialogue', status:'shipped',
+  { id:'dialogue-refonte', title:"Refonte du système de dialogues + admin", category:'dialogue', status:'testing',
     quarter:6.05, date:'Juil 2026 (S3)',
     tech:"Dialogues en base + pages admin (liste, édition, seed legacy) ; un dialogue peut être porté par un bâtiment OUVERT (conversation façon marchand).",
     player:"Les PNJs deviennent capables de conversations à branches, conditions, réactions au contexte du joueur.",
     enables:['tutorial-extra','admin-team-autonomy'] },
 
-  { id:'items-individual', title:"⭐ Bâtiments + objets individuels", category:'inventory', status:'shipped',
+  { id:'items-individual', title:"⭐ Bâtiments + objets individuels", category:'inventory', status:'testing',
     quarter:6.1, date:'Juil 2026 (S3)',
     tech:"Bâtiments = entités (players 'building' + satellite, pseudo-races structure, portes, PV, combat, dialogues portés) ; 39 constructibles depuis l'inventaire (construire_* : RequiresItem + BuildSite + PlaceStructure) ; instances d'objets (id propre, durabilité, identité au sol) ; parchemins supprimés. Mort d'un bâtiment = disparition (tombstone limbes, événements préservés), sprite brisé sous 50 % PV, damier patché en place.",
     player:"Les bâtiments rentrent dans le moteur : on les construit, ils s'ouvrent, se défendent, se détruisent. Chaque objet a son histoire (usure, identité). Arrive avec la Saison 3.",
     enables:['admin-items','item-durability','outposts'] },
 
-  { id:'admin-items', title:"Admin pour objets & bâtiments", category:'admin', status:'shipped',
+  { id:'admin-items', title:"Admin pour objets & bâtiments", category:'admin', status:'testing',
     quarter:6.15, date:'Juil 2026 (S3)',
     tech:"Pages Objets (stats JSON→BDD sans perte, création, import d'images par emplacement, compte de détenteurs, suppression gardée par les FK), Recettes, Bâtiments (pose/restauration/retrait, migration ancien système).",
     player:"Les animateurs créent et ajustent les objets/bâtiments depuis une interface — images comprises.",
     enables:['admin-team-autonomy'] },
 
-  { id:'faction-race-split', title:"Séparation factions / races", category:'faction-race', status:'shipped',
+  { id:'faction-race-split', title:"Séparation factions / races", category:'faction-race', status:'testing',
     quarter:6.0, date:'Juil 2026 (S3)',
     tech:"Entités Faction/FactionRole + FactionService (tables factions, faction_roles), seed depuis les JSON legacy, pages admin (CRUD, rôles ordonnés, membres, export/import). La race ne garde qu'un pointeur « faction de départ » optionnel ; plus aucun JSON lu au runtime.",
     player:"Les factions ne sont plus soudées aux races : une faction peut accueillir plusieurs peuples, et les animateurs gèrent factions, rôles et membres depuis l'admin. Bases d'un modèle politique plus riche.",
@@ -785,31 +791,31 @@ const FEATURES = [
     player:"L'interface devient snappy : ce qui change se met à jour sans recharger la page.",
     enables:[] },
 
-  { id:'effects-catalog', title:"Catalogue d'effets en base", category:'combat', status:'shipped',
+  { id:'effects-catalog', title:"Catalogue d'effets en base", category:'combat', status:'testing',
     quarter:6.0, date:'Juil 2026 (S3)', playerHidden:true,
     tech:"Le catalogue des effets passe en BDD (page admin Effets) : comportements en données (postures, vol, coûts, blocages — plus rien codé par nom), wiki généré depuis le catalogue, bundles export/import. Saignement par race (races.bleeds, wound_color).",
     player:"Les effets du jeu deviennent du contenu réglable par l'équipe, plus du code.",
     enables:['new-comp-3'] },
 
-  { id:'turn-engine', title:"Moteur de tour extrait + récap", category:'tech-debt', status:'shipped',
+  { id:'turn-engine', title:"Moteur de tour extrait + récap", category:'tech-debt', status:'testing',
     quarter:6.0, date:'Juil 2026 (S3)', playerHidden:true,
     tech:"TurnProcessingService extrait de la vue (golden master), tour = événement relisible ; usure de l'équipement au tour ; décalage manuel du prochain tour (remplace la DLA glissante), borné à un par cycle.",
     player:"Chaque nouveau tour écrit son récapitulatif complet (XP, PV, usure…) dans vos événements.",
     enables:[] },
 
-  { id:'line-of-fire', title:"Ligne de tir", category:'combat', status:'shipped',
+  { id:'line-of-fire', title:"Ligne de tir", category:'combat', status:'testing',
     quarter:6.1, date:'Juil 2026 (S3)',
     tech:"Bresenham pur (extrémités exclues) ; premier obstacle = toute entité dont la race arrête les projectiles (races.blocks_projectiles : structures par défaut, personnages seulement si cochés) ou map_walls. Tir refusé au travers ; trajectoire à la demande — clic droit / appui long (api/map/line_of_fire.php), bascule, option hideLineOfFire.",
     player:"Un tir à distance est bloqué par les murs, arbres et bâtiments — et la trajectoire se dessine d'un clic droit (appui long au mobile) sur le plateau.",
     enables:[] },
 
-  { id:'admin-player-editor', title:"Fiche d'édition de personnage (admin)", category:'admin', status:'shipped',
+  { id:'admin-player-editor', title:"Fiche d'édition de personnage (admin)", category:'admin', status:'testing',
     quarter:6.15, date:'Juil 2026 (S3)',
     tech:"Depuis la liste des personnages (filtres nom/type/statut/race) : renommer, téléporter (plan validé), régler les vitalités restantes via players_bonus (la mécanique des blessures), rendre le tour disponible. CSRF + PRG, accès hérité de players.php.",
     player:"Les animateurs blessent, soignent, déplacent un personnage depuis l'admin — sans requête SQL.",
     enables:['admin-team-autonomy'] },
 
-  { id:'playtest-round-s3', title:"Rafale de retours de playtest (S3)", category:'ui-ux', status:'shipped',
+  { id:'playtest-round-s3', title:"Rafale de retours de playtest (S3)", category:'ui-ux', status:'testing',
     quarter:6.2, date:'Juil 2026 (S3)',
     tech:"Doc de retours traité en pile de MR (!681–!694) : popup histoire corrigée, couleur de race en lavis sur la carte d'observation, consommation détaillée aux événements (hiddenText), règles de terrain (éléments sanctuarisés), plantes au panneau de case, menu pnj mobile, catégorie d'action éditable, artisanat en sommeil (CRAFT_ENABLED).",
     player:"Une journée de retours de test, une journée de correctifs : lisibilité, cohérence du terrain, confort mobile.",
@@ -821,31 +827,31 @@ const FEATURES = [
     player:"La Saison 3 ouvre : nouvelle interface, construction, objets vivants — tout ce qui se prépare depuis des mois.",
     enables:[] },
 
-  { id:'generic-item-actions', title:"Actions génériques paramétrées par l'objet", category:'action-system', status:'shipped',
+  { id:'generic-item-actions', title:"Actions génériques paramétrées par l'objet", category:'action-system', status:'testing',
     quarter:6.25, date:'Juil 2026 (S3)', playerHidden:true,
     tech:"Livrées : construire (remplace ~39 construire_<type>, visée « none »), consommer (visée « self », dans le moteur), équiper, creuser (DigSite bloquante, événement garanti) et fabriquer — l'objet est un paramètre d'exécution (condition ItemPick, patron BuildSitePick). XP et événements par type (action_type_xp / action_type_logs, ActionEventLogger partagé).",
     player:"Sous le capot : le catalogue d'actions arrête de se dupliquer par objet, et consommer devient composable (conditions, simulation).",
     enables:['craft-building'] },
 
-  { id:'walls-to-entities', title:"Conversion des murs de carte en entités", category:'map-tiles', status:'shipped',
+  { id:'walls-to-entities', title:"Conversion des murs de carte en entités", category:'map-tiles', status:'testing',
     quarter:6.3, date:'Juil 2026 (S3)',
     tech:"Livrée (!706–!708) : les map_walls obstacles/décor sont devenus des entités bâtiment (image copiée telle quelle — zéro filesystem en migration, leçon « Mu » ; self-heal au rendu + console building repair-avatars), table map_walls_archive pour rollback. Les RESSOURCES récoltables restent map_walls ; destroy.php survit pour les seuls autels. ⚠ Census prod requis avant le merge staging (requête dans docs/design-walls-to-entities.md).",
     player:"Tous les murs du monde se comportent pareil : on les attaque, ils s'abîment, ils tombent — plus de règles à part.",
     enables:['outposts'] },
 
-  { id:'admin-types-images', title:"Types de bâtiments : section admin + stock d'images", category:'admin', status:'shipped',
+  { id:'admin-types-images', title:"Types de bâtiments : section admin + stock d'images", category:'admin', status:'testing',
     quarter:6.35, date:'Juil 2026 (S3)', playerHidden:true,
     tech:"La table races garde deux visages : Races (personnages) et Bâtiments → Types/Images (wrappers ?kind=structure). Vignettes partout (première image du stock), sprite du plateau résolu stock → mur du même nom, bouton « Copier dans le stock » (copie verbatim, la transparence survit), suppression et messages au vocabulaire des types.",
     player:"Les animateurs gèrent les types de bâtiments (PV, nature, images) sans plus les confondre avec les races de personnages.",
     enables:[] },
 
-  { id:'map-elements-admin', title:"Éléments posés : admin + constructible par-dessus", category:'map-tiles', status:'shipped',
+  { id:'map-elements-admin', title:"Éléments posés : admin + constructible par-dessus", category:'map-tiles', status:'testing',
     quarter:6.3, date:'Juil 2026 (S3)',
     tech:"Le lien case ↔ effet (marcher applique l'effet du même nom) devient réglable : page Cartes → Éléments posés (pose à la case, durée ou permanent, sélection multiple, purge manuelle des expirés). Et effects.buildable_over : un élément ne bloque plus systématiquement la construction — sang, boue et traces laissent bâtir, feu/lave/ronce non.",
     player:"Les animateurs peuvent piéger ou décorer une case (boue, feu…) sans toucher à la base — et une simple trace de pas n'empêche plus de construire.",
     enables:['elements-refonte'] },
 
-  { id:'wiki-generator', title:"Générateur de fiches wiki (5 familles)", category:'admin', status:'shipped',
+  { id:'wiki-generator', title:"Générateur de fiches wiki (5 familles)", category:'admin', status:'testing',
     quarter:6.35, date:'Juil 2026 (S3)', playerHidden:true,
     tech:"admin → Wiki : markup DokuWiki généré à la volée depuis les exporters de bundles (une seule source de vérité) — actions, passifs, effets, objets, races & types. Mécaniques dérivées du moteur (coûts, visées, bonus PassiveValueCalculator, règles d'effets) : le wiki ne peut pas mentir. Une famille de plus = une petite classe renderer.",
     player:"Le wiki public reste juste : les fiches se régénèrent d'un clic depuis les vraies données du jeu, plus de recopie à la main qui vieillit mal.",
@@ -888,7 +894,7 @@ const FEATURES = [
     player:"Plus de contenu, plus vite. Les animateurs ne sont plus bloqués par la disponibilité des devs.",
     enables:[] },
 
-  { id:'item-durability', title:"Système d'usure des objets", category:'inventory', status:'shipped',
+  { id:'item-durability', title:"Système d'usure des objets", category:'inventory', status:'testing',
     quarter:6.15, date:'Juil 2026 (S3)',
     tech:"Modélisation de la durabilité sur les objets : décrément périodique via un système d'événements/triggers générique. Requiert les objets individuels (chaque instance a son propre état d'usure).",
     player:"Les armes et armures s'usent. Repose sur les objets individuels (sans eux, on ne pourrait pas différencier l'usure d'une épée à l'autre).",
@@ -1007,7 +1013,7 @@ const FEATURES = [
  * ============================================================ */
 
 /* ----- Constants ----- */
-const STATUS_LABELS = { shipped:'Livré', progress:'En cours', planned:'Planifié', longterm:'Long terme' };
+const STATUS_LABELS = { shipped:'Livré', testing:'En test (préprod)', progress:'En cours', planned:'Planifié', longterm:'Long terme' };
 const MONTHS_BY_QUARTER = ['jan–mar', 'avr–juin', 'juil–sep', 'oct–déc'];
 const COLLISION_BUMP_RATIO = 1.3;
 const MIN_ARROW_OFFSET = 24;
@@ -1052,8 +1058,11 @@ function featuresOf(categoryId) {
     .sort((a, b) => a.quarter - b.quarter);
 }
 function passesFilter(f) {
-  if (currentFilter === 'future')  return f.status !== 'shipped';
+  /* « En test » compte comme livré côté « À venir » : c'est du travail
+     terminé, seulement pas encore en production. */
+  if (currentFilter === 'future')  return f.status !== 'shipped' && f.status !== 'testing';
   if (currentFilter === 'shipped') return f.status === 'shipped';
+  if (currentFilter === 'testing') return f.status === 'testing';
   return true;
 }
 
@@ -1062,7 +1071,7 @@ function readUrlState() {
   const params = new URLSearchParams(location.hash.replace(/^#/, ''));
   const v = params.get('view'), f = params.get('filter'), id = params.get('id');
   if (v === 'tech' || v === 'player')                   currentView = v;
-  if (f === 'all' || f === 'future' || f === 'shipped') currentFilter = f;
+  if (f === 'all' || f === 'future' || f === 'shipped' || f === 'testing') currentFilter = f;
   if (id) selectedId = id;
 }
 function writeUrlState() {
