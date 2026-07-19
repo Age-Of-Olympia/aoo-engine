@@ -66,7 +66,7 @@ class TargetTypeCondition extends BaseCondition implements HasParameterSchema
         // cible) — dans les deux cas la seule exécution valide est celle où
         // action.php a auto-ciblé le lanceur (ou une simulation sur soi).
         if (in_array(self::KIND_SELF, $allowed, true) || in_array(self::KIND_NONE, $allowed, true)) {
-            if ($target === null || $target->id === $actor->id) {
+            if ($target === null || $target->getId() === $actor->getId()) {
                 return new ConditionResult(true, array(), array());
             }
 
