@@ -56,7 +56,11 @@ class BuildingService extends BaseService
         foreach (['players_bonus', 'players_effects', 'players_items'] as $table) {
             $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$playerId]);
         }
-        $conn->executeStatement('DELETE FROM players_logs WHERE player_id = ? OR target_id = ?', [$playerId, $playerId]);
+        // Kills et assists référencent players des deux côtés : une entité
+        // qui a COMBATTU (assist enregistré sur elle) bloquait le DELETE.
+        foreach (['players_logs', 'players_kills', 'players_assists'] as $table) {
+            $conn->executeStatement("DELETE FROM {$table} WHERE player_id = ? OR target_id = ?", [$playerId, $playerId]);
+        }
         $conn->executeStatement('DELETE FROM players WHERE id = ?', [$playerId]);
     }
 
