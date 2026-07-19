@@ -78,6 +78,26 @@ class ConsommerGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame($maxA, PlayerFactory::legacy($drinker->id)->getRemaining('a'), 'a blocked action must not cost the A');
     }
 
+    public function testAimingAtSomeoneElseIsRefusedBySelfTargeting(): void
+    {
+        // Visée 'self' : consommer ne s'applique qu'à son lanceur — la
+        // potion d'un autre ne se boit pas par procuration.
+        $drinker = $this->createRealPlayer('GmSelfish');
+        $other = $this->createRealPlayer('GmVictim');
+        $drinker->getCoords();
+        $drinker->get_caracs();
+        $other->get_caracs();
+
+        $potion = $this->itemOrSkip('potion_soin');
+        $potion->add_item($drinker, 1);
+        $_POST['itemId'] = (string) $potion->id;
+
+        $results = (new ActionExecutorService($this->actionOrSkip(), $drinker, $other))->executeAction();
+
+        $this->assertTrue($results->isBlocked(), "visée 'self' : une cible tierce doit bloquer");
+        $this->assertSame(1, $potion->get_n(PlayerFactory::legacy($drinker->id)), 'nothing may be consumed');
+    }
+
     public function testANonConsumableItemIsRefusedByAdmissibility(): void
     {
         // Un itemId forgé ne doit pas permettre de « consommer » l'or :
