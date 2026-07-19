@@ -456,6 +456,12 @@
                 centerMap();
                 redrawBlockedMarkers();
                 renderIdleSelection();
+
+                /* Un déplacement journalise (move — et les actions qu'il
+                 * démarre : creuser…) : le flux d'évènements se recharge
+                 * comme après une action, sinon l'évènement n'apparaît
+                 * qu'au prochain rafraîchissement manuel. */
+                loadFeed('events');
             })
             .fail(function () {
                 document.location.reload();
