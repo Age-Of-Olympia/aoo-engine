@@ -350,6 +350,7 @@
                 var doc = new DOMParser().parseFromString(html, 'text/html');
 
                 refreshPills(doc);
+                refreshBoardSprites(doc);
 
                 var freshTimer = doc.getElementById('next-turn-timer');
                 var timer = document.getElementById('next-turn-timer');
@@ -362,6 +363,34 @@
         refreshSelection();
 
         loadFeed('events');
+    }
+
+    /* Sprites du damier après une action : la bascule blessé/réparé
+     * d'un bâtiment change players.avatar côté serveur — recopier les
+     * href des <image> du SVG depuis le re-rendu, nœud par nœud (le
+     * damier en place garde zoom et défilement). Un nœud absent du
+     * re-rendu (bâtiment détruit) est retiré du damier. Les
+     * apparitions (pose) passent par les redraws complets existants. */
+    function refreshBoardSprites(doc) {
+        var freshView = doc.getElementById('svg-view');
+        var currentView = document.getElementById('svg-view');
+        if (!freshView || !currentView) {
+            return;
+        }
+
+        $(currentView).find('image[id]').each(function () {
+            var fresh = freshView.querySelector('image[id="' + this.id + '"]');
+            if (!fresh) {
+                this.remove();
+                return;
+            }
+            var freshHref = fresh.getAttribute('href') || fresh.getAttribute('xlink:href');
+            var currentHref = this.getAttribute('href') || this.getAttribute('xlink:href');
+            if (freshHref !== null && freshHref !== currentHref) {
+                this.setAttribute('href', freshHref);
+                this.setAttribute('xlink:href', freshHref);
+            }
+        });
     }
 
     /* Re-observe la sélection courante : PV, charges, message du

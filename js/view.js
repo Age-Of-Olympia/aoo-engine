@@ -117,8 +117,9 @@ $(document).ready(function(){
      * d'action.php quand la cible est une structure.
      */
     window.aooUpdateBoardSprite = function(id, href){
+        /* nœuds émis par View.php : id="players{id}" et son ombre */
         ['', '-shadow'].forEach(function(suffix){
-            var node = document.getElementById(String(id) + suffix);
+            var node = document.getElementById('players' + String(id) + suffix);
             if(node && node.tagName.toLowerCase() === 'image'){
                 node.setAttribute('href', href);
                 node.setAttribute('xlink:href', href);
