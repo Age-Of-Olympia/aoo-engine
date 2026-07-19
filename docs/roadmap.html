@@ -827,6 +827,12 @@ const FEATURES = [
     player:"Sous le capot : le catalogue d'actions arrête de se dupliquer par objet, et consommer devient composable (conditions, simulation).",
     enables:['craft-building'] },
 
+  { id:'walls-to-entities', title:"Conversion des murs de carte en entités", category:'map-tiles', status:'planned',
+    quarter:6.4, date:'Août 2026',
+    tech:"Les map_walls obstacles/décor deviennent des entités bâtiment (races structure existantes, image copiée telle quelle — zéro filesystem en migration, leçon « Mu ») ; les RESSOURCES récoltables restent map_walls. destroy.php supprimé : attaquer/vanish/sprites couvrent tout. Cadrage : docs/design-walls-to-entities.md — census prod requis avant go.",
+    player:"Tous les murs du monde se comportent pareil : on les attaque, ils s'abîment, ils tombent — plus de règles à part.",
+    enables:['outposts'] },
+
   { id:'craft-building', title:"Artisanat porté par un bâtiment", category:'inventory', status:'planned',
     quarter:6.6, date:'2026-Q3/Q4',
     tech:"L'artisanat (en sommeil derrière CRAFT_ENABLED, code et route intacts) revient adossé à un bâtiment dédié — le geste de craft se fait sur place.",
