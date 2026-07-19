@@ -98,7 +98,10 @@ final class ActionTargeting
             return in_array($category->value, $allowed, true);
         }
 
-        return true;
+        // Sans condition TargetType : PERSONNAGES seulement — le défaut
+        // sûr. Une action voulant viser les structures le déclare
+        // (['character','structure']), comme melee/distance au backfill.
+        return $category === \App\Enum\EntityCategory::Character;
     }
 
     /**

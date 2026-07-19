@@ -189,9 +189,11 @@ class FactionService
     public function countPlayersUsingFaction(string $code): array
     {
         $row = $this->entityManager->getConnection()->fetchAssociative(
+            // Les structures portent une faction (satellite des bâtiments)
+            // mais ne sont pas des MEMBRES : personnages seulement.
             'SELECT COALESCE(SUM(faction = ?), 0) AS members,
                     COALESCE(SUM(secretFaction = ?), 0) AS secretMembers
-             FROM players',
+             FROM players WHERE player_type IN ("real", "npc")',
             [$code, $code]
         );
 
@@ -213,8 +215,8 @@ class FactionService
         $counts = [];
 
         $sql = [
-            'members' => "SELECT faction AS code, COUNT(*) AS n FROM players WHERE faction <> '' GROUP BY faction",
-            'secretMembers' => "SELECT secretFaction AS code, COUNT(*) AS n FROM players WHERE secretFaction <> '' GROUP BY secretFaction",
+            'members' => "SELECT faction AS code, COUNT(*) AS n FROM players WHERE faction <> '' AND player_type IN ('real', 'npc') GROUP BY faction",
+            'secretMembers' => "SELECT secretFaction AS code, COUNT(*) AS n FROM players WHERE secretFaction <> '' AND player_type IN ('real', 'npc') GROUP BY secretFaction",
         ];
         foreach ($sql as $key => $query) {
             foreach ($connection->fetchAllAssociative($query) as $row) {

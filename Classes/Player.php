@@ -2220,6 +2220,17 @@ class Player implements ActorInterface {
             return false;
         }
 
+        /* Une structure (bâtiment, objet unique) n'est pas un
+         * interlocuteur : ni destinataire ni expéditeur de missives —
+         * le courrier s'entassait dans une boîte que personne n'ouvre. */
+        foreach ([$this, $target] as $side) {
+            $category = \App\Enum\EntityCategory::fromPlayerType($side->data->player_type ?? 'real');
+            if (!$category->isSocialActor()) {
+
+                return false;
+            }
+        }
+
         return true;
     }
 

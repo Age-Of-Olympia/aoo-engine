@@ -53,6 +53,14 @@ class MissiveView
                     }
                 }
                 $desti->get_data(false);
+
+                /* Le chemin par NOM est déjà filtré (player_type real) ;
+                 * le chemin par ID numérique acceptait n'importe quelle
+                 * ligne players — bâtiments compris. Même garde que le
+                 * bouton Missive de la carte d'observation. */
+                if (!$player->check_missive_permission($desti)) {
+                    exit('<div id="error">Ce destinataire ne peut pas recevoir de missives.</div>');
+                }
                 Forum::add_dest($player, $desti, $topJson, $destTbl);
                 //Ajouter l'animateur si la faction est différente
                 if (

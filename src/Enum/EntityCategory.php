@@ -41,4 +41,15 @@ enum EntityCategory: string
             self::Structure->value => 'Structure',
         ];
     }
+
+    /**
+     * Acteur SOCIAL : peut échanger des missives, compter dans une
+     * faction, apparaître dans les surfaces de personnages. Un bâtiment
+     * ou un objet unique porte une faction et des options (isMerchant…)
+     * mais n'est pas un interlocuteur.
+     */
+    public function isSocialActor(): bool
+    {
+        return $this === self::Character;
+    }
 }
