@@ -165,7 +165,24 @@ ob_start();
                                 <?= $entry['isTerrain'] ? ' <span class="badge badge-success" title="Déclarée terrain (fondable)">terrain</span>' : '' ?></td>
                             <td style="font-size:12px;"><?= e(implode(', ', $entry['files'])) ?></td>
                             <td><?= $entry['missing'] ? '—' : $entry['width'] . '×' . $entry['height'] ?></td>
-                            <td><?= $entry['usage'] > 0 ? '<strong>' . $entry['usage'] . '</strong>' : '<span class="text-muted">0</span>' ?></td>
+                            <td>
+                                <?php if ($entry['usage'] > 0): ?>
+                                    <details class="row-popover">
+                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                                 title="Positions de cette tuile sur les cartes"><strong><?= $entry['usage'] ?></strong></summary>
+                                        <div class="row-popover-panel" style="max-height:12rem;overflow:auto;font-size:12px;">
+                                            <?php foreach ($service->positionsOfTile($layer, $entry['name']) as $position): ?>
+                                                <div><?= e($position) ?></div>
+                                            <?php endforeach; ?>
+                                            <?php if ($entry['usage'] > 200): ?>
+                                                <div class="text-muted">… (200 premières)</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </details>
+                                <?php else: ?>
+                                    <span class="text-muted">0</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php foreach ($entry['problems'] as $problem): ?>
                                     <div class="text-warning" style="font-size:12px;"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>

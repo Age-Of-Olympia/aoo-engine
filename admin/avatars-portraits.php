@@ -68,6 +68,8 @@ try {
 }
 $withProblems = array_filter($entries, fn(array $entry) => $entry['problems'] !== []);
 $thumbHeight = $type === ImageType::PORTRAIT ? 76 : 50;
+$usersByPath = $entries !== [] ? $service->usersByPath($type) : [];
+$imageDir = '/img/' . ($type === ImageType::PORTRAIT ? 'portraits' : 'avatars') . '/' . $race . '/';
 
 ob_start();
 ?>
@@ -150,9 +152,12 @@ ob_start();
                         <tr>
                             <td style="width:64px;">
                                 <?php if (!$entry['missing']): ?>
-                                    <img src="/img/<?= e($type->value === 'portrait' ? 'portraits' : 'avatars') ?>/<?= e($race) ?>/<?= e($entry['file']) ?>"
-                                         height="<?= $thumbHeight ?>" loading="lazy"
-                                         style="object-fit:contain;border:1px solid #ddd;" alt="">
+                                    <a href="<?= e($imageDir . $entry['file']) ?>" target="_blank"
+                                       title="Afficher en taille réelle (clic droit pour télécharger)">
+                                        <img src="<?= e($imageDir . $entry['file']) ?>"
+                                             height="<?= $thumbHeight ?>" loading="lazy"
+                                             style="object-fit:contain;border:1px solid #ddd;" alt="">
+                                    </a>
                                 <?php else: ?>
                                     <span class="badge badge-danger">absente</span>
                                 <?php endif; ?>
@@ -162,7 +167,22 @@ ob_start();
                             <?php if ($type === ImageType::PORTRAIT): ?>
                                 <td><?= $entry['hasMini'] ? '✓' : '<span class="text-muted">—</span>' ?></td>
                             <?php endif; ?>
-                            <td><?= $entry['usage'] > 0 ? '<strong>' . $entry['usage'] . '</strong>' : '<span class="text-muted">0</span>' ?></td>
+                            <td>
+                                <?php $imageUsers = $usersByPath['img/' . ($type === ImageType::PORTRAIT ? 'portraits' : 'avatars') . '/' . $race . '/' . $entry['file']] ?? []; ?>
+                                <?php if ($imageUsers !== []): ?>
+                                    <details class="row-popover">
+                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                                 title="Joueurs utilisant cette image"><strong><?= count($imageUsers) ?></strong></summary>
+                                        <div class="row-popover-panel" style="max-height:12rem;overflow:auto;">
+                                            <?php foreach ($imageUsers as $userLabel): ?>
+                                                <div><?= e($userLabel) ?></div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </details>
+                                <?php else: ?>
+                                    <span class="text-muted">0</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <?php foreach ($entry['problems'] as $problem): ?>
                                     <div class="text-warning" style="font-size:12px;"><i class="fas fa-exclamation-triangle"></i> <?= e($problem) ?></div>

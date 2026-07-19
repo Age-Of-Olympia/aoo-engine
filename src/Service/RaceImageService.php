@@ -191,6 +191,27 @@ class RaceImageService
     /* ------------------------------------------------------------------ */
 
     /** @return array<string, int> chemin relatif (players.avatar/portrait) => joueurs */
+    /**
+     * Qui utilise quelle image — pour le popover « Joueurs » de la page
+     * d'admin (le compte seul ne dit pas QUI changer avant suppression).
+     *
+     * @return array<string, list<string>> chemin relatif => « Nom (mat.X) »
+     */
+    public function usersByPath(ImageType $type): array
+    {
+        $column = $type === ImageType::PORTRAIT ? 'portrait' : 'avatar';
+        $rows = $this->em()->getConnection()->fetchAllAssociative(
+            "SELECT {$column} AS path, id, name FROM players WHERE {$column} != '' ORDER BY name"
+        );
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(string) $row['path']][] = $row['name'] . ' (mat.' . $row['id'] . ')';
+        }
+
+        return $map;
+    }
+
     private function usageByPath(ImageType $type): array
     {
         $column = $type === ImageType::PORTRAIT ? 'portrait' : 'avatar';

@@ -40,7 +40,19 @@ final class PlayerSearchView
             . '<option value="active">Actifs</option>'
             . '<option value="inactive">Inactifs</option>'
             . '</select>'
+            . $this->raceFilter()
             . '</div>';
+    }
+
+    /**
+     * Race select fed lazily from the rows themselves (data-race), so the
+     * filter always matches what the table actually contains.
+     */
+    private function raceFilter(): string
+    {
+        return '<select id="skills-race" class="form-control" style="max-width:12rem" aria-label="Filtrer par race">'
+            . '<option value="">Toutes les races</option>'
+            . '</select>';
     }
 
     /**
@@ -56,6 +68,7 @@ final class PlayerSearchView
 
             $rows .= '<tr data-filter="' . $this->esc($needle) . '"'
                 . ' data-type="' . ($isNpc ? 'npc' : 'real') . '"'
+                . ' data-race="' . $this->esc(strtolower($player['race'])) . '"'
                 . ' data-active="' . ($active ? '1' : '0') . '">'
                 . '<td>' . (int) $player['id'] . '</td>'
                 . '<td>' . $this->esc($player['name']) . '</td>'
@@ -100,10 +113,15 @@ final class PlayerSearchView
             . 'var input=document.getElementById("skills-filter");'
             . 'var typeSel=document.getElementById("skills-type");'
             . 'var statusSel=document.getElementById("skills-status");'
+            . 'var raceSel=document.getElementById("skills-race");'
             . 'var rows=Array.prototype.slice.call(document.querySelectorAll("#skills-table tbody tr"));'
             . 'var count=document.getElementById("skills-count");'
             . 'var empty=document.getElementById("skills-empty");'
             . 'if(!input)return;'
+            /* remplit le filtre race depuis les lignes (source unique) */
+            . 'if(raceSel){var races={};rows.forEach(function(r){var v=r.getAttribute("data-race");if(v)races[v]=1;});'
+            . 'Object.keys(races).sort().forEach(function(v){var o=document.createElement("option");'
+            . 'o.value=v;o.textContent=v.charAt(0).toUpperCase()+v.slice(1);raceSel.appendChild(o);});}'
             . 'function apply(){'
             . 'var q=input.value.trim().toLowerCase();'
             . 'var t=typeSel?typeSel.value:"";'
@@ -112,9 +130,11 @@ final class PlayerSearchView
             . 'rows.forEach(function(r){'
             . 'var okText=q===""||r.getAttribute("data-filter").indexOf(q)!==-1;'
             . 'var okType=t===""||r.getAttribute("data-type")===t;'
+            . 'var rc=raceSel?raceSel.value:"";'
+            . 'var okRace=rc===""||r.getAttribute("data-race")===rc;'
             . 'var active=r.getAttribute("data-active")==="1";'
             . 'var okStatus=s===""||(s==="active"?active:!active);'
-            . 'var match=okText&&okType&&okStatus;'
+            . 'var match=okText&&okType&&okStatus&&okRace;'
             . 'r.style.display=match?"":"none";if(match)shown++;});'
             . 'if(count)count.textContent=shown;'
             . 'if(empty)empty.style.display=shown===0?"":"none";'
@@ -122,6 +142,7 @@ final class PlayerSearchView
             . 'input.addEventListener("input",apply);'
             . 'if(typeSel)typeSel.addEventListener("change",apply);'
             . 'if(statusSel)statusSel.addEventListener("change",apply);'
+            . 'if(raceSel)raceSel.addEventListener("change",apply);'
             . '})();</script>';
     }
 

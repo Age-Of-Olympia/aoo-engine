@@ -422,6 +422,29 @@ class TileAssetService
         }
     }
 
+    /**
+     * Positions d'une tuile sur les cartes — pour le popover « Positions »
+     * de la page d'admin (le compte seul ne dit pas OÙ aller la remplacer).
+     *
+     * @return list<string> « x, y (z) plan », bornées à $limit
+     */
+    public function positionsOfTile(string $layer, string $name, int $limit = 200): array
+    {
+        $this->assertLayer($layer);
+
+        $rows = $this->connection()->fetchAllAssociative(
+            'SELECT c.x, c.y, c.z, c.plan FROM map_' . $layer . ' m
+             INNER JOIN coords c ON m.coords_id = c.id
+             WHERE m.name = ? ORDER BY c.plan, c.z, c.x, c.y LIMIT ' . $limit,
+            [$name]
+        );
+
+        return array_map(
+            static fn(array $row): string => $row['x'] . ', ' . $row['y'] . ' (z' . $row['z'] . ') ' . $row['plan'],
+            $rows
+        );
+    }
+
     private function connection(): \Doctrine\DBAL\Connection
     {
         $this->entityManager ??= EntityManagerFactory::getEntityManager();
