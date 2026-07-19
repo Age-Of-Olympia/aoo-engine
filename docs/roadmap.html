@@ -799,8 +799,8 @@ const FEATURES = [
 
   { id:'line-of-fire', title:"Ligne de tir", category:'combat', status:'shipped',
     quarter:6.1, date:'Juil 2026 (S3)',
-    tech:"Bresenham pur (extrémités exclues) ; premier obstacle = entité structure qui arrête les projectiles (races.blocks_projectiles) ou map_walls. Tir refusé au travers ; trajectoire tracée au damier (verte/rouge), désactivable (option hideLineOfFire).",
-    player:"Un tir à distance est bloqué par les murs, arbres et bâtiments — et la trajectoire se dessine sur le plateau.",
+    tech:"Bresenham pur (extrémités exclues) ; premier obstacle = toute entité dont la race arrête les projectiles (races.blocks_projectiles : structures par défaut, personnages seulement si cochés) ou map_walls. Tir refusé au travers ; trajectoire à la demande — clic droit / appui long (api/map/line_of_fire.php), bascule, option hideLineOfFire.",
+    player:"Un tir à distance est bloqué par les murs, arbres et bâtiments — et la trajectoire se dessine d'un clic droit (appui long au mobile) sur le plateau.",
     enables:[] },
 
   { id:'admin-player-editor', title:"Fiche d'édition de personnage (admin)", category:'admin', status:'shipped',
@@ -823,15 +823,33 @@ const FEATURES = [
 
   { id:'generic-item-actions', title:"Actions génériques paramétrées par l'objet", category:'action-system', status:'shipped',
     quarter:6.25, date:'Juil 2026 (S3)', playerHidden:true,
-    tech:"UNE action construire (au lieu de ~39 construire_<type>) et UNE action consommer (aujourd'hui hors moteur, coût 1 A codé à la main dans InventoryService) : l'objet devient un paramètre d'exécution (condition ItemPick, patron BuildSitePick). Cadrage : docs/design-generic-item-actions.md — à faire avant l'ouverture de la S3 (les construire_* n'existent qu'en préprod).",
+    tech:"Livrées : construire (remplace ~39 construire_<type>, visée « none »), consommer (visée « self », dans le moteur), équiper, creuser (DigSite bloquante, événement garanti) et fabriquer — l'objet est un paramètre d'exécution (condition ItemPick, patron BuildSitePick). XP et événements par type (action_type_xp / action_type_logs, ActionEventLogger partagé).",
     player:"Sous le capot : le catalogue d'actions arrête de se dupliquer par objet, et consommer devient composable (conditions, simulation).",
     enables:['craft-building'] },
 
-  { id:'walls-to-entities', title:"Conversion des murs de carte en entités", category:'map-tiles', status:'planned',
-    quarter:6.4, date:'Août 2026',
-    tech:"Les map_walls obstacles/décor deviennent des entités bâtiment (races structure existantes, image copiée telle quelle — zéro filesystem en migration, leçon « Mu ») ; les RESSOURCES récoltables restent map_walls. destroy.php supprimé : attaquer/vanish/sprites couvrent tout. Cadrage : docs/design-walls-to-entities.md — census prod requis avant go.",
+  { id:'walls-to-entities', title:"Conversion des murs de carte en entités", category:'map-tiles', status:'shipped',
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"Livrée (!706–!708) : les map_walls obstacles/décor sont devenus des entités bâtiment (image copiée telle quelle — zéro filesystem en migration, leçon « Mu » ; self-heal au rendu + console building repair-avatars), table map_walls_archive pour rollback. Les RESSOURCES récoltables restent map_walls ; destroy.php survit pour les seuls autels. ⚠ Census prod requis avant le merge staging (requête dans docs/design-walls-to-entities.md).",
     player:"Tous les murs du monde se comportent pareil : on les attaque, ils s'abîment, ils tombent — plus de règles à part.",
     enables:['outposts'] },
+
+  { id:'admin-types-images', title:"Types de bâtiments : section admin + stock d'images", category:'admin', status:'shipped',
+    quarter:6.35, date:'Juil 2026 (S3)', playerHidden:true,
+    tech:"La table races garde deux visages : Races (personnages) et Bâtiments → Types/Images (wrappers ?kind=structure). Vignettes partout (première image du stock), sprite du plateau résolu stock → mur du même nom, bouton « Copier dans le stock » (copie verbatim, la transparence survit), suppression et messages au vocabulaire des types.",
+    player:"Les animateurs gèrent les types de bâtiments (PV, nature, images) sans plus les confondre avec les races de personnages.",
+    enables:[] },
+
+  { id:'map-elements-admin', title:"Éléments posés : admin + constructible par-dessus", category:'map-tiles', status:'shipped',
+    quarter:6.3, date:'Juil 2026 (S3)',
+    tech:"Le lien case ↔ effet (marcher applique l'effet du même nom) devient réglable : page Cartes → Éléments posés (pose à la case, durée ou permanent, sélection multiple, purge manuelle des expirés). Et effects.buildable_over : un élément ne bloque plus systématiquement la construction — sang, boue et traces laissent bâtir, feu/lave/ronce non.",
+    player:"Les animateurs peuvent piéger ou décorer une case (boue, feu…) sans toucher à la base — et une simple trace de pas n'empêche plus de construire.",
+    enables:['elements-refonte'] },
+
+  { id:'wiki-generator', title:"Générateur de fiches wiki (5 familles)", category:'admin', status:'shipped',
+    quarter:6.35, date:'Juil 2026 (S3)', playerHidden:true,
+    tech:"admin → Wiki : markup DokuWiki généré à la volée depuis les exporters de bundles (une seule source de vérité) — actions, passifs, effets, objets, races & types. Mécaniques dérivées du moteur (coûts, visées, bonus PassiveValueCalculator, règles d'effets) : le wiki ne peut pas mentir. Une famille de plus = une petite classe renderer.",
+    player:"Le wiki public reste juste : les fiches se régénèrent d'un clic depuis les vraies données du jeu, plus de recopie à la main qui vieillit mal.",
+    enables:[] },
 
   { id:'craft-building', title:"Artisanat porté par un bâtiment", category:'inventory', status:'planned',
     quarter:6.6, date:'2026-Q3/Q4',
