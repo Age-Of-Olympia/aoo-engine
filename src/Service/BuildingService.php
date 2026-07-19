@@ -76,12 +76,14 @@ class BuildingService extends BaseService
 
     /**
      * Ligne de tir entre deux points du même plan : les cases traversées
-     * (Bresenham, extrémités exclues) et le premier obstacle — une
-     * entité structure dont la race arrête les projectiles
-     * (races.blocks_projectiles), ou n'importe quel map_walls (arbre,
-     * pilier, statue… : tout ce qui bloque le pas bloque la flèche).
-     * Sert au refus du tir (DistanceCompute) et à l'affichage de la
-     * trajectoire sur le damier (observe).
+     * (Bresenham, extrémités exclues) et le premier obstacle — toute
+     * entité dont la race arrête les projectiles
+     * (races.blocks_projectiles : les structures par défaut, un
+     * personnage seulement si sa race est cochée — par défaut les tirs
+     * passent), ou n'importe quel map_walls (arbre, pilier, statue… :
+     * tout ce qui bloque le pas bloque la flèche). Sert au refus du tir
+     * (DistanceCompute) et à l'affichage de la trajectoire sur le damier
+     * (observe).
      *
      * @return array{tiles: list<array{int,int}>, blocker: ?array{int,int}, blockerName: ?string}
      */
@@ -107,14 +109,16 @@ class BuildingService extends BaseService
 
         $blockersByTile = [];
 
-        $blocking = $this->raceService->getProjectileBlockingStructureNames();
+        $blocking = $this->raceService->getProjectileBlockingRaceNames();
         if ($blocking !== []) {
+            // Tout type d'entité : la race décide seule — les tombes de
+            // bâtiments et les morts sont hors plateau (plan), invisibles
+            // au filtre de cases.
             $rows = $conn->fetchAllAssociative(
                 'SELECT c.x, c.y, p.name
                  FROM players p
                  JOIN coords c ON c.id = p.coords_id
-                 WHERE p.player_type IN (\'building\', \'unique\')
-                   AND ' . $tileFilter . '
+                 WHERE ' . $tileFilter . '
                    AND p.race IN (' . implode(',', array_fill(0, count($blocking), '?')) . ')',
                 array_merge($tileParams, $blocking)
             );

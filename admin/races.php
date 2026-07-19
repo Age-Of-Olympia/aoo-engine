@@ -363,9 +363,10 @@ HTML;
             . ' title="Élément versé au sol quand l\'entité est blessée — rien : un mur ne saigne pas."'
         )
         . '</label> '
-        // Nature et flags de blocage : structures seulement — sur le
-        // visage Races ils sont posés en champs cachés (le save les lit),
-        // pas affichés.
+        // La Nature (édifice/obstacle) n'a de sens que pour une structure :
+        // champ caché sur le visage Races. Les flags de blocage restent
+        // éditables partout — une race massive PEUT faire écran aux tirs,
+        // simplement pas par défaut.
         . ($structureMode
             ? '<label class="mr-3">Nature '
                 . formSelect(
@@ -377,17 +378,16 @@ HTML;
                     . ' title="Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
                 )
                 . '</label> '
-                . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
-                . checked(!$isEdit || $race->blocksPassage())
-                . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
-                . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
-                . checked(!$isEdit || $race->blocksProjectiles())
-                . ' title="Décoché : les tirs passent au-dessus (table, muret bas…)."> Bloque les tirs</label> '
-            // Pas de blocks_projectiles côté Races : le save le force à
-            // faux pour une sorte personnage.
             : '<input type="hidden" name="structure_nature" value="'
-                . ($isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice') . '">'
-                . (!$isEdit || $race->blocksPassage() ? '<input type="hidden" name="blocks_passage" value="1">' : ''))
+                . ($isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice') . '">')
+        . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
+        . checked(!$isEdit || $race->blocksPassage())
+        . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
+        . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
+        // Coché par défaut pour un type (un mur arrête la flèche), pas
+        // pour une race de personnage (les tirs passent, sauf exception).
+        . checked($isEdit ? $race->blocksProjectiles() : $structureMode)
+        . ' title="Décoché (défaut des personnages) : les tirs passent. Coché : fait écran sur la ligne de tir."> Bloque les tirs</label> '
         . ($structureMode ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
         . '<label><input type="checkbox" name="hidden" '

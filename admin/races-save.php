@@ -105,9 +105,7 @@ $applyForm = static function (Race $race): string {
     $bleeds = trim((string) ($_POST['bleeds'] ?? ''));
     $race->setBleeds($bleeds !== '' && (new \App\Service\EffectService())->exists($bleeds) ? $bleeds : '');
     $race->setBlocksPassage(booleanCheckbox('blocks_passage'));
-    // Arrêter les projectiles est une mécanique de structure : une race
-    // de personnage ne bloque jamais les tirs, quoi que poste le form.
-    $race->setBlocksProjectiles($kind === 'structure' && booleanCheckbox('blocks_projectiles'));
+    $race->setBlocksProjectiles(booleanCheckbox('blocks_projectiles'));
     $race->setPlayable($kind === 'character' && booleanCheckbox('playable'));
     $race->setHidden(booleanCheckbox('hidden'));
     $race->setBgColor((string) $_POST['bgColor']);

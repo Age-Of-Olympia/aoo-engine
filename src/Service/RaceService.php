@@ -143,14 +143,16 @@ class RaceService
     }
 
     /**
-     * @return string[] Noms des races STRUCTURE qui arrêtent les
-     *                  projectiles (murs…) — la ligne de tir les
-     *                  contourne ou échoue.
+     * @return string[] Noms des races — toutes sortes — qui arrêtent les
+     *                  projectiles : les structures par défaut (murs…),
+     *                  et toute race de personnage cochée explicitement
+     *                  (une race massive peut faire écran ; par défaut
+     *                  les tirs passent au-dessus des personnages).
      */
-    public function getProjectileBlockingStructureNames(): array
+    public function getProjectileBlockingRaceNames(): array
     {
         $names = [];
-        foreach ($this->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+        foreach ($this->getAllRaces() as $race) {
             if ($race->blocksProjectiles()) {
                 $names[] = $race->getName();
             }

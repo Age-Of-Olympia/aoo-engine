@@ -8,12 +8,13 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
 /**
- * Les races de personnages n'arrêtent pas les projectiles (revue du
- * 2026-07-20) : blocks_projectiles est une mécanique de structure (la
- * ligne de tir ne consulte que les entités posées) mais les races de
- * personnages portaient encore le défaut à 1 — config trompeuse. Le
- * panneau d'admin force désormais 0 à l'enregistrement d'une race ;
- * cette migration aligne l'existant. Idempotente.
+ * Par défaut, un personnage ne fait pas écran aux tirs (revue du
+ * 2026-07-20) : la ligne de tir consulte désormais TOUTES les entités
+ * dont la race coche blocks_projectiles — structures comme personnages.
+ * Les 16 races de personnages portaient le défaut de colonne à 1 (héritée
+ * de la création des structures), ce qui aurait bloqué toutes les
+ * flèches : on les passe à 0. L'option reste éditable race par race
+ * (une race massive peut faire écran). Idempotente.
  */
 final class Version20260720100000_CharacterRacesDontBlockProjectiles extends AbstractMigration
 {
