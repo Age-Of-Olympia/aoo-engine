@@ -155,6 +155,43 @@ while($row = $res->fetch_object()){
 }
 
 
+/* Plantes (map_plants) : mêmes égards que les routes — le panneau de
+ * case dit ce qui pousse ici et comment le récolter. */
+$sql = '
+SELECT
+p.name
+FROM
+map_plants AS p
+INNER JOIN
+coords AS c
+ON
+p.coords_id = c.id
+WHERE
+c.x = ?
+AND
+c.y = ?
+AND
+c.z = ?
+AND
+c.plan = ?
+';
+
+$res = $db->exe($sql, array($x, $y, $coords->z, $coords->plan));
+
+while($row = $res->fetch_object()){
+
+    echo '
+    <div class="case-infos">
+        <img src="img/plants/'. $row->name .'.png" />
+        <div class="text">
+            '. ucfirst($row->name) .'<br />
+            Se récolte en marchant sur la case.
+        </div>
+    </div>
+    ';
+}
+
+
 // plan exceptions
 $planJson = json()->decode('plans', $player->coords->plan);
 
