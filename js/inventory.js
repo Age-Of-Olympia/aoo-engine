@@ -176,13 +176,16 @@ $(document).ready(function(){
                     return;
                 }
 
-                /* Consommer passe par le MOTEUR D'ACTIONS : l'action
-                 * générique `consommer` reçoit l'objet via itemId
-                 * (ItemPick) — coût 1 A, retrait et effets en conditions
-                 * et outcomes, journalisé comme toute action. */
-                if(action == 'use' && window.useKind == 'consume'){
+                /* Consommer et équiper passent par le MOTEUR D'ACTIONS :
+                 * les actions génériques `consommer`/`equiper` reçoivent
+                 * l'objet via itemId (+ instance précise pour l'équipement)
+                 * — coûts, retrait et effets en conditions et outcomes,
+                 * journalisés comme toute action. */
+                if(action == 'use' && (window.useKind == 'consume' || window.useKind == 'equip')){
 
-                    $.post('action.php', { action: 'consommer', itemId: window.id }, function(data){
+                    var genericAction = window.useKind == 'consume' ? 'consommer' : 'equiper';
+
+                    $.post('action.php', { action: genericAction, itemId: window.id, instanceId: window.instanceId || '' }, function(data){
 
                         if(window.hudShowActionResult){
 
