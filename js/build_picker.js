@@ -22,7 +22,7 @@ $(document).ready(function(){
 
     /* Charge utile complète exigée : un pendingBuild tronqué armerait un
        POST action=undefined. */
-    if(!pending || typeof pending.action !== 'string' || typeof pending.name !== 'string'){
+    if(!pending || typeof pending.action !== 'string' || typeof pending.name !== 'string' || !pending.itemId){
         sessionStorage.removeItem('pendingBuild');
         return;
     }
@@ -93,7 +93,7 @@ $(document).ready(function(){
 
         cleanup();
 
-        $.post('action.php', { action: pending.action, buildX: coords[0], buildY: coords[1] }, function(data){
+        $.post('action.php', { action: pending.action, itemId: pending.itemId, buildX: coords[0], buildY: coords[1] }, function(data){
 
             var text = $('<div></div>').html(
                 data.replace(/<script[\s\S]*?<\/script>/gi, '')

@@ -20,6 +20,8 @@ class ConditionObject
     protected ?int $lifeloss = null;
     /** Case de construction validée par BuildSiteCondition (x/y/z/plan). */
     protected ?object $buildCoords = null;
+    /** Objet du catalogue validé par ItemPickCondition (possession + admissibilité). */
+    protected ?\Classes\Item $pickedItem = null;
 
 
     public function __construct() {
@@ -33,6 +35,17 @@ class ConditionObject
     public function setBuildCoords(object $buildCoords): self
     {
         $this->buildCoords = $buildCoords;
+        return $this;
+    }
+
+    public function getPickedItem(): ?\Classes\Item
+    {
+        return $this->pickedItem;
+    }
+
+    public function setPickedItem(\Classes\Item $item): self
+    {
+        $this->pickedItem = $item;
         return $this;
     }
 

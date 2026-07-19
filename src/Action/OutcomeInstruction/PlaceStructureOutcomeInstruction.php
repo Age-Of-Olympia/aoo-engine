@@ -42,8 +42,15 @@ class PlaceStructureOutcomeInstruction extends OutcomeInstruction implements Has
     public function execute(Player $actor, Player $target, ConditionObject $conditionObject): OutcomeResult
     {
         $params = $this->getParameters() ?? [];
-        $type = (string) ($params['type'] ?? '');
+        // Type statique, sinon dérivé de l'objet du geste (ItemPick) : le
+        // nom d'objet EST le type de structure — la convention des sprites
+        // et des pseudo-races (action générique « construire »).
+        $type = (string) ($params['type'] ?? $conditionObject->getPickedItem()?->row->name ?? '');
         $name = trim((string) ($params['name'] ?? ''));
+
+        if ($type === '') {
+            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['PlaceStructure : aucun type (ni statique, ni fourni au geste).']);
+        }
 
         if (!isset($actor->coords)) {
             $actor->getCoords();

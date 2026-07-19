@@ -72,12 +72,13 @@ $(document).ready(function(){
 
         /* Constructibles (nouveau système) : bâtir DEPUIS l'objet — retour
            au damier en mode choix de case (spotlight du tutoriel, voir
-           js/build_picker.js) ; l'action construire_{objet} est la
-           mécanique. */
+           js/build_picker.js) ; l'action générique `construire` reçoit
+           l'objet via itemId (condition ItemPick). */
         if(action == 'use' && window.type == 'constructible'){
 
             sessionStorage.setItem('pendingBuild', JSON.stringify({
                 'action': window.buildAction,
+                'itemId': window.id,
                 'name': window.name
             }));
 
@@ -172,6 +173,31 @@ $(document).ready(function(){
             askConfirm.then(function(ok){
 
                 if(!ok){
+                    return;
+                }
+
+                /* Consommer passe par le MOTEUR D'ACTIONS : l'action
+                 * générique `consommer` reçoit l'objet via itemId
+                 * (ItemPick) — coût 1 A, retrait et effets en conditions
+                 * et outcomes, journalisé comme toute action. */
+                if(action == 'use' && window.useKind == 'consume'){
+
+                    $.post('action.php', { action: 'consommer', itemId: window.id }, function(data){
+
+                        if(window.hudShowActionResult){
+
+                            window.hudShowActionResult(data, true);
+                            /* le panneau d'inventaire se recharge sous la
+                             * modale : le compte d'exemplaires est à jour */
+                            if(window.hudReloadPanels){
+                                window.hudReloadPanels();
+                            }
+                            return;
+                        }
+
+                        var text = $('<div></div>').html(data).text().trim();
+                        aooAlert(text || 'Consommé.').then(aooReload);
+                    });
                     return;
                 }
 
