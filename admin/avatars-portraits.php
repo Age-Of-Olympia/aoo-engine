@@ -121,6 +121,32 @@ ob_start();
     </div>
 
     <?php if ($race !== ''): ?>
+    <?php if ($structureMode && $type === ImageType::AVATAR):
+        // Le sprite EFFECTIF du plateau — celui des vignettes de la liste
+        // des Types. Sans stock, il est hérité d'un fichier du jeu (mur du
+        // même nom, webp dédié) : visible ici pour ne pas laisser croire
+        // que le type n'a pas d'image.
+        $effective = \App\Service\BuildingService::resolveAvatar($race);
+        $effectiveSource = match (true) {
+            $effective === '' => '',
+            str_starts_with($effective, 'img/avatars/' . $race . '/') => 'première image du stock ci-dessous',
+            str_starts_with($effective, 'img/walls/') => 'hérité du sprite de mur du même nom — ajoutez une image au stock pour le remplacer',
+            default => 'fichier dédié ' . $effective . ' — ajoutez une image au stock pour le remplacer',
+        };
+    ?>
+    <div class="card mt-3">
+        <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
+            <span class="text-muted" style="font-size:13px;"><i class="fas fa-chess-rook"></i> Sprite sur le plateau :</span>
+            <?php if ($effective !== ''): ?>
+                <img src="/<?= e($effective) ?>" height="40" style="object-fit:contain;border:1px solid #ddd;background:#fff;" alt="">
+                <code style="font-size:12px;"><?= e($effective) ?></code>
+                <small class="text-muted"><?= e($effectiveSource) ?></small>
+            <?php else: ?>
+                <small class="text-muted">aucun — les entités posées affichent leurs initiales.</small>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
     <div class="card mt-3">
         <div class="card-body">
             <h5 class="card-title">Ajouter un <?= e($type->value) ?> — <?= $structureMode ? 'type' : 'race' ?> <?= e($race) ?></h5>
@@ -154,7 +180,10 @@ ob_start();
             </div>
 
             <?php if ($entries === []): ?>
-                <div class="alert alert-info mb-0">Aucune image pour cette race.</div>
+                <div class="alert alert-info mb-0"><?= $structureMode
+                    ? 'Aucune image dans le stock de ce type' . ($type === ImageType::AVATAR
+                        ? ' — le plateau utilise le sprite hérité ci-dessus.' : '.')
+                    : 'Aucune image pour cette race.' ?></div>
             <?php else: ?>
                 <table class="table table-sm table-striped" style="font-size:13px;" data-admin-list data-page-size="40">
                     <thead><tr>
