@@ -18,6 +18,7 @@ final class WikiRendererRegistry
     {
         foreach ($renderers ?? [
             new ActionWikiRenderer(),
+            new PassiveWikiRenderer(),
             new EffectWikiRenderer(),
             new ItemWikiRenderer(),
             new RaceWikiRenderer(),
