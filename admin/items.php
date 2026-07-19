@@ -47,6 +47,28 @@ function items_catalog(): array
     return $rows;
 }
 
+/**
+ * Joueurs distincts possédant chaque objet (inventaire ∪ banque) — la
+ * colonne « Joueurs » de la liste, et le garde-fou du bouton Supprimer.
+ *
+ * @return array<int, int> item_id => nombre de joueurs
+ */
+function items_owner_counts(): array
+{
+    $counts = [];
+    $res = (new \Classes\Db())->exe(
+        'SELECT item_id, COUNT(DISTINCT player_id) AS n FROM (
+            SELECT item_id, player_id FROM players_items
+            UNION
+            SELECT item_id, player_id FROM players_items_bank
+         ) AS u GROUP BY item_id'
+    );
+    while ($row = $res->fetch_object()) {
+        $counts[(int) $row->item_id] = (int) $row->n;
+    }
+    return $counts;
+}
+
 function item_flag_badges(object $row): string
 {
     $badges = [];
@@ -104,6 +126,7 @@ function items_render_list(array $items, string $csrfToken): string
     $inDb = 0;
     $typeCounts = [];
     $rows = [];
+    $ownerCounts = items_owner_counts();
     foreach ($items as $row) {
         $type = (string) ($row->type ?? '');
         if ($type === '' && empty($row->stats_in_db)) {
@@ -142,6 +165,20 @@ function items_render_list(array $items, string $csrfToken): string
                 . '</form>';
         }
 
+        // Supprimable seulement sans détenteur — les autres références
+        // (instances, sol, recettes, marché) sont re-vérifiées côté
+        // items-save.php avec le détail du refus.
+        $owners = $ownerCounts[(int) $row->id] ?? 0;
+        $deleteButton = ' <form method="post" style="display:inline"'
+            . ' action="/admin/items-save.php?action=delete"'
+            . ' onsubmit="return confirm(\'Supprimer définitivement « ' . e($row->name) . ' » du catalogue ?\');">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="hidden" name="id" value="' . (int) $row->id . '">'
+            . '<button class="btn btn-sm btn-outline-danger"'
+            . ($owners > 0 ? ' disabled title="Encore détenu par ' . $owners . ' joueur(s)"' : ' title="Supprimer du catalogue"')
+            . '>Supprimer</button>'
+            . '</form>';
+
         $rows[] = '<tr data-type="' . e($type) . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
@@ -151,10 +188,12 @@ function items_render_list(array $items, string $csrfToken): string
             . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . item_wear_cell($row) . '</td>'
+            . '<td title="Joueurs distincts en possédant (inventaire ou banque)">'
+            . ($owners > 0 ? '<strong>' . $owners . '</strong>' : '<span class="text-muted">0</span>') . '</td>'
             . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
             . ' href="/admin/action-export.php?type=item&name=' . e(urlencode($row->name)) . '">JSON</a>'
-            . $migrateButton . '</td>'
+            . $migrateButton . $deleteButton . '</td>'
             . '</tr>';
     }
 
@@ -171,7 +210,7 @@ function items_render_list(array $items, string $csrfToken): string
         . '<input type="text" class="form-control mb-2" id="items-filter" placeholder="filtrer…"'
         . ' onkeyup="itemsApplyFilters();">'
         . renderTable(
-            ['Objet', 'Type', 'Stats', 'Flags', 'Élément', 'Sort lié', 'Usure', ''],
+            ['Objet', 'Type', 'Stats', 'Flags', 'Élément', 'Sort lié', 'Usure', 'Joueurs', ''],
             $rows,
             'class="table table-sm table-striped align-middle" id="items-table"'
         );
@@ -308,25 +347,42 @@ function items_render_edit(object $row, string $csrfToken): string
 
     // Toutes les représentations visuelles de l'objet, manquantes incluses —
     // dont l'image « brisé » des structures de carte (bascule à mi-PV,
-    // destroy.php) : voir d'un coup d'œil ce qui existe et ce qui manque.
+    // destroy.php). Chaque emplacement s'importe ici même : l'image
+    // téléversée est convertie au format attendu (webp/png), le nom de
+    // fichier découle du nom technique. Les formulaires d'upload vivent
+    // HORS du formulaire d'édition (attribut form — pas d'imbrication).
     $imagesPanel = '';
+    $imageUploadForms = '';
     foreach ([
-        'img/items/' . $row->name . '.webp' => 'Objet',
-        'img/items/' . $row->name . '_mini.webp' => 'Vignette',
-        'img/walls/' . $row->name . '.png' => 'Sur la carte',
-        'img/walls/' . $row->name . '_broken.png' => 'Sur la carte — brisé',
-    ] as $path => $label) {
+        'item' => ['img/items/' . $row->name . '.webp', 'Objet'],
+        'mini' => ['img/items/' . $row->name . '_mini.webp', 'Vignette'],
+        'wall' => ['img/walls/' . $row->name . '.png', 'Sur la carte'],
+        'wall_broken' => ['img/walls/' . $row->name . '_broken.png', 'Sur la carte — brisé'],
+    ] as $slot => [$path, $label]) {
         $exists = is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $path);
-        $imagesPanel .= '<div class="text-center d-inline-block m-1" style="width:110px;vertical-align:top;">'
+        $formId = 'item-img-' . $slot;
+        $imagesPanel .= '<div class="text-center d-inline-block m-1" style="width:130px;vertical-align:top;">'
             . ($exists
-                ? '<img src="/' . e($path) . '" style="max-width:100px;max-height:80px;" alt="">'
+                ? '<img src="/' . e($path) . '?t=' . filemtime($_SERVER['DOCUMENT_ROOT'] . '/' . $path) . '" style="max-width:100px;max-height:80px;" alt="">'
                 : '<div style="width:100px;height:80px;display:inline-flex;align-items:center;justify-content:center;'
-                  . 'border:1px dashed #bbb;color:#999;font-size:11px;">manquante</div>')
+                  . 'border:1px dashed #bbb;color:#999;font-size:11px;margin:auto;">manquante</div>')
             . '<div><small>' . $label . ($exists ? '' : ' <span class="text-muted">(repli : image par défaut)</span>') . '</small></div>'
+            . '<input type="file" form="' . $formId . '" name="image_file" required'
+            . ' accept=".png,.jpg,.jpeg,.webp,.gif" style="width:120px;font-size:10px;">'
+            . '<button type="submit" form="' . $formId . '" class="btn btn-sm btn-outline-primary mt-1">Importer</button>'
             . '</div>';
+        $imageUploadForms .= '<form id="' . $formId . '" method="post" enctype="multipart/form-data"'
+            . ' action="/admin/items-save.php?action=upload-image">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="hidden" name="id" value="' . (int) $row->id . '">'
+            . '<input type="hidden" name="slot" value="' . e($slot) . '">'
+            . '</form>';
     }
     $imagesPanel = '<div class="card mb-3"><div class="card-header">Images</div>'
-        . '<div class="card-body py-2">' . $imagesPanel . '</div></div>';
+        . '<div class="card-body py-2">' . $imagesPanel
+        . '<div><small class="text-muted">L\'image importée est convertie au format de l\'emplacement'
+        . ' (webp objet/vignette, png carte) sans redimensionnement.</small></div>'
+        . '</div></div>';
 
     // Création : pas encore de ligne en base — champ nom éditable,
     // POST vers action=create, pas de panneau d'images (elles portent le nom).
@@ -431,7 +487,8 @@ function items_render_edit(object $row, string $csrfToken): string
         . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
         . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'
-        . '</form>';
+        . '</form>'
+        . ($isNew ? '' : $imageUploadForms);
 
     $header = $isNew
         ? 'Nouvel objet'
