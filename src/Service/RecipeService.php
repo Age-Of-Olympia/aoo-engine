@@ -119,7 +119,10 @@ class RecipeService
                 $itemRecipe = new \Classes\Item($ingredient->getItem()->getId());
 
                 if (!$itemRecipe->add_item($player, -$ingredient->GetCount())) {
-                    $message = "Vous n\'avez pas assez de {$ingredient->name} pour la recette {$recipe->getName()}";
+                    // rollback obligatoire : sans lui la transaction restait
+                    // OUVERTE sur ce chemin de refus (bug latent)
+                    $db->rollback();
+                    $message = "Vous n'avez pas assez de {$ingredient->getItem()->getName()} pour la recette {$recipe->getName()}";
                     return false;
                 }
             }
