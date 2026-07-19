@@ -17,7 +17,7 @@ if(!empty($_POST['action']) && $_POST['action'] == 'store'){
 $ui = new Ui('Inventaire');
 
 /* Artisanat en sommeil (CRAFT_ENABLED) : onglet masqué, la route ?craft reste. */
-$craftTab = CRAFT_ENABLED ? '<a href="inventory.php?craft"><button><span class="ra ra-forging"></span> Artisanat</button></a>' : '';
+$craftTab = Ui::craftEnabled() ? '<a href="inventory.php?craft"><button><span class="ra ra-forging"></span> Artisanat</button></a>' : '';
 
 echo '<div><a href="index.php"><button id="back"><span class="ra ra-sideswipe"></span> Retour</button></a><a href="inventory.php"><button><span class="ra ra-key"></span> Inventaire</button></a>'. $craftTab .'<a href="inventory.php?bank"><button><span class="ra ra-gold-bar"></span></span> Banque</button></a></div>';
 

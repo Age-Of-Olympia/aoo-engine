@@ -156,6 +156,16 @@ class Ui{
         }
     }
 
+    /**
+     * L'artisanat est-il visible ? (constante CRAFT_ENABLED — lue via
+     * constant() pour que PHPStan ne fige pas la branche en « toujours
+     * false » tant que la fonctionnalité dort)
+     */
+    public static function craftEnabled(): bool
+    {
+        return defined('CRAFT_ENABLED') && (bool) constant('CRAFT_ENABLED');
+    }
+
     public static function get_card($data) : string{
 
         ob_start();
@@ -511,7 +521,7 @@ class Ui{
 
                     /* bouton Artisanat en sommeil tant que CRAFT_ENABLED est
                      * à false (reviendra porté par un bâtiment dédié) */
-                    $craftAction = CRAFT_ENABLED
+                    $craftAction = self::craftEnabled()
                         ? '<button class="row-action" data-action="craft" title="Artisanat"><span class="ra ra-forging"></span></button>'
                         : '';
 
