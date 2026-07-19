@@ -23,10 +23,52 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/layout.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/admin/helpers.php');
 
 use App\Entity\Race;
+use App\Enum\ImageType;
 use App\Service\ActionService;
+use App\Service\BuildingService;
 use App\Service\CsrfProtectionService;
 use App\Service\FactionService;
+use App\Service\RaceImageService;
 use App\Service\RaceService;
+
+/**
+ * Vignette d'une race ou d'un type : la PREMIÈRE image du stock (admin →
+ * Avatars & portraits / Bâtiments → Images) — pour un type, le sprite
+ * effectivement posé sur le plateau (stock, sinon le mur du même nom) :
+ * le même visuel que partout ailleurs. Chemin relatif, ou '' sans image.
+ */
+function race_image_path(string $name, bool $structureMode): string
+{
+    if ($structureMode) {
+        return BuildingService::resolveAvatar($name);
+    }
+
+    try {
+        return (new RaceImageService())->firstImagePath(ImageType::AVATAR, $name) ?? '';
+    } catch (\RuntimeException) {
+        return ''; // nom hors canon : pas de dossier de stock possible
+    }
+}
+
+/** Page du stock d'images correspondant à la section courante. */
+function race_images_page(bool $structureMode): string
+{
+    return $structureMode ? '/admin/structure-images.php' : '/admin/avatars-portraits.php';
+}
+
+/** La vignette, cliquable vers le stock d'images de la race / du type. */
+function race_image_cell(string $name, bool $structureMode): string
+{
+    $path = race_image_path($name, $structureMode);
+    $href = race_images_page($structureMode) . '?type=avatar&amp;race=' . e(urlencode($name));
+
+    $inner = $path !== ''
+        ? '<img src="/' . e($path) . '" height="36" loading="lazy" alt=""'
+            . ' style="object-fit:contain;border:1px solid #ddd;background:#fff;">'
+        : '<span class="text-muted">—</span>';
+
+    return '<a href="' . $href . '" title="Gérer les images">' . $inner . '</a>';
+}
 
 function race_flag_badge(bool $on, string $labelOn, string $labelOff): string
 {
@@ -129,6 +171,7 @@ function race_render_list(array $races, bool $structureMode = false): string
     $rows = '';
     foreach ($races as $race) {
         $rows .= '<tr>'
+            . '<td style="width:48px;">' . race_image_cell($race->getName(), $structureMode) . '</td>'
             . '<td><code>' . e($race->getName()) . '</code></td>'
             . '<td>' . e($race->getLabel()) . '</td>';
 
@@ -171,9 +214,9 @@ function race_render_list(array $races, bool $structureMode = false): string
     }
 
     $headers = $structureMode
-        ? '<th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th>'
+        ? '<th></th><th>Code</th><th>Nom</th><th>Nature</th><th>Couleur</th><th>PV</th>'
             . '<th title="Entités de ce type posées dans le monde">Posés</th><th></th>'
-        : '<th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
+        : '<th></th><th>Code</th><th>Nom</th><th>Statut</th><th>Couleur</th><th>Faction</th>'
             . '<th>Stats clés</th><th>Listes</th><th title="Personnages (joueurs et PNJ) utilisant cette race">Personnages</th><th></th>';
 
     return '<div class="d-flex justify-content-between align-items-center mb-3">'
@@ -350,6 +393,15 @@ HTML;
         . '</div></div></div>'
 
         . '<div class="card mb-3"><div class="card-header">Apparence &amp; monde</div><div class="card-body"><div class="row">'
+        . ($isEdit
+            ? '<div class="form-group col-md-2"><label>' . ($structureMode ? 'Image' : 'Avatar') . '</label>'
+                . '<div>' . race_image_cell($race->getName(), $structureMode) . '</div>'
+                . '<a class="btn btn-sm btn-outline-secondary mt-1" href="' . race_images_page($structureMode)
+                . '?type=avatar&amp;race=' . e(urlencode($race->getName())) . '">Gérer les images</a>'
+                . '<small class="form-text text-muted">Première image du stock'
+                . ($structureMode ? ' — le sprite des entités posées.' : ' — les joueurs choisissent en jeu.')
+                . '</small></div>'
+            : '')
         . '<div class="form-group col-md-2"><label>Couleur de fond</label>'
         . '<input type="color" class="form-control" name="bgColor" value="'
         . e($isEdit ? $race->getBgColor() : '#FFFFFF') . '">'

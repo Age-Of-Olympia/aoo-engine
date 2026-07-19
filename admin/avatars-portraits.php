@@ -20,13 +20,20 @@ use App\Service\RaceImageService;
 $csrf = new CsrfProtectionService();
 $service = new RaceImageService();
 
+// Deux sections pour un même stock (même séparation que Races ×
+// Types de bâtiments) : ici les personnages, admin/structure-images.php
+// (wrapper qui pose ?kind=structure) pour les types.
+$structureMode = (($_GET['kind'] ?? '') === 'structure');
+$selfPage = $structureMode ? '/admin/structure-images.php' : '/admin/avatars-portraits.php';
+$pageTitle = $structureMode ? 'Images des bâtiments' : 'Avatars & portraits';
+
 $type = ImageType::tryFrom(stringWithDefault('type', (string) ($_GET['type'] ?? 'avatar'))) ?? ImageType::AVATAR;
-$races = $service->raceNames($type);
+$races = $service->raceNames($type, $structureMode ? 'structure' : 'character');
 $race = stringWithDefault('race', (string) ($_GET['race'] ?? ''));
 if (!in_array($race, $races, true)) {
     $race = $races[0] ?? '';
 }
-$backTo = 'avatars-portraits.php?type=' . urlencode($type->value) . '&race=' . urlencode($race);
+$backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode($race);
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
     && (isset($_POST['image_upload']) || isset($_POST['image_delete']));
@@ -75,29 +82,37 @@ ob_start();
 ?>
 
 <div class="container">
-    <h3>Avatars &amp; portraits</h3>
+    <h3><?= e($pageTitle) ?></h3>
 
     <?= renderFlashMessage() ?>
 
     <div class="alert alert-info" style="font-size: 13px; line-height: 1.5;">
-        Images de personnage par race : avatars (50×50, carte et listes) et portraits
-        (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne au canon et
-        numérote avec le compteur de la race ; la suppression est refusée tant qu'un joueur
-        utilise l'image. Les joueurs choisissent leurs images en jeu — ici c'est le stock.
+        <?php if ($structureMode): ?>
+            Images des types de bâtiments : la <strong>première image du stock</strong> est le
+            sprite des entités posées sur le plateau (à défaut, le sprite de mur du même nom).
+            L'ajout redimensionne au canon et numérote avec le compteur du type ; la suppression
+            est refusée tant qu'une entité posée utilise l'image.
+        <?php else: ?>
+            Images de personnage par race : avatars (50×50, carte et listes) et portraits
+            (210×320 + miniature 50×79, fiche de personnage). L'ajout redimensionne au canon et
+            numérote avec le compteur de la race ; la suppression est refusée tant qu'un joueur
+            utilise l'image. Les joueurs choisissent leurs images en jeu — ici c'est le stock.
+        <?php endif; ?>
     </div>
 
     <div class="card mt-3">
         <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
-            <span class="text-muted" style="font-size:13px;"><i class="fas fa-image"></i> Type :</span>
+            <span class="text-muted" style="font-size:13px;"><i class="fas fa-image"></i> Image :</span>
             <?php foreach (ImageType::cases() as $candidate): ?>
-                <a href="/admin/avatars-portraits.php?type=<?= e($candidate->value) ?>"
+                <a href="<?= e($selfPage) ?>?type=<?= e($candidate->value) ?>"
                    class="btn btn-sm <?= $candidate === $type ? 'btn-primary' : 'btn-outline-secondary' ?>">
                     <?= e(ucfirst($candidate->value)) ?>s
                 </a>
             <?php endforeach; ?>
-            <span class="text-muted" style="font-size:13px;margin-left:1rem;"><i class="fas fa-dragon"></i> Race :</span>
+            <span class="text-muted" style="font-size:13px;margin-left:1rem;">
+                <i class="fas fa-dragon"></i> <?= $structureMode ? 'Type :' : 'Race :' ?></span>
             <?php foreach ($races as $candidate): ?>
-                <a href="/admin/avatars-portraits.php?type=<?= e($type->value) ?>&amp;race=<?= e(urlencode($candidate)) ?>"
+                <a href="<?= e($selfPage) ?>?type=<?= e($type->value) ?>&amp;race=<?= e(urlencode($candidate)) ?>"
                    class="btn btn-sm <?= $candidate === $race ? 'btn-primary' : 'btn-outline-secondary' ?>">
                     <?= e($candidate) ?>
                 </a>
@@ -108,7 +123,7 @@ ob_start();
     <?php if ($race !== ''): ?>
     <div class="card mt-3">
         <div class="card-body">
-            <h5 class="card-title">Ajouter un <?= e($type->value) ?> — race <?= e($race) ?></h5>
+            <h5 class="card-title">Ajouter un <?= e($type->value) ?> — <?= $structureMode ? 'type' : 'race' ?> <?= e($race) ?></h5>
             <form method="post" enctype="multipart/form-data" class="d-flex align-items-end gap-3 flex-wrap">
                 <?= $csrf->renderTokenField() ?>
                 <input type="hidden" name="type" value="<?= e($type->value) ?>">
@@ -215,4 +230,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-echo admin_layout('Avatars & portraits', $content);
+echo admin_layout($pageTitle, $content);

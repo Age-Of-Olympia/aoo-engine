@@ -31,19 +31,60 @@ class RaceImageService
         $this->root = $root ?? (($_SERVER['DOCUMENT_ROOT'] ?? '') ?: dirname(__DIR__, 2));
     }
 
-    /** @return list<string> races ayant un dossier d'images ou une fiche en base */
-    public function raceNames(ImageType $type): array
+    /**
+     * Races ayant un dossier d'images ou une fiche en base, filtrables par
+     * sorte — la même séparation Races / Types de bâtiments que l'admin
+     * (races.php × structure-types.php) : 'character', 'structure', ou null
+     * pour tout. Un dossier orphelin (sans fiche) compte comme personnage.
+     *
+     * @return list<string>
+     */
+    public function raceNames(ImageType $type, ?string $kind = null): array
     {
-        $names = [];
+        $kinds = [];
+        foreach ($this->em()->getRepository(Race::class)->findAll() as $race) {
+            $kinds[$race->getName()] = $race->isStructureKind() ? 'structure' : 'character';
+        }
+
+        $names = array_fill_keys(array_keys($kinds), true);
         foreach (glob($this->baseDir($type) . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
             $names[basename($dir)] = true;
         }
-        foreach ($this->em()->getRepository(Race::class)->findAll() as $race) {
-            $names[$race->getName()] = true;
-        }
+
         $names = array_keys($names);
+        if ($kind !== null) {
+            $names = array_values(array_filter(
+                $names,
+                static fn (string $name): bool => ($kinds[$name] ?? 'character') === $kind
+            ));
+        }
         sort($names);
         return $names;
+    }
+
+    /**
+     * Première image du stock (ordre naturel, miniatures exclues) — LA
+     * vignette des listes d'admin Races et Types, et le sprite par défaut
+     * des structures posées (BuildingService::resolveAvatar) : le même
+     * visuel partout. Chemin relatif au docroot, ou null si stock vide.
+     */
+    public function firstImagePath(ImageType $type, string $race): ?string
+    {
+        $this->assertRace($race);
+        $dir = $this->raceDir($type, $race);
+
+        $files = [];
+        foreach (is_dir($dir) ? scandir($dir) : [] as $fileName) {
+            if (preg_match('/\.(png|jpe?g|webp|gif)$/i', $fileName) && !str_contains($fileName, '_mini.')) {
+                $files[] = $fileName;
+            }
+        }
+        if ($files === []) {
+            return null;
+        }
+        sort($files, SORT_NATURAL);
+
+        return $this->relativeDir($type, $race) . '/' . $files[0];
     }
 
     /**

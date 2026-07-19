@@ -132,7 +132,8 @@ function admin_layout($title, $content, array $assets = []) {
         $navGroup('Bâtiments', [
             ['buildings.php', 'Liste', '/admin/buildings.php'],
             ['structure-types.php', 'Types', '/admin/structure-types.php'],
-        ], ['buildings.php', 'structure-types.php']),
+            ['structure-images.php', 'Images', '/admin/structure-images.php'],
+        ], ['buildings.php', 'structure-types.php', 'structure-images.php']),
         $navGroup('Objets', [
             ['items.php', 'Liste', '/admin/items.php'],
             ['recipes.php', 'Recettes', '/admin/recipes.php'],

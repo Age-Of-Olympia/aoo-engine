@@ -89,6 +89,7 @@ class AdminMenuAccessService
      */
     private const ALIASES = [
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
+        'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
         'plans-save.php'             => 'plans.php',
         'dialogs-save.php'           => 'dialogs.php',
         'dialog-seed.php'            => 'dialogs.php',

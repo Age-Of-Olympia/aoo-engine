@@ -145,19 +145,34 @@ class BuildingService extends BaseService
 
     /**
      * Sprite of a structure type, in fallback order: dedicated avatar
-     * (img/avatars/{type}.webp) → the map-wall sprite of the same name
-     * (img/walls/{type}.png — a built mur_bois looks like a mur_bois) →
-     * the generic placeholder. View.php renders players.avatar directly.
+     * (img/avatars/{type}.webp) → the FIRST image of the type's stock
+     * (img/avatars/{type}/, admin → Bâtiments → Images — same thumbnail
+     * as the admin lists, one visual everywhere) → the map-wall sprite of
+     * the same name (img/walls/{type}.png — a built mur_bois looks like a
+     * mur_bois) → the generic placeholder. View.php renders
+     * players.avatar directly.
      */
     public static function resolveAvatar(string $type, bool $broken = false): string
     {
         $root = dirname(__DIR__, 2);
         $suffix = $broken ? '_broken' : '';
 
-        foreach ([
-            'img/avatars/' . $type . $suffix . '.webp',
-            'img/walls/' . $type . $suffix . '.png',
-        ] as $candidate) {
+        $candidates = ['img/avatars/' . $type . $suffix . '.webp'];
+        if (!$broken) {
+            // Le stock n'a pas de convention _broken : variante cassée
+            // servie par les fichiers plats seulement.
+            try {
+                $stock = (new RaceImageService())->firstImagePath(\App\Enum\ImageType::AVATAR, $type);
+            } catch (\RuntimeException) {
+                $stock = null; // nom hors canon (PNJ legacy…) : pas de stock
+            }
+            if ($stock !== null) {
+                $candidates[] = $stock;
+            }
+        }
+        $candidates[] = 'img/walls/' . $type . $suffix . '.png';
+
+        foreach ($candidates as $candidate) {
             if (is_file($root . '/' . $candidate)) {
                 return $candidate;
             }
