@@ -16,7 +16,12 @@ final class WikiRendererRegistry
     /** @param WikiSheetRenderer[]|null $renderers injection de test */
     public function __construct(?array $renderers = null)
     {
-        foreach ($renderers ?? [new ActionWikiRenderer()] as $renderer) {
+        foreach ($renderers ?? [
+            new ActionWikiRenderer(),
+            new EffectWikiRenderer(),
+            new ItemWikiRenderer(),
+            new RaceWikiRenderer(),
+        ] as $renderer) {
             $this->register($renderer);
         }
     }
