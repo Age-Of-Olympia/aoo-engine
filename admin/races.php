@@ -363,22 +363,31 @@ HTML;
             . ' title="Élément versé au sol quand l\'entité est blessée — rien : un mur ne saigne pas."'
         )
         . '</label> '
-        . '<label class="mr-3">Nature '
-        . formSelect(
-            'structure_nature',
-            ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
-            $isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice',
-            null,
-            'class="form-control form-control-sm d-inline-block" style="width:auto"'
-            . ' title="Structures seulement — Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
-        )
-        . '</label> '
-        . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
-        . checked(!$isEdit || $race->blocksPassage())
-        . ' title="Structures seulement — décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
-        . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
-        . checked(!$isEdit || $race->blocksProjectiles())
-        . ' title="Structures seulement — décoché : les tirs passent au-dessus (table, muret bas…)."> Bloque les tirs</label> '
+        // Nature et flags de blocage : structures seulement — sur le
+        // visage Races ils sont posés en champs cachés (le save les lit),
+        // pas affichés.
+        . ($structureMode
+            ? '<label class="mr-3">Nature '
+                . formSelect(
+                    'structure_nature',
+                    ['edifice' => 'Édifice (porte)', 'obstacle' => 'Obstacle (mur)'],
+                    $isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice',
+                    null,
+                    'class="form-control form-control-sm d-inline-block" style="width:auto"'
+                    . ' title="Édifice : vrai bâtiment, a une porte (Ouvert/Fermé, dialogue). Obstacle : mur construit, sans porte (is_open = future passabilité)."'
+                )
+                . '</label> '
+                . '<label class="mr-3"><input type="checkbox" name="blocks_passage" '
+                . checked(!$isEdit || $race->blocksPassage())
+                . ' title="Décoché : on marche sur sa case (mobilier bas, passage)."> Bloque le passage</label> '
+                . '<label class="mr-3"><input type="checkbox" name="blocks_projectiles" '
+                . checked(!$isEdit || $race->blocksProjectiles())
+                . ' title="Décoché : les tirs passent au-dessus (table, muret bas…)."> Bloque les tirs</label> '
+            // Pas de blocks_projectiles côté Races : le save le force à
+            // faux pour une sorte personnage.
+            : '<input type="hidden" name="structure_nature" value="'
+                . ($isEdit && $race->getStructureNature() === 'obstacle' ? 'obstacle' : 'edifice') . '">'
+                . (!$isEdit || $race->blocksPassage() ? '<input type="hidden" name="blocks_passage" value="1">' : ''))
         . ($structureMode ? '' : '<label class="mr-3"><input type="checkbox" name="playable" '
             . checked($isEdit && $race->getPlayable()) . '> Jouable (proposée à l\'inscription)</label>')
         . '<label><input type="checkbox" name="hidden" '
