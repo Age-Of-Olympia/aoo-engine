@@ -183,6 +183,15 @@ class Effect
     #[ORM\Column(type: "boolean", options: ["default" => false], name: "is_map_marker")]
     private bool $mapMarker = false;
 
+    /**
+     * Un élément au sol portant cet effet laisse-t-il construire et
+     * aménager sa case ? Faux par défaut (feu, lave, ronce… rendent la
+     * case inconstructible) ; vrai pour les salissures qui ne gênent
+     * pas le chantier (sang, boue, traces de pas).
+     */
+    #[ORM\Column(type: "boolean", options: ["default" => false], name: "buildable_over")]
+    private bool $buildableOver = false;
+
     /** @var Collection<int, EffectCorruptionMaterial> */
     #[ORM\OneToMany(targetEntity: EffectCorruptionMaterial::class, mappedBy: "effect", cascade: ["persist", "remove"], orphanRemoval: true)]
     #[ORM\OrderBy(["position" => "ASC"])]
@@ -488,6 +497,16 @@ class Effect
     public function setMapMarker(bool $mapMarker): void
     {
         $this->mapMarker = $mapMarker;
+    }
+
+    public function isBuildableOver(): bool
+    {
+        return $this->buildableOver;
+    }
+
+    public function setBuildableOver(bool $buildableOver): void
+    {
+        $this->buildableOver = $buildableOver;
     }
 
     /** @return string[] Material names this corruption can break. */

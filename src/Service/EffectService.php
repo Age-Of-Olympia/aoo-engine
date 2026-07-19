@@ -70,6 +70,16 @@ class EffectService
         return $this->getEffectByName($name) !== null;
     }
 
+    /**
+     * Un élément au sol de ce nom laisse-t-il construire et aménager sa
+     * case ? Un nom hors catalogue bloque (prudence : on ne bâtit pas
+     * sur l'inconnu).
+     */
+    public function isBuildableOver(string $name): bool
+    {
+        return $this->getEffectByName($name)?->isBuildableOver() ?? false;
+    }
+
     public function getIcon(string $name): string
     {
         $effect = $this->getEffectByName($name);

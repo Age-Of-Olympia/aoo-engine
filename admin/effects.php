@@ -224,7 +224,9 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
             . formCheckbox('hidden', $isEdit && $effect->isHidden(), 'Caché',
                 'class="mr-3" title="Posture éphémère (parade, leurre…) : purgée au nouveau tour ou à l\'usage, jamais listée sur les fiches"')
             . formCheckbox('is_map_marker', $isEdit && $effect->isMapMarker(), 'Marqueur de carte',
-                'title="Marqueur de carte (traces de pas…) : exclu des listes de gameplay (workbench, saignement)"')
+                'class="mr-3" title="Marqueur de carte (traces de pas…) : exclu des listes de gameplay (workbench, saignement)"')
+            . formCheckbox('buildable_over', $isEdit && $effect->isBuildableOver(), 'Constructible par-dessus',
+                'title="Posé au sol comme élément : n\'empêche ni construction ni aménagement de la case (sang, boue, traces) — décoché, la case est bloquée (feu, lave, ronce…)"')
             . '</div>',
             'form-group col-md-3')
         . formField('Description', formTextarea('description', $isEdit ? $effect->getDescription() : ''),

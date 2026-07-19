@@ -78,11 +78,16 @@ class PlaceLayerOutcomeInstruction extends OutcomeInstruction implements HasPara
             return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Il y a déjà cela ici.']);
         }
 
-        // Un élément (boue, feu, sang…) interdit l'aménagement — même
-        // règle que BuildingService::place pour les structures.
-        $element = $db->exe('SELECT id FROM map_elements WHERE coords_id = ?', $coordsId);
-        if ($element && $element->num_rows) {
-            return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Un élément occupe cette case.']);
+        // Un élément interdit l'aménagement SAUF si son effet est marqué
+        // constructible par-dessus (sang, boue, traces —
+        // effects.buildable_over) : même règle que BuildingService::place
+        // pour les structures.
+        $effectService = new \App\Service\EffectService();
+        $element = $db->exe('SELECT name FROM map_elements WHERE coords_id = ?', $coordsId);
+        while ($element && ($row = $element->fetch_object())) {
+            if (!$effectService->isBuildableOver((string) $row->name)) {
+                return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Un élément occupe cette case.']);
+            }
         }
 
         $db->insert('map_' . $layer, [

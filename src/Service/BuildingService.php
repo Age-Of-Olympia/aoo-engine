@@ -278,12 +278,17 @@ class BuildingService extends BaseService
                     "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un mur."
                 );
             }
-            // Un élément (boue, feu, sang…) rend la case inconstructible :
-            // même règle que PlaceLayerOutcomeInstruction pour les routes.
-            if ($conn->fetchOne('SELECT coords_id FROM map_elements WHERE coords_id = ?', [$coordsId]) !== false) {
-                throw new \InvalidArgumentException(
-                    "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un élément."
-                );
+            // Un élément rend la case inconstructible SAUF si son effet
+            // est marqué constructible par-dessus (sang, boue, traces —
+            // effects.buildable_over) : même règle que
+            // PlaceLayerOutcomeInstruction pour les routes.
+            $effectService = new EffectService();
+            foreach ($conn->fetchFirstColumn('SELECT name FROM map_elements WHERE coords_id = ?', [$coordsId]) as $elementName) {
+                if (!$effectService->isBuildableOver((string) $elementName)) {
+                    throw new \InvalidArgumentException(
+                        "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un élément ({$elementName})."
+                    );
+                }
             }
 
             $conn->executeStatement(
