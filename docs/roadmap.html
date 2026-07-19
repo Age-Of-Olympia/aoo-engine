@@ -821,6 +821,12 @@ const FEATURES = [
     player:"La Saison 3 ouvre : nouvelle interface, construction, objets vivants — tout ce qui se prépare depuis des mois.",
     enables:[] },
 
+  { id:'generic-item-actions', title:"Actions génériques paramétrées par l'objet", category:'action-system', status:'planned',
+    quarter:6.5, date:'Août 2026', playerHidden:true,
+    tech:"UNE action construire (au lieu de ~39 construire_<type>) et UNE action consommer (aujourd'hui hors moteur, coût 1 A codé à la main dans InventoryService) : l'objet devient un paramètre d'exécution (condition ItemPick, patron BuildSitePick). Cadrage : docs/design-generic-item-actions.md — à faire avant l'ouverture de la S3 (les construire_* n'existent qu'en préprod).",
+    player:"Sous le capot : le catalogue d'actions arrête de se dupliquer par objet, et consommer devient composable (conditions, simulation).",
+    enables:['craft-building'] },
+
   { id:'craft-building', title:"Artisanat porté par un bâtiment", category:'inventory', status:'planned',
     quarter:6.6, date:'2026-Q3/Q4',
     tech:"L'artisanat (en sommeil derrière CRAFT_ENABLED, code et route intacts) revient adossé à un bâtiment dédié — le geste de craft se fait sur place.",
