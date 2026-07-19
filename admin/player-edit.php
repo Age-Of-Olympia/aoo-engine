@@ -119,6 +119,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['player_save'])) {
     redirectTo($backTo); // PRG
 }
 
+// Inventaire : ajouter/retirer des exemplaires de pile — le geste
+// d'animation (donner une pioche, retirer un objet de test) sans SQL.
+// Les instances individualisées ne se créent pas ici (elles naissent du
+// jeu) ; le retrait ne touche que la pile.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['inventory_add']) || isset($_POST['inventory_remove']))) {
+    try {
+        $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
+
+        if (isset($_POST['inventory_add'])) {
+            $itemName = strtolower(trim((string) ($_POST['item_name'] ?? '')));
+            $n = max(1, (int) ($_POST['n'] ?? 1));
+            $res = $db->exe('SELECT id, name FROM items WHERE name = ?', $itemName);
+            $item = $res ? $res->fetch_object() : null;
+            if ($item === null) {
+                throw new RuntimeException("Objet inconnu au catalogue : « {$itemName} ».");
+            }
+            $db->exe(
+                'INSERT INTO players_items (player_id, item_id, n, equiped) VALUES (?, ?, ?, "")
+                 ON DUPLICATE KEY UPDATE n = n + VALUES(n)',
+                array($id, (int) $item->id, $n)
+            );
+            setFlash('success', "+{$n} × {$item->name} pour « {$player->data->name} ».");
+        } else {
+            $itemId = (int) ($_POST['item_id'] ?? 0);
+            $n = max(1, (int) ($_POST['n'] ?? 1));
+            $res = $db->exe('SELECT i.name, pi.n FROM players_items pi JOIN items i ON i.id = pi.item_id WHERE pi.player_id = ? AND pi.item_id = ?', array($id, $itemId));
+            $row = $res ? $res->fetch_object() : null;
+            if ($row === null) {
+                throw new RuntimeException('Cet objet n\'est pas dans la pile du personnage.');
+            }
+            if ($n >= (int) $row->n) {
+                $db->exe('DELETE FROM players_items WHERE player_id = ? AND item_id = ?', array($id, $itemId));
+            } else {
+                $db->exe('UPDATE players_items SET n = n - ? WHERE player_id = ? AND item_id = ?', array($n, $id, $itemId));
+            }
+            setFlash('success', "-{$n} × {$row->name} pour « {$player->data->name} ».");
+        }
+
+        // le fragment d'inventaire est un cache par personnage
+        @unlink($_SERVER['DOCUMENT_ROOT'] . '/datas/private/players/' . $id . '.invent.html');
+    } catch (Throwable $e) {
+        setFlash('danger', $e->getMessage());
+    }
+    redirectTo($backTo); // PRG
+}
+
 // ----- Affichage -----
 
 $vitalsRows = '';
@@ -164,12 +210,59 @@ $turn = formCard('Tour', ''
     . '<p class="mb-2">' . e($turnInfo) . '</p>'
     . formCheckbox('turn_now', false, 'Rendre le tour disponible maintenant'));
 
+// ----- Inventaire (piles ; formulaires séparés du formulaire principal) -----
+
+$inventoryRows = '';
+$stock = $db->exe(
+    'SELECT pi.item_id, pi.n, pi.equiped, i.name FROM players_items pi
+     JOIN items i ON i.id = pi.item_id WHERE pi.player_id = ? ORDER BY i.name',
+    $id
+);
+while ($stockRow = $stock->fetch_object()) {
+    $inventoryRows .= '<tr>'
+        . '<td><code>' . e($stockRow->name) . '</code>'
+        . ($stockRow->equiped !== '' ? ' <span class="badge badge-info">' . e($stockRow->equiped) . '</span>' : '') . '</td>'
+        . '<td>×' . (int) $stockRow->n . '</td>'
+        . '<td><form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex" style="gap:.25rem"'
+        . ' onsubmit="return confirm(\'Retirer « ' . e($stockRow->name) . ' » de l\\\'inventaire ?\');">'
+        . $csrf->renderTokenField()
+        . '<input type="hidden" name="id" value="' . (int) $id . '">'
+        . '<input type="hidden" name="item_id" value="' . (int) $stockRow->item_id . '">'
+        . '<input type="number" class="form-control form-control-sm" name="n" value="1" min="1" max="' . (int) $stockRow->n . '" style="width:5rem">'
+        . '<button type="submit" name="inventory_remove" value="1" class="btn btn-sm btn-outline-danger">Retirer</button>'
+        . '</form></td>'
+        . '</tr>';
+}
+
+$catalogNames = [];
+$catalog = $db->exe('SELECT name FROM items ORDER BY name');
+while ($catalogRow = $catalog->fetch_object()) {
+    $catalogNames[$catalogRow->name] = '';
+}
+
+$inventory = formCard('Inventaire (piles)', ''
+    . ($inventoryRows === ''
+        ? '<p class="text-muted">Inventaire vide.</p>'
+        : '<table class="table table-sm mb-2"><thead><tr><th>Objet</th><th>Qté</th><th></th></tr></thead>'
+            . '<tbody>' . $inventoryRows . '</tbody></table>')
+    . '<form method="post" action="player-edit.php?id=' . (int) $id . '" class="d-flex flex-wrap align-items-end" style="gap:.5rem">'
+    . $csrf->renderTokenField()
+    . '<input type="hidden" name="id" value="' . (int) $id . '">'
+    . formField('Objet (nom technique)', formInput('item_name', '', 'list="pe-items" placeholder="pioche" required'))
+    . formField('Quantité', formInput('n', '1', 'type="number" min="1" style="max-width:6rem"'))
+    . '<button type="submit" name="inventory_add" value="1" class="btn btn-outline-primary mb-3">Ajouter</button>'
+    . '</form>'
+    . renderDatalist('pe-items', $catalogNames)
+    . '<p class="text-muted mb-0">Piles seulement — les instances individualisées (durabilité) naissent du jeu ;'
+    . ' les objets équipés se gèrent en jeu.</p>');
+
 $body = '<form method="post" action="player-edit.php?id=' . (int) $id . '">'
     . $csrfField
     . '<input type="hidden" name="id" value="' . (int) $id . '">'
     . $identity . $position . $vitals . $turn
     . '<button type="submit" name="player_save" value="1" class="btn btn-primary">Enregistrer</button> '
     . '<a class="btn btn-outline-secondary" href="players.php">Retour à la liste</a>'
-    . '</form>';
+    . '</form>'
+    . $inventory;
 
 echo admin_layout('Édition — ' . $player->data->name, renderFlashMessage() . $body);
