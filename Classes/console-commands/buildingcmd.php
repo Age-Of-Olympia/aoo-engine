@@ -19,6 +19,7 @@ Exemple:
 > building place [type] [x] [y] [z] [plan]  (z par défaut : 0, plan : gaia)
 > building place palissade 3 -2
 > building remove [id]
+> building repair-avatars  (re-résout les avatars vides/cassés des structures — une conversion déployée tourne sans img/)
 EOT);
     }
 
@@ -34,7 +35,11 @@ EOT);
             return $this->remove($argumentValues);
         }
 
-        return "Action inconnue. Utiliser : building place [type] [x] [y] [z] [plan] | building remove [id]";
+        if ($action === 'repair-avatars') {
+            return $this->repairAvatars();
+        }
+
+        return "Action inconnue. Utiliser : building place [type] [x] [y] [z] [plan] | building remove [id] | building repair-avatars";
     }
 
     private function place(array $argumentValues): string
@@ -73,5 +78,37 @@ EOT);
         }
 
         return 'Bâtiment #' . $id . ' retiré.';
+    }
+
+    /**
+     * Re-résout l'avatar des structures dont il est vide ou pointe un
+     * fichier absent : les CONVERSIONS déployées (migrations) tournent
+     * depuis le checkout git, sans img/ — l'avatar y est figé vide et le
+     * damier retombe sur les initiales. À lancer depuis le jeu (docroot,
+     * img/ présent) après toute conversion de masse ; le damier
+     * s'auto-répare aussi au rendu, ceci soigne tout d'un coup.
+     */
+    private function repairAvatars(): string
+    {
+        $db = new \Classes\Db();
+        $res = $db->exe("SELECT id, race, avatar FROM players WHERE player_type IN ('building', 'unique')");
+
+        $healed = 0;
+        $bare = 0;
+        while ($row = $res->fetch_object()) {
+            if ($row->avatar !== '' && file_exists($row->avatar)) {
+                continue;
+            }
+            $resolved = BuildingService::resolveAvatar((string) $row->race);
+            if ($resolved === '') {
+                $bare++;
+                continue; // vraiment sans visuel : initiales au rendu, normal
+            }
+            $db->exe('UPDATE players SET avatar = ?, portrait = ? WHERE id = ?', array($resolved, $resolved, (int) $row->id));
+            BuildingService::purgeEntityCaches((int) $row->id);
+            $healed++;
+        }
+
+        return "Avatars réparés : {$healed} structure(s) ; sans visuel (initiales) : {$bare}.";
     }
 }

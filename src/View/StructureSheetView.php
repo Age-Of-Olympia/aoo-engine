@@ -175,6 +175,13 @@ final class StructureSheetView
             return $portrait;
         }
 
+        // Portrait figé vide à la conversion (migration sans img/) :
+        // re-résolution par la race au rendu — même repli que le damier.
+        $resolved = \App\Service\BuildingService::resolveAvatar((string) $entity->getRace());
+        if ($resolved !== '') {
+            return $resolved;
+        }
+
         return \Classes\View::structureInitialsAvatar($entity->getName());
     }
 }

@@ -357,13 +357,33 @@ class View{
 
                     $img = $player->data->avatar;
 
-                    // Structure sans visuel dédié : ses initiales dans un
-                    // cadre, dessinées au rendu — l'avatar est figé en base
-                    // à la pose, donc le repli doit vivre ici pour couvrir
-                    // aussi les bâtiments déjà posés.
+                    // Avatar figé en base à la CONVERSION : quand elle a
+                    // tourné sans img/ (déploiement — les migrations
+                    // partent du checkout git), il est resté vide et les
+                    // murs convertis s'affichaient en initiales « Mu ».
+                    // Au rendu, img/ existe : re-résolution par la race,
+                    // et AUTO-RÉPARATION de la ligne pour ne le faire
+                    // qu'une fois.
                     if($isStructure && (empty($img) || !file_exists($img))){
 
-                        $img = self::structureInitialsAvatar((string) $player->data->name);
+                        $resolved = \App\Service\BuildingService::resolveAvatar((string) $player->data->race);
+
+                        if($resolved !== ''){
+
+                            $img = $resolved;
+
+                            $db = new Db();
+                            $db->exe(
+                                'UPDATE players SET avatar = ?, portrait = ? WHERE id = ?',
+                                array($resolved, $resolved, (int) $player->id)
+                            );
+                            \App\Service\BuildingService::purgeEntityCaches((int) $player->id);
+                        }
+                        else{
+
+                            // Vraiment sans visuel (taverne…) : initiales.
+                            $img = self::structureInitialsAvatar((string) $player->data->name);
+                        }
                     }
 
                     /* Structure passable (table…) : marquée pour que le
