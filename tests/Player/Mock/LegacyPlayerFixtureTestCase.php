@@ -192,6 +192,12 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
             $this->markTestSkipped("structure type '{$type}' not seeded (run migrations).");
         }
 
+        /* Un élément seedé sur la case (sang, boue…) la rendrait
+         * inconstructible depuis la règle map_elements de place() —
+         * ces tests exercent le bâtiment, pas le terrain : on nettoie. */
+        $coordsId = View::get_coords_id((object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]);
+        (new \Classes\Db())->exe('DELETE FROM map_elements WHERE coords_id = ?', $coordsId);
+
         $id = (new BuildingService())->place(
             $type,
             (object) ['x' => $x, 'y' => $y, 'z' => 0, 'plan' => $plan]
