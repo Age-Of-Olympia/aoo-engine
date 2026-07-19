@@ -1014,7 +1014,7 @@ article.pnj {
             position: absolute;
             top: 0;
             left: 0;
-            border: 5px solid rgba(0,0,0,0.5);
+            border: 5px solid var(--race-bg, rgba(0,0,0,0.5));
             border-left: 5px solid rgba(255,255,255,0.1);
         }
 
@@ -1039,6 +1039,18 @@ article.pnj {
         font-size: 88%;
         margin-left: -10px;
         text-shadow: 1px 1px #0a0a0a;
+    }
+
+    /* Pastille de race : fond/texte aux couleurs de la race (contraste
+     * garanti par la paire bgColor/color curée en base) */
+    #ui-card .card-wrapper.race-colored .card-type{
+
+        display: inline-block;
+        background: var(--race-bg);
+        color: var(--race-fg);
+        padding: 0 6px;
+        border-radius: 3px;
+        text-shadow: none;
     }
 
     #ui-card .card-faction{

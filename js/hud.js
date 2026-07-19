@@ -1033,6 +1033,13 @@
                 $d.find('.building-status'),
                 $w.children('.card-text')
             );
+            /* Couleurs de race (--race-bg/--race-fg posées sur
+             * .card-wrapper par Ui::get_card) : le wrapper disparaît,
+             * on reporte classe et variables sur la coquille #ui-card */
+            if ($w.hasClass('race-colored')) {
+                $card.addClass('race-colored').attr('style', $w.attr('style'));
+            }
+
             $card.empty().append($left, $main);
             $sel.append($card);
         } else {

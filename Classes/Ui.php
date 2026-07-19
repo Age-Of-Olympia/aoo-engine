@@ -37,7 +37,7 @@ class Ui{
                 <script src="js/jquery.js"></script>
                 <script src="js/main.js?v=20260716"></script>
                 <script src="js/console.js?v=20260614"></script>
-                <link href="css/main.min.css?v=20260718b" rel="stylesheet">
+                <link href="css/main.min.css?v=20260719" rel="stylesheet">
                 <link rel="stylesheet" href="css/rpg-awesome.min.css">';
 
         // Environment-specific body background: test/experimental get a distinct
@@ -165,7 +165,18 @@ class Ui{
             ';
 
 
-            echo '<div class="card-wrapper '. $data->race .'">';
+            /* La carte magic disparue, le lien race↔couleur se lit ici :
+             * cadre du portrait et pastille du type (via --race-bg/--race-fg,
+             * même convention que scripts/logs/body.php) */
+            $raceJson = (new \App\Service\RaceService())->getRaceData((string) ($data->race ?? ''));
+            $raceStyle = '';
+            $raceColorClass = '';
+            if ($raceJson !== null && !empty($raceJson->bgColor)) {
+                $raceStyle = ' style="--race-bg: '. $raceJson->bgColor .'; --race-fg: '. ($raceJson->color ?: '#eee') .';"';
+                $raceColorClass = ' race-colored';
+            }
+
+            echo '<div class="card-wrapper '. $data->race . $raceColorClass .'"'. $raceStyle .'>';
 
 
                 echo '<div class="card-name">'. $data->name .'</div>';
