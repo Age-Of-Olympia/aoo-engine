@@ -81,10 +81,26 @@ final class ItemWikiRenderer implements WikiSheetRenderer
     /** @param array<string, mixed> $item */
     private function displayName(array $item): string
     {
-        $extra = json_decode((string) ($item['extra'] ?? ''), true);
-        $label = is_array($extra) && !empty($extra['name']) ? (string) $extra['name'] : (string) $item['name'];
+        $extra = $this->extraOf($item);
 
-        return $label;
+        return !empty($extra['name']) ? (string) $extra['name'] : (string) $item['name'];
+    }
+
+    /**
+     * La clé extra du payload : l'exporter la livre DÉJÀ décodée en
+     * tableau — mais on tolère la chaîne JSON brute (autre source).
+     *
+     * @param array<string, mixed> $item
+     * @return array<string, mixed>
+     */
+    private function extraOf(array $item): array
+    {
+        $extra = $item['extra'] ?? null;
+        if (is_string($extra)) {
+            $extra = json_decode($extra, true);
+        }
+
+        return is_array($extra) ? $extra : [];
     }
 
     /**
@@ -111,7 +127,7 @@ final class ItemWikiRenderer implements WikiSheetRenderer
             }
         }
 
-        $extra = json_decode((string) ($item['extra'] ?? ''), true);
+        $extra = $this->extraOf($item);
         foreach ((array) ($extra['effet'] ?? []) as $effet) {
             $effet = (string) $effet;
             $parts[] = str_starts_with($effet, '-')
