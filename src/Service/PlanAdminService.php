@@ -280,6 +280,219 @@ class PlanAdminService
             );
         }
 
+        $report = $this->purgePlanRows($plan, $force);
+
+        // Fichiers en dernier et best-effort : la base fait foi, un fichier
+        // survivant se renettoie, une base à moitié supprimée non
+        $jsonPath = $this->jsonPath($plan);
+        if (file_exists($jsonPath) && @unlink($jsonPath)) {
+            $report['files'][] = 'datas/private/plans/' . $plan . '.json';
+        }
+        foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_' . $plan . '_*.png') ?: [] as $png) {
+            if (@unlink($png)) {
+                $report['files'][] = 'img/maps/local/' . basename($png);
+            }
+        }
+
+        return $report;
+    }
+
+    /**
+     * Vide les cases d'un plan (couches map_*, objets au sol, coords) en
+     * GARDANT sa configuration JSON et ses PNG : le plan reste déclaré,
+     * prêt à être re-peuplé. Mêmes gardes que deletePlan (preflight,
+     * $force pour PNJ/logs uniquement).
+     *
+     * @return array{coords: int, layers: array<string, int>, map_items: int,
+     *               npcs: int, logs_detached: int, files: list<string>}
+     * @throws RuntimeException code 400, 404 ou 409
+     */
+    public function clearPlanCoords(string $plan, bool $force = false): array
+    {
+        $this->assertValidPlanName($plan);
+
+        if (!$this->planExists($plan)) {
+            throw new RuntimeException('Plan introuvable : ' . $plan, 404);
+        }
+
+        $preflight = $this->deletePreflight($plan);
+        $blocking = array_filter(
+            $preflight['blockers'],
+            fn(array $b) => !$force || !$b['forceable']
+        );
+        if ($blocking !== []) {
+            throw new RuntimeException(
+                "Vidage impossible :\n- " . implode("\n- ", array_column($blocking, 'detail')),
+                409
+            );
+        }
+
+        return $this->purgePlanRows($plan, $force);
+    }
+
+    /**
+     * Renomme un plan : code technique + toutes les coordonnées + les
+     * références par NOM (respawn des factions, plan de départ des races,
+     * catalogue tutoriel, téléporteurs entrants) + fichiers JSON/PNG.
+     * Les joueurs et les couches suivent via coords_id, rien d'autre à
+     * toucher.
+     *
+     * @return array{coords: int, references: array<string, int>, teleports: int, files: list<string>}
+     * @throws RuntimeException code 400, 404 (source inconnue) ou 409 (cible existante)
+     */
+    public function renamePlan(string $from, string $to): array
+    {
+        $this->assertValidPlanName($from);
+        $this->assertValidPlanName($to);
+
+        if (!$this->planExists($from)) {
+            throw new RuntimeException('Plan introuvable : ' . $from, 404);
+        }
+        if ($from === $to) {
+            throw new RuntimeException('Le nouveau nom est identique.', 400);
+        }
+        if ($this->planExists($to) || file_exists($this->jsonPath($to))) {
+            throw new RuntimeException("Le plan « {$to} » existe déjà.", 409);
+        }
+
+        $report = ['coords' => 0, 'references' => [], 'teleports' => 0, 'files' => []];
+
+        $this->db->beginTransaction();
+        try {
+            $report['coords'] = (int) $this->db->exe(
+                'UPDATE coords SET plan = ? WHERE plan = ?',
+                array($to, $from),
+                false,
+                true
+            );
+
+            // Références par NOM de plan (tout le reste passe par coords_id)
+            $byName = [
+                'factions'              => 'respawnPlan',
+                'races'                 => 'plan',
+                'tutorial_catalog'      => 'plan',
+                'tutorial_map_instances' => 'plan_name',
+            ];
+            foreach ($byName as $table => $column) {
+                $n = (int) $this->db->exe(
+                    'UPDATE ' . $table . ' SET `' . $column . '` = ? WHERE `' . $column . '` = ?',
+                    array($to, $from),
+                    false,
+                    true
+                );
+                if ($n > 0) {
+                    $report['references'][$table] = $n;
+                }
+            }
+
+            // Téléporteurs entrants : params CSV « x,y,z,plan » (même
+            // décodage que incomingTeleportSources) — réécrits pour ne pas
+            // laisser de liens cassés.
+            $res = $this->db->exe('SELECT id, params FROM map_triggers WHERE name = "tp"');
+            while ($row = $res->fetch_assoc()) {
+                $parts = explode(',', (string) $row['params']);
+                if (trim($parts[3] ?? '') !== $from) {
+                    continue;
+                }
+                $parts[3] = $to;
+                $this->db->exe(
+                    'UPDATE map_triggers SET params = ? WHERE id = ?',
+                    array(implode(',', $parts), (int) $row['id'])
+                );
+                $report['teleports']++;
+            }
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        // Fichiers en dernier et best-effort — même politique que deletePlan
+        $fromJson = $this->jsonPath($from);
+        if (file_exists($fromJson) && @rename($fromJson, $this->jsonPath($to))) {
+            $report['files'][] = 'datas/private/plans/' . $to . '.json';
+        }
+        $pngPrefix = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_';
+        foreach (glob($pngPrefix . $from . '_*.png') ?: [] as $png) {
+            $target = $pngPrefix . $to . '_' . substr(basename($png), strlen('local_' . $from . '_'));
+            if (@rename($png, $target)) {
+                $report['files'][] = 'img/maps/local/' . basename($target);
+            }
+        }
+
+        return $report;
+    }
+
+    /**
+     * Supprime une LIGNE DE NIVEAU (toutes les cases d'un z du plan) :
+     * couches, objets au sol, coords, puis l'entrée z_levels du JSON.
+     * Refuse tant qu'une entité (joueur, PNJ, bâtiment) occupe le niveau —
+     * pas de force : on déplace d'abord, la suppression reste réversible
+     * par rien.
+     *
+     * @return array{coords: int, layers: array<string, int>, map_items: int}
+     * @throws RuntimeException code 400, 404 ou 409
+     */
+    public function deleteZLevel(string $plan, int $z): array
+    {
+        $this->assertValidPlanName($plan);
+
+        if (!$this->planExists($plan)) {
+            throw new RuntimeException('Plan introuvable : ' . $plan, 404);
+        }
+
+        $res = $this->db->exe(
+            'SELECT COUNT(*) n FROM players p JOIN coords c ON c.id = p.coords_id WHERE c.plan = ? AND c.z = ?',
+            array($plan, $z)
+        );
+        $entities = (int) ($res->fetch_assoc()['n'] ?? 0);
+        if ($entities > 0) {
+            throw new RuntimeException(
+                $entities . ' entité(s) (joueur, PNJ ou bâtiment) occupent le niveau z' . $z . ' — déplacez-les d\'abord.',
+                409
+            );
+        }
+
+        $report = ['coords' => 0, 'layers' => [], 'map_items' => 0];
+
+        $this->db->beginTransaction();
+        try {
+            $report['map_items'] = $this->deleteLayerRowsAtZ('map_items', $plan, $z);
+            foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
+                $report['layers'][$layer] = $this->deleteLayerRowsAtZ('map_' . $layer, $plan, $z);
+            }
+
+            $report['coords'] = (int) $this->db->exe(
+                'DELETE FROM coords WHERE plan = ? AND z = ?',
+                array($plan, $z),
+                false,
+                true
+            );
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        // Config après la base : la ligne ne doit pas réapparaître via
+        // l'union DB ∪ JSON de l'éditeur.
+        $this->planConfig->removeZLevel($plan, $z);
+
+        return $report;
+    }
+
+    /**
+     * Purge transactionnelle des lignes d'un plan (couches, objets au sol,
+     * coords ; PNJ et logs si $force) — le tronc commun de deletePlan et
+     * clearPlanCoords.
+     *
+     * @return array{coords: int, layers: array<string, int>, map_items: int,
+     *               npcs: int, logs_detached: int, files: list<string>}
+     */
+    private function purgePlanRows(string $plan, bool $force): array
+    {
         $report = ['coords' => 0, 'layers' => [], 'map_items' => 0, 'npcs' => 0, 'logs_detached' => 0, 'files' => []];
 
         $this->db->beginTransaction();
@@ -315,19 +528,18 @@ class PlanAdminService
             throw $e;
         }
 
-        // Fichiers en dernier et best-effort : la base fait foi, un fichier
-        // survivant se renettoie, une base à moitié supprimée non
-        $jsonPath = $this->jsonPath($plan);
-        if (file_exists($jsonPath) && @unlink($jsonPath)) {
-            $report['files'][] = 'datas/private/plans/' . $plan . '.json';
-        }
-        foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/local_' . $plan . '_*.png') ?: [] as $png) {
-            if (@unlink($png)) {
-                $report['files'][] = 'img/maps/local/' . basename($png);
-            }
-        }
-
         return $report;
+    }
+
+    /** Variante z d'une seule ligne de deleteLayerRows. */
+    private function deleteLayerRowsAtZ(string $table, string $plan, int $z): int
+    {
+        return (int) $this->db->exe(
+            'DELETE m FROM ' . $table . ' m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ? AND c.z = ?',
+            array($plan, $z),
+            false,
+            true
+        );
     }
 
     /** @throws RuntimeException code 400 */

@@ -5,7 +5,11 @@
  * Routé sur ?action : create (vierge ou clonage) | update (config +
  * niveaux Z) | delete (bilan préalable et garde-fous côté
  * PlanAdminService : un joueur réel sur le plan bloque toujours ; PNJ et
- * logs exigent le forçage explicite).
+ * logs exigent le forçage explicite) | rename | clear | delete-z.
+ *
+ * Les trois opérations destructives (delete, rename, clear) exigent une
+ * DOUBLE validation : confirm() côté client ET le code du plan retapé
+ * dans confirm_code, vérifié ici — un clic malheureux ne suffit pas.
  *
  * CSRF validé ; même niveau d'accès que le menu plans.php pour qu'un POST
  * direct ne contourne rien. Redirige (PRG) avec un flash.
@@ -135,6 +139,63 @@ if ($action === 'update') {
     }
 
     setFlash('success', "Configuration du plan « {$plan} » enregistrée." . $notice);
+    redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));
+}
+
+/* Double validation des opérations destructives : le code du plan doit
+ * être RETAPÉ (confirm_code) — la boîte confirm() du navigateur ne
+ * suffit pas (c'est le garde-fou demandé après l'épisode « tout péter »). */
+$needsTypedCode = in_array($action, ['delete', 'rename', 'clear'], true);
+if ($needsTypedCode && strtolower(trim((string) ($_POST['confirm_code'] ?? ''))) !== $plan) {
+    setFlash('warning', "Confirmation refusée : retapez le code du plan (« {$plan} ») dans le champ de confirmation.");
+    redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));
+}
+
+if ($action === 'rename') {
+    $to = strtolower(trim((string) ($_POST['new_plan'] ?? '')));
+    try {
+        $report = $service->renamePlan($plan, $to);
+        $refs = [];
+        foreach ($report['references'] as $table => $n) {
+            $refs[] = "{$table} ×{$n}";
+        }
+        if ($report['teleports'] > 0) {
+            $refs[] = 'téléporteurs ×' . $report['teleports'];
+        }
+        if ($report['files'] !== []) {
+            $refs[] = count($report['files']) . ' fichier(s)';
+        }
+        setFlash('success', "Plan « {$plan} » renommé en « {$to} » : {$report['coords']} case(s)"
+            . ($refs !== [] ? ' — ' . implode(', ', $refs) : '') . '.');
+        redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($to));
+    } catch (\RuntimeException $e) {
+        setFlash('warning', str_replace("\n", ' ', $e->getMessage()));
+        redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));
+    }
+}
+
+if ($action === 'clear') {
+    try {
+        $report = $service->clearPlanCoords($plan, isset($_POST['force']));
+        $layerTotal = array_sum($report['layers']) + $report['map_items'];
+        setFlash('success', "Plan « {$plan} » vidé : {$report['coords']} case(s), {$layerTotal} ligne(s) de couches"
+            . ($report['npcs'] > 0 ? ' — ' . $report['npcs'] . ' PNJ supprimé(s)' : '')
+            . '. La configuration JSON est conservée.');
+    } catch (\RuntimeException $e) {
+        setFlash('warning', str_replace("\n", ' ', $e->getMessage()));
+    }
+    redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));
+}
+
+if ($action === 'delete-z') {
+    $z = (int) ($_POST['z'] ?? 0);
+    try {
+        $report = $service->deleteZLevel($plan, $z);
+        $layerTotal = array_sum($report['layers']) + $report['map_items'];
+        setFlash('success', "Niveau z{$z} du plan « {$plan} » supprimé : {$report['coords']} case(s), {$layerTotal} ligne(s) de couches.");
+    } catch (\RuntimeException $e) {
+        setFlash('warning', str_replace("\n", ' ', $e->getMessage()));
+    }
     redirectTo('/admin/plans.php?action=edit&plan=' . urlencode($plan));
 }
 

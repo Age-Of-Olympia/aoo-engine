@@ -340,6 +340,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
     sort($allZ);
 
     $zRows = '';
+    $zDeleteForms = '';
     foreach ($allZ as $z) {
         $zConfig = $configService->readZLevel($planId, $z);
         $origin = '';
@@ -360,7 +361,23 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
             . '<td><input type="text" class="form-control form-control-sm" name="z[' . $z . '][bounds]"'
             . ' value="' . e($zConfig['bounds']) . '" placeholder="auto">'
             . '</td>'
+            /* Bouton hors du <form> principal (attribut form) : un formulaire
+             * imbriqué serait invalide. Garde serveur : refus si une entité
+             * occupe le niveau. */
+            . '<td class="align-middle text-center">'
+            . '<button type="submit" form="plan-delz-' . $z . '" class="btn btn-sm btn-outline-danger"'
+            . ' title="Supprimer les cases et couches du niveau z=' . $z . '">Supprimer</button>'
+            . '</td>'
             . '</tr>';
+
+        $zDeleteForms .= '<form id="plan-delz-' . $z . '" method="post"'
+            . ' action="/admin/plans-save.php?action=delete-z"'
+            . ' onsubmit="return confirm(\'Supprimer le niveau z=' . $z . ' du plan « ' . e($planId)
+            . ' » : toutes ses cases et couches ?\');">'
+            . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+            . '<input type="hidden" name="plan" value="' . e($planId) . '">'
+            . '<input type="hidden" name="z" value="' . $z . '">'
+            . '</form>';
     }
 
     $zCard = $zRows === ''
@@ -368,7 +385,8 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         : '<table class="table table-sm mb-1"><thead><tr>'
             . '<th style="width:22%">Niveau</th><th>Nom affiché</th>'
             . '<th style="width:12%" class="text-center" title="Niveau volontairement sans carte (MapUnavailable)">Sans carte</th>'
-            . '<th style="width:30%" title="Bornes visibles « minX,maxX,minY,maxY », ou « auto » (recalculées au prochain push Tiled)">Bornes visibles</th>'
+            . '<th style="width:26%" title="Bornes visibles « minX,maxX,minY,maxY », ou « auto » (recalculées au prochain push Tiled)">Bornes visibles</th>'
+            . '<th style="width:10%"></th>'
             . '</tr></thead><tbody>' . $zRows . '</tbody></table>'
             . '<small class="text-muted">Bornes : « minX,maxX,minY,maxY » explicites, ou « auto » — recalculées'
             . ' sur l\'étendue réelle au prochain push Tiled du niveau.</small>';
@@ -420,6 +438,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         . '<div class="card-body">' . plans_validation_html($planId, $db, true) . '</div></div>'
 
         . plans_render_delete_zone($planId, $csrfToken)
+        . $zDeleteForms
         . $bgCatalog;
 }
 
@@ -469,14 +488,61 @@ function plans_render_delete_zone(string $planId, string $csrfToken): string
             . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
             . '<input type="hidden" name="plan" value="' . e($planId) . '">'
             . $forceField
+            . plans_typed_confirm_field($planId)
             . '<div class="d-flex align-items-center gap-3">'
             . '<button type="submit" class="btn btn-outline-danger">Supprimer le plan</button>'
             . '<small class="text-muted">Pensez à exporter un bundle JSON avant — il permet de restaurer le plan à l\'identique.</small>'
             . '</div></form>';
     }
 
+    // Vider les cases : mêmes gardes que la suppression, mais la
+    // configuration JSON (et les PNG) restent — le plan se re-peuple.
+    $clearBody = '<form method="post" action="/admin/plans-save.php?action=clear"'
+        . ' onsubmit="return confirm(\'Vider toutes les cases du plan « ' . e($planId)
+        . ' » (coordonnées et couches) ? La configuration JSON est conservée.\');">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="plan" value="' . e($planId) . '">'
+        . ($hard === [] && $soft !== []
+            ? '<label class="d-block mb-3" style="cursor:pointer;"><input type="checkbox" name="force"> '
+                . 'Forcer : supprimer les PNJ du plan (et leurs données) et détacher les logs.</label>'
+            : '')
+        . plans_typed_confirm_field($planId)
+        . '<button type="submit" class="btn btn-outline-danger"' . ($hard !== [] ? ' disabled title="Blocages ci-dessus"' : '') . '>'
+        . 'Vider les cases du plan</button>'
+        . '</form>';
+
+    // Renommage : code technique + coords + références par nom + fichiers.
+    $renameBody = '<form method="post" action="/admin/plans-save.php?action=rename"'
+        . ' onsubmit="return confirm(\'Renommer le plan « ' . e($planId)
+        . ' » partout (coordonnées, respawn de factions, races, téléporteurs, fichiers) ?\');">'
+        . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
+        . '<input type="hidden" name="plan" value="' . e($planId) . '">'
+        . '<div class="form-group"><label>Nouveau code technique</label>'
+        . '<input type="text" class="form-control" name="new_plan" required'
+        . ' pattern="[a-z0-9_-]{1,64}" placeholder="nouveau_code" style="max-width:20rem;"></div>'
+        . plans_typed_confirm_field($planId)
+        . '<button type="submit" class="btn btn-outline-danger">Renommer le plan</button>'
+        . '</form>';
+
     return '<div class="card mt-4 border-danger"><div class="card-header text-danger">Zone dangereuse</div>'
-        . '<div class="card-body">' . $body . '</div></div>';
+        . '<div class="card-body">'
+        . '<h6>Renommer</h6>' . $renameBody
+        . '<hr><h6>Vider les cases</h6>' . $clearBody
+        . '<hr><h6>Supprimer</h6>' . $body
+        . '</div></div>';
+}
+
+/**
+ * Champ de DOUBLE validation des opérations destructives : le code du
+ * plan doit être retapé, vérifié côté serveur (plans-save.php) — la
+ * boîte confirm() seule ne protège pas d'un clic réflexe.
+ */
+function plans_typed_confirm_field(string $planId): string
+{
+    return '<div class="form-group"><label>Confirmation : retapez le code du plan'
+        . ' (<code>' . e($planId) . '</code>)</label>'
+        . '<input type="text" class="form-control" name="confirm_code" required autocomplete="off"'
+        . ' placeholder="' . e($planId) . '" style="max-width:20rem;"></div>';
 }
 
 /* -------------------------------------------------------------------------

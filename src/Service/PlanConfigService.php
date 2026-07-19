@@ -264,6 +264,29 @@ class PlanConfigService
         ];
     }
 
+    /**
+     * Retire l'entrée z_levels d'un niveau — le pendant config de la
+     * suppression d'une ligne de niveau (sinon la ligne réapparaît dans
+     * l'éditeur via l'union DB ∪ JSON). No-op si absente.
+     */
+    public function removeZLevel(string $plan, int $z): void
+    {
+        $json = $this->load($plan);
+        if (empty($json['z_levels'])) {
+            return;
+        }
+
+        $kept = array_values(array_filter(
+            $json['z_levels'],
+            static fn(array $level): bool => !isset($level['z']) || (int) $level['z'] !== $z
+        ));
+
+        if (count($kept) !== count($json['z_levels'])) {
+            $json['z_levels'] = $kept;
+            $this->save($plan, $json);
+        }
+    }
+
     /** @return array<string, mixed> entrée z_levels du niveau, ou [] */
     private function findZLevel(array $json, int $z): array
     {
