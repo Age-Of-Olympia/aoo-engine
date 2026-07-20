@@ -15,6 +15,6 @@ final class Caracs
 {
     public const KEYS = [
         'a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e',
-        'agi', 'pm', 'fm', 'm', 'r', 'rm', 'spd', 'ae',
+        'agi', 'pm', 'fm', 'pui', 'res', 'r', 'rm', 'spd', 'ae',
     ];
 }

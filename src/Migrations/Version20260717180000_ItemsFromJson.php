@@ -31,8 +31,8 @@ final class Version20260717180000_ItemsFromJson extends AbstractMigration
         'fixedF' => 0, 'mDamage' => 0, 'demolition' => 0, 'craftedByN' => 0,
         'lootChance' => 0,
         'a' => 0, 'mvt' => 0, 'p' => 0, 'pv' => 0, 'cc' => 0, 'ct' => 0,
-        'f' => 0, 'e' => 0, 'agi' => 0, 'pm' => 0, 'fm' => 0, 'm' => 0,
-        'r' => 0, 'rm' => 0, 'spd' => 0, 'ae' => 0,
+        'f' => 0, 'e' => 0, 'agi' => 0, 'pm' => 0, 'fm' => 0, 'pui' => 0,
+        'res' => 0, 'r' => 0, 'rm' => 0, 'spd' => 0, 'ae' => 0,
     ];
 
     private const VARCHAR_COLUMNS = ['emplacement', 'type', 'subtype', 'race'];
