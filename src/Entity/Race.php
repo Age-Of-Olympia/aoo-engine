@@ -44,14 +44,7 @@ abstract class Race implements OwnsCaracsInterface, LockableInterface, Obstructs
      * The 16 stat keys, one DB column each — alias de la source unique
      * {@see \App\Enum\Caracs::KEYS} (CARACS garde les libellés UI).
      */
-<<<<<<< HEAD
     public const CARAC_KEYS = \App\Enum\Caracs::KEYS;
-=======
-    public const CARAC_KEYS = [
-        'a', 'mvt', 'p', 'pv', 'cc', 'ct', 'f', 'e',
-        'agi', 'pm', 'fm', 'pui', 'res', 'r', 'rm', 'spd', 'ae',
-    ];
->>>>>>> 41e092ff (Premier jet remplacement M -> Pui/Res)
 
     public const FAMILY_CHARACTER = 'character';
     public const FAMILY_BUILDING = 'building';
