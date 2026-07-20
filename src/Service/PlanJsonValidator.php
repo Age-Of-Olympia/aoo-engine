@@ -129,7 +129,7 @@ class PlanJsonValidator
      *
      * Pour qu'une fouille fonctionne (voir ResourceService::findResourcesAround),
      * deux conditions doivent être vraies pour chaque biome :
-     *   - le nom du wall existe dans WALLS_PV avec la valeur -1 (récoltable) ;
+     *   - le nom du wall existe dans RESOURCES_PV avec la valeur -1 (récoltable) ;
      *   - le nom de la ressource correspond à un item existant en base
      *     (Item::get_item_by_name reçoit ce nom).
      * Toute typo sur l'un ou l'autre provoque une fouille muette, sans erreur.
@@ -145,7 +145,7 @@ class PlanJsonValidator
             return;
         }
 
-        $wallsPv = defined('WALLS_PV') ? WALLS_PV : [];
+        $wallsPv = defined('RESOURCES_PV') ? RESOURCES_PV : [];
 
         // Suivi des walls déjà rencontrés pour signaler les doublons : au runtime,
         // ResourceService indexe les biomes par wall ($biomes[$wall] = $ressource),
@@ -153,7 +153,7 @@ class PlanJsonValidator
         $seenWalls = [];
 
         foreach ($planData->biomes as $i => $biome) {
-            // Valeurs brutes pour la logique (lookups WALLS_PV / requête items),
+            // Valeurs brutes pour la logique (lookups RESOURCES_PV / requête items),
             // valeurs échappées pour l'affichage (les messages sont rendus en HTML).
             $wallName      = $biome->wall      ?? null;
             $ressourceName = $biome->ressource ?? null;
@@ -177,15 +177,15 @@ class PlanJsonValidator
                 $seenWalls[$wallName] = $i;
             }
 
-            // Vérifier le wall dans WALLS_PV (doit exister ET valoir -1 = récoltable)
+            // Vérifier le wall dans RESOURCES_PV (doit exister ET valoir -1 = récoltable)
             if (!$wallName) {
                 $errors[] = "{$label} : clé 'wall' manquante";
             } elseif (!array_key_exists($wallName, $wallsPv)) {
-                $errors[] = "{$label} : wall '{$wallEsc}' inconnu dans WALLS_PV, probablement une typo";
+                $errors[] = "{$label} : wall '{$wallEsc}' inconnu dans RESOURCES_PV, probablement une typo";
             } elseif ($wallsPv[$wallName] !== -1) {
-                $warnings[] = "{$label} : wall '{$wallEsc}' a WALLS_PV=" . $wallsPv[$wallName] . " (pas -1) → non récoltable en l'état";
+                $warnings[] = "{$label} : wall '{$wallEsc}' a RESOURCES_PV=" . $wallsPv[$wallName] . " (pas -1) → non récoltable en l'état";
             } else {
-                $ok[] = "{$label} : wall valide (WALLS_PV=-1)";
+                $ok[] = "{$label} : wall valide (RESOURCES_PV=-1)";
             }
 
             // Vérifier la ressource : elle doit correspondre à un item existant en base.

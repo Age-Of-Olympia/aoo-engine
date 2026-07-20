@@ -17,7 +17,7 @@ class TileCatalogService
     /** Tolérance au-delà de laquelle une image n'est plus une tuile posable */
     private const TILE_MAX_SIZE = TiledMapService::TILE_SIZE * 1.2;
 
-    /** Taille maximale d'une image poussée depuis l'éditeur (fonds compris) */
+    /** Taille maximale d'une image uploadée (stocks d'images de l'admin) */
     public const IMAGE_MAX_BYTES = 4 * 1024 * 1024;
 
     /** @var array<string, array<string, array{file: string, width: int, height: int}>> */
@@ -38,13 +38,15 @@ class TileCatalogService
 
         foreach ($layers as $layer) {
             $names = [];
+            // La couche resources garde img/walls — voir layerImageDir()
+            $dir = TiledMapService::layerImageDir($layer);
 
-            foreach ($this->scanImages('img/' . $layer) as $name => $image) {
+            foreach ($this->scanImages('img/' . $dir) as $name => $image) {
                 if (!$this->isTileSized($image)) {
                     continue;
                 }
                 $names[] = $name;
-                $images[$layer . '/' . $name] = 'img/' . $layer . '/' . $image['file'];
+                $images[$layer . '/' . $name] = 'img/' . $dir . '/' . $image['file'];
             }
 
             sort($names);
@@ -71,7 +73,8 @@ class TileCatalogService
         $composites = [];
 
         foreach ($layers as $layer) {
-            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
+            $imageDir = TiledMapService::layerImageDir($layer);
+            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $imageDir;
 
             foreach (is_dir($dir) ? scandir($dir) : [] as $base) {
                 if ($base === '.' || $base === '..'
@@ -111,7 +114,7 @@ class TileCatalogService
 
                 $composites[$layer][] = [
                     'name'   => $base,
-                    'image'  => 'img/' . $layer . '/' . $base . '/' . $base . '.png',
+                    'image'  => 'img/' . $imageDir . '/' . $base . '/' . $base . '.png',
                     'width'  => $width,
                     'height' => $height,
                     'pieces' => $pieces,
@@ -142,94 +145,6 @@ class TileCatalogService
         sort($choices);
 
         return $choices;
-    }
-
-    /**
-     * Toutes les images que l'éditeur peut synchroniser : fichiers à la
-     * racine de chaque img/<couche authorable> (tuiles ET grandes images —
-     * fonds/masques de plan) plus l'originale des structures composites
-     * (img/<couche>/<base>/<base>.<ext>). Chemins relatifs triés.
-     *
-     * @return string[]
-     */
-    public function listImagePaths(): array
-    {
-        $paths = [];
-
-        foreach (array_keys(TiledMapService::AUTHORABLE_LAYERS) as $layer) {
-            $dir = $_SERVER['DOCUMENT_ROOT'] . '/img/' . $layer;
-
-            foreach (is_dir($dir) ? scandir($dir) : [] as $entry) {
-                if ($entry === '.' || $entry === '..') {
-                    continue;
-                }
-
-                if (is_dir($dir . '/' . $entry)) {
-                    if (!preg_match(self::ASSET_NAME_PATTERN, $entry)) {
-                        continue;
-                    }
-                    foreach (self::IMAGE_EXTENSIONS as $ext) {
-                        if (is_file($dir . '/' . $entry . '/' . $entry . '.' . $ext)) {
-                            $paths[] = 'img/' . $layer . '/' . $entry . '/' . $entry . '.' . $ext;
-                        }
-                    }
-                    continue;
-                }
-
-                $ext = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
-                if (in_array($ext, self::IMAGE_EXTENSIONS, true)
-                    && preg_match(self::ASSET_NAME_PATTERN, pathinfo($entry, PATHINFO_FILENAME))
-                ) {
-                    $paths[] = 'img/' . $layer . '/' . $entry;
-                }
-            }
-        }
-
-        sort($paths);
-
-        return $paths;
-    }
-
-    /**
-     * Chemin absolu d'une image de l'éditeur, ou null si le chemin sort du
-     * cadre autorisé : img/<couche authorable>/<nom>.<ext> ou, pour
-     * l'originale d'une structure composite, img/<couche>/<base>/<base>.<ext>
-     * (le sous-dossier doit porter le nom de l'image — ce qui interdit au
-     * passage tout segment de traversée). Le fichier peut ne pas exister :
-     * la même validation sert au téléchargement et à l'upload.
-     */
-    public function resolveImagePath(string $path): ?string
-    {
-        $segments = explode('/', $path);
-        $count = count($segments);
-
-        if ($count < 3 || $count > 4 || $segments[0] !== 'img'
-            || !array_key_exists($segments[1], TiledMapService::AUTHORABLE_LAYERS)
-        ) {
-            return null;
-        }
-
-        $file = $segments[$count - 1];
-        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        $name = pathinfo($file, PATHINFO_FILENAME);
-
-        if (!in_array($ext, self::IMAGE_EXTENSIONS, true)
-            || !preg_match(self::ASSET_NAME_PATTERN, $name)
-            || ($count === 4 && $segments[2] !== $name)
-        ) {
-            return null;
-        }
-
-        return $_SERVER['DOCUMENT_ROOT'] . '/' . $path;
-    }
-
-    /** Le contenu est-il une image d'un format supporté (magic bytes) ? */
-    public static function looksLikeImage(string $bytes): bool
-    {
-        return str_starts_with($bytes, "\x89PNG\r\n\x1a\n")
-            || (str_starts_with($bytes, 'RIFF') && substr($bytes, 8, 4) === 'WEBP')
-            || str_starts_with($bytes, 'GIF87a')
-            || str_starts_with($bytes, 'GIF89a');
     }
 
     /**

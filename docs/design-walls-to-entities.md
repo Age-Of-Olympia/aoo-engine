@@ -33,6 +33,13 @@ biomes des plans) est un système à part entière et fonctionne. Les
 convertir n'apporterait rien et casserait `ResourceService`. Décision :
 `map_walls` DEVIENT la table des ressources, et rien d'autre.
 
+RENOMMAGE (2026-07-20) : le nom suit le contenu — la table s'appelle
+`map_resources` (migration `Version20260720130000`, vue `map_walls`
+conservée pour la fenêtre de déploiement), la couche des éditeurs
+`resources`, la constante `RESOURCES_PV` (ex-`WALLS_PV`). Le dossier
+`img/walls/` garde son nom : dépôt d'assets non versionné + chemins
+d'avatars copiés en base.
+
 ### Cas à trancher (questions ouvertes)
 
 1. **Coffres** (`coffre_* `, PV 1 dans WALLS_PV) : convertis, ils
@@ -91,9 +98,14 @@ convertir n'apporterait rien et casserait `ResourceService`. Décision :
      du calque bâtiments (!705) ;
    - `WALLS_PV` : réduit aux ressources (les PV des obstacles vivent
      dans leurs races) ;
-   - éditeur Tiled (`scripts/tiled/*`) : poser un « mur » d'obstacle
-     pose désormais une entité (ou l'éditeur garde map_walls et un cron
-     de conversion ramasse ? — à trancher avec l'équipe carte).
+   - éditeur Tiled (`scripts/tiled/*`) : TRANCHÉ (2026-07-20, passe
+     Tiled) — filtrage du catalogue : les deux éditeurs ne proposent
+     plus que les murs encore posables en map_walls
+     (`WallPaletteService` : ressources, autels, unique_*, tout sur les
+     plans de tutoriel) et l'import Tiled refuse d'en réintroduire.
+     Les obstacles se posent au pinceau sur la couche « buildings »
+     des deux éditeurs (pose = `BuildingService::place`, gomme =
+     `remove`, décor seulement) ou via admin → Bâtiments.
 
 ## Ce que ça débloque
 

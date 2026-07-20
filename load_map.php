@@ -35,7 +35,7 @@ if ($viewService->isWorldPlan()) {
     $fullHref = 'map.php?world';
     $title = 'Olympia';
 } else {
-    $layers = ['tiles', 'elements', 'walls', 'routes'];
+    $layers = ['tiles', 'elements', 'resources', 'routes'];
     $mapResult = $viewService->getLocalMap();
     if (!isset($mapResult['tiles'])) {
         $viewService->generateLocalMap($layers);

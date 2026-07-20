@@ -4,7 +4,7 @@
  *
  * POST /api/admin/map/import.php
  * Auth : header X-AoO-Tiled-Token (jeton délivré par auth.php)
- * Body JSON : { plan, z, version, layers: {walls: [{x,y,name}...], triggers: [{x,y,name,params}...], ...} }
+ * Body JSON : { plan, z, version, layers: {resources: [{x,y,name}...], triggers: [{x,y,name,params}...], ...} }
  *
  * `version` doit être celle reçue au pull : si le plan a changé entre-temps
  * (autre admin), l'import répond 409 sans rien écrire.

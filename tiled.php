@@ -493,7 +493,9 @@ include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_indestructibles.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_plants.php';
 
-include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_walls.php';
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_resources.php';
+
+include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_buildings.php';
 
 include $_SERVER['DOCUMENT_ROOT'].'/scripts/tiled/display_elements.php';
 
@@ -553,7 +555,7 @@ $modalView->displayModal('tile-info','info-display');
 </style>
 
 <script src="js/admin-tools.js?v=20260715"></script>
-<script src="js/blocked-tiles.js?v=20260501c"></script>
+<script src="js/blocked-tiles.js?v=20260720"></script>
 <script src="js/tiled.js?v=20260421"></script>
 <script>
 /* Tiled editor: toggle the "blocked tiles" overlay so admins can

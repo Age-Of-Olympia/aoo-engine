@@ -6,7 +6,7 @@
  * Auth : header X-AoO-Tiled-Token (jeton délivré par auth.php)
  *
  * Réponse : { success, plan, z, zLevels, tileSize, version,
- *             layers: {tiles: [...], walls: [...], ...},
+ *             layers: {tiles: [...], resources: [...], ...},
  *             catalog: {tiles: [noms...], ...},
  *             images: {"walls/arbre1": "img/walls/arbre1.png", ...} }
  *

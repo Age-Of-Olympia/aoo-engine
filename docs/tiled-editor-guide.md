@@ -27,12 +27,14 @@ Les actions AoO vivent en bas du menu **Fichier** :
 | AoO : Connexion / changer d'instance… | formulaire compte + instance (local, test… ou « adresse personnalisée » pour saisir une URL à la volée) |
 | AoO : Pull un plan du jeu… | télécharge un plan (liste déroulante des plans avec leurs niveaux z ; niveau z optionnel, vide = tous) |
 | AoO : Push la carte vers le jeu… | applique la carte ouverte à son instance d'origine |
-| AoO : Pull les images du jeu… | télécharge dans `img/` local les images de tuiles absentes (l'`img/` du dépôt n'est pas versionné) |
-| AoO : Push les nouvelles images… | envoie vers l'instance le nouvel art local (jamais d'écrasement : l'art existant se gère via le dépôt d'assets) |
-| AoO : Nouveau plan dans le jeu… | crée un plan vierge et l'ouvre |
-| AoO : Fond / ambiance du plan… | choisit le fond et le masque animé |
-| AoO : Biomes (ressources) du plan… | édite les ressources récoltables (formulaire, sans JSON) |
 | AoO : Générer le monde… | pull tous les plans et écrit un `.world` (vue d'ensemble) |
+
+Le reste du cycle de vie se gère dans **l'admin du jeu** : création,
+clonage et configuration des plans (fond, ambiance, biomes…) sur la page
+**Plans**, inventaire et gestion des images de tuiles sur la page
+**Tuiles & images** (l'`img/` du dépôt n'est pas versionné : récupérer
+l'art via le dépôt d'assets). L'extension se concentre sur l'édition du
+contenu des couches.
 
 ### Le monde (tous les plans en un espace)
 
@@ -56,7 +58,7 @@ les `tp`). Le push reste par plan, inchangé.
   on édite **la couche sélectionnée**, et rien d'autre. L'œil règle la
   visibilité, le cadenas le verrouillage.
 - **À droite, en bas — Tilesets** : la palette. Un onglet par couche du jeu
-  (`aoo-tiles`, `aoo-walls`…) contenant **toutes** les images disponibles,
+  (`aoo-tiles`, `aoo-resources`…) contenant **toutes** les images disponibles,
   pas seulement celles déjà posées.
 - **À gauche — Propriétés** : les détails de l'élément sélectionné (pour
   les déclencheurs : leurs champs typés).
@@ -69,20 +71,47 @@ Chaque niveau z est un groupe `z=0`, `z=-1`… contenant, de bas en haut :
 |---|---|---|
 | `tiles` | sol (biomes, routes posées au sol…) | tuiles |
 | `routes`, `plants` | routes, plantes | tuiles |
-| `walls` | murs et ressources (arbres, pierres) — bloquants | tuiles |
+| `resources` | ressources récoltables (arbres, pierres…), autels, `unique_*` — bloquants | tuiles |
 | `elements` | décor animé/temporaire | tuiles |
+| `buildings` | **entités bâtiment** (murs d'enceinte, statues, coffres…) — une tuile = une entité | tuiles |
 | `foregrounds` | décor d'avant-plan | tuiles |
 | `triggers` | déclencheurs invisibles (tp, forbidden…) | objets |
 | `dialogs` | points de dialogue | objets |
 | `xxx (joueurs)` 🔒 | constructions des joueurs — intouchables | tuiles |
 
 Règle d'or : **la tuile doit venir du tileset de sa couche** (un arbre
-d'`aoo-walls` se pose sur `walls`). Sinon le push refuse avec un message
+d'`aoo-resources` se pose sur `resources`). Sinon le push refuse avec un message
 clair.
+
+Depuis la conversion des murs en entités, les **obstacles et le décor**
+(murs d'enceinte, statues, coffres…) sont des **bâtiments** : ils se posent
+sur la couche `buildings`, pas sur `resources`. La palette `aoo-resources` ne
+propose donc que ce qui reste des `map_resources` (ex-`map_walls`) — les ressources récoltables,
+les autels et les types `unique_*` (tout, sur les plans de tutoriel, dont
+les murs sont clonés par session) — et le serveur refuse un push qui
+réintroduirait un obstacle dans `resources`.
+
+### La couche `buildings` (entités)
+
+Elle se peint **comme une couche de tuiles** (pinceau, pot, gomme,
+copier-coller), mais chaque tuile est une **entité** du jeu :
+
+- la palette `aoo-buildings` liste les types de structure du catalogue
+  (les mêmes que admin → Bâtiments), sprite compris ;
+- au push, chaque tuile ajoutée devient une entité (PV de son type,
+  attaquable) et chaque tuile effacée démonte la sienne ; une tuile
+  inchangée conserve son entité — id, blessures, tout ;
+- une pose sur une **case occupée** (joueur, autre entité, mur, élément
+  non constructible) est refusée case par case : le push réussit, le
+  rapport liste les refus (⚠), re-puller pour recoller la carte au réel ;
+- seul le **décor** est éditable : les bâtiments à propriétaire, de
+  faction, en chantier ou en ruine arrivent dans la couche verrouillée
+  « buildings (joueurs) », intouchables — ils se gèrent dans
+  admin → Bâtiments (propriétaire, faction et dialogue s'y règlent aussi).
 
 ## Peindre des tuiles
 
-1. Cliquer la couche cible dans **Calques** (ex. `walls`).
+1. Cliquer la couche cible dans **Calques** (ex. `resources`).
 2. Choisir une tuile dans l'onglet du tileset correspondant.
 3. Outils principaux (raccourcis) :
    - **B — tampon** : peindre tuile par tuile, ou en traits.
@@ -100,7 +129,7 @@ clair.
 Les outils opèrent sur **les couches sélectionnées** — et on peut en
 sélectionner plusieurs (**Ctrl+clic** dans le panneau Calques) :
 
-- couches `tiles` + `walls` + `foregrounds` sélectionnées → **R**, tracer la
+- couches `tiles` + `resources` + `foregrounds` sélectionnées → **R**, tracer la
   zone, **Ctrl+C**, **Ctrl+V** : l'aperçu suit la souris, un clic dépose le
   tout, chaque contenu sur sa couche ;
 - même principe pour le tampon : capture au clic droit avec plusieurs
@@ -169,44 +198,20 @@ de ce niveau, préfixée `aooZ_` :
 
 Tout est écrit dans `z_levels` du JSON de plan au push.
 
-#### Le fond et l'ambiance (Fichier → AoO : Fond / ambiance du plan…)
+#### Le fond, l'ambiance et les biomes (admin → Plans)
 
-Le fond et l'ambiance ne sont **pas des tuiles** : ce sont des images
-plein écran affichées sous et par-dessus la carte, stockées comme clés du
-JSON de plan. Comme ce sont de grandes images (500×500, bandes de
-2848×862…), elles sont volontairement absentes de la palette ; cette action
-les liste dans deux menus déroulants :
+Le fond (`bg`, l'image affichée sous les tuiles), le masque animé (`mask`,
+l'effet d'ambiance météo qui défile par-dessus) et les biomes (`biomes`,
+quels murs sont récoltables et ce qu'ils donnent) sont des clés du JSON de
+plan : leur **édition assistée vit dans l'admin du jeu, page Plans**
+(catalogue des fonds, validation des biomes).
 
-- **Fond (`bg`)** : l'image affichée **sous** les tuiles, à la place du fond
-  par défaut (`img/tiles/<plan>.webp`). C'est la texture du territoire —
-  sable, herbe, pierre… Choisir « (aucun / défaut) » pour revenir au fond
-  automatique.
-- **Masque animé (`mask`)** : une image semi-transparente affichée
-  **par-dessus** la carte, qui défile en boucle — brume, nuages, tempête de
-  sable, pluie de cendres. C'est l'effet d'ambiance météo.
-
-Deux réglages du masque se font dans les propriétés `aooPlan_*` (panneau
-Propriétés) plutôt que dans ce menu :
-
-- **`scrollingMask`** : la durée d'un cycle de défilement en secondes (petit
-  = rapide, grand = lent). Vide = masque fixe.
-- **`verticalScrolling`** : `true` pour un défilement vertical (pluie,
-  chutes) au lieu d'horizontal (nuages poussés par le vent).
-
-Le choix est mémorisé sur la carte et écrit dans le JSON de plan au push.
-Un **aperçu** est ajouté dans l'éditeur : un calque image verrouillé « fond
-(aperçu) » sous la carte et « masque (aperçu) » (semi-transparent) au-dessus
-— purement visuels, ignorés au push. Le rendu exact reste celui du jeu.
-
-#### Les biomes / ressources (Fichier → AoO : Biomes… )
-
-Les biomes définissent quels murs sont **récoltables** et ce qu'ils donnent.
-Cette action ouvre un éditeur : **un biome par ligne**, au format
-`wall:ressource:exhaust:regrow` — le mur récoltable, l'item obtenu, le
-pourcentage d'épuisement à chaque récolte, le nombre de tours de repousse
-(ex. `arbre1:bois:75:20`). Chaque champ est validé (exhaust/regrow
-numériques) ; le tout est écrit dans la clé `biomes` du JSON de plan au push,
-puis contrôlé par le validateur (ressources inconnues signalées).
+Côté Tiled, ces clés restent visibles et modifiables à la main dans les
+propriétés `aooPlan_*` (cas avancés — elles sont réécrites au push, avec le
+bilan de santé `PlanJsonValidator` dans le rapport), et le pull ajoute un
+**aperçu** du fond et du masque : deux calques image verrouillés « fond
+(aperçu) » / « masque (aperçu) », purement visuels et ignorés au push. Le
+rendu exact reste celui du jeu.
 
 ### Le pinceau Terrain (transitions automatiques)
 
@@ -309,8 +314,10 @@ temps réel.
 Emplacements :
 - Extension + projet : `tools/tiled/aoo/` (`aoo.js`, `aoo.tiled-project`,
   `config.json`/`session.json` locaux gitignorés, `.exemple` fournis).
-- Endpoints : `api/admin/map/{auth,export,import,plans,create,world}.php`
-  (socle commun `_common.php`).
+- Endpoints : `api/admin/map/{auth,export,import,plans,world}.php`
+  (socle commun `_common.php`). La création/configuration des plans et la
+  gestion des images passent par l'admin du jeu (pages Plans et
+  Tuiles & images).
 - Services : `TiledMapService` (diff transactionnel `map_*`),
   `PlanConfigService` (JSON de plan), `TileCatalogService` (scan `img/`),
   `TiledAuthService` (jetons), plus `ColorService`/`PlanJsonValidator` existants.
@@ -328,6 +335,13 @@ Emplacements :
   poussée — protection portée par une **propriété**, pas par le nom de couche
   (résiste au renommage/déverrouillage). `map_items` (objets au sol) jamais
   concerné.
+- **Couche `buildings` = entités** : pas de table `map_buildings` — les
+  lignes sont les entités bâtiment du niveau. Même diff (x, y, type), mais
+  pose par `BuildingService::place()` et retrait par `remove()`, **hors de
+  la transaction `map_*`** (autre connexion) et après elle ; une pose
+  refusée (case occupée) est signalée sans condamner le push, et la
+  version post-push se recalcule sur l'état réel. Seul le décor (sans
+  propriétaire ni faction, état `built`) est diffable.
 - **Contrôle de version optimiste** : empreinte du contenu authoré calculée au
   pull (colonnes runtime et lignes joueurs exclues), vérifiée au push → **409**
   si le plan a bougé entre-temps.
@@ -346,9 +360,8 @@ Emplacements :
 - **Monde** : cases dimensionnées par plan plutôt qu'au plus grand (`enfers`,
   421 tuiles, gonfle l'espacement) ; validation des liens `tp` cassés
   (destination inexistante / hors bornes) remontée comme le bilan de santé.
-- **Biomes** : édition assistée existante (`wall:ressource:exhaust:regrow`) ;
-  des objets typés seraient encore plus sûrs. À valider en jeu : la clé
-  d'identité des plantes inclut `params`.
+- **Biomes** : édition assistée dans l'admin (page Plans). À valider en
+  jeu : la clé d'identité des plantes inclut `params`.
 - **Aperçu** : bg/mask affichés en calques image ; on pourrait aussi poser
   l'image de fond de la carte.
 - **Industrialisation** : export périodique des plans en `.tmj` versionnés

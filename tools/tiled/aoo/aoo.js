@@ -15,9 +15,18 @@
  *    de groupe « z=N » par niveau (version d'édition portée par le groupe) ;
  *    « plan » au pull ramène tous les niveaux, « plan:z » un seul ;
  *  - le y du jeu monte vers le nord, celui de Tiled descend → tiledY = -gameY ;
- *  - couches de tuiles : tiles, routes, plants, walls, elements, foregrounds ;
- *  - couches d'objets : triggers, dialogs (params par instance) ;
+ *  - couches de tuiles : tiles, routes, plants, resources, elements,
+ *    buildings, foregrounds ; couches d'objets : triggers, dialogs
+ *    (params par instance) ;
  *  - map_items (état runtime) n'est jamais exporté ni importé ;
+ *  - la palette resources (table map_resources, ex-map_walls) ne propose
+ *    que ce qui y reste posable (ressources récoltables, autels,
+ *    unique_* — tout sur les plans de tutoriel) : les obstacles sont des
+ *    entités bâtiment, posées sur la couche « buildings » ; le serveur
+ *    refuse un push qui en réintroduirait dans resources ;
+ *  - la création de plans et leur configuration (fond, ambiance, biomes)
+ *    se gèrent dans l'admin du jeu (page Plans) — les propriétés
+ *    aooPlan_* restent lisibles/poussables pour les cas avancés ;
  *  - au push, les lignes posées par des joueurs (player_id, couches
  *    verrouillées « xxx (joueurs) ») sont intouchables et l'état runtime
  *    (damages, endTime) des lignes inchangées survit.
@@ -27,8 +36,13 @@ var AoO = {};
 
 /* Ordre d'empilement bas → haut, aligné sur le rendu du jeu
    (Classes/View.php) — doit rester le miroir de
-   TiledMapService::AUTHORABLE_LAYERS côté serveur */
-AoO.TILE_LAYERS = ['tiles', 'routes', 'plants', 'walls', 'elements', 'foregrounds'];
+   TiledMapService::AUTHORABLE_LAYERS côté serveur, plus la couche
+   « buildings » : les ENTITÉS bâtiment du niveau (une tuile = une entité,
+   name = le type). Poser au push = BuildingService::place (une case
+   occupée est signalée sans faire échouer le push), effacer = retrait de
+   l'entité ; les bâtiments non-décor (propriétaire, faction, chantier,
+   ruine) arrivent dans la couche verrouillée « buildings (joueurs) ». */
+AoO.TILE_LAYERS = ['tiles', 'routes', 'plants', 'resources', 'elements', 'buildings', 'foregrounds'];
 AoO.OBJECT_LAYERS = ['triggers', 'dialogs'];
 
 /* Propriétés custom posées sur les cartes/couches/tuiles générées —
@@ -41,56 +55,12 @@ AoO.PROP = {
     instance: 'aooInstance',    /* carte : instance d'origine — le push y est verrouillé */
     planPrefix: 'aooPlan_',     /* carte : propriétés du JSON de plan (aooPlan_name, aooPlan_bg…) */
     zPrefix: 'aooZ_',           /* groupe z : config du niveau (aooZ_name, aooZ_mapUnavailable, aooZ_bounds) */
-    imageChoices: 'aooImageChoices', /* carte : images candidates bg/mask (info, alimenté au pull) */
     z: 'aooZ',                  /* groupe : niveau z */
     version: 'aooVersion'       /* groupe : version d'édition du niveau */
 };
 
 AoO.hasParams = function(value) {
     return value !== undefined && value !== null && String(value) !== '';
-};
-
-/* Biomes ↔ texte « wall:ressource:exhaust:regrow » (un par ligne), pour
-   éditer les ressources sans écrire de JSON. */
-AoO.formatBiomes = function(json) {
-    var biomes;
-    try {
-        biomes = JSON.parse(json || '[]');
-    } catch (error) {
-        return String(json || ''); /* JSON cassé : montrer tel quel pour correction */
-    }
-    if (!Array.isArray(biomes)) {
-        return '';
-    }
-    return biomes.map(function(b) {
-        return [b.wall || '', b.ressource || '', b.exhaust || '', b.regrow || ''].join(':');
-    }).join('\n');
-};
-
-AoO.parseBiomes = function(text) {
-    var biomes = [];
-    /* une ligne par biome ; virgules aussi acceptées (repli prompt) */
-    var lines = String(text || '').split(/[\r\n,]+/);
-
-    for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (!line) {
-            continue;
-        }
-        var parts = line.split(':');
-        if (parts.length !== 4 || !parts[0].trim() || !parts[1].trim()
-            || !/^\d+$/.test(parts[2].trim()) || !/^\d+$/.test(parts[3].trim())) {
-            throw new Error('Biome mal formé (attendu « wall:ressource:exhaust:regrow ») : ' + line);
-        }
-        biomes.push({
-            wall: parts[0].trim(),
-            ressource: parts[1].trim(),
-            exhaust: parseInt(parts[2].trim(), 10),
-            regrow: parseInt(parts[3].trim(), 10)
-        });
-    }
-
-    return biomes;
 };
 
 /*
@@ -440,53 +410,6 @@ AoO.login = function(config, fixedInstance) {
     return data.token;
 };
 
-/* ------------------------------------------------------------------ */
-/* Base64 — les images transitent en base64 dans le JSON de l'API      */
-/* (pas d'atob/btoa dans le moteur JS de Tiled)                        */
-/* ------------------------------------------------------------------ */
-
-AoO.B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-AoO.B64_LOOKUP = (function() {
-    var lookup = {};
-    for (var i = 0; i < AoO.B64.length; i++) {
-        lookup[AoO.B64[i]] = i;
-    }
-    return lookup;
-})();
-
-AoO.base64Encode = function(buffer) {
-    var bytes = new Uint8Array(buffer);
-    var out = [];
-    for (var i = 0; i < bytes.length; i += 3) {
-        var b0 = bytes[i];
-        var b1 = i + 1 < bytes.length ? bytes[i + 1] : null;
-        var b2 = i + 2 < bytes.length ? bytes[i + 2] : null;
-        out.push(AoO.B64[b0 >> 2]);
-        out.push(AoO.B64[((b0 & 3) << 4) | (b1 === null ? 0 : b1 >> 4)]);
-        out.push(b1 === null ? '=' : AoO.B64[((b1 & 15) << 2) | (b2 === null ? 0 : b2 >> 6)]);
-        out.push(b2 === null ? '=' : AoO.B64[b2 & 63]);
-    }
-    return out.join('');
-};
-
-AoO.base64Decode = function(text) {
-    var clean = String(text).replace(/[^A-Za-z0-9+\/]/g, '');
-    var bytes = new Uint8Array(Math.floor(clean.length * 3 / 4));
-    var p = 0;
-    var buffer = 0;
-    var bits = 0;
-    for (var i = 0; i < clean.length; i++) {
-        buffer = (buffer << 6) | AoO.B64_LOOKUP[clean[i]];
-        bits += 6;
-        if (bits >= 8) {
-            bits -= 8;
-            bytes[p++] = (buffer >> bits) & 255;
-        }
-    }
-    return bytes.buffer;
-};
-
 /* Appel API authentifié sur une instance ; redemande les identifiants une fois sur 401 */
 AoO.api = function(config, instance, method, path, body) {
     var token = AoO.cachedToken(instance) || AoO.login(config, instance);
@@ -760,12 +683,12 @@ AoO.pull = function(plan, zSpec, config) {
     map.setProperty(AoO.PROP.instance, instance);
 
     /* propriétés du JSON de plan, éditables directement dans le panneau
-       Propriétés de la carte ('' = clé absente), réécrites au push */
+       Propriétés de la carte ('' = clé absente), réécrites au push —
+       l'édition assistée (fond, biomes…) vit dans l'admin, page Plans */
     if (firstData.planConfig) {
         for (var configKey in firstData.planConfig.values) {
             map.setProperty(AoO.PROP.planPrefix + configKey, firstData.planConfig.values[configKey]);
         }
-        map.setProperty(AoO.PROP.imageChoices, JSON.stringify(firstData.planConfig.bgChoices || []));
     }
 
     var registry = {};
@@ -804,8 +727,7 @@ AoO.pull = function(plan, zSpec, config) {
  * Aperçu du fond et du masque dans l'éditeur : calques image verrouillés,
  * purement visuels (aucune couche AoO, donc ignorés au push). Le fond en
  * bas de la pile, le masque en haut (semi-transparent), tous deux répétés
- * comme le fait le jeu. Reconstruit à chaque appel — utilisé au pull et
- * après un changement via l'action « Fond / ambiance ».
+ * comme le fait le jeu. Reconstruit à chaque pull.
  */
 AoO.applyBackgroundPreview = function(map, config) {
     /* retire les aperçus existants (property aooPreview) */
@@ -1010,7 +932,8 @@ AoO.pullAndOpen = function(plan, zSpec) {
     var missing = map && map.isTileMap ? AoO.countMissingImages(map) : 0;
     if (missing) {
         tiled.alert(missing + ' tuile(s) de la palette n\'ont pas leur image dans le dépôt local.\n\n' +
-            'Utiliser « AoO : Pull les images du jeu… » pour les télécharger, puis re-puller le plan.',
+            'Récupérer l\'art via le dépôt d\'assets (img/ n\'est pas versionné ici) — inventaire ' +
+            'dans l\'admin du jeu, page « Tuiles & images » — puis re-puller le plan.',
             'AoO — Images manquantes');
     }
 
@@ -1217,6 +1140,12 @@ AoO.formatReport = function(reports) {
                     ' / ' + r.kept + ' conservés' +
                     (r.protected ? ' / ' + r.protected + ' protégés (joueurs)' : ''));
             }
+            /* poses de bâtiments refusées (case occupée…) : le push a
+               réussi, ces tuiles-là n'ont juste pas pris — re-puller
+               pour recoller la carte à l'état réel */
+            for (var s = 0; s < (r.skipped || []).length; s++) {
+                lines.push('z=' + report.z + ' ' + layer + ' ⚠ ' + r.skipped[s]);
+            }
         }
         if (report.planHealth) {
             health = report.planHealth; /* même bilan à chaque niveau : garder le dernier */
@@ -1345,61 +1274,6 @@ AoO.generateWorld = function(config, instance) {
     return { fileName: fileName, count: maps.length, skipped: skipped };
 };
 
-/* ------------------------------------------------------------------ */
-/* Synchronisation des images (img/<couche>/…)                         */
-/* ------------------------------------------------------------------ */
-
-/* Télécharge une image de l'instance vers le dépôt local */
-AoO.downloadImage = function(config, instance, path) {
-    var data = AoO.api(config, instance, 'GET',
-        '/api/admin/map/images.php?path=' + encodeURIComponent(path));
-
-    var local = config.gameDir + '/' + path;
-    File.makePath(local.substring(0, local.lastIndexOf('/')));
-    var file = new BinaryFile(local, BinaryFile.WriteOnly);
-    file.write(AoO.base64Decode(data.data));
-    file.commit();
-};
-
-/* Envoie une image du dépôt local vers l'instance */
-AoO.uploadImage = function(config, instance, path) {
-    var file = new BinaryFile(config.gameDir + '/' + path, BinaryFile.ReadOnly);
-    var bytes = file.readAll();
-    file.close();
-
-    AoO.api(config, instance, 'POST', '/api/admin/map/images.php',
-        { path: path, data: AoO.base64Encode(bytes) });
-};
-
-/*
- * Images du dépôt local, mêmes règles que le serveur : fichiers image à la
- * racine de chaque img/<couche>, plus l'originale <base>/<base>.png des
- * structures composites.
- */
-AoO.listLocalImages = function(config, layers) {
-    var found = [];
-    var isImage = /\.(png|webp|gif)$/i;
-
-    for (var l = 0; l < layers.length; l++) {
-        var dir = config.gameDir + '/img/' + layers[l];
-        var entries = File.exists(dir) ? File.directoryEntries(dir) : [];
-
-        for (var i = 0; i < entries.length; i++) {
-            var entry = entries[i];
-            if (entry === '.' || entry === '..') {
-                continue;
-            }
-            if (isImage.test(entry)) {
-                found.push('img/' + layers[l] + '/' + entry);
-            } else if (File.exists(dir + '/' + entry + '/' + entry + '.png')) {
-                found.push('img/' + layers[l] + '/' + entry + '/' + entry + '.png');
-            }
-        }
-    }
-
-    return found;
-};
-
 /* Combien de tuiles de la carte pointent une image absente du dépôt local ? */
 AoO.countMissingImages = function(map) {
     var missing = 0;
@@ -1522,33 +1396,6 @@ AoO.registerSafeAction('AoOPull', 'AoO : Pull un plan du jeu…', 'AoO — Pull'
     tiled.log('AoO : plan « ' + plan + ' » ouvert depuis ' + fileName);
 });
 
-AoO.registerSafeAction('AoOBg', 'AoO : Fond / ambiance du plan…', 'AoO — Fond du plan', function() {
-    var map = tiled.activeAsset;
-    if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
-        throw new Error('Ouvrir d\'abord une carte pullée du jeu.');
-    }
-
-    var choices = JSON.parse(String(map.property(AoO.PROP.imageChoices) || '[]'));
-    var NONE = '(aucun / défaut)';
-    var options = [NONE].concat(choices);
-    var propBg = AoO.PROP.planPrefix + 'bg';
-    var propMask = AoO.PROP.planPrefix + 'mask';
-
-    var values = AoO.showFormDialog('AoO — Fond / ambiance du plan', [
-        { key: 'bg', label: 'Fond (bg) :', type: 'combo', options: options, value: String(map.property(propBg) || '') || NONE },
-        { key: 'mask', label: 'Masque animé (mask) :', type: 'combo', options: options, value: String(map.property(propMask) || '') || NONE }
-    ]);
-    if (!values) {
-        return;
-    }
-
-    map.setProperty(propBg, values.bg === NONE ? '' : values.bg);
-    map.setProperty(propMask, values.mask === NONE ? '' : values.mask);
-    AoO.applyBackgroundPreview(map, AoO.loadConfig()); /* rafraîchit l'aperçu */
-    tiled.log('AoO : fond/masque du plan mis à jour — appliqué au prochain push ' +
-        '(vitesse du masque : propriété ' + AoO.PROP.planPrefix + 'scrollingMask)');
-});
-
 AoO.registerSafeAction('AoOWorld', 'AoO : Générer le monde (tous les plans)…', 'AoO — Monde', function() {
     var config = AoO.loadConfig();
     var instance = AoO.currentInstance(config);
@@ -1566,119 +1413,6 @@ AoO.registerSafeAction('AoOWorld', 'AoO : Générer le monde (tous les plans)…
         message += '\n\nPlans écartés (' + result.skipped.length + ') :\n  ' + result.skipped.join('\n  ');
     }
     tiled.alert(message, 'AoO — Monde');
-});
-
-AoO.registerSafeAction('AoOPullImages', 'AoO : Pull les images du jeu…', 'AoO — Images', function() {
-    var config = AoO.loadConfig();
-    var instance = AoO.currentInstance(config);
-    var remote = AoO.api(config, instance, 'GET', '/api/admin/map/images.php').images;
-
-    var missing = [];
-    for (var i = 0; i < remote.length; i++) {
-        if (!File.exists(config.gameDir + '/' + remote[i])) {
-            missing.push(remote[i]);
-        }
-    }
-    if (!missing.length) {
-        tiled.alert('Rien à télécharger : les ' + remote.length + ' images de « ' + instance +
-            ' » sont déjà toutes présentes en local.', 'AoO — Images');
-        return;
-    }
-    if (typeof tiled.confirm === 'function' &&
-        !tiled.confirm('Télécharger ' + missing.length + ' image(s) manquante(s) depuis « ' + instance +
-            ' » vers ' + config.gameDir + '/img ?', 'AoO — Images')) {
-        return;
-    }
-
-    for (var j = 0; j < missing.length; j++) {
-        AoO.downloadImage(config, instance, missing[j]);
-        if ((j + 1) % 25 === 0) {
-            tiled.log('AoO : images — ' + (j + 1) + '/' + missing.length);
-        }
-    }
-
-    tiled.alert(missing.length + ' image(s) téléchargée(s) dans ' + config.gameDir + '/img.\n\n' +
-        'Re-puller le plan pour que les tuiles retrouvent leur image.', 'AoO — Images');
-});
-
-AoO.registerSafeAction('AoOPushImages', 'AoO : Push les nouvelles images…', 'AoO — Images', function() {
-    var config = AoO.loadConfig();
-    var instance = AoO.currentInstance(config);
-    var data = AoO.api(config, instance, 'GET', '/api/admin/map/images.php');
-
-    var remote = {};
-    for (var i = 0; i < data.images.length; i++) {
-        remote[data.images[i]] = true;
-    }
-
-    /* nouvel art local uniquement : une image déjà sur l'instance n'est
-       jamais écrasée d'ici (l'art existant se gère via le dépôt d'assets) */
-    var news = AoO.listLocalImages(config, data.layers).filter(function(path) {
-        return !remote[path];
-    });
-    if (!news.length) {
-        tiled.alert('Aucune nouvelle image locale : « ' + instance +
-            ' » connaît déjà tout le contenu de ' + config.gameDir + '/img.', 'AoO — Images');
-        return;
-    }
-
-    var preview = news.slice(0, 30).join('\n  ') + (news.length > 30 ? '\n  …' : '');
-    if (typeof tiled.confirm === 'function' &&
-        !tiled.confirm('Envoyer ' + news.length + ' nouvelle(s) image(s) vers « ' + instance + ' » ?\n\n  ' +
-            preview, 'AoO — Images')) {
-        return;
-    }
-
-    for (var j = 0; j < news.length; j++) {
-        AoO.uploadImage(config, instance, news[j]);
-    }
-
-    tiled.alert(news.length + ' image(s) envoyée(s) vers « ' + instance + ' ».\n\n' +
-        'Elles apparaissent dans la palette au prochain pull du plan.', 'AoO — Images');
-});
-
-AoO.registerSafeAction('AoOBiomes', 'AoO : Biomes (ressources) du plan…', 'AoO — Biomes', function() {
-    var map = tiled.activeAsset;
-    if (!map || !map.isTileMap || !map.property(AoO.PROP.plan)) {
-        throw new Error('Ouvrir d\'abord une carte pullée du jeu.');
-    }
-
-    var propBiomes = AoO.PROP.planPrefix + 'biomes';
-    var current = AoO.formatBiomes(String(map.property(propBiomes) || ''));
-
-    var values = AoO.showFormDialog('AoO — Biomes (ressources) du plan', [
-        {
-            key: 'biomes', type: 'textarea',
-            label: 'Un biome par ligne : wall:ressource:exhaust:regrow\n' +
-                '(ex. arbre1:bois:75:20 — mur récoltable, item obtenu, % épuisement, tours de repousse)',
-            value: current
-        }
-    ]);
-    if (!values) {
-        return;
-    }
-
-    var biomes = AoO.parseBiomes(values.biomes); /* valide le format */
-    map.setProperty(propBiomes, biomes.length ? JSON.stringify(biomes) : '');
-    tiled.log('AoO : ' + biomes.length + ' biome(s) — appliqué au prochain push');
-});
-
-AoO.registerSafeAction('AoONew', 'AoO : Nouveau plan dans le jeu…', 'AoO — Nouveau plan', function() {
-    var config = AoO.loadConfig();
-    var instance = AoO.currentInstance(config);
-    var plan = tiled.prompt('Nom du nouveau plan sur « ' + instance + ' » (minuscules, chiffres, _ et -) :',
-        '', 'AoO — Nouveau plan');
-    if (!plan) {
-        return;
-    }
-    plan = plan.trim();
-
-    AoO.api(config, instance, 'POST', '/api/admin/map/create.php', { plan: plan });
-
-    /* le plan vierge existe : le pull ramène une carte vide avec la
-       palette complète (catalogue) prête à peindre */
-    var fileName = AoO.pullAndOpen(plan);
-    tiled.log('AoO : plan « ' + plan + ' » créé et ouvert depuis ' + fileName);
 });
 
 AoO.registerSafeAction('AoOPush', 'AoO : Push la carte vers le jeu…', 'AoO — Push', function() {
@@ -1714,11 +1448,6 @@ try {
         { action: 'AoOConnect' },
         { action: 'AoOPull' },
         { action: 'AoOPush' },
-        { action: 'AoOPullImages' },
-        { action: 'AoOPushImages' },
-        { action: 'AoONew' },
-        { action: 'AoOBg' },
-        { action: 'AoOBiomes' },
         { action: 'AoOWorld' }
     ]);
     tiled.log('AoO : extension chargée, actions dans le menu Fichier');

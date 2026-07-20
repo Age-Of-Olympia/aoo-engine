@@ -6,7 +6,7 @@ $db = new Db();
 $infos ='';
 
 $db = new Db();
-$sql = "UPDATE map_walls 
+$sql = "UPDATE map_resources 
     SET damages = CASE
     WHEN damages = 0 THEN -1
     WHEN damages = -1 THEN -2

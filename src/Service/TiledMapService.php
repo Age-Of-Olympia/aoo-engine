@@ -24,6 +24,17 @@ use RuntimeException;
  *  - le tout est transactionnel, avec contrôle de version optimiste :
  *    la version calculée au pull doit correspondre à l'état courant,
  *    sinon 409 (un autre admin — ou le jeu — a modifié le plan).
+ *
+ * La couche « buildings » est particulière : elle n'a pas de table map_*,
+ * ses lignes sont les ENTITÉS bâtiment du niveau (players type building).
+ * À l'export, une tuile par entité (name = le type / la race structure) ;
+ * à l'import, le même diff (x, y, name), mais chaque pose passe par
+ * BuildingService::place() et chaque retrait par remove() — hors de la
+ * transaction map_* (autre connexion), après elle, pose par pose : une
+ * case occupée est signalée (« skipped ») sans condamner le push. Seul le
+ * DÉCOR est diffable (sans propriétaire ni faction, état built) ; le
+ * reste — bâtiments de joueurs, avant-postes de faction, chantiers,
+ * ruines — est protégé comme les lignes player_id des autres couches.
  */
 class TiledMapService
 {
@@ -44,12 +55,27 @@ class TiledMapService
         'tiles'       => ['columns' => ['foreground', 'player_id'], 'paramsInKey' => false, 'composites' => false],
         'routes'      => ['columns' => ['player_id'],               'paramsInKey' => false, 'composites' => true],
         'plants'      => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => true],
-        'walls'       => ['columns' => ['damages', 'player_id'],    'paramsInKey' => false, 'composites' => true],
+        'resources'   => ['columns' => ['damages', 'player_id'],    'paramsInKey' => false, 'composites' => true],
         'elements'    => ['columns' => ['endTime'],                 'paramsInKey' => false, 'composites' => true],
         'foregrounds' => ['columns' => [],                          'paramsInKey' => false, 'composites' => true],
         'triggers'    => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
         'dialogs'     => ['columns' => ['params'],                  'paramsInKey' => true,  'composites' => false],
     ];
+
+    /** Couche virtuelle des entités bâtiment (pas de table map_*) */
+    public const BUILDINGS_LAYER = 'buildings';
+
+    /**
+     * Répertoire d'images d'une couche. La couche « resources »
+     * (table map_resources, ex-map_walls) garde img/walls : le dépôt
+     * d'assets n'est pas versionné ici et les avatars des entités
+     * converties pointent des chemins img/walls/… copiés en base —
+     * renommer le dossier casserait les deux.
+     */
+    public static function layerImageDir(string $layer): string
+    {
+        return $layer === 'resources' ? 'walls' : $layer;
+    }
 
     public const TILE_SIZE = 50;
 
@@ -83,6 +109,30 @@ class TiledMapService
 
         $layers = $this->fetchLayers($plan, $z);
         ['catalog' => $catalog, 'images' => $images] = $this->catalog->buildCatalog($layerNames);
+        $composites = $this->catalog->buildComposites($compositeLayers);
+
+        // Depuis la conversion des obstacles en entités bâtiment, la palette
+        // resources ne propose que ce qui reste posable en map_resources sur
+        // ce plan (ressources, autels, unique_* — tout sur les plans de
+        // tutoriel). Les murs déjà posés restent visibles : buildLevel les
+        // tient des lignes du plan, pas du catalogue.
+        $catalog['resources'] = ResourcePaletteService::filterNames($catalog['resources'] ?? [], $plan);
+        $composites['resources'] = array_values(array_filter(
+            $composites['resources'] ?? [],
+            fn(array $composite) => ResourcePaletteService::isAuthorable($composite['name'], $plan)
+        ));
+
+        // Palette bâtiments : le catalogue des types de structure (mêmes
+        // entrées que admin → Bâtiments), sprite résolu comme au rendu
+        $catalog[self::BUILDINGS_LAYER] = [];
+        foreach ((new RaceService())->getRacesByKind(\App\Enum\EntityCategory::Structure->value) as $race) {
+            $catalog[self::BUILDINGS_LAYER][] = $race->getName();
+            $sprite = BuildingService::resolveAvatar($race->getName());
+            if ($sprite !== BuildingService::NO_IMAGE) {
+                $images[self::BUILDINGS_LAYER . '/' . $race->getName()] = $sprite;
+            }
+        }
+        sort($catalog[self::BUILDINGS_LAYER]);
 
         return [
             'plan'       => $plan,
@@ -93,10 +143,9 @@ class TiledMapService
             'layers'     => $layers,
             'catalog'    => $catalog,
             'images'     => $images,
-            'composites' => $this->catalog->buildComposites($compositeLayers),
+            'composites' => $composites,
             'planConfig' => [
-                'values'    => $this->planConfig->read($plan),
-                'bgChoices' => $this->catalog->backgroundChoices(),
+                'values' => $this->planConfig->read($plan),
             ],
             'zConfig'    => $this->planConfig->readZLevel($plan, $z),
         ];
@@ -236,14 +285,25 @@ class TiledMapService
      */
     public function importPlan(string $plan, int $z, array $incomingLayers, string $expectedVersion): array
     {
-        // WALLS_PV (damages par défaut des murs) : dépendance du service,
+        // RESOURCES_PV (damages par défaut des murs) : dépendance du service,
         // pas de ses appelants
         require_once __DIR__ . '/../../config/constants.php';
 
+        $incomingLayers = self::normalizeLegacyLayerKeys($incomingLayers);
+
         foreach (array_keys($incomingLayers) as $layer) {
-            if (!isset(self::AUTHORABLE_LAYERS[$layer])) {
+            if (!isset(self::AUTHORABLE_LAYERS[$layer]) && $layer !== self::BUILDINGS_LAYER) {
                 throw new RuntimeException('Couche inconnue : ' . $layer, 400);
             }
+        }
+
+        // Les bâtiments sont des entités : posés/retirés via BuildingService
+        // (autre connexion), APRÈS la transaction map_* — un mur supprimé
+        // dans le même push libère sa case avant la pose
+        $incomingBuildings = null;
+        if (array_key_exists(self::BUILDINGS_LAYER, $incomingLayers)) {
+            $incomingBuildings = $incomingLayers[self::BUILDINGS_LAYER];
+            unset($incomingLayers[self::BUILDINGS_LAYER]);
         }
 
         $currentLayers = $this->fetchLayers($plan, $z);
@@ -274,9 +334,96 @@ class TiledMapService
         // hors diff, sont aussi hors empreinte), les autres n'ont pas bougé
         $postLayers = array_merge($currentLayers, $incomingLayers);
 
+        if ($incomingBuildings !== null) {
+            $report[self::BUILDINGS_LAYER] = $this->importBuildingsLayer(
+                $plan,
+                $z,
+                $incomingBuildings,
+                $currentLayers[self::BUILDINGS_LAYER]
+            );
+            // Contrairement aux map_*, l'état final peut différer des lignes
+            // reçues (poses refusées) : relire les entités réelles
+            $postLayers[self::BUILDINGS_LAYER] = $this->fetchBuildingRows($plan, $z);
+        }
+
         return [
             'layers'     => $report,
             'newVersion' => $this->computeVersion($postLayers),
+        ];
+    }
+
+    /**
+     * Diff de la couche bâtiments : même clé d'identité (x, y, type) que les
+     * couches de tuiles, mais chaque pose est un BuildingService::place()
+     * (validations d'occupation comprises) et chaque retrait un remove().
+     * Une pose refusée est signalée dans `skipped` sans faire échouer le
+     * push ; les entités protégées (propriétaire, faction, chantier, ruine)
+     * sont hors diff comme les lignes player_id des autres couches.
+     *
+     * @return array{inserted: int, deleted: int, kept: int, protected: int, skipped: string[]}
+     */
+    private function importBuildingsLayer(string $plan, int $z, array $incomingRows, array $currentRows): array
+    {
+        $available = [];
+        $protected = 0;
+
+        foreach ($currentRows as $row) {
+            if (!empty($row['player_id'])) {
+                $protected++;
+                continue;
+            }
+            $available[$this->rowKey(self::BUILDINGS_LAYER, $row)][] = $row['id'];
+        }
+
+        $kept = 0;
+        $toInsert = [];
+
+        foreach ($incomingRows as $row) {
+            self::validateIncomingRow(self::BUILDINGS_LAYER, $row);
+
+            $key = $this->rowKey(self::BUILDINGS_LAYER, $row);
+
+            if (!empty($available[$key])) {
+                array_pop($available[$key]);
+                $kept++;
+            } else {
+                $toInsert[] = $row;
+            }
+        }
+
+        $buildings = new BuildingService();
+        $skipped = [];
+        $inserted = 0;
+
+        // Retraits d'abord : déplacer un bâtiment d'une case à l'autre dans
+        // le même push libère l'ancienne case avant la pose sur la nouvelle
+        $deleted = 0;
+        foreach (array_merge([], ...array_values($available)) as $entityId) {
+            if ($buildings->remove((int) $entityId)) {
+                $deleted++;
+            }
+        }
+
+        foreach ($toInsert as $row) {
+            try {
+                $buildings->place((string) $row['name'], (object) [
+                    'x'    => (int) $row['x'],
+                    'y'    => (int) $row['y'],
+                    'z'    => $z,
+                    'plan' => $plan,
+                ]);
+                $inserted++;
+            } catch (\InvalidArgumentException $e) {
+                $skipped[] = $row['x'] . ',' . $row['y'] . ' ' . $row['name'] . ' — ' . $e->getMessage();
+            }
+        }
+
+        return [
+            'inserted'  => $inserted,
+            'deleted'   => $deleted,
+            'kept'      => $kept,
+            'protected' => $protected,
+            'skipped'   => $skipped,
         ];
     }
 
@@ -357,7 +504,49 @@ class TiledMapService
             $layers[$layer] = $rows;
         }
 
+        $layers[self::BUILDINGS_LAYER] = $this->fetchBuildingRows($plan, $z);
+
         return $layers;
+    }
+
+    /**
+     * Entités bâtiment du (plan, z), sous la forme des lignes de couche :
+     * name = le type (players.race). Le DÉCOR authorable a player_id = 0 ;
+     * tout le reste (propriétaire, faction, chantier, ruine) porte un
+     * player_id non nul — même convention que les lignes construites par
+     * les joueurs : hors diff, hors empreinte de version, couche
+     * verrouillée « (joueurs) » côté extension.
+     *
+     * @return list<array{id: int, name: string, x: int, y: int, player_id: int}>
+     */
+    private function fetchBuildingRows(string $plan, int $z): array
+    {
+        $res = $this->db->exe(
+            "SELECT p.id, p.race AS name, c.x, c.y, b.owner_id, b.faction, b.build_state
+             FROM buildings b
+             JOIN players p ON p.id = b.player_id
+             JOIN coords c ON c.id = p.coords_id
+             WHERE c.plan = ? AND c.z = ?
+             ORDER BY c.y, c.x, p.id",
+            array($plan, $z)
+        );
+
+        $rows = [];
+        while ($row = $res->fetch_assoc()) {
+            $isDecor = $row['owner_id'] === null
+                && (string) $row['faction'] === ''
+                && (string) $row['build_state'] === 'built';
+
+            $rows[] = [
+                'id'        => (int) $row['id'],
+                'name'      => (string) $row['name'],
+                'x'         => (int) $row['x'],
+                'y'         => (int) $row['y'],
+                'player_id' => $isDecor ? 0 : (int) ($row['owner_id'] ?? -1),
+            ];
+        }
+
+        return $rows;
     }
 
     /** @return int[] niveaux z existants du plan, croissants */
@@ -442,7 +631,7 @@ class TiledMapService
     {
         $key = $row['x'] . '|' . $row['y'] . '|' . $row['name'];
 
-        if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey']) {
+        if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] ?? false) {
             $key .= '|' . (string) ($row['params'] ?? '');
         }
 
@@ -503,6 +692,24 @@ class TiledMapService
     }
 
     /**
+     * Accepte les payloads d'avant le renommage map_walls → map_resources :
+     * les cartes pullées et les bundles exportés à l'époque portent la clé
+     * « walls ». Partagé avec l'import de bundle (PlanImporter).
+     *
+     * @param array<string, mixed> $layers
+     * @return array<string, mixed>
+     */
+    public static function normalizeLegacyLayerKeys(array $layers): array
+    {
+        if (isset($layers['walls']) && !isset($layers['resources'])) {
+            $layers['resources'] = $layers['walls'];
+            unset($layers['walls']);
+        }
+
+        return $layers;
+    }
+
+    /**
      * Point de contrôle unique de la validité d'une ligne authorée — partagé
      * entre le push Tiled et l'import de bundle (PlanImporter).
      *
@@ -527,6 +734,19 @@ class TiledMapService
     /** @param array<string, int> $coordsIds cache "x|y" => id, enrichi au fil des créations */
     private function insertRow(string $plan, int $z, string $layer, array $row, array &$coordsIds): void
     {
+        // Les obstacles/décor sont des entités bâtiment depuis leur
+        // conversion : map_resources ne reçoit plus que les ressources et les
+        // survivants (autels, unique_*, plans de tutoriel). Avant toute
+        // écriture : la création de coords vit hors transaction.
+        if ($layer === 'resources' && !ResourcePaletteService::isAuthorable($row['name'], $plan)) {
+            throw new RuntimeException(
+                'Mur « ' . $row['name'] . ' » en ' . $row['x'] . ',' . $row['y']
+                    . ' : les obstacles se posent sur la couche buildings (ou admin → Bâtiments) — '
+                    . 'la couche resources ne reçoit que les ressources récoltables, les autels et les unique_*.',
+                400
+            );
+        }
+
         $coordsKey = (int) $row['x'] . '|' . (int) $row['y'];
 
         if (!isset($coordsIds[$coordsKey])) {
@@ -549,10 +769,10 @@ class TiledMapService
             'coords_id' => $coordsIds[$coordsKey],
         ];
 
-        if ($layer === 'walls') {
+        if ($layer === 'resources') {
             // Défaut authoré : -1 (récoltable) pour les ressources de
-            // WALLS_PV, 0 (intact) pour les autres murs
-            $values['damages'] = ((WALLS_PV[$row['name']] ?? 0) === -1) ? -1 : 0;
+            // RESOURCES_PV, 0 (intact) pour les autres murs
+            $values['damages'] = ((RESOURCES_PV[$row['name']] ?? 0) === -1) ? -1 : 0;
         }
 
         if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {

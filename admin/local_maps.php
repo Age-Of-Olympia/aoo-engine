@@ -110,7 +110,7 @@ if (isset($_POST['cleanup_local'])) {
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['generate_local'])) {
     try {
-        $layers = ['tiles', 'elements', 'foregrounds', 'walls', 'routes'];
+        $layers = ['tiles', 'elements', 'foregrounds', 'resources', 'routes'];
 
         $viewService = new ViewService($database, 0, 0, $selectedZLevel, 0, $selectedPlan);
         $results = $viewService->generateLocalMap($layers);
@@ -376,7 +376,7 @@ ob_start();
                         <?php if ($selectedZLevel !== null && $selectedZLevel !== ''):
                             $existingService = new ViewService($database, 0, 0, $selectedZLevel, 0, $selectedPlan);
                             $existingLayers = $existingService->getLocalMap();
-                            $layerOrder = ['tiles', 'elements', 'foregrounds', 'walls', 'routes'];
+                            $layerOrder = ['tiles', 'elements', 'foregrounds', 'resources', 'routes'];
 
                             // Chercher le composite existant
                             $compositeFiles = glob($_SERVER['DOCUMENT_ROOT'] . "/img/maps/local/local_{$selectedPlan}_{$selectedZLevel}_composite_*.png");
@@ -441,7 +441,7 @@ ob_start();
                 <?php
                 // Create composite image
                 $compositePath = null;
-                $layerOrder = ['tiles', 'routes', 'elements', 'walls', 'foregrounds'];
+                $layerOrder = ['tiles', 'routes', 'elements', 'resources', 'foregrounds'];
                 $validLayers = array_intersect($layerOrder, array_keys($_SESSION['generated_layers']));
                 
                 if (!empty($validLayers)) {

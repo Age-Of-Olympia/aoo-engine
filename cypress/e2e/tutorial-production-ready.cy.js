@@ -211,7 +211,7 @@ describe('Tutorial System - Production Readiness Test', () => {
 
     /* Map tiles rendered (detection for "all-gray, no walls" bug).
      * The tree wall must be drawn at (0,1) before the test tries to click it. */
-    cy.get('[data-table="walls"][data-coords="0,1"], image[data-table="walls"][data-coords="0,1"]', { timeout: 5000 })
+    cy.get('[data-table="resources"][data-coords="0,1"], image[data-table="resources"][data-coords="0,1"]', { timeout: 5000 })
       .should('exist');
 
     cy.then(() => {
@@ -239,7 +239,7 @@ describe('Tutorial System - Production Readiness Test', () => {
           query: `SELECT
                     (SELECT COUNT(*) FROM coords c WHERE c.plan LIKE 'tut_%' AND c.id IN (SELECT coords_id FROM players WHERE id = ?)) AS player_on_tut,
                     (SELECT COUNT(*) FROM coords c WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_coords,
-                    (SELECT COUNT(*) FROM map_walls mw JOIN coords c ON c.id=mw.coords_id WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_walls,
+                    (SELECT COUNT(*) FROM map_resources mw JOIN coords c ON c.id=mw.coords_id WHERE c.plan=(SELECT c2.plan FROM coords c2 JOIN players p ON p.coords_id=c2.id WHERE p.id=?)) AS plan_walls,
                     (SELECT COUNT(*) FROM players p JOIN coords c ON c.id=p.coords_id WHERE p.id < 0 AND p.name='Gaïa' AND c.plan=(SELECT c2.plan FROM coords c2 JOIN players p2 ON p2.coords_id=c2.id WHERE p2.id=?)) AS plan_gaia`,
           params: [tutorialPlayerId, tutorialPlayerId, tutorialPlayerId, tutorialPlayerId]
         }).then((rows) => {

@@ -106,12 +106,12 @@ class PlanAdminServiceTest extends TestCase
 
         $this->assertSame(3, $report['coords']);
         $this->assertSame(1, $report['layers']['tiles']);
-        $this->assertSame(1, $report['layers']['walls'], 'le mur construit par un joueur n\'est pas copié');
+        $this->assertSame(1, $report['layers']['resources'], 'le mur construit par un joueur n\'est pas copié');
         $this->assertSame(1, $report['layers']['elements']);
 
         // Le mur restant est bien l'authoré, et player_id n'a pas voyagé
         $walls = $link->fetchAllAssociative(
-            'SELECT m.name, m.player_id, m.damages FROM map_walls m
+            'SELECT m.name, m.player_id, m.damages FROM map_resources m
              JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
             [self::CLONE]
         );
@@ -203,7 +203,7 @@ class PlanAdminServiceTest extends TestCase
         $this->assertSame(3, $report['coords']);
         $this->assertNull($link->fetchOne('SELECT 1 FROM players WHERE id = ?', [self::NPC_ID]) ?: null);
         $this->assertSame(0, (int) $link->fetchOne('SELECT COUNT(*) FROM coords WHERE plan = ?', [self::SRC]));
-        foreach (['tiles', 'walls', 'elements'] as $layer) {
+        foreach (['tiles', 'resources', 'elements'] as $layer) {
             $this->assertSame(
                 0,
                 (int) $link->fetchOne(
@@ -239,7 +239,7 @@ class PlanAdminServiceTest extends TestCase
             [$ids['0,0'], 'grass']
         );
         $link->executeStatement(
-            'INSERT INTO map_walls (coords_id, name, damages) VALUES (?, ?, -1)',
+            'INSERT INTO map_resources (coords_id, name, damages) VALUES (?, ?, -1)',
             [$ids['1,0'], 'arbre1']
         );
 
@@ -249,7 +249,7 @@ class PlanAdminServiceTest extends TestCase
             $this->markTestSkipped('Aucun joueur en base pour porter le mur player_id.');
         }
         $link->executeStatement(
-            'INSERT INTO map_walls (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
+            'INSERT INTO map_resources (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
             [$ids['1,0'], 'palissade', (int) $builderId]
         );
 
@@ -277,7 +277,7 @@ class PlanAdminServiceTest extends TestCase
             [self::PLAYER_ID, self::NPC_ID]
         );
 
-        foreach (['tiles', 'routes', 'plants', 'walls', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
+        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
             $link->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_adm_%'"
             );

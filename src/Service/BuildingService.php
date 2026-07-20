@@ -66,7 +66,7 @@ class BuildingService extends BaseService
 
     /**
      * « statue_heroique » → « Statue heroique », « arbre1 » → « Arbre » :
-     * les map_walls n'ont pas de libellé en base, on humanise leur code
+     * les map_resources n'ont pas de libellé en base, on humanise leur code
      * pour le message de tir bloqué.
      */
     private static function humanizeWallName(string $name): string
@@ -80,7 +80,7 @@ class BuildingService extends BaseService
      * entité dont la race arrête les projectiles
      * (races.blocks_projectiles : les structures par défaut, un
      * personnage seulement si sa race est cochée — par défaut les tirs
-     * passent), ou n'importe quel map_walls (arbre, pilier, statue… :
+     * passent), ou n'importe quel map_resources (arbre, pilier, statue… :
      * tout ce qui bloque le pas bloque la flèche). Sert au refus du tir
      * (DistanceCompute) et à l'affichage de la trajectoire sur le damier
      * (observe).
@@ -129,7 +129,7 @@ class BuildingService extends BaseService
 
         foreach ($conn->fetchAllAssociative(
             'SELECT c.x, c.y, w.name
-             FROM map_walls w
+             FROM map_resources w
              JOIN coords c ON c.id = w.coords_id
              WHERE ' . $tileFilter,
             $tileParams
@@ -273,7 +273,7 @@ class BuildingService extends BaseService
                     "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par l'entité #{$occupant}."
                 );
             }
-            if ($conn->fetchOne('SELECT coords_id FROM map_walls WHERE coords_id = ?', [$coordsId]) !== false) {
+            if ($conn->fetchOne('SELECT coords_id FROM map_resources WHERE coords_id = ?', [$coordsId]) !== false) {
                 throw new \InvalidArgumentException(
                     "Case ({$goCoords->x}, {$goCoords->y}, {$goCoords->plan}) occupée par un mur."
                 );

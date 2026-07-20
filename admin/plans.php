@@ -288,7 +288,7 @@ function plans_render_edit_form(object $plan, string $csrfToken, Db $db): string
         'mask'              => ['Masque', 'Superposition (brume, tempête…), niveaux z ≥ 0 uniquement.'],
         'scrollingMask'     => ['Défilement du masque', 'Durée d\'animation du masque (0/vide = statique).'],
         'verticalScrolling' => ['Défilement vertical', 'Direction du défilement du masque.'],
-        'biomes'            => ['Biomes (JSON)', 'Ressources récoltables : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}]. Le mur doit valoir -1 dans WALLS_PV, la ressource exister dans items.'],
+        'biomes'            => ['Biomes (JSON)', 'Ressources récoltables : [{"wall": "arbre1", "ressource": "bois", "exhaust": 75, "regrow": 20}]. Le mur doit valoir -1 dans RESOURCES_PV, la ressource exister dans items.'],
     ];
 
     $renderField = function (string $key, string $type) use ($values, $fieldHelp): string {

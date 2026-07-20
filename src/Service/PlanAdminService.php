@@ -86,7 +86,7 @@ class PlanAdminService
      * Clone un plan complet : coords, couches authorables et fichier JSON.
      * SQL ensembliste (jointure ancien→nouveau par (x,y,z)) — pas de remap
      * PHP ligne à ligne. endTime (map_elements) n'est pas copié : c'est de
-     * l'état runtime ; damages (map_walls) l'est : il encode l'intention
+     * l'état runtime ; damages (map_resources) l'est : il encode l'intention
      * d'auteur (-1 = récoltable).
      *
      * @param array<string, mixed> $jsonOverrides clés du JSON cible surchargées (name…)

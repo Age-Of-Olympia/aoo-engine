@@ -158,6 +158,8 @@ final class PlanImporter implements ObjectImporter
         if (!is_array($layers)) {
             throw new RuntimeException('« layers » doit être un objet couche => lignes.');
         }
+        // Bundles exportés avant le renommage map_walls → map_resources
+        $layers = TiledMapService::normalizeLegacyLayerKeys($layers);
         foreach ($layers as $layer => $rows) {
             if (!isset(TiledMapService::AUTHORABLE_LAYERS[$layer])) {
                 throw new RuntimeException('Couche inconnue : ' . $layer);
@@ -212,7 +214,7 @@ final class PlanImporter implements ObjectImporter
      */
     private function applyPayload(array $payload): void
     {
-        // WALLS_PV (damages par défaut des murs) : même dépendance que
+        // RESOURCES_PV (damages par défaut des murs) : même dépendance que
         // TiledMapService::importPlan()
         require_once __DIR__ . '/../../../config/constants.php';
 
@@ -304,10 +306,10 @@ final class PlanImporter implements ObjectImporter
     {
         if ($column === 'damages') {
             // Même défaut authoré que TiledMapService::insertRow() : -1
-            // (récoltable) pour les ressources de WALLS_PV, sinon 0
+            // (récoltable) pour les ressources de RESOURCES_PV, sinon 0
             return isset($row['damages']) && is_numeric($row['damages'])
                 ? (int) $row['damages']
-                : (((WALLS_PV[$row['name']] ?? 0) === -1) ? -1 : 0);
+                : (((RESOURCES_PV[$row['name']] ?? 0) === -1) ? -1 : 0);
         }
         if ($column === 'foreground') {
             return isset($row['foreground']) && is_numeric($row['foreground']) ? (int) $row['foreground'] : 0;

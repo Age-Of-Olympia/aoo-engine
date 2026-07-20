@@ -5,17 +5,17 @@ use Classes\Db;
 
 $sql = '
 SELECT 
-map_walls.id AS id,
-map_walls.name as name,
-map_walls.damages as damages,
+map_resources.id AS id,
+map_resources.name as name,
+map_resources.damages as damages,
 coords.plan as plan
-FROM `map_walls`
+FROM `map_resources`
 INNER JOIN
 coords
 ON
 coords_id = coords.id
 WHERE 
-map_walls.damages =-2
+map_resources.damages =-2
 ';
 
 $db = new Db();

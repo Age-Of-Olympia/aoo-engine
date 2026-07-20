@@ -18,7 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
  * G2 (docs/design-items-instances.md §4) : pose une structure sur une
  * case libre adjacente à l'acteur, via BuildingService — le débouché
  * data-driven de l'action « construire ». Remplace la pose de
- * map_walls muets de build.php : une palissade construite par un
+ * map_resources muets de build.php : une palissade construite par un
  * joueur a des PV, s'attaque et se répare.
  *
  * L'acteur devient propriétaire, sa faction est reprise sur le

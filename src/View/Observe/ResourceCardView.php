@@ -10,17 +10,17 @@ use Classes\Str;
 use Classes\Ui;
 
 /**
- * Carte d'un MUR de carte (map_walls) ou d'un AUTEL pour le panneau
+ * Carte d'un MUR de carte (map_resources) ou d'un AUTEL pour le panneau
  * d'observation. Depuis la conversion murs→entités (2026-07-19), les
- * map_walls restants sont les RESSOURCES (récoltable/épuisé,
+ * map_resources restants sont les RESSOURCES (récoltable/épuisé,
  * indestructibles ici), les murs de tutoriel et l'AUTEL — seul
  * destructible restant (destroy.php ne vit plus que pour lui, il
  * mourra avec la refonte des autels).
  */
-final class WallCardView
+final class ResourceCardView
 {
     /**
-     * @param \mysqli_result $res lignes map_walls de la case
+     * @param \mysqli_result $res lignes map_resources de la case
      * @param int|string     $x   coordonnées observées (script destroy)
      * @param int|string     $y
      *
@@ -63,7 +63,7 @@ final class WallCardView
 
         echo '
         <script>
-        var $wall = $(\'#walls' . $wallId . '\');
+        var $wall = $(\'#resources' . $wallId . '\');
         var x = ' . $x . ';
         var y = ' . $y . ';
         </script>
@@ -73,11 +73,11 @@ final class WallCardView
         return $card;
     }
 
-    /** « Destructible (état). » ou « Indestructible. » selon WALLS_PV. */
+    /** « Destructible (état). » ou « Indestructible. » selon RESOURCES_PV. */
     private static function wallStatus(string $wallName, int $damages): string
     {
-        if (!empty(WALLS_PV[$wallName]) && WALLS_PV[$wallName] > 0) {
-            return 'Destructible (' . Str::get_status($damages, WALLS_PV[$wallName]) . ').';
+        if (!empty(RESOURCES_PV[$wallName]) && RESOURCES_PV[$wallName] > 0) {
+            return 'Destructible (' . Str::get_status($damages, RESOURCES_PV[$wallName]) . ').';
         }
 
         return 'Indestructible.';
@@ -162,7 +162,7 @@ final class WallCardView
             $wallText = (string) ($wallCatalogItem->data->text ?? '');
         }
 
-        $wallPvMax = (!empty(WALLS_PV[$wallName]) && WALLS_PV[$wallName] > 0) ? (int) WALLS_PV[$wallName] : 0;
+        $wallPvMax = (!empty(RESOURCES_PV[$wallName]) && RESOURCES_PV[$wallName] > 0) ? (int) RESOURCES_PV[$wallName] : 0;
 
         $data = (object) [
             'bg' => 'img/walls/' . $wallName . '.png',

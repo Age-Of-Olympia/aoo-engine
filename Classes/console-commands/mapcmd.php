@@ -10,7 +10,7 @@ use Classes\View;
 class MapCmd extends AdminCommand
 
 {
-    private $tables = array('tiles', 'routes', 'walls', 'triggers', 'foregrounds', 'items', 'dialogs', 'plants', 'elements');
+    private $tables = array('tiles', 'routes', 'resources', 'triggers', 'foregrounds', 'items', 'dialogs', 'plants', 'elements');
 
     public function __construct() {
         parent::__construct("map",[new Argument('action',true), new Argument('name',true)]);
@@ -58,7 +58,7 @@ EOT);
         // Scan the directory for map files
         foreach (File::scan_dir(PATH) as $file) {
             // Check if the file is a map file (complete or part)
-            if (preg_match('/^(.+?)(\_(tiles|routes|walls|triggers|foregrounds|items|dialogs|plants|elements))?(\_part\_\d+)?\.json$/', $file, $matches)) {
+            if (preg_match('/^(.+?)(\_(tiles|routes|walls|resources|triggers|foregrounds|items|dialogs|plants|elements))?(\_part\_\d+)?\.json$/', $file, $matches)) {
                 $baseName = $matches[1];
                 if (!in_array($baseName, $mapNames)) {
                     $mapNames[] = $baseName;
@@ -67,7 +67,7 @@ EOT);
     
                     // List all parts of the map across all tables
                     foreach (File::scan_dir(PATH) as $partFile) {
-                        if (preg_match('/^' . preg_quote($baseName) . '(\_(tiles|routes|walls|triggers|foregrounds|items|dialogs|plants|elements))?(\_part\_\d+)?\.json$/', $partFile)) {
+                        if (preg_match('/^' . preg_quote($baseName) . '(\_(tiles|routes|walls|resources|triggers|foregrounds|items|dialogs|plants|elements))?(\_part\_\d+)?\.json$/', $partFile)) {
                             echo ' - ' . $partFile . '<br />';
                         }
                     }
@@ -151,7 +151,7 @@ function load_map($argumentValues) {
         $progress = json_decode(file_get_contents($progressFile), true);
     }
 
-    $tables = array('tiles', 'routes', 'walls', 'triggers', 'foregrounds', 'items', 'dialogs', 'plants', 'elements');
+    $tables = array('tiles', 'routes', 'resources', 'triggers', 'foregrounds', 'items', 'dialogs', 'plants', 'elements');
 
     // Check if it's a single-file map
     if (file_exists(PATH . $name . '.json')) {

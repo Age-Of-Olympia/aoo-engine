@@ -98,7 +98,7 @@ SELECT COUNT(*) AS n
 FROM coords
 WHERE
 id IN(
-    SELECT coords_id FROM map_walls WHERE coords_id = ?
+    SELECT coords_id FROM map_resources WHERE coords_id = ?
     )
 '. $inPlayerSql .'
 ';

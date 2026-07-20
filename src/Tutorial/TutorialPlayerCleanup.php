@@ -63,7 +63,7 @@ class TutorialPlayerCleanup
         ['table' => 'players_pnjs', 'columns' => ['player_id', 'pnj_id']],
 
         // Map interactions (tutorial players shouldn't have these, but comprehensive cleanup)
-        ['table' => 'map_walls', 'columns' => ['player_id']],
+        ['table' => 'map_resources', 'columns' => ['player_id']],
         ['table' => 'map_tiles', 'columns' => ['player_id']],
         ['table' => 'map_routes', 'columns' => ['player_id']],
 

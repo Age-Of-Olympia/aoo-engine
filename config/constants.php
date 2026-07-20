@@ -155,13 +155,18 @@ define('DAYS_OF_WEEK', array(
 
 
 /*
- * walls
+ * Ressources de carte (map_resources, ex-map_walls).
  *
+ * Valeur négative = ressource (-1 récoltable / -2 épuisé) — c'est le seul
+ * critère encore lu au runtime (ResourcePaletteService, éditeurs, fouille).
+ * Les valeurs positives sont les PV des ex-murs obstacles : leurs PV
+ * vivent désormais dans leurs races structure, ces entrées ne restent que
+ * pour les survivants (autels via destroy.php) et l'historique.
  */
 
 
 // PV: if not defined, undestructible
-define('WALLS_PV', array(
+define('RESOURCES_PV', array(
 
     //murs
     'mur_pierre'=>150,

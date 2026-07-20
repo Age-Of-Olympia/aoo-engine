@@ -273,10 +273,10 @@ class View{
 
             SELECT
             id, name, coords_id,
-            "walls" AS whichTable,
+            "resources" AS whichTable,
             99 AS tableOrder
             FROM
-            map_walls
+            map_resources
             WHERE
             coords_id IN ('. $inSightIdImploded .')
 
@@ -320,7 +320,11 @@ class View{
                 $y = (-$y + $this->coords->y + $this->p) * 50;
 
 
-                $img = 'img/'. $row->whichTable .'/'. $row->name .'.png';
+                // La couche resources garde ses images dans img/walls
+                // (dépôt d'assets + avatars copiés en base — voir
+                // TiledMapService::layerImageDir)
+                $imgDir = $row->whichTable == 'resources' ? 'walls' : $row->whichTable;
+                $img = 'img/'. $imgDir .'/'. $row->name .'.png';
 
 
                 if($row->whichTable == 'items'){
@@ -829,7 +833,7 @@ class View{
         FROM
         coords AS c
         INNER JOIN
-        map_walls AS p
+        map_resources AS p
         ON
         p.coords_id = c.id
         WHERE
@@ -1080,12 +1084,12 @@ class View{
 
         $sql = '
         SELECT
-        map_walls.id AS id,
+        map_resources.id AS id,
         x,y
         FROM
         coords
         INNER JOIN
-        map_walls
+        map_resources
         ON
         coords.id = coords_id
         WHERE
@@ -1181,7 +1185,7 @@ class View{
                 $obstacle = true;
 
                 ?>
-                $('#walls'+ <?php echo $wallsTbl[$x .','. $y] ?>).addClass('blink');
+                $('#resources'+ <?php echo $wallsTbl[$x .','. $y] ?>).addClass('blink');
                 <?php
             }
         }
@@ -1330,7 +1334,7 @@ class View{
     SELECT (
         SELECT COUNT(*) FROM players WHERE coords_id = c.id
     ) + (
-        SELECT COUNT(*) FROM map_walls WHERE coords_id = c.id
+        SELECT COUNT(*) FROM map_resources WHERE coords_id = c.id
     ) + (
         SELECT COUNT(*) FROM map_triggers WHERE coords_id = c.id
     ) AS total

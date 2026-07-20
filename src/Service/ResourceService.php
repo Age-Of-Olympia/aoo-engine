@@ -35,7 +35,7 @@ class ResourceService
         COUNT(*) AS max,
         name
         FROM
-        map_walls
+        map_resources
         WHERE
         coords_id IN('. implode(',', $coordsIdArround) .')
         AND
@@ -78,7 +78,7 @@ class ResourceService
         id,
         name
         FROM
-        map_walls
+        map_resources
         WHERE
         coords_id IN('. implode(',', $coordsIdArround) .')
         AND
@@ -97,7 +97,7 @@ class ResourceService
     {
 
         $sql = '
-        UPDATE map_walls
+        UPDATE map_resources
         SET damages=-2
         WHERE 
         id IN('. implode(',', $resourcesId) .')
@@ -114,7 +114,7 @@ class ResourceService
         }
 
         $sql = '
-        UPDATE map_walls
+        UPDATE map_resources
         SET damages=-1
         WHERE 
         id IN('. implode(',', $resourcesId) .')

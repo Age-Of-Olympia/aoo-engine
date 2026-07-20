@@ -223,7 +223,7 @@ class ViewService {
     }
 
     public function generateLocalMap(?array $selectedLayers = null) {
-        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'buildings'];
+        $selectedLayers = $selectedLayers ?? ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings'];
 
         // Crée l'image de base
         $this->image = $this->createLayer($this->localMapWidth, $this->localMapHeight);
@@ -271,8 +271,8 @@ class ViewService {
                 case 'foregrounds':
                     $this->generateForegroundsLayer($this->currentPlan);
                     break;
-                case 'walls':
-                    $this->generateWallLayer($this->currentPlan);
+                case 'resources':
+                    $this->generateResourceLayer($this->currentPlan);
                     break;
                 case 'routes':
                     $this->generateRoutesLayer($this->currentPlan);
@@ -689,7 +689,7 @@ class ViewService {
         $this->layers['routes'] = $layer;
     }
 
-    private function generateWallLayer($plan) {
+    private function generateResourceLayer($plan) {
         $layer = $this->createLayer();
         $zCondition = $plan === $this->worldPlan 
             ? "AND c.z = 0" 
@@ -698,7 +698,7 @@ class ViewService {
 
         // Requête les murs à partir de map_murs
         $sql = "SELECT mw.*, c.x, c.y
-            FROM map_walls mw
+            FROM map_resources mw
             JOIN coords c ON c.id = mw.coords_id
             WHERE c.plan = '" . $plan . "'
             AND (mw.name LIKE '%mur%' OR mw.name LIKE '%arbre%')
@@ -732,7 +732,7 @@ class ViewService {
             );
         }
         
-        $this->layers['walls'] = $layer;
+        $this->layers['resources'] = $layer;
     }
 
     /**
@@ -1220,7 +1220,7 @@ class ViewService {
 
     public function getLocalMap(): array
     {
-        $layers = ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'buildings', 'players', 'player'];
+        $layers = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'buildings', 'players', 'player'];
         $mapDir = $_SERVER['DOCUMENT_ROOT'] . '/img/maps/local/';
         $results = [];
 

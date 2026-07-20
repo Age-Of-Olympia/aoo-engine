@@ -116,8 +116,8 @@ class TutorialMapInstance
         }
 
 
-        // Step 4: Copy map_walls (resources like trees/stones)
-        $this->copyMapElements('walls', $coordsMapping, ['name', 'player_id', 'damages'], $templatePlan);
+        // Step 4: Copy map_resources (resources like trees/stones)
+        $this->copyMapElements('resources', $coordsMapping, ['name', 'player_id', 'damages'], $templatePlan);
 
         // Step 5: Spawn template NPCs from tutorial_npcs config (replaces
         // the legacy "copy any NPC sitting on plan='tutorial'" pass).
@@ -313,7 +313,7 @@ class TutorialMapInstance
         }
 
         // Delete all map elements
-        $mapElementTypes = ['walls', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
+        $mapElementTypes = ['resources', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
 
         foreach ($mapElementTypes as $type) {
             $deleted = $this->conn->executeStatement("
@@ -365,7 +365,7 @@ class TutorialMapInstance
         }
 
         // Delete all map elements
-        $mapElementTypes = ['walls', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
+        $mapElementTypes = ['resources', 'tiles', 'foregrounds', 'triggers', 'elements', 'dialogs', 'plants', 'routes'];
 
         foreach ($mapElementTypes as $type) {
             $deleted = $this->conn->executeStatement("

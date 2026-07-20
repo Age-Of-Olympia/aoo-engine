@@ -10,13 +10,13 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
 /**
  * Invariants de la conversion murs→entités (Version20260719280000,
  * docs/design-walls-to-entities.md) : après migrations, il ne reste en
- * map_walls que les RESSOURCES, les autels et les plans de tutoriel —
+ * map_resources que les RESSOURCES, les autels et les plans de tutoriel —
  * et un obstacle converti vit et meurt comme tout bâtiment.
  */
 #[Group('entities-structure')]
 class WallsConversionGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
-    /** Types RESSOURCE gelés par la migration (WALLS_PV < 0). */
+    /** Types RESSOURCE gelés par la migration (RESOURCES_PV < 0). */
     private const RESOURCE_PREFIXES = [
         'arbre', 'cendre', 'cuir', 'cuivre', 'etain', 'fer', 'nickel',
         'salpetre', 'tourbe', 'mana', 'bronze', 'herbe', 'jungle',
@@ -32,7 +32,7 @@ class WallsConversionGoldenMasterTest extends LegacyPlayerFixtureTestCase
     public function testOnlyResourcesAltarsAndTutorialWallsRemain(): void
     {
         $leftovers = $this->link->fetchAllAssociative(
-            "SELECT w.name, c.plan FROM map_walls w JOIN coords c ON c.id = w.coords_id"
+            "SELECT w.name, c.plan FROM map_resources w JOIN coords c ON c.id = w.coords_id"
         );
 
         $violations = [];
@@ -61,7 +61,7 @@ class WallsConversionGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertSame(
             [],
             $violations,
-            'map_walls ne doit plus porter d\'obstacles convertibles : ' . implode(', ', $violations)
+            'map_resources ne doit plus porter d\'obstacles convertibles : ' . implode(', ', $violations)
         );
     }
 

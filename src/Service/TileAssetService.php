@@ -48,7 +48,7 @@ class TileAssetService
     public function inventory(string $layer): array
     {
         $this->assertLayer($layer);
-        $dir = $this->root . '/img/' . $layer;
+        $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
 
         // Fichiers présents, groupés par nom (toutes extensions)
         $files = [];
@@ -121,7 +121,7 @@ class TileAssetService
         imagealphablending($image, false);
         imagesavealpha($image, true);
 
-        $dir = $this->root . '/img/' . $layer;
+        $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
         if (!is_dir($dir) || !is_writable($dir)) {
             throw new RuntimeException('Dossier non inscriptible : ' . $dir);
         }
@@ -152,7 +152,7 @@ class TileAssetService
         }
 
         foreach ($files as $file) {
-            if (!unlink($this->root . '/img/' . $layer . '/' . $file)) {
+            if (!unlink($this->root . '/img/' . TiledMapService::layerImageDir($layer) . '/' . $file)) {
                 throw new RuntimeException('Suppression impossible : ' . $file);
             }
         }
@@ -257,8 +257,8 @@ class TileAssetService
 
             foreach ($files as $file) {
                 $ext = pathinfo($file, PATHINFO_EXTENSION);
-                if (!rename($this->root . '/img/' . $layer . '/' . $file,
-                    $this->root . '/img/' . $layer . '/' . $new . '.' . $ext)) {
+                if (!rename($this->root . '/img/' . TiledMapService::layerImageDir($layer) . '/' . $file,
+                    $this->root . '/img/' . TiledMapService::layerImageDir($layer) . '/' . $new . '.' . $ext)) {
                     throw new RuntimeException('Renommage du fichier impossible : ' . $file);
                 }
             }
@@ -296,7 +296,7 @@ class TileAssetService
      */
     private function buildEntry(string $layer, string $name, array $nameFiles, array $usage, array $terrainTiles): array
     {
-        $dir = $this->root . '/img/' . $layer;
+        $dir = $this->root . '/img/' . TiledMapService::layerImageDir($layer);
         $primary = $dir . '/' . $nameFiles[0];
         $size = @getimagesize($primary);
         $problems = [];
@@ -375,7 +375,7 @@ class TileAssetService
     /**
      * Références de configuration qu'un renommage NE met PAS à jour : à
      * vérifier à la main. Les biomes des plans (datas/private/plans/*.json)
-     * nomment des murs/ressources ; WALLS_PV (config/constants.php) aussi.
+     * nomment des murs/ressources ; RESOURCES_PV (config/constants.php) aussi.
      *
      * @return list<string>
      */
@@ -383,8 +383,8 @@ class TileAssetService
     {
         $warnings = [];
 
-        if (defined('WALLS_PV') && array_key_exists($old, (array) WALLS_PV)) {
-            $warnings[] = "« {$old} » figure dans WALLS_PV (config/constants.php) — à renommer à la main";
+        if (defined('RESOURCES_PV') && array_key_exists($old, (array) RESOURCES_PV)) {
+            $warnings[] = "« {$old} » figure dans RESOURCES_PV (config/constants.php) — à renommer à la main";
         }
 
         foreach (glob($this->root . '/datas/*/plans/*.json') ?: [] as $file) {
@@ -401,7 +401,7 @@ class TileAssetService
     {
         $files = [];
         foreach (TileCatalogService::IMAGE_EXTENSIONS as $ext) {
-            if (is_file($this->root . '/img/' . $layer . '/' . $name . '.' . $ext)) {
+            if (is_file($this->root . '/img/' . TiledMapService::layerImageDir($layer) . '/' . $name . '.' . $ext)) {
                 $files[] = $name . '.' . $ext;
             }
         }

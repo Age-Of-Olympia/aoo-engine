@@ -52,8 +52,8 @@ class PlanImportExportTest extends TestCase
         $this->assertCount(3, $payload['coords'], 'toutes les coords, y compris sans contenu');
         $this->assertContains([0, 1, 0], $payload['coords']);
 
-        $this->assertCount(1, $payload['layers']['walls'], 'le mur player_id est exclu de l\'export');
-        $wall = $payload['layers']['walls'][0];
+        $this->assertCount(1, $payload['layers']['resources'], 'le mur player_id est exclu de l\'export');
+        $wall = $payload['layers']['resources'][0];
         $this->assertSame('arbre1', $wall['name']);
         $this->assertSame(-1, (int) $wall['damages']);
         $this->assertArrayNotHasKey('id', $wall, 'jamais d\'id DB dans un bundle');
@@ -102,7 +102,7 @@ class PlanImportExportTest extends TestCase
 
         $cases = [
             'couche inconnue'   => ['plan' => self::IMPORTED, 'layers' => ['loot' => []]],
-            'ligne sans nom'    => ['plan' => self::IMPORTED, 'layers' => ['walls' => [['x' => 0, 'y' => 0, 'z' => 0]]]],
+            'ligne sans nom'    => ['plan' => self::IMPORTED, 'layers' => ['resources' => [['x' => 0, 'y' => 0, 'z' => 0]]]],
             'nom de plan'       => ['plan' => 'Pas Un Plan'],
             'coords non triple' => ['plan' => self::IMPORTED, 'coords' => [[1, 2]]],
         ];
@@ -140,7 +140,7 @@ class PlanImportExportTest extends TestCase
         $importer->import([$payload]);
 
         $walls = $link->fetchAllAssociative(
-            'SELECT m.name, m.player_id FROM map_walls m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
+            'SELECT m.name, m.player_id FROM map_resources m JOIN coords c ON c.id = m.coords_id WHERE c.plan = ?',
             [self::SRC]
         );
         $this->assertCount(1, $walls, 'le mur authoré est remplacé (supprimé), le mur joueur survit');
@@ -169,14 +169,14 @@ class PlanImportExportTest extends TestCase
         }
 
         $link->executeStatement('INSERT INTO map_tiles (coords_id, name, foreground) VALUES (?, ?, 0)', [$ids['0,0'], 'grass']);
-        $link->executeStatement('INSERT INTO map_walls (coords_id, name, damages) VALUES (?, ?, -1)', [$ids['1,0'], 'arbre1']);
+        $link->executeStatement('INSERT INTO map_resources (coords_id, name, damages) VALUES (?, ?, -1)', [$ids['1,0'], 'arbre1']);
 
         $builderId = $link->fetchOne('SELECT id FROM players WHERE id > 0 ORDER BY id LIMIT 1');
         if ($builderId === false) {
             $this->markTestSkipped('Aucun joueur en base pour porter le mur player_id.');
         }
         $link->executeStatement(
-            'INSERT INTO map_walls (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
+            'INSERT INTO map_resources (coords_id, name, damages, player_id) VALUES (?, ?, 0, ?)',
             [$ids['1,0'], 'palissade', (int) $builderId]
         );
 
@@ -196,7 +196,7 @@ class PlanImportExportTest extends TestCase
             return;
         }
 
-        foreach (['tiles', 'routes', 'plants', 'walls', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
+        foreach (['tiles', 'routes', 'plants', 'resources', 'elements', 'foregrounds', 'triggers', 'dialogs', 'items'] as $layer) {
             $link->executeStatement(
                 "DELETE m FROM map_{$layer} m JOIN coords c ON c.id = m.coords_id WHERE c.plan LIKE 'plan_test_ie_%'"
             );

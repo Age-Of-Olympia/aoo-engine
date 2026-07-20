@@ -325,7 +325,7 @@ else{
     name,
     damages
     FROM
-    map_walls AS p
+    map_resources AS p
     INNER JOIN
     coords AS c
     ON
@@ -346,7 +346,7 @@ else{
     if($res->num_rows){
 
         /* Murs de carte (et autel) : carte mutualisée + script destroy. */
-        $card = \App\View\Observe\WallCardView::render($player, $res, $x, $y);
+        $card = \App\View\Observe\ResourceCardView::render($player, $res, $x, $y);
     }
     else{
 
@@ -407,7 +407,7 @@ if($res->num_rows){
 
 /* Ligne de tir depuis le joueur vers la case observée : cases
  * traversées + premier obstacle (structure blocks_projectiles ou
- * map_walls). Le panneau garde l'info de blocage ; le TRACÉ sur le
+ * map_resources). Le panneau garde l'info de blocage ; le TRACÉ sur le
  * damier n'est plus embarqué ici — il se demande explicitement par
  * clic droit / appui long sur la case (js/view.js →
  * api/map/line_of_fire.php), un clic gauche en dessinait trop. */

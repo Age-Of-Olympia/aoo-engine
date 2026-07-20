@@ -205,7 +205,7 @@ if(isset($_GET['local'])){
         echo '<h1>'. $planJson->name .'</h1>';
 
         // Récupère les couches sélectionnées ou utilise les valeurs par défaut
-        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+        $selectedLayers = $_GET['layers'] ?? ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'players', 'player'];
 
         try {
             $viewService = new \App\Service\ViewService($database, $player->coords->x, $player->coords->y,$player->coords->z, $player->id, $planJson->id);
@@ -243,7 +243,7 @@ if(isset($_GET['local'])){
                     <label><input type="checkbox" name="layers[]" value="tiles" checked disabled> Terrain</label>';
                     generateLayerCheckbox('Éléments', 'elements');
                     generateLayerCheckbox('Décor', 'foregrounds');
-                    generateLayerCheckbox('Murs', 'walls');
+                    generateLayerCheckbox('Ressources', 'resources');
                     generateLayerCheckbox('Routes', 'routes');
                     generateLayerCheckbox('Tous les joueurs', 'players');
                     generateLayerCheckbox('Ma position', 'player');
@@ -270,7 +270,7 @@ if(isset($_GET['local'])){
                 <!-- Overlay the map layers - The loop below handles this -->
                 ';
 
-                $layerOrder = ['tiles', 'elements', 'foregrounds', 'walls', 'routes', 'players', 'player'];
+                $layerOrder = ['tiles', 'elements', 'foregrounds', 'resources', 'routes', 'players', 'player'];
 
                 foreach ($layerOrder as $layer) {
                     if (in_array($layer, $selectedLayers) && isset($mapResult[$layer]['imagePath'])) {

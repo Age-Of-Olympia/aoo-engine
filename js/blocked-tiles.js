@@ -1,7 +1,7 @@
 /**
  * Drop a red × on map tiles the player cannot walk on. Mirrors the
  * server's movement rules from go.php:
- *   - map_walls on the destination cell,
+ *   - map_resources (ressources) on the destination cell,
  *   - other players on the destination cell,
  *   - 'forbidden' triggers on the destination cell (the trigger row
  *     itself isn't in the DOM in normal play, so View.php stamps
@@ -39,7 +39,7 @@
 
     function collectBlockedCoords(playerCoords) {
         const set = new Set();
-        $('image[data-table="walls"]').each(function() {
+        $('image[data-table="resources"]').each(function() {
             const c = this.getAttribute('data-coords');
             if (c) set.add(c);
         });
