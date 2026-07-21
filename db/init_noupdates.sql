@@ -4726,6 +4726,7 @@ CREATE TABLE `players` (
   `secretFaction` varchar(255) NOT NULL DEFAULT '',
   `secretFactionRole` int(11) NOT NULL DEFAULT 0,
   `nextTurnTime` int(11) NOT NULL DEFAULT 0,
+  `nextTurnRescheduled` tinyint(1) NOT NULL DEFAULT 0,
   `registerTime` int(11) NOT NULL DEFAULT 0,
   `lastActionTime` int(11) NOT NULL DEFAULT 0,
   `lastLoginTime` int(11) NOT NULL DEFAULT 0,
