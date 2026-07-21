@@ -60,14 +60,19 @@ final class OptionCatalog
     }
 
     /**
-     * The playable races (the races table is the single source).
+     * Every CHARACTER race, PNJ/system ones included (the races table is
+     * the single source) : une action ou un passif se restreint aussi à
+     * une race non jouable — ame, animal, dieu… (retour saison 3 : le
+     * sélecteur n'offrait que les jouables). Les types de structures
+     * (kind 'structure') restent exclus : players.race d'un personnage
+     * ne les porte jamais.
      *
      * @return array<string, string> race => label
      */
     public function races(): array
     {
         $races = [];
-        foreach ((new \App\Service\RaceService())->getPlayableRaces() as $race) {
+        foreach ((new \App\Service\RaceService())->getRacesByKind('character') as $race) {
             $races[$race->getName()] = $race->getLabel();
         }
 
