@@ -366,12 +366,18 @@ class PlanAdminService
                 true
             );
 
-            // Références par NOM de plan (tout le reste passe par coords_id)
+            // Références par NOM de plan (tout le reste passe par coords_id).
+            // Les journaux et morts gardent le plan en clair : sans
+            // réécriture, l'historique filtré par plan (Log.php) perdrait
+            // tout ce qui précède le renommage.
             $byName = [
-                'factions'              => 'respawnPlan',
-                'races'                 => 'plan',
-                'tutorial_catalog'      => 'plan',
+                'factions'               => 'respawnPlan',
+                'races'                  => 'plan',
+                'tutorial_catalog'       => 'plan',
                 'tutorial_map_instances' => 'plan_name',
+                'players_logs'           => 'plan',
+                'players_logs_archives'  => 'plan',
+                'players_kills'          => 'plan',
             ];
             foreach ($byName as $table => $column) {
                 $n = (int) $this->db->exe(
