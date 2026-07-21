@@ -36,7 +36,8 @@ if (!in_array($race, $races, true)) {
 $backTo = $selfPage . '?type=' . urlencode($type->value) . '&race=' . urlencode($race);
 
 $isStateChangingPost = $_SERVER['REQUEST_METHOD'] === 'POST'
-    && (isset($_POST['image_upload']) || isset($_POST['image_delete']) || isset($_POST['image_adopt']));
+    && (isset($_POST['image_upload']) || isset($_POST['image_delete'])
+        || isset($_POST['image_adopt']) || isset($_POST['image_move']));
 if ($isStateChangingPost) {
     try {
         $csrf->validateTokenOrFail($_POST['csrf_token'] ?? null);
@@ -65,6 +66,15 @@ if ($isStateChangingPost) {
             $created = $service->adopt($type, $race, $inherited);
             setFlash('success', "Sprite hérité « {$inherited} » copié dans le stock : « {$created} »"
                 . ' — c\'est désormais lui qui fait foi sur le plateau.');
+        } elseif (isset($_POST['image_move'])) {
+            $name = trim((string) ($_POST['file'] ?? ''));
+            $target = trim((string) ($_POST['target_race'] ?? ''));
+            if (!in_array($target, $races, true)) {
+                throw new RuntimeException('Race cible inconnue.');
+            }
+            $created = $service->move($type, $race, $name, $target);
+            setFlash('success', ucfirst($type->value) . " « {$name} » déplacé vers"
+                . " {$target} sous le nom « {$created} ».");
         } elseif (isset($_POST['image_delete'])) {
             $name = trim((string) ($_POST['file'] ?? ''));
             $service->delete($type, $race, $name);
@@ -113,8 +123,10 @@ ob_start();
     <div class="card mt-3">
         <div class="card-body py-2 d-flex align-items-center gap-3 flex-wrap">
             <span class="text-muted" style="font-size:13px;"><i class="fas fa-image"></i> Image :</span>
+            <?php // La race suit le changement de type (et réciproquement) :
+                  // sans elle, chaque sélecteur réinitialisait l'autre. ?>
             <?php foreach (ImageType::cases() as $candidate): ?>
-                <a href="<?= e($selfPage) ?>?type=<?= e($candidate->value) ?>"
+                <a href="<?= e($selfPage) ?>?type=<?= e($candidate->value) ?><?= $race !== '' ? '&amp;race=' . e(urlencode($race)) : '' ?>"
                    class="btn btn-sm <?= $candidate === $type ? 'btn-primary' : 'btn-outline-secondary' ?>">
                     <?= e(ucfirst($candidate->value)) ?>s
                 </a>
@@ -255,6 +267,32 @@ ob_start();
                             </td>
                             <td style="white-space:nowrap;">
                                 <?php if (!$entry['missing']): ?>
+                                    <?php if (count($races) > 1): ?>
+                                    <details class="row-popover" style="display:inline-block;">
+                                        <summary class="btn btn-sm btn-outline-secondary" style="cursor:pointer;list-style:none;"
+                                                 title="Déplacer l'image vers <?= $structureMode ? 'un autre type' : 'une autre race' ?>"
+                                                 <?= $entry['usage'] > 0 ? 'aria-disabled="true"' : '' ?>>Déplacer</summary>
+                                        <form method="post" class="row-popover-panel d-flex gap-2"
+                                              onsubmit="return confirm('Déplacer « <?= e($entry['file']) ?> » vers <?= $structureMode ? 'le type sélectionné' : 'la race sélectionnée' ?> ?');">
+                                            <?= $csrf->renderTokenField() ?>
+                                            <input type="hidden" name="type" value="<?= e($type->value) ?>">
+                                            <input type="hidden" name="race" value="<?= e($race) ?>">
+                                            <input type="hidden" name="file" value="<?= e($entry['file']) ?>">
+                                            <?php
+                                            $raceChoices = [];
+                                            foreach ($races as $target) {
+                                                if ($target !== $race) {
+                                                    $raceChoices[$target] = $target;
+                                                }
+                                            }
+                                            echo formSelect('target_race', $raceChoices, null, null,
+                                                'class="form-control form-control-sm" style="width:140px;"');
+                                            ?>
+                                            <button type="submit" name="image_move" value="1" class="btn btn-sm btn-primary"
+                                                    <?= $entry['usage'] > 0 ? 'disabled title="Encore utilisée par des joueurs"' : '' ?>>OK</button>
+                                        </form>
+                                    </details>
+                                    <?php endif; ?>
                                     <form method="post" style="display:inline-block;"
                                           onsubmit="return confirm('Supprimer définitivement « <?= e($entry['file']) ?> » ?');">
                                         <?= $csrf->renderTokenField() ?>

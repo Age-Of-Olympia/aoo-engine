@@ -238,6 +238,63 @@ class RaceImageService
     }
 
     /**
+     * Déplace une image (et sa miniature) vers une autre race, renumérotée
+     * par le compteur de la race cible — même contrat que Tuiles & images :
+     * refus tant que des joueurs l'utilisent (leur players.avatar/portrait
+     * pointerait vers un fichier disparu), le popover « Joueurs » dit qui
+     * changer d'abord.
+     *
+     * @return string nom de fichier créé dans la race cible
+     */
+    public function move(ImageType $type, string $fromRace, string $fileName, string $toRace): string
+    {
+        $this->assertRace($fromRace);
+        if ($toRace === $fromRace) {
+            throw new RuntimeException('Race cible identique à la race actuelle.');
+        }
+        $race = $this->em()->getRepository(Race::class)->findOneBy(['name' => $toRace]);
+        if ($race === null) {
+            throw new RuntimeException("Race inconnue : {$toRace}.");
+        }
+        if (!preg_match('/^[a-zA-Z0-9_.-]+\.(png|jpe?g|webp|gif)$/i', $fileName) || str_contains($fileName, '..')) {
+            throw new RuntimeException('Nom de fichier invalide.');
+        }
+
+        $sourceDir = $this->raceDir($type, $fromRace);
+        if (!is_file($sourceDir . '/' . $fileName)) {
+            throw new RuntimeException("Image inconnue : {$fileName}.");
+        }
+
+        $path = $this->relativeDir($type, $fromRace) . '/' . $fileName;
+        $usage = $this->usageByPath($type)[$path] ?? 0;
+        if ($usage > 0) {
+            throw new RuntimeException("« {$fileName} » est l'image de {$usage} joueur(s) — changez-les d'abord.");
+        }
+
+        $targetDir = $this->raceDir($type, $toRace);
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            throw new RuntimeException('Impossible de créer ' . $targetDir);
+        }
+
+        $number = $type === ImageType::PORTRAIT ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber();
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $newName = $number . '.' . $extension;
+        if (!rename($sourceDir . '/' . $fileName, $targetDir . '/' . $newName)) {
+            throw new RuntimeException('Déplacement impossible : ' . $fileName);
+        }
+        $mini = preg_replace('/\.([a-zA-Z]+)$/', '_mini.$1', $fileName);
+        if (is_string($mini) && is_file($sourceDir . '/' . $mini)) {
+            rename($sourceDir . '/' . $mini, $targetDir . '/' . $number . '_mini.' . $extension);
+        }
+
+        $type === ImageType::PORTRAIT ? $race->incrementPortraitNextNumber() : $race->incrementAvatarNextNumber();
+        $this->em()->persist($race);
+        $this->em()->flush();
+
+        return $newName;
+    }
+
+    /**
      * Supprime une image (et sa miniature). Refus tant que des joueurs
      * l'ont comme avatar/portrait : ils se retrouveraient avec une image
      * cassée en jeu.
