@@ -34,16 +34,17 @@ class InventoryView
 
                 $player->get_data();
 
+                // Instance précise cliquée (ligne d'instance) —
+                // vide/absent sur une ligne de pile.
+                $instanceId = !empty($_POST['instanceId']) && is_numeric($_POST['instanceId'])
+                    ? (int) $_POST['instanceId']
+                    : null;
+
                 switch ($_POST['action']) {
                     case 'drop':
-                        InventoryService::dropItem($player, $item);
+                        InventoryService::dropItem($player, $item, $instanceId);
                         break;
                     case 'use':
-                        // Instance précise cliquée (ligne d'instance) —
-                        // vide/absent sur une ligne de pile.
-                        $instanceId = !empty($_POST['instanceId']) && is_numeric($_POST['instanceId'])
-                            ? (int) $_POST['instanceId']
-                            : null;
                         InventoryService::useItem($player, $item, $instanceId);
                         break;
                 };

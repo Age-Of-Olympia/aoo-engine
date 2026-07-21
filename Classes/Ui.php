@@ -512,10 +512,12 @@ class Ui{
                 }
                 $wornClass = $isEquipped ? ' row-action--worn' : '';
 
-                /* Jeter/Artisanat opèrent sur la PILE (drop → map_items,
-                 * craft → décrément de pile) : sur une ligne d'instance ils
-                 * dupliqueraient l'objet à partir de rien — masqués tant que
-                 * le flux de dépôt d'instance (dropAt) n'est pas câblé ici. */
+                /* Jeter vaut pour les deux représentations : la pile part
+                 * en bourse de case (map_items), l'instance individualisée
+                 * (arme usée…) descend au sol avec son identité (dropAt →
+                 * map_items_instances) — une instance encore portée se
+                 * déséquipe d'abord. L'Artisanat, lui, n'opère que sur la
+                 * PILE (décrément) : masqué sur une ligne d'instance. */
                 $stackActions = '';
                 if(!$isInstance){
 
@@ -527,6 +529,11 @@ class Ui{
 
                     $stackActions = '
                     <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>'. $craftAction;
+                }
+                elseif(!$isEquipped){
+
+                    $stackActions = '
+                    <button class="row-action" data-action="drop" title="Jeter"><span class="ra ra-underhand"></span></button>';
                 }
 
                 echo '

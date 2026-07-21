@@ -11,13 +11,34 @@ use App\Enum\EquipResult;
 
 class InventoryService
 {
-    public static function dropItem(Player $player, Item $item)
+    /**
+     * @param int|null $instanceId instance PRÉCISE à jeter (clic sur une
+     *        ligne d'instance — arme usée…) : elle descend au sol avec
+     *        son identité via dropAt (map_items_instances), là où la
+     *        pile part en bourse de case (map_items)
+     */
+    public static function dropItem(Player $player, Item $item, ?int $instanceId = null)
     {
         if ($item->row->cursed) {
 
             echo '<div id="data">Objet Maudit!</div>';
             exit();
         }
+
+        if ($instanceId !== null) {
+            try {
+                (new ItemInstanceService())->dropAt($instanceId, (int) $player->data->coords_id);
+            } catch (\InvalidArgumentException $e) {
+                echo '<div id="data">' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>';
+                exit();
+            }
+
+            $text = $player->data->name . ' a déposé ' . $item->data->name . '.';
+
+            Log::put($player, $player, $text, type: 'use');
+            return;
+        }
+
         if (!is_numeric($_POST['n']) || (int)$_POST['n'] < 1) {
             echo '<div id="data">Mauvais nombre</div>';
             exit();
