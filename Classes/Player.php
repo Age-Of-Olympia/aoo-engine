@@ -1611,7 +1611,16 @@ class Player implements ActorInterface {
      *        ligne d'instance de l'inventaire) — null : la plus ancienne
      *        disponible, sinon promotion depuis la pile
      */
-    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null): EquipResult{
+    /**
+     * @param bool|null $clickedEquippedLine la ligne d'inventaire cliquée
+     *        était-elle PORTÉE ? true = geste de déséquipement, false =
+     *        geste d'équipement (même si un AUTRE exemplaire du même
+     *        objet catalogue est porté : équiper l'arc neuf remplace
+     *        l'abîmé au lieu de le déséquiper). Null = pas de contexte
+     *        de ligne (mort, désarmement, revert Ae, munitions auto) :
+     *        bascule héritée par objet catalogue.
+     */
+    public function equip(Item $item, bool $doNotRefresh = false, ?int $instanceId = null, ?bool $clickedEquippedLine = null): EquipResult{
 
         $db = new Db();
 
@@ -1631,7 +1640,7 @@ class Player implements ActorInterface {
         $itemList = Item::get_equiped_list($this);
 
 
-        if(!empty($itemList[$item->id])){
+        if(!empty($itemList[$item->id]) && $clickedEquippedLine !== false){
 
 
             // item is cursed
@@ -1693,7 +1702,12 @@ class Player implements ActorInterface {
 
             // item is NOT equiped : EQUIP
 
-            if(!empty($this->emplacements->{$item->data->emplacement}) && $this->emplacements->{$item->data->emplacement}->id == $item->id){
+            // Garde anti no-op héritée — court-circuitée quand le geste
+            // d'équipement est explicite (clic sur une ligne NON portée) :
+            // équiper l'arc neuf alors que l'abîmé occupe l'emplacement
+            // est un REMPLACEMENT voulu, pas un no-op.
+            if($clickedEquippedLine !== false
+                && !empty($this->emplacements->{$item->data->emplacement}) && $this->emplacements->{$item->data->emplacement}->id == $item->id){
                 return EquipResult::DoNothing;
             }
 

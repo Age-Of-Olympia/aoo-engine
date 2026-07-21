@@ -16,6 +16,11 @@ $(document).ready(function(){
            ligne de pile, pour ne pas laisser fuiter la sélection
            précédente. */
         window.instanceId = $item.data("instance-id") || null;
+        /* LA ligne cliquée est-elle portée ? C'est elle qui décide du
+           sens de la bascule côté serveur (rowEquipped) : un arc abîmé
+           porté ne doit pas transformer « équiper » le lot neuf en
+           déséquipement. */
+        window.rowEquipped = String($item.data("equiped")) === "1";
         /* Ce que « Utiliser » ferait, décidé par le serveur
            (InventoryService::useKind) : equip | consume | vide. */
         window.useKind = $item.data("use-kind") || '';
@@ -32,7 +37,11 @@ $(document).ready(function(){
 
         $('.action[data-action="store"]').prop('disabled', !bankable);
 
-        if($('.emplacement[data-id="'+ window.id +'"]')[0] != null){
+        /* « Déséquiper » seulement si LA ligne cliquée est portée — le
+           test hérité par objet catalogue (.emplacement[data-id])
+           affichait Déséquiper sur le lot neuf dès qu'un exemplaire
+           abîmé du même objet était porté. */
+        if(window.rowEquipped){
 
             $('.action[data-action="use"]')
             .html('Déséquiper')

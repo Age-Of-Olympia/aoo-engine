@@ -92,7 +92,7 @@ class InventoryService
      *        une ligne d'instance) — transmis jusqu'à
      *        ItemInstanceService::equipCatalogItem
      */
-    public static function useItem(Player $player, Item $item, ?int $instanceId = null): void
+    public static function useItem(Player $player, Item $item, ?int $instanceId = null, ?bool $clickedEquippedLine = null): void
     {
         /* détail de consommation : visible du seul buveur, via le
          * hiddenText des événements */
@@ -109,7 +109,7 @@ class InventoryService
         if (!empty($item->data->emplacement)) {
 
 
-            $return = $player->equip($item, instanceId: $instanceId);
+            $return = $player->equip($item, instanceId: $instanceId, clickedEquippedLine: $clickedEquippedLine);
 
             if ($return == EquipResult::Equip) {
 

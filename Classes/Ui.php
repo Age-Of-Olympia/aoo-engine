@@ -420,6 +420,7 @@ class Ui{
                 id="'. $domId .'"
                 data-id="'. $row->id .'"
                 data-instance-id="'. ($isInstance ? (int) $row->instance_id : '') .'"
+                data-equiped="'. (!empty($row->equiped) ? '1' : '0') .'"
                 data-use-kind="'. $useKind .'"
                 data-name="'. $itemName .'"
                 data-n="'. $row->n .'"
@@ -572,7 +573,7 @@ class Ui{
         window.n =    <?php echo $defaultItemN ?>;
         window.price =    1;
         </script>
-        <script src="js/inventUi.js?v=20260720b"></script>
+        <script src="js/inventUi.js?v=20260722"></script>
         <?php
 
         return Str::minify(ob_get_clean());

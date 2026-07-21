@@ -52,6 +52,22 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchema
         return is_numeric($raw) ? (int) $raw : null;
     }
 
+    /**
+     * La ligne cliquée était-elle PORTÉE ? C'est elle qui décide du sens
+     * de la bascule équiper/déséquiper (un arc abîmé porté ne doit pas
+     * transformer « équiper » le lot neuf en déséquipement). Null quand
+     * le client n'a pas fourni le contexte de ligne : Player::equip
+     * retombe alors sur la bascule héritée par objet catalogue.
+     */
+    public static function requestedEquippedLine(): ?bool
+    {
+        return match ((string) ($_POST['rowEquipped'] ?? '')) {
+            '1' => true,
+            '0' => false,
+            default => null,
+        };
+    }
+
     public function check(ActorInterface $actor, ?ActorInterface $target, ActionCondition $condition, ConditionObject $conditionObject): ConditionResult
     {
         $condition->setBlocking(true);
@@ -89,6 +105,7 @@ class ItemPickCondition extends BaseCondition implements HasParameterSchema
 
         $conditionObject->setPickedItem($item);
         $conditionObject->setPickedInstanceId(self::requestedInstanceId());
+        $conditionObject->setPickedEquippedLine(self::requestedEquippedLine());
 
         return new ConditionResult(true, array(), array());
     }

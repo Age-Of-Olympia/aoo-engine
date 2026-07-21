@@ -24,6 +24,10 @@ class ConditionObject
     protected ?\Classes\Item $pickedItem = null;
     /** Instance PRÉCISE désignée au geste (ligne d'instance cliquée), sinon null. */
     protected ?int $pickedInstanceId = null;
+    /** La ligne cliquée était-elle PORTÉE ? Décide du sens de la bascule
+     *  équiper/déséquiper ; null = contexte de ligne inconnu (bascule
+     *  héritée par objet catalogue dans Player::equip). */
+    protected ?bool $pickedEquippedLine = null;
 
 
     public function __construct() {
@@ -59,6 +63,17 @@ class ConditionObject
     public function setPickedInstanceId(?int $instanceId): self
     {
         $this->pickedInstanceId = $instanceId;
+        return $this;
+    }
+
+    public function getPickedEquippedLine(): ?bool
+    {
+        return $this->pickedEquippedLine;
+    }
+
+    public function setPickedEquippedLine(?bool $equippedLine): self
+    {
+        $this->pickedEquippedLine = $equippedLine;
         return $this;
     }
 

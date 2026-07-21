@@ -2,6 +2,7 @@
 
 namespace App\View\Inventory;
 
+use App\Action\Condition\ItemPickCondition;
 use App\Factory\PlayerFactory;
 use App\Service\InventoryService;
 use App\Tutorial\TutorialHelper;
@@ -34,18 +35,19 @@ class InventoryView
 
                 $player->get_data();
 
-                // Instance précise cliquée (ligne d'instance) —
-                // vide/absent sur une ligne de pile.
-                $instanceId = !empty($_POST['instanceId']) && is_numeric($_POST['instanceId'])
-                    ? (int) $_POST['instanceId']
-                    : null;
+                // Mêmes lecteurs que le moteur d'actions (ItemPickCondition,
+                // source unique du contrat client) : instance précise
+                // cliquée, et sens de la bascule — LA ligne cliquée
+                // était-elle portée ? (null = contexte non fourni)
+                $instanceId = ItemPickCondition::requestedInstanceId();
+                $clickedEquippedLine = ItemPickCondition::requestedEquippedLine();
 
                 switch ($_POST['action']) {
                     case 'drop':
                         InventoryService::dropItem($player, $item, $instanceId);
                         break;
                     case 'use':
-                        InventoryService::useItem($player, $item, $instanceId);
+                        InventoryService::useItem($player, $item, $instanceId, $clickedEquippedLine);
                         break;
                 };
 
@@ -101,7 +103,7 @@ window.aLeft = ' . $player->getRemaining('a') . ';
 
 ?>
         <script src="js/progressive_loader.js?v=20260716"></script>
-        <script src="js/inventory.js?v=20260722c"></script>
+        <script src="js/inventory.js?v=20260722e"></script>
 <?php
     }
 }

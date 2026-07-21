@@ -40,11 +40,14 @@ class EquipItemOutcomeInstruction extends OutcomeInstruction implements HasParam
             return new OutcomeResult(true, outcomeSuccessMessages: ['Équiperait/déséquiperait : ' . $item->data->name . '.'], outcomeFailureMessages: array());
         }
 
-        $return = $actor->equip($item, instanceId: $conditionObject->getPickedInstanceId());
+        $return = $actor->equip($item, instanceId: $conditionObject->getPickedInstanceId(),
+            clickedEquippedLine: $conditionObject->getPickedEquippedLine());
 
         if ($return == EquipResult::Equip) {
             if ($actor->getRemaining('ae') < 1) {
-                // même règle que le flux hérité : sans Ae, la bascule est annulée
+                // même règle que le flux hérité : sans Ae, la bascule est
+                // annulée — SANS contexte de ligne : la bascule héritée
+                // par catalogue déséquipe ce qui vient d'être équipé
                 $actor->equip($item, instanceId: $conditionObject->getPickedInstanceId());
 
                 return new OutcomeResult(false, outcomeSuccessMessages: array(), outcomeFailureMessages: ['Pas assez d\'Ae pour équiper ' . htmlspecialchars($item->data->name, ENT_QUOTES, 'UTF-8') . '.']);
