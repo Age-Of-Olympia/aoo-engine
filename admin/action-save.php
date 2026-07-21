@@ -49,6 +49,11 @@ try {
     }
     $saveService->saveParameters($actionId, $conditionParams, $instructionParams, $conditionRaw, $instructionRaw, $conditionContext);
     $saveService->saveOutcomeTargets($actionId, $outcomeTargets);
+    // Type STI en DERNIER : saveType() clear() l'EntityManager — les
+    // enregistrements précédents doivent d'abord flusher leurs entités.
+    if (array_key_exists('type', $_POST)) {
+        $saveService->saveType($actionId, (string) $_POST['type']);
+    }
 
     setFlash('success', 'Paramètres enregistrés.');
     $csrf->regenerateToken();

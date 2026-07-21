@@ -155,6 +155,23 @@ if ($action === null) {
         . formSelect('race', (new OptionCatalog())->races(), $currentRace !== '' ? $currentRace : null, '—',
             'class="form-control" title="Restreint l\'action à une race ; — = toutes"') . '</label>';
 
+    // Type STI — le discriminateur, donc la classe PHP de l'action
+    // (ciblage, instructions héritées). Rebasculable, mais engageant :
+    // confirmation au changement, les conditions/outcomes en place sont
+    // conservés et à revoir sous le nouveau type.
+    $currentType = (string) \App\Entity\EntityManagerFactory::getEntityManager()
+        ->getClassMetadata(get_class($action))->discriminatorValue;
+    echo '<label class="wb-field"><span>Type</span>'
+        . formSelect('type', $actionTypes, $currentType !== '' ? $currentType : null, null,
+            'class="form-control" data-original="' . e($currentType) . '"'
+            . ' title="Le type décide du comportement (ciblage, instructions héritées) —'
+            . ' changer conserve conditions et outcomes, à revoir ensuite"'
+            . ' onchange="if(this.value !== this.dataset.original'
+            . ' &amp;&amp; !confirm(\'Changer le type de cette action ?'
+            . ' Les conditions et outcomes existants sont conservés mais peuvent'
+            . ' ne plus convenir au nouveau type.\')) this.value = this.dataset.original;"')
+        . '</label>';
+
     // Catégorie — le regroupement des listes du jeu ; libre, avec datalist
     // des catégories déjà en usage pour rester cohérent d'un clic.
     $knownCategories = [];

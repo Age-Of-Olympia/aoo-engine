@@ -169,6 +169,35 @@ final class ActionSaveService
     }
 
     /**
+     * Rebascule une action vers un autre type STI — le discriminateur
+     * `type` décide de la classe PHP (ciblage, instructions héritées via
+     * ActionTypeRegistry). Doctrine ne réécrit jamais un discriminateur :
+     * UPDATE SQL direct, puis clear() pour que l'EntityManager recharge
+     * l'action sous sa nouvelle classe. Conditions et outcomes sont
+     * conservés tels quels : à revoir après bascule (les défauts du
+     * nouveau type ne sont PAS réappliqués). No-op si inchangé.
+     */
+    public function saveType(int $actionId, string $type): void
+    {
+        $action = EntityFinder::orFail($this->entityManager, Action::class, $actionId, 'Action');
+
+        $type = trim($type);
+        $metadata = $this->entityManager->getClassMetadata(Action::class);
+        if (!isset($metadata->discriminatorMap[$type])) {
+            throw new \InvalidArgumentException("Type d'action inconnu : {$type}.");
+        }
+        if ($type === (string) $this->entityManager->getClassMetadata(get_class($action))->discriminatorValue) {
+            return;
+        }
+
+        $this->entityManager->getConnection()->executeStatement(
+            'UPDATE ' . $metadata->getTableName() . ' SET type = ? WHERE id = ?',
+            [$type, $actionId]
+        );
+        $this->entityManager->clear();
+    }
+
+    /**
      * Reclasse une action dans une autre catégorie (le regroupement des
      * listes du jeu et du roster des compétences). Chaîne vide = sans
      * catégorie. No-op si inchangée — même contrat que saveRace.
