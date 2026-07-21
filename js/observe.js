@@ -142,8 +142,12 @@ $(document).ready(function(){
     });
 });
 
-/* Bourse : Ramasser sa propre case (bouton injecté en AJAX — délégué). */
-$(document).on('click', '#pickup-own-tile', function(){
+/* Bourse : Ramasser sa propre case (bouton injecté en AJAX — délégué).
+   off() d'abord : ce script est re-exécuté à chaque chargement du
+   panneau d'observation, et les délégués sur document s'ACCUMULENT —
+   un clic déclenchait N ramassages, le premier réussissait puis les
+   suivants répondaient « Rien à ramasser ici ». */
+$(document).off('click.pickupOwnTile').on('click.pickupOwnTile', '#pickup-own-tile', function(){
 
     var b = this;
     b.disabled = true;
