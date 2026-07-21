@@ -177,9 +177,15 @@ class ItemInstanceService extends BaseService
     /**
      * Equip a catalog item through the instance path: the caller's
      * chosen instance when given (a click on a SPECIFIC inventory
-     * line), else the player's OLDEST unequipped live instance of that
-     * item, else promote one unit from the stack. Returns the equipped
-     * instance id.
+     * line), else one PRISTINE unit promoted from the stack, else the
+     * player's oldest unequipped live instance of that item. Returns
+     * the equipped instance id.
+     *
+     * La pile prime sur les instances existantes : le geste sans
+     * instance précise (clic sur la ligne de pile, flux hérités) doit
+     * équiper un exemplaire vierge, pas la plus vieille instance usée —
+     * celle-ci ne s'équipe qu'en cliquant SA ligne. L'aller-retour
+     * pile↔instance vierge (promote/demote) reste sans perte.
      *
      * @throws \RuntimeException when the player owns no unit at all, or
      *         when the requested instance is not equippable (absente,
@@ -195,16 +201,27 @@ class ItemInstanceService extends BaseService
                 throw new \RuntimeException("instance {$instanceId} non équipable pour le joueur {$playerId}");
             }
         } else {
-            $existing = $conn->fetchOne(
-                "SELECT l.instance_id
-                 FROM players_items_instances l
-                 JOIN item_instances i ON i.id = l.instance_id
-                 WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
-                 ORDER BY l.instance_id LIMIT 1",
+            $stacked = (int) $conn->fetchOne(
+                "SELECT COALESCE(SUM(n), 0) FROM players_items
+                 WHERE player_id = ? AND item_id = ? AND equiped = ''",
                 [$playerId, $itemId]
             );
 
-            $instanceId = $existing !== false ? (int) $existing : $this->promote($playerId, $itemId);
+            if ($stacked > 0) {
+                $instanceId = $this->promote($playerId, $itemId);
+            } else {
+                $existing = $conn->fetchOne(
+                    "SELECT l.instance_id
+                     FROM players_items_instances l
+                     JOIN item_instances i ON i.id = l.instance_id
+                     WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
+                     ORDER BY l.instance_id LIMIT 1",
+                    [$playerId, $itemId]
+                );
+
+                // promote() sans pile lève l'exception « aucun exemplaire ».
+                $instanceId = $existing !== false ? (int) $existing : $this->promote($playerId, $itemId);
+            }
         }
 
         $conn->executeStatement(
