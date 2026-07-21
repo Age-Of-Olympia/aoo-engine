@@ -233,7 +233,38 @@ define('EFFECTS_TXT', array(
     'corruption_du_plantes'=>'Corruption des plantes<br />Augmente le risque que le matériel contenant des plantes (Adonis) se casse.',
     'corruption_du_cuir'=>'Corruption du Cuir<br />Augmente le risque que le matériel contenant du Cuir se casse.',
 
-    'vol'=>"Vol<br />Permet de se déplacer dans les airs."
+    'vol'=>"Vol<br />Permet de se déplacer dans les airs.",
+
+    // effets buff/debuff de combat
+    'dexterite'=>"Dextérité<br />Augmente votre jet d'attaque (plus de chances de toucher).",
+    'maladresse'=>"Maladresse<br />Diminue votre jet d'attaque (moins de chances de toucher).",
+    'protection'=>"Protection<br />Augmente votre jet de défense (plus difficile à toucher).",
+    'vulnerabilite'=>"Vulnérabilité<br />Diminue votre jet de défense (plus facile à toucher).",
+    'agressivite'=>"Agressivité<br />Augmente les dégâts que vous infligez.",
+    'faiblesse'=>"Faiblesse<br />Diminue les dégâts que vous infligez.",
+    'armure'=>"Armure<br />Réduit les dégâts que vous subissez.",
+    'fragilite'=>"Fragilité<br />Augmente les dégâts que vous subissez.",
+    'encaisse'=>"Encaisse<br />Absorbe une partie des dégâts subis.",
+    'renforcement'=>"Renforcement<br />Augmente vos chances de réussir une bousculade.",
+    'stabilite'=>"Stabilité<br />Augmente votre résistance aux bousculades.",
+    'instabilite'=>"Instabilité<br />Diminue votre résistance aux bousculades.",
+    'ralentissement'=>"Ralentissement<br />Réduit vos Mouvements.",
+    'aveuglement'=>"Aveuglement<br />Diminue votre Perception.",
+    'acuite_visuelle'=>"Acuité visuelle<br />Augmente votre Perception.",
+
+    // effets utilitaires
+    'imposture'=>"Imposture<br />Vous n'apparaissez plus sur la carte générale jusqu'à votre prochain tour.",
+    'leger'=>"Léger<br />Vous ne laissez pas de traces de pas en vous déplaçant.",
+
+    // effets élémentaires / dégâts sur la durée
+    'feu'=>"Feu<br />Diminue l'Endurance de 1.",
+    'poison'=>"Poison<br />Empêche la récupération de PV au prochain tour.",
+
+    // esquives "one-shot" (consommées à la prochaine attaque subie)
+    'parade'=>"Parade<br />Pare la prochaine attaque de corps-à-corps.",
+    'leurre'=>"Leurre<br />Pare le prochain sort lancé sur vous.",
+    'cle_de_bras'=>"Clé de bras<br />Si vous êtes attaqué au corps-à-corps à mains nues, immobilise l'assaillant.",
+    'pas_de_cote'=>"Pas de côté<br />Esquive la prochaine attaque physique en vous déplaçant sur une case adjacente."
 ));
 
 

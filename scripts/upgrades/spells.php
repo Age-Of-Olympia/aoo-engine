@@ -30,7 +30,7 @@ $spellsN = count($spellList);
 $trStyle = '';
 $buttonStyle = '';
 
-$maxColSpan = 7;
+$maxColSpan = 8;
 if(isset($_GET['forget'])){
     $maxColSpan++;
 }
@@ -56,7 +56,7 @@ if($numberOfSpellsAvailable < 0){
 }
 echo '</tr>';
 
-echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th>';
+echo '<tr><th colspan="2">Sort</th><th></th><th>Coût</th><th>Bonus</th><th>Effet</th><th>Type</th><th>Niveau</th>';
 
 if(isset($_GET['forget'])){
     echo '<th>Action</th>';
@@ -85,36 +85,87 @@ foreach($spellList as $e){
 
     $outcomeInstructionService = new OutcomeInstructionService();
 
+    // getOutcomeInstructionByTypeByOutcome renvoie un tableau d'instructions : on lit les params du premier
     $instructionLifeLoss = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("LifeLossOutcomeInstruction", $outcomes[0]->getId());
-    if (isset($instructionLifeLoss)) {
-        $instructionParameters = [];
-        if (is_object($instructionLifeLoss)) {
-        $instructionParameters = $instructionLifeLoss->getParameters();
-        } elseif (is_array($instructionLifeLoss)) {
-            $instructionParameters =  $instructionLifeLoss;
-        }
+    if (!empty($instructionLifeLoss)) {
+        $instructionParameters = $instructionLifeLoss[0]->getParameters();
         if (isset($instructionParameters['bonusDamagesTrait'])) {
             $bonusDamages = $instructionParameters['bonusDamagesTrait'];
         }
     }
 
     $instructionHealing = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("HealingOutcomeInstruction", $outcomes[0]->getId());
-    if (isset($instructionHealing)) {
-        $instructionParameters = [];
-    
-        if (is_object($instructionHealing)) {
-            $instructionParameters = $instructionHealing->getParameters();
-        } elseif (is_array($instructionHealing)) {
-            $instructionParameters = $instructionHealing;
-        }
+    if (!empty($instructionHealing)) {
+        $instructionParameters = $instructionHealing[0]->getParameters();
         if (isset($instructionParameters['bonusHealingTrait'])) {
             $bonusHeal = $instructionParameters['bonusHealingTrait'];
         }
     }
 
-    $type = "Technique";
-    if ($spell->getOrmType() == 'spell') {
-        $type = "Sort";
+    // heal/buff/spell sont des sorts ; seul 'technique' est une technique (#287)
+    $type = in_array($spell->getOrmType(), ['spell', 'heal', 'buff'], true) ? "Sort" : "Technique";
+
+    // Effets posés par le sort (instructions applystatus) : icône + nom + tooltip explicatif
+    $effectBadges = [];
+    $seenEffects = [];
+    foreach ($outcomes as $outcome) {
+        $statusInstructions = $outcomeInstructionService->getOutcomeInstructionByTypeByOutcome("ApplyStatusOutcomeInstruction", $outcome->getId());
+        foreach ($statusInstructions as $status) {
+            $statusParams = $status->getParameters();
+
+            // gère la forme récente {"effect":"x","apply":true} et la forme legacy {"x":true}
+            if (array_key_exists('effect', $statusParams)) {
+                $effectName = (string) $statusParams['effect'];
+                $apply = filter_var($statusParams['apply'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            } else {
+                $effectName = (string) array_key_first($statusParams);
+                $apply = filter_var($statusParams[$effectName] ?? true, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            // seulement les effets réellement appliqués, une fois chacun, avec une icône connue
+            if (!$apply || $effectName === '' || isset($seenEffects[$effectName]) || !isset(EFFECTS_RA_FONT[$effectName])) {
+                continue;
+            }
+            $seenEffects[$effectName] = true;
+
+            // "Titre<br />Description" : le titre sert de libellé, le tout de tooltip (texte brut)
+            $label = isset(EFFECTS_TXT[$effectName])
+                ? explode('<br />', EFFECTS_TXT[$effectName])[0]
+                : ucfirst(str_replace('_', ' ', $effectName));
+            $tooltip = isset(EFFECTS_TXT[$effectName])
+                ? str_replace('<br />', ' : ', EFFECTS_TXT[$effectName])
+                : $label;
+
+            // valeur de l'effet (ex. Protection x2) : essentielle pour les effets qui stackent.
+            // Préfixe cohérent avec l'exécution (ApplyStatusOutcomeInstruction) :
+            // '+' si l'effet est cumulable (stackable), 'x' sinon.
+            // scalaire => (x2)/(+2) ; tableau de nombres (aléatoire, ex. [1,2]) => (x1-2)
+            $value = $statusParams['value'] ?? 1;
+            $prefix = filter_var($statusParams['stackable'] ?? false, FILTER_VALIDATE_BOOLEAN) ? '+' : 'x';
+            if (is_numeric($value)) {
+                $valueSuffix = ' ('. $prefix . $value .')';
+            } elseif (is_array($value) && $value !== [] && count(array_filter($value, 'is_numeric')) === count($value)) {
+                $valueSuffix = ' ('. $prefix . implode('-', $value) .')';
+            } else {
+                $valueSuffix = '';
+            }
+
+            // - le tooltip et l'icône rpg-awesome utilisent tous deux ::before :
+            //   tooltip sur le span parent, icône dans un span enfant
+            // - le span parent reste en white-space normal pour que la bulle (::after,
+            //   qui hérite du white-space) puisse wrapper ; le nowrap va sur un span
+            //   interne pour garder icône + nom sur la même ligne
+            $effectBadges[] = '<span flow="up" tooltip="'. htmlspecialchars($tooltip, ENT_QUOTES) .'" style="text-decoration:none;cursor:help;">'
+                . '<span style="white-space:nowrap;"><span class="ra '. EFFECTS_RA_FONT[$effectName] .'"></span> '. htmlspecialchars($label) . $valueSuffix .'</span>'
+                . '</span>';
+        }
+    }
+
+    // Cellule Effet : texte descriptif du sort + badges des effets posés.
+    // (le texte doit rester de la prose, sans réénumérer les effets)
+    $effetCell = $spell->getText();
+    if (!empty($effectBadges)) {
+        $effetCell .= '<br />' . implode(' ; ', $effectBadges);
     }
 
     echo '
@@ -133,29 +184,39 @@ foreach($spellList as $e){
         </td>
         ';
 
+        // Le bonus peut être un entier (+4, -3), un trait nu ("m" => +M)
+        // ou un tableau [trait, diviseur] (["m", 3] => +M/3, bonus basé sur une carac)
         $bonus = '';
+        $bonusValue = ($bonusHeal !== "") ? $bonusHeal : $bonusDamages;
 
-        if($bonusDamages != ""){
-            $bonus = '+'. $bonusDamages;
+        if ($bonusValue !== "" && $bonusValue !== null) {
+            if (is_array($bonusValue)) {
+                $bonus = '+'. strtoupper((string) $bonusValue[0]) . (isset($bonusValue[1]) ? '/'. $bonusValue[1] : '');
+            } elseif (is_numeric($bonusValue)) {
+                $bonus = ($bonusValue < 0) ? (string) (int) $bonusValue : '+'. (int) $bonusValue;
+            } else {
+                $bonus = '+'. strtoupper((string) $bonusValue);
+            }
         }
-        
-        if($bonusHeal != ""){
-            $bonus = '+'. $bonusHeal;
-        }
-
 
         echo '<td>'. $bonus .'</td>';
 
 
         echo '
         <td align="left">
-            '. $spell->getText() .'
+            '. $effetCell .'
         </td>
         ';
 
         echo '
         <td>
             '. $type .'
+        </td>
+        ';
+
+        echo '
+        <td align="center">
+            '. $spell->getLevel() .'
         </td>
         ';
 
