@@ -803,6 +803,25 @@ body:has(#hud) #view-landing-wrapper {
     box-sizing: border-box;
 }
 
+/* Portrait de BÂTIMENT (classe posée par composeSelection) : l'image
+ * n'est pas au canon 210×320 des personnages — l'étirer en couverture
+ * sur toute la hauteur du bandeau la recadrait n'importe comment
+ * (retour saison 3 : correct en mode théâtre, pas en mode normal).
+ * Elle garde ses proportions, calée en haut de sa colonne. */
+#hud #ajax-data .hud-sel--building .hud-sel-left {
+    align-self: start;
+    max-height: 100%;
+}
+
+#hud #ajax-data .hud-sel--building .hud-sel-left .card-image,
+#hud #ajax-data .hud-sel--building .hud-sel-left .card-portrait {
+    height: auto;
+}
+
+#hud #ajax-data .hud-sel--building .hud-sel-left .card-portrait {
+    object-fit: contain;
+}
+
 /* Voile de blessures : #red-filter converti en pourcentage par
  * js/hud.js — au-dessus du portrait quel que soit l'empilement */
 #hud #ajax-data .hud-pv-lost {

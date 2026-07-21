@@ -2,8 +2,16 @@
 /* Bascule de personnage : le HUD persiste ses panneaux ouverts dans
  * sessionStorage et les restaure au rechargement — sans purge, le menu
  * des pnj se rouvrirait tout seul une fois le personnage changé
- * (agaçant sur smartphone où le panneau couvre tout). */
+ * (agaçant sur smartphone où le panneau couvre tout). La purge passe
+ * par l'état VIVANT du HUD quand il est là (hudForgetPanel — purger le
+ * seul sessionStorage laissait un syncPanels réécrire l'ancien état
+ * avant l'unload) ; repli stockage sur les pages sans HUD. */
 function forgetPnjPanel(){
+
+    if (typeof window.hudForgetPanel === 'function') {
+        window.hudForgetPanel('load_pnjs.php');
+        return;
+    }
 
     ['hudPanels', 'hudPanelHistory'].forEach(function(key){
         try {

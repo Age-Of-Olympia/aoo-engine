@@ -369,8 +369,7 @@
      * d'un bâtiment change players.avatar côté serveur — recopier les
      * href des <image> du SVG depuis le re-rendu, nœud par nœud (le
      * damier en place garde zoom et défilement). Un nœud absent du
-     * re-rendu (bâtiment détruit) est retiré du damier. Les
-     * apparitions (pose) passent par les redraws complets existants. */
+     * re-rendu (bâtiment détruit) est retiré du damier. */
     function refreshBoardSprites(doc) {
         var freshView = doc.getElementById('svg-view');
         var currentView = document.getElementById('svg-view');
@@ -390,6 +389,44 @@
                 this.setAttribute('href', freshHref);
                 this.setAttribute('xlink:href', freshHref);
             }
+        });
+
+        /* Les images SANS id — éléments posés (sang, traces, ressources…)
+         * — apparaissent aussi PENDANT une action : le sang d'une attaque
+         * coule sur la case sans attendre un déplacement. Diff par
+         * (table, coords, href) avec multiplicité ; les nouveaux nœuds
+         * s'insèrent avant le premier sprite à id pour rester SOUS les
+         * personnages (l'ordre du SVG est l'ordre de peinture). */
+        var plainKey = function (img) {
+            return (img.getAttribute('data-table') || '') + '|'
+                + (img.getAttribute('data-coords') || '') + '|'
+                + (img.getAttribute('href') || img.getAttribute('xlink:href') || '');
+        };
+
+        var byKey = {};
+        Array.prototype.forEach.call(currentView.querySelectorAll('image:not([id])'), function (img) {
+            var key = plainKey(img);
+            (byKey[key] = byKey[key] || []).push(img);
+        });
+
+        var anchor = currentView.querySelector('image[id]');
+        Array.prototype.forEach.call(freshView.querySelectorAll('image:not([id])'), function (img) {
+            var key = plainKey(img);
+            if (byKey[key] && byKey[key].length) {
+                byKey[key].shift(); /* déjà sur le damier */
+                return;
+            }
+            var clone = img.cloneNode(true);
+            if (anchor) {
+                anchor.parentNode.insertBefore(clone, anchor);
+            } else {
+                currentView.appendChild(clone);
+            }
+        });
+
+        /* Restants : disparus du re-rendu (élément consommé, nettoyé). */
+        Object.keys(byKey).forEach(function (key) {
+            byKey[key].forEach(function (img) { img.remove(); });
         });
     }
 
@@ -1046,6 +1083,14 @@
 
         var $sel = $('<div class="hud-sel"></div>');
 
+        /* Bâtiment sélectionné (la pastille d'état n'existe que pour
+         * eux) : son portrait n'est pas au canon 210×320 des
+         * personnages — le CSS le laisse à ses proportions au lieu de
+         * le recadrer en couverture. */
+        if ($d.find('.building-status').length) {
+            $sel.addClass('hud-sel--building');
+        }
+
         if ($card.length) {
             var $w = $card.find('.card-wrapper');
             var $left = $('<div class="hud-sel-left"></div>')
@@ -1450,6 +1495,19 @@
         syncPanels();
         reloadAllPanels();
     }
+
+    /* Purge un panneau de l'état VIVANT et persisté — la bascule de
+     * personnage (js/pnjs.js) ferme le menu des pnj avant de recharger.
+     * Ne purger que sessionStorage laissait une course : tout
+     * syncPanels() entre la purge et l'unload (resize mobile quand la
+     * barre d'adresse bouge, poll…) réécrivait l'état depuis la mémoire
+     * et le panneau se rouvrait sur le nouveau personnage. */
+    window.hudForgetPanel = function (urlFragment) {
+        var keep = function (p) { return ((p && p.url) || '').indexOf(urlFragment) === -1; };
+        openPanels = openPanels.filter(keep);
+        panelHistory = panelHistory.filter(keep);
+        syncPanels();
+    };
 
     /* Flèche du bandeau du panneau : rouvre le panneau remplacé. */
     function goBackPanel() {
