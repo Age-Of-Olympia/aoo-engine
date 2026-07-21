@@ -10,7 +10,7 @@ use Doctrine\Migrations\AbstractMigration;
 /**
  * Drop column 'm' from races, add 'pui' and 'res' columns with specific race default values.
  */
-final class Version20260721130000_UpdateRacesStats extends AbstractMigration
+final class Version20260721100000_ChangeMtoPuiRes extends AbstractMigration
 {
     /** Values for the new 'pui' column per race (lowercase code). */
     private const PUI_VALUES = [
