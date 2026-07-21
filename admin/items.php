@@ -121,6 +121,34 @@ function item_type_badge(string $type): string
 }
 
 /** @param array<int, object> $items */
+/**
+ * Sections renseignées alors que le type de l'objet ne les utilise pas
+ * (usure sans equipement, effets sans consommable, pousses sans
+ * graine) — la même détection que les volets « hors type » de la
+ * fiche, pour marquer la liste comme la liste des plans marque les
+ * siens.
+ *
+ * @return list<string> libellés des incohérences, vide si sain
+ */
+function items_type_inconsistencies(object $row, string $type): array
+{
+    $extra = json_decode((string) ($row->extra ?? ''));
+
+    $issues = [];
+    if (((int) ($row->wear_rate ?? 0) > 0 || trim((string) ($row->wear_triggers ?? '')) !== '')
+        && $type !== 'equipement') {
+        $issues[] = 'usure';
+    }
+    if (is_object($extra) && !empty($extra->effet) && $type !== 'consommable') {
+        $issues[] = 'effets de consommation';
+    }
+    if (is_object($extra) && (!empty($extra->growTo) || !empty($extra->growZMin)) && $type !== 'graine') {
+        $issues[] = 'pousses de graine';
+    }
+
+    return $issues;
+}
+
 function items_render_list(array $items, string $csrfToken): string
 {
     $inDb = 0;
@@ -179,10 +207,19 @@ function items_render_list(array $items, string $csrfToken): string
             . '>Supprimer</button>'
             . '</form>';
 
+        // Incohérences type ↔ sections (mêmes règles que la fiche) :
+        // badge orange dans la colonne Type, comme la liste des plans.
+        $issues = items_type_inconsistencies($row, $type);
+        $issuesBadge = $issues !== []
+            ? ' <span class="badge" style="background-color:#f0ad4e;color:#fff;"'
+                . ' title="Renseigné hors type : ' . e(implode(', ', $issues)) . ' — ouvrez la fiche pour corriger.">'
+                . '<i class="fas fa-exclamation-triangle"></i> ' . count($issues) . '</span>'
+            : '';
+
         $rows[] = '<tr data-type="' . e($type) . '">'
             . '<td><img src="/img/items/' . e($row->name) . '_mini.webp" style="max-height:24px"'
             . ' onerror="this.style.display=\'none\'" alt=""> <code>' . e($row->name) . '</code>' . $mapThumbs . '</td>'
-            . '<td>' . item_type_badge($type) . '</td>'
+            . '<td>' . item_type_badge($type) . $issuesBadge . '</td>'
             . '<td>' . $statsBadge . '</td>'
             . '<td>' . item_flag_badges($row) . '</td>'
             . '<td>' . ($row->element !== '' && $row->element !== null ? e($row->element) : '<span class="text-muted">—</span>') . '</td>'
@@ -285,6 +322,76 @@ function item_effect_multiselect(string $field, array $selected, string $label, 
         . '<small class="text-muted">' . $hint . '</small></div>';
 }
 
+/**
+ * Lignes d'édition des pousses d'une graine (extra.growTo) : nom posé,
+ * table de carte cible, taux « 1 chance sur N par jour » — plus une
+ * ligne vierge pour l'ajout.
+ *
+ * @param list<object> $growTo entrées {name, table, chance}
+ */
+function items_grow_rows(array $growTo): string
+{
+    $rows = '<div class="d-flex gap-2 text-muted" style="font-size:85%;">'
+        . '<span style="flex:2;">Pousse (nom posé sur la carte)</span>'
+        . '<span style="flex:2;">Table cible</span>'
+        . '<span style="flex:1;">1 chance sur…</span></div>';
+
+    foreach (array_merge($growTo, [null]) as $entry) {
+        $rows .= '<div class="d-flex gap-2 mb-1">'
+            . '<input class="form-control form-control-sm" name="grow_name[]" style="flex:2;"'
+            . ' value="' . e((string) ($entry->name ?? '')) . '" placeholder="ex : arbre1">'
+            . '<input class="form-control form-control-sm" name="grow_table[]" list="grow-tables" style="flex:2;"'
+            . ' value="' . e((string) ($entry->table ?? '')) . '" placeholder="plants, resources…">'
+            . '<input class="form-control form-control-sm" type="number" min="1" name="grow_chance[]" style="flex:1;"'
+            . ' value="' . (isset($entry->chance) ? (int) $entry->chance : '') . '" placeholder="N">'
+            . '</div>';
+    }
+
+    return '<div class="form-group">' . $rows
+        . renderDatalist('grow-tables', ['plants' => '', 'resources' => '', 'foregrounds' => ''])
+        . '<small class="text-muted">La pousse est insérée dans <code>map_&lt;table&gt;</code> sous ce nom'
+        . ' — le nom doit exister dans la couche visée (image et PV).</small></div>';
+}
+
+/**
+ * Section repliable du formulaire d'édition : le titre porte un digest
+ * toujours visible de ce qui est configuré, le détail ne s'ouvre que
+ * quand il concerne l'objet — l'écran ne déplie que le pertinent, le
+ * reste demeure accessible d'un clic (retour relecture : « beaucoup de
+ * sections, beaucoup de champs, tout empilé »).
+ */
+/**
+ * @param string|null $forType section liée à un type d'objet : le
+ *        sélecteur Type l'ouvre quand il prend cette valeur et la
+ *        replie/estompe sinon (les champs restent soumis et éditables)
+ * @param bool $filled la section liée porte des valeurs — renseignée
+ *        mais hors type, elle reste dépliée et affiche l'avertissement
+ *        « hors type » (même convention que les warnings des plans)
+ *        au lieu de s'estomper : une incohérence se montre, ne se
+ *        cache pas
+ * @param bool $warnNow état initial de l'avertissement (avant JS)
+ */
+function items_edit_section(string $title, string $digest, bool $open, string $html,
+    ?string $forType = null, bool $filled = false, bool $warnNow = false): string
+{
+    $warnBadge = $forType !== null
+        ? '<span class="badge item-section-warn" style="background-color:#f0ad4e;color:#fff;"'
+            . ($warnNow ? '' : ' hidden')
+            . ' title="Section renseignée alors que le type de l\'objet ne l\'utilise pas'
+            . ' — nettoyez-la ou changez le type.">'
+            . '<i class="fas fa-exclamation-triangle"></i> hors type</span>'
+        : '';
+
+    return '<details class="item-section"' . ($open || $warnNow ? ' open' : '')
+        . ($forType !== null ? ' data-for-type="' . e($forType) . '" data-filled="' . ($filled ? '1' : '0') . '"' : '')
+        . '>'
+        . '<summary><span class="item-section-title">' . $title . '</span>'
+        . $warnBadge
+        . '<span class="item-section-digest">' . $digest . '</span></summary>'
+        . '<div class="item-section-body">' . $html . '</div>'
+        . '</details>';
+}
+
 function items_render_edit(object $row, string $csrfToken): string
 {
     $triggers = array_filter(array_map('trim', explode(',', (string) $row->wear_triggers)));
@@ -338,8 +445,14 @@ function items_render_edit(object $row, string $csrfToken): string
         static fn (string $e): string => substr($e, 1),
         array_filter($consumeEffects, static fn (string $e): bool => str_starts_with($e, '-'))
     ));
+    /* Graine : growTo (pousses possibles, table cible, 1 chance sur N par
+     * jour — cron daily 20_grow_crops) et growZMin, éclatés en champs
+     * dédiés — même contrat que les effets : le textarea Extra n'affiche
+     * plus ces clés, elles se recomposent à l'enregistrement. */
+    $growTo = (is_object($extraJson) && !empty($extraJson->growTo)) ? array_values((array) $extraJson->growTo) : [];
+    $growZMin = (is_object($extraJson) && isset($extraJson->growZMin)) ? (int) $extraJson->growZMin : null;
     if (is_object($extraJson)) {
-        unset($extraJson->effet);
+        unset($extraJson->effet, $extraJson->growTo, $extraJson->growZMin);
     }
     $extraDisplay = (is_object($extraJson) && get_object_vars($extraJson) !== [])
         ? json_encode($extraJson, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
@@ -361,7 +474,10 @@ function items_render_edit(object $row, string $csrfToken): string
     ] as $slot => [$path, $label]) {
         $exists = is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $path);
         $formId = 'item-img-' . $slot;
-        $imagesPanel .= '<div class="text-center d-inline-block m-1" style="width:130px;vertical-align:top;">'
+        // Pas de .d-inline-block dans admin.css : les emplacements sont
+        // des enfants d'un conteneur flex (ci-dessous), sinon ils
+        // s'empilent en colonne au lieu d'occuper la largeur.
+        $imagesPanel .= '<div class="text-center" style="width:130px;">'
             . ($exists
                 ? '<img src="/' . e($path) . '?t=' . filemtime($_SERVER['DOCUMENT_ROOT'] . '/' . $path) . '" style="max-width:100px;max-height:80px;" alt="">'
                 : '<div style="width:100px;height:80px;display:inline-flex;align-items:center;justify-content:center;'
@@ -379,7 +495,8 @@ function items_render_edit(object $row, string $csrfToken): string
             . '</form>';
     }
     $imagesPanel = '<div class="card mb-3"><div class="card-header">Images</div>'
-        . '<div class="card-body py-2">' . $imagesPanel
+        . '<div class="card-body py-2">'
+        . '<div class="d-flex flex-wrap" style="gap: 8px; align-items: flex-start;">' . $imagesPanel . '</div>'
         . '<div><small class="text-muted">L\'image importée est convertie au format de l\'emplacement'
         . ' (webp objet/vignette, png carte) sans redimensionnement.</small></div>'
         . '</div></div>';
@@ -394,23 +511,38 @@ function items_render_edit(object $row, string $csrfToken): string
             'Minuscules, chiffres, _ / - ; sert de clé pour les images (img/items/{nom}_mini.webp) et les bundles.')
         : '<input type="hidden" name="id" value="' . (int) $row->id . '">';
 
-    $identite = '<h5>Identité</h5>'
-        . formField('Description', formTextarea('text', (string) ($row->text ?? ''), 5),
+    /* Type : un sélecteur fermé — les gestes du jeu ne connaissent que
+     * ces valeurs, la saisie libre produisait des types morts. Les
+     * valeurs héritées encore en base (matiere, monnaie…) restent
+     * choisissables ; une valeur inconnue survivrait via la sentinelle ⚠
+     * de renderSelectOptions. Le choix pilote aussi les sections liées
+     * (Usure / À la consommation / Graine) via data-for-type. */
+    $typeValue = (string) ($row->type ?? '');
+    $typeOptions = [
+        'equipement' => 'equipement',
+        'consommable' => 'consommable',
+        Item::TYPE_CONSTRUCTIBLE => Item::TYPE_CONSTRUCTIBLE,
+        'graine' => 'graine',
+    ];
+    $typesInDb = (new \Classes\Db())->exe("SELECT DISTINCT type FROM items WHERE type != '' ORDER BY type");
+    while ($typeRow = $typesInDb->fetch_object()) {
+        $typeOptions[$typeRow->type] ??= $typeRow->type;
+    }
+
+    $identite = formField('Description', formTextarea('text', (string) ($row->text ?? ''), 5),
             'form-group', 'Texte montré au joueur (aperçu d\'inventaire, marchand).')
         . formField('Prix', formInput('price', (string) (int) ($row->price ?? 1), 'type="number" min="0"'),
             'form-group', 'Prix de référence du marchand et des contrats.')
         . formField('Type',
-            formInput('type', (string) ($row->type ?? ''),
-                'list="item-types" placeholder="equipement, consommable, ' . Item::TYPE_CONSTRUCTIBLE . '…"'),
+            formSelect('type', $typeOptions, $typeValue !== '' ? $typeValue : null,
+                '— sans usage direct (matériau…)',
+                'class="form-control" id="item-type-select"'),
             'form-group',
             'Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
             . ' <b>consommable</b> se consomme (1 A),'
-            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se bâtit sur la carte.'
-            . ' Un objet sans usage (matériau…) a son bouton grisé en jeu.')
-        . renderDatalist('item-types', [
-            'equipement' => '', 'consommable' => '',
-            Item::TYPE_CONSTRUCTIBLE => '',
-        ])
+            . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se bâtit sur la carte,'
+            . ' <b>graine</b> germe une fois posée au sol.'
+            . ' Le choix ouvre la section correspondante ci-contre.')
         . formField('Emplacement',
             formSelect('emplacement',
                 array_combine(ITEM_EMPLACEMENT_FORMAT, ITEM_EMPLACEMENT_FORMAT),
@@ -425,7 +557,7 @@ function items_render_edit(object $row, string $csrfToken): string
         . formField('Race (objet racial)', formInput('race', (string) ($row->race ?? '')),
             'form-group', 'Code de race (nain, elfe…) : colore le nom de l\'objet — vide : commun.');
 
-    $flags = '<h5>Flags</h5>' . $flagBoxes
+    $flags = $flagBoxes
         . formField('Élément', formInput('element', (string) $row->element),
             'form-group mt-2', 'Élément porté par l\'objet (feu, eau…) — marque le nom et joue avec les règles élémentaires.')
         . formField('Sort lié', formInput('spell', (string) $row->spell),
@@ -433,9 +565,9 @@ function items_render_edit(object $row, string $csrfToken): string
             'Objet à sort intégré : le sort est affiché sur l\'objet'
             . ' (l\'apprentissage des sorts passe par les écoles de guerre).')
         . formField('Exotique (race)', formInput('exotique', (string) $row->exotique),
-            'form-group', 'Code de race : SEULE cette race peut équiper l\'objet.')
-        . '<h5>Usure <small class="text-muted">(par tour)</small></h5>'
-        . '<div class="form-group">' . $triggerBoxes . '</div>'
+            'form-group', 'Code de race : SEULE cette race peut équiper l\'objet.');
+
+    $usure = '<div class="form-group">' . $triggerBoxes . '</div>'
         . formField('Points perdus par tour armé',
             formInput('wear_rate', (string) (int) $row->wear_rate, 'type="number" min="0"'),
             'form-group', '0 = ne s\'use jamais.')
@@ -443,27 +575,32 @@ function items_render_edit(object $row, string $csrfToken): string
             formInput('durability_max', (string) (int) ($row->durability_max ?? 100), 'type="number" min="1"'),
             'form-group', 'Vie de départ des exemplaires individualisés — les instances déjà nées gardent la leur.');
 
-    $caracsCol = '<h5>Caractéristiques</h5>'
-        . '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
+    $caracsCol = '<p class="text-muted mb-2" style="font-size:88%">Double lecture selon le type :'
         . ' sur un <b>équipement</b>, modificateurs du porteur tant que l\'objet est porté ;'
         . ' sur un <b>consommable</b>, quantités RENDUES à la consommation (PV, PM, MVT, A, AE).</p>'
         . '<div class="row">' . $caracInputs . '</div>';
 
-    $speciaux = '<h5>Spéciaux</h5>'
-        . '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
+    $speciaux = '<p class="text-muted mb-2" style="font-size:88%">Modificateurs du porteur — sur un consommable,'
         . ' PR / PF / Malus s\'appliquent aussi à la consommation.</p>'
         . '<div class="row">' . $specialInputs . '</div>'
         . formField('Munitions (noms, séparés par des virgules)', formInput('munitions', $munitions),
-            'form-group', 'Arme de tir : les objets-munitions qu\'elle accepte.')
+            'form-group', 'Arme de tir : les objets-munitions qu\'elle accepte.');
 
-        . '<h5>À la consommation</h5>'
-        . item_effect_multiselect('effets_appliques', $effectsApplied, 'Effets appliqués',
+    $consommation = item_effect_multiselect('effets_appliques', $effectsApplied, 'Effets appliqués',
             'Posés sur le buveur à la consommation (potion de poison, de régénération…). Ctrl+clic pour plusieurs.')
         . item_effect_multiselect('effets_retires', $effectsRemoved, 'Effets retirés',
-            'Purgés du buveur à la consommation (antidote…). Catalogue : admin → Effets.')
+            'Purgés du buveur à la consommation (antidote…). Catalogue : admin → Effets.');
 
-        . '<h5>JSON avancé</h5>'
-        . formField('Effets d\'arme au coup porté (JSON)',
+    $graine = '<p class="text-muted mb-2" style="font-size:88%">Objet de type <b>graine</b> posé seul au sol :'
+        . ' chaque jour, une pousse est tirée au hasard parmi les lignes ci-dessous, puis germe avec'
+        . ' 1 chance sur N — la graine disparaît alors. Ligne au nom vidé = supprimée ;'
+        . ' la ligne vierge sert à en ajouter une.</p>'
+        . items_grow_rows($growTo)
+        . formField('Z minimum de pousse',
+            formInput('grow_z_min', $growZMin === null ? '' : (string) $growZMin, 'type="number"'),
+            'form-group', 'La graine ne germe qu\'à partir de ce niveau Z — vide : partout.');
+
+    $jsonAvance = formField('Effets d\'arme au coup porté (JSON)',
             formTextarea('add_effects', (string) ($row->add_effects ?? ''), 2),
             'form-group',
             'Arme équipée : effets posés quand le coup touche —'
@@ -473,22 +610,118 @@ function items_render_edit(object $row, string $csrfToken): string
         . formField('Extra (JSON, clés héritées — sans perte)', formTextarea('extra', $extraDisplay, 2),
             'form-group',
             'Clés historiques diverses, conservées telles quelles. Les effets de'
-            . ' consommation s\'éditent au-dessus, plus dans cette zone.');
+            . ' consommation s\'éditent dans leur section, plus dans cette zone.');
 
-    $body = '<form method="post" action="/admin/items-save.php?action=' . ($isNew ? 'create' : 'update') . '">'
+    /* Digests des sections : ce que chaque volet configure, lisible sans
+     * l'ouvrir — seuls les volets qui portent quelque chose (ou que le
+     * type de l'objet appelle) démarrent dépliés. */
+    $emplacementValue = (string) ($row->emplacement ?? '');
+    $flagCount = count(array_filter(Item::FLAG_KEYS, static fn (string $c): bool => !empty($row->$c)));
+    $magie = array_filter([(string) $row->element, (string) $row->spell, (string) $row->exotique]);
+    $wearRate = (int) $row->wear_rate;
+    $caracsCount = count(array_filter(\App\Enum\Caracs::KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
+    $specialCount = count(array_filter(Item::SPECIAL_KEYS, static fn (string $k): bool => (int) ($row->$k ?? 0) !== 0));
+    $munitionsCount = $munitions === '' ? 0 : count(explode(',', $munitions));
+    $jsonSet = array_keys(array_filter([
+        'add_effects' => trim((string) ($row->add_effects ?? '')) !== '',
+        'forbid' => trim((string) ($row->forbid ?? '')) !== '',
+        'extra' => $extraDisplay !== '',
+    ]));
+
+    $flagsDigestParts = array_filter([
+        $flagCount > 0 ? $flagCount . ' actif' . ($flagCount > 1 ? 's' : '') : '',
+        implode(' · ', array_map('e', $magie)),
+    ]);
+    $speciauxDigestParts = array_filter([
+        $specialCount > 0 ? $specialCount . ' modificateur' . ($specialCount > 1 ? 's' : '') : '',
+        $munitionsCount > 0 ? $munitionsCount . ' munition' . ($munitionsCount > 1 ? 's' : '') : '',
+    ]);
+    $consoDigestParts = array_filter([
+        $effectsApplied !== [] ? count($effectsApplied) . ' appliqué' . (count($effectsApplied) > 1 ? 's' : '') : '',
+        $effectsRemoved !== [] ? count($effectsRemoved) . ' retiré' . (count($effectsRemoved) > 1 ? 's' : '') : '',
+    ]);
+
+    $sections = items_edit_section('Identité',
+            e(trim($typeValue . ($emplacementValue !== '' ? ' · ' . $emplacementValue : ''))) ?: 'type non renseigné',
+            true, $identite)
+        . items_edit_section('Flags &amp; magie',
+            $flagsDigestParts !== [] ? implode(' · ', $flagsDigestParts) : '—',
+            $flagCount > 0 || $magie !== [], $flags)
+        . items_edit_section('Usure <small class="text-muted">(par tour)</small>',
+            $wearRate > 0 ? $wearRate . ' pt/tour · vie ' . (int) ($row->durability_max ?? 100) : 'ne s\'use pas',
+            $wearRate > 0 || $triggers !== [], $usure, 'equipement',
+            $wearRate > 0 || $triggers !== [],
+            ($wearRate > 0 || $triggers !== []) && $typeValue !== 'equipement')
+        . items_edit_section('Caractéristiques',
+            $caracsCount > 0 ? $caracsCount . ' modificateur' . ($caracsCount > 1 ? 's' : '') : '—',
+            $caracsCount > 0, $caracsCol)
+        . items_edit_section('Spéciaux &amp; munitions',
+            $speciauxDigestParts !== [] ? implode(' · ', $speciauxDigestParts) : '—',
+            $specialCount > 0 || $munitionsCount > 0, $speciaux)
+        . items_edit_section('À la consommation',
+            $consoDigestParts !== [] ? implode(' · ', $consoDigestParts) : '—',
+            $effectsApplied !== [] || $effectsRemoved !== [] || $typeValue === 'consommable', $consommation, 'consommable',
+            $effectsApplied !== [] || $effectsRemoved !== [],
+            ($effectsApplied !== [] || $effectsRemoved !== []) && $typeValue !== 'consommable')
+        . items_edit_section('Graine <small class="text-muted">(pousse quotidienne)</small>',
+            $growTo !== [] ? count($growTo) . ' pousse' . (count($growTo) > 1 ? 's' : '') : '—',
+            $growTo !== [] || $growZMin !== null || $typeValue === 'graine', $graine, 'graine',
+            $growTo !== [] || $growZMin !== null,
+            ($growTo !== [] || $growZMin !== null) && $typeValue !== 'graine')
+        . items_edit_section('JSON avancé',
+            $jsonSet !== [] ? implode(', ', $jsonSet) : '—',
+            $jsonSet !== [], $jsonAvance);
+
+    $sectionStyles = '<style>
+        .item-sections { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; align-items: start; margin-bottom: 14px; }
+        .item-section { border: 1px solid var(--rule); border-radius: var(--r-lg); background: var(--paper); }
+        .item-section > summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 9px 12px; cursor: pointer; list-style: none; }
+        .item-section > summary::-webkit-details-marker { display: none; }
+        .item-section-title { font-weight: 600; color: var(--ink); white-space: nowrap; }
+        .item-section-title::before { content: "▸ "; color: var(--mute); font-size: 11px; }
+        .item-section[open] > summary .item-section-title::before { content: "▾ "; }
+        .item-section-digest { color: var(--mute); font-size: 12px; text-align: right; }
+        .item-section-body { padding: 8px 12px 12px; border-top: 1px solid var(--rule); }
+        .item-section--off > summary { opacity: 0.55; }
+    </style>';
+
+    /* Le sélecteur Type pilote les sections liées (data-for-type) : au
+     * changement, la section du type choisi s'ouvre ; une section liée
+     * VIDE et hors type se replie et s'estompe ; une section liée
+     * RENSEIGNÉE et hors type reste dépliée avec le badge « hors type »
+     * (même convention que les warnings des plans) — une incohérence se
+     * montre, ne se cache pas. Au chargement, seuls estompage et badge
+     * s'appliquent, l'état ouvert/replié initial vient du serveur. */
+    $sectionScript = '<script>
+        (function () {
+            var select = document.getElementById("item-type-select");
+            if (!select) { return; }
+            function apply(fold) {
+                document.querySelectorAll(".item-section[data-for-type]").forEach(function (section) {
+                    var match = section.dataset.forType === select.value;
+                    var filled = section.dataset.filled === "1";
+                    section.classList.toggle("item-section--off", !match && !filled);
+                    var warn = section.querySelector(".item-section-warn");
+                    if (warn) { warn.hidden = match || !filled; }
+                    if (fold) { section.open = match || filled; }
+                });
+            }
+            select.addEventListener("change", function () { apply(true); });
+            apply(false);
+        })();
+    </script>';
+
+    $body = $sectionStyles
+        . '<form method="post" action="/admin/items-save.php?action=' . ($isNew ? 'create' : 'update') . '">'
         . '<input type="hidden" name="csrf_token" value="' . e($csrfToken) . '">'
         . $nameField
         . ($isNew ? '' : $notInDb . $imagesPanel)
-        . '<div class="row">'
-        . '<div class="col-md-3">' . $identite . '</div>'
-        . '<div class="col-md-3">' . $flags . '</div>'
-        . '<div class="col-md-3">' . $caracsCol . '</div>'
-        . '<div class="col-md-3">' . $speciaux . '</div>'
-        . '</div>'
+        . '<div class="item-sections">' . $sections . '</div>'
         . '<button class="btn btn-primary" type="submit">Enregistrer</button> '
         . '<a class="btn btn-secondary" href="/admin/items.php">Retour</a>'
         . '</form>'
-        . ($isNew ? '' : $imageUploadForms);
+        . ($isNew ? '' : $imageUploadForms)
+        . $sectionScript;
 
     $header = $isNew
         ? 'Nouvel objet'

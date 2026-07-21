@@ -252,6 +252,36 @@ unset($extraObject->effet);
 if ($consumeEffects !== []) {
     $extraObject->effet = $consumeEffects;
 }
+
+// Graine : growTo / growZMin recomposés depuis les champs dédiés du
+// formulaire (cron daily 20_grow_crops) — le textarea Extra n'édite
+// plus ces clés. Ligne au nom vide = supprimée.
+unset($extraObject->growTo, $extraObject->growZMin);
+$growTo = [];
+foreach (array_values((array) ($_POST['grow_name'] ?? [])) as $i => $growName) {
+    $growName = trim((string) $growName);
+    if ($growName === '') {
+        continue;
+    }
+    $growTable = trim((string) ($_POST['grow_table'][$i] ?? ''));
+    if (!preg_match('/^[a-z][a-z0-9_]*$/', $growTable)) {
+        setFlash('warning', "Pousse « {$growName} » : table cible invalide ({$growTable}) — rien n'a été enregistré.");
+        redirectTo('/admin/items.php?action=edit&id=' . $id);
+    }
+    $growTo[] = (object) [
+        'name' => $growName,
+        'table' => $growTable,
+        'chance' => max(1, (int) ($_POST['grow_chance'][$i] ?? 1)),
+    ];
+}
+if ($growTo !== []) {
+    $extraObject->growTo = $growTo;
+}
+$growZMin = trim((string) ($_POST['grow_z_min'] ?? ''));
+if ($growZMin !== '' && (int) $growZMin !== 0) {
+    $extraObject->growZMin = (int) $growZMin;
+}
+
 $jsonColumns['extra'] = get_object_vars($extraObject) !== []
     ? json_encode($extraObject, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
     : null;
