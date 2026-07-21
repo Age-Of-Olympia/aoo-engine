@@ -86,15 +86,49 @@ abstract class LegacyPlayerFixtureTestCase extends TestCase
                 'players_options',
                 'players_items',
                 'players_items_bank',
+                // Depuis la consolidation db/updates, players(id) est visé
+                // par des FK : une ligne orpheline (id recyclé par
+                // l'auto-incrément, la base de dev en garde des années)
+                // sur n'importe laquelle de ces tables bloquerait le
+                // DELETE players ci-dessous.
+                'players_connections',
+                'players_banned',
+                'players_upgrades',
+                'players_followers',
+                'players_quests_steps',
+                'players_quests',
+                'players_forum_missives',
+                'tutorial_progress',
+                'items_asks',
+                'items_bids',
             ] as $table) {
                 $this->link->executeStatement("DELETE FROM {$table} WHERE player_id = ?", [$id]);
             }
-            foreach (['players_logs', 'players_assists'] as $table) {
+            foreach ([
+                'players_logs',
+                'players_assists',
+                'players_kills',
+                'players_items_exchanges',
+                'items_exchanges',
+            ] as $table) {
                 $this->link->executeStatement(
                     "DELETE FROM {$table} WHERE player_id = ? OR target_id = ?",
                     [$id, $id]
                 );
             }
+            $this->link->executeStatement('DELETE FROM players_pnjs WHERE player_id = ? OR pnj_id = ?', [$id, $id]);
+            $this->link->executeStatement(
+                'DELETE FROM players_forum_rewards WHERE from_player_id = ? OR to_player_id = ?',
+                [$id, $id]
+            );
+            $this->link->executeStatement('DELETE FROM tutorial_enemies WHERE enemy_player_id = ?', [$id]);
+
+            // Provenance de carte (« posé par ») : on détache la référence,
+            // on ne détruit pas le contenu qu'un id orphelin squatterait.
+            foreach (['map_resources', 'map_tiles', 'map_routes'] as $table) {
+                $this->link->executeStatement("UPDATE {$table} SET player_id = NULL WHERE player_id = ?", [$id]);
+            }
+
             $this->link->executeStatement('DELETE FROM players WHERE id = ?', [$id]);
 
             // Purge every per-entity file cache: .json is the get_data()
