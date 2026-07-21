@@ -3,7 +3,12 @@ $(document).ready(function(){
     window.visible = false;
 
 
-    $('.action').click(function(e){
+    /* Boutons d'action DIRECTS (.action--direct : Ramasser sa propre
+       case…) : un clic = le geste, via leur gestionnaire délégué
+       dédié — ils échappent au cycle en deux temps (élargir puis
+       confirmer) des actions de case, qui avalait le premier clic
+       puis POSTait un data-action vide (« error action »). */
+    $('.action').not('.action--direct').click(function(e){
 
 
         if($(this).find('.action-name').html() != 'Fermer'){

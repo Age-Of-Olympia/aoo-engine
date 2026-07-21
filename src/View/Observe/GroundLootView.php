@@ -54,7 +54,9 @@ final class GroundLootView
          * bouton de ramassage direct (drop accidentel, plus besoin de sortir
          * puis revenir). Ailleurs : le rappel marche-dessus. */
         if ($x === (int) $player->coords->x && $y === (int) $player->coords->y) {
-            echo '<button class="action" id="pickup-own-tile">'
+            /* action--direct : échappe au cycle en deux temps de
+             * js/observe.js — un clic ramasse, point. */
+            echo '<button class="action action--direct" id="pickup-own-tile">'
                 . '<span class="ra ra-hand"></span> <span class="action-name">Ramasser</span></button>';
         } else {
             echo '<sup>Marchez sur la case pour ramasser.</sup>';
