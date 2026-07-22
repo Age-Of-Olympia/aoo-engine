@@ -347,6 +347,10 @@ select.form-control {
     padding: 0.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     white-space: nowrap;
+    /* Le conteneur .row-popover fait la largeur de son bouton : sans
+       min-width, un panneau scrollable (overflow:auto) se fait clamper
+       à cette largeur et les noms de joueurs sont illisibles. */
+    min-width: max-content;
 }
 
 /* Recherche + pagination des tableaux (admin/js/admin-list.js) */
