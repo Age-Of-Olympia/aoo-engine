@@ -4,7 +4,6 @@
  * damier — js/view.js) : cases traversées et premier obstacle entre le
  * joueur actif et la case visée. Le tracé n'est plus embarqué dans
  * chaque réponse observe : il ne s'affiche que sur demande explicite.
- * Respecte l'option hideLineOfFire (les corps-à-corps s'en passent).
  */
 
 use App\Service\BuildingService;
@@ -17,11 +16,6 @@ header('Content-Type: application/json; charset=utf-8');
 
 $player = new Player(TutorialHelper::getActivePlayerId());
 $player->getCoords();
-
-if ($player->have_option('hideLineOfFire')) {
-    echo json_encode(['tiles' => []]);
-    exit();
-}
 
 $x = (int) ($_GET['x'] ?? 0);
 $y = (int) ($_GET['y'] ?? 0);

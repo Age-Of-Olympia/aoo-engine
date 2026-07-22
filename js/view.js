@@ -166,7 +166,7 @@ $(document).ready(function(){
         }
         var parts = coords.split(',');
         $.getJSON('api/map/line_of_fire.php', {x: parts[0], y: parts[1]}, function(data){
-            /* tiles vide : case adjacente, ou option hideLineOfFire. */
+            /* tiles vide : case adjacente au joueur. */
             if(!data || !data.tiles || !data.tiles.length){
                 window.clearLineOfFire();
                 return;

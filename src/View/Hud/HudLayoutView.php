@@ -21,7 +21,7 @@ use Classes\Ui;
 final class HudLayoutView
 {
     /** Cache-busting des assets du HUD — à incrémenter à chaque modif CSS/JS. */
-    private const VERSION = '20260722g';
+    private const VERSION = '20260722h';
 
     public static function render(Player $player): void
     {
@@ -81,7 +81,6 @@ final class HudLayoutView
             'hideGrid'         => 'Masquer la grille',
             'noMask'           => 'Désactiver les masques météo',
             'hideBoardCoords'  => 'Masquer les coordonnées du bord',
-            'hideLineOfFire'   => 'Masquer la ligne de tir',
             'hideBuildingsLayer' => 'Masquer les bâtiments (cartes)',
         ];
         echo '<div id="hud-layers">'
