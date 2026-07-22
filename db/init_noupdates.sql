@@ -2157,6 +2157,11 @@ INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260419180000_AddTutorialColumnsToPlayers','2026-04-19 18:00:00',0);
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260419200000_DropTutorialPlayersRealPlayerIdColumn','2026-04-19 20:00:00',0);
 INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260419210000_AddRealPlayerIdRefForeignKey','2026-04-19 21:00:00',0);
+-- Enregistrée d'office : son UPDATE cible apply_to_self, colonne que la
+-- section de patch tri-state en fin de dump supprime — la rejouer sur une
+-- base fraîche plante. Son effet (run/train → self) est répliqué dans la
+-- même section de patch, sur apply_to.
+INSERT INTO `doctrine_migration_versions` VALUES ('App\\Migrations\\Version20260622180000_FixSelfActionOutcomesTargeting','2026-06-22 18:00:00',0);
 /*!40000 ALTER TABLE `doctrine_migration_versions` ENABLE KEYS */;
 COMMIT;
 SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
@@ -6015,5 +6020,9 @@ ALTER TABLE `action_outcomes` ADD COLUMN IF NOT EXISTS `apply_to` varchar(10) NO
 UPDATE `action_outcomes` SET `apply_to` = IF(`apply_to_self` = 1, 'self', 'target');
 UPDATE `action_outcomes` o JOIN `actions` a ON a.id = o.action_id SET o.`apply_to` = 'both' WHERE a.category = 'spell-support' AND o.on_success = 1;
 UPDATE `action_outcomes` SET `apply_to` = 'self' WHERE `name` = 'buff_pasleger';
+-- Version20260622180000_FixSelfActionOutcomesTargeting, transposée sur le
+-- tri-state : les seeds ci-dessus datent d'avant elle (apply_to_self=0 pour
+-- run/train), la migration est enregistrée d'office plus haut.
+UPDATE `action_outcomes` SET `apply_to` = 'self' WHERE `name` IN ('run_effect','train_effect');
 ALTER TABLE `action_outcomes` DROP COLUMN IF EXISTS `apply_to_self`;
 
