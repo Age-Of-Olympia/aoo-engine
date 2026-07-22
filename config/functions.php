@@ -11,7 +11,10 @@ function db()
          //temp lock réutilisation de la connection de doctrine voir bootstrap.php
          echo "Error: Unable to connect to DB." . PHP_EOL;
 
-         exit;
+         /* exit(1), pas exit; : le exit nu sort avec le code 0 — sous
+          * PHPUnit en CI, la suite mourait ici en silence et le job
+          * passait au vert sans avoir exécuté aucun test. */
+         exit(1);
     }
 
     return $link;

@@ -100,9 +100,26 @@ stan_job:
       when: never
     - if: $CI_COMMIT_BRANCH
 
+# The PHPUnit suite needs a reachable DB: without one, config/functions.php
+# db() used to kill the run with exit code 0 and the job stayed green while
+# ZERO tests executed. Same throwaway mariadb + seeding as cypress_tutorial_job.
 test_job:
   <<: *php-job-template
   stage: test
+  services:
+    - name: mariadb:11
+      alias: mariadb
+      variables:
+        MARIADB_ROOT_PASSWORD: passwordRoot
+        MARIADB_DATABASE: aoo4
+  variables:
+    DB_HOST: mariadb
+    DB_USER: root
+    DB_PASS: passwordRoot
+  before_script:
+    - make setup-ci-env
+    - composer install --no-progress --no-interaction
+    - bash scripts/testing/setup_ci_database.sh
   script:
     - make test-ci
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'

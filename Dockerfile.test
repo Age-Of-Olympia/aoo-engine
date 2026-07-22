@@ -27,6 +27,8 @@ RUN apt-get update && apt-get install -y \
     make \
     curl \
     default-mysql-client \
+    libpng-dev \
+    libjpeg-dev \
     nodejs \
     npm \
     xvfb \
@@ -53,7 +55,10 @@ RUN pecl install xdebug \
 #   mysqli:   Classes\Db (legacy raw SQL) + Doctrine driver=mysqli
 #             (canonical setting in db_constants.php).
 #   pdo_mysql: Doctrine fallback when driver=pdo_mysql.
-RUN docker-php-ext-install mysqli pdo_mysql
+#   gd:       image pipeline (RaceImageService & co) + its tests. Same
+#             configure as the dev Dockerfile: --with-jpeg, no webp.
+RUN docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install mysqli pdo_mysql gd
 
 # Layer 4 (volatile): Composer. The composer:latest tag is rolling so
 # this layer effectively rebuilds on every cache miss; keep it last so
