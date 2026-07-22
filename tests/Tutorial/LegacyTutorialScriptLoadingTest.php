@@ -29,6 +29,15 @@ use PHPUnit\Framework\TestCase;
  */
 class LegacyTutorialScriptLoadingTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        // Sans ce nettoyage, le playerId de session fuit vers les tests
+        // suivants : MainView::render() (gardé par $_SESSION['playerId'])
+        // se met à rendre pour de vrai et son garde-fou SVG marque un
+        // test ultérieur risky (sortie inattendue).
+        unset($_SESSION['playerId']);
+    }
+
     #[Group('legacy-tutorial')]
     public function testRenderTutorialEmitsLegacyScriptTag(): void
     {

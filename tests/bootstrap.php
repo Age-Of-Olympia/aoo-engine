@@ -2,6 +2,13 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// Sous le SAPI cli, error_log() sort sur stderr ; PHPUnit
+// (beStrictAboutOutputDuringTests + failOnRisky) compte cette sortie comme
+// du bruit de test et marque le test risky → run en échec. Les messages
+// diagnostiques légitimes (ex. le garde-fou SVG de MainView) partent dans
+// un fichier au lieu de polluer la sortie.
+ini_set('error_log', sys_get_temp_dir() . '/phpunit-error.log');
+
 // The engine/simulator unit tests deliberately run actions with no seeded
 // XP/log rows; silence the data-driven-config warning so its error_log() does
 // not trip the suite's strict no-output / fail-on-risky checks.
