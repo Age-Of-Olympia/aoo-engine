@@ -67,8 +67,14 @@ $(document).ready(function(){
         window.addEventListener('resize', redrawBlockedTiles);
     }
 
-    // Right-click coordinate tool (available for everyone, TP button only for admins)
+    // Right-click coordinate tool (admins only — players get no popup,
+    // their right-click stays dedicated to the line-of-fire tool)
     $(document).on('contextmenu', '.case', function(e) {
+
+        if(!window.isAdmin) {
+            return;
+        }
+
         e.preventDefault();
 
         var coords = $(this).data('coords');
@@ -77,16 +83,13 @@ $(document).ready(function(){
             return;
         }
 
-        let [x, y] = coords.split(',');
+        /* Coordonnées complètes x,y,z,plan : copiables telles quelles
+         * dans la console (ex. « tp <joueur> 0,1,0,gaia »). Repli sur
+         * x,y si le SVG en cache précède l'attribut data-coords-full. */
+        var coordsFull = $(this).data('coords-full') || coords;
 
-        // Build HTML with coords button (always shown) and TP button (admin only)
-        var html = '<button id="admin-coords-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">x'+ x +',y'+ y +'</button>';
-
-        if(window.isAdmin) {
-            html += '<br><button onclick="teleport(\'' + coords + '\')">TP</button>';
-        }
-
-        html += '</div>';
+        var html = '<button id="admin-coords-close" title="Fermer">✕</button><div id="case-coords"><button OnClick="copyToClipboard(this);">'+ coordsFull +'</button>' +
+            '<br><button onclick="teleport(\'' + coords + '\')">TP</button></div>';
 
         $('#admin-coords').html(html);
 

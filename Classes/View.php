@@ -14,6 +14,7 @@ class View{
     private $useTbl; // array qui permettra d'augmenter le z-level des images
     private $options; // player->get_options()
     private $playerId; // ID du joueur pour qui la vue est générée
+    private $fullCoordsOnCases; // data-coords-full sur les cases (éditeur + admins)
 
 
     function __construct($coords, $p, $tiled=false, $options=array(), $playerId=null){
@@ -29,6 +30,11 @@ class View{
 
         $this->useTbl = array();
         $this->options = $options;
+
+        /* Coordonnées complètes x,y,z,plan sur chaque case : l'éditeur
+         * de map en a besoin pour ses outils, et les admins en jeu pour
+         * l'outil clic droit (format directement collable en console). */
+        $this->fullCoordsOnCases = $tiled || in_array('isAdmin', $options);
 
         // Use provided playerId or fall back to session
         $this->playerId = $playerId ?? ($_SESSION['playerId'] ?? null);
@@ -608,7 +614,7 @@ class View{
                             class="case '. $goCase .'"
                             data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
-                            if($this->tiled){
+                            if($this->fullCoordsOnCases){
                                 echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
                             }
 
@@ -629,7 +635,7 @@ class View{
                             class="case"
                             data-coords="'. $coordX .','. $coordY .'"'. $blockedAttr;
 
-                            if($this->tiled){
+                            if($this->fullCoordsOnCases){
                                 echo 'data-coords-full="'. $coordX .','. $coordY .','.$this->coords->z.','.$this->coords->plan.'"';
                             }
 
