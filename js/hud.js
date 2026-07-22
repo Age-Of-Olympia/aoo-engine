@@ -394,9 +394,11 @@
         /* Les images SANS id — éléments posés (sang, traces, ressources…)
          * — apparaissent aussi PENDANT une action : le sang d'une attaque
          * coule sur la case sans attendre un déplacement. Diff par
-         * (table, coords, href) avec multiplicité ; les nouveaux nœuds
-         * s'insèrent avant le premier sprite à id pour rester SOUS les
-         * personnages (l'ordre du SVG est l'ordre de peinture). */
+         * (table, coords, href) avec multiplicité ; chaque nouveau nœud
+         * reprend la place que le re-rendu lui donne — devant le premier
+         * sprite À id qui le SUIT là-bas (l'ordre du SVG est l'ordre de
+         * peinture, et les tuiles portent aussi un id : ancrer sur le
+         * premier image[id] du damier glissait le sang SOUS le sol). */
         var plainKey = function (img) {
             return (img.getAttribute('data-table') || '') + '|'
                 + (img.getAttribute('data-coords') || '') + '|'
@@ -409,7 +411,18 @@
             (byKey[key] = byKey[key] || []).push(img);
         });
 
-        var anchor = currentView.querySelector('image[id]');
+        var anchorFor = function (freshImg) {
+            for (var n = freshImg.nextElementSibling; n; n = n.nextElementSibling) {
+                if (n.localName === 'image' && n.id) {
+                    var onBoard = currentView.querySelector('image[id="' + n.id + '"]');
+                    if (onBoard) {
+                        return onBoard;
+                    }
+                }
+            }
+            return null;
+        };
+
         Array.prototype.forEach.call(freshView.querySelectorAll('image:not([id])'), function (img) {
             var key = plainKey(img);
             if (byKey[key] && byKey[key].length) {
@@ -417,6 +430,7 @@
                 return;
             }
             var clone = img.cloneNode(true);
+            var anchor = anchorFor(img);
             if (anchor) {
                 anchor.parentNode.insertBefore(clone, anchor);
             } else {
