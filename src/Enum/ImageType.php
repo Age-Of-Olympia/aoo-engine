@@ -48,18 +48,18 @@ enum ImageType: string
     /**
      * Builds the filename for this image type (no mini).
      */
-    public function buildFilename(int $number): string
+    public function buildFilename(int $number, string $extension = 'jpeg'): string
     {
-        // e.g. "10.jpeg"
-        return "{$number}.jpeg";
+        // e.g. "10.jpeg", "10.png"
+        return "{$number}.{$extension}";
     }
 
     /**
      * Builds the mini version filename.
      */
-    public function buildMiniFilename(int $number): string
+    public function buildMiniFilename(int $number, string $extension = 'jpeg'): string
     {
         // e.g. "10_mini.jpeg" (only relevant for PORTRAIT)
-        return "{$number}_mini.jpeg";
+        return "{$number}_mini.{$extension}";
     }
 }

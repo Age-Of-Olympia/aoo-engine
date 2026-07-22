@@ -106,15 +106,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mkdir($uploadDir, 0777, true);
     }
 
+    // Temp path to uploaded file
+    $tempPath = $_FILES['image']['tmp_name'];
+
+    // A PNG stays a PNG (resizeImage writes it as such — transparency
+    // preserved), so the filename extension must match the content
+    $extension = (getimagesize($tempPath)[2] ?? null) === IMAGETYPE_PNG ? 'png' : 'jpeg';
+
     // Build main filename
-    $fileName         = $imageType->buildFilename((int)$number);
+    $fileName         = $imageType->buildFilename((int)$number, $extension);
     $destinationPath  = $uploadDir . '/' . $fileName;
 
     // Get main dimensions for this image type
     [$width, $height] = $imageType->dimensions();
-
-    // Temp path to uploaded file
-    $tempPath = $_FILES['image']['tmp_name'];
 
     try {
         // 1) Resize & save the main image
@@ -124,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($miniDims = $imageType->miniDimensions()) {
             [$miniWidth, $miniHeight] = $miniDims;
 
-            $miniFileName = $imageType->buildMiniFilename((int)$number);
+            $miniFileName = $imageType->buildMiniFilename((int)$number, $extension);
             $miniPath     = $uploadDir . '/' . $miniFileName;
 
             resizeImage($tempPath, $miniPath, $miniWidth, $miniHeight);

@@ -97,6 +97,39 @@ class RaceImageServiceTest extends TestCase
         $this->assertNotSame($created, $second);
     }
 
+    public function testUploadKeepsPngFormatAndTransparency(): void
+    {
+        $tmp = $this->root . '/source.png';
+        $image = imagecreatetruecolor(60, 60);
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+        imagefill($image, 0, 0, imagecolorallocatealpha($image, 0, 0, 0, 127));
+        imagepng($image, $tmp);
+        imagedestroy($image);
+
+        $created = $this->service->upload(ImageType::AVATAR, 'nain', $tmp);
+        unlink($tmp);
+
+        $this->assertStringEndsWith('.png', $created, 'un png ne doit pas être ré-encodé en jpeg');
+        $result = imagecreatefrompng($this->root . '/img/avatars/nain/' . $created);
+        $alpha = (imagecolorat($result, 25, 25) >> 24) & 0x7F;
+        $this->assertSame(127, $alpha, 'la transparence survit au redimensionnement');
+    }
+
+    public function testUploadKeepsJpegAsJpeg(): void
+    {
+        $tmp = $this->root . '/source.jpeg';
+        $image = imagecreatetruecolor(60, 60);
+        imagejpeg($image, $tmp);
+        imagedestroy($image);
+
+        $created = $this->service->upload(ImageType::AVATAR, 'nain', $tmp);
+        unlink($tmp);
+
+        $this->assertStringEndsWith('.jpeg', $created);
+        $this->assertSame(IMAGETYPE_JPEG, getimagesize($this->root . '/img/avatars/nain/' . $created)[2]);
+    }
+
     public function testDeleteRefusesImagesChosenByPlayers(): void
     {
         // Cradek & co ont un portrait en base : recréer le fichier pointé

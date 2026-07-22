@@ -181,13 +181,15 @@ class RaceImageService
         }
 
         $number = $type === ImageType::PORTRAIT ? $race->getPortraitNextNumber() : $race->getAvatarNextNumber();
-        $fileName = $type->buildFilename($number);
+        $info = @getimagesize($tmpPath);
+        $extension = self::outputExtension(is_array($info) ? (string) $info['mime'] : '');
+        $fileName = $type->buildFilename($number, $extension);
 
         [$width, $height] = $type->dimensions();
         $this->resize($tmpPath, $dir . '/' . $fileName, $width, $height);
 
         if ($miniDims = $type->miniDimensions()) {
-            $this->resize($tmpPath, $dir . '/' . $type->buildMiniFilename($number), $miniDims[0], $miniDims[1]);
+            $this->resize($tmpPath, $dir . '/' . $type->buildMiniFilename($number, $extension), $miniDims[0], $miniDims[1]);
         }
 
         $type === ImageType::PORTRAIT ? $race->incrementPortraitNextNumber() : $race->incrementAvatarNextNumber();
@@ -201,8 +203,8 @@ class RaceImageService
      * Adopte dans le stock une image HÉRITÉE (sprite de mur du même nom,
      * webp dédié — bouton « Copier dans le stock » de Bâtiments → Images) :
      * copie VERBATIM, numérotée par le compteur — pas le pipeline upload,
-     * dont le ré-encodage jpeg perdrait la transparence d'un sprite de
-     * plateau déjà au bon format.
+     * dont le redimensionnement dégraderait un sprite de plateau déjà au
+     * bon format.
      *
      * @param string $sourceRelPath chemin relatif au docroot (img/…)
      * @return string nom de fichier créé
@@ -359,14 +361,30 @@ class RaceImageService
         return array_map('intval', $rows);
     }
 
-    /** Redimensionne vers les dimensions exactes (même contrat que l'API d'upload). */
+    /**
+     * Extension de sortie selon le format source : jpeg reste jpeg ;
+     * png, webp et gif sortent en png — le seul format de sortie à canal
+     * alpha dont GD dispose partout (pas d'imagewebp ici), un ré-encodage
+     * jpeg aplatirait la transparence sur fond noir. Le gif perd de toute
+     * façon son animation au redimensionnement.
+     */
+    private static function outputExtension(string $mime): string
+    {
+        return match ($mime) {
+            'image/jpeg' => 'jpeg',
+            'image/png', 'image/webp', 'image/gif' => 'png',
+            default => throw new RuntimeException('Image illisible (png, jpeg, webp ou gif attendu).'),
+        };
+    }
+
+    /** Redimensionne vers les dimensions exactes ; le format d'écriture suit l'extension de destination. */
     private function resize(string $sourcePath, string $destinationPath, int $width, int $height): void
     {
         $info = @getimagesize($sourcePath);
         $source = match ($info['mime'] ?? '') {
             'image/png'  => imagecreatefrompng($sourcePath),
             'image/jpeg' => imagecreatefromjpeg($sourcePath),
-            'image/webp' => imagecreatefromwebp($sourcePath),
+            'image/webp' => function_exists('imagecreatefromwebp') ? imagecreatefromwebp($sourcePath) : false,
             'image/gif'  => imagecreatefromgif($sourcePath),
             default      => false,
         };
@@ -382,7 +400,10 @@ class RaceImageService
         imagesavealpha($destination, true);
         imagecopyresampled($destination, $source, 0, 0, 0, 0, $width, $height, imagesx($source), imagesy($source));
 
-        if (!imagejpeg($destination, $destinationPath, 90)) {
+        $written = strtolower(pathinfo($destinationPath, PATHINFO_EXTENSION)) === 'png'
+            ? imagepng($destination, $destinationPath)
+            : imagejpeg($destination, $destinationPath, 90);
+        if (!$written) {
             throw new RuntimeException('Écriture impossible : ' . $destinationPath);
         }
     }
