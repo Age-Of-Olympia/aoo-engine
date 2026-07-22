@@ -8,14 +8,10 @@
 # scripts/testing/reset_test_database.sh.
 set -e
 
-# 1. CI database config, pointing at the mariadb service alias. Force-enable the
-#    new tutorial system: cypress-registered players get fresh auto-incremented
-#    IDs (not the dev whitelist 1/2/3), so TutorialFeatureFlag must not fall back
-#    to that whitelist or index.php logs "Tutorial enabled: NO".
+# 1. CI database config, pointing at the mariadb service alias.
 cat > config/db_constants.php <<'PHPEOF'
 <?php
 define('DEV_MODE', true);
-define('TUTORIAL_V2_ENABLED', true);
 define('DB_CONSTANTS', array(
     'host'     => 'mariadb',
     'user'     => 'root',
@@ -27,6 +23,17 @@ define('DB_CONSTANTS', array(
     'charset'  => 'utf8mb4',
 ));
 PHPEOF
+
+# 1b. Cypress only (ENABLE_TUTORIAL_V2=1) : force-enable the new tutorial
+#     system — cypress-registered players get fresh auto-incremented IDs (not
+#     the dev whitelist 1/2/3), so TutorialFeatureFlag must not fall back to
+#     that whitelist or index.php logs "Tutorial enabled: NO". test_job must
+#     NOT define it: TutorialFeatureFlagTest exercises the disabled paths.
+if [ "${ENABLE_TUTORIAL_V2:-}" = "1" ]; then
+cat >> config/db_constants.php <<'PHPEOF'
+define('TUTORIAL_V2_ENABLED', true);
+PHPEOF
+fi
 
 # 2. Wait for the mariadb service to accept connections (cold start).
 until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -e "SELECT 1" >/dev/null 2>&1; do

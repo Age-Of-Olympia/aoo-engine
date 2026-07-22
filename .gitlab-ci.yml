@@ -165,6 +165,9 @@ cypress_tutorial_job:
     TEST_DB_PASS: passwordRoot
     TEST_DB_NAME: aoo4
     CYPRESS_CONTAINER: "true"
+    # Cypress flows need the tutorial force-enabled; test_job must not set it
+    # (TutorialFeatureFlagTest exercises the disabled paths).
+    ENABLE_TUTORIAL_V2: "1"
   before_script:
     # Stage the data + image fixtures the app expects.
     - make setup-ci-env
