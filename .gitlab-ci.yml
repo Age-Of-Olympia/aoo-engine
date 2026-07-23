@@ -8,6 +8,12 @@ variables:
   EXPERIMENTAL_BRANCH:
     value: "saison-3"
     description: "Branch deployed to the experimental environment (set this to the branch you are running the pipeline on)."
+  # Tag VERSIONNÉ de l'image de test — à bumper dans le même commit qu'un
+  # changement de Dockerfile.test. Avec la pull policy if-not-present du
+  # runner, un tag mutable (latest) resservait indéfiniment sa copie locale
+  # périmée ; un tag neuf n'existe pas localement, donc il est tiré une fois,
+  # puis plus jamais — zéro pull en régime permanent, zéro image périmée.
+  TEST_IMAGE_TAG: "test-20260723"
 
 # stan_job et test_job partagent l'étape test : ils ne dépendent que de
 # l'image, pas l'un de l'autre — les sérialiser doublait la durée du pipeline.
@@ -29,7 +35,7 @@ stages:
         - composer.lock
     paths:
       - vendor/
-  image: $CI_REGISTRY_IMAGE/test:latest
+  image: $CI_REGISTRY_IMAGE/test:$TEST_IMAGE_TAG
 
 build_image:
   stage: build
@@ -39,7 +45,7 @@ build_image:
   variables:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
-    IMAGE_TAG: "test:latest"
+    IMAGE_TAG: "test:$TEST_IMAGE_TAG"
     # Enable BuildKit so --build-arg BUILDKIT_INLINE_CACHE works and
     # --cache-from picks up unchanged layers from the previous image.
     DOCKER_BUILDKIT: "1"
@@ -49,12 +55,15 @@ build_image:
     - export DOCKER_IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_TAG"
     # Pull the previous image (if any) so its layers are available as
     # build cache. The "|| true" handles the bootstrap case where the
-    # registry has nothing yet.
-    - docker pull $DOCKER_IMAGE 2>/dev/null || true
+    # registry has nothing yet. Le tag étant versionné, un tag neuf se
+    # rabat sur test:latest (dernière image de l'ère tag-mutable) pour
+    # ne pas repartir de zéro.
+    - docker pull $DOCKER_IMAGE 2>/dev/null || docker pull $CI_REGISTRY_IMAGE/test:latest 2>/dev/null || true
     - |
       build_with_cache() {
         docker build \
           --cache-from $DOCKER_IMAGE \
+          --cache-from $CI_REGISTRY_IMAGE/test:latest \
           --build-arg BUILDKIT_INLINE_CACHE=1 \
           -t $DOCKER_IMAGE \
           -f Dockerfile.test \
