@@ -909,8 +909,11 @@ class View{
             try {
                 $db->insert('coords', $coordsData);
                 $coordsId = $db->get_last_id('coords');
-
-                error_log("[View::get_coords_id] Created new coords: id={$coordsId}, x={$coordsData['x']}, y={$coordsData['y']}, z={$coordsData['z']}, plan={$coordsData['plan']}");
+                /* Pas de log du chemin nominal : l'auto-création de coords
+                 * est un événement normal et fréquent (exploration de la
+                 * carte) — le journaliser noie les vraies erreurs, et
+                 * PHPUnit 12 capture error_log() et marque risky tout test
+                 * qui passe par ici. Les échecs restent logués ci-dessous. */
             } catch (\Exception $e) {
                 error_log("[View::get_coords_id] ERROR creating coords: " . $e->getMessage());
                 error_log("[View::get_coords_id] Coords data: " . print_r($coordsData, true));
