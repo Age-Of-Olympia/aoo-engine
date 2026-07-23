@@ -9,17 +9,10 @@ variables:
     value: "saison-3"
     description: "Branch deployed to the experimental environment (set this to the branch you are running the pipeline on)."
 
-.default_rules:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_REF_NAME == "staging"
-    - if: $CI_COMMIT_REF_NAME == $EXPERIMENTAL_BRANCH
-    - if: $CI_COMMIT_REF_NAME == "main"
-
+# stan_job et test_job partagent l'étape test : ils ne dépendent que de
+# l'image, pas l'un de l'autre — les sérialiser doublait la durée du pipeline.
 stages:
   - build
-  - stan
   - test
   - security
   - prepare
@@ -78,7 +71,15 @@ build_image:
         echo "Image $DOCKER_IMAGE already exists, skipping build."
       fi
   rules:
-    - !reference [.default_rules, rules]
+    # L'image ne contient que l'environnement (PHP, extensions, outils) — le
+    # code est cloné par chaque job, jamais cuit dans l'image. Un push de code
+    # n'a donc rien à reconstruire : le job ne s'attache que si la recette de
+    # l'image ou la config du pipeline change. L'ancien repli `exists:
+    # Dockerfile.test` attachait le job (et sa minute de rituel dind) à chaque
+    # pipeline pour conclure « rien à faire ». Déclenchement web gardé pour
+    # amorcer un registre vide. NB : le premier pipeline d'une branche neuve
+    # compte tout comme « changé » (comportement GitLab) — rebuild assisté par
+    # cache dans ce cas, ~1 min quand les couches se retrouvent.
     - if: '$CI_PIPELINE_SOURCE == "push"'
       changes:
         paths:
@@ -86,13 +87,19 @@ build_image:
           - .gitlab-ci.yml
       variables:
         FORCE_REBUILD: "true"
-      when: always
-    - exists:
-        - Dockerfile.test
+    - if: '$CI_PIPELINE_SOURCE == "web"'
 
 stan_job:
   <<: *php-job-template
-  stage: stan
+  stage: test
+  # Double cache : vendor (clé composer.lock, comme le template) + le cache de
+  # résultats PHPStan (phpstan.neon → tmpDir: tmp/phpstan) pour ne réanalyser
+  # que les fichiers modifiés d'un pipeline à l'autre.
+  cache:
+    - *cache-template
+    - key: phpstan-result-cache
+      paths:
+        - tmp/phpstan/
   script:
     - make phpstan-ci
   rules:

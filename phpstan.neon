@@ -3,6 +3,10 @@ includes:
 
 parameters:
     level: 4
+    # Cache de résultats dans l'arbre (au lieu du tmp système) pour que le
+    # cache GitLab CI puisse le persister entre pipelines : sur code inchangé,
+    # l'analyse retombe à quelques secondes au lieu de repartir à froid.
+    tmpDir: tmp/phpstan
     paths:
       - tests
       - config/constants.php
