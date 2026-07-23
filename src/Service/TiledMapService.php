@@ -285,10 +285,6 @@ class TiledMapService
      */
     public function importPlan(string $plan, int $z, array $incomingLayers, string $expectedVersion): array
     {
-        // RESOURCES_PV (damages par défaut des murs) : dépendance du service,
-        // pas de ses appelants
-        require_once __DIR__ . '/../../config/constants.php';
-
         $incomingLayers = self::normalizeLegacyLayerKeys($incomingLayers);
 
         foreach (array_keys($incomingLayers) as $layer) {
@@ -770,9 +766,9 @@ class TiledMapService
         ];
 
         if ($layer === 'resources') {
-            // Défaut authoré : -1 (récoltable) pour les ressources de
-            // RESOURCES_PV, 0 (intact) pour les autres murs
-            $values['damages'] = ((RESOURCES_PV[$row['name']] ?? 0) === -1) ? -1 : 0;
+            // Défaut authoré : -1 (récoltable) pour les ressources du
+            // catalogue resource_types, 0 (intact) pour les autres murs
+            $values['damages'] = ResourceTypeService::isHarvestable($row['name']) ? -1 : 0;
         }
 
         if (self::AUTHORABLE_LAYERS[$layer]['paramsInKey'] && isset($row['params']) && $row['params'] !== '') {

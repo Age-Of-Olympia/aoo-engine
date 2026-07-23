@@ -20,12 +20,10 @@ class ResourcePaletteService
     /** Préfixes de noms qui restent des map_resources quel que soit le plan */
     private const SPECIAL_PREFIXES = ['autel', 'altar', 'unique_'];
 
-    /** Un mur récoltable : RESOURCES_PV négatif (-1 récoltable / -2 épuisé) */
+    /** Un mur récoltable : pv négatif au catalogue (-1 récoltable / -2 épuisé) */
     public static function isResourceName(string $name): bool
     {
-        self::ensureConstants();
-
-        return (RESOURCES_PV[$name] ?? 0) < 0;
+        return ResourceTypeService::isResource($name);
     }
 
     /** Les murs des plans de tutoriel sont clonés par session, hors conversion */
@@ -66,13 +64,5 @@ class ResourcePaletteService
             $names,
             fn(string $name) => self::isAuthorable($name, $plan)
         ));
-    }
-
-    /** RESOURCES_PV : même dépendance que TiledMapService::importPlan() */
-    private static function ensureConstants(): void
-    {
-        if (!defined('RESOURCES_PV')) {
-            require_once __DIR__ . '/../../config/constants.php';
-        }
     }
 }

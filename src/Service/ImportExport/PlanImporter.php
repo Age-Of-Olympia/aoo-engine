@@ -4,6 +4,7 @@ namespace App\Service\ImportExport;
 
 use App\Service\PlanAdminService;
 use App\Service\PlanConfigService;
+use App\Service\ResourceTypeService;
 use App\Service\TiledMapService;
 use Classes\Db;
 use RuntimeException;
@@ -214,10 +215,6 @@ final class PlanImporter implements ObjectImporter
      */
     private function applyPayload(array $payload): void
     {
-        // RESOURCES_PV (damages par défaut des murs) : même dépendance que
-        // TiledMapService::importPlan()
-        require_once __DIR__ . '/../../../config/constants.php';
-
         $plan = $payload['plan'];
         $db = $this->db();
 
@@ -306,10 +303,10 @@ final class PlanImporter implements ObjectImporter
     {
         if ($column === 'damages') {
             // Même défaut authoré que TiledMapService::insertRow() : -1
-            // (récoltable) pour les ressources de RESOURCES_PV, sinon 0
+            // (récoltable) pour les ressources du catalogue, sinon 0
             return isset($row['damages']) && is_numeric($row['damages'])
                 ? (int) $row['damages']
-                : (((RESOURCES_PV[$row['name']] ?? 0) === -1) ? -1 : 0);
+                : (ResourceTypeService::isHarvestable((string) $row['name']) ? -1 : 0);
         }
         if ($column === 'foreground') {
             return isset($row['foreground']) && is_numeric($row['foreground']) ? (int) $row['foreground'] : 0;

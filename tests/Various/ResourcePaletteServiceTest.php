@@ -14,16 +14,19 @@ class ResourcePaletteServiceTest extends TestCase
 {
     public static function setUpBeforeClass(): void
     {
-        // Miroir minimal de config/constants.php (même pattern que le
-        // bootstrap) : ressources < 0, obstacles > 0
-        if (!defined('RESOURCES_PV')) {
-            define('RESOURCES_PV', [
-                'arbre1'     => -1,
-                'pierre1'    => -1,
-                'mur_pierre' => 150,
-                'pilier'     => 10,
-            ]);
-        }
+        // Miroir minimal du catalogue resource_types (couture de test du
+        // gateway, pas de base ici) : ressources < 0, obstacles > 0
+        \App\Service\ResourceTypeService::setCatalogForTests([
+            'arbre1'     => -1,
+            'pierre1'    => -1,
+            'mur_pierre' => 150,
+            'pilier'     => 10,
+        ]);
+    }
+
+    public static function tearDownAfterClass(): void
+    {
+        \App\Service\ResourceTypeService::setCatalogForTests(null);
     }
 
     public function testResourcesAreAuthorableEverywhere(): void
@@ -38,7 +41,7 @@ class ResourcePaletteServiceTest extends TestCase
         $this->assertFalse(ResourcePaletteService::isResourceName('mur_pierre'));
         $this->assertFalse(ResourcePaletteService::isAuthorable('mur_pierre', 'gaia'));
         $this->assertFalse(ResourcePaletteService::isAuthorable('pilier', 'arcadia'));
-        // Nom inconnu de RESOURCES_PV : obstacle par défaut
+        // Nom inconnu du catalogue : obstacle par défaut
         $this->assertFalse(ResourcePaletteService::isAuthorable('statue_exotique', 'gaia'));
     }
 

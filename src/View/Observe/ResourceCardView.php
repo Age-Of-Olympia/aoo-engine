@@ -3,6 +3,7 @@
 namespace App\View\Observe;
 
 use App\Factory\PlayerFactory;
+use App\Service\ResourceTypeService;
 use Classes\Db;
 use Classes\Item;
 use Classes\Player;
@@ -73,11 +74,12 @@ final class ResourceCardView
         return $card;
     }
 
-    /** « Destructible (état). » ou « Indestructible. » selon RESOURCES_PV. */
+    /** « Destructible (état). » ou « Indestructible. » selon le catalogue resource_types. */
     private static function wallStatus(string $wallName, int $damages): string
     {
-        if (!empty(RESOURCES_PV[$wallName]) && RESOURCES_PV[$wallName] > 0) {
-            return 'Destructible (' . Str::get_status($damages, RESOURCES_PV[$wallName]) . ').';
+        $pv = ResourceTypeService::pv($wallName);
+        if ($pv !== null && $pv > 0) {
+            return 'Destructible (' . Str::get_status($damages, $pv) . ').';
         }
 
         return 'Indestructible.';
@@ -162,7 +164,8 @@ final class ResourceCardView
             $wallText = (string) ($wallCatalogItem->data->text ?? '');
         }
 
-        $wallPvMax = (!empty(RESOURCES_PV[$wallName]) && RESOURCES_PV[$wallName] > 0) ? (int) RESOURCES_PV[$wallName] : 0;
+        $wallPv = ResourceTypeService::pv($wallName);
+        $wallPvMax = ($wallPv !== null && $wallPv > 0) ? $wallPv : 0;
 
         $data = (object) [
             'bg' => 'img/walls/' . $wallName . '.png',

@@ -64,7 +64,7 @@ class StructureConversionService
         }
 
         // --- 2. pseudo-race structure --------------------------------------
-        $pv = (int) (defined('RESOURCES_PV') ? (RESOURCES_PV[$name] ?? 0) : 0);
+        $pv = ResourceTypeService::pv($name) ?? 0;
         $created = $conn->executeStatement(
             "INSERT IGNORE INTO races
                 (code, name, label, description, playable, hidden, kind, structure_nature,

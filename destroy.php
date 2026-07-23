@@ -67,18 +67,18 @@ if($distance > 1){
 }
 
 
-if(!isset(RESOURCES_PV[$row->name])){
+$pvMax = App\Service\ResourceTypeService::pv($row->name);
+
+if($pvMax === null){
 
     exit('Cet objet est indestructible!');
 }
 
 // Si les PV sont inférieurs à 0, il s'agit d'une ressource indestructible)
-if(RESOURCES_PV[$row->name] < 0){
-    
+if($pvMax < 0){
+
     exit('Cet objet est indestructible!');
 }
-
-$pvMax = RESOURCES_PV[$row->name];
 
 
 $player->get_caracs();
@@ -110,12 +110,12 @@ $name = $row->name;
 /* Bascule visuelle « brisé » (capacité restaurée — la condition était
  * inversée et testait x_broken_broken.png, jamais vrai) : passé la
  * moitié de ses PV, la structure affiche son image _broken quand elle
- * existe. Double repli : pas d'image _broken OU pas d'entrée RESOURCES_PV
- * pour le nom _broken (la garde du prochain coup en a besoin) → elle
- * garde son image et son nom d'origine. */
+ * existe. Double repli : pas d'image _broken OU pas d'entrée au catalogue
+ * resource_types pour le nom _broken (la garde du prochain coup en a
+ * besoin) → elle garde son image et son nom d'origine. */
 if(strpos($row->name, '_broken') === false
     && ($row->damages + $damages) >= ceil($pvMax / 2)
-    && isset(RESOURCES_PV[$row->name .'_broken'])
+    && App\Service\ResourceTypeService::pv($row->name .'_broken') !== null
     && file_exists('img/walls/'. $row->name .'_broken.png')){
 
     $name = $row->name .'_broken';

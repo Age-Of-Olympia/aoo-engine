@@ -44,6 +44,9 @@ class AdminMenuAccessService
         'local_maps.php'           => ['Cartes · Cartes locales', 'Cartes', self::LEVEL_ADMIN],
         'terrain-transitions.php'  => ['Cartes · Transitions de terrain', 'Cartes', self::LEVEL_ADMIN],
         'tile-assets.php'          => ['Cartes · Tuiles & images', 'Cartes', self::LEVEL_ADMIN],
+        // Types de ressources : catalogue de gameplay (récoltable/PV) —
+        // même politique que races/effets
+        'resource-types.php'       => ['Cartes · Ressources (types)', 'Cartes', self::LEVEL_SUPERADMIN],
         // Éléments posés : pose case par case (boue, feu…) — travail
         // d'animation, même niveau que la pose de bâtiments
         'map-elements.php'         => ['Cartes · Éléments posés', 'Cartes', self::LEVEL_ADMIN],
@@ -94,6 +97,7 @@ class AdminMenuAccessService
         'upload_image.php'           => 'avatars-portraits.php', // redirection legacy
         'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
         'plans-save.php'             => 'plans.php',
+        'resource-types-save.php'    => 'resource-types.php',
         'dialogs-save.php'           => 'dialogs.php',
         'dialog-seed.php'            => 'dialogs.php',
         'races-save.php'             => 'races.php',

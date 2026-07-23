@@ -375,7 +375,7 @@ class TileAssetService
     /**
      * Références de configuration qu'un renommage NE met PAS à jour : à
      * vérifier à la main. Les biomes des plans (datas/private/plans/*.json)
-     * nomment des murs/ressources ; RESOURCES_PV (config/constants.php) aussi.
+     * nomment des murs/ressources ; le catalogue resource_types aussi.
      *
      * @return list<string>
      */
@@ -383,8 +383,8 @@ class TileAssetService
     {
         $warnings = [];
 
-        if (defined('RESOURCES_PV') && array_key_exists($old, (array) RESOURCES_PV)) {
-            $warnings[] = "« {$old} » figure dans RESOURCES_PV (config/constants.php) — à renommer à la main";
+        if (ResourceTypeService::pv($old) !== null) {
+            $warnings[] = "« {$old} » figure au catalogue resource_types — à renommer à la main";
         }
 
         foreach (glob($this->root . '/datas/*/plans/*.json') ?: [] as $file) {
