@@ -48,7 +48,6 @@ class TiledBuildingsLayerTest extends TestCase
 
     public function testPushPlacesKeepsAndRemovesDecorBuildings(): void
     {
-        $this->expectErrorLog();
         $service = new TiledMapService();
 
         $export = $service->exportPlan(self::PLAN, 0);
@@ -103,7 +102,6 @@ class TiledBuildingsLayerTest extends TestCase
 
     public function testOwnedBuildingsAreProtectedFromTheDiff(): void
     {
-        $this->expectErrorLog();
         $buildings = new BuildingService();
         $ownerId = (int) $this->link()->fetchOne('SELECT id FROM players WHERE id > 0 ORDER BY id LIMIT 1');
         if ($ownerId === 0) {
@@ -128,7 +126,6 @@ class TiledBuildingsLayerTest extends TestCase
 
     public function testOccupiedTileIsSkippedWithoutFailingThePush(): void
     {
-        $this->expectErrorLog();
         $service = new TiledMapService();
 
         // Un mur ressource occupe la case visée

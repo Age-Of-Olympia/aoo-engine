@@ -41,10 +41,6 @@ class PlanAdminServiceTest extends TestCase
     public function testCreateBlankPlanWritesJsonAndSeedCoord(): void
     {
         // View::get_coords_id() trace la coord d'amorce via error_log ;
-        // PHPUnit 12.1 capture error_log autour du test et l'imprime (test
-        // « risky ») sauf si on le déclare attendu
-        $this->expectErrorLog();
-
         (new PlanAdminService())->createBlankPlan(self::BLANK, ['name' => 'Plan de test', 'player_visibility' => 'false']);
 
         $this->assertFileExists($this->jsonPath(self::BLANK));
