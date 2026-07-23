@@ -51,16 +51,23 @@ class PlantsService
 
     public static function growSeed($plante, $coords)
     {
-        //chaque plante a un pourcentage de chance de pousser (dans constant.php)
+        // Chaque plante a une chance de pousser : 1 sur items.grow_rate
+        // (ex-constante GROW_RATE)
 
-        if(empty(GROW_RATE[$plante])){
+        $db = new Db();
 
-            // Plante inconnue du barème : elle ne pousse pas — avant,
+        $res = $db->exe('SELECT grow_rate FROM items WHERE name = ?', $plante);
+
+        $item = $res->fetch_object();
+
+        if(!$item || empty($item->grow_rate)){
+
+            // Plante sans barème : elle ne pousse pas — avant,
             // $growTo indéfini faisait un rand(1, null) imprévisible.
             return;
         }
 
-        $growTo = GROW_RATE[$plante];
+        $growTo = (int) $item->grow_rate;
 
         //chance de 1/growTo
         if(AUTO_GROW || rand(1,$growTo) == 1)
@@ -70,8 +77,7 @@ class PlantsService
                 'name'=>$plante,
                 'coords_id'=>$coords
             );
-            
-            $db = new Db();
+
             $db->insert('map_plants', $values);
             
         }

@@ -425,6 +425,7 @@ function items_render_edit(object $row, string $csrfToken): string
         'esquive' => 'Esquive', 'pr' => 'PR', 'pf' => 'PF', 'malus' => 'Malus',
         'spellMalus' => 'Malus de sort', 'fixedF' => 'F fixée', 'mDamage' => 'Dégâts magiques',
         'demolition' => 'Démolition', 'craftedByN' => 'Craft (n)', 'lootChance' => 'Chance de loot (%)',
+        'grow_rate' => 'Repousse (1 chance sur n)',
     ];
     $specialInputs = '';
     foreach (Item::SPECIAL_KEYS as $col) {

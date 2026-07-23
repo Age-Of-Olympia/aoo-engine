@@ -20,7 +20,7 @@ class Item{
      */
     public const SPECIAL_KEYS = [
         'esquive', 'pr', 'pf', 'malus', 'spellMalus', 'fixedF', 'mDamage',
-        'demolition', 'craftedByN', 'lootChance',
+        'demolition', 'craftedByN', 'lootChance', 'grow_rate',
     ];
     public const FLAG_KEYS = ['cursed', 'enchanted', 'vorpal', 'is_bankable', 'is_deprecated'];
     public const WEAR_TRIGGERS = ['attack', 'defense', 'move', 'usage'];

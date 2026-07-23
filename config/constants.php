@@ -209,51 +209,9 @@ define('ITEM_EMPLACEMENT_FORMAT', array(
 define('LOOT_CHANCE_DEFAULT', 30);
 
 
-define('LOOT_CHANCE', array(
-    'or'=>200,
-    'anneau_caprice'=>200,
-    'anneau_ferocite'=>200,
-    'anneau_finesse'=>200,
-    'anneau_horizon'=>200,
-    'anneau_pretention'=>200,
-    'anneau_puissance'=>200,
-    'anneau_souplesse'=>200,
-    'anneau_tenacite'=>200,
-    'bois_petrifie'=>50,
-    'cuivre'=>50,
-    'cendre'=>50,
-    'fer'=>50,
-    'tourbe'=>50,
-    'cuir'=>80,
-    'etain'=>80,
-    'nickel'=>80,
-    'pierre_mana'=>80,
-    'salpetre'=>80,
-    'emeraude'=>100,
-    'lapis_lazuli'=>100,
-    'opale'=>100,
-    'rubis'=>100,
-    'plume_doree'=>100,
-	'plume_irisee'=>100,
-	'plume_ebenne'=>100,
-    'morceau_de_carte'=>100,
-    'carte_recomposee'=>100
-));
+/* LOOT_CHANCE : en base (items.lootChance), lu par Player::death(). */
 
-/*
-    taux de réapparition des plantes par trigger
-    7 => 1 chance sur 7
-*/
-define('GROW_RATE', array(
-    'adonis'=>2,
-    'astral'=>10,
-    'cafe'=>3,
-    'houblon'=>3,
-    'lichen_sacre'=>7,
-    'lotus_noir'=>20,
-    'menthe'=>7,
-    'pavot'=>7
-));
+/* GROW_RATE : en base (items.grow_rate), lu par PlantsService::growSeed(). */
 
 
 /*

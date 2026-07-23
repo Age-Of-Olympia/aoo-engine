@@ -1964,7 +1964,7 @@ class Player implements ActorInterface {
         $sql = '
         SELECT
         item_id, n, equiped,
-        i.name
+        i.name, i.lootChance
         FROM
         players_items AS pi
         INNER JOIN
@@ -1993,13 +1993,13 @@ class Player implements ActorInterface {
             // loot chance default
             $lootChance = LOOT_CHANCE_DEFAULT;
 
-            // type loot chance
-            if(!empty(LOOT_CHANCE[$row->name])){
+            // catalog loot chance (items.lootChance, ex-constante LOOT_CHANCE)
+            if(!empty($row->lootChance)){
 
-                $lootChance = LOOT_CHANCE[$row->name];
+                $lootChance = (int) $row->lootChance;
             }
 
-            // custom loot chance
+            // custom loot chance (source des stats : JSON legacy possible)
             if(!empty($loot->data->lootChance)){
 
                 $lootChance = $loot->data->lootChance;
