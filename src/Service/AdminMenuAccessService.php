@@ -47,6 +47,9 @@ class AdminMenuAccessService
         // Types de ressources : catalogue de gameplay (récoltable/PV) —
         // même politique que races/effets
         'resource-types.php'       => ['Cartes · Ressources (types)', 'Cartes', self::LEVEL_SUPERADMIN],
+        // Couleurs de carte : palette visuelle de la carte monde générée —
+        // travail d'animation, même niveau que les tuiles
+        'tile-colors.php'          => ['Cartes · Couleurs de carte', 'Cartes', self::LEVEL_ADMIN],
         // Éléments posés : pose case par case (boue, feu…) — travail
         // d'animation, même niveau que la pose de bâtiments
         'map-elements.php'         => ['Cartes · Éléments posés', 'Cartes', self::LEVEL_ADMIN],
@@ -98,6 +101,7 @@ class AdminMenuAccessService
         'structure-images.php'       => 'avatars-portraits.php', // même stock, visage Bâtiments
         'plans-save.php'             => 'plans.php',
         'resource-types-save.php'    => 'resource-types.php',
+        'tile-colors-save.php'       => 'tile-colors.php',
         'dialogs-save.php'           => 'dialogs.php',
         'dialog-seed.php'            => 'dialogs.php',
         'races-save.php'             => 'races.php',

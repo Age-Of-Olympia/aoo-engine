@@ -29,7 +29,6 @@ class ViewService {
     private $playerZ;
     private $playerId;
     private $raceService;
-    private $colorService;
     private $worldPlan = 'olympia';
     private $localMinX;
     private $localMaxX;
@@ -53,9 +52,8 @@ class ViewService {
         $this->playerId = $playerId;
         $this->currentPlan = $plan;
         $this->raceService = new RaceService();
-        $this->colorService = new ColorService();
         $this->calculateBounds();
-        $this->colors = $this->colorService->initializePastelColors();
+        $this->colors = ColorService::palette();
     }
 
     private function calculateBounds() {
