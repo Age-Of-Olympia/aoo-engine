@@ -26,6 +26,7 @@ use App\Entity\Effect;
 use App\Service\Action\RpgAwesomeIcons;
 use App\Service\CsrfProtectionService;
 use App\Service\EffectService;
+use App\View\Action\IconFieldView;
 
 function effect_flag_badges(Effect $effect): string
 {
@@ -199,11 +200,6 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         }
     }
 
-    $iconCatalog = renderDatalist('effect-icon-catalog', array_combine(
-        (new RpgAwesomeIcons())->all(),
-        (new RpgAwesomeIcons())->all()
-    ) ?: []);
-
     $breakChance = $isEdit ? $effect->getCorruptionBreakChance() : null;
     $materials = $isEdit ? implode("\n", $effect->getCorruptionMaterialNames()) : '';
 
@@ -211,12 +207,13 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . $nameField
         . formField('Nom affiché', formInput('label', $isEdit ? $effect->getLabel() : '', 'required'), 'form-group col-md-3')
         . formField('Icône',
-            '<div class="input-group">'
-            . '<div class="input-group-prepend"><span class="input-group-text"><span class="ra '
-            . e($isEdit ? $effect->getIcon() : EffectService::FALLBACK_ICON) . '"></span></span></div>'
-            . formInput('icon', $isEdit ? $effect->getIcon() : '',
-                'list="effect-icon-catalog" required pattern="ra-[a-z0-9-]+" placeholder="ra-…"')
-            . '</div>',
+            /* Même sélecteur que le workbench des actions (grille
+             * filtrable) — sans pastilles de couleur, l'effet n'a pas
+             * de colonne couleur. Validation format côté save. */
+            (new IconFieldView())->render(
+                $isEdit ? $effect->getIcon() : EffectService::FALLBACK_ICON,
+                'icon', null, 'icon_color', false
+            ),
             'form-group col-md-3',
             'Classe RPG-Awesome, affichée sur les fiches et le HUD.')
         . formField('Flags',
@@ -349,8 +346,7 @@ function effect_render_form(?Effect $effect, string $csrfToken): string
         . formCard('Corruption', $corruption)
         . '<button type="submit" class="btn btn-primary">' . ($isEdit ? 'Enregistrer' : 'Créer l\'effet') . '</button>'
         . '</form>'
-        . ($isEdit ? effect_render_delete_zone($effect, $csrfToken) : '')
-        . $iconCatalog;
+        . ($isEdit ? effect_render_delete_zone($effect, $csrfToken) : '');
 }
 
 /**
@@ -404,6 +400,12 @@ if ($action === 'wiki') {
     $content = effect_render_list($service->getAllEffects());
 }
 
+/* Catalogue d'icônes du sélecteur (IconFieldView) — même mécanisme que
+ * le workbench des actions. */
+$content .= '<script>window.WB_ICONS = '
+    . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
+
 echo admin_layout('Effets', renderFlashMessage() . $content, [
-    'styles' => ['/css/rpg-awesome.min.css'],
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/icon-picker.css'],
+    'scripts' => ['/admin/js/icon-picker.js'],
 ]);

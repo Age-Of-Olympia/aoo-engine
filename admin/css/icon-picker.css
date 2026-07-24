@@ -1,0 +1,23 @@
+/* Icon picker (IconFieldView) : un déclencheur qui ouvre une grille
+   filtrable des icônes RPG-Awesome, plus les pastilles de couleur
+   optionnelles. Partagé entre le workbench des actions et les effets —
+   dépend des variables du design system admin (admin-design-system.css)
+   et de window.WB_ICONS + admin/js/icon-picker.js. */
+.wb-icon-field { position: relative; margin-bottom: 6px; }
+.wb-icon-trigger { display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 8px; border: 1px solid var(--rule); border-radius: 6px; background: #fff; cursor: pointer; font-size: 13px; color: var(--ink); text-align: left; }
+.wb-icon-trigger:hover { background: #f7f9fb; }
+.wb-icon-preview { flex: 0 0 auto; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; background: #f1f4f7; color: var(--mute); font-size: 15px; }
+.wb-icon-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--mute); }
+.wb-icon-pop { position: absolute; z-index: 50; top: calc(100% + 4px); left: 0; right: 0; min-width: 230px; background: #fff; border: 1px solid #d4dade; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.16); padding: 8px; }
+.wb-icon-search { width: 100%; padding: 6px 9px; border: 1px solid var(--rule); border-radius: 6px; font-size: 13px; box-sizing: border-box; margin-bottom: 6px; }
+.wb-icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 3px; max-height: 240px; overflow-y: auto; }
+.wb-icon-opt { display: inline-flex; align-items: center; justify-content: center; height: 32px; border: 1px solid transparent; border-radius: 6px; background: #f7f9fb; color: var(--mute); font-size: 16px; cursor: pointer; }
+.wb-icon-opt:hover { background: var(--bronze); color: #fff; }
+
+/* Pastilles de couleur de l'icône (IconFieldView, actions seulement) */
+.wb-icon-colors { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; align-items: center; }
+.wb-color-swatch { cursor: pointer; line-height: 0; }
+.wb-color-swatch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.wb-color-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0, 0, 0, .25); box-sizing: border-box; }
+.wb-color-dot--default { background: #fff; background-image: linear-gradient(45deg, transparent 44%, var(--danger) 44%, var(--danger) 56%, transparent 56%); }
+.wb-color-swatch input:checked + .wb-color-dot { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--bronze-bright); }

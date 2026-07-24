@@ -311,6 +311,6 @@ $editorBody = '<div class="wb-tab wb-config" data-tab="config"' . ($activeTab ==
 $content = (new WorkbenchLayoutView())->render('Actions', count($actions), $listBody, $editorHead, $editorBody, 'wb-tabs')
     . '<script>window.WB_ICONS = ' . json_encode((new RpgAwesomeIcons())->all(), JSON_UNESCAPED_SLASHES) . ';</script>';
 echo admin_layout('Workbench', $content, [
-    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-simulate.css', '/admin/css/action-workbench.css'],
-    'scripts' => ['/admin/js/action-simulate.js', '/admin/js/action-workbench.js'],
+    'styles' => ['/css/rpg-awesome.min.css', '/admin/css/action-simulate.css', '/admin/css/icon-picker.css', '/admin/css/action-workbench.css'],
+    'scripts' => ['/admin/js/action-simulate.js', '/admin/js/icon-picker.js', '/admin/js/action-workbench.js'],
 ]);

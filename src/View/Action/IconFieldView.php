@@ -7,13 +7,17 @@ namespace App\View\Action;
  * carries the value, a popover the client fills with a searchable grid of the
  * available RPG-Awesome icons (window.WB_ICONS, emitted once by the page), and a
  * row of colour swatches (the curated {@see ActionIconPalette}). Shared by the
- * create form and the config tab.
+ * create form, the config tab and the effects admin — assets in
+ * admin/js/icon-picker.js + admin/css/icon-picker.css.
+ *
+ * $withColor: entities without an icon colour column (effects) skip the
+ * swatch row entirely rather than posting a stray colour field.
  */
 final class IconFieldView
 {
     use EscapesHtml;
 
-    public function render(string $current, string $name = 'icon', ?string $currentColor = null, string $colorName = 'icon_color'): string
+    public function render(string $current, string $name = 'icon', ?string $currentColor = null, string $colorName = 'icon_color', bool $withColor = true): string
     {
         $current = trim($current);
         $label = $current !== '' ? $current : 'Choisir une icône';
@@ -28,7 +32,7 @@ final class IconFieldView
             . '<input type="text" class="wb-icon-search" placeholder="Rechercher une icône…" autocomplete="off">'
             . '<div class="wb-icon-grid"></div>'
             . '</div>'
-            . $this->colorSwatches($colorName, $currentColor)
+            . ($withColor ? $this->colorSwatches($colorName, $currentColor) : '')
             . '</div>';
     }
 
