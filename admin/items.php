@@ -226,7 +226,9 @@ function items_render_list(array $items, string $csrfToken): string
             . '<td>' . ($row->spell !== '' && $row->spell !== null ? e($row->spell) : '<span class="text-muted">—</span>') . '</td>'
             . '<td>' . item_wear_cell($row) . '</td>'
             . '<td title="Joueurs distincts en possédant (inventaire ou banque)">'
-            . ($owners > 0 ? '<strong>' . $owners . '</strong>' : '<span class="text-muted">0</span>') . '</td>'
+            . ($owners > 0
+                ? '<a href="/admin/item-owners.php?id=' . (int) $row->id . '"><strong>' . $owners . '</strong></a>'
+                : '<span class="text-muted">0</span>') . '</td>'
             . '<td class="text-nowrap"><a class="btn btn-sm btn-outline-primary" href="/admin/items.php?action=edit&id=' . (int) $row->id . '">Éditer</a> '
             . '<a class="btn btn-sm btn-outline-secondary" title="Exporter le bundle JSON"'
             . ' href="/admin/action-export.php?type=item&name=' . e(urlencode($row->name)) . '">JSON</a>'

@@ -121,6 +121,7 @@ class AdminMenuAccessService
         'buildings-save.php'         => 'buildings.php',
         'items-save.php'             => 'items.php',
         'item-seed.php'              => 'items.php',
+        'item-owners.php'            => 'items.php',
         'recipes-save.php'           => 'recipes.php',
         'view_recipes.php'           => 'recipes.php',
     ];
