@@ -31,4 +31,5 @@ echo json_encode([
     'to' => [$x, $y],
     'blocker' => $fireReport['blocker'],
     'blockerName' => $fireReport['blockerName'],
+    'blockers' => $fireReport['blockers'],
 ]);

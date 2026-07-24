@@ -141,11 +141,12 @@ $(document).ready(function(){
      * Ligne de tir sur le damier : demandée EXPLICITEMENT par clic
      * droit (desktop) ou appui long (mobile) sur une case — un clic
      * gauche en dessinait trop. api/map/line_of_fire.php renvoie la
-     * case du tireur, la case visée et l'éventuel premier obstacle. On
-     * trace une vraie ligne de centre à centre — verte tant que la
-     * trajectoire est libre, rouge à partir de l'obstacle (marqué d'un
-     * point). Redemander la même case efface (bascule) ; un clic
-     * gauche efface aussi.
+     * case du tireur, la case visée et les cases bloquantes. On trace
+     * une vraie ligne de centre à centre, terminée par une flèche de
+     * direction — verte tant que la trajectoire est libre, rouge à
+     * partir du premier obstacle, un point sur chaque case bloquante.
+     * Redemander la même case efface (bascule) ; un clic gauche efface
+     * aussi.
      */
     var lofShownFor = null;         /* data-coords de la case tracée */
     var lofSuppressClickUntil = 0;  /* l'appui long ne doit pas cliquer */
@@ -171,12 +172,12 @@ $(document).ready(function(){
                 window.clearLineOfFire();
                 return;
             }
-            window.showLineOfFire(data.from, data.to, data.blocker);
+            window.showLineOfFire(data.from, data.to, data.blocker, data.blockers);
             lofShownFor = coords;
         });
     }
 
-    window.showLineOfFire = function(from, to, blocker){
+    window.showLineOfFire = function(from, to, blocker, blockers){
 
         window.clearLineOfFire();
 
@@ -214,6 +215,37 @@ $(document).ready(function(){
             svg[0].appendChild(line);
         }
 
+        /* Pointe de flèche à l'arrivée : la direction du tir se lit
+           d'un coup d'œil, même quand le trajet sort de l'écran. */
+        function arrowHead(p1, p2, color){
+            var ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            var len = 14, half = 6;
+            var bx = p2.x - len * Math.cos(ang);
+            var by = p2.y - len * Math.sin(ang);
+            var head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            head.setAttribute('class', 'lof-mark');
+            head.setAttribute('points',
+                p2.x + ',' + p2.y + ' '
+                + (bx + half * Math.sin(ang)) + ',' + (by - half * Math.cos(ang)) + ' '
+                + (bx - half * Math.sin(ang)) + ',' + (by + half * Math.cos(ang)));
+            head.setAttribute('fill', color);
+            head.setAttribute('pointer-events', 'none');
+            svg[0].appendChild(head);
+        }
+
+        /* Un point sur CHAQUE case bloquante du trajet, pas seulement
+           la première : on voit tout ce qui gêne le tir. */
+        function blockerDot(center){
+            var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('class', 'lof-mark');
+            dot.setAttribute('cx', center.x);
+            dot.setAttribute('cy', center.y);
+            dot.setAttribute('r', '6');
+            dot.setAttribute('fill', 'rgba(205, 40, 40, 0.9)');
+            dot.setAttribute('pointer-events', 'none');
+            svg[0].appendChild(dot);
+        }
+
         var blockerCenter = blocker ? tileCenter(blocker) : null;
 
         if(blockerCenter){
@@ -229,19 +261,20 @@ $(document).ready(function(){
 
             segment(a, hit, 'rgba(60, 170, 60, 0.85)');
             segment(hit, b, 'rgba(205, 40, 40, 0.85)');
+            arrowHead(a, b, 'rgba(205, 40, 40, 0.9)');
 
-            /* Point d'impact */
-            var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            dot.setAttribute('class', 'lof-mark');
-            dot.setAttribute('cx', hit.x);
-            dot.setAttribute('cy', hit.y);
-            dot.setAttribute('r', '6');
-            dot.setAttribute('fill', 'rgba(205, 40, 40, 0.9)');
-            dot.setAttribute('pointer-events', 'none');
-            svg[0].appendChild(dot);
+            /* Un point par case bloquante (repli : la première seule
+               si l'API ne fournit pas encore la liste). */
+            (blockers && blockers.length ? blockers : [blocker]).forEach(function(tile){
+                var center = tileCenter(tile);
+                if(center){
+                    blockerDot(center);
+                }
+            });
         }
         else{
             segment(a, b, 'rgba(60, 170, 60, 0.85)');
+            arrowHead(a, b, 'rgba(60, 170, 60, 0.9)');
         }
     };
 

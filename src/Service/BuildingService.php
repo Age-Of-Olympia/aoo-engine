@@ -94,7 +94,7 @@ class BuildingService extends BaseService
         );
 
         if ($tiles === [] || ($from->plan ?? '') !== ($to->plan ?? '') || (int) ($from->z ?? 0) !== (int) ($to->z ?? 0)) {
-            return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null];
+            return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null, 'blockers' => []];
         }
 
         $conn = $this->entityManager->getConnection();
@@ -137,14 +137,28 @@ class BuildingService extends BaseService
             $blockersByTile[$row['x'] . ',' . $row['y']] ??= self::humanizeWallName((string) $row['name']);
         }
 
-        // Le PREMIER obstacle le long du trajet, pas un obstacle quelconque.
+        // Tous les obstacles dans l'ordre du trajet — blocker/blockerName
+        // restent le PREMIER (c'est lui qui arrête le tir), blockers liste
+        // chaque case bloquante pour le marquage du tracé.
+        $blockers = [];
         foreach ($tiles as $tile) {
             if (isset($blockersByTile[$tile[0] . ',' . $tile[1]])) {
-                return ['tiles' => $tiles, 'blocker' => $tile, 'blockerName' => $blockersByTile[$tile[0] . ',' . $tile[1]]];
+                $blockers[] = $tile;
             }
         }
 
-        return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null];
+        if ($blockers !== []) {
+            $first = $blockers[0];
+
+            return [
+                'tiles' => $tiles,
+                'blocker' => $first,
+                'blockerName' => $blockersByTile[$first[0] . ',' . $first[1]],
+                'blockers' => $blockers,
+            ];
+        }
+
+        return ['tiles' => $tiles, 'blocker' => null, 'blockerName' => null, 'blockers' => []];
     }
 
     /**
