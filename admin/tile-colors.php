@@ -27,6 +27,32 @@ function tile_color_hex(array $rgb): string
     return sprintf('#%02x%02x%02x', $rgb[0], $rgb[1], $rgb[2]);
 }
 
+/**
+ * Vignette de la tuile correspondante quand l'image existe dans
+ * img/tiles — le nom de palette EST le nom d'asset. Couvre les tuiles
+ * fixes (<nom>.png/webp…) et la première frame des tuiles animées
+ * (<nom>-00.png). Une entrée de palette sans image (biome de
+ * transition, entrée historique) garde un tiret : c'est justement le
+ * genre d'écart que tile-assets.php audite.
+ */
+function tile_color_thumbnail(string $name): string
+{
+    if (preg_match('/^[a-zA-Z0-9_.-]+$/', $name)) {
+        $candidates = ['png', 'webp', 'jpg', 'jpeg', 'gif'];
+        $paths = array_map(static fn (string $ext): string => 'img/tiles/' . $name . '.' . $ext, $candidates);
+        $paths[] = 'img/tiles/' . $name . '-00.png';
+
+        foreach ($paths as $rel) {
+            if (is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $rel)) {
+                return '<img src="/' . e($rel) . '" width="28" height="28" loading="lazy"'
+                    . ' style="border:1px solid #ccc;vertical-align:middle" alt="" title="' . e($rel) . '">';
+            }
+        }
+    }
+
+    return '<span class="text-muted" title="Pas d\'image img/tiles/' . e($name) . '.*">—</span>';
+}
+
 $csrfToken = (new CsrfProtectionService())->generateToken();
 
 $palette = ColorService::palette();
@@ -53,6 +79,7 @@ foreach ($palette as $name => $rgb) {
             . '</form>';
 
     $rows[] = '<tr>'
+        . '<td>' . tile_color_thumbnail((string) $name) . '</td>'
         . '<td><span style="display:inline-block;width:1.4em;height:1.4em;border:1px solid #ccc;vertical-align:middle;background:' . e($hex) . '"></span></td>'
         . '<td><code>' . e((string) $name) . '</code></td>'
         . '<td class="text-muted">' . e($hex) . ' · rgb(' . implode(', ', $rgb) . ')</td>'
@@ -75,7 +102,7 @@ $content = '<div class="d-flex justify-content-between align-items-center mb-3">
     . 'palette prend la couleur <code>default</code> ; les tuiles de transition mélangent automatiquement '
     . 'les couleurs de leurs biomes. Regénérer la carte (Cartes · Carte monde) pour voir le résultat.</p>'
     . renderTable(
-        ['', 'Nom', 'Valeur', 'Couleur', ''],
+        [['Tuile', 'title="Image de la tuile dans img/tiles, quand elle existe"'], '', 'Nom', 'Valeur', 'Couleur', ''],
         $rows,
         'class="table table-striped table-sm" data-admin-list data-page-size="30"'
     );
