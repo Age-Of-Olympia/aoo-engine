@@ -160,7 +160,7 @@ foreach($spellList as $e){
                 data-spell="'. $e .'"
                 data-name="'. $spell->getDisplayName() .'"
                 title="Oublier '. htmlspecialchars($spell->getDisplayName(), ENT_QUOTES) .'"
-                ><span class="ra ra-burning-book"></span></button>
+                ><span class="ra ra-burning-book"></span>Oublier</button>
         </td>
         ';
 
@@ -201,7 +201,7 @@ if (!empty($passives)) {
                     data-passive="'. $passive->getName() .'"
                     data-name="'. $passive->getDisplayName() .'"
                     title="Oublier '. htmlspecialchars($passive->getDisplayName(), ENT_QUOTES) .'"
-                    ><span class="ra ra-burning-book"></span></button>
+                    ><span class="ra ra-burning-book"></span>Oublier</button>
             </td>
             ';
 

@@ -1223,6 +1223,14 @@ body:has(#hud) #view-landing-wrapper {
     line-height: 1;
 }
 
+/* Le bouton d'oubli porte son verbe en toutes lettres : le glyphe
+ * livre-brûlé seul ne se comprenait pas. */
+#hud .hud-panel .item-actions .row-action.forget {
+    width: auto;
+    padding: 0 8px;
+    gap: 4px;
+}
+
 #hud .hud-panel .item-actions .row-action[disabled] {
     opacity: 0.35;
 }
