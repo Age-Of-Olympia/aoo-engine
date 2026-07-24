@@ -113,6 +113,8 @@ function item_type_badge(string $type): string
         'structure' => ['Structure (ancien)', 'danger',
             'Ancien système de pose (build.php, supprimé) — plus aucun usage en jeu : à migrer en Constructible'],
         'matiere' => ['Matière', 'secondary', 'Matériau d\'artisanat, sans usage direct'],
+        Item::TYPE_QUETE => ['Objet de quête', 'info',
+            'Carte, clef, relique… aucune mécanique câblée : ni équipable, ni consommable'],
     ];
     [$label, $style, $help] = $styles[$type] ?? [($type !== '' ? ucfirst($type) : '—'), 'light', ''];
 
@@ -526,6 +528,7 @@ function items_render_edit(object $row, string $csrfToken): string
         'consommable' => 'consommable',
         Item::TYPE_CONSTRUCTIBLE => Item::TYPE_CONSTRUCTIBLE,
         'graine' => 'graine',
+        Item::TYPE_QUETE => Item::TYPE_QUETE,
     ];
     $typesInDb = (new \Classes\Db())->exe("SELECT DISTINCT type FROM items WHERE type != '' ORDER BY type");
     while ($typeRow = $typesInDb->fetch_object()) {
@@ -544,7 +547,8 @@ function items_render_edit(object $row, string $csrfToken): string
             'Décide du geste « Utiliser » : <b>equipement</b> se porte (1 Ae),'
             . ' <b>consommable</b> se consomme (1 A),'
             . ' <b>' . Item::TYPE_CONSTRUCTIBLE . '</b> se bâtit sur la carte,'
-            . ' <b>graine</b> germe une fois posée au sol.'
+            . ' <b>graine</b> germe une fois posée au sol,'
+            . ' <b>' . Item::TYPE_QUETE . '</b> (carte, clef, relique…) n\'a aucune mécanique.'
             . ' Le choix ouvre la section correspondante ci-contre.')
         . formField('Emplacement',
             formSelect('emplacement',

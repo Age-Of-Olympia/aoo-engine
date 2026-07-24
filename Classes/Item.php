@@ -10,8 +10,13 @@ class Item{
      * des littéraux, revue DRY 2026-07-18 :
      * - TYPE_CONSTRUCTIBLE : se construit DEPUIS L'INVENTAIRE en vraie
      *   entité bâtiment (action générique construire, choix de case).
+     * - TYPE_QUETE : objet de quête (carte, clef, relique…) — AUCUNE
+     *   mécanique câblée : ni équipable ni consommable, il tombe sur le
+     *   « sans usage direct » de l'inventaire. Un objet scénarisé qui se
+     *   porte (dague de sarx…) reste un equipement.
      */
     public const TYPE_CONSTRUCTIBLE = 'constructible';
+    public const TYPE_QUETE = 'quete';
 
     /**
      * Groupes de colonnes du catalogue items — sources uniques (revue

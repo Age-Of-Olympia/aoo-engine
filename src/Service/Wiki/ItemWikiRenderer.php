@@ -13,7 +13,7 @@ use App\Service\ImportExport\ExporterRegistry;
  */
 final class ItemWikiRenderer implements WikiSheetRenderer
 {
-    private const TYPE_ORDER = ['equipement', 'consommable', 'constructible', 'matiere'];
+    private const TYPE_ORDER = ['equipement', 'consommable', 'constructible', 'matiere', 'quete'];
 
     private const PAYLOAD_LABELS = [
         'pv' => 'PV', 'pm' => 'PM', 'mvt' => 'Mvt', 'a' => 'A', 'ae' => 'Ae',
