@@ -53,6 +53,14 @@ final class HudLayoutView
         echo (Ui::craftEnabled() ? '<a href="inventory.php?craft" id="show-craft" title="Artisanat"><button><span class="ra ra-forging"></span></button></a>' : '')
             . '<a href="inventory.php?bank" id="show-bank" title="Banque"><button><span class="ra ra-gold-bar"></span></button></a>'
             . '<a href="upgrades.php?spells" id="show-spells" title="Sorts &amp; Techniques"><button><span class="ra ra-fairy-wand"></span></button></a>';
+        /* Fiche de la faction du personnage — page de lecture, ouverte
+         * dans le panneau latéral (js/hud.js route faction.php?faction=
+         * vers load_faction.php). Sans faction, pas d'entrée. */
+        $faction = (string) ($player->data->faction ?? '');
+        if ($faction !== '') {
+            echo '<a href="faction.php?faction=' . htmlspecialchars(rawurlencode($faction), ENT_QUOTES)
+                . '" id="show-faction" title="Faction"><button><span class="ra ra-castle-flag"></span></button></a>';
+        }
         echo '</div></nav>';
 
         MinimapView::render($player);
