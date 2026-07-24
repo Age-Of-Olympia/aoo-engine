@@ -255,20 +255,24 @@ $(document).ready(function(){
                d'impact — pas de coude. */
             var dx = b.x - a.x;
             var dy = b.y - a.y;
-            var t = ((blockerCenter.x - a.x) * dx + (blockerCenter.y - a.y) * dy) / (dx * dx + dy * dy);
-            t = Math.max(0, Math.min(1, t));
-            var hit = {x: a.x + t * dx, y: a.y + t * dy};
+            function projectOnLine(center){
+                var t = ((center.x - a.x) * dx + (center.y - a.y) * dy) / (dx * dx + dy * dy);
+                t = Math.max(0, Math.min(1, t));
+                return {x: a.x + t * dx, y: a.y + t * dy};
+            }
+            var hit = projectOnLine(blockerCenter);
 
             segment(a, hit, 'rgba(60, 170, 60, 0.85)');
             segment(hit, b, 'rgba(205, 40, 40, 0.85)');
             arrowHead(a, b, 'rgba(205, 40, 40, 0.9)');
 
             /* Un point par case bloquante (repli : la première seule
-               si l'API ne fournit pas encore la liste). */
+               si l'API ne fournit pas encore la liste), projeté sur la
+               droite du tir plutôt qu'au centre de sa case. */
             (blockers && blockers.length ? blockers : [blocker]).forEach(function(tile){
                 var center = tileCenter(tile);
                 if(center){
-                    blockerDot(center);
+                    blockerDot(projectOnLine(center));
                 }
             });
         }
