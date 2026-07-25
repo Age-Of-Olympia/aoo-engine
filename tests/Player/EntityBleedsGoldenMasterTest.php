@@ -41,6 +41,39 @@ class EntityBleedsGoldenMasterTest extends LegacyPlayerFixtureTestCase
         $this->assertGreaterThanOrEqual($before, $this->bloodCountAt((int) $player->data->coords_id));
     }
 
+    /**
+     * Le damier de chaque joueur est un SVG mis en cache sur disque. Le
+     * sang était bien écrit en base, mais rien n'invalidait ce cache :
+     * le joueur continuait de recevoir sa vieille image et ne voyait
+     * donc sa blessure qu'après s'être déplacé. Le rafraîchissement
+     * côté client existait déjà — il rapatriait le même SVG périmé.
+     *
+     * C'est l'invalidation qui manquait, et c'est elle qu'on épingle :
+     * sans elle, le correctif JavaScript reste inerte.
+     */
+    public function testBleedingInvalidatesTheCachedBoardOfWhoeverSeesIt(): void
+    {
+        $player = $this->createRealPlayer('GmBleed');
+        $player->get_data();
+        $player->get_caracs();
+        $this->snapshotBloodAt((int) $player->data->coords_id);
+
+        /* Même chemin RELATIF que le code de production
+         * (View::refresh_players_svg) : il s'appuie sur le répertoire
+         * courant, pas sur DOCUMENT_ROOT, qui est vide hors requête. */
+        $cache = 'datas/private/players/' . $player->id . '.svg';
+        @mkdir(dirname($cache), 0777, true);
+        file_put_contents($cache, '<svg/>');
+        $this->assertFileExists($cache, 'le cache de départ est bien en place');
+
+        $player->putBonus(['pv' => -1]);
+
+        $this->assertFileDoesNotExist(
+            $cache,
+            'le damier mis en cache est purgé : le joueur verra son sang sans se déplacer'
+        );
+    }
+
     public function testAStructureDoesNotBleed(): void
     {
         $this->requireBuildingsOrSkip();

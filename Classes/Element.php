@@ -53,5 +53,31 @@ class Element{
         ';
 
         $db->exe($sql, array($name, $coords_id, $endTime));
+
+        self::refreshWatchers($db, (int) $coords_id);
+    }
+
+    /**
+     * Le damier de chaque joueur est un SVG mis en cache sur disque, et
+     * rien ne l'invalidait quand un élément apparaissait dessus. Le sang
+     * d'un coup porté était donc bien écrit en base, mais le joueur
+     * continuait de recevoir sa vieille image : il ne le voyait qu'après
+     * s'être déplacé. Le rafraîchissement côté client, lui, était déjà
+     * en place — il rapatriait simplement le même SVG périmé.
+     *
+     * Le rayon est celui d'un déplacement (±20 cases), et c'est un choix
+     * assumé : Player::go() purge EXACTEMENT de la même façon à chaque
+     * pas, et l'on se déplace bien plus souvent qu'on ne se bat. Le coût
+     * est donc déjà celui du jeu ordinaire.
+     */
+    private static function refreshWatchers(Db $db, int $coordsId): void
+    {
+        $res = $db->exe('SELECT x, y, z, plan FROM coords WHERE id = ?', array($coordsId));
+
+        if (!$res || !$res->num_rows) {
+            return;
+        }
+
+        View::refresh_players_svg($res->fetch_object());
     }
 }
