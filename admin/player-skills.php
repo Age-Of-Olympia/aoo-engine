@@ -43,11 +43,14 @@ foreach ((new ActionCatalogService())->listActions() as $action) {
     ];
 }
 
-// Some owned actions are legitimate but not in the action catalog — most
-// notably 'attaquer', the base attack (melee AND distance), which the catalog
-// does not model. This catalog-driven view would otherwise hide them, making a
-// player look like they lack their basic attack. Surface them as owned rows in
-// their own group so the skills stays truthful.
+// Some owned actions are legitimate but not in the action catalog: names
+// granted directly in players_actions with no `actions` row behind them.
+// This catalog-driven view would otherwise hide them, making a player look
+// like they lack skills they actually have. Surface them as owned rows in
+// their own group so the sheet stays truthful.
+// (L'attaque de base était le cas emblématique, sous le nom fantôme
+// « attaquer » ; elle est désormais catalogée en melee + distance —
+// cf. Version20260725110000.)
 $orphanActions = [];
 foreach ($ownedActionNames as $name) {
     if (!isset($catalogActionNames[$name])) {

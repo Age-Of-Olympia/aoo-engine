@@ -15,11 +15,19 @@ use Tests\Player\Mock\LegacyPlayerFixtureTestCase;
  * elle passe. Démontré sur la RequiresDistance de « melee » : visible
  * adjacent, masqué à distance ; et sans drapeau, jamais masqué
  * (comportement historique).
+ *
+ * Le test pose LUI-MÊME les deux états et restaure la valeur d'origine :
+ * depuis la scission d'« attaquer » en melee + distance, cette condition
+ * est livrée contextuelle, et une prémisse implicite sur la donnée
+ * seedée rendrait le test faux sans que le mécanisme ait bougé.
  */
 #[Group('entities-golden-master')]
 class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
 {
     private ?int $flaggedConditionId = null;
+
+    /** Valeur seedée, restaurée au démontage. */
+    private int $originalDisplayContext = 0;
 
     protected function setUp(): void
     {
@@ -36,8 +44,8 @@ class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
     {
         if ($this->flaggedConditionId !== null && $this->link !== null) {
             $this->link->executeStatement(
-                'UPDATE action_conditions SET display_context = 0 WHERE id = ?',
-                [$this->flaggedConditionId]
+                'UPDATE action_conditions SET display_context = ? WHERE id = ?',
+                [$this->originalDisplayContext, $this->flaggedConditionId]
             );
         }
 
@@ -54,6 +62,18 @@ class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
         if ($conditionId === false) {
             $this->markTestSkipped("melee/RequiresDistance not seeded.");
         }
+
+        /* On part d'un état CHOISI, pas de celui que la base porte. */
+        $this->flaggedConditionId = (int) $conditionId;
+        $this->originalDisplayContext = (int) $this->link->fetchOne(
+            'SELECT display_context FROM action_conditions WHERE id = ?',
+            [(int) $conditionId]
+        );
+        $this->link->executeStatement(
+            'UPDATE action_conditions SET display_context = 0 WHERE id = ?',
+            [(int) $conditionId]
+        );
+        \App\Entity\EntityManagerFactory::getEntityManager()->clear();
 
         $actor = $this->createRealPlayer('GmCtx');
         $target = $this->createRealPlayer('GmCtx');
@@ -80,7 +100,6 @@ class ActionDisplayContextGoldenMasterTest extends LegacyPlayerFixtureTestCase
 
         // AVEC drapeau : masqué hors portée, visible adjacent.
         $this->link->executeStatement('UPDATE action_conditions SET display_context = 1 WHERE id = ?', [(int) $conditionId]);
-        $this->flaggedConditionId = (int) $conditionId;
         $em->clear();
         $action = (new ActionService())->getActionByName('melee');
 

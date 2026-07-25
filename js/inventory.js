@@ -93,7 +93,13 @@ $(document).ready(function(){
         }
 
         var isMarket = (action == "newAsk" || action == "newBid");
-        var needsN = (action == 'drop' || action == "store" || isMarket);
+        /* Dépôt en banque d'un objet individualisé (usé, nommé, de
+         * qualité) : la ligne cliquée EST l'exemplaire, il n'y a pas de
+         * quantité à demander — le serveur le déplace par son id
+         * d'instance. On envoie quand même 1, la garde de BankView
+         * teste la présence de « n ». */
+        var storesInstance = (action == 'store' && !!window.instanceId);
+        var needsN = (action == 'drop' || action == "store" || isMarket) && !storesInstance;
 
         if(isMarket && window.name == 'or'){
             aooAlert('Impossible de vendre cet objet.');
@@ -113,7 +119,7 @@ $(document).ready(function(){
                 }
                 return n;
             })
-            : Promise.resolve(0);
+            : Promise.resolve(storesInstance ? 1 : 0);
 
         /* Libellé du bouton d'aperçu (« Équiper (1 Ae) »,
          * « Déséquiper »…) : sert au message de confirmation. */

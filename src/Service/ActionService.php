@@ -164,8 +164,8 @@ class ActionService
     /**
      * Every action name the game knows, for admin pickers/autocomplete:
      * the configured actions (with their type as label) plus the legacy
-     * names that only exist as granted rows or race-list entries (e.g.
-     * 'attaquer', which has no `actions` row).
+     * names that only exist as granted rows or race-list entries, sans
+     * ligne dans `actions`.
      *
      * Merged in PHP: the four tables carry mixed collations, a SQL UNION
      * on them throws.

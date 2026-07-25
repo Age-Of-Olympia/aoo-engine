@@ -542,16 +542,29 @@ class Item{
          * d'instance. Clés : par id catalogue quand on liste l'ÉQUIPÉ
          * (contrat des emplacements/caracs — au plus un par emplacement),
          * par 'i{instanceId}' sinon (chaque individu = sa propre ligne). */
+        $instanceService = new \App\Service\ItemInstanceService();
+
         if(!$bank){
 
-            $instances = (new \App\Service\ItemInstanceService())
-                ->listForInventory($playerId, $equiped !== '');
+            $instances = $instanceService->listForInventory($playerId, $equiped !== '');
 
             foreach($instances as $instanceRow){
 
                 $row = (object) $instanceRow;
                 $key = ($equiped !== '') ? $row->id : 'i'. $row->instance_id;
                 $return[$key] = $row;
+            }
+        }
+        else{
+
+            /* La banque a la même double lecture : sans elle, un objet
+             * individualisé rangé au coffre disparaissait de la liste
+             * (et sa durabilité avec — retour joueur). Jamais d'équipé
+             * en banque, donc la clé est toujours celle de l'individu. */
+            foreach($instanceService->listForBank($playerId) as $instanceRow){
+
+                $row = (object) $instanceRow;
+                $return['i'. $row->instance_id] = $row;
             }
         }
 

@@ -50,7 +50,10 @@ class RaceServiceTest extends TestCase
         $this->assertSame(50, $data->pv);
 
         $this->assertIsArray($data->actions);
-        $this->assertContains('attaquer', $data->actions);
+        /* Attaque de base : deux actions du catalogue depuis la scission
+         * d'« attaquer » (cf. Version20260725110000). */
+        $this->assertContains('melee', $data->actions);
+        $this->assertContains('distance', $data->actions);
         $this->assertIsArray($data->spells);
     }
 

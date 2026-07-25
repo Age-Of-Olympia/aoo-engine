@@ -100,6 +100,12 @@ $actionResultsView = null;
 
 $action = ActionFactory::getAction($_POST["action"]);
 
+/* Repli de transition : « attaquer » n'est plus accordé à personne
+ * (Version20260725110000 l'a remplacé par melee + distance, chacune
+ * affichée selon la portée). Ce branchement ne sert plus qu'aux
+ * requêtes en vol — un panneau rendu AVANT le déploiement poste encore
+ * l'ancien nom. À supprimer une fois la migration passée en prod et les
+ * sessions renouvelées ; le tutoriel accepte déjà les trois noms. */
 if ($action == null) {
     if($distance == 1){
         try {

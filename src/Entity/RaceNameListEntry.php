@@ -8,8 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * Race starter actions and race spells share this shape. The names reference
  * actions by their players_actions string name (e.g. "dmg1/pic_de_pierre"),
- * NOT by FK: part of these names have no row in the `actions` table (legacy
- * actions like "attaquer" are granted by name only).
+ * NOT by FK: part of these names have no row in the `actions` table — des
+ * actions héritées, accordées par leur seul nom.
  */
 #[ORM\MappedSuperclass]
 abstract class RaceNameListEntry

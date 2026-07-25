@@ -58,7 +58,11 @@ class RaceImportExportTest extends TestCase
         $this->assertSame('Nain', $payload['label']);
         $this->assertSame('#FF0000', $payload['bgColor']);
         $this->assertSame(4, $payload['caracs']['mvt']);
-        $this->assertContains('attaquer', $payload['starterActions']);
+        /* L'attaque de base est accordée sous ses deux noms de catalogue
+         * depuis la scission d'« attaquer » (melee au contact, distance
+         * au tir) — cf. Version20260725110000. */
+        $this->assertContains('melee', $payload['starterActions']);
+        $this->assertContains('distance', $payload['starterActions']);
         $this->assertArrayNotHasKey('id', $payload, 'jamais d\'id DB dans un bundle');
     }
 

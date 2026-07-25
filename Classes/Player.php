@@ -554,8 +554,8 @@ class Player implements ActorInterface {
     public function get_options(){ return (new PlayerOptionsService())->getOptions($this->id); }
 
     // actions shortcuts — delegate to PlayerActionsService.
-    // The spell/technique → type='sort' branch and the 'attaquer'
-    // short-circuit live inside the service; see addAction().
+    // The spell/technique → type='sort' branch lives inside the
+    // service; see addAction().
     public function add_action($name){ (new PlayerActionsService())->addAction($this->id, $name); }
     public function have_action($name){ return (new PlayerActionsService())->hasAction($this->id, $name); }
     public function end_action($name){ (new PlayerActionsService())->endAction($this->id, $name); }

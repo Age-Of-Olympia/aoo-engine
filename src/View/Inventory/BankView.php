@@ -3,6 +3,7 @@
 namespace App\View\Inventory;
 
 use App\Factory\PlayerFactory;
+use App\Service\ItemInstanceService;
 use Classes\Item;
 use Classes\Market;
 use Classes\Player;
@@ -17,6 +18,38 @@ class BankView
 
 
             $item = new Item($_POST['itemId']);
+
+            /* Objet individualisé (usé, nommé, de qualité) : il ne se
+             * compte pas, il se déplace. Son identité et son usure
+             * restent sur la même ligne de possession — seule sa
+             * localisation change, d'où l'absence de quantité ici. */
+            $instanceId = (int) ($_POST['instanceId'] ?? 0);
+
+            if ($instanceId > 0) {
+
+                $service = new ItemInstanceService();
+
+                try {
+
+                    if ($_POST['action'] == 'withdraw') {
+
+                        $service->withdrawFromBank($instanceId, (int) $player->id);
+                    } elseif ($_POST['action'] == 'store') {
+
+                        if (!$item->is_bankable()) {
+
+                            exit('Cet objet est refusé en banque.');
+                        }
+
+                        $service->storeInBank($instanceId, (int) $player->id);
+                    }
+                } catch (\InvalidArgumentException $e) {
+
+                    exit($e->getMessage());
+                }
+
+                exit();
+            }
 
 
             if ($_POST['action'] == 'withdraw') {
@@ -89,10 +122,51 @@ class BankView
                     $actions
                         .append('<button class="action" data-action="withdraw">←Retirer</button><br />');
 
-                    $('.action').click(function(e) {
+                    /* Sélecteur restreint au bouton posé juste au-dessus :
+                     * « action » seule est partagée avec l'inventaire et
+                     * les contrats du marché. */
+                    $('.preview-action .action[data-action="withdraw"]').click(function(e) {
 
 
                         var action = $(this).data('action');
+                        var url = 'merchant.php?targetId=<?php echo isset($target) ? $target->id : "0" ?>&bank'; /* 0 allow valid link even if code should not be used in that case */
+
+                        function send(n) {
+
+                            $.ajax({
+                                type: "POST",
+                                url: url,
+                                data: {
+                                    'action': action,
+                                    'itemId': window.id,
+                                    'instanceId': window.instanceId || '',
+                                    'n': n
+                                },
+                                success: function(data) {
+
+                                    /* Erreur métier : le serveur renvoie sa
+                                     * raison en clair plutôt qu'une page. */
+                                    var text = $('<div></div>').html(data).text().trim();
+
+                                    if (text) {
+
+                                        aooAlert(text).then(aooReload);
+                                        return;
+                                    }
+
+                                    /* Panneau HUD ou page (main.js) */
+                                    aooReload();
+                                }
+                            });
+                        }
+
+                        /* Un objet individualisé est unique : il n'y a
+                         * pas de quantité à demander. */
+                        if (window.instanceId) {
+
+                            send(1);
+                            return;
+                        }
 
                         aooPrompt('Combien?', window.n).then(function(n) {
 
@@ -106,20 +180,7 @@ class BankView
                                 return;
                             }
 
-                            $.ajax({
-                                type: "POST",
-                                url: 'merchant.php?targetId=<?php echo isset($target) ? $target->id : "0" ?>&bank', /* 0 allow valid link even if code should not be used in that case */
-                                data: {
-                                    'action': action,
-                                    'itemId': window.id,
-                                    'n': n
-                                },
-                                success: function(data) {
-
-                                    /* Panneau HUD ou page (main.js) */
-                                    aooReload();
-                                }
-                            });
+                            send(n);
                         });
                     });
                 });

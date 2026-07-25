@@ -172,15 +172,10 @@ final class EntityCardView
     {
         $actionService = new ActionService();
         $actionTargeting = new ActionTargeting();
-        $actions = self::sortActionsByCategory($player->get_actions(), $actionService);
+        $actions = self::sortActionsByCategory($player, $player->get_actions(), $actionService);
 
         $html = '';
         foreach ($actions as $actionName) {
-            if ($actionName == 'attaquer') {
-                $html .= self::attackButtonHtml($player, $target, $actionService, $actionTargeting);
-                continue;
-            }
-
             $actionData = $actionService->getActionByName($actionName);
             if ($actionData == null) {
                 continue;
@@ -192,21 +187,6 @@ final class EntityCardView
         }
 
         return $html;
-    }
-
-    /** « attaquer » : alias historique de l'action melee, jamais sur soi. */
-    private static function attackButtonHtml(Player $player, Player $target, ActionService $actionService, ActionTargeting $actionTargeting): string
-    {
-        if ($player->id == $target->id) {
-            return '';
-        }
-
-        $actionData = $actionService->getActionByName('melee');
-        if ($actionData == null || !$actionTargeting->matchesDisplayContext($actionData, $player, $target)) {
-            return '';
-        }
-
-        return self::buildActionToDisplay($target, $actionData, $actionService, 'attaquer');
     }
 
     /**
@@ -337,9 +317,18 @@ final class EntityCardView
      * Trie les actions : bases, puis offensives, soins et utilitaires
      * (chaque groupe en ordre alphabétique).
      */
-    private static function sortActionsByCategory(array $actions, ActionService $actionService): array
+    private static function sortActionsByCategory(Player $player, array $actions, ActionService $actionService): array
     {
-        $basics = ['attaquer', 'courir', 'entrainement', 'fouiller', 'prier', 'repos', 'vol_a_la_tire'];
+        /* L'ordre des actions de base vient de la LISTE DE DÉPART de la
+         * race (race_starter_actions.position), éditable dans la page
+         * Races. Elle était recopiée ici dans un tableau littéral, où
+         * l'attaque devait sa première place à son seul rang d'écriture
+         * — la scission d'« attaquer » l'avait donc fait disparaître au
+         * milieu des actions offensives. Réordonner est désormais un
+         * geste d'admin, pas une modification de code. */
+        $raceData = (new RaceService())->getRaceData((string) ($player->data->race ?? ''));
+        $basics = is_array($raceData->actions ?? null) ? $raceData->actions : [];
+
         $offensiveTypes = ['melee', 'distance', 'spell', 'technique'];
 
         $byCategory = ['basics' => [], 'offensive' => [], 'heal' => [], 'utility' => []];

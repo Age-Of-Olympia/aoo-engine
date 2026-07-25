@@ -61,10 +61,14 @@ class PlayerActionsService
      * Insert a row into players_actions. Throws on PK conflict
      * (mysqli_sql_exception under strict mode).
      *
-     * For non-'attaquer' names, looks up the action's ormType via
-     * ActionService; learned combat skills (spell/technique/buff/heal)
-     * persist with `type='sort'` to satisfy the caster UI branches
-     * downstream (owned-spells list + NUMBER_MAX_COMP cap).
+     * Looks up the action's ormType via ActionService; learned combat
+     * skills (spell/technique/buff/heal) persist with `type='sort'` to
+     * satisfy the caster UI branches downstream (owned-spells list +
+     * NUMBER_MAX_COMP cap). Le court-circuit qui sautait cette lecture
+     * pour « attaquer » a disparu avec le nom fantôme lui-même : melee
+     * et distance sont au catalogue, et leur ormType (melee/distance)
+     * n'est pas une compétence apprise — elles ne comptent donc pas
+     * dans le plafond, exactement comme avant.
      */
     public function addAction(int $playerId, string $name): void
     {
@@ -73,16 +77,13 @@ class PlayerActionsService
             'name'      => $name,
         ];
 
-        if ($name !== 'attaquer') {
-            $actionService = new ActionService();
-            $action = $actionService->getActionByName($name);
-            // 'sort' marks a learned combat skill (shows on the owned-spells page
-            // and counts toward NUMBER_MAX_COMP). Defensive spells are buff/heal
-            // classes, not just spell/technique — without them the owned heals were
-            // invisible and uncapped (#264).
-            if ($action !== null && in_array($action->getOrmType(), ['spell', 'technique', 'buff', 'heal'], true)) {
-                $values['type'] = 'sort';
-            }
+        $action = (new ActionService())->getActionByName($name);
+        // 'sort' marks a learned combat skill (shows on the owned-spells page
+        // and counts toward NUMBER_MAX_COMP). Defensive spells are buff/heal
+        // classes, not just spell/technique — without them the owned heals were
+        // invisible and uncapped (#264).
+        if ($action !== null && in_array($action->getOrmType(), ['spell', 'technique', 'buff', 'heal'], true)) {
+            $values['type'] = 'sort';
         }
 
         (new Db())->insert('players_actions', $values);

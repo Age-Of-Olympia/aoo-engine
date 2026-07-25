@@ -20,10 +20,13 @@ use Doctrine\ORM\EntityManagerInterface;
  *     pristine returns to its stack. This is what makes the whole
  *     conversion reversible while nothing has diverged.
  *
- * Invariant owned here: an instance has exactly ONE location (the
- * players_items_instances link for now; map/bank come with later
- * phases). No read path is switched yet — this service is inert until
- * the dual-read steps land.
+ * Invariant owned here: an instance has exactly ONE location. Le sol
+ * s'exprime par la table map_items_instances ; côté joueur, la colonne
+ * players_items_instances.location distingue ce qu'il PORTE de ce qu'il
+ * a rangé en BANQUE. Tout ce qui répond « le joueur a-t-il cet objet
+ * sous la main » doit donc filtrer sur LOCATION_INVENTORY : sans ce
+ * filtre, une arme déposée en banque resterait équipable, jetable et
+ * vendable depuis n'importe où sur la carte.
  */
 class ItemInstanceService extends BaseService
 {
@@ -33,6 +36,12 @@ class ItemInstanceService extends BaseService
      * partout où l'état est testé ou affiché.
      */
     public const BROKEN_AT = 0;
+
+    /** Sous la main : équipable, jetable, comptée par get_n(). */
+    public const LOCATION_INVENTORY = 'inventory';
+
+    /** Rangée en banque : hors de portée de tout geste de jeu. */
+    public const LOCATION_BANK = 'bank';
 
     public static function isBroken(int $durability): bool
     {
@@ -141,13 +150,21 @@ class ItemInstanceService extends BaseService
         return $conn->transactional(function ($conn) use ($instanceId): bool {
             $row = $conn->fetchAssociative(
                 'SELECT i.id, i.item_id, i.durability, i.durability_max, i.quality, i.custom_name,
-                        i.params, i.destroyed, i.wear_pending, l.player_id, l.equiped
+                        i.params, i.destroyed, i.wear_pending, l.player_id, l.equiped, l.location
                  FROM item_instances i
                  JOIN players_items_instances l ON l.instance_id = i.id
                  WHERE i.id = ? FOR UPDATE',
                 [$instanceId]
             );
             if ($row === false) {
+                return false;
+            }
+
+            /* La démotion reverse l'exemplaire dans players_items, la
+             * pile PORTÉE : appliquée à un exemplaire rangé en banque
+             * elle le téléporterait dans l'inventaire. Un exemplaire en
+             * banque reste une instance, même vierge. */
+            if ((string) $row['location'] !== self::LOCATION_INVENTORY) {
                 return false;
             }
 
@@ -215,6 +232,7 @@ class ItemInstanceService extends BaseService
                      FROM players_items_instances l
                      JOIN item_instances i ON i.id = l.instance_id
                      WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
+                       AND l.location = '" . self::LOCATION_INVENTORY . "'
                      ORDER BY l.instance_id LIMIT 1",
                     [$playerId, $itemId]
                 );
@@ -244,7 +262,8 @@ class ItemInstanceService extends BaseService
              FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
              WHERE l.instance_id = ? AND l.player_id = ? AND i.item_id = ?
-               AND l.equiped = '' AND i.destroyed = 0",
+               AND l.equiped = '' AND i.destroyed = 0
+               AND l.location = '" . self::LOCATION_INVENTORY . "'",
             [$instanceId, $playerId, $itemId]
         );
     }
@@ -309,10 +328,104 @@ class ItemInstanceService extends BaseService
              FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
              JOIN items it ON it.id = i.item_id
-             WHERE l.player_id = ? AND i.destroyed = 0 {$equipedFilter}
+             WHERE l.player_id = ? AND i.destroyed = 0
+               AND l.location = '" . self::LOCATION_INVENTORY . "' {$equipedFilter}
              ORDER BY l.equiped DESC, i.id",
             [$playerId]
         );
+    }
+
+    /**
+     * Le pendant BANQUE de listForInventory() : mêmes colonnes, même
+     * mise en forme « ligne de pile + méta d'instance », pour que
+     * Ui::print_inventory affiche l'état réel (durabilité, nom
+     * personnalisé) des exemplaires rangés — c'est tout l'objet de la
+     * fonctionnalité. Jamais d'exemplaire équipé ici : l'invariant est
+     * posé par storeInBank().
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listForBank(int $playerId): array
+    {
+        return $this->entityManager->getConnection()->fetchAllAssociative(
+            "SELECT it.*, i.item_id, i.id AS instance_id, i.durability, i.durability_max, i.quality,
+                    i.custom_name, i.params AS instance_params, i.creator_id, i.wear_pending,
+                    '' AS equiped, 1 AS n
+             FROM players_items_instances l
+             JOIN item_instances i ON i.id = l.instance_id
+             JOIN items it ON it.id = i.item_id
+             WHERE l.player_id = ? AND i.destroyed = 0
+               AND l.location = '" . self::LOCATION_BANK . "'
+             ORDER BY it.name, i.id",
+            [$playerId]
+        );
+    }
+
+    /**
+     * Ranger un exemplaire individualisé en banque. Refuse un
+     * exemplaire porté : le déposer laisserait un emplacement occupé
+     * par un objet hors de portée.
+     *
+     * @throws \InvalidArgumentException quand l'exemplaire n'appartient
+     *         pas au joueur, est détruit, est équipé, ou est déjà rangé
+     */
+    public function storeInBank(int $instanceId, int $playerId): void
+    {
+        $this->moveTo($instanceId, $playerId, self::LOCATION_INVENTORY, self::LOCATION_BANK);
+    }
+
+    /**
+     * Reprendre un exemplaire rangé : il retrouve l'inventaire avec son
+     * usure et son identité, qui n'ont jamais bougé de ligne.
+     *
+     * @throws \InvalidArgumentException quand l'exemplaire n'est pas en
+     *         banque chez ce joueur
+     */
+    public function withdrawFromBank(int $instanceId, int $playerId): void
+    {
+        $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_INVENTORY);
+    }
+
+    /**
+     * Bascule de localisation, conditionnelle et atomique : l'UPDATE
+     * porte la localisation ATTENDUE dans son WHERE, donc deux dépôts
+     * concurrents du même exemplaire n'en valident qu'un — le second ne
+     * touche aucune ligne et lève. Même garde que le ramassage au sol
+     * (collectAt), pour la même raison.
+     */
+    private function moveTo(int $instanceId, int $playerId, string $from, string $to): void
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $conn->transactional(function ($conn) use ($instanceId, $playerId, $from, $to): void {
+            $row = $conn->fetchAssociative(
+                'SELECT l.equiped, l.location, i.destroyed
+                 FROM players_items_instances l
+                 JOIN item_instances i ON i.id = l.instance_id
+                 WHERE l.instance_id = ? AND l.player_id = ? FOR UPDATE',
+                [$instanceId, $playerId]
+            );
+
+            if ($row === false || (int) $row['destroyed'] === 1) {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} non possédé ou détruit.");
+            }
+            if ((string) $row['equiped'] !== '') {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} encore équipé — déséquiper d'abord.");
+            }
+            if ((string) $row['location'] !== $from) {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} n'est pas « {$from} ».");
+            }
+
+            $affected = $conn->executeStatement(
+                'UPDATE players_items_instances SET location = ?
+                 WHERE instance_id = ? AND player_id = ? AND location = ?',
+                [$to, $instanceId, $playerId, $from]
+            );
+
+            if ($affected === 0) {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} déplacé entre-temps.");
+            }
+        });
     }
 
     /**
@@ -326,7 +439,8 @@ class ItemInstanceService extends BaseService
         return (int) $this->entityManager->getConnection()->fetchOne(
             "SELECT COUNT(*) FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
-             WHERE l.player_id = ? AND i.item_id = ? AND i.destroyed = 0 {$equipedFilter}",
+             WHERE l.player_id = ? AND i.item_id = ? AND i.destroyed = 0
+               AND l.location = '" . self::LOCATION_INVENTORY . "' {$equipedFilter}",
             [$playerId, $itemId]
         );
     }
@@ -345,7 +459,7 @@ class ItemInstanceService extends BaseService
 
         $conn->transactional(function ($conn) use ($instanceId, $coordsId): void {
             $row = $conn->fetchAssociative(
-                'SELECT l.equiped, i.destroyed
+                'SELECT l.equiped, l.location, i.destroyed
                  FROM players_items_instances l
                  JOIN item_instances i ON i.id = l.instance_id
                  WHERE l.instance_id = ? FOR UPDATE',
@@ -356,6 +470,11 @@ class ItemInstanceService extends BaseService
             }
             if ((string) $row['equiped'] !== '') {
                 throw new \InvalidArgumentException("Instance #{$instanceId} encore équipée — déséquiper d'abord.");
+            }
+            /* On ne jette pas au sol ce qu'on a rangé à la banque : le
+             * joueur n'est pas au même endroit que son coffre. */
+            if ((string) $row['location'] !== self::LOCATION_INVENTORY) {
+                throw new \InvalidArgumentException("Instance #{$instanceId} est en banque — la retirer d'abord.");
             }
 
             $conn->executeStatement('DELETE FROM players_items_instances WHERE instance_id = ?', [$instanceId]);
@@ -429,14 +548,16 @@ class ItemInstanceService extends BaseService
     }
 
     /**
-     * All of a player's instances with their catalog name, worn first.
+     * All of a player's instances with their catalog name, worn first —
+     * inventaire ET banque, avec leur localisation : c'est la vue
+     * « tout ce que ce joueur possède », pas « ce qu'il a sous la main ».
      *
      * @return array<int, array<string, mixed>>
      */
     public function getInstances(int $playerId): array
     {
         return $this->entityManager->getConnection()->fetchAllAssociative(
-            'SELECT i.*, l.equiped, it.name AS catalog_name
+            'SELECT i.*, l.equiped, l.location, it.name AS catalog_name
              FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
              JOIN items it ON it.id = i.item_id
@@ -467,6 +588,7 @@ class ItemInstanceService extends BaseService
              FROM players_items_instances l
              JOIN item_instances i ON i.id = l.instance_id
              WHERE l.player_id = ? AND i.item_id = ? AND l.equiped = '' AND i.destroyed = 0
+               AND l.location = '" . self::LOCATION_INVENTORY . "'
              LIMIT 1",
             [$playerId, $itemId]
         );
@@ -480,6 +602,12 @@ class ItemInstanceService extends BaseService
         ) ?: 0) > 0;
     }
 
+    /**
+     * Tout ce que le joueur POSSÈDE de cet objet, banque comprise — à
+     * ne pas confondre avec countInstances(), qui ne compte que ce
+     * qu'il a sous la main et qui est le chiffre dont dépend get_n()
+     * (donc les actions, les ventes, les jets au sol).
+     */
     public function countOwned(int $playerId, int $itemId): int
     {
         $conn = $this->entityManager->getConnection();
