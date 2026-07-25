@@ -19,7 +19,16 @@ class InventoryView
      *                       héritées (inventory.php, marchand) sont
      *                       inchangées.
      */
-    public static function renderInventory(bool $itemsFromBank, bool $hudPanel = false): void
+    /**
+     * @param bool $stacksOnly n'afficher que les PILES fongibles, en
+     *        écartant les exemplaires individualisés. Le marché ne sait
+     *        échanger que du fongible : mettre en vente débite une pile
+     *        (Item::add_item garde strictement sur elle). Une épée à
+     *        3/20 n'est de toute façon pas le même bien qu'une épée
+     *        neuve — l'offre porte un objet et une quantité, pas un
+     *        individu.
+     */
+    public static function renderInventory(bool $itemsFromBank, bool $hudPanel = false, bool $stacksOnly = false): void
     {
 
         if (!empty($_POST['action'])) {
@@ -70,6 +79,14 @@ class InventoryView
         $player = PlayerFactory::legacy($activePlayerId);
 
         $itemList = Item::get_item_list($player->id, bank: $itemsFromBank);
+
+        if ($stacksOnly) {
+
+            $itemList = array_filter(
+                $itemList,
+                static fn($row): bool => !isset($row->instance_id)
+            );
+        }
 
         /* Compteur d'Actions d'Équipement : la carac n'apparaît plus
          * dans le nouveau HUD (pilules et page d'amélioration l'ignorent),
