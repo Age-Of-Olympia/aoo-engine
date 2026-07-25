@@ -211,7 +211,8 @@ class TutorialConstants
     const BASIC_TUTORIAL_ACTIONS = [
         'fouiller',      // Search/gather resources
         'repos',         // Rest (restore PA/MVT)
-        'attaquer',      // Attack
+        'melee',         // Attack at contact
+        'distance',      // Attack at range
         'courir',        // Run (fast movement)
         'prier',         // Pray (faction-specific)
         'entrainement'   // Training (gain XP)

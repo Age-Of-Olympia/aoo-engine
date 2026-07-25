@@ -118,8 +118,13 @@ class TutorialPlayerFactory
             unlink($cacheFile);
         }
 
-        // Step 8: Grant basic actions
-        foreach (['fouiller', 'repos', 'attaquer', 'courir', 'prier', 'entrainement'] as $actionName) {
+        /* Step 8: Grant basic actions.
+         *
+         * melee + distance, et non plus « attaquer » : ce nom n'a jamais
+         * eu de ligne au catalogue et se résolvait par un repli sur la
+         * distance, qui n'existe plus. Un personnage de tutoriel à qui
+         * on l'accorderait ne pourrait tout simplement plus attaquer. */
+        foreach (['fouiller', 'repos', 'melee', 'distance', 'courir', 'prier', 'entrainement'] as $actionName) {
             $conn->insert('players_actions', [
                 'player_id' => $actualPlayerId,
                 'name'      => $actionName,

@@ -100,27 +100,22 @@ $actionResultsView = null;
 
 $action = ActionFactory::getAction($_POST["action"]);
 
-/* Repli de transition : « attaquer » n'est plus accordé à personne
- * (Version20260725110000 l'a remplacé par melee + distance, chacune
- * affichée selon la portée). Ce branchement ne sert plus qu'aux
- * requêtes en vol — un panneau rendu AVANT le déploiement poste encore
- * l'ancien nom. À supprimer une fois la migration passée en prod et les
- * sessions renouvelées ; le tutoriel accepte déjà les trois noms. */
+/* Un nom d'action inconnu est REFUSÉ.
+ *
+ * Un repli choisissait ici l'action à la place du client : cible
+ * adjacente → mêlée, cible plus loin → tir. Il existait pour le nom
+ * fantôme « attaquer », qui n'avait pas de ligne au catalogue et se
+ * résolvait par la distance — c'est la scission en melee + distance
+ * (Version20260725110000) qui l'a rendu inutile.
+ *
+ * Il ne testait pourtant PAS « attaquer » : il se déclenchait pour
+ * n'importe quel nom inconnu. Une faute de frappe ou un bouton mal
+ * câblé produisait donc une attaque de mêlée au lieu d'une erreur —
+ * un fourre-tout silencieux, et le contraire de ce qu'on veut d'un
+ * point d'entrée qui exécute des actions de jeu. */
 if ($action == null) {
-    if($distance == 1){
-        try {
-            $action = ActionFactory::getAction('melee'); // Crée une instance de MeleeAction
-        } catch (Exception $e) {
-            echo $e->getMessage();
-        }
-    }
-    elseif($distance > 1){
-        try {
-            $action = ActionFactory::getAction('distance'); // Crée une instance de DistanceAction
-        } catch (Exception $e) {
-            echo $e->getMessage();
-        }
-    }
+
+    exit('Action inconnue.');
 }
 
 try {

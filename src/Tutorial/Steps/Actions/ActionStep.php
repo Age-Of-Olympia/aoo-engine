@@ -56,13 +56,19 @@ class ActionStep extends AbstractStep
             return true;
         }
 
-        // Special case: "attaquer" can be either "melee" or "distance" in backend
-        // but button always has data-action="attaquer"
+        /* Une étape qui demande « attaquer » demande UNE ATTAQUE, quelle
+         * qu'elle soit : le catalogue en connaît deux, melee au contact
+         * et distance au tir, et le joueur satisfait l'étape avec l'une
+         * ou l'autre. Ce n'est donc pas un vestige de l'ancien nom
+         * fantôme mais l'expression d'une intention — l'étape 27 est
+         * toujours configurée ainsi en base.
+         *
+         * La réciproque couvre les étapes configurées sur une action
+         * précise, pour les bases où « attaquer » subsisterait. */
         if ($requiredAction === 'attaquer' && in_array($usedAction, ['melee', 'distance', 'attaquer'])) {
             return true;
         }
 
-        // Special case: allow validation by melee/distance if that's what's configured
         if (in_array($requiredAction, ['melee', 'distance']) && $usedAction === 'attaquer') {
             return true;
         }
