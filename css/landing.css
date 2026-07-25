@@ -155,6 +155,48 @@ body::before {
     margin: 10px auto;
 }
 
+/* « Jouer » est LE geste de la page : il avait exactement le poids de
+ * « Créer un personnage » et de « Discord », et se perdait dans la pile.
+ * Encre pleine plutôt que parchemin, un cran plus haut, et un halo au
+ * survol. La classe index-button est CONSERVÉE : le script de la page
+ * masque les entrées par ce sélecteur pour déplier le formulaire de
+ * connexion — la retirer laisserait le bouton affiché par-dessus. */
+#index-menu .index-button-primary {
+    background: var(--lp-bronze);
+    color: #fdf6e5;
+    height: clamp(40px, 5.4vh, 50px);
+    font-size: clamp(1.05em, 2.4vh, 1.3em);
+    font-weight: 600;
+    border-color: var(--lp-ink);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+}
+
+#index-menu .index-button-primary:hover,
+#index-menu .index-button-primary:focus-visible {
+    background: var(--lp-ink);
+    color: #fdf6e5;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+#index-menu .index-button-primary:active {
+    background: var(--lp-bronze);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Pied de garde : mentions légales, discrètes mais présentes. Hors du
+ * flux des boutons pour ne pas peser dans le premier écran. */
+#landing-legal {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.78em;
+    opacity: 0.75;
+}
+
+#landing-legal a {
+    color: inherit;
+    text-decoration: underline;
+}
+
 /* Fleurons gravés entre les entrées (calque alpha de la maquette).
  * Retour joueur juillet 2026 : répétés à pleine encre ils pèsent —
  * le premier reste un fleuron (accent sous « Jouer »), atténué ;

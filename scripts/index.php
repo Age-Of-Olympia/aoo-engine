@@ -9,7 +9,7 @@ if(isset($_GET['resetPsw'])){
 
 /* Habillage papier & encre de la maquette graphiste : la bannière
  * cède la place au héros planète + titre Gloock (css/landing.css). */
-echo '<link rel="stylesheet" href="css/landing.css?v=20260715b" />';
+echo '<link rel="stylesheet" href="css/landing.css?v=20260725a" />';
 
 /* Fond filigrané « aootest » hors prod (variante _test du fond
  * composité de la maquette). */
@@ -54,7 +54,9 @@ echo '
 
     echo '<div class="text"><b>Age of Olympia,<br />JDR gratuit au tour-par-tour.</b></div>';
 
-    echo '<a href="index.php" action="login" id="index-button-play" class="index-button">Jouer</a>';
+    /* index-button CONSERVÉE : le script de dépliage du formulaire de
+     * connexion masque les entrées par ce sélecteur. */
+    echo '<a href="index.php" action="login" id="index-button-play" class="index-button index-button-primary">Jouer</a>';
 
 
     $raceBg = (new \App\Service\RaceService())->getPlayableRaceNames()[0] ?? 'nain';
@@ -235,6 +237,16 @@ echo '<a href="https://www.qtg.fr/" title="Qu\'est-ce que tu Geekes ?"><img src=
 echo '</div>';
 
 echo '</div>'; /* /#landing-partners */
+
+/* Mentions légales : les CGU n'étaient accessibles QUE depuis la case à
+ * cocher de l'inscription (register.php) — un visiteur déjà inscrit, ou
+ * simplement curieux, n'avait aucun chemin pour les relire. Le texte
+ * vit sur le wiki, hors du dépôt : c'est un lien, pas une page locale.
+ * Placé après les partenaires pour ne pas peser dans le premier écran. */
+echo '<div id="landing-legal">'
+    . '<a href="https://age-of-olympia.net/wiki/doku.php?id=about:cgu" target="_blank" rel="noopener">'
+    . 'Conditions générales d\'utilisation</a>'
+    . '</div>';
 
 
 $annonceJson = json()->decode('', 'annonce');

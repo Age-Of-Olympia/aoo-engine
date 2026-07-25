@@ -37,20 +37,42 @@ function tile_color_hex(array $rgb): string
  */
 function tile_color_thumbnail(string $name): string
 {
+    /* La regex protège du path traversal sur un nom venu de la base :
+     * ne pas la relâcher, les dossiers ci-dessous sont concaténés. */
     if (preg_match('/^[a-zA-Z0-9_.-]+$/', $name)) {
-        $candidates = ['png', 'webp', 'jpg', 'jpeg', 'gif'];
-        $paths = array_map(static fn (string $ext): string => 'img/tiles/' . $name . '.' . $ext, $candidates);
-        $paths[] = 'img/tiles/' . $name . '-00.png';
 
-        foreach ($paths as $rel) {
-            if (is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $rel)) {
-                return '<img src="/' . e($rel) . '" width="28" height="28" loading="lazy"'
-                    . ' style="border:1px solid #ccc;vertical-align:middle" alt="" title="' . e($rel) . '">';
+        /* La palette ne colore pas que le SOL : elle mélange les tuiles,
+         * les murs et les éléments posés, et chaque couche range ses
+         * images dans son propre dossier. Chercher dans le seul
+         * img/tiles laissait un tiret sur des entrées bien vivantes —
+         * arbre1..5 vivent dans img/walls, boue et lave dans
+         * img/elements. La correspondance couche → dossier est celle de
+         * TiledMapService, pas une seconde liste à tenir à jour. */
+        $dirs = array_unique(array_map(
+            [\App\Service\TiledMapService::class, 'layerImageDir'],
+            ['tiles', 'resources', 'elements', 'foregrounds']
+        ));
+
+        $candidates = ['png', 'webp', 'jpg', 'jpeg', 'gif'];
+
+        foreach ($dirs as $dir) {
+            $paths = array_map(
+                static fn (string $ext): string => 'img/' . $dir . '/' . $name . '.' . $ext,
+                $candidates
+            );
+            /* Tuile animée : la première frame sert de vignette. */
+            $paths[] = 'img/' . $dir . '/' . $name . '-00.png';
+
+            foreach ($paths as $rel) {
+                if (is_file($_SERVER['DOCUMENT_ROOT'] . '/' . $rel)) {
+                    return '<img src="/' . e($rel) . '" width="28" height="28" loading="lazy"'
+                        . ' style="border:1px solid #ccc;vertical-align:middle" alt="" title="' . e($rel) . '">';
+                }
             }
         }
     }
 
-    return '<span class="text-muted" title="Pas d\'image img/tiles/' . e($name) . '.*">—</span>';
+    return '<span class="text-muted" title="Aucune image « ' . e($name) . ' » dans les dossiers de couches">—</span>';
 }
 
 $csrfToken = (new CsrfProtectionService())->generateToken();
