@@ -130,10 +130,46 @@ class View{
             width="100%"
             height="100%"
 
-            style="background: url(\''. $tile .'\');max-width: '. $size .'px;"
+            style="max-width: '. $size .'px;"
 
             class="box-shadow"
             >
+            ';
+
+            /* Le sol ENTRE dans le SVG, au lieu d'être une
+             * background-image CSS posée sur lui.
+             *
+             * En CSS, la texture se répétait à sa taille en PIXELS : elle
+             * ne suivait donc ni le zoom ni le défilement du damier, qui
+             * eux vivent dans le viewBox. Au pincement, les cases
+             * grandissaient pendant que le sol restait fin et se
+             * contentait de se répéter davantage. En <pattern>, la
+             * texture est exprimée dans les mêmes unités que le reste :
+             * elle suit tout, sans une ligne de JavaScript pour la
+             * recaler.
+             *
+             * La taille du motif est celle de l'IMAGE, pas une constante :
+             * les tuiles de sol n'ont pas toutes le même format — gaia
+             * fait 500 (dix cases), underground et sky en font 50. La
+             * figer aurait changé l\'échelle du décor selon le plan. */
+            $tileSize = @getimagesize($tile);
+            $tileW = ($tileSize[0] ?? 0) ?: 50;
+            $tileH = ($tileSize[1] ?? 0) ?: 50;
+
+            /* Débordement large : buildMapRulers (js/hud.js) agrandit le
+             * viewBox pour loger les coordonnées en marge, et cette marge
+             * était peinte par le fond CSS. Le rectangle la couvre donc
+             * aussi ; ce qui dépasse est écrêté par le viewBox, sans coût. */
+            echo '
+            <defs>
+                <pattern id="ground-pattern" patternUnits="userSpaceOnUse"
+                         width="'. $tileW .'" height="'. $tileH .'">
+                    <image href="'. $tile .'" xlink:href="'. $tile .'"
+                           width="'. $tileW .'" height="'. $tileH .'" />
+                </pattern>
+            </defs>
+            <rect x="-200" y="-200" width="'. ($size + 400) .'" height="'. ($size + 400) .'"
+                  fill="url(#ground-pattern)" />
             ';
 
 
