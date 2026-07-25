@@ -183,13 +183,16 @@ class ViewService {
      *
      *   carte LOCALE  : respecte incognitoMode, IGNORE la colonne
      *                   `visible`, exclut le lecteur, n'anonymise pas ;
-     *   carte MONDE   : respecte `visible` (qui sert aussi de race
-     *                   d'emprunt), IGNORE incognitoMode, inclut le
-     *                   lecteur, et noircit au-delà de DIST_MAP_MAX.
+     *   carte MONDE   : respecte incognitoMode ET `visible` (qui sert
+     *                   aussi de race d'emprunt), inclut le lecteur, et
+     *                   noircit au-delà de DIST_MAP_MAX.
      *
-     * Cet écart est CONSERVÉ tel quel : le corriger changerait ce que
-     * les joueurs voient, et c'est une décision de jeu, pas de
-     * refactorisation. Il est désormais lisible en un seul endroit.
+     * L'écart restant est CONSERVÉ tel quel : le réduire davantage
+     * changerait ce que les joueurs voient, et c'est une décision de
+     * jeu, pas de refactorisation. Il est lisible ici, donc décidable.
+     * Reste ouvert : la carte du monde n'exclut pas le lecteur (son
+     * propre marqueur vient d'un calque à part, celui-ci fait donc
+     * doublon), et la carte locale ignore toujours `visible`.
      *
      * @param string $scope 'local' ou 'global'
      * @return array<int, array{x: int, y: int, color: string, known: bool}>
@@ -204,11 +207,18 @@ class ViewService {
                 return [];
             }
             $default = '#000000';
+            /* incognitoMode s'applique ici AUSSI : il ne masquait que sur
+             * la carte locale, si bien qu'un personnage discret restait
+             * lisible sur la carte du monde — l'option ne tenait donc pas
+             * sa promesse. Même exclusion que la carte locale, à la
+             * lettre. */
             $sql = "
                 SELECT c.x, c.y, c.z, p.race, p.visible
                 FROM players p
                 JOIN coords c ON c.id = p.coords_id
+                LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
                 WHERE c.x IS NOT NULL AND c.y IS NOT NULL
+                  AND po.player_id IS NULL
                   AND p.player_type IN ('real', 'npc')
                   AND c.plan = '" . $this->worldPlan . "'
             ";
