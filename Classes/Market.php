@@ -83,20 +83,28 @@ class Market
 
         $order = ($table == 'bids') ? 'DESC' : 'ASC';
 
-        /* L'état de l'exemplaire voyage avec l'offre : sans cette
-         * jointure, un acheteur ne saurait pas s'il paie une épée neuve
-         * ou une épée à 3/20. L'offre ne PORTE pas l'état (il resterait
-         * à recopier et à maintenir) — elle le référence, et on le lit
-         * ici. LEFT JOIN : une offre de pile n'a pas d'instance, et
-         * l'offre d'un exemplaire détruit ne doit pas disparaître de la
-         * liste sans que son vendeur l'apprenne. */
+        /* L'état de l'exemplaire voyage avec l'offre de VENTE : sans
+         * cette jointure, un acheteur ne saurait pas s'il paie une épée
+         * neuve ou une épée à 3/20. L'offre ne PORTE pas l'état (il
+         * resterait à recopier et à maintenir) — elle le référence.
+         *
+         * Réservée à items_bids : seules les offres de vente séquestrent
+         * un exemplaire, et seule cette table porte instance_id. Une
+         * demande d'achat n'entiercit que de l'or, elle vise un objet de
+         * catalogue ; joindre sur une colonne qu'elle n'a pas faisait
+         * planter toute la page des demandes. */
+        $instanceJoin = $table == 'bids'
+            ? ', i.durability, i.durability_max, i.quality, i.custom_name, i.destroyed'
+            : '';
+        $instanceFrom = $table == 'bids'
+            ? ' LEFT JOIN item_instances i ON i.id = o.instance_id'
+            : '';
+
         $sql = '
         SELECT
-        o.*,
-        i.durability, i.durability_max, i.quality, i.custom_name, i.destroyed
+        o.*' . $instanceJoin . '
         FROM
-        items_' . $table . ' AS o
-        LEFT JOIN item_instances i ON i.id = o.instance_id
+        items_' . $table . ' AS o' . $instanceFrom . '
         WHERE
         o.stock > 0
         ORDER BY

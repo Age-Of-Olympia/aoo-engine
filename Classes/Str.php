@@ -258,7 +258,19 @@ class Str{
      */
     public static function richText(?string $raw): string
     {
-        $escaped = htmlspecialchars((string) $raw, ENT_QUOTES, 'UTF-8');
+        /* double_encode: false — les textes déjà en base portent leurs
+         * accents en ENTITÉS HTML (« Had&egrave;s », « &hellip; ») et
+         * étaient rendus bruts jusqu'ici. Les ré-encoder transformait
+         * « &egrave; » en « &amp;egrave; », affiché tel quel : le jeu
+         * est en français, ça se voyait partout.
+         *
+         * Ça ne rouvre rien : une entité est décodée par le navigateur
+         * APRÈS l'analyse du document, dans un nœud de TEXTE. Un
+         * « &lt;script&gt; » redevient les caractères « <script> » à
+         * l'écran, jamais une balise — il n'existe aucun chemin par
+         * lequel une entité reconstruise du balisage. Le « & » isolé,
+         * lui, reste bien échappé. */
+        $escaped = htmlspecialchars((string) $raw, ENT_QUOTES, 'UTF-8', false);
 
         /* \s* et /? tolèrent « <br/> » et « <br /> » ; rien d'autre ne
          * peut tenir entre le nom de balise et le chevron fermant. */

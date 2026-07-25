@@ -101,4 +101,45 @@ class RichTextTest extends TestCase
     {
         $this->assertSame('', Str::richText(null));
     }
+
+    /**
+     * Les textes déjà en base portent leurs accents en entités HTML et
+     * étaient rendus bruts : les ré-encoder affichait « &egrave; » en
+     * toutes lettres au milieu des phrases. Le jeu est en français, ça
+     * se voyait partout.
+     */
+    public function testExistingHtmlEntitiesAreNotReEncoded(): void
+    {
+        $this->assertSame(
+            'Had&egrave;s en mouvement &hellip; &ccedil;a ne pr&eacute;sage rien de bon',
+            Str::richText('Had&egrave;s en mouvement &hellip; &ccedil;a ne pr&eacute;sage rien de bon')
+        );
+    }
+
+    public function testALoneAmpersandIsStillEscaped(): void
+    {
+        $this->assertSame('Tom &amp; Jerry', Str::richText('Tom & Jerry'));
+    }
+
+    /**
+     * Ne pas ré-encoder les entités ne rouvre rien : une entité est
+     * décodée par le navigateur APRÈS l'analyse du document, dans un
+     * nœud de texte. Les caractères obtenus ne peuvent pas reconstruire
+     * une balise.
+     */
+    public function testEntityEncodedMarkupStaysInert(): void
+    {
+        $out = Str::richText('&lt;script&gt;alert(1)&lt;/script&gt;');
+
+        $this->assertStringNotContainsString('<script', $out);
+        $this->assertSame('&lt;script&gt;alert(1)&lt;/script&gt;', $out);
+    }
+
+    public function testNumericEntitiesCannotSmuggleATag(): void
+    {
+        $out = Str::richText('&#60;img src=x onerror=alert(1)&#62;');
+
+        $this->assertStringNotContainsString('<img', $out);
+        $this->assertStringContainsString('&#60;img', $out);
+    }
 }
