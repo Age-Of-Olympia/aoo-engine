@@ -68,6 +68,26 @@
       box.appendChild(input);
     }
 
+    /* Choix parmi une liste : un <select> plutôt qu'un champ libre —
+     * quand la réponse EST une des options, la saisir à la main est une
+     * source d'erreur, et l'appelant devrait revalider. textContent sur
+     * les libellés : ils décrivent parfois des objets nommés par des
+     * joueurs. */
+    if (options.choices) {
+      input = document.createElement('select');
+      input.className = 'aoo-dialog-input';
+      options.choices.forEach(function (choice) {
+        const opt = document.createElement('option');
+        opt.value = String(choice.value);
+        opt.textContent = String(choice.label);
+        if (options.defaultValue != null && String(choice.value) === String(options.defaultValue)) {
+          opt.selected = true;
+        }
+        input.appendChild(opt);
+      });
+      box.appendChild(input);
+    }
+
     const buttons = document.createElement('div');
     buttons.className = 'aoo-dialog-buttons';
 
@@ -136,6 +156,19 @@
 
   window.aooConfirm = function (message) {
     return buildDialog(message, { cancel: true, cancelValue: false });
+  };
+
+  /**
+   * Choix dans une liste. choices : [{value, label}].
+   * Résout la valeur choisie, ou null si annulé.
+   */
+  window.aooChoose = function (message, choices, defaultValue) {
+    return buildDialog(message, {
+      cancel: true,
+      cancelValue: null,
+      choices: choices,
+      defaultValue: defaultValue
+    });
   };
 
   window.aooPrompt = function (message, defaultValue) {

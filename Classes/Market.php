@@ -22,6 +22,51 @@ class Market
         return $this->target != null;
     }
 
+    /**
+     * Ce qu'un joueur peut livrer pour une demande d'achat : sa pile de
+     * banque (intacte par construction, donc toujours éligible) et
+     * chacun de ses exemplaires qui satisfait le seuil d'état exigé.
+     *
+     * Calculé serveur pour que le vendeur ne se voie proposer que de
+     * l'éligible ; le service revérifie à l'acceptation — cette liste
+     * est une commodité, pas une garde.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    private static function deliverableChoices($player, Item $item, int $minPct): array
+    {
+        $choices = [];
+
+        $stack = $item->get_n($player, bank: true, includeInstances: false);
+        if ($stack > 0) {
+            $choices[] = ['value' => '', 'label' => 'Depuis la pile (x' . $stack . ', neuve)'];
+        }
+
+        $service = new \App\Service\ItemInstanceService();
+        foreach ($service->listForBank((int) $player->id) as $row) {
+            if ((int) $row['item_id'] !== (int) $item->id) {
+                continue;
+            }
+            if (!\App\Service\ItemInstanceService::meetsCondition(
+                (int) $row['durability'],
+                (int) $row['durability_max'],
+                $minPct
+            )) {
+                continue;
+            }
+
+            $choices[] = [
+                'value' => (string) $row['instance_id'],
+                'label' => \App\Service\ItemInstanceService::label($row['custom_name'], (string) $row['name'])
+                    . ' — ' . strip_tags(
+                        \App\Service\ItemInstanceService::stateLine($row, withBreak: false)
+                    ),
+            ];
+        }
+
+        return $choices;
+    }
+
     public function get($table)
     {
 
@@ -248,6 +293,29 @@ class Market
                 ? '<em>unique</em>' . \App\Service\ItemInstanceService::stateLine($row)
                 : 'x' . $row->stock;
 
+            /* Demande d'achat : l'acheteur a bloqué son or à l'avance et
+             * annonce le pire état qu'il accepte. Le vendeur doit le
+             * voir AVANT de proposer quoi que ce soit. */
+            $minPct = (int) ($row->min_durability_pct ?? 0);
+            if ($table == 'asks' && $minPct > 0) {
+                $quantityCell .= '<br /><small>'
+                    . htmlspecialchars(
+                        \App\Service\ItemInstanceService::CONDITION_LEVELS[$minPct] ?? '—',
+                        ENT_QUOTES,
+                        'UTF-8'
+                    )
+                    . '</small>';
+            }
+
+            /* Ce que CE joueur peut livrer pour cette demande : sa pile
+             * de banque, et chacun de ses exemplaires qui satisfait le
+             * seuil. La liste est calculée serveur — le client ne
+             * propose que l'éligible, et le serveur revérifie. */
+            $deliverable = [];
+            if ($table == 'asks' && $action == 'accept') {
+                $deliverable = self::deliverableChoices($player, $item, $minPct);
+            }
+
             if ($isInstance && !empty($row->custom_name)) {
                 $quantityCell = '« ' . htmlspecialchars((string) $row->custom_name, ENT_QUOTES, 'UTF-8') . ' »'
                     . \App\Service\ItemInstanceService::stateLine($row);
@@ -287,6 +355,7 @@ class Market
                         data-id="' . $row->id . '"
                         data-target="' . $this->target->id . '"
                         data-instance="' . ($isInstance ? 1 : 0) . '"
+                        data-deliverable="' . htmlspecialchars(json_encode(array_values($deliverable)), ENT_QUOTES, 'UTF-8') . '"
 
                         >' . $txt . '</button>';
 
@@ -338,6 +407,49 @@ class Market
                 /* Exemplaire unique : ni quantité à demander, ni total à
                  * calculer — l'offre part en entier. */
                 var isInstance = $(this).data('instance') == 1;
+
+                /* Répondre à une demande d'achat : le vendeur choisit CE
+                 * qu'il livre. La liste ne contient que l'éligible au
+                 * seuil d'état exigé — un seul choix possible, on ne
+                 * demande rien. */
+                var deliverable = $(this).data('deliverable') || [];
+                if (type == 'asks' && action == 'accept' && deliverable.length) {
+
+                    var pick = deliverable.length === 1
+                        ? Promise.resolve(String(deliverable[0].value))
+                        : aooChoose('Que livrez-vous ?', deliverable, deliverable[0].value);
+
+                    pick.then(function(chosen) {
+
+                        if (chosen === null) { return; }
+
+                        payload.instance_id = chosen;
+
+                        if (chosen !== '') {
+                            payload.quantity = 1;
+                            aooConfirm('Livrer cet exemplaire pour ' + price + 'Po ?').then(function(ok) {
+                                if (ok) {
+                                    aooFetch(url, payload, null).then(autoModal).catch(autoError());
+                                }
+                            });
+                            return;
+                        }
+
+                        aooPrompt('Combien ?', stock).then(function(value) {
+                            var n = parseInt(value, 10);
+                            if (value === null) { return; }
+                            if (isNaN(n) || n < 1 || n > stock) { aooAlert('Nombre invalide !'); return; }
+                            payload.quantity = n;
+                            aooConfirm(label + ' x' + n + '\npour un total de ' + (n * price) + 'Po ?').then(function(ok) {
+                                if (ok) {
+                                    aooFetch(url, payload, null).then(autoModal).catch(autoError());
+                                }
+                            });
+                        });
+                    });
+
+                    return;
+                }
 
                 var askConfirmText = (action == 'cancel')
 

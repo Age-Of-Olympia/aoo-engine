@@ -88,7 +88,7 @@ elseif(isset($_GET['asks'])){
     <script>
     window.targetId = <?php echo $target->id ?>;
     </script>
-    <script src="js/new_contract.js?v=20260716"></script>
+    <script src="js/new_contract.js?v=20260725"></script>
     <?php
 
 

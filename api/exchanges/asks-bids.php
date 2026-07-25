@@ -55,13 +55,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $instanceId = (int) $POST_DATA['instance_id'] ?: null;
         }
 
-        $bidsAsksService->Create($POST_DATA['type'], $POST_DATA['item_id'], $POST_DATA['price'], $POST_DATA['quantity'], $player, $instanceId);
+        /* Seuil d'état exigé par une demande d'achat — facultatif, un
+         * palier inconnu vaut « aucune contrainte » côté service. */
+        $minCondition = 0;
+        if (isset($POST_DATA['min_condition']) && $POST_DATA['min_condition'] !== '') {
+            SanitizeIntChecked($POST_DATA['min_condition']);
+            $minCondition = (int) $POST_DATA['min_condition'];
+        }
+
+        $bidsAsksService->Create($POST_DATA['type'], $POST_DATA['item_id'], $POST_DATA['price'], $POST_DATA['quantity'], $player, $instanceId, $minCondition);
     }
     elseif ($POST_DATA['action'] == 'accept') {
         
         SanitizeIntChecked($POST_DATA['id']);
         SanitizeIntChecked($POST_DATA['quantity']);
-        $bidsAsksService->Accept($POST_DATA['type'], $POST_DATA['id'],$POST_DATA['quantity'], $player);
+
+        /* Exemplaire livré par le vendeur pour satisfaire une demande. */
+        $acceptInstanceId = null;
+        if (isset($POST_DATA['instance_id']) && $POST_DATA['instance_id'] !== '') {
+            SanitizeIntChecked($POST_DATA['instance_id']);
+            $acceptInstanceId = (int) $POST_DATA['instance_id'] ?: null;
+        }
+
+        $bidsAsksService->Accept($POST_DATA['type'], $POST_DATA['id'],$POST_DATA['quantity'], $player, $acceptInstanceId);
     }
     else {
         ExitError(INVALID_REQ);

@@ -59,18 +59,35 @@ $(document).ready(function () {
 
                 /* Panneau HUD : les paramètres sont ceux du
                  * fragment, pas de la page (main.js). */
-                targetId = aooViewParam('targetId');
-                let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
-                let payload = {
-                    'action': 'create',
-                    'type': 'asks',
-                    'item_id': itemId,
-                    'quantity': n,
-                    'price': price
-                };
-                aooFetch(url, payload, null)
-                    .then(autoModal)
-                    .catch(autoError());
+                /* L'acheteur bloque son or À L'AVANCE : sans ce choix,
+                 * il paierait sans savoir dans quel état on le
+                 * livrerait — les exemplaires usés circulent désormais.
+                 * Le libellé décrit le PIRE état accepté. */
+                aooChoose('État minimum accepté ?', [
+                    { value: '100', label: 'Neuf uniquement' },
+                    { value: '50', label: 'Bon état ou mieux' },
+                    { value: '1', label: 'Tout sauf brisé' }
+                ], '50').then(function (minCondition) {
+
+                    if (minCondition === null) {
+
+                        return;
+                    }
+
+                    targetId = aooViewParam('targetId');
+                    let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
+                    let payload = {
+                        'action': 'create',
+                        'type': 'asks',
+                        'item_id': itemId,
+                        'quantity': n,
+                        'price': price,
+                        'min_condition': minCondition
+                    };
+                    aooFetch(url, payload, null)
+                        .then(autoModal)
+                        .catch(autoError());
+                });
             });
         });
     });

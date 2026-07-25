@@ -92,7 +92,7 @@ class BidsAsksService
      *        offres de vente — une demande d'achat n'entiercit que de
      *        l'or et porte un objet de catalogue.
      */
-    public function Create(string $type, int $itemId, int $price, int $quantity, $player, ?int $instanceId = null): void
+    public function Create(string $type, int $itemId, int $price, int $quantity, $player, ?int $instanceId = null, int $minCondition = 0): void
     {
         $item = new Item($itemId, row: false, checked: true);
         $item->get_data();
@@ -174,6 +174,16 @@ class BidsAsksService
             if ($type == 'asks') {
                 $total = $quantity * $price;
 
+                /* L'acheteur bloque son or À L'AVANCE : il doit pouvoir
+                 * dire quel état il accepte, sinon il paie sans savoir
+                 * ce qu'on lui livrera. Un palier inconnu vaut « aucune
+                 * contrainte » plutôt que d'échouer — l'ancien client
+                 * n'envoie rien. */
+                $values['min_durability_pct'] =
+                    isset(\App\Service\ItemInstanceService::CONDITION_LEVELS[$minCondition])
+                        ? $minCondition
+                        : 0;
+
                 //remove money to "block" it
                 $gold = Item::get_item_by_name('or', checked: true);
                 if ($gold->add_item($player, -$total)) {
@@ -194,7 +204,13 @@ class BidsAsksService
         ExitSuccess(["message" => "L'offre/demande a été créée.", "redirect" => "merchant.php?{$type}&targetId={$_GET['targetId']}"]);
     }
 
-    public function Accept(string $type, int $id, int $quantity, $player): void
+    /**
+     * @param int|null $instanceId exemplaire que le VENDEUR livre pour
+     *        satisfaire une demande d'achat. Une demande n'entiercit que
+     *        de l'or : l'exemplaire va donc directement de la banque du
+     *        vendeur à celle de l'acheteur, sans étape intermédiaire.
+     */
+    public function Accept(string $type, int $id, int $quantity, $player, ?int $instanceId = null): void
     {
          if ($quantity < 1) {
                 $auditService = new AuditService();
@@ -233,23 +249,79 @@ class BidsAsksService
 
                 $item = new Item($row->item_id, row: false, checked: true);
 
-                // transfer item to target bank
-                if (!$item->give_item($player, $target, $quantity, bank: true)) {
-                    ExitError("Vous n'avez pas assez de cet objet en banque.");
+                /* Livraison d'un EXEMPLAIRE : une demande n'entiercit
+                 * que de l'or, il n'y a donc pas de séquestre à
+                 * dénouer — l'objet passe de la banque du vendeur à
+                 * celle de l'acheteur, et c'est son propriétaire qui
+                 * change. Le seuil d'état est vérifié ICI : le client
+                 * ne propose que des exemplaires éligibles, mais un
+                 * POST se forge. */
+                if ($instanceId !== null) {
+
+                    $quantity = 1;
+                    $total = $row->price;
+
+                    $instanceService = new ItemInstanceService();
+                    $state = (new Db())->exe(
+                        'SELECT i.durability, i.durability_max FROM item_instances i
+                         JOIN players_items_instances l ON l.instance_id = i.id
+                         WHERE i.id = ? AND l.player_id = ? AND i.destroyed = 0',
+                        array($instanceId, $player->id)
+                    )->fetch_object();
+
+                    if ($state === null) {
+                        ExitError("Cet exemplaire ne vous appartient pas.");
+                    }
+
+                    if (!ItemInstanceService::meetsCondition(
+                        (int) $state->durability,
+                        (int) $state->durability_max,
+                        (int) ($row->min_durability_pct ?? 0)
+                    )) {
+                        ExitError("Cet exemplaire est trop abîmé pour cette demande.");
+                    }
+
+                    $label = $instanceService->describe($instanceId);
+
+                    try {
+                        $instanceService->deliverEscrow(
+                            $instanceId,
+                            (int) $player->id,
+                            (int) $target->id,
+                            ItemInstanceService::LOCATION_BANK
+                        );
+                    } catch (\InvalidArgumentException $e) {
+                        ExitError($e->getMessage());
+                    }
+
+                    $gold = Item::get_item_by_name('or', checked: true);
+                    $gold->add_item($player, $total, bank: true);
+
+                    $logTime = time();
+                    Log::put($player, $player, "Vous avez vendu un objet.",
+                        "hidden_action", "{$label} à {$row->price} Or.", $logTime);
+                    Log::put($target, $target, "Un objet que vous demandiez vous a été vendu.",
+                        "hidden_action", "{$label} à {$row->price} Or.", $logTime);
+                } else {
+
+                    // transfer item to target bank
+                    if (!$item->give_item($player, $target, $quantity, bank: true)) {
+                        ExitError("Vous n'avez pas assez de cet objet en banque.");
+                    }
+
+                    // transfer gold to player bank from market
+                    $gold = Item::get_item_by_name('or', checked: true);
+                    $gold->add_item($player, $total, bank: true);
+
+                    $logTime = time();
+                    $targetLog = "Vous avez vendus des objets.";
+                    $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
+                    Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
+
+                    $targetLog = "Des objets que vous demandez vous ont été vendus.";
+                    $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
+                    Log::put($target, $target, $targetLog, "hidden_action", $objects, $logTime);
                 }
-
-                // transfer gold to player bank from market
-                $gold = Item::get_item_by_name('or', checked: true);
-                $gold->add_item($player, $total, bank: true);
-
-                $logTime = time();
-                $targetLog = "Vous avez vendus des objets.";
-                $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
-                Log::put($player, $player, $targetLog, "hidden_action", $objects, $logTime);
-
-                $targetLog = "Des objets que vous demandez vous ont été vendus.";
-                $objects = "{$quantity} {$item->row->name} à {$row->price} Or l'unité.";
-                Log::put($target, $target, $targetLog, "hidden_action", $objects, $logTime);
 
             } elseif ($type == 'bids') {
                 // player buys item from target and send gold

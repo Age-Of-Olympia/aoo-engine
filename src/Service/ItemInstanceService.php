@@ -479,6 +479,49 @@ class ItemInstanceService extends BaseService
     }
 
     /**
+     * Paliers d'état qu'un acheteur peut exiger, du plus strict au plus
+     * permissif : la clé est le pourcentage de durabilité MINIMAL, le
+     * libellé décrit le PIRE état accepté.
+     *
+     * Trois niveaux à l'écran, un pourcentage en base — un quatrième
+     * palier ne coûterait qu'une ligne ici. 50 % est la frontière de la
+     * bande verte de stateLine() : ce que le joueur voit comme « en bon
+     * état » est exactement ce qu'il obtient.
+     *
+     * @var array<int, string>
+     */
+    public const CONDITION_LEVELS = [
+        100 => 'Neuf uniquement',
+        50  => 'Bon état ou mieux',
+        1   => 'Tout sauf brisé',
+    ];
+
+    /**
+     * L'exemplaire satisfait-il le seuil exigé par une demande d'achat ?
+     *
+     * Une PILE (pas de durabilité) est intacte par construction : elle
+     * satisfait tout seuil. Un objet BRISÉ n'en satisfait aucun — il ne
+     * contribue plus ses caractéristiques, personne ne peut le vouloir,
+     * et l'accepter serait une mauvaise surprise plutôt qu'un choix.
+     */
+    public static function meetsCondition(?int $durability, ?int $durabilityMax, int $minPct): bool
+    {
+        if ($minPct <= 0) {
+            return true;
+        }
+
+        if ($durability === null || $durabilityMax === null || $durabilityMax <= 0) {
+            return true;
+        }
+
+        if (self::isBroken($durability)) {
+            return false;
+        }
+
+        return (int) round($durability / $durabilityMax * 100) >= $minPct;
+    }
+
+    /**
      * Libellé d'un exemplaire pour les journaux : son nom (personnalisé
      * s'il en a un) suivi de son état. « L'Éclat de Dorna (Durabilité
      * 7/20) » plutôt que « gladius » — un journal de vente qui ne dit
