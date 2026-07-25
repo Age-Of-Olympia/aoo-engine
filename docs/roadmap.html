@@ -900,6 +900,45 @@ const FEATURES = [
     player:"Les armes et armures s'usent. Repose sur les objets individuels (sans eux, on ne pourrait pas différencier l'usure d'une épée à l'autre).",
     enables:[] },
 
+  /* ───────── Rafale « Retours en vrac » — lot 2 (25 juil. 2026) ─────────
+   * Pile de 7 MR empilées sur integration/hud-redesign (!741 → !747). */
+
+  { id:'hud-feedback-lot2', title:"HUD : fenêtre étroite, message du jour, détail des actions", category:'ui-ux', status:'testing',
+    quarter:6.2, date:'Juil 2026 (S3)',
+    tech:"isMobileViewport confondait « écran étroit » et « tactile » : un PC en fenêtre réduite prenait la mise en page mobile ET perdait les affordances souris. Nouveau isMobileDevice (étroit ET pointeur grossier) réservé aux gestes ; le damier se cale sur son cadre, la sélection est restaurée, les médaillons de zoom reviennent. Pagination du carrousel ajoutée à la liste blanche anti-désélection. propagateMdj cible les seuls panneaux affichant un mdj. FeedRenderer affiche enfin le détail d'action, replié et réservé à son auteur.",
+    player:"Le plateau ne déborde plus quand la fenêtre n'est pas maximisée, et cliquer le point du bas pour atteindre ses actions ne désélectionne plus la case. Publier son message du jour le met à jour partout. Le détail d'une action (jets de dés, coûts) revient dans le flux, sans avoir à ouvrir la page complète.",
+    enables:[] },
+
+  { id:'player-text-sanitizing', title:"Textes libres : liste blanche de balisage", category:'player-account', status:'testing',
+    quarter:6.2, date:'Juil 2026 (S3)',
+    tech:"Message du jour et histoire étaient rendus bruts à quatre endroits : XSS stocké exploitable par n'importe quel joueur, déclenché sans clic par le flux latéral. Str::richText échappe TOUT puis ré-autorise les seuls motifs de la liste blanche (b/strong/i/em/u/s/br, sans attribut), et rééquilibre les balises. Assaini à la source, jamais dans Ui::get_card qui sert aussi du HTML composé par le jeu. Corrigé au passage : scripts/logs/body.php réaffectait $player dans sa boucle, exposant les jets de dés de tous les joueurs.",
+    player:"La mise en forme simple reste possible dans les messages du jour et les histoires ; le reste s'affiche en texte. Et les détails de vos actions ne sont plus lisibles par les autres.",
+    enables:[] },
+
+  { id:'attack-two-actions', title:"« attaquer » devient melee + distance", category:'combat', status:'testing',
+    quarter:6.2, date:'Juil 2026 (S3)',
+    tech:"« attaquer » était un nom fantôme : aucune ligne dans actions, et action.php choisissait melee ou distance selon la portée. Une action qui en fabriquait deux, avec ses contournements partout (alias de statistiques, habillage de bouton dédié, exception au tutoriel, court-circuit à l'octroi). Les deux vraies actions portaient déjà la bonne condition RequiresDistance : il ne manquait que le drapeau display_context pour qu'elle soit évaluée au rendu. L'ordre des actions de base vient désormais de race_starter_actions.position, plus d'un tableau littéral.",
+    player:"Le bouton d'attaque devient « Corps à corps » au contact et « Tirer » à distance — l'un ou l'autre selon où se trouve la cible. Réordonner les actions de base est devenu un réglage d'animateur.",
+    enables:[] },
+
+  { id:'bank-market-instances', title:"Objets individualisés en banque et au marché", category:'inventory', status:'testing',
+    quarter:6.25, date:'Juil 2026 (S3)',
+    tech:"La banque n'acceptait que des piles fongibles : un objet usé, nommé ou de qualité ne pouvait pas y être déposé. players_items_instances gagne une localisation (inventory | bank | market | exchange) plutôt qu'une table d'entiercement : l'exemplaire ne change pas de ligne, son identité traverse le dépôt et la vente sans recopie. Les lectures de possession filtrant en liste blanche sur « inventory », toute nouvelle localisation met l'exemplaire hors de portée sans qu'aucune soit modifiée. Index UNIQUE sur items_bids.instance_id et transfert de propriété par UPDATE conditionnel : deux gardes structurelles contre la duplication.",
+    player:"Une arme usée peut enfin être rangée en banque et vendue, avec sa durabilité visible — et l'acheteur voit l'état de ce qu'il achète avant de payer.",
+    enables:['exchange-instances'] },
+
+  { id:'exchange-instances', title:"Objets individualisés dans les échanges", category:'inventory', status:'planned',
+    quarter:6.4, date:'Août 2026 (S3)',
+    tech:"Même machinerie d'entiercement que le marché (location 'exchange', instance_id sur players_items_exchanges, index UNIQUE). Deux préalables mis au jour par la cartographie : la table n'a aucune clé primaire — remove_item_from_exchange supprime donc toutes les lignes identiques d'un coup — et les lignes ne sont JAMAIS supprimées après règlement, ce qui rend indécidable la légitimité d'un séquestre.",
+    player:"Proposer une arme usée dans un échange, avec son état visible par les deux parties.",
+    enables:[] },
+
+  { id:'admin-player-effects', title:"Effets d'un personnage éditables en admin", category:'admin', status:'testing',
+    quarter:6.2, date:'Juil 2026 (S3)',
+    tech:"Pose et levée d'un effet depuis la fiche d'édition, via Player::add_effect / end_effect plutôt qu'un INSERT — ce sont eux qui appliquent les annulations du catalogue. Durée en temps réel, PROVISOIRE : le passage à une durée en tours (MR !645, à rebaser) inverserait le sens de la valeur 0, aujourd'hui « illimité » et demain « expiré ».",
+    player:"Un animateur peut geler un personnage ou lever une malédiction depuis sa fiche, sans passer par la base.",
+    enables:[] },
+
   /* ─────────────────────────── PAST — ajouts ultérieurs ─────────────────────────── */
   { id:'worldmap-s2', title:"Nouvelle carte du monde (S2)", category:'map-tiles', status:'shipped',
     quarter:0.9, version:'pré-4.2.1', date:'Mar–Avr 2025',
