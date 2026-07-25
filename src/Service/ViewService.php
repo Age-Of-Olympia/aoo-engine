@@ -178,21 +178,21 @@ class ViewService {
      * GD de chaque carte. Elles n'ont pourtant rien d'anodin : ce sont
      * elles qui décident si un joueur voit un adversaire, et sous quelle
      * identité. Deux copies, c'est la certitude qu'elles divergeront —
-     * elles avaient d'ailleurs DÉJÀ divergé, et ce tableau le dit
-     * plutôt que de le masquer :
+     * et elles avaient divergé, chaque carte oubliant une règle, et
+     * chacune une règle différente : l'une ignorait le mode discret,
+     * l'autre l'invisibilité et les déguisements, une seule excluait le
+     * lecteur.
      *
-     *   carte LOCALE  : respecte incognitoMode, IGNORE la colonne
-     *                   `visible`, exclut le lecteur, n'anonymise pas ;
-     *   carte MONDE   : respecte incognitoMode ET `visible` (qui sert
-     *                   aussi de race d'emprunt), inclut le lecteur, et
-     *                   noircit au-delà de DIST_MAP_MAX.
+     * Elles sont désormais ALIGNÉES. Ce qui vaut pour les deux cartes :
+     * personnages et PNJ seulement, jamais les discrets (incognitoMode),
+     * jamais les invisibles, jamais le lecteur — et la colonne `visible`
+     * fait office de race d'emprunt, un déguisement n'ayant pas de raison
+     * de tenir à l'échelle du monde et de tomber à l'échelle locale.
      *
-     * L'écart restant est CONSERVÉ tel quel : le réduire davantage
-     * changerait ce que les joueurs voient, et c'est une décision de
-     * jeu, pas de refactorisation. Il est lisible ici, donc décidable.
-     * Reste ouvert : la carte du monde n'exclut pas le lecteur (son
-     * propre marqueur vient d'un calque à part, celui-ci fait donc
-     * doublon), et la carte locale ignore toujours `visible`.
+     * La SEULE différence qui subsiste est délibérée : la carte du monde
+     * noircit au-delà de DIST_MAP_MAX. Elle couvre des étendues où l'on
+     * ne reconnaît pas un individu à vue ; la carte locale, elle, tient
+     * dans la portée de perception.
      *
      * @param string $scope 'local' ou 'global'
      * @return array<int, array{x: int, y: int, color: string, known: bool}>
@@ -207,42 +207,37 @@ class ViewService {
                 return [];
             }
             $default = '#000000';
-            /* incognitoMode s'applique ici AUSSI : il ne masquait que sur
-             * la carte locale, si bien qu'un personnage discret restait
-             * lisible sur la carte du monde — l'option ne tenait donc pas
-             * sa promesse. Même exclusion que la carte locale, à la
-             * lettre. */
-            $sql = "
-                SELECT c.x, c.y, c.z, p.race, p.visible
-                FROM players p
-                JOIN coords c ON c.id = p.coords_id
-                LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
-                WHERE c.x IS NOT NULL AND c.y IS NOT NULL
-                  AND po.player_id IS NULL
-                  AND p.player_type IN ('real', 'npc')
-                  AND c.plan = '" . $this->worldPlan . "'
-            ";
+            $plan = $this->worldPlan;
+            /* Carte du monde : le sol uniquement. */
+            $zCondition = 'AND c.z = 0';
         } else {
             if (!$this->localBoundsAvailable) {
                 return [];
             }
             $default = '#ffffff';
+            $plan = $this->currentPlan;
             $zCondition = $this->currentPlan === $this->worldPlan
-                ? "AND c.z = 0"
-                : ($this->playerZ !== null ? "AND c.z = " . $this->playerZ : "");
-            $sql = "
-                SELECT c.x, c.y, c.z, p.race, p.visible
-                FROM players p
-                JOIN coords c ON c.id = p.coords_id
-                LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
-                WHERE c.x IS NOT NULL AND c.y IS NOT NULL
-                  AND c.plan = '" . $this->currentPlan . "'
-                  AND p.id != " . (int) $this->playerId . "
-                  AND po.player_id IS NULL
-                  AND p.player_type IN ('real', 'npc')
-                  {$zCondition}
-            ";
+                ? 'AND c.z = 0'
+                : ($this->playerZ !== null ? 'AND c.z = ' . (int) $this->playerZ : '');
         }
+
+        /* Le tronc COMMUN des deux cartes : personnages et PNJ, jamais
+         * les discrets, jamais les invisibles, jamais le lecteur. Ce
+         * n'était pas le cas — chaque carte en oubliait une partie, et
+         * chacune une partie différente. */
+        $sql = "
+            SELECT c.x, c.y, p.race, p.visible
+            FROM players p
+            JOIN coords c ON c.id = p.coords_id
+            LEFT JOIN players_options po ON po.player_id = p.id AND po.name = 'incognitoMode'
+            WHERE c.x IS NOT NULL AND c.y IS NOT NULL
+              AND po.player_id IS NULL
+              AND p.player_type IN ('real', 'npc')
+              AND p.id != " . (int) $this->playerId . "
+              AND (p.visible IS NULL OR p.visible != 'invisible')
+              AND c.plan = '" . $plan . "'
+              {$zCondition}
+        ";
 
         $raceColors = array_merge(['default' => $default], $this->raceService->getBgColorMap());
 
@@ -253,22 +248,19 @@ class ViewService {
                 continue;
             }
 
-            if ($isGlobal) {
-                if (!isset($row['z']) || $row['z'] != 0 || $row['visible'] == 'invisible') {
-                    continue;
-                }
+            /* `visible` sert aussi de race d'emprunt : un personnage peut
+             * se montrer sous une autre apparence. Vrai sur les DEUX
+             * cartes désormais — il n'y a pas de raison qu'un déguisement
+             * tienne à l'échelle du monde et tombe à l'échelle locale. */
+            $race = $row['visible'] !== null ? $row['visible'] : $row['race'];
 
-                /* `visible` sert aussi de race d'emprunt : un joueur peut
-                 * se montrer sous une autre apparence. */
-                $race = $row['visible'] !== null ? $row['visible'] : $row['race'];
-
-                $known = $this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX
+            /* Anonymisation à distance : propre à la carte du monde, qui
+             * couvre des étendues où l'on ne reconnaît pas un individu à
+             * vue. La carte locale tient dans la portée de perception. */
+            $known = !$isGlobal
+                || ($this->getPlayersDistance($this->playerX, $this->playerY, $row['x'], $row['y']) <= DIST_MAP_MAX
                     && $this->playerZ == 0
-                    && $this->currentPlan == $this->worldPlan;
-            } else {
-                $race = $row['race'];
-                $known = true;
-            }
+                    && $this->currentPlan == $this->worldPlan);
 
             $out[] = [
                 'x' => $this->transformX($row['x'], $scope),
