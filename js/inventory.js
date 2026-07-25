@@ -93,13 +93,20 @@ $(document).ready(function(){
         }
 
         var isMarket = (action == "newAsk" || action == "newBid");
+        /* Vente d'un exemplaire individualisé : la ligne cliquée EST
+         * l'objet, il n'y a pas de quantité à demander — le serveur le
+         * met en vente par son id d'instance et impose 1 de son côté.
+         * Une demande d'achat porte un objet de catalogue, jamais un
+         * individu : elle garde son prompt. */
+        var sellsInstance = (action == 'newBid' && !!window.instanceId);
         /* Dépôt en banque d'un objet individualisé (usé, nommé, de
          * qualité) : la ligne cliquée EST l'exemplaire, il n'y a pas de
          * quantité à demander — le serveur le déplace par son id
          * d'instance. On envoie quand même 1, la garde de BankView
          * teste la présence de « n ». */
         var storesInstance = (action == 'store' && !!window.instanceId);
-        var needsN = (action == 'drop' || action == "store" || isMarket) && !storesInstance;
+        var needsN = (action == 'drop' || action == "store" || isMarket)
+            && !storesInstance && !sellsInstance;
 
         if(isMarket && window.name == 'or'){
             aooAlert('Impossible de vendre cet objet.');
@@ -119,7 +126,7 @@ $(document).ready(function(){
                 }
                 return n;
             })
-            : Promise.resolve(storesInstance ? 1 : 0);
+            : Promise.resolve((storesInstance || sellsInstance) ? 1 : 0);
 
         /* Libellé du bouton d'aperçu (« Équiper (1 Ae) »,
          * « Déséquiper »…) : sert au message de confirmation. */
@@ -150,6 +157,9 @@ $(document).ready(function(){
                         'action': 'create',
                         'type': action == 'newAsk' ? 'asks' : 'bids',
                         'item_id': window.id,
+                        /* JAMAIS dans itemId : deux paramètres distincts,
+                         * le serveur refuse l'ambigu (design des instances). */
+                        'instance_id': sellsInstance ? window.instanceId : '',
                         'quantity': n,
                         'price': price
                     };

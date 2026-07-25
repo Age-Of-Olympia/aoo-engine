@@ -372,26 +372,17 @@ class Ui{
             }
 
             /* État d'une instance (usure, seuils décidés en revue) :
-             * ligne colorée sous les caracs + data-state pour l'aperçu. */
-            $stateLine = '';
+             * ligne colorée sous les caracs + data-state pour l'aperçu.
+             * La ligne vient d'ItemInstanceService, seule source des
+             * seuils et des paliers de couleur — le marché et les
+             * échanges affichent EXACTEMENT le même état. */
+            $stateLine = \App\Service\ItemInstanceService::stateLine($row);
             $stateAttr = '';
-            if(isset($row->durability, $row->durability_max) && (int) $row->durability_max > 0){
+            if($stateLine !== ''){
 
-                $d = (int) $row->durability;
-                $dMax = (int) $row->durability_max;
-
-                if(\App\Service\ItemInstanceService::isBroken($d)){
-
-                    $stateLine = '<br /><font color="red"><b>Brisé</b></font>';
-                    $stateAttr = 'Brisé — ne contribue plus ses caractéristiques.';
-                }
-                else{
-
-                    $pct = (int) round($d / $dMax * 100);
-                    $color = $pct < 20 ? 'red' : ($pct < 50 ? 'orange' : 'green');
-                    $stateLine = '<br /><font color="'. $color .'">Durabilité '. $d .'/'. $dMax .'</font>';
-                    $stateAttr = 'Durabilité '. $d .'/'. $dMax;
-                }
+                $stateAttr = \App\Service\ItemInstanceService::isBroken((int) $row->durability)
+                    ? 'Brisé — ne contribue plus ses caractéristiques.'
+                    : 'Durabilité '. (int) $row->durability .'/'. (int) $row->durability_max;
             }
 
 

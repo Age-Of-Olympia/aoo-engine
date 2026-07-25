@@ -43,6 +43,21 @@ class ItemInstanceService extends BaseService
     /** Rangée en banque : hors de portée de tout geste de jeu. */
     public const LOCATION_BANK = 'bank';
 
+    /**
+     * Séquestrée par une offre de vente, ou par un échange en cours.
+     *
+     * Ces deux localisations n'ont demandé aucune migration de colonne :
+     * les lectures de possession filtrent en LISTE BLANCHE sur
+     * LOCATION_INVENTORY, si bien que toute valeur nouvelle met
+     * automatiquement l'exemplaire hors d'atteinte de l'équipement, du
+     * jet au sol, du dépôt et du comptage de get_n(). L'exemplaire
+     * appartient toujours à son vendeur pendant l'entiercement — seul
+     * son emplacement change, l'usure et le nom ne bougent pas de ligne.
+     */
+    public const LOCATION_MARKET = 'market';
+
+    public const LOCATION_EXCHANGE = 'exchange';
+
     public static function isBroken(int $durability): bool
     {
         return $durability <= self::BROKEN_AT;
@@ -384,6 +399,147 @@ class ItemInstanceService extends BaseService
     public function withdrawFromBank(int $instanceId, int $playerId): void
     {
         $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_INVENTORY);
+    }
+
+    /**
+     * Mettre en vente : l'exemplaire quitte la banque pour l'offre. Il
+     * reste la propriété du vendeur — c'est son emplacement qui change,
+     * pas son propriétaire (players_items_instances.player_id porte une
+     * clé étrangère vers players, il n'existe pas de « joueur marché »).
+     *
+     * @throws \InvalidArgumentException si l'exemplaire n'est pas en banque
+     */
+    public function escrowForMarket(int $instanceId, int $playerId): void
+    {
+        $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_MARKET);
+    }
+
+    /** Annulation d'une offre : l'exemplaire retourne au coffre. */
+    public function releaseFromMarket(int $instanceId, int $playerId): void
+    {
+        $this->moveTo($instanceId, $playerId, self::LOCATION_MARKET, self::LOCATION_BANK);
+    }
+
+    /** Mise en jeu dans un échange. */
+    public function escrowForExchange(int $instanceId, int $playerId): void
+    {
+        $this->moveTo($instanceId, $playerId, self::LOCATION_BANK, self::LOCATION_EXCHANGE);
+    }
+
+    /** Retrait d'un échange, ou annulation : retour au coffre. */
+    public function releaseFromExchange(int $instanceId, int $playerId): void
+    {
+        $this->moveTo($instanceId, $playerId, self::LOCATION_EXCHANGE, self::LOCATION_BANK);
+    }
+
+    /**
+     * Règlement : l'exemplaire séquestré change de PROPRIÉTAIRE et
+     * retombe en banque chez l'acquéreur. C'est le seul geste du
+     * cycle où player_id bouge.
+     *
+     * Atomique et conditionnel comme le reste : le WHERE porte le
+     * vendeur ET la localisation attendue, et le nombre de lignes
+     * affectées est vérifié — deux acheteurs simultanés sur la même
+     * offre, un seul emporte l'exemplaire, l'autre lève. Sans cela on
+     * livrerait deux fois un objet qui n'existe qu'en un exemplaire.
+     *
+     * @throws \InvalidArgumentException si l'exemplaire n'est plus là où
+     *         on l'attendait, ou n'appartient plus au cédant
+     */
+    public function deliverEscrow(int $instanceId, int $fromPlayerId, int $toPlayerId, string $from): void
+    {
+        $conn = $this->entityManager->getConnection();
+
+        $conn->transactional(function ($conn) use ($instanceId, $fromPlayerId, $toPlayerId, $from): void {
+            $row = $conn->fetchAssociative(
+                'SELECT l.location, i.destroyed
+                 FROM players_items_instances l
+                 JOIN item_instances i ON i.id = l.instance_id
+                 WHERE l.instance_id = ? AND l.player_id = ? FOR UPDATE',
+                [$instanceId, $fromPlayerId]
+            );
+
+            if ($row === false || (int) $row['destroyed'] === 1) {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} introuvable ou détruit.");
+            }
+            if ((string) $row['location'] !== $from) {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} n'est plus séquestré.");
+            }
+
+            $affected = $conn->executeStatement(
+                'UPDATE players_items_instances SET player_id = ?, location = ?
+                 WHERE instance_id = ? AND player_id = ? AND location = ?',
+                [$toPlayerId, self::LOCATION_BANK, $instanceId, $fromPlayerId, $from]
+            );
+
+            if ($affected === 0) {
+                throw new \InvalidArgumentException("Exemplaire #{$instanceId} emporté entre-temps.");
+            }
+        });
+    }
+
+    /**
+     * Libellé d'un exemplaire pour les journaux : son nom (personnalisé
+     * s'il en a un) suivi de son état. « L'Éclat de Dorna (Durabilité
+     * 7/20) » plutôt que « gladius » — un journal de vente qui ne dit
+     * pas QUEL exemplaire est parti ne sert à rien.
+     */
+    public function describe(int $instanceId): string
+    {
+        $row = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT i.custom_name, i.durability, i.durability_max, it.name AS catalog_name
+             FROM item_instances i JOIN items it ON it.id = i.item_id WHERE i.id = ?',
+            [$instanceId]
+        );
+
+        if ($row === false) {
+            return 'exemplaire #' . $instanceId;
+        }
+
+        $state = strip_tags(self::stateLine($row, withBreak: false));
+
+        return self::label($row['custom_name'], (string) $row['catalog_name'])
+            . ($state !== '' ? ' (' . $state . ')' : '');
+    }
+
+    /**
+     * État d'un exemplaire, en une ligne prête à afficher.
+     *
+     * SOURCE UNIQUE de la règle : les seuils viennent d'ici (BROKEN_AT)
+     * et les paliers de couleur aussi. Le marché, les échanges et
+     * l'inventaire s'en servent tous — une deuxième formulation serait
+     * un deuxième endroit à corriger le jour où l'usure changera.
+     *
+     * @param object|array<string, mixed> $row ligne portant durability
+     *        et durability_max ; chaîne vide si ce n'est pas un exemplaire
+     */
+    public static function stateLine($row, bool $withBreak = true): string
+    {
+        $get = static function (string $key) use ($row) {
+            if (is_array($row)) {
+                return $row[$key] ?? null;
+            }
+
+            return $row->$key ?? null;
+        };
+
+        $d = $get('durability');
+        $dMax = $get('durability_max');
+
+        if ($d === null || $dMax === null || (int) $dMax <= 0) {
+            return '';
+        }
+
+        $prefix = $withBreak ? '<br />' : '';
+
+        if (self::isBroken((int) $d)) {
+            return $prefix . '<font color="red"><b>Brisé</b></font>';
+        }
+
+        $pct = (int) round((int) $d / (int) $dMax * 100);
+        $color = $pct < 20 ? 'red' : ($pct < 50 ? 'orange' : 'green');
+
+        return $prefix . '<font color="' . $color . '">Durabilité ' . (int) $d . '/' . (int) $dMax . '</font>';
     }
 
     /**

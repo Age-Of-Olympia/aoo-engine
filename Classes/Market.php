@@ -38,13 +38,24 @@ class Market
 
         $order = ($table == 'bids') ? 'DESC' : 'ASC';
 
+        /* L'état de l'exemplaire voyage avec l'offre : sans cette
+         * jointure, un acheteur ne saurait pas s'il paie une épée neuve
+         * ou une épée à 3/20. L'offre ne PORTE pas l'état (il resterait
+         * à recopier et à maintenir) — elle le référence, et on le lit
+         * ici. LEFT JOIN : une offre de pile n'a pas d'instance, et
+         * l'offre d'un exemplaire détruit ne doit pas disparaître de la
+         * liste sans que son vendeur l'apprenne. */
         $sql = '
         SELECT
-        *
+        o.*,
+        i.durability, i.durability_max, i.quality, i.custom_name, i.destroyed
         FROM
-        items_' . $table . '
+        items_' . $table . ' AS o
+        LEFT JOIN item_instances i ON i.id = o.instance_id
+        WHERE
+        o.stock > 0
         ORDER BY
-        price
+        o.price
         ' . $order . '
         ';
 
@@ -227,9 +238,24 @@ class Market
                 </td>
                 ';
 
+            /* Ce que l'acheteur doit savoir AVANT de payer : un
+             * exemplaire porte un nom et une usure, et la colonne
+             * « quantité » n'a pas de sens pour lui. L'état vient
+             * d'ItemInstanceService — même règle et mêmes couleurs que
+             * dans l'inventaire, pas une deuxième formulation. */
+            $isInstance = !empty($row->instance_id);
+            $quantityCell = $isInstance
+                ? '<em>unique</em>' . \App\Service\ItemInstanceService::stateLine($row)
+                : 'x' . $row->stock;
+
+            if ($isInstance && !empty($row->custom_name)) {
+                $quantityCell = '« ' . htmlspecialchars((string) $row->custom_name, ENT_QUOTES, 'UTF-8') . ' »'
+                    . \App\Service\ItemInstanceService::stateLine($row);
+            }
+
             echo '
                 <td>
-                    x' . $row->stock . '</font>
+                    ' . $quantityCell . '
                 </td>
                 ';
 
@@ -260,6 +286,7 @@ class Market
                         data-price="' . $row->price . '"
                         data-id="' . $row->id . '"
                         data-target="' . $this->target->id . '"
+                        data-instance="' . ($isInstance ? 1 : 0) . '"
 
                         >' . $txt . '</button>';
 
@@ -308,9 +335,20 @@ class Market
 
                 /* Modales du jeu (js/modal.js) : asynchrones — la suite
                  * vit dans les .then(), pas dans un if(confirm(...)). */
+                /* Exemplaire unique : ni quantité à demander, ni total à
+                 * calculer — l'offre part en entier. */
+                var isInstance = $(this).data('instance') == 1;
+
                 var askConfirmText = (action == 'cancel')
 
-                    ? Promise.resolve('Annuler ' + item + ' x' + stock + ' ?')
+                    ? Promise.resolve('Annuler ' + item + (isInstance ? ' ?' : ' x' + stock + ' ?'))
+
+                    : isInstance
+
+                    ? (function() {
+                        payload.quantity = 1;
+                        return Promise.resolve(label + ' ' + item + '\npour ' + price + 'Po ?');
+                    })()
 
                     : aooPrompt('Combien ?', stock).then(function(value) {
 

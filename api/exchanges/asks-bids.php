@@ -44,7 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         SanitizeIntChecked($POST_DATA['quantity']);
         SanitizeIntChecked($POST_DATA['item_id']);
 
-        $bidsAsksService->Create($POST_DATA['type'], $POST_DATA['item_id'], $POST_DATA['price'], $POST_DATA['quantity'], $player);
+        /* instance_id est FACULTATIF (une offre de pile n'en a pas) :
+         * SanitizeIntChecked sort du script sur une valeur non
+         * numérique, il ne peut donc pas s'appliquer à une clé absente.
+         * Vide ou 0 = pas d'exemplaire ; on ne laisse pas une valeur
+         * bancale devenir 0 en silence. */
+        $instanceId = null;
+        if (isset($POST_DATA['instance_id']) && $POST_DATA['instance_id'] !== '') {
+            SanitizeIntChecked($POST_DATA['instance_id']);
+            $instanceId = (int) $POST_DATA['instance_id'] ?: null;
+        }
+
+        $bidsAsksService->Create($POST_DATA['type'], $POST_DATA['item_id'], $POST_DATA['price'], $POST_DATA['quantity'], $player, $instanceId);
     }
     elseif ($POST_DATA['action'] == 'accept') {
         

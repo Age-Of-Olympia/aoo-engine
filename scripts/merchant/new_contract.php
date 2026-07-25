@@ -16,17 +16,11 @@ if(isset($_GET['bids'])){
     });
     </script>
     <?php
-    /* Piles seulement : le marché échange du fongible — une offre porte
-     * un objet et une quantité, pas un individu. Les exemplaires
-     * individualisés (usés, nommés, de qualité) sont visibles en banque
-     * depuis qu'elle les accepte, mais les mettre en vente échouerait à
-     * la première décrémentation : add_item ne sait pas débiter une
-     * instance. Mieux vaut ne pas les proposer que promettre une vente
-     * impossible. */
-    echo '<p><small>Seules les piles sont vendables : un exemplaire usé,'
-        . ' nommé ou de qualité ne s\'échange pas au marché.</small></p>';
-
-    InventoryView::renderInventory(itemsFromBank: true, stacksOnly: true);
+    /* Exemplaires individualisés COMPRIS : ils étaient écartés de cette
+     * liste faute de savoir les vendre — un pis-aller que la vente par
+     * référence rend inutile. Chaque ligne affiche son usure, et le
+     * serveur met en vente l'exemplaire cliqué, pas une unité de pile. */
+    InventoryView::renderInventory(itemsFromBank: true);
 }
 
 elseif(isset($_GET['asks'])){
