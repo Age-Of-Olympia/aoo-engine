@@ -1,7 +1,7 @@
 <?php
+use App\Factory\PlayerFactory;
 use Classes\Exchange;
 use Classes\Market;
-use Classes\Player;
 use Classes\Item;
 use Classes\Log;
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
@@ -11,11 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     ExitError('error no merchant');
   }
-  
-  $player = new Player($_SESSION['playerId']);
+
+  // Joueur ACTIF (tutoriel / PNJ), comme le reste du flux marchand.
+  $player = PlayerFactory::active();
   $player->get_data();
-  
-  $target = new Player($_GET['targetId']);
+
+  $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
   $marketAccessError = Market::CheckMarketAccess($player, $target);
   if($marketAccessError !=null){
@@ -31,9 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ExitError('Invalid request');
   }
 
+  // Garde « le personnage a changé dans un autre onglet » : la vue
+  // envoie l'id du joueur ACTIF, la comparaison doit porter sur le même.
   if(isset($POST_DATA['playerid']))
   {
-    if($_SESSION['playerId'] != $POST_DATA['playerid'])
+    if(PlayerFactory::activeId() != $POST_DATA['playerid'])
     {
       ExitError('account changed');
     }
@@ -60,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
       $isTarget = $player->id == $exchange->targetId;
 
-      $offeringPlayer = new Player($isTarget ? $exchange->playerId : $exchange->targetId);
-      $targetPlayer = new Player($isTarget ? $exchange->targetId : $exchange->playerId);
+      $offeringPlayer = PlayerFactory::legacy((int) ($isTarget ? $exchange->playerId : $exchange->targetId));
+      $targetPlayer = PlayerFactory::legacy((int) ($isTarget ? $exchange->targetId : $exchange->playerId));
       $offeringPlayer->get_data();
       $targetPlayer->get_data();
       if ($POST_DATA['action'] == 'accept') {
@@ -103,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $exchange->db->start_transaction('cancel_exchange');
     try {
       $exchange->get_items_data();
-      $offeringPlayer = new Player($exchange->playerId);
-      $targetPlayer = new Player($exchange->targetId);
+      $offeringPlayer = PlayerFactory::legacy((int) $exchange->playerId);
+      $targetPlayer = PlayerFactory::legacy((int) $exchange->targetId);
       //refund items
       $exchange->give_items(from_player: $offeringPlayer, to_player: $offeringPlayer);
       $exchange->give_items(from_player: $targetPlayer, to_player: $targetPlayer);

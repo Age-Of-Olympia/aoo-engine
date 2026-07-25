@@ -108,21 +108,32 @@ else{
 
 ?>
 <script>
-$(document).ready(function(){
+/* Lignes du marché : le reste de la ligne est cliquable, mais le lien
+ * « Négocier » (Classes\Market::print_market) appartient au SEUL
+ * routeur de liens de js/hud.js. Sans ce garde, les deux se
+ * marchaient dessus : ce handler ouvrait le panneau et détachait le
+ * lien du DOM, puis le routeur — ne retrouvant plus son panneau
+ * parent — basculait en toggle et le refermait aussitôt (« Négocier
+ * ne fait rien »).
+ * Délégué namespacé et purgé : ce fragment est ré-exécuté à chaque
+ * chargement de panneau, un délégué non purgé s'empilerait. */
+$(document).off('click.marketRow').on('click.marketRow', 'tr.item[data-market]', function(e){
 
-    $('.item').click(function(e){
+    if($(e.target).closest('a[href]').length){
 
-        var url = 'merchant.php?'+ $(this).data('market') +'&targetId=<?php echo $target->id ?>&itemId='+ $(this).data('id');
+        return;
+    }
 
-        /* HUD : la fiche de l'objet du marché s'ouvre dans le
-         * panneau ; habillage hérité : pleine page. */
-        if(window.hudOpenPanel){
+    var url = 'merchant.php?'+ $(this).data('market') +'&targetId='+ $(this).data('target') +'&itemId='+ $(this).data('id');
 
-            window.hudOpenPanel(url.replace('merchant.php', 'load_merchant.php'), 'Marchand');
-            return;
-        }
+    /* HUD : la fiche de l'objet du marché s'ouvre dans le
+     * panneau ; habillage hérité : pleine page. */
+    if(window.hudOpenPanel){
 
-        document.location = url;
-    });
+        window.hudOpenPanel(url.replace('merchant.php', 'load_merchant.php'), 'Marchand');
+        return;
+    }
+
+    document.location = url;
 });
 </script>

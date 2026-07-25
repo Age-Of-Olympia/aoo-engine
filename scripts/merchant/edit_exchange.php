@@ -1,7 +1,7 @@
 <?php
+use App\Factory\PlayerFactory;
 use Classes\Exchange;
 use Classes\Item;
-use Classes\Player;
 use Classes\Ui;
 
 if (!isset($_GET['editExchange'])) {
@@ -15,13 +15,15 @@ if (!$exchange->is_in_progress()) {
 $exchange->get_items_data();
 $objects = [];
 
-$player = new Player($_SESSION['playerId']);
+// Joueur ACTIF (tutoriel / PNJ) : la vue d'échanges qui inclut ce
+// fichier travaille déjà sur l'actif, et l'API vérifie son id.
+$player = PlayerFactory::active();
 $player->get_data();
 
 if ($player->id != $exchange->targetId && $player->id != $exchange->playerId) {
   ExitError('Current player is not part of the exchange');
 }
-$otherPlayer = new Player($player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId);
+$otherPlayer = PlayerFactory::legacy((int) ($player->id == $exchange->playerId ? $exchange->targetId : $exchange->playerId));
 $otherPlayer->get_data();
 ?>
 <div class="section">
@@ -46,7 +48,6 @@ $otherPlayer->get_data();
             <hr>
             <h3>Votre Inventaire :</h3>
             <?php
-            $player = new Player($_SESSION['playerId']);
             $itemList = Item::get_item_list($player, bank:true);
             echo Ui::print_inventory($itemList);
             ?>
@@ -110,7 +111,10 @@ $otherPlayer->get_data();
         updateObjectList();
       }
       $('.delete').click(deleteObject);
-      $('.action').click(function(e){
+      /* Sélecteur restreint au bouton posé juste au-dessus : « action »
+       * seule est partagée avec l'inventaire et les contrats du marché,
+       * un panneau voisin voyait ses boutons détournés ici. */
+      $('.preview-action .action[data-action="add-to-exchange"]').click(function(e){
         e.preventDefault();
         aooPrompt('Combien?', window.n).then(function(n){
           if(n == null){

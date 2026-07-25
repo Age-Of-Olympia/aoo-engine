@@ -2,7 +2,6 @@
 use App\Factory\PlayerFactory;
 use Classes\Exchange;
 use Classes\Market;
-use Classes\Player;
 require_once($_SERVER['DOCUMENT_ROOT'].'/config.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -11,10 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     exit('error no merchant');
   }
-  $player = new Player($_SESSION['playerId']);
+  // Joueur ACTIF (tutoriel / PNJ), comme le reste du flux marchand.
+  $player = PlayerFactory::active();
   $player->get_data();
 
-  $target = new Player($_GET['targetId']);
+  $target = PlayerFactory::legacy((int) $_GET['targetId']);
 
   $marketAccessError = Market::CheckMarketAccess($player, $target);
   if($marketAccessError !=null){

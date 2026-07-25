@@ -50,7 +50,13 @@ $(document).ready(function(){
     });
 
 
-    $('.action').click(function(e){
+    /* Symétrique des correctifs marchands : « action » est une classe
+     * partagée. Ce fragment se lie aux .action présents AU MOMENT de
+     * son chargement — panneaux voisins compris. Un bouton Acheter du
+     * marché (.market-action) ou un lien d'échange (data-url) déjà
+     * ouvert héritait donc de ce handler et déclenchait, en plus de sa
+     * transaction, une action d'inventaire sur l'objet courant. */
+    $('.action').not('.market-action, [data-url]').click(function(e){
 
 
         var action = $(this).data('action');

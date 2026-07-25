@@ -55,6 +55,32 @@ function aooFetch(url,  payload = null, method = null,autoProcess = true) {
         })
 }
 
+/* Redirection demandée par le serveur : dans le HUD, une URL qui a un
+ * équivalent fragment s'ouvre dans le panneau courant (hudNavigate) —
+ * document.location éjectait le joueur du plateau vers la page héritée
+ * après un achat/une vente (retours de playtest juillet 2026).
+ * hudNavigate retombe lui-même sur document.location quand l'URL n'a
+ * pas de fragment, et le repli ci-dessous couvre l'habillage hérité :
+ * le comportement hors HUD est inchangé. */
+function aooGoto(url) {
+
+    if (window.hudNavigate) {
+
+        window.hudNavigate(url);
+
+        /* La redirection suit une action qui a changé les valeurs
+         * vivantes du bandeau (or après un achat, sacoche après une
+         * vente) : sans rechargement de page, il faut les recompter. */
+        if (window.hudRefreshAfterAction) {
+
+            window.hudRefreshAfterAction();
+        }
+        return;
+    }
+
+    document.location = url;
+}
+
 function autoModal(data) {
     if (data.error) {
         aooAlert(data.error);
@@ -63,14 +89,14 @@ function autoModal(data) {
         if (data.result.message && data.result.redirect) {
             /* Message PUIS redirection : l'alerte modale n'est pas bloquante */
             aooAlert(data.result.message).then(function () {
-                document.location = data.result.redirect;
+                aooGoto(data.result.redirect);
             });
             return;
         }
         if (data.result.message)
             aooAlert(data.result.message);
         if (data.result.redirect)
-            document.location = data.result.redirect;
+            aooGoto(data.result.redirect);
     }
 }
 

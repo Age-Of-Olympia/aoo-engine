@@ -103,7 +103,12 @@ class ExchangesView
 
         </div>
         <script>
-            $('.action').click(function(e) {
+            /* Délégué namespacé et purgé : ce fragment est ré-exécuté à
+             * chaque chargement de panneau (js/hud.js), un délégué non
+             * purgé s'empilerait. Sélecteur restreint aux liens
+             * d'échange : la classe « action » est partagée avec
+             * l'inventaire et les contrats du marché. */
+            $(document).off('click.exchangeAction').on('click.exchangeAction', 'a.action[data-url]', function(e) {
                 e.preventDefault();
                 let elem = e.currentTarget;
                 let url = elem.dataset.url;

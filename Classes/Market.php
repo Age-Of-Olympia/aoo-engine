@@ -97,6 +97,9 @@ class Market
             $item->get_data();
 
 
+            // data-target : le marchand porté par la ligne — le handler
+            // de scripts/merchant/body.php est un délégué partagé, il ne
+            // peut pas se fier à un identifiant figé au rendu.
             echo '
             <tr
                 class="item ' . $table . '"
@@ -104,6 +107,7 @@ class Market
                 data-market="' . $table . '"
                 data-name="' . $item->row->name . '"
                 data-id="' . $item->id . '"
+                data-target="' . $this->target->id . '"
                 >
                 ';
 
@@ -162,7 +166,10 @@ class Market
 
         if (!isset($this->get($table)[$item->id])) {
 
-            exit('<div>' . ($table == 'bids') ? 'Acheter' : 'Vendre' . ' cet objet: aucun contrat trouvé.</div>');
+            // Le ternaire doit être parenthésé : « . » est prioritaire sur
+            // « ?: », la condition portait sur '<div>' . ($table == 'bids')
+            // (toujours vraie) et le message affichait toujours « Acheter ».
+            exit('<div>' . ($table == 'bids' ? 'Acheter' : 'Vendre') . ' cet objet : aucun contrat trouvé.</div>');
         }
 
 
@@ -232,18 +239,27 @@ class Market
                 </td>
                 ';
 
+            // market-action : classe propre au marché — « action » seule est
+            // partagée avec l'inventaire et les échanges, un délégué posé
+            // dessus attraperait leurs boutons (et réciproquement).
+            // data-label : libellé français réutilisé dans la confirmation.
+            // data-target : le marchand, porté par le bouton — plus sûr que
+            // la seule requête de vue (un second panneau ouvert derrière
+            // remplace window.hudPanelQuery).
             echo '
                 <td>
                     <button
-                        class="action"
+                        class="action market-action"
 
                         data-item="' . $item->id . '"
                         data-type="' . $table . '"
                         data-name="' . ucfirst($item->data->name) . '"
                         data-action="' . $action . '"
+                        data-label="' . $txt . '"
                         data-stock="' . $row->stock . '"
                         data-price="' . $row->price . '"
                         data-id="' . $row->id . '"
+                        data-target="' . $this->target->id . '"
 
                         >' . $txt . '</button>';
 
@@ -265,48 +281,77 @@ class Market
 
 ?>
         <script>
-            $(document).ready(function() {
+            /* Délégué namespacé et purgé : ce fragment est ré-exécuté à
+             * chaque chargement de panneau (js/hud.js), un délégué non
+             * purgé s'empilerait et déclencherait N transactions. */
+            $(document).off('click.marketDetail').on('click.marketDetail', 'button.market-action', function(e) {
 
-                $('.action').click(function(e) {
+                var item = $(this).data('name');
+                var label = $(this).data('label');
+                var action = $(this).data('action');
+                var stock = $(this).data('stock');
+                var price = $(this).data('price');
+                var id = $(this).data('id');
+                var type = $(this).data('type');
 
-                    var item = $(this).data('name');
-                    var action = $(this).data('action');
-                    var stock = $(this).data('stock');
-                    var price = $(this).data('price');
-                    var id = $(this).data('id');
-                    var type = $(this).data('type');
+                /* Panneau HUD : la barre d'adresse ne porte pas les
+                 * paramètres du fragment. Le marchand est lu sur le
+                 * bouton lui-même, et à défaut dans la requête de la
+                 * vue courante (main.js). */
+                var targetId = $(this).data('target') || aooViewParam('targetId');
+                var url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
+                var payload = {
+                    'action': action,
+                    'type': type,
+                    'id': id,
+                };
 
-                    const urlParams = new URLSearchParams(window.location.search);
-                    targetId = urlParams.get('targetId');
-                    let url = 'api/exchanges/asks-bids.php?targetId=' + targetId;
-                    let payload = {
-                        'action': action,
-                        'type': type,
-                        'id': id,
-                    };
+                /* Modales du jeu (js/modal.js) : asynchrones — la suite
+                 * vit dans les .then(), pas dans un if(confirm(...)). */
+                var askConfirmText = (action == 'cancel')
 
+                    ? Promise.resolve('Annuler ' + item + ' x' + stock + ' ?')
 
-                    if (action == 'cancel') {
-                        confirmtxt = 'Annuler ' + item + ' x' + stock + ' ?';
+                    : aooPrompt('Combien ?', stock).then(function(value) {
+
+                        /* null = annulation (silencieuse) */
+                        if (value === null) {
+
+                            return null;
+                        }
+
+                        var n = parseInt(value, 10);
+
+                        if (isNaN(n) || n < 1 || n > stock) {
+
+                            aooAlert('Nombre invalide !');
+                            return null;
+                        }
+
+                        payload.quantity = n;
+                        payload.price = price;
+
+                        return label + ' ' + item + ' x' + n + '\nà ' + price + 'Po/unité\npour un total de ' + (n * price) + 'Po ?';
+                    });
+
+                askConfirmText.then(function(confirmText) {
+
+                    if (confirmText === null) {
+
+                        return;
                     }
-                    else{
-                    var n = prompt('Combien?', stock);
 
-                    if (n == null || n == '' || n < 1 || n > stock) {
+                    aooConfirm(confirmText).then(function(ok) {
 
-                        return false;
-                    }
-                    total = n * price;
-                    payload.quantity = n;
-                    payload.price = price;
-                    confirmtxt=action + ' ' + item + ' x' + n + '\nà ' + price + 'Po/unité\npour un total de ' + total + 'Po?'
-                }
+                        if (!ok) {
 
-                    if (confirm(confirmtxt)) {
+                            return;
+                        }
+
                         aooFetch(url, payload, null)
                             .then(autoModal)
                             .catch(autoError());
-                    }
+                    });
                 });
             });
         </script>
